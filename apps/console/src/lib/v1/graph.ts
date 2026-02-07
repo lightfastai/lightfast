@@ -5,6 +5,7 @@ import {
 } from "@db/console/schema";
 import { and, eq, or, inArray } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
+import { NotFoundError } from "@repo/console-types";
 import type { V1AuthContext } from "./index";
 
 export interface GraphLogicInput {
@@ -36,6 +37,7 @@ export interface GraphLogicOutput {
       target: string;
       type: string;
       linkingKey: string | null;
+      linkingKeyType: string | null;
       confidence: number;
     }[];
   };
@@ -74,7 +76,12 @@ export async function graphLogic(
   });
 
   if (!rootObs) {
-    throw new Error(`Observation not found: ${input.observationId}`);
+    log.warn("Graph query - observation not found", {
+      observationId: input.observationId,
+      workspaceId: auth.workspaceId,
+      requestId: input.requestId,
+    });
+    throw new NotFoundError("Observation", input.observationId);
   }
 
   // Step 2: BFS traversal to find connected observations
@@ -149,6 +156,7 @@ export async function graphLogic(
           target: targetNode.externalId,
           type: rel.relationshipType,
           linkingKey: rel.linkingKey,
+          linkingKeyType: rel.linkingKeyType,
           confidence: rel.confidence,
         });
       }

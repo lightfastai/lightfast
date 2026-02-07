@@ -10,8 +10,8 @@
  * 3. Evaluate significance (GATE - return early if below threshold)
  * 4. Fetch workspace context
  * 5. PARALLEL: Classification + Embedding + Entity Extraction
- * 6. Upsert vector to Pinecone
- * 7. Store observation + entities (transactional)
+ * 6. Store observation + entities (transactional) — SOURCE OF TRUTH
+ * 7. Upsert vector to Pinecone — DERIVED INDEX
  * 8. Emit completion event
  */
 
@@ -732,6 +732,20 @@ export const observationCapture = inngest.createFunction(
           throw new Error("Failed to generate all multi-view embeddings");
         }
 
+        // Validate embedding dimensions match workspace config
+        const expectedDim = workspace.settings.embedding.embeddingDim;
+        for (const [viewName, embedding] of [
+          ["title", result.embeddings[0]],
+          ["content", result.embeddings[1]],
+          ["summary", result.embeddings[2]],
+        ] as const) {
+          if (embedding.length !== expectedDim) {
+            throw new NonRetriableError(
+              `Embedding dimension mismatch for ${viewName}: got ${embedding.length}, expected ${expectedDim}. Check embedding model configuration.`
+            );
+          }
+        }
+
         // Generate view-specific vector IDs
         const baseId = sourceEvent.sourceId.replace(/[^a-zA-Z0-9]/g, "_");
 
@@ -848,77 +862,9 @@ export const observationCapture = inngest.createFunction(
       },
     });
 
-    // Step 6: Upsert multi-view vectors to Pinecone
-    await step.run("upsert-multi-view-vectors", async () => {
-      const namespace = workspace.settings.embedding.namespaceName;
-
-      // Base metadata shared across all views
-      const baseMetadata = {
-        layer: "observations",
-        observationType: deriveObservationType(sourceEvent),
-        source: sourceEvent.source,
-        sourceType: sourceEvent.sourceType,
-        sourceId: sourceEvent.sourceId,
-        occurredAt: sourceEvent.occurredAt,
-        actorName: sourceEvent.actor?.name || "unknown",
-        // Pre-generated externalId for direct lookup (BIGINT migration)
-        // This eliminates database queries during search ID normalization.
-        // The observationId field stores the public nanoid identifier.
-        observationId: externalId,
-      };
-
-      // View-specific metadata
-      const titleMetadata: ObservationVectorMetadata = {
-        ...baseMetadata,
-        view: "title",
-        title: sourceEvent.title,
-        snippet: sourceEvent.title,
-      };
-
-      const contentMetadata: ObservationVectorMetadata = {
-        ...baseMetadata,
-        view: "content",
-        title: sourceEvent.title,
-        snippet: sourceEvent.body.slice(0, 500),
-      };
-
-      const summaryMetadata: ObservationVectorMetadata = {
-        ...baseMetadata,
-        view: "summary",
-        title: sourceEvent.title,
-        snippet: `${sourceEvent.title}\n${sourceEvent.body.slice(0, 300)}`,
-      };
-
-      // Batch upsert all 3 vectors
-      await consolePineconeClient.upsertVectors<ObservationVectorMetadata>(
-        workspace.settings.embedding.indexName,
-        {
-          ids: [
-            embeddingResult.title.vectorId,
-            embeddingResult.content.vectorId,
-            embeddingResult.summary.vectorId,
-          ],
-          vectors: [
-            embeddingResult.title.vector,
-            embeddingResult.content.vector,
-            embeddingResult.summary.vector,
-          ],
-          metadata: [titleMetadata, contentMetadata, summaryMetadata],
-        },
-        namespace
-      );
-
-      log.info("Multi-view vectors upserted to Pinecone", {
-        titleVectorId: embeddingResult.title.vectorId,
-        contentVectorId: embeddingResult.content.vectorId,
-        summaryVectorId: embeddingResult.summary.vectorId,
-        namespace,
-        indexName: workspace.settings.embedding.indexName,
-      });
-    });
-
-    // Step 7: Store observation + entities (transactional)
-    // Note: Topics come from Step 5 (classify), significance from Step 3
+    // Step 6: Store observation + entities (transactional) — SOURCE OF TRUTH
+    // DB record is created first. If Pinecone upsert fails, observation exists but
+    // isn't searchable — a safe failure mode that Inngest retries will resolve.
     const { observation, entitiesStored } = await step.run("store-observation", async () => {
       const observationType = deriveObservationType(sourceEvent);
 
@@ -995,6 +941,77 @@ export const observationCapture = inngest.createFunction(
         });
 
         return { observation: obs, entitiesStored };
+      });
+    });
+
+    // Step 7: Upsert multi-view vectors to Pinecone — DERIVED INDEX
+    // If this fails, observation exists in DB but isn't searchable.
+    // Inngest retries will attempt the upsert again. No orphaned vectors.
+    await step.run("upsert-multi-view-vectors", async () => {
+      const namespace = workspace.settings.embedding.namespaceName;
+
+      // Base metadata shared across all views
+      const baseMetadata = {
+        layer: "observations",
+        observationType: deriveObservationType(sourceEvent),
+        source: sourceEvent.source,
+        sourceType: sourceEvent.sourceType,
+        sourceId: sourceEvent.sourceId,
+        occurredAt: sourceEvent.occurredAt,
+        actorName: sourceEvent.actor?.name || "unknown",
+        // Pre-generated externalId for direct lookup (BIGINT migration)
+        // This eliminates database queries during search ID normalization.
+        // The observationId field stores the public nanoid identifier.
+        observationId: externalId,
+      };
+
+      // View-specific metadata
+      const titleMetadata: ObservationVectorMetadata = {
+        ...baseMetadata,
+        view: "title",
+        title: sourceEvent.title,
+        snippet: sourceEvent.title,
+      };
+
+      const contentMetadata: ObservationVectorMetadata = {
+        ...baseMetadata,
+        view: "content",
+        title: sourceEvent.title,
+        snippet: sourceEvent.body.slice(0, 500),
+      };
+
+      const summaryMetadata: ObservationVectorMetadata = {
+        ...baseMetadata,
+        view: "summary",
+        title: sourceEvent.title,
+        snippet: `${sourceEvent.title}\n${sourceEvent.body.slice(0, 300)}`,
+      };
+
+      // Batch upsert all 3 vectors
+      await consolePineconeClient.upsertVectors<ObservationVectorMetadata>(
+        workspace.settings.embedding.indexName,
+        {
+          ids: [
+            embeddingResult.title.vectorId,
+            embeddingResult.content.vectorId,
+            embeddingResult.summary.vectorId,
+          ],
+          vectors: [
+            embeddingResult.title.vector,
+            embeddingResult.content.vector,
+            embeddingResult.summary.vector,
+          ],
+          metadata: [titleMetadata, contentMetadata, summaryMetadata],
+        },
+        namespace
+      );
+
+      log.info("Multi-view vectors upserted to Pinecone", {
+        titleVectorId: embeddingResult.title.vectorId,
+        contentVectorId: embeddingResult.content.vectorId,
+        summaryVectorId: embeddingResult.summary.vectorId,
+        namespace,
+        indexName: workspace.settings.embedding.indexName,
       });
     });
 

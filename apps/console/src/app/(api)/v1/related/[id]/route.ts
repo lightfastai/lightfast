@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 import { log } from "@vendor/observability/log";
+import { NotFoundError } from "@repo/console-types";
 import {
   withDualAuth,
   createDualAuthErrorResponse,
@@ -54,6 +55,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof NotFoundError) {
+      return NextResponse.json(
+        {
+          error: "NOT_FOUND",
+          message: error.message,
+          requestId,
+        },
+        { status: 404 }
+      );
+    }
+
     log.error("v1/related error", {
       requestId,
       error: error instanceof Error ? error.message : String(error),

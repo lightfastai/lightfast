@@ -5,6 +5,7 @@ import {
 } from "@db/console/schema";
 import { and, eq, or, inArray, desc } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
+import { NotFoundError } from "@repo/console-types";
 import type { V1AuthContext } from "./index";
 
 export interface RelatedLogicInput {
@@ -63,7 +64,12 @@ export async function relatedLogic(
   });
 
   if (!sourceObs) {
-    throw new Error(`Observation not found: ${input.observationId}`);
+    log.warn("Related query - observation not found", {
+      observationId: input.observationId,
+      workspaceId: auth.workspaceId,
+      requestId: input.requestId,
+    });
+    throw new NotFoundError("Observation", input.observationId);
   }
 
   // Step 2: Find direct relationships

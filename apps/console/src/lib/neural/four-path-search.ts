@@ -123,6 +123,41 @@ async function normalizeVectorIds(
     }
   }
 
+  // Verify Phase 3 observation IDs exist in DB (defense against orphaned Pinecone vectors)
+  if (withObsId.length > 0) {
+    const phase3ObsIds = Array.from(
+      new Set(withObsId.map((m) => (m.metadata as Record<string, unknown>).observationId as string))
+    );
+
+    const existingObs = await db
+      .select({ externalId: workspaceNeuralObservations.externalId })
+      .from(workspaceNeuralObservations)
+      .where(
+        and(
+          eq(workspaceNeuralObservations.workspaceId, workspaceId),
+          inArray(workspaceNeuralObservations.externalId, phase3ObsIds)
+        )
+      );
+
+    const existingSet = new Set(existingObs.map((r) => r.externalId));
+    const orphanedCount = phase3ObsIds.length - existingSet.size;
+
+    if (orphanedCount > 0) {
+      log.warn("Orphaned Pinecone vectors detected", {
+        requestId,
+        orphanedCount,
+        totalPhase3: phase3ObsIds.length,
+      });
+
+      // Remove orphaned entries from obsGroups
+      for (const obsId of phase3ObsIds) {
+        if (!existingSet.has(obsId)) {
+          obsGroups.delete(obsId);
+        }
+      }
+    }
+  }
+
   // For legacy vectors without observationId, fall back to database lookup (Phase 2 path)
   if (withoutObsId.length > 0) {
     const vectorIds = withoutObsId.map((m) => m.id);

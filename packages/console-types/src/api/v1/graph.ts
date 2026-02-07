@@ -29,6 +29,7 @@ export const GraphEdgeSchema = z.object({
   target: z.string(),
   type: z.string(),
   linkingKey: z.string().nullable(),
+  linkingKeyType: z.string().nullable(),
   confidence: z.number(),
 });
 

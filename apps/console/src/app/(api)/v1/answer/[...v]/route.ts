@@ -6,7 +6,11 @@ import { fetchRequestHandler } from "@lightfastai/ai-sdk/server/adapters/fetch";
 import { randomUUID } from "node:crypto";
 import { auth } from "@clerk/nextjs/server";
 import { log } from "@vendor/observability/log";
-import type { AnswerAppRuntimeContext } from "@repo/console-ai-types";
+import type {
+  AnswerAppRuntimeContext,
+  GraphToolOutput,
+  RelatedToolOutput,
+} from "@repo/console-ai-types";
 import { workspaceSearchTool } from "@repo/console-ai/workspace-search";
 import { workspaceContentsTool } from "@repo/console-ai/workspace-contents";
 import { workspaceFindSimilarTool } from "@repo/console-ai/workspace-find-similar";
@@ -16,6 +20,7 @@ import {
   withDualAuth,
   createDualAuthErrorResponse,
 } from "../../lib/with-dual-auth";
+import { NotFoundError } from "@repo/console-types";
 import {
   buildAnswerSystemPrompt,
   HARDCODED_WORKSPACE_CONTEXT,
@@ -145,33 +150,57 @@ export async function POST(request: NextRequest) {
               ),
           },
           workspaceGraph: {
-            handler: async (input) =>
-              graphLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  observationId: input.id,
-                  depth: input.depth ?? 1,
-                  requestId: randomUUID(),
-                },
-              ),
+            handler: async (input) => {
+              try {
+                return await graphLogic(
+                  {
+                    workspaceId: authData.workspaceId,
+                    userId: authData.userId,
+                    authType: "session",
+                  },
+                  {
+                    observationId: input.id,
+                    depth: input.depth ?? 1,
+                    requestId: randomUUID(),
+                  },
+                );
+              } catch (error) {
+                if (error instanceof NotFoundError) {
+                  return {
+                    error: "not_found",
+                    message: `Observation ${input.id} was not found. It may have been deleted or not yet ingested. Try searching for the topic instead using workspaceSearch.`,
+                    suggestedAction: "workspaceSearch",
+                  } as unknown as GraphToolOutput;
+                }
+                throw error;
+              }
+            },
           },
           workspaceRelated: {
-            handler: async (input) =>
-              relatedLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  observationId: input.id,
-                  requestId: randomUUID(),
-                },
-              ),
+            handler: async (input) => {
+              try {
+                return await relatedLogic(
+                  {
+                    workspaceId: authData.workspaceId,
+                    userId: authData.userId,
+                    authType: "session",
+                  },
+                  {
+                    observationId: input.id,
+                    requestId: randomUUID(),
+                  },
+                );
+              } catch (error) {
+                if (error instanceof NotFoundError) {
+                  return {
+                    error: "not_found",
+                    message: `Observation ${input.id} was not found. It may have been deleted or not yet ingested. Try searching for the topic instead using workspaceSearch.`,
+                    suggestedAction: "workspaceSearch",
+                  } as unknown as RelatedToolOutput;
+                }
+                throw error;
+              }
+            },
           },
         },
       }),
@@ -307,33 +336,57 @@ export async function GET(request: NextRequest) {
               ),
           },
           workspaceGraph: {
-            handler: async (input) =>
-              graphLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  observationId: input.id,
-                  depth: input.depth ?? 1,
-                  requestId: randomUUID(),
-                },
-              ),
+            handler: async (input) => {
+              try {
+                return await graphLogic(
+                  {
+                    workspaceId: authData.workspaceId,
+                    userId: authData.userId,
+                    authType: "session",
+                  },
+                  {
+                    observationId: input.id,
+                    depth: input.depth ?? 1,
+                    requestId: randomUUID(),
+                  },
+                );
+              } catch (error) {
+                if (error instanceof NotFoundError) {
+                  return {
+                    error: "not_found",
+                    message: `Observation ${input.id} was not found. It may have been deleted or not yet ingested. Try searching for the topic instead using workspaceSearch.`,
+                    suggestedAction: "workspaceSearch",
+                  } as unknown as GraphToolOutput;
+                }
+                throw error;
+              }
+            },
           },
           workspaceRelated: {
-            handler: async (input) =>
-              relatedLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  observationId: input.id,
-                  requestId: randomUUID(),
-                },
-              ),
+            handler: async (input) => {
+              try {
+                return await relatedLogic(
+                  {
+                    workspaceId: authData.workspaceId,
+                    userId: authData.userId,
+                    authType: "session",
+                  },
+                  {
+                    observationId: input.id,
+                    requestId: randomUUID(),
+                  },
+                );
+              } catch (error) {
+                if (error instanceof NotFoundError) {
+                  return {
+                    error: "not_found",
+                    message: `Observation ${input.id} was not found. It may have been deleted or not yet ingested. Try searching for the topic instead using workspaceSearch.`,
+                    suggestedAction: "workspaceSearch",
+                  } as unknown as RelatedToolOutput;
+                }
+                throw error;
+              }
+            },
           },
         },
       }),
