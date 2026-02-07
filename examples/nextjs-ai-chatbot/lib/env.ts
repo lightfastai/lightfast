@@ -29,7 +29,7 @@ export const env = createEnv({
   /**
    * Skip validation during build and lint
    */
-  skipValidation: !!process.env.CI || process.env.npm_lifecycle_event === 'lint',
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === 'lint',
 
   /**
    * Empty strings are treated as undefined

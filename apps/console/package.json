@@ -70,6 +70,7 @@
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:^",
     "@vendor/seo": "workspace:*",
+    "@vendor/upstash": "workspace:^",
     "@vercel/microfrontends": "^2.3.0",
     "@vercel/related-projects": "catalog:",
     "ai": "catalog:",

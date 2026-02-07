@@ -35,7 +35,7 @@ export const consoleM2MEnv = createEnv({
   client: {},
   experimental__runtimeEnv: {},
   skipValidation:
-    !!process.env.CI ||
+    !!process.env.SKIP_ENV_VALIDATION ||
     process.env.npm_lifecycle_event === "lint" ||
     process.env.SKIP_ENV_VALIDATION === "true",
   emptyStringAsUndefined: true,
