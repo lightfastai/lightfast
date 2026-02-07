@@ -36,14 +36,9 @@ export interface LinearWebhookBase {
 
 /**
  * Linear webhook event types supported by our transformers.
- * Note: IssueLabel is omitted as it's not needed for demo scenarios.
+ * Derived from linearTransformers map — add new entity types there.
  */
-export type LinearWebhookEventType =
-  | "Issue"
-  | "Comment"
-  | "Project"
-  | "Cycle"
-  | "ProjectUpdate";
+export type LinearWebhookEventType = keyof typeof linearTransformers;
 
 /**
  * Linear Issue Webhook

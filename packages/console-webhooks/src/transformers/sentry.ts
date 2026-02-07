@@ -215,17 +215,11 @@ export interface SentryActor {
 }
 
 // ============================================================================
-// Sentry Event Type Enum
+// Sentry Event Type (derived from transformer map)
 // ============================================================================
 
-export type SentryWebhookEventType =
-  | "issue.created"
-  | "issue.resolved"
-  | "issue.assigned"
-  | "issue.ignored"
-  | "error"
-  | "event_alert"
-  | "metric_alert";
+// Forward declaration — resolved after sentryTransformers is defined below.
+export type SentryWebhookEventType = keyof typeof sentryTransformers;
 
 // ============================================================================
 // Log validation errors helper
