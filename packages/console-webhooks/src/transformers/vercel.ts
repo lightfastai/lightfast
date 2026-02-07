@@ -5,7 +5,7 @@ import type {
 } from "@repo/console-types";
 import type {
   VercelWebhookPayload,
-  VercelDeploymentEvent,
+  VercelWebhookEventType,
 } from "../vercel.js";
 import { toInternalVercelEvent } from "../event-mapping.js";
 import { validateSourceEvent } from "../validation.js";
@@ -16,7 +16,7 @@ import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
  */
 export function transformVercelDeployment(
   payload: VercelWebhookPayload,
-  eventType: VercelDeploymentEvent,
+  eventType: VercelWebhookEventType,
   context: TransformContext
 ): SourceEvent {
   const deployment = payload.payload.deployment;
@@ -77,7 +77,7 @@ export function transformVercelDeployment(
     id: project.id,
   });
 
-  const eventTitleMap: Record<VercelDeploymentEvent, string> = {
+  const eventTitleMap: Record<VercelWebhookEventType, string> = {
     "deployment.created": "Deployment Started",
     "deployment.succeeded": "Deployment Succeeded",
     "deployment.ready": "Deployment Ready",
@@ -113,7 +113,7 @@ export function transformVercelDeployment(
 
   const event: SourceEvent = {
     source: "vercel",
-    sourceType: internalType ?? eventType,
+    sourceType: internalType ?? `vercel:${eventType}`,
     sourceId: `deployment:${deployment.id}`,
     title: sanitizeTitle(`[${actionTitle}] ${project.name} from ${branch}`),
     body: sanitizeBody(rawBody),

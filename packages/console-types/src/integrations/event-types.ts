@@ -1,7 +1,7 @@
 /**
  * Internal Event Type System
  *
- * Standardized event format using <event-name>.<action> convention.
+ * Standardized event format using {source}:{entity}.{action} convention.
  * All event names use hyphens (kebab-case), not underscores.
  *
  * External formats (from webhooks) are mapped to internal format at the boundary.
@@ -24,65 +24,103 @@ interface EventTypeConfig {
  */
 export const INTERNAL_EVENT_TYPES = {
   // GitHub events
-  push: { source: "github", label: "Push", weight: 30 },
-  "pull-request.opened": { source: "github", label: "PR Opened", weight: 50 },
-  "pull-request.closed": { source: "github", label: "PR Closed", weight: 45 },
-  "pull-request.merged": { source: "github", label: "PR Merged", weight: 60 },
-  "pull-request.reopened": {
+  "github:push": { source: "github", label: "Push", weight: 30 },
+  "github:pull-request.opened": { source: "github", label: "PR Opened", weight: 50 },
+  "github:pull-request.closed": { source: "github", label: "PR Closed", weight: 45 },
+  "github:pull-request.merged": { source: "github", label: "PR Merged", weight: 60 },
+  "github:pull-request.reopened": {
     source: "github",
     label: "PR Reopened",
     weight: 40,
   },
-  "pull-request.ready-for-review": {
+  "github:pull-request.ready-for-review": {
     source: "github",
     label: "Ready for Review",
     weight: 45,
   },
-  "issue.opened": { source: "github", label: "Issue Opened", weight: 45 },
-  "issue.closed": { source: "github", label: "Issue Closed", weight: 40 },
-  "issue.reopened": { source: "github", label: "Issue Reopened", weight: 40 },
-  "release.published": {
+  "github:issue.opened": { source: "github", label: "Issue Opened", weight: 45 },
+  "github:issue.closed": { source: "github", label: "Issue Closed", weight: 40 },
+  "github:issue.reopened": { source: "github", label: "Issue Reopened", weight: 40 },
+  "github:release.published": {
     source: "github",
     label: "Release Published",
     weight: 75,
   },
-  "release.created": { source: "github", label: "Release Created", weight: 70 },
-  "discussion.created": {
+  "github:release.created": { source: "github", label: "Release Created", weight: 70 },
+  "github:discussion.created": {
     source: "github",
     label: "Discussion Created",
     weight: 35,
   },
-  "discussion.answered": {
+  "github:discussion.answered": {
     source: "github",
     label: "Discussion Answered",
     weight: 40,
   },
 
-  // Vercel events (already in dot notation)
-  "deployment.created": {
+  // Vercel events
+  "vercel:deployment.created": {
     source: "vercel",
     label: "Deployment Started",
     weight: 30,
   },
-  "deployment.succeeded": {
+  "vercel:deployment.succeeded": {
     source: "vercel",
     label: "Deployment Succeeded",
     weight: 40,
   },
-  "deployment.ready": {
+  "vercel:deployment.ready": {
     source: "vercel",
     label: "Deployment Ready",
     weight: 40,
   },
-  "deployment.error": {
+  "vercel:deployment.error": {
     source: "vercel",
     label: "Deployment Failed",
     weight: 70,
   },
-  "deployment.canceled": {
+  "vercel:deployment.canceled": {
     source: "vercel",
     label: "Deployment Canceled",
     weight: 65,
+  },
+
+  // Sentry events
+  "sentry:issue.created": { source: "sentry", label: "Issue Created", weight: 55 },
+  "sentry:issue.resolved": { source: "sentry", label: "Issue Resolved", weight: 50 },
+  "sentry:issue.assigned": { source: "sentry", label: "Issue Assigned", weight: 30 },
+  "sentry:issue.ignored": { source: "sentry", label: "Issue Ignored", weight: 25 },
+  "sentry:error": { source: "sentry", label: "Error Captured", weight: 45 },
+  "sentry:event-alert": { source: "sentry", label: "Event Alert", weight: 65 },
+  "sentry:metric-alert": { source: "sentry", label: "Metric Alert", weight: 70 },
+
+  // Linear events
+  "linear:issue.created": { source: "linear", label: "Issue Created", weight: 50 },
+  "linear:issue.updated": { source: "linear", label: "Issue Updated", weight: 35 },
+  "linear:issue.deleted": { source: "linear", label: "Issue Deleted", weight: 40 },
+  "linear:comment.created": { source: "linear", label: "Comment Created", weight: 25 },
+  "linear:comment.updated": { source: "linear", label: "Comment Updated", weight: 20 },
+  "linear:comment.deleted": { source: "linear", label: "Comment Deleted", weight: 20 },
+  "linear:project.created": { source: "linear", label: "Project Created", weight: 45 },
+  "linear:project.updated": { source: "linear", label: "Project Updated", weight: 35 },
+  "linear:project.deleted": { source: "linear", label: "Project Deleted", weight: 40 },
+  "linear:cycle.created": { source: "linear", label: "Cycle Created", weight: 40 },
+  "linear:cycle.updated": { source: "linear", label: "Cycle Updated", weight: 30 },
+  "linear:cycle.deleted": { source: "linear", label: "Cycle Deleted", weight: 35 },
+  "linear:project-update.created": {
+    source: "linear",
+    label: "Project Update",
+    weight: 45,
+  },
+  "linear:project-update.updated": {
+    source: "linear",
+    label: "Project Update Edited",
+    weight: 30,
+  },
+  "linear:project-update.deleted": {
+    source: "linear",
+    label: "Project Update Deleted",
+    weight: 25,
   },
 } as const satisfies Record<string, EventTypeConfig>;
 

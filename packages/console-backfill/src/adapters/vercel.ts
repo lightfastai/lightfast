@@ -6,7 +6,7 @@
  */
 import type {
   VercelWebhookPayload,
-  VercelDeploymentEvent,
+  VercelWebhookEventType,
 } from "@repo/console-webhooks";
 
 /**
@@ -18,7 +18,7 @@ import type {
  *   CANCELED → "deployment.canceled"
  *   BUILDING / QUEUED / other → "deployment.created"
  */
-function mapReadyStateToEventType(readyState?: string): VercelDeploymentEvent {
+function mapReadyStateToEventType(readyState?: string): VercelWebhookEventType {
   switch (readyState) {
     case "READY":
       return "deployment.succeeded";
@@ -35,14 +35,14 @@ function mapReadyStateToEventType(readyState?: string): VercelDeploymentEvent {
  * Adapt a Vercel deployment from the list API into a VercelWebhookPayload shape.
  *
  * The transformer expects:
- *   transformVercelDeployment(payload: VercelWebhookPayload, eventType: VercelDeploymentEvent, context)
+ *   transformVercelDeployment(payload: VercelWebhookPayload, eventType: VercelWebhookEventType, context)
  *
  * Returns both the adapted payload and the event type string.
  */
 export function adaptVercelDeploymentForTransformer(
   deployment: Record<string, unknown>,
   projectName: string,
-): { webhookPayload: VercelWebhookPayload; eventType: VercelDeploymentEvent } {
+): { webhookPayload: VercelWebhookPayload; eventType: VercelWebhookEventType } {
   const eventType = mapReadyStateToEventType(deployment.readyState as string | undefined);
   const createdAt = (deployment.created as number | undefined) ?? Date.now();
 

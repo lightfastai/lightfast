@@ -118,8 +118,10 @@ export const stressScenario = (count: number): SourceEvent[] => {
 // Re-export transform types
 export type {
   WebhookPayload,
-  GitHubEventType,
-  VercelEventType,
   SentryWebhookPayload,
   LinearWebhookPayload,
 } from "./transform.js";
+
+// Re-export canonical event types from console-webhooks
+export type { GitHubWebhookEventType, SentryWebhookEventType, LinearWebhookEventType } from "@repo/console-webhooks/transformers";
+export type { VercelWebhookEventType } from "@repo/console-webhooks";

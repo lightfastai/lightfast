@@ -14,6 +14,7 @@ import type {
 } from "@repo/console-types";
 import { validateSourceEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
+import { toInternalSentryEvent } from "../event-mapping.js";
 
 // ============================================================================
 // Official Sentry Webhook Payload Types
@@ -217,7 +218,7 @@ export interface SentryActor {
 // Sentry Event Type Enum
 // ============================================================================
 
-export type SentryEventType =
+export type SentryWebhookEventType =
   | "issue.created"
   | "issue.resolved"
   | "issue.assigned"
@@ -319,7 +320,7 @@ export function transformSentryIssue(
 
   const event: SourceEvent = {
     source: "sentry",
-    sourceType: `issue.${payload.action}`,
+    sourceType: toInternalSentryEvent(`issue.${payload.action}`) ?? `sentry:issue.${payload.action}`,
     sourceId: `sentry-issue:${issue.project.slug}:${issue.shortId}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${errorType}: ${errorValue.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -403,7 +404,7 @@ export function transformSentryError(
 
   const event_out: SourceEvent = {
     source: "sentry",
-    sourceType: "error",
+    sourceType: toInternalSentryEvent("error") ?? "sentry:error",
     sourceId: `sentry-error:${event.project}:${event.event_id}`,
     title: sanitizeTitle(`[Error] ${errorType}: ${errorValue.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -472,7 +473,7 @@ export function transformSentryEventAlert(
 
   const event_out: SourceEvent = {
     source: "sentry",
-    sourceType: "event_alert",
+    sourceType: toInternalSentryEvent("event_alert") ?? "sentry:event-alert",
     sourceId: `sentry-alert:${event.project}:${event.event_id}:${triggered_rule.replace(/\s/g, "-")}`,
     title: sanitizeTitle(`[Alert Triggered] ${triggered_rule}: ${errorType}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -528,7 +529,7 @@ export function transformSentryMetricAlert(
 
   const event: SourceEvent = {
     source: "sentry",
-    sourceType: "metric_alert",
+    sourceType: toInternalSentryEvent("metric_alert") ?? "sentry:metric-alert",
     sourceId: `sentry-metric-alert:${alertRule.organization_id}:${metric_alert.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${alertRule.name}`),
     body: sanitizeBody(bodyParts.join("\n")),
