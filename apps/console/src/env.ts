@@ -4,13 +4,16 @@ import { z } from "zod";
 
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
+import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { env as knockEnv } from "@vendor/knock/env";
 import { env as dbEnv } from "@db/console/env";
 import { githubEnv } from "@repo/console-octokit-github/env";
 import { vercelEnv } from "@repo/console-vercel/env";
+import { upstashEnv } from "@vendor/upstash/env";
+import { basehubEnv } from "@vendor/cms/env";
 
 export const env = createEnv({
-	extends: [vercel(), clerkEnvBase, knockEnv, dbEnv, sentryEnv, githubEnv, vercelEnv],
+	extends: [vercel(), clerkEnvBase, knockEnv, dbEnv, sentryEnv, betterstackEnv, githubEnv, vercelEnv, upstashEnv, basehubEnv],
 	shared: {
 		NODE_ENV: z
 			.enum(["development", "production", "test"])
@@ -71,6 +74,6 @@ export const env = createEnv({
 		NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
 	},
 	skipValidation:
-		!!process.env.CI || process.env.npm_lifecycle_event === "lint",
+		!!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
 	emptyStringAsUndefined: true,
 });
