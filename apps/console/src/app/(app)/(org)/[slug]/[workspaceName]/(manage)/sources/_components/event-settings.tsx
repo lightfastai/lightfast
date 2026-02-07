@@ -13,7 +13,7 @@ import {
   VERCEL_EVENTS,
   ALL_GITHUB_EVENTS,
   ALL_VERCEL_EVENTS,
-} from "@repo/console-types/integrations/events";
+} from "@repo/console-types";
 
 // Combined interface for event config
 interface EventConfig {

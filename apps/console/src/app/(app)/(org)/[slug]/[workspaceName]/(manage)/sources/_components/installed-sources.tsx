@@ -293,7 +293,7 @@ export function InstalledSources({
 															{isAwaitingConfig ? "Awaiting config" : "Active"}
 														</p>
 													</div>
-													<span className="text-muted-foreground">•</span>
+													{/* <span className="text-muted-foreground">•</span>
 													<p className="text-sm text-muted-foreground">
 														Synced{" "}
 														{integration.lastSyncedAt
@@ -301,7 +301,7 @@ export function InstalledSources({
 																	addSuffix: true,
 															  })
 															: "never"}
-													</p>
+													</p> */}
 													{documentCount && documentCount > 0 && (
 														<>
 															<span className="text-muted-foreground">•</span>

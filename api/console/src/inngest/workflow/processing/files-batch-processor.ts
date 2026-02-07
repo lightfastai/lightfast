@@ -74,7 +74,7 @@ export const filesBatchProcessor = inngest.createFunction(
       committedAt,
     } = event.data;
 
-    const startTime = Date.now();
+    const startTime = await step.run("capture-start-time", () => Date.now());
 
     log.info("Processing file batch", {
       batchId,

@@ -7,7 +7,7 @@
 
 import { PineconeClient as VendorPineconeClient } from "@vendor/pinecone/client";
 import { PINECONE_CONFIG } from "@repo/console-config";
-import type { UpsertRequest, UpsertResponse, QueryRequest, QueryResponse } from "@vendor/pinecone/types";
+import type { UpsertRequest, UpsertResponse, QueryRequest, QueryResponse, FetchResponse, UpdateRequest } from "@vendor/pinecone/types";
 import type { RecordMetadata } from "@pinecone-database/pinecone";
 
 /**
@@ -142,6 +142,40 @@ export class ConsolePineconeClient {
     }
   ): Promise<void> {
     return this.client.configureIndex(indexName, options);
+  }
+
+  /**
+   * Fetch vectors by IDs
+   *
+   * Generic method - works with any metadata type extending RecordMetadata
+   *
+   * @param indexName - Name of the index
+   * @param vectorIds - Array of vector IDs to fetch
+   * @param namespace - Optional namespace for data isolation
+   */
+  async fetchVectors<T extends RecordMetadata = RecordMetadata>(
+    indexName: string,
+    vectorIds: string[],
+    namespace?: string
+  ): Promise<FetchResponse<T>> {
+    return this.client.fetchVectors<T>(indexName, vectorIds, namespace);
+  }
+
+  /**
+   * Update a vector's metadata
+   *
+   * Generic method - works with any metadata type extending RecordMetadata
+   *
+   * @param indexName - Name of the index
+   * @param request - Update request with vector ID and metadata
+   * @param namespace - Optional namespace for data isolation
+   */
+  async updateVectorMetadata<T extends RecordMetadata = RecordMetadata>(
+    indexName: string,
+    request: UpdateRequest<T>,
+    namespace?: string
+  ): Promise<void> {
+    return this.client.updateVectorMetadata(indexName, request, namespace);
   }
 }
 

@@ -331,6 +331,9 @@ importers:
       '@repo/console-auth-middleware':
         specifier: workspace:^
         version: link:../../packages/console-auth-middleware
+      '@repo/console-backfill':
+        specifier: workspace:*
+        version: link:../../packages/console-backfill
       '@repo/console-chunking':
         specifier: workspace:*
         version: link:../../packages/console-chunking
@@ -916,6 +919,9 @@ importers:
       '@repo/console-auth-middleware':
         specifier: workspace:*
         version: link:../../packages/console-auth-middleware
+      '@repo/console-backfill':
+        specifier: workspace:*
+        version: link:../../packages/console-backfill
       '@repo/console-clerk-cache':
         specifier: workspace:*
         version: link:../../packages/console-clerk-cache
@@ -2634,6 +2640,46 @@ importers:
       zod:
         specifier: catalog:zod3
         version: 3.25.76
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
+      eslint:
+        specifier: 'catalog:'
+        version: 9.38.0(jiti@2.6.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/console-backfill:
+    dependencies:
+      '@octokit/webhooks-types':
+        specifier: ^7.6.1
+        version: 7.6.1
+      '@repo/console-octokit-github':
+        specifier: workspace:*
+        version: link:../console-octokit-github
+      '@repo/console-types':
+        specifier: workspace:*
+        version: link:../console-types
+      '@repo/console-validation':
+        specifier: workspace:*
+        version: link:../console-validation
+      '@repo/console-webhooks':
+        specifier: workspace:*
+        version: link:../console-webhooks
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*

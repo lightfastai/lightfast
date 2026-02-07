@@ -124,8 +124,8 @@ async function resetDemoEnvironment(options: ResetOptions) {
 
   // Step 5: Optionally inject demo data
   if (inject) {
-    console.log("\n📥 Injecting demo-incident dataset...");
-    const dataset = loadDataset("demo-incident");
+    console.log("\n📥 Injecting sandbox-1 dataset...");
+    const dataset = loadDataset("sandbox-1");
     console.log(`   Found ${dataset.events.length} events to inject`);
 
     const result = await triggerObservationCapture(dataset.events, {
@@ -140,7 +140,7 @@ async function resetDemoEnvironment(options: ResetOptions) {
     console.log(`\n\n✅ Injected ${result.triggered} events in ${result.duration}ms`);
     console.log("\n⏳ Wait 90-120 seconds for Inngest workflows to complete indexing.");
     console.log("   Check status at: http://localhost:8288 (Inngest Dev Server)");
-    console.log("\n🎯 Demo ready! Try searching for: 'checkout TypeError'");
+    console.log("\n🎯 Demo ready! Try searching for: 'Pinecone dimension mismatch'");
   }
 }
 
@@ -167,7 +167,7 @@ Usage: reset-demo -w <workspaceId> [-i] [--dry-run]
 
 Options:
   -w, --workspace  Workspace ID to reset (required)
-  -i, --inject     Inject demo-incident dataset after cleanup
+  -i, --inject     Inject sandbox-1 dataset after cleanup
   --dry-run        Show what would be deleted without executing
   -h, --help       Show this help message
 

@@ -10,7 +10,7 @@ import {
 import { inngest } from "@api/console/inngest";
 import type {
   VercelWebhookPayload,
-  VercelDeploymentEvent,
+  VercelWebhookEventType,
 } from "@repo/console-webhooks";
 import {
   verifyVercelWebhook,
@@ -32,7 +32,7 @@ export const dynamic = "force-dynamic";
  */
 async function handleDeploymentEvent(
   payload: VercelWebhookPayload,
-  eventType: VercelDeploymentEvent,
+  eventType: VercelWebhookEventType,
   rawPayload: string,
   headers: Record<string, string>,
 ) {
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const eventType = payload.type as VercelDeploymentEvent;
+    const eventType = payload.type as VercelWebhookEventType;
     const webhookHeaders = extractWebhookHeaders(request.headers);
 
     console.log(`[Vercel Webhook] Received ${eventType} event`);

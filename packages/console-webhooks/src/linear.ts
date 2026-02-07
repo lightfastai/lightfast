@@ -6,7 +6,7 @@
 
 export type {
   LinearWebhookBase,
-  LinearWebhookType,
+  LinearWebhookEventType,
   LinearIssueWebhook,
   LinearCommentWebhook,
   LinearProjectWebhook,

@@ -14,6 +14,9 @@ export type {
   QueryMatch,
   UpsertRequest,
   UpsertResponse,
+  FetchResponse,
+  FetchedRecord,
+  UpdateRequest,
 } from "@vendor/pinecone/types";
 
 // Export console-specific client with injected config

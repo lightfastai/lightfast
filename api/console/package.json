@@ -41,6 +41,7 @@
 		"@inngest/middleware-sentry": "catalog:",
 		"@repo/console-api-key": "workspace:*",
 		"@repo/console-auth-middleware": "workspace:^",
+		"@repo/console-backfill": "workspace:*",
 		"@repo/console-chunking": "workspace:*",
 		"@repo/console-clerk-cache": "workspace:*",
 		"@repo/console-clerk-m2m": "workspace:*",
