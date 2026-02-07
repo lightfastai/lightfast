@@ -10,9 +10,10 @@ import { env as dbEnv } from "@db/console/env";
 import { githubEnv } from "@repo/console-octokit-github/env";
 import { vercelEnv } from "@repo/console-vercel/env";
 import { upstashEnv } from "@vendor/upstash/env";
+import { basehubEnv } from "@vendor/cms/env";
 
 export const env = createEnv({
-	extends: [vercel(), clerkEnvBase, knockEnv, dbEnv, sentryEnv, betterstackEnv, githubEnv, vercelEnv, upstashEnv],
+	extends: [vercel(), clerkEnvBase, knockEnv, dbEnv, sentryEnv, betterstackEnv, githubEnv, vercelEnv, upstashEnv, basehubEnv],
 	shared: {
 		NODE_ENV: z
 			.enum(["development", "production", "test"])
