@@ -39,3 +39,20 @@ export { compareEvalRuns, formatComparisonReport, REGRESSION_THRESHOLDS } from "
 // Search client
 export type { SearchConfig, SearchOptions, V1SearchResponse } from "./clients/search-client";
 export { searchAPI } from "./clients/search-client";
+
+// Eval context and infrastructure
+export type { EvalInfraConfig, EvalWorkspaceConfig, EvalContext } from "./context/eval-context";
+export { assertEvalSafety } from "./context/eval-context";
+
+// Eval configuration
+export type { EvalConfig } from "./config/eval-config";
+export { createDefaultEvalConfig } from "./config/eval-config";
+export { loadEvalInfraConfig } from "./config/infra";
+
+// In-process runner
+export { runEvalInProcess } from "./runner/in-process";
+
+// Data seeding
+export type { SeedObservation, SeedCorpus, SeedResult } from "./seed/seeder";
+export { seedEvalData } from "./seed/seeder";
+export { cleanupEvalData } from "./seed/cleanup";

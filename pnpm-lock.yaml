@@ -2896,6 +2896,9 @@ importers:
       '@repo/console-config':
         specifier: workspace:*
         version: link:../console-config
+      '@repo/console-search':
+        specifier: workspace:*
+        version: link:../console-search
       '@repo/console-types':
         specifier: workspace:*
         version: link:../console-types
@@ -2905,12 +2908,24 @@ importers:
       '@repo/console-webhooks':
         specifier: workspace:*
         version: link:../console-webhooks
+      '@repo/console-workspace-cache':
+        specifier: workspace:*
+        version: link:../console-workspace-cache
+      '@t3-oss/env-core':
+        specifier: 'catalog:'
+        version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
       '@vendor/braintrust':
         specifier: workspace:*
         version: link:../../vendor/braintrust
+      '@vendor/embed':
+        specifier: workspace:*
+        version: link:../../vendor/embed
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
+      '@vendor/pinecone':
+        specifier: workspace:*
+        version: link:../../vendor/pinecone
       ai:
         specifier: 'catalog:'
         version: 5.0.15(zod@3.25.76)
@@ -2920,6 +2935,9 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.43.1(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.5)(postgres@3.4.7)
+      postgres:
+        specifier: ^3.4.5
+        version: 3.4.7
       zod:
         specifier: catalog:zod3
         version: 3.25.76
