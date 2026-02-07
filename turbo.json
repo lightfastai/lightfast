@@ -131,6 +131,7 @@
 
     // Notifications
     "KNOCK_API_KEY",
+    "KNOCK_SIGNING_KEY",
     "NEXT_PUBLIC_KNOCK_PUBLIC_API_KEY",
 
     // Storage & Cache

@@ -7,6 +7,7 @@ export const notificationsRouter = createTRPCRouter({
     // Sign user token with Knock signing key for enhanced security
     const token = await signUserToken(ctx.auth.userId, {
       signingKey: env.KNOCK_SIGNING_KEY,
+      expiresInSeconds: 3600, // 1 hour — client refetches every 5 min via staleTime
     });
     return token;
   }),

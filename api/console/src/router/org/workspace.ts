@@ -76,6 +76,7 @@ export const workspaceRouter = {
       // Verify user has access to this organization
       const membership = await clerk.organizations.getOrganizationMembershipList({
         organizationId: clerkOrg.id,
+        limit: 100,
       });
 
       const userMembership = membership.data.find(
@@ -242,6 +243,7 @@ export const workspaceRouter = {
 
       const membership = await clerk.organizations.getOrganizationMembershipList({
         organizationId: input.clerkOrgId,
+        limit: 100,
       });
 
       const userMembership = membership.data.find(

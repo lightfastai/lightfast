@@ -15,6 +15,9 @@ import { inngest } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import { notifications } from "@vendor/knock";
 import { clerkClient } from "@clerk/nextjs/server";
+import { db } from "@db/console/client";
+import { orgWorkspaces } from "@db/console/schema";
+import { eq } from "drizzle-orm";
 
 /** Minimum significance score to trigger a notification */
 const NOTIFICATION_SIGNIFICANCE_THRESHOLD = 70;
@@ -66,37 +69,53 @@ export const notificationDispatch = inngest.createFunction(
       return { status: "skipped", reason: "missing_clerk_org_id" };
     }
 
-    // Fetch organization members from Clerk
+    // Fetch ALL organization members from Clerk (paginated)
     const orgMembers = await step.run("fetch-org-members", async () => {
       try {
         const clerk = await clerkClient();
-        const membershipList = await clerk.organizations.getOrganizationMembershipList({
-          organizationId: clerkOrgId,
-        });
+        const allRecipients: Array<{ id: string; email: string; name: string | undefined }> = [];
+        let offset = 0;
+        const limit = 100;
 
-        // Map members to recipient format with email addresses
-        const recipients = membershipList.data
-          .filter((membership) =>
-            membership.publicUserData?.userId &&
-            membership.publicUserData?.identifier
-          )
-          .map((membership) => {
-            const userData = membership.publicUserData!;
-            return {
-              id: userData.userId!,
-              email: userData.identifier!,
-              name: userData.firstName && userData.lastName
-                ? `${userData.firstName} ${userData.lastName}`
-                : userData.firstName || undefined,
-            };
+        // Paginate through all org members
+        while (true) {
+          const membershipList = await clerk.organizations.getOrganizationMembershipList({
+            organizationId: clerkOrgId,
+            limit,
+            offset,
           });
+
+          const recipients = membershipList.data
+            .filter((membership) =>
+              membership.publicUserData?.userId &&
+              membership.publicUserData?.identifier
+            )
+            .map((membership) => {
+              const userData = membership.publicUserData!;
+              return {
+                id: userData.userId!,
+                email: userData.identifier!,
+                name: userData.firstName && userData.lastName
+                  ? `${userData.firstName} ${userData.lastName}`
+                  : userData.firstName || undefined,
+              };
+            });
+
+          allRecipients.push(...recipients);
+
+          // Stop if we got fewer results than the limit (last page)
+          if (membershipList.data.length < limit) {
+            break;
+          }
+          offset += limit;
+        }
 
         log.info("Fetched org members for notification", {
           clerkOrgId,
-          memberCount: recipients.length,
+          memberCount: allRecipients.length,
         });
 
-        return recipients;
+        return allRecipients;
       } catch (error) {
         log.error("Failed to fetch org members from Clerk", {
           clerkOrgId,
@@ -125,13 +144,22 @@ export const notificationDispatch = inngest.createFunction(
       };
     }
 
+    // Look up workspace name for human-readable templates
+    const workspaceName = await step.run("lookup-workspace-name", async () => {
+      const workspace = await db.query.orgWorkspaces.findFirst({
+        where: eq(orgWorkspaces.id, workspaceId),
+        columns: { name: true },
+      });
+      return workspace?.name ?? workspaceId;
+    });
+
     // Trigger Knock workflow with individual members as recipients
     await step.run("trigger-knock-workflow", async () => {
       if (!notifications) return; // TypeScript guard
 
       await notifications.workflows.trigger(OBSERVATION_WORKFLOW_KEY, {
         recipients: orgMembers,
-        tenant: clerkOrgId,
+        tenant: workspaceId,  // Changed from clerkOrgId — scopes preferences per-workspace
         data: {
           observationId,
           observationType,
@@ -139,11 +167,13 @@ export const notificationDispatch = inngest.createFunction(
           topics: topics ?? [],
           clusterId,
           workspaceId,
+          workspaceName,  // Human-readable workspace name for templates
         },
       });
 
       log.info("Knock notification triggered", {
         workspaceId,
+        workspaceName,
         observationId,
         clerkOrgId,
         recipientCount: orgMembers.length,

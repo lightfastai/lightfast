@@ -27,6 +27,7 @@ export const organizationRouter = {
 		const { data: memberships } =
 			await clerk.users.getOrganizationMembershipList({
 				userId,
+				limit: 100,
 			});
 
 		// Return Clerk organization data directly
