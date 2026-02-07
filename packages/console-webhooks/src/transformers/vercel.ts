@@ -3,11 +3,11 @@ import type {
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
+import { toInternalVercelEvent } from "@repo/console-types";
 import type {
   VercelWebhookPayload,
   VercelWebhookEventType,
 } from "../vercel.js";
-import { toInternalVercelEvent } from "../event-mapping.js";
 import { validateSourceEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 

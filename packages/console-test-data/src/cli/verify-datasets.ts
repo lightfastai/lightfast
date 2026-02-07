@@ -17,6 +17,7 @@
 
 import { loadDataset, listDatasets } from "../loader/index.js";
 import type { SourceEvent } from "@repo/console-types";
+import { EVENT_REGISTRY } from "@repo/console-types";
 
 interface VerifyResult {
   dataset: string;
@@ -74,82 +75,34 @@ function verifyDataset(name: string): VerifyResult {
     result.sources[e.source] = (result.sources[e.source] ?? 0) + 1;
   }
 
-  // === Title format checks ===
+  // === Title format checks (derived from EVENT_REGISTRY labels) ===
+  // Uses startsWith("[{label}") to handle action-suffixed titles
+  // e.g., registry label "Metric Alert" matches both "[Metric Alert Triggered]" and "[Metric Alert Resolved]"
+  const titlePrefixCache = new Map<string, string[]>();
+  function getTitlePrefixes(source: string): string[] {
+    if (!titlePrefixCache.has(source)) {
+      const prefixes = [
+        ...new Set(
+          Object.values(EVENT_REGISTRY)
+            .filter((e) => e.source === source)
+            .map((e) => `[${e.label}`)
+        ),
+      ];
+      titlePrefixCache.set(source, prefixes);
+    }
+    return titlePrefixCache.get(source)!;
+  }
+
   for (let i = 0; i < ds.events.length; i++) {
     const e = ds.events[i];
     if (!e) continue;
     const prefix = `event[${i}]`;
+    const validPrefixes = getTitlePrefixes(e.source);
 
-    if (e.source === "sentry") {
-      const validPrefixes = [
-        "[Issue Created]",
-        "[Issue Resolved]",
-        "[Issue Assigned]",
-        "[Issue Ignored]",
-        "[Error]",
-        "[Alert Triggered]",
-        "[Metric Alert Triggered]",
-        "[Metric Alert Resolved]",
-      ];
-      if (!validPrefixes.some((p) => e.title.startsWith(p)))
-        result.errors.push(
-          `${prefix}: Sentry title has unexpected format: "${e.title.slice(0, 50)}"`
-        );
-    }
-
-    if (e.source === "linear") {
-      const validPrefixes = [
-        "[Issue Created]",
-        "[Issue Updated]",
-        "[Issue Deleted]",
-        "[Comment Added]",
-        "[Comment Updated]",
-        "[Comment Deleted]",
-        "[Project Created]",
-        "[Project Updated]",
-        "[Project Deleted]",
-        "[Cycle Created]",
-        "[Cycle Updated]",
-        "[Cycle Deleted]",
-        "[Project Update Posted]",
-        "[Project Update Edited]",
-        "[Project Update Deleted]",
-      ];
-      if (!validPrefixes.some((p) => e.title.startsWith(p)))
-        result.errors.push(
-          `${prefix}: Linear title has unexpected format: "${e.title.slice(0, 50)}"`
-        );
-    }
-
-    if (e.source === "github") {
-      const validPrefixes = [
-        "[Push]",
-        "[PR Opened]",
-        "[PR Merged]",
-        "[PR Closed]",
-        "[Issue Opened]",
-        "[Issue Closed]",
-        "[Release",
-        "[Discussion",
-      ];
-      if (!validPrefixes.some((p) => e.title.startsWith(p)))
-        result.errors.push(
-          `${prefix}: GitHub title has unexpected format: "${e.title.slice(0, 50)}"`
-        );
-    }
-
-    if (e.source === "vercel") {
-      const validPrefixes = [
-        "[Deployment Started]",
-        "[Deployment Succeeded]",
-        "[Deployment Ready]",
-        "[Deployment Failed]",
-        "[Deployment Canceled]",
-      ];
-      if (!validPrefixes.some((p) => e.title.startsWith(p)))
-        result.errors.push(
-          `${prefix}: Vercel title has unexpected format: "${e.title.slice(0, 50)}"`
-        );
+    if (validPrefixes.length > 0 && !validPrefixes.some((p) => e.title.startsWith(p))) {
+      result.errors.push(
+        `${prefix}: ${e.source} title has unexpected format: "${e.title.slice(0, 50)}"`
+      );
     }
   }
 

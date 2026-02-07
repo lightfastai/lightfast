@@ -12,9 +12,9 @@ import type {
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
+import { toInternalSentryEvent } from "@repo/console-types";
 import { validateSourceEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
-import { toInternalSentryEvent } from "../event-mapping.js";
 
 // ============================================================================
 // Official Sentry Webhook Payload Types

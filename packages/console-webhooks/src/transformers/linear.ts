@@ -12,9 +12,9 @@ import type {
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
+import { toInternalLinearEvent } from "@repo/console-types";
 import { validateSourceEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
-import { toInternalLinearEvent } from "../event-mapping.js";
 
 // ============================================================================
 // Official Linear Webhook Payload Types

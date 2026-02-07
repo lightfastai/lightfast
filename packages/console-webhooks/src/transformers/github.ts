@@ -3,6 +3,7 @@ import type {
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
+import { toInternalGitHubEvent } from "@repo/console-types";
 import type {
   PushEvent,
   PullRequestEvent,
@@ -11,7 +12,6 @@ import type {
   DiscussionEvent,
 } from "@octokit/webhooks-types";
 export type { PushEvent, PullRequestEvent, IssuesEvent, ReleaseEvent, DiscussionEvent };
-import { toInternalGitHubEvent } from "../event-mapping.js";
 import { validateSourceEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
