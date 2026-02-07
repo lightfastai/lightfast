@@ -2,6 +2,7 @@ import { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
 import type { Memory } from "@lightfastai/ai-sdk/memory";
 import type { AnswerMemoryContext } from "../types";
+import { env } from "~/env";
 
 interface SessionMessagesData<TMessage> {
   messages: TMessage[];
@@ -40,8 +41,8 @@ export class AnswerRedisMemory
   } as const;
 
   constructor(config?: { url?: string; token?: string }) {
-    const url = config?.url ?? process.env.KV_REST_API_URL;
-    const token = config?.token ?? process.env.KV_REST_API_TOKEN;
+    const url = config?.url ?? env.KV_REST_API_URL;
+    const token = config?.token ?? env.KV_REST_API_TOKEN;
 
     if (!url || !token) {
       throw new Error("KV_REST_API_URL and KV_REST_API_TOKEN are required");

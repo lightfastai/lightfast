@@ -1,8 +1,8 @@
 import { db } from "@db/console";
-import { workspaceWebhookPayloads } from "@db/console/schema";
+import { workspaceIngestionPayloads } from "@db/console/schema";
 import type { SourceType } from "@repo/console-validation";
 
-export interface StoreWebhookPayloadParams {
+export interface StoreIngestionPayloadParams {
   workspaceId: string;
   deliveryId: string;
   source: SourceType;
@@ -10,20 +10,25 @@ export interface StoreWebhookPayloadParams {
   payload: string; // Raw JSON string from request.text()
   headers: Record<string, string>;
   receivedAt: Date;
+  ingestionSource?: "webhook" | "backfill" | "manual" | "api";
 }
 
+/** @deprecated Use StoreIngestionPayloadParams instead */
+export type StoreWebhookPayloadParams = StoreIngestionPayloadParams;
+
 /**
- * Store raw webhook payload for permanent retention.
- * Called after signature verification and workspace resolution.
+ * Store raw ingestion payload for permanent retention.
+ * Called after signature verification and workspace resolution (for webhooks),
+ * or after API response fetch (for backfills).
  *
- * @param params - Webhook payload data to store
+ * @param params - Payload data to store
  * @returns The internal BIGINT ID of the stored payload record
  */
-export async function storeWebhookPayload(
-  params: StoreWebhookPayloadParams
+export async function storeIngestionPayload(
+  params: StoreIngestionPayloadParams
 ): Promise<number> {
   const [record] = await db
-    .insert(workspaceWebhookPayloads)
+    .insert(workspaceIngestionPayloads)
     .values({
       workspaceId: params.workspaceId,
       deliveryId: params.deliveryId,
@@ -32,15 +37,19 @@ export async function storeWebhookPayload(
       payload: JSON.parse(params.payload),
       headers: params.headers,
       receivedAt: params.receivedAt.toISOString(),
+      ingestionSource: params.ingestionSource ?? "webhook",
     })
-    .returning({ id: workspaceWebhookPayloads.id });
+    .returning({ id: workspaceIngestionPayloads.id });
 
   if (!record) {
-    throw new Error("Failed to insert webhook payload record");
+    throw new Error("Failed to insert ingestion payload record");
   }
 
   return record.id;
 }
+
+/** @deprecated Use storeIngestionPayload instead */
+export const storeWebhookPayload = storeIngestionPayload;
 
 /**
  * Extract relevant headers from request for storage.

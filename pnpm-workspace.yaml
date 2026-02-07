@@ -36,8 +36,8 @@ catalog:
   braintrust: ^0.2.1
   exa-js: ^1.8.22
   '@browserbasehq/stagehand': ^2.3.1
-  '@t3-oss/env-core': ^0.12.0
-  '@t3-oss/env-nextjs': ^0.12.0
+  '@t3-oss/env-core': ^0.13.10
+  '@t3-oss/env-nextjs': ^0.13.10
   resumable-stream: ^2.0.0
   '@clerk/backend': 2.18.1
   '@clerk/elements': 0.23.63

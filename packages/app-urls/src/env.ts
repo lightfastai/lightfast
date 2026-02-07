@@ -19,6 +19,6 @@ export const env = createEnv({
     NEXT_PUBLIC_CONSOLE_PORT: process.env.NEXT_PUBLIC_CONSOLE_PORT,
     NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
   },
-  skipValidation: !!process.env.CI || process.env.npm_lifecycle_event === "lint",
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
   emptyStringAsUndefined: true,
 });

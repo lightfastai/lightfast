@@ -86,6 +86,18 @@ const neuralLLMEntityExtractionInputSchema = z.object({
 });
 
 // =============================================================================
+// BACKFILL ORCHESTRATOR - INPUT
+// =============================================================================
+
+const backfillOrchestratorInputSchema = z.object({
+  inngestFunctionId: z.literal("backfill.orchestrator"),
+  integrationId: z.string(),
+  provider: sourceTypeSchema,
+  depth: z.number(),
+  entityTypes: z.array(z.string()),
+});
+
+// =============================================================================
 // DISCRIMINATED UNION - ALL INPUTS
 // =============================================================================
 
@@ -98,6 +110,8 @@ export const workflowInputSchema = z.discriminatedUnion("inngestFunctionId", [
   neuralProfileUpdateInputSchema,
   neuralClusterSummaryInputSchema,
   neuralLLMEntityExtractionInputSchema,
+  // Backfill workflows
+  backfillOrchestratorInputSchema,
 ]);
 
 export type WorkflowInput = z.infer<typeof workflowInputSchema>;
@@ -345,6 +359,33 @@ const neuralLLMEntityExtractionOutputFailureSchema = z.object({
 });
 
 // =============================================================================
+// BACKFILL ORCHESTRATOR - OUTPUT (SUCCESS)
+// =============================================================================
+
+const backfillOrchestratorOutputSuccessSchema = z.object({
+  inngestFunctionId: z.literal("backfill.orchestrator"),
+  status: z.literal("success"),
+  eventsProduced: z.number().int().nonnegative(),
+  eventsDispatched: z.number().int().nonnegative(),
+  errorCount: z.number().int().nonnegative(),
+  durationMs: z.number().int().nonnegative(),
+});
+
+// =============================================================================
+// BACKFILL ORCHESTRATOR - OUTPUT (FAILURE)
+// =============================================================================
+
+const backfillOrchestratorOutputFailureSchema = z.object({
+  inngestFunctionId: z.literal("backfill.orchestrator"),
+  status: z.literal("failure"),
+  error: z.string(),
+  eventsProduced: z.number().int().nonnegative(),
+  eventsDispatched: z.number().int().nonnegative(),
+  errorCount: z.number().int().nonnegative(),
+  durationMs: z.number().int().nonnegative(),
+});
+
+// =============================================================================
 // DISCRIMINATED UNION - ALL OUTPUTS
 // =============================================================================
 
@@ -370,6 +411,9 @@ export const workflowOutputSchema = z.union([
   neuralLLMEntityExtractionOutputSuccessSchema,
   neuralLLMEntityExtractionOutputSkippedSchema,
   neuralLLMEntityExtractionOutputFailureSchema,
+  // Backfill workflows
+  backfillOrchestratorOutputSuccessSchema,
+  backfillOrchestratorOutputFailureSchema,
 ]);
 
 export type WorkflowOutput = z.infer<typeof workflowOutputSchema>;
@@ -392,3 +436,8 @@ export type NeuralClusterSummaryOutputFailure = z.infer<typeof neuralClusterSumm
 export type NeuralLLMEntityExtractionOutputSuccess = z.infer<typeof neuralLLMEntityExtractionOutputSuccessSchema>;
 export type NeuralLLMEntityExtractionOutputSkipped = z.infer<typeof neuralLLMEntityExtractionOutputSkippedSchema>;
 export type NeuralLLMEntityExtractionOutputFailure = z.infer<typeof neuralLLMEntityExtractionOutputFailureSchema>;
+
+// Backfill workflow type exports
+export type BackfillOrchestratorInput = z.infer<typeof backfillOrchestratorInputSchema>;
+export type BackfillOrchestratorOutputSuccess = z.infer<typeof backfillOrchestratorOutputSuccessSchema>;
+export type BackfillOrchestratorOutputFailure = z.infer<typeof backfillOrchestratorOutputFailureSchema>;

@@ -950,6 +950,7 @@ export const observationCapture = inngest.createFunction(
             embeddingTitleId: embeddingResult.title.vectorId,
             embeddingContentId: embeddingResult.content.vectorId,
             embeddingSummaryId: embeddingResult.summary.vectorId,
+            ingestionSource: event.data.ingestionSource ?? "webhook",
           })
           .returning();
 
