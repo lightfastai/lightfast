@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentType, SVGProps } from "react";
-import { Layers3, Database } from "lucide-react";
+import { Layers3 } from "lucide-react";
 import { IntegrationIcons } from "@repo/ui/integration-icons";
 
 interface Integration {

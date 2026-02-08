@@ -98,7 +98,10 @@ export function InstalledSources({
 		if (integration.type === "github") {
 			const repoName = metadata?.repoFullName ?? "";
 			searchableName = repoName ? `${providerLabel.toLowerCase()}/${repoName}` : providerLabel;
-		} else if (integration.type === "vercel" || integration.type === "linear" || integration.type === "sentry") {
+		} else if (integration.type === "vercel") {
+			const projectName = metadata?.projectName ?? "";
+			searchableName = projectName ? `${providerLabel.toLowerCase()}/${projectName}` : providerLabel;
+		} else if (integration.type === "linear" || integration.type === "sentry") { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
 			const resourceName = metadata?.projectName ?? metadata?.workspaceName ?? "";
 			searchableName = resourceName ? `${providerLabel.toLowerCase()}/${resourceName}` : providerLabel;
 		} else {
@@ -199,15 +202,15 @@ export function InstalledSources({
 
 							// Get display name based on provider type
 							let displayName: string;
-							let providerLabel: string = providerNames[integration.type] ?? integration.type;
+							const providerLabel: string = providerNames[integration.type] ?? integration.type;
 
 							if (integration.type === "github") {
 								const repoName = metadata?.repoFullName ?? "";
-								displayName = repoName ? `${providerLabel.toLowerCase()}/${repoName.split("/").pop() || repoName}` : providerLabel;
+								displayName = repoName ? `${providerLabel.toLowerCase()}/${repoName.split("/").pop() ?? repoName}` : providerLabel;
 							} else if (integration.type === "vercel") {
 								const projectName = metadata?.projectName ?? "";
 								displayName = projectName ? `${providerLabel.toLowerCase()}/${projectName}` : providerLabel;
-							} else if (integration.type === "linear" || integration.type === "sentry") {
+							} else if (integration.type === "linear" || integration.type === "sentry") { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
 								// For Linear/Sentry, show provider/workspace or provider/project
 								const resourceName = metadata?.projectName ?? metadata?.workspaceName ?? "";
 								displayName = resourceName ? `${providerLabel.toLowerCase()}/${resourceName}` : providerLabel;
@@ -290,11 +293,11 @@ export function InstalledSources({
 									</AccordionTrigger>
 
 									{/* Expanded Event Settings - Only for providers with webhook handlers */}
-									{(integration.type === "github" || integration.type === "vercel" || integration.type === "linear" || integration.type === "sentry") && (
+									{(integration.type === "github" || integration.type === "vercel" || integration.type === "linear" || integration.type === "sentry") && ( // eslint-disable-line @typescript-eslint/no-unnecessary-condition
 										<AccordionContent className="px-0 pb-0">
 											<EventSettings
 												integrationId={integration.id}
-												provider={integration.type as "github" | "vercel" | "linear" | "sentry"}
+												provider={integration.type}
 												currentEvents={metadata?.sync?.events ?? []}
 												clerkOrgSlug={clerkOrgSlug}
 												workspaceName={workspaceName}

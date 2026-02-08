@@ -11,8 +11,8 @@ interface SelectedResource {
 
 interface ConnectFormContextValue {
   // Provider state
-  provider: "github" | "vercel";
-  setProvider: (provider: "github" | "vercel") => void;
+  provider: "github" | "vercel" | "linear" | "sentry";
+  setProvider: (provider: "github" | "vercel" | "linear" | "sentry") => void;
 
   // Connection state (set by child components)
   isConnected: boolean;
@@ -44,11 +44,11 @@ export function ConnectFormProvider({
   workspaceName,
 }: {
   children: ReactNode;
-  initialProvider: "github" | "vercel";
+  initialProvider: "github" | "vercel" | "linear" | "sentry";
   clerkOrgSlug: string;
   workspaceName: string;
 }) {
-  const [provider, setProvider] = useState<"github" | "vercel">(initialProvider);
+  const [provider, setProvider] = useState<"github" | "vercel" | "linear" | "sentry">(initialProvider);
   const [isConnected, setIsConnected] = useState(false);
   const [userSourceId, setUserSourceId] = useState<string | null>(null);
   const [selectedInstallationId, setSelectedInstallationId] = useState<string | null>(null);
