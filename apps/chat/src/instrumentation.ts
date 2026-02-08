@@ -23,7 +23,7 @@ const createInitOptions = (_runtime: "nodejs" | "edge"): InitOptions => {
 
   const baseOptions: InitOptions = {
     dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-    environment: env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+    environment: env.NEXT_PUBLIC_VERCEL_ENV,
     tracesSampleRate: 1,
     debug: false,
     enableLogs: true,

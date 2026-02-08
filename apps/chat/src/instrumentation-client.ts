@@ -11,7 +11,7 @@ import { env } from "~/env";
 
 initSentry({
   dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+  environment: env.NEXT_PUBLIC_VERCEL_ENV,
 
   // Adds request headers and IP for users, for more info visit:
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
@@ -32,7 +32,7 @@ initSentry({
    * in development and sample at a lower rate in production
    */
   replaysSessionSampleRate:
-    env.NEXT_PUBLIC_SENTRY_ENVIRONMENT === "production" ? 0.1 : 1.0,
+    env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
   replaysOnErrorSampleRate: 1.0,
 
   // You can remove this option if you're not planning to use the Sentry Session Replay feature:
