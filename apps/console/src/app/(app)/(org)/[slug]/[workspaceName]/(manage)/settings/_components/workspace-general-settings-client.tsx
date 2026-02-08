@@ -21,6 +21,7 @@ import {
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { workspaceSettingsFormSchema } from "@repo/console-validation/forms";
+import { showErrorToast } from "~/lib/trpc-errors";
 import type { WorkspaceSettingsFormValues } from "@repo/console-validation/forms";
 
 interface WorkspaceGeneralSettingsClientProps {
@@ -144,9 +145,7 @@ export function WorkspaceGeneralSettingsClient({
 					);
 				}
 
-				toast.error("Failed to update workspace name", {
-					description: err.message || "Please try again.",
-				});
+				showErrorToast(err, "Failed to update workspace name", "Please try again.");
 			},
 
 			onSuccess: (data) => {

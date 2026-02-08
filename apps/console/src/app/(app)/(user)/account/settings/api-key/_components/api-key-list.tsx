@@ -23,6 +23,7 @@ import {
 import { toast } from "@repo/ui/components/ui/sonner";
 import { Key, Copy, Trash2, Plus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { showErrorToast } from "~/lib/trpc-errors";
 
 /**
  * API Key List (Client Component)
@@ -62,7 +63,7 @@ export function ApiKeyList() {
 				});
 			},
 			onError: (error) => {
-				toast.error(error.message || "Failed to create API key");
+				showErrorToast(error, "Failed to create API key");
 			},
 		}),
 	);
@@ -76,7 +77,7 @@ export function ApiKeyList() {
 				});
 			},
 			onError: (error) => {
-				toast.error(error.message || "Failed to revoke API key");
+				showErrorToast(error, "Failed to revoke API key");
 			},
 		}),
 	);
@@ -90,7 +91,7 @@ export function ApiKeyList() {
 				});
 			},
 			onError: (error) => {
-				toast.error(error.message || "Failed to delete API key");
+				showErrorToast(error, "Failed to delete API key");
 			},
 		}),
 	);

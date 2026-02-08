@@ -7,6 +7,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useConnectForm } from "./connect-form-provider";
+import { showErrorToast } from "~/lib/trpc-errors";
 
 export function ConnectButton() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export function ConnectButton() {
       router.push(`/${clerkOrgSlug}/${workspaceName}/sources`);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to connect repositories");
+      showErrorToast(error, "Failed to connect repositories");
     },
   });
 
@@ -43,7 +44,7 @@ export function ConnectButton() {
       router.push(`/${clerkOrgSlug}/${workspaceName}/sources`);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to connect projects");
+      showErrorToast(error, "Failed to connect projects");
     },
   });
 

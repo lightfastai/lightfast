@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
+import { showErrorToast } from "~/lib/trpc-errors";
 import { useOrganizationList } from "@clerk/nextjs";
 import { useWorkspaceForm } from "./workspace-form-provider";
 import type { WorkspaceFormValues } from "@repo/console-validation/forms";
@@ -196,9 +197,7 @@ export function CreateWorkspaceButton() {
       router.push(`/${orgSlug}/${wsName}`);
     } catch (error) {
       console.error("Workspace creation failed:", error);
-      toast.error("Creation failed", {
-        description: error instanceof Error ? error.message : "Failed to create workspace. Please try again.",
-      });
+      showErrorToast(error, "Creation failed", "Failed to create workspace. Please try again.");
     }
   };
 

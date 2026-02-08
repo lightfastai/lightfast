@@ -9,6 +9,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import type { TeamFormValues } from "@repo/console-validation/forms";
+import { showErrorToast } from "~/lib/trpc-errors";
 
 /**
  * Create Team Button
@@ -75,7 +76,7 @@ export function CreateTeamButton() {
           );
         }
 
-        toast.error(err.message || "Failed to create team. Please try again.");
+        showErrorToast(err, "Failed to create team", "Failed to create team. Please try again.");
       },
       onSuccess: (data) => {
         toast.success(`Team created! Successfully created ${teamName}`);

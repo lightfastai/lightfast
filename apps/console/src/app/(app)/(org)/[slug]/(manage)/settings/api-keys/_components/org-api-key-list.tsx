@@ -23,6 +23,7 @@ import {
 import { toast } from "@repo/ui/components/ui/sonner";
 import { Key, Copy, Trash2, Plus, RotateCcw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { showErrorToast } from "~/lib/trpc-errors";
 
 interface OrgApiKeyListProps {
   workspaceId: string;
@@ -67,7 +68,7 @@ export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
         });
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to create API key");
+        showErrorToast(error, "Failed to create API key");
       },
     })
   );
@@ -81,7 +82,7 @@ export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
         });
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to revoke API key");
+        showErrorToast(error, "Failed to revoke API key");
       },
     })
   );
@@ -95,7 +96,7 @@ export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
         });
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to delete API key");
+        showErrorToast(error, "Failed to delete API key");
       },
     })
   );
@@ -110,7 +111,7 @@ export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
         });
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to rotate API key");
+        showErrorToast(error, "Failed to rotate API key");
       },
     })
   );

@@ -21,6 +21,7 @@ import {
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { teamSettingsFormSchema } from "@repo/console-validation/forms";
+import { showErrorToast } from "~/lib/trpc-errors";
 import type { TeamSettingsFormValues } from "@repo/console-validation/forms";
 
 interface TeamGeneralSettingsClientProps {
@@ -67,9 +68,7 @@ export function TeamGeneralSettingsClient({
 	const updateNameMutation = useMutation(
 		trpc.organization.updateName.mutationOptions({
 			onError: (err) => {
-				toast.error("Failed to update team name", {
-					description: err.message || "Please try again.",
-				});
+				showErrorToast(err, "Failed to update team name", "Please try again.");
 			},
 
 			onSuccess: async (data) => {

@@ -5,6 +5,7 @@ import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { Github, MoreVertical } from "lucide-react";
+import { showErrorToast } from "~/lib/trpc-errors";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -57,7 +58,7 @@ export function SourcesList() {
 				});
 			},
 			onError: (error) => {
-				toast.error(error.message || "Failed to disconnect integration");
+				showErrorToast(error, "Failed to disconnect integration");
 			},
 		}),
 	);

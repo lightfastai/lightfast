@@ -23,6 +23,7 @@ import {
 import { useTRPC } from "@repo/console-trpc/react";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { Button } from "@repo/ui/components/ui/button";
+import { showErrorToast } from "~/lib/trpc-errors";
 import { Input } from "@repo/ui/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import {
@@ -123,9 +124,7 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
         });
       },
       onError: (error) => {
-        toast.error("Failed to restart job", {
-          description: error.message,
-        });
+        showErrorToast(error, "Failed to restart job");
       },
     }),
   );

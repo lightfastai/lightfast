@@ -17,6 +17,7 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { IntegrationIcons } from "@repo/ui/integration-icons";
 import { Loader2, RefreshCw } from "lucide-react";
+import { showErrorToast } from "~/lib/trpc-errors";
 
 interface VercelProjectSelectorProps {
   open: boolean;
@@ -65,7 +66,7 @@ export function VercelProjectSelector({
       onSuccess?.();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to connect projects");
+      showErrorToast(error, "Failed to connect projects");
     },
   });
 
