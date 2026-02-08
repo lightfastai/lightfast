@@ -1,8 +1,7 @@
 "use client";
 
 import type { ComponentType, SVGProps } from "react";
-import { useState, useEffect } from "react";
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -12,14 +11,18 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "@repo/ui/components/ui/accordion";
 import { IntegrationIcons } from "@repo/ui/integration-icons";
-import { Search, Circle, ChevronDown, ChevronRight, Plus, AlertTriangle } from "lucide-react";
+import { Search, Circle, ChevronDown, Plus, AlertTriangle } from "lucide-react";
 import { ConfigTemplateDialog } from "~/components/config-template-dialog";
 import { useQueryStates, parseAsString, parseAsStringEnum } from "nuqs";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { VercelProjectSelector } from "~/components/integrations/vercel-project-selector";
 import { EventSettings } from "./event-settings";
+import Link from "next/link";
 
 interface InstalledSourcesProps {
 	clerkOrgSlug: string;
@@ -36,12 +39,16 @@ const providerIcons: Record<
 	github: IntegrationIcons.github,
 	upstash: IntegrationIcons.github, // Fallback until we have upstash icon
 	vercel: IntegrationIcons.vercel,
+	linear: IntegrationIcons.linear,
+	sentry: IntegrationIcons.sentry,
 };
 
 const providerNames: Record<string, string> = {
 	github: "GitHub",
 	upstash: "Upstash",
 	vercel: "Vercel",
+	linear: "Linear",
+	sentry: "Sentry",
 };
 
 export function InstalledSources({
@@ -51,22 +58,6 @@ export function InstalledSources({
 	initialStatus = "all",
 }: InstalledSourcesProps) {
 	const trpc = useTRPC();
-	const searchParams = useSearchParams();
-	const router = useRouter();
-	const [showVercelSelector, setShowVercelSelector] = useState(false);
-	const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-
-	const toggleExpanded = (id: string) => {
-		setExpandedItems((prev) => {
-			const next = new Set(prev);
-			if (next.has(id)) {
-				next.delete(id);
-			} else {
-				next.add(id);
-			}
-			return next;
-		});
-	};
 
 	// Use nuqs for URL-based state management with server-side initial values
 	const [filters, setFilters] = useQueryStates(
@@ -89,67 +80,33 @@ export function InstalledSources({
 		refetchOnWindowFocus: false,
 	});
 
-	// Query for user's Vercel source
-	const { data: vercelSource } = useQuery({
-		...trpc.userSources.vercel.get.queryOptions(),
-		staleTime: 5 * 60 * 1000,
-	});
-
-	// Get query client for invalidation
-	const queryClient = useQueryClient();
-	const handleVercelSuccess = () => {
-		// Invalidate sources list query to refresh the list
-		void queryClient.invalidateQueries({
-			queryKey: [["workspace", "sources", "list"], { input: { clerkOrgSlug, workspaceName }, type: "query" }],
-		});
-	};
-
-	// Auto-open selector after OAuth callback (URL parameter)
-	useEffect(() => {
-		if (searchParams.get("vercel_connected") === "true" && vercelSource) {
-			setShowVercelSelector(true);
-			// Clean up URL
-			const url = new URL(window.location.href);
-			url.searchParams.delete("vercel_connected");
-			router.replace(url.pathname + url.search, { scroll: false });
-		}
-	}, [searchParams, vercelSource, router]);
-
-	// Listen for postMessage from OAuth popup window
-	useEffect(() => {
-		const handleMessage = (event: MessageEvent<{ type?: string }>) => {
-			if (event.data.type === "vercel_connected") {
-				// Refetch Vercel source and sources list, then open selector
-				void queryClient.invalidateQueries({
-					queryKey: [["userSources", "vercel", "get"]],
-				});
-				void queryClient.invalidateQueries({
-					queryKey: [["workspace", "sources", "list"], { input: { clerkOrgSlug, workspaceName }, type: "query" }],
-				});
-				// Use timeout to allow queries to refetch before opening selector
-				setTimeout(() => {
-					setShowVercelSelector(true);
-				}, 500);
-			}
-		};
-
-		window.addEventListener("message", handleMessage);
-		return () => window.removeEventListener("message", handleMessage);
-	}, [clerkOrgSlug, workspaceName, queryClient]);
-
 	const integrations = sourcesData.list;
-	const workspaceId = sourcesData.workspaceId;
 
 	// Filter integrations
 	const filteredIntegrations = integrations.filter((integration) => {
-		// Type-safe metadata access for GitHub integrations
-		const metadata = integration.metadata as { repoFullName?: string } | null | undefined;
-		const displayName = integration.type === "github"
-			? metadata?.repoFullName ?? providerNames[integration.type] ?? integration.type
-			: providerNames[integration.type] ?? integration.type;
+		// Type-safe metadata access
+		const metadata = integration.metadata as {
+			repoFullName?: string;
+			projectName?: string;
+			workspaceName?: string;
+		} | null | undefined;
+
+		// Build searchable display name (matches the format shown in UI)
+		const providerLabel = providerNames[integration.type] ?? integration.type;
+		let searchableName: string;
+
+		if (integration.type === "github") {
+			const repoName = metadata?.repoFullName ?? "";
+			searchableName = repoName ? `${providerLabel.toLowerCase()}/${repoName}` : providerLabel;
+		} else if (integration.type === "vercel" || integration.type === "linear" || integration.type === "sentry") {
+			const resourceName = metadata?.projectName ?? metadata?.workspaceName ?? "";
+			searchableName = resourceName ? `${providerLabel.toLowerCase()}/${resourceName}` : providerLabel;
+		} else {
+			searchableName = metadata?.projectName ?? providerLabel;
+		}
 
 		const matchesSearch =
-			displayName.toLowerCase().includes(filters.search.toLowerCase()) ||
+			searchableName.toLowerCase().includes(filters.search.toLowerCase()) ||
 			integration.type.toLowerCase().includes(filters.search.toLowerCase());
 
 		// All sources are active by default in the new model
@@ -197,18 +154,13 @@ export function InstalledSources({
 						</DropdownMenuContent>
 					</DropdownMenu>
 
-					{/* Add Vercel Projects button */}
-					{vercelSource && (
-						<Button
-							variant="outline"
-							size="sm"
-							className="h-10"
-							onClick={() => setShowVercelSelector(true)}
-						>
+					{/* Add new source button */}
+					<Link href={`/${clerkOrgSlug}/${workspaceName}/sources/connect`}>
+						<Button size="sm" className="h-10">
 							<Plus className="h-4 w-4 mr-2" />
-							Add Vercel Projects
+							Add New Source
 						</Button>
-					)}
+					</Link>
 				</div>
 
 				{/* Integrations list */}
@@ -221,7 +173,7 @@ export function InstalledSources({
 						</p>
 					</div>
 				) : (
-					<div className="rounded-sm border border-border/60 overflow-hidden bg-card">
+					<Accordion type="multiple" className="rounded-sm border border-border/60 overflow-hidden bg-card">
 						{filteredIntegrations.map((integration, index) => {
 							const IconComponent = providerIcons[integration.type];
 
@@ -231,6 +183,7 @@ export function InstalledSources({
 								documentCount?: number;
 								isPrivate?: boolean;
 								projectName?: string;
+								workspaceName?: string;
 								status?: {
 									configStatus?: "configured" | "awaiting_config";
 									configPath?: string;
@@ -245,26 +198,35 @@ export function InstalledSources({
 							const isAwaitingConfig = metadata?.status?.configStatus === "awaiting_config";
 
 							// Get display name based on provider type
-							let name: string;
+							let displayName: string;
+							let providerLabel: string = providerNames[integration.type] ?? integration.type;
+
 							if (integration.type === "github") {
-								name = metadata?.repoFullName ?? providerNames[integration.type] ?? integration.type;
+								const repoName = metadata?.repoFullName ?? "";
+								displayName = repoName ? `${providerLabel.toLowerCase()}/${repoName.split("/").pop() || repoName}` : providerLabel;
+							} else if (integration.type === "vercel") {
+								const projectName = metadata?.projectName ?? "";
+								displayName = projectName ? `${providerLabel.toLowerCase()}/${projectName}` : providerLabel;
+							} else if (integration.type === "linear" || integration.type === "sentry") {
+								// For Linear/Sentry, show provider/workspace or provider/project
+								const resourceName = metadata?.projectName ?? metadata?.workspaceName ?? "";
+								displayName = resourceName ? `${providerLabel.toLowerCase()}/${resourceName}` : providerLabel;
 							} else {
-								// Vercel or other providers
-								name = metadata?.projectName ?? providerNames[integration.type] ?? integration.type;
+								// Fallback for other providers
+								displayName = metadata?.projectName ?? providerLabel;
 							}
 
 							// Get additional metadata for GitHub
 							const documentCount = integration.documentCount || metadata?.documentCount;
 							const isPrivate = metadata?.isPrivate;
 
-							const isExpanded = expandedItems.has(integration.id);
-
 							return (
-								<div
+								<AccordionItem
 									key={integration.id}
-									className={index !== filteredIntegrations.length - 1 ? "border-b border-border" : ""}
+									value={integration.id}
+									className={index !== filteredIntegrations.length - 1 ? "border-b border-border" : "border-b-0"}
 								>
-									<div className="flex items-center justify-between p-3">
+									<AccordionTrigger className="px-3 py-3 hover:no-underline hover:bg-muted/50">
 										<div className="flex items-center gap-4 flex-1">
 											{/* Icon */}
 											<div className="flex items-center justify-center w-10 h-10 rounded-sm bg-muted shrink-0 p-2">
@@ -276,9 +238,9 @@ export function InstalledSources({
 											</div>
 
 											{/* Name and Status */}
-											<div className="flex-1 min-w-0">
+											<div className="flex-1 min-w-0 text-left">
 												<div className="flex items-center gap-2">
-													<p className="font-medium text-foreground">{name}</p>
+													<p className="font-medium text-foreground">{displayName}</p>
 													{integration.type === "github" && isPrivate && (
 														<span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
 															Private
@@ -288,23 +250,14 @@ export function InstalledSources({
 												<div className="flex items-center gap-3 mt-1">
 													<div className="flex items-center gap-2">
 														<Circle className={`h-2 w-2 fill-current ${isAwaitingConfig ? "text-amber-500" : "text-green-500"}`} />
-														<p className="text-sm text-muted-foreground">
+														<p className="text-xs text-muted-foreground">
 															{isAwaitingConfig ? "Awaiting config" : "Active"}
 														</p>
 													</div>
-													{/* <span className="text-muted-foreground">•</span>
-													<p className="text-sm text-muted-foreground">
-														Synced{" "}
-														{integration.lastSyncedAt
-															? formatDistanceToNow(new Date(integration.lastSyncedAt), {
-																	addSuffix: true,
-															  })
-															: "never"}
-													</p> */}
 													{documentCount && documentCount > 0 && (
 														<>
-															<span className="text-muted-foreground">•</span>
-															<p className="text-sm text-muted-foreground">
+															<span className="text-muted-foreground text-xs">•</span>
+															<p className="text-xs text-muted-foreground">
 																{documentCount.toLocaleString()} docs
 															</p>
 														</>
@@ -314,15 +267,15 @@ export function InstalledSources({
 												{isAwaitingConfig && (
 													<div className="mt-2 p-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
 														<div className="flex items-start gap-2">
-															<AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-															<div className="text-sm flex-1">
+															<AlertTriangle className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
+															<div className="text-xs flex-1">
 																<p className="font-medium text-amber-800 dark:text-amber-200">
 																	Configuration Required
 																</p>
 																<p className="text-amber-700 dark:text-amber-300 mt-0.5">
 																	Add a{" "}
 																	<ConfigTemplateDialog>
-																		<button className="underline hover:no-underline font-mono text-xs">
+																		<button className="underline hover:no-underline font-mono">
 																			lightfast.yml
 																		</button>
 																	</ConfigTemplateDialog>
@@ -334,50 +287,26 @@ export function InstalledSources({
 												)}
 											</div>
 										</div>
-
-										{/* Expand/Collapse Button */}
-										<Button
-											variant="ghost"
-											size="sm"
-											className="shrink-0"
-											onClick={() => toggleExpanded(integration.id)}
-										>
-											<ChevronRight
-												className={`h-4 w-4 transition-transform ${
-													isExpanded ? "rotate-90" : ""
-												}`}
-											/>
-										</Button>
-									</div>
+									</AccordionTrigger>
 
 									{/* Expanded Event Settings - Only for providers with webhook handlers */}
-									{isExpanded && (integration.type === "github" || integration.type === "vercel") && (
-										<EventSettings
-											integrationId={integration.id}
-											provider={integration.type}
-											currentEvents={metadata?.sync?.events ?? []}
-											clerkOrgSlug={clerkOrgSlug}
-											workspaceName={workspaceName}
-										/>
+									{(integration.type === "github" || integration.type === "vercel" || integration.type === "linear" || integration.type === "sentry") && (
+										<AccordionContent className="px-0 pb-0">
+											<EventSettings
+												integrationId={integration.id}
+												provider={integration.type as "github" | "vercel" | "linear" | "sentry"}
+												currentEvents={metadata?.sync?.events ?? []}
+												clerkOrgSlug={clerkOrgSlug}
+												workspaceName={workspaceName}
+											/>
+										</AccordionContent>
 									)}
-								</div>
+								</AccordionItem>
 							);
 						})}
-					</div>
+					</Accordion>
 				)}
 			</div>
-
-			{/* Vercel Project Selector Modal */}
-			{vercelSource && (
-				<VercelProjectSelector
-					open={showVercelSelector}
-					onOpenChange={setShowVercelSelector}
-					userSourceId={vercelSource.id}
-					workspaceId={workspaceId}
-					workspaceName={workspaceName}
-					onSuccess={handleVercelSuccess}
-				/>
-			)}
 		</>
 	);
 }

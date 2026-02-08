@@ -153,8 +153,8 @@ export function FindSimilarToolResult({
       </div>
       <div className="space-y-1">
         {similar.map((item) => (
-          <Card key={item.id} className="border-border/50">
-            <CardContent className="p-2 flex items-start justify-between gap-2">
+          <Card key={item.id} className="border-border/50 p-2">
+            <CardContent className="py-1 px-2 flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-medium truncate">{item.title}</div>
                 <div className="text-[10px] text-muted-foreground">

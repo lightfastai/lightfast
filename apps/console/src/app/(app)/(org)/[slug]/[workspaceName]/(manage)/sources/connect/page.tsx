@@ -23,9 +23,10 @@ export default async function ConnectPage({
   const { slug, workspaceName } = await params;
   const { provider = "github", connected } = await searchParams;
 
-  // Prefetch user sources for both providers (no waterfall)
+  // Prefetch user sources for all providers (no waterfall)
   prefetch(userTrpc.userSources.github.get.queryOptions());
   prefetch(userTrpc.userSources.vercel.get.queryOptions());
+  // TODO: Add prefetch for Linear and Sentry when available
 
   return (
     <div className="flex-1 overflow-y-auto bg-background">
@@ -37,7 +38,7 @@ export default async function ConnectPage({
           <HydrateClient>
             <Suspense fallback={<ConnectLoading />}>
               <ConnectInitializer
-                initialProvider={provider as "github" | "vercel"}
+                initialProvider={provider as "github" | "vercel" | "linear" | "sentry"}
                 initialConnected={connected === "true"}
                 clerkOrgSlug={slug}
                 workspaceName={workspaceName}

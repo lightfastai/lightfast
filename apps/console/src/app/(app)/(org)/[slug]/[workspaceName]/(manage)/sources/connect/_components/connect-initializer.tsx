@@ -12,7 +12,7 @@ import { ResourcePicker } from "./resource-picker";
 import { ConnectButton } from "./connect-button";
 
 interface ConnectInitializerProps {
-  initialProvider: "github" | "vercel";
+  initialProvider: "github" | "vercel" | "linear" | "sentry";
   initialConnected: boolean;
   clerkOrgSlug: string;
   workspaceName: string;
@@ -48,10 +48,17 @@ export function ConnectInitializer({
         {/* Section 2: Connect Account */}
         <Section number={2} title="Connect Account">
           <Suspense fallback={<ConnectorSkeleton />}>
-            {provider === "github" ? (
-              <GitHubConnector autoOpen={initialConnected} />
-            ) : (
-              <VercelConnector autoOpen={initialConnected} />
+            {provider === "github" && <GitHubConnector autoOpen={initialConnected} />}
+            {provider === "vercel" && <VercelConnector autoOpen={initialConnected} />}
+            {provider === "linear" && (
+              <div className="rounded-lg border border-border p-6 text-center">
+                <p className="text-muted-foreground">Linear connector coming soon</p>
+              </div>
+            )}
+            {provider === "sentry" && (
+              <div className="rounded-lg border border-border p-6 text-center">
+                <p className="text-muted-foreground">Sentry connector coming soon</p>
+              </div>
             )}
           </Suspense>
         </Section>

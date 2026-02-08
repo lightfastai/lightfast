@@ -12,6 +12,16 @@ interface Integration {
 
 const latestIntegrations: Integration[] = [
 	{
+		name: "Linear",
+		description: "Issue tracking and project management with AI-powered context.",
+		Icon: IntegrationIcons.linear,
+	},
+	{
+		name: "Sentry",
+		description: "Error monitoring and performance tracking for production insights.",
+		Icon: IntegrationIcons.sentry,
+	},
+	{
 		name: "Vercel",
 		description: "Deployment correlation with code changes and rollback intelligence.",
 		Icon: IntegrationIcons.vercel,
@@ -20,16 +30,6 @@ const latestIntegrations: Integration[] = [
 		name: "PostHog",
 		description: "Analytics correlation with deployments and feature flag impact analysis.",
 		Icon: IntegrationIcons.posthog,
-	},
-	{
-		name: "Slack",
-		description: "Intelligent thread understanding and automated context sharing.",
-		Icon: IntegrationIcons.slack,
-	},
-	{
-		name: "PlanetScale",
-		description: "Database schema understanding and migration tracking.",
-		Icon: Database,
 	},
 ];
 

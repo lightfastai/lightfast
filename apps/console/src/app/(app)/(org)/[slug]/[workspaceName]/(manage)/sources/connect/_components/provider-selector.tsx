@@ -29,16 +29,23 @@ const providers: ProviderOption[] = [
     icon: "vercel",
     status: "available",
   },
+  {
+    id: "linear",
+    name: "Linear",
+    description: "Connect issues & projects",
+    icon: "linear",
+    status: "available",
+  },
+  {
+    id: "sentry",
+    name: "Sentry",
+    description: "Connect error tracking",
+    icon: "sentry",
+    status: "available",
+  },
 ];
 
 const comingSoon: ProviderOption[] = [
-  {
-    id: "coming_soon",
-    name: "Linear",
-    description: "Coming soon",
-    icon: "linear",
-    status: "coming_soon",
-  },
   {
     id: "coming_soon",
     name: "Slack",

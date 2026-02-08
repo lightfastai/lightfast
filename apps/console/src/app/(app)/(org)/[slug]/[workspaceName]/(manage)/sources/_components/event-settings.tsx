@@ -11,8 +11,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   GITHUB_EVENTS,
   VERCEL_EVENTS,
+  LINEAR_EVENTS,
+  SENTRY_EVENTS,
   ALL_GITHUB_EVENTS,
   ALL_VERCEL_EVENTS,
+  ALL_LINEAR_EVENTS,
+  ALL_SENTRY_EVENTS,
 } from "@repo/console-types";
 
 // Combined interface for event config
@@ -24,7 +28,7 @@ interface EventConfig {
 
 interface EventSettingsProps {
   integrationId: string;
-  provider: "github" | "vercel";
+  provider: "github" | "vercel" | "linear" | "sentry";
   currentEvents: string[];
   clerkOrgSlug: string;
   workspaceName: string;
@@ -42,8 +46,17 @@ export function EventSettings({
 
   // Determine which events are enabled
   // Empty array = all events enabled (backwards compat)
-  const allEvents = provider === "github" ? ALL_GITHUB_EVENTS : ALL_VERCEL_EVENTS;
-  const eventConfig: Record<string, EventConfig> = provider === "github" ? GITHUB_EVENTS : VERCEL_EVENTS;
+  const allEvents =
+    provider === "github" ? ALL_GITHUB_EVENTS :
+    provider === "vercel" ? ALL_VERCEL_EVENTS :
+    provider === "linear" ? ALL_LINEAR_EVENTS :
+    ALL_SENTRY_EVENTS;
+
+  const eventConfig: Record<string, EventConfig> =
+    provider === "github" ? GITHUB_EVENTS :
+    provider === "vercel" ? VERCEL_EVENTS :
+    provider === "linear" ? LINEAR_EVENTS :
+    SENTRY_EVENTS;
 
   const getInitialEvents = () => {
     if (currentEvents.length === 0) {
@@ -85,7 +98,7 @@ export function EventSettings({
   const showPushWarning = provider === "github" && !selectedEvents.includes("push");
 
   return (
-    <div className="pt-3 pb-1 px-4 border-t border-border bg-muted/30">
+    <div className="pt-3 pb-4 px-4 border-t border-border bg-muted/30">
       <div className="text-sm font-medium text-foreground mb-3">Event Subscriptions</div>
 
       {showPushWarning && (

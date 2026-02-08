@@ -2,7 +2,7 @@
 
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 
-const providers = ["github", "vercel"] as const;
+const providers = ["github", "vercel", "linear", "sentry"] as const;
 export type Provider = (typeof providers)[number];
 
 export function useConnectParams() {
