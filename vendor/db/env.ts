@@ -5,8 +5,8 @@ export const dbEnv = createEnv({
   shared: {},
   server: {
     DATABASE_HOST: z.string().min(1),
-    DATABASE_USERNAME: z.string().min(1), 
-    DATABASE_PASSWORD: z.string().min(1),
+    DATABASE_USERNAME: z.string().startsWith("pscale_api_"),
+    DATABASE_PASSWORD: z.string().startsWith("pscale_pw_"),
   },
   client: {},
   experimental__runtimeEnv: {},
