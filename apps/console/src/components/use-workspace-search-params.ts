@@ -42,7 +42,7 @@ export function useWorkspaceSearchParams(initialQuery = "") {
       view: parseAsStringLiteral(viewTabs).withDefault("list"),
     },
     {
-      history: "push",
+      history: "replace",
       shallow: true,
     }
   );

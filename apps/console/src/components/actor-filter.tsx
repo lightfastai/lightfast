@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -35,24 +35,13 @@ export function ActorFilter({
     ...trpc.workspace.getActors.queryOptions({
       clerkOrgSlug: orgSlug,
       workspaceName: workspaceName,
-      search: undefined, // Fetch all actors, filter client-side
+      search: search || undefined, // Pass search to backend for server-side filtering
       limit: 50,
     }),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     staleTime: 60 * 1000, // 1 minute
   });
-
-  // Filter actors client-side based on search
-  const filteredActors = useMemo(() => {
-    if (!actors) return [];
-    if (!search) return actors;
-
-    const searchLower = search.toLowerCase();
-    return actors.filter((actor) =>
-      actor.displayName.toLowerCase().includes(searchLower),
-    );
-  }, [actors, search]);
 
   const toggleActor = useCallback(
     (displayName: string) => {
@@ -89,12 +78,12 @@ export function ActorFilter({
             className="h-8"
           />
           <div className="space-y-2 max-h-[300px] overflow-y-auto">
-            {filteredActors.length === 0 ? (
+            {!actors || actors.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-2">
-                No actors found.
+                {search ? "No actors found." : "Loading actors..."}
               </p>
             ) : (
-              filteredActors.map((actor) => (
+              actors.map((actor) => (
                 <div key={actor.id} className="flex items-center gap-2">
                   <Checkbox
                     id={`actor-${actor.id}`}

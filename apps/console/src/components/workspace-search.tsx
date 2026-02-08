@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
@@ -86,6 +86,9 @@ export function WorkspaceSearch({
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  // Reference to track current request for cancellation
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   // Perform search via API route
   const performSearch = useCallback(
     async (searchQuery: string) => {
@@ -100,6 +103,10 @@ export function WorkspaceSearch({
         );
         return;
       }
+
+      // Cancel any previous request
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
 
       setIsSearching(true);
       setError(null);
@@ -128,6 +135,7 @@ export function WorkspaceSearch({
             "X-Workspace-ID": store.id,
           },
           body: JSON.stringify(body),
+          signal: abortControllerRef.current.signal,
         });
 
         if (!response.ok) {
@@ -147,6 +155,10 @@ export function WorkspaceSearch({
         const data = (await response.json()) as V1SearchResponse;
         setSearchResults(data);
       } catch (err) {
+        // Ignore AbortError (request was cancelled intentionally)
+        if (err instanceof Error && err.name === "AbortError") {
+          return; // Silently ignore cancelled requests
+        }
         setError(err instanceof Error ? err.message : "Search failed");
         setSearchResults(null);
       } finally {
