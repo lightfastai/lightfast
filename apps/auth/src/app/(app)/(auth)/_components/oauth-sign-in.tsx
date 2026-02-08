@@ -10,7 +10,11 @@ import { handleClerkError } from "~/app/lib/clerk/error-handler";
 import { useLogger } from "@vendor/observability/client-log";
 import { consoleUrl } from "~/lib/related-projects";
 
-export function OAuthSignIn() {
+interface OAuthSignInProps {
+	onError?: (error: string, isSignUpRestricted?: boolean) => void;
+}
+
+export function OAuthSignIn({ onError }: OAuthSignInProps = {}) {
 	const { signIn, isLoaded } = useSignIn();
 	const [loading, setLoading] = React.useState<OAuthStrategy | null>(null);
 	const log = useLogger();
@@ -37,7 +41,13 @@ export function OAuthSignIn() {
 				strategy,
 			});
 
-			toast.error(errorResult.userMessage);
+			// For waitlist errors, pass to parent form for inline display
+			// For other errors, show toast
+			if (errorResult.isSignUpRestricted && onError) {
+				onError(errorResult.userMessage, errorResult.isSignUpRestricted);
+			} else {
+				toast.error(errorResult.userMessage);
+			}
 			setLoading(null);
 		}
 	};
