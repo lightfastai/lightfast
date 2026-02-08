@@ -34,6 +34,8 @@ const isPublicRoute = createRouteMatcher([
   "/sitemap(.*)",
   "/llms.txt", // AI crawler guidance file
   "/docs(.*)", // Documentation pages
+  "/monitoring", // Sentry error reporting tunnel (tunnelRoute in vendor/next config)
+  "/ingest(.*)", // PostHog analytics proxy (rewrites to us.i.posthog.com)
 ]);
 
 // Team creation routes - accessible to pending users (authenticated but no org claimed)

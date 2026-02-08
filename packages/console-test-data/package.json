@@ -13,6 +13,8 @@
     "lint": "eslint src/",
     "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --",
     "inject": "pnpm with-env tsx src/cli/inject.ts",
+    "inject:prod": "dotenv -e ../../apps/console/.vercel/.env.production.local -- tsx src/cli/inject.ts",
+    "seed-integrations:prod": "dotenv -e ../../apps/console/.vercel/.env.production.local -- tsx src/cli/seed-integrations.ts",
     "reset-demo": "pnpm with-env tsx src/cli/reset-demo.ts",
     "verify": "tsx src/cli/generate-schema.ts && tsx src/cli/verify-datasets.ts",
     "generate-schema": "tsx src/cli/generate-schema.ts"

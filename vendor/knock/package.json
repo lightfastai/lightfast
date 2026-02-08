@@ -11,7 +11,7 @@
     "./components/provider": "./src/components/provider.tsx",
     "./components/trigger": "./src/components/trigger.tsx",
     "./styles": "./src/styles.css",
-    "./env": "./env.ts"
+    "./env": "./src/env.ts"
   },
   "license": "MIT",
   "scripts": {

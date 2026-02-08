@@ -6,11 +6,12 @@ import "./src/env";
 import {
   config as vendorConfig,
   withBetterStack,
+  withSentry,
 } from "@vendor/next/next-config-builder";
 import { mergeNextConfig } from "@vendor/next/merge-config";
 import { getDocsUrl } from "@repo/app-urls";
 
-const config: NextConfig = withBetterStack(
+const config: NextConfig = withSentry(withBetterStack(
   mergeNextConfig(vendorConfig, {
     reactStrictMode: true,
     transpilePackages: [
@@ -68,6 +69,6 @@ const config: NextConfig = withBetterStack(
       ];
     },
   }),
-);
+));
 
 export default withMicrofrontends(config, { debug: true });

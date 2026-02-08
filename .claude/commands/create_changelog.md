@@ -1,6 +1,6 @@
 ---
 description: Generate changelog entries from PRs, URLs, or manual input. Output saved to thoughts/changelog/
-model: opus
+model: sonnet
 ---
 
 # Changelog Generator

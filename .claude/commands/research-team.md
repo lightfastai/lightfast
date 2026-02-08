@@ -1,6 +1,6 @@
 ---
 description: Spawn a coordinated research team for complex topics requiring both codebase and external research with synthesis and review
-model: opus
+model: sonnet
 ---
 
 # Research Team

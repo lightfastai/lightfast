@@ -5,7 +5,7 @@
       "packageName": "@lightfast/console",
       "development": {
         "local": 4107,
-        "fallback": "app.lightfast.ai"
+        "fallback": "console.lightfast.ai"
       }
     },
     "lightfast-www": {

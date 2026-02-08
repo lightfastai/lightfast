@@ -1,6 +1,6 @@
 ---
 description: Deep dive into specific topics from external codebase analysis
-model: opus
+model: sonnet
 ---
 
 # External Codebase Research
