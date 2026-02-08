@@ -7,7 +7,7 @@ const register = () => {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     init({
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-      environment: env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+      environment: env.NEXT_PUBLIC_VERCEL_ENV,
       tracesSampleRate: 1,
       debug: false,
     });
@@ -17,7 +17,7 @@ const register = () => {
   if (process.env.NEXT_RUNTIME === "edge") {
     init({
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-      environment: env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+      environment: env.NEXT_PUBLIC_VERCEL_ENV,
       tracesSampleRate: 1,
       debug: false,
     });

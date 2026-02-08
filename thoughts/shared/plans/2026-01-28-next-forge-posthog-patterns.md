@@ -294,12 +294,12 @@ import { createBaseUrl } from "~/lib/base-url";
 
 initSentry({
   dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+  environment: env.NEXT_PUBLIC_VERCEL_ENV,
   sendDefaultPii: true,
   tracesSampleRate: 1.0,
   debug: false,
   replaysSessionSampleRate:
-    env.NEXT_PUBLIC_SENTRY_ENVIRONMENT === "production" ? 0.1 : 1.0,
+    env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
   replaysOnErrorSampleRate: 1.0,
   integrations: [
     replayIntegration({
