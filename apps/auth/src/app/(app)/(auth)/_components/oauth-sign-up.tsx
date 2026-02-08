@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { OAuthStrategy } from "@clerk/types";
-import { useSignUp } from "@clerk/nextjs";
+import { useSignUp, useClerk } from "@clerk/nextjs";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
@@ -10,8 +10,14 @@ import { handleClerkError } from "~/app/lib/clerk/error-handler";
 import { useLogger } from "@vendor/observability/client-log";
 import { consoleUrl } from "~/lib/related-projects";
 
-export function OAuthSignUp() {
+interface OAuthSignUpProps {
+  onError?: (errorMessage: string, isSignUpRestricted?: boolean) => void;
+  invitationTicket?: string | null;
+}
+
+export function OAuthSignUp({ onError, invitationTicket }: OAuthSignUpProps = {}) {
   const { signUp, isLoaded } = useSignUp();
+  const { setActive } = useClerk();
   const [loading, setLoading] = React.useState<OAuthStrategy | null>(null);
   const log = useLogger();
 
@@ -20,6 +26,42 @@ export function OAuthSignUp() {
 
     try {
       setLoading(strategy);
+
+      // If invitation ticket is present, complete sign-up via ticket directly.
+      // OAuth redirect cannot carry the ticket context, so Clerk's callback
+      // would hit the waitlist restriction. Instead, use the ticket to create
+      // the account and redirect immediately.
+      if (invitationTicket) {
+        const signUpAttempt = await signUp.create({
+          strategy: "ticket",
+          ticket: invitationTicket,
+        });
+
+        if (signUpAttempt.status === "complete") {
+          log.info("[OAuthSignUp] Sign-up completed via invitation ticket", {
+            strategy,
+          });
+          await setActive({ session: signUpAttempt.createdSessionId });
+          window.location.href = `${consoleUrl}/account/teams/new`;
+          return;
+        }
+
+        // Ticket didn't auto-complete — OAuth can't help here since the
+        // redirect would lose the ticket context and hit the waitlist.
+        // Ask the user to complete sign-up via email instead.
+        log.warn("[OAuthSignUp] Ticket sign-up incomplete, OAuth not viable", {
+          strategy,
+          status: signUpAttempt.status,
+        });
+        if (onError) {
+          onError(
+            "Please use the email option above to complete your invitation sign-up.",
+          );
+        }
+        setLoading(null);
+        return;
+      }
+
       await signUp.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sign-up/sso-callback",
@@ -37,7 +79,13 @@ export function OAuthSignUp() {
         strategy,
       });
 
-      toast.error(errorResult.userMessage);
+      // Pass waitlist errors to parent for special handling
+      if (errorResult.isSignUpRestricted && onError) {
+        onError(errorResult.userMessage, true);
+      } else {
+        toast.error(errorResult.userMessage);
+      }
+
       setLoading(null);
     }
   };
