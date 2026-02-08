@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { OAuthStrategy } from "@clerk/types";
-import { useSignUp } from "@clerk/nextjs";
+import { useSignUp, useClerk } from "@clerk/nextjs";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
@@ -17,6 +17,7 @@ interface OAuthSignUpProps {
 
 export function OAuthSignUp({ onError, invitationTicket }: OAuthSignUpProps = {}) {
   const { signUp, isLoaded } = useSignUp();
+  const { setActive } = useClerk();
   const [loading, setLoading] = React.useState<OAuthStrategy | null>(null);
   const log = useLogger();
 
@@ -26,13 +27,23 @@ export function OAuthSignUp({ onError, invitationTicket }: OAuthSignUpProps = {}
     try {
       setLoading(strategy);
 
-      // If invitation ticket is present, pre-create the sign-up with
-      // the ticket to bypass waitlist before redirecting to OAuth
+      // If invitation ticket is present, create sign-up with ticket
+      // which may auto-complete (bypassing waitlist + OAuth redirect)
       if (invitationTicket) {
-        await signUp.create({
+        const signUpAttempt = await signUp.create({
           strategy: "ticket",
           ticket: invitationTicket,
         });
+
+        // Ticket auto-completed sign-up — set session and redirect
+        if (signUpAttempt.status === "complete") {
+          log.info("[OAuthSignUp] Sign-up completed via invitation ticket", {
+            strategy,
+          });
+          await setActive({ session: signUpAttempt.createdSessionId });
+          window.location.href = `${consoleUrl}/account/teams/new`;
+          return;
+        }
       }
 
       await signUp.authenticateWithRedirect({
