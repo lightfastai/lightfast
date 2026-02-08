@@ -28,8 +28,15 @@ export const vercelEnv = createEnv({
 		// In production: https://lightfast.ai/api/vercel/callback
 		VERCEL_REDIRECT_URI: z.string().url().optional(),
 	},
-	client: {},
-	experimental__runtimeEnv: {},
+	client: {
+		// Vercel Integration Slug (public - visible in URLs anyway)
+		// Used for: Client-side Vercel integration/permission links
+		// Example: "lightfast" (production) or "lightfast-dev" (development)
+		NEXT_PUBLIC_VERCEL_INTEGRATION_SLUG: z.string().min(1),
+	},
+	experimental__runtimeEnv: {
+		NEXT_PUBLIC_VERCEL_INTEGRATION_SLUG: process.env.NEXT_PUBLIC_VERCEL_INTEGRATION_SLUG,
+	},
 	skipValidation:
 		!!process.env.SKIP_ENV_VALIDATION ||
 		process.env.npm_lifecycle_event === "lint",

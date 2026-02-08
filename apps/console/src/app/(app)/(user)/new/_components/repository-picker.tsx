@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@repo/ui/components/ui/select";
 import { useTRPC } from "@repo/console-trpc/react";
+import { githubEnv } from "@repo/console-octokit-github/env";
 import { useWorkspaceForm } from "./workspace-form-provider";
 
 /**
@@ -80,7 +81,7 @@ export function RepositoryPicker({ userSourceId, refetchIntegration }: Repositor
     const top = window.screen.height / 2 - height / 2;
 
     const popup = window.open(
-      "https://github.com/apps/lightfastai-dev/installations/select_target",
+      `https://github.com/apps/${githubEnv.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target`,
       "github-permissions",
       `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
     );
