@@ -27,15 +27,16 @@ export function OAuthSignUp({ onError, invitationTicket }: OAuthSignUpProps = {}
     try {
       setLoading(strategy);
 
-      // If invitation ticket is present, create sign-up with ticket
-      // which may auto-complete (bypassing waitlist + OAuth redirect)
+      // If invitation ticket is present, complete sign-up via ticket directly.
+      // OAuth redirect cannot carry the ticket context, so Clerk's callback
+      // would hit the waitlist restriction. Instead, use the ticket to create
+      // the account and redirect immediately.
       if (invitationTicket) {
         const signUpAttempt = await signUp.create({
           strategy: "ticket",
           ticket: invitationTicket,
         });
 
-        // Ticket auto-completed sign-up — set session and redirect
         if (signUpAttempt.status === "complete") {
           log.info("[OAuthSignUp] Sign-up completed via invitation ticket", {
             strategy,
@@ -44,6 +45,21 @@ export function OAuthSignUp({ onError, invitationTicket }: OAuthSignUpProps = {}
           window.location.href = `${consoleUrl}/account/teams/new`;
           return;
         }
+
+        // Ticket didn't auto-complete — OAuth can't help here since the
+        // redirect would lose the ticket context and hit the waitlist.
+        // Ask the user to complete sign-up via email instead.
+        log.warn("[OAuthSignUp] Ticket sign-up incomplete, OAuth not viable", {
+          strategy,
+          status: signUpAttempt.status,
+        });
+        if (onError) {
+          onError(
+            "Please use the email option above to complete your invitation sign-up.",
+          );
+        }
+        setLoading(null);
+        return;
       }
 
       await signUp.authenticateWithRedirect({

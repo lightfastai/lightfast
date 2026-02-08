@@ -2,6 +2,7 @@
 import * as React from "react";
 import NextLink from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useSignUp } from "@clerk/nextjs";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
@@ -15,6 +16,7 @@ import { env } from "~/env";
 export function SignUpForm() {
 	const searchParams = useSearchParams();
 	const invitationTicket = searchParams.get("__clerk_ticket");
+	const { signUp } = useSignUp();
 
 	const [verificationStep, setVerificationStep] = React.useState<
 		"email" | "code" | "password"
@@ -26,6 +28,19 @@ export function SignUpForm() {
 
 	// Only show password sign-up in development and preview environments
 	const showPasswordSignUp = env.NEXT_PUBLIC_VERCEL_ENV !== "production";
+
+	// Check for waitlist error after OAuth redirect (e.g. SSO callback failure)
+	React.useEffect(() => {
+		const verificationError =
+			signUp?.verifications.emailAddress.error;
+		if (verificationError?.code === "sign_up_restricted_waitlist") {
+			setError(
+				verificationError.longMessage ??
+					"Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.",
+			);
+			setIsWaitlistRestricted(true);
+		}
+	}, [signUp]);
 
 	function handleEmailSuccess(email: string) {
 		setEmailAddress(email);
