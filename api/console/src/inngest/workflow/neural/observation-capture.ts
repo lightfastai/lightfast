@@ -507,7 +507,7 @@ export const observationCapture = inngest.createFunction(
           resourceId = metadata.projectId?.toString();
           break;
         case "sentry":
-          resourceId = metadata.projectId?.toString() || metadata.project?.id?.toString();
+          resourceId = metadata.projectId?.toString();
           break;
         case "linear":
           resourceId = metadata.teamId?.toString();
