@@ -28,7 +28,7 @@
     "@db/console": "workspace:*",
     "@hookform/resolvers": "catalog:",
     "@lightfastai/ai-sdk": "workspace:*",
-    "@nosecone/next": "1.0.0-beta.15",
+    "@nosecone/next": "1.1.0",
     "@octokit/openapi-types": "^26.0.0",
     "@octokit/types": "^15.0.0",
     "@repo/ai": "workspace:^",
