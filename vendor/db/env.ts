@@ -4,7 +4,12 @@ import { z } from "zod";
 export const dbEnv = createEnv({
   shared: {},
   server: {
-    DATABASE_HOST: z.string().min(1),
+    DATABASE_HOST: z
+      .string()
+      .min(1)
+      .refine((v) => !v.startsWith("pscale_pw_") && !v.startsWith("pscale_api_"), {
+        message: "DATABASE_HOST should be a hostname, not a credential",
+      }),
     DATABASE_USERNAME: z.string().startsWith("pscale_api_"),
     DATABASE_PASSWORD: z.string().startsWith("pscale_pw_"),
   },
