@@ -27,6 +27,7 @@
     "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@repo/console-webhooks": "workspace:*",
+    "@repo/lib": "workspace:*",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {
