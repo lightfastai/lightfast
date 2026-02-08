@@ -3,6 +3,8 @@
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { addBreadcrumb } from "@sentry/nextjs";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { useAnswerTransport } from "~/ai/hooks/use-answer-transport";
 import { AnswerMessages } from "./answer-messages";
 import { AskLightfastSuggestions } from "./ask-lightfast-suggestions";
@@ -37,46 +39,88 @@ export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
     id: sessionId,
   });
 
-  const handleSubmit = useCallback(
-    async (promptMessage: PromptInputMessage) => {
-      const text = promptMessage.text?.trim();
-      if (!text) return;
+  // Helper to validate and send messages - mirrors chat-interface.tsx pattern
+  // Returns true if message was queued, false if validation failed
+  const handleSendMessage = useCallback(
+    (text: string): boolean => {
+      const trimmedText = text.trim();
+
+      // Guard: empty input, already streaming, or already submitted
+      if (
+        !trimmedText ||
+        status === "streaming" ||
+        status === "submitted"
+      ) {
+        return false;
+      }
 
       const userMessage: UIMessage = {
         role: "user",
-        parts: [{ type: "text", text }],
+        parts: [{ type: "text", text: trimmedText }],
         id: crypto.randomUUID(),
       };
 
-      try {
-        await sendMessage(userMessage);
-      } catch (error: unknown) {
-        console.error("Failed to send message:", error);
-      }
+      // Log breadcrumb for debugging
+      addBreadcrumb({
+        category: "answer-ui",
+        message: "send_message",
+        data: {
+          workspaceId,
+          sessionId,
+          length: trimmedText.length,
+        },
+      });
 
-      // Clear the input form
-      formRef.current?.reset();
+      // Fire-and-forget - matches chat-interface.tsx pattern
+      sendMessage(userMessage).catch((error: unknown) => {
+        console.error("Failed to send message:", error);
+
+        // Show user-friendly error toast
+        toast.error("Failed to send message", {
+          description: "Please try again",
+          duration: 4000,
+        });
+      });
+
+      return true;
     },
-    [sendMessage],
+    [sendMessage, status, workspaceId, sessionId],
+  );
+
+  const handleSubmit = useCallback(
+    async (promptMessage: PromptInputMessage) => {
+      await Promise.resolve(); // Satisfy linter - function must be async for prop signature
+      const text = promptMessage.text ?? "";
+      const success = handleSendMessage(text);
+
+      // Clear form only if message was successfully queued
+      if (success && formRef.current) {
+        formRef.current.reset();
+      }
+    },
+    [handleSendMessage],
   );
 
   const handleSuggestionClick = useCallback(
     (prompt: string) => {
-      const userMessage: UIMessage = {
-        role: "user",
-        parts: [{ type: "text", text: prompt }],
-        id: crypto.randomUUID(),
-      };
+      const success = handleSendMessage(prompt);
 
-      sendMessage(userMessage).catch((error: unknown) => {
-        console.error("Failed to send message:", error);
-      });
-
-      // Clear the input form
-      formRef.current?.reset();
+      // Clear form only if message was successfully queued
+      if (success && formRef.current) {
+        formRef.current.reset();
+      }
     },
-    [sendMessage],
+    [handleSendMessage],
   );
+
+  // Disable submit button while streaming or submitting
+  const isSubmitDisabled = status === "streaming" || status === "submitted";
+
+  // Provide helpful reason for why submit is disabled
+  const submitDisabledReason =
+    status === "streaming" ? "Processing response..." :
+    status === "submitted" ? "Sending message..." :
+    undefined;
 
   if (!isClient) {
     return null;
@@ -99,7 +143,8 @@ export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
             placeholder="Ask anything about your workspace..."
             onSubmit={handleSubmit}
             status={status}
-            isSubmitDisabled={false}
+            isSubmitDisabled={isSubmitDisabled}
+            submitDisabledReason={submitDisabledReason}
           />
           {/* Prompt suggestions - only visible on tablet and above (md breakpoint) */}
           <div className="hidden md:block relative mt-4 h-12">
@@ -133,7 +178,8 @@ export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
                 placeholder="Continue the conversation..."
                 onSubmit={handleSubmit}
                 status={status}
-                isSubmitDisabled={false}
+                isSubmitDisabled={isSubmitDisabled}
+                submitDisabledReason={submitDisabledReason}
               />
             </div>
 
