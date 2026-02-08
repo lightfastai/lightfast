@@ -1,3 +1,5 @@
+'use client'
+
 import { AuthenticateWithRedirectCallback } from '@clerk/nextjs'
 
 export default function Page() {
@@ -8,5 +10,14 @@ export default function Page() {
   // Clerk's task system handles redirection:
   // - Pending users (no org) → taskUrls["choose-organization"] → /account/teams/new
   // - Active users (with org) → signInFallbackRedirectUrl → console
-  return <AuthenticateWithRedirectCallback />
+
+  return (
+    <AuthenticateWithRedirectCallback
+      continueSignUpUrl="/sign-in"
+      signInFallbackRedirectUrl="/account/teams/new"
+      signUpFallbackRedirectUrl="/account/teams/new"
+      afterSignInUrl="/account/teams/new"
+      afterSignUpUrl="/account/teams/new"
+    />
+  )
 }

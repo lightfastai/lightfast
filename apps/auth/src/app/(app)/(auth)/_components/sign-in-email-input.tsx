@@ -26,7 +26,7 @@ type EmailFormData = z.infer<typeof emailSchema>;
 
 interface SignInEmailInputProps {
 	onSuccess: (email: string) => void;
-	onError: (error: string) => void;
+	onError: (error: string, isSignUpRestricted?: boolean) => void;
 }
 
 export function SignInEmailInput({ onSuccess, onError }: SignInEmailInputProps) {
@@ -69,21 +69,18 @@ export function SignInEmailInput({ onSuccess, onError }: SignInEmailInputProps) 
 			});
 			onSuccess(data.email);
 		} catch (err) {
-			// Log the error
 			log.error("[SignInEmailInput] Authentication failed", {
 				email: data.email,
 				error: err,
 			});
-			
-			// Handle the error with proper context
+
 			const errorResult = handleClerkError(err, {
 				component: "SignInEmailInput",
 				action: "create_sign_in",
 				email: data.email,
 			});
-			
-			// Pass the user-friendly error message to parent
-			onError(errorResult.userMessage);
+
+			onError(errorResult.userMessage, errorResult.isSignUpRestricted);
 		}
 	}
 

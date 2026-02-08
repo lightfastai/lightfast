@@ -1,5 +1,7 @@
 "use client";
 import * as React from "react";
+import { useSignIn } from "@clerk/nextjs";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { SignInEmailInput } from "./sign-in-email-input";
@@ -10,140 +12,186 @@ import { consoleUrl } from "~/lib/related-projects";
 import { env } from "~/env";
 
 interface SignInFormProps {
-	verificationStep?: "email" | "code" | "password";
-	onVerificationStepChange?: (step: "email" | "code" | "password") => void;
+  verificationStep?: "email" | "code" | "password";
+  onVerificationStepChange?: (step: "email" | "code" | "password") => void;
 }
 
 export function SignInForm({
-	verificationStep: controlledStep,
-	onVerificationStepChange,
+  verificationStep: controlledStep,
+  onVerificationStepChange,
 }: SignInFormProps = {}) {
-	const [internalStep, setInternalStep] = React.useState<"email" | "code" | "password">(
-		"email",
-	);
-	const verificationStep = controlledStep ?? internalStep;
-	const setVerificationStep = onVerificationStepChange ?? setInternalStep;
+  const { signIn } = useSignIn();
+  const [internalStep, setInternalStep] = React.useState<
+    "email" | "code" | "password"
+  >("email");
+  const verificationStep = controlledStep ?? internalStep;
+  const setVerificationStep = onVerificationStepChange ?? setInternalStep;
 
-	const [emailAddress, setEmailAddress] = React.useState("");
-	const [error, setError] = React.useState("");
+  const [emailAddress, setEmailAddress] = React.useState("");
+  const [error, setError] = React.useState("");
+  const [isWaitlistRestricted, setIsWaitlistRestricted] = React.useState(false);
 
-	// Only show password sign-in in development and preview environments
-	const showPasswordSignIn = env.NEXT_PUBLIC_VERCEL_ENV !== "production";
+  // Only show password sign-in in development and preview environments
+  const showPasswordSignIn = env.NEXT_PUBLIC_VERCEL_ENV !== "production";
 
-	function handleEmailSuccess(email: string) {
-		setEmailAddress(email);
-		setVerificationStep("code");
-		setError("");
-	}
+  // Check for waitlist error after OAuth redirect
+  React.useEffect(() => {
+    const verificationError = signIn?.firstFactorVerification.error;
+    if (verificationError?.code === "sign_up_restricted_waitlist") {
+      setError(
+        verificationError.longMessage ??
+          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.",
+      );
+      setIsWaitlistRestricted(true);
+    }
+  }, [signIn]);
 
-	function handleReset() {
-		setVerificationStep("email");
-		setError("");
-		setEmailAddress("");
-	}
+  function handleEmailSuccess(email: string) {
+    setEmailAddress(email);
+    setVerificationStep("code");
+    setError("");
+  }
 
-	function handleError(errorMessage: string) {
-		setError(errorMessage);
-	}
+  function handleReset() {
+    setVerificationStep("email");
+    setError("");
+    setEmailAddress("");
+    setIsWaitlistRestricted(false);
+  }
 
-	function handlePasswordSuccess() {
-		// Password sign-in is complete, redirect to team creation
-		setError("");
-		window.location.href = `${consoleUrl}/account/teams/new`;
-	}
+  function handleError(errorMessage: string, isSignUpRestricted = false) {
+    setError(errorMessage);
+    setIsWaitlistRestricted(isSignUpRestricted);
+  }
 
-	return (
-		<div className="w-full space-y-8">
-			{/* Header - only show on email and password steps */}
-			{(verificationStep === "email" || verificationStep === "password") && (
-				<div className="text-center">
-					<h1 className="text-3xl font-semibold text-foreground">
-						Log in to Lightfast
-					</h1>
-				</div>
-			)}
+  function handlePasswordSuccess() {
+    // Password sign-in is complete, redirect to team creation
+    setError("");
+    window.location.href = `${consoleUrl}/account/teams/new`;
+  }
 
-			<div className="space-y-4">
-				{error && (
-					<div className="space-y-4">
-						<div className="rounded-lg bg-red-50 border border-red-200 p-3">
-							<p className="text-sm text-red-800">{error}</p>
-						</div>
-						<Button onClick={handleReset} variant="outline" className="w-full h-12">
-							Try again
-						</Button>
-					</div>
-				)}
+  return (
+    <div className="w-full space-y-8">
+      {/* Header - only show on email and password steps */}
+      {(verificationStep === "email" || verificationStep === "password") && (
+        <div className="text-center">
+          <h1 className="text-3xl font-semibold text-foreground">
+            Log in to Lightfast
+          </h1>
+        </div>
+      )}
 
-				{!error && verificationStep === "email" && (
-					<>
-						{/* Email Sign In */}
-						<SignInEmailInput onSuccess={handleEmailSuccess} onError={handleError} />
+      <div className="space-y-4">
+        {error && !isWaitlistRestricted && (
+          <>
+            <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+            <Button
+              onClick={handleReset}
+              variant="outline"
+              className="w-full h-12"
+            >
+              Try again
+            </Button>
+          </>
+        )}
 
-						{showPasswordSignIn && (
-							<>
-								{/* Separator */}
-								<div className="relative">
-									<div className="absolute inset-0 flex items-center">
-										<Separator className="w-full" />
-									</div>
-									<div className="relative flex justify-center text-xs uppercase">
-										<span className="bg-background px-2 text-muted-foreground">Or</span>
-									</div>
-								</div>
+        {error && isWaitlistRestricted && (
+          <>
+            <div className="rounded-lg bg-destructive/30 border border-border p-3">
+              <p className="text-sm text-foreground">{error}</p>
+            </div>
+            <Button asChild className="w-full h-12">
+              <MicrofrontendLink href="/early-access">
+                Join the Waitlist
+              </MicrofrontendLink>
+            </Button>
+            <Button
+              onClick={handleReset}
+              variant="outline"
+              className="w-full h-12"
+            >
+              Back to Sign In
+            </Button>
+          </>
+        )}
 
-								{/* Password Sign In Option */}
-								<Button
-									variant="outline"
-									onClick={() => setVerificationStep("password")}
-									className="w-full h-12"
-								>
-									Sign in with Password
-								</Button>
-							</>
-						)}
+        {!error && verificationStep === "email" && (
+          <>
+            {/* Email Sign In */}
+            <SignInEmailInput
+              onSuccess={handleEmailSuccess}
+              onError={handleError}
+            />
 
-						{/* Separator */}
-						<div className="relative">
-							<div className="absolute inset-0 flex items-center">
-								<Separator className="w-full" />
-							</div>
-							<div className="relative flex justify-center text-xs uppercase">
-								<span className="bg-background px-2 text-muted-foreground">Or</span>
-							</div>
-						</div>
+            {showPasswordSignIn && (
+              <>
+                {/* Separator */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or
+                    </span>
+                  </div>
+                </div>
 
-						{/* OAuth Sign In */}
-						<OAuthSignIn />
-					</>
-				)}
+                {/* Password Sign In Option */}
+                <Button
+                  variant="outline"
+                  onClick={() => setVerificationStep("password")}
+                  className="w-full h-12"
+                >
+                  Sign in with Password
+                </Button>
+              </>
+            )}
 
-				{!error && verificationStep === "password" && (
-					<>
-						<SignInPassword
-							onSuccess={handlePasswordSuccess}
-							onError={handleError}
-						/>
-						
-						<Button
-							variant="ghost"
-							onClick={handleReset}
-							className="w-full h-12 text-muted-foreground hover:text-foreground"
-						>
-							← Back to other options
-						</Button>
-					</>
-				)}
+            {/* Separator */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or
+                </span>
+              </div>
+            </div>
 
-				{!error && verificationStep === "code" && (
-					<SignInCodeVerification
-						email={emailAddress}
-						onReset={handleReset}
-						onError={handleError}
-					/>
-				)}
-			</div>
-		</div>
-	);
+            {/* OAuth Sign In */}
+            <OAuthSignIn onError={handleError} />
+          </>
+        )}
+
+        {!error && verificationStep === "password" && (
+          <>
+            <SignInPassword
+              onSuccess={handlePasswordSuccess}
+              onError={handleError}
+            />
+
+            <Button
+              variant="ghost"
+              onClick={handleReset}
+              className="w-full h-12 text-muted-foreground hover:text-foreground"
+            >
+              ← Back to other options
+            </Button>
+          </>
+        )}
+
+        {!error && verificationStep === "code" && (
+          <SignInCodeVerification
+            email={emailAddress}
+            onReset={handleReset}
+            onError={handleError}
+          />
+        )}
+      </div>
+    </div>
+  );
 }
-

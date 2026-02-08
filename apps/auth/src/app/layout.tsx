@@ -82,6 +82,7 @@ export default function RootLayout({
       publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
+      waitlistUrl="/early-access"
       signInFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
       signUpFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
       taskUrls={{

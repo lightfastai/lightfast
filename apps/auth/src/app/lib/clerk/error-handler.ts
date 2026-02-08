@@ -1,8 +1,9 @@
 import { captureException } from "@sentry/nextjs";
-import { 
-  getErrorMessage, 
-  isRateLimitError, 
+import {
+  getErrorMessage,
+  isRateLimitError,
   isAccountLockedError,
+  isSignUpRestricted,
   formatLockoutTime
 } from "./error-handling";
 
@@ -18,6 +19,7 @@ export interface ClerkErrorResult {
   userMessage: string;
   isRateLimit: boolean;
   isAccountLocked: boolean;
+  isSignUpRestricted: boolean;
   retryAfterSeconds?: number;
 }
 
@@ -33,14 +35,15 @@ export function handleClerkError(
 ): ClerkErrorResult {
   // Extract the Clerk error message
   const message = getErrorMessage(error);
-  
+
   // Check for specific error types
   const rateLimitInfo = isRateLimitError(error);
   const lockoutInfo = isAccountLockedError(error);
-  
+  const signUpRestricted = isSignUpRestricted(error);
+
   // Determine the user-facing message
   let userMessage = message;
-  
+
   if (rateLimitInfo.rateLimited) {
     userMessage = rateLimitInfo.retryAfterSeconds
       ? `Rate limit exceeded. Please try again in ${formatLockoutTime(rateLimitInfo.retryAfterSeconds)}.`
@@ -49,6 +52,8 @@ export function handleClerkError(
     userMessage = lockoutInfo.expiresInSeconds
       ? `Account locked. Please try again in ${formatLockoutTime(lockoutInfo.expiresInSeconds)}.`
       : "Account locked. Please try again later.";
+  } else if (signUpRestricted) {
+    userMessage = "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.";
   } else if (message.toLowerCase().includes('incorrect') || message.toLowerCase().includes('invalid')) {
     userMessage = "The entered code is incorrect. Please try again and check for typos.";
   }
@@ -69,11 +74,13 @@ export function handleClerkError(
     tags: {
       component: context.component,
       action: context.action,
-      error_type: rateLimitInfo.rateLimited 
-        ? 'rate_limit' 
-        : lockoutInfo.locked 
-          ? 'account_locked' 
-          : 'validation',
+      error_type: rateLimitInfo.rateLimited
+        ? 'rate_limit'
+        : lockoutInfo.locked
+          ? 'account_locked'
+          : signUpRestricted
+            ? 'sign_up_restricted'
+            : 'validation',
     },
     extra: {
       ...context,
@@ -84,6 +91,7 @@ export function handleClerkError(
       retryAfterSeconds: rateLimitInfo.retryAfterSeconds,
       isAccountLocked: lockoutInfo.locked,
       lockoutExpiresInSeconds: lockoutInfo.expiresInSeconds,
+      isSignUpRestricted: signUpRestricted,
     },
   });
   
@@ -92,6 +100,7 @@ export function handleClerkError(
     userMessage,
     isRateLimit: rateLimitInfo.rateLimited,
     isAccountLocked: lockoutInfo.locked,
+    isSignUpRestricted: signUpRestricted,
     retryAfterSeconds: rateLimitInfo.retryAfterSeconds,
   };
 }
