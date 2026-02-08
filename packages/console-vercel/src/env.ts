@@ -13,6 +13,11 @@ import { z } from "zod";
 export const vercelEnv = createEnv({
 	shared: {},
 	server: {
+		// Vercel Integration Slug (integration name in marketplace URL)
+		// Used for: Marketplace install URL (https://vercel.com/integrations/{slug}/new)
+		// Example: "lightfast" (production) or "lightfast-dev" (development)
+		VERCEL_INTEGRATION_SLUG: z.string().min(1),
+
 		// Vercel Integration OAuth & Webhooks
 		// NOTE: Integration webhooks use the CLIENT_INTEGRATION_SECRET for signature verification,
 		// not a separate webhook secret (per Vercel docs)

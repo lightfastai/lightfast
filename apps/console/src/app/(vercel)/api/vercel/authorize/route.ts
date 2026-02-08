@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { generateOAuthState } from "@repo/console-oauth/state";
+import { env } from "~/env";
 
 /**
  * Vercel Integration Authorization
@@ -33,8 +34,8 @@ export function GET(request: NextRequest) {
 	});
 
 	// Build Vercel Integration marketplace install URL
-	// Integration slug from Integration Console: lightfast-dev
-	const marketplaceUrl = new URL("https://vercel.com/integrations/lightfast-dev/new");
+	const integrationSlug = env.VERCEL_INTEGRATION_SLUG;
+	const marketplaceUrl = new URL(`https://vercel.com/integrations/${integrationSlug}/new`);
 	// Pass state to be forwarded to our callback
 	marketplaceUrl.searchParams.set("state", encoded);
 
