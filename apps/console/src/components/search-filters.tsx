@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Input } from "@repo/ui/components/ui/input";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Switch } from "@repo/ui/components/ui/switch";
@@ -70,6 +71,43 @@ export function SearchFilters({
   orgSlug,
   workspaceName,
 }: SearchFiltersProps) {
+  // Local display state for number inputs to allow empty field during editing
+  const [displayLimit, setDisplayLimit] = useState(String(limit));
+  const [displayOffset, setDisplayOffset] = useState(String(offset));
+
+  // Sync display state with prop changes (e.g., from URL updates)
+  useEffect(() => {
+    setDisplayLimit(String(limit));
+  }, [limit]);
+
+  useEffect(() => {
+    setDisplayOffset(String(offset));
+  }, [offset]);
+
+  // Handle limit input blur - validate and update parent
+  const handleLimitBlur = () => {
+    const parsed = parseInt(displayLimit, 10);
+    if (!isNaN(parsed)) {
+      // Valid number: clamp and propagate
+      onLimitChange(Math.min(100, Math.max(1, parsed)));
+    } else {
+      // Invalid (empty or non-numeric): revert to last valid value
+      setDisplayLimit(String(limit));
+    }
+  };
+
+  // Handle offset input blur - validate and update parent
+  const handleOffsetBlur = () => {
+    const parsed = parseInt(displayOffset, 10);
+    if (!isNaN(parsed)) {
+      // Valid number: ensure non-negative
+      onOffsetChange(Math.max(0, parsed));
+    } else {
+      // Invalid (empty or non-numeric): revert to last valid value
+      setDisplayOffset(String(offset));
+    }
+  };
+
   return (
     <div className="space-y-12">
       {/* Pagination Settings */}
@@ -84,12 +122,9 @@ export function SearchFilters({
           type="number"
           min={1}
           max={100}
-          value={limit}
-          onChange={(e) =>
-            onLimitChange(
-              Math.min(100, Math.max(1, parseInt(e.target.value) || 1)),
-            )
-          }
+          value={displayLimit}
+          onChange={(e) => setDisplayLimit(e.target.value)}
+          onBlur={handleLimitBlur}
           className="h-9 input-no-spinner"
         />
 
@@ -99,10 +134,9 @@ export function SearchFilters({
         <Input
           type="number"
           min={0}
-          value={offset}
-          onChange={(e) =>
-            onOffsetChange(Math.max(0, parseInt(e.target.value) || 0))
-          }
+          value={displayOffset}
+          onChange={(e) => setDisplayOffset(e.target.value)}
+          onBlur={handleOffsetBlur}
           className="h-9 input-no-spinner"
         />
         </div>
@@ -171,7 +205,7 @@ export function SearchFilters({
                       id={`source-${opt.value}`}
                       checked={sourceTypes.includes(opt.value)}
                       onCheckedChange={(checked) => {
-                        void onSourceTypesChange(
+                        onSourceTypesChange(
                           checked
                             ? [...sourceTypes, opt.value]
                             : sourceTypes.filter((s) => s !== opt.value),
@@ -216,7 +250,7 @@ export function SearchFilters({
                       id={`observation-${opt.value}`}
                       checked={observationTypes.includes(opt.value)}
                       onCheckedChange={(checked) => {
-                        void onObservationTypesChange(
+                        onObservationTypesChange(
                           checked
                             ? [...observationTypes, opt.value]
                             : observationTypes.filter((t) => t !== opt.value),

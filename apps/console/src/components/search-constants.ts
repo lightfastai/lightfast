@@ -4,17 +4,30 @@ import { Zap, Scale, Brain } from "lucide-react";
 export const SOURCE_TYPE_OPTIONS = [
   { value: "github", label: "GitHub" },
   { value: "vercel", label: "Vercel" },
+  { value: "sentry", label: "Sentry" },
+  { value: "linear", label: "Linear" },
 ] as const;
 
 export const OBSERVATION_TYPE_OPTIONS = [
+  // GitHub
   { value: "push", label: "Push" },
   { value: "pull_request_opened", label: "PR Opened" },
   { value: "pull_request_merged", label: "PR Merged" },
   { value: "pull_request_closed", label: "PR Closed" },
   { value: "issue_opened", label: "Issue Opened" },
   { value: "issue_closed", label: "Issue Closed" },
+  // Vercel
   { value: "deployment_succeeded", label: "Deploy Success" },
   { value: "deployment_error", label: "Deploy Error" },
+  // Sentry
+  { value: "issue.created", label: "Issue Created" },
+  { value: "issue.resolved", label: "Issue Resolved" },
+  { value: "error.created", label: "Error Created" },
+  { value: "alert.triggered", label: "Alert Triggered" },
+  // Linear
+  { value: "issue.updated", label: "Issue Updated" },
+  { value: "issue.completed", label: "Issue Completed" },
+  { value: "comment.created", label: "Comment Created" },
 ] as const;
 
 export const MODE_OPTIONS: {

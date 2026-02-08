@@ -495,9 +495,26 @@ export const observationCapture = inngest.createFunction(
 
     // Step 2: Check if event is allowed by source config
     const eventAllowed = await step.run("check-event-allowed", async () => {
-      // Extract resource ID from metadata (repoId for GitHub, projectId for Vercel)
+      // Extract resource ID from metadata based on source type
       const metadata = sourceEvent.metadata as Record<string, unknown>;
-      const resourceId = metadata.repoId?.toString() || metadata.projectId?.toString();
+
+      let resourceId: string | undefined;
+      switch (sourceEvent.source) {
+        case "github":
+          resourceId = metadata.repoId?.toString();
+          break;
+        case "vercel":
+          resourceId = metadata.projectId?.toString();
+          break;
+        case "sentry":
+          resourceId = metadata.projectId?.toString() || metadata.project?.id?.toString();
+          break;
+        case "linear":
+          resourceId = metadata.teamId?.toString();
+          break;
+        default:
+          resourceId = undefined;
+      }
 
       if (!resourceId) {
         // No resource ID in metadata - allow event (legacy or unknown source)

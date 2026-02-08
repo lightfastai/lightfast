@@ -329,6 +329,7 @@ export function transformSentryIssue(
       deliveryId: context.deliveryId,
       issueId: issue.id,
       shortId: issue.shortId,
+      projectId: issue.project.id,
       projectSlug: issue.project.slug,
       projectName: issue.project.name,
       level: issue.level,
