@@ -190,13 +190,15 @@ Sandboxed execution, scoped credentials, audit logs, human-in-the-loop for criti
 
 **GitHub App Name:** `Lightfast Console`
 
-**Homepage URL:** `https://console.lightfast.com`
+**Homepage URL:** `https://lightfast.ai`
 
-**Callback URL:** `https://console.lightfast.com/api/github/user-authorized`
+**Callback URL:** `https://lightfast.ai/api/github/user-authorized`
 
-**Webhook URL:** `https://console.lightfast.com/api/github/webhooks`
+**Webhook URL:** `https://lightfast.ai/api/github/webhooks`
 
 **Installation:** Any account
+
+**Note:** Production uses `lightfast.ai` (not `console.lightfast.com`) for all microfrontend apps. The `createBaseUrl()` utility returns `https://lightfast.ai` in production.
 
 ### Permissions Required
 
@@ -240,10 +242,12 @@ GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVA
 GITHUB_WEBHOOK_SECRET=your-webhook-secret  # Generate secure random string
 ```
 
-**Note:** Base URLs are automatically determined by `createBaseUrl()` utility:
-- Production: `https://lightfast.ai` (microfrontends)
+**Note:** Base URLs are automatically determined by `createBaseUrl()` utility in `apps/console/src/lib/base-url.ts`:
+- Production: `https://lightfast.ai` (all microfrontends served from main domain)
 - Preview: `https://{VERCEL_URL}` (Vercel preview deployments)
 - Development: `http://localhost:4107` (console app port)
+
+**IMPORTANT:** GitHub App callback URLs must match the base URL returned by `createBaseUrl()`. Do NOT hardcode `console.lightfast.com` - it will cause cookie/state validation errors.
 
 ### Key Notes
 

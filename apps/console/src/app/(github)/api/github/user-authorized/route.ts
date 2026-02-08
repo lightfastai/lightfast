@@ -51,7 +51,20 @@ export async function GET(request: NextRequest) {
 	// Validate state parameter with @repo/console-oauth
 	const storedStateEncoded = request.cookies.get("github_oauth_state")?.value;
 
+	// DEBUG: Log what we received
+	console.log("[GitHub OAuth Debug]", {
+		hasState: !!state,
+		hasCookie: !!storedStateEncoded,
+		requestUrl: request.url,
+		requestHost: request.headers.get("host"),
+		cookies: request.cookies.getAll().map((c) => c.name),
+	});
+
 	if (!state || !storedStateEncoded) {
+		console.error("[GitHub OAuth] Missing state or cookie", {
+			state: !!state,
+			cookie: !!storedStateEncoded,
+		});
 		return NextResponse.redirect(`${baseUrl}/?github_error=invalid_state`);
 	}
 
