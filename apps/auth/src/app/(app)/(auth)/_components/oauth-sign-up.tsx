@@ -10,7 +10,12 @@ import { handleClerkError } from "~/app/lib/clerk/error-handler";
 import { useLogger } from "@vendor/observability/client-log";
 import { consoleUrl } from "~/lib/related-projects";
 
-export function OAuthSignUp() {
+interface OAuthSignUpProps {
+  onError?: (errorMessage: string, isSignUpRestricted?: boolean) => void;
+  invitationTicket?: string | null;
+}
+
+export function OAuthSignUp({ onError, invitationTicket }: OAuthSignUpProps = {}) {
   const { signUp, isLoaded } = useSignUp();
   const [loading, setLoading] = React.useState<OAuthStrategy | null>(null);
   const log = useLogger();
@@ -20,6 +25,16 @@ export function OAuthSignUp() {
 
     try {
       setLoading(strategy);
+
+      // If invitation ticket is present, pre-create the sign-up with
+      // the ticket to bypass waitlist before redirecting to OAuth
+      if (invitationTicket) {
+        await signUp.create({
+          strategy: "ticket",
+          ticket: invitationTicket,
+        });
+      }
+
       await signUp.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sign-up/sso-callback",
@@ -37,7 +52,13 @@ export function OAuthSignUp() {
         strategy,
       });
 
-      toast.error(errorResult.userMessage);
+      // Pass waitlist errors to parent for special handling
+      if (errorResult.isSignUpRestricted && onError) {
+        onError(errorResult.userMessage, true);
+      } else {
+        toast.error(errorResult.userMessage);
+      }
+
       setLoading(null);
     }
   };

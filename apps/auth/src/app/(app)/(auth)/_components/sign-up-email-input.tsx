@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useSignUp } from "@clerk/nextjs";
+import { useSignUp, useClerk } from "@clerk/nextjs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,42 +17,91 @@ import {
 import { Icons } from "@repo/ui/components/icons";
 import { handleClerkError } from "~/app/lib/clerk/error-handler";
 import { useLogger } from "@vendor/observability/client-log";
+import { consoleUrl } from "~/lib/related-projects";
 
-const signUpSchema = z.object({
+const emailSchema = z.object({
 	email: z.string().email("Please enter a valid email address"),
-	password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
-type SignUpFormData = z.infer<typeof signUpSchema>;
+type EmailFormData = z.infer<typeof emailSchema>;
 
 interface SignUpEmailInputProps {
 	onSuccess: (email: string) => void;
-	onError: (error: string) => void;
+	onError: (error: string, isSignUpRestricted?: boolean) => void;
+	invitationTicket?: string | null;
 }
 
 export function SignUpEmailInput({
 	onSuccess,
 	onError,
+	invitationTicket,
 }: SignUpEmailInputProps) {
 	const { signUp, isLoaded } = useSignUp();
+	const { setActive } = useClerk();
 	const log = useLogger();
 
-	const form = useForm<SignUpFormData>({
-		resolver: zodResolver(signUpSchema),
+	const form = useForm<EmailFormData>({
+		resolver: zodResolver(emailSchema),
 		defaultValues: {
 			email: "",
-			password: "",
 		},
 	});
 
-	async function onSubmit(data: SignUpFormData) {
+	async function onSubmit(data: EmailFormData) {
 		if (!signUp) return;
 
 		try {
-			// Create sign-up attempt with email and password
+			// If invitation ticket is present, use ticket strategy
+			if (invitationTicket) {
+				const signUpAttempt = await signUp.create({
+					strategy: "ticket",
+					ticket: invitationTicket,
+					emailAddress: data.email,
+				});
+
+				log.info("[SignUpEmailInput] Sign-up created via invitation ticket", {
+					email: data.email,
+					status: signUpAttempt.status,
+				});
+
+				// Ticket strategy auto-verifies email, so check if complete
+				if (signUpAttempt.status === "complete") {
+					log.info("[SignUpEmailInput] Sign-up complete, redirecting to console");
+					await setActive({ session: signUpAttempt.createdSessionId });
+					window.location.href = `${consoleUrl}/account/teams/new`;
+					return;
+				}
+
+				// If not complete but email verified, transition to success
+				if (
+					signUpAttempt.emailAddress &&
+					signUpAttempt.verifications.emailAddress.status === "verified"
+				) {
+					log.info("[SignUpEmailInput] Email auto-verified via ticket", {
+						email: data.email,
+					});
+					onSuccess(data.email);
+					return;
+				}
+
+				// Unexpected state - fall through to standard verification
+				log.warn(
+					"[SignUpEmailInput] Ticket sign-up did not auto-verify, falling back to code",
+					{
+						status: signUpAttempt.status,
+						emailVerificationStatus:
+							signUpAttempt.verifications.emailAddress.status,
+					}
+				);
+			}
+
+			// Standard email-only sign-up flow
 			await signUp.create({
 				emailAddress: data.email,
-				password: data.password,
+			});
+
+			log.info("[SignUpEmailInput] Sign-up created", {
+				email: data.email,
 			});
 
 			// Send verification code
@@ -60,27 +109,24 @@ export function SignUpEmailInput({
 				strategy: "email_code",
 			});
 
-			log.info("[SignUpEmailInput] Authentication success", {
+			log.info("[SignUpEmailInput] Verification code sent", {
 				email: data.email,
-				timestamp: new Date().toISOString(),
 			});
+
 			onSuccess(data.email);
 		} catch (err) {
-			// Log the error
-			log.error("[SignUpEmailInput] Authentication failed", {
+			log.error("[SignUpEmailInput] Sign-up failed", {
 				email: data.email,
 				error: err,
 			});
 
-			// Handle the error with proper context
 			const errorResult = handleClerkError(err, {
 				component: "SignUpEmailInput",
 				action: "create_sign_up",
 				email: data.email,
 			});
 
-			// Pass the user-friendly error message to parent
-			onError(errorResult.userMessage);
+			onError(errorResult.userMessage, errorResult.isSignUpRestricted);
 		}
 	}
 
@@ -105,24 +151,6 @@ export function SignUpEmailInput({
 					)}
 				/>
 
-				<FormField
-					control={form.control}
-					name="password"
-					render={({ field }) => (
-						<FormItem>
-							<FormControl>
-								<Input
-									type="password"
-									placeholder="Password (8+ characters)"
-									className="h-12 bg-background dark:bg-background"
-									{...field}
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-
 				<Button
 					type="submit"
 					className="w-full h-12"
@@ -131,14 +159,13 @@ export function SignUpEmailInput({
 					{form.formState.isSubmitting ? (
 						<>
 							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-							Creating Account...
+							Sending...
 						</>
 					) : (
-						"Create Account"
+						"Continue with Email"
 					)}
 				</Button>
 			</form>
 		</Form>
 	);
 }
-
