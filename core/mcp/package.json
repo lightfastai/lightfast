@@ -1,6 +1,6 @@
 {
   "name": "@lightfastai/mcp",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "description": "Lightfast Neural Memory MCP Server - MCP for the Lightfast Memory API",
   "publishConfig": {
     "tag": "latest",
