@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -20,13 +19,11 @@ export function PerformanceMetrics({
 }: PerformanceMetricsProps) {
 
 	// Prepare chart data
-	const chartData = useMemo(() => {
-		return timeSeries.map((point) => ({
-			hour: point.hour,
-			jobs: point.jobCount,
-			avgDuration: point.avgDuration / 1000, // Convert to seconds for readability
-		}));
-	}, [timeSeries]);
+	const chartData = timeSeries.map((point) => ({
+		hour: point.hour,
+		jobs: point.jobCount,
+		avgDuration: point.avgDuration / 1000, // Convert to seconds for readability
+	}));
 
 	// Custom tooltip for the chart
 	const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {

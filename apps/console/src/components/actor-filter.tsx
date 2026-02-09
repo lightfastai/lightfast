@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -43,16 +43,13 @@ export function ActorFilter({
     staleTime: 60 * 1000, // 1 minute
   });
 
-  const toggleActor = useCallback(
-    (displayName: string) => {
-      if (selectedActors.includes(displayName)) {
-        onSelectionChange(selectedActors.filter((a) => a !== displayName));
-      } else {
-        onSelectionChange([...selectedActors, displayName]);
-      }
-    },
-    [selectedActors, onSelectionChange],
-  );
+  const toggleActor = (displayName: string) => {
+    if (selectedActors.includes(displayName)) {
+      onSelectionChange(selectedActors.filter((a) => a !== displayName));
+    } else {
+      onSelectionChange([...selectedActors, displayName]);
+    }
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

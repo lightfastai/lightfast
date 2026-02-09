@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { addBreadcrumb } from "@sentry/nextjs";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useAnswerTransport } from "~/ai/hooks/use-answer-transport";
@@ -41,8 +41,7 @@ export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
 
   // Helper to validate and send messages - mirrors chat-interface.tsx pattern
   // Returns true if message was queued, false if validation failed
-  const handleSendMessage = useCallback(
-    (text: string): boolean => {
+  const handleSendMessage = (text: string): boolean => {
       const trimmedText = text.trim();
 
       // Guard: empty input, already streaming, or already submitted
@@ -83,35 +82,27 @@ export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
       });
 
       return true;
-    },
-    [sendMessage, status, workspaceId, sessionId],
-  );
+  };
 
-  const handleSubmit = useCallback(
-    async (promptMessage: PromptInputMessage) => {
-      await Promise.resolve(); // Satisfy linter - function must be async for prop signature
-      const text = promptMessage.text ?? "";
-      const success = handleSendMessage(text);
+  const handleSubmit = async (promptMessage: PromptInputMessage) => {
+    await Promise.resolve(); // Satisfy linter - function must be async for prop signature
+    const text = promptMessage.text ?? "";
+    const success = handleSendMessage(text);
 
-      // Clear form only if message was successfully queued
-      if (success && formRef.current) {
-        formRef.current.reset();
-      }
-    },
-    [handleSendMessage],
-  );
+    // Clear form only if message was successfully queued
+    if (success && formRef.current) {
+      formRef.current.reset();
+    }
+  };
 
-  const handleSuggestionClick = useCallback(
-    (prompt: string) => {
-      const success = handleSendMessage(prompt);
+  const handleSuggestionClick = (prompt: string) => {
+    const success = handleSendMessage(prompt);
 
-      // Clear form only if message was successfully queued
-      if (success && formRef.current) {
-        formRef.current.reset();
-      }
-    },
-    [handleSendMessage],
-  );
+    // Clear form only if message was successfully queued
+    if (success && formRef.current) {
+      formRef.current.reset();
+    }
+  };
 
   // Disable submit button while streaming or submitting
   const isSubmitDisabled = status === "streaming" || status === "submitted";
