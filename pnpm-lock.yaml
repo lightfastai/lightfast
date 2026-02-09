@@ -1625,7 +1625,7 @@ importers:
         specifier: ^1.0.0
         version: 1.20.1
       lightfast:
-        specifier: ^0.1.0-alpha.4
+        specifier: workspace:*
         version: link:../lightfast
       zod:
         specifier: ^3.25.76

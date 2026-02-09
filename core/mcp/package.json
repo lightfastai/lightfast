@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "lightfast": "^0.1.0-alpha.4",
+    "lightfast": "workspace:*",
     "zod": "^3.25.76"
   },
   "devDependencies": {
