@@ -1,0 +1,1353 @@
+{
+  "$schema": "./webhook-schema.json",
+  "name": "sandbox-8",
+  "description": "Feature work surfaces hidden bugs: React Compiler integration triggers CI failures revealing pre-existing TypeScript and ESLint misconfigurations (Feb 9, 2026).",
+  "webhooks": [
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-09T08:00:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739084400000,
+        "data": {
+          "id": "issue_lf_440",
+          "identifier": "LF-440",
+          "title": "Enable React Compiler for performance optimization",
+          "description": "## Goal\nIntegrate React 19 Compiler to optimize rendering performance and reduce bundle size for the console application.\n\n## Implementation Plan\n1. Update @repo/ui package to use React 19.1.0\n2. Enable React Compiler in tsconfig.json with strict mode\n3. Update Next.js config for compiler integration\n4. Run full test suite and e2e validations\n5. Deploy to production after CI passes\n\n## Benefits\n- Automatic component memoization\n- Reduced re-renders\n- Better TypeScript type inference\n- ~12KB bundle size reduction\n\n## Timeline\nEstimate: 3 points (1 day work)",
+          "priority": 2,
+          "priorityLabel": "High",
+          "estimate": 3,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-09T08:00:00Z",
+          "updatedAt": "2026-02-09T08:00:00Z",
+          "number": 440,
+          "url": "https://linear.app/lightfastai/issue/LF-440",
+          "branchName": "feat/react-compiler-integration",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_console_perf",
+            "name": "Console Performance",
+            "url": "https://linear.app/lightfastai/project/console-perf"
+          },
+          "cycle": {
+            "id": "cycle_sprint_10",
+            "name": "Sprint 10",
+            "number": 10
+          },
+          "labels": [
+            { "id": "label_feature", "name": "Feature", "color": "#6366f1" },
+            { "id": "label_perf", "name": "Performance", "color": "#f59e0b" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "opened",
+        "number": 368,
+        "pull_request": {
+          "id": 3368000001,
+          "node_id": "PR_kwDO_lightfast_368",
+          "number": 368,
+          "state": "open",
+          "locked": false,
+          "title": "feat: enable React Compiler for console application",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nEnables React 19 Compiler integration with strict mode for the console application. This adds automatic component memoization and improves type inference across all React components.\n\n## Changes\n- Update packages/ui to React 19.1.0\n- Enable React Compiler in next.config.js with experimental.reactCompiler\n- Update tsconfig.json jsx option to support compiler directives\n- Add babel plugin for JavaScript files\n- Update all Console.log/console.warn calls per compiler requirements\n\n## Testing\n- [x] Local dev server with Compiler enabled\n- [x] All components render without errors\n- [x] Build completes successfully\n- [x] No TypeScript errors\n\n## Related\n- Fixes LF-440",
+          "created_at": "2026-02-09T09:00:00Z",
+          "updated_at": "2026-02-09T09:00:00Z",
+          "closed_at": null,
+          "merged_at": null,
+          "merge_commit_sha": null,
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 104, "node_id": "L_104", "name": "feature", "color": "6366f1", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "performance", "color": "f59e0b", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 7,
+          "additions": 156,
+          "deletions": 34,
+          "changed_files": 12,
+          "head": {
+            "label": "lightfastai:feat/react-compiler-integration",
+            "ref": "feat/react-compiler-integration",
+            "sha": "c5d8e2f91a3b4567",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T00:00:00Z",
+              "pushed_at": "2026-02-09T09:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15200,
+              "stargazers_count": 48,
+              "watchers_count": 48,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 12,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "d9f5c1e8b3a4d567",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T00:00:00Z",
+              "pushed_at": "2026-02-09T00:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15200,
+              "stargazers_count": 48,
+              "watchers_count": 48,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 12,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/368",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/368.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/368.patch",
+          "merged": false,
+          "mergeable": true,
+          "rebaseable": true,
+          "mergeable_state": "clean",
+          "merged_by": null,
+          "comments": 0,
+          "review_comments": 0,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T00:00:00Z",
+          "pushed_at": "2026-02-09T09:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15200,
+          "stargazers_count": 48,
+          "watchers_count": 48,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 12,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Comment",
+      "payload": {
+        "action": "create",
+        "type": "Comment",
+        "createdAt": "2026-02-09T09:30:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739088600000,
+        "data": {
+          "id": "comment_lf_440_001",
+          "body": "PR #368 opened with React Compiler integration. Local testing passed, moving to CI validation. Expecting ~5 min build time.",
+          "createdAt": "2026-02-09T09:30:00Z",
+          "updatedAt": "2026-02-09T09:30:00Z",
+          "url": "https://linear.app/lightfastai/issue/LF-440#comment-comment_lf_440_001",
+          "reactionData": [],
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "issue": {
+            "id": "issue_lf_440",
+            "identifier": "LF-440",
+            "title": "Enable React Compiler for performance optimization",
+            "url": "https://linear.app/lightfastai/issue/LF-440"
+          }
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "closed",
+        "number": 368,
+        "pull_request": {
+          "id": 3368000001,
+          "node_id": "PR_kwDO_lightfast_368",
+          "number": 368,
+          "state": "closed",
+          "locked": false,
+          "title": "feat: enable React Compiler for console application",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nEnables React 19 Compiler integration with strict mode for the console application. This adds automatic component memoization and improves type inference across all React components.\n\n## Changes\n- Update packages/ui to React 19.1.0\n- Enable React Compiler in next.config.js with experimental.reactCompiler\n- Update tsconfig.json jsx option to support compiler directives\n- Add babel plugin for JavaScript files\n- Update all Console.log/console.warn calls per compiler requirements\n\n## Testing\n- [x] Local dev server with Compiler enabled\n- [x] All components render without errors\n- [x] Build completes successfully\n- [x] No TypeScript errors\n\n## Related\n- Fixes LF-440",
+          "created_at": "2026-02-09T09:00:00Z",
+          "updated_at": "2026-02-09T10:00:00Z",
+          "closed_at": "2026-02-09T10:00:00Z",
+          "merged_at": "2026-02-09T10:00:00Z",
+          "merge_commit_sha": "8042056a1e5c7d92",
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 104, "node_id": "L_104", "name": "feature", "color": "6366f1", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "performance", "color": "f59e0b", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 7,
+          "additions": 156,
+          "deletions": 34,
+          "changed_files": 12,
+          "head": {
+            "label": "lightfastai:feat/react-compiler-integration",
+            "ref": "feat/react-compiler-integration",
+            "sha": "c5d8e2f91a3b4567",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T00:00:00Z",
+              "pushed_at": "2026-02-09T10:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15200,
+              "stargazers_count": 48,
+              "watchers_count": 48,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 12,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "d9f5c1e8b3a4d567",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T00:00:00Z",
+              "pushed_at": "2026-02-09T10:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15200,
+              "stargazers_count": 48,
+              "watchers_count": 48,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 12,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/368",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/368.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/368.patch",
+          "merged": true,
+          "mergeable": null,
+          "rebaseable": null,
+          "mergeable_state": "unknown",
+          "merged_by": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "comments": 3,
+          "review_comments": 4,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T00:00:00Z",
+          "pushed_at": "2026-02-09T10:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15200,
+          "stargazers_count": 48,
+          "watchers_count": 48,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 11,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "d9f5c1e8b3a4d567",
+        "after": "8042056a1e5c7d92",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/d9f5c1e8b3a4d567...8042056a1e5c7d92",
+        "commits": [
+          {
+            "id": "c5d8e2f91a3b4567",
+            "tree_id": "tree368_react_compiler",
+            "distinct": true,
+            "message": "feat: enable React Compiler for console application\n\nAdds React 19 Compiler integration with strict mode and automatic\ncomponent memoization. Enables compiler in next.config.js and updates\ntsconfig.json jsx option.\n\nFixes LF-440",
+            "timestamp": "2026-02-09T09:45:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/c5d8e2f91a3b4567",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "packages/ui/package.json",
+              "apps/console/next.config.js",
+              "apps/console/tsconfig.json",
+              "vendor/cms/src/env.ts",
+              "packages/console-validation/src/primitives/env.ts"
+            ]
+          },
+          {
+            "id": "8042056a1e5c7d92",
+            "tree_id": "tree368_merge",
+            "distinct": true,
+            "message": "Merge pull request #368 from lightfastai/feat/react-compiler-integration\n\nfeat: enable React Compiler for console application",
+            "timestamp": "2026-02-09T10:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/8042056a1e5c7d92",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "username": "web-flow"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "packages/ui/package.json",
+              "apps/console/next.config.js",
+              "apps/console/tsconfig.json",
+              "vendor/cms/src/env.ts",
+              "packages/console-validation/src/primitives/env.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "8042056a1e5c7d92",
+          "tree_id": "tree368_merge",
+          "distinct": true,
+          "message": "Merge pull request #368 from lightfastai/feat/react-compiler-integration\n\nfeat: enable React Compiler for console application",
+          "timestamp": "2026-02-09T10:00:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/8042056a1e5c7d92",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "GitHub",
+            "email": "noreply@github.com",
+            "username": "web-flow"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "packages/ui/package.json",
+            "apps/console/next.config.js",
+            "apps/console/tsconfig.json",
+            "vendor/cms/src/env.ts",
+            "packages/console-validation/src/primitives/env.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T00:00:00Z",
+          "pushed_at": "2026-02-09T10:05:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15200,
+          "stargazers_count": 48,
+          "watchers_count": 48,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 11,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.created",
+      "payload": {
+        "id": "hook_react_compiler_001",
+        "type": "deployment.created",
+        "createdAt": 1770631800000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_react_compiler_368",
+            "name": "lightfast-console",
+            "url": "lightfast-console-react-compiler-368.vercel.app",
+            "readyState": "BUILDING",
+            "meta": {
+              "githubCommitSha": "8042056a1e5c7d92",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #368 from lightfastai/feat/react-compiler-integration\n\nfeat: enable React Compiler for console application",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "368",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.error",
+      "payload": {
+        "id": "hook_react_compiler_002",
+        "type": "deployment.error",
+        "createdAt": 1770631860000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_react_compiler_368",
+            "name": "lightfast-console",
+            "url": "lightfast-console-react-compiler-368.vercel.app",
+            "readyState": "ERROR",
+            "errorMessage": "Build failed in CI. See logs for details.",
+            "errorCode": "BUILD_SCRIPT_ERROR",
+            "meta": {
+              "githubCommitSha": "8042056a1e5c7d92",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #368 from lightfastai/feat/react-compiler-integration\n\nfeat: enable React Compiler for console application",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "368",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "error",
+      "payload": {
+        "action": "created",
+        "data": {
+          "event": {
+            "event_id": "evt_ci_error_001",
+            "project": 9012345,
+            "timestamp": "2026-02-09T10:15:00Z",
+            "received": "2026-02-09T10:15:01Z",
+            "platform": "node",
+            "message": "TypeScript error in vendor/cms/src/env.ts: Type 'string | undefined' is not assignable to type 'string'",
+            "title": "TypeScript error in vendor/cms/src/env.ts",
+            "location": "vendor/cms/src/env.ts",
+            "culprit": "parseEnv",
+            "type": "error",
+            "metadata": {
+              "type": "TypeScriptError",
+              "value": "Type 'string | undefined' is not assignable to type 'string'",
+              "filename": "vendor/cms/src/env.ts",
+              "function": "parseEnv",
+              "line": 23
+            },
+            "tags": [
+              { "key": "environment", "value": "ci" },
+              { "key": "build_trigger", "value": "main_push" },
+              { "key": "error_type", "value": "typescript" }
+            ],
+            "user": {
+              "id": "ci_system",
+              "username": "vercel-ci"
+            },
+            "sdk": {
+              "name": "sentry.javascript.node",
+              "version": "8.42.0"
+            },
+            "exception": {
+              "values": [
+                {
+                  "type": "TypeScriptError",
+                  "value": "Type 'string | undefined' is not assignable to type 'string'",
+                  "stacktrace": {
+                    "frames": [
+                      {
+                        "filename": "vendor/cms/src/env.ts",
+                        "function": "parseEnv",
+                        "lineno": 23,
+                        "colno": 5,
+                        "context_line": "  DB_HOST: z.string(),"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "web_url": "https://sentry.io/organizations/lightfastai/issues/5013022567/events/evt_ci_error_001/",
+            "issue_url": "https://sentry.io/api/0/issues/5013022567/"
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "issue.created",
+      "payload": {
+        "action": "created",
+        "data": {
+          "issue": {
+            "id": "5013022567",
+            "shortId": "CI-245",
+            "title": "TypeScript error in vendor/cms/src/env.ts - Type mismatch",
+            "culprit": "parseEnv (env.ts)",
+            "status": "unresolved",
+            "level": "error",
+            "platform": "node",
+            "firstSeen": "2026-02-09T10:15:00Z",
+            "lastSeen": "2026-02-09T10:15:00Z",
+            "count": 1,
+            "userCount": 0,
+            "permalink": "https://sentry.io/organizations/lightfastai/issues/5013022567/",
+            "metadata": {
+              "type": "TypeScriptError",
+              "value": "Type 'string | undefined' is not assignable to type 'string'",
+              "filename": "vendor/cms/src/env.ts",
+              "function": "parseEnv"
+            },
+            "project": {
+              "id": "9012345",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
+            "assignedTo": null,
+            "logger": "node",
+            "type": "error",
+            "annotations": [],
+            "isPublic": false,
+            "isBookmarked": false,
+            "isSubscribed": true,
+            "hasSeen": false,
+            "numComments": 0
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        },
+        "actor": {
+          "type": "application",
+          "id": "sentry",
+          "name": "Sentry"
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-09T10:20:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1770631800000,
+        "data": {
+          "id": "issue_lf_441",
+          "identifier": "LF-441",
+          "title": "Fix vendor package configs - TypeScript and ESLint misconfigurations",
+          "description": "## Problem\nReact Compiler integration (PR #368) exposed pre-existing TypeScript strictness issues in vendor packages, specifically vendor/cms and packages/console-validation.\n\n## CI Failures\n1. vendor/cms/src/env.ts:23 - Type 'string | undefined' not assignable to 'string'\n2. packages/console-validation/src/primitives/env.ts - ESLint rule violations\n\n## Root Cause\nThese packages have incomplete tsconfig.json configurations and missing ESLint rules. The React Compiler's stricter type checking exposed these pre-existing issues.\n\n## Fix Required\n1. Update vendor/cms/src/env.ts to handle optional environment variables\n2. Update packages/console-validation ESLint config\n3. Add missing tsconfig.json strict mode settings\n4. Re-run CI to verify all checks pass\n\n## Timeline\nBlock: LF-440 (React Compiler feature depends on this fix)",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 2,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-09T10:20:00Z",
+          "updatedAt": "2026-02-09T10:20:00Z",
+          "number": 441,
+          "url": "https://linear.app/lightfastai/issue/LF-441",
+          "branchName": "fix/vendor-package-configs",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_console_perf",
+            "name": "Console Performance",
+            "url": "https://linear.app/lightfastai/project/console-perf"
+          },
+          "cycle": {
+            "id": "cycle_sprint_10",
+            "name": "Sprint 10",
+            "number": 10
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_config", "name": "Config", "color": "#8b5cf6" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "8042056a1e5c7d92",
+        "after": "91ba85041f2e9c34",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/8042056a1e5c7d92...91ba85041f2e9c34",
+        "commits": [
+          {
+            "id": "91ba85041f2e9c34",
+            "tree_id": "tree441_config_fix",
+            "distinct": true,
+            "message": "fix: resolve TypeScript and ESLint misconfigurations in vendor packages\n\nFixes TypeScript strictness issues in vendor/cms/src/env.ts and\npackages/console-validation by:\n- Adding proper type annotations for optional env vars\n- Updating ESLint rules per React Compiler requirements\n- Fixing tsconfig.json strict mode settings\n\nReferences #368\nFixes LF-441",
+            "timestamp": "2026-02-09T11:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/91ba85041f2e9c34",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "vendor/cms/src/env.ts",
+              "packages/console-validation/src/primitives/env.ts",
+              "vendor/cms/tsconfig.json",
+              "packages/console-validation/tsconfig.json"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "91ba85041f2e9c34",
+          "tree_id": "tree441_config_fix",
+          "distinct": true,
+          "message": "fix: resolve TypeScript and ESLint misconfigurations in vendor packages\n\nFixes TypeScript strictness issues in vendor/cms/src/env.ts and\npackages/console-validation by:\n- Adding proper type annotations for optional env vars\n- Updating ESLint rules per React Compiler requirements\n- Fixing tsconfig.json strict mode settings\n\nReferences #368\nFixes LF-441",
+          "timestamp": "2026-02-09T11:00:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/91ba85041f2e9c34",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "vendor/cms/src/env.ts",
+            "packages/console-validation/src/primitives/env.ts",
+            "vendor/cms/tsconfig.json",
+            "packages/console-validation/tsconfig.json"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T00:00:00Z",
+          "pushed_at": "2026-02-09T11:30:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15200,
+          "stargazers_count": 48,
+          "watchers_count": 48,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 11,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.created",
+      "payload": {
+        "id": "hook_config_fix_001",
+        "type": "deployment.created",
+        "createdAt": 1770636900000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_config_fix_441",
+            "name": "lightfast-console",
+            "url": "lightfast-console-config-fix-441.vercel.app",
+            "readyState": "BUILDING",
+            "meta": {
+              "githubCommitSha": "91ba85041f2e9c34",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "fix: resolve TypeScript and ESLint misconfigurations in vendor packages\n\nFixes TypeScript strictness issues in vendor/cms/src/env.ts and\npackages/console-validation",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "2"
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_config_fix_002",
+        "type": "deployment.succeeded",
+        "createdAt": 1770636960000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_config_fix_441",
+            "name": "lightfast-console",
+            "url": "lightfast-console.vercel.app",
+            "readyState": "READY",
+            "meta": {
+              "githubCommitSha": "91ba85041f2e9c34",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "fix: resolve TypeScript and ESLint misconfigurations in vendor packages\n\nFixes TypeScript strictness issues in vendor/cms/src/env.ts and\npackages/console-validation",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "2"
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "issue.resolved",
+      "payload": {
+        "action": "resolved",
+        "data": {
+          "issue": {
+            "id": "5013022567",
+            "shortId": "CI-245",
+            "title": "TypeScript error in vendor/cms/src/env.ts - Type mismatch",
+            "culprit": "parseEnv (env.ts)",
+            "status": "resolved",
+            "level": "error",
+            "platform": "node",
+            "firstSeen": "2026-02-09T11:50:00Z",
+            "lastSeen": "2026-02-09T11:50:00Z",
+            "count": 1,
+            "userCount": 0,
+            "permalink": "https://sentry.io/organizations/lightfastai/issues/5013022567/",
+            "metadata": {
+              "type": "TypeScriptError",
+              "value": "Type 'string | undefined' is not assignable to type 'string'",
+              "filename": "vendor/cms/src/env.ts",
+              "function": "parseEnv"
+            },
+            "project": {
+              "id": "9012345",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
+            "assignedTo": {
+              "id": "user_jeevan_sentry",
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai"
+            },
+            "statusDetails": {
+              "inCommit": {
+                "repository": "lightfastai/lightfast",
+                "commit": "91ba85041f2e9c34"
+              }
+            },
+            "logger": "node",
+            "type": "error",
+            "annotations": [],
+            "isPublic": false,
+            "isBookmarked": false,
+            "isSubscribed": true,
+            "hasSeen": true,
+            "numComments": 0
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        },
+        "actor": {
+          "type": "user",
+          "id": "user_jeevan_sentry",
+          "name": "Jeevan Pillay",
+          "email": "jp@lightfast.ai"
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "update",
+        "type": "Issue",
+        "createdAt": "2026-02-09T12:00:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739102400000,
+        "data": {
+          "id": "issue_lf_441",
+          "identifier": "LF-441",
+          "title": "Fix vendor package configs - TypeScript and ESLint misconfigurations",
+          "description": "## Problem\nReact Compiler integration (PR #368) exposed pre-existing TypeScript strictness issues in vendor packages.\n\n## Resolution\nFixed all TypeScript and ESLint issues:\n1. vendor/cms/src/env.ts - Added proper type annotations for optional env vars\n2. packages/console-validation - Updated ESLint rules per React Compiler requirements\n3. Both packages tsconfig.json updated with strict mode settings\n\n## Fix Commit\n91ba85041f2e9c34 - All CI checks passing, Vercel deployment succeeded\n\n## Impact\n- React Compiler integration (LF-440) can now proceed\n- Pre-existing configuration issues resolved\n- CI pipeline now stricter and more maintainable",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 2,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "startedAt": "2026-02-09T10:30:00Z",
+          "completedAt": "2026-02-09T12:00:00Z",
+          "createdAt": "2026-02-09T10:20:00Z",
+          "updatedAt": "2026-02-09T12:00:00Z",
+          "number": 441,
+          "url": "https://linear.app/lightfastai/issue/LF-441",
+          "branchName": "fix/vendor-package-configs",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_done",
+            "name": "Done",
+            "color": "#5e6ad2",
+            "type": "completed"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_console_perf",
+            "name": "Console Performance",
+            "url": "https://linear.app/lightfastai/project/console-perf"
+          },
+          "cycle": {
+            "id": "cycle_sprint_10",
+            "name": "Sprint 10",
+            "number": 10
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_config", "name": "Config", "color": "#8b5cf6" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        },
+        "updatedFrom": {
+          "stateId": "state_todo",
+          "completedAt": null
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "update",
+        "type": "Issue",
+        "createdAt": "2026-02-09T12:15:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739103300000,
+        "data": {
+          "id": "issue_lf_440",
+          "identifier": "LF-440",
+          "title": "Enable React Compiler for performance optimization",
+          "description": "## Goal\nIntegrate React 19 Compiler to optimize rendering performance and reduce bundle size for the console application.\n\n## Status: COMPLETED\n\n## Work Completed\n1. PR #368: React Compiler integration merged to main at 10:00 UTC\n2. LF-441: Fixed vendor package configs blocking CI at 12:00 UTC\n3. Full CI validation passed with React Compiler enabled\n4. Vercel deployment succeeded at 11:35 UTC\n5. No TypeScript or ESLint errors in strict mode\n\n## Outcomes\n- Automatic component memoization enabled\n- ~12KB bundle size reduction achieved\n- All type checking passes with React Compiler\n- Pre-existing configuration issues now resolved\n- Ready for production deployment",
+          "priority": 2,
+          "priorityLabel": "High",
+          "estimate": 3,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "startedAt": "2026-02-09T08:30:00Z",
+          "completedAt": "2026-02-09T12:15:00Z",
+          "createdAt": "2026-02-09T08:00:00Z",
+          "updatedAt": "2026-02-09T12:15:00Z",
+          "number": 440,
+          "url": "https://linear.app/lightfastai/issue/LF-440",
+          "branchName": "feat/react-compiler-integration",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_done",
+            "name": "Done",
+            "color": "#5e6ad2",
+            "type": "completed"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_console_perf",
+            "name": "Console Performance",
+            "url": "https://linear.app/lightfastai/project/console-perf"
+          },
+          "cycle": {
+            "id": "cycle_sprint_10",
+            "name": "Sprint 10",
+            "number": 10
+          },
+          "labels": [
+            { "id": "label_feature", "name": "Feature", "color": "#6366f1" },
+            { "id": "label_perf", "name": "Performance", "color": "#f59e0b" }
+          ],
+          "attachments": {
+            "nodes": [
+              {
+                "id": "attachment_gh_pr_368",
+                "title": "PR #368: feat: enable React Compiler for console application",
+                "url": "https://github.com/lightfastai/lightfast/pull/368",
+                "source": "github",
+                "sourceType": "githubPr",
+                "metadata": { "state": "merged", "number": 368 }
+              },
+              {
+                "id": "attachment_lf_441",
+                "title": "LF-441: Fix vendor package configs",
+                "url": "https://linear.app/lightfastai/issue/LF-441",
+                "source": "linear",
+                "sourceType": "linearIssue",
+                "metadata": { "identifier": "LF-441", "status": "Done" }
+              }
+            ]
+          },
+          "subscriberIds": ["user_jeevan_linear"]
+        },
+        "updatedFrom": {
+          "stateId": "state_todo",
+          "completedAt": null
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Comment",
+      "payload": {
+        "action": "create",
+        "type": "Comment",
+        "createdAt": "2026-02-09T12:30:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739104200000,
+        "data": {
+          "id": "comment_lf_440_002",
+          "body": "## Post-Implementation Summary\n\n**Timeline (Feb 9, 2026):**\n- 08:00 - LF-440 created: Enable React Compiler\n- 09:00 - PR #368 opened: React Compiler integration\n- 10:00 - PR #368 merged to main (commit 8042056a)\n- 10:05 - Vercel CI build started\n- 10:10 - Vercel build failed (TypeScript errors surfaced)\n- 10:15 - Sentry alerted: CI-245 (vendor/cms type mismatch)\n- 10:20 - LF-441 created: Fix vendor configs\n- 11:00 - Fix commit 91ba8504 pushed\n- 11:30 - Vercel CI retry initiated\n- 11:35 - Vercel deployment succeeded\n- 12:00 - LF-441 marked Done\n- 12:15 - LF-440 marked Done\n\n**Key Insight:**\nThe React Compiler integration actually exposed pre-existing configuration issues in vendor packages. This is a positive outcome - the stricter type checking caught bugs that would have eventually caused problems. The CI failures were caught before production, giving us a chance to fix them cleanly.\n\n**Outcomes:**\n- React Compiler fully integrated and working\n- Vendor package configs now TypeScript strict-compliant\n- 12KB bundle size reduction\n- No additional technical debt\n\n**Next Steps:**\n1. Monitor production performance metrics\n2. Update documentation for React Compiler best practices\n3. Add stricter TypeScript checks to all packages",
+          "createdAt": "2026-02-09T12:30:00Z",
+          "updatedAt": "2026-02-09T12:30:00Z",
+          "url": "https://linear.app/lightfastai/issue/LF-440#comment-comment_lf_440_002",
+          "reactionData": [],
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "issue": {
+            "id": "issue_lf_440",
+            "identifier": "LF-440",
+            "title": "Enable React Compiler for performance optimization",
+            "url": "https://linear.app/lightfastai/issue/LF-440"
+          }
+        }
+      }
+    }
+  ]
+}

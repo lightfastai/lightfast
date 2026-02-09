@@ -29,7 +29,7 @@ import {
   withDualAuth,
   createDualAuthErrorResponse,
 } from "../lib/with-dual-auth";
-import { searchLogic } from "~/lib/v1";
+import { searchLogic } from "~/lib/v1/search";
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();

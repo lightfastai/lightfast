@@ -17,7 +17,7 @@ import {
   withDualAuth,
   createDualAuthErrorResponse,
 } from "../lib/with-dual-auth";
-import { relatedLogic } from "~/lib/v1";
+import { relatedLogic } from "~/lib/v1/related";
 
 export async function POST(request: NextRequest) {
   const requestId = randomUUID();

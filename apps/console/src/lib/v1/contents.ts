@@ -10,7 +10,7 @@ import { recordSystemActivity } from "@api/console/lib/activity";
 import { buildSourceUrl } from "~/lib/neural/url-builder";
 import { resolveObservationsById } from "~/lib/neural/id-resolver";
 import type { ResolvedObservation } from "~/lib/neural/id-resolver";
-import type { V1AuthContext } from "./index";
+import type { V1AuthContext } from "./types";
 
 export interface ContentsLogicInput {
   ids: string[];

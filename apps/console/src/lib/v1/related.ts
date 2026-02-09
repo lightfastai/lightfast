@@ -5,7 +5,7 @@ import {
 } from "@db/console/schema";
 import { and, eq, or, inArray, desc } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
-import type { V1AuthContext } from "./index";
+import type { V1AuthContext } from "./types";
 
 export interface RelatedLogicInput {
   observationId: string;

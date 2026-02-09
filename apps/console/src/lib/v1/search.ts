@@ -10,7 +10,7 @@ import {
   fourPathParallelSearch,
   enrichSearchResults,
 } from "~/lib/neural/four-path-search";
-import type { V1AuthContext } from "./index";
+import type { V1AuthContext } from "./types";
 
 export interface SearchLogicInput {
   query: string;

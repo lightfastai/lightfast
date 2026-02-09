@@ -21,13 +21,11 @@ import {
   HARDCODED_WORKSPACE_CONTEXT,
 } from "~/ai/prompts/system-prompt";
 import { AnswerRedisMemory } from "~/ai/runtime/memory";
-import {
-  searchLogic,
-  contentsLogic,
-  findsimilarLogic,
-  graphLogic,
-  relatedLogic,
-} from "~/lib/v1";
+import { searchLogic } from "~/lib/v1/search";
+import { contentsLogic } from "~/lib/v1/contents";
+import { findsimilarLogic } from "~/lib/v1/findsimilar";
+import { graphLogic } from "~/lib/v1/graph";
+import { relatedLogic } from "~/lib/v1/related";
 
 const MODEL_ID = "anthropic/claude-sonnet-4-5-20250929";
 

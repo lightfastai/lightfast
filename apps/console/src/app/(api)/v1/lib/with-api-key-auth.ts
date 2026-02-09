@@ -9,7 +9,7 @@ import type { NextRequest } from "next/server";
 import { db } from "@db/console/client";
 import { orgApiKeys } from "@db/console/schema";
 import { eq, and, sql } from "drizzle-orm";
-import { hashApiKey } from "@repo/console-api-key";
+import { hashApiKey, isValidApiKeyFormat } from "@repo/console-api-key";
 import { log } from "@vendor/observability/log";
 
 export interface ApiKeyAuthContext {
@@ -66,14 +66,14 @@ export async function withApiKeyAuth(
 
   const apiKey = authHeader.slice(7); // Remove "Bearer " prefix
 
-  // 2. Validate key format (should start with sk-lf- prefix)
-  if (!apiKey.startsWith("sk-lf-")) {
+  // 2. Validate key format (prefix and length)
+  if (!isValidApiKeyFormat(apiKey)) {
     log.warn("Invalid API key format", { requestId });
     return {
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "Invalid API key format. Keys must start with 'sk-lf-'.",
+        message: "Invalid API key format.",
       },
       status: 401,
     };

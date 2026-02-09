@@ -4,6 +4,13 @@ export { Lightfast, createLightfast } from "./client";
 // Deprecated aliases
 export { LightfastMemory, createLightfastMemory } from "./client";
 
+// Constants
+export {
+  LIGHTFAST_API_KEY_PREFIX,
+  API_KEY_SECRET_LENGTH,
+  isValidApiKeyFormat,
+} from "./constants";
+
 // Errors
 export {
   LightfastError,

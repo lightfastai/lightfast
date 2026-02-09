@@ -7,6 +7,7 @@ export default defineConfig({
     client: "./src/client.ts",
     types: "./src/types.ts",
     errors: "./src/errors.ts",
+    constants: "./src/constants.ts",
   },
   format: ["esm"],
   dts: true,

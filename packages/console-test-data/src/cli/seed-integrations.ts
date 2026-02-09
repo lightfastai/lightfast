@@ -57,7 +57,7 @@ const DEMO_SOURCES = [
       sync: {
         branches: ["main"],
         paths: ["**/*"],
-        events: ["push", "pull_request"],
+        events: ["push", "pull_request", "issues", "release", "discussion"],
         autoSync: true,
       },
     },
@@ -85,7 +85,7 @@ const DEMO_SOURCES = [
       teamSlug: "lightfastai",
       configurationId: "icfg_demo_001",
       sync: {
-        events: ["deployment.created", "deployment.succeeded", "deployment.failed"],
+        events: ["deployment.created", "deployment.succeeded", "deployment.ready", "deployment.error", "deployment.canceled", "deployment.check-rerequested"],
         autoSync: true,
       },
     },
@@ -107,7 +107,7 @@ const DEMO_SOURCES = [
       projectSlug: "lightfast-console",
       projectId: "4508288486826115",
       sync: {
-        events: ["issue.created", "issue.resolved", "error.created", "alert.triggered"],
+        events: ["issue", "error", "event_alert", "metric_alert"],
         autoSync: true,
       },
     },
@@ -129,7 +129,7 @@ const DEMO_SOURCES = [
       teamKey: "LIGHT",
       teamName: "Lightfast",
       sync: {
-        events: ["issue.created", "issue.updated", "issue.completed", "comment.created"],
+        events: ["Issue", "Comment", "Project", "Cycle", "ProjectUpdate"],
         autoSync: true,
       },
     },

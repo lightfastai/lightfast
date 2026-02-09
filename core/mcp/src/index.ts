@@ -1,4 +1,5 @@
 import { parseArgs } from "node:util";
+import { LIGHTFAST_API_KEY_PREFIX } from "lightfast/constants";
 import { createServer } from "./server";
 
 const HELP_TEXT = `
@@ -60,8 +61,10 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  if (!apiKey.startsWith("sk-lf-")) {
-    console.error("Error: Invalid API key format. Keys should start with 'sk-lf-'");
+  if (!apiKey.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
+    console.error(
+      `Error: Invalid API key format. Keys should start with '${LIGHTFAST_API_KEY_PREFIX}'`
+    );
     process.exit(1);
   }
 

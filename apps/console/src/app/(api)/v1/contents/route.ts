@@ -19,7 +19,7 @@ import { log } from "@vendor/observability/log";
 import { V1ContentsRequestSchema } from "@repo/console-types";
 
 import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
-import { contentsLogic } from "~/lib/v1";
+import { contentsLogic } from "~/lib/v1/contents";
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();

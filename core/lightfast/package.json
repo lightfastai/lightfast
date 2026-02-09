@@ -41,6 +41,10 @@
     "./errors": {
       "types": "./dist/errors.d.ts",
       "import": "./dist/errors.mjs"
+    },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "import": "./dist/constants.mjs"
     }
   },
   "scripts": {
