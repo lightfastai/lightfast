@@ -39,7 +39,8 @@ export function SearchResultsList({
       </div>
 
       {/* Context clusters & actors */}
-      {searchResults.context && (
+      {/* Temporarily commented out - see thoughts/shared/research/2026-02-09-search-results-topics-linear-only.md */}
+      {/* {searchResults.context && (
         <div className="flex flex-wrap gap-4 text-xs">
           {searchResults.context.clusters &&
             searchResults.context.clusters.length > 0 && (
@@ -68,7 +69,7 @@ export function SearchResultsList({
               </div>
             )}
         </div>
-      )}
+      )} */}
 
       {/* Result cards */}
       {searchResults.data.length === 0 ? (
