@@ -20,7 +20,7 @@
     },
     "lightfast": {
       "command": "npx",
-      "args": ["-y", "@lightfastai/mcp", "--api-key", "sk_live_YOUR_KEY_HERE"]
+      "args": ["-y", "@lightfastai/mcp", "--api-key", "sk-lf-YOUR_KEY_HERE"]
     }
   }
 }

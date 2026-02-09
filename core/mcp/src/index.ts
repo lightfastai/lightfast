@@ -14,15 +14,15 @@ Options:
   --version, -v      Show version
 
 Examples:
-  npx @lightfastai/mcp --api-key sk_live_abc123
-  LIGHTFAST_API_KEY=sk_live_abc123 npx @lightfastai/mcp
+  npx @lightfastai/mcp --api-key sk-lf-abc123xyz
+  LIGHTFAST_API_KEY=sk-lf-abc123xyz npx @lightfastai/mcp
 
 Configure in Claude Desktop (claude_desktop_config.json):
   {
     "mcpServers": {
       "lightfast": {
         "command": "npx",
-        "args": ["-y", "@lightfastai/mcp", "--api-key", "sk_live_..."]
+        "args": ["-y", "@lightfastai/mcp", "--api-key", "sk-lf-..."]
       }
     }
   }
@@ -60,8 +60,8 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  if (!apiKey.startsWith("sk_")) {
-    console.error("Error: Invalid API key format. Keys should start with 'sk_'");
+  if (!apiKey.startsWith("sk-lf-")) {
+    console.error("Error: Invalid API key format. Keys should start with 'sk-lf-'");
     process.exit(1);
   }
 
