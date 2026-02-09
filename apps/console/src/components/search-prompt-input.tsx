@@ -61,8 +61,10 @@ const AnimatedModeToggle = forwardRef<
       }
     };
 
-    // Initial position
-    updateBgPosition();
+    // Initial position - defer until after DOM paint to avoid flash
+    requestAnimationFrame(() => {
+      updateBgPosition();
+    });
 
     // Update on resize
     const resizeObserver = new ResizeObserver(updateBgPosition);
