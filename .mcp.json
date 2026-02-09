@@ -19,8 +19,8 @@
       "args": [".mcp/start-knock.sh"]
     },
     "lightfast": {
-      "command": "npx",
-      "args": ["-y", "@lightfastai/mcp", "--api-key", "sk-lf-YOUR_KEY_HERE"]
+      "command": "bash",
+      "args": [".mcp/start-lightfast.sh"]
     }
   }
 }
