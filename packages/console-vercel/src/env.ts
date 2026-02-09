@@ -1,6 +1,5 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
-import { vendorApiKey } from "@repo/console-validation";
 
 /**
  * Vercel Integration Environment Variables
@@ -22,7 +21,7 @@ export const vercelEnv = createEnv({
 		// Vercel Integration OAuth & Webhooks
 		// NOTE: Integration webhooks use the CLIENT_INTEGRATION_SECRET for signature verification,
 		// not a separate webhook secret (per Vercel docs)
-		VERCEL_CLIENT_SECRET_ID: vendorApiKey("oac_"),
+		VERCEL_CLIENT_SECRET_ID: z.string().min(1).startsWith("oac_"),
 		VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
 		// Redirect URI for OAuth token exchange - must match Integration Console config
 		// In local dev with ngrok: https://your-ngrok-url.ngrok-free.app/api/vercel/callback

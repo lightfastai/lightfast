@@ -1,14 +1,14 @@
 import { createEnv } from "@t3-oss/env-nextjs";
-import { vendorApiKey } from "@repo/console-validation";
+import { z } from "zod";
 
 // Base Clerk environment variables
 export const clerkEnvBase = createEnv({
   shared: {},
   server: {
-    CLERK_SECRET_KEY: vendorApiKey("sk_"),
+    CLERK_SECRET_KEY: z.string().min(1).startsWith("sk_"),
   },
   client: {
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: vendorApiKey("pk_"),
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1).startsWith("pk_"),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:

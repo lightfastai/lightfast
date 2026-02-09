@@ -16,7 +16,7 @@ import {
   resolveObservationById,
   resolveObservationsById,
 } from "~/lib/neural/id-resolver";
-import type { V1AuthContext } from "./index";
+import type { V1AuthContext } from "./types";
 
 interface SourceContent {
   id: string;

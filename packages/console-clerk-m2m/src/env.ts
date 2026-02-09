@@ -1,5 +1,5 @@
 import { createEnv } from "@t3-oss/env-nextjs";
-import { vendorApiKey } from "@repo/console-validation";
+import { z } from "zod";
 
 /**
  * Console-specific M2M (Machine-to-Machine) environment variables
@@ -24,13 +24,13 @@ export const consoleM2MEnv = createEnv({
   shared: {},
   server: {
     // tRPC Machine - Secret key to VERIFY all incoming M2M tokens
-    CLERK_MACHINE_SECRET_KEY_TRPC: vendorApiKey("ak_"),
+    CLERK_MACHINE_SECRET_KEY_TRPC: z.string().min(1).startsWith("ak_"),
 
     // Webhook Machine - Secret key to CREATE tokens
-    CLERK_MACHINE_SECRET_KEY_WEBHOOK: vendorApiKey("ak_"),
+    CLERK_MACHINE_SECRET_KEY_WEBHOOK: z.string().min(1).startsWith("ak_"),
 
     // Inngest Machine - Secret key to CREATE tokens
-    CLERK_MACHINE_SECRET_KEY_INNGEST: vendorApiKey("ak_"),
+    CLERK_MACHINE_SECRET_KEY_INNGEST: z.string().min(1).startsWith("ak_"),
   },
   client: {},
   experimental__runtimeEnv: {},

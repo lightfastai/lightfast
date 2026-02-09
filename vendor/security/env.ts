@@ -1,12 +1,11 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
-import { vendorApiKey } from "@repo/console-validation";
 
 export const env = createEnv({
 	shared: {},
 	server: {
 		ARCJET_ENV: z.enum(["development", "production"]).optional(),
-		ARCJET_KEY: vendorApiKey("ajkey_"),
+		ARCJET_KEY: z.string().min(1).startsWith("ajkey_"),
 	},
 	client: {},
 	experimental__runtimeEnv: {},

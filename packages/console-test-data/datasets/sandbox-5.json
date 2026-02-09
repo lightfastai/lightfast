@@ -1,0 +1,1157 @@
+{
+  "$schema": "./webhook-schema.json",
+  "name": "sandbox-5",
+  "description": "Infrastructure optimization: Turborepo pipeline and Next.js configuration optimization achieving 50-80% faster builds (Feb 9, 2026).",
+  "webhooks": [
+    {
+      "source": "sentry",
+      "eventType": "metric_alert",
+      "payload": {
+        "action": "triggered",
+        "createdAt": "2026-02-09T08:00:00Z",
+        "data": {
+          "metric_alert": {
+            "id": "metric_alert_build_perf_001",
+            "alert_rule": {
+              "id": 84722,
+              "name": "CI Build Performance Degradation",
+              "organization_id": "org_lightfastai",
+              "status": 0,
+              "query": "event.type:transaction transaction:ci-build-pipeline",
+              "threshold_type": 0,
+              "resolve_threshold": 480,
+              "time_window": 15,
+              "aggregate": "p95(transaction.duration)"
+            },
+            "date_started": "2026-02-09T08:00:00Z",
+            "date_detected": "2026-02-09T08:00:00Z",
+            "date_closed": null
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-09T08:15:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739086500000,
+        "data": {
+          "id": "issue_lf_430",
+          "identifier": "LF-430",
+          "title": "Slow CI builds blocking deployments",
+          "description": "## Problem\nCI pipeline builds taking 8+ minutes, creating deployment bottleneck.\n\n## Sentry Alert\n- Build performance metric degradation detected at 08:00 UTC\n- P95 build duration trending above 480 seconds\n- Blocking team productivity\n\n## Impact\n- P2 - Each deployment requires 8 minute wait\n- Multiple daily deployments affected\n- Blocking PR feedback cycle\n\n## Investigation\n- Benchmark current build time and cache hit rates\n- Profile Turborepo task graph and Next.js compilation\n- Identify slowest packages and build steps",
+          "priority": 2,
+          "priorityLabel": "High",
+          "estimate": 5,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-09T08:15:00Z",
+          "updatedAt": "2026-02-09T08:15:00Z",
+          "number": 430,
+          "url": "https://linear.app/lightfastai/issue/LF-430",
+          "branchName": "fix/ci-build-optimization",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_infrastructure",
+            "key": "LF",
+            "name": "Infrastructure"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_platform_efficiency",
+            "name": "Platform Efficiency v1",
+            "url": "https://linear.app/lightfastai/project/platform-efficiency-v1"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_perf", "name": "Performance", "color": "#fbbf24" },
+            { "id": "label_p2", "name": "P2", "color": "#f97316" },
+            { "id": "label_infra", "name": "Infrastructure", "color": "#06b6d4" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Comment",
+      "payload": {
+        "action": "create",
+        "type": "Comment",
+        "createdAt": "2026-02-09T09:00:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739090400000,
+        "data": {
+          "id": "comment_lf_430_001",
+          "body": "## Investigation Results (09:00 UTC)\n\n### Benchmark Baseline\n- Current build time: **480 seconds (8m)**\n- Cache hit rate: **~35%** (cold start 100% miss)\n- Bottleneck: Turborepo task graph re-computation\n\n### Profiling Data\n- `core/lightfast` build: 2m45s (includes unnecessary bundling)\n- `apps/console` build: 3m20s (Next.js page compilation)\n- Package graph: 47 packages with serial dependencies\n\n### Root Causes\n1. **Turborepo cache mismatch**: Pipeline hashing not capturing all inputs\n2. **Next.js config**: Compiling all pages eagerly, no incremental builds\n3. **Package graph**: Sequential ordering when parallelizable\n\n### Optimization Plan\n1. **Turborepo**: Fix cache key generation, enable persistent cache layer\n2. **Next.js**: Enable incremental static regeneration, optimize webpack config\n3. **Graph**: Restructure dependencies for parallel task execution\n\nEstimated impact: **50-80% improvement** (480s → 120s)\n\nStarting implementation now.",
+          "createdAt": "2026-02-09T09:00:00Z",
+          "updatedAt": "2026-02-09T09:00:00Z",
+          "url": "https://linear.app/lightfastai/issue/LF-430#comment-comment_lf_430_001",
+          "reactionData": [],
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "issue": {
+            "id": "issue_lf_430",
+            "identifier": "LF-430",
+            "title": "Slow CI builds blocking deployments",
+            "url": "https://linear.app/lightfastai/issue/LF-430"
+          }
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/perf/turborepo-optimization",
+        "before": "0000000000000000",
+        "after": "480cda9c1a2b3c4d",
+        "created": true,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/...480cda9c1a2b3c4d",
+        "timestamp": "2026-02-09T10:00:00Z",
+        "commits": [
+          {
+            "id": "480cda9c1a2b3c4d",
+            "tree_id": "tree_turborepo_opt",
+            "distinct": true,
+            "message": "perf(turborepo): fix cache key generation and enable persistent cache\n\nOptimizes Turborepo pipeline by:\n- Including all input files in cache key hash\n- Enabling persistent cache layer across CI runs\n- Restructuring task dependencies for parallelization\n- Adding turbo.json optimization presets\n\nBenchmark improvement: 8m → 4m45s (40% faster)\n\nFixes LF-430",
+            "timestamp": "2026-02-09T10:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/480cda9c1a2b3c4d",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "turbo.json",
+              "core/lightfast/tsup.config.ts",
+              "packages/console-validation/src/index.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "480cda9c1a2b3c4d",
+          "tree_id": "tree_turborepo_opt",
+          "distinct": true,
+          "message": "perf(turborepo): fix cache key generation and enable persistent cache",
+          "timestamp": "2026-02-09T10:00:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/480cda9c1a2b3c4d",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "turbo.json",
+            "core/lightfast/tsup.config.ts",
+            "packages/console-validation/src/index.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T00:00:00Z",
+          "pushed_at": "2026-02-09T10:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 12,
+          "default_branch": "main",
+          "topics": ["ai", "agents", "mcp", "neural-memory", "typescript"],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/perf/turborepo-optimization",
+        "before": "480cda9c1a2b3c4d",
+        "after": "adea6073e5f6g7h8",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/480cda9c1a2b3c4d...adea6073e5f6g7h8",
+        "timestamp": "2026-02-09T11:00:00Z",
+        "commits": [
+          {
+            "id": "adea6073e5f6g7h8",
+            "tree_id": "tree_nextjs_opt",
+            "distinct": true,
+            "message": "perf(next.js): optimize webpack config and enable incremental builds\n\nOptimizes Next.js build pipeline by:\n- Disabling unnecessary transformations in webpack\n- Enabling incremental static regeneration (ISR)\n- Optimizing CSS module handling\n- Reducing initial page compilation overhead\n\nBenchmark improvement: 4m45s → 2m (58% faster)\n\nFixes LF-430",
+            "timestamp": "2026-02-09T11:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/adea6073e5f6g7h8",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "apps/console/next.config.ts",
+              "apps/console/tsconfig.json",
+              "apps/www/next.config.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "adea6073e5f6g7h8",
+          "tree_id": "tree_nextjs_opt",
+          "distinct": true,
+          "message": "perf(next.js): optimize webpack config and enable incremental builds",
+          "timestamp": "2026-02-09T11:00:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/adea6073e5f6g7h8",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "apps/console/next.config.ts",
+            "apps/console/tsconfig.json",
+            "apps/www/next.config.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T00:00:00Z",
+          "pushed_at": "2026-02-09T11:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 12,
+          "default_branch": "main",
+          "topics": ["ai", "agents", "mcp", "neural-memory", "typescript"],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "opened",
+        "number": 360,
+        "createdAt": "2026-02-09T12:00:00Z",
+        "pull_request": {
+          "id": 3360000001,
+          "node_id": "PR_kwDO_lightfast_360",
+          "number": 360,
+          "state": "open",
+          "locked": false,
+          "title": "perf: Turborepo and Next.js build optimization for 50-80% faster CI",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nComprehensive CI/CD performance optimization achieving 50-80% faster builds through Turborepo cache tuning and Next.js webpack configuration improvements.\n\n## Changes\n- **Turborepo**: Fixed cache key generation to include all inputs; enabled persistent cache layer; restructured task dependencies for parallelization\n- **Next.js**: Optimized webpack config to reduce page compilation overhead; enabled incremental static regeneration (ISR)\n- **Configuration**: Updated turbo.json with optimization presets for both apps/console and apps/www\n\n## Benchmark Results\n\n### Before\n- Total build time: **480 seconds (8 minutes)**\n- Cache hit rate: **35%**\n- Breakdown:\n  - core/lightfast: 2m45s\n  - apps/console: 3m20s\n\n### After (both commits)\n- Total build time: **120 seconds (2 minutes)**\n- Cache hit rate: **85%**\n- Breakdown:\n  - core/lightfast: 45s (↓65%)\n  - apps/console: 75s (↓62%)\n\n### Metrics\n- **Overall improvement: 75% faster**\n- **Cold start: 480s → 180s (62% faster)**\n- **Warm cache: 180s → 45s (75% faster)**\n- **Cache efficiency: 35% → 85% hit rate**\n\n## Testing\n- [x] Build succeeds with persistent cache\n- [x] ISR correctly handles page regeneration\n- [x] Parallel tasks execute correctly\n- [x] Cache invalidation works on config changes\n- [x] Local dev experience unchanged\n\n## Related Issues\n- Fixes #430\n- Fixes LF-430\n- Resolves Sentry CI Build Performance alert",
+          "created_at": "2026-02-09T12:00:00Z",
+          "updated_at": "2026-02-09T12:00:00Z",
+          "closed_at": null,
+          "merged_at": null,
+          "merge_commit_sha": null,
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 104, "node_id": "L_104", "name": "performance", "color": "#fbbf24", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "infrastructure", "color": "#06b6d4", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 2,
+          "additions": 156,
+          "deletions": 34,
+          "changed_files": 5,
+          "head": {
+            "label": "lightfastai:perf/turborepo-optimization",
+            "ref": "perf/turborepo-optimization",
+            "sha": "adea6073e5f6g7h8",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T00:00:00Z",
+              "pushed_at": "2026-02-09T11:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 12,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "c9d8e7f6a5b43210",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T00:00:00Z",
+              "pushed_at": "2026-02-09T00:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 12,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/360",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/360.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/360.patch",
+          "merged": false,
+          "mergeable": true,
+          "rebaseable": true,
+          "mergeable_state": "clean",
+          "merged_by": null,
+          "comments": 0,
+          "review_comments": 0,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T00:00:00Z",
+          "pushed_at": "2026-02-09T12:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 12,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "closed",
+        "number": 360,
+        "createdAt": "2026-02-09T13:00:00Z",
+        "pull_request": {
+          "id": 3360000001,
+          "node_id": "PR_kwDO_lightfast_360",
+          "number": 360,
+          "state": "closed",
+          "locked": false,
+          "title": "perf: Turborepo and Next.js build optimization for 50-80% faster CI",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nComprehensive CI/CD performance optimization achieving 50-80% faster builds through Turborepo cache tuning and Next.js webpack configuration improvements.\n\n## Changes\n- **Turborepo**: Fixed cache key generation to include all inputs; enabled persistent cache layer; restructured task dependencies for parallelization\n- **Next.js**: Optimized webpack config to reduce page compilation overhead; enabled incremental static regeneration (ISR)\n- **Configuration**: Updated turbo.json with optimization presets for both apps/console and apps/www\n\n## Benchmark Results\n\n### Before\n- Total build time: **480 seconds (8 minutes)**\n- Cache hit rate: **35%**\n- Breakdown:\n  - core/lightfast: 2m45s\n  - apps/console: 3m20s\n\n### After (both commits)\n- Total build time: **120 seconds (2 minutes)**\n- Cache hit rate: **85%**\n- Breakdown:\n  - core/lightfast: 45s (↓65%)\n  - apps/console: 75s (↓62%)\n\n### Metrics\n- **Overall improvement: 75% faster**\n- **Cold start: 480s → 180s (62% faster)**\n- **Warm cache: 180s → 45s (75% faster)**\n- **Cache efficiency: 35% → 85% hit rate**\n\n## Testing\n- [x] Build succeeds with persistent cache\n- [x] ISR correctly handles page regeneration\n- [x] Parallel tasks execute correctly\n- [x] Cache invalidation works on config changes\n- [x] Local dev experience unchanged\n\n## Related Issues\n- Fixes #430\n- Fixes LF-430\n- Resolves Sentry CI Build Performance alert",
+          "created_at": "2026-02-09T12:00:00Z",
+          "updated_at": "2026-02-09T13:00:00Z",
+          "closed_at": "2026-02-09T13:00:00Z",
+          "merged_at": "2026-02-09T13:00:00Z",
+          "merge_commit_sha": "f9e8d7c6b5a49382",
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 104, "node_id": "L_104", "name": "performance", "color": "#fbbf24", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "infrastructure", "color": "#06b6d4", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 2,
+          "additions": 156,
+          "deletions": 34,
+          "changed_files": 5,
+          "head": {
+            "label": "lightfastai:perf/turborepo-optimization",
+            "ref": "perf/turborepo-optimization",
+            "sha": "adea6073e5f6g7h8",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T00:00:00Z",
+              "pushed_at": "2026-02-09T12:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 12,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "c9d8e7f6a5b43210",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T00:00:00Z",
+              "pushed_at": "2026-02-09T12:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 12,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/360",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/360.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/360.patch",
+          "merged": true,
+          "mergeable": null,
+          "rebaseable": null,
+          "mergeable_state": "unknown",
+          "merged_by": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "comments": 0,
+          "review_comments": 3,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T00:00:00Z",
+          "pushed_at": "2026-02-09T13:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 11,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "c9d8e7f6a5b43210",
+        "after": "f9e8d7c6b5a49382",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/c9d8e7f6a5b43210...f9e8d7c6b5a49382",
+        "timestamp": "2026-02-09T13:05:00Z",
+        "commits": [
+          {
+            "id": "480cda9c1a2b3c4d",
+            "tree_id": "tree_turborepo_opt",
+            "distinct": true,
+            "message": "perf(turborepo): fix cache key generation and enable persistent cache",
+            "timestamp": "2026-02-09T10:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/480cda9c1a2b3c4d",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "turbo.json",
+              "core/lightfast/tsup.config.ts",
+              "packages/console-validation/src/index.ts"
+            ]
+          },
+          {
+            "id": "adea6073e5f6g7h8",
+            "tree_id": "tree_nextjs_opt",
+            "distinct": true,
+            "message": "perf(next.js): optimize webpack config and enable incremental builds",
+            "timestamp": "2026-02-09T11:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/adea6073e5f6g7h8",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "apps/console/next.config.ts",
+              "apps/console/tsconfig.json",
+              "apps/www/next.config.ts"
+            ]
+          },
+          {
+            "id": "f9e8d7c6b5a49382",
+            "tree_id": "tree_merge_perf",
+            "distinct": true,
+            "message": "Merge pull request #360 from lightfastai/perf/turborepo-optimization\n\nperf: Turborepo and Next.js build optimization for 50-80% faster CI",
+            "timestamp": "2026-02-09T13:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/f9e8d7c6b5a49382",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "username": "web-flow"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "turbo.json",
+              "core/lightfast/tsup.config.ts",
+              "packages/console-validation/src/index.ts",
+              "apps/console/next.config.ts",
+              "apps/console/tsconfig.json",
+              "apps/www/next.config.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "f9e8d7c6b5a49382",
+          "tree_id": "tree_merge_perf",
+          "distinct": true,
+          "message": "Merge pull request #360 from lightfastai/perf/turborepo-optimization\n\nperf: Turborepo and Next.js build optimization for 50-80% faster CI",
+          "timestamp": "2026-02-09T13:00:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/f9e8d7c6b5a49382",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "GitHub",
+            "email": "noreply@github.com",
+            "username": "web-flow"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "turbo.json",
+            "core/lightfast/tsup.config.ts",
+            "packages/console-validation/src/index.ts",
+            "apps/console/next.config.ts",
+            "apps/console/tsconfig.json",
+            "apps/www/next.config.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T00:00:00Z",
+          "pushed_at": "2026-02-09T13:05:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 11,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.created",
+      "payload": {
+        "id": "hook_perf_opt_001",
+        "type": "deployment.created",
+        "createdAt": 1770642600000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_perf_opt_360",
+            "name": "lightfast-console",
+            "url": "lightfast-console-perf-opt-360.vercel.app",
+            "readyState": "BUILDING",
+            "meta": {
+              "githubCommitSha": "f9e8d7c6b5a49382",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #360 from lightfastai/perf/turborepo-optimization\n\nperf: Turborepo and Next.js build optimization for 50-80% faster CI",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "360",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_perf_opt_002",
+        "type": "deployment.succeeded",
+        "createdAt": 1770642660000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_perf_opt_360",
+            "name": "lightfast-console",
+            "url": "lightfast-console.vercel.app",
+            "readyState": "READY",
+            "meta": {
+              "githubCommitSha": "f9e8d7c6b5a49382",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #360 from lightfastai/perf/turborepo-optimization\n\nperf: Turborepo and Next.js build optimization for 50-80% faster CI",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "360",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1",
+              "buildTime": 120,
+              "previousBuildTime": 480
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "metric_alert",
+      "payload": {
+        "action": "resolved",
+        "createdAt": "2026-02-09T13:11:00Z",
+        "data": {
+          "metric_alert": {
+            "id": "metric_alert_build_perf_001",
+            "alert_rule": {
+              "id": 84722,
+              "name": "CI Build Performance Degradation",
+              "organization_id": "org_lightfastai",
+              "status": 0,
+              "query": "event.type:transaction transaction:ci-build-pipeline",
+              "threshold_type": 0,
+              "resolve_threshold": 480,
+              "time_window": 15,
+              "aggregate": "p95(transaction.duration)"
+            },
+            "date_started": "2026-02-09T08:00:00Z",
+            "date_detected": "2026-02-09T13:11:00Z",
+            "date_closed": "2026-02-09T13:11:00Z"
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "update",
+        "type": "Issue",
+        "createdAt": "2026-02-09T13:20:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739098800000,
+        "data": {
+          "id": "issue_lf_430",
+          "identifier": "LF-430",
+          "title": "Slow CI builds blocking deployments",
+          "description": "## Problem\nCI pipeline builds taking 8+ minutes, creating deployment bottleneck.\n\n## Solution Implemented\nComprehensive optimization of Turborepo cache and Next.js webpack configuration.\n\n## Results\n- Before: 480 seconds (8 minutes), 35% cache hit rate\n- After: 120 seconds (2 minutes), 85% cache hit rate\n- Improvement: **75% faster builds**\n- Cold start: 62% improvement (480s → 180s)\n- Warm cache: 75% improvement (180s → 45s)\n\n## Changes Merged\n- PR #360 merged with commits 480cda9c and adea6073\n- Deployed to production at 13:10 UTC\n- Sentry metric alert resolved\n\n## Impact\n- Removed deployment blocking issue\n- Team productivity increase\n- Faster feedback loop for PR reviews",
+          "priority": 2,
+          "priorityLabel": "High",
+          "estimate": 5,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "startedAt": "2026-02-09T09:00:00Z",
+          "completedAt": "2026-02-09T13:20:00Z",
+          "createdAt": "2026-02-09T13:20:00Z",
+          "updatedAt": "2026-02-09T13:20:00Z",
+          "number": 430,
+          "url": "https://linear.app/lightfastai/issue/LF-430",
+          "branchName": "fix/ci-build-optimization",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_infrastructure",
+            "key": "LF",
+            "name": "Infrastructure"
+          },
+          "state": {
+            "id": "state_done",
+            "name": "Done",
+            "color": "#5e6ad2",
+            "type": "completed"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_platform_efficiency",
+            "name": "Platform Efficiency v1",
+            "url": "https://linear.app/lightfastai/project/platform-efficiency-v1"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_perf", "name": "Performance", "color": "#fbbf24" },
+            { "id": "label_p2", "name": "P2", "color": "#f97316" },
+            { "id": "label_infra", "name": "Infrastructure", "color": "#06b6d4" }
+          ],
+          "attachments": {
+            "nodes": [
+              {
+                "id": "attachment_gh_pr_360",
+                "title": "PR #360: perf: Turborepo and Next.js build optimization",
+                "url": "https://github.com/lightfastai/lightfast/pull/360",
+                "source": "github",
+                "sourceType": "githubPr",
+                "metadata": { "state": "merged", "number": 360 }
+              },
+              {
+                "id": "attachment_commit_480cda9c",
+                "title": "Commit 480cda9c: perf(turborepo): fix cache key generation",
+                "url": "https://github.com/lightfastai/lightfast/commit/480cda9c1a2b3c4d",
+                "source": "github",
+                "sourceType": "githubCommit",
+                "metadata": { "sha": "480cda9c1a2b3c4d" }
+              },
+              {
+                "id": "attachment_commit_adea6073",
+                "title": "Commit adea6073: perf(next.js): optimize webpack config",
+                "url": "https://github.com/lightfastai/lightfast/commit/adea6073e5f6g7h8",
+                "source": "github",
+                "sourceType": "githubCommit",
+                "metadata": { "sha": "adea6073e5f6g7h8" }
+              }
+            ]
+          },
+          "subscriberIds": ["user_jeevan_linear"]
+        },
+        "updatedFrom": {
+          "stateId": "state_todo",
+          "completedAt": null
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "ProjectUpdate",
+      "payload": {
+        "action": "create",
+        "type": "ProjectUpdate",
+        "createdAt": "2026-02-09T13:30:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739099400000,
+        "data": {
+          "id": "update_platform_efficiency_builds",
+          "body": "## Platform Efficiency v1 - Build Performance Victory\n\nWe successfully delivered a comprehensive CI/CD optimization initiative, achieving 75% faster builds across the monorepo.\n\n**Improvements:**\n- Build time: 480s → 120s (8m → 2m)\n- Cache hit rate: 35% → 85%\n- Cold start performance: 62% improvement\n- Warm cache performance: 75% improvement\n\n**Technical Changes:**\n1. **Turborepo**: Fixed cache key generation to capture all input files; enabled persistent cache layer; restructured task dependencies for parallelization\n2. **Next.js**: Optimized webpack configuration; enabled incremental static regeneration; reduced page compilation overhead\n\n**Impact on Team:**\n- Eliminated deployment bottleneck (8m wait is now 2m)\n- Faster PR feedback cycle\n- Improved developer experience\n- Reduced CI resource consumption\n\n**What's Next:**\n- Monitor build metrics in Sentry dashboard\n- Consider cache warm-up strategies for baseline deployments\n- Explore similar optimizations for other build pipelines (docs, www)\n\n**Status: On Track** - infrastructure efficiency improvements are tracking well.",
+          "createdAt": "2026-02-09T13:30:00Z",
+          "updatedAt": "2026-02-09T13:30:00Z",
+          "url": "https://linear.app/lightfastai/project/platform-efficiency-v1/updates/update_platform_efficiency_builds",
+          "health": "onTrack",
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_platform_efficiency",
+            "name": "Platform Efficiency v1",
+            "url": "https://linear.app/lightfastai/project/platform-efficiency-v1"
+          }
+        }
+      }
+    }
+  ]
+}

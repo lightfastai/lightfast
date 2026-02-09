@@ -17,7 +17,7 @@ import {
   withDualAuth,
   createDualAuthErrorResponse,
 } from "../lib/with-dual-auth";
-import { graphLogic } from "~/lib/v1";
+import { graphLogic } from "~/lib/v1/graph";
 
 export async function POST(request: NextRequest) {
   const requestId = randomUUID();

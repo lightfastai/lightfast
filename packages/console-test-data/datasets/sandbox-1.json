@@ -237,7 +237,7 @@
             "id": "user_jeevan_linear",
             "name": "Jeevan Pillay",
             "displayName": "Jeevan Pillay",
-            "email": "jeevan@lightfast.ai",
+            "email": "jp@lightfast.ai",
             "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
             "isMe": true,
             "active": true
@@ -246,7 +246,7 @@
             "id": "user_jeevan_linear",
             "name": "Jeevan Pillay",
             "displayName": "Jeevan Pillay",
-            "email": "jeevan@lightfast.ai",
+            "email": "jp@lightfast.ai",
             "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
             "isMe": true,
             "active": true
@@ -291,7 +291,7 @@
             "id": "user_jeevan_linear",
             "name": "Jeevan Pillay",
             "displayName": "Jeevan Pillay",
-            "email": "jeevan@lightfast.ai",
+            "email": "jp@lightfast.ai",
             "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
             "isMe": true,
             "active": true
@@ -449,7 +449,7 @@
             "id": "user_jeevan_linear",
             "name": "Jeevan Pillay",
             "displayName": "Jeevan Pillay",
-            "email": "jeevan@lightfast.ai",
+            "email": "jp@lightfast.ai",
             "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
             "isMe": true,
             "active": true
@@ -458,7 +458,7 @@
             "id": "user_jeevan_linear",
             "name": "Jeevan Pillay",
             "displayName": "Jeevan Pillay",
-            "email": "jeevan@lightfast.ai",
+            "email": "jp@lightfast.ai",
             "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
             "isMe": true,
             "active": true
@@ -891,12 +891,12 @@
             "url": "https://github.com/lightfastai/lightfast/commit/b7e4d1f82c3a4567",
             "author": {
               "name": "Jeevan Pillay",
-              "email": "jeevan@lightfast.ai",
+              "email": "jp@lightfast.ai",
               "username": "jeevanpillay"
             },
             "committer": {
               "name": "Jeevan Pillay",
-              "email": "jeevan@lightfast.ai",
+              "email": "jp@lightfast.ai",
               "username": "jeevanpillay"
             },
             "added": [],
@@ -917,7 +917,7 @@
             "url": "https://github.com/lightfastai/lightfast/commit/a8f3c2d91e4b5678",
             "author": {
               "name": "Jeevan Pillay",
-              "email": "jeevan@lightfast.ai",
+              "email": "jp@lightfast.ai",
               "username": "jeevanpillay"
             },
             "committer": {
@@ -944,7 +944,7 @@
           "url": "https://github.com/lightfastai/lightfast/commit/a8f3c2d91e4b5678",
           "author": {
             "name": "Jeevan Pillay",
-            "email": "jeevan@lightfast.ai",
+            "email": "jp@lightfast.ai",
             "username": "jeevanpillay"
           },
           "committer": {
@@ -993,7 +993,7 @@
           "topics": [],
           "visibility": "private"
         },
-        "pusher": { "name": "jeevanpillay", "email": "jeevan@lightfast.ai" },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
         "sender": {
           "login": "jeevanpillay",
           "id": 7654321,
@@ -1107,7 +1107,7 @@
             "assignedTo": {
               "id": "user_jeevan_sentry",
               "name": "Jeevan Pillay",
-              "email": "jeevan@lightfast.ai"
+              "email": "jp@lightfast.ai"
             },
             "statusDetails": {
               "inCommit": {
@@ -1132,7 +1132,7 @@
           "type": "user",
           "id": "user_jeevan_sentry",
           "name": "Jeevan Pillay",
-          "email": "jeevan@lightfast.ai"
+          "email": "jp@lightfast.ai"
         }
       }
     },
@@ -1180,7 +1180,7 @@
             "id": "user_jeevan_linear",
             "name": "Jeevan Pillay",
             "displayName": "Jeevan Pillay",
-            "email": "jeevan@lightfast.ai",
+            "email": "jp@lightfast.ai",
             "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
             "isMe": true,
             "active": true
@@ -1189,7 +1189,7 @@
             "id": "user_jeevan_linear",
             "name": "Jeevan Pillay",
             "displayName": "Jeevan Pillay",
-            "email": "jeevan@lightfast.ai",
+            "email": "jp@lightfast.ai",
             "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
             "isMe": true,
             "active": true
@@ -1359,7 +1359,7 @@
             "id": "user_jeevan_linear",
             "name": "Jeevan Pillay",
             "displayName": "Jeevan Pillay",
-            "email": "jeevan@lightfast.ai",
+            "email": "jp@lightfast.ai",
             "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
             "isMe": true,
             "active": true
@@ -1394,7 +1394,7 @@
             "id": "user_jeevan_linear",
             "name": "Jeevan Pillay",
             "displayName": "Jeevan Pillay",
-            "email": "jeevan@lightfast.ai",
+            "email": "jp@lightfast.ai",
             "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
             "isMe": true,
             "active": true
