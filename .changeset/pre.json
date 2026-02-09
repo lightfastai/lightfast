@@ -78,6 +78,7 @@
   },
   "changesets": [
     "fix-api-key-format",
+    "fix-mcp-validation",
     "mcp-schema-export-fix"
   ]
 }
