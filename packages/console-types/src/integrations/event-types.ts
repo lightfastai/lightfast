@@ -577,6 +577,72 @@ export function toExternalGitHubEvent(
   return INTERNAL_TO_GITHUB[internalType];
 }
 
+// ─── Helper Function ──────────────────────────────────────────────────────────
+
+/**
+ * Strip source prefix from internal event type.
+ * Converts "github:pull-request.opened" → "pull-request.opened"
+ * @param internalType - Internal event type with source prefix
+ */
+function stripSourcePrefix(internalType: string): string {
+  const colonIndex = internalType.indexOf(":");
+  return colonIndex > 0 ? internalType.slice(colonIndex + 1) : internalType;
+}
+
+// ─── External Format Functions (SourceEvent.sourceType) ──────────────────────
+
+/**
+ * GitHub: external event format -> SourceEvent.sourceType (WITHOUT prefix).
+ * Use this when creating SourceEvents in transformers.
+ * @param event - GitHub event name (e.g., "pull_request")
+ * @param action - GitHub action (e.g., "opened")
+ */
+export function toExternalGitHubEventType(
+  event: string,
+  action?: string,
+): string | undefined {
+  const internal = toInternalGitHubEvent(event, action);
+  if (!internal) return undefined;
+  return stripSourcePrefix(internal);
+}
+
+/**
+ * Vercel: event type string -> SourceEvent.sourceType (WITHOUT prefix).
+ * Use this when creating SourceEvents in transformers.
+ */
+export function toExternalVercelEventType(
+  eventType: string,
+): string | undefined {
+  const internal = toInternalVercelEvent(eventType);
+  if (!internal) return undefined;
+  return stripSourcePrefix(internal);
+}
+
+/**
+ * Sentry: event type string -> SourceEvent.sourceType (WITHOUT prefix).
+ * Use this when creating SourceEvents in transformers.
+ */
+export function toExternalSentryEventType(
+  eventType: string,
+): string | undefined {
+  const internal = toInternalSentryEvent(eventType);
+  if (!internal) return undefined;
+  return stripSourcePrefix(internal);
+}
+
+/**
+ * Linear: webhook type + action -> SourceEvent.sourceType (WITHOUT prefix).
+ * Use this when creating SourceEvents in transformers.
+ */
+export function toExternalLinearEventType(
+  type: string,
+  action: string,
+): string | undefined {
+  const internal = toInternalLinearEvent(type, action);
+  if (!internal) return undefined;
+  return stripSourcePrefix(internal);
+}
+
 // ─── Auto-Derived UI Display Events ───────────────────────────────────────────
 
 export const GITHUB_EVENTS = EVENT_CATEGORIES.github;

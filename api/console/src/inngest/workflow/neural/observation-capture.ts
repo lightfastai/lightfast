@@ -161,53 +161,63 @@ function extractTopics(sourceEvent: SourceEvent): string[] {
  * getBaseEventType("vercel", "deployment.created") // "deployment.created"
  */
 function getBaseEventType(source: string, sourceType: string): string {
+  // Defensive: Strip source prefix if present (transformers should not include it)
+  const prefix = `${source}:`;
+  const cleanType = sourceType.startsWith(prefix)
+    ? sourceType.slice(prefix.length)
+    : sourceType;
+
   if (source === "github") {
     // Internal format uses dot notation: "pull-request.opened"
-    const dotIndex = sourceType.indexOf(".");
+    const dotIndex = cleanType.indexOf(".");
     if (dotIndex > 0) {
-      const base = sourceType.substring(0, dotIndex);
+      const base = cleanType.substring(0, dotIndex);
       // Convert hyphens to underscores for config format
       const configBase = base.replace(/-/g, "_");
       // Special case: issue → issues (config uses plural)
       return configBase === "issue" ? "issues" : configBase;
     }
     // Handle simple events like "push"
-    return sourceType;
+    return cleanType;
   }
 
   if (source === "vercel") {
     // Vercel events are already in category format (e.g., "deployment.created")
-    return sourceType;
+    return cleanType;
   }
 
   if (source === "sentry") {
     // Normalize Sentry events to category level
     // issue.created, issue.resolved, issue.assigned, issue.ignored → issue
     // error → error (already category level)
-    // event_alert → event_alert (already category level)
-    // metric_alert → metric_alert (already category level)
-    if (sourceType.startsWith("issue.")) {
+    // event-alert → event_alert (convert hyphens to underscores for config)
+    // metric-alert → metric_alert (convert hyphens to underscores for config)
+    if (cleanType.startsWith("issue.")) {
       return "issue";
     }
-    return sourceType; // error, event_alert, metric_alert
+    // Convert hyphens to underscores to match config format
+    return cleanType.replace(/-/g, "_"); // event-alert → event_alert
   }
 
   if (source === "linear") {
     // Normalize Linear events to category level
-    // Issue:create, Issue:update, Issue:remove → Issue
-    // Comment:create, Comment:update → Comment
-    // Project:create, Project:update → Project
-    // Cycle:create, Cycle:update → Cycle
-    // ProjectUpdate:create, ProjectUpdate:update → ProjectUpdate
-    const colonIndex = sourceType.indexOf(":");
-    if (colonIndex > 0) {
-      return sourceType.substring(0, colonIndex);
+    // After transformer update, format is: issue.created, comment.created, etc.
+    // Need to extract before dot and capitalize: issue.created → Issue
+    // Config format: Issue, Comment, Project, Cycle, ProjectUpdate
+    const dotIndex = cleanType.indexOf(".");
+    if (dotIndex > 0) {
+      const base = cleanType.substring(0, dotIndex);
+      // Capitalize first letter and handle camelCase (project-update → ProjectUpdate)
+      return base
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join("");
     }
-    // Fallback for category-level events already
-    return sourceType;
+    // Fallback for category-level events already (shouldn't happen with new format)
+    return cleanType;
   }
 
-  return sourceType;
+  return cleanType;
 }
 
 /**
@@ -544,12 +554,12 @@ export const observationCapture = inngest.createFunction(
       }
 
       if (!resourceId) {
-        // No resource ID in metadata - allow event (legacy or unknown source)
-        log.info("No resource ID in metadata, allowing event", {
+        // CHANGED: No resource ID - reject (can't determine if configured)
+        log.info("No resource ID in metadata, rejecting event", {
           source: sourceEvent.source,
           sourceType: sourceEvent.sourceType,
         });
-        return true;
+        return false; // CHANGED from true to false
       }
 
       // Look up the integration by workspaceId + providerResourceId
@@ -561,12 +571,13 @@ export const observationCapture = inngest.createFunction(
       });
 
       if (!integration) {
-        // Integration not found - allow event (may be processed differently)
-        log.info("Integration not found for resource, allowing event", {
+        // CHANGED: Integration not found - reject (resource not connected to workspace)
+        log.info("Integration not found for resource, rejecting event", {
           workspaceId,
           resourceId,
+          source: sourceEvent.source,
         });
-        return true;
+        return false; // CHANGED from true to false
       }
 
       // Check if event is allowed

@@ -3,7 +3,7 @@ import type {
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
-import { toInternalGitHubEvent } from "@repo/console-types";
+import { toExternalGitHubEventType } from "@repo/console-types";
 import type {
   PushEvent,
   PullRequestEvent,
@@ -70,7 +70,7 @@ export function transformGitHubPush(
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: toInternalGitHubEvent("push") ?? "github:push",
+    sourceType: toExternalGitHubEventType("push") ?? "push",
     sourceId: `push:${payload.repository.full_name}:${payload.after}`,
     title: sanitizeTitle(`[Push] ${rawTitle}`),
     body: sanitizeBody(rawBody),
@@ -205,11 +205,11 @@ export function transformGitHubPullRequest(
   // Determine effective action (merged is a special case of closed)
   const effectiveAction =
     payload.action === "closed" && pr.merged ? "merged" : payload.action;
-  const internalType = toInternalGitHubEvent("pull_request", effectiveAction);
+  const sourceType = toExternalGitHubEventType("pull_request", effectiveAction);
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `github:pull-request.${effectiveAction}`,
+    sourceType: sourceType ?? `pull-request.${effectiveAction}`,
     sourceId: `pr:${payload.repository.full_name}#${pr.number}:${effectiveAction}`,
     title: sanitizeTitle(`[${actionTitle}] ${pr.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
@@ -297,11 +297,11 @@ export function transformGitHubIssue(
   // SEMANTIC CONTENT ONLY (for embedding)
   const rawBody = [issue.title, issue.body || ""].join("\n");
 
-  const internalType = toInternalGitHubEvent("issue", payload.action);
+  const sourceType = toExternalGitHubEventType("issues", payload.action);
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `github:issue.${payload.action}`,
+    sourceType: sourceType ?? `issue.${payload.action}`,
     sourceId: `issue:${payload.repository.full_name}#${issue.number}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${issue.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
@@ -362,11 +362,11 @@ export function transformGitHubRelease(
   // SEMANTIC CONTENT ONLY (for embedding)
   const rawBody = release.body || "";
 
-  const internalType = toInternalGitHubEvent("release", payload.action);
+  const sourceType = toExternalGitHubEventType("release", payload.action);
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `github:release.${payload.action}`,
+    sourceType: sourceType ?? `release.${payload.action}`,
     sourceId: `release:${payload.repository.full_name}:${release.tag_name}`,
     title: sanitizeTitle(`[${actionTitle}] ${release.name || release.tag_name}`),
     body: sanitizeBody(rawBody),
@@ -432,11 +432,11 @@ export function transformGitHubDiscussion(
   // SEMANTIC CONTENT ONLY (for embedding)
   const rawBody = [discussion.title, discussion.body || ""].join("\n");
 
-  const internalType = toInternalGitHubEvent("discussion", payload.action);
+  const sourceType = toExternalGitHubEventType("discussion", payload.action);
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `github:discussion.${payload.action}`,
+    sourceType: sourceType ?? `discussion.${payload.action}`,
     sourceId: `discussion:${payload.repository.full_name}#${discussion.number}`,
     title: sanitizeTitle(`[${actionTitle}] ${discussion.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),

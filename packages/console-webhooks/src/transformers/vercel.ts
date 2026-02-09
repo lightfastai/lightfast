@@ -3,7 +3,7 @@ import type {
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
-import { toInternalVercelEvent } from "@repo/console-types";
+import { toExternalVercelEventType } from "@repo/console-types";
 import type {
   VercelWebhookPayload,
   VercelWebhookEventType,
@@ -109,11 +109,11 @@ export function transformVercelDeployment(
     .filter(Boolean)
     .join("\n");
 
-  const internalType = toInternalVercelEvent(eventType);
+  const sourceType = toExternalVercelEventType(eventType);
 
   const event: SourceEvent = {
     source: "vercel",
-    sourceType: internalType ?? `vercel:${eventType}`,
+    sourceType: sourceType ?? eventType,
     sourceId: `deployment:${deployment.id}`,
     title: sanitizeTitle(`[${actionTitle}] ${project.name} from ${branch}`),
     body: sanitizeBody(rawBody),
