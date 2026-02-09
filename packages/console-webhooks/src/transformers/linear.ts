@@ -12,7 +12,7 @@ import type {
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
-import { toInternalLinearEvent } from "@repo/console-types";
+import { toExternalLinearEventType } from "@repo/console-types";
 import { validateSourceEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
@@ -452,7 +452,7 @@ export function transformLinearIssue(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: toInternalLinearEvent("Issue", payload.action) ?? `linear:issue.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: toExternalLinearEventType("Issue", payload.action) ?? `issue.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-issue:${issue.team.key}:${issue.identifier}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${issue.identifier}: ${issue.title.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -538,7 +538,7 @@ export function transformLinearComment(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: toInternalLinearEvent("Comment", payload.action) ?? `linear:comment.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: toExternalLinearEventType("Comment", payload.action) ?? `comment.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-comment:${comment.issue.identifier}:${comment.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${comment.issue.identifier}: ${comment.body.slice(0, 60)}...`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -627,7 +627,7 @@ export function transformLinearProject(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: toInternalLinearEvent("Project", payload.action) ?? `linear:project.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: toExternalLinearEventType("Project", payload.action) ?? `project.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-project:${project.slugId}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] Project: ${project.name}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -715,7 +715,7 @@ export function transformLinearCycle(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: toInternalLinearEvent("Cycle", payload.action) ?? `linear:cycle.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: toExternalLinearEventType("Cycle", payload.action) ?? `cycle.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-cycle:${cycle.team.key}:${cycle.number}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${cycleName} (${cycle.team.name})`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -786,7 +786,7 @@ export function transformLinearProjectUpdate(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: toInternalLinearEvent("ProjectUpdate", payload.action) ?? `linear:project-update.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: toExternalLinearEventType("ProjectUpdate", payload.action) ?? `project-update.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-project-update:${update.project.id}:${update.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${update.project.name}: ${update.body.slice(0, 60)}...`),
     body: sanitizeBody(bodyParts.join("\n")),
