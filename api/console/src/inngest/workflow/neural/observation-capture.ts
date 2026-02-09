@@ -176,7 +176,34 @@ function getBaseEventType(source: string, sourceType: string): string {
   }
 
   if (source === "vercel") {
-    // Vercel events are already in config format (e.g., "deployment.created")
+    // Vercel events are already in category format (e.g., "deployment.created")
+    return sourceType;
+  }
+
+  if (source === "sentry") {
+    // Normalize Sentry events to category level
+    // issue.created, issue.resolved, issue.assigned, issue.ignored → issue
+    // error → error (already category level)
+    // event_alert → event_alert (already category level)
+    // metric_alert → metric_alert (already category level)
+    if (sourceType.startsWith("issue.")) {
+      return "issue";
+    }
+    return sourceType; // error, event_alert, metric_alert
+  }
+
+  if (source === "linear") {
+    // Normalize Linear events to category level
+    // Issue:create, Issue:update, Issue:remove → Issue
+    // Comment:create, Comment:update → Comment
+    // Project:create, Project:update → Project
+    // Cycle:create, Cycle:update → Cycle
+    // ProjectUpdate:create, ProjectUpdate:update → ProjectUpdate
+    const colonIndex = sourceType.indexOf(":");
+    if (colonIndex > 0) {
+      return sourceType.substring(0, colonIndex);
+    }
+    // Fallback for category-level events already
     return sourceType;
   }
 
