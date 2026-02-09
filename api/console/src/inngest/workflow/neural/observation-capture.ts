@@ -377,8 +377,8 @@ export const observationCapture = inngest.createFunction(
     description: "Captures engineering events as neural observations",
     retries: 3,
 
-    // Idempotency by source ID to prevent duplicate observations
-    idempotency: "event.data.sourceEvent.sourceId",
+    // Idempotency by workspace + source ID to prevent duplicate observations per workspace
+    idempotency: "event.data.workspaceId + '-' + event.data.sourceEvent.sourceId",
 
     // Concurrency limit per workspace
     concurrency: {
