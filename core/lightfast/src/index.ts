@@ -24,6 +24,8 @@ export type {
   SearchInput,
   ContentsInput,
   FindSimilarInput,
+  GraphInput,
+  RelatedInput,
   // V1 API types (re-exported from @repo/console-types)
   V1SearchRequest,
   V1SearchResponse,
@@ -40,4 +42,13 @@ export type {
   V1FindSimilarResponse,
   V1FindSimilarResult,
   V1FindSimilarSource,
+  // Graph types
+  V1GraphRequest,
+  GraphResponse,
+  GraphNode,
+  GraphEdge,
+  // Related types
+  V1RelatedRequest,
+  RelatedResponse,
+  RelatedEvent,
 } from "./types";

@@ -10,11 +10,15 @@ import {
 import type {
   ContentsInput,
   FindSimilarInput,
+  GraphInput,
   LightfastConfig,
+  RelatedInput,
   SearchInput,
   V1ContentsResponse,
   V1FindSimilarResponse,
   V1SearchResponse,
+  GraphResponse,
+  RelatedResponse,
 } from "./types";
 
 const DEFAULT_BASE_URL = "https://lightfast.ai";
@@ -134,6 +138,48 @@ export class Lightfast {
       sameSourceOnly: request.sameSourceOnly ?? false,
       excludeIds: request.excludeIds,
       filters: request.filters,
+    });
+  }
+
+  /**
+   * Traverse the relationship graph from a starting observation
+   *
+   * @param request - Graph traversal parameters
+   * @returns Graph nodes, edges, and metadata
+   *
+   * @example
+   * ```typescript
+   * const graph = await lightfast.graph({
+   *   id: "obs_abc123",
+   *   depth: 2,
+   *   types: ["fixes", "deploys"],
+   * });
+   * ```
+   */
+  async graph(request: GraphInput): Promise<GraphResponse> {
+    return this.request<GraphResponse>("/v1/graph", {
+      id: request.id,
+      depth: request.depth ?? 2,
+      types: request.types,
+    });
+  }
+
+  /**
+   * Find observations directly connected via relationships
+   *
+   * @param request - Source observation ID
+   * @returns Related observations grouped by source
+   *
+   * @example
+   * ```typescript
+   * const related = await lightfast.related({
+   *   id: "obs_abc123",
+   * });
+   * ```
+   */
+  async related(request: RelatedInput): Promise<RelatedResponse> {
+    return this.request<RelatedResponse>("/v1/related", {
+      id: request.id,
     });
   }
 

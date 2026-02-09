@@ -19,12 +19,23 @@ export type {
   V1FindSimilarResponse,
   V1FindSimilarResult,
   V1FindSimilarSource,
+  // Graph types
+  V1GraphRequest,
+  GraphResponse,
+  GraphNode,
+  GraphEdge,
+  // Related types
+  V1RelatedRequest,
+  RelatedResponse,
+  RelatedEvent,
 } from "@repo/console-types";
 
 import type {
   V1SearchRequest,
   V1ContentsRequest,
   V1FindSimilarRequest,
+  V1GraphRequest,
+  V1RelatedRequest,
 } from "@repo/console-types";
 
 /**
@@ -60,6 +71,19 @@ export type FindSimilarInput = Omit<
   Partial<
     Pick<V1FindSimilarRequest, "limit" | "threshold" | "sameSourceOnly">
   >;
+
+/**
+ * SDK input type for graph requests.
+ * Makes depth optional (defaults to 2).
+ */
+export type GraphInput = Omit<V1GraphRequest, "depth"> &
+  Partial<Pick<V1GraphRequest, "depth">>;
+
+/**
+ * SDK input type for related requests.
+ * Matches V1RelatedRequest (no defaults to make optional).
+ */
+export type RelatedInput = V1RelatedRequest;
 
 /**
  * Configuration for the Lightfast client

@@ -5,6 +5,8 @@ import {
   V1SearchRequestSchema,
   V1ContentsRequestSchema,
   V1FindSimilarRequestSchema,
+  V1GraphRequestSchema,
+  V1RelatedRequestSchema,
 } from "@repo/console-types/api";
 
 declare const __SDK_VERSION__: string;
@@ -67,6 +69,32 @@ export async function createServer(config: ServerConfig): Promise<void> {
       // Validate with the full schema including refinement
       const validated = V1FindSimilarRequestSchema.parse(args);
       const results = await lightfast.findSimilar(validated);
+      return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+      };
+    }
+  );
+
+  // Register graph tool
+  server.tool(
+    "lightfast_graph",
+    "Traverse the relationship graph from a starting observation. Returns connected observations with relationship edges. Supports depth control (1-3) and relationship type filtering.",
+    V1GraphRequestSchema.shape,
+    async (args) => {
+      const results = await lightfast.graph(args);
+      return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+      };
+    }
+  );
+
+  // Register related tool
+  server.tool(
+    "lightfast_related",
+    "Find observations directly connected to a given observation via relationships. Returns related events grouped by source system with relationship types and directions.",
+    V1RelatedRequestSchema.shape,
+    async (args) => {
+      const results = await lightfast.related(args);
       return {
         content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
       };

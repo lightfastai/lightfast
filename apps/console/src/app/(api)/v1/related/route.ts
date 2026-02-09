@@ -1,35 +1,58 @@
 /**
- * Related Events API
+ * Related Events API - POST endpoint
  *
- * GET /v1/related/{observationId}
+ * POST /v1/related
  *
  * Returns observations directly connected to the given observation
  * via the relationship graph. Simpler than full graph traversal.
+ * Accepts parameters via JSON body for SDK/MCP consistency.
  */
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 import { log } from "@vendor/observability/log";
+import { V1RelatedRequestSchema } from "@repo/console-types";
 import {
   withDualAuth,
   createDualAuthErrorResponse,
-} from "../../lib/with-dual-auth";
+} from "../lib/with-dual-auth";
 import { relatedLogic } from "~/lib/v1";
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function POST(request: NextRequest) {
   const requestId = randomUUID();
   const startTime = Date.now();
-  const { id: observationId } = await params;
 
-  log.info("v1/related request", { requestId, observationId });
+  log.info("v1/related POST request", { requestId });
 
   try {
-    // Authenticate
+    // Parse request body
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "INVALID_JSON", message: "Invalid JSON body", requestId },
+        { status: 400 }
+      );
+    }
+
+    // Validate request body
+    const parseResult = V1RelatedRequestSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          error: "VALIDATION_ERROR",
+          message: "Invalid request",
+          details: parseResult.error.flatten().fieldErrors,
+          requestId,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { id: observationId } = parseResult.data;
+
     const authResult = await withDualAuth(request, requestId);
     if (!authResult.success) {
       return createDualAuthErrorResponse(authResult, requestId);
@@ -37,16 +60,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { workspaceId } = authResult.auth;
 
-    // Call extracted logic
     const result = await relatedLogic(
       { workspaceId, userId: authResult.auth.userId, authType: authResult.auth.authType },
-      {
-        observationId,
-        requestId,
-      }
+      { observationId, requestId }
     );
 
-    log.info("v1/related complete", {
+    log.info("v1/related POST complete", {
       requestId,
       total: result.data.related.length,
       took: Date.now() - startTime,
@@ -54,7 +73,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(result);
   } catch (error) {
-    log.error("v1/related error", {
+    log.error("v1/related POST error", {
       requestId,
       error: error instanceof Error ? error.message : String(error),
     });
