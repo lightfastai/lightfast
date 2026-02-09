@@ -1,6 +1,6 @@
 {
   "name": "lightfast",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Lightfast Neural Memory SDK - TypeScript client for the Lightfast Memory API",
   "publishConfig": {
     "tag": "latest",

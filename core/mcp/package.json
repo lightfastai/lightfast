@@ -1,6 +1,6 @@
 {
   "name": "@lightfastai/mcp",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Lightfast Neural Memory MCP Server - MCP for the Lightfast Memory API",
   "publishConfig": {
     "tag": "latest",
@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "lightfast": "^0.1.0-alpha.1",
+    "lightfast": "^0.1.0-alpha.2",
     "zod": "^3.25.76"
   },
   "devDependencies": {
