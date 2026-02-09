@@ -300,9 +300,9 @@ Remove `^build` dependency from `lint` and `typecheck` tasks to enable parallel 
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Lint runs successfully without build: `pnpm turbo lint`
-- [ ] Typecheck runs successfully without build: `pnpm turbo typecheck`
-- [ ] Both run in parallel: `pnpm turbo lint typecheck --parallel` (check logs for concurrent execution)
+- [x] Lint runs successfully without build: `pnpm turbo lint`
+- [x] Typecheck runs successfully without build: `pnpm turbo typecheck`
+- [x] Both run in parallel: `pnpm turbo lint typecheck --parallel` (check logs for concurrent execution)
 
 #### Manual Verification:
 - [ ] Time `pnpm lint` before and after. Should be 30-50% faster without waiting for build.
@@ -348,8 +348,8 @@ Remove `cache: false` from docs build task to leverage Turbo's caching. Docs bui
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Docs build succeeds: `pnpm turbo build --filter @lightfast/docs`
-- [ ] Second build hits cache: Run build twice, verify "cache hit" in logs
+- [x] Docs build succeeds: `pnpm turbo build --filter @lightfast/docs`
+- [x] Second build hits cache: Run build twice, verify "cache hit" in logs
 
 #### Manual Verification:
 - [ ] Verify CMS content updates trigger rebuild: Change something in Basehub, run build, should see cache miss
@@ -429,8 +429,8 @@ Remove error suppression from lint and typecheck jobs in CI to enforce code qual
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Lint passes locally on main: `pnpm --filter lightfast lint && pnpm --filter @lightfastai/mcp lint`
-- [ ] Typecheck passes locally on main: `pnpm --filter lightfast typecheck && pnpm --filter @lightfastai/mcp typecheck`
+- [x] Lint passes locally on main: `pnpm --filter lightfast lint && pnpm --filter @lightfastai/mcp lint`
+- [x] Typecheck passes locally on main: `pnpm --filter lightfast typecheck && pnpm --filter @lightfastai/mcp typecheck`
 - [ ] CI lint job passes: Push to test branch, verify lint job succeeds
 - [ ] CI typecheck job passes: Push to test branch, verify typecheck job succeeds
 
