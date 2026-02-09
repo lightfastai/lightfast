@@ -156,6 +156,100 @@ describe("LightfastMemory", () => {
     });
   });
 
+  describe("graph", () => {
+    it("should call /v1/graph with correct parameters", async () => {
+      const mockResponse = {
+        data: {
+          root: { id: "obs_123", title: "Test", source: "github", type: "issue" },
+          nodes: [],
+          edges: [],
+        },
+        meta: { depth: 2, nodeCount: 1, edgeCount: 0, took: 50 },
+        requestId: "req_123",
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const memory = new LightfastMemory({ apiKey: "sk_test_abc" });
+      const result = await memory.graph({ id: "obs_123" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://lightfast.ai/v1/graph",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"id":"obs_123"'),
+        })
+      );
+
+      expect(result).toEqual(mockResponse);
+    });
+
+    it("should apply default depth", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { root: {}, nodes: [], edges: [] } }),
+      });
+
+      const memory = new LightfastMemory({ apiKey: "sk_test_abc" });
+      await memory.graph({ id: "obs_123" });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.depth).toBe(2);
+    });
+
+    it("should pass custom depth and types", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { root: {}, nodes: [], edges: [] } }),
+      });
+
+      const memory = new LightfastMemory({ apiKey: "sk_test_abc" });
+      await memory.graph({ id: "obs_123", depth: 3, types: ["fixes", "deploys"] });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body).toEqual({
+        id: "obs_123",
+        depth: 3,
+        types: ["fixes", "deploys"],
+      });
+    });
+  });
+
+  describe("related", () => {
+    it("should call /v1/related with correct parameters", async () => {
+      const mockResponse = {
+        data: {
+          source: { id: "obs_123", title: "Test", source: "github" },
+          related: [],
+          bySource: {},
+        },
+        meta: { total: 0, took: 30 },
+        requestId: "req_123",
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const memory = new LightfastMemory({ apiKey: "sk_test_abc" });
+      const result = await memory.related({ id: "obs_123" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://lightfast.ai/v1/related",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ id: "obs_123" }),
+        })
+      );
+
+      expect(result).toEqual(mockResponse);
+    });
+  });
+
   describe("error handling", () => {
     it("should throw AuthenticationError on 401", async () => {
       mockFetch.mockResolvedValueOnce({

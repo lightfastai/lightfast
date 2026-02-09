@@ -1,41 +1,59 @@
 /**
- * Graph API
+ * Graph API - POST endpoint
  *
- * GET /v1/graph/{observationId}?depth=2&types=fixes,deploys
+ * POST /v1/graph
  *
  * Traverses the relationship graph from a starting observation.
  * Returns connected observations with relationship edges.
+ * Accepts parameters via JSON body for SDK/MCP consistency.
  */
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 import { log } from "@vendor/observability/log";
+import { V1GraphRequestSchema } from "@repo/console-types";
 import {
   withDualAuth,
   createDualAuthErrorResponse,
-} from "../../lib/with-dual-auth";
+} from "../lib/with-dual-auth";
 import { graphLogic } from "~/lib/v1";
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function POST(request: NextRequest) {
   const requestId = randomUUID();
   const startTime = Date.now();
-  const { id: observationId } = await params;
 
-  log.info("v1/graph request", { requestId, observationId });
+  log.info("v1/graph POST request", { requestId });
 
   try {
-    // Parse query params
-    const { searchParams } = new URL(request.url);
-    const depth = Math.min(parseInt(searchParams.get("depth") ?? "2", 10), 3);
-    const typesParam = searchParams.get("types");
-    const allowedTypes = typesParam ? typesParam.split(",") : null;
+    // Parse request body
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "INVALID_JSON", message: "Invalid JSON body", requestId },
+        { status: 400 }
+      );
+    }
 
-    // Authenticate
+    // Validate request body
+    const parseResult = V1GraphRequestSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          error: "VALIDATION_ERROR",
+          message: "Invalid request",
+          details: parseResult.error.flatten().fieldErrors,
+          requestId,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { id: observationId, depth, types } = parseResult.data;
+    const allowedTypes = types ?? null;
+
     const authResult = await withDualAuth(request, requestId);
     if (!authResult.success) {
       return createDualAuthErrorResponse(authResult, requestId);
@@ -43,18 +61,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { workspaceId } = authResult.auth;
 
-    // Call extracted logic
     const result = await graphLogic(
       { workspaceId, userId: authResult.auth.userId, authType: authResult.auth.authType },
-      {
-        observationId,
-        depth,
-        allowedTypes,
-        requestId,
-      }
+      { observationId, depth, allowedTypes, requestId }
     );
 
-    log.info("v1/graph complete", {
+    log.info("v1/graph POST complete", {
       requestId,
       nodeCount: result.data.nodes.length,
       edgeCount: result.data.edges.length,
@@ -64,7 +76,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(result);
   } catch (error) {
-    log.error("v1/graph error", {
+    log.error("v1/graph POST error", {
       requestId,
       error: error instanceof Error ? error.message : String(error),
     });

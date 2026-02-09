@@ -75,6 +75,14 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-non-null-assertion": "error",
       "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "ExportAllDeclaration",
+          message:
+            "Avoid 'export *' — use explicit named exports for better tree-shaking. Barrel files with wildcard re-exports prevent bundlers from eliminating unused code, increasing bundle size.",
+        },
+      ],
     },
   },
   {
