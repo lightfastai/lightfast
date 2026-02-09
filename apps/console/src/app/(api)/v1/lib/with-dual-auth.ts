@@ -12,6 +12,7 @@ import { db } from "@db/console/client";
 import { orgWorkspaces } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
+import { LIGHTFAST_API_KEY_PREFIX } from "@repo/console-api-key";
 import { withApiKeyAuth } from "./with-api-key-auth";
 
 export interface DualAuthContext {
@@ -57,8 +58,8 @@ export async function withDualAuth(
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
 
-    // Check if it's an API key (starts with sk-lf-)
-    if (token.startsWith("sk-lf-")) {
+    // Check if it's an API key (starts with Lightfast prefix)
+    if (token.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
       // API key path - use existing implementation
       const apiKeyResult = await withApiKeyAuth(request, requestId);
 

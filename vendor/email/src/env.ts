@@ -1,9 +1,9 @@
 import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod";
+import { vendorApiKey } from "@repo/console-validation";
 
 export const env = createEnv({
   server: {
-    RESEND_API_KEY: z.string().min(1).startsWith("re_"),
+    RESEND_API_KEY: vendorApiKey("re_"),
   },
   client: {},
   experimental__runtimeEnv: {},

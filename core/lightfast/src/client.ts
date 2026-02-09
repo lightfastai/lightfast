@@ -7,6 +7,7 @@ import {
   ServerError,
   ValidationError,
 } from "./errors";
+import { LIGHTFAST_API_KEY_PREFIX } from "./constants";
 import type {
   ContentsInput,
   FindSimilarInput,
@@ -55,8 +56,10 @@ export class Lightfast {
     if (!config.apiKey) {
       throw new Error("API key is required");
     }
-    if (!config.apiKey.startsWith("sk-lf-")) {
-      throw new Error("Invalid API key format. Keys should start with 'sk-lf-'");
+    if (!config.apiKey.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
+      throw new Error(
+        `Invalid API key format. Keys should start with '${LIGHTFAST_API_KEY_PREFIX}'`
+      );
     }
 
     this.apiKey = config.apiKey;

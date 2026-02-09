@@ -51,6 +51,7 @@ export {
 export * from "./primitives/ids";
 export * from "./primitives/names";
 export * from "./primitives/slugs";
+export * from "./primitives/env";
 
 // Schemas (direct to leaf modules - these are heavy runtime Zod objects)
 export * from "./schemas/workspace";
