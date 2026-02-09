@@ -49,6 +49,7 @@ const config: NextConfig = withSentry(
         "@vendor/seo",
       ],
       experimental: {
+        reactCompiler: true,
         optimizeCss: true,
         optimizePackageImports: [
           // Already present

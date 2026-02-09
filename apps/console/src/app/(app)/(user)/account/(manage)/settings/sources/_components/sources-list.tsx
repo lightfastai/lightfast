@@ -1,4 +1,5 @@
 "use client";
+"use no memo";
 
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
@@ -76,7 +77,8 @@ export function SourcesList() {
 	const handleConnect = (provider: string) => {
 		// Redirect to OAuth flow
 		if (provider === "github") {
-			window.location.href = "/api/github/oauth";
+			// Use window.location.replace for navigation (React Compiler compatible)
+			window.location.replace("/api/github/oauth");
 		} else {
 			toast.info(`${providerNames[provider as keyof typeof providerNames]} integration coming soon`);
 		}
