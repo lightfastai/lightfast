@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
@@ -90,8 +90,7 @@ export function WorkspaceSearch({
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Perform search via API route
-  const performSearch = useCallback(
-    async (searchQuery: string) => {
+  const performSearch = async (searchQuery: string) => {
       if (!searchQuery.trim()) {
         setError("Please enter a search query");
         return;
@@ -164,45 +163,26 @@ export function WorkspaceSearch({
       } finally {
         setIsSearching(false);
       }
-    },
-    [
-      store,
-      mode,
-      limit,
-      offset,
-      includeContext,
-      includeHighlights,
-      sourceTypes,
-      observationTypes,
-      actorNames,
-      agePreset,
-    ],
-  );
+  };
 
-  const handleSearch = useCallback(async () => {
+  const handleSearch = async () => {
     await performSearch(query);
-  }, [query, performSearch]);
+  };
 
-  const handlePromptSubmit = useCallback(
-    async (message: PromptInputMessage) => {
-      const content = message.text?.trim() ?? "";
-      void setQuery(content);
-      setInputValue(""); // Clear input after submission
-      await performSearch(content);
-    },
-    [performSearch, setQuery],
-  );
+  const handlePromptSubmit = async (message: PromptInputMessage) => {
+    const content = message.text?.trim() ?? "";
+    void setQuery(content);
+    setInputValue(""); // Clear input after submission
+    await performSearch(content);
+  };
 
   // Handle Cmd+Enter keyboard shortcut
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && !isSearching) {
-        e.preventDefault();
-        void handleSearch();
-      }
-    },
-    [handleSearch, isSearching],
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && !isSearching) {
+      e.preventDefault();
+      void handleSearch();
+    }
+  };
 
   return (
     <div

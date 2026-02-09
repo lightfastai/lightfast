@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
@@ -36,10 +36,7 @@ export function WorkspaceSwitcher({
   });
 
   // Find current organization by slug from URL (not Clerk's active org)
-  const currentOrg = useMemo(() => {
-    if (!orgSlug) return null;
-    return organizations.find((org) => org.slug === orgSlug);
-  }, [orgSlug, organizations]);
+  const currentOrg = !orgSlug ? null : organizations.find((org) => org.slug === orgSlug);
 
   // Fetch workspaces for current org by slug
   const { data: workspaces = [], isLoading: isLoadingWorkspaces } = useQuery({
@@ -53,10 +50,7 @@ export function WorkspaceSwitcher({
   });
 
   // Find current workspace by name (name is used in URLs)
-  const currentWorkspace = useMemo(() => {
-    if (!workspaceName) return null;
-    return workspaces.find((ws) => ws.name === workspaceName);
-  }, [workspaceName, workspaces]);
+  const currentWorkspace = !workspaceName ? null : workspaces.find((ws) => ws.name === workspaceName);
 
   // Removed handleSelectWorkspace - now using TeamSwitcherLink pattern
 

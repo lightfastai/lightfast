@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, memo, useMemo, useState } from "react";
+import React, { Fragment, useState } from "react";
 import type {
   ChatStatus,
   UIMessage,
@@ -68,7 +68,7 @@ function getTextContent(message: UIMessage): string {
 }
 
 // User message - display text content
-const UserMessage = memo(function UserMessage({
+function UserMessage({
   message,
 }: {
   message: UIMessage;
@@ -88,10 +88,10 @@ const UserMessage = memo(function UserMessage({
       </div>
     </div>
   );
-});
+}
 
 // Assistant message - parts-based rendering
-const AssistantMessage = memo(function AssistantMessage({
+function AssistantMessage({
   message,
   isCurrentlyStreaming,
 }: {
@@ -210,7 +210,7 @@ const AssistantMessage = memo(function AssistantMessage({
       </div>
     </div>
   );
-});
+}
 
 // Build turns from messages: pair user messages with assistant responses
 interface Turn {
@@ -267,7 +267,7 @@ function buildTurns(messages: UIMessage[], status: ChatStatus): Turn[] {
 }
 
 export function AnswerMessages({ messages, status }: AnswerMessagesProps) {
-  const turns = useMemo(() => buildTurns(messages, status), [messages, status]);
+  const turns = buildTurns(messages, status);
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
