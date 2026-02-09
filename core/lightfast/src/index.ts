@@ -52,3 +52,12 @@ export type {
   RelatedResponse,
   RelatedEvent,
 } from "./types";
+
+// Zod Schemas (for runtime validation, used by MCP server)
+export {
+  V1SearchRequestSchema,
+  V1ContentsRequestSchema,
+  V1FindSimilarRequestSchema,
+  V1GraphRequestSchema,
+  V1RelatedRequestSchema,
+} from "@repo/console-types/api";

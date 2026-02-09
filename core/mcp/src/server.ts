@@ -1,13 +1,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { Lightfast } from "lightfast";
 import {
+  Lightfast,
   V1SearchRequestSchema,
   V1ContentsRequestSchema,
   V1FindSimilarRequestSchema,
   V1GraphRequestSchema,
   V1RelatedRequestSchema,
-} from "@repo/console-types/api";
+} from "lightfast";
 
 declare const __SDK_VERSION__: string;
 

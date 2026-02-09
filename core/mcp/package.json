@@ -49,9 +49,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "@repo/console-types": "workspace:*",
-    "lightfast": "workspace:*",
-    "zod": "catalog:zod3"
+    "lightfast": "^0.1.0-alpha.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
