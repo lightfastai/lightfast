@@ -76,7 +76,5 @@
     "@vendor/upstash": "0.1.0",
     "@vendor/upstash-workflow": "0.1.0"
   },
-  "changesets": [
-    "comprehensive-readmes-alpha5"
-  ]
+  "changesets": []
 }

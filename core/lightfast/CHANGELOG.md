@@ -1,5 +1,11 @@
 # lightfast
 
+## 0.1.0-alpha.5
+
+### Patch Changes
+
+- Add comprehensive package README with accurate API documentation. Includes complete API reference for all 5 methods, real-world usage examples, TypeScript support, and error handling documentation.
+
 ## 0.1.0-alpha.4
 
 ### Patch Changes

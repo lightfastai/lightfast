@@ -1,5 +1,13 @@
 # @lightfastai/mcp
 
+## 0.1.0-alpha.5
+
+### Patch Changes
+
+- Add comprehensive package README with accurate MCP documentation. Includes setup guides for Claude Desktop, Code, Cursor, and Cline; all 5 MCP tools documented with correct names; complete response schemas; and troubleshooting guide.
+- Updated dependencies
+  - lightfast@0.1.0-alpha.5
+
 ## 0.1.0-alpha.4
 
 ### Patch Changes
