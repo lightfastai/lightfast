@@ -3,6 +3,7 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
+	"sideEffects": ["*.css"],
 	"exports": {
 		"./components/*": "./src/components/*.tsx",
 		"./components/chat": "./src/components/chat/index.ts",

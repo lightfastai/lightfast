@@ -1,7 +1,7 @@
 import { NextConfig } from "next";
 import { withMicrofrontends } from "@vercel/microfrontends/next/config";
 
-import "./src/env";
+import { env } from "./src/env";
 
 import {
   config as vendorConfig,
@@ -91,6 +91,17 @@ const config: NextConfig = withSentry(
           "@vendor/seo",
         ],
         turbopackScopeHoisting: false,
+        serverActions: {
+          bodySizeLimit: "2mb",
+          allowedOrigins:
+            env.NODE_ENV === "development"
+              ? ["localhost:*"]
+              : ["lightfast.ai", "*.lightfast.ai"],
+        },
+        staleTimes: {
+          dynamic: 30,
+          static: 180,
+        },
       },
       async rewrites() {
         // Proxy /docs to the docs app
@@ -112,4 +123,6 @@ const config: NextConfig = withSentry(
   ),
 );
 
-export default withMicrofrontends(config, { debug: true });
+export default withMicrofrontends(config, {
+  debug: env.NODE_ENV !== "production",
+});

@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "sideEffects": false,
   "exports": {
     "./sentry-env": "./src/env/sentry-env.ts",
     "./betterstack-env": "./src/env/betterstack-env.ts",
