@@ -7,10 +7,8 @@ import { log } from "@vendor/observability/log";
 import type { V1ContentsResponse, V1ContentItem } from "@repo/console-types";
 import { recordSystemActivity } from "@api/console/lib/activity";
 
-import { buildSourceUrl } from "~/lib/neural/url-builder";
-import { resolveObservationsById } from "~/lib/neural/id-resolver";
-import type { ResolvedObservation } from "~/lib/neural/id-resolver";
-import type { V1AuthContext } from "./index";
+import { buildSourceUrl, resolveObservationsById } from "@repo/console-search";
+import type { ResolvedObservation, V1AuthContext } from "@repo/console-search";
 
 export interface ContentsLogicInput {
   ids: string[];

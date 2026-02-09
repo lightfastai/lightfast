@@ -45,6 +45,7 @@
     "@repo/console-octokit-github": "workspace:*",
     "@repo/console-pinecone": "workspace:*",
     "@repo/console-rerank": "workspace:*",
+    "@repo/console-search": "workspace:*",
     "@repo/console-trpc": "workspace:^",
     "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:^",

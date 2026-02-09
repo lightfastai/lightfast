@@ -1,0 +1,60 @@
+{
+  "name": "@repo/console-eval",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./metrics": "./src/metrics/index.ts",
+    "./env": "./src/env.ts",
+    "./context": "./src/context/eval-context.ts",
+    "./config": "./src/config/eval-config.ts",
+    "./runner": "./src/runner/in-process.ts",
+    "./seed": "./src/seed/seeder.ts",
+    "./adapter": "./src/seed/adapter.ts"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint",
+    "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --",
+    "generate-dataset": "pnpm with-env tsx src/cli/generate-dataset.ts",
+    "run": "pnpm with-env tsx src/cli/run.ts",
+    "compare": "pnpm with-env tsx src/cli/compare.ts",
+    "seed": "pnpm with-env tsx src/cli/seed.ts",
+    "cleanup": "pnpm with-env tsx src/cli/cleanup.ts",
+    "eval:local": "pnpm with-env tsx src/cli/run-local.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/gateway": "catalog:",
+    "@db/console": "workspace:*",
+    "@octokit/webhooks-types": "^7.6.1",
+    "@repo/console-config": "workspace:*",
+    "@repo/console-search": "workspace:*",
+    "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
+    "@repo/console-webhooks": "workspace:*",
+    "@repo/console-workspace-cache": "workspace:*",
+    "@t3-oss/env-core": "catalog:",
+    "@vendor/braintrust": "workspace:*",
+    "@vendor/embed": "workspace:*",
+    "@vendor/observability": "workspace:*",
+    "@vendor/pinecone": "workspace:*",
+    "ai": "catalog:",
+    "commander": "catalog:",
+    "drizzle-orm": "catalog:",
+    "postgres": "^3.4.5",
+    "zod": "catalog:zod3"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "dotenv-cli": "^8.0.0",
+    "eslint": "catalog:",
+    "tsup": "^8.5.0",
+    "tsx": "^4.19.2",
+    "typescript": "catalog:"
+  }
+}

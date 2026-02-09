@@ -10,13 +10,13 @@ import { getCachedWorkspaceConfig } from "@repo/console-workspace-cache";
 import type { V1FindSimilarResponse, V1FindSimilarResult } from "@repo/console-types";
 import { recordSystemActivity } from "@api/console/lib/activity";
 
-import { resolveByUrl } from "~/lib/neural/url-resolver";
-import { buildSourceUrl } from "~/lib/neural/url-builder";
 import {
+  resolveByUrl,
+  buildSourceUrl,
   resolveObservationById,
   resolveObservationsById,
-} from "~/lib/neural/id-resolver";
-import type { V1AuthContext } from "./index";
+} from "@repo/console-search";
+import type { V1AuthContext } from "@repo/console-search";
 
 interface SourceContent {
   id: string;

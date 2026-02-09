@@ -16,5 +16,5 @@ export const embedEnv = createEnv({
 		OPENAI_API_KEY: process.env.OPENAI_API_KEY,
 	},
 	skipValidation:
-		!!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
+		!!process.env.SKIP_ENV_VALIDATION || !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });

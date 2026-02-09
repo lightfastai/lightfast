@@ -1,0 +1,28 @@
+{
+  "name": "@vendor/braintrust",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./env": "./src/env.ts"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "catalog:",
+    "braintrust": "catalog:",
+    "zod": "catalog:zod3"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "tsup": "^8.5.0",
+    "typescript": "catalog:"
+  }
+}
