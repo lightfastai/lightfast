@@ -197,6 +197,13 @@
       "when": 1770383598946,
       "tag": "0027_nasty_ezekiel_stane",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1770624513643,
+      "tag": "0028_workable_mantis",
+      "breakpoints": true
     }
   ]
 }
