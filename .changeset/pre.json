@@ -76,9 +76,5 @@
     "@vendor/upstash": "0.1.0",
     "@vendor/upstash-workflow": "0.1.0"
   },
-  "changesets": [
-    "fix-api-key-format",
-    "fix-mcp-validation",
-    "mcp-schema-export-fix"
-  ]
+  "changesets": []
 }

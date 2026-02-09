@@ -4,221 +4,187 @@ This document explains how to release the Lightfast SDK (`lightfast`) and MCP se
 
 ## Overview
 
-We use [Changesets](https://github.com/changesets/changesets) for version management and automated npm publishing through GitHub Actions.
-
 **Published Packages:**
 - [`lightfast`](https://www.npmjs.com/package/lightfast) - TypeScript SDK for Lightfast Memory API
 - [`@lightfastai/mcp`](https://www.npmjs.com/package/@lightfastai/mcp) - Model Context Protocol server
 
 **Release Strategy:**
-- Both packages are released together with the same version number (fixed versioning)
-- Alpha/beta releases are tagged with `@alpha` or `@beta` on npm
-- Stable releases are tagged with `@latest` on npm
+- Both packages use **fixed versioning** - they always release together with the same version
+- Currently in **prerelease mode** (`alpha`) for weekly alpha releases
+- All releases are **fully automated** via GitHub Actions using Changesets
 
-## Prerequisites
+## The Correct Release Workflow
 
-**Required GitHub Secrets:**
-- `LIGHTFAST_RELEASE_BOT_GITHUB_TOKEN` - GitHub PAT with `repo` and `workflow` scopes
-- `LIGHTFAST_RELEASE_BOT_NPM_TOKEN` - npm automation token with publish access to both packages
+### Step 1: Make Code Changes
 
-**Local Setup:**
+Work on your feature or bug fix in `core/lightfast/` or `core/mcp/`:
+
 ```bash
-# Install dependencies
-pnpm install
+# Make your changes
+vim core/lightfast/src/client.ts
 
-# Build packages to verify
-pnpm turbo build --filter lightfast --filter @lightfastai/mcp
-
-# Run tests
+# Test locally
 pnpm --filter lightfast test
+pnpm turbo build --filter lightfast --filter @lightfastai/mcp
 ```
 
-## Release Workflows
+### Step 2: Create a Changeset
 
-### Alpha/Beta Releases (Prerelease Mode)
-
-Use prerelease mode for alpha or beta testing releases.
-
-#### 1. Enter Prerelease Mode
+**IMPORTANT:** Do NOT manually edit `package.json` versions or `CHANGELOG.md` files!
 
 ```bash
-# Enter alpha prerelease mode
-pnpm changeset pre enter alpha
-
-# Or for beta
-pnpm changeset pre enter beta
-
-# Commit and push
-git add .changeset/pre.json
-git commit -m "chore: enter alpha prerelease mode"
-git push
-```
-
-This creates `.changeset/pre.json` which locks the repository into prerelease mode.
-
-#### 2. Create a Changeset
-
-```bash
+# Create a changeset
 pnpm changeset
 ```
 
 **Interactive Prompts:**
-1. **Which packages changed?** → Select `lightfast` and `@lightfastai/mcp` (both must be selected)
-2. **What kind of change?** → Choose bump type:
-   - `patch` - Bug fixes, minor updates (alpha.1 → alpha.2)
-   - `minor` - New features (alpha.1 → alpha.1.1)
-   - `major` - Breaking changes (alpha.1 → alpha.2.0)
-3. **Summary** → Write a description of changes
+1. **Which packages changed?** → Select `lightfast` and `@lightfastai/mcp` (BOTH must be selected due to fixed versioning)
+2. **What kind of change?**
+   - `patch` - Bug fixes, minor updates (alpha.4 → alpha.5)
+   - `minor` - New features (alpha.4 → 0.2.0-alpha.0)
+   - `major` - Breaking changes (alpha.4 → 1.0.0-alpha.0)
+3. **Summary** → Write a clear description
 
-**Example changeset file** (`.changeset/random-words.md`):
+**Example changeset** (`.changeset/random-words.md`):
 ```markdown
 ---
 "lightfast": patch
 "@lightfastai/mcp": patch
 ---
 
-Add graph traversal and related observation methods to SDK and MCP server
+Add graph traversal methods to SDK and MCP server
+
+Adds new `traverseGraph()` and `getRelatedObservations()` methods for exploring memory graphs.
 ```
 
-#### 3. Commit and Push
+### Step 3: Commit and Push
 
 ```bash
-git add .changeset/
-git commit -m "chore: add changeset for [feature name]"
+git add .changeset/random-words.md
+git commit -m "chore: add changeset for graph traversal"
 git push
 ```
 
-#### 4. Automated Release
+### Step 4: Automated Release Process
 
-**GitHub Actions automatically:**
-1. Triggers `.github/workflows/release.yml` workflow
-2. Creates/updates a "Version Packages (alpha)" PR
-3. PR updates:
-   - Bumps versions in `package.json` (e.g., `0.1.0-alpha.1` → `0.1.0-alpha.2`)
-   - Generates `CHANGELOG.md` entries
-   - Deletes consumed changeset files
+**GitHub Actions automatically handles everything:**
 
-**To publish:**
-1. Review the "Version Packages" PR
-2. Merge the PR
-3. GitHub Actions automatically publishes both packages to npm with `@alpha` tag
+1. **`.github/workflows/release.yml` triggers** (on push to main with `.changeset/` changes)
 
-**Published as:**
+2. **Changesets creates a "Version Packages (alpha)" PR** that:
+   - Bumps versions in `package.json` files (e.g., `0.1.0-alpha.4` → `0.1.0-alpha.5`)
+   - Updates `CHANGELOG.md` files with new entries
+   - Deletes consumed `.changeset/*.md` files
+   - Updates `.changeset/pre.json` tracking
+
+3. **Review the PR** - Check the version bump and changelog entries are correct
+
+4. **Merge the PR** - This triggers the publish step
+
+5. **Changesets automatically publishes** to npm:
+   - Builds both packages
+   - Runs tests
+   - Publishes to npm with provenance
+   - Pushes git tags (e.g., `lightfast@0.1.0-alpha.5`)
+
+**Installation:**
 ```bash
 npm install lightfast@alpha
 npm install @lightfastai/mcp@alpha
 ```
 
-#### 5. Exit Prerelease Mode
+## Why This Workflow?
 
-When ready to graduate to stable:
+### ❌ Don't Do This (Manual Publishing)
 
 ```bash
-pnpm changeset pre exit
-git add .changeset/pre.json
-git commit -m "chore: exit prerelease mode"
+# BAD - Don't manually bump versions
+vim core/lightfast/package.json  # Change "0.1.0-alpha.4" → "0.1.0-alpha.5"
+pnpm changeset version           # Manually consume changesets
 git push
-```
-
-### Stable Releases
-
-For production-ready releases:
-
-#### 1. Ensure NOT in Prerelease Mode
-
-Check if `.changeset/pre.json` exists:
-```bash
-# If it exists, exit prerelease mode
-pnpm changeset pre exit
-```
-
-#### 2. Create a Changeset
-
-```bash
-pnpm changeset
-```
-
-Choose version bump:
-- `patch` - 0.1.0 → 0.1.1 (bug fixes)
-- `minor` - 0.1.0 → 0.2.0 (new features)
-- `major` - 0.1.0 → 1.0.0 (breaking changes)
-
-#### 3. Commit and Push
-
-```bash
-git add .changeset/
-git commit -m "chore: add changeset for v[version]"
-git push
-```
-
-#### 4. Merge Version Packages PR
-
-GitHub Actions creates a "Version Packages" PR. When merged, packages are published with `@latest` tag:
-
-```bash
-npm install lightfast@latest
-npm install @lightfastai/mcp@latest
-```
-
-## Manual Publishing (Emergency)
-
-If GitHub Actions fails, you can publish manually:
-
-### Local Setup
-
-```bash
-# Set npm token
-npm config set //registry.npmjs.org/:_authToken=YOUR_NPM_TOKEN
-
-# Verify login
-npm whoami
-# Should output: lightfast-release-bot
-```
-
-### Build and Publish
-
-```bash
-# Build both packages
 pnpm turbo build --filter lightfast --filter @lightfastai/mcp
-
-# Publish lightfast
-cd core/lightfast
-npm publish --tag alpha --access public
-
-# Publish MCP server
-cd ../mcp
-npm publish --tag alpha --access public
-
-# Push git tags (created by changesets)
-git push --follow-tags
+npm publish --tag alpha          # Manual publish
 ```
 
-## Version Strategies
+**Problems:**
+- `.changeset/*.md` files don't get deleted (stale changesets)
+- `CHANGELOG.md` files don't get updated
+- `.changeset/pre.json` tracking gets out of sync
+- Git tags don't get pushed
+- npm provenance missing
+- Easy to forget steps or make mistakes
 
-### Fixed Versioning
+### ✅ Do This (Automated Via PR)
 
-Both packages always release together with the same version number. This is configured in `.changeset/config.json`:
+```bash
+# GOOD - Let Changesets handle everything
+pnpm changeset                   # Create changeset
+git push                         # Push changeset
+# Wait for "Version Packages" PR
+# Review PR, then merge it
+# Changesets automatically publishes
+```
+
+**Benefits:**
+- Consistent version bumps
+- Automatic CHANGELOG updates
+- Changesets properly consumed and deleted
+- Git tags automatically pushed
+- npm provenance included
+- No manual steps = no mistakes
+
+## Configuration Files
+
+### `.changeset/config.json`
 
 ```json
 {
-  "fixed": [["lightfast", "@lightfastai/mcp"]]
+  "fixed": [["lightfast", "@lightfastai/mcp"]],
+  "updateInternalDependencies": "patch"
 }
 ```
 
-**Why?** The MCP server depends on the SDK, so they should stay in sync.
+- **`fixed`** - Both packages always version together
+- **`updateInternalDependencies`** - Auto-updates workspace dependencies
 
-### Semantic Versioning
+### `.changeset/pre.json`
 
-We follow [semver](https://semver.org/):
+```json
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "changesets": []
+}
+```
 
-- **Patch** (0.1.0 → 0.1.1): Backward-compatible bug fixes
-- **Minor** (0.1.0 → 0.2.0): Backward-compatible new features
-- **Major** (0.1.0 → 1.0.0): Breaking changes
+- **`mode: "pre"`** - In prerelease mode
+- **`tag: "alpha"`** - Publishes with `@alpha` tag
+- **`changesets: []`** - Tracks unconsumed changesets
 
-**In prerelease:**
-- `patch` bumps prerelease number: 0.1.0-alpha.1 → 0.1.0-alpha.2
-- `minor` bumps minor and resets prerelease: 0.1.0-alpha.1 → 0.1.1-alpha.0
-- `major` bumps major and resets prerelease: 0.1.0-alpha.1 → 0.2.0-alpha.0
+**Created by:** `pnpm changeset pre enter alpha`
+**Removed by:** `pnpm changeset pre exit`
+
+## Package Configuration
+
+Both packages use `workspace:*` for internal dependencies:
+
+**`core/mcp/package.json`:**
+```json
+{
+  "dependencies": {
+    "lightfast": "workspace:*"
+  }
+}
+```
+
+**What happens on publish:**
+- **Development:** `workspace:*` → resolves to local `../lightfast`
+- **Published:** Changesets converts to `^0.1.0-alpha.5` automatically
+
+This enables:
+- Testing MCP with local SDK changes
+- No lockfile sync issues
+- Smart version resolution on publish
 
 ## GitHub Actions Workflows
 
@@ -228,165 +194,116 @@ We follow [semver](https://semver.org/):
 - Push to `main` with changes to `.changeset/**`
 - Manual workflow dispatch
 
-**Steps:**
-1. Checkout code
-2. Install dependencies
-3. Build packages: `pnpm turbo build --filter lightfast --filter @lightfastai/mcp`
-4. Run tests: `pnpm --filter lightfast test`
-5. Run `changesets/action`:
-   - If changesets exist → Create/update Version Packages PR
-   - If versions changed but no changesets → Publish to npm
+**Jobs:**
+1. Build packages
+2. Run tests
+3. Use `changesets/action`:
+   - **If changesets exist** → Create/update "Version Packages (alpha)" PR
+   - **If "Version Packages" PR merged** → Publish to npm
 
-**Environment Variables:**
-- `GITHUB_TOKEN` - Creates PRs and pushes tags
-- `NODE_AUTH_TOKEN` - Publishes to npm with provenance
-- `NPM_CONFIG_PROVENANCE=true` - Enables npm provenance attestations
+**Environment:**
+- `GITHUB_TOKEN` - Creates PRs, pushes tags
+- `NODE_AUTH_TOKEN` - Publishes to npm
+- `NPM_CONFIG_PROVENANCE=true` - Enables signed attestations
 
 ### `.github/workflows/verify-changeset.yml`
 
-Validates changesets in PRs:
-- Checks that changesets mention `lightfast` or `@lightfastai/mcp`
-- Enforces valid version types (patch, minor, major)
-- Requires summary description
+**Triggers:** PRs that modify `.changeset/*.md` files
 
-### `.github/workflows/ci.yml`
+**Validates:**
+- Changeset mentions `lightfast` or `@lightfastai/mcp`
+- Uses valid version type (`patch`, `minor`, `major`)
+- Includes summary description
 
-Runs on changes to `core/lightfast/**` or `core/mcp/**`:
-- Lints code
-- Type checks
-- Runs tests
-- Builds packages
-- Verifies build outputs
+## Semantic Versioning in Prerelease
 
-## Configuration Files
+**In alpha mode (0.1.0-alpha.X):**
 
-### `.changeset/config.json`
+| Bump Type | Current | Next | Use Case |
+|-----------|---------|------|----------|
+| `patch` | 0.1.0-alpha.4 | 0.1.0-alpha.5 | Bug fixes, small updates |
+| `minor` | 0.1.0-alpha.4 | 0.2.0-alpha.0 | New features |
+| `major` | 0.1.0-alpha.4 | 1.0.0-alpha.0 | Breaking changes |
 
-```json
-{
-  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
-  "changelog": "@changesets/cli/changelog",
-  "commit": false,
-  "fixed": [["lightfast", "@lightfastai/mcp"]],
-  "linked": [],
-  "access": "public",
-  "baseBranch": "main",
-  "updateInternalDependencies": "patch",
-  "ignore": []
-}
+**Most common:** Use `patch` for weekly alpha releases.
+
+## Graduating to Stable
+
+When ready for production release:
+
+### 1. Exit Prerelease Mode
+
+```bash
+pnpm changeset pre exit
+git add .changeset/pre.json
+git commit -m "chore: exit prerelease mode"
+git push
 ```
 
-**Key settings:**
-- `fixed`: Both packages version together
-- `access: "public"`: Packages are publicly accessible on npm
-- `baseBranch: "main"`: PRs target main branch
-- `ignore`: Packages to exclude from releases
+### 2. Create Stable Changeset
 
-### Package Configurations
-
-**lightfast** (`core/lightfast/package.json`):
-```json
-{
-  "name": "lightfast",
-  "version": "0.1.0-alpha.1",
-  "publishConfig": {
-    "tag": "latest",
-    "access": "public"
-  }
-}
+```bash
+pnpm changeset
+# Choose: patch (0.1.0) | minor (0.2.0) | major (1.0.0)
+git push
 ```
 
-**@lightfastai/mcp** (`core/mcp/package.json`):
-```json
-{
-  "name": "@lightfastai/mcp",
-  "version": "0.1.0-alpha.1",
-  "publishConfig": {
-    "tag": "latest",
-    "access": "public"
-  }
-}
+### 3. Merge Version Packages PR
+
+This will publish with `@latest` tag:
+```bash
+npm install lightfast@latest
+npm install @lightfastai/mcp@latest
 ```
 
 ## Troubleshooting
 
-### Changeset validation fails
+### "Version Packages" PR has conflicts
 
-**Error:** `Some errors occurred when validating the changesets config`
+**Fix:** Close the PR. Changesets will create a fresh one on next push.
 
-**Cause:** Packages in `ignore` list that other packages depend on
+### Changesets still in `.changeset/` after publish
 
-**Fix:** Remove from ignore list or add all dependent packages to ignore
-
-### npm publish fails with 403 Forbidden
-
-**Error:** `403 You cannot publish over the previously published versions`
-
-**Cause:** Version already exists on npm
-
-**Fix:**
-1. Check published versions: `npm view lightfast versions`
-2. Bump version in changeset or skip publish if already done
-
-### npm publish fails with E404 Not Found
-
-**Error:** `404 Not Found - PUT https://registry.npmjs.org/@lightfastai/mcp`
-
-**Cause:** npm token expired or lacks permissions
-
-**Fix:**
-1. Generate new npm automation token at https://www.npmjs.com/settings/tokens
-2. Update GitHub secret: `gh secret set LIGHTFAST_RELEASE_BOT_NPM_TOKEN`
-3. Ensure token has access to `@lightfastai` organization
-
-### GitHub Actions checkout fails
-
-**Error:** `could not read Username for 'https://github.com': terminal prompts disabled`
-
-**Cause:** `LIGHTFAST_RELEASE_BOT_GITHUB_TOKEN` missing or invalid
-
-**Fix:**
-1. Generate new GitHub PAT with `repo` and `workflow` scopes
-2. Update GitHub secret: `gh secret set LIGHTFAST_RELEASE_BOT_GITHUB_TOKEN`
-
-### Packages fail to build
-
-**Error:** Build errors in CI
+**Cause:** Versions were manually bumped instead of using the PR flow.
 
 **Fix:**
 ```bash
-# Clean and reinstall
-pnpm clean:workspaces && pnpm install
+# 1. Manually update CHANGELOGs
+vim core/lightfast/CHANGELOG.md   # Add missing entries
+vim core/mcp/CHANGELOG.md          # Add missing entries
 
-# Build locally
-pnpm turbo build --filter lightfast --filter @lightfastai/mcp
+# 2. Delete stale changesets
+rm .changeset/old-changeset.md
 
-# Check for errors
-pnpm --filter lightfast typecheck
-pnpm --filter @lightfastai/mcp typecheck
+# 3. Update pre.json tracking
+vim .changeset/pre.json            # Remove consumed changesets from array
+
+# 4. Commit
+git add . && git commit -m "chore: sync changesets system" && git push
 ```
 
-### Version Packages PR conflicts
+### npm publish fails with 403
 
-**Error:** PR has merge conflicts
+**Error:** `403 You cannot publish over previously published versions`
 
-**Fix:**
-1. Close the PR (don't merge)
-2. Changesets will create a fresh PR on next push
-3. Or manually resolve conflicts and push
+**Cause:** Version already exists on npm.
 
-## Release Checklist
+**Fix:** Bump version again with a new changeset.
 
-Before releasing:
+### Lockfile out of sync
 
-- [ ] All tests passing: `pnpm --filter lightfast test`
-- [ ] Builds successfully: `pnpm turbo build --filter lightfast --filter @lightfastai/mcp`
-- [ ] No TypeScript errors: `pnpm typecheck`
-- [ ] No lint errors: `pnpm lint`
-- [ ] CHANGELOG entries are accurate
-- [ ] Version numbers are correct
-- [ ] Git tags created (after publish)
-- [ ] npm packages accessible: `npm view lightfast@VERSION`
+**Error:** `ERR_PNPM_OUTDATED_LOCKFILE`
+
+**Cause:** MCP dependency not using `workspace:*` protocol.
+
+**Fix:** Ensure `core/mcp/package.json` uses:
+```json
+{
+  "dependencies": {
+    "lightfast": "workspace:*"
+  }
+}
+```
 
 ## Commands Reference
 
@@ -395,8 +312,6 @@ Before releasing:
 pnpm changeset                    # Create new changeset
 pnpm changeset pre enter alpha    # Enter alpha prerelease mode
 pnpm changeset pre exit           # Exit prerelease mode
-pnpm version-packages             # Consume changesets, bump versions
-pnpm release                      # Publish to npm (manual)
 
 # Build & Test
 pnpm turbo build --filter lightfast --filter @lightfastai/mcp
@@ -405,24 +320,39 @@ pnpm lint && pnpm typecheck
 
 # npm
 npm view lightfast versions       # List all published versions
-npm view lightfast dist-tags      # Show dist tags (latest, alpha, beta)
+npm view lightfast dist-tags      # Show dist tags (latest, alpha)
 npm install lightfast@alpha       # Install alpha version
-npm install lightfast@latest      # Install latest stable
 
 # GitHub
-gh workflow run release.yml       # Manually trigger release workflow
-gh run list --workflow=release.yml --limit 5  # View recent runs
-gh secret set SECRET_NAME         # Update GitHub secret
+gh workflow run release.yml       # Manually trigger release
+gh pr list --label "Version Packages"  # View version PRs
 ```
+
+## Release Checklist
+
+Before merging "Version Packages" PR:
+
+- [ ] Version bump is correct (patch/minor/major)
+- [ ] CHANGELOG entries are accurate
+- [ ] Changeset files will be deleted
+- [ ] Tests passing in CI
+- [ ] Build successful
+
+After merge (automatic):
+
+- [ ] Packages published to npm
+- [ ] Git tags pushed
+- [ ] Changeset files deleted from `.changeset/`
+
+## Current Status
+
+**Version:** `0.1.0-alpha.4`
+**Mode:** Prerelease (alpha)
+**Fixed Versioning:** Both packages version together
+**Next Release:** `0.1.0-alpha.5` (when next changeset merged)
 
 ## Support
 
-For issues or questions:
 - **Changesets docs**: https://github.com/changesets/changesets
 - **npm publishing**: https://docs.npmjs.com/cli/v10/commands/npm-publish
 - **GitHub Actions**: https://docs.github.com/en/actions
-
-## History
-
-- **2026-02-09**: Initial alpha.1 release of both packages
-- **2026-02-09**: Entered prerelease mode for weekly alpha releases
