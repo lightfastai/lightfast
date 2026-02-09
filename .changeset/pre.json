@@ -76,5 +76,7 @@
     "@vendor/upstash": "0.1.0",
     "@vendor/upstash-workflow": "0.1.0"
   },
-  "changesets": []
+  "changesets": [
+    "mcp-schema-export-fix"
+  ]
 }
