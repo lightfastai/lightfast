@@ -42,7 +42,7 @@ interface ApiErrorResponse {
  *
  * @example
  * ```typescript
- * const lightfast = new Lightfast({ apiKey: "sk_live_..." });
+ * const lightfast = new Lightfast({ apiKey: "sk-lf-..." });
  * const results = await lightfast.search({ query: "authentication" });
  * ```
  */
@@ -55,8 +55,8 @@ export class Lightfast {
     if (!config.apiKey) {
       throw new Error("API key is required");
     }
-    if (!config.apiKey.startsWith("sk_")) {
-      throw new Error("Invalid API key format. Keys should start with 'sk_'");
+    if (!config.apiKey.startsWith("sk-lf-")) {
+      throw new Error("Invalid API key format. Keys should start with 'sk-lf-'");
     }
 
     this.apiKey = config.apiKey;
@@ -271,7 +271,7 @@ export class Lightfast {
  *
  * @example
  * ```typescript
- * const lightfast = createLightfast({ apiKey: "sk_live_..." });
+ * const lightfast = createLightfast({ apiKey: "sk-lf-..." });
  * ```
  */
 export function createLightfast(config: LightfastConfig): Lightfast {
