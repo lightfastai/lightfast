@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -13,10 +13,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@repo/ui/components/ui/form";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { captureException } from "@sentry/nextjs";
-import { useEarlyAccessParams } from "./use-early-access-params";
 import { ConfettiWrapper } from "./confetti-wrapper";
 import {
   joinEarlyAccessAction,
@@ -46,29 +45,26 @@ const DATA_SOURCES = [
   { value: "discord", label: "Discord" },
 ];
 
+type FormStep = "email" | "company" | "sources";
+
 export function EarlyAccessForm() {
   const form = useFormContext<EarlyAccessFormValues>();
-  const [urlParams, setUrlParams] = useEarlyAccessParams();
+  const [step, setStep] = useState<FormStep>("email");
   const [state, setState] = useState<EarlyAccessState>({ status: "idle" });
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const { step } = urlParams;
 
   // Only subscribe to fields needed for current step to reduce re-renders
-  // Step "email": needs email for button disable state
-  // Step "company": needs companySize for button disable state
-  // Step "sources": needs sources for button disable state, email for success display
-  const email = step === "email" || step === "sources"
-    ? form.watch("email")
-    : form.getValues("email");
+  const email =
+    step === "email" || step === "sources"
+      ? form.watch("email")
+      : form.getValues("email");
 
-  const companySize = step === "company"
-    ? form.watch("companySize")
-    : form.getValues("companySize");
+  const companySize =
+    step === "company"
+      ? form.watch("companySize")
+      : form.getValues("companySize");
 
-  const sources = step === "sources"
-    ? form.watch("sources")
-    : form.getValues("sources");
+  const sources =
+    step === "sources" ? form.watch("sources") : form.getValues("sources");
 
   // Track client-side errors
   useEffect(() => {
@@ -89,51 +85,16 @@ export function EarlyAccessForm() {
     }
   }, [state]);
 
-  // Initialize form from URL on mount
-  useEffect(() => {
-    if (urlParams.email && !email) {
-      form.setValue("email", urlParams.email, { shouldValidate: true });
-    }
-    if (urlParams.companySize && !companySize) {
-      form.setValue("companySize", urlParams.companySize, {
-        shouldValidate: true,
-      });
-    }
-    if (urlParams.sources.length > 0 && sources.length === 0) {
-      form.setValue("sources", urlParams.sources, { shouldValidate: true });
-    }
-  }, [urlParams, email, companySize, sources, form]);
-
-  // Debounced URL sync
-  const syncToUrl = (updates: Partial<typeof urlParams>) => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      void setUrlParams(updates);
-    }, 500);
-  };
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
-
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      void setUrlParams({ step: "company", email });
+      setStep("company");
     }
   };
 
   const handleCompanySizeSubmit = () => {
     if (companySize) {
-      void setUrlParams({ step: "sources", companySize });
+      setStep("sources");
     }
   };
 
@@ -178,9 +139,9 @@ export function EarlyAccessForm() {
 
   const goBack = () => {
     if (step === "company") {
-      void setUrlParams({ step: "email" });
+      setStep("email");
     } else if (step === "sources") {
-      void setUrlParams({ step: "company" });
+      setStep("company");
     }
   };
 
@@ -189,7 +150,7 @@ export function EarlyAccessForm() {
     return (
       <>
         <ConfettiWrapper />
-        <div className="w-full max-w-md">
+        <div className="w-full">
           {/* Progress indicator */}
           <div className="mb-8 flex items-center gap-2">
             <div className="h-1 w-8 rounded-full bg-primary" />
@@ -197,11 +158,11 @@ export function EarlyAccessForm() {
             <div className="h-1 w-8 rounded-full bg-primary" />
           </div>
 
-          <div className="flex flex-col h-[640px] justify-center space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
+          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold text-foreground">
+              <h2 className="text-2xl font-semibold text-foreground">
                 You're in!
-              </h1>
+              </h2>
               <p className="text-sm text-muted-foreground">{state.message}</p>
             </div>
             <div className="rounded-lg border border-border bg-muted/30 p-4">
@@ -219,7 +180,7 @@ export function EarlyAccessForm() {
   const isPending = state.status === "pending";
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full">
       {/* Progress indicator */}
       <div className="mb-8 flex items-center gap-2">
         <div
@@ -244,246 +205,193 @@ export function EarlyAccessForm() {
 
       {/* Step 1: Email */}
       {step === "email" && (
-        <form onSubmit={handleEmailSubmit} className="flex flex-col h-[640px] animate-in fade-in slide-in-from-right-4 duration-200">
-          {/* Header - fixed height */}
-          <div className="flex-none">
-            {/* Back button space - hidden but maintains layout */}
-            <div className="h-[28px] mb-2" />
-
-            {/* Title and description - consistent spacing */}
-            <div className="space-y-2 mb-6">
-              <h1 className="text-2xl font-semibold text-foreground">
-                What's your email?
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Create your account or sign in.
-              </p>
-            </div>
-          </div>
-
-          {/* Content - flexible with scroll */}
-          <div className="flex-1 overflow-y-auto mb-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Work email</FormLabel>
-                  <FormControl>
+        <form
+          onSubmit={handleEmailSubmit}
+          className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-200"
+        >
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem className="space-y-1 text-md">
+                <FormLabel className="text-muted-foreground font-pp">
+                  What's your email?
+                </FormLabel>
+                <FormControl>
+                  <div className="relative">
                     <Input
                       {...field}
                       type="email"
                       placeholder="name@company.com"
-                      className="h-12 rounded-xs"
                       autoFocus
-                      onChange={(e) => {
-                        field.onChange(e);
-                        syncToUrl({ email: e.target.value });
-                      }}
-                      onBlur={() => {
-                        field.onBlur();
-                        if (debounceTimerRef.current) {
-                          clearTimeout(debounceTimerRef.current);
-                        }
-                        void setUrlParams({ email: field.value });
-                      }}
+                      className="pr-12"
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                    <Button
+                      type="submit"
+                      variant="none"
+                      size="icon"
+                      disabled={!email || !!form.formState.errors.email}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 size-8"
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          {/* Footer - fixed height */}
-          <div className="flex-none space-y-3">
-            <Button
-              type="submit"
-              size="xl"
-              className="w-full rounded-xs"
-              disabled={!email || !!form.formState.errors.email}
+          <p className="text-xs text-muted-foreground">
+            By continuing you acknowledge that you understand and agree to our{" "}
+            <a
+              href="/legal/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground transition-colors"
             >
-              Continue
-            </Button>
-
-            {/* Error space to match other steps */}
-            <div className="min-h-[40px]" />
-          </div>
+              Terms and Conditions
+            </a>{" "}
+            and{" "}
+            <a
+              href="/legal/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground transition-colors"
+            >
+              Privacy Policy
+            </a>
+            .
+          </p>
         </form>
       )}
 
       {/* Step 2: Company Size */}
       {step === "company" && (
-        <div className="flex flex-col h-[640px] animate-in fade-in slide-in-from-right-4 duration-200">
-          {/* Header - fixed height */}
-          <div className="flex-none">
-            {/* Back button - consistent height */}
-            <div className="h-[28px] mb-2">
-              <button
-                onClick={goBack}
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="h-3 w-3" />
-                Back
-              </button>
-            </div>
+        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-200">
+          <Button
+            onClick={goBack}
+            variant="ghost"
+            size="sm"
+            className="gap-1 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            Back
+          </Button>
 
-            {/* Title and description - consistent spacing */}
-            <div className="space-y-2 mb-6">
-              <h1 className="text-2xl font-semibold text-foreground">
-                Company size
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                How many people work at your company?
-              </p>
-            </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold text-foreground">
+              Company size
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              How many people work at your company?
+            </p>
           </div>
 
-          {/* Content - flexible with scroll */}
-          <div className="flex-1 overflow-y-auto mb-6">
-            <FormField
-              control={form.control}
-              name="companySize"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <RadioGroup
-                      value={field.value}
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        syncToUrl({ companySize: value });
-                      }}
-                      onBlur={() => {
-                        field.onBlur();
-                        if (debounceTimerRef.current) {
-                          clearTimeout(debounceTimerRef.current);
-                        }
-                        void setUrlParams({ companySize: field.value });
-                      }}
-                    >
-                      {COMPANY_SIZES.map((size) => (
-                        <label
-                          key={size.value}
-                          htmlFor={size.value}
-                          className="flex items-center space-x-3 rounded-xs border border-border p-3 hover:bg-accent transition-colors cursor-pointer"
-                        >
-                          <RadioGroupItem
-                            value={size.value}
-                            id={size.value}
-                            className="text-primary"
-                          />
-                          <span className="flex-1 text-sm text-foreground">
-                            {size.label}
-                          </span>
-                        </label>
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="companySize"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <RadioGroup
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    {COMPANY_SIZES.map((size) => (
+                      <label
+                        key={size.value}
+                        htmlFor={size.value}
+                        className="flex items-center space-x-3 rounded-lg border border-border p-3 hover:bg-accent transition-colors cursor-pointer"
+                      >
+                        <RadioGroupItem value={size.value} id={size.value} />
+                        <span className="flex-1 text-sm text-foreground">
+                          {size.label}
+                        </span>
+                      </label>
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          {/* Footer - fixed height */}
-          <div className="flex-none space-y-3">
-            <Button
-              onClick={handleCompanySizeSubmit}
-              size="xl"
-              className="w-full rounded-xs"
-              disabled={!companySize}
-            >
-              Continue
-            </Button>
-
-            {/* Error space to match other steps */}
-            <div className="min-h-[40px]" />
-          </div>
+          <Button
+            onClick={handleCompanySizeSubmit}
+            size="lg"
+            className="w-full"
+            disabled={!companySize}
+          >
+            Continue
+          </Button>
         </div>
       )}
 
       {/* Step 3: Data Sources */}
       {step === "sources" && (
-        <div className="flex flex-col h-[640px] animate-in fade-in slide-in-from-right-4 duration-200">
-          {/* Header - fixed height */}
-          <div className="flex-none">
-            {/* Back button - consistent height */}
-            <div className="h-[28px] mb-2">
-              <button
-                onClick={goBack}
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="h-3 w-3" />
-                Back
-              </button>
-            </div>
+        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-200">
+          <Button
+            onClick={goBack}
+            variant="ghost"
+            size="sm"
+            className="gap-1 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            Back
+          </Button>
 
-            {/* Title and description - consistent spacing */}
-            <div className="space-y-2 mb-6">
-              <h1 className="text-2xl font-semibold text-foreground">
-                Where does your software team work?
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Select all the tools your software team uses (you can add more later).
-              </p>
-            </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold text-foreground">
+              Where does your software team work?
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Select all the tools your software team uses.
+            </p>
           </div>
 
-          {/* Content - flexible with scroll */}
-          <div className="flex-1 overflow-y-auto mb-6">
-            <FormField
-              control={form.control}
-              name="sources"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="grid grid-cols-2 gap-3">
-                    {DATA_SOURCES.map((source) => {
-                      const isChecked = field.value.includes(source.value);
+          <FormField
+            control={form.control}
+            name="sources"
+            render={({ field }) => (
+              <FormItem>
+                <div className="grid grid-cols-2 gap-3">
+                  {DATA_SOURCES.map((source) => {
+                    const isChecked = field.value.includes(source.value);
 
-                      return (
-                        <label
-                          key={source.value}
-                          htmlFor={source.value}
-                          className="flex items-center space-x-3 rounded-xs border border-border p-3 hover:bg-accent transition-colors cursor-pointer"
-                        >
-                          <Checkbox
-                            id={source.value}
-                            checked={isChecked}
-                            onCheckedChange={(checked) => {
-                              const newValue = checked
-                                ? [...field.value, source.value]
-                                : field.value.filter((s) => s !== source.value);
-                              field.onChange(newValue);
-                              syncToUrl({ sources: newValue });
-                            }}
-                            onBlur={() => {
-                              field.onBlur();
-                              if (debounceTimerRef.current) {
-                                clearTimeout(debounceTimerRef.current);
-                              }
-                              void setUrlParams({ sources: field.value });
-                            }}
-                            className="text-primary"
-                          />
-                          <span className="flex-1 text-sm text-foreground">
-                            {source.label}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                    return (
+                      <label
+                        key={source.value}
+                        htmlFor={source.value}
+                        className="flex items-center space-x-3 rounded-lg border border-border p-3 hover:bg-accent transition-colors cursor-pointer"
+                      >
+                        <Checkbox
+                          id={source.value}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            const newValue = checked
+                              ? [...field.value, source.value]
+                              : field.value.filter((s) => s !== source.value);
+                            field.onChange(newValue);
+                          }}
+                        />
+                        <span className="flex-1 text-sm text-foreground">
+                          {source.label}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          {/* Footer - fixed height */}
-          <div className="flex-none space-y-3">
+          <div className="space-y-3">
             <Button
               onClick={handleFinalSubmit}
-              size="xl"
-              className="w-full rounded-xs"
+              size="lg"
+              className="w-full"
               disabled={sources.length === 0 || isPending}
             >
               {isPending ? (
@@ -496,29 +404,26 @@ export function EarlyAccessForm() {
               )}
             </Button>
 
-            {/* Error messages - fixed height to prevent layout shift */}
-            <div className="min-h-[40px]">
-              {state.status === "validation_error" &&
-                state.fieldErrors.sources && (
-                  <p className="text-xs text-destructive">
-                    {state.fieldErrors.sources[0]}
+            {state.status === "validation_error" &&
+              state.fieldErrors.sources && (
+                <p className="text-sm text-destructive">
+                  {state.fieldErrors.sources[0]}
+                </p>
+              )}
+            {state.status === "error" && (
+              <div className="space-y-1">
+                <p
+                  className={`text-sm ${state.isRateLimit ? "text-yellow-600 dark:text-yellow-500" : "text-destructive"}`}
+                >
+                  {state.error}
+                </p>
+                {state.isRateLimit && (
+                  <p className="text-sm text-muted-foreground">
+                    Please wait a moment before trying again.
                   </p>
                 )}
-              {state.status === "error" && (
-                <div className="space-y-1">
-                  <p
-                    className={`text-xs ${state.isRateLimit ? "text-yellow-600 dark:text-yellow-500" : "text-destructive"}`}
-                  >
-                    {state.error}
-                  </p>
-                  {state.isRateLimit && (
-                    <p className="text-xs text-muted-foreground">
-                      Please wait a moment before trying again.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}
