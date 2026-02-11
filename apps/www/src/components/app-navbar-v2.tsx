@@ -11,6 +11,7 @@ import {
   NavigationMenuTrigger,
   NavigationMenuLink,
 } from "@repo/ui/components/ui/navigation-menu";
+import { Button } from "@repo/ui/components/ui/button";
 
 /**
  * Server-rendered navbar component (v2)
@@ -22,7 +23,7 @@ export function AppNavbarV2() {
       {/* Centered nav container */}
       <div className="relative flex items-center justify-center">
         {/* Desktop: Centered nav pill */}
-        <nav className="hidden lg:flex items-center gap-0.5 rounded-md bg-[var(--nav-pill)] backdrop-blur-md  pl-4 pr-1 py-1">
+        <nav className="hidden lg:flex items-center gap-0.5 rounded-md bg-card backdrop-blur-md  pl-4 pr-1 py-1">
           {/* Logo */}
           <NextLink
             href="/"
@@ -66,42 +67,49 @@ export function AppNavbarV2() {
               (i) => i.href !== "/features" && i.href !== "/early-access",
             ).map((item) =>
               item.microfrontend ? (
-                <MicrofrontendLink
+                <Button
                   key={item.href}
-                  href={item.href}
-                  className="inline-flex items-center justify-center h-[26px] px-1.5 text-xs text-muted-foreground hover:text-foreground rounded transition-colors"
+                  asChild
+                  size="xs"
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground"
                 >
-                  {item.title}
-                </MicrofrontendLink>
+                  <MicrofrontendLink href={item.href}>
+                    {item.title}
+                  </MicrofrontendLink>
+                </Button>
               ) : (
-                <NextLink
+                <Button
                   key={item.href}
-                  href={item.href}
-                  prefetch
-                  className="inline-flex items-center justify-center h-[26px] px-1.5 text-xs text-muted-foreground hover:text-foreground rounded transition-colors"
+                  asChild
+                  size="xs"
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground"
                 >
-                  {item.title}
-                </NextLink>
+                  <NextLink href={item.href} prefetch>
+                    {item.title}
+                  </NextLink>
+                </Button>
               ),
             )}
 
             {/* Sign In Link */}
-            <MicrofrontendLink
-              href="/sign-in"
-              className="inline-flex items-center justify-center h-[26px] px-1.5 text-xs text-muted-foreground hover:text-foreground rounded transition-colors"
+            <Button
+              asChild
+              size="xs"
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
             >
-              Sign in
-            </MicrofrontendLink>
+              <MicrofrontendLink href="/sign-in">Sign in</MicrofrontendLink>
+            </Button>
           </div>
 
           {/* Join Early Access Button */}
-          <NextLink
-            href="/early-access"
-            prefetch
-            className="inline-flex items-center justify-center h-[26px] px-2.5 ml-1 rounded bg-brand-blue hover:bg-brand-blue/90 text-xs text-primary-foreground transition-colors"
-          >
-            Join Early Access
-          </NextLink>
+          <Button asChild size="xs" className="ml-1">
+            <NextLink href="/early-access" prefetch>
+              Join Early Access
+            </NextLink>
+          </Button>
         </nav>
 
         {/* Mobile: Logo + Sign In + CTA + Nav Trigger */}
@@ -116,20 +124,20 @@ export function AppNavbarV2() {
           </NextLink>
           {/* Spacer */}
           <div className="w-6" />
-          <MicrofrontendLink
-            href="/sign-in"
-            className="inline-flex items-center justify-center h-[26px] px-1.5 text-xs text-muted-foreground hover:text-foreground rounded transition-colors"
+          <Button
+            asChild
+            size="xs"
+            variant="ghost"
+            className="text-muted-foreground hover:text-foreground"
           >
-            Sign in
-          </MicrofrontendLink>
+            <MicrofrontendLink href="/sign-in">Sign in</MicrofrontendLink>
+          </Button>
 
-          <NextLink
-            href="/early-access"
-            prefetch
-            className="inline-flex items-center justify-center h-[26px] px-2.5 rounded bg-brand-blue hover:bg-brand-blue/90 text-xs text-primary-foreground transition-colors"
-          >
-            Join Early Access
-          </NextLink>
+          <Button asChild size="xs">
+            <NextLink href="/early-access" prefetch>
+              Join Early Access
+            </NextLink>
+          </Button>
 
           <AppMobileNav />
         </div>

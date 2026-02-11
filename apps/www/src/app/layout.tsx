@@ -145,7 +145,7 @@ export default function RootLayout({
   } as const;
 
   return (
-    <html className={fonts} lang="en" suppressHydrationWarning>
+    <html className={fonts} lang="en" suppressHydrationWarning className="dark">
       <head>
         <JsonLd code={organizationSchema} />
         <JsonLd code={websiteSchema} />
