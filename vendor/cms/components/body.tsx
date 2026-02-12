@@ -11,12 +11,12 @@ type BodyProps = ComponentProps<typeof RichText>;
 const richTextBaseComponents = {
   // Tighter list spacing
   ul: ({ children }: { children?: ReactNode }) => (
-    <ul className="my-4 ml-6 list-disc pl-4 not-prose text-foreground space-y-2">
+    <ul className="my-3 ml-6 list-disc pl-4 text-foreground space-y-2">
       {children}
     </ul>
   ),
   ol: ({ children }: { children?: ReactNode }) => (
-    <ol className="my-4 ml-6 list-decimal pl-4 not-prose text-foreground space-y-2">
+    <ol className="my-4 ml-6 decimal pl-4 text-foreground space-y-1">
       {children}
     </ol>
   ),
@@ -29,7 +29,7 @@ const richTextBaseComponents = {
     children,
     ...props
   }: { children?: ReactNode } & React.HTMLAttributes<HTMLTableElement>) => (
-    <div className="my-6 overflow-x-auto rounded-xs overflow-hidden not-prose text-foreground">
+    <div className="my-6 overflow-x-auto rounded-xs overflow-hidden text-foreground">
       <table className="min-w-full border-collapse" {...props}>
         {children}
       </table>
@@ -113,7 +113,7 @@ const richTextBaseComponents = {
       return SSRCodeBlock({
         children: code,
         language,
-        className: cn("my-6 not-prose", className),
+        className: cn("my-6", className),
       });
     }
 
@@ -187,20 +187,59 @@ const richTextBaseComponents = {
     );
   },
 
+  // Heading components with consistent styling
+  h1: ({ children }: { children?: ReactNode }) => (
+    <h1 className="scroll-m-20 text-xl font-bold tracking-tight mb-4 mt-6">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }: { children?: ReactNode }) => (
+    <h2 className="scroll-m-20 text-lg font-semibold tracking-tight mb-3 mt-6">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }: { children?: ReactNode }) => (
+    <h3 className="scroll-m-20 text-xl font-normal mb-2 mt-5">{children}</h3>
+  ),
+  h4: ({ children }: { children?: ReactNode }) => (
+    <h4 className="scroll-m-20 text-sm font-semibold tracking-tight mb-2 mt-4">
+      {children}
+    </h4>
+  ),
+
+  // Typography
+  strong: ({ children }: { children?: ReactNode }) => (
+    <strong className="font-semibold">{children}</strong>
+  ),
+  em: ({ children }: { children?: ReactNode }) => (
+    <em className="italic">{children}</em>
+  ),
+
+  // Paragraph - no font size here, inherited from Body wrapper
+  p: ({ children }: { children?: ReactNode }) => (
+    <p className="[&:not(:first-child)]:mt-3">{children}</p>
+  ),
+
   // Horizontal rule with reduced spacing
-  hr: () => <hr className="not-prose my-8 border-border/40" />,
+  hr: () => <hr className="my-8 border-border/40" />,
 };
 
-export const Body = ({ components, ...props }: BodyProps) => (
-  <RichText
-    // @ts-expect-error BaseHub RichText components typing issue
-    components={{
-      ...richTextBaseComponents,
-      // Allow consumer overrides
-      ...components,
-    }}
-    {...props}
-  />
+export const Body = ({
+  components,
+  className,
+  ...props
+}: BodyProps & { className?: string }) => (
+  <div className={cn("text-sm", className)}>
+    <RichText
+      // @ts-expect-error BaseHub RichText components typing issue
+      components={{
+        ...richTextBaseComponents,
+        // Allow consumer overrides
+        ...components,
+      }}
+      {...props}
+    />
+  </div>
 );
 
 // Keep simple export for cases that need raw RichText

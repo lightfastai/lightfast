@@ -326,6 +326,19 @@ export interface CategoriesItem {
 
 export type CategoriesItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'description__ASC' | 'description__DESC'
 
+export interface Changelog {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    post: ChangelogPages
+    __typename: 'Changelog'
+}
+
 export interface ChangelogPages {
     _analyticsKey: Scalars['String']
     _dashboardUrl: Scalars['String']
@@ -668,7 +681,7 @@ export interface Query {
     _structure: Scalars['JSON']
     _sys: RepoSys
     blog: Blog
-    changelogPages: ChangelogPages
+    changelog: Changelog
     legalPages: LegalPages
     __typename: 'Query'
 }
@@ -1613,6 +1626,36 @@ by?: (Scalars['String'][] | null),
 /** Search query */
 q?: (Scalars['String'] | null)}
 
+export interface ChangelogGenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     *
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    post?: (ChangelogPagesGenqlSelection & { __args?: {
+    /** Filter by a field. */
+    filter?: (ChangelogPagesItemFilterInput | null),
+    /** Limit the number of items returned. Defaults to 500. */
+    first?: (Scalars['Int'] | null),
+    /** Order by a field. */
+    orderBy?: (ChangelogPagesItemOrderByEnum | null),
+    /** Search by a field. */
+    search?: (ChangelogPagesItemSearchInput | null),
+    /** Skip the first n items. */
+    skip?: (Scalars['Int'] | null)} })
+    __typename?: boolean | number
+    __fragmentOn?: "Changelog"
+}
+
 export interface ChangelogPagesGenqlSelection{
     _analyticsKey?: { __args: {
     /**
@@ -2181,6 +2224,7 @@ export interface QueryGenqlSelection{
     withTypeOptions?: (Scalars['Boolean'] | null)} } | boolean | number
     _sys?: RepoSysGenqlSelection
     blog?: BlogGenqlSelection
+    changelog?: ChangelogGenqlSelection
     changelogPages?: (ChangelogPagesGenqlSelection & { __args?: {
     /** Filter by a field. */
     filter?: (ChangelogPagesItemFilterInput | null), 

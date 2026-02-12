@@ -469,14 +469,18 @@ export type ChangelogEntry = ChangelogEntryMeta & {
 };
 
 export type ChangelogEntryQueryResponse = {
-  changelogPages?: {
-    item?: ChangelogEntry | null;
+  changelog?: {
+    post?: {
+      item?: ChangelogEntry | null;
+    } | null;
   } | null;
 };
 
 export type ChangelogEntriesQueryResponse = {
-  changelogPages?: {
-    items?: ChangelogEntry[] | null;
+  changelog?: {
+    post?: {
+      items?: ChangelogEntry[] | null;
+    } | null;
   } | null;
 };
 
@@ -487,60 +491,70 @@ export type ChangelogAdjacentEntries = {
 
 export const changelog = {
   entriesQuery: fragmentOnLoose("Query", {
-    changelogPages: {
-      __args: {
-        orderBy: "publishedAt__DESC",
+    changelog: {
+      post: {
+        __args: {
+          orderBy: "publishedAt__DESC",
+        },
+        items: changelogEntryFragment,
       },
-      items: changelogEntryFragment,
     },
   }),
 
   entriesMetaQuery: fragmentOnLoose("Query", {
-    changelogPages: {
-      __args: {
-        orderBy: "publishedAt__DESC",
+    changelog: {
+      post: {
+        __args: {
+          orderBy: "publishedAt__DESC",
+        },
+        items: changelogEntryMetaFragment,
       },
-      items: changelogEntryMetaFragment,
     },
   }),
 
   latestEntryQuery: fragmentOnLoose("Query", {
-    changelogPages: {
-      __args: {
-        orderBy: "publishedAt__DESC",
+    changelog: {
+      post: {
+        __args: {
+          orderBy: "publishedAt__DESC",
+        },
+        item: changelogEntryFragment,
       },
-      item: changelogEntryFragment,
     },
   }),
 
   entryQuery: (slug: string) =>
     fragmentOnLoose("Query", {
-      changelogPages: {
-        __args: {
-          filter: {
-            _sys_slug: { eq: slug },
+      changelog: {
+        post: {
+          __args: {
+            filter: {
+              _sys_slug: { eq: slug },
+            },
           },
+          item: changelogEntryFragment,
         },
-        item: changelogEntryFragment,
       },
     }),
 
   entryBySlugQuery: (slug: string) =>
     fragmentOnLoose("Query", {
-      changelogPages: {
-        __args: {
-          filter: {
-            slug: { eq: slug },
+      changelog: {
+        post: {
+          __args: {
+            filter: {
+              slug: { eq: slug },
+            },
           },
+          item: changelogEntryFragment,
         },
-        item: changelogEntryFragment,
       },
     }),
 
   getEntries: async (): Promise<ChangelogEntry[]> => {
     try {
       const data: any = await basehub.query(changelog.entriesQuery as any);
-      return data.changelogPages.items as ChangelogEntry[];
+      return data.changelog.post.items as ChangelogEntry[];
     } catch {
       // Fallback to empty array if changelog doesn't exist yet
       return [];
@@ -550,7 +564,7 @@ export const changelog = {
   getLatestEntry: async (): Promise<ChangelogEntry | null> => {
     try {
       const data: any = await basehub.query(changelog.latestEntryQuery as any);
-      return data.changelogPages.item as ChangelogEntry;
+      return data.changelog.post.item as ChangelogEntry;
     } catch {
       return null;
     }
@@ -560,7 +574,7 @@ export const changelog = {
     try {
       const query = changelog.entryQuery(slug);
       const data: any = await basehub.query(query as any);
-      return data.changelogPages.item as ChangelogEntry;
+      return data.changelog.post.item as ChangelogEntry;
     } catch {
       return null;
     }
@@ -570,7 +584,7 @@ export const changelog = {
     try {
       const query = changelog.entryBySlugQuery(slug);
       const data: any = await basehub.query(query as any);
-      return data.changelogPages.item as ChangelogEntry;
+      return data.changelog.post.item as ChangelogEntry;
     } catch {
       return null;
     }
@@ -581,7 +595,7 @@ export const changelog = {
   ): Promise<ChangelogAdjacentEntries> => {
     try {
       const data: any = await basehub.query(changelog.entriesMetaQuery as any);
-      const entries = (data.changelogPages?.items ?? []) as ChangelogEntryMeta[];
+      const entries = (data.changelog?.post?.items ?? []) as ChangelogEntryMeta[];
 
       // Find current entry index
       const currentIndex = entries.findIndex(
