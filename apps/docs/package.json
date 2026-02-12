@@ -21,6 +21,7 @@
   "dependencies": {
     "@mixedbread/sdk": "^0.50.1",
     "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-popover": "^1.1.14",
     "@radix-ui/react-portal": "^1.1.10",
     "@repo/app-urls": "workspace:*",
     "@repo/ui": "workspace:*",
@@ -36,10 +37,12 @@
     "fumadocs-openapi": "^9.6.4",
     "fumadocs-ui": "15.6.9",
     "geist": "catalog:",
+    "github-slugger": "^2.0.0",
     "lucide-react": "catalog:",
     "next": "catalog:next15",
     "react": "19.2.1",
     "react-dom": "19.2.1",
+    "remove-markdown": "^0.6.3",
     "shiki": "^3.9.2",
     "tailwind-merge": "^3.3.1",
     "zod": "catalog:zod3"

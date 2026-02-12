@@ -1,10 +1,14 @@
 import type { NextRequest } from 'next/server';
 import Mixedbread from '@mixedbread/sdk';
+import GithubSlugger from 'github-slugger';
+import removeMd from 'remove-markdown';
 import { env } from '~/env';
 
 export const runtime = 'edge';
 
 const mxbaiClient = new Mixedbread({ apiKey: env.MXBAI_API_KEY });
+
+// --- Types ---
 
 interface MixedbreadMetadata {
   file_path?: string;
@@ -34,94 +38,122 @@ interface MixedbreadSearchItem {
   generated_metadata?: MixedbreadGeneratedMetadata;
 }
 
-interface SearchResult {
+export interface SortedResult {
   id: string;
-  title: string;
-  description?: string;
   url: string;
-  snippet?: string;
-  score: number;
+  type: 'page' | 'heading' | 'text';
+  content: string;
   source: string;
 }
 
-function transformResults(items: MixedbreadSearchItem[]): SearchResult[] {
-  const results: SearchResult[] = items.map((item) => {
+// --- Heading Extraction ---
+
+function extractHeadingTitle(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith('#')) return '';
+  const firstLine = trimmed.split('\n')[0]?.trim();
+  if (!firstLine) return '';
+  return removeMd(firstLine, { useImgAltText: false });
+}
+
+// --- URL Building ---
+
+function buildUrl(filePath: string, filename: string): string {
+  if (filePath) {
+    if (filePath.includes('content/docs/')) {
+      const pathPart = filePath.split('content/docs/')[1] ?? '';
+      return '/docs/' + pathPart.replace(/\.mdx?$/, '').replace(/\/index$/, '');
+    }
+    if (filePath.includes('content/api/')) {
+      const pathPart = filePath.split('content/api/')[1] ?? '';
+      return '/docs/api/' + pathPart.replace(/\.mdx?$/, '').replace(/\/index$/, '');
+    }
+  }
+  if (filename) {
+    return '/docs/' + filename.replace(/\.mdx?$/, '');
+  }
+  return '#';
+}
+
+function buildSource(filePath: string): string {
+  return filePath.includes('content/api/') ? 'API Reference' : 'Documentation';
+}
+
+// --- Transform ---
+
+function transformResults(items: MixedbreadSearchItem[]): SortedResult[] {
+  const slugger = new GithubSlugger();
+  const results: SortedResult[] = [];
+
+  for (const item of items) {
     const filePath = item.metadata?.file_path ?? '';
-    const generatedMetadata = item.generated_metadata;
-
     const title =
-      generatedMetadata?.title ??
+      item.generated_metadata?.title ??
       item.filename.replace(/\.mdx?$/, '').replace(/-/g, ' ');
+    const url = buildUrl(filePath, item.filename);
+    const source = buildSource(filePath);
 
-    const description = generatedMetadata?.description;
-
-    let url = '';
-    if (filePath) {
-      if (filePath.includes('content/docs/')) {
-        const pathPart = filePath.split('content/docs/')[1] ?? '';
-        url = '/docs/' + pathPart.replace(/\.mdx?$/, '').replace(/\/index$/, '');
-      } else if (filePath.includes('content/api/')) {
-        const pathPart = filePath.split('content/api/')[1] ?? '';
-        url = '/docs/api/' + pathPart.replace(/\.mdx?$/, '').replace(/\/index$/, '');
-      }
-    }
-    if (!url && item.filename) {
-      url = '/docs/' + item.filename.replace(/\.mdx?$/, '');
-    }
-
-    let snippet: string | undefined;
-    if (item.text) {
-      const withoutFrontmatter = item.text.replace(/^---[\s\S]*?---\s*/, '');
-      snippet = withoutFrontmatter.substring(0, 200).trim();
-    }
-
-    const source = filePath.includes('content/api/')
-      ? 'API Reference'
-      : 'Documentation';
-
-    return {
-      id: `${item.file_id}-${item.chunk_index}`,
-      title,
-      description,
+    // Page result
+    results.push({
+      id: `${item.file_id}-${item.chunk_index}-page`,
+      type: 'page',
+      content: title,
       url,
-      snippet,
-      score: item.score,
       source,
-    };
-  });
+    });
 
-  // Deduplicate by URL, keeping highest score
-  const seenUrls = new Map<string, SearchResult>();
-  for (const result of results) {
-    const existing = seenUrls.get(result.url);
-    if (!existing || result.score > existing.score) {
-      seenUrls.set(result.url, result);
+    // Heading result (deep-link)
+    if (item.text) {
+      const headingTitle = extractHeadingTitle(item.text);
+      if (headingTitle) {
+        slugger.reset();
+        results.push({
+          id: `${item.file_id}-${item.chunk_index}-heading`,
+          type: 'heading',
+          content: headingTitle,
+          url: `${url}#${slugger.slug(headingTitle)}`,
+          source,
+        });
+      }
     }
   }
 
-  return Array.from(seenUrls.values());
+  // Deduplicate by URL, keeping first occurrence (highest score — Mixedbread returns sorted)
+  const seen = new Set<string>();
+  return results.filter((r) => {
+    if (seen.has(r.url)) return false;
+    seen.add(r.url);
+    return true;
+  });
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = (await request.json()) as { query?: string };
-    const { query } = body;
+// --- GET Handler ---
 
-    if (!query || typeof query !== 'string') {
-      return Response.json({ error: 'Query is required' }, { status: 400 });
+export async function GET(request: NextRequest) {
+  try {
+    const query = request.nextUrl.searchParams.get('query');
+
+    if (!query?.trim()) {
+      return Response.json([]);
     }
 
     const response = await mxbaiClient.stores.search({
       query,
       store_identifiers: [env.MXBAI_STORE_ID],
       top_k: 10,
+      search_options: {
+        rerank: true,
+        rewrite_query: true,
+        score_threshold: 0.5,
+        return_metadata: true,
+      },
     });
 
     const results = transformResults(
       response.data as MixedbreadSearchItem[],
     );
 
-    return Response.json({ data: results });
+    return Response.json(results);
   } catch (error) {
     console.error('Search error:', error);
     return Response.json({ error: 'Search failed' }, { status: 500 });

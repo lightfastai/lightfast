@@ -1,81 +1,94 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { SortedResult } from '~/app/(docs)/api/search/route';
 
-export interface SearchResult {
-  id: string;
-  title: string;
-  description?: string;
-  url: string;
-  snippet?: string;
-  score?: number;
-  source?: string;
+export type { SortedResult };
+
+// In-memory cache for GET requests (survives re-renders, cleared on page reload)
+const queryCache = new Map<string, SortedResult[]>();
+
+function useDebounce<T>(value: T, delayMs = 100): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    if (delayMs === 0) return;
+    const handler = window.setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => clearTimeout(handler);
+  }, [delayMs, value]);
+
+  if (delayMs === 0) return value;
+  return debouncedValue;
 }
 
-export function useDocsSearch() {
-  const [results, setResults] = useState<SearchResult[]>([]);
+export function useDocsSearch(delayMs = 100) {
+  const [search, setSearch] = useState('');
+  const [results, setResults] = useState<SortedResult[] | 'empty'>('empty');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | undefined>();
 
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const debouncedQuery = useDebounce(search, delayMs);
+  const onStartRef = useRef<(() => void) | undefined>(undefined);
 
-  const search = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setResults([]);
-      setError(null);
+  useEffect(() => {
+    // Cancel previous in-flight request
+    if (onStartRef.current) {
+      onStartRef.current();
+      onStartRef.current = undefined;
+    }
+
+    if (!debouncedQuery.trim()) {
+      setResults('empty');
+      setIsLoading(false);
+      setError(undefined);
       return;
     }
 
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
     setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
-        signal: abortController.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error('Search request failed');
-      }
-
-      const json = (await response.json()) as { data?: SearchResult[] };
-      setResults(json.data ?? []);
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        return;
-      }
-      setError(err instanceof Error ? err.message : 'Search failed');
-      setResults([]);
-    } finally {
-      if (!abortController.signal.aborted) {
-        setIsLoading(false);
-        abortControllerRef.current = null;
-      }
-    }
-  }, []);
-
-  const clearResults = useCallback(() => {
-    setResults([]);
-    setError(null);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+    let interrupt = false;
+    onStartRef.current = () => {
+      interrupt = true;
     };
+
+    const url = new URL('/api/search', window.location.origin);
+    url.searchParams.set('query', debouncedQuery);
+    const cacheKey = url.toString();
+
+    // Check cache
+    const cached = queryCache.get(cacheKey);
+    if (cached) {
+      setResults(cached);
+      setIsLoading(false);
+      setError(undefined);
+      return;
+    }
+
+    void fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error('Search request failed');
+        return res.json() as Promise<SortedResult[]>;
+      })
+      .then((data) => {
+        if (interrupt) return;
+        queryCache.set(cacheKey, data);
+        setResults(data);
+        setError(undefined);
+      })
+      .catch((err: Error) => {
+        if (interrupt) return;
+        setError(err);
+        setResults('empty');
+      })
+      .finally(() => {
+        if (!interrupt) setIsLoading(false);
+      });
+  }, [debouncedQuery]);
+
+  const clearSearch = useCallback(() => {
+    setSearch('');
+    setResults('empty');
+    setError(undefined);
   }, []);
 
-  return { search, results, isLoading, error, clearResults };
+  return { search, setSearch, clearSearch, results, isLoading, error };
 }

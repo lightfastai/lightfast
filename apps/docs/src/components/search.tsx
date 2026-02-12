@@ -1,7 +1,13 @@
 "use client";
 
 import { cn } from "@repo/ui/lib/utils";
-import { Search as SearchIcon, Loader2 } from "lucide-react";
+import {
+  Search as SearchIcon,
+  Loader2,
+  FileText,
+  Hash,
+  AlignLeft,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Input } from "@repo/ui/components/ui/input";
@@ -11,33 +17,29 @@ import { useRouter } from "next/navigation";
 import { useDocsSearch } from "~/hooks/use-docs-search";
 
 export function Search() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [open, setOpen] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
 
-  const { search, results, isLoading, error, clearResults } =
+  const { search, setSearch, clearSearch, results, isLoading, error } =
     useDocsSearch();
 
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  const resultsList = results === "empty" ? [] : results;
 
   const handleClose = useCallback(() => {
     setOpen(false);
-    setSearchQuery("");
-    clearResults();
+    clearSearch();
     setSelectedIndex(0);
-    setHasSearched(false);
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = undefined;
-    }
-  }, [clearResults]);
+  }, [clearSearch]);
 
   // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      // IME-safe: don't interfere with composition
+      if (e.isComposing) return;
+
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         inputRef.current?.focus();
@@ -46,18 +48,18 @@ export function Search() {
 
       const isInputFocused = document.activeElement === inputRef.current;
 
-      if (open && results.length > 0 && isInputFocused) {
+      if (open && resultsList.length > 0 && isInputFocused) {
         if (e.key === "ArrowDown") {
           e.preventDefault();
-          setSelectedIndex((prev) => (prev + 1) % results.length);
+          setSelectedIndex((prev) => (prev + 1) % resultsList.length);
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
           setSelectedIndex(
-            (prev) => (prev - 1 + results.length) % results.length,
+            (prev) => (prev - 1 + resultsList.length) % resultsList.length,
           );
-        } else if (e.key === "Enter" && results[selectedIndex]) {
+        } else if (e.key === "Enter" && resultsList[selectedIndex]) {
           e.preventDefault();
-          router.push(results[selectedIndex].url);
+          router.push(resultsList[selectedIndex].url);
           handleClose();
         }
       }
@@ -71,42 +73,22 @@ export function Search() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, results, selectedIndex, router, handleClose]);
+  }, [open, resultsList, selectedIndex, router, handleClose]);
 
-  // Debounced search
+  // Reset selected index when results change
   useEffect(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+    setSelectedIndex(0);
+  }, [results]);
+
+  // Clear results when popover closes while search has text
+  useEffect(() => {
+    if (!open && search) {
+      clearSearch();
     }
-
-    if (!searchQuery.trim()) {
-      clearResults();
-      return;
-    }
-
-    if (!open) {
-      return;
-    }
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHasSearched(false);
-
-    debounceTimerRef.current = setTimeout(() => {
-      setHasSearched(true);
-      setSelectedIndex(0);
-      void search(searchQuery);
-    }, 300);
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = undefined;
-      }
-    };
-  }, [searchQuery, open, search, clearResults]);
+  }, [open, search, clearSearch]);
 
   const showResults =
-    open && (results.length > 0 || searchQuery.trim().length > 0 || error);
+    open && (resultsList.length > 0 || search.trim().length > 0 || error);
 
   return (
     <>
@@ -120,7 +102,17 @@ export function Search() {
           document.body,
         )}
 
-      <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Root
+        open={open}
+        onOpenChange={(newOpen) => {
+          if (!newOpen) {
+            handleClose();
+            inputRef.current?.blur();
+          } else {
+            setOpen(true);
+          }
+        }}
+      >
         <Popover.Anchor asChild>
           <div className={cn("relative", open && "z-50")}>
             <div className="relative flex items-center">
@@ -129,8 +121,8 @@ export function Search() {
                 ref={inputRef}
                 type="text"
                 placeholder="Search documentation"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 onFocus={() => setOpen(true)}
                 className={cn(
                   "w-[420px] pl-10 pr-20 h-9",
@@ -181,51 +173,57 @@ export function Search() {
                 </div>
               )}
 
-              {!error && (isLoading || (searchQuery && !hasSearched)) && (
+              {!error && resultsList.length === 0 && (
                 <div className="px-4 py-3 flex items-center gap-2 text-sm text-muted-foreground/70">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   Searching...
                 </div>
               )}
 
-              {!error && !isLoading && results.length === 0 && searchQuery && hasSearched && (
-                <div className="px-4 py-3 text-sm text-muted-foreground/70">
-                  No results
-                </div>
-              )}
-
-              {!error && results.length > 0 && (
+              {!error && resultsList.length > 0 && (
                 <div className="">
-                  {results.map((result, index) => (
+                  {resultsList.map((result, index) => (
                     <Link
                       key={result.id}
                       href={result.url}
                       className={cn(
-                        "block w-full px-4 py-2.5 text-left transition-colors",
+                        "flex items-start gap-3 w-full px-4 py-2.5 text-left transition-colors",
                         "hover:bg-muted/40",
                         index === selectedIndex && "bg-muted/60",
+                        result.type === "heading" && "pl-7",
                       )}
                       onClick={() => handleClose()}
                       onMouseEnter={() => setSelectedIndex(index)}
                     >
-                      <div className="text-sm font-normal text-foreground">
-                        {result.title}
-                      </div>
-                      {result.source && (
-                        <div className="mt-0.5 text-xs text-muted-foreground/60">
-                          {result.source}
+                      <span className="mt-0.5 shrink-0 text-muted-foreground/50">
+                        {result.type === "page" && (
+                          <FileText className="h-4 w-4" />
+                        )}
+                        {result.type === "heading" && (
+                          <Hash className="h-3.5 w-3.5" />
+                        )}
+                        {result.type === "text" && (
+                          <AlignLeft className="h-3.5 w-3.5" />
+                        )}
+                      </span>
+                      <div className="min-w-0">
+                        <div
+                          className={cn(
+                            "text-sm text-foreground truncate",
+                            result.type === "page" && "font-medium",
+                            result.type !== "page" && "font-normal",
+                          )}
+                        >
+                          {result.content}
                         </div>
-                      )}
+                        {result.type === "page" && result.source && (
+                          <div className="mt-0.5 text-xs text-muted-foreground/60">
+                            {result.source}
+                          </div>
+                        )}
+                      </div>
                     </Link>
                   ))}
-                </div>
-              )}
-
-              {!error && results.length === 0 && !searchQuery && (
-                <div className="px-4 py-8 text-center">
-                  <p className="text-sm text-muted-foreground/50">
-                    Start typing to search...
-                  </p>
                 </div>
               )}
             </Popover.Content>
