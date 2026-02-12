@@ -11,7 +11,7 @@ import {
   V1ContentsResponseSchema,
   V1FindSimilarRequestSchema,
   V1FindSimilarResponseSchema,
-} from "./index";
+} from "@repo/console-types/api";
 
 extendZodWithOpenApi(z);
 

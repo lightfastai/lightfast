@@ -6,6 +6,7 @@ import { mdxComponents } from "@/mdx-components";
 import { siteConfig, docsMetadata } from "@/src/lib/site-config";
 import { createMetadata } from "@vendor/seo/metadata";
 import { JsonLd } from "@vendor/seo/json-ld";
+import { AlphaBanner } from "@/src/components/alpha-banner";
 import type {
   GraphContext,
   Organization,
@@ -123,6 +124,7 @@ export default async function Page({
     <>
       <JsonLd code={structuredData} />
       <DocsLayout toc={toc}>
+        <AlphaBanner />
         <article className="max-w-none">
           <MDX components={mdxComponents} />
         </article>

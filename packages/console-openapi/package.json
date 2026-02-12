@@ -1,5 +1,5 @@
 {
-  "name": "@repo/console-types",
+  "name": "@repo/console-openapi",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,12 +8,7 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./api": "./src/api/index.ts",
-    "./document": "./src/document.ts",
-    "./vector": "./src/vector.ts",
-    "./error": "./src/error.ts",
-    "./repository": "./src/repository.ts",
-    "./integrations/events": "./src/integrations/events.ts"
+    "./openapi.json": "./openapi.json"
   },
   "license": "MIT",
   "scripts": {
@@ -22,10 +17,12 @@
     "dev": "tsc --watch",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "generate:openapi": "tsx scripts/generate.ts"
   },
   "dependencies": {
-    "@repo/console-validation": "workspace:*",
+    "@asteasolutions/zod-to-openapi": "^7.3.4",
+    "@repo/console-types": "workspace:*",
     "zod": "catalog:zod3"
   },
   "devDependencies": {
@@ -35,6 +32,7 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "tsx": "^4.19.2",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

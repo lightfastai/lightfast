@@ -1,0 +1,1440 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lightfast API",
+    "version": "1.0.0-alpha",
+    "description": "Real-time semantic search across all your company's data sources. This API is currently in alpha — breaking changes may occur between releases.",
+    "contact": {
+      "name": "Lightfast Support",
+      "email": "support@lightfast.ai",
+      "url": "https://lightfast.ai"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://lightfast.ai",
+      "description": "Production API"
+    }
+  ],
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Search",
+      "description": "Semantic search across indexed content"
+    },
+    {
+      "name": "Contents",
+      "description": "Batch content retrieval by ID"
+    },
+    {
+      "name": "Find Similar",
+      "description": "Find similar content using vector similarity"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API Key",
+        "description": "Use your Lightfast API key (sk-lf-...) as the bearer token. Optionally include X-Workspace-ID header."
+      }
+    },
+    "schemas": {
+      "V1SearchRequest": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The search query text to find relevant documents"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10,
+            "description": "Maximum number of results to return (1-100, default: 10)"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "Result offset for pagination (default: 0)"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "fast",
+              "balanced",
+              "thorough"
+            ],
+            "default": "balanced",
+            "description": "Search quality mode: 'fast' (speed), 'balanced' (default), 'thorough' (quality)"
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "sourceTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "observationTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "actorNames": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "dateRange": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            },
+            "description": "Optional filters to scope results by source type, observation type, actors, or date range"
+          },
+          "includeContext": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include contextual information like topic clusters (default: true)"
+          },
+          "includeHighlights": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include highlighted text snippets (default: true)"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "V1SearchResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "snippet": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "occurredAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "entities": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "category": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "category"
+                    ]
+                  }
+                },
+                "highlights": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "snippet": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "url",
+                "snippet",
+                "score",
+                "source",
+                "type"
+              ]
+            }
+          },
+          "context": {
+            "type": "object",
+            "properties": {
+              "clusters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "topic": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "summary": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "keywords": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "topic",
+                    "summary",
+                    "keywords"
+                  ]
+                }
+              },
+              "relevantActors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "expertiseDomains": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "displayName",
+                    "expertiseDomains"
+                  ]
+                }
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number",
+                "minimum": 0
+              },
+              "limit": {
+                "type": "number"
+              },
+              "offset": {
+                "type": "number"
+              },
+              "took": {
+                "type": "number",
+                "minimum": 0
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "fast",
+                  "balanced",
+                  "thorough"
+                ]
+              },
+              "paths": {
+                "type": "object",
+                "properties": {
+                  "vector": {
+                    "type": "boolean"
+                  },
+                  "entity": {
+                    "type": "boolean"
+                  },
+                  "cluster": {
+                    "type": "boolean"
+                  },
+                  "actor": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "vector",
+                  "entity",
+                  "cluster",
+                  "actor"
+                ]
+              }
+            },
+            "required": [
+              "total",
+              "limit",
+              "offset",
+              "took",
+              "mode",
+              "paths"
+            ]
+          },
+          "latency": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number",
+                "minimum": 0
+              },
+              "auth": {
+                "type": "number",
+                "minimum": 0
+              },
+              "parse": {
+                "type": "number",
+                "minimum": 0
+              },
+              "search": {
+                "type": "number",
+                "minimum": 0
+              },
+              "embedding": {
+                "type": "number",
+                "minimum": 0
+              },
+              "retrieval": {
+                "type": "number",
+                "minimum": 0
+              },
+              "entitySearch": {
+                "type": "number",
+                "minimum": 0
+              },
+              "clusterSearch": {
+                "type": "number",
+                "minimum": 0
+              },
+              "actorSearch": {
+                "type": "number",
+                "minimum": 0
+              },
+              "rerank": {
+                "type": "number",
+                "minimum": 0
+              },
+              "enrich": {
+                "type": "number",
+                "minimum": 0
+              },
+              "maxParallel": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "total",
+              "retrieval",
+              "rerank"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "meta",
+          "latency",
+          "requestId"
+        ]
+      },
+      "V1ContentsRequest": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 50,
+            "description": "Array of document or observation IDs to fetch (1-50 IDs)"
+          }
+        },
+        "required": [
+          "ids"
+        ]
+      },
+      "V1ContentsResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "url": {
+                  "type": "string"
+                },
+                "snippet": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "occurredAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "metadata": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "url",
+                "snippet",
+                "source",
+                "type"
+              ]
+            }
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "missing",
+          "requestId"
+        ]
+      },
+      "V1FindSimilarRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Document ID to find similar content for"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to find similar content for (alternative to id)"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 10,
+            "description": "Maximum number of similar items to return (1-50, default: 10)"
+          },
+          "threshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.5,
+            "description": "Minimum similarity score 0-1 (default: 0.5)"
+          },
+          "sameSourceOnly": {
+            "type": "boolean",
+            "default": false,
+            "description": "Only return results from the same source type (default: false)"
+          },
+          "excludeIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of IDs to exclude from results"
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "sourceTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "observationTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "actorNames": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "dateRange": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            },
+            "description": "Optional filters to scope results by source type, observation type, actors, or date range"
+          }
+        }
+      },
+      "V1FindSimilarResponse": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "cluster": {
+                "type": "object",
+                "properties": {
+                  "topic": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "memberCount": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "topic",
+                  "memberCount"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "type"
+            ]
+          },
+          "similar": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "snippet": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                },
+                "vectorSimilarity": {
+                  "type": "number"
+                },
+                "entityOverlap": {
+                  "type": "number"
+                },
+                "sameCluster": {
+                  "type": "boolean"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "occurredAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "url",
+                "score",
+                "vectorSimilarity",
+                "sameCluster",
+                "source",
+                "type"
+              ]
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number"
+              },
+              "took": {
+                "type": "number"
+              },
+              "inputEmbedding": {
+                "type": "object",
+                "properties": {
+                  "found": {
+                    "type": "boolean"
+                  },
+                  "generated": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "found",
+                  "generated"
+                ]
+              }
+            },
+            "required": [
+              "total",
+              "took",
+              "inputEmbedding"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "similar",
+          "meta",
+          "requestId"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/v1/search": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Search",
+        "description": "Search across your team's knowledge with semantic understanding and multi-path retrieval.",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The search query text to find relevant documents"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 10,
+                    "description": "Maximum number of results to return (1-100, default: 10)"
+                  },
+                  "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "default": 0,
+                    "description": "Result offset for pagination (default: 0)"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "fast",
+                      "balanced",
+                      "thorough"
+                    ],
+                    "default": "balanced",
+                    "description": "Search quality mode: 'fast' (speed), 'balanced' (default), 'thorough' (quality)"
+                  },
+                  "filters": {
+                    "type": "object",
+                    "properties": {
+                      "sourceTypes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "observationTypes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "actorNames": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "dateRange": {
+                        "type": "object",
+                        "properties": {
+                          "start": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "end": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "description": "Optional filters to scope results by source type, observation type, actors, or date range"
+                  },
+                  "includeContext": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include contextual information like topic clusters (default: true)"
+                  },
+                  "includeHighlights": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include highlighted text snippets (default: true)"
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "snippet": {
+                            "type": "string"
+                          },
+                          "score": {
+                            "type": "number"
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "entities": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "category": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "category"
+                              ]
+                            }
+                          },
+                          "highlights": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string"
+                              },
+                              "snippet": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "url",
+                          "snippet",
+                          "score",
+                          "source",
+                          "type"
+                        ]
+                      }
+                    },
+                    "context": {
+                      "type": "object",
+                      "properties": {
+                        "clusters": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "topic": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "summary": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "keywords": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "topic",
+                              "summary",
+                              "keywords"
+                            ]
+                          }
+                        },
+                        "relevantActors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "expertiseDomains": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "displayName",
+                              "expertiseDomains"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "offset": {
+                          "type": "number"
+                        },
+                        "took": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "fast",
+                            "balanced",
+                            "thorough"
+                          ]
+                        },
+                        "paths": {
+                          "type": "object",
+                          "properties": {
+                            "vector": {
+                              "type": "boolean"
+                            },
+                            "entity": {
+                              "type": "boolean"
+                            },
+                            "cluster": {
+                              "type": "boolean"
+                            },
+                            "actor": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "vector",
+                            "entity",
+                            "cluster",
+                            "actor"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "limit",
+                        "offset",
+                        "took",
+                        "mode",
+                        "paths"
+                      ]
+                    },
+                    "latency": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "auth": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "parse": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "search": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "embedding": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "retrieval": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "entitySearch": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "clusterSearch": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "actorSearch": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "rerank": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "enrich": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "maxParallel": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "retrieval",
+                        "rerank"
+                      ]
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta",
+                    "latency",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "401": {
+            "description": "Invalid or missing API key"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/contents": {
+      "post": {
+        "tags": [
+          "Contents"
+        ],
+        "summary": "Get Contents",
+        "description": "Fetch full content for specific documents or observations by their IDs. Batch endpoint supporting up to 50 IDs per request.",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "maxItems": 50,
+                    "description": "Array of document or observation IDs to fetch (1-50 IDs)"
+                  }
+                },
+                "required": [
+                  "ids"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Content items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "snippet": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "metadata": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "url",
+                          "snippet",
+                          "source",
+                          "type"
+                        ]
+                      }
+                    },
+                    "missing": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "missing",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "401": {
+            "description": "Invalid or missing API key"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v1/findsimilar": {
+      "post": {
+        "tags": [
+          "Find Similar"
+        ],
+        "summary": "Find Similar",
+        "description": "Find content similar to a given document or URL using vector similarity, entity overlap, and cluster analysis.",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Document ID to find similar content for"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL to find similar content for (alternative to id)"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
+                    "default": 10,
+                    "description": "Maximum number of similar items to return (1-50, default: 10)"
+                  },
+                  "threshold": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "default": 0.5,
+                    "description": "Minimum similarity score 0-1 (default: 0.5)"
+                  },
+                  "sameSourceOnly": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Only return results from the same source type (default: false)"
+                  },
+                  "excludeIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Array of IDs to exclude from results"
+                  },
+                  "filters": {
+                    "type": "object",
+                    "properties": {
+                      "sourceTypes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "observationTypes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "actorNames": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "dateRange": {
+                        "type": "object",
+                        "properties": {
+                          "start": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "end": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "description": "Optional filters to scope results by source type, observation type, actors, or date range"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Similar content items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "cluster": {
+                          "type": "object",
+                          "properties": {
+                            "topic": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "memberCount": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "topic",
+                            "memberCount"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "type"
+                      ]
+                    },
+                    "similar": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "snippet": {
+                            "type": "string"
+                          },
+                          "score": {
+                            "type": "number"
+                          },
+                          "vectorSimilarity": {
+                            "type": "number"
+                          },
+                          "entityOverlap": {
+                            "type": "number"
+                          },
+                          "sameCluster": {
+                            "type": "boolean"
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "occurredAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "url",
+                          "score",
+                          "vectorSimilarity",
+                          "sameCluster",
+                          "source",
+                          "type"
+                        ]
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        },
+                        "took": {
+                          "type": "number"
+                        },
+                        "inputEmbedding": {
+                          "type": "object",
+                          "properties": {
+                            "found": {
+                              "type": "boolean"
+                            },
+                            "generated": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "found",
+                            "generated"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "took",
+                        "inputEmbedding"
+                      ]
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "similar",
+                    "meta",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "401": {
+            "description": "Invalid or missing API key"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}
