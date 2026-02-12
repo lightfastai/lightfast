@@ -1,27 +1,36 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   LazyMotion,
   m,
   useScroll,
   useTransform,
   useMotionValueEvent,
-  AnimatePresence,
 } from "framer-motion";
 import type { MotionValue } from "framer-motion";
 import { loadMotionFeatures } from "../_lib/motion-features";
+import {
+  GRID_COLS,
+  shouldBeGridView,
+  getSlideYKeyframes,
+  getSlideScaleKeyframes,
+  getSlideOpacityKeyframes,
+  getSlideZIndexKeyframes,
+  getIndicatorOpacityKeyframes,
+  getIndicatorWidthKeyframes,
+  getGridDimensions,
+  getGridPosition,
+  getSlideIndexFromProgress,
+  getScrollTargetForSlide,
+  getStaggerDelay,
+} from "../_lib/animation-utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import { usePitchDeck } from "./pitch-deck-context";
-import {
-  ContentSlideContent,
-  CustomTitleSlide,
-  CustomClosingSlide,
-  ShowcaseSlideContent,
-  ColumnsSlideContent,
-} from "./slide-content";
+import { resolveSlideComponent } from "./slide-content";
 import { MobileBottomBar } from "./mobile-bottom-bar";
 
 export function PitchDeck() {
@@ -35,17 +44,9 @@ export function PitchDeck() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const isTransitioningRef = useRef(false);
 
-  // Grid view threshold: last slide ends at (totalSlides) / (totalSlides + 1)
-  // For 8 slides with +1 extra: 8/9 = 0.889
-  // Trigger grid when scroll exceeds ~0.92 (in the extra scroll space)
-  const GRID_THRESHOLD = 0.92;
-
   // Update current slide based on scroll progress (desktop only, but safe to run)
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    const slideIndex = Math.min(
-      Math.floor(latest * PITCH_SLIDES.length),
-      PITCH_SLIDES.length - 1,
-    );
+    const slideIndex = getSlideIndexFromProgress(latest, PITCH_SLIDES.length);
     if (slideIndex !== currentSlide) {
       setCurrentSlide(slideIndex);
     }
@@ -53,16 +54,19 @@ export function PitchDeck() {
     // Prevent grid toggle during reverse transition
     if (isTransitioningRef.current) return;
 
-    // Grid view logic
-    const shouldBeGrid = latest >= GRID_THRESHOLD;
-    if (shouldBeGrid !== isGridView) {
-      setIsGridView(shouldBeGrid);
+    // Grid view logic with hysteresis
+    const nextGridState = shouldBeGridView(latest, isGridView);
+    if (nextGridState !== isGridView) {
+      setIsGridView(nextGridState);
     }
   });
 
   // Keyboard navigation (desktop only behavior, but safe to attach)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Disable scroll-based keyboard navigation in grid mode
+      if (isGridView) return;
+
       const scrollAmount = window.innerHeight;
 
       if (e.key === "ArrowDown" || e.key === " " || e.key === "PageDown") {
@@ -88,15 +92,24 @@ export function PitchDeck() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [isGridView]);
 
   // Exit grid view and scroll to a specific slide
   const exitGridToSlide = (index: number) => {
     isTransitioningRef.current = true;
-    setIsGridView(false);
+
+    // flushSync ensures React commits the DOM change (height: auto → 1100vh)
+    // before we read scrollHeight or call scrollTo.
+    flushSync(() => {
+      setIsGridView(false);
+    });
 
     requestAnimationFrame(() => {
-      const scrollTarget = index * window.innerHeight;
+      const scrollTarget = getScrollTargetForSlide(
+        index,
+        PITCH_SLIDES.length,
+        document.documentElement.scrollHeight,
+      );
       window.scrollTo({ top: scrollTarget, behavior: "instant" });
       setTimeout(() => {
         isTransitioningRef.current = false;
@@ -125,14 +138,22 @@ export function PitchDeck() {
 
   const handlePrevSlide = () => {
     if (currentSlide > 0) {
-      const scrollTarget = (currentSlide - 1) * window.innerHeight;
+      const scrollTarget = getScrollTargetForSlide(
+        currentSlide - 1,
+        PITCH_SLIDES.length,
+        document.documentElement.scrollHeight,
+      );
       window.scrollTo({ top: scrollTarget, behavior: "smooth" });
     }
   };
 
   const handleNextSlide = () => {
     if (currentSlide < PITCH_SLIDES.length - 1) {
-      const scrollTarget = (currentSlide + 1) * window.innerHeight;
+      const scrollTarget = getScrollTargetForSlide(
+        currentSlide + 1,
+        PITCH_SLIDES.length,
+        document.documentElement.scrollHeight,
+      );
       window.scrollTo({ top: scrollTarget, behavior: "smooth" });
     }
   };
@@ -263,20 +284,11 @@ function IndicatorLine({
   scrollProgress: MotionValue<number>;
   onClick: () => void;
 }) {
-  const slideStart = index / totalSlides;
-  const slideEnd = (index + 1) / totalSlides;
+  const opacityKf = getIndicatorOpacityKeyframes(index, totalSlides);
+  const widthKf = getIndicatorWidthKeyframes(index, totalSlides);
 
-  const opacity = useTransform(
-    scrollProgress,
-    [slideStart - 0.05, slideStart, slideEnd - 0.05, slideEnd],
-    [0.3, 1, 1, 0.3],
-  );
-
-  const width = useTransform(
-    scrollProgress,
-    [slideStart - 0.05, slideStart, slideEnd - 0.05, slideEnd],
-    [24, 40, 40, 24],
-  );
+  const opacity = useTransform(scrollProgress, opacityKf.input, opacityKf.output);
+  const width = useTransform(scrollProgress, widthKf.input, widthKf.output);
 
   return (
     <m.button
@@ -399,11 +411,6 @@ function NavigationControls({
   );
 }
 
-// --- Grid layout constants ---
-const GRID_COLS = 4;
-const GRID_GAP = 24; // px
-const GRID_ROW_GAP = 32; // px (extra space for title below card)
-
 function SlideContainer({
   isGridView,
   scrollYProgress,
@@ -430,13 +437,8 @@ function SlideContainer({
   }, []);
 
   // Calculate thumbnail size from container width
-  const thumbWidth = containerWidth > 0
-    ? (containerWidth - (GRID_COLS - 1) * GRID_GAP) / GRID_COLS
-    : 0;
-  const thumbHeight = thumbWidth * (9 / 16);
-  const gridScale = containerWidth > 0 ? thumbWidth / containerWidth : 0.25;
+  const { thumbWidth, gridScale, rowHeight } = getGridDimensions(containerWidth);
   const totalRows = Math.ceil(PITCH_SLIDES.length / GRID_COLS);
-  const rowHeight = thumbHeight + GRID_ROW_GAP;
 
   return (
     <div
@@ -494,74 +496,29 @@ function PitchSlide({
   thumbWidth,
   rowHeight,
 }: PitchSlideProps) {
-  const slideStart = index / totalSlides;
-  const slideEnd = (index + 1) / totalSlides;
-  const isFirstSlide = index === 0;
-
   // --- Scroll-driven transforms ---
-  const y = useTransform(
-    scrollProgress,
-    isFirstSlide
-      ? [0, slideEnd, slideEnd + 0.1, slideEnd + 0.2, slideEnd + 0.3]
-      : [
-          slideStart - 0.12,
-          slideStart - 0.08,
-          slideStart,
-          slideEnd,
-          slideEnd + 0.1,
-          slideEnd + 0.2,
-          slideEnd + 0.3,
-        ],
-    isFirstSlide
-      ? ["0%", "-30px", "-50px", "-60px", "-60px"]
-      : ["150vh", "150vh", "0%", "-30px", "-50px", "-60px", "-60px"],
-  );
+  const yKf = getSlideYKeyframes(index, totalSlides);
+  const scaleKf = getSlideScaleKeyframes(index, totalSlides);
+  const opacityKf = getSlideOpacityKeyframes(index, totalSlides);
+  const zIndexKf = getSlideZIndexKeyframes(index, totalSlides);
 
-  const scale = useTransform(
-    scrollProgress,
-    isFirstSlide
-      ? [0, slideEnd, slideEnd + 0.1, slideEnd + 0.2, slideEnd + 0.3]
-      : [
-          slideStart - 0.08,
-          slideStart,
-          slideEnd,
-          slideEnd + 0.1,
-          slideEnd + 0.2,
-          slideEnd + 0.3,
-        ],
-    isFirstSlide ? [1, 0.95, 0.9, 0.85, 0.85] : [1, 1, 0.95, 0.9, 0.85, 0.85],
-  );
-
-  const opacity = useTransform(
-    scrollProgress,
-    [slideEnd + 0.15, slideEnd + 0.25, slideEnd + 0.35],
-    [1, 0.6, 0],
-  );
-
-  const zIndex = useTransform(
-    scrollProgress,
-    [slideStart - 0.1, slideStart, slideEnd],
-    [index, index + 1, index + 1],
-  );
+  const y = useTransform(scrollProgress, yKf.input, yKf.output);
+  const scale = useTransform(scrollProgress, scaleKf.input, scaleKf.output);
+  const opacity = useTransform(scrollProgress, opacityKf.input, opacityKf.output);
+  const zIndex = useTransform(scrollProgress, zIndexKf.input, zIndexKf.output);
 
   // --- Grid position calculation ---
-  // With origin-top-left, scale shrinks the card from top-left corner
-  // so x/y positions are simply the grid cell coordinates
-  const row = Math.floor(index / GRID_COLS);
-  const col = index % GRID_COLS;
-  const gridX = col * (thumbWidth + GRID_GAP);
-  const gridY = row * rowHeight;
+  const { x: gridX, y: gridY } = getGridPosition(index, thumbWidth, rowHeight);
 
-  // Reduced motion check
-  const prefersReducedMotion = useRef(false);
-  useEffect(() => {
-    prefersReducedMotion.current =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  }, []);
+  // Reduced motion check — read during render so must be state, not ref
+  const [prefersReducedMotion] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false,
+  );
 
   // Animation delay: reverse order (last card first, first card last)
-  const staggerDelay = (totalSlides - 1 - index) * 0.05;
+  const staggerDelay = getStaggerDelay(index, totalSlides);
 
   return (
     <m.article
@@ -576,8 +533,8 @@ function PitchSlide({
               opacity: 1,
               zIndex: 1,
               transition: {
-                duration: prefersReducedMotion.current ? 0 : 0.6,
-                delay: prefersReducedMotion.current ? 0 : staggerDelay,
+                duration: prefersReducedMotion ? 0 : 0.6,
+                delay: prefersReducedMotion ? 0 : staggerDelay,
                 ease: [0.25, 0.1, 0.25, 1],
               },
             }
@@ -608,7 +565,7 @@ function PitchSlide({
       </div>
 
       {/* Grid title label — only in grid mode */}
-      {isGridView && "gridTitle" in slide && slide.gridTitle && (
+      {isGridView && "gridTitle" in slide && (
         <p
           className="text-xs text-muted-foreground text-center truncate mt-2"
           style={{
@@ -626,24 +583,5 @@ function PitchSlide({
 }
 
 function SlideContent({ slide }: { slide: (typeof PITCH_SLIDES)[number] }) {
-  // First slide (id: "title") uses the custom grid design
-  if (slide.type === "title" && slide.id === "title") {
-    return <CustomTitleSlide slide={slide} variant="responsive" />;
-  }
-
-  // Last slide (id: "vision") uses the custom closing design
-  if (slide.type === "title" && slide.id === "vision") {
-    return <CustomClosingSlide slide={slide} variant="responsive" />;
-  }
-
-  switch (slide.type) {
-    case "content":
-      return <ContentSlideContent slide={slide} variant="responsive" />;
-    case "showcase":
-      return <ShowcaseSlideContent slide={slide} variant="responsive" />;
-    case "columns":
-      return <ColumnsSlideContent slide={slide} variant="responsive" />;
-    default:
-      return null;
-  }
+  return resolveSlideComponent(slide, "responsive");
 }

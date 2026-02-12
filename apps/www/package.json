@@ -88,7 +88,8 @@
     "require-in-the-middle": "catalog:",
     "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:",
-    "typescript-eslint": "catalog:"
+    "typescript-eslint": "catalog:",
+    "vitest": "^3.2.4"
   },
   "prettier": "@repo/prettier-config"
 }

@@ -22,13 +22,7 @@ export function DownloadButton() {
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={handleDownload}
-      disabled={isExporting}
-      className="text-sm text-foreground hover:text-muted-foreground transition-colors"
-    >
+    <Button variant="ghost" onClick={handleDownload} disabled={isExporting}>
       {isExporting ? (
         <Loader2 className="size-4 animate-spin" />
       ) : (

@@ -23,12 +23,12 @@ export function CustomTitleSlide({
 
   return (
     <div className="absolute inset-0 bg-[var(--pitch-deck-red)] overflow-hidden">
-      {/* Grid overlay */}
-      <div className="absolute inset-0 grid grid-cols-12 p-4 grid-rows-4">
-        {Array.from({ length: 48 }).map((_, i) => (
+      {/* Square grid overlay — 16×9 maps to 16:9 aspect ratio */}
+      <div className="absolute inset-0 grid grid-cols-16 grid-rows-9 gap-1.5 p-2">
+        {Array.from({ length: 144 }).map((_, i) => (
           <div
             key={i}
-            className="border-[1.5px] border-[var(--pitch-deck-red-overlay)]/30 rounded-sm transition-colors duration-1000 hover:duration-75 hover:bg-[var(--pitch-deck-red-overlay)]"
+            className="aspect-square rounded-sm border-[1.5px] border-[var(--pitch-deck-red-overlay)]/30 transition-colors duration-1000 hover:duration-75 hover:bg-[var(--pitch-deck-red-overlay)]"
           />
         ))}
       </div>
