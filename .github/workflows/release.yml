@@ -56,6 +56,12 @@ jobs:
           SKIP_ENV_VALIDATION: "true"
         run: pnpm --filter lightfast test
 
+      - name: Dry-run publish to validate packages
+        run: |
+          echo "Running publish dry-run to validate both packages..."
+          pnpm changeset publish --dry-run
+          echo "✅ Dry-run successful - both packages are valid"
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v1
@@ -67,6 +73,27 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.LIGHTFAST_RELEASE_BOT_GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.LIGHTFAST_RELEASE_BOT_NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+
+      - name: Verify published versions match
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "Verifying both packages published successfully..."
+          sleep 10  # Wait for npm registry to update
+
+          LIGHTFAST_VERSION=$(npm view lightfast version)
+          MCP_VERSION=$(npm view @lightfastai/mcp version)
+
+          echo "lightfast: $LIGHTFAST_VERSION"
+          echo "@lightfastai/mcp: $MCP_VERSION"
+
+          if [ "$LIGHTFAST_VERSION" != "$MCP_VERSION" ]; then
+            echo "❌ ERROR: Version drift detected!"
+            echo "lightfast@$LIGHTFAST_VERSION != @lightfastai/mcp@$MCP_VERSION"
+            echo "Manual intervention required - publish the missing package"
+            exit 1
+          fi
+
+          echo "✅ Both packages at $LIGHTFAST_VERSION"
 
       - name: Send a Slack notification if a publish happens
         if: steps.changesets.outputs.published == 'true'
