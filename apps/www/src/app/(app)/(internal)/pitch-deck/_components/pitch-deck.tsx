@@ -25,6 +25,8 @@ import {
   getSlideIndexFromProgress,
   getScrollTargetForSlide,
   getStaggerDelay,
+  getStackedPosition,
+  GRID_SLIDE_DURATION,
 } from "../_lib/animation-utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
@@ -43,6 +45,8 @@ export function PitchDeck() {
   const { isGridView, setIsGridView } = usePitchDeck();
   const [currentSlide, setCurrentSlide] = useState(0);
   const isTransitioningRef = useRef(false);
+  // When non-null, slides animate from grid positions to stacked position at this index
+  const [exitTargetSlide, setExitTargetSlide] = useState<number | null>(null);
 
   // Update current slide based on scroll progress (desktop only, but safe to run)
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
@@ -94,27 +98,33 @@ export function PitchDeck() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isGridView]);
 
-  // Exit grid view and scroll to a specific slide
+  // Exit grid view and scroll to a specific slide (two-phase animation)
   const exitGridToSlide = (index: number) => {
+    if (isTransitioningRef.current) return;
     isTransitioningRef.current = true;
 
-    // flushSync ensures React commits the DOM change (height: auto → 1100vh)
-    // before we read scrollHeight or call scrollTo.
-    flushSync(() => {
-      setIsGridView(false);
-    });
+    // Phase 1: Animate slides from grid positions to stacked position
+    setExitTargetSlide(index);
 
-    requestAnimationFrame(() => {
-      const scrollTarget = getScrollTargetForSlide(
-        index,
-        PITCH_SLIDES.length,
-        document.documentElement.scrollHeight,
-      );
-      window.scrollTo({ top: scrollTarget, behavior: "instant" });
-      setTimeout(() => {
-        isTransitioningRef.current = false;
-      }, 100);
-    });
+    // Phase 2: After animation completes, switch to scroll mode at correct position
+    setTimeout(() => {
+      flushSync(() => {
+        setIsGridView(false);
+        setExitTargetSlide(null);
+      });
+
+      requestAnimationFrame(() => {
+        const scrollTarget = getScrollTargetForSlide(
+          index,
+          PITCH_SLIDES.length,
+          document.documentElement.scrollHeight,
+        );
+        window.scrollTo({ top: scrollTarget, behavior: "instant" });
+        setTimeout(() => {
+          isTransitioningRef.current = false;
+        }, 100);
+      });
+    }, GRID_SLIDE_DURATION * 1000 + 50); // Wait for animation + small buffer
   };
 
   const handleGridItemClick = (index: number) => {
@@ -183,6 +193,7 @@ export function PitchDeck() {
             {/* Slide container — stays in absolute positioning, cards animate to grid positions */}
             <SlideContainer
               isGridView={isGridView}
+              exitTargetSlide={exitTargetSlide}
               scrollYProgress={scrollYProgress}
               onGridItemClick={handleGridItemClick}
             />
@@ -413,10 +424,12 @@ function NavigationControls({
 
 function SlideContainer({
   isGridView,
+  exitTargetSlide,
   scrollYProgress,
   onGridItemClick,
 }: {
   isGridView: boolean;
+  exitTargetSlide: number | null;
   scrollYProgress: MotionValue<number>;
   onGridItemClick: (index: number) => void;
 }) {
@@ -463,6 +476,7 @@ function SlideContainer({
           totalSlides={PITCH_SLIDES.length}
           scrollProgress={scrollYProgress}
           isGridView={isGridView}
+          exitTargetSlide={exitTargetSlide}
           onGridItemClick={() => onGridItemClick(index)}
           gridScale={gridScale}
           thumbWidth={thumbWidth}
@@ -479,6 +493,7 @@ interface PitchSlideProps {
   totalSlides: number;
   scrollProgress: MotionValue<number>;
   isGridView: boolean;
+  exitTargetSlide: number | null;
   onGridItemClick: () => void;
   gridScale: number;
   thumbWidth: number;
@@ -491,6 +506,7 @@ function PitchSlide({
   totalSlides,
   scrollProgress,
   isGridView,
+  exitTargetSlide,
   onGridItemClick,
   gridScale,
   thumbWidth,
@@ -520,33 +536,55 @@ function PitchSlide({
   // Animation delay: reverse order (last card first, first card last)
   const staggerDelay = getStaggerDelay(index, totalSlides);
 
+  // Determine animation mode
+  const isExiting = exitTargetSlide !== null;
+  const stackedPos = isExiting
+    ? getStackedPosition(index, exitTargetSlide, totalSlides)
+    : null;
+
+  // Three states:
+  // 1. Grid mode (no exit): animate to grid positions
+  // 2. Grid mode (exiting): animate from grid to stacked positions
+  // 3. Scroll mode: scroll-driven transforms via style
+  const animateTarget = isGridView
+    ? isExiting
+      ? {
+          x: 0,
+          y: stackedPos!.y,
+          scale: stackedPos!.scale,
+          opacity: stackedPos!.opacity,
+          zIndex: stackedPos!.zIndex,
+          transition: {
+            duration: prefersReducedMotion ? 0 : GRID_SLIDE_DURATION,
+            ease: [0.16, 1, 0.3, 1],
+          },
+        }
+      : {
+          x: gridX,
+          y: gridY,
+          scale: gridScale,
+          opacity: 1,
+          zIndex: 1,
+          transition: {
+            duration: prefersReducedMotion ? 0 : GRID_SLIDE_DURATION,
+            delay: prefersReducedMotion ? 0 : staggerDelay,
+            ease: [0.16, 1, 0.3, 1],
+          },
+        }
+    : undefined;
+
   return (
     <m.article
       initial={false}
       style={isGridView ? undefined : { y, scale, opacity, zIndex }}
-      animate={
-        isGridView
-          ? {
-              x: gridX,
-              y: gridY,
-              scale: gridScale,
-              opacity: 1,
-              zIndex: 1,
-              transition: {
-                duration: prefersReducedMotion ? 0 : 0.6,
-                delay: prefersReducedMotion ? 0 : staggerDelay,
-                ease: [0.25, 0.1, 0.25, 1],
-              },
-            }
-          : undefined
-      }
+      animate={animateTarget}
       className={cn(
         "absolute inset-0",
         isGridView
           ? "cursor-pointer group origin-top-left"
           : "will-change-transform origin-center",
       )}
-      onClick={isGridView ? onGridItemClick : undefined}
+      onClick={isGridView && exitTargetSlide === null ? onGridItemClick : undefined}
       aria-label={`Slide ${index + 1} of ${totalSlides}: ${slide.title}`}
     >
       {/* Slide content wrapper */}

@@ -3,8 +3,8 @@ export const GRID_COLS = 4;
 export const GRID_GAP = 24; // px
 export const GRID_ROW_GAP = 32; // px
 
-export const GRID_ENTER_THRESHOLD = 0.92;
-export const GRID_EXIT_THRESHOLD = 0.88;
+export const GRID_ENTER_THRESHOLD = 0.97;
+export const GRID_EXIT_THRESHOLD = 0.93;
 
 /**
  * Determine if grid view should be active, with hysteresis.
@@ -40,15 +40,14 @@ export function getSlideYKeyframes(
 
   return {
     input: [
-      slideStart - 0.12,
-      slideStart - 0.08,
+      slideStart - 0.01,
       slideStart,
       slideEnd,
       slideEnd + 0.1,
       slideEnd + 0.2,
       slideEnd + 0.3,
     ],
-    output: ["150vh", "150vh", "0%", "-30px", "-50px", "-60px", "-60px"],
+    output: ["150vh", "0%", "-30px", "-50px", "-60px", "-60px"],
   };
 }
 
@@ -72,7 +71,7 @@ export function getSlideScaleKeyframes(
 
   return {
     input: [
-      slideStart - 0.08,
+      slideStart - 0.01,
       slideStart,
       slideEnd,
       slideEnd + 0.1,
@@ -197,8 +196,35 @@ export function getScrollTargetForSlide(
 }
 
 /**
- * Reverse stagger delay: last card animates first.
+ * Compute the stacked-view appearance of a slide when viewing targetSlide.
+ * Used for the grid-exit animation: slides animate from grid positions
+ * back to these stacked positions.
+ */
+export function getStackedPosition(
+  index: number,
+  targetSlide: number,
+  totalSlides: number,
+): { y: string; scale: number; opacity: number; zIndex: number } {
+  if (index === targetSlide) {
+    // Target slide: fully visible, centered
+    return { y: "0%", scale: 1, opacity: 1, zIndex: totalSlides };
+  }
+  // All non-target slides: hidden
+  return {
+    y: index < targetSlide ? "-60px" : "150vh",
+    scale: index < targetSlide ? 0.85 : 1,
+    opacity: 0,
+    zIndex: index,
+  };
+}
+
+/** Duration of the grid-entry animation (seconds). */
+export const GRID_SLIDE_DURATION = 0.5;
+
+/**
+ * Stagger delay for grid entry. All slides move simultaneously
+ * with a subtle stagger for visual polish.
  */
 export function getStaggerDelay(index: number, totalSlides: number): number {
-  return (totalSlides - 1 - index) * 0.05;
+  return (totalSlides - 1 - index) * 0.02;
 }

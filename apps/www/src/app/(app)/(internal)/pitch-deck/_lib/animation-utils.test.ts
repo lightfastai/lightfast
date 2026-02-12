@@ -16,6 +16,7 @@ import {
   GRID_GAP,
   GRID_ROW_GAP,
   GRID_ENTER_THRESHOLD,
+  GRID_SLIDE_DURATION,
 } from "./animation-utils";
 
 const TOTAL = 10;
@@ -28,12 +29,12 @@ describe("getSlideYKeyframes", () => {
     expect(kf.output[0]).toBe("0%");
   });
 
-  it("returns 7 keyframes for non-first slides", () => {
+  it("returns 6 keyframes for non-first slides", () => {
     const kf = getSlideYKeyframes(3, TOTAL);
-    expect(kf.input).toHaveLength(7);
-    expect(kf.output).toHaveLength(7);
+    expect(kf.input).toHaveLength(6);
+    expect(kf.output).toHaveLength(6);
     expect(kf.output[0]).toBe("150vh");
-    expect(kf.output[2]).toBe("0%");
+    expect(kf.output[1]).toBe("0%");
   });
 });
 
@@ -181,37 +182,39 @@ describe("getScrollTargetForSlide", () => {
 
 describe("getStaggerDelay", () => {
   it("first slide gets max delay", () => {
-    expect(getStaggerDelay(0, TOTAL)).toBe((TOTAL - 1) * 0.05);
+    expect(getStaggerDelay(0, TOTAL)).toBe((TOTAL - 1) * 0.02);
   });
 
-  it("last slide gets 0 delay", () => {
+  it("last slide gets 0 delay (animates first)", () => {
     expect(getStaggerDelay(TOTAL - 1, TOTAL)).toBe(0);
   });
 
-  it("reverses order", () => {
+  it("reverses order with subtle stagger", () => {
     const delay0 = getStaggerDelay(0, TOTAL);
     const delay5 = getStaggerDelay(5, TOTAL);
     const delay9 = getStaggerDelay(9, TOTAL);
     expect(delay0).toBeGreaterThan(delay5);
     expect(delay5).toBeGreaterThan(delay9);
+    // Total stagger is small — all slides move near-simultaneously
+    expect(delay0).toBeLessThan(0.5);
   });
 });
 
 describe("shouldBeGridView", () => {
   it("enters grid above enter threshold", () => {
-    expect(shouldBeGridView(0.93, false)).toBe(true);
+    expect(shouldBeGridView(0.98, false)).toBe(true);
   });
 
   it("stays in grid above exit threshold", () => {
-    expect(shouldBeGridView(0.90, true)).toBe(true);
+    expect(shouldBeGridView(0.95, true)).toBe(true);
   });
 
   it("exits grid below exit threshold", () => {
-    expect(shouldBeGridView(0.87, true)).toBe(false);
+    expect(shouldBeGridView(0.92, true)).toBe(false);
   });
 
   it("stays out of grid below enter threshold", () => {
-    expect(shouldBeGridView(0.90, false)).toBe(false);
+    expect(shouldBeGridView(0.95, false)).toBe(false);
   });
 });
 
@@ -220,6 +223,6 @@ describe("constants", () => {
     expect(GRID_COLS).toBe(4);
     expect(GRID_GAP).toBe(24);
     expect(GRID_ROW_GAP).toBe(32);
-    expect(GRID_ENTER_THRESHOLD).toBe(0.92);
+    expect(GRID_ENTER_THRESHOLD).toBe(0.97);
   });
 });
