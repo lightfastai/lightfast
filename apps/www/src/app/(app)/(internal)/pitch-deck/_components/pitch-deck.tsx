@@ -33,6 +33,7 @@ export function PitchDeck() {
 
   const { isGridView, setIsGridView } = usePitchDeck();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const isTransitioningRef = useRef(false);
 
   // Grid view threshold: last slide ends at (totalSlides) / (totalSlides + 1)
   // For 8 slides with +1 extra: 8/9 = 0.889
@@ -48,6 +49,9 @@ export function PitchDeck() {
     if (slideIndex !== currentSlide) {
       setCurrentSlide(slideIndex);
     }
+
+    // Prevent grid toggle during reverse transition
+    if (isTransitioningRef.current) return;
 
     // Grid view logic
     const shouldBeGrid = latest >= GRID_THRESHOLD;
@@ -86,10 +90,38 @@ export function PitchDeck() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const handleGridItemClick = (index: number) => {
-    const scrollTarget = index * window.innerHeight;
-    window.scrollTo({ top: scrollTarget, behavior: "smooth" });
+  // Exit grid view and scroll to a specific slide
+  const exitGridToSlide = (index: number) => {
+    isTransitioningRef.current = true;
+    setIsGridView(false);
+
+    requestAnimationFrame(() => {
+      const scrollTarget = index * window.innerHeight;
+      window.scrollTo({ top: scrollTarget, behavior: "instant" });
+      setTimeout(() => {
+        isTransitioningRef.current = false;
+      }, 100);
+    });
   };
+
+  const handleGridItemClick = (index: number) => {
+    exitGridToSlide(index);
+  };
+
+  // Scroll backward in grid mode → return to last slide
+  useEffect(() => {
+    if (!isGridView) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaY < 0) {
+        e.preventDefault();
+        exitGridToSlide(PITCH_SLIDES.length - 1);
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [isGridView]);
 
   const handlePrevSlide = () => {
     if (currentSlide > 0) {
@@ -112,26 +144,27 @@ export function PitchDeck() {
         <div
           ref={containerRef}
           className="hidden lg:block relative"
-          style={{ height: `${(PITCH_SLIDES.length + 1) * 100}vh` }}
+          style={{
+            height: isGridView ? "auto" : `${(PITCH_SLIDES.length + 1) * 100}vh`,
+          }}
         >
+          {/* Sticky wrapper — only sticky in scroll mode */}
           <div
-            className="sticky top-0 h-screen flex flex-col items-center justify-center page-gutter py-16 overflow-visible"
+            className={cn(
+              "flex flex-col items-center page-gutter py-16",
+              isGridView
+                ? "min-h-screen justify-start pt-24"
+                : "sticky top-0 h-screen justify-center overflow-visible",
+            )}
             role="region"
             aria-label="Slide viewer"
           >
-            {/* Slide container - fills available space with aspect ratio constraint */}
-            <div className="relative w-full max-w-[1200px] aspect-[16/9] overflow-visible">
-              {PITCH_SLIDES.map((slide, index) => (
-                <PitchSlide
-                  key={slide.id}
-                  slide={slide}
-                  index={index}
-                  totalSlides={PITCH_SLIDES.length}
-                  scrollProgress={scrollYProgress}
-                  isGridView={isGridView}
-                />
-              ))}
-            </div>
+            {/* Slide container — stays in absolute positioning, cards animate to grid positions */}
+            <SlideContainer
+              isGridView={isGridView}
+              scrollYProgress={scrollYProgress}
+              onGridItemClick={handleGridItemClick}
+            />
 
             {/* Progress Indicator - positioned with padding offset */}
             <SlideIndicator
@@ -165,9 +198,11 @@ export function PitchDeck() {
               <div
                 className={cn(
                   "w-full aspect-[16/9] rounded-sm overflow-hidden shadow-lg",
-                  slide.bgColor
+                  slide.bgColor,
                 )}
-                style={{ "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties}
+                style={
+                  { "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties
+                }
               >
                 <div className="relative h-full p-4 flex flex-col justify-between">
                   <SlideContent slide={slide} />
@@ -178,105 +213,11 @@ export function PitchDeck() {
           <MobileBottomBar />
         </div>
 
-        {/* Grid View Overlay (desktop only) */}
-        <AnimatePresence>
-          {isGridView && (
-            <GridView>
-              {PITCH_SLIDES.map((slide, index) => (
-                <GridSlideItem
-                  key={slide.id}
-                  slide={slide}
-                  index={index}
-                  totalSlides={PITCH_SLIDES.length}
-                  onClick={() => handleGridItemClick(index)}
-                />
-              ))}
-            </GridView>
-          )}
-        </AnimatePresence>
       </main>
     </LazyMotion>
   );
 }
 
-// Grid View Overlay with CSS Grid
-function GridView({ children }: { children: React.ReactNode }) {
-  return (
-    <m.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="fixed inset-0 z-40 bg-background/95 backdrop-blur-sm overflow-auto"
-    >
-      <div className="min-h-screen py-24 px-8 flex items-center justify-center">
-        <div className="max-w-7xl w-full">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {children}
-          </div>
-        </div>
-      </div>
-    </m.div>
-  );
-}
-
-// Grid Item Component - Shows actual slide content scaled down
-function GridSlideItem({
-  slide,
-  index,
-  totalSlides,
-  onClick,
-}: {
-  slide: (typeof PITCH_SLIDES)[number];
-  index: number;
-  totalSlides: number;
-  onClick: () => void;
-}) {
-  // Stagger delay: last slide animates first (reverse order)
-  const staggerDelay = (totalSlides - 1 - index) * 0.05;
-
-  return (
-    <m.div
-      onClick={onClick}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{
-        opacity: 1,
-        scale: 1,
-        transition: {
-          delay: staggerDelay,
-          duration: 0.3,
-          ease: [0.25, 0.1, 0.25, 1],
-        },
-      }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.2 }}
-      className="cursor-pointer group"
-    >
-      {/* Container maintains 16:9 aspect ratio */}
-      <div className="w-full aspect-[16/9] rounded-sm overflow-hidden shadow-lg transition-shadow duration-200 group-hover:shadow-xl group-hover:ring-2 group-hover:ring-white/20">
-        {/* Inner wrapper scales down the full slide content */}
-        <div
-          className={cn("w-[400%] h-[400%] origin-top-left", slide.bgColor)}
-          style={
-            {
-              transform: "scale(0.25)",
-              "--foreground": "oklch(0.205 0 0)",
-            } as React.CSSProperties
-          }
-        >
-          <div className="relative w-full h-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">
-            <SlideContent slide={slide} />
-          </div>
-        </div>
-      </div>
-      {"gridTitle" in slide && slide.gridTitle && (
-        <p className="mt-2 text-xs text-muted-foreground text-center truncate">
-          {slide.gridTitle}
-        </p>
-      )}
-    </m.div>
-  );
-}
 
 function SlideIndicator({
   totalSlides,
@@ -458,12 +399,88 @@ function NavigationControls({
   );
 }
 
+// --- Grid layout constants ---
+const GRID_COLS = 4;
+const GRID_GAP = 24; // px
+const GRID_ROW_GAP = 32; // px (extra space for title below card)
+
+function SlideContainer({
+  isGridView,
+  scrollYProgress,
+  onGridItemClick,
+}: {
+  isGridView: boolean;
+  scrollYProgress: MotionValue<number>;
+  onGridItemClick: (index: number) => void;
+}) {
+  const slideContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  // Measure container width
+  useEffect(() => {
+    const el = slideContainerRef.current;
+    if (!el) return;
+
+    const measure = () => setContainerWidth(el.offsetWidth);
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Calculate thumbnail size from container width
+  const thumbWidth = containerWidth > 0
+    ? (containerWidth - (GRID_COLS - 1) * GRID_GAP) / GRID_COLS
+    : 0;
+  const thumbHeight = thumbWidth * (9 / 16);
+  const gridScale = containerWidth > 0 ? thumbWidth / containerWidth : 0.25;
+  const totalRows = Math.ceil(PITCH_SLIDES.length / GRID_COLS);
+  const rowHeight = thumbHeight + GRID_ROW_GAP;
+
+  return (
+    <div
+      ref={slideContainerRef}
+      className={cn(
+        "w-full relative",
+        isGridView
+          ? "max-w-7xl"
+          : "max-w-[1200px] aspect-[16/9] overflow-visible",
+      )}
+      style={
+        isGridView
+          ? { height: `${totalRows * rowHeight}px` }
+          : undefined
+      }
+    >
+      {PITCH_SLIDES.map((slide, index) => (
+        <PitchSlide
+          key={slide.id}
+          slide={slide}
+          index={index}
+          totalSlides={PITCH_SLIDES.length}
+          scrollProgress={scrollYProgress}
+          isGridView={isGridView}
+          onGridItemClick={() => onGridItemClick(index)}
+          gridScale={gridScale}
+          thumbWidth={thumbWidth}
+          rowHeight={rowHeight}
+        />
+      ))}
+    </div>
+  );
+}
+
 interface PitchSlideProps {
   slide: (typeof PITCH_SLIDES)[number];
   index: number;
   totalSlides: number;
   scrollProgress: MotionValue<number>;
   isGridView: boolean;
+  onGridItemClick: () => void;
+  gridScale: number;
+  thumbWidth: number;
+  rowHeight: number;
 }
 
 function PitchSlide({
@@ -472,24 +489,25 @@ function PitchSlide({
   totalSlides,
   scrollProgress,
   isGridView,
+  onGridItemClick,
+  gridScale,
+  thumbWidth,
+  rowHeight,
 }: PitchSlideProps) {
   const slideStart = index / totalSlides;
   const slideEnd = (index + 1) / totalSlides;
-
-  // Scroll-based transforms (used when NOT in grid view)
-  // First slide: visible at start, then stacks behind
-  // Other slides: start at 150vh below viewport, animate UP into view, then stack
   const isFirstSlide = index === 0;
 
+  // --- Scroll-driven transforms ---
   const y = useTransform(
     scrollProgress,
     isFirstSlide
       ? [0, slideEnd, slideEnd + 0.1, slideEnd + 0.2, slideEnd + 0.3]
       : [
-          slideStart - 0.12, // Well before slide appears - at 150vh
-          slideStart - 0.08, // Start entering
-          slideStart, // Fully visible (centered)
-          slideEnd, // Start stacking
+          slideStart - 0.12,
+          slideStart - 0.08,
+          slideStart,
+          slideEnd,
           slideEnd + 0.1,
           slideEnd + 0.2,
           slideEnd + 0.3,
@@ -514,7 +532,6 @@ function PitchSlide({
     isFirstSlide ? [1, 0.95, 0.9, 0.85, 0.85] : [1, 1, 0.95, 0.9, 0.85, 0.85],
   );
 
-  // Opacity: all slides start visible, fade out when stacking behind
   const opacity = useTransform(
     scrollProgress,
     [slideEnd + 0.15, slideEnd + 0.25, slideEnd + 0.35],
@@ -527,28 +544,83 @@ function PitchSlide({
     [index, index + 1, index + 1],
   );
 
-  // Don't render slides when in grid view (they render in GridView instead)
-  if (isGridView) {
-    return null;
-  }
+  // --- Grid position calculation ---
+  // With origin-top-left, scale shrinks the card from top-left corner
+  // so x/y positions are simply the grid cell coordinates
+  const row = Math.floor(index / GRID_COLS);
+  const col = index % GRID_COLS;
+  const gridX = col * (thumbWidth + GRID_GAP);
+  const gridY = row * rowHeight;
+
+  // Reduced motion check
+  const prefersReducedMotion = useRef(false);
+  useEffect(() => {
+    prefersReducedMotion.current =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  // Animation delay: reverse order (last card first, first card last)
+  const staggerDelay = (totalSlides - 1 - index) * 0.05;
 
   return (
     <m.article
-      style={{ y, scale, opacity, zIndex }}
-      className={cn("absolute inset-0 will-change-transform origin-center")}
+      initial={false}
+      style={isGridView ? undefined : { y, scale, opacity, zIndex }}
+      animate={
+        isGridView
+          ? {
+              x: gridX,
+              y: gridY,
+              scale: gridScale,
+              opacity: 1,
+              zIndex: 1,
+              transition: {
+                duration: prefersReducedMotion.current ? 0 : 0.6,
+                delay: prefersReducedMotion.current ? 0 : staggerDelay,
+                ease: [0.25, 0.1, 0.25, 1],
+              },
+            }
+          : undefined
+      }
+      className={cn(
+        "absolute inset-0",
+        isGridView
+          ? "cursor-pointer group origin-top-left"
+          : "will-change-transform origin-center",
+      )}
+      onClick={isGridView ? onGridItemClick : undefined}
       aria-label={`Slide ${index + 1} of ${totalSlides}: ${slide.title}`}
     >
+      {/* Slide content wrapper */}
       <div
         className={cn(
-          "w-full aspect-[16/9] rounded-sm overflow-hidden shadow-2xl",
+          "w-full aspect-[16/9] rounded-lg overflow-hidden shadow-2xl",
+          isGridView &&
+            "rounded-sm shadow-lg transition-shadow duration-200 group-hover:shadow-xl group-hover:ring-2 group-hover:ring-white/20",
           slide.bgColor,
         )}
         style={{ "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties}
       >
-        <div className="relative h-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">
+        <div className="relative h-full w-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">
           <SlideContent slide={slide} />
         </div>
       </div>
+
+      {/* Grid title label — only in grid mode */}
+      {isGridView && "gridTitle" in slide && slide.gridTitle && (
+        <p
+          className="text-xs text-muted-foreground text-center truncate mt-2"
+          style={{
+            // Scale up the title text to counteract the parent's scale-down
+            transform: `scale(${1 / gridScale})`,
+            transformOrigin: "top center",
+            width: `${thumbWidth}px`,
+          }}
+        >
+          {slide.gridTitle}
+        </p>
+      )}
     </m.article>
   );
 }
