@@ -3,3 +3,17 @@
 @import "fumadocs-ui/css/preset.css";
 @import "fumadocs-openapi/css/preset.css";
 @import "@repo/ui/globals.css";
+
+/* Lightfast brand color scale for OpenAPI customization */
+@layer components {
+  :root {
+    /* Brand color scale based on Lightfast brand-blue */
+    /* Base: oklch(0.4868 0.2565 266.23) */
+    --brand-50: 225 100% 97%;    /* Lightest tint for backgrounds */
+    --brand-100: 225 96% 90%;    /* Light tint for borders */
+    --brand-200: 225 96% 82%;    /* Subtle accent */
+    --brand-500: 225 86% 55%;    /* Primary brand color (accent) */
+    --brand-600: 225 70% 44%;    /* Darker variant */
+    --brand-900: 225 80% 15%;    /* Darkest for text */
+  }
+}
