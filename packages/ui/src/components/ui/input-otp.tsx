@@ -3,26 +3,50 @@
 import * as React from "react"
 import { OTPInput, OTPInputContext } from "input-otp"
 import { MinusIcon } from "lucide-react"
+import { cva } from "class-variance-authority"
+import type { VariantProps } from "class-variance-authority"
 
 import { cn } from "@repo/ui/lib/utils"
+
+// Create context for size
+const InputOTPSizeContext = React.createContext<"default" | "lg">("default")
+
+const inputOTPSlotVariants = cva(
+  "data-[active=true]:border-ring data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:ring-destructive/20 dark:data-[active=true]:aria-invalid:ring-destructive/40 aria-invalid:border-destructive data-[active=true]:aria-invalid:border-destructive dark:bg-input/30 border-input relative flex items-center justify-center border-y border-r text-sm shadow-xs transition-all outline-none first:rounded-l-md first:border-l last:rounded-r-md data-[active=true]:z-10 data-[active=true]:ring-[3px]",
+  {
+    variants: {
+      size: {
+        default: "h-9 w-9",
+        lg: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
+  },
+)
 
 function InputOTP({
   className,
   containerClassName,
+  size = "default",
   ...props
 }: React.ComponentProps<typeof OTPInput> & {
   containerClassName?: string
+  size?: "default" | "lg"
 }) {
   return (
-    <OTPInput
-      data-slot="input-otp"
-      containerClassName={cn(
-        "flex items-center gap-2 has-disabled:opacity-50",
-        containerClassName
-      )}
-      className={cn("disabled:cursor-not-allowed", className)}
-      {...props}
-    />
+    <InputOTPSizeContext.Provider value={size}>
+      <OTPInput
+        data-slot="input-otp"
+        containerClassName={cn(
+          "flex items-center gap-2 has-disabled:opacity-50",
+          containerClassName
+        )}
+        className={cn("disabled:cursor-not-allowed", className)}
+        {...props}
+      />
+    </InputOTPSizeContext.Provider>
   )
 }
 
@@ -44,6 +68,7 @@ function InputOTPSlot({
   index: number
 }) {
   const inputOTPContext = React.useContext(OTPInputContext)
+  const size = React.useContext(InputOTPSizeContext)
   const { char, hasFakeCaret, isActive } = inputOTPContext?.slots[index] ?? {}
 
   return (
@@ -51,7 +76,7 @@ function InputOTPSlot({
       data-slot="input-otp-slot"
       data-active={isActive}
       className={cn(
-        "data-[active=true]:border-ring data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:ring-destructive/20 dark:data-[active=true]:aria-invalid:ring-destructive/40 aria-invalid:border-destructive data-[active=true]:aria-invalid:border-destructive dark:bg-input/30 border-input relative flex h-9 w-9 items-center justify-center border-y border-r text-sm shadow-xs transition-all outline-none first:rounded-l-md first:border-l last:rounded-r-md data-[active=true]:z-10 data-[active=true]:ring-[3px]",
+        inputOTPSlotVariants({ size }),
         className
       )}
       {...props}

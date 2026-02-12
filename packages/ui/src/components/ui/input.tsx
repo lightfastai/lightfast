@@ -1,8 +1,8 @@
-import * as React from "react"
-import { cva  } from "class-variance-authority"
-import type {VariantProps} from "class-variance-authority";
+import * as React from "react";
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 
-import { cn } from "@repo/ui/lib/utils"
+import { cn } from "@repo/ui/lib/utils";
 
 const inputVariants = cva(
   "file:text-foreground selection:bg-primary selection:text-primary-foreground flex w-full min-w-0 bg-transparent outline-none transition-[color,box-shadow] file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
@@ -10,7 +10,7 @@ const inputVariants = cva(
     variants: {
       variant: {
         default: [
-          "placeholder:text-muted-foreground dark:bg-background border-input h-9 rounded-md border px-3 py-1 text-base shadow-xs md:text-sm",
+          "placeholder:text-muted-foreground dark:bg-background border-input rounded-md border text-base shadow-xs md:text-sm",
           "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:ring-offset-0",
           "aria-invalid:ring-2 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         ],
@@ -19,26 +19,31 @@ const inputVariants = cva(
           "focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-foreground",
         ],
       },
+      size: {
+        default: "h-8 px-3 py-1",
+        lg: "h-10 px-4 py-2",
+      },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
-  }
-)
+  },
+);
 
 export interface InputProps
-  extends React.ComponentProps<"input">,
+  extends Omit<React.ComponentProps<"input">, "size">,
     VariantProps<typeof inputVariants> {}
 
-function Input({ className, type, variant, ...props }: InputProps) {
+function Input({ className, type, variant, size, ...props }: InputProps) {
   return (
     <input
       type={type}
       data-slot="input"
-      className={cn(inputVariants({ variant }), className)}
+      className={cn(inputVariants({ variant, size }), className)}
       {...props}
     />
-  )
+  );
 }
 
-export { Input }
+export { Input };

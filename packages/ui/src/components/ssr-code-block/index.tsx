@@ -104,7 +104,7 @@ export async function SSRCodeBlock({
 
   return (
     <div className={cn("my-4", className)}>
-      <div className="rounded-xs bg-muted/30 dark:bg-card overflow-hidden scrollbar-thin">
+      <div className="rounded-sm border dark:bg-card overflow-hidden scrollbar-thin">
         {/* Header with language label and copy button */}
         {showHeader && (
           <div className="flex items-center justify-between px-6 py-2">
