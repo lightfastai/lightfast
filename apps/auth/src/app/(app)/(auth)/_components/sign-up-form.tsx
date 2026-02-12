@@ -10,122 +10,124 @@ import { OAuthSignUp } from "./oauth-sign-up";
 import { siteConfig } from "@repo/site-config";
 
 export function SignUpForm() {
-	const [verificationStep, setVerificationStep] = React.useState<
-		"email" | "code"
-	>("email");
-	const [emailAddress, setEmailAddress] = React.useState("");
-	const [error, setError] = React.useState("");
+  const [verificationStep, setVerificationStep] = React.useState<
+    "email" | "code"
+  >("email");
+  const [emailAddress, setEmailAddress] = React.useState("");
+  const [error, setError] = React.useState("");
 
-	function handleEmailSuccess(email: string) {
-		setEmailAddress(email);
-		setVerificationStep("code");
-		setError("");
-	}
+  function handleEmailSuccess(email: string) {
+    setEmailAddress(email);
+    setVerificationStep("code");
+    setError("");
+  }
 
-	function handleReset() {
-		setVerificationStep("email");
-		setError("");
-		setEmailAddress("");
-	}
+  function handleReset() {
+    setVerificationStep("email");
+    setError("");
+    setEmailAddress("");
+  }
 
-	function handleError(errorMessage: string) {
-		setError(errorMessage);
-	}
+  function handleError(errorMessage: string) {
+    setError(errorMessage);
+  }
 
-	return (
-		<div className="w-full space-y-8">
-			{/* Header - only show on email step */}
-			{verificationStep === "email" && (
-				<div className="text-center">
-					<h1 className="text-3xl font-semibold text-foreground">
-						Sign up for Lightfast
-					</h1>
-				</div>
-			)}
+  return (
+    <div className="w-full space-y-8">
+      {/* Header - only show on email step */}
+      {verificationStep === "email" && (
+        <div className="text-center">
+          <h1 className="text-3xl font-normal text-foreground">
+            Sign up for Lightfast
+          </h1>
+        </div>
+      )}
 
-			<div className="space-y-4">
-				{error && (
-					<div className="space-y-4">
-						<div className="rounded-lg bg-red-50 border border-red-200 p-3">
-							<p className="text-sm text-red-800">{error}</p>
-						</div>
-						<Button
-							onClick={handleReset}
-							variant="outline"
-							className="w-full h-12"
-						>
-							Try again
-						</Button>
-					</div>
-				)}
+      <div className="space-y-4">
+        {error && (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+            <Button onClick={handleReset} size="lg" variant="outline" className="w-full">
+              Try again
+            </Button>
+          </div>
+        )}
 
-				{!error && verificationStep === "email" && (
-					<>
-						{/* Email Sign Up */}
-						<SignUpEmailInput
-							onSuccess={handleEmailSuccess}
-							onError={handleError}
-						/>
+        {!error && verificationStep === "email" && (
+          <>
+            {/* Email Sign Up */}
+            <SignUpEmailInput
+              onSuccess={handleEmailSuccess}
+              onError={handleError}
+            />
 
-						{/* Legal compliance text */}
-						<p className="text-xs text-center text-muted-foreground">
-							By joining, you agree to our{" "}
-							<MicrofrontendLink
-								href={siteConfig.links.terms.href}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="text-foreground hover:text-foreground/80 underline"
-							>
-								Terms of Service
-							</MicrofrontendLink>{" "}
-							and{" "}
-							<MicrofrontendLink
-								href={siteConfig.links.privacy.href}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="text-foreground hover:text-foreground/80 underline"
-							>
-								Privacy Policy
-							</MicrofrontendLink>
-						</p>
+            {/* Legal compliance text */}
+            <p className="text-xs text-center text-muted-foreground">
+              By joining, you agree to our{" "}
+              <MicrofrontendLink
+                href={siteConfig.links.terms.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground hover:text-foreground/80 underline"
+              >
+                Terms of Service
+              </MicrofrontendLink>{" "}
+              and{" "}
+              <MicrofrontendLink
+                href={siteConfig.links.privacy.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground hover:text-foreground/80 underline"
+              >
+                Privacy Policy
+              </MicrofrontendLink>
+            </p>
 
-						{/* Separator */}
-						<div className="relative">
-							<div className="absolute inset-0 flex items-center">
-								<Separator className="w-full" />
-							</div>
-							<div className="relative flex justify-center text-xs uppercase">
-								<span className="bg-background px-2 text-muted-foreground">Or</span>
-							</div>
-						</div>
+            {/* Separator */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or
+                </span>
+              </div>
+            </div>
 
-						{/* OAuth Sign Up */}
-						<OAuthSignUp />
-					</>
-				)}
+            {/* OAuth Sign Up */}
+            <OAuthSignUp />
+          </>
+        )}
 
-				{!error && verificationStep === "code" && (
-					<SignUpCodeVerification
-						email={emailAddress}
-						onReset={handleReset}
-						onError={handleError}
-					/>
-				)}
-			</div>
+        {!error && verificationStep === "code" && (
+          <SignUpCodeVerification
+            email={emailAddress}
+            onReset={handleReset}
+            onError={handleError}
+          />
+        )}
+      </div>
 
-			{/* Sign In Link - only show on email step */}
-			{verificationStep === "email" && (
-				<div className="text-center text-sm">
-					<span className="text-muted-foreground">Already have an account? </span>
-					<Button
-						asChild
-						variant="link-blue"
-						className="inline-flex h-auto p-0 rounded-none text-sm"
-					>
-						<NextLink href="/sign-in" prefetch>Log In</NextLink>
-					</Button>
-				</div>
-			)}
-		</div>
-	);
+      {/* Sign In Link - only show on email step */}
+      {verificationStep === "email" && (
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">
+            Already have an account?{" "}
+          </span>
+          <Button
+            asChild
+            variant="link-blue"
+            className="inline-flex h-auto p-0 rounded-none text-sm"
+          >
+            <NextLink href="/sign-in" prefetch>
+              Log In
+            </NextLink>
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 }

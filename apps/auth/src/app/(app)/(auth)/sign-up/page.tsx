@@ -17,20 +17,7 @@ export default function SignUpPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-6">
-            <div className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full mb-4">
-              DEV ONLY
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Create test accounts for development
-            </p>
-          </div>
-
-          <SignUpForm />
-        </div>
-      </div>
+      <SignUpForm />
     </>
   );
 }

@@ -96,7 +96,8 @@ export function SignUpEmailInput({
 								<Input
 									type="email"
 									placeholder="Email Address"
-									className="h-12 bg-background dark:bg-background"
+									size="lg"
+									className="bg-background dark:bg-background"
 									{...field}
 								/>
 							</FormControl>
@@ -114,7 +115,8 @@ export function SignUpEmailInput({
 								<Input
 									type="password"
 									placeholder="Password (8+ characters)"
-									className="h-12 bg-background dark:bg-background"
+									size="lg"
+									className="bg-background dark:bg-background"
 									{...field}
 								/>
 							</FormControl>
@@ -125,7 +127,8 @@ export function SignUpEmailInput({
 
 				<Button
 					type="submit"
-					className="w-full h-12"
+					size="lg"
+					className="w-full"
 					disabled={!isLoaded || form.formState.isSubmitting}
 				>
 					{form.formState.isSubmitting ? (

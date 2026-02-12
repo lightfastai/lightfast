@@ -45,7 +45,8 @@ export function OAuthSignUp() {
   return (
     <Button
       variant="outline"
-      className="w-full h-12"
+      className="w-full"
+      size="lg"
       onClick={() => signUpWith("oauth_github")}
       disabled={!isLoaded || loading !== null}
     >

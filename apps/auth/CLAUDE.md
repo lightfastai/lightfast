@@ -1,16 +1,16 @@
 # Auth App Development Guide
 
-## Local Testing
+## Test Accounts
 
-When testing the auth app locally, password login is configured with the following test credentials:
+Password login test credentials:
 
 - **Email**: `admin@lightfast.ai`
 - **Password**: `ijXFdBJ3U2eMDFnKqngp`
 
-Testing with new fresh accounts:
+Testing with fresh accounts:
 
--- **Email**:`some-email+clerk_test@lightfast.ai`
--- **Verification Code**: `424242`
+- **Email**: `some-email+clerk_test@lightfast.ai`
+- **Verification Code**: `424242`
 
 ## Development Commands
 

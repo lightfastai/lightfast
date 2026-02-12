@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
 
-import "@repo/ui/globals.css";
+import "~/styles/globals.css";
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/sonner";
-import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
@@ -88,9 +87,9 @@ export default function RootLayout({
         "choose-organization": `${consoleUrl}/account/teams/new`,
       }}
     >
-      <html className={fonts} lang="en" suppressHydrationWarning>
+      <html lang="en" suppressHydrationWarning>
         <head />
-        <body className={cn("bg-background dark font-sans min-h-screen")}>
+        <body className={cn("bg-background dark font-sans min-h-screen antialiased")}>
           {children}
           <Toaster position="bottom-right" />
           <VercelAnalytics />
