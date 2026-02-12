@@ -381,7 +381,7 @@ export const mdxComponents = {
     return (
       <div
         className={cn(
-          "bg-card border border-transparent p-6 rounded-xs my-10 [&_*]:text-xs [&_p]:leading-relaxed [&_p]:mt-0 flex gap-3",
+          "bg-card border border-transparent p-6 rounded-xs my-10 [&_*]:text-sm [&_p]:leading-relaxed [&_p]:mt-0 flex gap-3",
           className,
         )}
         {...props}

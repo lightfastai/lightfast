@@ -10,7 +10,7 @@ interface DocsLayoutProps {
 export function DocsLayout({ children, toc }: DocsLayoutProps) {
   return (
     <div className="flex">
-      <div className="flex-1 min-w-0 py-2">
+      <div className="flex-1 min-w-0">
         <div className="max-w-4xl mx-auto">{children}</div>
       </div>
       {/* TOC Sidebar - Desktop only */}

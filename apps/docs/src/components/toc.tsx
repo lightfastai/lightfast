@@ -45,7 +45,7 @@ function TOCContent({ items }: TOCProps) {
           <TOCItem
             key={item.url}
             href={item.url}
-            className="relative block text-xs text-muted-foreground hover:text-foreground transition-colors leading-relaxed py-1 pl-6 pr-4 data-[active=true]:text-foreground z-10 h-7 flex items-center truncate"
+            className="relative block text-sm text-muted-foreground hover:text-foreground transition-colors leading-relaxed py-1 pl-6 pr-4 data-[active=true]:text-foreground z-10 h-7 flex items-center truncate"
             style={{
               paddingLeft: `${24 + Math.max(0, item.depth - 2) * 12}px`,
             }}
@@ -73,4 +73,4 @@ export function TOC({ items }: TOCProps) {
       </AnchorProvider>
     </div>
   );
-}
+

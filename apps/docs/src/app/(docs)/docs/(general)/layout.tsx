@@ -8,7 +8,11 @@ import { authUrl } from "@/src/lib/related-projects";
 import { pageTree } from "@/src/lib/source";
 import { cn } from "@repo/ui/lib/utils";
 
-export default function GeneralDocsLayout({ children }: { children: ReactNode }) {
+export default function GeneralDocsLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const signInUrl = `${authUrl}/sign-in`;
 
   return (
@@ -25,10 +29,10 @@ export default function GeneralDocsLayout({ children }: { children: ReactNode })
         {/* Main Content Area */}
         <SidebarInset className="flex flex-col flex-1 overflow-hidden">
           {/* Header with actions */}
-          <header className="shrink-0 bg-background">
-            <div className="page-gutter flex items-center justify-end min-h-[3rem]">
+          <header className="shrink-0 py-4 page-gutter bg-transparent">
+            <div className="flex items-center justify-end h-9">
               {/* Right side - Navigation and Sign In Button */}
-              <div className="flex items-center gap-8 py-4">
+              <div className="flex items-center gap-6">
                 {/* Navigation */}
                 <nav className="flex items-center gap-6">
                   <Button
@@ -39,9 +43,7 @@ export default function GeneralDocsLayout({ children }: { children: ReactNode })
                     )}
                     asChild
                   >
-                    <Link href="/docs/get-started/overview">
-                      Docs
-                    </Link>
+                    <Link href="/docs/get-started/overview">Docs</Link>
                   </Button>
                   <Button
                     variant="link"
@@ -76,7 +78,7 @@ export default function GeneralDocsLayout({ children }: { children: ReactNode })
 
           {/* Scrollable content area */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
-            <div className="page-gutter py-16">
+            <div className="page-gutter py-8">
               {/* Page Content */}
               <main className="min-w-0">{children}</main>
             </div>

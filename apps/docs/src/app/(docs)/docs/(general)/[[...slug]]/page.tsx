@@ -4,7 +4,6 @@ import { notFound, redirect } from "next/navigation";
 import { DeveloperPlatformLanding } from "./_components/developer-platform-landing";
 import { DocsLayout } from "@/src/components/docs-layout";
 import { mdxComponents } from "@/mdx-components";
-import { exposureTrial } from "@/src/lib/fonts";
 import { siteConfig, docsMetadata } from "@/src/lib/site-config";
 import { createMetadata } from "@vendor/seo/metadata";
 import { JsonLd } from "@vendor/seo/json-ld";
@@ -92,9 +91,10 @@ export default async function Page({
     sameAs: [
       "https://twitter.com/lightfastai",
       "https://github.com/lightfastai",
-      "https://www.linkedin.com/company/lightfastai"
+      "https://www.linkedin.com/company/lightfastai",
     ],
-    description: "Lightfast is memory built for teams. We help people and agents find what they need, understand context, and trace decisions across their entire organization."
+    description:
+      "Lightfast is memory built for teams. We help people and agents find what they need, understand context, and trace decisions across their entire organization.",
   };
 
   const websiteEntity: WebSite = {
@@ -102,31 +102,33 @@ export default async function Page({
     "@id": "https://lightfast.ai/docs#website",
     url: "https://lightfast.ai/docs",
     name: "Lightfast Documentation",
-    description: "Documentation for Lightfast neural memory — Learn how to integrate team memory via a simple REST API and MCP tools",
+    description:
+      "Documentation for Lightfast neural memory — Learn how to integrate team memory via a simple REST API and MCP tools",
     publisher: {
-      "@id": "https://lightfast.ai/#organization"
-    }
+      "@id": "https://lightfast.ai/#organization",
+    },
   };
 
   // Build breadcrumb list
   const breadcrumbItems = slug.map((segment, index) => {
     const url = `/docs/${slug.slice(0, index + 1).join("/")}`;
-    const name = segment.split("-").map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(" ");
+    const name = segment
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
 
     return {
       "@type": "ListItem" as const,
       position: index + 1,
       name,
-      item: `https://lightfast.ai${url}`
+      item: `https://lightfast.ai${url}`,
     };
   });
 
   const breadcrumbList: BreadcrumbList = {
     "@type": "BreadcrumbList",
     "@id": `https://lightfast.ai/docs/${slug.join("/")}#breadcrumb`,
-    itemListElement: breadcrumbItems
+    itemListElement: breadcrumbItems,
   };
 
   // Build TechArticle entity for documentation pages
@@ -141,16 +143,18 @@ export default async function Page({
       ? { "@type": "Person", name: frontmatter.author }
       : { "@id": "https://lightfast.ai/#organization" },
     publisher: {
-      "@id": "https://lightfast.ai/#organization"
+      "@id": "https://lightfast.ai/#organization",
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://lightfast.ai/docs/${slug.join("/")}`
+      "@id": `https://lightfast.ai/docs/${slug.join("/")}`,
     },
     // TechArticle-specific fields
     proficiencyLevel: frontmatter.proficiencyLevel ?? "Beginner",
     // Add article dates if available in frontmatter
-    ...(frontmatter.publishedAt ? { datePublished: frontmatter.publishedAt } : {}),
+    ...(frontmatter.publishedAt
+      ? { datePublished: frontmatter.publishedAt }
+      : {}),
     ...(frontmatter.updatedAt ? { dateModified: frontmatter.updatedAt } : {}),
   };
 
@@ -160,8 +164,8 @@ export default async function Page({
       organizationEntity,
       websiteEntity,
       breadcrumbList,
-      techArticleEntity
-    ]
+      techArticleEntity,
+    ],
   };
 
   return (
@@ -169,23 +173,23 @@ export default async function Page({
       <JsonLd code={structuredData} />
       <DocsLayout toc={toc}>
         <article className="max-w-none">
-        {/* Page Header */}
-        {(title !== undefined || description !== undefined) && (
-          <div className="flex w-full flex-col items-center text-center mb-16 max-w-3xl mx-auto">
-            {title ? (
-              <h1
-                className={`text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] text-balance ${exposureTrial.className}`}
-              >
-                {title}
-              </h1>
-            ) : null}
-            {description && (
-              <div className="mt-4 w-full">
-                <p className="text-base text-muted-foreground">{description}</p>
-              </div>
-            )}
-          </div>
-        )}
+          {/* Page Header */}
+          {(title !== undefined || description !== undefined) && (
+            <div className="flex w-full flex-col items-center text-center mb-16 max-w-3xl mx-auto">
+              {title ? (
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] text-balance font-[family-name:var(--font-exposure-trial)]">
+                  {title}
+                </h1>
+              ) : null}
+              {description && (
+                <div className="mt-4 w-full">
+                  <p className="text-base text-muted-foreground">
+                    {description}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <MDX components={mdxComponents} />
         </article>
@@ -211,7 +215,8 @@ export async function generateMetadata({
   if (!resolvedParams.slug || resolvedParams.slug.length === 0) {
     return createMetadata({
       title: "Documentation – Lightfast",
-      description: "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
+      description:
+        "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
       image: siteConfig.ogImage,
       metadataBase: new URL(siteConfig.url),
       keywords: [...docsMetadata.keywords],
@@ -234,7 +239,8 @@ export async function generateMetadata({
       },
       openGraph: {
         title: "Documentation – Lightfast",
-        description: "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
+        description:
+          "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
         url: `${siteConfig.url}/docs`,
         siteName: "Lightfast Documentation",
         type: "website",
@@ -246,13 +252,14 @@ export async function generateMetadata({
             height: 630,
             alt: "Lightfast Documentation",
             type: "image/jpeg",
-          }
+          },
         ],
       },
       twitter: {
         card: "summary_large_image",
         title: "Documentation – Lightfast",
-        description: "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
+        description:
+          "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
         site: "@lightfastai",
         creator: "@lightfastai",
         images: [siteConfig.ogImage],
@@ -284,7 +291,9 @@ export async function generateMetadata({
 
   // Build canonical URL for SEO
   const pageUrl = `/docs/${slug.join("/")}`;
-  const title = frontmatter.title ? `${frontmatter.title} – Lightfast Docs` : "Lightfast Docs";
+  const title = frontmatter.title
+    ? `${frontmatter.title} – Lightfast Docs`
+    : "Lightfast Docs";
   const description = frontmatter.description ?? siteConfig.description;
 
   // Extract per-page SEO fields from extended frontmatter with fallbacks
@@ -337,7 +346,9 @@ export async function generateMetadata({
       type: "article",
       locale: "en_US",
       // Include article dates for better SEO and freshness signals
-      ...(frontmatter.publishedAt ? { publishedTime: frontmatter.publishedAt } : {}),
+      ...(frontmatter.publishedAt
+        ? { publishedTime: frontmatter.publishedAt }
+        : {}),
       ...(frontmatter.updatedAt ? { modifiedTime: frontmatter.updatedAt } : {}),
       ...(frontmatter.author ? { authors: [frontmatter.author] } : {}),
       images: [
@@ -347,7 +358,7 @@ export async function generateMetadata({
           height: 630,
           alt: ogTitle,
           type: "image/jpeg",
-        }
+        },
       ],
     },
     twitter: {

@@ -52,7 +52,7 @@ export function DocsSidebar({ tree }: DocsSidebarProps) {
       {/* Static Header - Logo, Trigger, Matrix, Back to Home */}
       <SidebarHeader className="!p-0 gap-0">
         {/* Logo - aligned with main header */}
-        <div className="h-[4.5rem] page-gutter -ml-2 flex flex-row items-center gap-2">
+        <div className="h-[4.25rem] page-gutter -ml-2 flex flex-row items-center gap-2">
           <Link href={wwwUrl}>
             <Icons.logoShort className="h-4 w-4 text-foreground group-hover:text-foreground transition-colors" />
           </Link>
@@ -85,7 +85,7 @@ export function DocsSidebar({ tree }: DocsSidebarProps) {
                   <SidebarGroupLabel className="text-xs text-muted-foreground font-normal px-0">
                     {item.name}
                   </SidebarGroupLabel>
-                  <SidebarGroupContent className="mt-1">
+                  <SidebarGroupContent>
                     <SidebarMenu className="gap-1">
                       {item.children.map((page) => {
                         if (page.type !== "page") return null;
@@ -93,11 +93,11 @@ export function DocsSidebar({ tree }: DocsSidebarProps) {
                         const isActive = page.url === pathname;
 
                         return (
-                          <SidebarMenuItem key={page.url} className="-mx-4">
+                          <SidebarMenuItem key={page.url} className="-mx-3">
                             <SidebarMenuButton
                               asChild
                               isActive={isActive}
-                              className="h-auto px-4 py-1.5 w-fit text-sm hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground justify-start"
+                              className="h-auto px-3 py-1.5 w-fit text-sm rounded-lg whitespace-nowrap truncate hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground justify-start"
                             >
                               <Link prefetch href={page.url}>
                                 {page.name}

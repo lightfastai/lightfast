@@ -34,19 +34,27 @@ export function Search() {
     setSelectedIndex(0);
   }, [clearSearch]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (capture phase to fire before Radix)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      // IME-safe: don't interfere with composition
       if (e.isComposing) return;
 
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         inputRef.current?.focus();
         setOpen(true);
+        return;
       }
 
       const isInputFocused = document.activeElement === inputRef.current;
+
+      if (e.key === "Escape" && isInputFocused && open) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleClose();
+        inputRef.current?.blur();
+        return;
+      }
 
       if (open && resultsList.length > 0 && isInputFocused) {
         if (e.key === "ArrowDown") {
@@ -63,16 +71,10 @@ export function Search() {
           handleClose();
         }
       }
-
-      if (e.key === "Escape" && isInputFocused && open) {
-        e.preventDefault();
-        handleClose();
-        inputRef.current?.blur();
-      }
     }
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
   }, [open, resultsList, selectedIndex, router, handleClose]);
 
   // Reset selected index when results change
@@ -92,8 +94,8 @@ export function Search() {
 
   return (
     <>
-      {/* Overlay - renders when dropdown has content */}
-      {showResults &&
+      {/* Overlay - renders immediately on focus */}
+      {open &&
         createPortal(
           <div
             className="fixed inset-0 z-40 bg-black/20 backdrop-blur-md animate-in fade-in-0"
@@ -152,6 +154,7 @@ export function Search() {
             <Popover.Content
               onOpenAutoFocus={(e) => e.preventDefault()}
               onInteractOutside={(e) => e.preventDefault()}
+              onEscapeKeyDown={(e) => e.preventDefault()}
               side="bottom"
               align="start"
               sideOffset={6}

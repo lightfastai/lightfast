@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FileText, Terminal, Layers, Timer } from "lucide-react";
+import { cn } from "@repo/ui/lib/utils";
 
 const iconMap = {
   "file-text": FileText,
@@ -12,7 +13,7 @@ const iconMap = {
 export interface NextStepsProps {
   steps?: {
     icon: keyof typeof iconMap;
-    image: string;
+    image?: string;
     title: string;
     description: string;
     href: string;
@@ -21,7 +22,7 @@ export interface NextStepsProps {
 
 const defaultSteps: {
   icon: keyof typeof iconMap;
-  image: string;
+  image?: string;
   title: string;
   description: string;
   href: string;
@@ -68,11 +69,17 @@ export function NextSteps({ steps = defaultSteps }: NextStepsProps) {
   return (
     <div className="my-16">
       {/* Centered heading */}
-      <h2 className="text-center text-4xl sm:text-5xl font-light tracking-tight mb-12">
+      <h2 className="text-center text-4xl sm:text-4xl font-medium tracking-tight mb-6">
         Next steps
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div
+        className={cn(
+          "grid grid-cols-1 sm:grid-cols-2 gap-6",
+          steps.length >= 4 && "lg:grid-cols-4",
+          steps.length === 3 && "lg:grid-cols-3",
+        )}
+      >
         {steps.map((step, _index) => {
           const Icon = iconMap[step.icon];
 
@@ -80,16 +87,22 @@ export function NextSteps({ steps = defaultSteps }: NextStepsProps) {
             <Link key={step.href} href={step.href} className="group block">
               <div className="space-y-4">
                 {/* Card with image and icon */}
-                <div className="relative rounded-xs overflow-hidden transition-all aspect-[3/2]">
-                  {/* Background image with blur */}
-                  <Image
-                    src={step.image}
-                    alt={step.title}
-                    fill
-                    priority
-                    quality={10}
-                    className="object-cover"
-                  />
+                <div
+                  className={cn(
+                    "relative rounded-xs overflow-hidden transition-all h-40",
+                    !step.image && "bg-card/80 border border-border/50",
+                  )}
+                >
+                  {step.image && (
+                    <Image
+                      src={step.image}
+                      alt={step.title}
+                      fill
+                      priority
+                      quality={10}
+                      className="object-cover"
+                    />
+                  )}
 
                   {/* Icon overlay - centered */}
                   <div className="absolute inset-0 flex items-center justify-center">
