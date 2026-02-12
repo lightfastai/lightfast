@@ -2,25 +2,38 @@
 
 import { cn } from "@repo/ui/lib/utils";
 import { Search as SearchIcon, Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Input } from "@repo/ui/components/ui/input";
 import * as Popover from "@radix-ui/react-popover";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMixedbreadSearch } from "~/hooks/use-mixedbread-search";
+import { useDocsSearch } from "~/hooks/use-docs-search";
 
 export function Search() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [open, setOpen] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const { search, results, isLoading, error, clearResults } =
-    useMixedbreadSearch();
+    useDocsSearch();
 
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    setSearchQuery("");
+    clearResults();
+    setSelectedIndex(0);
+    setHasSearched(false);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = undefined;
+    }
+  }, [clearResults]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -45,20 +58,20 @@ export function Search() {
         } else if (e.key === "Enter" && results[selectedIndex]) {
           e.preventDefault();
           router.push(results[selectedIndex].url);
-          setOpen(false);
+          handleClose();
         }
       }
 
       if (e.key === "Escape" && isInputFocused && open) {
         e.preventDefault();
-        setOpen(false);
+        handleClose();
         inputRef.current?.blur();
       }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, results, selectedIndex, router]);
+  }, [open, results, selectedIndex, router, handleClose]);
 
   // Debounced search
   useEffect(() => {
@@ -66,12 +79,21 @@ export function Search() {
       clearTimeout(debounceTimerRef.current);
     }
 
-    if (!searchQuery.trim() || !open) {
+    if (!searchQuery.trim()) {
       clearResults();
       return;
     }
 
+    if (!open) {
+      return;
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHasSearched(false);
+
     debounceTimerRef.current = setTimeout(() => {
+      setHasSearched(true);
+      setSelectedIndex(0);
       void search(searchQuery);
     }, 300);
 
@@ -83,37 +105,17 @@ export function Search() {
     };
   }, [searchQuery, open, search, clearResults]);
 
-  // Reset when dialog closes - intentional state reset on dialog close
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (!open) {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = undefined;
-      }
-      setSearchQuery("");
-      clearResults();
-      setSelectedIndex(0);
-    }
-  }, [open, clearResults]);
-
-  // Reset selected index when results change - intentional state sync when results update
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [results]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
   const showResults =
-    open && (results.length > 0 || searchQuery.length > 0 || error);
+    open && (results.length > 0 || searchQuery.trim().length > 0 || error);
 
   return (
     <>
-      {/* Overlay - renders immediately on open */}
-      {open &&
+      {/* Overlay - renders when dropdown has content */}
+      {showResults &&
         createPortal(
           <div
             className="fixed inset-0 z-40 bg-black/20 backdrop-blur-md animate-in fade-in-0"
-            onClick={() => setOpen(false)}
+            onClick={() => handleClose()}
           />,
           document.body,
         )}
@@ -129,16 +131,11 @@ export function Search() {
                 placeholder="Search documentation"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => {
-                  setOpen(true);
-                  requestAnimationFrame(() => {
-                    inputRef.current?.focus();
-                  });
-                }}
+                onFocus={() => setOpen(true)}
                 className={cn(
                   "w-[420px] pl-10 pr-20 h-9",
                   "transition-all rounded-md border border-border/50",
-                  "bg-card/40 backdrop-blur-md",
+                  "dark:bg-card/40 backdrop-blur-md",
                   "text-foreground/60",
                   "focus-visible:ring-0 focus-visible:ring-offset-0",
                   "focus-visible:outline-none focus:outline-none",
@@ -161,16 +158,8 @@ export function Search() {
         {showResults && (
           <Popover.Portal>
             <Popover.Content
-              onOpenAutoFocus={(e) => {
-                e.preventDefault();
-              }}
-              onEscapeKeyDown={() => setOpen(false)}
-              onPointerDownOutside={(e) => {
-                setOpen(false);
-              }}
-              onInteractOutside={(e) => {
-                e.preventDefault();
-              }}
+              onOpenAutoFocus={(e) => e.preventDefault()}
+              onInteractOutside={(e) => e.preventDefault()}
               side="bottom"
               align="start"
               sideOffset={6}
@@ -192,7 +181,14 @@ export function Search() {
                 </div>
               )}
 
-              {!error && !isLoading && results.length === 0 && searchQuery && (
+              {!error && (isLoading || (searchQuery && !hasSearched)) && (
+                <div className="px-4 py-3 flex items-center gap-2 text-sm text-muted-foreground/70">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Searching...
+                </div>
+              )}
+
+              {!error && !isLoading && results.length === 0 && searchQuery && hasSearched && (
                 <div className="px-4 py-3 text-sm text-muted-foreground/70">
                   No results
                 </div>
@@ -209,9 +205,7 @@ export function Search() {
                         "hover:bg-muted/40",
                         index === selectedIndex && "bg-muted/60",
                       )}
-                      onClick={() => {
-                        setOpen(false);
-                      }}
+                      onClick={() => handleClose()}
                       onMouseEnter={() => setSelectedIndex(index)}
                     >
                       <div className="text-sm font-normal text-foreground">
