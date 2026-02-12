@@ -256,6 +256,79 @@ npm install lightfast@latest
 npm install @lightfastai/mcp@latest
 ```
 
+## Alpha to Beta Transition
+
+### When to Move to Beta
+
+**Alpha (current):**
+- Breaking changes allowed in both API endpoints and SDK
+- Weekly releases expected
+- `/v1/` API can change freely
+
+**Beta (planned):**
+- `/v1/` API contract frozen - no breaking changes to HTTP endpoints
+- Only additive changes (new optional fields, new endpoints)
+- SDK can still have breaking changes (class renames, defaults)
+- Signifies API is stabilizing for 1.0 release
+
+### How to Transition
+
+```bash
+# 1. Exit alpha prerelease
+pnpm changeset pre exit
+git add .changeset/pre.json
+git commit -m "chore: exit alpha prerelease"
+git push
+
+# 2. Enter beta prerelease
+pnpm changeset pre enter beta
+git add .changeset/pre.json
+git commit -m "chore: enter beta prerelease"
+git push
+
+# 3. Create changeset for first beta
+pnpm changeset
+# Choose patch to go from 0.1.0-alpha.N → 0.1.0-beta.0
+git push
+```
+
+**Installation after beta:**
+```bash
+npm install lightfast@beta
+npm install @lightfastai/mcp@beta
+```
+
+### User Communication During Alpha/Beta
+
+**What users see automatically:**
+- CHANGELOG.md entries (via changeset summaries)
+- GitHub Releases (auto-created on publish)
+- npm version bumps
+
+**What requires manual notification:**
+- Slack/Discord announcements (via Pylon + Lightfast integration)
+- Migration guides for breaking changes (add to changeset summaries)
+- Deprecation notices (use `npm deprecate` command)
+
+**For breaking changes, include migration steps in changesets:**
+```markdown
+---
+"lightfast": major
+"@lightfastai/mcp": major
+---
+
+## Breaking: Renamed `mode` to `rerankMode`
+
+### Migration
+\`\`\`typescript
+// Before
+client.search({ query: "...", mode: "balanced" })
+
+// After
+client.search({ query: "...", rerankMode: "balanced" })
+\`\`\`
+```
+
 ## Troubleshooting
 
 ### "Version Packages" PR has conflicts
