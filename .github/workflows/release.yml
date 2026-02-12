@@ -65,5 +65,6 @@ jobs:
 
       - name: Send a Slack notification if a publish happens
         if: steps.changesets.outputs.published == 'true'
-        # You can do something when a publish happens.
+        # TODO: First users are through Slack/Discord channels. Notify via Pylon + Lightfast
+        # integration to post release notes to each team's custom channel.
         run: echo "A new version of lightfast was published!"
