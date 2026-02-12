@@ -5,25 +5,25 @@ import { createMetadata } from "@vendor/seo/metadata";
 import { Button } from "@repo/ui/components/ui/button";
 import { exposureTrial } from "~/lib/fonts";
 import { UseCaseGrid } from "~/components/use-case-grid";
-import { technicalFoundersUseCases } from "./data";
+import { platformEngineersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast for Technical Founders – Stop Being the Bottleneck",
+  title: "Lightfast for Platform Engineers – Infrastructure Intelligence",
   description:
-    "You hold most of the context in your head. Lightfast captures decisions, ownership, and rationale so your team can self-serve answers instead of waiting for you.",
+    "From drift detection to cost attribution, get visibility into your entire infrastructure stack. Predict scaling events, optimize costs, and prevent security incidents.",
   openGraph: {
-    title: "Lightfast for Technical Founders",
+    title: "Lightfast for Platform Engineers",
     description:
-      "Stop being the bottleneck. Lightfast captures what you know so your team can find answers without asking you.",
-    url: "https://lightfast.ai/use-cases/technical-founders",
+      "Infrastructure intelligence for modern platforms. Track dependencies, optimize costs, and maintain security posture.",
+    url: "https://lightfast.ai/use-cases/platform-engineers",
     type: "website",
   },
   alternates: {
-    canonical: "https://lightfast.ai/use-cases/technical-founders",
+    canonical: "https://lightfast.ai/use-cases/platform-engineers",
   },
 });
 
-export default function TechnicalFoundersPage() {
+export default function PlatformEngineersPage() {
   return (
     <div className="mt-6 flex w-full flex-col gap-20 overflow-x-clip pb-32 md:px-10">
       {/* Hero Section - centered content */}
@@ -34,13 +34,13 @@ export default function TechnicalFoundersPage() {
             <h1
               className={`text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] px-4 text-balance ${exposureTrial.className}`}
             >
-              Technical Founders
+              Platform Engineers
             </h1>
 
             {/* Description */}
             <div className="mt-4 px-4 w-full">
               <p className="text-base text-muted-foreground whitespace-nowrap md:whitespace-normal lg:whitespace-nowrap">
-                Stop being the bottleneck. Let your team find answers without waiting.
+                Infrastructure intelligence that predicts, prevents, and optimizes across your entire platform.
               </p>
             </div>
 
@@ -65,7 +65,7 @@ export default function TechnicalFoundersPage() {
 
       {/* Use Cases Grid */}
       <div className="max-w-7xl mx-auto w-full px-4">
-        <UseCaseGrid items={technicalFoundersUseCases} />
+        <UseCaseGrid items={platformEngineersUseCases} />
       </div>
     </div>
   );

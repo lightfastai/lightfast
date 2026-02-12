@@ -13,6 +13,9 @@ import {
 } from "@repo/ui/components/ui/navigation-menu";
 import { Button } from "@repo/ui/components/ui/button";
 
+const navLinkClass =
+  "text-foreground/60 hover:text-foreground transition-colors" as const;
+
 /**
  * Server-rendered navbar component (v2)
  * Centered nav pill with logo and navigation items
@@ -32,7 +35,7 @@ export function AppNavbarV2() {
             prefetch
             className="flex items-center mr-auto pr-4"
           >
-            <Icons.logoShort className="w-4 h-4 hover:text-foreground text-muted-foreground" />
+            <Icons.logoShort className="w-4 h-4 text-foreground/60 hover:text-foreground transition-colors" />
           </NextLink>
           {/* Nav items container */}
           <div className="flex items-center gap-0.5">
@@ -40,7 +43,7 @@ export function AppNavbarV2() {
             <NavigationMenu viewport={false} className="static [&>div]:!static">
               <NavigationMenuList>
                 <NavigationMenuItem className="static">
-                  <NavigationMenuTrigger className="px-1.5 text-sm text-muted-foreground hover:text-foreground rounded transition-colors bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
+                  <NavigationMenuTrigger className={`px-1.5 text-sm rounded bg-transparent hover:bg-transparent dark:hover:bg-transparent focus:bg-transparent dark:focus:bg-transparent data-[state=open]:bg-transparent dark:data-[state=open]:bg-transparent hover:text-foreground dark:hover:text-foreground focus:text-foreground dark:focus:text-foreground data-[state=open]:text-foreground dark:data-[state=open]:text-foreground ${navLinkClass}`}>
                     Resources
                   </NavigationMenuTrigger>
                   <NavigationMenuContent className="left-0 right-0 w-full md:w-full">
@@ -72,9 +75,9 @@ export function AppNavbarV2() {
                 <Button
                   key={item.href}
                   asChild
-                  variant="ghost"
+                  variant="none"
                   size="sm"
-                  className="text-muted-foreground hover:text-foreground"
+                  className={navLinkClass}
                 >
                   <MicrofrontendLink href={item.href}>
                     {item.title}
@@ -84,9 +87,9 @@ export function AppNavbarV2() {
                 <Button
                   key={item.href}
                   asChild
-                  variant="ghost"
+                  variant="none"
                   size="sm"
-                  className="text-muted-foreground hover:text-foreground"
+                  className={navLinkClass}
                 >
                   <NextLink href={item.href} prefetch>
                     {item.title}
@@ -99,8 +102,8 @@ export function AppNavbarV2() {
             <Button
               asChild
               size="sm"
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
+              variant="none"
+              className={navLinkClass}
             >
               <MicrofrontendLink href="/sign-in">Sign in</MicrofrontendLink>
             </Button>
@@ -114,33 +117,15 @@ export function AppNavbarV2() {
           </Button>
         </nav>
 
-        {/* Mobile: Logo + Sign In + CTA + Nav Trigger */}
-        <div className="flex lg:hidden items-center gap-0.5 rounded-md bg-[var(--nav-pill)] backdrop-blur-md  pl-4 pr-1 py-1">
-          {/* Logo */}
+        {/* Mobile: Logo left, hamburger right */}
+        <div className="flex lg:hidden items-center justify-between w-full">
           <NextLink
             href="/"
             prefetch
-            className="flex items-center mr-auto hover:opacity-80 transition-opacity"
+            className="flex items-center hover:opacity-80 transition-opacity"
           >
             <Icons.logoShort className="w-4 h-4 text-foreground" />
           </NextLink>
-          {/* Spacer */}
-          <div className="w-6" />
-          <Button
-            asChild
-            size="sm"
-            variant="ghost"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <MicrofrontendLink href="/sign-in">Sign in</MicrofrontendLink>
-          </Button>
-
-          <Button asChild size="sm">
-            <NextLink href="/early-access" prefetch>
-              Join Early Access
-            </NextLink>
-          </Button>
-
           <AppMobileNav />
         </div>
       </div>

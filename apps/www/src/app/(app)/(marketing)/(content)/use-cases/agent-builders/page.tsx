@@ -8,13 +8,13 @@ import { UseCaseGrid } from "~/components/use-case-grid";
 import { agentBuildersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast for Agent Builders – Team Memory for AI Agents",
+  title: "Lightfast for Agent Builders – AI-Powered DevOps Intelligence",
   description:
-    "Your agents need context. Lightfast provides a shared memory substrate with 4 simple API routes and MCP tools. Answers with citations, not hallucinations.",
+    "Build intelligent systems that predict incidents, optimize deployments, and automate root cause analysis. From error prediction to tech debt prioritization.",
   openGraph: {
     title: "Lightfast for Agent Builders",
     description:
-      "Give your AI agents team memory. 4 API routes. MCP tools. Answers with sources. No more brittle RAG hacks.",
+      "Build AI agents that understand your entire engineering stack. Predict incidents, automate root cause analysis, and optimize deployments.",
     url: "https://lightfast.ai/use-cases/agent-builders",
     type: "website",
   },
@@ -40,7 +40,7 @@ export default function AgentBuildersPage() {
             {/* Description */}
             <div className="mt-4 px-4 w-full">
               <p className="text-base text-muted-foreground whitespace-nowrap md:whitespace-normal lg:whitespace-nowrap">
-                Give your AI agents team memory. Answers with sources, not hallucinations.
+                Build AI systems that predict, prevent, and optimize across your entire stack.
               </p>
             </div>
 

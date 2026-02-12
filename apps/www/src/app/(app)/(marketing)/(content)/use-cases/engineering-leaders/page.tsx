@@ -5,25 +5,25 @@ import { createMetadata } from "@vendor/seo/metadata";
 import { Button } from "@repo/ui/components/ui/button";
 import { exposureTrial } from "~/lib/fonts";
 import { UseCaseGrid } from "~/components/use-case-grid";
-import { foundingEngineersUseCases } from "./data";
+import { engineeringLeadersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast for Founding Engineers – Find Context Without Asking",
+  title: "Lightfast for Engineering Leaders – Team Health & Velocity Intelligence",
   description:
-    "You're the first engineer. Half the codebase is undocumented. Lightfast gives you answers with sources so you can ship without waiting for the founder.",
+    "From cognitive load estimation to sprint predictions, understand team health and optimize delivery. Predict hiring needs, balance on-call, and track culture health.",
   openGraph: {
-    title: "Lightfast for Founding Engineers",
+    title: "Lightfast for Engineering Leaders",
     description:
-      "Find the context you need without asking. Lightfast surfaces decisions, ownership, and rationale from your team's existing tools.",
-    url: "https://lightfast.ai/use-cases/founding-engineers",
+      "Team intelligence that optimizes velocity, predicts hiring needs, and maintains healthy engineering culture.",
+    url: "https://lightfast.ai/use-cases/engineering-leaders",
     type: "website",
   },
   alternates: {
-    canonical: "https://lightfast.ai/use-cases/founding-engineers",
+    canonical: "https://lightfast.ai/use-cases/engineering-leaders",
   },
 });
 
-export default function FoundingEngineersPage() {
+export default function EngineeringLeadersPage() {
   return (
     <div className="mt-6 flex w-full flex-col gap-20 overflow-x-clip pb-32 md:px-10">
       {/* Hero Section - centered content */}
@@ -34,13 +34,13 @@ export default function FoundingEngineersPage() {
             <h1
               className={`text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] px-4 text-balance ${exposureTrial.className}`}
             >
-              Founding Engineers
+              Engineering Leaders
             </h1>
 
             {/* Description */}
             <div className="mt-4 px-4 w-full">
               <p className="text-base text-muted-foreground whitespace-nowrap md:whitespace-normal lg:whitespace-nowrap">
-                Find context and ship without waiting for answers.
+                Optimize team health, velocity, and culture with AI-powered engineering intelligence.
               </p>
             </div>
 
@@ -65,7 +65,7 @@ export default function FoundingEngineersPage() {
 
       {/* Use Cases Grid */}
       <div className="max-w-7xl mx-auto w-full px-4">
-        <UseCaseGrid items={foundingEngineersUseCases} />
+        <UseCaseGrid items={engineeringLeadersUseCases} />
       </div>
     </div>
   );

@@ -146,7 +146,7 @@ const SHOW_WORKFLOW_SECTION = false;
 const SHOW_INTEGRATIONS_SECTION = false;
 const SHOW_FEATURE_VISUALS_SECTION = false;
 const SHOW_CONNECT_TOOLS_SECTION = false;
-const SHOW_FAQ_SECTION = false;
+const SHOW_FAQ_SECTION = true;
 const SHOW_CHANGELOG_SECTION = false;
 const SHOW_CTA_SECTION = false;
 const SHOW_UNICORN_SECTION = false;
@@ -277,80 +277,83 @@ export default function HomePage() {
 
                 {/* Layered workflow visuals - right side, allowed to bleed past viewport */}
                 {/* Nested grid: cards shifted right, overlap via shared grid areas */}
-                {!DISABLE_HERO_CARDS && <div className="lg:col-span-9 xl:col-span-8 grid grid-cols-12 grid-rows-6 min-h-[420px] pl-32 md:min-h-[500px] lg:min-h-[560px]">
-                  {/* Component 1 - User Query card */}
-                  {/* Mobile: full width | Desktop: starts col 2, pushed right */}
-                  <div className="col-span-12 md:col-span-8 lg:col-start-2 lg:col-span-7 row-start-2 row-span-1 z-30 self-start">
-                    <div className="bg-card backdrop-blur-md rounded-lg shadow-lg px-5 py-3.5 md:px-6 md:py-4">
-                      <p className="text-sm md:text-base text-foreground leading-relaxed">
-                        when did we decide to use PostgreSQL for the analytics
-                        service and what were the reasons?
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Component 2 - AI Response with workflow steps */}
-                  {/* Mobile: full width | Desktop: starts col 1, spans 10 */}
-                  <div className="col-span-12 md:col-span-10 lg:col-start-1 lg:col-span-8 row-start-3 row-span-2 z-20 self-start -mt-1 md:-mt-2">
-                    <div className="bg-card/40 backdrop-blur-md rounded-lg shadow-lg p-4 md:p-5">
-                      {/* Agent Header */}
-                      <div className="flex items-center gap-2 mb-3">
-                        <Icons.logoShort className="w-5 h-5 text-primary" />
-                      </div>
-
-                      {/* Agent Message */}
-                      <p className="text-sm md:text-base text-foreground/90 mb-4 leading-relaxed">
-                        I&apos;ll help you find when we decided to use
-                        PostgreSQL for the analytics service. Let me search
-                        through your team&apos;s memory.
-                      </p>
-
-                      {/* Workflow Steps - Vertical Pills */}
-                      <div className="flex flex-col gap-2">
-                        {/* Step 1 - Search */}
-                        <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
-                          <Search className="w-3.5 h-3.5 text-primary shrink-0" />
-                          <p className="text-xs md:text-sm text-foreground truncate">
-                            <span className="font-medium">Search</span>{" "}
-                            <span className="text-muted-foreground">
-                              all accounts sorted by last interaction date an...
-                            </span>
-                          </p>
-                        </div>
-
-                        {/* Step 2 - Contents */}
-                        <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
-                          <RefreshCw className="w-3.5 h-3.5 text-primary shrink-0" />
-                          <p className="text-xs md:text-sm text-foreground truncate">
-                            <span className="font-medium">Contents</span>{" "}
-                            <span className="text-muted-foreground">
-                              17 accounts answered – what are the key deta...
-                            </span>
-                          </p>
-                        </div>
-
-                        {/* Step 3 - Graph */}
-                        <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
-                          <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                          <p className="text-xs md:text-sm text-foreground truncate">
-                            <span className="font-medium">Graph</span>{" "}
-                            <span className="text-muted-foreground">
-                              found connections between 8 entities across...
-                            </span>
-                          </p>
-                        </div>
+                {!DISABLE_HERO_CARDS && (
+                  <div className="lg:col-span-9 xl:col-span-8 grid grid-cols-12 grid-rows-6 min-h-[420px] pl-32 md:min-h-[500px] lg:min-h-[560px]">
+                    {/* Component 1 - User Query card */}
+                    {/* Mobile: full width | Desktop: starts col 2, pushed right */}
+                    <div className="col-span-12 md:col-span-8 lg:col-start-2 lg:col-span-7 row-start-2 row-span-1 z-30 self-start">
+                      <div className="bg-card backdrop-blur-md rounded-lg shadow-lg px-5 py-3.5 md:px-6 md:py-4">
+                        <p className="text-sm md:text-base text-foreground leading-relaxed">
+                          when did we decide to use PostgreSQL for the analytics
+                          service and what were the reasons?
+                        </p>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Component 3 - Search Results */}
-                  {/* Mobile: full width | Desktop: cols 5-13 (bleeds right), rows 4-6 */}
-                  <div className="col-span-12 md:col-start-3 md:col-span-10 lg:col-start-5 lg:col-span-9 row-start-4 row-span-3 z-10 self-start -mt-2 md:-mt-4">
-                    <div className="bg-background/60 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden max-h-[320px] md:max-h-[380px] lg:max-h-[420px]">
-                      <SearchDemo />
+                    {/* Component 2 - AI Response with workflow steps */}
+                    {/* Mobile: full width | Desktop: starts col 1, spans 10 */}
+                    <div className="col-span-12 md:col-span-10 lg:col-start-1 lg:col-span-8 row-start-3 row-span-2 z-20 self-start -mt-1 md:-mt-2">
+                      <div className="bg-card/40 backdrop-blur-md rounded-lg shadow-lg p-4 md:p-5">
+                        {/* Agent Header */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <Icons.logoShort className="w-5 h-5 text-primary" />
+                        </div>
+
+                        {/* Agent Message */}
+                        <p className="text-sm md:text-base text-foreground/90 mb-4 leading-relaxed">
+                          I&apos;ll help you find when we decided to use
+                          PostgreSQL for the analytics service. Let me search
+                          through your team&apos;s memory.
+                        </p>
+
+                        {/* Workflow Steps - Vertical Pills */}
+                        <div className="flex flex-col gap-2">
+                          {/* Step 1 - Search */}
+                          <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
+                            <Search className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <p className="text-xs md:text-sm text-foreground truncate">
+                              <span className="font-medium">Search</span>{" "}
+                              <span className="text-muted-foreground">
+                                all accounts sorted by last interaction date
+                                an...
+                              </span>
+                            </p>
+                          </div>
+
+                          {/* Step 2 - Contents */}
+                          <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
+                            <RefreshCw className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <p className="text-xs md:text-sm text-foreground truncate">
+                              <span className="font-medium">Contents</span>{" "}
+                              <span className="text-muted-foreground">
+                                17 accounts answered – what are the key deta...
+                              </span>
+                            </p>
+                          </div>
+
+                          {/* Step 3 - Graph */}
+                          <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
+                            <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <p className="text-xs md:text-sm text-foreground truncate">
+                              <span className="font-medium">Graph</span>{" "}
+                              <span className="text-muted-foreground">
+                                found connections between 8 entities across...
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Component 3 - Search Results */}
+                    {/* Mobile: full width | Desktop: cols 5-13 (bleeds right), rows 4-6 */}
+                    <div className="col-span-12 md:col-start-3 md:col-span-10 lg:col-start-5 lg:col-span-9 row-start-4 row-span-3 z-10 self-start -mt-2 md:-mt-4">
+                      <div className="bg-background/60 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden max-h-[320px] md:max-h-[380px] lg:max-h-[420px]">
+                        <SearchDemo />
+                      </div>
                     </div>
                   </div>
-                </div>}
+                )}
               </div>
             </section>
           ) : (

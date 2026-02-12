@@ -25,14 +25,12 @@ export function AppMobileNav() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
+        <button
+          className="lg:hidden p-2 text-foreground/60 hover:text-foreground transition-colors"
           aria-label="Toggle Menu"
         >
           <Menu className="h-5 w-5" />
-        </Button>
+        </button>
       </SheetTrigger>
       <SheetPrimitive.Portal>
         <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
@@ -127,6 +125,27 @@ export function AppMobileNav() {
                 </div>
               </div>
             </ScrollArea>
+
+            {/* CTA buttons */}
+            <div className="border-t p-6 space-y-3">
+              <Button asChild size="lg" className="w-full">
+                <NextLink
+                  href="/early-access"
+                  prefetch
+                  onClick={() => setOpen(false)}
+                >
+                  Join Early Access
+                </NextLink>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="w-full">
+                <MicrofrontendLink
+                  href="/sign-in"
+                  onClick={() => setOpen(false)}
+                >
+                  Sign in
+                </MicrofrontendLink>
+              </Button>
+            </div>
 
             {/* Footer with social links */}
             <div className="border-t p-6 flex items-center justify-center gap-6">
