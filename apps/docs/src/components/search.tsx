@@ -3,8 +3,9 @@
 import { cn } from "@repo/ui/lib/utils";
 import { Search as SearchIcon, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Input } from "@repo/ui/components/ui/input";
-import * as Dialog from "@radix-ui/react-dialog";
+import * as Popover from "@radix-ui/react-popover";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMixedbreadSearch } from "~/hooks/use-mixedbread-search";
@@ -18,35 +19,8 @@ export function Search() {
     useMixedbreadSearch();
 
   const router = useRouter();
-  const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
-
-  // Calculate position for results dialog
-  const [dialogPosition, setDialogPosition] = useState({
-    top: 0,
-    left: 0,
-    width: 0,
-  });
-
-  const updateDialogPosition = () => {
-    if (searchRef.current) {
-      const rect = searchRef.current.getBoundingClientRect();
-      setDialogPosition({
-        top: rect.bottom + 6,
-        left: rect.left,
-        width: rect.width,
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (open) {
-      updateDialogPosition();
-      window.addEventListener("resize", updateDialogPosition);
-      return () => window.removeEventListener("resize", updateDialogPosition);
-    }
-  }, [open]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -133,142 +107,137 @@ export function Search() {
     open && (results.length > 0 || searchQuery.length > 0 || error);
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <div ref={searchRef} className={cn("relative", open && "z-50")}>
-        <div className="relative flex items-center">
-          <SearchIcon className="absolute left-3 h-4 w-4 text-foreground/60 pointer-events-none z-10" />
-          <Input
-            ref={inputRef}
-            type="text"
-            placeholder="Search documentation"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => {
-              setOpen(true);
-              requestAnimationFrame(() => {
-                inputRef.current?.focus();
-              });
-            }}
-            className={cn(
-              "w-[420px] pl-10 pr-20 h-9",
-              "transition-all rounded-md border border-border/50",
-              "bg-card/40 backdrop-blur-md",
-              "text-foreground/60",
-              "focus-visible:ring-0 focus-visible:ring-offset-0",
-              "focus-visible:outline-none focus:outline-none",
-              "focus-visible:border-border/50",
-            )}
-          />
-          <div className="absolute right-2 flex items-center gap-1.5 pointer-events-none">
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-foreground/60" />
-            ) : (
-              <kbd className="hidden sm:inline-flex gap-1.5 px-1.5 py-0.5 items-center rounded-md border border-border text-sm font-medium text-foreground/60">
-                {open ? "ESC" : "⌘K"}
-              </kbd>
-            )}
-          </div>
-        </div>
-      </div>
+    <>
+      {/* Overlay - renders immediately on open */}
+      {open &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-md animate-in fade-in-0"
+            onClick={() => setOpen(false)}
+          />,
+          document.body,
+        )}
 
-      <Dialog.Portal>
-        <Dialog.Overlay
-          className={cn(
-            "fixed inset-0 z-40 bg-black/20 backdrop-blur-md",
-            "data-[state=open]:animate-in data-[state=closed]:animate-out",
-            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-          )}
-          onClick={() => setOpen(false)}
-        />
+      <Popover.Root open={open} onOpenChange={setOpen}>
+        <Popover.Anchor asChild>
+          <div className={cn("relative", open && "z-50")}>
+            <div className="relative flex items-center">
+              <SearchIcon className="absolute left-3 h-4 w-4 text-foreground/60 pointer-events-none z-10" />
+              <Input
+                ref={inputRef}
+                type="text"
+                placeholder="Search documentation"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => {
+                  setOpen(true);
+                  requestAnimationFrame(() => {
+                    inputRef.current?.focus();
+                  });
+                }}
+                className={cn(
+                  "w-[420px] pl-10 pr-20 h-9",
+                  "transition-all rounded-md border border-border/50",
+                  "bg-card/40 backdrop-blur-md",
+                  "text-foreground/60",
+                  "focus-visible:ring-0 focus-visible:ring-offset-0",
+                  "focus-visible:outline-none focus:outline-none",
+                  "focus-visible:border-border/50",
+                )}
+              />
+              <div className="absolute right-2 flex items-center gap-1.5 pointer-events-none">
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-foreground/60" />
+                ) : (
+                  <kbd className="hidden sm:inline-flex gap-1.5 px-1.5 py-0.5 items-center rounded-md border border-border text-sm font-medium text-foreground/60">
+                    {open ? "ESC" : "⌘K"}
+                  </kbd>
+                )}
+              </div>
+            </div>
+          </div>
+        </Popover.Anchor>
 
         {showResults && (
-          <Dialog.Content
-            onOpenAutoFocus={(e) => {
-              e.preventDefault();
-            }}
-            onEscapeKeyDown={() => setOpen(false)}
-            onPointerDownOutside={(e) => {
-              if (searchRef.current?.contains(e.target as Node)) {
+          <Popover.Portal>
+            <Popover.Content
+              onOpenAutoFocus={(e) => {
                 e.preventDefault();
-              } else {
+              }}
+              onEscapeKeyDown={() => setOpen(false)}
+              onPointerDownOutside={(e) => {
                 setOpen(false);
-              }
-            }}
-            onInteractOutside={(e) => {
-              if (searchRef.current?.contains(e.target as Node)) {
+              }}
+              onInteractOutside={(e) => {
                 e.preventDefault();
-              }
-            }}
-            className={cn(
-              "fixed z-50",
-              "bg-card/40 backdrop-blur-md",
-              "border border-border/50 rounded-sm shadow",
-              "max-h-[420px] overflow-y-auto",
-              "data-[state=open]:animate-in data-[state=closed]:animate-out",
-              "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-              "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-              "data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-top-[48%]",
-            )}
-            style={{
-              top: `${dialogPosition.top}px`,
-              left: `${dialogPosition.left}px`,
-              width: `${dialogPosition.width}px`,
-              maxWidth: "min(480px, 90vw)",
-            }}
-          >
-            <Dialog.Title className="sr-only">Search Results</Dialog.Title>
+              }}
+              side="bottom"
+              align="start"
+              sideOffset={6}
+              alignOffset={0}
+              className={cn(
+                "z-50",
+                "bg-card/40 backdrop-blur-md",
+                "border border-border/50 rounded-sm shadow",
+                "max-h-[420px] overflow-y-auto",
+                "data-[state=open]:animate-in data-[state=closed]:animate-out",
+                "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+                "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+              )}
+              style={{ width: "var(--radix-popover-trigger-width)" }}
+            >
+              {error && (
+                <div className="px-4 py-3 text-sm text-muted-foreground/70">
+                  Unable to search at this time
+                </div>
+              )}
 
-            {error && (
-              <div className="px-4 py-3 text-sm text-muted-foreground/70">
-                Unable to search at this time
-              </div>
-            )}
+              {!error && !isLoading && results.length === 0 && searchQuery && (
+                <div className="px-4 py-3 text-sm text-muted-foreground/70">
+                  No results
+                </div>
+              )}
 
-            {!error && !isLoading && results.length === 0 && searchQuery && (
-              <div className="px-4 py-3 text-sm text-muted-foreground/70">
-                No results
-              </div>
-            )}
-
-            {!error && results.length > 0 && (
-              <div className="">
-                {results.map((result, index) => (
-                  <Link
-                    key={result.id}
-                    href={result.url}
-                    className={cn(
-                      "block w-full px-4 py-2.5 text-left transition-colors",
-                      "hover:bg-muted/40",
-                      index === selectedIndex && "bg-muted/60",
-                    )}
-                    onClick={() => {
-                      setOpen(false);
-                    }}
-                    onMouseEnter={() => setSelectedIndex(index)}
-                  >
-                    <div className="text-sm font-normal text-foreground">
-                      {result.title}
-                    </div>
-                    {result.source && (
-                      <div className="mt-0.5 text-xs text-muted-foreground/60">
-                        {result.source}
+              {!error && results.length > 0 && (
+                <div className="">
+                  {results.map((result, index) => (
+                    <Link
+                      key={result.id}
+                      href={result.url}
+                      className={cn(
+                        "block w-full px-4 py-2.5 text-left transition-colors",
+                        "hover:bg-muted/40",
+                        index === selectedIndex && "bg-muted/60",
+                      )}
+                      onClick={() => {
+                        setOpen(false);
+                      }}
+                      onMouseEnter={() => setSelectedIndex(index)}
+                    >
+                      <div className="text-sm font-normal text-foreground">
+                        {result.title}
                       </div>
-                    )}
-                  </Link>
-                ))}
-              </div>
-            )}
+                      {result.source && (
+                        <div className="mt-0.5 text-xs text-muted-foreground/60">
+                          {result.source}
+                        </div>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              )}
 
-            {!error && results.length === 0 && !searchQuery && (
-              <div className="px-4 py-8 text-center">
-                <p className="text-sm text-muted-foreground/50">
-                  Start typing to search...
-                </p>
-              </div>
-            )}
-          </Dialog.Content>
+              {!error && results.length === 0 && !searchQuery && (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-sm text-muted-foreground/50">
+                    Start typing to search...
+                  </p>
+                </div>
+              )}
+            </Popover.Content>
+          </Popover.Portal>
         )}
-      </Dialog.Portal>
-    </Dialog.Root>
+      </Popover.Root>
+    </>
   );
 }
