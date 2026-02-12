@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@repo/ui/lib/utils";
+import { Icons } from "@repo/ui/components/icons";
 import type { PITCH_SLIDES } from "~/config/pitch-deck-data";
-import { LightfastLogoLatest } from "~/components/icons";
 
 export type SlideVariant = "responsive" | "fixed";
 
@@ -48,7 +48,7 @@ export function CustomTitleSlide({
       {/* Centered logo + text */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-          <LightfastLogoLatest
+          <Icons.logoShort
             className={cn(
               "text-white",
               isFixed

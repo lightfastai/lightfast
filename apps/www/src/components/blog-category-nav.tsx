@@ -25,9 +25,9 @@ export function CategoryNav({ categories }: CategoryNavProps) {
       <nav className="space-y-1">
         <Button
           variant="link"
-          size="xs"
+          size="sm"
           asChild
-          className={`w-full justify-start px-3 py-1 h-fit h-auto font-normal ${
+          className={`w-full justify-start py-1 h-fit h-auto font-normal ${
             isHomePage ? "text-foreground" : "text-muted-foreground"
           }`}
         >
@@ -37,9 +37,9 @@ export function CategoryNav({ categories }: CategoryNavProps) {
           <Button
             key={category._slug}
             variant="link"
-            size="xs"
+            size="sm"
             asChild
-            className={`w-full justify-start px-3 py-1 h-fit h-auto font-normal ${
+            className={`w-full justify-start py-1 h-fit h-auto font-normal ${
               currentCategory === category._slug
                 ? "text-foreground"
                 : "text-muted-foreground"
@@ -54,3 +54,4 @@ export function CategoryNav({ categories }: CategoryNavProps) {
     </aside>
   );
 }
+

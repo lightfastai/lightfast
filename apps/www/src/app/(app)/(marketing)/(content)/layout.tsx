@@ -9,10 +9,10 @@ export default function ContentLayout({
   return (
     <div className="flex bg-background flex-col min-h-full">
       {/* Scrollable content */}
-      <div className="flex-1 page-gutter">{children}</div>
+      <div className="flex-1 flex flex-col page-gutter pt-[var(--content-pt)] [--content-pt:6rem]">{children}</div>
 
       {/* Waitlist CTA */}
-      <div className="gap-48 flex-col flex py-10">
+      <div className="gap-48 flex-col flex">
         <WaitlistCTA />
       </div>
     </div>

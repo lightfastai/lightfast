@@ -4,20 +4,19 @@ import NextLink from "next/link";
 
 import { emailConfig, siteConfig } from "@repo/site-config";
 import { Icons } from "@repo/ui/components/icons";
-import { GridSection } from "./grid-section";
 import { Lissajous } from "./lissajous";
 
 // Different Lissajous patterns for each column (defined inline to avoid client/server boundary issues)
 const FOOTER_PATTERNS = [
-  { a: 1, b: 1, delta: Math.PI / 2 },     // circle
-  { a: 1, b: 2, delta: Math.PI / 2 },     // figure8
-  { a: 3, b: 2, delta: Math.PI / 2 },     // pretzel
-  { a: 2, b: 3, delta: Math.PI / 2 },     // bow
-  { a: 3, b: 4, delta: Math.PI / 2 },     // knot
-  { a: 5, b: 4, delta: Math.PI / 2 },     // star
-  { a: 1, b: 3, delta: Math.PI / 4 },     // wave
-  { a: 2, b: 1, delta: Math.PI / 2 },     // infinity
-  { a: 3, b: 1, delta: Math.PI / 2 },     // clover
+  { a: 1, b: 1, delta: Math.PI / 2 }, // circle
+  { a: 1, b: 2, delta: Math.PI / 2 }, // figure8
+  { a: 3, b: 2, delta: Math.PI / 2 }, // pretzel
+  { a: 2, b: 3, delta: Math.PI / 2 }, // bow
+  { a: 3, b: 4, delta: Math.PI / 2 }, // knot
+  { a: 5, b: 4, delta: Math.PI / 2 }, // star
+  { a: 1, b: 3, delta: Math.PI / 4 }, // wave
+  { a: 2, b: 1, delta: Math.PI / 2 }, // infinity
+  { a: 3, b: 1, delta: Math.PI / 2 }, // clover
 ];
 
 export function AppFooter() {
@@ -29,7 +28,7 @@ export function AppFooter() {
           {/* Logo - left column */}
           <div>
             <NextLink href="/" aria-label="Lightfast">
-              <Icons.logoShort className="h-4 w-auto text-foreground" />
+              <Icons.logoShort className="h-4 w-auto text-muted-foreground" />
             </NextLink>
           </div>
 
@@ -37,7 +36,9 @@ export function AppFooter() {
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Product Column */}
             <div className="flex flex-col gap-3">
-              <h3 className="text-foreground text-sm font-medium">Product</h3>
+              <h3 className="text-muted-foreground text-sm font-medium">
+                Product
+              </h3>
               <nav className="flex flex-col gap-2">
                 <NextLink
                   href="/pricing"
@@ -62,7 +63,9 @@ export function AppFooter() {
 
             {/* Resources Column */}
             <div className="flex flex-col gap-3">
-              <h3 className="text-foreground text-sm font-medium">Resources</h3>
+              <h3 className="text-muted-foreground text-sm font-medium">
+                Resources
+              </h3>
               <nav className="flex flex-col gap-2">
                 <NextLink
                   href="/docs/get-started/overview"
@@ -87,7 +90,9 @@ export function AppFooter() {
 
             {/* Connect Column */}
             <div className="flex flex-col gap-3">
-              <h3 className="text-foreground text-sm font-medium">Connect</h3>
+              <h3 className="text-muted-foreground text-sm font-medium">
+                Connect
+              </h3>
               <nav className="flex flex-col gap-2">
                 <NextLink
                   href={siteConfig.links.twitter.href}
@@ -153,36 +158,30 @@ export function AppFooter() {
             <div className="hidden lg:block" />
 
             {/* Col 3: Location (aligns with Connect nav above) */}
-            <p className="text-muted-foreground text-sm">
-              Built in Melbourne
-            </p>
+            <p className="text-muted-foreground text-sm">Built in Melbourne</p>
           </div>
         </div>
       </div>
 
-      {/* Grid row - matches hero section style */}
+      {/* Lissajous patterns grid */}
       <div className="w-full py-16 px-8 md:px-16 lg:px-24">
-        <GridSection
-          rows={1}
-          cols={9}
-          borderVariant="double-line"
-          renderCell={(_row, col) => {
-            const pattern = FOOTER_PATTERNS[col - 1]; // 1-indexed to 0-indexed
-            if (!pattern) return null;
-            return (
-              <div className="flex items-center justify-center p-4 w-full h-full">
-                <Lissajous
-                  a={pattern.a}
-                  b={pattern.b}
-                  delta={pattern.delta}
-                  className="w-full h-full"
-                  stroke="var(--border)"
-                  strokeWidth={1.5}
-                />
-              </div>
-            );
-          }}
-        />
+        <div className="grid grid-cols-3 md:grid-cols-9 gap-4">
+          {FOOTER_PATTERNS.map((pattern, index) => (
+            <div
+              key={index}
+              className="aspect-square border border-border flex items-center justify-center p-4"
+            >
+              <Lissajous
+                a={pattern.a}
+                b={pattern.b}
+                delta={pattern.delta}
+                className="w-full h-full"
+                stroke="var(--border)"
+                strokeWidth={1.5}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </footer>
   );

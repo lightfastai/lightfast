@@ -24,17 +24,27 @@ type BlogPostQueryResponse = {
 export const revalidate = 300;
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  const posts = await blog.getPosts().catch(() => []);
-  return posts
-    .filter((post) => !!(post.slug || post._slug))
-    .map((post) => ({ slug: (post.slug || post._slug) as string }));
+  try {
+    const posts = await blog.getPosts();
+    return posts
+      .filter((post) => !!(post.slug || post._slug))
+      .map((post) => ({ slug: (post.slug || post._slug) as string }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = await blog.getPost(slug);
+
+  let post;
+  try {
+    post = await blog.getPost(slug);
+  } catch {
+    return {};
+  }
 
   if (!post) return {};
 
@@ -369,15 +379,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
                   {/* Content */}
                   {post.body?.json?.content ? (
-                    <div
-                      className="prose prose-lg max-w-none mt-12
-                      prose-headings:text-foreground prose-headings:font-semibold
-                      prose-p:text-foreground/80 prose-p:leading-relaxed
-                      prose-strong:text-foreground prose-strong:font-semibold
-                      prose-a:text-foreground prose-a:underline hover:prose-a:text-foreground/80
-                      prose-blockquote:text-foreground/80 prose-blockquote:border-foreground/20
-                      prose-img:rounded-lg"
-                    >
+                    <div className="max-w-none mt-12">
                       <Body content={post.body.json.content} />
                     </div>
                   ) : null}

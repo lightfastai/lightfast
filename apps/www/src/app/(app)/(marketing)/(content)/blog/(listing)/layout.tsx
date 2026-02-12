@@ -14,15 +14,15 @@ export default async function BlogListingLayout({
 
   return (
     <div className="max-w-7xl mx-auto px-4 pb-32 pt-8">
-      <div className="flex items-start justify-between mb-16 max-w-5xl mr-2">
+      <div className="flex items-center justify-between mb-16 max-w-5xl mr-2">
         <h1
-          className={`text-5xl font-light leading-[1.2] tracking-[-0.7] text-foreground max-w-2xl ${exposureTrial.className}`}
+          className={`text-5xl font-pp text-foreground max-w-2xl font-medium`}
         >
           News and Updates about Lightfast
         </h1>
         <Link
           href="/blog/feed.xml"
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           title="Subscribe to RSS Feed"
         >
           <RssIcon className="h-4 w-4" />
@@ -30,12 +30,12 @@ export default async function BlogListingLayout({
         </Link>
       </div>
 
-      <div className="flex gap-12">
+      <div className="flex gap-12 max-w-5xl">
         {/* Category Navigation - shared across all listing pages */}
         <CategoryNav categories={allCategories} />
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 max-w-3xl">{children}</main>
+        <main className="flex-1 min-w-0">{children}</main>
       </div>
     </div>
   );

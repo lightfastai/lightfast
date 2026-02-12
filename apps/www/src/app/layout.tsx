@@ -145,7 +145,11 @@ export default function RootLayout({
   } as const;
 
   return (
-    <html className={fonts} lang="en" suppressHydrationWarning className="dark">
+    <html
+      className={cn(fonts, "dark scrollbar-thin")}
+      lang="en"
+      suppressHydrationWarning
+    >
       <head>
         <JsonLd code={organizationSchema} />
         <JsonLd code={websiteSchema} />

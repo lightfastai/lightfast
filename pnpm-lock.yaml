@@ -1335,9 +1335,6 @@ importers:
       next:
         specifier: catalog:next16
         version: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      nuqs:
-        specifier: ^2.8.0
-        version: 2.8.0(@tanstack/react-router@1.133.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)
       react:
         specifier: ^19.2.1
         version: 19.2.1
@@ -27297,14 +27294,6 @@ snapshots:
     optionalDependencies:
       '@tanstack/react-router': 1.133.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       next: 15.5.7(@opentelemetry/api@1.9.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-
-  nuqs@2.8.0(@tanstack/react-router@1.133.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1):
-    dependencies:
-      '@standard-schema/spec': 1.0.0
-      react: 19.2.1
-    optionalDependencies:
-      '@tanstack/react-router': 1.133.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
 
   object-assign@4.1.1: {}
 

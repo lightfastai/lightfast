@@ -12,7 +12,7 @@ export function ChangelogPreview() {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;
-        const entries = response.changelogPages?.items ?? [];
+        const entries = response.changelog?.post?.items ?? [];
 
         // Get the latest 4 entries
         const latestEntries = entries.slice(0, 4);

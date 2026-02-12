@@ -1,6 +1,6 @@
 import NextLink from "next/link";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
-import { LightfastLogoLatest } from "~/components/icons";
+import { Icons } from "@repo/ui/components/icons";
 import { AppMobileNav } from "./app-mobile-nav";
 import { INTERNAL_NAV, RESOURCES_NAV } from "~/config/nav";
 import {
@@ -23,26 +23,28 @@ export function AppNavbarV2() {
       {/* Centered nav container */}
       <div className="relative flex items-center justify-center">
         {/* Desktop: Centered nav pill */}
-        <nav className="hidden lg:flex items-center gap-0.5 rounded-md bg-card backdrop-blur-md  pl-4 pr-1 py-1">
+        <nav className="hidden lg:flex relative h-9 items-center gap-0.5 rounded-md pl-4 pr-1 py-1">
+          {/* Glass backdrop layer - sibling so dropdown's backdrop-blur isn't trapped */}
+          <div className="absolute inset-0 rounded-md bg-card/40 border border-border/50 backdrop-blur-md -z-10" />
           {/* Logo */}
           <NextLink
             href="/"
             prefetch
-            className="flex items-center mr-auto hover:opacity-80 transition-opacity pr-4"
+            className="flex items-center mr-auto pr-4"
           >
-            <LightfastLogoLatest className="w-4 h-4 text-muted-foreground" />
+            <Icons.logoShort className="w-4 h-4 hover:text-foreground text-muted-foreground" />
           </NextLink>
           {/* Nav items container */}
           <div className="flex items-center gap-0.5">
             {/* Resources dropdown */}
-            <NavigationMenu viewport={false}>
+            <NavigationMenu viewport={false} className="static [&>div]:!static">
               <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="h-[26px] px-1.5 text-xs text-muted-foreground hover:text-foreground rounded transition-colors bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
+                <NavigationMenuItem className="static">
+                  <NavigationMenuTrigger className="px-1.5 text-sm text-muted-foreground hover:text-foreground rounded transition-colors bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
                     Resources
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="flex flex-col gap-1 rounded-sm p-1 md:w-[220px]">
+                  <NavigationMenuContent className="left-0 right-0 w-full md:w-full">
+                    <div className="flex flex-col gap-1 rounded-sm">
                       {RESOURCES_NAV.map((item) => (
                         <NavigationMenuLink asChild key={item.href}>
                           {item.microfrontend ? (
@@ -70,8 +72,8 @@ export function AppNavbarV2() {
                 <Button
                   key={item.href}
                   asChild
-                  size="xs"
                   variant="ghost"
+                  size="sm"
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <MicrofrontendLink href={item.href}>
@@ -82,8 +84,8 @@ export function AppNavbarV2() {
                 <Button
                   key={item.href}
                   asChild
-                  size="xs"
                   variant="ghost"
+                  size="sm"
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <NextLink href={item.href} prefetch>
@@ -96,7 +98,7 @@ export function AppNavbarV2() {
             {/* Sign In Link */}
             <Button
               asChild
-              size="xs"
+              size="sm"
               variant="ghost"
               className="text-muted-foreground hover:text-foreground"
             >
@@ -105,7 +107,7 @@ export function AppNavbarV2() {
           </div>
 
           {/* Join Early Access Button */}
-          <Button asChild size="xs" className="ml-1">
+          <Button asChild size="sm" className="ml-1">
             <NextLink href="/early-access" prefetch>
               Join Early Access
             </NextLink>
@@ -120,20 +122,20 @@ export function AppNavbarV2() {
             prefetch
             className="flex items-center mr-auto hover:opacity-80 transition-opacity"
           >
-            <LightfastLogoLatest className="w-4 h-4 text-foreground" />
+            <Icons.logoShort className="w-4 h-4 text-foreground" />
           </NextLink>
           {/* Spacer */}
           <div className="w-6" />
           <Button
             asChild
-            size="xs"
+            size="sm"
             variant="ghost"
             className="text-muted-foreground hover:text-foreground"
           >
             <MicrofrontendLink href="/sign-in">Sign in</MicrofrontendLink>
           </Button>
 
-          <Button asChild size="xs">
+          <Button asChild size="sm">
             <NextLink href="/early-access" prefetch>
               Join Early Access
             </NextLink>

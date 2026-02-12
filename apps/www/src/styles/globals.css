@@ -1,21 +1,72 @@
 /* Import the base UI globals */
 @import "@repo/ui/globals.css";
 
-/* Override shadcn border-radius via CSS variable */
-:root {
-  /* Brand colors */
-  --brand-blue: oklch(0.4868 0.2565 266.23);
-  --brand-orange: oklch(0.5913 0.2286 31.28);
-  --brand-orange-overlay: oklch(0.6496 0.2375 31.9);
-  --brand-gray: oklch(0.1957 0 0);
-  /* Pitch deck red colors */
-  --pitch-deck-red: #e62200;
-  --pitch-deck-red-overlay: #ff3714;
+/* PP Neue Montreal Font Family */
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Thin.woff2") format("woff2");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
 }
 
-.animate-framework-scroll {
-  animation-name: framework-scroll;
-  animation-duration: 30s;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Book.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Italic.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Medium.woff2")
+    format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-SemiBolditalic.woff2")
+    format("woff2");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Override shadcn border-radius via CSS variable */
+:root {
+  /* Override font-sans to use PP Neue Montreal */
+  --font-sans: "PP Neue Montreal", var(--font-geist-sans);
+
+  /* PP Neue Montreal Typography Settings */
+  --font-pp-letter-spacing: -0.03em;
+  --font-pp-line-height: 1.1;
+}
+
+@layer utilities {
+  .font-pp {
+    font-family: var(--font-sans);
+    letter-spacing: var(--font-pp-letter-spacing);
+    line-height: var(--font-pp-line-height);
+  }
 }

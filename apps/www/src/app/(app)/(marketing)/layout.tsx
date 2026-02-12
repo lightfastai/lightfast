@@ -16,7 +16,7 @@ export default function MarketingLayout({
       </header>
 
       {/* Main content - sits ON TOP of footer */}
-      <main className="relative z-10 min-h-screen bg-background border-b">
+      <main className="relative z-10 min-h-screen bg-background">
         <div className="mx-auto w-full">{children}</div>
       </main>
 

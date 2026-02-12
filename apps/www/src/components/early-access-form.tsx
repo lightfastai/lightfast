@@ -1,19 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
-import { Checkbox } from "@repo/ui/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@repo/ui/components/ui/radio-group";
+import { Badge } from "@repo/ui/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@repo/ui/components/ui/command";
+import {
+  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@repo/ui/components/ui/form";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { captureException } from "@sentry/nextjs";
 import { ConfettiWrapper } from "./confetti-wrapper";
@@ -21,7 +42,10 @@ import {
   joinEarlyAccessAction,
   type EarlyAccessState,
 } from "./early-access-actions";
-import type { EarlyAccessFormValues } from "./early-access-form.schema";
+import {
+  earlyAccessFormSchema,
+  type EarlyAccessFormValues,
+} from "./early-access-form.schema";
 
 const COMPANY_SIZES = [
   { value: "1-10", label: "1-10 employees" },
@@ -45,26 +69,31 @@ const DATA_SOURCES = [
   { value: "discord", label: "Discord" },
 ];
 
-type FormStep = "email" | "company" | "sources";
-
-export function EarlyAccessForm() {
-  const form = useFormContext<EarlyAccessFormValues>();
-  const [step, setStep] = useState<FormStep>("email");
+export function EarlyAccessForm({
+  initialEmail = "",
+  initialCompanySize = "",
+  initialSources = [],
+}: {
+  initialEmail?: string;
+  initialCompanySize?: string;
+  initialSources?: string[];
+}) {
+  const form = useForm<EarlyAccessFormValues>({
+    resolver: zodResolver(earlyAccessFormSchema),
+    defaultValues: {
+      email: initialEmail,
+      companySize: initialCompanySize,
+      sources: initialSources,
+    },
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+  });
   const [state, setState] = useState<EarlyAccessState>({ status: "idle" });
 
-  // Only subscribe to fields needed for current step to reduce re-renders
-  const email =
-    step === "email" || step === "sources"
-      ? form.watch("email")
-      : form.getValues("email");
-
-  const companySize =
-    step === "company"
-      ? form.watch("companySize")
-      : form.getValues("companySize");
-
-  const sources =
-    step === "sources" ? form.watch("sources") : form.getValues("sources");
+  // Watch form values for validation
+  const email = form.watch("email");
+  const companySize = form.watch("companySize");
+  const sources = form.watch("sources");
 
   // Track client-side errors
   useEffect(() => {
@@ -85,21 +114,8 @@ export function EarlyAccessForm() {
     }
   }, [state]);
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      setStep("company");
-    }
-  };
-
-  const handleCompanySizeSubmit = () => {
-    if (companySize) {
-      setStep("sources");
-    }
-  };
-
-  const handleFinalSubmit = async () => {
-    if (sources.length === 0) return;
 
     // Validate entire form
     const isValid = await form.trigger();
@@ -137,28 +153,13 @@ export function EarlyAccessForm() {
     }
   };
 
-  const goBack = () => {
-    if (step === "company") {
-      setStep("email");
-    } else if (step === "sources") {
-      setStep("company");
-    }
-  };
-
   // Show success state if submission succeeded
   if (state.status === "success") {
     return (
       <>
         <ConfettiWrapper />
         <div className="w-full">
-          {/* Progress indicator */}
-          <div className="mb-8 flex items-center gap-2">
-            <div className="h-1 w-8 rounded-full bg-primary" />
-            <div className="h-1 w-8 rounded-full bg-primary" />
-            <div className="h-1 w-8 rounded-full bg-primary" />
-          </div>
-
-          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div className="space-y-2">
               <h2 className="text-2xl font-semibold text-foreground">
                 You're in!
@@ -178,255 +179,244 @@ export function EarlyAccessForm() {
   }
 
   const isPending = state.status === "pending";
+  const isFormValid = email && companySize && sources.length > 0;
 
   return (
-    <div className="w-full">
-      {/* Progress indicator */}
-      <div className="mb-8 flex items-center gap-2">
-        <div
-          className={cn(
-            "h-1 w-8 rounded-full transition-colors",
-            step === "email" ? "bg-primary" : "bg-primary/20",
+    <Form {...form}>
+      <div className="w-full">
+        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Email Field */}
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-medium text-muted-foreground">
+                Email address
+              </FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="email"
+                  placeholder="name@company.com"
+                  autoFocus
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
         />
-        <div
-          className={cn(
-            "h-1 w-8 rounded-full transition-colors",
-            step === "company" ? "bg-primary" : "bg-primary/20",
-          )}
-        />
-        <div
-          className={cn(
-            "h-1 w-8 rounded-full transition-colors",
-            step === "sources" ? "bg-primary" : "bg-primary/20",
-          )}
-        />
-      </div>
 
-      {/* Step 1: Email */}
-      {step === "email" && (
-        <form
-          onSubmit={handleEmailSubmit}
-          className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-200"
-        >
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem className="space-y-1 text-md">
-                <FormLabel className="text-muted-foreground font-pp">
-                  What's your email?
+        {/* Company Size Field */}
+        <FormField
+          control={form.control}
+          name="companySize"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-medium text-muted-foreground">
+                Company size
+              </FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select company size" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {COMPANY_SIZES.map((size) => (
+                    <SelectItem key={size.value} value={size.value}>
+                      {size.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Data Sources Field */}
+        <FormField
+          control={form.control}
+          name="sources"
+          render={({ field }) => {
+            const [open, setOpen] = useState(false);
+
+            return (
+              <FormItem>
+                <FormLabel className="text-xs font-medium text-muted-foreground">
+                  Tools your team uses
                 </FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Input
-                      {...field}
-                      type="email"
-                      placeholder="name@company.com"
-                      autoFocus
-                      className="pr-12"
-                    />
-                    <Button
-                      type="submit"
-                      variant="none"
-                      size="icon"
-                      disabled={!email || !!form.formState.errors.email}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 size-8"
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <p className="text-xs text-muted-foreground">
-            By continuing you acknowledge that you understand and agree to our{" "}
-            <a
-              href="/legal/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-foreground transition-colors"
-            >
-              Terms and Conditions
-            </a>{" "}
-            and{" "}
-            <a
-              href="/legal/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-foreground transition-colors"
-            >
-              Privacy Policy
-            </a>
-            .
-          </p>
-        </form>
-      )}
-
-      {/* Step 2: Company Size */}
-      {step === "company" && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-200">
-          <Button
-            onClick={goBack}
-            variant="ghost"
-            size="sm"
-            className="gap-1 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-3 w-3" />
-            Back
-          </Button>
-
-          <div className="space-y-2">
-            <h2 className="text-2xl font-semibold text-foreground">
-              Company size
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              How many people work at your company?
-            </p>
-          </div>
-
-          <FormField
-            control={form.control}
-            name="companySize"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <RadioGroup
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    {COMPANY_SIZES.map((size) => (
-                      <label
-                        key={size.value}
-                        htmlFor={size.value}
-                        className="flex items-center space-x-3 rounded-lg border border-border p-3 hover:bg-accent transition-colors cursor-pointer"
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className={cn(
+                          "w-full justify-start font-normal px-2 min-h-8 h-auto py-1",
+                          !field.value.length && "text-muted-foreground",
+                        )}
                       >
-                        <RadioGroupItem value={size.value} id={size.value} />
-                        <span className="flex-1 text-sm text-foreground">
-                          {size.label}
-                        </span>
-                      </label>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+                            {field.value.length > 0 ? (
+                              field.value.map((value) => {
+                                const source = DATA_SOURCES.find(
+                                  (s) => s.value === value,
+                                );
+                                return (
+                                  <Badge
+                                    key={value}
+                                    variant="secondary"
+                                    className="gap-1 pr-1"
+                                  >
+                                    {source?.label}
+                                    <span
+                                      role="button"
+                                      tabIndex={0}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        field.onChange(
+                                          field.value.filter(
+                                            (s) => s !== value,
+                                          ),
+                                        );
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          field.onChange(
+                                            field.value.filter(
+                                              (s) => s !== value,
+                                            ),
+                                          );
+                                        }
+                                      }}
+                                      className="ml-1 rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </span>
+                                  </Badge>
+                                );
+                              })
+                            ) : (
+                              <span>Select tools</span>
+                            )}
+                          </div>
+                          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                        </div>
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search tools..." />
+                      <CommandList>
+                        <CommandEmpty>No tools found.</CommandEmpty>
+                        <CommandGroup>
+                          {DATA_SOURCES.map((source) => {
+                            const isSelected = field.value.includes(
+                              source.value,
+                            );
+                            return (
+                              <CommandItem
+                                key={source.value}
+                                value={source.value}
+                                onSelect={() => {
+                                  const newValue = isSelected
+                                    ? field.value.filter(
+                                        (s) => s !== source.value,
+                                      )
+                                    : [...field.value, source.value];
+                                  field.onChange(newValue);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    isSelected ? "opacity-100" : "opacity-0",
+                                  )}
+                                />
+                                {source.label}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
-            )}
-          />
+            );
+          }}
+        />
 
+        {/* Submit Button and Errors */}
+        <div className="space-y-3">
           <Button
-            onClick={handleCompanySizeSubmit}
-            size="lg"
+            type="submit"
             className="w-full"
-            disabled={!companySize}
+            disabled={!isFormValid || isPending}
           >
-            Continue
-          </Button>
-        </div>
-      )}
-
-      {/* Step 3: Data Sources */}
-      {step === "sources" && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-200">
-          <Button
-            onClick={goBack}
-            variant="ghost"
-            size="sm"
-            className="gap-1 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-3 w-3" />
-            Back
+            {isPending ? (
+              <>
+                <Loader2 className="size-4 animate-spin mr-2" />
+                Submitting...
+              </>
+            ) : (
+              "Get Early Access"
+            )}
           </Button>
 
-          <div className="space-y-2">
-            <h2 className="text-2xl font-semibold text-foreground">
-              Where does your software team work?
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Select all the tools your software team uses.
+          {state.status === "validation_error" && state.fieldErrors.sources && (
+            <p className="text-sm text-destructive">
+              {state.fieldErrors.sources[0]}
             </p>
-          </div>
-
-          <FormField
-            control={form.control}
-            name="sources"
-            render={({ field }) => (
-              <FormItem>
-                <div className="grid grid-cols-2 gap-3">
-                  {DATA_SOURCES.map((source) => {
-                    const isChecked = field.value.includes(source.value);
-
-                    return (
-                      <label
-                        key={source.value}
-                        htmlFor={source.value}
-                        className="flex items-center space-x-3 rounded-lg border border-border p-3 hover:bg-accent transition-colors cursor-pointer"
-                      >
-                        <Checkbox
-                          id={source.value}
-                          checked={isChecked}
-                          onCheckedChange={(checked) => {
-                            const newValue = checked
-                              ? [...field.value, source.value]
-                              : field.value.filter((s) => s !== source.value);
-                            field.onChange(newValue);
-                          }}
-                        />
-                        <span className="flex-1 text-sm text-foreground">
-                          {source.label}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="space-y-3">
-            <Button
-              onClick={handleFinalSubmit}
-              size="lg"
-              className="w-full"
-              disabled={sources.length === 0 || isPending}
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="size-4 animate-spin mr-2" />
-                  Submitting...
-                </>
-              ) : (
-                "Get Early Access"
-              )}
-            </Button>
-
-            {state.status === "validation_error" &&
-              state.fieldErrors.sources && (
-                <p className="text-sm text-destructive">
-                  {state.fieldErrors.sources[0]}
+          )}
+          {state.status === "error" && (
+            <div className="space-y-1">
+              <p
+                className={`text-sm ${state.isRateLimit ? "text-yellow-600 dark:text-yellow-500" : "text-destructive"}`}
+              >
+                {state.error}
+              </p>
+              {state.isRateLimit && (
+                <p className="text-sm text-muted-foreground">
+                  Please wait a moment before trying again.
                 </p>
               )}
-            {state.status === "error" && (
-              <div className="space-y-1">
-                <p
-                  className={`text-sm ${state.isRateLimit ? "text-yellow-600 dark:text-yellow-500" : "text-destructive"}`}
-                >
-                  {state.error}
-                </p>
-                {state.isRateLimit && (
-                  <p className="text-sm text-muted-foreground">
-                    Please wait a moment before trying again.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Terms and Privacy */}
+        <p className="text-xs text-muted-foreground">
+          By continuing you acknowledge that you understand and agree to our{" "}
+          <a
+            href="/legal/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-foreground transition-colors"
+          >
+            Terms and Conditions
+          </a>{" "}
+          and{" "}
+          <a
+            href="/legal/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-foreground transition-colors"
+          >
+            Privacy Policy
+          </a>
+          .
+        </p>
+      </form>
     </div>
+    </Form>
   );
 }

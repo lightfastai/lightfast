@@ -3,9 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Search, RefreshCw, Users, Zap, Link2, Shield } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
+import { Icons } from "@repo/ui/components/icons";
 import { faqs, FAQSection } from "~/components/faq-section";
 import { DitheredBackground } from "~/components/dithered-background";
-import { LightfastLogoLatest } from "~/components/icons";
 import { IntegrationShowcase } from "~/components/integration-showcase";
 import { PlatformAccessCards } from "~/components/platform-access-cards";
 import { ChangelogPreview } from "~/components/changelog-preview";
@@ -14,6 +14,8 @@ import { FeatureVisualsTabs } from "~/components/feature-visuals-tabs";
 import { UnicornScene } from "~/components/unicorn-scene";
 import { LissajousHero } from "~/components/lissajous-hero";
 import { GridSection } from "~/components/grid-section";
+import { WorkflowVisual } from "~/components/landing/workflow-visual";
+import { SearchDemo } from "~/components/search-demo";
 import { exposureTrial } from "~/lib/fonts";
 
 const benefits = [
@@ -134,9 +136,13 @@ const SHOW_GRID_LABELS = false;
 // Flag to disable the grid system for hero section
 const DISABLE_HERO_GRID = true;
 
+// Flag to disable the right-side layered cards in the hero
+const DISABLE_HERO_CARDS = true;
+
 // Section visibility flags
 const SHOW_HERO_SECTION = true;
 const SHOW_INTRODUCING_SECTION = false;
+const SHOW_WORKFLOW_SECTION = false;
 const SHOW_INTEGRATIONS_SECTION = false;
 const SHOW_FEATURE_VISUALS_SECTION = false;
 const SHOW_CONNECT_TOOLS_SECTION = false;
@@ -237,28 +243,114 @@ export default function HomePage() {
         {SHOW_HERO_SECTION &&
           (DISABLE_HERO_GRID ? (
             /* Full-width hero without grid - Lightfield style */
-            <section className="relative w-full h-screen bg-background">
-              {/* Hero text - left middle (optically adjusted slightly upward) */}
-              <div className="absolute top-[45%] -translate-y-1/2 left-8 md:left-16 lg:left-24 z-20 max-w-md">
-                <LightfastLogoLatest className="w-5 h-5 mb-4 text-muted-foreground" />
-                <h1 className="text-xl md:text-2xl lg:text-3xl leading-[1.1] tracking-[-0.02em] mb-4">
-                  <span className="text-muted-foreground">The</span>{" "}
-                  <span className="text-primary">memory layer</span>{" "}
-                  <span className="text-muted-foreground">
-                    for software teams and AI agents.
-                  </span>
-                </h1>
-                <Button asChild size="xs">
-                  <Link href="/early-access">
-                    Join Early Access
-                    <span className="ml-2">→</span>
-                  </Link>
-                </Button>
-              </div>
+            <section className="w-full min-h-screen bg-background overflow-x-clip py-12 md:py-16 lg:py-20">
+              {/*
+                Hero layout: CSS Grid with 12 columns
+                - Mobile/Tablet: single column with padding, cards stack vertically
+                - Desktop (lg+): left text (~35%) + right visuals (~65%), visuals allowed to bleed right
+                Cards sit in the ~40-100%+ horizontal zone of the viewport.
+              */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-0 items-center min-h-[calc(100vh-10rem)] px-6 md:px-12 lg:pl-20 lg:pr-0">
+                {/* Hero text - left side (narrower to push visuals right) */}
+                <div className="lg:col-span-3 xl:col-span-4 flex flex-col justify-center">
+                  <Icons.logoShort className="w-5 h-5 mb-4 text-muted-foreground" />
+                  <h1 className="text-xl md:text-2xl lg:text-3xl font-pp font-medium mb-4">
+                    <span className="text-muted-foreground">The</span>{" "}
+                    <span className="text-primary">memory layer</span>{" "}
+                    <span className="text-muted-foreground">
+                      for software teams and AI agents.
+                    </span>
+                  </h1>
+                  <div>
+                    <Button asChild size="sm">
+                      <Link href="/early-access">
+                        Join Early Access
+                        <span className="ml-2">→</span>
+                      </Link>
+                    </Button>
+                  </div>
+                  {/* Changelog badge - below CTA on mobile, absolute bottom-left on lg */}
+                  <div className="mt-8 lg:mt-12">
+                    <HeroChangelogBadge />
+                  </div>
+                </div>
 
-              {/* Changelog badge - bottom left */}
-              <div className="absolute bottom-8 left-8 md:left-16 lg:left-24 z-20">
-                <HeroChangelogBadge />
+                {/* Layered workflow visuals - right side, allowed to bleed past viewport */}
+                {/* Nested grid: cards shifted right, overlap via shared grid areas */}
+                {!DISABLE_HERO_CARDS && <div className="lg:col-span-9 xl:col-span-8 grid grid-cols-12 grid-rows-6 min-h-[420px] pl-32 md:min-h-[500px] lg:min-h-[560px]">
+                  {/* Component 1 - User Query card */}
+                  {/* Mobile: full width | Desktop: starts col 2, pushed right */}
+                  <div className="col-span-12 md:col-span-8 lg:col-start-2 lg:col-span-7 row-start-2 row-span-1 z-30 self-start">
+                    <div className="bg-card backdrop-blur-md rounded-lg shadow-lg px-5 py-3.5 md:px-6 md:py-4">
+                      <p className="text-sm md:text-base text-foreground leading-relaxed">
+                        when did we decide to use PostgreSQL for the analytics
+                        service and what were the reasons?
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Component 2 - AI Response with workflow steps */}
+                  {/* Mobile: full width | Desktop: starts col 1, spans 10 */}
+                  <div className="col-span-12 md:col-span-10 lg:col-start-1 lg:col-span-8 row-start-3 row-span-2 z-20 self-start -mt-1 md:-mt-2">
+                    <div className="bg-card/40 backdrop-blur-md rounded-lg shadow-lg p-4 md:p-5">
+                      {/* Agent Header */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <Icons.logoShort className="w-5 h-5 text-primary" />
+                      </div>
+
+                      {/* Agent Message */}
+                      <p className="text-sm md:text-base text-foreground/90 mb-4 leading-relaxed">
+                        I&apos;ll help you find when we decided to use
+                        PostgreSQL for the analytics service. Let me search
+                        through your team&apos;s memory.
+                      </p>
+
+                      {/* Workflow Steps - Vertical Pills */}
+                      <div className="flex flex-col gap-2">
+                        {/* Step 1 - Search */}
+                        <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
+                          <Search className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <p className="text-xs md:text-sm text-foreground truncate">
+                            <span className="font-medium">Search</span>{" "}
+                            <span className="text-muted-foreground">
+                              all accounts sorted by last interaction date an...
+                            </span>
+                          </p>
+                        </div>
+
+                        {/* Step 2 - Contents */}
+                        <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
+                          <RefreshCw className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <p className="text-xs md:text-sm text-foreground truncate">
+                            <span className="font-medium">Contents</span>{" "}
+                            <span className="text-muted-foreground">
+                              17 accounts answered – what are the key deta...
+                            </span>
+                          </p>
+                        </div>
+
+                        {/* Step 3 - Graph */}
+                        <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
+                          <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <p className="text-xs md:text-sm text-foreground truncate">
+                            <span className="font-medium">Graph</span>{" "}
+                            <span className="text-muted-foreground">
+                              found connections between 8 entities across...
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Component 3 - Search Results */}
+                  {/* Mobile: full width | Desktop: cols 5-13 (bleeds right), rows 4-6 */}
+                  <div className="col-span-12 md:col-start-3 md:col-span-10 lg:col-start-5 lg:col-span-9 row-start-4 row-span-3 z-10 self-start -mt-2 md:-mt-4">
+                    <div className="bg-background/60 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden max-h-[320px] md:max-h-[380px] lg:max-h-[420px]">
+                      <SearchDemo />
+                    </div>
+                  </div>
+                </div>}
               </div>
             </section>
           ) : (
@@ -626,25 +718,15 @@ export default function HomePage() {
             <DitheredBackground />
           </div> */}
 
-              {/* Hero visual - Unicorn Studio scene */}
+              {/* Hero visual - Workflow demonstration */}
               <div
                 className="z-10 hidden md:block overflow-hidden relative"
                 style={{
-                  gridColumn: "4 / 10", // cols 4-9 (bounding box)
-                  gridRow: "1 / 7", // rows 1-6 (bounding box)
-                  clipPath:
-                    "polygon(50% 0%, 83.33% 0%, 83.33% 16.67%, 100% 16.67%, 100% 100%, 33.33% 100%, 33.33% 83.33%, 0% 83.33%, 0% 50%, 16.67% 50%, 16.67% 33.33%, 33.33% 33.33%, 33.33% 16.67%, 50% 16.67%)",
+                  gridColumn: "5 / 10", // cols 5-9 (right side)
+                  gridRow: "1 / 8", // rows 1-7 (full height)
                 }}
               >
-                <UnicornScene
-                  projectId="WJgAtyV7ZTlZqfZHiGn5"
-                  className="w-full h-full"
-                  scale={0.75}
-                  dpi={1.5}
-                  fps={30}
-                  lazyLoad={false}
-                  altText="Lightfast hero visual"
-                />
+                <WorkflowVisual />
               </div>
             </section>
           ))}
@@ -689,6 +771,41 @@ export default function HomePage() {
               >
                 <LissajousHero />
               </Link>
+            </div>
+          </section>
+        )}
+
+        {/* Workflow Section */}
+        {SHOW_WORKFLOW_SECTION && (
+          <section className="w-full bg-background py-24 md:py-32">
+            <div className="w-full px-8 md:px-16 lg:px-24">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16 mb-8">
+                {/* Left: Badge */}
+                <div>
+                  <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                    AI Agents That Know Your Context
+                  </span>
+                </div>
+
+                {/* Right: Content - spans 2 columns */}
+                <div className="lg:col-span-2 max-w-xl">
+                  <p className="text-base md:text-lg leading-relaxed mb-6">
+                    <span className="text-foreground font-normal">
+                      Watch how AI agents use Lightfast to understand your
+                      business.
+                    </span>{" "}
+                    <span className="text-muted-foreground">
+                      From prospect data to past interactions, agents can search
+                      your entire knowledge base to take action on your behalf.
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Workflow Visual */}
+              <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border">
+                <WorkflowVisual />
+              </div>
             </div>
           </section>
         )}
@@ -810,7 +927,7 @@ export default function HomePage() {
           {/* Centered content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 pointer-events-none">
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-              <LightfastLogoLatest className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
+              <Icons.logoShort className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
               <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal text-white tracking-tight">
                 Try Lightfast Now
               </h2>

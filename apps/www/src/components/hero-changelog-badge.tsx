@@ -9,7 +9,7 @@ export function HeroChangelogBadge() {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;
-        const entries = response.changelogPages?.items ?? [];
+        const entries = response.changelog?.post?.items ?? [];
         const latest = entries[0];
 
         if (!latest) {

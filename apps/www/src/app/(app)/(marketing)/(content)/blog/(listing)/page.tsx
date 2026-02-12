@@ -64,7 +64,12 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-  const posts: Post[] = await blog.getPosts();
+  let posts: Post[] = [];
+  try {
+    posts = await blog.getPosts();
+  } catch {
+    // CMS unavailable — render empty state
+  }
 
   // Structured data for SEO - using @graph for multiple entities
   const structuredData: GraphContext = {
@@ -134,9 +139,9 @@ export default async function BlogPage() {
       {/* Posts List */}
       <div className="space-y-2">
         {posts.length === 0 ? (
-          <div className="bg-card border border-transparent rounded-xs p-6">
-            <h2 className="text-lg font-semibold mb-4">Coming soon</h2>
-            <p className="text-muted-foreground leading-relaxed">
+          <div className="bg-card border border-transparent rounded-xs py-4 px-5">
+            <h2 className="text-md font-semibold mb-4">Coming soon</h2>
+            <p className="text-muted-foreground text-md leading-relaxed">
               We're preparing news and updates about Lightfast. Check back soon
               for product announcements, feature releases, and insights from the
               Lightfast team.

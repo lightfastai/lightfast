@@ -57,7 +57,6 @@
     "lucide-react": "catalog:",
     "neverthrow": "catalog:",
     "next": "catalog:next16",
-    "nuqs": "^2.8.0",
     "react": "19.2.1",
     "react-confetti": "^6.4.0",
     "react-devicons": "^2.16.2",

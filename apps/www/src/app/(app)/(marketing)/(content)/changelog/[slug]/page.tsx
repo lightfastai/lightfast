@@ -21,17 +21,27 @@ type ChangelogPageProps = {
 export const revalidate = 300;
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  const entries = await changelog.getEntries().catch(() => []);
-  return entries
-    .filter((entry) => !!entry.slug)
-    .map((entry) => ({ slug: entry.slug as string }));
+  try {
+    const entries = await changelog.getEntries();
+    return entries
+      .filter((entry) => !!entry.slug)
+      .map((entry) => ({ slug: entry.slug as string }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({
   params,
 }: ChangelogPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const entry = await changelog.getEntryBySlug(slug);
+
+  let entry;
+  try {
+    entry = await changelog.getEntryBySlug(slug);
+  } catch {
+    return {};
+  }
 
   if (!entry) return {};
 
@@ -112,11 +122,13 @@ export default async function ChangelogEntryPage({
         "use server";
 
         const response = data as ChangelogEntryQueryResponse;
-        const entry = response.changelogPages?.item;
+        const entry = response.changelog?.post?.item;
         if (!entry) notFound();
 
         // Fetch adjacent entries for navigation
-        const adjacentEntries = await changelog.getAdjacentEntries(slug);
+        const adjacentEntries = await changelog
+          .getAdjacentEntries(slug)
+          .catch(() => ({ previous: null, next: null }));
 
         // Use publishedAt if available, fall back to createdAt
         const publishedTime = entry.publishedAt || entry._sys?.createdAt;
@@ -261,7 +273,7 @@ export default async function ChangelogEntryPage({
                     )}
 
                     {entry.body?.json?.content ? (
-                      <div className="prose max-w-none mt-6 prose-headings:text-foreground prose-p:text-foreground/80 prose-strong:text-foreground prose-a:text-foreground hover:prose-a:text-foreground/80">
+                      <div className="max-w-none mt-6">
                         <Body content={entry.body.json.content} />
                       </div>
                     ) : null}

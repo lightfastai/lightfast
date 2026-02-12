@@ -4,41 +4,54 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { JsonLd, type GraphContext } from "@vendor/seo/json-ld";
 
-const categorySEO: Record<string, {
-  metaTitle: string;
-  metaDescription: string;
-  focusKeyword: string;
-  secondaryKeywords: string;
-}> = {
+const categorySEO: Record<
+  string,
+  {
+    metaTitle: string;
+    metaDescription: string;
+    focusKeyword: string;
+    secondaryKeywords: string;
+  }
+> = {
   company: {
     metaTitle: "Company News - Lightfast Blog",
-    metaDescription: "Stay updated on Lightfast company news, team updates, and milestones. Learn about our mission to make team knowledge instantly searchable with AI-powered memory.",
+    metaDescription:
+      "Stay updated on Lightfast company news, team updates, and milestones. Learn about our mission to make team knowledge instantly searchable with AI-powered memory.",
     focusKeyword: "team memory",
-    secondaryKeywords: "organizational knowledge, knowledge management, AI search, company updates, Lightfast news",
+    secondaryKeywords:
+      "organizational knowledge, knowledge management, AI search, company updates, Lightfast news",
   },
   data: {
     metaTitle: "Data & Infrastructure - Lightfast Blog",
-    metaDescription: "Deep dives into data engineering, vector search, and knowledge graph infrastructure. Learn how Lightfast stores, indexes, and retrieves your team's information at scale.",
+    metaDescription:
+      "Deep dives into data engineering, vector search, and knowledge graph infrastructure. Learn how Lightfast stores, indexes, and retrieves your team's information at scale.",
     focusKeyword: "vector search",
-    secondaryKeywords: "knowledge graphs, data infrastructure, embeddings, semantic search, retrieval systems, Pinecone, Redis",
+    secondaryKeywords:
+      "knowledge graphs, data infrastructure, embeddings, semantic search, retrieval systems, Pinecone, Redis",
   },
   guides: {
     metaTitle: "Guides & Tutorials - Lightfast Blog",
-    metaDescription: "Step-by-step guides for getting the most out of Lightfast. Learn how to configure memory stores, integrate with your tools, and search your team's knowledge effectively.",
+    metaDescription:
+      "Step-by-step guides for getting the most out of Lightfast. Learn how to configure memory stores, integrate with your tools, and search your team's knowledge effectively.",
     focusKeyword: "Lightfast tutorials",
-    secondaryKeywords: "knowledge base setup, search guides, MCP integration, API documentation, how-to guides",
+    secondaryKeywords:
+      "knowledge base setup, search guides, MCP integration, API documentation, how-to guides",
   },
   technology: {
     metaTitle: "Technology & Engineering - Lightfast Blog",
-    metaDescription: "Technical deep dives into Lightfast's architecture, AI models, and search algorithms. Explore hybrid retrieval, cross-encoder reranking, and the engineering behind team memory.",
+    metaDescription:
+      "Technical deep dives into Lightfast's architecture, AI models, and search algorithms. Explore hybrid retrieval, cross-encoder reranking, and the engineering behind team memory.",
     focusKeyword: "AI architecture",
-    secondaryKeywords: "retrieval systems, hybrid search, neural search, cross-encoder, technical architecture, engineering blog",
+    secondaryKeywords:
+      "retrieval systems, hybrid search, neural search, cross-encoder, technical architecture, engineering blog",
   },
   product: {
     metaTitle: "Product Updates - Lightfast Blog",
-    metaDescription: "Latest product announcements, feature releases, and roadmap updates from Lightfast. Discover new capabilities for searching and understanding your team's knowledge.",
+    metaDescription:
+      "Latest product announcements, feature releases, and roadmap updates from Lightfast. Discover new capabilities for searching and understanding your team's knowledge.",
     focusKeyword: "product updates",
-    secondaryKeywords: "new features, release notes, changelog, product announcements, Lightfast updates",
+    secondaryKeywords:
+      "new features, release notes, changelog, product announcements, Lightfast updates",
   },
 };
 
@@ -49,19 +62,29 @@ type Props = {
 };
 
 export async function generateStaticParams() {
-  const allCategories = await categoriesAPI.getCategories();
-  return allCategories.map((category) => ({
-    category: category._slug || "",
-  }));
+  try {
+    const allCategories = await categoriesAPI.getCategories();
+    return allCategories.map((category) => ({
+      category: category._slug || "",
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await params;
   const seo = categorySEO[category];
-  const allCategories = await categoriesAPI.getCategories();
-  const currentCategory = allCategories.find(
-    (cat) => cat._slug?.toLowerCase() === category.toLowerCase()
-  );
+
+  let currentCategory;
+  try {
+    const allCategories = await categoriesAPI.getCategories();
+    currentCategory = allCategories.find(
+      (cat) => cat._slug?.toLowerCase() === category.toLowerCase(),
+    );
+  } catch {
+    return { title: seo?.metaTitle || "Blog" };
+  }
 
   if (!seo || !currentCategory) {
     return {
@@ -110,11 +133,35 @@ export default async function CategoryPage({ params }: Props) {
   const { category } = await params;
 
   // Fetch categories from BaseHub
-  const allCategories = await categoriesAPI.getCategories();
+  let allCategories;
+  try {
+    allCategories = await categoriesAPI.getCategories();
+  } catch {
+    // CMS unavailable — show empty state with category slug as display name
+    return (
+      <>
+        <div className="space-y-2">
+          <div className="bg-card border border-transparent rounded-lg py-4 px-5">
+            <h2 className="text-md font-semibold mb-4">
+              Temporarily unavailable
+            </h2>
+            <p className="text-muted-foreground text-md leading-relaxed">
+              We&apos;re having trouble loading posts right now. Please try again
+              shortly or{" "}
+              <Link href="/blog" className="underline">
+                view all posts
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   // Find the current category
   const currentCategory = allCategories.find(
-    (cat) => cat._slug?.toLowerCase() === category.toLowerCase()
+    (cat) => cat._slug?.toLowerCase() === category.toLowerCase(),
   );
 
   // Validate category exists
@@ -130,8 +177,9 @@ export default async function CategoryPage({ params }: Props) {
   // Filter posts by category
   const posts = allPosts.filter((post) =>
     post.categories?.some(
-      (cat) => cat._title?.toLowerCase() === currentCategory._title?.toLowerCase()
-    )
+      (cat) =>
+        cat._title?.toLowerCase() === currentCategory._title?.toLowerCase(),
+    ),
   );
 
   // Structured data for category page
@@ -167,71 +215,72 @@ export default async function CategoryPage({ params }: Props) {
 
       {/* Posts List */}
       <div className="space-y-2">
-            {posts.length === 0 ? (
-              <div className="bg-card border border-transparent rounded-lg p-8">
-                <h2 className="text-2xl font-semibold mb-4">
-                  No {displayName} posts yet
-                </h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  We haven't published any {displayName.toLowerCase()} posts yet. Check back
-                  soon or{" "}
-                  <Link href="/blog" className="underline">
-                    view all posts
-                  </Link>
-                  .
-                </p>
-              </div>
-            ) : (
-              posts.map((post) => {
-                const publishedDate = post.publishedAt
-                  ? new Date(post.publishedAt)
-                  : null;
-                const dateStr = publishedDate
-                  ? publishedDate.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })
-                  : "";
+        {posts.length === 0 ? (
+          <div className="bg-card border border-transparent rounded-lg py-4 px-5">
+            <h2 className="text-md font-semibold mb-4">
+              No {displayName} posts yet
+            </h2>
+            <p className="text-muted-foreground text-md leading-relaxed">
+              We haven't published any {displayName.toLowerCase()} posts yet.
+              Check back soon or{" "}
+              <Link href="/blog" className="underline">
+                view all posts
+              </Link>
+              .
+            </p>
+          </div>
+        ) : (
+          posts.map((post) => {
+            const publishedDate = post.publishedAt
+              ? new Date(post.publishedAt)
+              : null;
+            const dateStr = publishedDate
+              ? publishedDate.toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })
+              : "";
 
-                // Get primary category
-                const primaryCategory = post.categories?.[0]?._title;
+            // Get primary category
+            const primaryCategory = post.categories?.[0]?._title;
 
-                return (
-                  <article
-                    key={post._slug ?? post._title}
-                    className="bg-card border border-transparent rounded-xs p-4 hover:border-border/40 transition-colors"
-                  >
-                    <Link
-                      href={`/blog/${post.slug || post._slug}`}
-                      className="block group"
-                    >
-                      <h2 className="text-md font-base mb-1 group-hover:text-foreground/80 transition-colors">
-                        {post._title}
-                      </h2>
+            return (
+              <article
+                key={post._slug ?? post._title}
+                className="bg-card border border-transparent rounded-xs p-4 hover:border-border/40 transition-colors"
+              >
+                <Link
+                  href={`/blog/${post.slug || post._slug}`}
+                  className="block group"
+                >
+                  <h2 className="text-md font-base mb-1 group-hover:text-foreground/80 transition-colors">
+                    {post._title}
+                  </h2>
 
-                      {post.description && (
-                        <p className="text-muted-foreground text-md leading-relaxed mb-4">
-                          {post.description}
-                        </p>
-                      )}
+                  {post.description && (
+                    <p className="text-muted-foreground text-md leading-relaxed mb-4">
+                      {post.description}
+                    </p>
+                  )}
 
-                      {/* Metadata */}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {primaryCategory && (
-                          <>
-                            <span>{primaryCategory}</span>
-                            <span>·</span>
-                          </>
-                        )}
-                        <time>{dateStr}</time>
-                      </div>
-                    </Link>
-                  </article>
-                );
-              })
-            )}
+                  {/* Metadata */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    {primaryCategory && (
+                      <>
+                        <span>{primaryCategory}</span>
+                        <span>·</span>
+                      </>
+                    )}
+                    <time>{dateStr}</time>
+                  </div>
+                </Link>
+              </article>
+            );
+          })
+        )}
       </div>
     </>
   );
 }
+

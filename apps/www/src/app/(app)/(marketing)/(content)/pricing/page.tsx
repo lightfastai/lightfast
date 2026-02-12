@@ -156,7 +156,7 @@ const pricingPlans: PricingPlan[] = [
       "+$5 per 1K extra searches",
       "+$20/mo for 180-day retention",
     ],
-    monthlyPrice: 12,
+    monthlyPrice: 20,
     interval: "user/month",
     buttonText: "Start Trial",
     highlighted: true,
@@ -203,9 +203,9 @@ const pricingPlans: PricingPlan[] = [
 
 const faqs = [
   {
-    question: "What makes Lightfast worth $12/user?",
+    question: "What makes Lightfast worth $20/user?",
     answer:
-      "Lightfast gives your team perfect memory. Find any decision, code change, or discussion instantly. Know who worked on what and why. Track how things evolved over time. For a 10-person team at $120/month, you're saving hours of context searching every week. That's easily worth 10x the cost in saved developer time.",
+      "Lightfast gives your team perfect memory. Find any decision, code change, or discussion instantly. Know who worked on what and why. Track how things evolved over time. For a 10-person team at $200/month, you're saving hours of context searching every week. That's easily worth 10x the cost in saved developer time.",
   },
   {
     question: "What's included in the search allowance?",
@@ -317,7 +317,7 @@ export default function PricingPage() {
             <div className="col-span-12 md:col-span-10 md:col-start-2 lg:col-span-10 lg:col-start-2">
               <div className="flex w-full flex-col items-center text-center">
                 {/* Small label */}
-                <div className="mb-8 opacity-80">
+                <div className="mb-4">
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">
                     Pricing for memory layer
                   </p>
@@ -325,7 +325,7 @@ export default function PricingPage() {
 
                 {/* Heading */}
                 <h1
-                  className={`text-3xl sm:text-4xl md:text-5xl font-light leading-[1.1] tracking-[-0.02em] px-4 text-balance ${exposureTrial.className}`}
+                  className={`text-3xl sm:text-4xl md:text-5xl font-normal px-4 text-balance font-pp`}
                 >
                   Choose the plan that fits your team
                 </h1>
@@ -355,7 +355,7 @@ export default function PricingPage() {
                   <div
                     key={plan.plan}
                     className={cn(
-                      "flex flex-col bg-card rounded-xs p-6 h-full",
+                      "flex flex-col bg-card rounded-sm p-6 h-full",
                       plan.highlighted
                         ? "border border-foreground shadow-lg"
                         : "",
@@ -377,7 +377,7 @@ export default function PricingPage() {
                           className="flex items-start gap-3"
                         >
                           <Check className="w-4 h-4 text-foreground flex-shrink-0 mt-0.5" />
-                          <div className="text-xs text-foreground">
+                          <div className="text-sm text-foreground">
                             {feature}
                           </div>
                         </div>
@@ -393,7 +393,7 @@ export default function PricingPage() {
                               key={addOnIndex}
                               className="flex items-start gap-3"
                             >
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-sm text-muted-foreground">
                                 {addOn}
                               </span>
                             </div>
@@ -415,15 +415,15 @@ export default function PricingPage() {
                                 ${price}
                               </span>
                               <span className="text-muted-foreground">
-                                / {plan.interval}
+                                /{plan.interval}
                               </span>
                             </>
                           )}
                         </div>
 
                         {plan.plan === "team" && (
-                          <p className="text-xs text-muted-foreground">
-                            $36/month for 3 users minimum
+                          <p className="text-sm text-muted-foreground">
+                            $60/month for 3 users minimum
                           </p>
                         )}
 
