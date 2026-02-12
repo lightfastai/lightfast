@@ -53,15 +53,14 @@ export * from "./types.js";
 export * from "./common.js";
 export * from "./github.js";
 export * from "./vercel.js";
+export * from "./linear.js";
+export * from "./sentry.js";
 
 // Validation utilities
 export * from "./validation.js";
 
 // Sanitization utilities
 export * from "./sanitize.js";
-
-// Event mapping utilities
-export * from "./event-mapping.js";
 
 // Transformers
 export * from "./transformers/index.js";

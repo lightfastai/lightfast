@@ -23,6 +23,8 @@ import { z } from "zod";
 export const sourceTypeSchema = z.enum([
   "github",      // ✅ Implemented
   "vercel",      // ✅ Implemented (Phase 01)
+  "linear",      // ✅ Transformer ready
+  "sentry",      // ✅ Transformer ready
 ]);
 
 export type SourceType = z.infer<typeof sourceTypeSchema>;
@@ -67,3 +69,43 @@ export const syncStatusSchema = z.enum([
 ]);
 
 export type SyncStatus = z.infer<typeof syncStatusSchema>;
+
+/**
+ * Backfill Depth
+ *
+ * Number of days to backfill historical data.
+ * Limited to 7, 30, or 90 days.
+ */
+export const backfillDepthSchema = z.number().refine(
+  d => [7, 30, 90].includes(d),
+  { message: "Depth must be 7, 30, or 90 days" }
+);
+
+/**
+ * Backfill Status
+ *
+ * Tracks the lifecycle of a backfill run.
+ */
+export const backfillStatusSchema = z.enum([
+  "idle", "pending", "running", "completed", "failed", "cancelled",
+]);
+
+export type BackfillStatus = z.infer<typeof backfillStatusSchema>;
+
+/**
+ * GitHub Backfill Entity Types
+ *
+ * Entity types supported for GitHub backfill.
+ */
+export const githubBackfillEntityTypesSchema = z.array(
+  z.enum(["pull_request", "issue", "release"])
+).default(["pull_request", "issue", "release"]);
+
+/**
+ * Vercel Backfill Entity Types
+ *
+ * Entity types supported for Vercel backfill.
+ */
+export const vercelBackfillEntityTypesSchema = z.array(
+  z.enum(["deployment"])
+).default(["deployment"]);

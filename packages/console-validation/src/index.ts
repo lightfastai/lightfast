@@ -29,17 +29,48 @@
  * ```
  */
 
-// Constants
-export * from "./constants";
+// Constants (explicit exports from leaf modules)
+export {
+  CLERK_ORG_SLUG,
+  WORKSPACE_NAME,
+  STORE_NAME,
+  NAMING_ERRORS,
+  validateOrgSlug,
+  validateWorkspaceName,
+  validateStoreName,
+} from "./constants/naming";
+export {
+  PINECONE_DEFAULTS,
+  EMBEDDING_MODEL_DEFAULTS,
+  CHUNKING_DEFAULTS,
+  EMBEDDING_DEFAULTS,
+  type EmbeddingDefaults,
+} from "./constants/embedding";
 
-// Primitives
-export * from "./primitives";
+// Primitives (direct to leaf modules)
+export * from "./primitives/ids";
+export * from "./primitives/names";
+export * from "./primitives/slugs";
 
-// Domain Schemas
-export * from "./schemas";
+// Schemas (direct to leaf modules - these are heavy runtime Zod objects)
+export * from "./schemas/workspace";
+export * from "./schemas/organization";
+export * from "./schemas/store";
+export * from "./schemas/job";
+export * from "./schemas/sources";
+export * from "./schemas/source-metadata";
+export * from "./schemas/source-event";
+export * from "./schemas/workflow-io";
+export * from "./schemas/ingestion";
+export * from "./schemas/metrics";
+export * from "./schemas/activities";
+export * from "./schemas/entities";
+export * from "./schemas/org-api-key";
+export * from "./schemas/classification";
 
-// Form Schemas
-export * from "./forms";
+// Forms (direct to leaf modules)
+export * from "./forms/workspace-form";
+export * from "./forms/team-form";
 
-// Utilities
-export * from "./utils";
+// Utils (direct to leaf module)
+export * from "./utils/workspace-names";

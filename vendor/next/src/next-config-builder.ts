@@ -8,10 +8,19 @@ import { createSecureHeaders } from "next-secure-headers";
 import { env } from "../env";
 
 export const config: NextConfig = withVercelToolbar()({
+  poweredByHeader: false,
   serverExternalPackages: ["import-in-the-middle", "require-in-the-middle"],
 
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
+  },
+
   images: {
-    formats: ["image/webp"],
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 31536000,
     remotePatterns: [
       {
         protocol: "https",

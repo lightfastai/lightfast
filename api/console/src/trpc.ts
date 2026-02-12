@@ -239,15 +239,27 @@ export const createOrgTRPCContext = async (opts: { headers: Headers }) => {
  * createUserTRPCContext and createOrgTRPCContext return the same context shape.
  * They only differ in auth validation (user-scoped vs org-scoped).
  */
+const isProduction = process.env.NODE_ENV === "production";
+
 const t = initTRPC.context<typeof createUserTRPCContext>().create({
   transformer: superjson,
-  errorFormatter: ({ shape, error }) => ({
-    ...shape,
-    data: {
-      ...shape.data,
-      zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
-    },
-  }),
+  errorFormatter: ({ shape, error }) => {
+    // In production, sanitize INTERNAL_SERVER_ERROR messages to prevent credential leaks.
+    // Procedures that throw TRPCError with specific codes (CONFLICT, BAD_REQUEST, etc.)
+    // intentionally set user-facing messages, so those are preserved.
+    const shouldSanitize =
+      isProduction && error.code === "INTERNAL_SERVER_ERROR";
+
+    return {
+      ...shape,
+      message: shouldSanitize ? "An unexpected error occurred" : shape.message,
+      data: {
+        ...shape.data,
+        zodError:
+          error.cause instanceof ZodError ? error.cause.flatten() : null,
+      },
+    };
+  },
 });
 
 const sentryMiddleware = t.middleware(

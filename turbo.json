@@ -4,7 +4,17 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".cache/tsbuildinfo.json", "dist/**"]
+      "outputs": [
+        ".cache/tsbuildinfo.json",
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**"
+      ],
+      "env": [
+        "NEXT_PUBLIC_*",
+        "SENTRY_*",
+        "VERCEL_ENV"
+      ]
     },
     "dev": {
       "cache": false,
@@ -31,12 +41,14 @@
       "outputLogs": "new-only"
     },
     "lint": {
-      "dependsOn": ["^build"],
-      "outputs": [".cache/.eslintcache"]
+      "dependsOn": [],
+      "outputs": [".cache/.eslintcache"],
+      "env": []
     },
     "typecheck": {
-      "dependsOn": ["^build"],
-      "outputs": [".cache/tsbuildinfo.json"]
+      "dependsOn": [],
+      "outputs": [".cache/tsbuildinfo.json"],
+      "env": []
     },
     "clean": {
       "cache": false
@@ -65,96 +77,8 @@
     }
   },
   "globalEnv": [
-    // Database
-    "POSTGRES_URL",
-    "DATABASE_HOST",
-    "DATABASE_USERNAME",
-    "DATABASE_PASSWORD",
-
-    // Clerk Authentication
-    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-    "CLERK_SECRET_KEY",
-    "NEXT_PUBLIC_CLERK_SIGN_IN_URL",
-    "NEXT_PUBLIC_CLERK_SIGN_UP_URL",
-    "NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL",
-    "NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL",
-    "CLERK_MACHINE_SECRET_KEY_TRPC",
-    "CLERK_MACHINE_SECRET_KEY_WEBHOOK",
-    "CLERK_MACHINE_SECRET_KEY_INNGEST",
-
-    // Sentry
-    "NEXT_PUBLIC_SENTRY_DSN",
-    "SENTRY_DSN",
-    "SENTRY_ORG",
-    "SENTRY_PROJECT",
-    "SENTRY_AUTH_TOKEN",
-    "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
-
-    // BetterStack/Logtail
-    "NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN",
-    "NEXT_PUBLIC_BETTER_STACK_INGESTING_URL",
-    "NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN",
-    "LOGTAIL_URL",
-    "LOGTAIL_SOURCE_TOKEN",
-
-    // Inngest
-    "INNGEST_APP_NAME",
-    "INNGEST_EVENT_KEY",
-    "INNGEST_SIGNING_KEY",
-
-    // GitHub
-    "GITHUB_CLIENT_ID",
-    "GITHUB_CLIENT_SECRET",
-    "GITHUB_WEBHOOK_SECRET",
-    "GITHUB_APP_ID",
-    "GITHUB_APP_SLUG",
-    "GITHUB_APP_PRIVATE_KEY",
-
-    // AI & Embeddings
-    "ANTHROPIC_API_KEY",
-    "OPENAI_API_KEY",
-    "COHERE_API_KEY",
-    "PINECONE_API_KEY",
-    "MXBAI_API_KEY",
-    "MXBAI_STORE_ID",
-
-    // Lightfast
-    "LIGHTFAST_API_KEY",
-    "LIGHTFAST_API_URL",
-
-    // Security & Encryption
-    "ENCRYPTION_KEY",
-    "ARCJET_KEY",
-    "ARCJET_SITE_KEY",
-
-    // Email
-    "RESEND_API_KEY",
-
-    // Storage & Cache
-    "KV_URL",
-    "KV_REST_API_TOKEN",
-    "KV_REST_API_URL",
-    "KV_REST_API_READ_ONLY_TOKEN",
-    "BLOB_READ_WRITE_TOKEN",
-    "BLOB_BASE_URI",
-
-    // Analytics
-    "NEXT_PUBLIC_POSTHOG_HOST",
-    "NEXT_PUBLIC_POSTHOG_KEY",
-    "POSTHOG_API_KEY",
-
-    // Other Services
-    "EXA_API_KEY",
-    "BRAINTRUST_API_KEY",
-    "BRAINTRUST_PROJECT_NAME",
-    "BASEHUB_TOKEN",
-    "BASEHUB_CHANGELOG_TOKEN",
-    "BROWSERBASE_API_KEY",
-    "BROWSERBASE_PROJECT_ID",
-    "AI_GATEWAY_API_KEY",
-    "NEXT_PUBLIC_API_URL",
-    "HEALTH_CHECK_AUTH_TOKEN",
-    "NEXT_PUBLIC_VERCEL_ENV"
+    "NODE_ENV",
+    "CI"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",
@@ -163,9 +87,86 @@
     "VERCEL",
     "VERCEL_ENV",
     "VERCEL_URL",
+    "VERCEL_PROJECT_PRODUCTION_URL",
     "npm_lifecycle_event",
     "ENVIRONMENT",
     "DEBUG",
-    "PORT"
+    "PORT",
+    "POSTGRES_URL",
+    "DATABASE_HOST",
+    "DATABASE_USERNAME",
+    "DATABASE_PASSWORD",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+    "CLERK_SECRET_KEY",
+    "NEXT_PUBLIC_CLERK_SIGN_IN_URL",
+    "NEXT_PUBLIC_CLERK_SIGN_UP_URL",
+    "NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL",
+    "NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL",
+    "CLERK_MACHINE_SECRET_KEY_INNGEST",
+    "CLERK_MACHINE_SECRET_KEY_WEBHOOK",
+    "CLERK_MACHINE_SECRET_KEY_TRPC",
+    "CLERK_M2M_TOKEN_WEBHOOK",
+    "CLERK_M2M_MACHINE_ID_WEBHOOK",
+    "CLERK_M2M_TOKEN_INNGEST",
+    "CLERK_M2M_MACHINE_ID_INNGEST",
+    "NEXT_PUBLIC_SENTRY_DSN",
+    "SENTRY_DSN",
+    "SENTRY_ORG",
+    "SENTRY_PROJECT",
+    "SENTRY_AUTH_TOKEN",
+    "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
+    "SENTRY_VERCEL_LOG_DRAIN_URL",
+    "SENTRY_OTLP_TRACES_URL",
+    "SENTRY_PUBLIC_KEY",
+    "NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN",
+    "NEXT_PUBLIC_BETTER_STACK_INGESTING_URL",
+    "NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN",
+    "LOGTAIL_URL",
+    "LOGTAIL_SOURCE_TOKEN",
+    "INNGEST_APP_NAME",
+    "INNGEST_SIGNING_KEY",
+    "INNGEST_EVENT_KEY",
+    "GITHUB_WEBHOOK_SECRET",
+    "GITHUB_APP_ID",
+    "GITHUB_APP_SLUG",
+    "GITHUB_CLIENT_ID",
+    "GITHUB_CLIENT_SECRET",
+    "GITHUB_APP_PRIVATE_KEY",
+    "ANTHROPIC_API_KEY",
+    "OPENAI_API_KEY",
+    "COHERE_API_KEY",
+    "PINECONE_API_KEY",
+    "MXBAI_API_KEY",
+    "MXBAI_STORE_ID",
+    "LIGHTFAST_API_KEY",
+    "LIGHTFAST_API_URL",
+    "ENCRYPTION_KEY",
+    "ARCJET_KEY",
+    "ARCJET_SITE_KEY",
+    "RESEND_API_KEY",
+    "KV_URL",
+    "KV_REST_API_READ_ONLY_TOKEN",
+    "KV_REST_API_TOKEN",
+    "KV_REST_API_URL",
+    "REDIS_URL",
+    "BLOB_READ_WRITE_TOKEN",
+    "BLOB_BASE_URI",
+    "NEXT_PUBLIC_POSTHOG_HOST",
+    "NEXT_PUBLIC_POSTHOG_KEY",
+    "POSTHOG_API_KEY",
+    "EXA_API_KEY",
+    "BRAINTRUST_API_KEY",
+    "BRAINTRUST_PROJECT_NAME",
+    "BASEHUB_ADMIN_TOKEN",
+    "BASEHUB_TOKEN",
+    "BASEHUB_CHANGELOG_TOKEN",
+    "BROWSERBASE_API_KEY",
+    "BROWSERBASE_PROJECT_ID",
+    "AI_GATEWAY_API_KEY",
+    "NEXT_PUBLIC_API_URL",
+    "HEALTH_CHECK_AUTH_TOKEN",
+    "NEXT_PUBLIC_VERCEL_ENV",
+    "KNOCK_API_KEY",
+    "KNOCK_SIGNING_KEY"
   ]
 }

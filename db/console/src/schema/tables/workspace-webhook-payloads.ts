@@ -9,18 +9,22 @@ import {
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
- * Workspace Webhook Payloads table stores raw, unmodified webhook payloads
- * from all sources (GitHub, Vercel) for permanent retention.
+ * Workspace Ingestion Payloads table stores raw, unmodified payloads
+ * from all ingestion sources (webhooks, backfills, manual imports, API)
+ * for permanent retention.
  *
  * Purpose:
  * - Enable future reprocessing if transformer logic changes
- * - Debug webhook issues with complete original data
- * - Maintain complete audit trail of all received webhooks
+ * - Debug webhook/backfill issues with complete original data
+ * - Maintain complete audit trail of all ingested payloads
  *
- * Only verified webhooks that resolve to a workspace are stored.
+ * Only verified payloads that resolve to a workspace are stored.
  * Failed signature verification or unresolvable webhooks are NOT stored.
+ *
+ * Note: SQL table name kept as workspace_webhook_payloads for migration safety.
+ * TypeScript export renamed to workspaceIngestionPayloads.
  */
-export const workspaceWebhookPayloads = pgTable(
+export const workspaceIngestionPayloads = pgTable(
   "lightfast_workspace_webhook_payloads",
   {
     /**
@@ -41,21 +45,22 @@ export const workspaceWebhookPayloads = pgTable(
      * Unique delivery identifier from source
      * GitHub: x-github-delivery header
      * Vercel: payload.id field
+     * Backfill: backfill-{integrationId}-{entityType}-p{page}
      */
     deliveryId: varchar("delivery_id", { length: 191 }).notNull(),
 
     /**
-     * Source system: "github" | "vercel"
+     * Source system: "github" | "vercel" | "linear" | "sentry"
      */
     source: varchar("source", { length: 50 }).notNull(),
 
     /**
-     * Event type from source (e.g., "push", "pull_request", "deployment.created")
+     * Event type from source (e.g., "push", "pull_request", "deployment.created", "backfill.pull_request")
      */
     eventType: varchar("event_type", { length: 100 }).notNull(),
 
     /**
-     * Complete raw webhook payload (unmodified JSON body)
+     * Complete raw payload (unmodified JSON body)
      */
     payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
 
@@ -66,9 +71,16 @@ export const workspaceWebhookPayloads = pgTable(
     headers: jsonb("headers").$type<Record<string, string>>().notNull(),
 
     /**
-     * When the webhook was received by our server
+     * When the payload was received by our server
      */
     receivedAt: timestamp("received_at", { mode: "string", withTimezone: true }).notNull(),
+
+    /**
+     * How this payload was ingested: webhook, backfill, manual, or api
+     */
+    ingestionSource: varchar("ingestion_source", { length: 20 })
+      .default("webhook")
+      .notNull(),
 
     /**
      * When this record was created
@@ -80,7 +92,7 @@ export const workspaceWebhookPayloads = pgTable(
   (table) => ({
     /**
      * Primary query pattern: find payloads by workspace + time range
-     * Used for browsing recent webhooks and time-bounded searches
+     * Used for browsing recent payloads and time-bounded searches
      */
     workspaceReceivedIdx: index("webhook_payload_workspace_received_idx").on(
       table.workspaceId,
@@ -97,7 +109,7 @@ export const workspaceWebhookPayloads = pgTable(
 
     /**
      * Filter by source/type within workspace
-     * Used for browsing webhooks by source (GitHub vs Vercel) and event type
+     * Used for browsing payloads by source (GitHub vs Vercel) and event type
      */
     workspaceSourceIdx: index("webhook_payload_workspace_source_idx").on(
       table.workspaceId,
@@ -107,6 +119,14 @@ export const workspaceWebhookPayloads = pgTable(
   }),
 );
 
+/** @deprecated Use workspaceIngestionPayloads instead */
+export const workspaceWebhookPayloads = workspaceIngestionPayloads;
+
 // Type exports
-export type WorkspaceWebhookPayload = typeof workspaceWebhookPayloads.$inferSelect;
-export type InsertWorkspaceWebhookPayload = typeof workspaceWebhookPayloads.$inferInsert;
+export type WorkspaceIngestionPayload = typeof workspaceIngestionPayloads.$inferSelect;
+export type InsertWorkspaceIngestionPayload = typeof workspaceIngestionPayloads.$inferInsert;
+
+/** @deprecated Use WorkspaceIngestionPayload instead */
+export type WorkspaceWebhookPayload = WorkspaceIngestionPayload;
+/** @deprecated Use InsertWorkspaceIngestionPayload instead */
+export type InsertWorkspaceWebhookPayload = InsertWorkspaceIngestionPayload;

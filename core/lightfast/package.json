@@ -1,6 +1,6 @@
 {
   "name": "lightfast",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.5",
   "description": "Lightfast Neural Memory SDK - TypeScript client for the Lightfast Memory API",
   "publishConfig": {
     "tag": "latest",
@@ -41,6 +41,10 @@
     "./errors": {
       "types": "./dist/errors.d.ts",
       "import": "./dist/errors.mjs"
+    },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "import": "./dist/constants.mjs"
     }
   },
   "scripts": {
@@ -51,6 +55,9 @@
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --fix"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@repo/console-types": "workspace:*",

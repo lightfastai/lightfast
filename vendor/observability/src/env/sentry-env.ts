@@ -11,12 +11,15 @@ export const sentryEnv = createEnv({
   },
   client: {
     NEXT_PUBLIC_SENTRY_DSN: z.string().min(1),
-    NEXT_PUBLIC_SENTRY_ENVIRONMENT: z.enum(["development", "production"]),
+    NEXT_PUBLIC_VERCEL_ENV: z
+      .enum(["development", "preview", "production"])
+      .default("development"),
   },
   experimental__runtimeEnv: {
-    NEXT_PUBLIC_SENTRY_ENVIRONMENT: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+    NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
   skipValidation:
-    !!process.env.CI || process.env.npm_lifecycle_event === "lint",
+    !!process.env.SKIP_ENV_VALIDATION ||
+    process.env.npm_lifecycle_event === "lint",
 });

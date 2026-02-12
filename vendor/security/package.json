@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -38,7 +39,7 @@
   "dependencies": {
     "@arcjet/decorate": "1.0.0-beta.10",
     "@arcjet/next": "1.0.0-beta.10",
-    "@nosecone/next": "1.0.0-beta.15",
+    "@nosecone/next": "1.1.0",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/clerk": "workspace:^",
     "js-cookie": "^3.0.5",

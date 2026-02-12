@@ -9,12 +9,12 @@ import type { PartialCspDirectives } from "./types";
  * - us.i.posthog.com: PostHog analytics endpoint (direct)
  * - us.posthog.com: PostHog UI host (for feature flags, surveys, etc.)
  * - us-assets.i.posthog.com: PostHog script CDN
- * - *.ingest.sentry.io: Sentry error tracking (all regions)
  *
  * Note: PostHog reverse proxy (/ingest) uses same-origin requests via Next.js
  * rewrites, so no additional CSP domains needed for the proxy.
+ * Note: Sentry CSP directives are in sentry.ts, not here.
  *
- * @returns Partial CSP directives for Analytics (Vercel + PostHog + Sentry)
+ * @returns Partial CSP directives for Analytics (Vercel + PostHog)
  *
  * @example
  * ```ts
@@ -32,13 +32,11 @@ export function createAnalyticsCspDirectives(): PartialCspDirectives {
       "https://us-assets.i.posthog.com",
     ],
 
-    // Connections: Performance vitals, PostHog direct/UI, and Sentry
+    // Connections: Performance vitals and PostHog direct/UI
     connectSrc: [
       "https://vitals.vercel-insights.com",
       "https://us.i.posthog.com",
       "https://us.posthog.com",
-      "https://*.ingest.sentry.io",
-      "https://*.ingest.us.sentry.io",
     ],
 
     // Frames: PostHog surveys and feature flag UI

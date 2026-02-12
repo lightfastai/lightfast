@@ -1,0 +1,49 @@
+{
+  "name": "@repo/console-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./workspace-search": {
+      "default": "./src/workspace-search.ts"
+    },
+    "./workspace-contents": {
+      "default": "./src/workspace-contents.ts"
+    },
+    "./workspace-find-similar": {
+      "default": "./src/workspace-find-similar.ts"
+    },
+    "./workspace-graph": {
+      "default": "./src/workspace-graph.ts"
+    },
+    "./workspace-related": {
+      "default": "./src/workspace-related.ts"
+    }
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc --watch",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@lightfastai/ai-sdk": "workspace:*",
+    "@repo/console-ai-types": "workspace:*",
+    "@repo/console-types": "workspace:*",
+    "ai": "catalog:",
+    "zod": "catalog:zod3"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}

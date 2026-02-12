@@ -82,6 +82,19 @@ export function isAccountLockedError(err: unknown): { locked: boolean; expiresIn
 }
 
 /**
+ * Check if error is due to sign-up waitlist restriction
+ */
+export function isSignUpRestricted(err: unknown): boolean {
+  if (isClerkAPIResponseError(err)) {
+    return err.errors.some(
+      (error: ClerkAPIError) => error.code === 'sign_up_restricted_waitlist'
+    )
+  }
+
+  return false
+}
+
+/**
  * Check if error is due to rate limiting
  */
 export function isRateLimitError(err: unknown): { rateLimited: boolean; retryAfterSeconds?: number } {

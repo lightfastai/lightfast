@@ -40,6 +40,12 @@ import {
   llmEntityExtractionWorkflow,
 } from "./workflow/neural";
 
+// Backfill workflows
+import { backfillOrchestrator } from "./workflow/backfill/backfill-orchestrator";
+
+// Notification workflows
+import { notificationDispatch } from "./workflow/notifications";
+
 // Export Inngest client
 export { inngest };
 
@@ -60,6 +66,12 @@ export { recordActivity };
 
 // Export neural memory workflows
 export { observationCapture, profileUpdate, clusterSummaryCheck, llmEntityExtractionWorkflow };
+
+// Export backfill workflows
+export { backfillOrchestrator };
+
+// Export notification workflows
+export { notificationDispatch };
 
 /**
  * Create the route context for Next.js API routes
@@ -127,6 +139,12 @@ export function createInngestRouteContext() {
       profileUpdate,
       clusterSummaryCheck,
       llmEntityExtractionWorkflow,
+
+      // Backfill
+      backfillOrchestrator,
+
+      // Notifications
+      notificationDispatch,
     ],
     servePath: "/api/inngest",
   });

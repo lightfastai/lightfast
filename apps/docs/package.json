@@ -30,7 +30,7 @@
     "@repo/url-utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@vendor/seo": "workspace:*",
-    "@vercel/microfrontends": "^2.0.1",
+    "@vercel/microfrontends": "^2.3.0",
     "@vercel/related-projects": "catalog:",
     "clsx": "^2.1.1",
     "framer-motion": "^11.18.2",

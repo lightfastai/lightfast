@@ -32,11 +32,17 @@ export const githubEnv = createEnv({
 		// Used for: Webhook signature verification (push, installation events)
 		GITHUB_WEBHOOK_SECRET: z.string().min(32),
 	},
-	client: {},
-	experimental__runtimeEnv: {},
+	client: {
+		// GitHub App Slug (public - visible in URLs anyway)
+		// Used for: Client-side GitHub App installation/permission links
+		// Example: "lightfast-console" or "lightfast-console-dev"
+		NEXT_PUBLIC_GITHUB_APP_SLUG: z.string().min(1),
+	},
+	experimental__runtimeEnv: {
+		NEXT_PUBLIC_GITHUB_APP_SLUG: process.env.NEXT_PUBLIC_GITHUB_APP_SLUG,
+	},
 	skipValidation:
-		!!process.env.CI ||
-		process.env.npm_lifecycle_event === "lint" ||
-		process.env.SKIP_ENV_VALIDATION === "true",
+		!!process.env.SKIP_ENV_VALIDATION ||
+		process.env.npm_lifecycle_event === "lint",
 	emptyStringAsUndefined: true,
 });

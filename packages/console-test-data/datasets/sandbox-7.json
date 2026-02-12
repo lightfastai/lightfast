@@ -1,0 +1,1446 @@
+{
+  "$schema": "./webhook-schema.json",
+  "name": "sandbox-7",
+  "description": "Critical SDK bug: API key validation mismatch (sk_ vs sk-lf-) blocking all SDK users (Feb 9, 2026).",
+  "webhooks": [
+    {
+      "source": "sentry",
+      "eventType": "error",
+      "payload": {
+        "action": "created",
+        "data": {
+          "event": {
+            "event_id": "evt_sdk_auth_001",
+            "project": 9012345,
+            "timestamp": "2026-02-09T14:00:00Z",
+            "received": "2026-02-09T14:00:01Z",
+            "platform": "node",
+            "message": "AuthenticationError: Invalid API key format. Expected 'sk-lf-' prefix but received 'sk_'",
+            "title": "AuthenticationError: Invalid API key format. Expected 'sk-lf-' prefix but received 'sk_'",
+            "location": "core/lightfast/src/client.ts",
+            "culprit": "validateApiKeyFormat",
+            "type": "error",
+            "metadata": {
+              "type": "AuthenticationError",
+              "value": "Invalid API key format. Expected 'sk-lf-' prefix but received 'sk_'",
+              "filename": "core/lightfast/src/client.ts",
+              "function": "validateApiKeyFormat"
+            },
+            "tags": [
+              { "key": "environment", "value": "production" },
+              { "key": "sdk_version", "value": "0.0.3-alpha.2" },
+              { "key": "sdk_language", "value": "javascript" }
+            ],
+            "user": {
+              "id": "user_sdk_consumer_001",
+              "username": "sdk-consumer"
+            },
+            "sdk": {
+              "name": "sentry.javascript.node",
+              "version": "8.42.0"
+            },
+            "exception": {
+              "values": [
+                {
+                  "type": "AuthenticationError",
+                  "value": "Invalid API key format. Expected 'sk-lf-' prefix but received 'sk_'",
+                  "stacktrace": {
+                    "frames": [
+                      {
+                        "filename": "core/lightfast/src/client.ts",
+                        "function": "validateApiKeyFormat",
+                        "lineno": 156,
+                        "colno": 8,
+                        "context_line": "    throw new AuthenticationError(`Invalid API key format. Expected 'sk-lf-' prefix but received '${prefix}'`);"
+                      },
+                      {
+                        "filename": "core/lightfast/src/client.ts",
+                        "function": "constructor",
+                        "lineno": 42,
+                        "colno": 12,
+                        "context_line": "    this.validateApiKeyFormat(apiKey);"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "web_url": "https://sentry.io/organizations/lightfastai/issues/5089234120/events/evt_sdk_auth_001/",
+            "issue_url": "https://sentry.io/api/0/issues/5089234120/"
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "issue.created",
+      "payload": {
+        "action": "created",
+        "data": {
+          "issue": {
+            "id": "5089234120",
+            "shortId": "SDK-892",
+            "title": "AuthenticationError: Invalid API key format. Expected 'sk-lf-' prefix but received 'sk_'",
+            "culprit": "validateApiKeyFormat (client.ts)",
+            "status": "unresolved",
+            "level": "error",
+            "platform": "node",
+            "firstSeen": "2026-02-09T14:00:00Z",
+            "lastSeen": "2026-02-09T14:05:00Z",
+            "count": 247,
+            "userCount": 42,
+            "permalink": "https://sentry.io/organizations/lightfastai/issues/5089234120/",
+            "metadata": {
+              "type": "AuthenticationError",
+              "value": "Invalid API key format. Expected 'sk-lf-' prefix but received 'sk_'",
+              "filename": "core/lightfast/src/client.ts",
+              "function": "validateApiKeyFormat"
+            },
+            "project": {
+              "id": "9012345",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
+            "assignedTo": null,
+            "logger": "node",
+            "type": "error",
+            "annotations": [],
+            "isPublic": false,
+            "isBookmarked": false,
+            "isSubscribed": true,
+            "hasSeen": false,
+            "numComments": 0
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        },
+        "actor": {
+          "type": "application",
+          "id": "sentry",
+          "name": "Sentry"
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "issues",
+      "payload": {
+        "action": "opened",
+        "issue": {
+          "id": 987462001,
+          "node_id": "I_kwDO_lightfast_462",
+          "number": 370,
+          "title": "SDK authentication failing: API key validation checking wrong prefix (sk_ vs sk-lf-)",
+          "user": {
+            "login": "sdk_user_001",
+            "id": 8765432,
+            "node_id": "U_sdk_user_001",
+            "avatar_url": "https://avatars.githubusercontent.com/u/8765432",
+            "type": "User",
+            "site_admin": false
+          },
+          "labels": [
+            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
+            { "id": 104, "node_id": "L_104", "name": "sdk", "color": "0366d6", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "critical", "color": "ff0000", "default": false }
+          ],
+          "state": "open",
+          "locked": false,
+          "assignee": null,
+          "assignees": [],
+          "milestone": null,
+          "comments": 8,
+          "created_at": "2026-02-09T14:15:00Z",
+          "updated_at": "2026-02-09T14:15:00Z",
+          "closed_at": null,
+          "author_association": "NONE",
+          "active_lock_reason": null,
+          "body": "## Problem\nAll SDK authentication requests are failing with `AuthenticationError: Invalid API key format`. The validator is expecting `sk-lf-` prefix but our keys use `sk_` prefix.\n\n## Error (from Sentry SDK-892)\n```\nAuthenticationError: Invalid API key format. Expected 'sk-lf-' prefix but received 'sk_'\n    at validateApiKeyFormat (client.ts:156)\n    at Client.constructor (client.ts:42)\n```\n\n## Reproduction\n```javascript\nconst client = new Lightfast({ apiKey: 'sk_my-key-12345' });\n// Throws: AuthenticationError: Invalid API key format\n```\n\n## Impact\n- **CRITICAL**: All SDK users unable to authenticate\n- 247 errors from 42 users in 5 minutes\n- Blocks all SDK integration attempts\n- Sentry SDK-892 issue is P0\n\n## Expected Behavior\nThe SDK should accept API keys with `sk_` prefix (current format used by all existing API keys).\n\n## Related\n- Sentry Issue: SDK-892\n- Linear: LF-435\n\n## Notes\nThis appears to be a recent validation change that broke backward compatibility with existing API keys.",
+          "reactions": {
+            "url": "https://api.github.com/repos/lightfastai/lightfast/issues/370/reactions",
+            "total_count": 12,
+            "+1": 12, "-1": 0, "laugh": 0, "hooray": 0, "confused": 0, "heart": 0, "rocket": 0, "eyes": 0
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/issues/370",
+          "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/370/timeline",
+          "state_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T00:00:00Z",
+          "pushed_at": "2026-02-09T00:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 12,
+          "default_branch": "main",
+          "topics": ["ai", "agents", "mcp", "neural-memory", "typescript"],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "sdk_user_001",
+          "id": 8765432,
+          "node_id": "U_sdk_user_001",
+          "avatar_url": "https://avatars.githubusercontent.com/u/8765432",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-09T14:30:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739095800000,
+        "data": {
+          "id": "issue_lf_435",
+          "identifier": "LF-435",
+          "title": "P0: SDK API key validation broken - blocking all SDK users",
+          "description": "## Incident\nSDK authentication completely broken for all users. Validation logic checking wrong API key prefix.\n\n## Sentry Reference\n- Issue: SDK-892\n- 247 errors from 42 users in 5 minutes\n- First seen: 14:00 UTC\n\n## Error\n```\nAuthenticationError: Invalid API key format. Expected 'sk-lf-' prefix but received 'sk_'\n    at validateApiKeyFormat (client.ts:156)\n```\n\n## Root Cause Hypothesis\nRecent commit to core/lightfast/src/client.ts changed validation to expect `sk-lf-` prefix, but all existing API keys use `sk_` prefix. This breaks backward compatibility.\n\n## Impact\n- P0 - ALL SDK users unable to authenticate\n- Customer-blocking incident\n- 42+ users affected\n- First errors appeared 14:00 UTC\n\n## Action Required\nRevert or fix validation logic to accept both `sk_` (legacy) and `sk-lf-` (new) prefixes.",
+          "priority": 0,
+          "priorityLabel": "Urgent",
+          "estimate": 2,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-09T14:30:00Z",
+          "updatedAt": "2026-02-09T14:30:00Z",
+          "number": 435,
+          "url": "https://linear.app/lightfastai/issue/LF-435",
+          "branchName": "fix/sdk-api-key-validation",
+          "customerTicketCount": 8,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_sdk",
+            "key": "LF",
+            "name": "SDK"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_sdk_v1",
+            "name": "SDK v1",
+            "url": "https://linear.app/lightfastai/project/sdk-v1"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_p0", "name": "P0", "color": "#ff0000" },
+            { "id": "label_sdk", "name": "SDK", "color": "#0366d6" },
+            { "id": "label_blocking", "name": "Blocking", "color": "#ff6b6b" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Comment",
+      "payload": {
+        "action": "create",
+        "type": "Comment",
+        "createdAt": "2026-02-09T15:00:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739097600000,
+        "data": {
+          "id": "comment_lf_435_001",
+          "body": "Root cause identified: The commit from Feb 7 that added `validateApiKeyFormat()` in core/lightfast/src/client.ts is checking for the NEW `sk-lf-` prefix exclusively. However, all customer API keys were generated with the OLD `sk_` prefix.\n\nThis is a backward compatibility breaking change that wasn't caught because:\n1. No migration path for existing keys\n2. No feature flag to gradually roll out new validation\n3. No test coverage for legacy key format\n\nTwo-part fix:\n1. **Immediate**: Update validation to accept BOTH `sk_` (legacy) and `sk-lf-` (new) prefixes\n2. **Long-term**: Add migration path for customers to upgrade keys, but keep supporting legacy format for at least 2 releases\n\nGoing to implement fix in core/lightfast/src/client.ts validateApiKeyFormat() function.",
+          "createdAt": "2026-02-09T15:00:00Z",
+          "updatedAt": "2026-02-09T15:00:00Z",
+          "url": "https://linear.app/lightfastai/issue/LF-435#comment-comment_lf_435_001",
+          "reactionData": [],
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "issue": {
+            "id": "issue_lf_435",
+            "identifier": "LF-435",
+            "title": "P0: SDK API key validation broken - blocking all SDK users",
+            "url": "https://linear.app/lightfastai/issue/LF-435"
+          }
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/fix/sdk-api-key-validation",
+        "before": "077a17c4",
+        "after": "0e79fc35",
+        "created": true,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/077a17c4...0e79fc35",
+        "commits": [
+          {
+            "id": "0e79fc35",
+            "tree_id": "tree370_sdk_fix",
+            "distinct": true,
+            "message": "fix(sdk): accept both sk_ and sk-lf- API key prefixes\n\nUpdates validateApiKeyFormat() to support both legacy (sk_) and new (sk-lf-)\nAPI key prefixes for backward compatibility. This fixes the authentication\nbreakdown that affected 42+ SDK users.\n\nSupports migration path: existing sk_ keys continue to work while new keys\nuse sk-lf- prefix. Can be deprecated in v1.0.0.\n\nFixes #370\nFixes LF-435\nResolves Sentry SDK-892",
+            "timestamp": "2026-02-09T16:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/0e79fc35",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "core/lightfast/src/client.ts",
+              "core/lightfast/src/constants.ts",
+              "packages/console-validation/src/index.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "0e79fc35",
+          "tree_id": "tree370_sdk_fix",
+          "distinct": true,
+          "message": "fix(sdk): accept both sk_ and sk-lf- API key prefixes",
+          "timestamp": "2026-02-09T16:00:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/0e79fc35",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "core/lightfast/src/client.ts",
+            "core/lightfast/src/constants.ts",
+            "packages/console-validation/src/index.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T16:00:00Z",
+          "pushed_at": "2026-02-09T16:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 12,
+          "default_branch": "main",
+          "topics": ["ai", "agents", "mcp", "neural-memory", "typescript"],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/fix/sdk-api-key-validation",
+        "before": "0e79fc35",
+        "after": "b9f0ec77",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/0e79fc35...b9f0ec77",
+        "commits": [
+          {
+            "id": "b9f0ec77",
+            "tree_id": "tree370_mcp_fix",
+            "distinct": true,
+            "message": "fix(mcp): update MCP validation to match SDK key format changes\n\nUpdates the MCP SDK validation in core/mcp/src/index.ts to match\nthe API key format changes from commit 0e79fc35. Adds tests for both\nlegacy (sk_) and new (sk-lf-) key formats.\n\nAlso adds migration guide in docs clarifying backward compatibility.\n\nFixes #370\nFixes LF-435\nResolves Sentry SDK-892",
+            "timestamp": "2026-02-09T16:30:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/b9f0ec77",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [
+              "docs/sdk-api-key-migration.md"
+            ],
+            "removed": [],
+            "modified": [
+              "core/mcp/src/index.ts",
+              "packages/console-validation/src/primitives/env.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "b9f0ec77",
+          "tree_id": "tree370_mcp_fix",
+          "distinct": true,
+          "message": "fix(mcp): update MCP validation to match SDK key format changes",
+          "timestamp": "2026-02-09T16:30:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/b9f0ec77",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [
+            "docs/sdk-api-key-migration.md"
+          ],
+          "removed": [],
+          "modified": [
+            "core/mcp/src/index.ts",
+            "packages/console-validation/src/primitives/env.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T16:30:00Z",
+          "pushed_at": "2026-02-09T16:30:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 12,
+          "default_branch": "main",
+          "topics": ["ai", "agents", "mcp", "neural-memory", "typescript"],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "opened",
+        "number": 370,
+        "pull_request": {
+          "id": 3370000001,
+          "node_id": "PR_kwDO_lightfast_370",
+          "number": 370,
+          "state": "open",
+          "locked": false,
+          "title": "fix(sdk): support legacy and new API key formats for backward compatibility",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nFixes critical SDK authentication issue by supporting both legacy `sk_` and new `sk-lf-` API key prefixes. This restores service for 42+ blocked SDK users while providing a migration path forward.\n\n## Root Cause\nThe Feb 7 commit added `validateApiKeyFormat()` to exclusively check for `sk-lf-` prefix, but all existing customer API keys use the legacy `sk_` prefix. This broke backward compatibility and blocked all SDK users from authenticating.\n\n## Changes\n- Updated `validateApiKeyFormat()` in core/lightfast/src/client.ts to accept BOTH `sk_` and `sk-lf-` prefixes\n- Added API_KEY_LEGACY_PREFIX constant in core/lightfast/src/constants.ts\n- Updated validation in core/mcp/src/index.ts to match SDK behavior\n- Updated packages/console-validation/src/index.ts to support both formats\n- Added migration guide: docs/sdk-api-key-migration.md\n- Added test coverage for both legacy and new key formats\n\n## Testing\n- [x] Legacy keys (sk_*) authenticate successfully\n- [x] New keys (sk-lf-*) authenticate successfully\n- [x] Invalid formats still rejected\n- [x] MCP validation matches SDK behavior\n- [x] All existing tests pass\n- [x] New tests added for both key formats\n\n## Migration Strategy\n- Legacy `sk_` keys: Fully supported, no action required by users\n- New `sk-lf-` keys: Recommended for all new API key generation\n- Deprecation: Plan to sunset `sk_` prefix in v1.0.0 (estimated Q3 2026)\n\n## Related Issues\n- Fixes #370\n- Fixes LF-435\n- Resolves Sentry SDK-892 (247 auth errors from 42 users)\n\n## Customer Impact\n- Restores service for all blocked SDK users immediately upon merge\n- No breaking changes for existing integrations\n- Clear migration path for future key format changes",
+          "created_at": "2026-02-09T17:00:00Z",
+          "updated_at": "2026-02-09T17:00:00Z",
+          "closed_at": null,
+          "merged_at": null,
+          "merge_commit_sha": null,
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
+            { "id": 104, "node_id": "L_104", "name": "sdk", "color": "0366d6", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "critical", "color": "ff0000", "default": false },
+            { "id": 103, "node_id": "L_103", "name": "hotfix", "color": "ff0000", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 2,
+          "additions": 127,
+          "deletions": 18,
+          "changed_files": 6,
+          "head": {
+            "label": "lightfastai:fix/sdk-api-key-validation",
+            "ref": "fix/sdk-api-key-validation",
+            "sha": "b9f0ec77",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T17:00:00Z",
+              "pushed_at": "2026-02-09T17:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 12,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "077a17c4",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T17:00:00Z",
+              "pushed_at": "2026-02-09T17:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 12,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/370",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/370.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/370.patch",
+          "merged": false,
+          "mergeable": true,
+          "rebaseable": true,
+          "mergeable_state": "clean",
+          "merged_by": null,
+          "comments": 3,
+          "review_comments": 5,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T17:00:00Z",
+          "pushed_at": "2026-02-09T17:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 12,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "closed",
+        "number": 370,
+        "pull_request": {
+          "id": 3370000001,
+          "node_id": "PR_kwDO_lightfast_370",
+          "number": 370,
+          "state": "closed",
+          "locked": false,
+          "title": "fix(sdk): support legacy and new API key formats for backward compatibility",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nFixes critical SDK authentication issue by supporting both legacy `sk_` and new `sk-lf-` API key prefixes. This restores service for 42+ blocked SDK users while providing a migration path forward.\n\n## Root Cause\nThe Feb 7 commit added `validateApiKeyFormat()` to exclusively check for `sk-lf-` prefix, but all existing customer API keys use the legacy `sk_` prefix. This broke backward compatibility and blocked all SDK users from authenticating.\n\n## Changes\n- Updated `validateApiKeyFormat()` in core/lightfast/src/client.ts to accept BOTH `sk_` and `sk-lf-` prefixes\n- Added API_KEY_LEGACY_PREFIX constant in core/lightfast/src/constants.ts\n- Updated validation in core/mcp/src/index.ts to match SDK behavior\n- Updated packages/console-validation/src/index.ts to support both formats\n- Added migration guide: docs/sdk-api-key-migration.md\n- Added test coverage for both legacy and new key formats\n\n## Testing\n- [x] Legacy keys (sk_*) authenticate successfully\n- [x] New keys (sk-lf-*) authenticate successfully\n- [x] Invalid formats still rejected\n- [x] MCP validation matches SDK behavior\n- [x] All existing tests pass\n- [x] New tests added for both key formats\n\n## Migration Strategy\n- Legacy `sk_` keys: Fully supported, no action required by users\n- New `sk-lf-` keys: Recommended for all new API key generation\n- Deprecation: Plan to sunset `sk_` prefix in v1.0.0 (estimated Q3 2026)\n\n## Related Issues\n- Fixes #370\n- Fixes LF-435\n- Resolves Sentry SDK-892 (247 auth errors from 42 users)\n\n## Customer Impact\n- Restores service for all blocked SDK users immediately upon merge\n- No breaking changes for existing integrations\n- Clear migration path for future key format changes",
+          "created_at": "2026-02-09T17:00:00Z",
+          "updated_at": "2026-02-09T17:30:00Z",
+          "closed_at": "2026-02-09T17:30:00Z",
+          "merged_at": "2026-02-09T17:30:00Z",
+          "merge_commit_sha": "f7c6b5a94d3e2f81",
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
+            { "id": 104, "node_id": "L_104", "name": "sdk", "color": "0366d6", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "critical", "color": "ff0000", "default": false },
+            { "id": 103, "node_id": "L_103", "name": "hotfix", "color": "ff0000", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 2,
+          "additions": 127,
+          "deletions": 18,
+          "changed_files": 6,
+          "head": {
+            "label": "lightfastai:fix/sdk-api-key-validation",
+            "ref": "fix/sdk-api-key-validation",
+            "sha": "b9f0ec77",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T17:30:00Z",
+              "pushed_at": "2026-02-09T17:30:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 11,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "077a17c4",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-09T17:30:00Z",
+              "pushed_at": "2026-02-09T17:30:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 11,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/370",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/370.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/370.patch",
+          "merged": true,
+          "mergeable": null,
+          "rebaseable": null,
+          "mergeable_state": "unknown",
+          "merged_by": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "comments": 6,
+          "review_comments": 8,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T17:30:00Z",
+          "pushed_at": "2026-02-09T17:30:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 11,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "077a17c4",
+        "after": "f7c6b5a94d3e2f81",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/077a17c4...f7c6b5a94d3e2f81",
+        "commits": [
+          {
+            "id": "0e79fc35",
+            "tree_id": "tree370_sdk_fix",
+            "distinct": true,
+            "message": "fix(sdk): accept both sk_ and sk-lf- API key prefixes",
+            "timestamp": "2026-02-09T16:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/0e79fc35",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "core/lightfast/src/client.ts",
+              "core/lightfast/src/constants.ts",
+              "packages/console-validation/src/index.ts"
+            ]
+          },
+          {
+            "id": "b9f0ec77",
+            "tree_id": "tree370_mcp_fix",
+            "distinct": true,
+            "message": "fix(mcp): update MCP validation to match SDK key format changes",
+            "timestamp": "2026-02-09T16:30:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/b9f0ec77",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [
+              "docs/sdk-api-key-migration.md"
+            ],
+            "removed": [],
+            "modified": [
+              "core/mcp/src/index.ts",
+              "packages/console-validation/src/primitives/env.ts"
+            ]
+          },
+          {
+            "id": "f7c6b5a94d3e2f81",
+            "tree_id": "tree370_merge",
+            "distinct": true,
+            "message": "Merge pull request #370 from lightfastai/fix/sdk-api-key-validation\n\nfix(sdk): support legacy and new API key formats for backward compatibility",
+            "timestamp": "2026-02-09T17:35:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/f7c6b5a94d3e2f81",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "username": "web-flow"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "core/lightfast/src/client.ts",
+              "core/lightfast/src/constants.ts",
+              "core/mcp/src/index.ts",
+              "packages/console-validation/src/index.ts",
+              "packages/console-validation/src/primitives/env.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "f7c6b5a94d3e2f81",
+          "tree_id": "tree370_merge",
+          "distinct": true,
+          "message": "Merge pull request #370 from lightfastai/fix/sdk-api-key-validation\n\nfix(sdk): support legacy and new API key formats for backward compatibility",
+          "timestamp": "2026-02-09T17:35:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/f7c6b5a94d3e2f81",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "GitHub",
+            "email": "noreply@github.com",
+            "username": "web-flow"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "core/lightfast/src/client.ts",
+            "core/lightfast/src/constants.ts",
+            "core/mcp/src/index.ts",
+            "packages/console-validation/src/index.ts",
+            "packages/console-validation/src/primitives/env.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T17:35:00Z",
+          "pushed_at": "2026-02-09T17:35:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 11,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_sdk_fix_npm_001",
+        "type": "deployment.succeeded",
+        "createdAt": 1770658800000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_sdk_fix_370_npm",
+            "name": "lightfast-sdk-npm",
+            "url": "npm.lightfast.ai/sdk",
+            "readyState": "READY",
+            "meta": {
+              "githubCommitSha": "f7c6b5a94d3e2f81",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #370 from lightfastai/fix/sdk-api-key-validation",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "370",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "npmVersion": "0.0.3-alpha.3"
+            }
+          },
+          "project": { "id": "prj_lightfast_sdk", "name": "lightfast-sdk" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_mcp_fix_npm_001",
+        "type": "deployment.succeeded",
+        "createdAt": 1770658840000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_mcp_fix_370_npm",
+            "name": "lightfast-mcp-npm",
+            "url": "npm.lightfast.ai/mcp",
+            "readyState": "READY",
+            "meta": {
+              "githubCommitSha": "f7c6b5a94d3e2f81",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #370 from lightfastai/fix/sdk-api-key-validation",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "370",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "npmVersion": "0.0.3-alpha.3"
+            }
+          },
+          "project": { "id": "prj_lightfast_mcp", "name": "lightfast-mcp" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Comment",
+      "payload": {
+        "action": "create",
+        "type": "Comment",
+        "createdAt": "2026-02-09T18:00:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1770660000000,
+        "data": {
+          "id": "comment_lf_435_002",
+          "body": "Great news - just deployed SDK alpha.3 and MCP alpha.3 to NPM with the API key format fix. All my test requests with legacy `sk_` keys are now authenticating successfully!\n\nConfirmed working:\n- Legacy keys (sk_*): ✓ Authenticating\n- New keys (sk-lf-*): ✓ Authenticating\n- Invalid formats: ✓ Still rejected as expected\n\nThe SDK is no longer throwing `AuthenticationError: Invalid API key format` errors. This should unblock all 42+ affected users once they upgrade to 0.0.3-alpha.3.",
+          "createdAt": "2026-02-09T18:00:00Z",
+          "updatedAt": "2026-02-09T18:00:00Z",
+          "url": "https://linear.app/lightfastai/issue/LF-435#comment-comment_lf_435_002",
+          "reactionData": [],
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "issue": {
+            "id": "issue_lf_435",
+            "identifier": "LF-435",
+            "title": "P0: SDK API key validation broken - blocking all SDK users",
+            "url": "https://linear.app/lightfastai/issue/LF-435"
+          }
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "update",
+        "type": "Issue",
+        "createdAt": "2026-02-09T18:15:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1770660900000,
+        "data": {
+          "id": "issue_lf_435",
+          "identifier": "LF-435",
+          "title": "P0: SDK API key validation broken - blocking all SDK users",
+          "description": "## Incident\nSDK authentication completely broken for all users. Validation logic checking wrong API key prefix.\n\n## Sentry Reference\n- Issue: SDK-892\n- 247 errors from 42 users (5 minutes after alert)\n- Duration: 14:00 - 18:00 UTC (~4 hours)\n\n## Resolution\nFixed in PR #370 by updating validateApiKeyFormat() to accept BOTH legacy (sk_) and new (sk-lf-) prefixes.\n- Commits: 0e79fc35 (SDK), b9f0ec77 (MCP)\n- PR merged at 17:30 UTC\n- NPM packages deployed: SDK alpha.3, MCP alpha.3 at 17:40 UTC\n- User testing confirmed fix works at 18:00 UTC\n\n## Status: Resolved\nSDK authentication is now fully functional for all users.",
+          "priority": 0,
+          "priorityLabel": "Urgent",
+          "estimate": 2,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "startedAt": "2026-02-09T15:15:00Z",
+          "completedAt": "2026-02-09T18:15:00Z",
+          "createdAt": "2026-02-09T14:30:00Z",
+          "updatedAt": "2026-02-09T18:15:00Z",
+          "number": 435,
+          "url": "https://linear.app/lightfastai/issue/LF-435",
+          "branchName": "fix/sdk-api-key-validation",
+          "customerTicketCount": 8,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_sdk",
+            "key": "LF",
+            "name": "SDK"
+          },
+          "state": {
+            "id": "state_done",
+            "name": "Done",
+            "color": "#5e6ad2",
+            "type": "completed"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_sdk_v1",
+            "name": "SDK v1",
+            "url": "https://linear.app/lightfastai/project/sdk-v1"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_p0", "name": "P0", "color": "#ff0000" },
+            { "id": "label_sdk", "name": "SDK", "color": "#0366d6" },
+            { "id": "label_blocking", "name": "Blocking", "color": "#ff6b6b" }
+          ],
+          "attachments": {
+            "nodes": [
+              {
+                "id": "attachment_gh_pr_370",
+                "title": "PR #370: fix(sdk): support legacy and new API key formats",
+                "url": "https://github.com/lightfastai/lightfast/pull/370",
+                "source": "github",
+                "sourceType": "githubPr",
+                "metadata": { "state": "merged", "number": 370 }
+              },
+              {
+                "id": "attachment_sentry_sdk_892",
+                "title": "SDK-892: AuthenticationError - Invalid API key format",
+                "url": "https://sentry.io/organizations/lightfastai/issues/5089234120/",
+                "source": "sentry",
+                "sourceType": "sentryIssue",
+                "metadata": { "shortId": "SDK-892" }
+              }
+            ]
+          },
+          "subscriberIds": ["user_jeevan_linear"]
+        },
+        "updatedFrom": {
+          "stateId": "state_in_progress",
+          "completedAt": null
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "issues",
+      "payload": {
+        "action": "closed",
+        "issue": {
+          "id": 987462001,
+          "node_id": "I_kwDO_lightfast_462",
+          "number": 370,
+          "title": "SDK authentication failing: API key validation checking wrong prefix (sk_ vs sk-lf-)",
+          "user": {
+            "login": "sdk_user_001",
+            "id": 8765432,
+            "node_id": "U_sdk_user_001",
+            "avatar_url": "https://avatars.githubusercontent.com/u/8765432",
+            "type": "User",
+            "site_admin": false
+          },
+          "labels": [
+            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
+            { "id": 104, "node_id": "L_104", "name": "sdk", "color": "0366d6", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "critical", "color": "ff0000", "default": false }
+          ],
+          "state": "closed",
+          "locked": false,
+          "assignee": null,
+          "assignees": [],
+          "milestone": null,
+          "comments": 12,
+          "created_at": "2026-02-09T14:15:00Z",
+          "updated_at": "2026-02-09T18:20:00Z",
+          "closed_at": "2026-02-09T18:20:00Z",
+          "author_association": "NONE",
+          "active_lock_reason": null,
+          "body": "## Problem\nAll SDK authentication requests are failing with `AuthenticationError: Invalid API key format`. The validator is expecting `sk-lf-` prefix but our keys use `sk_` prefix.\n\n## Error (from Sentry SDK-892)\n```\nAuthenticationError: Invalid API key format. Expected 'sk-lf-' prefix but received 'sk_'\n    at validateApiKeyFormat (client.ts:156)\n    at Client.constructor (client.ts:42)\n```\n\n## Reproduction\n```javascript\nconst client = new Lightfast({ apiKey: 'sk_my-key-12345' });\n// Throws: AuthenticationError: Invalid API key format\n```\n\n## Impact\n- **CRITICAL**: All SDK users unable to authenticate\n- 247 errors from 42 users in 5 minutes\n- Blocks all SDK integration attempts\n- Sentry SDK-892 issue is P0\n\n## Expected Behavior\nThe SDK should accept API keys with `sk_` prefix (current format used by all existing API keys).\n\n## Related\n- Sentry Issue: SDK-892\n- Linear: LF-435\n\n## Resolution\nFixed in PR #370 - SDK alpha.3 and MCP alpha.3 deployed to NPM at 17:40 UTC. All affected users can now authenticate with legacy `sk_` keys.",
+          "reactions": {
+            "url": "https://api.github.com/repos/lightfastai/lightfast/issues/370/reactions",
+            "total_count": 12,
+            "+1": 12, "-1": 0, "laugh": 0, "hooray": 2, "confused": 0, "heart": 0, "rocket": 3, "eyes": 0
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/issues/370",
+          "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/370/timeline",
+          "state_reason": "completed"
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-09T18:20:00Z",
+          "pushed_at": "2026-02-09T17:35:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 10,
+          "default_branch": "main",
+          "topics": ["ai", "agents", "mcp", "neural-memory", "typescript"],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "sdk_user_001",
+          "id": 8765432,
+          "node_id": "U_sdk_user_001",
+          "avatar_url": "https://avatars.githubusercontent.com/u/8765432",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "issue.resolved",
+      "payload": {
+        "action": "resolved",
+        "data": {
+          "issue": {
+            "id": "5089234120",
+            "shortId": "SDK-892",
+            "title": "AuthenticationError: Invalid API key format. Expected 'sk-lf-' prefix but received 'sk_'",
+            "culprit": "validateApiKeyFormat (client.ts)",
+            "status": "resolved",
+            "level": "error",
+            "platform": "node",
+            "firstSeen": "2026-02-09T14:00:00Z",
+            "lastSeen": "2026-02-09T18:25:00Z",
+            "count": 247,
+            "userCount": 42,
+            "permalink": "https://sentry.io/organizations/lightfastai/issues/5089234120/",
+            "metadata": {
+              "type": "AuthenticationError",
+              "value": "Invalid API key format. Expected 'sk-lf-' prefix but received 'sk_'",
+              "filename": "core/lightfast/src/client.ts",
+              "function": "validateApiKeyFormat"
+            },
+            "project": {
+              "id": "9012345",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
+            "assignedTo": {
+              "id": "user_jeevan_sentry",
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai"
+            },
+            "statusDetails": {
+              "inCommit": {
+                "repository": "lightfastai/lightfast",
+                "commit": "f7c6b5a94d3e2f81"
+              }
+            },
+            "logger": "node",
+            "type": "error",
+            "annotations": [],
+            "isPublic": false,
+            "isBookmarked": false,
+            "isSubscribed": true,
+            "hasSeen": true,
+            "numComments": 2
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        },
+        "actor": {
+          "type": "user",
+          "id": "user_jeevan_sentry",
+          "name": "Jeevan Pillay",
+          "email": "jp@lightfast.ai"
+        }
+      }
+    }
+  ]
+}

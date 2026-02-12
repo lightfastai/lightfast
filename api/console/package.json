@@ -3,6 +3,7 @@
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
+	"sideEffects": false,
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
@@ -41,6 +42,7 @@
 		"@inngest/middleware-sentry": "catalog:",
 		"@repo/console-api-key": "workspace:*",
 		"@repo/console-auth-middleware": "workspace:^",
+		"@repo/console-backfill": "workspace:*",
 		"@repo/console-chunking": "workspace:*",
 		"@repo/console-clerk-cache": "workspace:*",
 		"@repo/console-clerk-m2m": "workspace:*",
@@ -62,6 +64,7 @@
 		"@trpc/tanstack-react-query": "catalog:",
 		"@vendor/clerk": "workspace:*",
 		"@vendor/inngest": "workspace:*",
+		"@vendor/knock": "workspace:*",
 		"@vendor/observability": "workspace:*",
 		"@vendor/pinecone": "workspace:*",
 		"ai": "catalog:",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -43,7 +43,7 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
 
   // Extract org slug from pathname (e.g., /someteam/... -> someteam)
   // Use URL as source of truth instead of Clerk's useOrganization() to avoid race conditions
-  const currentOrgSlug = useMemo(() => {
+  const currentOrgSlug = (() => {
     if (mode === "account") return null;
     const pathParts = pathname.split("/").filter(Boolean);
     // First path part is the org slug (unless it's a reserved route like /new, /account, /api)
@@ -52,13 +52,10 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
       return pathParts[0];
     }
     return null;
-  }, [pathname, mode]);
+  })();
 
   // Find current organization by slug from URL
-  const currentOrg = useMemo(() => {
-    if (!currentOrgSlug) return null;
-    return organizations.find((org) => org.slug === currentOrgSlug);
-  }, [currentOrgSlug, organizations]);
+  const currentOrg = !currentOrgSlug ? null : organizations.find((org) => org.slug === currentOrgSlug);
 
   // Get initials for avatar
   const getInitials = (name: string) => {

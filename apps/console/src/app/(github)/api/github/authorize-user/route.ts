@@ -58,5 +58,13 @@ export function GET(request: NextRequest) {
 
 	response.cookies.set("github_oauth_state", encoded, cookieOptions);
 
+	// DEBUG: Log cookie being set
+	console.log("[GitHub OAuth] Setting cookie", {
+		baseUrl,
+		redirectUri,
+		cookieOptions,
+		githubAuthUrl,
+	});
+
 	return response;
 }

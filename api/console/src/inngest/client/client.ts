@@ -8,6 +8,7 @@ import {
   syncTriggerSchema,
   githubSourceMetadataSchema,
   sourceTypeSchema,
+  ingestionSourceSchema,
 } from "@repo/console-validation";
 
 /**
@@ -616,6 +617,8 @@ const eventsMap = {
         })),
         metadata: z.record(z.unknown()),
       }),
+      /** How this event was ingested (webhook, backfill, manual, api). Defaults to "webhook" in the consumer. */
+      ingestionSource: ingestionSourceSchema.optional(),
     }),
   },
 
@@ -701,6 +704,100 @@ const eventsMap = {
       clerkOrgId: z.string().optional(),
       /** Observation to extract entities from */
       observationId: z.string(),
+    }),
+  },
+
+  // ============================================================================
+  // BACKFILL EVENTS
+  // ============================================================================
+
+  /**
+   * Backfill requested event
+   * Triggers the backfill orchestrator to import historical data
+   */
+  "apps-console/backfill.requested": {
+    data: z.object({
+      /** Integration record ID */
+      integrationId: z.string(),
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Clerk organization ID */
+      clerkOrgId: z.string(),
+      /** Source provider type */
+      provider: sourceTypeSchema,
+      /** User source connection ID */
+      userSourceId: z.string(),
+      /** Number of days to backfill */
+      depth: z.number(),
+      /** Entity types to backfill */
+      entityTypes: z.array(z.string()),
+      /** Who requested the backfill */
+      requestedBy: z.string(),
+    }),
+  },
+
+  /**
+   * Backfill completed event
+   * Emitted when a backfill run finishes (success or failure)
+   */
+  "apps-console/backfill.completed": {
+    data: z.object({
+      /** Integration record ID */
+      integrationId: z.string(),
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Source provider type */
+      provider: sourceTypeSchema,
+      /** Whether backfill succeeded */
+      success: z.boolean(),
+      /** Total events produced */
+      eventsProduced: z.number(),
+      /** Total events dispatched to observation pipeline */
+      eventsDispatched: z.number(),
+      /** Number of errors encountered */
+      errorCount: z.number(),
+      /** Total duration in milliseconds */
+      durationMs: z.number(),
+      /** Error message if failed */
+      error: z.string().optional(),
+    }),
+  },
+
+  /**
+   * Backfill cancelled event
+   * Used to cancel an in-progress backfill via Inngest cancelOn
+   */
+  "apps-console/backfill.cancelled": {
+    data: z.object({
+      /** Integration record ID (matched by cancelOn) */
+      integrationId: z.string(),
+      /** Who cancelled the backfill */
+      cancelledBy: z.string(),
+    }),
+  },
+
+  // ============================================================================
+  // NOTIFICATION EVENTS
+  // ============================================================================
+
+  /**
+   * Notification dispatch event
+   * Triggers Knock notification workflow for user-facing events
+   */
+  "apps-console/notification.dispatch": {
+    data: z.object({
+      /** Workspace DB UUID */
+      workspaceId: z.string(),
+      /** Clerk organization ID */
+      clerkOrgId: z.string().optional(),
+      /** Knock workflow key */
+      workflowKey: z.string(),
+      /** Recipients (Clerk user IDs) */
+      recipients: z.array(z.string()),
+      /** Tenant ID for workspace scoping */
+      tenant: z.string().optional(),
+      /** Notification data payload */
+      payload: z.record(z.unknown()),
     }),
   },
 

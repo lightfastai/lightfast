@@ -83,3 +83,29 @@ export interface DeleteRequest {
   /** Whether to delete all vectors in namespace */
   deleteAll?: boolean;
 }
+
+/**
+ * A single fetched vector record
+ */
+export interface FetchedRecord<T extends RecordMetadata = RecordMetadata> {
+  id: string;
+  values: number[];
+  metadata?: T;
+}
+
+/**
+ * Response from fetching vectors by ID
+ */
+export interface FetchResponse<T extends RecordMetadata = RecordMetadata> {
+  records: Record<string, FetchedRecord<T>>;
+}
+
+/**
+ * Request to update a vector's metadata
+ */
+export interface UpdateRequest<T extends RecordMetadata = RecordMetadata> {
+  /** Vector ID to update */
+  id: string;
+  /** New metadata (partial merge) */
+  metadata: Partial<T>;
+}

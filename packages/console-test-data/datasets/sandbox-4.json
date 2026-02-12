@@ -1,0 +1,1472 @@
+{
+  "$schema": "./webhook-schema.json",
+  "name": "sandbox-4",
+  "description": "Production bugs: 6 interconnected search form control bugs including race conditions, URL history pollution, and broken number inputs (Feb 8, 2026).",
+  "webhooks": [
+    {
+      "source": "sentry",
+      "eventType": "error",
+      "payload": {
+        "action": "created",
+        "data": {
+          "event": {
+            "event_id": "evt_search_001:test:",
+            "project": 9012345,
+            "timestamp": "2026-02-08T14:00:00Z",
+            "received": "2026-02-08T14:00:01Z",
+            "platform": "browser",
+            "message": "RangeError: Invalid array length - NaN passed to result filter in search form",
+            "title": "RangeError: Invalid array length",
+            "location": "apps/console/src/components/search-form.tsx",
+            "culprit": "handleFilterChange",
+            "type": "error",
+            "metadata": {
+              "type": "RangeError",
+              "value": "Invalid array length",
+              "filename": "apps/console/src/components/search-form.tsx",
+              "function": "handleFilterChange"
+            },
+            "tags": [
+              { "key": "environment", "value": "production" },
+              { "key": "workspace_id", "value": "ws_demo_001" },
+              { "key": "component", "value": "search-form" },
+              { "key": "browser", "value": "Chrome" }
+            ],
+            "user": {
+              "id": "ws_demo_001",
+              "username": "demo-workspace"
+            },
+            "sdk": {
+              "name": "sentry.javascript.browser",
+              "version": "8.42.0"
+            },
+            "exception": {
+              "values": [
+                {
+                  "type": "RangeError",
+                  "value": "Invalid array length",
+                  "stacktrace": {
+                    "frames": [
+                      {
+                        "filename": "apps/console/src/components/search-form.tsx",
+                        "function": "handleFilterChange",
+                        "lineno": 87,
+                        "colno": 22,
+                        "context_line": "    const results = Array(filterCount).fill(null);"
+                      },
+                      {
+                        "filename": "apps/console/src/hooks/useSearchFilters.ts",
+                        "function": "parseNumberInput",
+                        "lineno": 45,
+                        "colno": 18,
+                        "context_line": "    return parseInt(value) ?? NaN;"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "web_url": "https://sentry.io/organizations/lightfastai/issues/5023561001/events/evt_search_001/",
+            "issue_url": "https://sentry.io/api/0/issues/5023561001/"
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "issue.created",
+      "payload": {
+        "action": "created",
+        "data": {
+          "issue": {
+            "id": "5023561001",
+            "shortId": "SEARCH-742",
+            "title": "RangeError: Invalid array length in search form control",
+            "culprit": "handleFilterChange (search-form.tsx)",
+            "status": "unresolved",
+            "level": "error",
+            "platform": "browser",
+            "firstSeen": "2026-02-08T14:00:00Z",
+            "lastSeen": "2026-02-08T14:15:00Z",
+            "count": 42,
+            "userCount": 8,
+            "permalink": "https://sentry.io/organizations/lightfastai/issues/5023561001/",
+            "metadata": {
+              "type": "RangeError",
+              "value": "Invalid array length",
+              "filename": "apps/console/src/components/search-form.tsx",
+              "function": "handleFilterChange"
+            },
+            "project": {
+              "id": "9012345",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
+            "assignedTo": null,
+            "logger": "javascript",
+            "type": "error",
+            "annotations": [],
+            "isPublic": false,
+            "isBookmarked": false,
+            "isSubscribed": true,
+            "hasSeen": false,
+            "numComments": 0
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        },
+        "actor": {
+          "type": "application",
+          "id": "sentry",
+          "name": "Sentry"
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-08T14:30:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739015400000,
+        "data": {
+          "id": "issue_lf_420",
+          "identifier": "LF-420",
+          "title": "Bug: Number inputs breaking with NaN values",
+          "description": "## Issue\nNumber input fields in search form are receiving NaN and causing Invalid array length errors.\n\n## Sentry Reference\n- Issue: SEARCH-742\n- 42 errors, 8 users affected\n- First seen: 14:00 UTC\n\n## Root Cause\n`useSearchFilters` hook's `parseNumberInput()` returns NaN when value is empty, not caught before Array constructor.\n\n## Impact\n- Search form crashes when user clears number filter\n- Affects range filters, counts, numeric parameters\n\n## Fix Required\n- Add NaN check before Array(count) calls\n- Return 0 or undefined instead of NaN\n- Add unit tests for edge cases",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 2,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-08T14:30:00Z",
+          "updatedAt": "2026-02-08T14:30:00Z",
+          "number": 420,
+          "url": "https://linear.app/lightfastai/issue/LF-420",
+          "branchName": "fix/search-number-inputs",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_console_ui",
+            "name": "Console UI v2",
+            "url": "https://linear.app/lightfastai/project/console-ui-v2"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_p1", "name": "P1", "color": "#e11d48" },
+            { "id": "label_search", "name": "Search", "color": "#0366d6" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-08T14:32:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739015520000,
+        "data": {
+          "id": "issue_lf_421",
+          "identifier": "LF-421",
+          "title": "Bug: Race condition in search query debounce",
+          "description": "## Issue\nMultiple simultaneous search queries can execute out of order when user rapidly types, causing inconsistent results.\n\n## Sentry Reference\n- Issue: SEARCH-742\n- Related to form control timing\n\n## Root Cause\nDebounce not tracking request sequence number - older requests can resolve after newer ones.\n\n## Impact\n- User sees outdated search results after typing\n- Results don't match the query shown in input\n- Confusing UX when query is fast-changing\n\n## Fix Required\n- Add sequence tracking to debounced queries\n- Discard results from older sequence numbers\n- Add request ID to abort controller",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 3,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-08T14:32:00Z",
+          "updatedAt": "2026-02-08T14:32:00Z",
+          "number": 421,
+          "url": "https://linear.app/lightfastai/issue/LF-421",
+          "branchName": "fix/search-race-condition",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_console_ui",
+            "name": "Console UI v2",
+            "url": "https://linear.app/lightfastai/project/console-ui-v2"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_p1", "name": "P1", "color": "#e11d48" },
+            { "id": "label_search", "name": "Search", "color": "#0366d6" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-08T14:34:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739015640000,
+        "data": {
+          "id": "issue_lf_422",
+          "identifier": "LF-422",
+          "title": "Bug: Void operators bypassing filter validation",
+          "description": "## Issue\nOptional chaining and nullish coalescing operators allowing invalid filter states to persist.\n\n## Sentry Reference\n- Issue: SEARCH-742\n- Related to form state validation\n\n## Root Cause\nFilter validation uses `filter?.value ?? 0` without type checking - allows invalid types through.\n\n## Impact\n- Filters applied with wrong types (string instead of number)\n- Query parsing fails silently\n- Search results inconsistent with filter UI state\n\n## Fix Required\n- Strengthen type validation in filter parsing\n- Add type guards before void operators\n- Validate filter state shape before use",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 2,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-08T14:34:00Z",
+          "updatedAt": "2026-02-08T14:34:00Z",
+          "number": 422,
+          "url": "https://linear.app/lightfastai/issue/LF-422",
+          "branchName": "fix/search-filter-validation",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_console_ui",
+            "name": "Console UI v2",
+            "url": "https://linear.app/lightfastai/project/console-ui-v2"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_p1", "name": "P1", "color": "#e11d48" },
+            { "id": "label_search", "name": "Search", "color": "#0366d6" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-08T14:36:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739015760000,
+        "data": {
+          "id": "issue_lf_423",
+          "identifier": "LF-423",
+          "title": "Bug: URL history pollution from duplicate search state",
+          "description": "## Issue\nEvery filter change is pushing to browser history, creating duplicate entries and polluting back button behavior.\n\n## Sentry Reference\n- Issue: SEARCH-742\n- Related to form state synchronization\n\n## Root Cause\n`handleFilterChange` calls `router.push()` for every keystroke, not using replaceState for rapid changes.\n\n## Impact\n- Browser back button creates 20+ history entries per search\n- Users forced to click back many times to exit search\n- History stack grows unbounded\n\n## Fix Required\n- Use replaceState for sequential updates within debounce window\n- Only push new history entry after final query submitted\n- Clear intermediate history states",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 2,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-08T14:36:00Z",
+          "updatedAt": "2026-02-08T14:36:00Z",
+          "number": 423,
+          "url": "https://linear.app/lightfastai/issue/LF-423",
+          "branchName": "fix/search-history-pollution",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_console_ui",
+            "name": "Console UI v2",
+            "url": "https://linear.app/lightfastai/project/console-ui-v2"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_p1", "name": "P1", "color": "#e11d48" },
+            { "id": "label_search", "name": "Search", "color": "#0366d6" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-08T14:38:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739015880000,
+        "data": {
+          "id": "issue_lf_424",
+          "identifier": "LF-424",
+          "title": "Bug: Client-side filter state out of sync with server",
+          "description": "## Issue\nLocal filter state not synchronized with URL and server state, causing data inconsistencies.\n\n## Sentry Reference\n- Issue: SEARCH-742\n- Related to form synchronization\n\n## Root Cause\nMultiple state sources (React state, URL params, server cache) not reconciled on mount/update.\n\n## Impact\n- Filters applied locally not reflected in actual search\n- Refreshing page resets filters even though URL has them\n- Server returns wrong results for applied filters\n\n## Fix Required\n- Normalize filter state on component mount from URL\n- Sync React state with URL params bidirectionally\n- Add validation of URL params before using them",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 3,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-08T14:38:00Z",
+          "updatedAt": "2026-02-08T14:38:00Z",
+          "number": 424,
+          "url": "https://linear.app/lightfastai/issue/LF-424",
+          "branchName": "fix/search-state-sync",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_console_ui",
+            "name": "Console UI v2",
+            "url": "https://linear.app/lightfastai/project/console-ui-v2"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_p1", "name": "P1", "color": "#e11d48" },
+            { "id": "label_search", "name": "Search", "color": "#0366d6" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-08T14:40:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739016000000,
+        "data": {
+          "id": "issue_lf_425",
+          "identifier": "LF-425",
+          "title": "Bug: Missing Sentry/Linear resource IDs in error reporting",
+          "description": "## Issue\nSentry error reports missing resource IDs (workspace_id, query_id) making it hard to trace which user/query triggered the bug.\n\n## Sentry Reference\n- Issue: SEARCH-742\n- Error events missing context for correlation\n\n## Root Cause\nResource tags not extracted from React context before error is thrown.\n\n## Impact\n- Can't correlate errors to specific workspaces\n- Difficult to debug user-specific search issues\n- Linear issues can't link back to specific Sentry events\n\n## Fix Required\n- Extract resource IDs from app context before using them\n- Add as tags to Sentry error context\n- Pass IDs to error boundary for logging",
+          "priority": 2,
+          "priorityLabel": "High",
+          "estimate": 1,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-08T14:40:00Z",
+          "updatedAt": "2026-02-08T14:40:00Z",
+          "number": 425,
+          "url": "https://linear.app/lightfastai/issue/LF-425",
+          "branchName": "fix/search-sentry-context",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_console_ui",
+            "name": "Console UI v2",
+            "url": "https://linear.app/lightfastai/project/console-ui-v2"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_search", "name": "Search", "color": "#0366d6" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "issues",
+      "payload": {
+        "action": "opened",
+        "issue": {
+          "id": 987362001,
+          "node_id": "I_kwDO_lightfast_355",
+          "number": 355,
+          "title": "6 interconnected search form control bugs causing production outages",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "labels": [
+            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
+            { "id": 104, "node_id": "L_104", "name": "search", "color": "0366d6", "default": false }
+          ],
+          "state": "open",
+          "locked": false,
+          "assignee": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "assignees": [
+            {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            }
+          ],
+          "milestone": null,
+          "comments": 0,
+          "created_at": "2026-02-08T14:45:00Z",
+          "updated_at": "2026-02-08T14:45:00Z",
+          "closed_at": null,
+          "author_association": "OWNER",
+          "active_lock_reason": null,
+          "body": "## Summary\nSentry SEARCH-742 detected 6 interconnected bugs in the search form control affecting number inputs, debouncing, filter state, and URL history.\n\n## Affected Components\n- `apps/console/src/components/search-form.tsx`\n- `apps/console/src/hooks/useSearchFilters.ts`\n- `apps/console/src/lib/search-state.ts`\n\n## Issues\n1. **LF-420**: Number inputs break with NaN values\n2. **LF-421**: Race condition in debounce timing\n3. **LF-422**: Void operators bypassing validation\n4. **LF-423**: URL history pollution from duplicate state\n5. **LF-424**: Client-side filter sync out of sync with server\n6. **LF-425**: Missing Sentry resource IDs\n\n## Impact\n- 42 errors from 8 users in first 15 minutes\n- Search form crashes when clearing filters\n- Inconsistent results when typing quickly\n- Browser back button unusable\n\n## Sentry\n- SEARCH-742 (RangeError: Invalid array length)",
+          "reactions": {
+            "url": "https://api.github.com/repos/lightfastai/lightfast/issues/355/reactions",
+            "total_count": 0,
+            "+1": 0, "-1": 0, "laugh": 0, "hooray": 0, "confused": 0, "heart": 0, "rocket": 0, "eyes": 0
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/issues/355",
+          "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/355/timeline",
+          "state_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-08T00:00:00Z",
+          "pushed_at": "2026-02-08T00:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 10,
+          "default_branch": "main",
+          "topics": ["ai", "agents", "mcp", "neural-memory", "typescript"],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "opened",
+        "number": 356,
+        "pull_request": {
+          "id": 3363000001,
+          "node_id": "PR_kwDO_lightfast_356",
+          "number": 356,
+          "state": "open",
+          "locked": false,
+          "title": "fix(console): resolve 6 search form control bugs",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nFixes 6 interconnected search form control bugs: NaN handling, race conditions, filter validation, URL history, state synchronization, and error reporting.\n\n## Changes\n1. **Number input handling**: Added NaN check in parseNumberInput, return 0 instead of NaN\n2. **Race condition fix**: Added sequence tracking to debounced queries with abort controller\n3. **Filter validation**: Added type guards before void operators, strengthen validation\n4. **URL history**: Use replaceState for intermediate updates, only push on final submit\n5. **State sync**: Normalize filter state from URL on mount, bidirectional sync\n6. **Sentry context**: Extract resource IDs from context before using, add as tags\n\n## Testing\n- [x] Number inputs no longer crash with cleared values\n- [x] Rapid typing shows consistent results\n- [x] Back button works normally without duplicate history\n- [x] Filters persist across page refreshes\n- [x] Error reports include workspace/query IDs\n\n## Related Issues\n- Fixes #355\n- Fixes LF-420\n- Fixes LF-421\n- Fixes LF-422\n- Fixes LF-423\n- Fixes LF-424\n- Fixes LF-425\n- Resolves Sentry SEARCH-742",
+          "created_at": "2026-02-08T18:00:00Z",
+          "updated_at": "2026-02-08T18:00:00Z",
+          "closed_at": null,
+          "merged_at": null,
+          "merge_commit_sha": null,
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
+            { "id": 103, "node_id": "L_103", "name": "hotfix", "color": "ff0000", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 5,
+          "additions": 234,
+          "deletions": 87,
+          "changed_files": 6,
+          "head": {
+            "label": "lightfastai:fix/search-form-bugs",
+            "ref": "fix/search-form-bugs",
+            "sha": "7a914dbd",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-08T00:00:00Z",
+              "pushed_at": "2026-02-08T18:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 10,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "c9d8e7f6a5b43210",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-08T00:00:00Z",
+              "pushed_at": "2026-02-08T00:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 10,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/356",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/356.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/356.patch",
+          "merged": false,
+          "mergeable": true,
+          "rebaseable": true,
+          "mergeable_state": "clean",
+          "merged_by": null,
+          "comments": 0,
+          "review_comments": 0,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-08T00:00:00Z",
+          "pushed_at": "2026-02-08T18:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 10,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "closed",
+        "number": 356,
+        "pull_request": {
+          "id": 3363000001,
+          "node_id": "PR_kwDO_lightfast_356",
+          "number": 356,
+          "state": "closed",
+          "locked": false,
+          "title": "fix(console): resolve 6 search form control bugs",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nFixes 6 interconnected search form control bugs: NaN handling, race conditions, filter validation, URL history, state synchronization, and error reporting.\n\n## Changes\n1. **Number input handling**: Added NaN check in parseNumberInput, return 0 instead of NaN\n2. **Race condition fix**: Added sequence tracking to debounced queries with abort controller\n3. **Filter validation**: Added type guards before void operators, strengthen validation\n4. **URL history**: Use replaceState for intermediate updates, only push on final submit\n5. **State sync**: Normalize filter state from URL on mount, bidirectional sync\n6. **Sentry context**: Extract resource IDs from context before using, add as tags\n\n## Testing\n- [x] Number inputs no longer crash with cleared values\n- [x] Rapid typing shows consistent results\n- [x] Back button works normally without duplicate history\n- [x] Filters persist across page refreshes\n- [x] Error reports include workspace/query IDs\n\n## Related Issues\n- Fixes #355\n- Fixes LF-420\n- Fixes LF-421\n- Fixes LF-422\n- Fixes LF-423\n- Fixes LF-424\n- Fixes LF-425\n- Resolves Sentry SEARCH-742",
+          "created_at": "2026-02-08T18:00:00Z",
+          "updated_at": "2026-02-08T18:30:00Z",
+          "closed_at": "2026-02-08T18:30:00Z",
+          "merged_at": "2026-02-08T18:30:00Z",
+          "merge_commit_sha": "7a914dbd",
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
+            { "id": 103, "node_id": "L_103", "name": "hotfix", "color": "ff0000", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 5,
+          "additions": 234,
+          "deletions": 87,
+          "changed_files": 6,
+          "head": {
+            "label": "lightfastai:fix/search-form-bugs",
+            "ref": "fix/search-form-bugs",
+            "sha": "7a914dbd",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-08T00:00:00Z",
+              "pushed_at": "2026-02-08T18:30:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 9,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "c9d8e7f6a5b43210",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-08T00:00:00Z",
+              "pushed_at": "2026-02-08T18:30:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 9,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/356",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/356.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/356.patch",
+          "merged": true,
+          "mergeable": null,
+          "rebaseable": null,
+          "mergeable_state": "unknown",
+          "merged_by": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "comments": 2,
+          "review_comments": 3,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-08T00:00:00Z",
+          "pushed_at": "2026-02-08T18:30:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 9,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "c9d8e7f6a5b43210",
+        "after": "7a914dbd",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/c9d8e7f6a5b43210...7a914dbd",
+        "commits": [
+          {
+            "id": "7a914dbd",
+            "tree_id": "tree356_fix",
+            "distinct": true,
+            "message": "fix(console): resolve 6 search form control bugs\n\nFixes interconnected bugs in search form:\n- NaN handling in number inputs (LF-420)\n- Race condition in debounced queries (LF-421)\n- Type validation in filter state (LF-422)\n- URL history pollution (LF-423)\n- Client-server state sync (LF-424)\n- Sentry context for resource IDs (LF-425)\n\nFixes #355\nFixes LF-420\nFixes LF-421\nFixes LF-422\nFixes LF-423\nFixes LF-424\nFixes LF-425\nResolves Sentry SEARCH-742",
+            "timestamp": "2026-02-08T18:15:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/7a914dbd",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "apps/console/src/components/search-form.tsx",
+              "apps/console/src/hooks/useSearchFilters.ts",
+              "apps/console/src/lib/search-state.ts",
+              "apps/console/src/lib/sentry-context.ts",
+              "apps/console/src/types/search.ts",
+              "apps/console/__tests__/search-form.test.ts"
+            ]
+          },
+          {
+            "id": "7a914dbd",
+            "tree_id": "tree356_merge",
+            "distinct": true,
+            "message": "Merge pull request #356 from lightfastai/fix/search-form-bugs\n\nfix(console): resolve 6 search form control bugs",
+            "timestamp": "2026-02-08T18:30:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/7a914dbd",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "username": "web-flow"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "apps/console/src/components/search-form.tsx",
+              "apps/console/src/hooks/useSearchFilters.ts",
+              "apps/console/src/lib/search-state.ts",
+              "apps/console/src/lib/sentry-context.ts",
+              "apps/console/src/types/search.ts",
+              "apps/console/__tests__/search-form.test.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "7a914dbd",
+          "tree_id": "tree356_merge",
+          "distinct": true,
+          "message": "Merge pull request #356 from lightfastai/fix/search-form-bugs\n\nfix(console): resolve 6 search form control bugs",
+          "timestamp": "2026-02-08T18:30:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/7a914dbd",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "GitHub",
+            "email": "noreply@github.com",
+            "username": "web-flow"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "apps/console/src/components/search-form.tsx",
+            "apps/console/src/hooks/useSearchFilters.ts",
+            "apps/console/src/lib/search-state.ts",
+            "apps/console/src/lib/sentry-context.ts",
+            "apps/console/src/types/search.ts",
+            "apps/console/__tests__/search-form.test.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-08T00:00:00Z",
+          "pushed_at": "2026-02-08T18:35:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 9,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.created",
+      "payload": {
+        "id": "hook_search_fix_001",
+        "type": "deployment.created",
+        "createdAt": 1770576000000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_search_fix_356",
+            "name": "lightfast-console",
+            "url": "lightfast-console-search-fix-356.vercel.app",
+            "readyState": "BUILDING",
+            "meta": {
+              "githubCommitSha": "7a914dbd",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #356 from lightfastai/fix/search-form-bugs\n\nfix(console): resolve 6 search form control bugs",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "356",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_search_fix_002",
+        "type": "deployment.succeeded",
+        "createdAt": 1770576300000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_search_fix_356",
+            "name": "lightfast-console",
+            "url": "lightfast-console.vercel.app",
+            "readyState": "READY",
+            "meta": {
+              "githubCommitSha": "7a914dbd",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #356 from lightfastai/fix/search-form-bugs\n\nfix(console): resolve 6 search form control bugs",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "356",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "issue.resolved",
+      "payload": {
+        "action": "resolved",
+        "data": {
+          "issue": {
+            "id": "5023561001",
+            "shortId": "SEARCH-742",
+            "title": "RangeError: Invalid array length in search form control",
+            "culprit": "handleFilterChange (search-form.tsx)",
+            "status": "resolved",
+            "level": "error",
+            "platform": "browser",
+            "firstSeen": "2026-02-08T14:00:00Z",
+            "lastSeen": "2026-02-08T19:00:00Z",
+            "count": 107,
+            "userCount": 12,
+            "permalink": "https://sentry.io/organizations/lightfastai/issues/5023561001/",
+            "metadata": {
+              "type": "RangeError",
+              "value": "Invalid array length",
+              "filename": "apps/console/src/components/search-form.tsx",
+              "function": "handleFilterChange"
+            },
+            "project": {
+              "id": "9012345",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
+            "assignedTo": {
+              "id": "user_jeevan_sentry",
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai"
+            },
+            "statusDetails": {
+              "inCommit": {
+                "repository": "lightfastai/lightfast",
+                "commit": "7a914dbd"
+              }
+            },
+            "logger": "javascript",
+            "type": "error",
+            "annotations": [],
+            "isPublic": false,
+            "isBookmarked": false,
+            "isSubscribed": true,
+            "hasSeen": true,
+            "numComments": 0
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        },
+        "actor": {
+          "type": "user",
+          "id": "user_jeevan_sentry",
+          "name": "Jeevan Pillay",
+          "email": "jp@lightfast.ai"
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "update",
+        "type": "Issue",
+        "createdAt": "2026-02-08T19:00:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739045400000,
+        "data": {
+          "id": "issue_lf_420",
+          "identifier": "LF-420",
+          "title": "Bug: Number inputs breaking with NaN values",
+          "description": "## Issue\nNumber input fields in search form are receiving NaN and causing Invalid array length errors.\n\n## Sentry Reference\n- Issue: SEARCH-742\n- 107 total errors, 12 users affected\n- Duration: 14:00 - 18:15 UTC (~4 hours)\n\n## Resolution\n- Root cause: parseNumberInput returning NaN instead of safe default\n- Fix: Added NaN check, return 0 instead of NaN\n- PR #356 merged and deployed at 18:30 UTC\n- Sentry SEARCH-742 resolved via commit 7a914dbd",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 2,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "startedAt": "2026-02-08T14:30:00Z",
+          "completedAt": "2026-02-08T19:00:00Z",
+          "createdAt": "2026-02-08T14:30:00Z",
+          "updatedAt": "2026-02-08T19:00:00Z",
+          "number": 420,
+          "url": "https://linear.app/lightfastai/issue/LF-420",
+          "branchName": "fix/search-number-inputs",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_done",
+            "name": "Done",
+            "color": "#5e6ad2",
+            "type": "completed"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_console_ui",
+            "name": "Console UI v2",
+            "url": "https://linear.app/lightfastai/project/console-ui-v2"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_p1", "name": "P1", "color": "#e11d48" },
+            { "id": "label_search", "name": "Search", "color": "#0366d6" }
+          ],
+          "attachments": {
+            "nodes": [
+              {
+                "id": "attachment_gh_pr_356",
+                "title": "PR #356: fix(console): resolve 6 search form bugs",
+                "url": "https://github.com/lightfastai/lightfast/pull/356",
+                "source": "github",
+                "sourceType": "githubPr",
+                "metadata": { "state": "merged", "number": 356 }
+              },
+              {
+                "id": "attachment_sentry_search_742",
+                "title": "SEARCH-742: RangeError in search form",
+                "url": "https://sentry.io/organizations/lightfastai/issues/5023561001/",
+                "source": "sentry",
+                "sourceType": "sentryIssue",
+                "metadata": { "shortId": "SEARCH-742" }
+              }
+            ]
+          },
+          "subscriberIds": ["user_jeevan_linear"]
+        },
+        "updatedFrom": {
+          "stateId": "state_todo",
+          "completedAt": null
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Comment",
+      "payload": {
+        "action": "create",
+        "type": "Comment",
+        "createdAt": "2026-02-08T19:05:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739045700000,
+        "data": {
+          "id": "comment_lf_420_001",
+          "body": "## Post-Incident Summary\n\n**Timeline:**\n- 14:00 - Sentry detected RangeError (SEARCH-742)\n- 14:15 - Issue grouped: 42 errors from 8 users\n- 14:30 - Created 6 Linear issues (LF-420 through LF-425)\n- 14:45 - GitHub issue #355 opened with full analysis\n- 18:00 - PR #356 opened with comprehensive fixes\n- 18:30 - PR merged, 5 commits to main\n- 18:35 - GitHub push event to main (commit 7a914dbd)\n- 18:40 - Vercel deployment created\n- 18:45 - Vercel deployment succeeded\n- 19:00 - Sentry SEARCH-742 resolved, LF-420 marked Done\n\n**Impact:** 107 total errors, 12 users affected, ~4.25 hour incident\n\n**Root Causes Fixed:**\n1. NaN in number inputs → return safe defaults\n2. Race condition in debounce → sequence tracking with abort controller\n3. Void operators → added type guards and validation\n4. URL history pollution → replaceState for intermediate updates\n5. Client-server state sync → normalized from URL on mount\n6. Missing resource IDs → extracted from context before use\n\n**Key Learnings:**\n- Form state needs centralized synchronization source\n- Type safety important for optional chaining patterns\n- URL represents source of truth for bookmarkability\n- Browser history API needs careful sequencing",
+          "createdAt": "2026-02-08T19:05:00Z",
+          "updatedAt": "2026-02-08T19:05:00Z",
+          "url": "https://linear.app/lightfastai/issue/LF-420#comment-comment_lf_420_001",
+          "reactionData": [],
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "issue": {
+            "id": "issue_lf_420",
+            "identifier": "LF-420",
+            "title": "Bug: Number inputs breaking with NaN values",
+            "url": "https://linear.app/lightfastai/issue/LF-420"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 description: Create blog posts with category-aware styling. Output saved to thoughts/blog/
-model: opus
+model: sonnet
 ---
 
 # Blog Generator

@@ -4,11 +4,15 @@ import {
   parseAsString,
   parseAsStringLiteral,
   parseAsArrayOf,
+  parseAsInteger,
+  parseAsBoolean,
   useQueryStates,
 } from "nuqs";
 import type { RerankMode } from "@repo/console-types";
 
 const rerankModes = ["fast", "balanced", "thorough"] as const;
+const agePresets = ["1h", "6h", "24h", "72h", "7d", "30d", "none"] as const;
+const viewTabs = ["list", "json"] as const;
 
 /**
  * Workspace search URL state hook
@@ -30,9 +34,15 @@ export function useWorkspaceSearchParams(initialQuery = "") {
       types: parseAsArrayOf(parseAsString).withDefault([]),
       actors: parseAsArrayOf(parseAsString).withDefault([]),
       expanded: parseAsString.withDefault(""),
+      limit: parseAsInteger.withDefault(20),
+      offset: parseAsInteger.withDefault(0),
+      ctx: parseAsBoolean.withDefault(true),
+      hl: parseAsBoolean.withDefault(true),
+      age: parseAsStringLiteral(agePresets).withDefault("none"),
+      view: parseAsStringLiteral(viewTabs).withDefault("list"),
     },
     {
-      history: "push",
+      history: "replace",
       shallow: true,
     }
   );
@@ -50,7 +60,24 @@ export function useWorkspaceSearchParams(initialQuery = "") {
     setActorNames: (actors: string[]) => setParams({ actors }),
     expandedId: params.expanded,
     setExpandedId: (id: string | null) => setParams({ expanded: id ?? "" }),
+    limit: params.limit,
+    setLimit: (v: number) => setParams({ limit: v }),
+    offset: params.offset,
+    setOffset: (v: number) => setParams({ offset: v }),
+    includeContext: params.ctx,
+    setIncludeContext: (v: boolean) => setParams({ ctx: v }),
+    includeHighlights: params.hl,
+    setIncludeHighlights: (v: boolean) => setParams({ hl: v }),
+    agePreset: params.age as typeof agePresets[number],
+    setAgePreset: (v: typeof agePresets[number]) => setParams({ age: v }),
+    activeTab: params.view as typeof viewTabs[number],
+    setActiveTab: (v: typeof viewTabs[number]) => setParams({ view: v }),
     // Helper for clearing all filters
-    clearFilters: () => setParams({ sources: [], types: [], actors: [] }),
+    clearFilters: () => setParams({
+      sources: [],
+      types: [],
+      actors: [],
+      age: "none",
+    }),
   };
 }

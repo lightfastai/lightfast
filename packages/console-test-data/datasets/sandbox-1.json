@@ -1,0 +1,1411 @@
+{
+  "$schema": "./webhook-schema.json",
+  "name": "sandbox-1",
+  "description": "Production incident: Pinecone embedding dimension mismatch after workspace settings migration. Cross-source storyline across Sentry, Linear, GitHub, and Vercel (Feb 4, 2026).",
+  "webhooks": [
+    {
+      "source": "sentry",
+      "eventType": "error",
+      "payload": {
+        "action": "created",
+        "data": {
+          "event": {
+            "event_id": "evt_pinecone_dim_001",
+            "project": 9012345,
+            "timestamp": "2026-02-04T09:15:00Z",
+            "received": "2026-02-04T09:15:01Z",
+            "platform": "node",
+            "message": "PineconeError: Vector dimension 1536 does not match index dimension 1024",
+            "title": "PineconeError: Vector dimension 1536 does not match index dimension 1024",
+            "location": "api/console/src/inngest/workflow/neural/observation-capture.ts",
+            "culprit": "generateAndUpsertEmbeddings",
+            "type": "error",
+            "metadata": {
+              "type": "PineconeError",
+              "value": "Vector dimension 1536 does not match index dimension 1024",
+              "filename": "api/console/src/inngest/workflow/neural/observation-capture.ts",
+              "function": "generateAndUpsertEmbeddings"
+            },
+            "tags": [
+              { "key": "environment", "value": "production" },
+              { "key": "workspace_id", "value": "ws_demo_001" },
+              { "key": "embedding_model", "value": "cohere-embed-v4" },
+              { "key": "pinecone_index", "value": "lightfast-observations" }
+            ],
+            "user": {
+              "id": "ws_demo_001",
+              "username": "demo-workspace"
+            },
+            "sdk": {
+              "name": "sentry.javascript.node",
+              "version": "8.42.0"
+            },
+            "exception": {
+              "values": [
+                {
+                  "type": "PineconeError",
+                  "value": "Vector dimension 1536 does not match index dimension 1024",
+                  "stacktrace": {
+                    "frames": [
+                      {
+                        "filename": "packages/console-pinecone/src/client.ts",
+                        "function": "upsertVectors",
+                        "lineno": 87,
+                        "colno": 12,
+                        "context_line": "    const result = await index.namespace(namespace).upsert(vectors);"
+                      },
+                      {
+                        "filename": "api/console/src/inngest/workflow/neural/observation-capture.ts",
+                        "function": "generateAndUpsertEmbeddings",
+                        "lineno": 234,
+                        "colno": 18,
+                        "context_line": "    await pineconeClient.upsertVectors(indexName, vectors, namespace);"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "web_url": "https://sentry.io/organizations/lightfastai/issues/5012847391/events/evt_pinecone_dim_001/",
+            "issue_url": "https://sentry.io/api/0/issues/5012847391/"
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "issue.created",
+      "payload": {
+        "action": "created",
+        "data": {
+          "issue": {
+            "id": "5012847391",
+            "shortId": "NEURAL-847",
+            "title": "PineconeError: Vector dimension 1536 does not match index dimension 1024",
+            "culprit": "generateAndUpsertEmbeddings (observation-capture.ts)",
+            "status": "unresolved",
+            "level": "error",
+            "platform": "node",
+            "firstSeen": "2026-02-04T09:15:00Z",
+            "lastSeen": "2026-02-04T09:20:00Z",
+            "count": 34,
+            "userCount": 1,
+            "permalink": "https://sentry.io/organizations/lightfastai/issues/5012847391/",
+            "metadata": {
+              "type": "PineconeError",
+              "value": "Vector dimension 1536 does not match index dimension 1024",
+              "filename": "api/console/src/inngest/workflow/neural/observation-capture.ts",
+              "function": "generateAndUpsertEmbeddings"
+            },
+            "project": {
+              "id": "9012345",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
+            "assignedTo": null,
+            "logger": "node",
+            "type": "error",
+            "annotations": [],
+            "isPublic": false,
+            "isBookmarked": false,
+            "isSubscribed": true,
+            "hasSeen": false,
+            "numComments": 0
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        },
+        "actor": {
+          "type": "application",
+          "id": "sentry",
+          "name": "Sentry"
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "event_alert",
+      "payload": {
+        "action": "triggered",
+        "data": {
+          "event": {
+            "event_id": "evt_pinecone_dim_025",
+            "project": 9012345,
+            "timestamp": "2026-02-04T09:25:00Z",
+            "received": "2026-02-04T09:25:01Z",
+            "platform": "node",
+            "message": "PineconeError: Vector dimension 1536 does not match index dimension 1024",
+            "title": "PineconeError: Vector dimension 1536 does not match index dimension 1024",
+            "location": "api/console/src/inngest/workflow/neural/observation-capture.ts",
+            "culprit": "generateAndUpsertEmbeddings",
+            "type": "error",
+            "metadata": {
+              "type": "PineconeError",
+              "value": "Vector dimension 1536 does not match index dimension 1024",
+              "filename": "api/console/src/inngest/workflow/neural/observation-capture.ts",
+              "function": "generateAndUpsertEmbeddings"
+            },
+            "tags": [
+              { "key": "environment", "value": "production" },
+              { "key": "workspace_id", "value": "ws_demo_001" }
+            ],
+            "sdk": {
+              "name": "sentry.javascript.node",
+              "version": "8.42.0"
+            },
+            "web_url": "https://sentry.io/organizations/lightfastai/issues/5012847391/events/evt_pinecone_dim_025/"
+          },
+          "triggered_rule": "High Error Volume - Neural Pipeline"
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "metric_alert",
+      "payload": {
+        "action": "triggered",
+        "data": {
+          "metric_alert": {
+            "id": "metric_alert_obs_capture_001",
+            "alert_rule": {
+              "id": 84721,
+              "name": "Observation Capture Success Rate",
+              "organization_id": "org_lightfastai",
+              "status": 0,
+              "query": "event.type:transaction transaction:observation-capture",
+              "threshold_type": 0,
+              "resolve_threshold": 90,
+              "time_window": 10,
+              "aggregate": "percentage(transaction.status, ok)"
+            },
+            "date_started": "2026-02-04T09:15:00Z",
+            "date_detected": "2026-02-04T09:30:00Z",
+            "date_closed": null
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-04T09:45:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1738662300000,
+        "data": {
+          "id": "issue_lf_412",
+          "identifier": "LF-412",
+          "title": "Critical: Observation pipeline failing - embedding dimension mismatch",
+          "description": "## Incident\nSentry reporting PineconeError across all observation capture workflows.\n\n## Sentry Reference\n- Issue: NEURAL-847\n- 34 errors in first 5 minutes, 1 workspace affected\n- First seen: 09:15 UTC\n\n## Error\n```\nPineconeError: Vector dimension 1536 does not match index dimension 1024\n    at generateAndUpsertEmbeddings (observation-capture.ts:234)\n```\n\n## Root Cause Hypothesis\nWorkspace settings migrated to Cohere embed-v4 (1536 dims) but Pinecone index still configured for 1024 dims.\n\n## Impact\n- P1 - All new observations failing to embed\n- Search going stale for affected workspace\n- No data loss (raw webhooks stored separately)",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 3,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-04T09:45:00Z",
+          "updatedAt": "2026-02-04T09:45:00Z",
+          "number": 412,
+          "url": "https://linear.app/lightfastai/issue/LF-412",
+          "branchName": "fix/neural-embedding-dimension-validation",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_neural_memory",
+            "name": "Neural Memory v1",
+            "url": "https://linear.app/lightfastai/project/neural-memory-v1"
+          },
+          "cycle": {
+            "id": "cycle_sprint_4",
+            "name": "Sprint 4",
+            "number": 4
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_p1", "name": "P1", "color": "#e11d48" },
+            { "id": "label_neural", "name": "Neural", "color": "#7c3aed" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Comment",
+      "payload": {
+        "action": "create",
+        "type": "Comment",
+        "createdAt": "2026-02-04T10:00:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1738663200000,
+        "data": {
+          "id": "comment_lf_412_001",
+          "body": "Root cause confirmed: The workspace settings migration (from the Dec 16 `feat(db): migrate embedding config to versioned settings JSONB column` change) correctly updated the embedding model to `cohere-embed-v4` (1536 dims), but the Pinecone index wasn't recreated to match.\n\nThe fix needs two parts:\n1. **Immediate**: Add dimension validation in `observation-capture.ts` before calling Pinecone upsert - fail gracefully with clear error\n2. **Prevention**: Add a pre-flight check in the settings migration that verifies Pinecone index dimensions match the configured model\n\nGoing to branch `fix/neural-embedding-dimension-validation` and push a PR.",
+          "createdAt": "2026-02-04T10:00:00Z",
+          "updatedAt": "2026-02-04T10:00:00Z",
+          "url": "https://linear.app/lightfastai/issue/LF-412#comment-comment_lf_412_001",
+          "reactionData": [],
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "issue": {
+            "id": "issue_lf_412",
+            "identifier": "LF-412",
+            "title": "Critical: Observation pipeline failing - embedding dimension mismatch",
+            "url": "https://linear.app/lightfastai/issue/LF-412"
+          }
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "issues",
+      "payload": {
+        "action": "opened",
+        "issue": {
+          "id": 987361001,
+          "node_id": "I_kwDO_lightfast_361",
+          "number": 361,
+          "title": "Embedding dimension mismatch after workspace settings migration",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "labels": [
+            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
+            { "id": 102, "node_id": "L_102", "name": "neural-memory", "color": "7c3aed", "default": false }
+          ],
+          "state": "open",
+          "locked": false,
+          "assignee": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "assignees": [
+            {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            }
+          ],
+          "milestone": null,
+          "comments": 0,
+          "created_at": "2026-02-04T10:15:00Z",
+          "updated_at": "2026-02-04T10:15:00Z",
+          "closed_at": null,
+          "author_association": "OWNER",
+          "active_lock_reason": null,
+          "body": "## Problem\nObservation capture pipeline failing with dimension mismatch errors after workspace settings migration.\n\n## Error (from Sentry NEURAL-847)\n```\nPineconeError: Vector dimension 1536 does not match index dimension 1024\n    at generateAndUpsertEmbeddings (observation-capture.ts:234)\n    at upsertVectors (packages/console-pinecone/src/client.ts:87)\n```\n\n## Root Cause\nWorkspace embedding config upgraded to `cohere-embed-v4` (1536 dims) via the Dec 16 settings migration, but the Pinecone index still uses 1024-dim vectors from the previous model.\n\n## Impact\n- All new observations failing to embed for affected workspace\n- Neural search returning stale results\n- 34+ errors in 5 minutes (Sentry NEURAL-847)\n- Metric alert: Observation Capture Success Rate below 50%\n\n## Related\n- Sentry Issue: NEURAL-847\n- Linear: LF-412\n\n## Proposed Fix\n1. Add dimension validation before Pinecone upsert\n2. Add pre-flight check in settings migration for index compatibility",
+          "reactions": {
+            "url": "https://api.github.com/repos/lightfastai/lightfast/issues/361/reactions",
+            "total_count": 0,
+            "+1": 0, "-1": 0, "laugh": 0, "hooray": 0, "confused": 0, "heart": 0, "rocket": 0, "eyes": 0
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/issues/361",
+          "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/361/timeline",
+          "state_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-04T00:00:00Z",
+          "pushed_at": "2026-02-04T00:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": ["ai", "agents", "mcp", "neural-memory", "typescript"],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "update",
+        "type": "Issue",
+        "createdAt": "2026-02-04T10:30:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1738665000000,
+        "data": {
+          "id": "issue_lf_412",
+          "identifier": "LF-412",
+          "title": "Critical: Observation pipeline failing - embedding dimension mismatch",
+          "description": "## Incident\nSentry reporting PineconeError across all observation capture workflows.\n\n## Sentry Reference\n- Issue: NEURAL-847\n- 34 errors in first 5 minutes, 1 workspace affected\n- First seen: 09:15 UTC\n\n## Error\n```\nPineconeError: Vector dimension 1536 does not match index dimension 1024\n    at generateAndUpsertEmbeddings (observation-capture.ts:234)\n```\n\n## Root Cause Hypothesis\nWorkspace settings migrated to Cohere embed-v4 (1536 dims) but Pinecone index still configured for 1024 dims.\n\n## Impact\n- P1 - All new observations failing to embed\n- Search going stale for affected workspace\n- No data loss (raw webhooks stored separately)",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 3,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "startedAt": "2026-02-04T10:30:00Z",
+          "createdAt": "2026-02-04T09:45:00Z",
+          "updatedAt": "2026-02-04T10:30:00Z",
+          "number": 412,
+          "url": "https://linear.app/lightfastai/issue/LF-412",
+          "branchName": "fix/neural-embedding-dimension-validation",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_in_progress",
+            "name": "In Progress",
+            "color": "#f2c94c",
+            "type": "started"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_neural_memory",
+            "name": "Neural Memory v1",
+            "url": "https://linear.app/lightfastai/project/neural-memory-v1"
+          },
+          "cycle": {
+            "id": "cycle_sprint_4",
+            "name": "Sprint 4",
+            "number": 4
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_p1", "name": "P1", "color": "#e11d48" },
+            { "id": "label_neural", "name": "Neural", "color": "#7c3aed" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        },
+        "updatedFrom": {
+          "stateId": "state_todo",
+          "startedAt": null
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "opened",
+        "number": 362,
+        "pull_request": {
+          "id": 3362000001,
+          "node_id": "PR_kwDO_lightfast_362",
+          "number": 362,
+          "state": "open",
+          "locked": false,
+          "title": "fix(neural): validate embedding dimensions before Pinecone upsert",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nFixes embedding dimension mismatch crash by validating vector dimensions before Pinecone upsert and adding a pre-flight check to workspace settings migration.\n\n## Root Cause\nThe workspace settings migration to `cohere-embed-v4` (1536 dims) didn't verify that the Pinecone index was compatible. The `observation-capture.ts` workflow called `pineconeClient.upsertVectors()` with 1536-dim vectors into a 1024-dim index.\n\n## Changes\n- Added `validateEmbeddingDimensions()` check in observation-capture.ts before upsert\n- Added `getIndexDimension()` to `@repo/console-pinecone` client\n- Added dimension compatibility check in workspace settings update flow\n- Clear error message when mismatch detected: includes expected vs actual dims\n\n## Testing\n- [x] Dimension validation catches mismatch before Pinecone call\n- [x] Settings migration rejects incompatible model/index combos\n- [x] Existing 1024-dim indexes continue to work unchanged\n\n## Related Issues\n- Fixes #361\n- Fixes LF-412\n- Resolves Sentry NEURAL-847",
+          "created_at": "2026-02-04T11:00:00Z",
+          "updated_at": "2026-02-04T11:00:00Z",
+          "closed_at": null,
+          "merged_at": null,
+          "merge_commit_sha": null,
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
+            { "id": 103, "node_id": "L_103", "name": "hotfix", "color": "ff0000", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 3,
+          "additions": 89,
+          "deletions": 12,
+          "changed_files": 4,
+          "head": {
+            "label": "lightfastai:fix/neural-embedding-dimension-validation",
+            "ref": "fix/neural-embedding-dimension-validation",
+            "sha": "b7e4d1f82c3a4567",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-04T00:00:00Z",
+              "pushed_at": "2026-02-04T11:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "c9d8e7f6a5b43210",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-04T00:00:00Z",
+              "pushed_at": "2026-02-04T00:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/362",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/362.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/362.patch",
+          "merged": false,
+          "mergeable": true,
+          "rebaseable": true,
+          "mergeable_state": "clean",
+          "merged_by": null,
+          "comments": 0,
+          "review_comments": 0,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-04T00:00:00Z",
+          "pushed_at": "2026-02-04T11:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "closed",
+        "number": 362,
+        "pull_request": {
+          "id": 3362000001,
+          "node_id": "PR_kwDO_lightfast_362",
+          "number": 362,
+          "state": "closed",
+          "locked": false,
+          "title": "fix(neural): validate embedding dimensions before Pinecone upsert",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nFixes embedding dimension mismatch crash by validating vector dimensions before Pinecone upsert and adding a pre-flight check to workspace settings migration.\n\n## Root Cause\nThe workspace settings migration to `cohere-embed-v4` (1536 dims) didn't verify that the Pinecone index was compatible. The `observation-capture.ts` workflow called `pineconeClient.upsertVectors()` with 1536-dim vectors into a 1024-dim index.\n\n## Changes\n- Added `validateEmbeddingDimensions()` check in observation-capture.ts before upsert\n- Added `getIndexDimension()` to `@repo/console-pinecone` client\n- Added dimension compatibility check in workspace settings update flow\n- Clear error message when mismatch detected: includes expected vs actual dims\n\n## Testing\n- [x] Dimension validation catches mismatch before Pinecone call\n- [x] Settings migration rejects incompatible model/index combos\n- [x] Existing 1024-dim indexes continue to work unchanged\n\n## Related Issues\n- Fixes #361\n- Fixes LF-412\n- Resolves Sentry NEURAL-847",
+          "created_at": "2026-02-04T11:00:00Z",
+          "updated_at": "2026-02-04T12:00:00Z",
+          "closed_at": "2026-02-04T12:00:00Z",
+          "merged_at": "2026-02-04T12:00:00Z",
+          "merge_commit_sha": "a8f3c2d91e4b5678",
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
+            { "id": 103, "node_id": "L_103", "name": "hotfix", "color": "ff0000", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 3,
+          "additions": 89,
+          "deletions": 12,
+          "changed_files": 4,
+          "head": {
+            "label": "lightfastai:fix/neural-embedding-dimension-validation",
+            "ref": "fix/neural-embedding-dimension-validation",
+            "sha": "b7e4d1f82c3a4567",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-04T00:00:00Z",
+              "pushed_at": "2026-02-04T12:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "c9d8e7f6a5b43210",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-04T00:00:00Z",
+              "pushed_at": "2026-02-04T12:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/362",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/362.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/362.patch",
+          "merged": true,
+          "mergeable": null,
+          "rebaseable": null,
+          "mergeable_state": "unknown",
+          "merged_by": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "comments": 1,
+          "review_comments": 2,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-04T00:00:00Z",
+          "pushed_at": "2026-02-04T12:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 7,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "c9d8e7f6a5b43210",
+        "after": "a8f3c2d91e4b5678",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/c9d8e7f6a5b43210...a8f3c2d91e4b5678",
+        "commits": [
+          {
+            "id": "b7e4d1f82c3a4567",
+            "tree_id": "tree362_fix",
+            "distinct": true,
+            "message": "fix(neural): validate embedding dimensions before Pinecone upsert\n\nAdds dimension validation in observation-capture.ts before calling\nPinecone upsert. Also adds getIndexDimension() to the Pinecone client\nand a pre-flight check in workspace settings migration.\n\nFixes #361\nFixes LF-412\nResolves Sentry NEURAL-847",
+            "timestamp": "2026-02-04T11:45:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/b7e4d1f82c3a4567",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "api/console/src/inngest/workflow/neural/observation-capture.ts",
+              "packages/console-pinecone/src/client.ts",
+              "api/console/src/trpc/routers/org/workspace.ts",
+              "packages/console-pinecone/src/types.ts"
+            ]
+          },
+          {
+            "id": "a8f3c2d91e4b5678",
+            "tree_id": "tree362_merge",
+            "distinct": true,
+            "message": "Merge pull request #362 from lightfastai/fix/neural-embedding-dimension-validation\n\nfix(neural): validate embedding dimensions before Pinecone upsert",
+            "timestamp": "2026-02-04T12:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/a8f3c2d91e4b5678",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "username": "web-flow"
+            },
+            "added": [],
+            "removed": [],
+            "modified": [
+              "api/console/src/inngest/workflow/neural/observation-capture.ts",
+              "packages/console-pinecone/src/client.ts",
+              "api/console/src/trpc/routers/org/workspace.ts",
+              "packages/console-pinecone/src/types.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "a8f3c2d91e4b5678",
+          "tree_id": "tree362_merge",
+          "distinct": true,
+          "message": "Merge pull request #362 from lightfastai/fix/neural-embedding-dimension-validation\n\nfix(neural): validate embedding dimensions before Pinecone upsert",
+          "timestamp": "2026-02-04T12:00:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/a8f3c2d91e4b5678",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "GitHub",
+            "email": "noreply@github.com",
+            "username": "web-flow"
+          },
+          "added": [],
+          "removed": [],
+          "modified": [
+            "api/console/src/inngest/workflow/neural/observation-capture.ts",
+            "packages/console-pinecone/src/client.ts",
+            "api/console/src/trpc/routers/org/workspace.ts",
+            "packages/console-pinecone/src/types.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-04T00:00:00Z",
+          "pushed_at": "2026-02-04T12:05:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 7,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.created",
+      "payload": {
+        "id": "hook_neural_fix_001",
+        "type": "deployment.created",
+        "createdAt": 1770207000000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_neural_fix_362",
+            "name": "lightfast-console",
+            "url": "lightfast-console-neural-fix-362.vercel.app",
+            "readyState": "BUILDING",
+            "meta": {
+              "githubCommitSha": "a8f3c2d91e4b5678",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #362 from lightfastai/fix/neural-embedding-dimension-validation\n\nfix(neural): validate embedding dimensions before Pinecone upsert",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "362",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_neural_fix_002",
+        "type": "deployment.succeeded",
+        "createdAt": 1770207300000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_neural_fix_362",
+            "name": "lightfast-console",
+            "url": "lightfast-console.vercel.app",
+            "readyState": "READY",
+            "meta": {
+              "githubCommitSha": "a8f3c2d91e4b5678",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #362 from lightfastai/fix/neural-embedding-dimension-validation\n\nfix(neural): validate embedding dimensions before Pinecone upsert",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "362",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "issue.resolved",
+      "payload": {
+        "action": "resolved",
+        "data": {
+          "issue": {
+            "id": "5012847391",
+            "shortId": "NEURAL-847",
+            "title": "PineconeError: Vector dimension 1536 does not match index dimension 1024",
+            "culprit": "generateAndUpsertEmbeddings (observation-capture.ts)",
+            "status": "resolved",
+            "level": "error",
+            "platform": "node",
+            "firstSeen": "2026-02-04T09:15:00Z",
+            "lastSeen": "2026-02-04T12:30:00Z",
+            "count": 127,
+            "userCount": 1,
+            "permalink": "https://sentry.io/organizations/lightfastai/issues/5012847391/",
+            "metadata": {
+              "type": "PineconeError",
+              "value": "Vector dimension 1536 does not match index dimension 1024",
+              "filename": "api/console/src/inngest/workflow/neural/observation-capture.ts",
+              "function": "generateAndUpsertEmbeddings"
+            },
+            "project": {
+              "id": "9012345",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
+            "assignedTo": {
+              "id": "user_jeevan_sentry",
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai"
+            },
+            "statusDetails": {
+              "inCommit": {
+                "repository": "lightfastai/lightfast",
+                "commit": "a8f3c2d91e4b5678"
+              }
+            },
+            "logger": "node",
+            "type": "error",
+            "annotations": [],
+            "isPublic": false,
+            "isBookmarked": false,
+            "isSubscribed": true,
+            "hasSeen": true,
+            "numComments": 1
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        },
+        "actor": {
+          "type": "user",
+          "id": "user_jeevan_sentry",
+          "name": "Jeevan Pillay",
+          "email": "jp@lightfast.ai"
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "update",
+        "type": "Issue",
+        "createdAt": "2026-02-04T12:45:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1738673100000,
+        "data": {
+          "id": "issue_lf_412",
+          "identifier": "LF-412",
+          "title": "Critical: Observation pipeline failing - embedding dimension mismatch",
+          "description": "## Incident\nSentry reporting PineconeError across all observation capture workflows.\n\n## Sentry Reference\n- Issue: NEURAL-847\n- 127 total errors, 1 workspace affected\n- Duration: 09:15 - 12:15 UTC (~3 hours)\n\n## Resolution\n- Root cause: Settings migration upgraded embedding model to cohere-embed-v4 (1536 dims) without recreating Pinecone index\n- Fix: Added dimension validation before Pinecone upsert + pre-flight check in settings migration\n- PR #362 merged and deployed at 12:15 UTC\n- Sentry NEURAL-847 resolved via commit a8f3c2d",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 3,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "startedAt": "2026-02-04T10:30:00Z",
+          "completedAt": "2026-02-04T12:45:00Z",
+          "createdAt": "2026-02-04T09:45:00Z",
+          "updatedAt": "2026-02-04T12:45:00Z",
+          "number": 412,
+          "url": "https://linear.app/lightfastai/issue/LF-412",
+          "branchName": "fix/neural-embedding-dimension-validation",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_done",
+            "name": "Done",
+            "color": "#5e6ad2",
+            "type": "completed"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_neural_memory",
+            "name": "Neural Memory v1",
+            "url": "https://linear.app/lightfastai/project/neural-memory-v1"
+          },
+          "cycle": {
+            "id": "cycle_sprint_4",
+            "name": "Sprint 4",
+            "number": 4
+          },
+          "labels": [
+            { "id": "label_bug", "name": "Bug", "color": "#d73a4a" },
+            { "id": "label_p1", "name": "P1", "color": "#e11d48" },
+            { "id": "label_neural", "name": "Neural", "color": "#7c3aed" }
+          ],
+          "attachments": {
+            "nodes": [
+              {
+                "id": "attachment_gh_pr_362",
+                "title": "PR #362: fix(neural): validate embedding dimensions",
+                "url": "https://github.com/lightfastai/lightfast/pull/362",
+                "source": "github",
+                "sourceType": "githubPr",
+                "metadata": { "state": "merged", "number": 362 }
+              },
+              {
+                "id": "attachment_sentry_neural_847",
+                "title": "NEURAL-847: PineconeError: Vector dimension mismatch",
+                "url": "https://sentry.io/organizations/lightfastai/issues/5012847391/",
+                "source": "sentry",
+                "sourceType": "sentryIssue",
+                "metadata": { "shortId": "NEURAL-847" }
+              }
+            ]
+          },
+          "subscriberIds": ["user_jeevan_linear"]
+        },
+        "updatedFrom": {
+          "stateId": "state_in_progress",
+          "completedAt": null
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "issues",
+      "payload": {
+        "action": "closed",
+        "issue": {
+          "id": 987361001,
+          "node_id": "I_kwDO_lightfast_361",
+          "number": 361,
+          "title": "Embedding dimension mismatch after workspace settings migration",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "labels": [
+            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
+            { "id": 102, "node_id": "L_102", "name": "neural-memory", "color": "7c3aed", "default": false }
+          ],
+          "state": "closed",
+          "locked": false,
+          "assignee": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "assignees": [
+            {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            }
+          ],
+          "milestone": null,
+          "comments": 2,
+          "created_at": "2026-02-04T10:15:00Z",
+          "updated_at": "2026-02-04T12:50:00Z",
+          "closed_at": "2026-02-04T12:50:00Z",
+          "author_association": "OWNER",
+          "active_lock_reason": null,
+          "body": "## Problem\nObservation capture pipeline failing with dimension mismatch errors after workspace settings migration.\n\n## Error (from Sentry NEURAL-847)\n```\nPineconeError: Vector dimension 1536 does not match index dimension 1024\n    at generateAndUpsertEmbeddings (observation-capture.ts:234)\n    at upsertVectors (packages/console-pinecone/src/client.ts:87)\n```\n\n## Root Cause\nWorkspace embedding config upgraded to `cohere-embed-v4` (1536 dims) via the Dec 16 settings migration, but the Pinecone index still uses 1024-dim vectors from the previous model.\n\n## Impact\n- All new observations failing to embed for affected workspace\n- Neural search returning stale results\n- 34+ errors in 5 minutes (Sentry NEURAL-847)\n- Metric alert: Observation Capture Success Rate below 50%\n\n## Related\n- Sentry Issue: NEURAL-847\n- Linear: LF-412\n\n## Resolution\nFixed in PR #362 - deployed to production at 12:15 UTC",
+          "reactions": {
+            "url": "https://api.github.com/repos/lightfastai/lightfast/issues/361/reactions",
+            "total_count": 0,
+            "+1": 0, "-1": 0, "laugh": 0, "hooray": 0, "confused": 0, "heart": 0, "rocket": 0, "eyes": 0
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/issues/361",
+          "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/361/timeline",
+          "state_reason": "completed"
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-04T00:00:00Z",
+          "pushed_at": "2026-02-04T12:05:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 7,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Comment",
+      "payload": {
+        "action": "create",
+        "type": "Comment",
+        "createdAt": "2026-02-04T13:00:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1738674000000,
+        "data": {
+          "id": "comment_lf_412_002",
+          "body": "## Post-Incident Summary\n\n**Timeline:**\n- 09:15 - Sentry detected first PineconeError (NEURAL-847)\n- 09:20 - Issue grouped: 34 errors from 1 workspace\n- 09:25 - Event alert triggered: \"High Error Volume - Neural Pipeline\"\n- 09:30 - Metric alert: Observation Capture Success Rate below 50%\n- 09:45 - Linear issue LF-412 created, assigned to Jeevan\n- 10:00 - Root cause confirmed: embedding model upgrade without Pinecone re-index\n- 10:15 - GitHub issue #361 opened\n- 10:30 - Started work on fix branch\n- 11:00 - PR #362 opened: dimension validation + pre-flight check\n- 12:00 - PR merged\n- 12:10 - Vercel production deployment succeeded\n- 12:30 - Sentry NEURAL-847 resolved via commit\n- 12:45 - LF-412 marked Done\n- 12:50 - GitHub #361 closed\n\n**Impact:** 127 errors, 1 workspace affected, ~3 hour incident\n\n**Action Items:**\n1. Add embedding dimension to workspace health check dashboard\n2. Document Pinecone index recreation procedure in runbook\n3. Add automated test for settings migration → index compatibility",
+          "createdAt": "2026-02-04T13:00:00Z",
+          "updatedAt": "2026-02-04T13:00:00Z",
+          "url": "https://linear.app/lightfastai/issue/LF-412#comment-comment_lf_412_002",
+          "reactionData": [],
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "issue": {
+            "id": "issue_lf_412",
+            "identifier": "LF-412",
+            "title": "Critical: Observation pipeline failing - embedding dimension mismatch",
+            "url": "https://linear.app/lightfastai/issue/LF-412"
+          }
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "ProjectUpdate",
+      "payload": {
+        "action": "create",
+        "type": "ProjectUpdate",
+        "createdAt": "2026-02-04T13:05:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1738674300000,
+        "data": {
+          "id": "update_neural_memory_incident",
+          "body": "## Neural Memory v1 - Incident Resolved\n\nWe had a production incident today affecting the observation capture pipeline. A workspace settings migration upgraded the embedding model to cohere-embed-v4 (1536 dims) but the Pinecone index wasn't recreated to match (still 1024 dims).\n\nThe team detected it via Sentry alerts within 15 minutes, identified the root cause within 45 minutes, and shipped a fix (PR #362) within 3 hours. The fix adds dimension validation before Pinecone upsert and a pre-flight compatibility check in the settings migration flow.\n\nNo observation data was lost thanks to the raw webhook storage layer. Backfill will reprocess the affected observations automatically.\n\n**Status: On Track** - incident was a one-off configuration issue, not a systemic problem.",
+          "createdAt": "2026-02-04T13:05:00Z",
+          "updatedAt": "2026-02-04T13:05:00Z",
+          "url": "https://linear.app/lightfastai/project/neural-memory-v1/updates/update_neural_memory_incident",
+          "health": "onTrack",
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_neural_memory",
+            "name": "Neural Memory v1",
+            "url": "https://linear.app/lightfastai/project/neural-memory-v1"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import type {
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
+import { toExternalGitHubEventType } from "@repo/console-types";
 import type {
   PushEvent,
   PullRequestEvent,
@@ -10,7 +11,7 @@ import type {
   ReleaseEvent,
   DiscussionEvent,
 } from "@octokit/webhooks-types";
-import { toInternalGitHubEvent } from "../event-mapping.js";
+export type { PushEvent, PullRequestEvent, IssuesEvent, ReleaseEvent, DiscussionEvent };
 import { validateSourceEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
@@ -69,7 +70,7 @@ export function transformGitHubPush(
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: toInternalGitHubEvent("push") ?? "push",
+    sourceType: toExternalGitHubEventType("push") ?? "push",
     sourceId: `push:${payload.repository.full_name}:${payload.after}`,
     title: sanitizeTitle(`[Push] ${rawTitle}`),
     body: sanitizeBody(rawBody),
@@ -204,11 +205,11 @@ export function transformGitHubPullRequest(
   // Determine effective action (merged is a special case of closed)
   const effectiveAction =
     payload.action === "closed" && pr.merged ? "merged" : payload.action;
-  const internalType = toInternalGitHubEvent("pull_request", effectiveAction);
+  const sourceType = toExternalGitHubEventType("pull_request", effectiveAction);
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `pull-request.${effectiveAction}`,
+    sourceType: sourceType ?? `pull-request.${effectiveAction}`,
     sourceId: `pr:${payload.repository.full_name}#${pr.number}:${effectiveAction}`,
     title: sanitizeTitle(`[${actionTitle}] ${pr.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
@@ -296,11 +297,11 @@ export function transformGitHubIssue(
   // SEMANTIC CONTENT ONLY (for embedding)
   const rawBody = [issue.title, issue.body || ""].join("\n");
 
-  const internalType = toInternalGitHubEvent("issue", payload.action);
+  const sourceType = toExternalGitHubEventType("issues", payload.action);
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `issue.${payload.action}`,
+    sourceType: sourceType ?? `issue.${payload.action}`,
     sourceId: `issue:${payload.repository.full_name}#${issue.number}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${issue.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
@@ -361,11 +362,11 @@ export function transformGitHubRelease(
   // SEMANTIC CONTENT ONLY (for embedding)
   const rawBody = release.body || "";
 
-  const internalType = toInternalGitHubEvent("release", payload.action);
+  const sourceType = toExternalGitHubEventType("release", payload.action);
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `release.${payload.action}`,
+    sourceType: sourceType ?? `release.${payload.action}`,
     sourceId: `release:${payload.repository.full_name}:${release.tag_name}`,
     title: sanitizeTitle(`[${actionTitle}] ${release.name || release.tag_name}`),
     body: sanitizeBody(rawBody),
@@ -431,11 +432,11 @@ export function transformGitHubDiscussion(
   // SEMANTIC CONTENT ONLY (for embedding)
   const rawBody = [discussion.title, discussion.body || ""].join("\n");
 
-  const internalType = toInternalGitHubEvent("discussion", payload.action);
+  const sourceType = toExternalGitHubEventType("discussion", payload.action);
 
   const event: SourceEvent = {
     source: "github",
-    sourceType: internalType ?? `discussion.${payload.action}`,
+    sourceType: sourceType ?? `discussion.${payload.action}`,
     sourceId: `discussion:${payload.repository.full_name}#${discussion.number}`,
     title: sanitizeTitle(`[${actionTitle}] ${discussion.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
@@ -472,18 +473,34 @@ export function transformGitHubDiscussion(
 
 /**
  * Extract linked issues from PR/issue body
- * Matches: fixes #123, closes #123, resolves #123
+ * Matches:
+ * - GitHub issues: fixes #123, closes #123, resolves #123
+ * - External issues: fixes LIN-892, fixes ENG-123, resolves Sentry CHECKOUT-123
  */
 function extractLinkedIssues(
   body: string
 ): Array<{ id: string; url?: string; label: string }> {
-  const pattern = /(fix(?:es)?|close[sd]?|resolve[sd]?)\s+#(\d+)/gi;
   const matches: Array<{ id: string; url?: string; label: string }> = [];
+
+  // Pattern 1: GitHub-style issue references (fixes #123)
+  const githubPattern = /(fix(?:es)?|close[sd]?|resolve[sd]?)\s+#(\d+)/gi;
   let match;
 
-  while ((match = pattern.exec(body)) !== null) {
+  while ((match = githubPattern.exec(body)) !== null) {
     matches.push({
       id: `#${match[2]}`,
+      label: match[1]?.toLowerCase().replace(/e?s$/, "") || "fixes",
+    });
+  }
+
+  // Pattern 2: External issue references (fixes LIN-892, resolves CHECKOUT-123)
+  // Matches: keyword + optional "Sentry " + PROJECT-123 format
+  const externalPattern =
+    /(fix(?:es)?|close[sd]?|resolve[sd]?)\s+(?:Sentry\s+)?([A-Z]+-\d+)/gi;
+
+  while ((match = externalPattern.exec(body)) !== null) {
+    matches.push({
+      id: match[2] ?? "",
       label: match[1]?.toLowerCase().replace(/e?s$/, "") || "fixes",
     });
   }
@@ -499,3 +516,8 @@ export const githubTransformers = {
   release: transformGitHubRelease,
   discussion: transformGitHubDiscussion,
 };
+
+/**
+ * GitHub webhook event types supported by our transformers.
+ */
+export type GitHubWebhookEventType = keyof typeof githubTransformers;

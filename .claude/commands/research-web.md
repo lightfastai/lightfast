@@ -1,6 +1,6 @@
 ---
 description: Deep web research on technical topics with analysis and performance metrics
-model: opus
+model: sonnet
 ---
 
 # Research Web

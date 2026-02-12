@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Github } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -34,11 +34,8 @@ export function GitHubConnector() {
       refetchOnWindowFocus: false,
     });
 
-  // Memoize installations to prevent new array reference on every render
-  const installations = useMemo(
-    () => githubUserSource?.installations ?? [],
-    [githubUserSource?.installations]
-  );
+  // React Compiler handles memoization automatically
+  const installations = githubUserSource?.installations ?? [];
 
   // Track previous installations for equality comparison
   const prevInstallationsRef = useRef<typeof installations>([]);

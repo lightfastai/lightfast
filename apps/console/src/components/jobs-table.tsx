@@ -21,8 +21,9 @@ import {
   useMutation,
 } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import { toast } from "sonner";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { Button } from "@repo/ui/components/ui/button";
+import { showErrorToast } from "~/lib/trpc-errors";
 import { Input } from "@repo/ui/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import {
@@ -77,6 +78,19 @@ function formatDuration(ms: number): string {
   return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
 }
 
+/**
+ * Extract event type from job name (text before colon)
+ * Examples:
+ * - "LLM entities: jZpSEV4ulG9kCSGtgPMO5" -> "LLM entities"
+ * - "Update profile: github:56789" -> "Update profile"
+ * - "Capture github/issue.opened" -> "Capture github/issue.opened"
+ */
+function getEventType(jobName: string): string {
+  const colonIndex = jobName.indexOf(":");
+  if (colonIndex === -1) return jobName;
+  return jobName.substring(0, colonIndex).trim();
+}
+
 interface JobRowProps {
   job: Job;
   clerkOrgSlug: string;
@@ -110,9 +124,7 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
         });
       },
       onError: (error) => {
-        toast.error("Failed to restart job", {
-          description: error.message,
-        });
+        showErrorToast(error, "Failed to restart job");
       },
     }),
   );
@@ -144,13 +156,11 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
         onClick={() => hasDetails && setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-6">
-          {/* Left: Commit SHA + Job ID */}
-          <div className="flex flex-col gap-1 w-[120px] flex-shrink-0">
-            <span className="font-mono text-sm">
-              {commitSha?.substring(0, 8) ?? String(job.id)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {job.name}
+          {/* Left: Job ID + Event Type */}
+          <div className="flex flex-col gap-1 w-[140px] flex-shrink-0">
+            <span className="font-mono text-sm">#{job.id}</span>
+            <span className="text-xs text-muted-foreground truncate">
+              {getEventType(job.name)}
             </span>
           </div>
 

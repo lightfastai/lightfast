@@ -537,6 +537,7 @@ export interface EnrichedResult {
   type: string;
   occurredAt: string | null;
   entities: { key: string; category: string }[];
+  references: { type: string; id: string; url?: string; label?: string }[];
 }
 
 /**
@@ -574,6 +575,7 @@ export async function enrichSearchResults(
       observationType: workspaceNeuralObservations.observationType,
       occurredAt: workspaceNeuralObservations.occurredAt,
       metadata: workspaceNeuralObservations.metadata,
+      sourceReferences: workspaceNeuralObservations.sourceReferences,
     })
     .from(workspaceNeuralObservations)
     .where(
@@ -635,6 +637,10 @@ export async function enrichSearchResults(
     // Use candidate snippet from Pinecone (already computed during indexing)
     const snippet = candidate?.snippet ?? "";
 
+    // Extract references from sourceReferences (typed as JSONB array)
+    const rawRefs = obs?.sourceReferences as { type: string; id: string; url?: string; label?: string }[] | null;
+    const references = rawRefs ?? [];
+
     return {
       id: r.id,
       title: obs?.title ?? candidate?.title ?? "",
@@ -645,6 +651,7 @@ export async function enrichSearchResults(
       type: obs?.observationType ?? "unknown",
       occurredAt: obs?.occurredAt ?? null,
       entities: entityMap.get(r.id) ?? [],
+      references,
     };
   });
 }

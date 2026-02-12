@@ -176,6 +176,34 @@
       "when": 1765877314943,
       "tag": "0024_mighty_payback",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1770289232282,
+      "tag": "0025_cooing_zuras",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1770289375204,
+      "tag": "0026_windy_enchantress",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1770383598946,
+      "tag": "0027_nasty_ezekiel_stane",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1770624513643,
+      "tag": "0028_workable_mantis",
+      "breakpoints": true
     }
   ]
 }

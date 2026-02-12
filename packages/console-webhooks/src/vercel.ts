@@ -33,7 +33,7 @@ export const VERCEL_WEBHOOK_ID_HEADER = "x-vercel-id";
 /**
  * Vercel deployment event types
  */
-export type VercelDeploymentEvent =
+export type VercelWebhookEventType =
   | "deployment.created"
   | "deployment.succeeded"
   | "deployment.ready"
@@ -64,10 +64,10 @@ export type VercelIntegrationActionEvent =
 export type VercelConfigurationEvent = "integration-configuration.removed";
 
 /**
- * All Vercel webhook event types
+ * All Vercel webhook event types (deployment + marketplace + integration + configuration)
  */
-export type VercelWebhookEventType =
-  | VercelDeploymentEvent
+export type VercelWebhookEvent =
+  | VercelWebhookEventType
   | VercelMarketplaceEvent
   | VercelIntegrationActionEvent
   | VercelConfigurationEvent;
@@ -84,7 +84,7 @@ export interface VercelWebhookPayload {
   /**
    * Event type (e.g., "deployment.created")
    */
-  type: VercelWebhookEventType;
+  type: VercelWebhookEvent;
 
   /**
    * Unix timestamp (milliseconds) when event was created
@@ -144,6 +144,8 @@ export interface VercelWebhookPayload {
         githubCommitOrg?: string;
         githubCommitRepo?: string;
         githubCommitRepoId?: string;
+        /** PR number (undocumented but may be present for PR deployments) */
+        githubPrId?: string;
       };
     };
 

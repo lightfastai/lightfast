@@ -11,7 +11,7 @@ import {
 	DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
 import { Button } from "@repo/ui/components/ui/button";
-import { useToast } from "@repo/ui/hooks/use-toast";
+import { toast } from "@repo/ui/components/ui/sonner";
 
 interface GitHubConnectDialogProps {
 	children?: React.ReactNode;
@@ -33,7 +33,6 @@ export function GitHubConnectDialog({
 	onSuccess,
 }: GitHubConnectDialogProps) {
 	const [internalOpen, setInternalOpen] = useState(false);
-	const { toast } = useToast();
 
 	const open = controlledOpen ?? internalOpen;
 	const setOpen = onOpenChange ?? setInternalOpen;
@@ -50,8 +49,7 @@ export function GitHubConnectDialog({
 			if (githubAuth === "success") {
 				// OAuth successful
 				setOpen(false);
-				toast({
-					title: "GitHub connected",
+				toast.success("GitHub connected", {
 					description: "Successfully connected to GitHub. You can now set up environments.",
 				});
 
@@ -61,10 +59,8 @@ export function GitHubConnectDialog({
 				// Trigger success callback
 				onSuccess?.();
 			} else if (githubError) {
-				toast({
-					title: "GitHub authorization failed",
+				toast.error("GitHub authorization failed", {
 					description: `Error: ${githubError}`,
-					variant: "destructive",
 				});
 				// Clean up URL
 				window.history.replaceState({}, "", window.location.pathname);

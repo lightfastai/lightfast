@@ -133,7 +133,7 @@ Add to `claude_desktop_config.json`:
       "command": "npx",
       "args": ["-y", "@lightfastai/mcp"],
       "env": {
-        "LIGHTFAST_API_KEY": "sk_live_..."
+        "LIGHTFAST_API_KEY": "sk-lf-..."
       }
     }
   }
@@ -155,7 +155,7 @@ Add to `.mcp.json` in your project root (or `~/.claude.json` for global):
       "command": "npx",
       "args": ["-y", "@lightfastai/mcp"],
       "env": {
-        "LIGHTFAST_API_KEY": "sk_live_..."
+        "LIGHTFAST_API_KEY": "sk-lf-..."
       }
     }
   }
@@ -178,7 +178,7 @@ Add to `.cursor/mcp.json` in your project root:
       "command": "npx",
       "args": ["-y", "@lightfastai/mcp"],
       "env": {
-        "LIGHTFAST_API_KEY": "sk_live_..."
+        "LIGHTFAST_API_KEY": "sk-lf-..."
       }
     }
   }
@@ -198,7 +198,7 @@ command = "npx"
 args = ["-y", "@lightfastai/mcp"]
 
 [mcp_servers.lightfast.env]
-LIGHTFAST_API_KEY = "sk_live_..."
+LIGHTFAST_API_KEY = "sk-lf-..."
 ```
 
 </details>

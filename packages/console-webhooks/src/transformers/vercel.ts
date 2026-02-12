@@ -3,11 +3,11 @@ import type {
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
+import { toExternalVercelEventType } from "@repo/console-types";
 import type {
   VercelWebhookPayload,
-  VercelDeploymentEvent,
+  VercelWebhookEventType,
 } from "../vercel.js";
-import { toInternalVercelEvent } from "../event-mapping.js";
 import { validateSourceEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
@@ -16,7 +16,7 @@ import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
  */
 export function transformVercelDeployment(
   payload: VercelWebhookPayload,
-  eventType: VercelDeploymentEvent,
+  eventType: VercelWebhookEventType,
   context: TransformContext
 ): SourceEvent {
   const deployment = payload.payload.deployment;
@@ -55,6 +55,15 @@ export function transformVercelDeployment(
     });
   }
 
+  // Add PR reference (best-effort - githubPrId may not always be present)
+  if (gitMeta?.githubPrId && gitMeta?.githubOrg && gitMeta?.githubRepo) {
+    refs.push({
+      type: "pr",
+      id: `#${gitMeta.githubPrId}`,
+      url: `https://github.com/${gitMeta.githubOrg}/${gitMeta.githubRepo}/pull/${gitMeta.githubPrId}`,
+    });
+  }
+
   // Add deployment reference
   refs.push({
     type: "deployment",
@@ -68,7 +77,7 @@ export function transformVercelDeployment(
     id: project.id,
   });
 
-  const eventTitleMap: Record<VercelDeploymentEvent, string> = {
+  const eventTitleMap: Record<VercelWebhookEventType, string> = {
     "deployment.created": "Deployment Started",
     "deployment.succeeded": "Deployment Succeeded",
     "deployment.ready": "Deployment Ready",
@@ -100,11 +109,11 @@ export function transformVercelDeployment(
     .filter(Boolean)
     .join("\n");
 
-  const internalType = toInternalVercelEvent(eventType);
+  const sourceType = toExternalVercelEventType(eventType);
 
   const event: SourceEvent = {
     source: "vercel",
-    sourceType: internalType ?? eventType,
+    sourceType: sourceType ?? eventType,
     sourceId: `deployment:${deployment.id}`,
     title: sanitizeTitle(`[${actionTitle}] ${project.name} from ${branch}`),
     body: sanitizeBody(rawBody),

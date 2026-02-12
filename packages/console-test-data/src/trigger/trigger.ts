@@ -4,6 +4,7 @@
  * Triggers observation capture events via the Inngest workflow.
  */
 
+import { randomUUID } from "node:crypto";
 import type { SourceEvent } from "@repo/console-types";
 import { inngest } from "@api/console/inngest/client";
 
@@ -44,6 +45,10 @@ export const triggerObservationCapture = async (
   const batchSize = options.batchSize ?? 10;
   const delayMs = options.delayMs ?? 100;
 
+  // Generate unique run ID for this injection batch
+  // This allows re-injecting to same workspace without hitting idempotency
+  const runId = randomUUID();
+
   const batches = chunk(events, batchSize);
   let processed = 0;
 
@@ -53,8 +58,12 @@ export const triggerObservationCapture = async (
 
     const results = await Promise.all(
       batch.map(async (event) => {
+        // Use runId prefix so each injection run gets fresh event IDs
+        const eventId = `${runId}:${event.sourceId}`;
+
         await inngest.send({
           name: "apps-console/neural/observation.capture",
+          id: eventId,
           data: {
             workspaceId: options.workspaceId,
             sourceEvent: event,

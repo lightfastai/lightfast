@@ -10,7 +10,7 @@ import {
 	DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import { Button } from "@repo/ui/components/ui/button";
-import { useToast } from "@repo/ui/hooks/use-toast";
+import { toast } from "@repo/ui/components/ui/sonner";
 
 interface SetupGuideModalProps {
 	open: boolean;
@@ -47,22 +47,18 @@ export function SetupGuideModal({
 	repositoryName,
 }: SetupGuideModalProps) {
 	const [copied, setCopied] = useState(false);
-	const { toast } = useToast();
 
 	const handleCopy = async () => {
 		try {
 			await navigator.clipboard.writeText(DEFAULT_CONFIG);
 			setCopied(true);
-			toast({
-				title: "Copied to clipboard",
+			toast.success("Copied to clipboard", {
 				description: "lightfast.yml template has been copied.",
 			});
 			setTimeout(() => setCopied(false), 2000);
 		} catch {
-			toast({
-				title: "Copy failed",
+			toast.error("Copy failed", {
 				description: "Failed to copy to clipboard. Please copy manually.",
-				variant: "destructive",
 			});
 		}
 	};

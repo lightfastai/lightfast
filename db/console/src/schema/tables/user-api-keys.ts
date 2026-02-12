@@ -53,10 +53,15 @@ export const userApiKeys = pgTable(
 		keyHash: text("key_hash").notNull(),
 
 		/**
-		 * Last 4 characters of the original key (for display purposes)
-		 * Helps users identify keys without exposing the full value
+		 * Key prefix for identification (e.g., "sk-lf-")
+		 * Helps users identify key type without exposing full key
 		 */
-		keyPreview: varchar("key_preview", { length: 8 }).notNull(),
+		keyPrefix: varchar("key_prefix", { length: 20 }).notNull(),
+
+		/**
+		 * Last 4 characters of the original key (for display purposes)
+		 */
+		keySuffix: varchar("key_suffix", { length: 4 }).notNull(),
 
 		/**
 		 * Whether this key is currently active

@@ -36,7 +36,7 @@
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:^",
     "@vendor/seo": "workspace:*",
-    "@vercel/microfrontends": "^2.0.1",
+    "@vercel/microfrontends": "^2.3.0",
     "@vercel/related-projects": "catalog:",
     "geist": "catalog:",
     "lucide-react": "catalog:",

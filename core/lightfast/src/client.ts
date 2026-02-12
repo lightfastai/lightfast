@@ -7,14 +7,19 @@ import {
   ServerError,
   ValidationError,
 } from "./errors";
+import { LIGHTFAST_API_KEY_PREFIX } from "./constants";
 import type {
   ContentsInput,
   FindSimilarInput,
+  GraphInput,
   LightfastConfig,
+  RelatedInput,
   SearchInput,
   V1ContentsResponse,
   V1FindSimilarResponse,
   V1SearchResponse,
+  GraphResponse,
+  RelatedResponse,
 } from "./types";
 
 const DEFAULT_BASE_URL = "https://lightfast.ai";
@@ -38,7 +43,7 @@ interface ApiErrorResponse {
  *
  * @example
  * ```typescript
- * const lightfast = new Lightfast({ apiKey: "sk_live_..." });
+ * const lightfast = new Lightfast({ apiKey: "sk-lf-..." });
  * const results = await lightfast.search({ query: "authentication" });
  * ```
  */
@@ -51,8 +56,10 @@ export class Lightfast {
     if (!config.apiKey) {
       throw new Error("API key is required");
     }
-    if (!config.apiKey.startsWith("sk_")) {
-      throw new Error("Invalid API key format. Keys should start with 'sk_'");
+    if (!config.apiKey.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
+      throw new Error(
+        `Invalid API key format. Keys should start with '${LIGHTFAST_API_KEY_PREFIX}'`
+      );
     }
 
     this.apiKey = config.apiKey;
@@ -134,6 +141,48 @@ export class Lightfast {
       sameSourceOnly: request.sameSourceOnly ?? false,
       excludeIds: request.excludeIds,
       filters: request.filters,
+    });
+  }
+
+  /**
+   * Traverse the relationship graph from a starting observation
+   *
+   * @param request - Graph traversal parameters
+   * @returns Graph nodes, edges, and metadata
+   *
+   * @example
+   * ```typescript
+   * const graph = await lightfast.graph({
+   *   id: "obs_abc123",
+   *   depth: 2,
+   *   types: ["fixes", "deploys"],
+   * });
+   * ```
+   */
+  async graph(request: GraphInput): Promise<GraphResponse> {
+    return this.request<GraphResponse>("/v1/graph", {
+      id: request.id,
+      depth: request.depth ?? 2,
+      types: request.types,
+    });
+  }
+
+  /**
+   * Find observations directly connected via relationships
+   *
+   * @param request - Source observation ID
+   * @returns Related observations grouped by source
+   *
+   * @example
+   * ```typescript
+   * const related = await lightfast.related({
+   *   id: "obs_abc123",
+   * });
+   * ```
+   */
+  async related(request: RelatedInput): Promise<RelatedResponse> {
+    return this.request<RelatedResponse>("/v1/related", {
+      id: request.id,
     });
   }
 
@@ -225,7 +274,7 @@ export class Lightfast {
  *
  * @example
  * ```typescript
- * const lightfast = createLightfast({ apiKey: "sk_live_..." });
+ * const lightfast = createLightfast({ apiKey: "sk-lf-..." });
  * ```
  */
 export function createLightfast(config: LightfastConfig): Lightfast {

@@ -13,6 +13,11 @@ import { z } from "zod";
 export const vercelEnv = createEnv({
 	shared: {},
 	server: {
+		// Vercel Integration Slug (integration name in marketplace URL)
+		// Used for: Marketplace install URL (https://vercel.com/integrations/{slug}/new)
+		// Example: "lightfast" (production) or "lightfast-dev" (development)
+		VERCEL_INTEGRATION_SLUG: z.string().min(1),
+
 		// Vercel Integration OAuth & Webhooks
 		// NOTE: Integration webhooks use the CLIENT_INTEGRATION_SECRET for signature verification,
 		// not a separate webhook secret (per Vercel docs)
@@ -23,11 +28,17 @@ export const vercelEnv = createEnv({
 		// In production: https://lightfast.ai/api/vercel/callback
 		VERCEL_REDIRECT_URI: z.string().url().optional(),
 	},
-	client: {},
-	experimental__runtimeEnv: {},
+	client: {
+		// Vercel Integration Slug (public - visible in URLs anyway)
+		// Used for: Client-side Vercel integration/permission links
+		// Example: "lightfast" (production) or "lightfast-dev" (development)
+		NEXT_PUBLIC_VERCEL_INTEGRATION_SLUG: z.string().min(1),
+	},
+	experimental__runtimeEnv: {
+		NEXT_PUBLIC_VERCEL_INTEGRATION_SLUG: process.env.NEXT_PUBLIC_VERCEL_INTEGRATION_SLUG,
+	},
 	skipValidation:
-		!!process.env.CI ||
-		process.env.npm_lifecycle_event === "lint" ||
-		process.env.SKIP_ENV_VALIDATION === "true",
+		!!process.env.SKIP_ENV_VALIDATION ||
+		process.env.npm_lifecycle_event === "lint",
 	emptyStringAsUndefined: true,
 });

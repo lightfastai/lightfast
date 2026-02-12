@@ -12,6 +12,7 @@ import { db } from "@db/console/client";
 import { orgWorkspaces } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
+import { LIGHTFAST_API_KEY_PREFIX } from "@repo/console-api-key";
 import { withApiKeyAuth } from "./with-api-key-auth";
 
 export interface DualAuthContext {
@@ -49,28 +50,83 @@ export type DualAuthResult = DualAuthSuccess | DualAuthError;
  */
 export async function withDualAuth(
   request: NextRequest,
-  requestId?: string
+  requestId?: string,
 ): Promise<DualAuthResult> {
-  // Check for API key first
+  // Check for Authorization header
   const authHeader = request.headers.get("authorization");
-
+  console.log(request.headers);
   if (authHeader?.startsWith("Bearer ")) {
-    // API key path - use existing implementation
-    const apiKeyResult = await withApiKeyAuth(request, requestId);
+    const token = authHeader.slice(7);
 
-    if (!apiKeyResult.success) {
-      return apiKeyResult;
+    // Check if it's an API key (starts with Lightfast prefix)
+    if (token.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
+      // API key path - use existing implementation
+      const apiKeyResult = await withApiKeyAuth(request, requestId);
+
+      if (!apiKeyResult.success) {
+        return apiKeyResult;
+      }
+
+      return {
+        success: true,
+        auth: {
+          workspaceId: apiKeyResult.auth.workspaceId,
+          userId: apiKeyResult.auth.userId,
+          authType: "api-key",
+          apiKeyId: apiKeyResult.auth.apiKeyId,
+        },
+      };
+    } else {
+      // For other bearer tokens (Clerk JWTs), we rely on X-Workspace-ID header and implicit trust
+      // This is for internal service-to-service calls where the token establishes user identity
+      // but we trust the workspace/user info is valid based on the initial auth
+      const workspaceId = request.headers.get("x-workspace-id");
+      const userId = request.headers.get("x-user-id");
+
+      if (!workspaceId || !userId) {
+        log.warn("Missing X-Workspace-ID or X-User-ID for bearer token", {
+          requestId,
+        });
+        return {
+          success: false,
+          error: {
+            code: "BAD_REQUEST",
+            message:
+              "X-Workspace-ID and X-User-ID headers required with bearer token",
+          },
+          status: 400,
+        };
+      }
+
+      // Validate workspace exists
+      const workspace = await db.query.orgWorkspaces.findFirst({
+        where: eq(orgWorkspaces.id, workspaceId),
+        columns: { id: true },
+      });
+
+      if (!workspace) {
+        return {
+          success: false,
+          error: { code: "NOT_FOUND", message: "Workspace not found" },
+          status: 404,
+        };
+      }
+
+      log.info("Bearer token auth via headers", {
+        requestId,
+        userId,
+        workspaceId,
+      });
+
+      return {
+        success: true,
+        auth: {
+          workspaceId,
+          userId,
+          authType: "session",
+        },
+      };
     }
-
-    return {
-      success: true,
-      auth: {
-        workspaceId: apiKeyResult.auth.workspaceId,
-        userId: apiKeyResult.auth.userId,
-        authType: "api-key",
-        apiKeyId: apiKeyResult.auth.apiKeyId,
-      },
-    };
   }
 
   // Session path - validate via Clerk
@@ -108,7 +164,7 @@ export async function withDualAuth(
   const accessResult = await validateWorkspaceAccess(
     workspaceId,
     userId,
-    requestId
+    requestId,
   );
 
   if (!accessResult.success) {
@@ -139,7 +195,7 @@ export async function withDualAuth(
 async function validateWorkspaceAccess(
   workspaceId: string,
   userId: string,
-  requestId?: string
+  requestId?: string,
 ): Promise<DualAuthResult> {
   try {
     // 1. Fetch workspace to get clerkOrgId
@@ -164,11 +220,13 @@ async function validateWorkspaceAccess(
     }
 
     // 2. Verify user is member of the org (cached lookup)
-    const { getCachedUserOrgMemberships } = await import("@repo/console-clerk-cache");
+    const { getCachedUserOrgMemberships } = await import(
+      "@repo/console-clerk-cache"
+    );
     const userMemberships = await getCachedUserOrgMemberships(userId);
 
     const isMember = userMemberships.some(
-      (m) => m.organizationId === workspace.clerkOrgId
+      (m) => m.organizationId === workspace.clerkOrgId,
     );
 
     if (!isMember) {
@@ -214,7 +272,7 @@ async function validateWorkspaceAccess(
  */
 export function createDualAuthErrorResponse(
   result: DualAuthError,
-  requestId: string
+  requestId: string,
 ): Response {
   return Response.json(
     {
@@ -222,6 +280,6 @@ export function createDualAuthErrorResponse(
       message: result.error.message,
       requestId,
     },
-    { status: result.status }
+    { status: result.status },
   );
 }

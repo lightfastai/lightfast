@@ -6,8 +6,8 @@ export default function AccountSettingsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="w-full pb-16">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+    <div className="flex flex-col h-full min-h-0 w-full overflow-auto">
+      <div className="mx-auto w-full max-w-7xl px-6 lg:px-8 pb-16">
         {/* Header */}
         <div className="py-8">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">

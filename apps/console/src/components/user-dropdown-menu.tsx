@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import {
   SignedIn,
   useClerk,
@@ -29,7 +28,7 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
   // Always link to personal account settings (general page)
   const settingsHref = "/account/settings/general";
 
-  const _displayName = useMemo(() => {
+  const _displayName = (() => {
     if (!user) {
       return "";
     }
@@ -41,9 +40,9 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
       user.emailAddresses[0]?.emailAddress ??
       "User"
     );
-  }, [user]);
+  })();
 
-  const emailAddress = useMemo(() => {
+  const emailAddress = (() => {
     if (!user) {
       return "";
     }
@@ -54,9 +53,9 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
       user.username ??
       ""
     );
-  }, [user]);
+  })();
 
-  const initials = useMemo(() => {
+  const initials = (() => {
     if (!user) {
       return "";
     }
@@ -80,14 +79,14 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
     }
 
     return "LF";
-  }, [user]);
+  })();
 
   const handleSignOut = () => {
     void signOut();
   };
 
   if (!isLoaded) {
-    return null;
+    return <div className="size-6 rounded-full bg-white border border-border/50" />;
   }
 
   return (

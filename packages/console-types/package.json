@@ -3,17 +3,28 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
     "./api": "./src/api/index.ts",
+    "./api/search": "./src/api/search.ts",
+    "./api/common": "./src/api/common.ts",
+    "./api/contents": "./src/api/contents.ts",
+    "./api/v1/search": "./src/api/v1/search.ts",
+    "./api/v1/contents": "./src/api/v1/contents.ts",
+    "./api/v1/findsimilar": "./src/api/v1/findsimilar.ts",
+    "./api/v1/graph": "./src/api/v1/graph.ts",
     "./document": "./src/document.ts",
     "./vector": "./src/vector.ts",
     "./error": "./src/error.ts",
     "./repository": "./src/repository.ts",
-    "./integrations/events": "./src/integrations/events.ts"
+    "./workspace": "./src/workspace.ts",
+    "./neural/source-event": "./src/neural/source-event.ts",
+    "./neural/entity": "./src/neural/entity.ts",
+    "./integrations/events": "./src/integrations/event-types.ts"
   },
   "license": "MIT",
   "scripts": {

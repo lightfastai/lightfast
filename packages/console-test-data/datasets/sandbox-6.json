@@ -1,0 +1,1196 @@
+{
+  "$schema": "./webhook-schema.json",
+  "name": "sandbox-6",
+  "description": "Security hardening: Three-layer defense-in-depth fix preventing database credential leaks through error messages (Feb 8, 2026).",
+  "webhooks": [
+    {
+      "source": "github",
+      "eventType": "issues",
+      "payload": {
+        "action": "opened",
+        "issue": {
+          "id": 987361358,
+          "node_id": "I_kwDO_lightfast_358",
+          "number": 358,
+          "title": "Security: Potential database credentials exposed in error messages",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "labels": [
+            { "id": 104, "node_id": "L_104", "name": "security", "color": "ff0000", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "critical", "color": "8b0000", "default": false }
+          ],
+          "state": "open",
+          "locked": false,
+          "assignee": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "assignees": [
+            {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            }
+          ],
+          "milestone": null,
+          "comments": 0,
+          "created_at": "2026-02-08T10:15:00Z",
+          "updated_at": "2026-02-08T10:15:00Z",
+          "closed_at": null,
+          "author_association": "OWNER",
+          "active_lock_reason": null,
+          "body": "## Security Audit Finding\n\nDuring a security audit, we identified potential database credentials being leaked through error messages in the workspace settings migration flow.\n\n## Vulnerability\nError responses from database connection validation may expose sensitive information:\n- Database connection strings with embedded credentials\n- Password substrings in connection error messages\n- Host/port information in detailed error stack traces\n\nExample:\n```\nError: Connection failed - psql: error: could not connect to server: Connection refused\n  Is the server running on host \"prod-db-primary.internal\" (10.0.1.42) and accepting TCP connections on port 5432?\n  Connection string: postgres://admin:SecurePass123!@prod-db-primary.internal:5432/lightfast_prod\n```\n\n## Impact\n- P0/Critical - Credentials could be exposed in error logs, monitoring systems, or client error responses\n- Affects: Database configuration validation, workspace settings updates\n- Exposure vectors: Sentry error tracking, server logs, API response bodies\n\n## Proposal\nImplement three-layer defense-in-depth:\n1. **Environment Validation**: Validate inputs against environment constraints before DB operations\n2. **Server Sanitization**: Strip credentials from error messages before logging/returning\n3. **Client Display**: Show generic error messages to end users while preserving detailed logs for ops\n\n## Related\n- Security audit: Feb 8, 2026\n- Assigned: Jeevan Pillay",
+          "reactions": {
+            "url": "https://api.github.com/repos/lightfastai/lightfast/issues/358/reactions",
+            "total_count": 0,
+            "+1": 0, "-1": 0, "laugh": 0, "hooray": 0, "confused": 0, "heart": 0, "rocket": 0, "eyes": 0
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/issues/358",
+          "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/358/timeline",
+          "state_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-08T00:00:00Z",
+          "pushed_at": "2026-02-08T00:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 9,
+          "default_branch": "main",
+          "topics": ["ai", "agents", "mcp", "neural-memory", "typescript"],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "create",
+        "type": "Issue",
+        "createdAt": "2026-02-08T10:30:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739080200000,
+        "data": {
+          "id": "issue_lf_428",
+          "identifier": "LF-428",
+          "title": "Security: Prevent database credential leaks in error messages",
+          "description": "## Security Audit Finding (Feb 8, 2026)\n\nDatabase credentials may be exposed through error messages during workspace settings validation and updates.\n\n## Vulnerability Details\nThree exposure vectors identified:\n1. **Connection String Exposure**: Full psql/mysql error messages include connection strings with embedded credentials\n2. **Stack Traces**: Detailed error traces reveal DB host, port, and sometimes auth info\n3. **Unvalidated Input**: Client-provided connection configs passed directly to error messages\n\n## Affected Areas\n- `api/console/src/trpc/routers/org/workspace.ts` - settings update endpoint\n- `packages/console-db/src/client.ts` - database client initialization\n- `packages/console-db/src/connection-validator.ts` - connection string validation\n\n## Defense-in-Depth Fix (3 Layers)\n\n### Layer 1: Environment Validation\n- Validate connection string format BEFORE attempting connection\n- Check required env vars (host, port, database, user) are set\n- Fail early with safe error if config is incomplete\n\n### Layer 2: Server Sanitization\n- Catch database errors and scrub credentials before logging\n- Remove: connection strings, passwords, URLs with auth\n- Create credential-free error messages for ops teams\n- Log scrubbed errors to Sentry with `credential_leak_risk: false` tag\n\n### Layer 3: Client Display\n- Return generic error messages to API clients\n- Include error code for support/debugging (e.g., `DB_CONNECTION_FAILED`)\n- Preserve detailed logs in server-side monitoring for ops/security teams\n\n## Implementation Plan\n1. Add `sanitizeCredentials()` utility function\n2. Add environment pre-flight checks to workspace settings router\n3. Wrap DB operations with credential sanitization\n4. Add Sentry integration to tag sensitive errors\n5. Add integration tests for credential scrubbing\n\n## Priority\nP1 - Security/Critical - Potential credential exposure",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 5,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "createdAt": "2026-02-08T10:30:00Z",
+          "updatedAt": "2026-02-08T10:30:00Z",
+          "number": 428,
+          "url": "https://linear.app/lightfastai/issue/LF-428",
+          "branchName": "fix/prevent-credential-leaks",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_todo",
+            "name": "Todo",
+            "color": "#e2e2e2",
+            "type": "unstarted"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_security",
+            "name": "Security",
+            "url": "https://linear.app/lightfastai/project/security"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_security", "name": "Security", "color": "#ff0000" },
+            { "id": "label_p1", "name": "P1", "color": "#e11d48" },
+            { "id": "label_critical", "name": "Critical", "color": "#8b0000" }
+          ],
+          "subscriberIds": ["user_jeevan_linear"]
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Comment",
+      "payload": {
+        "action": "create",
+        "type": "Comment",
+        "createdAt": "2026-02-08T11:00:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739081200000,
+        "data": {
+          "id": "comment_lf_428_001",
+          "body": "## Three-Layer Defense-in-Depth Approach\n\nI've analyzed the vulnerability and here's the detailed fix strategy:\n\n### Layer 1: Environment Validation (Front-line Defense)\nBefore attempting any database connection:\n```typescript\n// In workspace settings router\nconst validateDbEnvironment = (config: DbConfig) => {\n  if (!process.env.DB_HOST) throw new Error('DB_HOST not configured');\n  if (!process.env.DB_PORT) throw new Error('DB_PORT not configured');\n  if (!process.env.DB_USER) throw new Error('DB_USER not configured');\n  if (!process.env.DB_PASSWORD) throw new Error('DB_PASSWORD not configured');\n  \n  // Validate user-provided values match environment\n  if (config.host !== process.env.DB_HOST) {\n    throw new Error('Database host mismatch - cannot override environment');\n  }\n};\n```\n\nThis prevents user input from creating connection strings that leak credentials.\n\n### Layer 2: Server-Side Sanitization (Active Scrubbing)\nWrap all database operations with credential sanitization:\n```typescript\nconst sanitizeCredentials = (error: Error): SanitizedError => {\n  const patterns = [\n    /postgres:\\/\\/[^@]+@[^/]+\\//gi,  // psql connection strings\n    /mysql:\\/\\/[^@]+@[^/]+\\//gi,     // mysql connection strings\n    /password[\"']?\\s*[:=]\\s*[\"']?[^\"'\\s]+/gi,  // password values\n    /:\\d{4,5}\\//gi                    // port numbers in URLs\n  ];\n  \n  let sanitized = error.message;\n  patterns.forEach(pattern => {\n    sanitized = sanitized.replace(pattern, '[REDACTED]');\n  });\n  \n  return {\n    message: sanitized,\n    code: 'DB_ERROR',\n    originalStack: error.stack // Keep full stack server-side for Sentry\n  };\n};\n```\n\n### Layer 3: Client-Side Generic Messages (User-Facing)\nAPI returns safe, generic error to client:\n```typescript\nreturn {\n  error: {\n    code: 'DB_CONNECTION_FAILED',\n    message: 'Unable to validate database configuration. Please check your credentials and try again.',\n    supportCode: 'DBV-2026-02-08-001'\n  }\n};\n```\n\nDetailed logs are preserved server-side tagged with `credential_leak_risk: false` for ops/security review.\n\nThis approach prevents credential exposure while maintaining full debugging capability for the team.",
+          "createdAt": "2026-02-08T11:00:00Z",
+          "updatedAt": "2026-02-08T11:00:00Z",
+          "url": "https://linear.app/lightfastai/issue/LF-428#comment-comment_lf_428_001",
+          "reactionData": [],
+          "user": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "issue": {
+            "id": "issue_lf_428",
+            "identifier": "LF-428",
+            "title": "Security: Prevent database credential leaks in error messages",
+            "url": "https://linear.app/lightfastai/issue/LF-428"
+          }
+        }
+      }
+    },
+    {
+      "source": "sentry",
+      "eventType": "metric_alert",
+      "payload": {
+        "action": "triggered",
+        "data": {
+          "metric_alert": {
+            "id": "metric_alert_security_001",
+            "alert_rule": {
+              "id": 84722,
+              "name": "Credential Leak Detection",
+              "organization_id": "org_lightfastai",
+              "status": 0,
+              "query": "environment:production tags.credential_leak_risk:true",
+              "threshold_type": 0,
+              "resolve_threshold": 0,
+              "time_window": 60,
+              "aggregate": "count()"
+            },
+            "date_started": "2026-02-08T10:00:00Z",
+            "date_detected": "2026-02-08T11:30:00Z",
+            "date_closed": null
+          }
+        },
+        "installation": {
+          "uuid": "sentry-install-lightfastai"
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/fix/prevent-credential-leaks",
+        "before": "0000000000000000000000000000000000000000",
+        "after": "2377a7b9",
+        "created": true,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/2377a7b9",
+        "commits": [
+          {
+            "id": "2377a7b9",
+            "tree_id": "tree_credential_fix",
+            "distinct": true,
+            "message": "fix(security): prevent database credential leaks through three-layer defense\n\nImplements defense-in-depth approach:\n1. Environment validation - validate config against env before DB ops\n2. Server sanitization - scrub credentials from error messages\n3. Client display - generic errors to users, detailed logs server-side\n\nCredential patterns scrubbed:\n- Connection strings with embedded passwords\n- psql/mysql connection error details\n- Database host/port information\n- Password field values\n\nAdds:\n- sanitizeCredentials() utility in @repo/console-db\n- validateDbEnvironment() pre-flight check\n- Sentry integration for credential_leak_risk tagging\n- Integration tests for credential scrubbing\n\nFixes #358\nFixes LF-428",
+            "timestamp": "2026-02-08T12:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/2377a7b9",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [
+              "packages/console-db/src/sanitize-credentials.ts",
+              "packages/console-db/src/validate-environment.ts",
+              "api/console/src/__tests__/credential-leak.test.ts"
+            ],
+            "removed": [],
+            "modified": [
+              "api/console/src/trpc/routers/org/workspace.ts",
+              "packages/console-db/src/client.ts",
+              "packages/console-db/src/index.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "2377a7b9",
+          "tree_id": "tree_credential_fix",
+          "distinct": true,
+          "message": "fix(security): prevent database credential leaks through three-layer defense\n\nImplements defense-in-depth approach:\n1. Environment validation - validate config against env before DB ops\n2. Server sanitization - scrub credentials from error messages\n3. Client display - generic errors to users, detailed logs server-side",
+          "timestamp": "2026-02-08T12:00:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/2377a7b9",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "added": [
+            "packages/console-db/src/sanitize-credentials.ts",
+            "packages/console-db/src/validate-environment.ts",
+            "api/console/src/__tests__/credential-leak.test.ts"
+          ],
+          "removed": [],
+          "modified": [
+            "api/console/src/trpc/routers/org/workspace.ts",
+            "packages/console-db/src/client.ts",
+            "packages/console-db/src/index.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-08T00:00:00Z",
+          "pushed_at": "2026-02-08T12:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 9,
+          "default_branch": "main",
+          "topics": ["ai", "agents", "mcp", "neural-memory", "typescript"],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "opened",
+        "number": 359,
+        "pull_request": {
+          "id": 3362000002,
+          "node_id": "PR_kwDO_lightfast_359",
+          "number": 359,
+          "state": "open",
+          "locked": false,
+          "title": "fix(security): prevent database credential leaks",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nImplements three-layer defense-in-depth security fix to prevent database credentials from leaking through error messages.\n\n## Vulnerability\nDuring security audit (Feb 8), we identified that database errors could expose sensitive information:\n- Connection strings with embedded credentials\n- Password field values\n- Database host/port information\n- Detailed stack traces\n\n## Solution: Three-Layer Defense-in-Depth\n\n### Layer 1: Environment Validation\nValidate configuration against environment constraints BEFORE attempting database operations. Prevents user-provided values from creating new connection strings.\n\n### Layer 2: Server-Side Sanitization\nCatch all database errors and scrub credentials using regex patterns:\n- `postgres://user:password@host/db` → `postgres://[REDACTED]`\n- `password: secretvalue` → `password: [REDACTED]`\n- Database host/port patterns\n\nLog sanitized errors to Sentry with `credential_leak_risk: false` tag.\n\n### Layer 3: Client Display\nReturn generic error codes to API clients while preserving detailed logs server-side:\n- Client: `{error: {code: 'DB_CONNECTION_FAILED', message: 'Unable to validate database...'}}`\n- Server: Full error + sanitized stack trace in Sentry for debugging\n\n## Changes\n- Added `@repo/console-db/src/sanitize-credentials.ts` - credential scrubbing utility\n- Added `@repo/console-db/src/validate-environment.ts` - environment pre-flight checks\n- Updated `api/console/src/trpc/routers/org/workspace.ts` - added validation layer\n- Updated `packages/console-db/src/client.ts` - integrated sanitization\n- Added comprehensive test suite `api/console/src/__tests__/credential-leak.test.ts`\n\n## Testing\n- [x] Credential scrubbing removes all sensitive patterns\n- [x] Environment validation catches config mismatches\n- [x] Client receives generic error messages\n- [x] Sentry logs contain scrubbed errors with proper tagging\n- [x] Integration tests cover all three layers\n\n## Related Issues\n- Fixes #358\n- Fixes LF-428\n- Resolves credential leak vulnerability",
+          "created_at": "2026-02-08T13:00:00Z",
+          "updated_at": "2026-02-08T13:00:00Z",
+          "closed_at": null,
+          "merged_at": null,
+          "merge_commit_sha": null,
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 104, "node_id": "L_104", "name": "security", "color": "ff0000", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "critical", "color": "8b0000", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 1,
+          "additions": 156,
+          "deletions": 28,
+          "changed_files": 5,
+          "head": {
+            "label": "lightfastai:fix/prevent-credential-leaks",
+            "ref": "fix/prevent-credential-leaks",
+            "sha": "2377a7b9",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-08T00:00:00Z",
+              "pushed_at": "2026-02-08T12:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 9,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "c9d8e7f6a5b43210",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-08T00:00:00Z",
+              "pushed_at": "2026-02-08T00:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 9,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/359",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/359.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/359.patch",
+          "merged": false,
+          "mergeable": true,
+          "rebaseable": true,
+          "mergeable_state": "clean",
+          "merged_by": null,
+          "comments": 0,
+          "review_comments": 0,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-08T00:00:00Z",
+          "pushed_at": "2026-02-08T12:00:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 9,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Comment",
+      "payload": {
+        "action": "create",
+        "type": "Comment",
+        "createdAt": "2026-02-08T14:00:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739092800000,
+        "data": {
+          "id": "comment_lf_428_002",
+          "body": "## Security Review - APPROVED\n\nI've reviewed the PR (#359) and the three-layer approach is solid from a security perspective.\n\n### Strengths:\n1. **Defense-in-Depth**: Multiple layers means even if one fails, others catch it\n2. **Comprehensive Pattern Matching**: Covers psql, mysql, and custom connection strings\n3. **Operational Visibility**: Scrubbed errors are still useful for debugging without leaking secrets\n4. **No Performance Impact**: String replacement is negligible vs DB operations\n5. **Backward Compatible**: Existing error handling remains intact\n\n### Test Coverage:\n- Credential scrubbing tests cover: passwords, URLs, connection strings, stack traces\n- Environment validation tests cover: missing vars, mismatched values, edge cases\n- Integration tests verify all three layers work together\n\n### Deployment Notes:\n- No database migrations needed\n- No breaking API changes\n- Safe to deploy immediately\n- Recommend monitoring Sentry for `credential_leak_risk:true` tags (should be zero)\n\n### Post-Deployment Actions:\n- Monitor error rates for 24h (should be identical)\n- Review Sentry logs for any `credential_leak_risk:true` events\n- Update security runbook with this pattern\n- Consider adding to code review checklist for DB operations\n\nApproved for merge - excellent security hardening work!",
+          "createdAt": "2026-02-08T14:00:00Z",
+          "updatedAt": "2026-02-08T14:00:00Z",
+          "url": "https://linear.app/lightfastai/issue/LF-428#comment-comment_lf_428_002",
+          "reactionData": [],
+          "user": {
+            "id": "user_security_lead_linear",
+            "name": "Security Lead",
+            "displayName": "Security Lead",
+            "email": "security@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/9876543",
+            "isMe": false,
+            "active": true
+          },
+          "issue": {
+            "id": "issue_lf_428",
+            "identifier": "LF-428",
+            "title": "Security: Prevent database credential leaks in error messages",
+            "url": "https://linear.app/lightfastai/issue/LF-428"
+          }
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "pull_request",
+      "payload": {
+        "action": "closed",
+        "number": 359,
+        "pull_request": {
+          "id": 3362000002,
+          "node_id": "PR_kwDO_lightfast_359",
+          "number": 359,
+          "state": "closed",
+          "locked": false,
+          "title": "fix(security): prevent database credential leaks",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "body": "## Summary\nImplements three-layer defense-in-depth security fix to prevent database credentials from leaking through error messages.\n\n## Vulnerability\nDuring security audit (Feb 8), we identified that database errors could expose sensitive information:\n- Connection strings with embedded credentials\n- Password field values\n- Database host/port information\n- Detailed stack traces\n\n## Solution: Three-Layer Defense-in-Depth\n\n### Layer 1: Environment Validation\nValidate configuration against environment constraints BEFORE attempting database operations. Prevents user-provided values from creating new connection strings.\n\n### Layer 2: Server-Side Sanitization\nCatch all database errors and scrub credentials using regex patterns:\n- `postgres://user:password@host/db` → `postgres://[REDACTED]`\n- `password: secretvalue` → `password: [REDACTED]`\n- Database host/port patterns\n\nLog sanitized errors to Sentry with `credential_leak_risk: false` tag.\n\n### Layer 3: Client Display\nReturn generic error codes to API clients while preserving detailed logs server-side:\n- Client: `{error: {code: 'DB_CONNECTION_FAILED', message: 'Unable to validate database...'}}`\n- Server: Full error + sanitized stack trace in Sentry for debugging\n\n## Changes\n- Added `@repo/console-db/src/sanitize-credentials.ts` - credential scrubbing utility\n- Added `@repo/console-db/src/validate-environment.ts` - environment pre-flight checks\n- Updated `api/console/src/trpc/routers/org/workspace.ts` - added validation layer\n- Updated `packages/console-db/src/client.ts` - integrated sanitization\n- Added comprehensive test suite `api/console/src/__tests__/credential-leak.test.ts`\n\n## Testing\n- [x] Credential scrubbing removes all sensitive patterns\n- [x] Environment validation catches config mismatches\n- [x] Client receives generic error messages\n- [x] Sentry logs contain scrubbed errors with proper tagging\n- [x] Integration tests cover all three layers\n\n## Related Issues\n- Fixes #358\n- Fixes LF-428\n- Resolves credential leak vulnerability",
+          "created_at": "2026-02-08T13:00:00Z",
+          "updated_at": "2026-02-08T14:30:00Z",
+          "closed_at": "2026-02-08T14:30:00Z",
+          "merged_at": "2026-02-08T14:30:00Z",
+          "merge_commit_sha": "3c8d9f4a7e2b1567",
+          "assignee": null,
+          "assignees": [],
+          "requested_reviewers": [],
+          "requested_teams": [],
+          "labels": [
+            { "id": 104, "node_id": "L_104", "name": "security", "color": "ff0000", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "critical", "color": "8b0000", "default": false }
+          ],
+          "milestone": null,
+          "draft": false,
+          "commits": 1,
+          "additions": 156,
+          "deletions": 28,
+          "changed_files": 5,
+          "head": {
+            "label": "lightfastai:fix/prevent-credential-leaks",
+            "ref": "fix/prevent-credential-leaks",
+            "sha": "2377a7b9",
+            "user": {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-08T00:00:00Z",
+              "pushed_at": "2026-02-08T14:30:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "base": {
+            "label": "lightfastai:main",
+            "ref": "main",
+            "sha": "c9d8e7f6a5b43210",
+            "user": {
+              "login": "lightfastai",
+              "id": 88881234,
+              "node_id": "O_lightfastai",
+              "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+              "type": "Organization",
+              "site_admin": false
+            },
+            "repo": {
+              "id": 901234567,
+              "node_id": "R_lightfastai_lightfast",
+              "name": "lightfast",
+              "full_name": "lightfastai/lightfast",
+              "private": true,
+              "owner": {
+                "login": "lightfastai",
+                "id": 88881234,
+                "node_id": "O_lightfastai",
+                "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+                "type": "Organization",
+                "site_admin": false
+              },
+              "html_url": "https://github.com/lightfastai/lightfast",
+              "description": "AI agent orchestration platform - neural memory for engineering teams",
+              "fork": false,
+              "url": "https://api.github.com/repos/lightfastai/lightfast",
+              "created_at": "2025-06-01T00:00:00Z",
+              "updated_at": "2026-02-08T00:00:00Z",
+              "pushed_at": "2026-02-08T00:00:00Z",
+              "homepage": "https://lightfast.ai",
+              "size": 15000,
+              "stargazers_count": 42,
+              "watchers_count": 42,
+              "language": "TypeScript",
+              "forks_count": 3,
+              "open_issues_count": 8,
+              "default_branch": "main",
+              "topics": [],
+              "visibility": "private"
+            }
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/pull/359",
+          "diff_url": "https://github.com/lightfastai/lightfast/pull/359.diff",
+          "patch_url": "https://github.com/lightfastai/lightfast/pull/359.patch",
+          "merged": true,
+          "mergeable": null,
+          "rebaseable": null,
+          "mergeable_state": "unknown",
+          "merged_by": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "comments": 2,
+          "review_comments": 3,
+          "maintainer_can_modify": true,
+          "author_association": "OWNER",
+          "auto_merge": null,
+          "active_lock_reason": null
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-08T00:00:00Z",
+          "pushed_at": "2026-02-08T14:30:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "c9d8e7f6a5b43210",
+        "after": "3c8d9f4a7e2b1567",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "base_ref": null,
+        "compare": "https://github.com/lightfastai/lightfast/compare/c9d8e7f6a5b43210...3c8d9f4a7e2b1567",
+        "commits": [
+          {
+            "id": "2377a7b9",
+            "tree_id": "tree_cred_fix",
+            "distinct": true,
+            "message": "fix(security): prevent database credential leaks through three-layer defense\n\nImplements defense-in-depth approach:\n1. Environment validation - validate config against env before DB ops\n2. Server sanitization - scrub credentials from error messages\n3. Client display - generic errors to users, detailed logs server-side\n\nFixes #358\nFixes LF-428",
+            "timestamp": "2026-02-08T12:00:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/2377a7b9",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "added": [
+              "packages/console-db/src/sanitize-credentials.ts",
+              "packages/console-db/src/validate-environment.ts",
+              "api/console/src/__tests__/credential-leak.test.ts"
+            ],
+            "removed": [],
+            "modified": [
+              "api/console/src/trpc/routers/org/workspace.ts",
+              "packages/console-db/src/client.ts",
+              "packages/console-db/src/index.ts"
+            ]
+          },
+          {
+            "id": "3c8d9f4a7e2b1567",
+            "tree_id": "tree_cred_merge",
+            "distinct": true,
+            "message": "Merge pull request #359 from lightfastai/fix/prevent-credential-leaks\n\nfix(security): prevent database credential leaks",
+            "timestamp": "2026-02-08T14:35:00Z",
+            "url": "https://github.com/lightfastai/lightfast/commit/3c8d9f4a7e2b1567",
+            "author": {
+              "name": "Jeevan Pillay",
+              "email": "jp@lightfast.ai",
+              "username": "jeevanpillay"
+            },
+            "committer": {
+              "name": "GitHub",
+              "email": "noreply@github.com",
+              "username": "web-flow"
+            },
+            "added": [
+              "packages/console-db/src/sanitize-credentials.ts",
+              "packages/console-db/src/validate-environment.ts",
+              "api/console/src/__tests__/credential-leak.test.ts"
+            ],
+            "removed": [],
+            "modified": [
+              "api/console/src/trpc/routers/org/workspace.ts",
+              "packages/console-db/src/client.ts",
+              "packages/console-db/src/index.ts"
+            ]
+          }
+        ],
+        "head_commit": {
+          "id": "3c8d9f4a7e2b1567",
+          "tree_id": "tree_cred_merge",
+          "distinct": true,
+          "message": "Merge pull request #359 from lightfastai/fix/prevent-credential-leaks\n\nfix(security): prevent database credential leaks",
+          "timestamp": "2026-02-08T14:35:00Z",
+          "url": "https://github.com/lightfastai/lightfast/commit/3c8d9f4a7e2b1567",
+          "author": {
+            "name": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "username": "jeevanpillay"
+          },
+          "committer": {
+            "name": "GitHub",
+            "email": "noreply@github.com",
+            "username": "web-flow"
+          },
+          "added": [
+            "packages/console-db/src/sanitize-credentials.ts",
+            "packages/console-db/src/validate-environment.ts",
+            "api/console/src/__tests__/credential-leak.test.ts"
+          ],
+          "removed": [],
+          "modified": [
+            "api/console/src/trpc/routers/org/workspace.ts",
+            "packages/console-db/src/client.ts",
+            "packages/console-db/src/index.ts"
+          ]
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-08T00:00:00Z",
+          "pushed_at": "2026-02-08T14:35:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 8,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "pusher": { "name": "jeevanpillay", "email": "jp@lightfast.ai" },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.created",
+      "payload": {
+        "id": "hook_security_fix_001",
+        "type": "deployment.created",
+        "createdAt": 1770561600000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_security_hardening_359",
+            "name": "lightfast-console",
+            "url": "lightfast-console-security-359.vercel.app",
+            "readyState": "BUILDING",
+            "meta": {
+              "githubCommitSha": "3c8d9f4a7e2b1567",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #359 from lightfastai/fix/prevent-credential-leaks\n\nfix(security): prevent database credential leaks",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "359",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "vercel",
+      "eventType": "deployment.succeeded",
+      "payload": {
+        "id": "hook_security_fix_002",
+        "type": "deployment.succeeded",
+        "createdAt": 1770561660000,
+        "region": "sfo1",
+        "payload": {
+          "deployment": {
+            "id": "dpl_security_hardening_359",
+            "name": "lightfast-console",
+            "url": "lightfast-console.vercel.app",
+            "readyState": "READY",
+            "meta": {
+              "githubCommitSha": "3c8d9f4a7e2b1567",
+              "githubCommitRef": "main",
+              "githubCommitMessage": "Merge pull request #359 from lightfastai/fix/prevent-credential-leaks\n\nfix(security): prevent database credential leaks",
+              "githubCommitAuthorName": "Jeevan Pillay",
+              "githubCommitAuthorLogin": "jeevanpillay",
+              "githubPrId": "359",
+              "githubOrg": "lightfastai",
+              "githubRepo": "lightfast",
+              "githubDeployment": "1"
+            }
+          },
+          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "team": {
+            "id": "team_lightfastai",
+            "slug": "lightfastai",
+            "name": "Lightfast AI"
+          }
+        }
+      }
+    },
+    {
+      "source": "linear",
+      "eventType": "Issue",
+      "payload": {
+        "action": "update",
+        "type": "Issue",
+        "createdAt": "2026-02-08T15:00:00Z",
+        "organizationId": "org_lightfastai",
+        "webhookId": "webhook_lightfastai_001",
+        "webhookTimestamp": 1739096400000,
+        "data": {
+          "id": "issue_lf_428",
+          "identifier": "LF-428",
+          "title": "Security: Prevent database credential leaks in error messages",
+          "description": "## Security Audit Finding (Feb 8, 2026)\n\nDatabase credentials may be exposed through error messages during workspace settings validation and updates.\n\n## Resolution\nImplemented three-layer defense-in-depth approach in PR #359:\n\n1. **Environment Validation**: Pre-flight checks validate configuration against environment before any DB operations\n2. **Server-Side Sanitization**: Regex-based credential scrubbing removes connection strings, passwords, host/port info\n3. **Client Display**: Generic error messages to API clients while preserving detailed logs server-side\n\nMerged and deployed to production at 2026-02-08T14:40:00Z.\n\n## Status: CLOSED\n- Fix deployed to production\n- Monitoring Sentry for credential_leak_risk:true events (zero found)\n- Security hardening verified complete",
+          "priority": 1,
+          "priorityLabel": "Urgent",
+          "estimate": 5,
+          "boardOrder": 0,
+          "sortOrder": 0,
+          "startedAt": "2026-02-08T10:30:00Z",
+          "completedAt": "2026-02-08T15:00:00Z",
+          "createdAt": "2026-02-08T10:30:00Z",
+          "updatedAt": "2026-02-08T15:00:00Z",
+          "number": 428,
+          "url": "https://linear.app/lightfastai/issue/LF-428",
+          "branchName": "fix/prevent-credential-leaks",
+          "customerTicketCount": 0,
+          "previousIdentifiers": [],
+          "team": {
+            "id": "team_console",
+            "key": "LF",
+            "name": "Console"
+          },
+          "state": {
+            "id": "state_done",
+            "name": "Done",
+            "color": "#5e6ad2",
+            "type": "completed"
+          },
+          "creator": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "assignee": {
+            "id": "user_jeevan_linear",
+            "name": "Jeevan Pillay",
+            "displayName": "Jeevan Pillay",
+            "email": "jp@lightfast.ai",
+            "avatarUrl": "https://avatars.githubusercontent.com/u/7654321",
+            "isMe": true,
+            "active": true
+          },
+          "project": {
+            "id": "proj_security",
+            "name": "Security",
+            "url": "https://linear.app/lightfastai/project/security"
+          },
+          "cycle": {
+            "id": "cycle_sprint_5",
+            "name": "Sprint 5",
+            "number": 5
+          },
+          "labels": [
+            { "id": "label_security", "name": "Security", "color": "#ff0000" },
+            { "id": "label_p1", "name": "P1", "color": "#e11d48" },
+            { "id": "label_critical", "name": "Critical", "color": "#8b0000" }
+          ],
+          "attachments": {
+            "nodes": [
+              {
+                "id": "attachment_gh_issue_358",
+                "title": "GitHub Issue #358: Potential database credentials exposed",
+                "url": "https://github.com/lightfastai/lightfast/issues/358",
+                "source": "github",
+                "sourceType": "githubIssue",
+                "metadata": { "number": 358 }
+              },
+              {
+                "id": "attachment_gh_pr_359",
+                "title": "PR #359: fix(security): prevent database credential leaks",
+                "url": "https://github.com/lightfastai/lightfast/pull/359",
+                "source": "github",
+                "sourceType": "githubPr",
+                "metadata": { "state": "merged", "number": 359 }
+              }
+            ]
+          },
+          "subscriberIds": ["user_jeevan_linear"]
+        },
+        "updatedFrom": {
+          "stateId": "state_todo",
+          "completedAt": null
+        }
+      }
+    },
+    {
+      "source": "github",
+      "eventType": "issues",
+      "payload": {
+        "action": "closed",
+        "issue": {
+          "id": 987361358,
+          "node_id": "I_kwDO_lightfast_358",
+          "number": 358,
+          "title": "Security: Potential database credentials exposed in error messages",
+          "user": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "labels": [
+            { "id": 104, "node_id": "L_104", "name": "security", "color": "ff0000", "default": false },
+            { "id": 105, "node_id": "L_105", "name": "critical", "color": "8b0000", "default": false }
+          ],
+          "state": "closed",
+          "locked": false,
+          "assignee": {
+            "login": "jeevanpillay",
+            "id": 7654321,
+            "node_id": "U_jeevanpillay",
+            "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+            "type": "User",
+            "site_admin": false
+          },
+          "assignees": [
+            {
+              "login": "jeevanpillay",
+              "id": 7654321,
+              "node_id": "U_jeevanpillay",
+              "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+              "type": "User",
+              "site_admin": false
+            }
+          ],
+          "milestone": null,
+          "comments": 1,
+          "created_at": "2026-02-08T10:15:00Z",
+          "updated_at": "2026-02-08T15:15:00Z",
+          "closed_at": "2026-02-08T15:15:00Z",
+          "author_association": "OWNER",
+          "active_lock_reason": null,
+          "body": "## Security Audit Finding\n\nDuring a security audit, we identified potential database credentials being leaked through error messages in the workspace settings migration flow.\n\n## Vulnerability\nError responses from database connection validation may expose sensitive information:\n- Database connection strings with embedded credentials\n- Password substrings in connection error messages\n- Host/port information in detailed error stack traces\n\n## Resolution (Feb 8, 2026)\n\nFixed in PR #359 with three-layer defense-in-depth approach:\n\n1. **Environment Validation**: Pre-flight checks prevent user input from creating new connection strings\n2. **Server Sanitization**: Regex patterns scrub credentials from all error messages before logging/returning\n3. **Client Display**: Generic error codes returned to API clients while detailed logs preserved server-side\n\nDeployed to production at 14:40 UTC.\nSecurity hardening verified complete - no credential leaks detected in Sentry.",
+          "reactions": {
+            "url": "https://api.github.com/repos/lightfastai/lightfast/issues/358/reactions",
+            "total_count": 0,
+            "+1": 0, "-1": 0, "laugh": 0, "hooray": 0, "confused": 0, "heart": 0, "rocket": 0, "eyes": 0
+          },
+          "html_url": "https://github.com/lightfastai/lightfast/issues/358",
+          "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/358/timeline",
+          "state_reason": "completed"
+        },
+        "repository": {
+          "id": 901234567,
+          "node_id": "R_lightfastai_lightfast",
+          "name": "lightfast",
+          "full_name": "lightfastai/lightfast",
+          "private": true,
+          "owner": {
+            "login": "lightfastai",
+            "id": 88881234,
+            "node_id": "O_lightfastai",
+            "avatar_url": "https://avatars.githubusercontent.com/u/88881234",
+            "type": "Organization",
+            "site_admin": false
+          },
+          "html_url": "https://github.com/lightfastai/lightfast",
+          "description": "AI agent orchestration platform - neural memory for engineering teams",
+          "fork": false,
+          "url": "https://api.github.com/repos/lightfastai/lightfast",
+          "created_at": "2025-06-01T00:00:00Z",
+          "updated_at": "2026-02-08T00:00:00Z",
+          "pushed_at": "2026-02-08T14:35:00Z",
+          "homepage": "https://lightfast.ai",
+          "size": 15000,
+          "stargazers_count": 42,
+          "watchers_count": 42,
+          "language": "TypeScript",
+          "forks_count": 3,
+          "open_issues_count": 7,
+          "default_branch": "main",
+          "topics": [],
+          "visibility": "private"
+        },
+        "sender": {
+          "login": "jeevanpillay",
+          "id": 7654321,
+          "node_id": "U_jeevanpillay",
+          "avatar_url": "https://avatars.githubusercontent.com/u/7654321",
+          "type": "User",
+          "site_admin": false
+        }
+      }
+    }
+  ]
+}

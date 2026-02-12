@@ -1,5 +1,7 @@
 "use client";
 import * as React from "react";
+import { useSignIn } from "@clerk/nextjs";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { SignInEmailInput } from "./sign-in-email-input";
@@ -18,6 +20,7 @@ export function SignInForm({
   verificationStep: controlledStep,
   onVerificationStepChange,
 }: SignInFormProps = {}) {
+  const { signIn } = useSignIn();
   const [internalStep, setInternalStep] = React.useState<
     "email" | "code" | "password"
   >("email");
@@ -26,9 +29,22 @@ export function SignInForm({
 
   const [emailAddress, setEmailAddress] = React.useState("");
   const [error, setError] = React.useState("");
+  const [isWaitlistRestricted, setIsWaitlistRestricted] = React.useState(false);
 
   // Only show password sign-in in development and preview environments
   const showPasswordSignIn = env.NEXT_PUBLIC_VERCEL_ENV !== "production";
+
+  // Check for waitlist error after OAuth redirect
+  React.useEffect(() => {
+    const verificationError = signIn?.firstFactorVerification.error;
+    if (verificationError?.code === "sign_up_restricted_waitlist") {
+      setError(
+        verificationError.longMessage ??
+          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.",
+      );
+      setIsWaitlistRestricted(true);
+    }
+  }, [signIn]);
 
   function handleEmailSuccess(email: string) {
     setEmailAddress(email);
@@ -40,10 +56,12 @@ export function SignInForm({
     setVerificationStep("email");
     setError("");
     setEmailAddress("");
+    setIsWaitlistRestricted(false);
   }
 
-  function handleError(errorMessage: string) {
+  function handleError(errorMessage: string, isSignUpRestricted = false) {
     setError(errorMessage);
+    setIsWaitlistRestricted(isSignUpRestricted);
   }
 
   function handlePasswordSuccess() {
@@ -57,15 +75,15 @@ export function SignInForm({
       {/* Header - only show on email and password steps */}
       {(verificationStep === "email" || verificationStep === "password") && (
         <div className="text-center">
-          <h1 className="text-3xl font-normal text-foreground">
+          <h1 className="text-3xl font-semibold text-foreground">
             Log in to Lightfast
           </h1>
         </div>
       )}
 
       <div className="space-y-4">
-        {error && (
-          <div className="space-y-4">
+        {error && !isWaitlistRestricted && (
+          <>
             <div className="rounded-lg bg-red-50 border border-red-200 p-3">
               <p className="text-sm text-red-800">{error}</p>
             </div>
@@ -77,7 +95,28 @@ export function SignInForm({
             >
               Try again
             </Button>
-          </div>
+          </>
+        )}
+
+        {error && isWaitlistRestricted && (
+          <>
+            <div className="rounded-lg bg-destructive/30 border border-border p-3">
+              <p className="text-sm text-foreground">{error}</p>
+            </div>
+            <Button asChild size="lg" className="w-full">
+              <MicrofrontendLink href="/early-access">
+                Join the Waitlist
+              </MicrofrontendLink>
+            </Button>
+            <Button
+              onClick={handleReset}
+              size="lg"
+              variant="outline"
+              className="w-full"
+            >
+              Back to Sign In
+            </Button>
+          </>
         )}
 
         {!error && verificationStep === "email" && (
@@ -127,7 +166,7 @@ export function SignInForm({
             </div>
 
             {/* OAuth Sign In */}
-            <OAuthSignIn />
+            <OAuthSignIn onError={handleError} />
           </>
         )}
 
@@ -141,8 +180,8 @@ export function SignInForm({
             <Button
               variant="ghost"
               onClick={handleReset}
-              className="w-full text-muted-foreground hover:text-foreground"
               size="lg"
+              className="w-full text-muted-foreground hover:text-foreground"
             >
               ← Back to other options
             </Button>

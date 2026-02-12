@@ -58,9 +58,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint packages
-        run: |
-          pnpm --filter lightfast lint || echo "⚠️ Linting issues found in lightfast but not blocking CI"
-          pnpm --filter @lightfastai/mcp lint || echo "⚠️ Linting issues found in @lightfastai/mcp but not blocking CI"
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm turbo lint --affected
 
   # Type checking (medium speed)
   typecheck:
@@ -87,9 +87,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type check packages
-        run: |
-          pnpm --filter lightfast typecheck || echo "⚠️ Type errors found in lightfast but not blocking CI"
-          pnpm --filter @lightfastai/mcp typecheck || echo "⚠️ Type errors found in @lightfastai/mcp but not blocking CI"
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm turbo typecheck --affected
 
   # Test (simple test run on Node 22)
   test:
@@ -116,6 +116,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test lightfast
+        env:
+          SKIP_ENV_VALIDATION: "true"
         run: pnpm --filter lightfast test
 
 
@@ -144,7 +146,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build packages
-        run: pnpm turbo build --filter lightfast --filter @lightfastai/mcp
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm turbo build --affected
 
       - name: Check build outputs
         run: |

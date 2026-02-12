@@ -3,10 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import {
-	generateApiKey,
+	generateOrgApiKey,
 	hashApiKey,
-	extractKeyPreview,
-	LIGHTFAST_API_KEY_PREFIX,
 } from "@repo/console-api-key";
 import { userApiKeys } from "@db/console/schema";
 import { userScopedProcedure } from "../../trpc";
@@ -35,7 +33,7 @@ export const userApiKeysRouter = {
 			return userKeys.map((key) => ({
 				id: key.id,
 				name: key.name,
-				keyPreview: key.keyPreview,
+				keyPreview: `${key.keyPrefix}...${key.keySuffix}`,
 				isActive: key.isActive,
 				expiresAt: key.expiresAt,
 				lastUsedAt: key.lastUsedAt,
@@ -66,10 +64,9 @@ export const userApiKeysRouter = {
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			// Generate API key with lf_ prefix
-			const apiKey = generateApiKey(LIGHTFAST_API_KEY_PREFIX);
-			const keyHash = await hashApiKey(apiKey);
-			const keyPreview = extractKeyPreview(apiKey);
+			// Generate API key with sk-lf- prefix
+			const { key, prefix, suffix } = generateOrgApiKey();
+			const keyHash = await hashApiKey(key);
 
 			try {
 				// Store hashed key
@@ -79,21 +76,24 @@ export const userApiKeysRouter = {
 						userId: ctx.auth.userId,
 						name: input.name,
 						keyHash,
-						keyPreview,
+						keyPrefix: prefix,
+						keySuffix: suffix,
 						isActive: true,
 						expiresAt: input.expiresAt || null,
 					})
 					.returning({
 						id: userApiKeys.id,
 						name: userApiKeys.name,
-						keyPreview: userApiKeys.keyPreview,
+						keyPrefix: userApiKeys.keyPrefix,
+						keySuffix: userApiKeys.keySuffix,
 						createdAt: userApiKeys.createdAt,
 					});
 
 				// Return the plaintext key ONLY THIS ONCE
 				return {
 					...result[0],
-					key: apiKey, // ⚠️ Only returned on creation
+					key, // ⚠️ Only returned on creation
+					keyPreview: `${prefix}...${suffix}`,
 				};
 			} catch (error: unknown) {
 				console.error("[tRPC] Failed to create API key:", error);
@@ -208,10 +208,9 @@ export const userApiKeysRouter = {
 				});
 			}
 
-			// 2. Generate new key with same prefix as old key
-			const newApiKey = generateApiKey(LIGHTFAST_API_KEY_PREFIX);
+			// 2. Generate new key with sk-lf- prefix
+			const { key: newApiKey, prefix, suffix } = generateOrgApiKey();
 			const newKeyHash = await hashApiKey(newApiKey);
-			const newKeyPreview = extractKeyPreview(newApiKey);
 
 			try {
 				// 3. Atomically swap keys in transaction
@@ -229,14 +228,16 @@ export const userApiKeysRouter = {
 							userId: ctx.auth.userId,
 							name: oldKey.name, // Same name
 							keyHash: newKeyHash,
-							keyPreview: newKeyPreview,
+							keyPrefix: prefix,
+							keySuffix: suffix,
 							isActive: true,
 							expiresAt: oldKey.expiresAt, // Same expiration
 						})
 						.returning({
 							id: userApiKeys.id,
 							name: userApiKeys.name,
-							keyPreview: userApiKeys.keyPreview,
+							keyPrefix: userApiKeys.keyPrefix,
+							keySuffix: userApiKeys.keySuffix,
 							createdAt: userApiKeys.createdAt,
 						});
 
@@ -247,6 +248,7 @@ export const userApiKeysRouter = {
 				return {
 					...result,
 					key: newApiKey, // ⚠️ Only returned on rotation
+					keyPreview: `${prefix}...${suffix}`,
 				};
 			} catch (error: unknown) {
 				console.error("[tRPC] Failed to rotate API key:", error);

@@ -4,6 +4,13 @@ export { Lightfast, createLightfast } from "./client";
 // Deprecated aliases
 export { LightfastMemory, createLightfastMemory } from "./client";
 
+// Constants
+export {
+  LIGHTFAST_API_KEY_PREFIX,
+  API_KEY_SECRET_LENGTH,
+  isValidApiKeyFormat,
+} from "./constants";
+
 // Errors
 export {
   LightfastError,
@@ -24,6 +31,8 @@ export type {
   SearchInput,
   ContentsInput,
   FindSimilarInput,
+  GraphInput,
+  RelatedInput,
   // V1 API types (re-exported from @repo/console-types)
   V1SearchRequest,
   V1SearchResponse,
@@ -40,4 +49,22 @@ export type {
   V1FindSimilarResponse,
   V1FindSimilarResult,
   V1FindSimilarSource,
+  // Graph types
+  V1GraphRequest,
+  GraphResponse,
+  GraphNode,
+  GraphEdge,
+  // Related types
+  V1RelatedRequest,
+  RelatedResponse,
+  RelatedEvent,
 } from "./types";
+
+// Zod Schemas (for runtime validation, used by MCP server)
+export {
+  V1SearchRequestSchema,
+  V1ContentsRequestSchema,
+  V1FindSimilarRequestSchema,
+  V1GraphRequestSchema,
+  V1RelatedRequestSchema,
+} from "@repo/console-types/api";
