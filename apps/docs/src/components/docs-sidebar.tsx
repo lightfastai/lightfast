@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { PageTree } from "fumadocs-core/server";
+import type * as PageTree from "fumadocs-core/page-tree";
 import { Icons } from "@repo/ui/components/icons";
 import {
   Sidebar,
@@ -87,24 +87,65 @@ export function DocsSidebar({ tree }: DocsSidebarProps) {
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
                     <SidebarMenu className="gap-1">
-                      {item.children.map((page) => {
-                        if (page.type !== "page") return null;
-
-                        const isActive = page.url === pathname;
-
-                        return (
-                          <SidebarMenuItem key={page.url} className="-mx-3">
-                            <SidebarMenuButton
-                              asChild
-                              isActive={isActive}
-                              className="h-auto px-3 py-1.5 w-fit text-sm rounded-lg whitespace-nowrap truncate hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground justify-start"
+                      {item.children.map((child, childIndex) => {
+                        // Handle nested folders (e.g., Endpoints -> Search -> pages)
+                        if (child.type === "folder") {
+                          return (
+                            <div
+                              key={child.$id ?? `child-${childIndex}`}
+                              className="mb-4"
                             >
-                              <Link prefetch href={page.url}>
-                                {page.name}
-                              </Link>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
+                              <div className="text-xs text-muted-foreground/70 px-3 mb-1 font-medium">
+                                {child.name}
+                              </div>
+                              <div className="ml-2">
+                                {child.children.map((page) => {
+                                  if (page.type !== "page") return null;
+
+                                  const isActive = page.url === pathname;
+
+                                  return (
+                                    <SidebarMenuItem
+                                      key={page.url}
+                                      className="-mx-3"
+                                    >
+                                      <SidebarMenuButton
+                                        asChild
+                                        isActive={isActive}
+                                        className="h-auto px-3 py-1.5 w-fit text-sm rounded-lg whitespace-nowrap truncate hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground justify-start"
+                                      >
+                                        <Link prefetch href={page.url}>
+                                          {page.name}
+                                        </Link>
+                                      </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        // Handle direct pages
+                        if (child.type === "page") {
+                          const isActive = child.url === pathname;
+
+                          return (
+                            <SidebarMenuItem key={child.url} className="-mx-3">
+                              <SidebarMenuButton
+                                asChild
+                                isActive={isActive}
+                                className="h-auto px-3 py-1.5 w-fit text-sm rounded-lg whitespace-nowrap truncate hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground justify-start"
+                              >
+                                <Link prefetch href={child.url}>
+                                  {child.name}
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        }
+
+                        return null;
                       })}
                     </SidebarMenu>
                   </SidebarGroupContent>

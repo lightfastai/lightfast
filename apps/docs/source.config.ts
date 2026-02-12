@@ -1,12 +1,11 @@
-import { defineConfig, defineDocs } from "fumadocs-mdx/config";
+import { defineConfig, defineDocs, frontmatterSchema } from "fumadocs-mdx/config";
 import { z } from "zod";
 
 /**
- * Complete frontmatter schema with SEO fields.
+ * Extended frontmatter schema with SEO fields.
  *
- * Note: We define the full schema instead of extending fumadocs' frontmatterSchema
- * because fumadocs-mdx uses Zod v4 internally while this project uses Zod v3.
- * Extending across Zod versions causes runtime errors.
+ * With Zod v4, we can now extend fumadocs' frontmatterSchema directly.
+ * This ensures compatibility with fumadocs-mdx v14 internals.
  *
  * These fields allow per-page SEO customization in MDX files:
  *
@@ -24,14 +23,7 @@ import { z } from "zod";
  * ---
  * ```
  */
-const docsSchema = z.object({
-	// Base fumadocs fields (must match fumadocs-mdx expectations)
-	title: z.string(),
-	description: z.string().optional(),
-	icon: z.string().optional(),
-	full: z.boolean().optional(),
-	_openapi: z.record(z.unknown()).optional(),
-
+const docsSchema = frontmatterSchema.extend({
 	// SEO meta fields
 	keywords: z.string().optional(),
 	canonical: z.string().optional(),

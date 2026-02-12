@@ -25,7 +25,6 @@ import {
   ValidationErrorList,
   ValidationExample,
 } from "@/src/components/validation-error";
-import { APIPage } from "fumadocs-openapi/ui";
 import { authUrl, wwwUrl } from "@/src/lib/related-projects";
 import { NextSteps } from "@/src/components/next-steps";
 import { AlphaBanner } from "@/src/components/alpha-banner";
@@ -405,7 +404,6 @@ export const mdxComponents = {
   ApiMethod,
   ApiReferenceCard,
   ApiReferenceGrid,
-  APIPage,
   AlphaBanner,
 
   // Validation components

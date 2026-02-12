@@ -2,5 +2,5 @@
   "title": "API Reference",
   "description": "Complete API documentation for Lightfast",
   "defaultOpen": true,
-  "pages": ["getting-started", "endpoints", "sdks-tools"]
+  "pages": ["getting-started", "sdks-tools"]
 }

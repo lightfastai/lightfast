@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { TOCItemType } from "fumadocs-core/server";
+import type { TOCItemType } from "fumadocs-core/toc";
 import { TOC } from "./toc";
 
 interface DocsLayoutProps {

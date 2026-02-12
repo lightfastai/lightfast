@@ -1,8 +1,0 @@
-{
-  "title": "Endpoints",
-  "pages": [
-    "search/v1/search/post",
-    "contents/v1/contents/post",
-    "find-similar/v1/findsimilar/post"
-  ]
-}

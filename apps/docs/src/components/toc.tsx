@@ -6,7 +6,7 @@ import {
   TOCItem,
   useActiveAnchor,
 } from "fumadocs-core/toc";
-import type { TOCItemType } from "fumadocs-core/server";
+import type { TOCItemType } from "fumadocs-core/toc";
 import { useRef, useMemo } from "react";
 
 interface TOCProps {

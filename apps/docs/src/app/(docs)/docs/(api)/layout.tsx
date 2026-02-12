@@ -5,17 +5,20 @@ import { Button } from "@repo/ui/components/ui/button";
 import { SidebarProvider, SidebarInset } from "@repo/ui/components/ui/sidebar";
 import { Search } from "@/src/components/search";
 import { authUrl } from "@/src/lib/related-projects";
-import { apiPageTree } from "@/src/lib/source";
+import { buildApiPageTree } from "@/src/lib/build-api-tree";
 import { cn } from "@repo/ui/lib/utils";
 
 export default function ApiDocsLayout({ children }: { children: ReactNode }) {
   const signInUrl = `${authUrl}/sign-in`;
 
+  // Build custom tree that includes OpenAPI virtual pages
+  const apiTree = buildApiPageTree();
+
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="dark flex w-full bg-background h-screen overflow-hidden">
         {/* Docs Sidebar */}
-        <DocsSidebar tree={apiPageTree} />
+        <DocsSidebar tree={apiTree} />
 
         {/* Search - Fixed position, centered on viewport */}
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">

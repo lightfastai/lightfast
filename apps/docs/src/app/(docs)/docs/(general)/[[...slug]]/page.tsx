@@ -1,10 +1,9 @@
-import { getPage, getPages } from "@/src/lib/source";
+import { getPage, getPages, type DocsPageType } from "@/src/lib/source";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { DeveloperPlatformLanding } from "./_components/developer-platform-landing";
 import { DocsLayout } from "@/src/components/docs-layout";
 import { mdxComponents } from "@/mdx-components";
-import { siteConfig, docsMetadata } from "@/src/lib/site-config";
 import { createMetadata } from "@vendor/seo/metadata";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type {
@@ -70,11 +69,12 @@ export default async function Page({
     return <DeveloperPlatformLanding />;
   }
 
-  const MDX = page.data.body;
-  const toc = page.data.toc;
-
-  // Cast page.data to include extended frontmatter fields
-  const frontmatter = page.data as unknown as ExtendedFrontmatter;
+  // Type-safe access using collection type from fumadocs-mdx v14
+  // DocsPageType includes runtime properties (body, toc) from DocData
+  const pageData = page.data as DocsPageType;
+  const MDX = pageData.body;
+  const toc = pageData.toc;
+  const frontmatter = pageData;
   const title = frontmatter.title;
   const description = frontmatter.description;
 
@@ -137,7 +137,7 @@ export default async function Page({
     "@type": "TechArticle",
     "@id": `https://lightfast.ai/docs/${slug.join("/")}#article`,
     headline: title ?? "Documentation",
-    description: description ?? siteConfig.description,
+    description: description ?? "Documentation for Lightfast neural memory — Learn how to integrate the memory layer for software teams via a simple REST API and MCP tools. Build search by meaning with sources.",
     url: `https://lightfast.ai/docs/${slug.join("/")}`,
     author: frontmatter.author
       ? { "@type": "Person", name: frontmatter.author }
@@ -217,12 +217,32 @@ export async function generateMetadata({
       title: "Documentation – Lightfast",
       description:
         "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
-      image: siteConfig.ogImage,
-      metadataBase: new URL(siteConfig.url),
-      keywords: [...docsMetadata.keywords],
-      authors: [...docsMetadata.authors],
-      creator: docsMetadata.creator,
-      publisher: docsMetadata.creator,
+      image: "https://lightfast.ai/og.jpg",
+      metadataBase: new URL("https://lightfast.ai/docs"),
+      keywords: [
+        "Lightfast documentation",
+        "memory layer",
+        "memory layer for software teams",
+        "software team memory",
+        "engineering knowledge search",
+        "neural memory docs",
+        "semantic search",
+        "semantic search docs",
+        "answers with sources",
+        "developer API",
+        "developer API reference",
+        "MCP tools",
+        "REST API",
+        "security best practices",
+      ],
+      authors: [
+        {
+          name: "Lightfast",
+          url: "https://lightfast.ai",
+        },
+      ],
+      creator: "Lightfast",
+      publisher: "Lightfast",
       robots: {
         index: true,
         follow: true,
@@ -235,19 +255,19 @@ export async function generateMetadata({
         },
       },
       alternates: {
-        canonical: `${siteConfig.url}/docs`,
+        canonical: "https://lightfast.ai/docs/docs",
       },
       openGraph: {
         title: "Documentation – Lightfast",
         description:
           "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
-        url: `${siteConfig.url}/docs`,
+        url: "https://lightfast.ai/docs/docs",
         siteName: "Lightfast Documentation",
         type: "website",
         locale: "en_US",
         images: [
           {
-            url: siteConfig.ogImage,
+            url: "https://lightfast.ai/og.jpg",
             width: 1200,
             height: 630,
             alt: "Lightfast Documentation",
@@ -262,7 +282,7 @@ export async function generateMetadata({
           "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
         site: "@lightfastai",
         creator: "@lightfastai",
-        images: [siteConfig.ogImage],
+        images: ["https://lightfast.ai/og.jpg"],
       },
       category: "Technology",
     });
@@ -277,8 +297,8 @@ export async function generateMetadata({
     return createMetadata({
       title: "Page Not Found – Lightfast Docs",
       description: "The requested documentation page could not be found",
-      image: siteConfig.ogImage,
-      metadataBase: new URL(siteConfig.url),
+      image: "https://lightfast.ai/og.jpg",
+      metadataBase: new URL("https://lightfast.ai/docs"),
       robots: {
         index: false,
         follow: false,
@@ -294,7 +314,7 @@ export async function generateMetadata({
   const title = frontmatter.title
     ? `${frontmatter.title} – Lightfast Docs`
     : "Lightfast Docs";
-  const description = frontmatter.description ?? siteConfig.description;
+  const description = frontmatter.description ?? "Documentation for Lightfast neural memory — Learn how to integrate the memory layer for software teams via a simple REST API and MCP tools. Build search by meaning with sources.";
 
   // Extract per-page SEO fields from extended frontmatter with fallbacks
   const pageKeywords = frontmatter.keywords
@@ -302,8 +322,8 @@ export async function generateMetadata({
     : [];
   const ogImage = frontmatter.ogImage
     ? `https://lightfast.ai${frontmatter.ogImage}`
-    : siteConfig.ogImage;
-  const canonical = frontmatter.canonical ?? `${siteConfig.url}${pageUrl}`;
+    : "https://lightfast.ai/og.jpg";
+  const canonical = frontmatter.canonical ?? `https://lightfast.ai/docs${pageUrl}`;
   const noindex = frontmatter.noindex ?? false;
   const nofollow = frontmatter.nofollow ?? false;
 
@@ -316,14 +336,30 @@ export async function generateMetadata({
     title,
     description,
     image: ogImage,
-    metadataBase: new URL(siteConfig.url),
+    metadataBase: new URL("https://lightfast.ai/docs"),
     // Merge per-page keywords with default docs keywords
-    keywords: [...pageKeywords, ...docsMetadata.keywords],
+    keywords: [
+      ...pageKeywords,
+      "Lightfast documentation",
+      "memory layer",
+      "memory layer for software teams",
+      "software team memory",
+      "engineering knowledge search",
+      "neural memory docs",
+      "semantic search",
+      "semantic search docs",
+      "answers with sources",
+      "developer API",
+      "developer API reference",
+      "MCP tools",
+      "REST API",
+      "security best practices",
+    ],
     authors: frontmatter.author
-      ? [{ name: frontmatter.author }, ...docsMetadata.authors]
-      : [...docsMetadata.authors],
-    creator: docsMetadata.creator,
-    publisher: docsMetadata.creator,
+      ? [{ name: frontmatter.author }, { name: "Lightfast", url: "https://lightfast.ai" }]
+      : [{ name: "Lightfast", url: "https://lightfast.ai" }],
+    creator: "Lightfast",
+    publisher: "Lightfast",
     robots: {
       index: !noindex,
       follow: !nofollow,
@@ -341,7 +377,7 @@ export async function generateMetadata({
     openGraph: {
       title: ogTitle,
       description: ogDescription,
-      url: `${siteConfig.url}${pageUrl}`,
+      url: `https://lightfast.ai/docs${pageUrl}`,
       siteName: "Lightfast Documentation",
       type: "article",
       locale: "en_US",
