@@ -1,35 +1,21 @@
-"use client";
-
 import type { ReactNode } from "react";
 import Link from "next/link";
-import type { PageTree } from "fumadocs-core/server";
-import { DocsMarketingSidebar } from "./docs-marketing-sidebar";
+import { DocsSidebar } from "@/src/components/docs-sidebar";
 import { Button } from "@repo/ui/components/ui/button";
 import { SidebarProvider, SidebarInset } from "@repo/ui/components/ui/sidebar";
-import { Search } from "./search";
-import { DocsHeaderNav } from "./docs-header-nav";
+import { Search } from "@/src/components/search";
 import { authUrl } from "@/src/lib/related-projects";
+import { apiPageTree } from "@/src/lib/source";
+import { cn } from "@repo/ui/lib/utils";
 
-interface DocsSidebarLayoutProps {
-  children: ReactNode;
-  tree?: PageTree.Root;
-}
-
-/**
- * DocsSidebarLayout - Client component wrapper for docs sidebar UI
- *
- * Handles:
- * - Sidebar state management
- * - Header actions (search, login, github)
- */
-export function DocsSidebarLayout({ children, tree }: DocsSidebarLayoutProps) {
+export default function ApiDocsLayout({ children }: { children: ReactNode }) {
   const signInUrl = `${authUrl}/sign-in`;
 
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="dark flex w-full bg-background h-screen overflow-hidden">
-        {/* Docs Marketing Sidebar */}
-        <DocsMarketingSidebar tree={tree} />
+        {/* Docs Sidebar */}
+        <DocsSidebar tree={apiPageTree} />
 
         {/* Search - Fixed position, centered on viewport */}
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
@@ -44,7 +30,32 @@ export function DocsSidebarLayout({ children, tree }: DocsSidebarLayoutProps) {
               {/* Right side - Navigation and Sign In Button */}
               <div className="flex items-center gap-8 py-4">
                 {/* Navigation */}
-                <DocsHeaderNav />
+                <nav className="flex items-center gap-6">
+                  <Button
+                    variant="link"
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-foreground p-0 h-auto",
+                      "text-muted-foreground", // Never active in API docs
+                    )}
+                    asChild
+                  >
+                    <Link href="/docs/get-started/overview">
+                      Docs
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="link"
+                    className={cn(
+                      "text-sm font-medium transition-colors hover:text-foreground p-0 h-auto",
+                      "text-foreground", // Always active in API docs
+                    )}
+                    asChild
+                  >
+                    <Link href="/docs/api-reference/getting-started/overview">
+                      API
+                    </Link>
+                  </Button>
+                </nav>
 
                 {/* Sign In Button */}
                 <Button

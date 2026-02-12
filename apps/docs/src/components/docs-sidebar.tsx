@@ -17,12 +17,12 @@ import {
 import { DocsSidebarScrollArea } from "./docs-sidebar-scroll-area";
 import { wwwUrl } from "../lib/related-projects";
 
-interface DocsMarketingSidebarProps {
+interface DocsSidebarProps {
   tree?: PageTree.Root;
 }
 
 /**
- * DocsMarketingSidebar - Sidebar navigation for the docs site
+ * DocsSidebar - Sidebar navigation for the docs site
  *
  * Features:
  * - Logo in header
@@ -33,21 +33,20 @@ interface DocsMarketingSidebarProps {
  * @example
  * ```tsx
  * <SidebarProvider>
- *   <DocsMarketingSidebar tree={pageTree} />
+ *   <DocsSidebar tree={pageTree} />
  *   <SidebarInset>
  *     <main>{children}</main>
  *   </SidebarInset>
  * </SidebarProvider>
  * ```
  */
-export function DocsMarketingSidebar({ tree }: DocsMarketingSidebarProps) {
+export function DocsSidebar({ tree }: DocsSidebarProps) {
   const pathname = usePathname();
 
   return (
     <Sidebar
       side="left"
       variant="sidebar"
-      collapsible="none"
       className="border-0 ![border-right:0]"
     >
       {/* Static Header - Logo, Trigger, Matrix, Back to Home */}
@@ -55,7 +54,7 @@ export function DocsMarketingSidebar({ tree }: DocsMarketingSidebarProps) {
         {/* Logo - aligned with main header */}
         <div className="h-[4.5rem] page-gutter -ml-2 flex flex-row items-center gap-2">
           <Link href={wwwUrl}>
-            <Icons.logo className="size-22 text-foreground group-hover:text-foreground transition-colors" />
+            <Icons.logoShort className="h-4 w-4 text-foreground group-hover:text-foreground transition-colors" />
           </Link>
         </div>
       </SidebarHeader>
