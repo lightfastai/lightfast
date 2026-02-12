@@ -9,6 +9,10 @@ import { V1SearchFiltersSchema } from "./search";
 
 /**
  * V1 FindSimilar request schema
+ *
+ * IMPORTANT: When adding/changing fields with .default() here, update the SDK's FindSimilarInput type
+ * in core/lightfast/src/types.ts to make those fields optional for better developer experience.
+ * The SDK client applies defaults before API calls (see core/lightfast/src/client.ts).
  */
 export const V1FindSimilarRequestSchema = z
   .object({

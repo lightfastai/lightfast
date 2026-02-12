@@ -8,6 +8,10 @@ import { z } from "zod";
 
 /**
  * Graph API request
+ *
+ * IMPORTANT: When adding/changing fields with .default() here, update the SDK's GraphInput type
+ * in core/lightfast/src/types.ts to make those fields optional for better developer experience.
+ * The SDK client applies defaults before API calls (see core/lightfast/src/client.ts).
  */
 export const V1GraphRequestSchema = z.object({
   id: z.string().describe("Observation ID to start graph traversal from"),

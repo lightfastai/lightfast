@@ -39,6 +39,29 @@ import type {
 } from "@repo/console-types";
 
 /**
+ * SDK Input Type Pattern
+ * =====================
+ *
+ * The V1 API schemas in @repo/console-types use Zod .default() for fields with server-side defaults.
+ * However, z.infer<> treats these fields as REQUIRED in the TypeScript type, even though Zod
+ * applies defaults at runtime.
+ *
+ * To improve DX, we create SDK input types (SearchInput, FindSimilarInput, etc.) that make these
+ * fields OPTIONAL. The SDK client then applies the defaults before making API calls.
+ *
+ * MAINTENANCE: When V1 schemas change:
+ * 1. If a field gets a new .default() → Add it to the Omit<> and Partial<Pick<>> in the SDK input type
+ * 2. If a field loses its .default() → Remove it from the transformation (keep it required)
+ * 3. If a new endpoint is added with defaults → Create a new input type following this pattern
+ *
+ * Pattern:
+ *   type XInput = Omit<V1XRequest, "fieldsWithDefaults"> &
+ *                 Partial<Pick<V1XRequest, "fieldsWithDefaults">>
+ *
+ * See: core/lightfast/src/client.ts for where defaults are applied
+ */
+
+/**
  * SDK input type for search requests.
  * Makes fields with defaults optional for better developer experience.
  * The API applies defaults server-side via Zod validation.
