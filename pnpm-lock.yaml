@@ -3077,6 +3077,9 @@ importers:
 
   packages/console-types:
     dependencies:
+      '@asteasolutions/zod-to-openapi':
+        specifier: ^7.3.4
+        version: 7.3.4(zod@3.25.76)
       '@repo/console-validation':
         specifier: workspace:*
         version: link:../console-validation
@@ -3102,6 +3105,9 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
+      tsx:
+        specifier: ^4.19.2
+        version: 4.20.6
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -4646,6 +4652,11 @@ packages:
 
   '@asteasolutions/zod-to-openapi@6.4.0':
     resolution: {integrity: sha512-8cxfF7AHHx2PqnN4Cd8/O8CBu/nVYJP9DpnfVLW3BFb66VJDnqI/CczZnkqMc3SNh6J9GiX7JbJ5T4BSP4HZ2Q==}
+    peerDependencies:
+      zod: ^3.20.2
+
+  '@asteasolutions/zod-to-openapi@7.3.4':
+    resolution: {integrity: sha512-/2rThQ5zPi9OzVwes6U7lK1+Yvug0iXu25olp7S0XsYmOqnyMfxH7gdSQjn/+DSOHRg7wnotwGJSyL+fBKdnEA==}
     peerDependencies:
       zod: ^3.20.2
 
@@ -16488,6 +16499,11 @@ snapshots:
   '@asamuzakjp/nwsapi@2.3.9': {}
 
   '@asteasolutions/zod-to-openapi@6.4.0(zod@3.25.76)':
+    dependencies:
+      openapi3-ts: 4.5.0
+      zod: 3.25.76
+
+  '@asteasolutions/zod-to-openapi@7.3.4(zod@3.25.76)':
     dependencies:
       openapi3-ts: 4.5.0
       zod: 3.25.76

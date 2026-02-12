@@ -13,7 +13,8 @@
     "./vector": "./src/vector.ts",
     "./error": "./src/error.ts",
     "./repository": "./src/repository.ts",
-    "./integrations/events": "./src/integrations/events.ts"
+    "./integrations/events": "./src/integrations/events.ts",
+    "./openapi.json": "./openapi.json"
   },
   "license": "MIT",
   "scripts": {
@@ -22,9 +23,11 @@
     "dev": "tsc --watch",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "generate:openapi": "tsx src/api/v1/generate-openapi.ts"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.4",
     "@repo/console-validation": "workspace:*",
     "zod": "catalog:zod3"
   },
@@ -35,6 +38,7 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "tsx": "^4.19.2",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

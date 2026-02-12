@@ -8,6 +8,7 @@
     "build": "pnpm build:prod",
     "build:dev": "next build --turbopack",
     "build:prod": "pnpm with-env next build --turbopack && pnpm with-env pnpm search:sync:ci",
+    "prebuild": "tsx scripts/generate-api-docs.ts",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --check . --ignore-path ../../.gitignore",
@@ -15,6 +16,7 @@
     "clean": "rm -rf .next .turbo dist .source tsconfig.tsbuildinfo",
     "postinstall": "fumadocs-mdx",
     "with-env": "dotenv -e ./.vercel/.env.development.local --",
+    "generate:api-docs": "tsx scripts/generate-api-docs.ts",
     "search:sync": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY",
     "search:sync:ci": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY -y"
   },

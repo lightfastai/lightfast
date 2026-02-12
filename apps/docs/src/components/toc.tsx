@@ -73,4 +73,4 @@ export function TOC({ items }: TOCProps) {
       </AnchorProvider>
     </div>
   );
-
+}

@@ -28,6 +28,7 @@ import {
 import { APIPage } from "fumadocs-openapi/ui";
 import { authUrl, wwwUrl } from "@/src/lib/related-projects";
 import { NextSteps } from "@/src/components/next-steps";
+import { AlphaBanner } from "@/src/components/alpha-banner";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -102,7 +103,13 @@ export const mdxComponents = {
 
     // Fallback for block code without language
     return (
-      <code className={cn("font-mono", className)} {...props}>
+      <code
+        className={cn(
+          "font-mono border text-sm bg-card/80 px-2 rounded-md tracking-wide",
+          className,
+        )}
+        {...props}
+      >
         {children}
       </code>
     );
@@ -399,6 +406,7 @@ export const mdxComponents = {
   ApiReferenceCard,
   ApiReferenceGrid,
   APIPage,
+  AlphaBanner,
 
   // Validation components
   ValidationError,
