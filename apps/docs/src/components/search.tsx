@@ -14,7 +14,8 @@ export function Search() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [open, setOpen] = useState(false);
 
-  const { search, results, isLoading, error, clearResults } = useMixedbreadSearch();
+  const { search, results, isLoading, error, clearResults } =
+    useMixedbreadSearch();
 
   const router = useRouter();
   const searchRef = useRef<HTMLDivElement>(null);
@@ -28,14 +29,22 @@ export function Search() {
     width: 0,
   });
 
-  useEffect(() => {
-    if (open && searchRef.current) {
+  const updateDialogPosition = () => {
+    if (searchRef.current) {
       const rect = searchRef.current.getBoundingClientRect();
       setDialogPosition({
-        top: rect.bottom + 12,
-        left: rect.left - 30,
-        width: rect.width + 60,
+        top: rect.bottom + 6,
+        left: rect.left,
+        width: rect.width,
       });
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      updateDialogPosition();
+      window.addEventListener("resize", updateDialogPosition);
+      return () => window.removeEventListener("resize", updateDialogPosition);
     }
   }, [open]);
 
@@ -125,15 +134,9 @@ export function Search() {
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <div
-        ref={searchRef}
-        className={cn(
-          "relative",
-          open && "z-50",
-        )}
-      >
+      <div ref={searchRef} className={cn("relative", open && "z-50")}>
         <div className="relative flex items-center">
-          <SearchIcon className="absolute left-4 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <SearchIcon className="absolute left-3 h-4 w-4 text-foreground/60 pointer-events-none z-10" />
           <Input
             ref={inputRef}
             type="text"
@@ -147,20 +150,20 @@ export function Search() {
               });
             }}
             className={cn(
-              "w-[420px] pl-11 pr-20",
-              "h-11",
-              "transition-all rounded-full border border-border/40",
-              "bg-background dark:bg-input/40",
+              "w-[420px] pl-10 pr-20 h-9",
+              "transition-all rounded-md border border-border/50",
+              "bg-card/40 backdrop-blur-md",
+              "text-foreground/60",
               "focus-visible:ring-0 focus-visible:ring-offset-0",
               "focus-visible:outline-none focus:outline-none",
-              "focus-visible:border-border/40",
+              "focus-visible:border-border/50",
             )}
           />
-          <div className="absolute right-4 flex items-center gap-1.5 pointer-events-none">
+          <div className="absolute right-2 flex items-center gap-1.5 pointer-events-none">
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Loader2 className="h-4 w-4 animate-spin text-foreground/60" />
             ) : (
-              <kbd className="hidden sm:inline-flex px-1.5 py-0.5 rounded border border-border text-2xs font-medium">
+              <kbd className="hidden sm:inline-flex gap-1.5 px-1.5 py-0.5 items-center rounded-md border border-border text-sm font-medium text-foreground/60">
                 {open ? "ESC" : "⌘K"}
               </kbd>
             )}
@@ -171,9 +174,9 @@ export function Search() {
       <Dialog.Portal>
         <Dialog.Overlay
           className={cn(
-            "fixed inset-0 z-40 bg-black/50 backdrop-blur-sm",
+            "fixed inset-0 z-40 bg-black/20 backdrop-blur-md",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
-            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           )}
           onClick={() => setOpen(false)}
         />
@@ -198,8 +201,8 @@ export function Search() {
             }}
             className={cn(
               "fixed z-50",
-              "bg-background/95 backdrop-blur-sm",
-              "border border-border/50 rounded-2xl shadow-2xl",
+              "bg-card/40 backdrop-blur-md",
+              "border border-border/50 rounded-sm shadow",
               "max-h-[420px] overflow-y-auto",
               "data-[state=open]:animate-in data-[state=closed]:animate-out",
               "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
