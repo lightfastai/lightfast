@@ -244,13 +244,20 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    font-family:
-      var(--font-geist-sans), var(--font-sans), ui-sans-serif, system-ui,
-      sans-serif;
     letter-spacing: -0.03em;
   }
   body {
     @apply bg-background text-foreground;
+    font-family:
+      var(--font-geist-sans), var(--font-sans), ui-sans-serif, system-ui,
+      sans-serif;
+  }
+  code,
+  pre,
+  kbd,
+  samp,
+  .font-mono {
+    letter-spacing: normal;
   }
 }
 
