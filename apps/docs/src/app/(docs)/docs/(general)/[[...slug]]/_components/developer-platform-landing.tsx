@@ -79,7 +79,7 @@ export function DeveloperPlatformLanding() {
       <div className="h-fit grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
         {/* Left: text */}
         <div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] text-balance font-[family-name:var(--font-exposure-trial)]">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] text-balance font-[family-name:var(--font-exposure-plus)]">
             Memory built for teams
           </h1>
           <p className="mt-2 text-md text-foreground/70">

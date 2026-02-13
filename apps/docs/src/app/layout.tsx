@@ -2,7 +2,7 @@ import "fumadocs-ui/style.css";
 import "@/src/styles/globals.css";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
-import { neueMontreal, exposureTrial } from "@/src/lib/fonts";
+import { neueMontreal, exposurePlus } from "@/src/lib/fonts";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
@@ -10,7 +10,7 @@ import { createMetadata } from "@vendor/seo/metadata";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <html className={cn(fonts, neueMontreal.variable, exposureTrial.variable)} lang="en" suppressHydrationWarning>
+    <html className={cn(fonts, neueMontreal.variable, exposurePlus.variable)} lang="en" suppressHydrationWarning>
       <head />
       <body className={cn("bg-background min-h-screen dark")}>
         <RootProvider

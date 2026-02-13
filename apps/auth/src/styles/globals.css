@@ -1,63 +1,11 @@
 /* Import the base UI globals */
 @import "@repo/ui/globals.css";
 
-/* PP Neue Montreal Font Family */
-@font-face {
-  font-family: "PP Neue Montreal";
-  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Thin.woff2") format("woff2");
-  font-weight: 100;
-  font-style: normal;
-  font-display: swap;
-}
+/* Custom font family CSS variables - provided by next/font/local */
+/* Default font-sans remains Geist - use these explicitly when needed */
+/* Usage: font-[family-name:var(--font-pp-neue-montreal)] or font-[family-name:var(--font-exposure-plus)] */
 
-@font-face {
-  font-family: "PP Neue Montreal";
-  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Book.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "PP Neue Montreal";
-  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Italic.woff2")
-    format("woff2");
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "PP Neue Montreal";
-  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Medium.woff2")
-    format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "PP Neue Montreal";
-  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-Bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "PP Neue Montreal";
-  src: url("/fonts/pp-neue-montreal/PPNeueMontreal-SemiBolditalic.woff2")
-    format("woff2");
-  font-weight: 600;
-  font-style: italic;
-  font-display: swap;
-}
-
-/* Override shadcn border-radius via CSS variable */
 :root {
-  /* Override font-sans to use PP Neue Montreal */
-  --font-sans: "PP Neue Montreal", var(--font-geist-sans);
-
   /* PP Neue Montreal Typography Settings */
   --font-pp-letter-spacing: -0.03em;
   --font-pp-line-height: 1.1;
@@ -65,8 +13,12 @@
 
 @layer utilities {
   .font-pp {
-    font-family: var(--font-sans);
+    font-family: var(--font-pp-neue-montreal);
     letter-spacing: var(--font-pp-letter-spacing);
     line-height: var(--font-pp-line-height);
+  }
+
+  .font-exposure {
+    font-family: var(--font-exposure-plus);
   }
 }

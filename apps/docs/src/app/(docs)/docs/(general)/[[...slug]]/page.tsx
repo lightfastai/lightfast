@@ -177,7 +177,7 @@ export default async function Page({
           {(title !== undefined || description !== undefined) && (
             <div className="flex w-full flex-col items-center text-center mb-16 max-w-3xl mx-auto">
               {title ? (
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] text-balance font-[family-name:var(--font-exposure-trial)]">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] text-balance font-[family-name:var(--font-exposure-plus)]">
                   {title}
                 </h1>
               ) : null}

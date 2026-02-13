@@ -3,8 +3,9 @@ import type { Metadata, Viewport } from "next";
 import "~/styles/globals.css";
 
 import { siteConfig } from "@repo/site-config";
-import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
+import { fonts as geistFonts } from "@repo/ui/lib/fonts";
+import { exposurePlus, ppNeueMontreal } from "~/lib/fonts";
 import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
@@ -145,7 +146,12 @@ export default function RootLayout({
 
   return (
     <html
-      className={cn(fonts, "dark scrollbar-thin")}
+      className={cn(
+        geistFonts,
+        ppNeueMontreal.variable,
+        exposurePlus.variable,
+        "dark scrollbar-thin",
+      )}
       lang="en"
       suppressHydrationWarning
     >

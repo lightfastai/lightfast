@@ -2,6 +2,13 @@
 @import "@repo/ui/globals.css";
 
 /*
+ * Custom Font Variables
+ * Fonts are loaded via next/font/local in ~/lib/fonts.ts
+ * Use explicitly when needed (e.g., font-[family-name:var(--font-pp-neue-montreal)])
+ * Default font-sans remains Geist from @repo/ui
+ */
+
+/*
  * Custom color overrides for Console app dark mode only
  * Light mode uses the default colors from @repo/ui
  */
@@ -43,5 +50,11 @@
 
 /* Additional custom styles specific to the console app */
 @layer utilities {
-  /* Add any console-specific utility classes here */
+  .font-pp {
+    font-family: var(--font-pp-neue-montreal);
+  }
+
+  .font-exposure {
+    font-family: var(--font-exposure-plus);
+  }
 }

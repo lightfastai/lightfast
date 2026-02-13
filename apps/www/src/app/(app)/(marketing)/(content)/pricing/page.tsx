@@ -325,7 +325,7 @@ export default function PricingPage() {
 
                 {/* Heading */}
                 <h1
-                  className={`text-3xl sm:text-4xl md:text-5xl font-normal px-4 text-balance font-pp`}
+                  className={`text-3xl sm:text-4xl md:text-5xl font-medium px-4 text-balance font-pp`}
                 >
                   Choose the plan that fits your team
                 </h1>

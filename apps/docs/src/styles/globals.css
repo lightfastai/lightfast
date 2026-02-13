@@ -4,6 +4,9 @@
 @import "fumadocs-openapi/css/preset.css";
 @import "@repo/ui/globals.css";
 
+/* Custom font family CSS variables - provided by next/font/local */
+/* Default font-sans remains Geist - use these explicitly when needed */
+
 /* Lightfast brand color scale for OpenAPI customization */
 @layer components {
   :root {
@@ -15,5 +18,15 @@
     --brand-500: 225 86% 55%;    /* Primary brand color (accent) */
     --brand-600: 225 70% 44%;    /* Darker variant */
     --brand-900: 225 80% 15%;    /* Darkest for text */
+  }
+}
+
+@layer utilities {
+  .font-pp {
+    font-family: var(--font-pp-neue-montreal);
+  }
+
+  .font-exposure {
+    font-family: var(--font-exposure-plus);
   }
 }

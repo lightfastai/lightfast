@@ -1,7 +1,10 @@
 import localFont from "next/font/local";
 
-// PP Neue Montreal - 6 weights (100, 400, 400 italic, 500, 600 italic, 700)
-export const neueMontreal = localFont({
+/**
+ * PP Neue Montreal - Primary font family
+ * Loads all 6 weights: 100 (thin), 400 (book), 400 italic, 500 (medium), 600 italic (semibold), 700 (bold)
+ */
+export const ppNeueMontreal = localFont({
   src: [
     {
       path: "../../public/fonts/pp-neue-montreal/PPNeueMontreal-Thin.woff2",
@@ -38,7 +41,10 @@ export const neueMontreal = localFont({
   display: "swap",
 });
 
-// Exposure Plus - 4 weights (400, 500, 600, 700)
+/**
+ * Exposure Plus - Secondary/display font family
+ * Loads weights: 400, 500, 600, 700
+ */
 export const exposurePlus = localFont({
   src: [
     {
@@ -65,6 +71,3 @@ export const exposurePlus = localFont({
   variable: "--font-exposure-plus",
   display: "swap",
 });
-
-// Legacy export for backwards compatibility
-export const exposureTrial = exposurePlus;
