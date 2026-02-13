@@ -26,20 +26,48 @@ export async function SSRCodeBlock({
   showLineNumbers = true,
 }: SSRCodeBlockProps) {
   const code = children.trim();
-  const lang = language as BundledLanguage;
   const lineCount = code.split("\n").length;
 
-  // Generate HAST for both themes in parallel
-  const [lightHast, darkHast] = await Promise.all([
-    codeToHast(code, {
-      lang,
-      theme: "github-light-default",
-    }),
-    codeToHast(code, {
-      lang,
-      theme: openaiDark,
-    }),
-  ]);
+  // Normalize language names - handle common aliases and invalid languages
+  let lang: BundledLanguage = language as BundledLanguage;
+  const languageLower = language.toLowerCase();
+
+  // Map common invalid/alias names to valid Shiki languages
+  const languageMap: Record<string, BundledLanguage> = {
+    plaintext: "text",
+    plain: "text",
+  };
+
+  if (languageLower in languageMap) {
+    lang = languageMap[languageLower];
+  }
+
+  // Generate HAST for both themes in parallel, with fallback to plain text
+  let lightHast, darkHast;
+  try {
+    [lightHast, darkHast] = await Promise.all([
+      codeToHast(code, {
+        lang,
+        theme: "github-light-default",
+      }),
+      codeToHast(code, {
+        lang,
+        theme: openaiDark,
+      }),
+    ]);
+  } catch (error) {
+    // If language is not supported, fall back to plain text
+    [lightHast, darkHast] = await Promise.all([
+      codeToHast(code, {
+        lang: "text",
+        theme: "github-light-default",
+      }),
+      codeToHast(code, {
+        lang: "text",
+        theme: openaiDark,
+      }),
+    ]);
+  }
 
   // Convert HAST to JSX for both themes
   // Override elements to control styling while preserving Shiki's syntax colors

@@ -106,6 +106,8 @@ Create the infrastructure: an OpenAPI schema reader utility and reusable MDX com
 **File**: `apps/docs/src/lib/schema-reader.ts` (NEW)
 **Purpose**: Parse `openapi.json` and provide typed access to schema definitions
 
+**Note**: The OpenAPI spec inlines all schemas without `$ref` references, so no reference resolution is needed.
+
 ```typescript
 import openApiSpec from "../../../packages/console-openapi/openapi.json";
 
@@ -127,26 +129,21 @@ interface SchemaInfo {
 
 /**
  * Extract schema fields from OpenAPI component schema.
- * Handles: primitives, enums, arrays, nested objects, $ref resolution.
+ * Handles: primitives, enums, arrays, nested objects.
  */
 export function getSchemaFields(schemaName: string): SchemaField[] {
   const schema = openApiSpec.components?.schemas?.[schemaName];
   if (!schema) throw new Error(`Schema "${schemaName}" not found in OpenAPI spec`);
-  return parseSchemaProperties(schema, openApiSpec.components?.schemas ?? {});
+  return parseSchemaProperties(schema);
 }
 
 /**
  * Get human-readable type string from OpenAPI schema property.
  */
-function resolveType(prop: OpenAPIProperty, schemas: Record<string, unknown>): string {
-  // Handle $ref
-  if (prop.$ref) {
-    const refName = prop.$ref.replace("#/components/schemas/", "");
-    return refName;
-  }
+function resolveType(prop: OpenAPIProperty): string {
   // Handle arrays
   if (prop.type === "array") {
-    const itemType = resolveType(prop.items, schemas);
+    const itemType = resolveType(prop.items);
     return `${itemType}[]`;
   }
   // Handle enums
@@ -155,7 +152,7 @@ function resolveType(prop: OpenAPIProperty, schemas: Record<string, unknown>): s
   if (prop.nullable) return `${prop.type} | null`;
   // Handle oneOf (nullable in OpenAPI 3.1)
   if (prop.oneOf) {
-    const types = prop.oneOf.map(s => s.type || resolveType(s, schemas));
+    const types = prop.oneOf.map(s => s.type || resolveType(s));
     return types.join(" | ");
   }
   return prop.type ?? "unknown";
@@ -305,24 +302,24 @@ export function EnumValues({ schema, field, descriptions }: EnumValuesProps) {
 ```
 
 #### 5. Register MDX Components
-**File**: `apps/docs/src/mdx-components.tsx` (EDIT)
-**Changes**: Add schema components to the components map
+**File**: `apps/docs/mdx-components.tsx` (EDIT)
+**Changes**: Add schema components to the `mdxComponents` export object
+
+**Current pattern**: The file exports a plain object `mdxComponents` that merges fumadocs defaults with custom components.
 
 ```typescript
 import { ParamTable } from "@/src/components/schema/param-table";
 import { ResponseSchema } from "@/src/components/schema/response-schema";
 import { EnumValues } from "@/src/components/schema/enum-values";
 
-// Add to components map:
-export function useMDXComponents(components: MDXComponents): MDXComponents {
-  return {
-    ...defaultComponents,
-    ...components,
-    ParamTable,
-    ResponseSchema,
-    EnumValues,
-  };
-}
+// Add to the mdxComponents export object (after other custom components like FeatureList, ApiEndpoint, etc.):
+export const mdxComponents = {
+  ...defaultMdxComponents,
+  // ... existing custom components ...
+  ParamTable,
+  ResponseSchema,
+  EnumValues,
+};
 ```
 
 ### Success Criteria:
@@ -580,7 +577,6 @@ try {
   - Nested objects (filters, dateRange) should be flattened correctly
   - Enum values should be extracted
   - Default values should be present
-  - $ref resolution should work
 
 ### Integration Tests:
 - Full docs build: `pnpm build:docs` should succeed

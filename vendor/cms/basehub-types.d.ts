@@ -144,7 +144,7 @@ export interface BlockColor {
     __typename: 'BlockColor'
 }
 
-export type BlockDocument = (Author | AuthorItem | Blog | Categories | CategoriesItem | ChangelogPages | ChangelogPagesItem | DistributionComponent | EngagementComponent | Faq | FaqItem | FaqItem_1 | Faq_1 | LegalPages | Post | PostItem | SeoComponent | SeoComponent_1 | TemplateLegalComponent | _AgentChangelogWriterAgent | _AgentStart | authorItem_AsList | categoriesItem_AsList | changelogPagesItem_AsList | distributionComponent_AsList | engagementComponent_AsList | faqItem1_AsList | faqItem_AsList | postItem_AsList | seoComponent1_AsList | seoComponent_AsList | templateLegalComponent_AsList) & { __isUnion?: true }
+export type BlockDocument = (Author | AuthorItem | Blog | Categories | CategoriesItem | Changelog | DistributionComponent | EngagementComponent | Faq | FaqItem | FaqItem_1 | Faq_1 | LegalPages | Post | PostItem | PostItem_1 | Post_1 | SeoComponent | SeoComponent_1 | TemplateLegalComponent | _AgentStart | authorItem_AsList | categoriesItem_AsList | distributionComponent_AsList | engagementComponent_AsList | faqItem1_AsList | faqItem_AsList | postItem1_AsList | postItem_AsList | seoComponent1_AsList | seoComponent_AsList | templateLegalComponent_AsList) & { __isUnion?: true }
 
 export interface BlockDocumentSys {
     apiNamePath: Scalars['String']
@@ -203,7 +203,7 @@ export interface BlockImage {
     __typename: 'BlockImage'
 }
 
-export type BlockList = (Author | Categories | ChangelogPages | Faq | Faq_1 | LegalPages | Post | authorItem_AsList | categoriesItem_AsList | changelogPagesItem_AsList | distributionComponent_AsList | engagementComponent_AsList | faqItem1_AsList | faqItem_AsList | postItem_AsList | seoComponent1_AsList | seoComponent_AsList | templateLegalComponent_AsList) & { __isUnion?: true }
+export type BlockList = (Author | Categories | Faq | Faq_1 | LegalPages | Post | Post_1 | authorItem_AsList | categoriesItem_AsList | distributionComponent_AsList | engagementComponent_AsList | faqItem1_AsList | faqItem_AsList | postItem1_AsList | postItem_AsList | seoComponent1_AsList | seoComponent_AsList | templateLegalComponent_AsList) & { __isUnion?: true }
 
 export interface BlockOgImage {
     height: Scalars['Int']
@@ -241,7 +241,7 @@ export interface Blog {
     _title: Scalars['String']
     author: Author
     categories: Categories
-    post: Post
+    post: Post_1
     __typename: 'Blog'
 }
 
@@ -335,56 +335,9 @@ export interface Changelog {
     _slugPath: Scalars['String']
     _sys: BlockDocumentSys
     _title: Scalars['String']
-    post: ChangelogPages
+    post: Post
     __typename: 'Changelog'
 }
-
-export interface ChangelogPages {
-    _analyticsKey: Scalars['String']
-    _dashboardUrl: Scalars['String']
-    _id: Scalars['String']
-    _idPath: Scalars['String']
-    _meta: ListMeta
-    /** The key used to search from the frontend. */
-    _searchKey: Scalars['String']
-    _slug: Scalars['String']
-    _slugPath: Scalars['String']
-    _sys: BlockDocumentSys
-    _title: Scalars['String']
-    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
-    item: (ChangelogPagesItem | null)
-    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
-    items: ChangelogPagesItem[]
-    __typename: 'ChangelogPages'
-}
-
-export interface ChangelogPagesItem {
-    _analyticsKey: Scalars['String']
-    _dashboardUrl: Scalars['String']
-    /** Array of search highlight information with field names and HTML markup */
-    _highlight: (SearchHighlight[] | null)
-    _id: Scalars['String']
-    _idPath: Scalars['String']
-    _slug: Scalars['String']
-    _slugPath: Scalars['String']
-    _sys: BlockDocumentSys
-    _title: Scalars['String']
-    body: (Body_1 | null)
-    excerpt: (Scalars['String'] | null)
-    featuredImage: (BlockImage | null)
-    fixes: (Scalars['String'] | null)
-    improvements: (Scalars['String'] | null)
-    infrastructure: (Scalars['String'] | null)
-    patches: (Scalars['String'] | null)
-    /** ISO 8601 date string. */
-    publishedAt: (Scalars['String'] | null)
-    seo: SeoComponent_1
-    slug: (Scalars['String'] | null)
-    tldr: (Scalars['String'] | null)
-    __typename: 'ChangelogPagesItem'
-}
-
-export type ChangelogPagesItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'body__ASC' | 'body__DESC' | 'excerpt__ASC' | 'excerpt__DESC' | 'featuredImage__ASC' | 'featuredImage__DESC' | 'fixes__ASC' | 'fixes__DESC' | 'improvements__ASC' | 'improvements__DESC' | 'infrastructure__ASC' | 'infrastructure__DESC' | 'patches__ASC' | 'patches__DESC' | 'publishedAt__ASC' | 'publishedAt__DESC' | 'seo__ASC' | 'seo__DESC' | 'slug__ASC' | 'slug__DESC' | 'tldr__ASC' | 'tldr__DESC'
 
 export interface CtaDescription {
     html: Scalars['String']
@@ -508,7 +461,7 @@ export interface FaqItem {
     __typename: 'FaqItem'
 }
 
-export type FaqItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'answer__ASC' | 'answer__DESC' | 'question__ASC' | 'question__DESC' | 'untitled__ASC' | 'untitled__DESC'
+export type FaqItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'answer__ASC' | 'answer__DESC' | 'question__ASC' | 'question__DESC'
 
 export interface FaqItem_1 {
     _analyticsKey: Scalars['String']
@@ -526,7 +479,7 @@ export interface FaqItem_1 {
     __typename: 'FaqItem_1'
 }
 
-export type FaqItem_1OrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'answer__ASC' | 'answer__DESC' | 'question__ASC' | 'question__DESC'
+export type FaqItem_1OrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'answer__ASC' | 'answer__DESC' | 'question__ASC' | 'question__DESC' | 'untitled__ASC' | 'untitled__DESC'
 
 export interface Faq_1 {
     _analyticsKey: Scalars['String']
@@ -647,8 +600,36 @@ export interface PostItem {
     _slugPath: Scalars['String']
     _sys: BlockDocumentSys
     _title: Scalars['String']
+    body: (Body | null)
+    excerpt: (Scalars['String'] | null)
+    featuredImage: (BlockImage | null)
+    fixes: (Scalars['String'] | null)
+    improvements: (Scalars['String'] | null)
+    infrastructure: (Scalars['String'] | null)
+    patches: (Scalars['String'] | null)
+    /** ISO 8601 date string. */
+    publishedAt: Scalars['String']
+    seo: SeoComponent
+    slug: (Scalars['String'] | null)
+    tldr: (Scalars['String'] | null)
+    __typename: 'PostItem'
+}
+
+export type PostItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'body__ASC' | 'body__DESC' | 'excerpt__ASC' | 'excerpt__DESC' | 'featuredImage__ASC' | 'featuredImage__DESC' | 'fixes__ASC' | 'fixes__DESC' | 'improvements__ASC' | 'improvements__DESC' | 'infrastructure__ASC' | 'infrastructure__DESC' | 'patches__ASC' | 'patches__DESC' | 'publishedAt__ASC' | 'publishedAt__DESC' | 'seo__ASC' | 'seo__DESC' | 'slug__ASC' | 'slug__DESC' | 'tldr__ASC' | 'tldr__DESC'
+
+export interface PostItem_1 {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    /** Array of search highlight information with field names and HTML markup */
+    _highlight: (SearchHighlight[] | null)
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
     authors: AuthorItem[]
-    body: Body
+    body: Body_1
     categories: CategoriesItem[]
     contentType: Scalars['BSHBSelect__442379851']
     description: Scalars['String']
@@ -659,15 +640,35 @@ export interface PostItem {
     ogImage: BlockOgImage
     /** ISO 8601 date string. */
     publishedAt: (Scalars['String'] | null)
-    relatedPosts: (PostItem[] | null)
-    seo: SeoComponent
+    relatedPosts: (PostItem_1[] | null)
+    seo: SeoComponent_1
     slug: Scalars['String']
     status: Scalars['BSHBSelect_950708073']
+    tldr: (Scalars['String'] | null)
     videoUrl: (BlockVideo | null)
-    __typename: 'PostItem'
+    __typename: 'PostItem_1'
 }
 
-export type PostItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'authors__ASC' | 'authors__DESC' | 'body__ASC' | 'body__DESC' | 'categories__ASC' | 'categories__DESC' | 'contentType__ASC' | 'contentType__DESC' | 'description__ASC' | 'description__DESC' | 'distribution__ASC' | 'distribution__DESC' | 'engagement__ASC' | 'engagement__DESC' | 'excerpt__ASC' | 'excerpt__DESC' | 'featuredImage__ASC' | 'featuredImage__DESC' | 'ogImage__ASC' | 'ogImage__DESC' | 'publishedAt__ASC' | 'publishedAt__DESC' | 'relatedPosts__ASC' | 'relatedPosts__DESC' | 'seo__ASC' | 'seo__DESC' | 'slug__ASC' | 'slug__DESC' | 'status__ASC' | 'status__DESC' | 'videoUrl__ASC' | 'videoUrl__DESC'
+export type PostItem_1OrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'authors__ASC' | 'authors__DESC' | 'body__ASC' | 'body__DESC' | 'categories__ASC' | 'categories__DESC' | 'contentType__ASC' | 'contentType__DESC' | 'description__ASC' | 'description__DESC' | 'distribution__ASC' | 'distribution__DESC' | 'engagement__ASC' | 'engagement__DESC' | 'excerpt__ASC' | 'excerpt__DESC' | 'featuredImage__ASC' | 'featuredImage__DESC' | 'ogImage__ASC' | 'ogImage__DESC' | 'publishedAt__ASC' | 'publishedAt__DESC' | 'relatedPosts__ASC' | 'relatedPosts__DESC' | 'seo__ASC' | 'seo__DESC' | 'slug__ASC' | 'slug__DESC' | 'status__ASC' | 'status__DESC' | 'tldr__ASC' | 'tldr__DESC' | 'videoUrl__ASC' | 'videoUrl__DESC'
+
+export interface Post_1 {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _meta: ListMeta
+    /** The key used to search from the frontend. */
+    _searchKey: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item: (PostItem_1 | null)
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items: PostItem_1[]
+    __typename: 'Post_1'
+}
 
 export interface Query {
     _agent: (_AgentStart | null)
@@ -722,14 +723,14 @@ export interface SeoComponent {
     canonicalUrl: (Scalars['String'] | null)
     faq: Faq
     focusKeyword: (Scalars['String'] | null)
-    metaDescription: Scalars['String']
-    metaTitle: Scalars['String']
+    metaDescription: (Scalars['String'] | null)
+    metaTitle: (Scalars['String'] | null)
     noIndex: Scalars['Boolean']
-    secondaryKeywords: Scalars['String']
+    secondaryKeyword: (Scalars['String'] | null)
     __typename: 'SeoComponent'
 }
 
-export type SeoComponentOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'canonicalUrl__ASC' | 'canonicalUrl__DESC' | 'faq__ASC' | 'faq__DESC' | 'focusKeyword__ASC' | 'focusKeyword__DESC' | 'metaDescription__ASC' | 'metaDescription__DESC' | 'metaTitle__ASC' | 'metaTitle__DESC' | 'noIndex__ASC' | 'noIndex__DESC' | 'secondaryKeywords__ASC' | 'secondaryKeywords__DESC'
+export type SeoComponentOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'canonicalUrl__ASC' | 'canonicalUrl__DESC' | 'faq__ASC' | 'faq__DESC' | 'focusKeyword__ASC' | 'focusKeyword__DESC' | 'metaDescription__ASC' | 'metaDescription__DESC' | 'metaTitle__ASC' | 'metaTitle__DESC' | 'noIndex__ASC' | 'noIndex__DESC' | 'secondaryKeyword__ASC' | 'secondaryKeyword__DESC'
 
 export interface SeoComponent_1 {
     _analyticsKey: Scalars['String']
@@ -745,14 +746,14 @@ export interface SeoComponent_1 {
     canonicalUrl: (Scalars['String'] | null)
     faq: Faq_1
     focusKeyword: (Scalars['String'] | null)
-    metaDescription: (Scalars['String'] | null)
-    metaTitle: (Scalars['String'] | null)
+    metaDescription: Scalars['String']
+    metaTitle: Scalars['String']
     noIndex: Scalars['Boolean']
-    secondaryKeyword: (Scalars['String'] | null)
+    secondaryKeywords: Scalars['String']
     __typename: 'SeoComponent_1'
 }
 
-export type SeoComponent_1OrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'canonicalUrl__ASC' | 'canonicalUrl__DESC' | 'faq__ASC' | 'faq__DESC' | 'focusKeyword__ASC' | 'focusKeyword__DESC' | 'metaDescription__ASC' | 'metaDescription__DESC' | 'metaTitle__ASC' | 'metaTitle__DESC' | 'noIndex__ASC' | 'noIndex__DESC' | 'secondaryKeyword__ASC' | 'secondaryKeyword__DESC'
+export type SeoComponent_1OrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'canonicalUrl__ASC' | 'canonicalUrl__DESC' | 'faq__ASC' | 'faq__DESC' | 'focusKeyword__ASC' | 'focusKeyword__DESC' | 'metaDescription__ASC' | 'metaDescription__DESC' | 'metaTitle__ASC' | 'metaTitle__DESC' | 'noIndex__ASC' | 'noIndex__DESC' | 'secondaryKeywords__ASC' | 'secondaryKeywords__DESC'
 
 export interface TemplateLegalComponent {
     _analyticsKey: Scalars['String']
@@ -792,35 +793,6 @@ export interface Variant {
     isDefault: Scalars['Boolean']
     label: Scalars['String']
     __typename: 'Variant'
-}
-
-export interface _AgentChangelogWriterAgent {
-    _agentKey: Scalars['String']
-    _analyticsKey: Scalars['String']
-    _dashboardUrl: Scalars['String']
-    _id: Scalars['String']
-    _idPath: Scalars['String']
-    _slug: Scalars['String']
-    _slugPath: Scalars['String']
-    _sys: BlockDocumentSys
-    _title: Scalars['String']
-    accent: Scalars['String']
-    avatar: Scalars['String']
-    chatUrl: Scalars['String']
-    commit: Scalars['Boolean']
-    description: Scalars['String']
-    edit: Scalars['Boolean']
-    embedUrl: Scalars['String']
-    getUserInfo: Scalars['Boolean']
-    grayscale: Scalars['String']
-    manageBranches: Scalars['Boolean']
-    mcpUrl: Scalars['String']
-    model: Scalars['String']
-    openRouterKey: (Scalars['String'] | null)
-    searchTheWeb: Scalars['Boolean']
-    slackInstallUrl: Scalars['String']
-    systemPrompt: Scalars['String']
-    __typename: '_AgentChangelogWriterAgent'
 }
 
 export interface _AgentStart {
@@ -918,7 +890,6 @@ export type _ResolveTargetsWithEnum = 'id' | 'objectName'
 export type _StructureFormatEnum = 'json' | 'xml'
 
 export interface _agents {
-    changelogWriterAgent: _AgentChangelogWriterAgent
     start: _AgentStart
     __typename: '_agents'
 }
@@ -926,12 +897,12 @@ export interface _agents {
 export interface _components {
     authorItem: authorItem_AsList
     categoriesItem: categoriesItem_AsList
-    changelogPagesItem: changelogPagesItem_AsList
     distribution: distributionComponent_AsList
     engagement: engagementComponent_AsList
     faqItem: faqItem_AsList
     faqItem1: faqItem1_AsList
     postItem: postItem_AsList
+    postItem1: postItem1_AsList
     seo: seoComponent_AsList
     seoComponent1: seoComponent1_AsList
     templateLegal: templateLegalComponent_AsList
@@ -974,25 +945,6 @@ export interface categoriesItem_AsList {
     /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
     items: CategoriesItem[]
     __typename: 'categoriesItem_AsList'
-}
-
-export interface changelogPagesItem_AsList {
-    _analyticsKey: Scalars['String']
-    _dashboardUrl: Scalars['String']
-    _id: Scalars['String']
-    _idPath: Scalars['String']
-    _meta: ListMeta
-    /** The key used to search from the frontend. */
-    _searchKey: Scalars['String']
-    _slug: Scalars['String']
-    _slugPath: Scalars['String']
-    _sys: BlockDocumentSys
-    _title: Scalars['String']
-    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
-    item: (ChangelogPagesItem | null)
-    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
-    items: ChangelogPagesItem[]
-    __typename: 'changelogPagesItem_AsList'
 }
 
 export interface distributionComponent_AsList {
@@ -1069,6 +1021,25 @@ export interface faqItem_AsList {
     /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
     items: FaqItem[]
     __typename: 'faqItem_AsList'
+}
+
+export interface postItem1_AsList {
+    _analyticsKey: Scalars['String']
+    _dashboardUrl: Scalars['String']
+    _id: Scalars['String']
+    _idPath: Scalars['String']
+    _meta: ListMeta
+    /** The key used to search from the frontend. */
+    _searchKey: Scalars['String']
+    _slug: Scalars['String']
+    _slugPath: Scalars['String']
+    _sys: BlockDocumentSys
+    _title: Scalars['String']
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item: (PostItem_1 | null)
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items: PostItem_1[]
+    __typename: 'postItem1_AsList'
 }
 
 export interface postItem_AsList {
@@ -1271,8 +1242,7 @@ export interface BlockDocumentGenqlSelection{
     on_Blog?: BlogGenqlSelection
     on_Categories?: CategoriesGenqlSelection
     on_CategoriesItem?: CategoriesItemGenqlSelection
-    on_ChangelogPages?: ChangelogPagesGenqlSelection
-    on_ChangelogPagesItem?: ChangelogPagesItemGenqlSelection
+    on_Changelog?: ChangelogGenqlSelection
     on_DistributionComponent?: DistributionComponentGenqlSelection
     on_EngagementComponent?: EngagementComponentGenqlSelection
     on_Faq?: FaqGenqlSelection
@@ -1282,18 +1252,19 @@ export interface BlockDocumentGenqlSelection{
     on_LegalPages?: LegalPagesGenqlSelection
     on_Post?: PostGenqlSelection
     on_PostItem?: PostItemGenqlSelection
+    on_PostItem_1?: PostItem_1GenqlSelection
+    on_Post_1?: Post_1GenqlSelection
     on_SeoComponent?: SeoComponentGenqlSelection
     on_SeoComponent_1?: SeoComponent_1GenqlSelection
     on_TemplateLegalComponent?: TemplateLegalComponentGenqlSelection
-    on__AgentChangelogWriterAgent?: _AgentChangelogWriterAgentGenqlSelection
     on__AgentStart?: _AgentStartGenqlSelection
     on_authorItem_AsList?: authorItem_AsListGenqlSelection
     on_categoriesItem_AsList?: categoriesItem_AsListGenqlSelection
-    on_changelogPagesItem_AsList?: changelogPagesItem_AsListGenqlSelection
     on_distributionComponent_AsList?: distributionComponent_AsListGenqlSelection
     on_engagementComponent_AsList?: engagementComponent_AsListGenqlSelection
     on_faqItem1_AsList?: faqItem1_AsListGenqlSelection
     on_faqItem_AsList?: faqItem_AsListGenqlSelection
+    on_postItem1_AsList?: postItem1_AsListGenqlSelection
     on_postItem_AsList?: postItem_AsListGenqlSelection
     on_seoComponent1_AsList?: seoComponent1_AsListGenqlSelection
     on_seoComponent_AsList?: seoComponent_AsListGenqlSelection
@@ -1382,18 +1353,18 @@ export interface BlockListGenqlSelection{
     _title?: boolean | number
     on_Author?: AuthorGenqlSelection
     on_Categories?: CategoriesGenqlSelection
-    on_ChangelogPages?: ChangelogPagesGenqlSelection
     on_Faq?: FaqGenqlSelection
     on_Faq_1?: Faq_1GenqlSelection
     on_LegalPages?: LegalPagesGenqlSelection
     on_Post?: PostGenqlSelection
+    on_Post_1?: Post_1GenqlSelection
     on_authorItem_AsList?: authorItem_AsListGenqlSelection
     on_categoriesItem_AsList?: categoriesItem_AsListGenqlSelection
-    on_changelogPagesItem_AsList?: changelogPagesItem_AsListGenqlSelection
     on_distributionComponent_AsList?: distributionComponent_AsListGenqlSelection
     on_engagementComponent_AsList?: engagementComponent_AsListGenqlSelection
     on_faqItem1_AsList?: faqItem1_AsListGenqlSelection
     on_faqItem_AsList?: faqItem_AsListGenqlSelection
+    on_postItem1_AsList?: postItem1_AsListGenqlSelection
     on_postItem_AsList?: postItem_AsListGenqlSelection
     on_seoComponent1_AsList?: seoComponent1_AsListGenqlSelection
     on_seoComponent_AsList?: seoComponent_AsListGenqlSelection
@@ -1486,15 +1457,15 @@ export interface BlogGenqlSelection{
     search?: (CategoriesItemSearchInput | null), 
     /** Skip the first n items. */
     skip?: (Scalars['Int'] | null)} })
-    post?: (PostGenqlSelection & { __args?: {
+    post?: (Post_1GenqlSelection & { __args?: {
     /** Filter by a field. */
-    filter?: (PostItemFilterInput | null), 
+    filter?: (PostItem_1FilterInput | null), 
     /** Limit the number of items returned. Defaults to 500. */
     first?: (Scalars['Int'] | null), 
     /** Order by a field. */
-    orderBy?: (PostItemOrderByEnum | null), 
+    orderBy?: (PostItem_1OrderByEnum | null), 
     /** Search configuration */
-    search?: (PostItemSearchInput | null), 
+    search?: (PostItem_1SearchInput | null), 
     /** Skip the first n items. */
     skip?: (Scalars['Int'] | null)} })
     __typename?: boolean | number
@@ -1630,7 +1601,7 @@ export interface ChangelogGenqlSelection{
     _analyticsKey?: { __args: {
     /**
      * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
-     *
+     * 
      * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
      */
     scope?: (AnalyticsKeyScope | null)} } | boolean | number
@@ -1641,89 +1612,20 @@ export interface ChangelogGenqlSelection{
     _slugPath?: boolean | number
     _sys?: BlockDocumentSysGenqlSelection
     _title?: boolean | number
-    post?: (ChangelogPagesGenqlSelection & { __args?: {
+    post?: (PostGenqlSelection & { __args?: {
     /** Filter by a field. */
-    filter?: (ChangelogPagesItemFilterInput | null),
+    filter?: (PostItemFilterInput | null), 
     /** Limit the number of items returned. Defaults to 500. */
-    first?: (Scalars['Int'] | null),
+    first?: (Scalars['Int'] | null), 
     /** Order by a field. */
-    orderBy?: (ChangelogPagesItemOrderByEnum | null),
-    /** Search by a field. */
-    search?: (ChangelogPagesItemSearchInput | null),
+    orderBy?: (PostItemOrderByEnum | null), 
+    /** Search configuration */
+    search?: (PostItemSearchInput | null), 
     /** Skip the first n items. */
     skip?: (Scalars['Int'] | null)} })
     __typename?: boolean | number
     __fragmentOn?: "Changelog"
 }
-
-export interface ChangelogPagesGenqlSelection{
-    _analyticsKey?: { __args: {
-    /**
-     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
-     * 
-     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
-     */
-    scope?: (AnalyticsKeyScope | null)} } | boolean | number
-    _dashboardUrl?: boolean | number
-    _id?: boolean | number
-    _idPath?: boolean | number
-    _meta?: ListMetaGenqlSelection
-    /** The key used to search from the frontend. */
-    _searchKey?: boolean | number
-    _slug?: boolean | number
-    _slugPath?: boolean | number
-    _sys?: BlockDocumentSysGenqlSelection
-    _title?: boolean | number
-    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
-    item?: ChangelogPagesItemGenqlSelection
-    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
-    items?: ChangelogPagesItemGenqlSelection
-    __typename?: boolean | number
-    __fragmentOn?: "ChangelogPages"
-}
-
-export interface ChangelogPagesItemGenqlSelection{
-    _analyticsKey?: { __args: {
-    /**
-     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
-     * 
-     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
-     */
-    scope?: (AnalyticsKeyScope | null)} } | boolean | number
-    _dashboardUrl?: boolean | number
-    /** Array of search highlight information with field names and HTML markup */
-    _highlight?: SearchHighlightGenqlSelection
-    _id?: boolean | number
-    _idPath?: boolean | number
-    _slug?: boolean | number
-    _slugPath?: boolean | number
-    _sys?: BlockDocumentSysGenqlSelection
-    _title?: boolean | number
-    body?: Body_1GenqlSelection
-    excerpt?: boolean | number
-    featuredImage?: BlockImageGenqlSelection
-    fixes?: boolean | number
-    improvements?: boolean | number
-    infrastructure?: boolean | number
-    patches?: boolean | number
-    /** ISO 8601 date string. */
-    publishedAt?: boolean | number
-    seo?: SeoComponent_1GenqlSelection
-    slug?: boolean | number
-    tldr?: boolean | number
-    __typename?: boolean | number
-    __fragmentOn?: "ChangelogPagesItem"
-}
-
-export interface ChangelogPagesItemFilterInput {AND?: (ChangelogPagesItemFilterInput | null),OR?: (ChangelogPagesItemFilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),excerpt?: (StringFilter | null),fixes?: (StringFilter | null),improvements?: (StringFilter | null),infrastructure?: (StringFilter | null),patches?: (StringFilter | null),publishedAt?: (DateFilter | null),seo?: (ChangelogPagesItemFilterInput__seo | null),slug?: (StringFilter | null),tldr?: (StringFilter | null)}
-
-export interface ChangelogPagesItemFilterInput__seo {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeyword?: (StringFilter | null)}
-
-export interface ChangelogPagesItemSearchInput {
-/** Searchable fields for query */
-by?: (Scalars['String'][] | null),
-/** Search query */
-q?: (Scalars['String'] | null)}
 
 export interface CtaDescriptionGenqlSelection{
     html?: { __args: {
@@ -2149,8 +2051,51 @@ export interface PostItemGenqlSelection{
     _slugPath?: boolean | number
     _sys?: BlockDocumentSysGenqlSelection
     _title?: boolean | number
-    authors?: AuthorItemGenqlSelection
     body?: BodyGenqlSelection
+    excerpt?: boolean | number
+    featuredImage?: BlockImageGenqlSelection
+    fixes?: boolean | number
+    improvements?: boolean | number
+    infrastructure?: boolean | number
+    patches?: boolean | number
+    /** ISO 8601 date string. */
+    publishedAt?: boolean | number
+    seo?: SeoComponentGenqlSelection
+    slug?: boolean | number
+    tldr?: boolean | number
+    __typename?: boolean | number
+    __fragmentOn?: "PostItem"
+}
+
+export interface PostItemFilterInput {AND?: (PostItemFilterInput | null),OR?: (PostItemFilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),excerpt?: (StringFilter | null),fixes?: (StringFilter | null),improvements?: (StringFilter | null),infrastructure?: (StringFilter | null),patches?: (StringFilter | null),publishedAt?: (DateFilter | null),seo?: (PostItemFilterInput__seo | null),slug?: (StringFilter | null),tldr?: (StringFilter | null)}
+
+export interface PostItemFilterInput__seo {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeyword?: (StringFilter | null)}
+
+export interface PostItemSearchInput {
+/** Searchable fields for query */
+by?: (Scalars['String'][] | null),
+/** Search query */
+q?: (Scalars['String'] | null)}
+
+export interface PostItem_1GenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    /** Array of search highlight information with field names and HTML markup */
+    _highlight?: SearchHighlightGenqlSelection
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    authors?: AuthorItemGenqlSelection
+    body?: Body_1GenqlSelection
     categories?: CategoriesItemGenqlSelection
     contentType?: boolean | number
     description?: boolean | number
@@ -2161,40 +2106,67 @@ export interface PostItemGenqlSelection{
     ogImage?: BlockOgImageGenqlSelection
     /** ISO 8601 date string. */
     publishedAt?: boolean | number
-    relatedPosts?: PostItemGenqlSelection
-    seo?: SeoComponentGenqlSelection
+    relatedPosts?: PostItem_1GenqlSelection
+    seo?: SeoComponent_1GenqlSelection
     slug?: boolean | number
     status?: boolean | number
+    tldr?: boolean | number
     videoUrl?: BlockVideoGenqlSelection
     __typename?: boolean | number
-    __fragmentOn?: "PostItem"
+    __fragmentOn?: "PostItem_1"
 }
 
-export interface PostItemFilterInput {AND?: (PostItemFilterInput | null),OR?: (PostItemFilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),authors?: (PostItemFilterInput__authors_0___untitled | null),categories?: (PostItemFilterInput__categories_0___untitled | null),contentType?: (SelectFilter | null),description?: (StringFilter | null),distribution?: (PostItemFilterInput__distribution | null),engagement?: (PostItemFilterInput__engagement | null),publishedAt?: (DateFilter | null),relatedPosts?: (PostItemFilterInput__relatedPosts_0___untitled | null),seo?: (PostItemFilterInput__seo | null),slug?: (StringFilter | null),status?: (SelectFilter | null)}
+export interface PostItem_1FilterInput {AND?: (PostItem_1FilterInput | null),OR?: (PostItem_1FilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),authors?: (PostItem_1FilterInput__authors_0___untitled | null),categories?: (PostItem_1FilterInput__categories_0___untitled | null),contentType?: (SelectFilter | null),description?: (StringFilter | null),distribution?: (PostItem_1FilterInput__distribution | null),engagement?: (PostItem_1FilterInput__engagement | null),publishedAt?: (DateFilter | null),relatedPosts?: (PostItem_1FilterInput__relatedPosts_0___untitled | null),seo?: (PostItem_1FilterInput__seo | null),slug?: (StringFilter | null),status?: (SelectFilter | null),tldr?: (StringFilter | null)}
 
-export interface PostItemFilterInput__authors_0___untitled {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),email?: (StringFilter | null),githubUrl?: (StringFilter | null),linkedInUrl?: (StringFilter | null),role?: (StringFilter | null),xUrl?: (StringFilter | null)}
+export interface PostItem_1FilterInput__authors_0___untitled {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),email?: (StringFilter | null),githubUrl?: (StringFilter | null),linkedInUrl?: (StringFilter | null),role?: (StringFilter | null),xUrl?: (StringFilter | null)}
 
-export interface PostItemFilterInput__categories_0___untitled {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null)}
+export interface PostItem_1FilterInput__categories_0___untitled {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null)}
 
-export interface PostItemFilterInput__distribution {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),businessGoal?: (SelectFilter | null),campaignTag?: (StringFilter | null),distributionChannels?: (StringFilter | null),primaryProductArea?: (StringFilter | null),targetPersona?: (StringFilter | null)}
+export interface PostItem_1FilterInput__distribution {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),businessGoal?: (SelectFilter | null),campaignTag?: (StringFilter | null),distributionChannels?: (StringFilter | null),primaryProductArea?: (StringFilter | null),targetPersona?: (StringFilter | null)}
 
-export interface PostItemFilterInput__engagement {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),ctaButtonText?: (StringFilter | null),ctaButtonUrl?: (StringFilter | null),ctaTitle?: (StringFilter | null),ctaType?: (SelectFilter | null)}
+export interface PostItem_1FilterInput__engagement {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),ctaButtonText?: (StringFilter | null),ctaButtonUrl?: (StringFilter | null),ctaTitle?: (StringFilter | null),ctaType?: (SelectFilter | null)}
 
-export interface PostItemFilterInput__relatedPosts_0___untitled {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),contentType?: (SelectFilter | null),description?: (StringFilter | null),distribution?: (PostItemFilterInput__relatedPosts_0___untitled__distribution | null),engagement?: (PostItemFilterInput__relatedPosts_0___untitled__engagement | null),publishedAt?: (DateFilter | null),seo?: (PostItemFilterInput__relatedPosts_0___untitled__seo | null),slug?: (StringFilter | null),status?: (SelectFilter | null)}
+export interface PostItem_1FilterInput__relatedPosts_0___untitled {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),contentType?: (SelectFilter | null),description?: (StringFilter | null),distribution?: (PostItem_1FilterInput__relatedPosts_0___untitled__distribution | null),engagement?: (PostItem_1FilterInput__relatedPosts_0___untitled__engagement | null),publishedAt?: (DateFilter | null),seo?: (PostItem_1FilterInput__relatedPosts_0___untitled__seo | null),slug?: (StringFilter | null),status?: (SelectFilter | null),tldr?: (StringFilter | null)}
 
-export interface PostItemFilterInput__relatedPosts_0___untitled__distribution {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),businessGoal?: (SelectFilter | null),campaignTag?: (StringFilter | null),distributionChannels?: (StringFilter | null),primaryProductArea?: (StringFilter | null),targetPersona?: (StringFilter | null)}
+export interface PostItem_1FilterInput__relatedPosts_0___untitled__distribution {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),businessGoal?: (SelectFilter | null),campaignTag?: (StringFilter | null),distributionChannels?: (StringFilter | null),primaryProductArea?: (StringFilter | null),targetPersona?: (StringFilter | null)}
 
-export interface PostItemFilterInput__relatedPosts_0___untitled__engagement {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),ctaButtonText?: (StringFilter | null),ctaButtonUrl?: (StringFilter | null),ctaTitle?: (StringFilter | null),ctaType?: (SelectFilter | null)}
+export interface PostItem_1FilterInput__relatedPosts_0___untitled__engagement {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),ctaButtonText?: (StringFilter | null),ctaButtonUrl?: (StringFilter | null),ctaTitle?: (StringFilter | null),ctaType?: (SelectFilter | null)}
 
-export interface PostItemFilterInput__relatedPosts_0___untitled__seo {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeywords?: (StringFilter | null)}
+export interface PostItem_1FilterInput__relatedPosts_0___untitled__seo {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeywords?: (StringFilter | null)}
 
-export interface PostItemFilterInput__seo {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeywords?: (StringFilter | null)}
+export interface PostItem_1FilterInput__seo {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeywords?: (StringFilter | null)}
 
-export interface PostItemSearchInput {
+export interface PostItem_1SearchInput {
 /** Searchable fields for query */
 by?: (Scalars['String'][] | null),
 /** Search query */
 q?: (Scalars['String'] | null)}
+
+export interface Post_1GenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _meta?: ListMetaGenqlSelection
+    /** The key used to search from the frontend. */
+    _searchKey?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item?: PostItem_1GenqlSelection
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items?: PostItem_1GenqlSelection
+    __typename?: boolean | number
+    __fragmentOn?: "Post_1"
+}
 
 export interface QueryGenqlSelection{
     _agent?: (_AgentStartGenqlSelection & { __args: {
@@ -2225,17 +2197,6 @@ export interface QueryGenqlSelection{
     _sys?: RepoSysGenqlSelection
     blog?: BlogGenqlSelection
     changelog?: ChangelogGenqlSelection
-    changelogPages?: (ChangelogPagesGenqlSelection & { __args?: {
-    /** Filter by a field. */
-    filter?: (ChangelogPagesItemFilterInput | null), 
-    /** Limit the number of items returned. Defaults to 500. */
-    first?: (Scalars['Int'] | null), 
-    /** Order by a field. */
-    orderBy?: (ChangelogPagesItemOrderByEnum | null), 
-    /** Search configuration */
-    search?: (ChangelogPagesItemSearchInput | null), 
-    /** Skip the first n items. */
-    skip?: (Scalars['Int'] | null)} })
     legalPages?: (LegalPagesGenqlSelection & { __args?: {
     /** Filter by a field. */
     filter?: (TemplateLegalComponentFilterInput | null), 
@@ -2322,12 +2283,12 @@ export interface SeoComponentGenqlSelection{
     metaDescription?: boolean | number
     metaTitle?: boolean | number
     noIndex?: boolean | number
-    secondaryKeywords?: boolean | number
+    secondaryKeyword?: boolean | number
     __typename?: boolean | number
     __fragmentOn?: "SeoComponent"
 }
 
-export interface SeoComponentFilterInput {AND?: (SeoComponentFilterInput | null),OR?: (SeoComponentFilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeywords?: (StringFilter | null)}
+export interface SeoComponentFilterInput {AND?: (SeoComponentFilterInput | null),OR?: (SeoComponentFilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeyword?: (StringFilter | null)}
 
 export interface SeoComponentSearchInput {
 /** Searchable fields for query */
@@ -2368,12 +2329,12 @@ export interface SeoComponent_1GenqlSelection{
     metaDescription?: boolean | number
     metaTitle?: boolean | number
     noIndex?: boolean | number
-    secondaryKeyword?: boolean | number
+    secondaryKeywords?: boolean | number
     __typename?: boolean | number
     __fragmentOn?: "SeoComponent_1"
 }
 
-export interface SeoComponent_1FilterInput {AND?: (SeoComponent_1FilterInput | null),OR?: (SeoComponent_1FilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeyword?: (StringFilter | null)}
+export interface SeoComponent_1FilterInput {AND?: (SeoComponent_1FilterInput | null),OR?: (SeoComponent_1FilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeywords?: (StringFilter | null)}
 
 export interface SeoComponent_1SearchInput {
 /** Searchable fields for query */
@@ -2438,42 +2399,6 @@ export interface VariantGenqlSelection{
     label?: boolean | number
     __typename?: boolean | number
     __fragmentOn?: "Variant"
-}
-
-export interface _AgentChangelogWriterAgentGenqlSelection{
-    _agentKey?: boolean | number
-    _analyticsKey?: { __args: {
-    /**
-     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
-     * 
-     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
-     */
-    scope?: (AnalyticsKeyScope | null)} } | boolean | number
-    _dashboardUrl?: boolean | number
-    _id?: boolean | number
-    _idPath?: boolean | number
-    _slug?: boolean | number
-    _slugPath?: boolean | number
-    _sys?: BlockDocumentSysGenqlSelection
-    _title?: boolean | number
-    accent?: boolean | number
-    avatar?: boolean | number
-    chatUrl?: boolean | number
-    commit?: boolean | number
-    description?: boolean | number
-    edit?: boolean | number
-    embedUrl?: boolean | number
-    getUserInfo?: boolean | number
-    grayscale?: boolean | number
-    manageBranches?: boolean | number
-    mcpUrl?: boolean | number
-    model?: boolean | number
-    openRouterKey?: boolean | number
-    searchTheWeb?: boolean | number
-    slackInstallUrl?: boolean | number
-    systemPrompt?: boolean | number
-    __typename?: boolean | number
-    __fragmentOn?: "_AgentChangelogWriterAgent"
 }
 
 export interface _AgentStartGenqlSelection{
@@ -2579,7 +2504,6 @@ export interface _PlaygroundInfoGenqlSelection{
 }
 
 export interface _agentsGenqlSelection{
-    changelogWriterAgent?: _AgentChangelogWriterAgentGenqlSelection
     start?: _AgentStartGenqlSelection
     __typename?: boolean | number
     __fragmentOn?: "_agents"
@@ -2606,17 +2530,6 @@ export interface _componentsGenqlSelection{
     orderBy?: (CategoriesItemOrderByEnum | null), 
     /** Search configuration */
     search?: (CategoriesItemSearchInput | null), 
-    /** Skip the first n items. */
-    skip?: (Scalars['Int'] | null)} })
-    changelogPagesItem?: (changelogPagesItem_AsListGenqlSelection & { __args?: {
-    /** Filter by a field. */
-    filter?: (ChangelogPagesItemFilterInput | null), 
-    /** Limit the number of items returned. Defaults to 500. */
-    first?: (Scalars['Int'] | null), 
-    /** Order by a field. */
-    orderBy?: (ChangelogPagesItemOrderByEnum | null), 
-    /** Search configuration */
-    search?: (ChangelogPagesItemSearchInput | null), 
     /** Skip the first n items. */
     skip?: (Scalars['Int'] | null)} })
     distribution?: (distributionComponent_AsListGenqlSelection & { __args?: {
@@ -2672,6 +2585,17 @@ export interface _componentsGenqlSelection{
     orderBy?: (PostItemOrderByEnum | null), 
     /** Search configuration */
     search?: (PostItemSearchInput | null), 
+    /** Skip the first n items. */
+    skip?: (Scalars['Int'] | null)} })
+    postItem1?: (postItem1_AsListGenqlSelection & { __args?: {
+    /** Filter by a field. */
+    filter?: (PostItem_1FilterInput | null), 
+    /** Limit the number of items returned. Defaults to 500. */
+    first?: (Scalars['Int'] | null), 
+    /** Order by a field. */
+    orderBy?: (PostItem_1OrderByEnum | null), 
+    /** Search configuration */
+    search?: (PostItem_1SearchInput | null), 
     /** Skip the first n items. */
     skip?: (Scalars['Int'] | null)} })
     seo?: (seoComponent_AsListGenqlSelection & { __args?: {
@@ -2761,32 +2685,6 @@ export interface categoriesItem_AsListGenqlSelection{
     items?: CategoriesItemGenqlSelection
     __typename?: boolean | number
     __fragmentOn?: "categoriesItem_AsList"
-}
-
-export interface changelogPagesItem_AsListGenqlSelection{
-    _analyticsKey?: { __args: {
-    /**
-     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
-     * 
-     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
-     */
-    scope?: (AnalyticsKeyScope | null)} } | boolean | number
-    _dashboardUrl?: boolean | number
-    _id?: boolean | number
-    _idPath?: boolean | number
-    _meta?: ListMetaGenqlSelection
-    /** The key used to search from the frontend. */
-    _searchKey?: boolean | number
-    _slug?: boolean | number
-    _slugPath?: boolean | number
-    _sys?: BlockDocumentSysGenqlSelection
-    _title?: boolean | number
-    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
-    item?: ChangelogPagesItemGenqlSelection
-    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
-    items?: ChangelogPagesItemGenqlSelection
-    __typename?: boolean | number
-    __fragmentOn?: "changelogPagesItem_AsList"
 }
 
 export interface distributionComponent_AsListGenqlSelection{
@@ -2891,6 +2789,32 @@ export interface faqItem_AsListGenqlSelection{
     items?: FaqItemGenqlSelection
     __typename?: boolean | number
     __fragmentOn?: "faqItem_AsList"
+}
+
+export interface postItem1_AsListGenqlSelection{
+    _analyticsKey?: { __args: {
+    /**
+     * The scope of the analytics key. Use `send` for just ingesting data. Use `query` if you need to show an analytics data in your website.
+     * 
+     * Have in mind, if you expose your `query` analytics key in the frontend, you'll be exposing all of this block's analytics data to the public. This is generally safe, but it might not be in your case.
+     */
+    scope?: (AnalyticsKeyScope | null)} } | boolean | number
+    _dashboardUrl?: boolean | number
+    _id?: boolean | number
+    _idPath?: boolean | number
+    _meta?: ListMetaGenqlSelection
+    /** The key used to search from the frontend. */
+    _searchKey?: boolean | number
+    _slug?: boolean | number
+    _slugPath?: boolean | number
+    _sys?: BlockDocumentSysGenqlSelection
+    _title?: boolean | number
+    /** Returns the first item in the list, or null if the list is empty. Useful when you expect only one result. */
+    item?: PostItem_1GenqlSelection
+    /** Returns the list of items after filtering and paginating according to the arguments sent by the client. */
+    items?: PostItem_1GenqlSelection
+    __typename?: boolean | number
+    __fragmentOn?: "postItem1_AsList"
 }
 
 export interface postItem_AsListGenqlSelection{
@@ -3090,13 +3014,9 @@ export interface FragmentsMap {
     root: CategoriesItem,
     selection: CategoriesItemGenqlSelection,
 }
-  ChangelogPages: {
-    root: ChangelogPages,
-    selection: ChangelogPagesGenqlSelection,
-}
-  ChangelogPagesItem: {
-    root: ChangelogPagesItem,
-    selection: ChangelogPagesItemGenqlSelection,
+  Changelog: {
+    root: Changelog,
+    selection: ChangelogGenqlSelection,
 }
   CtaDescription: {
     root: CtaDescription,
@@ -3174,6 +3094,14 @@ export interface FragmentsMap {
     root: PostItem,
     selection: PostItemGenqlSelection,
 }
+  PostItem_1: {
+    root: PostItem_1,
+    selection: PostItem_1GenqlSelection,
+}
+  Post_1: {
+    root: Post_1,
+    selection: Post_1GenqlSelection,
+}
   Query: {
     root: Query,
     selection: QueryGenqlSelection,
@@ -3209,10 +3137,6 @@ export interface FragmentsMap {
   Variant: {
     root: Variant,
     selection: VariantGenqlSelection,
-}
-  _AgentChangelogWriterAgent: {
-    root: _AgentChangelogWriterAgent,
-    selection: _AgentChangelogWriterAgentGenqlSelection,
 }
   _AgentStart: {
     root: _AgentStart,
@@ -3254,10 +3178,6 @@ export interface FragmentsMap {
     root: categoriesItem_AsList,
     selection: categoriesItem_AsListGenqlSelection,
 }
-  changelogPagesItem_AsList: {
-    root: changelogPagesItem_AsList,
-    selection: changelogPagesItem_AsListGenqlSelection,
-}
   distributionComponent_AsList: {
     root: distributionComponent_AsList,
     selection: distributionComponent_AsListGenqlSelection,
@@ -3273,6 +3193,10 @@ export interface FragmentsMap {
   faqItem_AsList: {
     root: faqItem_AsList,
     selection: faqItem_AsListGenqlSelection,
+}
+  postItem1_AsList: {
+    root: postItem1_AsList,
+    selection: postItem1_AsListGenqlSelection,
 }
   postItem_AsList: {
     root: postItem_AsList,

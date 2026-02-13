@@ -11,17 +11,17 @@ type BodyProps = ComponentProps<typeof RichText>;
 const richTextBaseComponents = {
   // Tighter list spacing
   ul: ({ children }: { children?: ReactNode }) => (
-    <ul className="my-3 ml-6 list-disc pl-4 text-foreground space-y-2">
+    <ul className="mb-3 ml-6 list-disc text-foreground [&>li:not(:first-child)]:mt-1">
       {children}
     </ul>
   ),
   ol: ({ children }: { children?: ReactNode }) => (
-    <ol className="my-4 ml-6 decimal pl-4 text-foreground space-y-1">
+    <ol className="mb-3 ml-6 list-decimal text-foreground [&>li:not(:first-child)]:mt-1">
       {children}
     </ol>
   ),
   li: ({ children }: { children?: ReactNode }) => (
-    <li className="text-foreground/90 pl-4">{children}</li>
+    <li className="text-foreground/90 leading-7 break-words">{children}</li>
   ),
 
   // Table elements with responsive wrapper
@@ -59,7 +59,7 @@ const richTextBaseComponents = {
     </tbody>
   ),
   tr: ({ children }: { children?: ReactNode }) => (
-    <tr className="">{children}</tr>
+    <tr className="hover:bg-muted/50 transition-colors">{children}</tr>
   ),
   // BaseHub passes lowercase colspan/rowspan and colwidth - we ignore colwidth to prevent layout issues
   th: ({
@@ -90,7 +90,7 @@ const richTextBaseComponents = {
     rowspan?: number;
     colwidth?: number[] | null;
   }) => (
-    <td className="px-4 py-3 text-sm" colSpan={colspan} rowSpan={rowspan}>
+    <td className="px-4 py-3 text-sm align-top" colSpan={colspan} rowSpan={rowspan}>
       {children}
     </td>
   ),
@@ -113,12 +113,12 @@ const richTextBaseComponents = {
       return SSRCodeBlock({
         children: code,
         language,
-        className: cn("my-6", className),
+        className: cn("my-4", className),
       });
     }
 
     // Fallback for content without code prop
-    return <pre className={cn("my-6", className)}>{children}</pre>;
+    return <pre className={cn("my-4", className)}>{children}</pre>;
   },
 
   // Code - inline gets styled, block just passes through (pre handles it)
@@ -165,7 +165,7 @@ const richTextBaseComponents = {
           alt={alt || ""}
           fill
           priority
-          quality={40}
+          quality={85}
           className="object-cover"
         />
       </div>
@@ -189,20 +189,22 @@ const richTextBaseComponents = {
 
   // Heading components with consistent styling
   h1: ({ children }: { children?: ReactNode }) => (
-    <h1 className="scroll-m-20 text-xl font-bold tracking-tight mb-4 mt-6">
+    <h1 className="scroll-m-20 text-2xl font-bold tracking-tight mb-4 mt-6">
       {children}
     </h1>
   ),
   h2: ({ children }: { children?: ReactNode }) => (
-    <h2 className="scroll-m-20 text-lg font-semibold tracking-tight mb-3 mt-6">
+    <h2 className="scroll-m-20 text-xl font-semibold tracking-tight mb-3 mt-6">
       {children}
     </h2>
   ),
   h3: ({ children }: { children?: ReactNode }) => (
-    <h3 className="scroll-m-20 text-xl font-normal mb-2 mt-5">{children}</h3>
+    <h3 className="scroll-m-20 text-lg font-semibold tracking-tight mb-2 mt-5">
+      {children}
+    </h3>
   ),
   h4: ({ children }: { children?: ReactNode }) => (
-    <h4 className="scroll-m-20 text-sm font-semibold tracking-tight mb-2 mt-4">
+    <h4 className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-4">
       {children}
     </h4>
   ),
@@ -217,7 +219,14 @@ const richTextBaseComponents = {
 
   // Paragraph - no font size here, inherited from Body wrapper
   p: ({ children }: { children?: ReactNode }) => (
-    <p className="[&:not(:first-child)]:mt-3">{children}</p>
+    <p className="leading-7 [&:not(:first-child)]:mt-3 break-words">{children}</p>
+  ),
+
+  // Blockquote for quotes
+  blockquote: ({ children }: { children?: ReactNode }) => (
+    <blockquote className="mt-6 border-l-2 border-border pl-6 italic text-foreground/80">
+      {children}
+    </blockquote>
   ),
 
   // Horizontal rule with reduced spacing
@@ -229,7 +238,7 @@ export const Body = ({
   className,
   ...props
 }: BodyProps & { className?: string }) => (
-  <div className={cn("text-sm", className)}>
+  <div className={cn("text-md [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}>
     <RichText
       // @ts-expect-error BaseHub RichText components typing issue
       components={{
