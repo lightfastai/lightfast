@@ -2,9 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Console - AI Workflow Orchestration",
-    short_name: "Console",
-    description: "Build powerful AI workflow orchestration with natural language. Connect AI to any tool via MCP and automate complex workflows without code.",
+    name: "Lightfast - Memory Layer for Software Teams",
+    short_name: "Lightfast",
+    description:
+      "The memory layer for software teams. Search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources.",
     start_url: "/",
     display: "standalone",
     background_color: "#09090b",
