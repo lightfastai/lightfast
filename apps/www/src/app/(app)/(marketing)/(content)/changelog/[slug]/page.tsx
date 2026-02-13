@@ -13,6 +13,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
+import { Button } from "@repo/ui/components/ui/button";
 
 type ChangelogPageProps = {
   params: Promise<{ slug: string }>;
@@ -227,147 +228,154 @@ export default async function ChangelogEntryPage({
             {/* Structured data for SEO */}
             <JsonLd code={structuredData as any} />
 
-            <div className="max-w-7xl mx-auto px-4">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-                <div className="md:col-span-2 flex items-center gap-2">
-                  {entry.slug && (
-                    <span className="inline-block border rounded-full px-3 py-1 text-xs text-muted-foreground w-fit">
-                      {entry.slug.slice(0, 3)}
-                    </span>
-                  )}
-                  <time className="text-sm text-muted-foreground whitespace-nowrap">
-                    {dateStr}
-                  </time>
+            <article className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-sm text-muted-foreground hover:text-foreground"
+                  asChild
+                >
+                  <Link href="/changelog">Changelog</Link>
+                </Button>
+                {entry.slug ? <> / {entry.slug.slice(0, 3)}</> : null}
+              </p>
+
+              <h2 className="text-2xl font-pp font-medium pb-4">
+                {entry._title}
+              </h2>
+
+              {entry.featuredImage?.url && (
+                <div className="relative w-[min(900px,90vw)] bg-card left-1/2 -translate-x-1/2 aspect-video rounded-lg overflow-hidden">
+                  <Image
+                    src={entry.featuredImage.url}
+                    alt={entry.featuredImage?.alt || entry._title || ""}
+                    width={entry.featuredImage?.width || 900}
+                    height={entry.featuredImage?.height || 506}
+                    className="w-full h-full object-cover"
+                    priority
+                  />
                 </div>
+              )}
 
-                <article className="md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4 space-y-8">
-                  <div>
-                    <h1 className="text-3xl text-foreground font-semibold tracking-tight">
-                      {entry._title}
-                    </h1>
+              <p className="text-sm text-muted-foreground">
+                {/* @todo add author into basehub Changelog component */}
+                Jeevan Pillay · {dateStr}
+              </p>
 
-                    {/* TL;DR Summary for AEO */}
-                    {entry.tldr && (
-                      <div className="bg-card rounded-xs p-8 my-8">
-                        <h2 className="text-xs font-semibold text-muted-foreground font-mono uppercase tracking-widest mb-12">
-                          TL;DR
-                        </h2>
-                        <p className="text-foreground/90 text-sm leading-relaxed">
-                          {entry.tldr}
-                        </p>
-                      </div>
-                    )}
+              {/* TL;DR Summary for AEO */}
+              {entry.tldr && (
+                <div className="bg-card rounded-xs p-8 my-8">
+                  <h3 className="text-xs font-semibold text-muted-foreground font-mono uppercase tracking-widest mb-4">
+                    TL;DR
+                  </h3>
+                  <p className="text-foreground/90 text-sm leading-relaxed">
+                    {entry.tldr}
+                  </p>
+                </div>
+              )}
 
-                    {/* Featured Image */}
-                    {entry.featuredImage?.url && (
-                      <div className="relative aspect-video rounded-lg overflow-hidden mt-8">
-                        <Image
-                          src={entry.featuredImage.url}
-                          alt={entry.featuredImage.alt || entry._title || ""}
-                          width={entry.featuredImage.width || 1200}
-                          height={entry.featuredImage.height || 630}
-                          className="w-full h-full object-cover"
-                          priority
-                        />
-                      </div>
-                    )}
+              {entry.excerpt && (
+                <p className="pt-4 text-sm text-muted-foreground leading-relaxed">
+                  {entry.excerpt}
+                </p>
+              )}
 
-                    {entry.body?.json?.content ? (
-                      <div className="max-w-none mt-6">
-                        <Body content={entry.body.json.content} />
-                      </div>
-                    ) : null}
-                  </div>
+              {entry.body?.json?.content ? (
+                <div className="">
+                  <Body content={entry.body.json.content} />
+                </div>
+              ) : null}
 
-                  {sections.length > 0 && (
-                    <div className="space-y-4">
-                      {sections.map((section) => {
-                        const items = parseBulletPoints(section.content);
-                        const count = items.length;
+              {sections.length > 0 && (
+                <div className="space-y-4">
+                  {sections.map((section) => {
+                    const items = parseBulletPoints(section.content);
+                    const count = items.length;
 
-                        return (
-                          <div
-                            key={section.key}
-                            className="border rounded-sm overflow-hidden"
+                    return (
+                      <div
+                        key={section.key}
+                        className="border rounded-sm overflow-hidden"
+                      >
+                        <Accordion type="multiple" className="w-full">
+                          <AccordionItem
+                            value={section.key}
+                            className="border-none"
                           >
-                            <Accordion type="multiple" className="w-full">
-                              <AccordionItem
-                                value={section.key}
-                                className="border-none"
-                              >
-                                <AccordionTrigger className="text-base font-semibold px-4 py-3">
-                                  {section.title} ({count})
-                                </AccordionTrigger>
-                                <AccordionContent className="px-4">
-                                  <ul className="space-y-2 text-foreground/80">
-                                    {items.map((item, idx) => (
-                                      <li key={idx} className="leading-relaxed">
-                                        • {item}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </AccordionContent>
-                              </AccordionItem>
-                            </Accordion>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                            <AccordionTrigger className="text-base font-semibold px-4 py-3">
+                              {section.title} ({count})
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4">
+                              <ul className="space-y-2 text-foreground/80">
+                                {items.map((item, idx) => (
+                                  <li
+                                    key={idx}
+                                    className="leading-relaxed text-sm"
+                                  >
+                                    • {item}
+                                  </li>
+                                ))}
+                              </ul>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
-                  {entry.body?.readingTime ? (
-                    <div className="text-xs text-muted-foreground">
-                      {entry.body.readingTime} min read
-                    </div>
-                  ) : null}
+              {entry.body?.readingTime ? (
+                <div className="text-xs text-muted-foreground">
+                  {entry.body.readingTime} min read
+                </div>
+              ) : null}
 
-                  {/* Previous/Next Navigation */}
-                  {(adjacentEntries.previous || adjacentEntries.next) && (
-                    <nav
-                      aria-label="Changelog navigation"
-                      className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-12 pb-4 pt-8"
+              {/* Previous/Next Navigation */}
+              {(adjacentEntries.previous || adjacentEntries.next) && (
+                <nav
+                  aria-label="Changelog navigation"
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-8"
+                >
+                  {adjacentEntries.previous ? (
+                    <Link
+                      href={`/changelog/${adjacentEntries.previous.slug}`}
+                      className="group"
                     >
-                      {adjacentEntries.previous ? (
-                        <Link
-                          href={`/changelog/${adjacentEntries.previous.slug}`}
-                          className="group"
-                        >
-                          <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
-                            <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <ChevronLeft className="h-4 w-4" />
-                              Previous post
-                            </span>
-                            <span className="block mt-1 font-medium text-sm text-foreground line-clamp-2">
-                              {adjacentEntries.previous._title}
-                            </span>
-                          </div>
-                        </Link>
-                      ) : (
-                        <div />
-                      )}
-                      {adjacentEntries.next ? (
-                        <Link
-                          href={`/changelog/${adjacentEntries.next.slug}`}
-                          className="group md:text-right"
-                        >
-                          <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
-                            <span className="flex items-center justify-end gap-1 text-sm text-muted-foreground md:justify-end">
-                              Next post
-                              <ChevronRight className="h-4 w-4" />
-                            </span>
-                            <span className="block mt-1 font-medium text-sm text-foreground line-clamp-2">
-                              {adjacentEntries.next._title}
-                            </span>
-                          </div>
-                        </Link>
-                      ) : (
-                        <div />
-                      )}
-                    </nav>
+                      <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
+                        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <ChevronLeft className="h-4 w-4" />
+                          Previous post
+                        </span>
+                        <span className="block mt-1 font-medium text-sm text-foreground line-clamp-2">
+                          {adjacentEntries.previous._title}
+                        </span>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div />
                   )}
-                </article>
-              </div>
-            </div>
+                  {adjacentEntries.next ? (
+                    <Link
+                      href={`/changelog/${adjacentEntries.next.slug}`}
+                      className="group md:text-right"
+                    >
+                      <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
+                        <span className="flex items-center justify-end gap-1 text-sm text-muted-foreground md:justify-end">
+                          Next post
+                          <ChevronRight className="h-4 w-4" />
+                        </span>
+                        <span className="block mt-1 font-medium text-sm text-foreground line-clamp-2">
+                          {adjacentEntries.next._title}
+                        </span>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div />
+                  )}
+                </nav>
+              )}
+            </article>
           </>
         );
       }}
