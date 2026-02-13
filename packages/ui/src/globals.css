@@ -244,13 +244,14 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    letter-spacing: -0.03em;
   }
-  body {
+  body,
+  .font-sans {
     @apply bg-background text-foreground;
     font-family:
       var(--font-geist-sans), var(--font-sans), ui-sans-serif, system-ui,
       sans-serif;
+    letter-spacing: -0.03em; /* Geist-specific letter spacing */
   }
   code,
   pre,
