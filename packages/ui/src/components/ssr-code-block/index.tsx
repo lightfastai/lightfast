@@ -34,8 +34,8 @@ export async function SSRCodeBlock({
 
   // Map common invalid/alias names to valid Shiki languages
   const languageMap: Record<string, BundledLanguage> = {
-    plaintext: "text",
-    plain: "text",
+    plaintext: "plaintext" as BundledLanguage,
+    plain: "plaintext" as BundledLanguage,
   };
 
   if (languageLower in languageMap) {

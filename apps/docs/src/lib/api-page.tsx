@@ -2,6 +2,7 @@ import { openapi } from "@/src/lib/openapi";
 import { createAPIPage } from "fumadocs-openapi/ui";
 import client from "./api-page.client";
 import { renderOperationLayout, renderPageLayout } from "./api-page-renderers";
+import { getCodeSamples } from "./code-samples";
 
 /**
  * Lightfast-branded API page component
@@ -11,6 +12,9 @@ import { renderOperationLayout, renderPageLayout } from "./api-page-renderers";
  */
 export const APIPage = createAPIPage(openapi, {
   client,
+  generateCodeSamples(endpoint) {
+    return getCodeSamples(endpoint);
+  },
   content: {
     renderOperationLayout,
     renderPageLayout,

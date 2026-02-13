@@ -41,9 +41,9 @@ Search through workspace memory for relevant documents and observations.
 const response = await client.search(input: SearchInput): Promise<V1SearchResponse>
 ```
 
-#### SearchInput
+#### SearchInput & Response
 
-<ParamTable schema="V1SearchRequest" />
+<EmbeddedOperation operationId="search" />
 
 #### SearchFilters
 
@@ -53,10 +53,6 @@ const response = await client.search(input: SearchInput): Promise<V1SearchRespon
 | `observationTypes` | `string[]` | Observation types to include (e.g., `["commit", "issue"]`) |
 | `actorNames` | `string[]` | Actor names to filter by (e.g., `["@sarah", "@mike"]`) |
 | `dateRange` | `{ start?: string; end?: string }` | Date range filter with ISO datetime strings |
-
-#### V1SearchResponse
-
-<ResponseSchema schema="V1SearchResponse" />
 
 #### Example
 
@@ -88,13 +84,9 @@ Fetch full content for documents by their IDs.
 const response = await client.contents(input: ContentsInput): Promise<V1ContentsResponse>
 ```
 
-#### ContentsInput
+#### ContentsInput & Response
 
-<ParamTable schema="V1ContentsRequest" />
-
-#### V1ContentsResponse
-
-<ResponseSchema schema="V1ContentsResponse" />
+<EmbeddedOperation operationId="get-contents" />
 
 #### Example
 
@@ -117,13 +109,9 @@ Find content semantically similar to a given document or URL.
 const response = await client.findSimilar(input: FindSimilarInput): Promise<V1FindSimilarResponse>
 ```
 
-#### FindSimilarInput
+#### FindSimilarInput & Response
 
-<ParamTable schema="V1FindSimilarRequest" />
-
-#### V1FindSimilarResponse
-
-<ResponseSchema schema="V1FindSimilarResponse" />
+<EmbeddedOperation operationId="find-similar" />
 
 #### Example
 
@@ -148,13 +136,9 @@ Traverse the relationship graph from a starting observation. Returns connected o
 const response = await client.graph(input: GraphInput): Promise<GraphResponse>
 ```
 
-#### GraphInput
+#### GraphInput & Response
 
-<ParamTable schema="V1GraphRequest" />
-
-#### GraphResponse
-
-<ResponseSchema schema="GraphResponse" />
+<EmbeddedOperation operationId="graph" />
 
 #### Example
 
@@ -179,13 +163,9 @@ Find observations directly connected to a given observation via relationships. R
 const response = await client.related(input: RelatedInput): Promise<RelatedResponse>
 ```
 
-#### RelatedInput
+#### RelatedInput & Response
 
-<ParamTable schema="V1RelatedRequest" />
-
-#### RelatedResponse
-
-<ResponseSchema schema="RelatedResponse" />
+<EmbeddedOperation operationId="find-related" />
 
 #### Example
 

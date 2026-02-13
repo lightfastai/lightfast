@@ -44,9 +44,9 @@ The MCP server exposes five tools to AI assistants.
 
 Search through workspace memory for relevant documents and observations.
 
-#### Parameters
+#### Parameters & Response
 
-<ParamTable schema="V1SearchRequest" />
+<EmbeddedOperation operationId="search" />
 
 **Filters object structure:**
 - `sourceTypes`: `string[]` - Source types to include (e.g., `["github", "linear"]`)
@@ -73,19 +73,15 @@ Search through workspace memory for relevant documents and observations.
 }
 ```
 
-#### Response Schema
-
-<ResponseSchema schema="V1SearchResponse" />
-
 ---
 
 ### lightfast_contents
 
 Fetch full content for documents by their IDs.
 
-#### Parameters
+#### Parameters & Response
 
-<ParamTable schema="V1ContentsRequest" />
+<EmbeddedOperation operationId="get-contents" />
 
 #### Example Request
 ```json
@@ -97,19 +93,15 @@ Fetch full content for documents by their IDs.
 }
 ```
 
-#### Response Schema
-
-<ResponseSchema schema="V1ContentsResponse" />
-
 ---
 
 ### lightfast_find_similar
 
 Find content semantically similar to a given document or URL.
 
-#### Parameters
+#### Parameters & Response
 
-<ParamTable schema="V1FindSimilarRequest" />
+<EmbeddedOperation operationId="find-similar" />
 
 **Note:** Filters have the same structure as `lightfast_search`.
 
@@ -125,19 +117,15 @@ Find content semantically similar to a given document or URL.
 }
 ```
 
-#### Response Schema
-
-<ResponseSchema schema="V1FindSimilarResponse" />
-
 ---
 
 ### lightfast_graph
 
 Traverse the relationship graph from a starting observation. Returns connected observations with relationship edges. Supports depth control (1-3) and relationship type filtering.
 
-#### Parameters
+#### Parameters & Response
 
-<ParamTable schema="V1GraphRequest" />
+<EmbeddedOperation operationId="graph" />
 
 #### Example Request
 ```json
@@ -150,19 +138,15 @@ Traverse the relationship graph from a starting observation. Returns connected o
 }
 ```
 
-#### Response Schema
-
-<ResponseSchema schema="GraphResponse" />
-
 ---
 
 ### lightfast_related
 
 Find observations directly connected to a given observation via relationships. Returns related events grouped by source system with relationship types and directions.
 
-#### Parameters
+#### Parameters & Response
 
-<ParamTable schema="V1RelatedRequest" />
+<EmbeddedOperation operationId="find-related" />
 
 #### Example Request
 ```json
@@ -173,10 +157,6 @@ Find observations directly connected to a given observation via relationships. R
   }
 }
 ```
-
-#### Response Schema
-
-<ResponseSchema schema="RelatedResponse" />
 
 ---
 

@@ -28,9 +28,7 @@ import {
 import { authUrl, wwwUrl } from "@/src/lib/related-projects";
 import { NextSteps } from "@/src/components/next-steps";
 import { AlphaBanner } from "@/src/components/alpha-banner";
-import { ParamTable } from "@/src/components/schema/param-table";
-import { ResponseSchema } from "@/src/components/schema/response-schema";
-import { EnumValues } from "@/src/components/schema/enum-values";
+import { EmbeddedOperation } from "@/src/components/schema/embedded-operation";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -415,9 +413,7 @@ export const mdxComponents = {
   ValidationExample,
 
   // Schema components
-  ParamTable,
-  ResponseSchema,
-  EnumValues,
+  EmbeddedOperation,
 
   // Fumadocs UI components
   Tab,
