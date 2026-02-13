@@ -28,6 +28,9 @@ import {
 import { authUrl, wwwUrl } from "@/src/lib/related-projects";
 import { NextSteps } from "@/src/components/next-steps";
 import { AlphaBanner } from "@/src/components/alpha-banner";
+import { ParamTable } from "@/src/components/schema/param-table";
+import { ResponseSchema } from "@/src/components/schema/response-schema";
+import { EnumValues } from "@/src/components/schema/enum-values";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -410,6 +413,11 @@ export const mdxComponents = {
   ValidationError,
   ValidationErrorList,
   ValidationExample,
+
+  // Schema components
+  ParamTable,
+  ResponseSchema,
+  EnumValues,
 
   // Fumadocs UI components
   Tab,

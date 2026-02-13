@@ -43,15 +43,7 @@ const response = await client.search(input: SearchInput): Promise<V1SearchRespon
 
 #### SearchInput
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `query` | `string` | Yes | - | The search query text to find relevant documents |
-| `limit` | `number` | No | `10` | Maximum number of results to return (1-100) |
-| `offset` | `number` | No | `0` | Result offset for pagination |
-| `mode` | `"fast" \| "balanced" \| "thorough"` | No | `"balanced"` | Search quality mode: `"fast"` (speed), `"balanced"` (default), `"thorough"` (quality) |
-| `filters` | `SearchFilters` | No | - | Optional filters to scope results |
-| `includeContext` | `boolean` | No | `true` | Include contextual information like topic clusters |
-| `includeHighlights` | `boolean` | No | `true` | Include highlighted text snippets |
+<ParamTable schema="V1SearchRequest" />
 
 #### SearchFilters
 
@@ -64,75 +56,7 @@ const response = await client.search(input: SearchInput): Promise<V1SearchRespon
 
 #### V1SearchResponse
 
-```typescript
-interface V1SearchResponse {
-  data: V1SearchResult[];
-  context?: {
-    clusters?: Array<{
-      topic: string | null;
-      summary: string | null;
-      keywords: string[];
-    }>;
-    relevantActors?: Array<{
-      displayName: string;
-      expertiseDomains: string[];
-    }>;
-  };
-  meta: {
-    total: number;
-    limit: number;
-    offset: number;
-    took: number;
-    mode: "fast" | "balanced" | "thorough";
-    paths: {
-      vector: boolean;
-      entity: boolean;
-      cluster: boolean;
-      actor: boolean;
-    };
-  };
-  latency: {
-    total: number;
-    auth?: number;
-    parse?: number;
-    search?: number;
-    embedding?: number;
-    retrieval: number;
-    entitySearch?: number;
-    clusterSearch?: number;
-    actorSearch?: number;
-    rerank: number;
-    enrich?: number;
-    maxParallel?: number;
-  };
-  requestId: string;
-}
-
-interface V1SearchResult {
-  id: string;
-  title: string;
-  url: string;
-  snippet: string;
-  score: number;
-  source: string;
-  type: string;
-  occurredAt?: string;
-  entities?: Array<{
-    key: string;
-    category: string;
-  }>;
-  references?: Array<{
-    type: string;
-    id: string;
-    url?: string;
-    label?: string;
-  }>;
-  highlights?: {
-    title?: string;
-    snippet?: string;
-  };
-}
-```
+<ResponseSchema schema="V1SearchResponse" />
 
 #### Example
 
@@ -166,31 +90,11 @@ const response = await client.contents(input: ContentsInput): Promise<V1Contents
 
 #### ContentsInput
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `ids` | `string[]` | Yes | Array of document or observation IDs to fetch (1-50 IDs) |
+<ParamTable schema="V1ContentsRequest" />
 
 #### V1ContentsResponse
 
-```typescript
-interface V1ContentsResponse {
-  items: V1ContentItem[];
-  missing: string[];
-  requestId: string;
-}
-
-interface V1ContentItem {
-  id: string;
-  title: string | null;
-  url: string;
-  snippet: string;
-  content?: string;
-  source: string;
-  type: string;
-  occurredAt?: string;
-  metadata?: Record<string, unknown>;
-}
-```
+<ResponseSchema schema="V1ContentsResponse" />
 
 #### Example
 
@@ -215,55 +119,11 @@ const response = await client.findSimilar(input: FindSimilarInput): Promise<V1Fi
 
 #### FindSimilarInput
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `id` | `string` | One of `id` or `url` | - | Document ID to find similar content for |
-| `url` | `string` | One of `id` or `url` | - | URL to find similar content for (alternative to id) |
-| `limit` | `number` | No | `10` | Maximum number of similar items to return (1-50) |
-| `threshold` | `number` | No | `0.5` | Minimum similarity score (0-1) |
-| `sameSourceOnly` | `boolean` | No | `false` | Only return results from the same source type |
-| `excludeIds` | `string[]` | No | - | Array of IDs to exclude from results |
-| `filters` | `SearchFilters` | No | - | Optional filters to scope results |
+<ParamTable schema="V1FindSimilarRequest" />
 
 #### V1FindSimilarResponse
 
-```typescript
-interface V1FindSimilarResponse {
-  source: {
-    id: string;
-    title: string;
-    type: string;
-    cluster?: {
-      topic: string | null;
-      memberCount: number;
-    };
-  };
-  similar: V1SimilarResult[];
-  meta: {
-    total: number;
-    took: number;
-    inputEmbedding: {
-      found: boolean;
-      generated: boolean;
-    };
-  };
-  requestId: string;
-}
-
-interface V1SimilarResult {
-  id: string;
-  title: string;
-  url: string;
-  snippet?: string;
-  score: number;
-  vectorSimilarity: number;
-  entityOverlap?: number;
-  sameCluster: boolean;
-  source: string;
-  type: string;
-  occurredAt?: string;
-}
-```
+<ResponseSchema schema="V1FindSimilarResponse" />
 
 #### Example
 
@@ -290,49 +150,11 @@ const response = await client.graph(input: GraphInput): Promise<GraphResponse>
 
 #### GraphInput
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `id` | `string` | Yes | - | Observation ID to start graph traversal from |
-| `depth` | `number` | No | `2` | Traversal depth (1-3) |
-| `types` | `string[]` | No | - | Filter by relationship types |
+<ParamTable schema="V1GraphRequest" />
 
 #### GraphResponse
 
-```typescript
-interface GraphResponse {
-  data: {
-    root: {
-      id: string;
-      title: string;
-      source: string;
-      type: string;
-    };
-    nodes: Array<{
-      id: string;
-      title: string;
-      source: string;
-      type: string;
-      occurredAt: string | null;
-      url: string | null;
-      isRoot?: boolean;
-    }>;
-    edges: Array<{
-      source: string;
-      target: string;
-      type: string;
-      linkingKey: string | null;
-      confidence: number;
-    }>;
-  };
-  meta: {
-    depth: number;
-    nodeCount: number;
-    edgeCount: number;
-    took: number;
-  };
-  requestId: string;
-}
-```
+<ResponseSchema schema="GraphResponse" />
 
 #### Example
 
@@ -359,39 +181,11 @@ const response = await client.related(input: RelatedInput): Promise<RelatedRespo
 
 #### RelatedInput
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `id` | `string` | Yes | Observation ID to find related events for |
+<ParamTable schema="V1RelatedRequest" />
 
 #### RelatedResponse
 
-```typescript
-interface RelatedResponse {
-  data: {
-    source: {
-      id: string;
-      title: string;
-      source: string;
-    };
-    related: Array<{
-      id: string;
-      title: string;
-      source: string;
-      type: string;
-      occurredAt: string | null;
-      url: string | null;
-      relationshipType: string;
-      direction: "outgoing" | "incoming";
-    }>;
-    bySource: Record<string, RelatedEvent[]>;
-  };
-  meta: {
-    total: number;
-    took: number;
-  };
-  requestId: string;
-}
-```
+<ResponseSchema schema="RelatedResponse" />
 
 #### Example
 
