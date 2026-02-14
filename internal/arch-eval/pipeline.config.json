@@ -1,0 +1,20 @@
+{
+  "dimensions": [
+    "boundary_integrity",
+    "dependency_health",
+    "build_efficiency",
+    "type_safety"
+  ],
+  "thresholds": {
+    "unused_exports_per_package": 10,
+    "build_time_increase_percent": 20,
+    "any_count_per_package": 5
+  },
+  "feature_flags": {
+    "turbo_boundaries": true,
+    "ai_smell_detection": false,
+    "weighted_scoring": false,
+    "dora_metrics": false,
+    "bundle_analysis": false
+  }
+}

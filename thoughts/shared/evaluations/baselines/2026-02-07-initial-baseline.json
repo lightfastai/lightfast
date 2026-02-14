@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-02-07T02:05:34Z",
+  "git_sha": "1da19b9411e3f2baf6c29642d31e3e06c082f3a3",
+  "branch": "main",
+  "findings": [
+    {
+      "id": "BND-001",
+      "tier": 2,
+      "dimension": "boundary_integrity",
+      "title": "Vendor package importing from packages layer",
+      "description": "vendor/cms/components/body.tsx imports from packages/ui (2 imports). Vendor abstractions should be self-contained and not depend on shared packages.",
+      "file": "vendor/cms/components/body.tsx",
+      "rule": "no-vendor-to-package-imports",
+      "tool": "dependency-cruiser",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T02:05:34Z"
+    },
+    {
+      "id": "BND-002",
+      "tier": 1,
+      "dimension": "boundary_integrity",
+      "title": "Packages importing from API layer (reverse dependency)",
+      "description": "4 package files import from api layer: packages/console-trpc → api/console, packages/chat-trpc → api/chat, packages/chat-api-services → api/chat, packages/console-test-data → api/console. This creates reverse dependencies - packages should not depend on API implementations.",
+      "file": "packages/console-trpc/src/server.tsx",
+      "rule": "no-package-to-api-imports",
+      "tool": "dependency-cruiser",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T02:05:34Z"
+    },
+    {
+      "id": "BND-003",
+      "tier": 1,
+      "dimension": "boundary_integrity",
+      "title": "Apps importing from DB layer directly (31 violations)",
+      "description": "apps/console and apps/chat import directly from db layer instead of going through API. Pattern affects apps/console/src/lib/v1/ (8 files), apps/console/src/lib/neural/ (14 files), apps/console/src/env.ts, apps/console/src/app routes (4 files), and apps/chat (2 files).",
+      "file": "apps/console/src/lib/v1/related.ts",
+      "rule": "no-app-to-db-imports",
+      "tool": "dependency-cruiser",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T02:05:34Z"
+    },
+    {
+      "id": "BND-004",
+      "tier": 2,
+      "dimension": "boundary_integrity",
+      "title": "Deep imports from vendor packages leaving boundaries",
+      "description": "turbo boundaries detected @vendor/cms deep imports (components/body, components/feed, env) being accessed from apps/www. These should be re-exported from the main @vendor/cms entry point.",
+      "file": "apps/www/src/app/(app)/(marketing)/legal/[slug]/page.tsx",
+      "rule": "package-boundary",
+      "tool": "turbo-boundaries",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T02:05:34Z"
+    },
+    {
+      "id": "BND-005",
+      "tier": 3,
+      "dimension": "boundary_integrity",
+      "title": "Type-only imports not declared as such",
+      "description": "core/ai-sdk imports from 'react' without type-only declaration. turbo boundaries detected 3 instances in use-chat.ts, use-delta-stream.ts, use-event-stream.ts.",
+      "file": "core/ai-sdk/src/core/v2/react/use-chat.ts",
+      "rule": "type-only-import",
+      "tool": "turbo-boundaries",
+      "auto_fixable": true,
+      "status": "open",
+      "first_seen": "2026-02-07T02:05:34Z"
+    },
+    {
+      "id": "DEP-001",
+      "tier": 2,
+      "dimension": "dependency_health",
+      "title": "Undeclared dependencies",
+      "description": "turbo boundaries found missing dependencies: 'server-only' in vendor/clerk, '@eslint/eslintrc' in examples/nextjs-ai-chatbot.",
+      "file": "vendor/clerk/src/server.ts",
+      "rule": "undeclared-dependency",
+      "tool": "turbo-boundaries",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T02:05:34Z"
+    }
+  ],
+  "summary": {
+    "total_findings": 6,
+    "tier1_count": 2,
+    "tier2_count": 3,
+    "tier3_count": 1,
+    "signal_ratio": 0.833,
+    "packages_evaluated": 71,
+    "packages_total": 71,
+    "tools_used": [
+      "dependency-cruiser@16.10.4",
+      "turbo-boundaries@2.5.8"
+    ]
+  }
+}

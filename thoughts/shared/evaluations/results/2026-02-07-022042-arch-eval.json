@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-02-07T02:20:42.693Z",
+  "git_sha": "1da19b9411e3f2baf6c29642d31e3e06c082f3a3",
+  "branch": "main",
+  "findings": [
+    {
+      "id": "TYP-001",
+      "tier": 1,
+      "dimension": "type_safety",
+      "title": "Missing strict mode in 64 tsconfig files",
+      "description": "64 tsconfig.json files do not have \"strict\": true:\n- api/chat/tsconfig.json\n- api/console/tsconfig.json\n- core/ai-sdk/tsconfig.json\n- core/cli/tsconfig.json\n- core/lightfast/tsconfig.json\n... and 59 more",
+      "rule": "missing-strict-mode",
+      "tool": "tsconfig-checker",
+      "auto_fixable": true,
+      "status": "open",
+      "first_seen": "2026-02-07T02:20:42.552Z"
+    },
+    {
+      "id": "TYP-002",
+      "tier": 2,
+      "dimension": "type_safety",
+      "title": "Excessive 'any' usage in apps (21 occurrences)",
+      "description": "apps has 21 'any' type usages (threshold: 5)",
+      "file": "apps",
+      "rule": "excessive-any-usage",
+      "tool": "grep",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T02:20:42.552Z"
+    },
+    {
+      "id": "TYP-003",
+      "tier": 2,
+      "dimension": "type_safety",
+      "title": "Excessive 'any' usage in api (2088 occurrences)",
+      "description": "api has 2088 'any' type usages (threshold: 5)",
+      "file": "api",
+      "rule": "excessive-any-usage",
+      "tool": "grep",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T02:20:42.552Z"
+    },
+    {
+      "id": "TYP-004",
+      "tier": 2,
+      "dimension": "type_safety",
+      "title": "Excessive 'any' usage in packages (16 occurrences)",
+      "description": "packages has 16 'any' type usages (threshold: 5)",
+      "file": "packages",
+      "rule": "excessive-any-usage",
+      "tool": "grep",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T02:20:42.552Z"
+    },
+    {
+      "id": "TYP-005",
+      "tier": 2,
+      "dimension": "type_safety",
+      "title": "Excessive 'any' usage in vendor (21 occurrences)",
+      "description": "vendor has 21 'any' type usages (threshold: 5)",
+      "file": "vendor",
+      "rule": "excessive-any-usage",
+      "tool": "grep",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T02:20:42.552Z"
+    },
+    {
+      "id": "TYP-006",
+      "tier": 2,
+      "dimension": "type_safety",
+      "title": "Excessive 'any' usage in core (40 occurrences)",
+      "description": "core has 40 'any' type usages (threshold: 5)",
+      "file": "core",
+      "rule": "excessive-any-usage",
+      "tool": "grep",
+      "auto_fixable": false,
+      "status": "open",
+      "first_seen": "2026-02-07T02:20:42.552Z"
+    }
+  ],
+  "summary": {
+    "total_findings": 6,
+    "tier1_count": 1,
+    "tier2_count": 5,
+    "tier3_count": 0,
+    "signal_ratio": 1,
+    "packages_evaluated": 0,
+    "packages_total": 0,
+    "tools_used": [
+      "dependency-cruiser",
+      "turbo-boundaries",
+      "knip"
+    ]
+  }
+}
