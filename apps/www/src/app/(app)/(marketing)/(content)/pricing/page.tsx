@@ -431,13 +431,17 @@ export default function PricingPage() {
                         )}
 
                         <div className="flex justify-start">
-                          <Button
-                            variant={plan.highlighted ? "default" : "outline"}
-                            className="rounded-full"
-                          >
-                            {plan.buttonText}
-                            <ArrowUpRight className="w-4 h-4 ml-2" />
-                          </Button>
+                          <a href="mailto:sales@lightfast.ai">
+                            <Button
+                              variant={
+                                plan.highlighted ? "default" : "outline"
+                              }
+                              className="rounded-full"
+                            >
+                              {plan.buttonText}
+                              <ArrowUpRight className="w-4 h-4 ml-2" />
+                            </Button>
+                          </a>
                         </div>
                       </div>
                     </div>
