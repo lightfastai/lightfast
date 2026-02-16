@@ -374,11 +374,13 @@ Migrated actor identities from workspace to organization scope for cross-workspa
  */
 async function getChangelogCollectionId(client) {
   const result = await client.query({
-    changelogPages: {
-      _id: true,
+    changelog: {
+      post: {
+        _id: true,
+      },
     },
   });
-  return result.changelogPages._id;
+  return result.changelog.post._id;
 }
 
 async function createChangelogEntry(client, parentId, data) {
@@ -440,14 +442,14 @@ async function main() {
 
   console.log("Creating changelog entries for Neural Memory implementation...\n");
 
-  // First, get the changelogPages collection ID
-  console.log("Fetching changelogPages collection ID...");
+  // First, get the changelog post collection ID
+  console.log("Fetching changelog post collection ID...");
   let parentId;
   try {
     parentId = await getChangelogCollectionId(client);
     console.log(`  Collection ID: ${parentId}\n`);
   } catch (error) {
-    throw new Error(`Failed to get changelogPages collection ID: ${error.message}`);
+    throw new Error(`Failed to get changelog post collection ID: ${error.message}`);
   }
 
   for (const entry of entries) {

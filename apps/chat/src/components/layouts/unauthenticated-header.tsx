@@ -12,7 +12,7 @@ export function UnauthenticatedHeader() {
 			<header className="lg:hidden relative h-14 flex items-center justify-between px-4 bg-background border-b border-border/50 z-10">
 				{/* Left side - Logo */}
 				<div className="flex items-center">
-					<Button variant="ghost" size="xs" asChild>
+					<Button variant="ghost" size="sm" asChild>
 						<Link href={wwwUrl}>
 							<Icons.logoShort className="h-4 w-auto text-foreground" />
 						</Link>

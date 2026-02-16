@@ -69,16 +69,18 @@ const getMutationClient = () => {
 };
 
 /**
- * Get the changelogPages collection ID for use as parentId in create mutations.
+ * Get the changelog post collection ID for use as parentId in create mutations.
  */
 async function getChangelogCollectionId(): Promise<string> {
   const client = getMutationClient();
   const result = await client.query({
-    changelogPages: {
-      _id: true,
+    changelog: {
+      post: {
+        _id: true,
+      },
     },
   });
-  return (result as { changelogPages: { _id: string } }).changelogPages._id;
+  return (result as { changelog: { post: { _id: string } } }).changelog.post._id;
 }
 
 /**

@@ -27,7 +27,7 @@
     "@clerk/elements": "catalog:",
     "@clerk/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
-    "next": "catalog:next15",
+    "next": "catalog:next16",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "svix": "^1.62.0",

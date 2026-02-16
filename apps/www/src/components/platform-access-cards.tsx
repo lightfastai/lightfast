@@ -3,7 +3,7 @@ import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { CheckCircle, Package, BookOpen, type LucideIcon } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 
-type CardVariant = "glass" | "muted" | "blue";
+type CardVariant = "glass" | "muted" | "red";
 
 interface AccessCard {
   href: string;
@@ -26,24 +26,24 @@ const variantStyles: Record<
   }
 > = {
   glass: {
-    card: "bg-gradient-to-br from-muted/80 via-muted/50 to-card/30 backdrop-blur-xl border-border/30 shadow-inner hover:from-muted/90 hover:via-muted/60 hover:to-card/40",
+    card: "bg-muted-foreground/20 backdrop-blur-md border-border hover:bg-muted/60",
     icon: "text-foreground",
     title: "text-foreground",
     description: "text-muted-foreground",
-    colSpan: "md:col-span-5",
+    colSpan: "md:col-span-6",
   },
   muted: {
     card: "bg-muted border-border hover:bg-accent/10 hover:border-muted-foreground/20",
     icon: "text-foreground",
     title: "text-foreground",
     description: "text-muted-foreground",
-    colSpan: "md:col-span-4",
+    colSpan: "md:col-span-3",
   },
-  blue: {
-    card: "bg-primary border-primary hover:bg-primary/90",
-    icon: "text-primary-foreground/80",
-    title: "text-primary-foreground",
-    description: "text-primary-foreground/70",
+  red: {
+    card: "bg-[var(--pitch-deck-red)] hover:bg-[var(--pitch-deck-red-overlay)]",
+    icon: "text-primary",
+    title: "text-primary",
+    description: "text-primary",
     colSpan: "md:col-span-3",
   },
 };
@@ -73,13 +73,13 @@ const accessCards: AccessCard[] = [
     description:
       "Learn how to integrate and use Lightfast in your applications.",
     external: true,
-    variant: "blue",
+    variant: "red",
   },
 ];
 
 export function PlatformAccessCards() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
       {accessCards.map((card) => {
         const Icon = card.icon;
         const LinkComponent = card.microfrontend ? MicrofrontendLink : Link;
@@ -97,12 +97,12 @@ export function PlatformAccessCards() {
           >
             <div
               className={cn(
-                "relative h-full rounded-xs border p-8 transition-all duration-200",
+                "relative h-full rounded-xs border p-10 transition-all duration-200",
                 styles.card,
               )}
             >
-              <div className="mb-32">
-                <Icon className={cn("h-5 w-5", styles.icon)} />
+              <div className="mb-40">
+                <Icon className={cn("h-6 w-6", styles.icon)} />
               </div>
               <h3 className={cn("mb-2 text-xl font-medium", styles.title)}>
                 {card.title}

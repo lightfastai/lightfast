@@ -11,13 +11,17 @@ export function PrefaceToggle({ className }: { className?: string }) {
   return (
     <Button
       variant="ghost"
-      size="icon"
       onClick={togglePreface}
-      className={cn("size-8", className)}
-      aria-label={prefaceExpanded ? "Collapse founder note" : "Expand founder note"}
+      className={cn(className)}
+      aria-label={
+        prefaceExpanded ? "Collapse founder note" : "Expand founder note"
+      }
     >
       <PanelLeft
-        className={cn("size-4 transition-transform", !prefaceExpanded && "rotate-180")}
+        className={cn(
+          "size-4 transition-transform",
+          !prefaceExpanded && "rotate-180",
+        )}
       />
     </Button>
   );

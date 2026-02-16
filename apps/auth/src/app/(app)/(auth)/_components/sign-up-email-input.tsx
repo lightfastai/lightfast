@@ -153,7 +153,8 @@ export function SignUpEmailInput({
 
 				<Button
 					type="submit"
-					className="w-full h-12"
+					size="lg"
+					className="w-full"
 					disabled={!isLoaded || form.formState.isSubmitting}
 				>
 					{form.formState.isSubmitting ? (

@@ -214,6 +214,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority: 0.7,
         };
       }),
+    // RSS/Atom feeds for blog (helps feed aggregators discover feeds)
+    {
+      url: `${base}/blog/rss.xml`,
+      ...(getMostRecentDate(blogPosts) && { lastModified: getMostRecentDate(blogPosts) }),
+      changeFrequency: "daily",
+      priority: 0.6,
+    },
+    {
+      url: `${base}/blog/atom.xml`,
+      ...(getMostRecentDate(blogPosts) && { lastModified: getMostRecentDate(blogPosts) }),
+      changeFrequency: "daily",
+      priority: 0.6,
+    },
+    {
+      url: `${base}/blog/feed.xml`,
+      ...(getMostRecentDate(blogPosts) && { lastModified: getMostRecentDate(blogPosts) }),
+      changeFrequency: "daily",
+      priority: 0.6,
+    },
+    // RSS/Atom feeds for changelog
+    {
+      url: `${base}/changelog/rss.xml`,
+      ...(getMostRecentDate(changelogEntries) && { lastModified: getMostRecentDate(changelogEntries) }),
+      changeFrequency: "daily",
+      priority: 0.6,
+    },
+    {
+      url: `${base}/changelog/atom.xml`,
+      ...(getMostRecentDate(changelogEntries) && { lastModified: getMostRecentDate(changelogEntries) }),
+      changeFrequency: "daily",
+      priority: 0.6,
+    },
+    {
+      url: `${base}/changelog/feed.xml`,
+      ...(getMostRecentDate(changelogEntries) && { lastModified: getMostRecentDate(changelogEntries) }),
+      changeFrequency: "daily",
+      priority: 0.6,
+    },
     // Search (no lastModified - static page)
     {
       url: `${base}/search`,

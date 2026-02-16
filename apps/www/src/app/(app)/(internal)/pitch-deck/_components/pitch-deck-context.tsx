@@ -13,10 +13,6 @@ interface PitchDeckContextProps {
   setPrefaceExpanded: (expanded: boolean) => void;
   togglePreface: () => void;
 
-  // View mode state
-  isGridView: boolean;
-  setIsGridView: (grid: boolean) => void;
-
   // Mobile detection - undefined during hydration
   isMobile: boolean | undefined;
 }
@@ -47,8 +43,6 @@ export function PitchDeckProvider({
     // Initial state will be overridden by useEffect once we know if mobile
     return defaultPrefaceExpanded;
   });
-
-  const [isGridView, setIsGridView] = React.useState(false);
 
   // Update preface state when mobile detection completes
   React.useEffect(() => {
@@ -92,11 +86,9 @@ export function PitchDeckProvider({
       prefaceExpanded,
       setPrefaceExpanded,
       togglePreface,
-      isGridView,
-      setIsGridView,
       isMobile,
     }),
-    [prefaceExpanded, setPrefaceExpanded, togglePreface, isGridView, isMobile]
+    [prefaceExpanded, setPrefaceExpanded, togglePreface, isMobile]
   );
 
   return (

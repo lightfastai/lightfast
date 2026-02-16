@@ -41,46 +41,37 @@ Search through workspace memory for relevant documents and observations.
 const response = await client.search(input: SearchInput): Promise<V1SearchResponse>
 ```
 
-#### SearchInput
+#### SearchInput & Response
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `query` | `string` | Yes | - | Natural language search query |
-| `limit` | `number` | No | `10` | Number of results to return |
-| `offset` | `number` | No | `0` | Pagination offset |
-| `mode` | `"fast" \| "balanced" \| "quality"` | No | `"balanced"` | Search mode |
-| `includeContext` | `boolean` | No | `true` | Include surrounding context |
-| `includeHighlights` | `boolean` | No | `true` | Include highlighted snippets |
-| `filters` | `SearchFilters` | No | - | Filter results |
+<EmbeddedOperation operationId="search" />
 
 #### SearchFilters
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `sources` | `string[]` | Filter by source (e.g., `["github"]`) |
-| `dateRange` | `string` | Filter by date (e.g., `"30d"`, `"7d"`) |
+| `sourceTypes` | `string[]` | Source types to include (e.g., `["github", "linear"]`) |
+| `observationTypes` | `string[]` | Observation types to include (e.g., `["commit", "issue"]`) |
+| `actorNames` | `string[]` | Actor names to filter by (e.g., `["@sarah", "@mike"]`) |
+| `dateRange` | `{ start?: string; end?: string }` | Date range filter with ISO datetime strings |
 
-#### V1SearchResponse
+#### Example
 
 ```typescript
-interface V1SearchResponse {
-  results: V1SearchResult[];
-  meta: {
-    total: number;
-    latency: { total: number };
-  };
-}
+const results = await client.search({
+  query: "authentication implementation",
+  limit: 10,
+  mode: "balanced",
+  filters: {
+    sourceTypes: ["github"],
+    dateRange: {
+      start: "2024-01-01T00:00:00Z",
+      end: "2024-12-31T23:59:59Z",
+    },
+  },
+});
 
-interface V1SearchResult {
-  id: string;
-  type: string;
-  title: string;
-  snippet: string;
-  score: number;
-  source: string;
-  url: string;
-  metadata: Record<string, unknown>;
-}
+console.log(results.data); // Array of search results
+console.log(results.meta.total); // Total matching documents
 ```
 
 ---
@@ -93,27 +84,19 @@ Fetch full content for documents by their IDs.
 const response = await client.contents(input: ContentsInput): Promise<V1ContentsResponse>
 ```
 
-#### ContentsInput
+#### ContentsInput & Response
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `ids` | `string[]` | Yes | Array of document IDs to fetch |
+<EmbeddedOperation operationId="get-contents" />
 
-#### V1ContentsResponse
+#### Example
 
 ```typescript
-interface V1ContentsResponse {
-  items: V1ContentItem[];
-  missing: string[];
-}
+const contents = await client.contents({
+  ids: ["obs_abc123", "doc_def456"],
+});
 
-interface V1ContentItem {
-  id: string;
-  type: string;
-  title: string;
-  content: string;
-  metadata: Record<string, unknown>;
-}
+console.log(contents.items); // Found content items
+console.log(contents.missing); // IDs that were not found
 ```
 
 ---
@@ -126,38 +109,74 @@ Find content semantically similar to a given document or URL.
 const response = await client.findSimilar(input: FindSimilarInput): Promise<V1FindSimilarResponse>
 ```
 
-#### FindSimilarInput
+#### FindSimilarInput & Response
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| `id` | `string` | One of `id` or `url` | - | Document ID to find similar content for |
-| `url` | `string` | One of `id` or `url` | - | URL to find similar content for |
-| `limit` | `number` | No | `10` | Number of results |
-| `threshold` | `number` | No | `0.5` | Minimum similarity score (0-1) |
-| `sameSourceOnly` | `boolean` | No | `false` | Only return results from same source |
-| `excludeIds` | `string[]` | No | - | Document IDs to exclude |
+<EmbeddedOperation operationId="find-similar" />
 
-#### V1FindSimilarResponse
+#### Example
 
 ```typescript
-interface V1FindSimilarResponse {
-  results: V1SimilarResult[];
-  source: {
-    id: string;
-    title: string;
-    type: string;
-  };
-}
+const similar = await client.findSimilar({
+  url: "https://github.com/org/repo/pull/123",
+  limit: 5,
+  threshold: 0.7,
+});
 
-interface V1SimilarResult {
-  id: string;
-  type: string;
-  title: string;
-  snippet: string;
-  score: number;
-  source: string;
-  url: string;
-}
+console.log(similar.similar); // Array of similar items
+console.log(similar.source); // Source document info
+```
+
+---
+
+### graph()
+
+Traverse the relationship graph from a starting observation. Returns connected observations with relationship edges.
+
+```typescript
+const response = await client.graph(input: GraphInput): Promise<GraphResponse>
+```
+
+#### GraphInput & Response
+
+<EmbeddedOperation operationId="graph" />
+
+#### Example
+
+```typescript
+const graph = await client.graph({
+  id: "obs_abc123",
+  depth: 2,
+});
+
+console.log(graph.data.nodes); // All connected nodes
+console.log(graph.data.edges); // Relationship edges
+console.log(graph.meta.nodeCount); // Total nodes traversed
+```
+
+---
+
+### related()
+
+Find observations directly connected to a given observation via relationships. Returns related events grouped by source system.
+
+```typescript
+const response = await client.related(input: RelatedInput): Promise<RelatedResponse>
+```
+
+#### RelatedInput & Response
+
+<EmbeddedOperation operationId="find-related" />
+
+#### Example
+
+```typescript
+const related = await client.related({
+  id: "obs_abc123",
+});
+
+console.log(related.data.related); // All related events
+console.log(related.data.bySource); // Events grouped by source
+console.log(related.meta.total); // Total related events found
 ```
 
 ---
@@ -173,6 +192,7 @@ import {
   NotFoundError,
   RateLimitError,
   NetworkError,
+  ServerError,
 } from "lightfast";
 ```
 
@@ -182,6 +202,7 @@ import {
 | `ValidationError` | 400 | Invalid request parameters. Access `error.details` for field-specific errors |
 | `NotFoundError` | 404 | Resource not found |
 | `RateLimitError` | 429 | Too many requests. Access `error.retryAfter` for retry delay in seconds |
+| `ServerError` | 500, 502, 503, 504 | Internal server error or service unavailable |
 | `NetworkError` | - | Connection or timeout error |
 
 ---
@@ -203,6 +224,10 @@ import type {
   FindSimilarInput,
   V1FindSimilarResponse,
   V1SimilarResult,
+  GraphInput,
+  GraphResponse,
+  RelatedInput,
+  RelatedResponse,
 } from "lightfast";
 ```
 

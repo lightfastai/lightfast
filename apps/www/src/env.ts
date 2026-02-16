@@ -37,7 +37,6 @@ export const env = createEnv({
   server: {
     // Clerk secret key for waitlist API (server-only, no ClerkProvider needed)
     CLERK_SECRET_KEY: z.string().min(1).startsWith("sk_"),
-    RESEND_EARLY_ACCESS_AUDIENCE_ID: z.string().min(1),
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
     PORT: z.coerce.number().positive().optional().default(3000),
     BASEHUB_TOKEN: z.string().min(1).startsWith("bshb_pk_"),

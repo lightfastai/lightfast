@@ -4,7 +4,8 @@
 		"baseUrl": ".",
 		"paths": {
 			"~/*": ["./src/*"],
-			"@/*": ["./*"]
+			"@/*": ["./*"],
+			"fumadocs-mdx:collections/*": [".source/*"]
 		},
 		"noUncheckedIndexedAccess": false,
 		"skipLibCheck": true,

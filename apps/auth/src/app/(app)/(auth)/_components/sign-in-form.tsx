@@ -75,7 +75,7 @@ export function SignInForm({
       {/* Header - only show on email and password steps */}
       {(verificationStep === "email" || verificationStep === "password") && (
         <div className="text-center">
-          <h1 className="text-3xl font-semibold text-foreground">
+          <h1 className="text-3xl font-pp font-medium text-foreground">
             Log in to Lightfast
           </h1>
         </div>
@@ -89,8 +89,9 @@ export function SignInForm({
             </div>
             <Button
               onClick={handleReset}
+              size="lg"
               variant="outline"
-              className="w-full h-12"
+              className="w-full"
             >
               Try again
             </Button>
@@ -102,15 +103,16 @@ export function SignInForm({
             <div className="rounded-lg bg-destructive/30 border border-border p-3">
               <p className="text-sm text-foreground">{error}</p>
             </div>
-            <Button asChild className="w-full h-12">
+            <Button asChild size="lg" className="w-full">
               <MicrofrontendLink href="/early-access">
                 Join the Waitlist
               </MicrofrontendLink>
             </Button>
             <Button
               onClick={handleReset}
+              size="lg"
               variant="outline"
-              className="w-full h-12"
+              className="w-full"
             >
               Back to Sign In
             </Button>
@@ -143,7 +145,8 @@ export function SignInForm({
                 <Button
                   variant="outline"
                   onClick={() => setVerificationStep("password")}
-                  className="w-full h-12"
+                  className="w-full"
+                  size="lg"
                 >
                   Sign in with Password
                 </Button>
@@ -177,7 +180,8 @@ export function SignInForm({
             <Button
               variant="ghost"
               onClick={handleReset}
-              className="w-full h-12 text-muted-foreground hover:text-foreground"
+              size="lg"
+              className="w-full text-muted-foreground hover:text-foreground"
             >
               ← Back to other options
             </Button>

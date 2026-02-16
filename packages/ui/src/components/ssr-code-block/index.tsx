@@ -5,6 +5,7 @@ import { Fragment } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
 import { cn } from "@repo/ui/lib/utils";
 import { SSRCodeBlockCopyButton } from "./copy-button";
+import { openaiDark } from "./openai-dark-theme";
 
 // Re-export types for consumers
 export type { BundledLanguage, BundledTheme } from "shiki";
@@ -25,20 +26,48 @@ export async function SSRCodeBlock({
   showLineNumbers = true,
 }: SSRCodeBlockProps) {
   const code = children.trim();
-  const lang = language as BundledLanguage;
   const lineCount = code.split("\n").length;
 
-  // Generate HAST for both themes in parallel
-  const [lightHast, darkHast] = await Promise.all([
-    codeToHast(code, {
-      lang,
-      theme: "github-light",
-    }),
-    codeToHast(code, {
-      lang,
-      theme: "github-dark",
-    }),
-  ]);
+  // Normalize language names - handle common aliases and invalid languages
+  let lang: BundledLanguage = language as BundledLanguage;
+  const languageLower = language.toLowerCase();
+
+  // Map common invalid/alias names to valid Shiki languages
+  const languageMap: Record<string, BundledLanguage> = {
+    plaintext: "plaintext" as BundledLanguage,
+    plain: "plaintext" as BundledLanguage,
+  };
+
+  if (languageLower in languageMap) {
+    lang = languageMap[languageLower]!;
+  }
+
+  // Generate HAST for both themes in parallel, with fallback to plain text
+  let lightHast, darkHast;
+  try {
+    [lightHast, darkHast] = await Promise.all([
+      codeToHast(code, {
+        lang,
+        theme: "github-light-default",
+      }),
+      codeToHast(code, {
+        lang,
+        theme: openaiDark,
+      }),
+    ]);
+  } catch (error) {
+    // If language is not supported, fall back to plain text
+    [lightHast, darkHast] = await Promise.all([
+      codeToHast(code, {
+        lang: "text",
+        theme: "github-light-default",
+      }),
+      codeToHast(code, {
+        lang: "text",
+        theme: openaiDark,
+      }),
+    ]);
+  }
 
   // Convert HAST to JSX for both themes
   // Override elements to control styling while preserving Shiki's syntax colors
@@ -53,7 +82,7 @@ export async function SSRCodeBlock({
     }) => (
       <pre
         {...props}
-        className="m-0 p-0 bg-transparent border-0 leading-[1.7]"
+        className="m-0 p-0 bg-transparent border-0 leading-[1.7]! tracking-normal"
       />
     ),
     code: ({
@@ -62,7 +91,7 @@ export async function SSRCodeBlock({
     }: {
       style?: React.CSSProperties;
       [key: string]: unknown;
-    }) => <code {...props} className="block leading-[1.7]" />,
+    }) => <code {...props} className="block leading-[1.7]!" />,
     // Ensure spans have visible text color - use Shiki's color if provided, else fallback
     span: ({
       style,
@@ -72,13 +101,15 @@ export async function SSRCodeBlock({
       [key: string]: unknown;
     }) => {
       const hasColor = style?.color && style.color !== "inherit";
-      const fallbackColor = mode === "light" ? "#24292e" : "#e1e4e8";
+      const fallbackColor = mode === "light" ? "#24292e" : "#dcdcdc";
       return (
         <span
           {...props}
+          className="leading-[1.7]!"
           style={{
             ...style,
             color: hasColor ? style?.color : fallbackColor,
+            letterSpacing: "normal",
           }}
         />
       );
@@ -104,10 +135,10 @@ export async function SSRCodeBlock({
 
   return (
     <div className={cn("my-4", className)}>
-      <div className="rounded-xs bg-muted/30 dark:bg-card overflow-hidden scrollbar-thin">
+      <div className="rounded-sm dark:bg-card/80 overflow-hidden scrollbar-thin">
         {/* Header with language label and copy button */}
         {showHeader && (
-          <div className="flex items-center justify-between px-6 py-2">
+          <div className="flex items-center justify-between pl-6 pr-3 py-2">
             <span className="text-xs font-mono font-medium text-muted-foreground">
               {language}
             </span>
@@ -116,7 +147,7 @@ export async function SSRCodeBlock({
         )}
 
         {/* Code content with line numbers */}
-        <div className="overflow-x-auto px-6 pt-2 pb-4">
+        <div className="overflow-x-auto px-6 pb-4">
           <div className="flex min-w-max">
             {/* Code content - dual theme rendering */}
             {/* text-foreground provides base color for plain text (no syntax highlighting) */}
@@ -126,7 +157,7 @@ export async function SSRCodeBlock({
                 {lightJsx}
               </div>
               {/* Dark theme - hidden in light mode */}
-              <div className="hidden dark:block font-mono text-xs">
+              <div className="hidden dark:block font-mono text-sm">
                 {darkJsx}
               </div>
             </div>

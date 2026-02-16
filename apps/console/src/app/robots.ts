@@ -16,13 +16,43 @@ export default function robots(): MetadataRoute.Robots {
   }
 
   // Production: Allow AI crawlers with specific permissions
+  // Strategy: Allow ALL training bots for maximum AEO/GEO visibility
   return {
     rules: [
-      // General crawlers
+      // General crawlers - block authenticated/private routes
+      // Note: RSS/Atom feeds at /blog/*.xml and /changelog/*.xml are publicly accessible
+      // Note: Microfrontends setup - console is catch-all, www handles marketing, auth handles sign-in/sign-up
       {
         userAgent: "*",
-        allow: "/",
-        disallow: "/api/",
+        allow: [
+          "/",
+          "/llms.txt", // AI crawler guidance file (standard for LLMs to understand site)
+          "/api/og/*", // Public OG image generation endpoints
+        ],
+        disallow: [
+          // API routes (console app)
+          "/api/", // All API routes including tRPC, Inngest, GitHub, Vercel webhooks
+
+          // Authenticated user routes (console app)
+          "/account/", // User account management
+          "/new/", // Organization creation flow
+
+          // Organization/workspace private routes (console app: /[orgSlug]/...)
+          "/*/settings/", // Org and workspace settings
+          "/*/sources/", // Source integrations management
+          "/*/insights/", // Analytics and insights
+          "/*/jobs/", // Background jobs
+          "/*/search/", // Authenticated workspace search
+
+          // Internal/preview/test content (www app)
+          "/pitch-deck", // Internal pitch deck
+          "/preview", // Preview mode
+          "/unicorn-test", // Test route
+
+          // OAuth and sensitive flows
+          "/oauth/", // OAuth callback routes (GitHub, Vercel)
+          "/confirm/", // Email confirmations
+        ],
       },
       // OpenAI - Critical for ChatGPT Search & SearchGPT
       {
@@ -33,9 +63,14 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "ChatGPT-User",
         allow: "/",
       },
-      // GPTBot - For OpenAI model training (optional but recommended)
+      // GPTBot - For OpenAI model training
       {
         userAgent: "GPTBot",
+        allow: "/",
+      },
+      // Common Crawl - Dataset for AI research and training
+      {
+        userAgent: "CCBot",
         allow: "/",
       },
       // Perplexity - Growing answer engine
@@ -48,14 +83,52 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "Claude-Web",
         allow: "/",
       },
-      // Google AI - For AI Overviews
+      // Google AI - For AI Overviews and Gemini training
       {
         userAgent: "Google-Extended",
+        allow: "/",
+      },
+      // Anthropic AI - For Claude model training (different from Claude-Web search)
+      {
+        userAgent: "anthropic-ai",
         allow: "/",
       },
       // Cohere AI
       {
         userAgent: "cohere-ai",
+        allow: "/",
+      },
+      // Meta AI - Facebook's answer engine
+      {
+        userAgent: "FacebookBot",
+        allow: "/",
+      },
+      {
+        userAgent: "meta-externalagent",
+        allow: "/",
+      },
+      // Amazon Alexa
+      {
+        userAgent: "Amazonbot",
+        allow: "/",
+      },
+      // Apple Siri/Spotlight
+      {
+        userAgent: "Applebot",
+        allow: "/",
+      },
+      // Apple AI training
+      {
+        userAgent: "Applebot-Extended",
+        allow: "/",
+      },
+      // Content aggregation bots
+      {
+        userAgent: "Omgilibot",
+        allow: "/",
+      },
+      {
+        userAgent: "Omgili",
         allow: "/",
       },
     ],

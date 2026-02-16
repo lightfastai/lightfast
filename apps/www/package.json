@@ -57,7 +57,6 @@
     "lucide-react": "catalog:",
     "neverthrow": "catalog:",
     "next": "catalog:next16",
-    "nuqs": "^2.8.0",
     "react": "19.2.1",
     "react-confetti": "^6.4.0",
     "react-devicons": "^2.16.2",
@@ -65,6 +64,7 @@
     "react-hook-form": "catalog:",
     "shiki": "^3.9.2",
     "tailwind-merge": "catalog:",
+    "unicornstudio-react": "2.0.1-1",
     "zod": "catalog:zod3",
     "zustand": "catalog:"
   },
@@ -88,7 +88,8 @@
     "require-in-the-middle": "catalog:",
     "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:",
-    "typescript-eslint": "catalog:"
+    "typescript-eslint": "catalog:",
+    "vitest": "^3.2.4"
   },
   "prettier": "@repo/prettier-config"
 }

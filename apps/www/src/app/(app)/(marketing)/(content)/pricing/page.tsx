@@ -156,7 +156,7 @@ const pricingPlans: PricingPlan[] = [
       "+$5 per 1K extra searches",
       "+$20/mo for 180-day retention",
     ],
-    monthlyPrice: 12,
+    monthlyPrice: 20,
     interval: "user/month",
     buttonText: "Start Trial",
     highlighted: true,
@@ -203,9 +203,9 @@ const pricingPlans: PricingPlan[] = [
 
 const faqs = [
   {
-    question: "What makes Lightfast worth $12/user?",
+    question: "What makes Lightfast worth $20/user?",
     answer:
-      "Lightfast gives your team perfect memory. Find any decision, code change, or discussion instantly. Know who worked on what and why. Track how things evolved over time. For a 10-person team at $120/month, you're saving hours of context searching every week. That's easily worth 10x the cost in saved developer time.",
+      "Lightfast gives your team perfect memory. Find any decision, code change, or discussion instantly. Know who worked on what and why. Track how things evolved over time. For a 10-person team at $200/month, you're saving hours of context searching every week. That's easily worth 10x the cost in saved developer time.",
   },
   {
     question: "What's included in the search allowance?",
@@ -317,7 +317,7 @@ export default function PricingPage() {
             <div className="col-span-12 md:col-span-10 md:col-start-2 lg:col-span-10 lg:col-start-2">
               <div className="flex w-full flex-col items-center text-center">
                 {/* Small label */}
-                <div className="mb-8 opacity-80">
+                <div className="mb-4">
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">
                     Pricing for memory layer
                   </p>
@@ -325,7 +325,7 @@ export default function PricingPage() {
 
                 {/* Heading */}
                 <h1
-                  className={`text-3xl sm:text-4xl md:text-5xl font-light leading-[1.1] tracking-[-0.02em] px-4 text-balance ${exposureTrial.className}`}
+                  className={`text-3xl sm:text-4xl md:text-5xl font-medium px-4 text-balance font-pp`}
                 >
                   Choose the plan that fits your team
                 </h1>
@@ -347,7 +347,7 @@ export default function PricingPage() {
         <div className="max-w-6xl px-4 mx-auto w-full py-10">
           <div className="space-y-8 w-full">
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-3 gap-8 w-full">
               {pricingPlans.map((plan) => {
                 const price = plan.monthlyPrice;
 
@@ -355,10 +355,13 @@ export default function PricingPage() {
                   <div
                     key={plan.plan}
                     className={cn(
-                      "flex flex-col bg-card rounded-xs p-6 h-full",
+                      "flex flex-col bg-card rounded-sm p-6 h-full",
                       plan.highlighted
                         ? "border border-foreground shadow-lg"
                         : "",
+                      "md:col-span-2 lg:col-span-1",
+                      plan.plan === "business" &&
+                        "md:col-start-2 lg:col-start-auto",
                     )}
                   >
                     <div className="space-y-1">
@@ -377,7 +380,7 @@ export default function PricingPage() {
                           className="flex items-start gap-3"
                         >
                           <Check className="w-4 h-4 text-foreground flex-shrink-0 mt-0.5" />
-                          <div className="text-xs text-foreground">
+                          <div className="text-sm text-foreground">
                             {feature}
                           </div>
                         </div>
@@ -393,7 +396,7 @@ export default function PricingPage() {
                               key={addOnIndex}
                               className="flex items-start gap-3"
                             >
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-sm text-muted-foreground">
                                 {addOn}
                               </span>
                             </div>
@@ -415,26 +418,30 @@ export default function PricingPage() {
                                 ${price}
                               </span>
                               <span className="text-muted-foreground">
-                                / {plan.interval}
+                                /{plan.interval}
                               </span>
                             </>
                           )}
                         </div>
 
                         {plan.plan === "team" && (
-                          <p className="text-xs text-muted-foreground">
-                            $36/month for 3 users minimum
+                          <p className="text-sm text-muted-foreground">
+                            $60/month for 3 users minimum
                           </p>
                         )}
 
                         <div className="flex justify-start">
-                          <Button
-                            variant={plan.highlighted ? "default" : "outline"}
-                            className="rounded-full"
-                          >
-                            {plan.buttonText}
-                            <ArrowUpRight className="w-4 h-4 ml-2" />
-                          </Button>
+                          <a href="mailto:sales@lightfast.ai">
+                            <Button
+                              variant={
+                                plan.highlighted ? "default" : "outline"
+                              }
+                              className="rounded-full"
+                            >
+                              {plan.buttonText}
+                              <ArrowUpRight className="w-4 h-4 ml-2" />
+                            </Button>
+                          </a>
                         </div>
                       </div>
                     </div>
@@ -448,20 +455,20 @@ export default function PricingPage() {
         {/* FAQ Section */}
         <div className="max-w-6xl mx-auto w-full px-4 py-10">
           <div className="w-full">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-              {/* Left side - FAQ label */}
-              <div className="md:col-span-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  FAQs
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
+              {/* Left: Badge */}
+              <div>
+                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                  FAQ
                 </span>
               </div>
 
-              {/* Right side - FAQ content */}
-              <div className="md:col-span-10 md:col-start-3">
+              {/* Right: FAQ content - spans 2 columns */}
+              <div className="lg:col-span-2">
                 {/* Header with CTA */}
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8 pb-8 border-b border-border">
                   <div className="space-y-1">
-                    <p className="text-xl text-muted-foreground">
+                    <p className="text-base md:text-lg leading-relaxed text-muted-foreground">
                       Find answers.
                     </p>
                   </div>

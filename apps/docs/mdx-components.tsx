@@ -25,9 +25,10 @@ import {
   ValidationErrorList,
   ValidationExample,
 } from "@/src/components/validation-error";
-import { APIPage } from "fumadocs-openapi/ui";
 import { authUrl, wwwUrl } from "@/src/lib/related-projects";
 import { NextSteps } from "@/src/components/next-steps";
+import { AlphaBanner } from "@/src/components/alpha-banner";
+import { EmbeddedOperation } from "@/src/components/schema/embedded-operation";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -102,7 +103,13 @@ export const mdxComponents = {
 
     // Fallback for block code without language
     return (
-      <code className={cn("font-mono", className)} {...props}>
+      <code
+        className={cn(
+          "font-mono border text-sm bg-card/80 px-2 rounded-md tracking-wide",
+          className,
+        )}
+        {...props}
+      >
         {children}
       </code>
     );
@@ -381,7 +388,7 @@ export const mdxComponents = {
     return (
       <div
         className={cn(
-          "bg-card border border-transparent p-6 rounded-xs my-10 [&_*]:text-xs [&_p]:leading-relaxed [&_p]:mt-0 flex gap-3",
+          "bg-card border border-transparent p-6 rounded-xs my-10 [&_*]:text-sm [&_p]:leading-relaxed [&_p]:mt-0 flex gap-3",
           className,
         )}
         {...props}
@@ -398,12 +405,15 @@ export const mdxComponents = {
   ApiMethod,
   ApiReferenceCard,
   ApiReferenceGrid,
-  APIPage,
+  AlphaBanner,
 
   // Validation components
   ValidationError,
   ValidationErrorList,
   ValidationExample,
+
+  // Schema components
+  EmbeddedOperation,
 
   // Fumadocs UI components
   Tab,

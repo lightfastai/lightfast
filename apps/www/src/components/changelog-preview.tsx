@@ -12,7 +12,7 @@ export function ChangelogPreview() {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;
-        const entries = response.changelogPages?.items ?? [];
+        const entries = response.changelog?.post?.items ?? [];
 
         // Get the latest 4 entries
         const latestEntries = entries.slice(0, 4);
@@ -25,10 +25,10 @@ export function ChangelogPreview() {
           <>
             {/* Section Header */}
             <div className="mb-8">
-              <h2 className="text-3xl font-light tracking-tight text-foreground mb-2">
+              <h2 className="text-3xl font-pp font-medium tracking-tight text-foreground mb-2">
                 Changelog
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-foreground/60">
                 Stay up to date with the latest improvements and updates
               </p>
             </div>
@@ -66,21 +66,21 @@ export function ChangelogPreview() {
                     href={`/changelog/${item.slug}`}
                     className="group"
                   >
-                    <div className="h-full rounded-xs border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
+                    <div className="h-full rounded-md border border-border p-4 transition-colors hover:bg-card/60">
                       {/* Version Badge and Date on same line */}
                       <div className="flex items-center gap-2 mb-4">
                         {item.slug && (
-                          <span className="inline-block border rounded-full px-3 py-1 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center h-6 px-2 rounded-md border border-border text-xs text-muted-foreground">
                             {item.slug.slice(0, 3)}
                           </span>
                         )}
-                        <time className="text-xs text-muted-foreground">
+                        <time className="text-sm text-muted-foreground">
                           {dateStr}
                         </time>
                       </div>
 
                       {/* Title */}
-                      <h3 className="text-md font-medium text-foreground line-clamp-2 px-2">
+                      <h3 className="text-base font-medium text-foreground line-clamp-2">
                         {item._title}
                       </h3>
                     </div>

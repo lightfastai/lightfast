@@ -18,15 +18,15 @@ export function DitheredBackground() {
       <ImageDithering
         width="100%"
         height="100%"
-        image="/images/blue-sky.webp"
+        image="/images/lightfast-gradient.webp"
         colorBack="#1e40af"
         colorFront="#ffffff"
-        colorHighlight="#3b82f6"
+        colorHighlight="#ffffff"
         originalColors={false}
         inverted={false}
-        type="8x8"
+        type="2x2"
         size={2}
-        colorSteps={2}
+        colorSteps={4}
         fit="cover"
         style={{ width: "100%", height: "100%" }}
       />

@@ -1,0 +1,41 @@
+{
+  "name": "@vendor/remotion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./dist/src/index.d.ts", "default": "./src/index.ts" },
+    "./renderer": {
+      "types": "./dist/src/renderer.d.ts",
+      "default": "./src/renderer.ts"
+    },
+    "./bundler": {
+      "types": "./dist/src/bundler.d.ts",
+      "default": "./src/bundler.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/bundler": "^4.0.242",
+    "@remotion/renderer": "^4.0.242",
+    "remotion": "^4.0.242"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}

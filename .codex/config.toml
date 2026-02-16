@@ -1,0 +1,23 @@
+# Project-scoped Codex MCP configuration.
+# Docs: https://developers.openai.com/codex/mcp
+
+[mcp_servers.lightfast]
+command = "bash"
+args = [".mcp/start-lightfast.sh"]
+
+[mcp_servers.playwright]
+command = "npx"
+args = [
+  "@playwright/mcp@latest",
+  "--isolated",
+  "--user-data-dir=/tmp/playwright-mcp",
+  "--storage-state=.auth/browser-session.json"
+]
+
+[mcp_servers.exa]
+command = "bash"
+args = [".mcp/start-exa.sh"]
+
+[mcp_servers.knock]
+command = "bash"
+args = [".mcp/start-knock.sh"]

@@ -21,7 +21,7 @@ export default function AuthLayout({
             {/* Left: Logo */}
             <div className="-ml-2 flex items-center md:justify-self-start">
               <MicrofrontendLink href="/" className="flex items-center">
-                <Icons.logoShort className="text-foreground size-6" />
+                <Icons.logoShort className="text-foreground h-4 w-4" />
               </MicrofrontendLink>
             </div>
             {/* Center placeholder to mirror marketing layout */}

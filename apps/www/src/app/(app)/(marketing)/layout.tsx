@@ -1,4 +1,4 @@
-import { AppNavbarV2 } from "~/components/app-navbar-v2";
+import { AppNavbar } from "~/components/app-navbar";
 import { AppFooter } from "~/components/app-footer";
 
 export default function MarketingLayout({
@@ -7,20 +7,26 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      {/* Main wrapper */}
-      <div className="relative min-h-screen flex flex-col">
-        {/* Navbar */}
-        <AppNavbarV2 />
+    <div className="relative">
+      {/* Navbar - fixed overlay */}
+      <header className="fixed top-0 left-0 right-0 z-50">
+        <div className="max-w-7xl mx-auto w-full">
+          <AppNavbar />
+        </div>
+      </header>
 
-        {/* Main content with background */}
-        <main className="flex-1 py-16 bg-background">{children}</main>
+      {/* Main content - sits ON TOP of footer */}
+      <main className="relative z-10 min-h-screen bg-background">
+        <div className="mx-auto w-full">{children}</div>
+      </main>
 
-        {/* Footer - normal flow on mobile, margin-bottom for desktop spacing */}
-        <footer className="mt-auto">
-          <AppFooter />
-        </footer>
-      </div>
-    </>
+      {/* Spacer - transparent to reveal footer behind */}
+      <div className="h-[800px] md:h-[650px] dark bg-background" />
+
+      {/* Footer - fixed behind content, revealed on scroll */}
+      <footer className="fixed bottom-0 left-0 right-0 z-0 h-[800px] md:h-[650px]">
+        <AppFooter />
+      </footer>
+    </div>
   );
 }

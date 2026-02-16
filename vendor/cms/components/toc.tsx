@@ -26,7 +26,7 @@ export const TableOfContents = ({
         a: ({ children, href }) => (
           <a
             className="line-clamp-3 flex rounded-sm text-foreground text-sm underline decoration-foreground/0 transition-colors hover:decoration-foreground/50"
-            href={`#${href?.split("#").at(1)}`}
+            href={`#${href.split("#").at(1)}`}
           >
             {children}
           </a>

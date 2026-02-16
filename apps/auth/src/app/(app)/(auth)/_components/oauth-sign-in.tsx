@@ -55,7 +55,8 @@ export function OAuthSignIn({ onError }: OAuthSignInProps = {}) {
 	return (
 		<Button
 			variant="outline"
-			className="w-full h-12"
+			className="w-full"
+			size="lg"
 			onClick={() => signInWith("oauth_github")}
 			disabled={!isLoaded || loading !== null}
 		>

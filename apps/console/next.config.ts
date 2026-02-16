@@ -15,6 +15,7 @@ const config: NextConfig = withSentry(
   withBetterStack(
     mergeNextConfig(vendorConfig, {
       reactStrictMode: true,
+      reactCompiler: true,
       transpilePackages: [
         // @api packages
         "@api/console",
@@ -49,7 +50,6 @@ const config: NextConfig = withSentry(
         "@vendor/seo",
       ],
       experimental: {
-        reactCompiler: true,
         optimizeCss: true,
         optimizePackageImports: [
           // Already present

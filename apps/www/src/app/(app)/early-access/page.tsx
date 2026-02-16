@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { createMetadata } from "@vendor/seo/metadata";
 import { Icons } from "@repo/ui/components/icons";
 import { EarlyAccessForm } from "~/components/early-access-form";
-import { EarlyAccessFormProvider } from "~/components/early-access-form-provider";
-import { Button } from "@repo/ui/components/ui/button";
-import Link from "next/link";
 
 export const metadata: Metadata = createMetadata({
   title: "Early Access – Lightfast Neural Memory for Teams",
@@ -45,47 +41,30 @@ export default async function EarlyAccessPage({
   const initialCompanySize = params.companySize ?? "";
   const initialSources = params.sources ? params.sources.split(",") : [];
   return (
-    <div className="relative bg-card min-h-screen overflow-hidden">
-      {/* Background Image */}
-      <div className="fixed inset-0 z-0">
-        <Image
-          src="https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/2949b91e-06a4-4197-7ea6-008d94cb5500/public"
-          alt="Background"
-          fill
-          priority
-          sizes="100vw"
-          quality={10}
-          draggable={false}
-          className="object-cover"
-        />
-      </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Main Content - Centered */}
+      <main className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-4">
+          {/* Logo Card */}
+          <div className="rounded-sm bg-card p-3 w-fit">
+            <Icons.logoShort className="h-5 w-5 text-foreground" />
+          </div>
 
-      {/* Frosted Glass Blur Overlay */}
-      <div className="fixed inset-0 z-10 backdrop-blur-md" />
+          {/* Heading */}
+          <h1 className="text-2xl pb-4 font-pp font-medium text-foreground">
+            Join the Early Access waitlist
+          </h1>
 
-      {/* Logo - Top Left */}
-      <div className="fixed px-4 py-2 z-30">
-        <div className="-ml-2 flex items-center md:justify-self-start">
-          <Button variant="none" size="lg" className="group" asChild>
-            <Link href="/" prefetch>
-              <Icons.logo className="size-22 text-foreground transition-colors" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Form - Centered */}
-      <div className="relative z-20 flex min-h-screen items-center justify-center p-8">
-        <div className="w-full max-w-md rounded-xs border border-border bg-background p-8 backdrop-blur-sm">
-          <EarlyAccessFormProvider
+          {/* Form */}
+          <EarlyAccessForm
             initialEmail={initialEmail}
             initialCompanySize={initialCompanySize}
             initialSources={initialSources}
-          >
-            <EarlyAccessForm />
-          </EarlyAccessFormProvider>
+          />
         </div>
-      </div>
+      </main>
+
+      <div aria-hidden className="shrink-0 h-16 md:h-20" />
     </div>
   );
 }

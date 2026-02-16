@@ -1,0 +1,162 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type * as PageTree from "fumadocs-core/page-tree";
+import { Icons } from "@repo/ui/components/icons";
+import {
+  Sidebar,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "@repo/ui/components/ui/sidebar";
+import { DocsSidebarScrollArea } from "./docs-sidebar-scroll-area";
+import { wwwUrl } from "../lib/related-projects";
+
+interface DocsSidebarProps {
+  tree?: PageTree.Root;
+}
+
+/**
+ * DocsSidebar - Sidebar navigation for the docs site
+ *
+ * Features:
+ * - Logo in header
+ * - Vertical navigation based on fumadocs pageTree
+ * - Active state with background highlighting
+ * - Proper shadcn/ui sidebar structure
+ *
+ * @example
+ * ```tsx
+ * <SidebarProvider>
+ *   <DocsSidebar tree={pageTree} />
+ *   <SidebarInset>
+ *     <main>{children}</main>
+ *   </SidebarInset>
+ * </SidebarProvider>
+ * ```
+ */
+export function DocsSidebar({ tree }: DocsSidebarProps) {
+  const pathname = usePathname();
+
+  return (
+    <Sidebar
+      side="left"
+      variant="sidebar"
+      className="border-0 ![border-right:0]"
+    >
+      {/* Static Header - Logo, Trigger, Matrix, Back to Home */}
+      <SidebarHeader className="!p-0 gap-0">
+        {/* Logo - aligned with main header */}
+        <div className="h-[4.25rem] page-gutter -ml-2 flex flex-row items-center gap-2">
+          <Link href={wwwUrl}>
+            <Icons.logoShort className="h-4 w-4 text-foreground group-hover:text-foreground transition-colors" />
+          </Link>
+        </div>
+      </SidebarHeader>
+
+      {/* Scrollable Documentation Navigation */}
+      <DocsSidebarScrollArea className="flex-1 min-h-0 w-full">
+        <div className="w-full max-w-full min-w-0 overflow-hidden px-12 py-4">
+          {tree?.children.map((item, index) => {
+            if (item.type === "separator") {
+              return (
+                <SidebarGroup
+                  key={item.$id ?? `item-${index}`}
+                  className="mb-6"
+                >
+                  <SidebarGroupLabel className="text-xs text-muted-foreground px-0">
+                    {item.name}
+                  </SidebarGroupLabel>
+                </SidebarGroup>
+              );
+            }
+
+            if (item.type === "folder") {
+              return (
+                <SidebarGroup
+                  key={item.$id ?? `item-${index}`}
+                  className="mb-6"
+                >
+                  <SidebarGroupLabel className="text-xs text-muted-foreground font-normal px-0">
+                    {item.name}
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu className="gap-1">
+                      {item.children.map((child, childIndex) => {
+                        // Handle nested folders (e.g., Endpoints -> Search -> pages)
+                        if (child.type === "folder") {
+                          return (
+                            <div
+                              key={child.$id ?? `child-${childIndex}`}
+                              className="mb-4"
+                            >
+                              <div className="text-xs text-muted-foreground/70 px-3 mb-1 font-medium">
+                                {child.name}
+                              </div>
+                              <div className="ml-2">
+                                {child.children.map((page) => {
+                                  if (page.type !== "page") return null;
+
+                                  const isActive = page.url === pathname;
+
+                                  return (
+                                    <SidebarMenuItem
+                                      key={page.url}
+                                      className="-mx-3"
+                                    >
+                                      <SidebarMenuButton
+                                        asChild
+                                        isActive={isActive}
+                                        className="h-auto px-3 py-1.5 w-fit text-sm rounded-lg whitespace-nowrap truncate hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground justify-start"
+                                      >
+                                        <Link prefetch href={page.url}>
+                                          {page.name}
+                                        </Link>
+                                      </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        // Handle direct pages
+                        if (child.type === "page") {
+                          const isActive = child.url === pathname;
+
+                          return (
+                            <SidebarMenuItem key={child.url} className="-mx-3">
+                              <SidebarMenuButton
+                                asChild
+                                isActive={isActive}
+                                className="h-auto px-3 py-1.5 w-fit text-sm rounded-lg whitespace-nowrap truncate hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground justify-start"
+                              >
+                                <Link prefetch href={child.url}>
+                                  {child.name}
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        }
+
+                        return null;
+                      })}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              );
+            }
+
+            return null;
+          })}
+        </div>
+      </DocsSidebarScrollArea>
+    </Sidebar>
+  );
+}

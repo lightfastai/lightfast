@@ -41,9 +41,9 @@ export function SearchDemo() {
 
   return (
     <div className="relative flex h-full w-full flex-col">
-      <div className="relative z-10 flex h-full flex-col gap-3 rounded-md bg-background p-3">
+      <div className="relative z-10 flex h-full flex-col gap-3 rounded-md bg-card p-3">
         {/* Search Query Display */}
-        <div className="bg-secondary rounded-md px-3 py-4 font-mono text-sm">
+        <div className="border rounded-md px-3 py-4 font-mono text-sm">
           <div className="text-muted-foreground">
             <span className="text-primary">lightfast</span>
             <span className="text-muted-foreground">.</span>
@@ -57,7 +57,7 @@ export function SearchDemo() {
         </div>
 
         {/* Search Results */}
-        <div className="flex-1 bg-accent rounded-lg overflow-hidden">
+        <div className="flex-1 border rounded-lg overflow-hidden">
           <div className="gap-2">
             {searchResults.map((result, index) => (
               <div

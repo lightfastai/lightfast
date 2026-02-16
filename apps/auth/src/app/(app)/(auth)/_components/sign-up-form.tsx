@@ -65,7 +65,7 @@ export function SignUpForm() {
 			{/* Header - only show on email and password steps */}
 			{(verificationStep === "email" || verificationStep === "password") && (
 				<div className="text-center">
-					<h1 className="text-3xl font-semibold text-foreground">
+					<h1 className="text-3xl font-pp font-medium text-foreground">
 						Sign up for Lightfast
 					</h1>
 				</div>
@@ -88,8 +88,9 @@ export function SignUpForm() {
 						</div>
 						<Button
 							onClick={handleReset}
+							size="lg"
 							variant="outline"
-							className="w-full h-12"
+							className="w-full"
 						>
 							Try again
 						</Button>
@@ -101,15 +102,16 @@ export function SignUpForm() {
 						<div className="rounded-lg bg-destructive/30 border border-border p-3">
 							<p className="text-sm text-foreground">{error}</p>
 						</div>
-						<Button asChild className="w-full h-12">
+						<Button asChild size="lg" className="w-full">
 							<MicrofrontendLink href="/early-access">
 								Join the Waitlist
 							</MicrofrontendLink>
 						</Button>
 						<Button
 							onClick={handleReset}
+							size="lg"
 							variant="outline"
-							className="w-full h-12"
+							className="w-full"
 						>
 							Back to Sign Up
 						</Button>
@@ -126,10 +128,10 @@ export function SignUpForm() {
 						/>
 
 						{/* Legal compliance text */}
-						<p className="text-xs text-center text-muted-foreground">
+						<p className="text-sm text-center text-muted-foreground">
 							By joining, you agree to our{" "}
 							<MicrofrontendLink
-								href={siteConfig.links.terms.href}
+								href={'/legal/terms'}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"
@@ -138,7 +140,7 @@ export function SignUpForm() {
 							</MicrofrontendLink>{" "}
 							and{" "}
 							<MicrofrontendLink
-								href={siteConfig.links.privacy.href}
+								href={'/legal/terms'}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"
@@ -165,7 +167,8 @@ export function SignUpForm() {
 								<Button
 									variant="outline"
 									onClick={() => setVerificationStep("password")}
-									className="w-full h-12"
+									className="w-full"
+									size="lg"
 								>
 									Sign up with Password
 								</Button>
@@ -199,7 +202,8 @@ export function SignUpForm() {
 						<Button
 							variant="ghost"
 							onClick={handleReset}
-							className="w-full h-12 text-muted-foreground hover:text-foreground"
+							size="lg"
+							className="w-full text-muted-foreground hover:text-foreground"
 						>
 							← Back to other options
 						</Button>

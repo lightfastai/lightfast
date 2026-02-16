@@ -112,7 +112,8 @@ export function CodeVerificationUI({
 					onClick={onReset}
 					disabled={isVerifying || isRedirecting}
 					variant="link-blue"
-					className="w-full h-10 rounded-none"
+					size="lg"
+					className="w-full rounded-none"
 				>
 					<ArrowLeft className="h-4 w-4" />
 					Back

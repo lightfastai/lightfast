@@ -28,7 +28,7 @@
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "eslint": "catalog:",
-    "next": "catalog:next15",
+    "next": "catalog:next16",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },

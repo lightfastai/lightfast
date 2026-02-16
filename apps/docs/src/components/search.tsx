@@ -1,271 +1,238 @@
 "use client";
 
 import { cn } from "@repo/ui/lib/utils";
-import { Search as SearchIcon, Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  Search as SearchIcon,
+  Loader2,
+  FileText,
+  Hash,
+  AlignLeft,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Input } from "@repo/ui/components/ui/input";
-import * as Dialog from "@radix-ui/react-dialog";
+import * as Popover from "@radix-ui/react-popover";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMixedbreadSearch } from "~/hooks/use-mixedbread-search";
+import { useDocsSearch } from "~/hooks/use-docs-search";
 
 export function Search() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [open, setOpen] = useState(false);
 
-  const { search, results, isLoading, error, clearResults } = useMixedbreadSearch();
+  const { search, setSearch, clearSearch, results, isLoading, error } =
+    useDocsSearch();
 
   const router = useRouter();
-  const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  // Calculate position for results dialog
-  const [dialogPosition, setDialogPosition] = useState({
-    top: 0,
-    left: 0,
-    width: 0,
-  });
+  const resultsList = results === "empty" ? [] : results;
 
-  useEffect(() => {
-    if (open && searchRef.current) {
-      const rect = searchRef.current.getBoundingClientRect();
-      setDialogPosition({
-        top: rect.bottom + 12,
-        left: rect.left - 30,
-        width: rect.width + 60,
-      });
-    }
-  }, [open]);
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    clearSearch();
+    setSelectedIndex(0);
+  }, [clearSearch]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (capture phase to fire before Radix)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      if (e.isComposing) return;
+
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         inputRef.current?.focus();
         setOpen(true);
+        return;
       }
 
       const isInputFocused = document.activeElement === inputRef.current;
 
-      if (open && results.length > 0 && isInputFocused) {
+      if (e.key === "Escape" && isInputFocused && open) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleClose();
+        inputRef.current?.blur();
+        return;
+      }
+
+      if (open && resultsList.length > 0 && isInputFocused) {
         if (e.key === "ArrowDown") {
           e.preventDefault();
-          setSelectedIndex((prev) => (prev + 1) % results.length);
+          setSelectedIndex((prev) => (prev + 1) % resultsList.length);
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
           setSelectedIndex(
-            (prev) => (prev - 1 + results.length) % results.length,
+            (prev) => (prev - 1 + resultsList.length) % resultsList.length,
           );
-        } else if (e.key === "Enter" && results[selectedIndex]) {
+        } else if (e.key === "Enter" && resultsList[selectedIndex]) {
           e.preventDefault();
-          router.push(results[selectedIndex].url);
-          setOpen(false);
+          router.push(resultsList[selectedIndex].url);
+          handleClose();
         }
       }
-
-      if (e.key === "Escape" && isInputFocused && open) {
-        e.preventDefault();
-        setOpen(false);
-        inputRef.current?.blur();
-      }
     }
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, results, selectedIndex, router]);
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+  }, [open, resultsList, selectedIndex, router, handleClose]);
 
-  // Debounced search
-  useEffect(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    if (!searchQuery.trim() || !open) {
-      clearResults();
-      return;
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      void search(searchQuery);
-    }, 300);
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = undefined;
-      }
-    };
-  }, [searchQuery, open, search, clearResults]);
-
-  // Reset when dialog closes - intentional state reset on dialog close
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (!open) {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = undefined;
-      }
-      setSearchQuery("");
-      clearResults();
-      setSelectedIndex(0);
-    }
-  }, [open, clearResults]);
-
-  // Reset selected index when results change - intentional state sync when results update
+  // Reset selected index when results change
   useEffect(() => {
     setSelectedIndex(0);
   }, [results]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Clear results when popover closes while search has text
+  useEffect(() => {
+    if (!open && search) {
+      clearSearch();
+    }
+  }, [open, search, clearSearch]);
 
   const showResults =
-    open && (results.length > 0 || searchQuery.length > 0 || error);
+    open && (resultsList.length > 0 || search.trim().length > 0 || error);
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <div
-        ref={searchRef}
-        className={cn(
-          "relative",
-          open && "z-50",
+    <>
+      {/* Overlay - renders immediately on focus */}
+      {open &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-md animate-in fade-in-0"
+            onClick={() => handleClose()}
+          />,
+          document.body,
         )}
-      >
-        <div className="relative flex items-center">
-          <SearchIcon className="absolute left-4 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input
-            ref={inputRef}
-            type="text"
-            placeholder="Search documentation"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => {
-              setOpen(true);
-              requestAnimationFrame(() => {
-                inputRef.current?.focus();
-              });
-            }}
-            className={cn(
-              "w-[420px] pl-11 pr-20",
-              "h-11",
-              "transition-all rounded-full border border-border/40",
-              "bg-background dark:bg-input/40",
-              "focus-visible:ring-0 focus-visible:ring-offset-0",
-              "focus-visible:outline-none focus:outline-none",
-              "focus-visible:border-border/40",
-            )}
-          />
-          <div className="absolute right-4 flex items-center gap-1.5 pointer-events-none">
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            ) : (
-              <kbd className="hidden sm:inline-flex px-1.5 py-0.5 rounded border border-border text-2xs font-medium">
-                {open ? "ESC" : "⌘K"}
-              </kbd>
-            )}
-          </div>
-        </div>
-      </div>
 
-      <Dialog.Portal>
-        <Dialog.Overlay
-          className={cn(
-            "fixed inset-0 z-40 bg-black/50 backdrop-blur-sm",
-            "data-[state=open]:animate-in data-[state=closed]:animate-out",
-            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
-          )}
-          onClick={() => setOpen(false)}
-        />
+      <Popover.Root
+        open={open}
+        onOpenChange={(newOpen) => {
+          if (!newOpen) {
+            handleClose();
+            inputRef.current?.blur();
+          } else {
+            setOpen(true);
+          }
+        }}
+      >
+        <Popover.Anchor asChild>
+          <div className={cn("relative", open && "z-50")}>
+            <div className="relative flex items-center">
+              <SearchIcon className="absolute left-3 h-4 w-4 text-foreground/60 pointer-events-none z-10" />
+              <Input
+                ref={inputRef}
+                type="text"
+                placeholder="Search documentation"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setOpen(true)}
+                className={cn(
+                  "w-[420px] pl-10 pr-20 h-9",
+                  "transition-all rounded-md border border-border/50",
+                  "dark:bg-card/40 backdrop-blur-md",
+                  "text-foreground/60",
+                  "focus-visible:ring-0 focus-visible:ring-offset-0",
+                  "focus-visible:outline-none focus:outline-none",
+                  "focus-visible:border-border/50",
+                )}
+              />
+              <div className="absolute right-2 flex items-center gap-1.5 pointer-events-none">
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-foreground/60" />
+                ) : (
+                  <kbd className="hidden sm:inline-flex gap-1.5 px-1.5 py-0.5 items-center rounded-md border border-border text-sm font-medium text-foreground/60">
+                    {open ? "ESC" : "⌘K"}
+                  </kbd>
+                )}
+              </div>
+            </div>
+          </div>
+        </Popover.Anchor>
 
         {showResults && (
-          <Dialog.Content
-            onOpenAutoFocus={(e) => {
-              e.preventDefault();
-            }}
-            onEscapeKeyDown={() => setOpen(false)}
-            onPointerDownOutside={(e) => {
-              if (searchRef.current?.contains(e.target as Node)) {
-                e.preventDefault();
-              } else {
-                setOpen(false);
-              }
-            }}
-            onInteractOutside={(e) => {
-              if (searchRef.current?.contains(e.target as Node)) {
-                e.preventDefault();
-              }
-            }}
-            className={cn(
-              "fixed z-50",
-              "bg-background/95 backdrop-blur-sm",
-              "border border-border/50 rounded-2xl shadow-2xl",
-              "max-h-[420px] overflow-y-auto",
-              "data-[state=open]:animate-in data-[state=closed]:animate-out",
-              "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-              "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-              "data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-top-[48%]",
-            )}
-            style={{
-              top: `${dialogPosition.top}px`,
-              left: `${dialogPosition.left}px`,
-              width: `${dialogPosition.width}px`,
-              maxWidth: "min(480px, 90vw)",
-            }}
-          >
-            <Dialog.Title className="sr-only">Search Results</Dialog.Title>
+          <Popover.Portal>
+            <Popover.Content
+              onOpenAutoFocus={(e) => e.preventDefault()}
+              onInteractOutside={(e) => e.preventDefault()}
+              onEscapeKeyDown={(e) => e.preventDefault()}
+              side="bottom"
+              align="start"
+              sideOffset={6}
+              alignOffset={0}
+              className={cn(
+                "z-50",
+                "bg-card/40 backdrop-blur-md",
+                "border border-border/50 rounded-sm shadow",
+                "max-h-[420px] overflow-y-auto",
+                "data-[state=open]:animate-in data-[state=closed]:animate-out",
+                "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+                "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+              )}
+              style={{ width: "var(--radix-popover-trigger-width)" }}
+            >
+              {error && (
+                <div className="px-4 py-3 text-sm text-muted-foreground/70">
+                  Unable to search at this time
+                </div>
+              )}
 
-            {error && (
-              <div className="px-4 py-3 text-sm text-muted-foreground/70">
-                Unable to search at this time
-              </div>
-            )}
+              {!error && resultsList.length === 0 && (
+                <div className="px-4 py-3 flex items-center gap-2 text-sm text-muted-foreground/70">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Searching...
+                </div>
+              )}
 
-            {!error && !isLoading && results.length === 0 && searchQuery && (
-              <div className="px-4 py-3 text-sm text-muted-foreground/70">
-                No results
-              </div>
-            )}
-
-            {!error && results.length > 0 && (
-              <div className="">
-                {results.map((result, index) => (
-                  <Link
-                    key={result.id}
-                    href={result.url}
-                    className={cn(
-                      "block w-full px-4 py-2.5 text-left transition-colors",
-                      "hover:bg-muted/40",
-                      index === selectedIndex && "bg-muted/60",
-                    )}
-                    onClick={() => {
-                      setOpen(false);
-                    }}
-                    onMouseEnter={() => setSelectedIndex(index)}
-                  >
-                    <div className="text-sm font-normal text-foreground">
-                      {result.title}
-                    </div>
-                    {result.source && (
-                      <div className="mt-0.5 text-xs text-muted-foreground/60">
-                        {result.source}
+              {!error && resultsList.length > 0 && (
+                <div className="">
+                  {resultsList.map((result, index) => (
+                    <Link
+                      key={result.id}
+                      href={result.url}
+                      className={cn(
+                        "flex items-start gap-3 w-full px-4 py-2.5 text-left transition-colors",
+                        "hover:bg-muted/40",
+                        index === selectedIndex && "bg-muted/60",
+                        result.type === "heading" && "pl-7",
+                      )}
+                      onClick={() => handleClose()}
+                      onMouseEnter={() => setSelectedIndex(index)}
+                    >
+                      <span className="mt-0.5 shrink-0 text-muted-foreground/50">
+                        {result.type === "page" && (
+                          <FileText className="h-4 w-4" />
+                        )}
+                        {result.type === "heading" && (
+                          <Hash className="h-3.5 w-3.5" />
+                        )}
+                        {result.type === "text" && (
+                          <AlignLeft className="h-3.5 w-3.5" />
+                        )}
+                      </span>
+                      <div className="min-w-0">
+                        <div
+                          className={cn(
+                            "text-sm text-foreground truncate",
+                            result.type === "page" && "font-medium",
+                            result.type !== "page" && "font-normal",
+                          )}
+                        >
+                          {result.content}
+                        </div>
+                        {result.type === "page" && result.source && (
+                          <div className="mt-0.5 text-xs text-muted-foreground/60">
+                            {result.source}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {!error && results.length === 0 && !searchQuery && (
-              <div className="px-4 py-8 text-center">
-                <p className="text-sm text-muted-foreground/50">
-                  Start typing to search...
-                </p>
-              </div>
-            )}
-          </Dialog.Content>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </Popover.Content>
+          </Popover.Portal>
         )}
-      </Dialog.Portal>
-    </Dialog.Root>
+      </Popover.Root>
+    </>
   );
 }

@@ -4,8 +4,9 @@ import "~/styles/globals.css";
 
 import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/sonner";
-import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
+import { fonts as geistFonts } from "@repo/ui/lib/fonts";
+import { ppNeueMontreal, exposurePlus } from "~/lib/fonts";
 import { ClerkProvider } from "@clerk/nextjs";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { TRPCReactProvider } from "@repo/console-trpc/react";
@@ -69,7 +70,12 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <head />
         <body
-          className={cn("dark bg-background min-h-screen antialiased", fonts)}
+          className={cn(
+            "dark bg-background min-h-screen antialiased",
+            geistFonts,
+            ppNeueMontreal.variable,
+            exposurePlus.variable,
+          )}
         >
           <NuqsAdapter>
             <TRPCReactProvider>

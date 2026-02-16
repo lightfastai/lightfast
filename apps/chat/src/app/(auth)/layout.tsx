@@ -20,7 +20,7 @@ export default function AuthLayout({
       <header className="lg:hidden relative h-14 flex items-center justify-between px-4 bg-background border-b border-border/50 z-10">
         {/* Left side - Logo */}
         <div className="flex items-center">
-          <Button variant="ghost" size="xs" asChild>
+          <Button variant="ghost" size="sm" asChild>
             <Link href="/">
               <Icons.logoShort className="h-4 w-auto text-foreground" />
             </Link>
@@ -29,7 +29,7 @@ export default function AuthLayout({
 
         {/* Right side - Sign in/up button */}
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="xs" asChild>
+          <Button variant="outline" size="sm" asChild>
             <Link href={isSignUpPage ? "/sign-in" : "/sign-up"}>
               {isSignUpPage ? "Sign In" : "Sign Up"}
             </Link>

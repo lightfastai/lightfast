@@ -1,6 +1,7 @@
 "use client";
 
 import NextLink from "next/link";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -9,40 +10,44 @@ import {
   NavigationMenuTrigger,
   NavigationMenuLink,
 } from "@repo/ui/components/ui/navigation-menu";
+import { RESOURCES_NAV } from "~/config/nav";
 
-const MENU_ITEMS = [
-  { title: "Home", href: "/" },
-  { title: "Pricing", href: "/pricing" },
-  { title: "Blog", href: "/blog" },
-  { title: "Changelog", href: "/changelog" },
-  { title: "Docs", href: "/docs/get-started/overview" },
-];
+const navLinkClass =
+  "text-foreground/60 hover:text-foreground transition-colors" as const;
 
 export function PitchDeckNavbar() {
   return (
-    <NavigationMenu viewport={false}>
-      <NavigationMenuList>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger className="bg-card/80 backdrop-blur-sm rounded-xs! px-4 py-2">
-            <span className="text-xs text-foreground mr-16">MENU</span>
-          </NavigationMenuTrigger>
-          <NavigationMenuContent className="left-1/2 -translate-x-1/2">
-            <div className="flex flex-col gap-1 rounded-sm p-1 md:w-[220px]">
-              {MENU_ITEMS.map((item) => (
-                <NavigationMenuLink asChild key={item.href}>
-                  <NextLink
-                    href={item.href}
-                    prefetch
-                    className="text--foreground"
-                  >
-                    {item.title}
-                  </NextLink>
-                </NavigationMenuLink>
-              ))}
-            </div>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-      </NavigationMenuList>
-    </NavigationMenu>
+    <div className="flex items-center gap-0.5">
+      {/* Home link */}
+      <Button asChild variant="none" size="sm" className={navLinkClass}>
+        <NextLink href="/" prefetch>
+          Home
+        </NextLink>
+      </Button>
+
+      {/* Resources dropdown */}
+      <NavigationMenu viewport={false} className="static [&>div]:!static">
+        <NavigationMenuList>
+          <NavigationMenuItem className="static">
+            <NavigationMenuTrigger
+              className={`px-1.5 text-sm rounded bg-transparent hover:bg-transparent dark:hover:bg-transparent focus:bg-transparent dark:focus:bg-transparent data-[state=open]:bg-transparent dark:data-[state=open]:bg-transparent hover:text-foreground dark:hover:text-foreground focus:text-foreground dark:focus:text-foreground data-[state=open]:text-foreground dark:data-[state=open]:text-foreground ${navLinkClass}`}
+            >
+              Resources
+            </NavigationMenuTrigger>
+            <NavigationMenuContent className="left-0 right-0 w-full md:w-full">
+              <div className="flex flex-col gap-1 rounded-sm">
+                {RESOURCES_NAV.map((item) => (
+                  <NavigationMenuLink asChild key={item.href}>
+                    <NextLink href={item.href} prefetch>
+                      {item.title}
+                    </NextLink>
+                  </NavigationMenuLink>
+                ))}
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+    </div>
   );
 }

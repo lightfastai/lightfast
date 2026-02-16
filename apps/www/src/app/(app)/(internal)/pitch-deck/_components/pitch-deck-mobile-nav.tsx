@@ -29,7 +29,7 @@ export function PitchDeckMobileNav() {
         <Button
           variant="ghost"
           size="icon"
-          className="lg:hidden"
+          className="md:hidden"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />

@@ -38,6 +38,10 @@ export type V1SearchFilters = z.infer<typeof V1SearchFiltersSchema>;
 
 /**
  * V1 Search request schema
+ *
+ * IMPORTANT: When adding/changing fields with .default() here, update the SDK's SearchInput type
+ * in core/lightfast/src/types.ts to make those fields optional for better developer experience.
+ * The SDK client applies defaults before API calls (see core/lightfast/src/client.ts).
  */
 export const V1SearchRequestSchema = z.object({
   /** Search query text */

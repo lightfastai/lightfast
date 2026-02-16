@@ -32,7 +32,6 @@ pnpm run format        # Format code with Biome
 - `src/lib/source.ts` - Fumadocs source loader configuration
 - `source.config.ts` - Fumadocs content configuration
 - `src/components/docs-layout-wrapper.tsx` - Documentation layout wrapper
-- `src/lib/site-config.ts` - Site metadata and configuration
 
 ## Content Structure
 

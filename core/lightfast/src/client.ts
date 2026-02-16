@@ -83,14 +83,16 @@ export class Lightfast {
    * ```
    */
   async search(request: SearchInput): Promise<V1SearchResponse> {
+    // Apply defaults for optional fields (see types.ts for SDK input type pattern)
+    // These must match the .default() values in @repo/console-types/src/api/v1/search.ts
     return this.request<V1SearchResponse>("/v1/search", {
       query: request.query,
-      limit: request.limit ?? 10,
-      offset: request.offset ?? 0,
-      mode: request.mode ?? "balanced",
+      limit: request.limit ?? 10,              // matches schema .default(10)
+      offset: request.offset ?? 0,              // matches schema .default(0)
+      mode: request.mode ?? "balanced",         // matches schema .default("balanced")
       filters: request.filters,
-      includeContext: request.includeContext ?? true,
-      includeHighlights: request.includeHighlights ?? true,
+      includeContext: request.includeContext ?? true,      // matches schema .default(true)
+      includeHighlights: request.includeHighlights ?? true, // matches schema .default(true)
     });
   }
 

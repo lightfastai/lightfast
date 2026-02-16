@@ -20,6 +20,20 @@ const securityHeaders = securityMiddleware(
     createClerkCspDirectives(), // Keep for other apps in microfrontends
     createAnalyticsCspDirectives(),
     createSentryCspDirectives(),
+    // UnicornStudio
+    {
+      scriptSrc: ["https://cdn.jsdelivr.net"],
+      connectSrc: ["https://assets.unicorn.studio"],
+      imgSrc: ["https://assets.unicorn.studio"],
+    },
+    // BaseHub CMS (draft mode uses Pusher for real-time updates)
+    {
+      connectSrc: [
+        "https://pump-router.basehub.com",
+        "wss://ws-mt1.pusher.com",
+        "https://sockjs-mt1.pusher.com",
+      ],
+    },
   ),
 );
 
