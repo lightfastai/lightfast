@@ -9,6 +9,7 @@ interface CaptureSlideProps {
   slide: (typeof PITCH_SLIDES)[number];
   width?: number;
   height?: number;
+  fontFamily?: string;
 }
 
 /**
@@ -16,11 +17,16 @@ interface CaptureSlideProps {
  * Renders at exact dimensions without animations.
  */
 export const CaptureSlide = forwardRef<HTMLDivElement, CaptureSlideProps>(
-  function CaptureSlide({ slide, width = 1920, height = 1080 }, ref) {
+  function CaptureSlide({ slide, width = 1920, height = 1080, fontFamily }, ref) {
     return (
       <div
         ref={ref}
-        style={{ width, height, "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties}
+        style={{
+          width,
+          height,
+          "--foreground": "oklch(0.205 0 0)",
+          ...(fontFamily ? { fontFamily } : {}),
+        } as React.CSSProperties}
         className={cn(
           "relative overflow-hidden font-sans antialiased",
           slide.bgColor

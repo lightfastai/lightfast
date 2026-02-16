@@ -41,8 +41,13 @@ export async function exportSlidesToPdf(
   // Wait for all fonts to be loaded before capturing
   await document.fonts.ready;
 
+  // Resolve the actual font-family from the body (bypasses CSS variable issues in html2canvas)
+  const resolvedFontFamily = getComputedStyle(document.body).fontFamily;
+
   // Create off-screen container for rendering
   const container = document.createElement("div");
+  // Copy font CSS variable classes from <html> so CSS variables are defined
+  container.className = document.documentElement.className;
   container.style.cssText = `
     position: fixed;
     left: -9999px;
@@ -51,6 +56,7 @@ export async function exportSlidesToPdf(
     height: ${height}px;
     overflow: hidden;
     z-index: -1;
+    font-family: ${resolvedFontFamily};
   `;
   document.body.appendChild(container);
 
@@ -69,6 +75,7 @@ export async function exportSlidesToPdf(
             slide,
             width,
             height,
+            fontFamily: resolvedFontFamily,
           }),
         );
       });
@@ -85,6 +92,11 @@ export async function exportSlidesToPdf(
         useCORS: true,
         logging: false,
         backgroundColor: null,
+        onclone: (clonedDoc) => {
+          // Ensure the cloned document has font CSS variable classes and resolved font-family
+          clonedDoc.documentElement.className = document.documentElement.className;
+          clonedDoc.body.style.fontFamily = resolvedFontFamily;
+        },
       });
 
       // Add canvas as image to PDF
