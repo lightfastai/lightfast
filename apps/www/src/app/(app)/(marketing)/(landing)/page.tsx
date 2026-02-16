@@ -245,17 +245,29 @@ export default function HomePage() {
           (DISABLE_HERO_GRID ? (
             /* Full-width hero without grid - Lightfield style */
             <section className="relative ml-[calc(50%-50dvw)] min-h-screen w-[100dvw] bg-background overflow-hidden">
-              {/* Hero visual - contained within bounded right area */}
-              <div className="pointer-events-none absolute top-[-5%] bottom-[-20%] right-[-15%] left-[25%] z-0">
-                <Image
-                  src="/images/landing-hero.gif"
-                  alt="Data flows through the Lightfast engine"
-                  fill
-                  priority
-                  unoptimized
-                  quality={100}
-                  className="object-contain object-right-top"
-                />
+              {/* Hero visual - overflow wrapper clips the image at section edges */}
+              <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+                {/* Inner container: width/height control size, top/right control position.
+                    Changing top/right only MOVES the image without distorting it. */}
+                <div
+                  className="absolute"
+                  style={{
+                    width: '80%',
+                    height: '95%',
+                    top: '5%',
+                    right: '-12.5%',
+                  }}
+                >
+                  <Image
+                    src="/images/landing-hero.gif"
+                    alt="Data flows through the Lightfast engine"
+                    fill
+                    priority
+                    unoptimized
+                    quality={100}
+                    className="object-contain object-right-top"
+                  />
+                </div>
               </div>
 
               {/* Hero text - positioned on the left */}
