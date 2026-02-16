@@ -49,7 +49,7 @@ console.log("[remotion] Watching compositions for changes...");
 const watcher = fs.watch(compositionsDir, { recursive: true }, (event, filename) => {
   if (!filename) return;
   // Only react to .ts/.tsx file changes
-  if (!/\.(ts|tsx)$/.test(filename)) return;
+  if (!/\.(ts|tsx|css)$/.test(filename)) return;
   console.log(`[remotion] Changed: ${filename}`);
   scheduleRender();
 });

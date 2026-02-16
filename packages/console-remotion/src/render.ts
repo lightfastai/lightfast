@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
 import { LANDING_HERO_GIF_RENDER_PROFILE } from "./compositions/landing-hero";
+import { enableCssLoaders } from "./webpack-override";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,6 +22,7 @@ async function main() {
     entryPoint,
     // Use the public directory for static assets (fonts)
     publicDir: path.resolve(__dirname, "../public"),
+    webpackOverride: enableCssLoaders,
   });
 
   console.log("Selecting composition...");
