@@ -74,7 +74,7 @@ const navCards: NavCard[] = [
 
 export function DeveloperPlatformLanding() {
   return (
-    <div className="mx-auto pt-16">
+    <div className="mx-auto">
       {/* Value prop + image */}
       <div className="h-fit grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
         {/* Left: text */}

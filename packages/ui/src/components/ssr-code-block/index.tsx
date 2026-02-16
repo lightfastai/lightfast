@@ -39,7 +39,7 @@ export async function SSRCodeBlock({
   };
 
   if (languageLower in languageMap) {
-    lang = languageMap[languageLower];
+    lang = languageMap[languageLower]!;
   }
 
   // Generate HAST for both themes in parallel, with fallback to plain text
