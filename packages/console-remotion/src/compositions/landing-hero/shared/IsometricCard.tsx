@@ -12,8 +12,6 @@ type IsometricCardProps = {
   /** Absolute position within the isometric plane */
   x: number;
   y: number;
-  /** Optional CSS mask to fade the card edges */
-  maskImage?: string;
 };
 
 export const IsometricCard: React.FC<IsometricCardProps> = ({
@@ -24,7 +22,6 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
   height,
   x,
   y,
-  maskImage,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -53,33 +50,36 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
         width,
         height,
         transformStyle: "preserve-3d",
-        ...(maskImage && {
-          WebkitMaskImage: maskImage,
-          maskImage,
-        }),
       }}
     >
-      {/* Card surface visual — background + border only, no children */}
+      {/* Card background */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           backgroundColor: COLORS.cardWhite,
-          borderRadius: 12,
-          border: `1px solid ${COLORS.border}`,
         }}
       />
-      {/* Children live directly in the preserve-3d context — no overflow:hidden in the chain */}
+      {/* Children — clipped to card shape */}
       <div
         style={{
           position: "relative",
           width: "100%",
           height: "100%",
-          transformStyle: "preserve-3d",
+          overflow: "hidden",
         }}
       >
         {children}
       </div>
+      {/* Border overlay — always visible on top */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          border: `1px solid ${COLORS.border}`,
+          pointerEvents: "none",
+        }}
+      />
     </div>
   );
 };

@@ -30,6 +30,16 @@ export const SECTION_TIMING = {
   BOTTOM_RIGHT: { start: 98, entrance: 98 },
 } as const;
 
+/** Beam animation — energy pulse traveling down grid columns to IngestedData */
+export const BEAM_TIMING = {
+  /** Frame when beams start traveling */
+  START: 50,
+  /** How many frames the beam takes to travel */
+  TRAVEL_FRAMES: 50,
+  /** Frame when beams arrive at IngestedData intersection (START + TRAVEL_FRAMES) */
+  ARRIVAL: 100,
+} as const;
+
 /** Stagger delay between rows appearing inside cards */
 export const ROW_STAGGER = {
   STREAM_EVENTS: 6,

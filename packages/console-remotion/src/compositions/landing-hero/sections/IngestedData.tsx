@@ -3,7 +3,7 @@ import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { IsometricCard } from "../shared/IsometricCard";
 import { COLORS } from "../shared/colors";
 import { FONT_FAMILY } from "../shared/fonts";
-import { SPRING_CONFIGS, MOTION_DURATION, ROW_STAGGER } from "../shared/timing";
+import { SPRING_CONFIGS, MOTION_DURATION, ROW_STAGGER, BEAM_TIMING } from "../shared/timing";
 
 const SEARCH_RESULTS = [
   {
@@ -58,8 +58,8 @@ export const IngestedData: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // ── Typewriter animation ──
-  const TYPEWRITER_START = 12;
+  // ── Typewriter animation — starts after beam arrives ──
+  const TYPEWRITER_START = BEAM_TIMING.ARRIVAL + 12;
   const CHARS_PER_FRAME = 1.2;
   const typingFrame = Math.max(0, frame - TYPEWRITER_START);
   const charsToShow = Math.min(

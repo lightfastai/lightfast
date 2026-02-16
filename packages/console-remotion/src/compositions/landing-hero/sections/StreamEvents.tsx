@@ -66,6 +66,7 @@ const EXTRA_LINE_HEIGHT = 13;
 const EXTRA_SECTION_OVERHEAD = 10; // marginTop + gap between lines
 const ROW_GAP = 8;
 const FEED_PADDING_Y = ROW_GAP;
+// 10 events × 30 frames = 300, divides evenly into GIF loop for seamless restart
 const FRAMES_PER_EVENT = 30;
 const STEP_MOVE_FRAMES = 10;
 const LOOP_FRAMES = FEED_EVENTS.length * FRAMES_PER_EVENT;
@@ -99,9 +100,6 @@ const ROWS_TO_RENDER =
   2;
 const START_INDEX = -N;
 
-// Fade mask uses the smallest pitch
-const MASK_EDGE = COMPACT_ROW_HEIGHT + ROW_GAP;
-
 const borderColor = COLORS.border;
 
 export const StreamEvents: React.FC = () => {
@@ -126,8 +124,6 @@ export const StreamEvents: React.FC = () => {
         width: FEED_WIDTH,
         height: FEED_HEIGHT,
         overflow: "hidden",
-        WebkitMaskImage: `linear-gradient(to bottom, transparent 0%, black ${MASK_EDGE}px, black ${FEED_HEIGHT - MASK_EDGE}px, transparent 100%)`,
-        maskImage: `linear-gradient(to bottom, transparent 0%, black ${MASK_EDGE}px, black ${FEED_HEIGHT - MASK_EDGE}px, transparent 100%)`,
       }}
     >
       {Array.from({ length: ROWS_TO_RENDER }).map((_, index) => {
