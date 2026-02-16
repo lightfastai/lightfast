@@ -1,13 +1,12 @@
 import type React from "react";
 import { useCurrentFrame } from "remotion";
-import { COLORS } from "../shared/colors";
 import { createBox, facePath, shapeBounds, project } from "../shared/iso";
 import type { Box3D, Vec2 } from "../shared/iso";
 
 const FACE_FILL: Record<string, string> = {
-  top: COLORS.background,
-  front: COLORS.background,
-  right: COLORS.background,
+  top: "var(--background)",
+  front: "var(--background)",
+  right: "var(--background)",
 };
 
 const BOX: Box3D = { x: 0, y: 0, z: 0, w: 172, h: 172, d: 18 };
@@ -86,14 +85,7 @@ export const LogoAnimation: React.FC = () => {
   const head = headPosition(progress);
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        left: "50%",
-        top: "50%",
-        transform: "translate(-50%, -50%)",
-      }}
-    >
+    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
       <svg
         viewBox={`${vx} ${vy} ${vw} ${vh}`}
         width={vw}
@@ -103,8 +95,7 @@ export const LogoAnimation: React.FC = () => {
           <path
             key={i}
             d={facePath(face)}
-            fill={FACE_FILL[face.type]}
-            stroke={COLORS.border}
+            style={{ fill: FACE_FILL[face.type], stroke: "var(--border)" }}
             strokeWidth={1}
             fillRule="evenodd"
           />
@@ -114,7 +105,7 @@ export const LogoAnimation: React.FC = () => {
         <path
           d={lissajousPath}
           fill="none"
-          stroke={COLORS.border}
+          style={{ stroke: "var(--border)" }}
           strokeWidth={1}
         />
 
@@ -122,7 +113,7 @@ export const LogoAnimation: React.FC = () => {
         <path
           d={lissajousPath}
           fill="none"
-          stroke={COLORS.text}
+          style={{ stroke: "var(--foreground)" }}
           strokeWidth={1.5}
           strokeDasharray={`${trailLength} ${gapLength}`}
           strokeDashoffset={dashOffset}
@@ -134,7 +125,7 @@ export const LogoAnimation: React.FC = () => {
           cx={head[0]}
           cy={head[1]}
           r={2.5}
-          fill={COLORS.primary}
+          style={{ fill: "var(--primary)" }}
         />
       </svg>
     </div>

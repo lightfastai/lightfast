@@ -1,8 +1,6 @@
 import type React from "react";
 import { useCurrentFrame, interpolate, Easing } from "remotion";
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
-import { COLORS } from "../shared/colors";
-import { FONT_FAMILY } from "../shared/fonts";
 
 type FeedEvent = {
   source: "Vercel" | "GitHub" | "Sentry" | "Linear";
@@ -61,10 +59,14 @@ const FEED_Y = 0;
 const FEED_WIDTH = 512;
 const FEED_HEIGHT = 512;
 const FEED_PADDING_X = 14;
-const COMPACT_ROW_HEIGHT = 64;
-const EXTRA_LINE_HEIGHT = 13;
-const EXTRA_SECTION_OVERHEAD = 10; // marginTop + gap between lines
 const ROW_GAP = 8;
+
+// Natural height estimates for scroll-position math (content drives actual size).
+// Compact: py-3(24) + source-line(20) + gap-2(8) + label-line(20) + border(2) = 74
+// Extra section adds: gap-2(8) + mt-1(4) + border-t(1) + pt-2(8) + lines
+const COMPACT_ROW_HEIGHT = 74;
+const EXTRA_LINE_HEIGHT = 20; // text-xs leading-tight(16) + gap-1(4)
+const EXTRA_SECTION_OVERHEAD = 21; // gap(8) + margin(4) + border(1) + padding(8)
 const FEED_PADDING_Y = ROW_GAP;
 // 10 events × 30 frames = 300, divides evenly into GIF loop for seamless restart
 const FRAMES_PER_EVENT = 30;
@@ -100,8 +102,6 @@ const ROWS_TO_RENDER =
   2;
 const START_INDEX = -N;
 
-const borderColor = COLORS.border;
-
 export const StreamEvents: React.FC = () => {
   const frame = useCurrentFrame();
   const streamFrame = frame % LOOP_FRAMES;
@@ -117,111 +117,56 @@ export const StreamEvents: React.FC = () => {
 
   return (
     <div
+      className="absolute overflow-hidden"
       style={{
-        position: "absolute",
         left: FEED_X,
         top: FEED_Y,
         width: FEED_WIDTH,
         height: FEED_HEIGHT,
-        overflow: "hidden",
       }}
     >
       {Array.from({ length: ROWS_TO_RENDER }).map((_, index) => {
         const virtualIndex = index + START_INDEX;
         const normalizedIndex = ((virtualIndex % N) + N) % N;
         const event = FEED_EVENTS[normalizedIndex]!;
-        const height = eventHeights[normalizedIndex]!;
         const rowTop =
           FEED_PADDING_Y + getCumPosition(virtualIndex) + scrollOffset;
 
         return (
           <div
             key={index}
+            className="absolute flex flex-col gap-2 rounded-md border border-border px-3 py-3 font-sans"
             style={{
-              position: "absolute",
               left: FEED_PADDING_X,
               top: rowTop,
               width: FEED_WIDTH - FEED_PADDING_X * 2,
-              height,
-              borderRadius: 2,
-              border: `1px solid ${borderColor}`,
-              padding: "10px 12px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              gap: 6,
-              fontFamily: FONT_FAMILY,
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
+            <div className="flex items-center gap-2">
               {(() => {
                 const Icon = IntegrationLogoIcons[SOURCE_ICON_KEY[event.source]];
                 return (
                   <Icon
-                    style={{
-                      width: 14,
-                      height: 14,
-                      color: SOURCE_COLORS[event.source],
-                      flexShrink: 0,
-                    }}
+                    className="size-4 shrink-0"
+                    style={{ color: SOURCE_COLORS[event.source] }}
                   />
                 );
               })()}
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  fontFamily: "monospace",
-                  color: COLORS.textMuted,
-                  letterSpacing: "0.02em",
-                }}
-              >
+              <span className="font-mono text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {event.source}
               </span>
             </div>
-            <div
-              style={{
-                fontSize: 14,
-                color: COLORS.text,
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <span style={{ color: COLORS.text }}>{event.label}</span>
-              <span style={{ color: COLORS.textLight }}>•</span>
-              <span style={{ color: COLORS.textMuted }}>{event.detail}</span>
+            <div className="flex items-center gap-2 overflow-hidden text-sm">
+              <span className="shrink-0 text-foreground">{event.label}</span>
+              <span className="shrink-0 text-muted-foreground/40">•</span>
+              <span className="truncate text-muted-foreground">{event.detail}</span>
             </div>
             {event.extra && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  marginTop: 2,
-                }}
-              >
+              <div className="mt-1 flex flex-col gap-1 border-t border-border/50 pt-2">
                 {event.extra.map((line, i) => (
                   <span
                     key={i}
-                    style={{
-                      fontSize: 11,
-                      fontFamily: "monospace",
-                      color: COLORS.textLight,
-                      letterSpacing: "0.01em",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
+                    className="truncate font-mono text-xs leading-tight text-muted-foreground/50"
                   >
                     {line}
                   </span>

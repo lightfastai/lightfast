@@ -1,7 +1,6 @@
 import type React from "react";
 import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { SPRING_CONFIGS, MOTION_DURATION } from "./timing";
-import { COLORS } from "./colors";
 
 type IsometricCardProps = {
   children: React.ReactNode;
@@ -41,8 +40,8 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
   return (
     // Outer wrapper: positioning + 3D context
     <div
+      className="absolute"
       style={{
-        position: "absolute",
         left: x,
         top: y,
         transform: `translateY(${translateY}px)`,
@@ -53,33 +52,16 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
       }}
     >
       {/* Card background */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundColor: COLORS.cardWhite,
-        }}
-      />
+      <div className="absolute inset-0 bg-card" />
       {/* Children — clipped to card shape */}
       <div
-        style={{
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          transformStyle: "preserve-3d",
-        }}
+        className="relative h-full w-full"
+        style={{ transformStyle: "preserve-3d" }}
       >
         {children}
       </div>
       {/* Border overlay — always visible on top */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          border: `1px solid ${COLORS.border}`,
-          pointerEvents: "none",
-        }}
-      />
+      <div className="pointer-events-none absolute inset-0 border border-border" />
     </div>
   );
 };

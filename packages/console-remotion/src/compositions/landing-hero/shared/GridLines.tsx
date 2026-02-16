@@ -1,6 +1,5 @@
 import type React from "react";
 import { useCurrentFrame, interpolate, Easing } from "remotion";
-import { COLORS } from "./colors";
 import { MOTION_DURATION, BEAM_TIMING } from "./timing";
 
 type GridLinesProps = {
@@ -10,8 +9,6 @@ type GridLinesProps = {
   planeH: number;
   startFrame?: number;
 };
-
-const BORDER_COLOR = COLORS.border;
 
 export const GridLines: React.FC<GridLinesProps> = ({
   cellW,
@@ -113,7 +110,7 @@ export const GridLines: React.FC<GridLinesProps> = ({
     <svg
       width={planeW}
       height={planeH}
-      style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}
+      className="pointer-events-none absolute left-0 top-0"
     >
       {/* Beam gradient — follows the beam position each frame */}
       {beamOpacity > 0 && (
@@ -141,7 +138,7 @@ export const GridLines: React.FC<GridLinesProps> = ({
           y1={0}
           x2={i * cellW}
           y2={planeH * drawProgress}
-          stroke={BORDER_COLOR}
+          style={{ stroke: "var(--border)" }}
           strokeWidth={2}
           strokeDasharray="8 12"
           strokeDashoffset={vOffsets[i - 1]}
@@ -156,7 +153,7 @@ export const GridLines: React.FC<GridLinesProps> = ({
           y1={i * cellH}
           x2={planeW * drawProgress}
           y2={i * cellH}
-          stroke={BORDER_COLOR}
+          style={{ stroke: "var(--border)" }}
           strokeWidth={2}
           strokeDasharray="8 12"
           strokeDashoffset={hOffsets[i - 1]}

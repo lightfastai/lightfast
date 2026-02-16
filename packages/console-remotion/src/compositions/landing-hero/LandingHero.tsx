@@ -5,7 +5,6 @@ import { StreamEvents } from "./sections/StreamEvents";
 import { LogoAnimation } from "./sections/LogoAnimation";
 import { IngestedData } from "./sections/IngestedData";
 import { GridLines } from "./shared/GridLines";
-import { COLORS } from "./shared/colors";
 import { SECTION_TIMING } from "./shared/timing";
 import { ensureFontsLoaded } from "./shared/fonts";
 
@@ -35,21 +34,11 @@ export const LandingHero: React.FC = () => {
   }, [handle]);
 
   return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: COLORS.background,
-      }}
-    >
+    <AbsoluteFill className="bg-background">
       {/* Centering wrapper — keeps translate separate from 3D context */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
       <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          transform: "translate(-50%, -50%)",
-        }}
-      >
-      <div
+        className="origin-center"
         style={{
           width: PLANE_WIDTH,
           height: PLANE_HEIGHT,
@@ -58,7 +47,6 @@ export const LandingHero: React.FC = () => {
             rotateZ(${ISO_ROTATE_Z_DEGREES}deg)
             scale(${PLANE_SCALE})
           `,
-          transformOrigin: "center center",
           transformStyle: "preserve-3d",
         }}
       >

@@ -104,24 +104,24 @@ export const IngestedData: React.FC = () => {
           style={{ width: SIDEBAR_WIDTH }}
         >
           {/* App name */}
-          <div className="flex items-center gap-[8px] border-b border-border p-[14px_14px_10px]">
-            <div className="flex size-[22px] shrink-0 items-center justify-center rounded-full bg-white">
-              <span className="text-[10px] font-semibold leading-none text-black">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white">
+              <span className="text-xs font-semibold leading-none text-black">
                 AC
               </span>
             </div>
-            <span className="text-[14px] font-medium tracking-[-0.01em] text-primary">
+            <span className="text-sm font-medium tracking-tight text-primary">
               Acme
             </span>
           </div>
 
           {/* Primary nav */}
-          <div className="p-[8px_6px]">
+          <div className="px-2 py-2">
             {PRIMARY_NAV.map((item) => (
               <div
                 key={item.label}
                 className={cn(
-                  "mb-[2px] rounded-[4px] p-[7px_8px] text-[13px]",
+                  "mb-1 rounded-lg px-2 py-2 text-xs",
                   item.active
                     ? "bg-accent font-medium text-foreground"
                     : "font-normal text-muted-foreground",
@@ -133,18 +133,15 @@ export const IngestedData: React.FC = () => {
           </div>
 
           {/* Manage section */}
-          <div className="p-[4px_6px]">
-            <div
-              className="p-[4px_8px] text-[11px] font-medium tracking-[0.02em]"
-              style={{ color: "#555555" }}
-            >
+          <div className="px-2 py-1">
+            <div className="px-2 py-1 text-xs font-medium tracking-wide text-muted-foreground/70">
               Manage
             </div>
             {MANAGE_NAV.map((item) => (
               <div
                 key={item.label}
                 className={cn(
-                  "mb-[2px] rounded-[4px] p-[7px_8px] text-[13px]",
+                  "mb-1 rounded-lg px-2 py-2 text-xs",
                   item.active
                     ? "bg-accent font-medium text-foreground"
                     : "font-normal text-muted-foreground",
@@ -159,10 +156,10 @@ export const IngestedData: React.FC = () => {
           <div className="flex-1" />
 
           {/* Bottom section */}
-          <div className="border-t border-border p-[10px_14px]">
-            <div className="flex items-center gap-[6px]">
-              <div className="size-[18px] rounded-full border border-border bg-accent" />
-              <span className="text-[12px] text-muted-foreground">
+          <div className="border-t border-border px-4 py-3">
+            <div className="flex items-center gap-2">
+              <div className="size-5 rounded-full border border-border bg-accent" />
+              <span className="text-xs text-muted-foreground">
                 Acme Inc
               </span>
             </div>
@@ -175,14 +172,14 @@ export const IngestedData: React.FC = () => {
           style={{ transformStyle: "preserve-3d" }}
         >
           {/* Search query section */}
-          <div className="flex min-h-[72px] flex-col justify-center border-b border-border p-[12px_14px]">
-            <div className="text-[13px] leading-[18px]">
+          <div className="flex min-h-18 flex-col justify-center border-b border-border px-4 py-3">
+            <div className="text-xs leading-normal">
               <span className="font-medium text-primary">lightfast</span>
               <span className="text-muted-foreground">.</span>
               <span className="text-foreground">search</span>
               <span className="text-muted-foreground">(</span>
             </div>
-            <div className="pl-[16px] text-[13px] leading-[18px] text-foreground">
+            <div className="pl-4 text-xs leading-normal text-foreground">
               {QUERY_TEXT.slice(0, charsToShow)}
               <span
                 className="font-light text-primary"
@@ -191,7 +188,7 @@ export const IngestedData: React.FC = () => {
                 |
               </span>
             </div>
-            <div className="text-[13px] leading-[18px]">
+            <div className="text-xs leading-normal">
               <span className="text-muted-foreground">)</span>
             </div>
           </div>
@@ -224,12 +221,12 @@ export const IngestedData: React.FC = () => {
 
               const rowContent = (
                 <>
-                  <div className="truncate text-[13px] font-medium leading-[16px] text-foreground">
+                  <div className="truncate text-xs font-medium leading-4 text-foreground">
                     {result.title}
                   </div>
-                  <div className="mt-[2px] flex items-center gap-[6px] text-[11px] leading-[16px] text-muted-foreground">
+                  <div className="mt-1 flex items-center gap-2 text-xs leading-4 text-muted-foreground">
                     <span>{result.domain}</span>
-                    <span style={{ color: "#555555" }}>|</span>
+                    <span className="text-muted-foreground/40">|</span>
                     <span>{result.timestamp}</span>
                   </div>
                 </>
@@ -239,7 +236,7 @@ export const IngestedData: React.FC = () => {
                 <div
                   key={index}
                   className={cn(
-                    "relative h-[52px]",
+                    "relative h-13",
                     index < SEARCH_RESULTS.length - 1 && "border-b border-border",
                   )}
                   style={{ transformStyle: "preserve-3d" }}
@@ -258,7 +255,7 @@ export const IngestedData: React.FC = () => {
                   {/* ── Ghost: faint content preview at landing zone (z=0) ── */}
                   {ghostOpacity > 0 && (
                     <div
-                      className="pointer-events-none absolute inset-0 flex flex-col justify-center p-[8px_14px]"
+                      className="pointer-events-none absolute inset-0 flex flex-col justify-center px-4 py-2"
                       style={{ opacity: ghostOpacity }}
                     >
                       {rowContent}
@@ -296,7 +293,7 @@ export const IngestedData: React.FC = () => {
                   >
                     {/* Row content with wireframe border */}
                     <div
-                      className="absolute inset-0 flex flex-col justify-center bg-background p-[8px_14px]"
+                      className="absolute inset-0 flex flex-col justify-center bg-background px-4 py-2"
                       style={{
                         border: wireframeOpacity > 0
                           ? `1px dashed rgba(128, 128, 128, ${wireframeOpacity})`
