@@ -26,7 +26,7 @@ export function AppMobileNav() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button
-          className="lg:hidden p-2 text-foreground/60 hover:text-foreground transition-colors"
+          className="md:hidden p-2 text-foreground/60 hover:text-foreground transition-colors"
           aria-label="Toggle Menu"
         >
           <Menu className="h-5 w-5" />

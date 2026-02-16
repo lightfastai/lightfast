@@ -14,7 +14,7 @@ export function AppNavbar() {
       {/* Centered nav container */}
       <div className="relative flex items-center justify-center">
         {/* Desktop: Centered nav pill */}
-        <nav className="hidden lg:flex relative h-9 items-center gap-0.5 rounded-md pl-4 pr-1 py-1">
+        <nav className="hidden md:flex relative h-9 items-center gap-0.5 rounded-md pl-4 pr-1 py-1">
           {/* Glass backdrop layer - sibling so dropdown's backdrop-blur isn't trapped */}
           <div className="absolute inset-0 rounded-md bg-card/40 border border-border/50 backdrop-blur-md -z-10" />
           {/* Logo */}
@@ -38,7 +38,7 @@ export function AppNavbar() {
         </nav>
 
         {/* Mobile: Logo left, hamburger right */}
-        <div className="flex lg:hidden items-center justify-between w-full">
+        <div className="flex md:hidden items-center justify-between w-full">
           <NextLink
             href="/"
             prefetch
