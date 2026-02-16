@@ -1,7 +1,7 @@
 {
-  "_comment": "Reference of all available MCP servers. Use 'pnpm claude [-b] [-e] [-a]' to start Claude with specific servers.",
   "mcpServers": {
     "playwright": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "@playwright/mcp@latest",
@@ -11,14 +11,17 @@
       ]
     },
     "exa": {
+      "type": "stdio",
       "command": "bash",
       "args": [".mcp/start-exa.sh"]
     },
     "knock": {
+      "type": "stdio",
       "command": "bash",
       "args": [".mcp/start-knock.sh"]
     },
     "lightfast": {
+      "type": "stdio",
       "command": "bash",
       "args": [".mcp/start-lightfast.sh"]
     }
