@@ -16,8 +16,8 @@
     "clean": "git clean -xdf node_modules .turbo .internal",
     "clean:workspaces": "turbo run clean",
     "dev": "turbo run dev --parallel --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/chat",
-    "dev:app": "turbo run dev --parallel dev:inngest dev:qstash dev:ngrok dev:studio --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/console --filter=@db/console",
-    "dev:www": "turbo watch dev -F @lightfast/www --continue",
+    "dev:app": "turbo run dev --parallel dev:inngest dev:qstash dev:ngrok dev:studio --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/console --filter=@db/console --filter=@repo/console-remotion",
+    "dev:www": "turbo watch dev -F @lightfast/www -F @repo/console-remotion --continue",
     "dev:auth": "turbo watch dev -F @lightfast/auth --continue",
     "dev:chat": "turbo watch dev -F @lightfast/chat --continue",
     "dev:console": "turbo run dev --filter=@lightfast/console",
@@ -40,7 +40,9 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "changeset publish",
-    "claude": "./scripts/c"
+    "claude": "./scripts/c",
+    "remotion:studio": "pnpm --filter @repo/console-remotion studio",
+    "remotion:render": "pnpm --filter @repo/console-remotion render:gif"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.5",

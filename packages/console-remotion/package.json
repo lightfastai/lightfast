@@ -1,0 +1,41 @@
+{
+  "name": "@repo/console-remotion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./src/index.ts" }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "npx tsx src/watch.ts",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "studio": "npx remotion studio src/index.ts",
+    "render:gif": "npx tsx src/render.ts"
+  },
+  "dependencies": {
+    "@remotion/bundler": "^4.0.242",
+    "@remotion/cli": "^4.0.242",
+    "@remotion/fonts": "^4.0.242",
+    "@remotion/renderer": "^4.0.242",
+    "@vendor/remotion": "workspace:*",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
+    "remotion": "^4.0.242"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "tsx": "^4.19.2",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}
