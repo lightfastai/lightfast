@@ -1,8 +1,7 @@
 import type React from "react";
 import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
+import { cn } from "../../../lib/cn";
 import { IsometricCard } from "../shared/IsometricCard";
-import { COLORS } from "../shared/colors";
-import { FONT_FAMILY } from "../shared/fonts";
 import { SPRING_CONFIGS, MOTION_DURATION, ROW_STAGGER, BEAM_TIMING } from "../shared/timing";
 
 const SEARCH_RESULTS = [
@@ -52,8 +51,6 @@ const MANAGE_NAV = [
 const QUERY_TEXT = '"How does our authentication service work?"';
 const SIDEBAR_WIDTH = 256;
 
-const borderColor = COLORS.border;
-
 export const IngestedData: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -98,83 +95,37 @@ export const IngestedData: React.FC = () => {
       y={1024}
     >
       <div
-        style={{
-          display: "flex",
-          height: "100%",
-          fontFamily: FONT_FAMILY,
-          backgroundColor: COLORS.background,
-          transformStyle: "preserve-3d",
-        }}
+        className="flex h-full bg-background font-sans"
+        style={{ transformStyle: "preserve-3d" }}
       >
         {/* ── Sidebar ── */}
         <div
-          style={{
-            width: SIDEBAR_WIDTH,
-            flexShrink: 0,
-            borderRight: `1px solid ${borderColor}`,
-            display: "flex",
-            flexDirection: "column",
-          }}
+          className="flex shrink-0 flex-col border-r border-border"
+          style={{ width: SIDEBAR_WIDTH }}
         >
           {/* App name */}
-          <div
-            style={{
-              padding: "14px 14px 10px",
-              borderBottom: `1px solid ${borderColor}`,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <div
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: 999,
-                backgroundColor: "#ffffff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: "#000000",
-                  lineHeight: 1,
-                }}
-              >
+          <div className="flex items-center gap-[8px] border-b border-border p-[14px_14px_10px]">
+            <div className="flex size-[22px] shrink-0 items-center justify-center rounded-full bg-white">
+              <span className="text-[10px] font-semibold leading-none text-black">
                 AC
               </span>
             </div>
-            <span
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: COLORS.primary,
-                letterSpacing: "-0.01em",
-              }}
-            >
+            <span className="text-[14px] font-medium tracking-[-0.01em] text-primary">
               Acme
             </span>
           </div>
 
           {/* Primary nav */}
-          <div style={{ padding: "8px 6px" }}>
+          <div className="p-[8px_6px]">
             {PRIMARY_NAV.map((item) => (
               <div
                 key={item.label}
-                style={{
-                  padding: "7px 8px",
-                  borderRadius: 4,
-                  fontSize: 13,
-                  fontWeight: item.active ? 500 : 400,
-                  color: item.active ? COLORS.text : COLORS.textMuted,
-                  backgroundColor: item.active ? COLORS.cardGray : "transparent",
-                  marginBottom: 2,
-                }}
+                className={cn(
+                  "mb-[2px] rounded-[4px] p-[7px_8px] text-[13px]",
+                  item.active
+                    ? "bg-accent font-medium text-foreground"
+                    : "font-normal text-muted-foreground",
+                )}
               >
                 {item.label}
               </div>
@@ -182,30 +133,22 @@ export const IngestedData: React.FC = () => {
           </div>
 
           {/* Manage section */}
-          <div style={{ padding: "4px 6px" }}>
+          <div className="p-[4px_6px]">
             <div
-              style={{
-                padding: "4px 8px",
-                fontSize: 11,
-                fontWeight: 500,
-                color: COLORS.textLight,
-                letterSpacing: "0.02em",
-              }}
+              className="p-[4px_8px] text-[11px] font-medium tracking-[0.02em]"
+              style={{ color: "#555555" }}
             >
               Manage
             </div>
             {MANAGE_NAV.map((item) => (
               <div
                 key={item.label}
-                style={{
-                  padding: "7px 8px",
-                  borderRadius: 4,
-                  fontSize: 13,
-                  fontWeight: item.active ? 500 : 400,
-                  color: item.active ? COLORS.text : COLORS.textMuted,
-                  backgroundColor: item.active ? COLORS.cardGray : "transparent",
-                  marginBottom: 2,
-                }}
+                className={cn(
+                  "mb-[2px] rounded-[4px] p-[7px_8px] text-[13px]",
+                  item.active
+                    ? "bg-accent font-medium text-foreground"
+                    : "font-normal text-muted-foreground",
+                )}
               >
                 {item.label}
               </div>
@@ -213,32 +156,13 @@ export const IngestedData: React.FC = () => {
           </div>
 
           {/* Spacer */}
-          <div style={{ flex: 1 }} />
+          <div className="flex-1" />
 
           {/* Bottom section */}
-          <div
-            style={{
-              padding: "10px 14px",
-              borderTop: `1px solid ${borderColor}`,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              <div
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: 999,
-                  backgroundColor: COLORS.cardGray,
-                  border: `1px solid ${borderColor}`,
-                }}
-              />
-              <span style={{ fontSize: 12, color: COLORS.textMuted }}>
+          <div className="border-t border-border p-[10px_14px]">
+            <div className="flex items-center gap-[6px]">
+              <div className="size-[18px] rounded-full border border-border bg-accent" />
+              <span className="text-[12px] text-muted-foreground">
                 Acme Inc
               </span>
             </div>
@@ -247,61 +171,33 @@ export const IngestedData: React.FC = () => {
 
         {/* ── Main content ── */}
         <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            transformStyle: "preserve-3d",
-          }}
+          className="flex flex-1 flex-col"
+          style={{ transformStyle: "preserve-3d" }}
         >
           {/* Search query section */}
-          <div
-            style={{
-              padding: "12px 14px",
-              borderBottom: `1px solid ${borderColor}`,
-              minHeight: 72,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
-            <div style={{ fontSize: 13, lineHeight: "18px" }}>
-              <span style={{ color: COLORS.primary, fontWeight: 500 }}>lightfast</span>
-              <span style={{ color: COLORS.textMuted }}>.</span>
-              <span style={{ color: COLORS.text }}>search</span>
-              <span style={{ color: COLORS.textMuted }}>(</span>
+          <div className="flex min-h-[72px] flex-col justify-center border-b border-border p-[12px_14px]">
+            <div className="text-[13px] leading-[18px]">
+              <span className="font-medium text-primary">lightfast</span>
+              <span className="text-muted-foreground">.</span>
+              <span className="text-foreground">search</span>
+              <span className="text-muted-foreground">(</span>
             </div>
-            <div
-              style={{
-                fontSize: 13,
-                lineHeight: "18px",
-                paddingLeft: 16,
-                color: COLORS.text,
-              }}
-            >
+            <div className="pl-[16px] text-[13px] leading-[18px] text-foreground">
               {QUERY_TEXT.slice(0, charsToShow)}
               <span
-                style={{
-                  opacity: cursorOpacity,
-                  color: COLORS.primary,
-                  fontWeight: 300,
-                }}
+                className="font-light text-primary"
+                style={{ opacity: cursorOpacity }}
               >
                 |
               </span>
             </div>
-            <div
-              style={{
-                fontSize: 13,
-                lineHeight: "18px",
-              }}
-            >
-              <span style={{ color: COLORS.textMuted }}>)</span>
+            <div className="text-[13px] leading-[18px]">
+              <span className="text-muted-foreground">)</span>
             </div>
           </div>
 
           {/* Results list */}
-          <div style={{ flex: 1, transformStyle: "preserve-3d" }}>
+          <div className="flex-1" style={{ transformStyle: "preserve-3d" }}>
             {SEARCH_RESULTS.map((result, index) => {
               const entrance = spring({
                 frame: frame - (RESULTS_START + index * RESULT_STAGGER),
@@ -317,76 +213,97 @@ export const IngestedData: React.FC = () => {
                 extrapolateRight: "clamp",
               });
               const wireframeOpacity = rowVisible * interpolate(
-                entrance, [0.0, 0.7, 1.0], [0.5, 0.5, 0],
+                entrance, [0.0, 0.7, 1.0], [0.8, 0.8, 0],
                 { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+              );
+              // Ghost: content preview at landing zone, fades as real content arrives
+              const ghostOpacity = rowVisible * interpolate(
+                entrance, [0, 0.8, 1.0], [0.35, 0.35, 0],
+                { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+              );
+
+              const rowContent = (
+                <>
+                  <div className="truncate text-[13px] font-medium leading-[16px] text-foreground">
+                    {result.title}
+                  </div>
+                  <div className="mt-[2px] flex items-center gap-[6px] text-[11px] leading-[16px] text-muted-foreground">
+                    <span>{result.domain}</span>
+                    <span style={{ color: "#555555" }}>|</span>
+                    <span>{result.timestamp}</span>
+                  </div>
+                </>
               );
 
               return (
                 <div
                   key={index}
-                  style={{
-                    position: "relative",
-                    height: 52,
-                    borderBottom:
-                      index < SEARCH_RESULTS.length - 1
-                        ? `1px solid ${borderColor}`
-                        : undefined,
-                    transformStyle: "preserve-3d",
-                  }}
+                  className={cn(
+                    "relative h-[52px]",
+                    index < SEARCH_RESULTS.length - 1 && "border-b border-border",
+                  )}
+                  style={{ transformStyle: "preserve-3d" }}
                 >
-                  {/* ── Wireframe: landing zone at z=0 ── */}
+                  {/* ── Wireframe: dashed landing zone at z=0 ── */}
                   {wireframeOpacity > 0 && (
                     <div
+                      className="pointer-events-none absolute inset-0"
                       style={{
-                        position: "absolute",
-                        inset: 0,
-                        border: `1px dashed ${borderColor}`,
+                        border: "1px dashed var(--muted-foreground)",
                         opacity: wireframeOpacity,
-                        pointerEvents: "none",
                       }}
                     />
                   )}
 
-                  {/* ── Row content — floats above surface, drops down ── */}
+                  {/* ── Ghost: faint content preview at landing zone (z=0) ── */}
+                  {ghostOpacity > 0 && (
+                    <div
+                      className="pointer-events-none absolute inset-0 flex flex-col justify-center p-[8px_14px]"
+                      style={{ opacity: ghostOpacity }}
+                    >
+                      {rowContent}
+                    </div>
+                  )}
+
+                  {/* ── Tracer lines: guide rails from z=0 to z=rowZ ── */}
+                  {rowZ > 0.5 && wireframeOpacity > 0 && (
+                    [0, 1].map((side) => (
+                      <div
+                        key={`tracer-${side}`}
+                        className="pointer-events-none absolute top-0"
+                        style={{
+                          left: side === 0 ? 0 : undefined,
+                          right: side === 1 ? 0 : undefined,
+                          width: 0,
+                          height: rowZ,
+                          borderLeft: "1px dashed var(--muted-foreground)",
+                          transform: "rotateX(90deg)",
+                          transformOrigin: "0 0",
+                          opacity: wireframeOpacity,
+                        }}
+                      />
+                    ))
+                  )}
+
+                  {/* ── Floating wrapper at z=rowZ: outline + content ── */}
                   <div
+                    className="absolute inset-0"
                     style={{
-                      position: "absolute",
-                      inset: 0,
-                      padding: "8px 14px",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "center",
                       opacity: rowVisible,
                       transform: `translateZ(${rowZ}px)`,
+                      transformStyle: "preserve-3d",
                     }}
                   >
+                    {/* Row content with wireframe border */}
                     <div
+                      className="absolute inset-0 flex flex-col justify-center bg-background p-[8px_14px]"
                       style={{
-                        fontSize: 13,
-                        fontWeight: 500,
-                        color: COLORS.text,
-                        lineHeight: "16px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                        border: wireframeOpacity > 0
+                          ? `1px dashed rgba(128, 128, 128, ${wireframeOpacity})`
+                          : "1px solid transparent",
                       }}
                     >
-                      {result.title}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: COLORS.textMuted,
-                        lineHeight: "16px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        marginTop: 2,
-                      }}
-                    >
-                      <span>{result.domain}</span>
-                      <span style={{ color: COLORS.textLight }}>|</span>
-                      <span>{result.timestamp}</span>
+                      {rowContent}
                     </div>
                   </div>
                 </div>
