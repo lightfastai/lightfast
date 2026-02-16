@@ -347,7 +347,7 @@ export default function PricingPage() {
         <div className="max-w-6xl px-4 mx-auto w-full py-10">
           <div className="space-y-8 w-full">
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-3 gap-8 w-full">
               {pricingPlans.map((plan) => {
                 const price = plan.monthlyPrice;
 
@@ -359,6 +359,9 @@ export default function PricingPage() {
                       plan.highlighted
                         ? "border border-foreground shadow-lg"
                         : "",
+                      "md:col-span-2 lg:col-span-1",
+                      plan.plan === "business" &&
+                        "md:col-start-2 lg:col-start-auto",
                     )}
                   >
                     <div className="space-y-1">
@@ -448,20 +451,20 @@ export default function PricingPage() {
         {/* FAQ Section */}
         <div className="max-w-6xl mx-auto w-full px-4 py-10">
           <div className="w-full">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-              {/* Left side - FAQ label */}
-              <div className="md:col-span-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  FAQs
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
+              {/* Left: Badge */}
+              <div>
+                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                  FAQ
                 </span>
               </div>
 
-              {/* Right side - FAQ content */}
-              <div className="md:col-span-10 md:col-start-3">
+              {/* Right: FAQ content - spans 2 columns */}
+              <div className="lg:col-span-2">
                 {/* Header with CTA */}
                 <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8 pb-8 border-b border-border">
                   <div className="space-y-1">
-                    <p className="text-xl text-muted-foreground">
+                    <p className="text-base md:text-lg leading-relaxed text-muted-foreground">
                       Find answers.
                     </p>
                   </div>

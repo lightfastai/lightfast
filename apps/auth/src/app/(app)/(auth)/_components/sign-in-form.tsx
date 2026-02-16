@@ -75,7 +75,7 @@ export function SignInForm({
       {/* Header - only show on email and password steps */}
       {(verificationStep === "email" || verificationStep === "password") && (
         <div className="text-center">
-          <h1 className="text-3xl font-semibold text-foreground">
+          <h1 className="text-3xl font-pp font-medium text-foreground">
             Log in to Lightfast
           </h1>
         </div>

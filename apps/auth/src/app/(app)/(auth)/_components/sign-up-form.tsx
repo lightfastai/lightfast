@@ -65,7 +65,7 @@ export function SignUpForm() {
 			{/* Header - only show on email and password steps */}
 			{(verificationStep === "email" || verificationStep === "password") && (
 				<div className="text-center">
-					<h1 className="text-3xl font-semibold text-foreground">
+					<h1 className="text-3xl font-pp font-medium text-foreground">
 						Sign up for Lightfast
 					</h1>
 				</div>
@@ -128,10 +128,10 @@ export function SignUpForm() {
 						/>
 
 						{/* Legal compliance text */}
-						<p className="text-xs text-center text-muted-foreground">
+						<p className="text-sm text-center text-muted-foreground">
 							By joining, you agree to our{" "}
 							<MicrofrontendLink
-								href={siteConfig.links.terms.href}
+								href={'/legal/terms'}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"
@@ -140,7 +140,7 @@ export function SignUpForm() {
 							</MicrofrontendLink>{" "}
 							and{" "}
 							<MicrofrontendLink
-								href={siteConfig.links.privacy.href}
+								href={'/legal/terms'}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"

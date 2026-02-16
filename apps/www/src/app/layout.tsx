@@ -9,10 +9,8 @@ import { exposurePlus, ppNeueMontreal } from "~/lib/fonts";
 import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
-import {
-  PrefetchCrossZoneLinks,
-  PrefetchCrossZoneLinksProvider,
-} from "@vercel/microfrontends/next/client";
+import { PrefetchCrossZoneLinks } from "@vercel/microfrontends/next/client";
+import { StablePrefetchCrossZoneLinksProvider } from "~/components/stable-prefetch-provider";
 
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Organization, WithContext } from "@vendor/seo/json-ld";
@@ -160,14 +158,14 @@ export default function RootLayout({
         <JsonLd code={websiteSchema} />
       </head>
       <body className={cn("min-h-screen font-sans bg-background")}>
-        <PrefetchCrossZoneLinksProvider>
+        <StablePrefetchCrossZoneLinksProvider>
           <PostHogProvider>
             {children}
             <VercelAnalytics />
             <SpeedInsights />
           </PostHogProvider>
           <PrefetchCrossZoneLinks />
-        </PrefetchCrossZoneLinksProvider>
+        </StablePrefetchCrossZoneLinksProvider>
       </body>
     </html>
   );
