@@ -2,9 +2,58 @@ import type React from "react";
 import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { cn } from "../../../lib/cn";
 import { IsometricCard } from "../shared/IsometricCard";
-import { SPRING_CONFIGS, MOTION_DURATION, ROW_STAGGER, BEAM_TIMING } from "../shared/timing";
+import {
+  SPRING_CONFIGS,
+  MOTION_DURATION,
+  BEAM_TIMING,
+} from "../shared/timing";
 
-const SEARCH_RESULTS = [
+// ── Pre-populated items — visible from the start so the list looks full ──
+const INITIAL_ITEMS = [
+  {
+    title: "Weekly engineering standup notes",
+    domain: "notion.so/acme/meetings",
+    timestamp: "2 days ago",
+  },
+  {
+    title: "Frontend deployment pipeline overview",
+    domain: "github.com/acme/infra",
+    timestamp: "5 days ago",
+  },
+  {
+    title: "Q4 performance review guidelines",
+    domain: "notion.so/acme/hr",
+    timestamp: "1 week ago",
+  },
+  {
+    title: "Database migration runbook",
+    domain: "github.com/acme/backend",
+    timestamp: "2 weeks ago",
+  },
+  {
+    title: "Design system component library",
+    domain: "figma.com/acme/design",
+    timestamp: "3 weeks ago",
+  },
+  {
+    title: "Incident response playbook — SRE",
+    domain: "notion.so/acme/sre",
+    timestamp: "1 month ago",
+  },
+  {
+    title: "Service mesh configuration guide",
+    domain: "github.com/acme/platform",
+    timestamp: "1 month ago",
+  },
+  {
+    title: "On-call rotation schedule Q1",
+    domain: "pagerduty.com/acme/schedules",
+    timestamp: "2 months ago",
+  },
+];
+
+// ── New items that push in one-by-one at the top after search ──
+const NEW_SEARCH_RESULTS = [
   {
     title: "Authentication service architecture decision",
     domain: "github.com/acme/backend",
@@ -26,11 +75,6 @@ const SEARCH_RESULTS = [
     timestamp: "3 weeks ago",
   },
   {
-    title: "Payment service dependencies and ownership",
-    domain: "linear.app/acme/ENG-1234",
-    timestamp: "1 month ago",
-  },
-  {
     title: "Auth middleware refactor discussion",
     domain: "github.com/acme/backend",
     timestamp: "1 month ago",
@@ -50,6 +94,7 @@ const MANAGE_NAV = [
 
 const QUERY_TEXT = '"How does our authentication service work?"';
 const SIDEBAR_WIDTH = 256;
+const ROW_HEIGHT = 52;
 
 export const IngestedData: React.FC = () => {
   const frame = useCurrentFrame();
@@ -81,9 +126,54 @@ export const IngestedData: React.FC = () => {
         ? 1
         : 0;
 
-  // ── Staggered results ──
+  // ── Two-phase arrival: shift first, pause, then drop ──
   const RESULTS_START = typingEndFrame + 10;
-  const RESULT_STAGGER = ROW_STAGGER.INGESTED_DATA;
+  const ARRIVAL_INTERVAL = 38; // frames between consecutive item cycles
+  const DROP_DELAY = 14; // frames after shift starts before drop begins
+
+  // Phase 1 — shift: existing items slide down to make room
+  const shiftSprings = NEW_SEARCH_RESULTS.map((_, k) => {
+    const shiftFrame = RESULTS_START + k * ARRIVAL_INTERVAL;
+    return spring({
+      frame: frame - shiftFrame,
+      fps,
+      config: SPRING_CONFIGS.SNAPPY,
+      durationInFrames: MOTION_DURATION.ROW_ENTRANCE,
+    });
+  });
+
+  // Phase 2 — drop: new item drops in after the gap has opened
+  const dropSprings = NEW_SEARCH_RESULTS.map((_, k) => {
+    const dropFrame = RESULTS_START + k * ARRIVAL_INTERVAL + DROP_DELAY;
+    return spring({
+      frame: frame - dropFrame,
+      fps,
+      config: SPRING_CONFIGS.SNAPPY,
+      durationInFrames: MOTION_DURATION.ROW_ENTRANCE,
+    });
+  });
+
+  // Total downward shift applied to initial items (sum of shift springs)
+  const totalShift = shiftSprings.reduce((a, b) => a + b, 0);
+
+  const RESULTS_HEIGHT = INITIAL_ITEMS.length * ROW_HEIGHT;
+
+  const renderRowContent = (item: {
+    title: string;
+    domain: string;
+    timestamp: string;
+  }) => (
+    <>
+      <div className="truncate text-xs font-medium leading-4 text-foreground">
+        {item.title}
+      </div>
+      <div className="mt-1 flex items-center gap-2 text-xs leading-4 text-muted-foreground">
+        <span>{item.domain}</span>
+        <span className="text-muted-foreground/40">|</span>
+        <span>{item.timestamp}</span>
+      </div>
+    </>
+  );
 
   return (
     <IsometricCard
@@ -92,7 +182,7 @@ export const IngestedData: React.FC = () => {
       width={854}
       height={512}
       x={341}
-      y={1024}
+      y={1072}
     >
       <div
         className="flex h-full bg-background font-sans"
@@ -159,9 +249,7 @@ export const IngestedData: React.FC = () => {
           <div className="border-t border-border px-4 py-3">
             <div className="flex items-center gap-2">
               <div className="size-5 rounded-full border border-border bg-accent" />
-              <span className="text-xs text-muted-foreground">
-                Acme Inc
-              </span>
+              <span className="text-xs text-muted-foreground">Acme Inc</span>
             </div>
           </div>
         </div>
@@ -193,53 +281,83 @@ export const IngestedData: React.FC = () => {
             </div>
           </div>
 
-          {/* Results list */}
-          <div className="flex-1" style={{ transformStyle: "preserve-3d" }}>
-            {SEARCH_RESULTS.map((result, index) => {
-              const entrance = spring({
-                frame: frame - (RESULTS_START + index * RESULT_STAGGER),
-                fps,
-                config: SPRING_CONFIGS.SNAPPY,
-                durationInFrames: MOTION_DURATION.ROW_ENTRANCE,
-              });
-              const rowVisible = entrance > 0 ? 1 : 0;
-              // translateZ lifts content above the isometric plane; the parent's
-              // rotateX(54.7°) projects Z into screen-Y so this appears as a
-              // vertical float-above → drop-down.
-              const rowZ = interpolate(entrance, [0, 1], [60, 0], {
+          {/* ── Results list ── */}
+          <div
+            className="relative"
+            style={{
+              height: RESULTS_HEIGHT,
+              transformStyle: "preserve-3d",
+            }}
+          >
+            {/* ── Clipped layer: initial items (2D only, safe to clip) ── */}
+            <div className="absolute inset-0 overflow-hidden">
+              {INITIAL_ITEMS.map((item, j) => {
+                const slot = j + totalShift;
+                const y = slot * ROW_HEIGHT;
+                if (y >= RESULTS_HEIGHT) return null;
+
+                return (
+                  <div
+                    key={`initial-${j}`}
+                    className="absolute left-0 right-0"
+                    style={{
+                      height: ROW_HEIGHT,
+                      transform: `translateY(${y}px)`,
+                    }}
+                  >
+                    <div className="flex h-full flex-col justify-center border-b border-border px-4 py-2">
+                      {renderRowContent(item)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── New search result items (preserve-3d for drop animation) ── */}
+            {NEW_SEARCH_RESULTS.map((result, i) => {
+              const drop = dropSprings[i]!;
+              // Only render once the drop phase begins
+              if (drop <= 0) return null;
+
+              // Slot = how many shift springs fired AFTER this one
+              const shiftsAfter = shiftSprings
+                .slice(i + 1)
+                .reduce((a, b) => a + b, 0);
+              const slot = shiftsAfter;
+              const y = slot * ROW_HEIGHT;
+
+              // 3D drop: new item floats from z=60 down to z=0
+              const rowZ = interpolate(drop, [0, 1], [60, 0], {
                 extrapolateRight: "clamp",
               });
-              const wireframeOpacity = rowVisible * interpolate(
-                entrance, [0.0, 0.7, 1.0], [0.8, 0.8, 0],
-                { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
-              );
-              // Ghost: content preview at landing zone, fades as real content arrives
-              const ghostOpacity = rowVisible * interpolate(
-                entrance, [0, 0.8, 1.0], [0.35, 0.35, 0],
+
+              // Wireframe cage: dashed outline at landing zone
+              const wireframeOpacity = interpolate(
+                drop,
+                [0.0, 0.7, 1.0],
+                [0.8, 0.8, 0],
                 { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
               );
 
-              const rowContent = (
-                <>
-                  <div className="truncate text-xs font-medium leading-4 text-foreground">
-                    {result.title}
-                  </div>
-                  <div className="mt-1 flex items-center gap-2 text-xs leading-4 text-muted-foreground">
-                    <span>{result.domain}</span>
-                    <span className="text-muted-foreground/40">|</span>
-                    <span>{result.timestamp}</span>
-                  </div>
-                </>
+              // Ghost: faint content preview at landing zone
+              const ghostOpacity = interpolate(
+                drop,
+                [0, 0.8, 1.0],
+                [0.35, 0.35, 0],
+                { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
               );
+
+              const landed = wireframeOpacity < 0.01;
 
               return (
                 <div
-                  key={index}
-                  className={cn(
-                    "relative h-13",
-                    index < SEARCH_RESULTS.length - 1 && "border-b border-border",
-                  )}
-                  style={{ transformStyle: "preserve-3d" }}
+                  key={`new-${i}`}
+                  className="absolute left-0 right-0"
+                  style={{
+                    height: ROW_HEIGHT,
+                    transform: `translateY(${y}px)`,
+                    transformStyle: "preserve-3d",
+                  }}
                 >
                   {/* ── Wireframe: dashed landing zone at z=0 ── */}
                   {wireframeOpacity > 0 && (
@@ -258,12 +376,13 @@ export const IngestedData: React.FC = () => {
                       className="pointer-events-none absolute inset-0 flex flex-col justify-center px-4 py-2"
                       style={{ opacity: ghostOpacity }}
                     >
-                      {rowContent}
+                      {renderRowContent(result)}
                     </div>
                   )}
 
                   {/* ── Tracer lines: guide rails from z=0 to z=rowZ ── */}
-                  {rowZ > 0.5 && wireframeOpacity > 0 && (
+                  {rowZ > 0.5 &&
+                    wireframeOpacity > 0 &&
                     [0, 1].map((side) => (
                       <div
                         key={`tracer-${side}`}
@@ -279,28 +398,30 @@ export const IngestedData: React.FC = () => {
                           opacity: wireframeOpacity,
                         }}
                       />
-                    ))
-                  )}
+                    ))}
 
-                  {/* ── Floating wrapper at z=rowZ: outline + content ── */}
+                  {/* ── Floating wrapper at z=rowZ: drops into landing zone ── */}
                   <div
                     className="absolute inset-0"
                     style={{
-                      opacity: rowVisible,
                       transform: `translateZ(${rowZ}px)`,
                       transformStyle: "preserve-3d",
                     }}
                   >
-                    {/* Row content with wireframe border */}
                     <div
-                      className="absolute inset-0 flex flex-col justify-center bg-background px-4 py-2"
-                      style={{
-                        border: wireframeOpacity > 0
-                          ? `1px dashed rgba(128, 128, 128, ${wireframeOpacity})`
-                          : "1px solid transparent",
-                      }}
+                      className={cn(
+                        "absolute inset-0 flex flex-col justify-center bg-background px-4 py-2",
+                        landed && "border-b border-border",
+                      )}
+                      style={
+                        !landed
+                          ? {
+                              border: `1px dashed rgba(128, 128, 128, ${wireframeOpacity})`,
+                            }
+                          : undefined
+                      }
                     >
-                      {rowContent}
+                      {renderRowContent(result)}
                     </div>
                   </div>
                 </div>
