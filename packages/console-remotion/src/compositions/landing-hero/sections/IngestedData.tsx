@@ -1,131 +1,245 @@
 import type React from "react";
-import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { IsometricCard } from "../shared/IsometricCard";
-import { SPRING_CONFIGS, SECTION_TIMING, ROW_STAGGER } from "../shared/timing";
 import { COLORS } from "../shared/colors";
 import { FONT_FAMILY } from "../shared/fonts";
 
-const MOCK_DATA = [
-  { company: "Acme Corp", category: "Enterprise", date: "Jan 15", amount: "$42,000" },
-  { company: "Globex Inc", category: "Startup", date: "Jan 18", amount: "$8,500" },
-  { company: "Initech", category: "Mid-market", date: "Jan 20", amount: "$23,100" },
-  { company: "Umbrella Co", category: "Enterprise", date: "Jan 22", amount: "$67,800" },
-  { company: "Stark Ind", category: "Enterprise", date: "Jan 25", amount: "$91,200" },
+const SEARCH_RESULTS = [
+  {
+    title: "Authentication service architecture decision",
+    domain: "github.com/lightfast/backend",
+    timestamp: "3 days ago",
+  },
+  {
+    title: "API rate limiting implementation — PR #842",
+    domain: "github.com/lightfast/api",
+    timestamp: "1 week ago",
+  },
+  {
+    title: "User authentication flow diagram",
+    domain: "notion.so/lightfast/docs",
+    timestamp: "2 weeks ago",
+  },
+  {
+    title: "Choosing between Clerk vs Auth0",
+    domain: "slack.com/lightfast/engineering",
+    timestamp: "3 weeks ago",
+  },
+  {
+    title: "Payment service dependencies and ownership",
+    domain: "linear.app/lightfast/ENG-1234",
+    timestamp: "1 month ago",
+  },
+  {
+    title: "Auth middleware refactor discussion",
+    domain: "github.com/lightfast/backend",
+    timestamp: "1 month ago",
+  },
 ];
 
-const COLUMNS = ["Account", "Segment", "Date", "Value"];
-const COL_WIDTHS = [120, 90, 70, 70];
+const NAV_ITEMS = [
+  { label: "Search", active: true },
+  { label: "Sources", active: false },
+  { label: "Analytics", active: false },
+  { label: "Settings", active: false },
+];
+
+const QUERY_TEXT = '"How does our authentication service work?"';
+const SIDEBAR_WIDTH = 256;
+
+const borderColor = COLORS.border;
 
 export const IngestedData: React.FC = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const entrance = SECTION_TIMING.INGESTED_DATA.entrance;
-
   return (
     <IsometricCard
-      entranceFrame={entrance}
-      width={380}
-      height={320}
-      x={100}
-      y={560}
+      entranceFrame={0}
+      animate={false}
+      width={854}
+      height={512}
+      x={341}
+      y={1024}
+      maskImage="linear-gradient(200deg, black 0%, black 40%, transparent 90%)"
     >
-      {/* Header */}
-      <div
-        style={{
-          padding: "16px 20px 12px",
-          borderBottom: `1px solid ${COLORS.borderLight}`,
-          fontFamily: FONT_FAMILY,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 500,
-            color: COLORS.textMuted,
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
-          }}
-        >
-          Ingested Accounts
-        </div>
-      </div>
-
-      {/* Table header */}
       <div
         style={{
           display: "flex",
-          padding: "10px 20px",
-          backgroundColor: COLORS.tableHeader,
-          borderBottom: `1px solid ${COLORS.borderLight}`,
+          height: "100%",
+          overflow: "hidden",
           fontFamily: FONT_FAMILY,
+          backgroundColor: COLORS.background,
         }}
       >
-        {COLUMNS.map((col, i) => (
+        {/* ── Sidebar ── */}
+        <div
+          style={{
+            width: SIDEBAR_WIDTH,
+            flexShrink: 0,
+            borderRight: `1px solid ${borderColor}`,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* App name */}
           <div
-            key={col}
             style={{
-              width: COL_WIDTHS[i],
-              fontSize: 10,
-              fontWeight: 500,
-              color: COLORS.textLight,
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
+              padding: "14px 14px 10px",
+              borderBottom: `1px solid ${borderColor}`,
             }}
           >
-            {col}
-          </div>
-        ))}
-      </div>
-
-      {/* Table rows */}
-      <div>
-        {MOCK_DATA.map((row, i) => {
-          const rowEntrance = spring({
-            frame: frame - (entrance + 12 + i * ROW_STAGGER.INGESTED_DATA),
-            fps,
-            config: SPRING_CONFIGS.SMOOTH,
-          });
-
-          const rowOpacity = interpolate(rowEntrance, [0, 1], [0, 1]);
-          const rowTranslate = interpolate(rowEntrance, [0, 1], [8, 0]);
-
-          const values = [row.company, row.category, row.date, row.amount];
-
-          return (
-            <div
-              key={i}
+            <span
               style={{
-                display: "flex",
-                padding: "10px 20px",
-                borderBottom:
-                  i < MOCK_DATA.length - 1
-                    ? `1px solid ${COLORS.borderLight}`
-                    : "none",
-                backgroundColor: i % 2 === 1 ? COLORS.tableRowAlt : "transparent",
-                opacity: rowOpacity,
-                transform: `translateY(${rowTranslate}px)`,
-                fontFamily: FONT_FAMILY,
+                fontSize: 11,
+                fontWeight: 500,
+                color: COLORS.primary,
+                letterSpacing: "-0.01em",
               }}
             >
-              {values.map((val, j) => (
+              lightfast
+            </span>
+          </div>
+
+          {/* Nav items */}
+          <div style={{ padding: "8px 6px" }}>
+            {NAV_ITEMS.map((item) => (
+              <div
+                key={item.label}
+                style={{
+                  padding: "7px 8px",
+                  borderRadius: 4,
+                  fontSize: 10,
+                  fontWeight: item.active ? 500 : 400,
+                  color: item.active ? COLORS.text : COLORS.textMuted,
+                  backgroundColor: item.active ? COLORS.cardGray : "transparent",
+                  marginBottom: 2,
+                }}
+              >
+                {item.label}
+              </div>
+            ))}
+          </div>
+
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+
+          {/* Bottom section */}
+          <div
+            style={{
+              padding: "10px 14px",
+              borderTop: `1px solid ${borderColor}`,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <div
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 999,
+                  backgroundColor: COLORS.cardGray,
+                  border: `1px solid ${borderColor}`,
+                }}
+              />
+              <span style={{ fontSize: 9, color: COLORS.textMuted }}>
+                Acme Inc
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Main content ── */}
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          {/* Search query section */}
+          <div
+            style={{
+              padding: "12px 14px",
+              borderBottom: `1px solid ${borderColor}`,
+              minHeight: 72,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <div style={{ fontSize: 10, lineHeight: "16px" }}>
+              <span style={{ color: COLORS.primary, fontWeight: 500 }}>lightfast</span>
+              <span style={{ color: COLORS.textMuted }}>.</span>
+              <span style={{ color: COLORS.text }}>search</span>
+              <span style={{ color: COLORS.textMuted }}>(</span>
+            </div>
+            <div
+              style={{
+                fontSize: 10,
+                lineHeight: "16px",
+                paddingLeft: 16,
+                color: COLORS.text,
+              }}
+            >
+              {QUERY_TEXT}
+            </div>
+            <div style={{ fontSize: 10, lineHeight: "16px" }}>
+              <span style={{ color: COLORS.textMuted }}>)</span>
+            </div>
+          </div>
+
+          {/* Results list */}
+          <div style={{ flex: 1, overflow: "hidden" }}>
+            {SEARCH_RESULTS.map((result, index) => (
+              <div
+                key={index}
+                style={{
+                  padding: "8px 14px",
+                  borderBottom:
+                    index < SEARCH_RESULTS.length - 1
+                      ? `1px solid ${borderColor}`
+                      : undefined,
+                  height: 46,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
                 <div
-                  key={j}
                   style={{
-                    width: COL_WIDTHS[j],
-                    fontSize: 11,
-                    color: j === 0 ? COLORS.text : COLORS.textMuted,
-                    fontWeight: j === 0 ? 500 : 400,
+                    fontSize: 10,
+                    fontWeight: 500,
+                    color: COLORS.text,
+                    lineHeight: "14px",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {val}
+                  {result.title}
                 </div>
-              ))}
-            </div>
-          );
-        })}
+                <div
+                  style={{
+                    fontSize: 9,
+                    color: COLORS.textMuted,
+                    lineHeight: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    marginTop: 2,
+                  }}
+                >
+                  <span>{result.domain}</span>
+                  <span style={{ color: COLORS.textLight }}>|</span>
+                  <span>{result.timestamp}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </IsometricCard>
   );

@@ -4,26 +4,28 @@ import { useEffect, useState } from "react";
 import { StreamEvents } from "./sections/StreamEvents";
 import { LogoAnimation } from "./sections/LogoAnimation";
 import { IngestedData } from "./sections/IngestedData";
-import { ConnectionLine } from "./shared/ConnectionLine";
+import { GridLines } from "./shared/GridLines";
 import { COLORS } from "./shared/colors";
 import { SECTION_TIMING } from "./shared/timing";
 import { ensureFontsLoaded } from "./shared/fonts";
 
 /**
- * Top-to-bottom isometric layout — centers collinear at slope 5.6.
- * Logo is exactly centered in the plane (x=240 = planeW/2).
+ * 3×3 isometric grid layout.
  *
- *   Element          Top-left     Size      Center
- *   StreamEvents     (0, 0)       380×320   (190, 160)
- *                                           ↓ 30px gap
- *   Logo             (150, 350)   180×180   (240, 440)  ← plane center
- *                                           ↓ 30px gap
- *   IngestedData     (100, 560)   380×320   (290, 720)
+ *   Cell (col,row)     Contents
+ *   (0,0)  (1,0)  (2,0)     ×  StreamEvents  ×
+ *   (0,1)  (1,1)  (2,1)     ×  Logo           ×
+ *   (0,2)  (1,2)  (2,2)     [--- Search (2-wide, centered) ---]
  *
- *   DX=50  DY=280  Gap=30px  Plane: 480×880
+ *   Cell: 512 × 512   Plane: 1536 × 1536
  */
-const PLANE_WIDTH = 480;
-const PLANE_HEIGHT = 880;
+const CELL_W = 512;
+const CELL_H = 512;
+const PLANE_WIDTH = CELL_W * 3;
+const PLANE_HEIGHT = CELL_H * 3;
+const PLANE_SCALE = 0.88;
+const ISO_TILT_DEGREES = 54.7356;
+const ISO_ROTATE_Z_DEGREES = -45;
 
 export const LandingHero: React.FC = () => {
   const [handle] = useState(() => delayRender("Loading fonts"));
@@ -36,48 +38,45 @@ export const LandingHero: React.FC = () => {
     <AbsoluteFill
       style={{
         backgroundColor: COLORS.background,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
       }}
     >
+      {/* Centering wrapper — keeps translate separate from 3D context */}
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
       <div
         style={{
           width: PLANE_WIDTH,
           height: PLANE_HEIGHT,
-          position: "relative",
           transform: `
-            perspective(1200px)
-            rotateX(55deg)
-            rotateZ(-45deg)
+            rotateX(${ISO_TILT_DEGREES}deg)
+            rotateZ(${ISO_ROTATE_Z_DEGREES}deg)
+            scale(${PLANE_SCALE})
           `,
           transformOrigin: "center center",
+          transformStyle: "preserve-3d",
         }}
       >
-        {/* Connection 1: StreamEvents bottom-center → Logo top-center */}
-        <ConnectionLine
-          x1={190}
-          y1={320}
-          x2={240}
-          y2={350}
-          startFrame={SECTION_TIMING.CONNECTION_1.start}
-          drawDuration={20}
-        />
-
-        {/* Connection 2: Logo bottom-center → IngestedData top-center */}
-        <ConnectionLine
-          x1={240}
-          y1={530}
-          x2={290}
-          y2={560}
-          startFrame={SECTION_TIMING.CONNECTION_2.start}
-          drawDuration={20}
+        <GridLines
+          cellW={CELL_W}
+          cellH={CELL_H}
+          planeW={PLANE_WIDTH}
+          planeH={PLANE_HEIGHT}
+          startFrame={SECTION_TIMING.GRID.start}
         />
 
         <StreamEvents />
-        <LogoAnimation />
         <IngestedData />
       </div>
+      </div>
+
+      {/* LogoAnimation uses its own math-based iso projection — render outside CSS 3D plane */}
+      <LogoAnimation />
     </AbsoluteFill>
   );
 };

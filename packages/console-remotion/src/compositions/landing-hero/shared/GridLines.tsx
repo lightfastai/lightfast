@@ -11,6 +11,8 @@ type GridLinesProps = {
   startFrame?: number;
 };
 
+const BORDER_BORDER = COLORS.border;
+
 export const GridLines: React.FC<GridLinesProps> = ({
   cellW,
   cellH,
@@ -52,9 +54,9 @@ export const GridLines: React.FC<GridLinesProps> = ({
           y1={0}
           x2={i * cellW}
           y2={planeH * drawProgress}
-          stroke={COLORS.border}
-          strokeWidth={1}
-          strokeDasharray="4 8"
+          stroke={BORDER_BORDER}
+          strokeWidth={2}
+          strokeDasharray="8 12"
           opacity={lineOpacity}
         />
       ))}
@@ -66,9 +68,9 @@ export const GridLines: React.FC<GridLinesProps> = ({
           y1={i * cellH}
           x2={planeW * drawProgress}
           y2={i * cellH}
-          stroke={COLORS.border}
-          strokeWidth={1}
-          strokeDasharray="4 8"
+          stroke={BORDER_BORDER}
+          strokeWidth={2}
+          strokeDasharray="8 12"
           opacity={lineOpacity}
         />
       ))}

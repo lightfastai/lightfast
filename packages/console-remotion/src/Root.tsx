@@ -6,10 +6,10 @@ export const RemotionRoot = () => {
     <Composition
       id="LandingHero"
       component={LandingHero}
-      durationInFrames={150}
+      durationInFrames={301}
       fps={30}
-      width={1200}
-      height={800}
+      width={1920}
+      height={1280}
     />
   );
 };

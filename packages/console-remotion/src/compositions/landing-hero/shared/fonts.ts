@@ -3,7 +3,7 @@ import { staticFile } from "remotion";
 
 let fontsLoaded = false;
 
-export const FONT_FAMILY = "PP Neue Montreal";
+export const FONT_FAMILY = "Geist";
 
 export const ensureFontsLoaded = async () => {
   if (fontsLoaded) return;
@@ -11,12 +11,12 @@ export const ensureFontsLoaded = async () => {
   await Promise.all([
     loadFont({
       family: FONT_FAMILY,
-      url: staticFile("fonts/PPNeueMontreal-Book.woff2"),
+      url: staticFile("fonts/Geist-Regular.woff2"),
       weight: "400",
     }),
     loadFont({
       family: FONT_FAMILY,
-      url: staticFile("fonts/PPNeueMontreal-Medium.woff2"),
+      url: staticFile("fonts/Geist-Medium.woff2"),
       weight: "500",
     }),
   ]);
