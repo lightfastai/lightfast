@@ -309,53 +309,83 @@ export const IngestedData: React.FC = () => {
                 config: SPRING_CONFIGS.SNAPPY,
                 durationInFrames: MOTION_DURATION.ROW_ENTRANCE,
               });
-              const rowOpacity = interpolate(entrance, [0, 1], [0, 1]);
-              const rowTranslateZ = interpolate(entrance, [0, 1], [60, 0]);
+              const rowVisible = entrance > 0 ? 1 : 0;
+              // translateZ lifts content above the isometric plane; the parent's
+              // rotateX(54.7°) projects Z into screen-Y so this appears as a
+              // vertical float-above → drop-down.
+              const rowZ = interpolate(entrance, [0, 1], [60, 0]);
+              const wireframeOpacity = rowVisible * interpolate(
+                entrance, [0.0, 0.7, 1.0], [0.5, 0.5, 0],
+                { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+              );
 
               return (
                 <div
                   key={index}
                   style={{
-                    padding: "8px 14px",
+                    position: "relative",
+                    height: 52,
                     borderBottom:
                       index < SEARCH_RESULTS.length - 1
                         ? `1px solid ${borderColor}`
                         : undefined,
-                    height: 52,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    opacity: rowOpacity,
-                    transform: `translateZ(${rowTranslateZ}px)`,
+                    transformStyle: "preserve-3d",
                   }}
                 >
+                  {/* ── Wireframe: landing zone at z=0 ── */}
+                  {wireframeOpacity > 0 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        border: `1px dashed ${borderColor}`,
+                        opacity: wireframeOpacity,
+                        pointerEvents: "none",
+                      }}
+                    />
+                  )}
+
+                  {/* ── Row content — floats above surface, drops down ── */}
                   <div
                     style={{
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: COLORS.text,
-                      lineHeight: "16px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {result.title}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: COLORS.textMuted,
-                      lineHeight: "16px",
+                      position: "absolute",
+                      inset: 0,
+                      padding: "8px 14px",
                       display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      marginTop: 2,
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      opacity: rowVisible,
+                      transform: `translateZ(${rowZ}px)`,
                     }}
                   >
-                    <span>{result.domain}</span>
-                    <span style={{ color: COLORS.textLight }}>|</span>
-                    <span>{result.timestamp}</span>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: COLORS.text,
+                        lineHeight: "16px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {result.title}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: COLORS.textMuted,
+                        lineHeight: "16px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        marginTop: 2,
+                      }}
+                    >
+                      <span>{result.domain}</span>
+                      <span style={{ color: COLORS.textLight }}>|</span>
+                      <span>{result.timestamp}</span>
+                    </div>
                   </div>
                 </div>
               );

@@ -39,7 +39,7 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
   const opacity = interpolate(entrance, [0, 1], [0, 1]);
 
   return (
-    // Outer wrapper: positioning + 3D context (no overflow — preserve-3d needs overflow:visible)
+    // Outer wrapper: positioning + 3D context
     <div
       style={{
         position: "absolute",
@@ -66,7 +66,7 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
           position: "relative",
           width: "100%",
           height: "100%",
-          overflow: "hidden",
+          transformStyle: "preserve-3d",
         }}
       >
         {children}
