@@ -31,7 +31,7 @@ export default async function PitchDeckLayout({
             </div>
 
             {/* Desktop: Centered nav pill */}
-            <nav className="hidden lg:flex relative h-9 items-center gap-0.5 rounded-md pl-4 pr-1 py-1">
+            <nav className="hidden md:flex relative h-9 items-center gap-0.5 rounded-md pl-4 pr-1 py-1">
               {/* Glass backdrop layer */}
               <div className="absolute inset-0 rounded-md bg-card/40 border border-border/50 backdrop-blur-md -z-10" />
 
@@ -54,7 +54,7 @@ export default async function PitchDeckLayout({
             </nav>
 
             {/* Mobile: Logo left, hamburger right */}
-            <div className="flex lg:hidden items-center justify-between w-full">
+            <div className="flex md:hidden items-center justify-between w-full">
               <NextLink
                 href="/"
                 prefetch
@@ -66,7 +66,7 @@ export default async function PitchDeckLayout({
             </div>
 
             {/* Right: Download button (absolute positioned) */}
-            <div className="absolute right-0 hidden lg:flex items-center">
+            <div className="absolute right-0 hidden md:flex items-center">
               <DownloadButton />
             </div>
           </div>

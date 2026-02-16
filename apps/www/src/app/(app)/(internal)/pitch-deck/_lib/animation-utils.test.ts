@@ -6,17 +6,8 @@ import {
   getSlideZIndexKeyframes,
   getIndicatorOpacityKeyframes,
   getIndicatorWidthKeyframes,
-  getGridDimensions,
-  getGridPosition,
   getSlideIndexFromProgress,
   getScrollTargetForSlide,
-  getStaggerDelay,
-  shouldBeGridView,
-  GRID_COLS,
-  GRID_GAP,
-  GRID_ROW_GAP,
-  GRID_ENTER_THRESHOLD,
-  GRID_SLIDE_DURATION,
 } from "./animation-utils";
 
 const TOTAL = 10;
@@ -91,64 +82,6 @@ describe("getIndicatorWidthKeyframes", () => {
   });
 });
 
-describe("getGridDimensions", () => {
-  it("calculates correct thumbnail sizing", () => {
-    const containerWidth = 1200;
-    const { thumbWidth, thumbHeight, gridScale, rowHeight } =
-      getGridDimensions(containerWidth);
-
-    const expectedThumbWidth = (1200 - 3 * GRID_GAP) / GRID_COLS;
-    expect(thumbWidth).toBe(expectedThumbWidth);
-    expect(thumbHeight).toBe(expectedThumbWidth * (9 / 16));
-    expect(gridScale).toBe(expectedThumbWidth / 1200);
-    expect(rowHeight).toBe(thumbHeight + GRID_ROW_GAP);
-  });
-
-  it("handles containerWidth=0", () => {
-    const { thumbWidth, gridScale } = getGridDimensions(0);
-    expect(thumbWidth).toBe(0);
-    expect(gridScale).toBe(0.25);
-  });
-});
-
-describe("getGridPosition", () => {
-  it("lays out 4 columns correctly", () => {
-    const thumbWidth = 282;
-    const rowHeight = 200;
-
-    // First row
-    expect(getGridPosition(0, thumbWidth, rowHeight)).toEqual({ x: 0, y: 0 });
-    expect(getGridPosition(1, thumbWidth, rowHeight)).toEqual({
-      x: 1 * (thumbWidth + GRID_GAP),
-      y: 0,
-    });
-    expect(getGridPosition(3, thumbWidth, rowHeight)).toEqual({
-      x: 3 * (thumbWidth + GRID_GAP),
-      y: 0,
-    });
-
-    // Second row
-    expect(getGridPosition(4, thumbWidth, rowHeight)).toEqual({
-      x: 0,
-      y: rowHeight,
-    });
-    expect(getGridPosition(7, thumbWidth, rowHeight)).toEqual({
-      x: 3 * (thumbWidth + GRID_GAP),
-      y: rowHeight,
-    });
-
-    // Third row
-    expect(getGridPosition(8, thumbWidth, rowHeight)).toEqual({
-      x: 0,
-      y: 2 * rowHeight,
-    });
-    expect(getGridPosition(9, thumbWidth, rowHeight)).toEqual({
-      x: 1 * (thumbWidth + GRID_GAP),
-      y: 2 * rowHeight,
-    });
-  });
-});
-
 describe("getSlideIndexFromProgress", () => {
   it("returns 0 at progress 0", () => {
     expect(getSlideIndexFromProgress(0, TOTAL)).toBe(0);
@@ -177,52 +110,5 @@ describe("getScrollTargetForSlide", () => {
 
   it("returns 0 for index 0", () => {
     expect(getScrollTargetForSlide(0, TOTAL, 11000)).toBe(0);
-  });
-});
-
-describe("getStaggerDelay", () => {
-  it("first slide gets max delay", () => {
-    expect(getStaggerDelay(0, TOTAL)).toBe((TOTAL - 1) * 0.02);
-  });
-
-  it("last slide gets 0 delay (animates first)", () => {
-    expect(getStaggerDelay(TOTAL - 1, TOTAL)).toBe(0);
-  });
-
-  it("reverses order with subtle stagger", () => {
-    const delay0 = getStaggerDelay(0, TOTAL);
-    const delay5 = getStaggerDelay(5, TOTAL);
-    const delay9 = getStaggerDelay(9, TOTAL);
-    expect(delay0).toBeGreaterThan(delay5);
-    expect(delay5).toBeGreaterThan(delay9);
-    // Total stagger is small — all slides move near-simultaneously
-    expect(delay0).toBeLessThan(0.5);
-  });
-});
-
-describe("shouldBeGridView", () => {
-  it("enters grid above enter threshold", () => {
-    expect(shouldBeGridView(0.98, false)).toBe(true);
-  });
-
-  it("stays in grid above exit threshold", () => {
-    expect(shouldBeGridView(0.95, true)).toBe(true);
-  });
-
-  it("exits grid below exit threshold", () => {
-    expect(shouldBeGridView(0.92, true)).toBe(false);
-  });
-
-  it("stays out of grid below enter threshold", () => {
-    expect(shouldBeGridView(0.95, false)).toBe(false);
-  });
-});
-
-describe("constants", () => {
-  it("exports expected values", () => {
-    expect(GRID_COLS).toBe(4);
-    expect(GRID_GAP).toBe(24);
-    expect(GRID_ROW_GAP).toBe(32);
-    expect(GRID_ENTER_THRESHOLD).toBe(0.97);
   });
 });

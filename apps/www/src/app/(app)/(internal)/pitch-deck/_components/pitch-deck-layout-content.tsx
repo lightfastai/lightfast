@@ -29,7 +29,7 @@ export function PitchDeckLayoutContent({ children }: PitchDeckLayoutContentProps
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">
                 A Note from the Founder
               </p>
-              <div className="space-y-4 text-sm lg:text-base text-muted-foreground leading-relaxed">
+              <div className="space-y-4 text-sm md:text-base text-muted-foreground leading-relaxed">
                 <p>
                   Thank you for taking the time to learn about what we&apos;re building.
                 </p>

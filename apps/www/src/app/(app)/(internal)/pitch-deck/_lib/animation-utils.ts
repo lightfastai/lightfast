@@ -1,25 +1,3 @@
-// --- Grid layout constants ---
-export const GRID_COLS = 4;
-export const GRID_GAP = 24; // px
-export const GRID_ROW_GAP = 32; // px
-
-export const GRID_ENTER_THRESHOLD = 0.97;
-export const GRID_EXIT_THRESHOLD = 0.93;
-
-/**
- * Determine if grid view should be active, with hysteresis.
- * Enter grid at GRID_ENTER_THRESHOLD, exit only below GRID_EXIT_THRESHOLD.
- */
-export function shouldBeGridView(
-  progress: number,
-  currentlyGrid: boolean,
-): boolean {
-  if (currentlyGrid) {
-    return progress >= GRID_EXIT_THRESHOLD;
-  }
-  return progress >= GRID_ENTER_THRESHOLD;
-}
-
 /**
  * Scroll-driven Y transform keyframes for a slide.
  */
@@ -40,7 +18,7 @@ export function getSlideYKeyframes(
 
   return {
     input: [
-      slideStart - 0.01,
+      slideStart - 0.06,
       slideStart,
       slideEnd,
       slideEnd + 0.1,
@@ -142,36 +120,6 @@ export function getIndicatorWidthKeyframes(
 }
 
 /**
- * Calculate grid thumbnail dimensions from container width.
- */
-export function getGridDimensions(containerWidth: number) {
-  const thumbWidth =
-    containerWidth > 0
-      ? (containerWidth - (GRID_COLS - 1) * GRID_GAP) / GRID_COLS
-      : 0;
-  const thumbHeight = thumbWidth * (9 / 16);
-  const gridScale = containerWidth > 0 ? thumbWidth / containerWidth : 0.25;
-  const rowHeight = thumbHeight + GRID_ROW_GAP;
-  return { thumbWidth, thumbHeight, gridScale, rowHeight };
-}
-
-/**
- * Calculate grid position for a slide at the given index.
- */
-export function getGridPosition(
-  index: number,
-  thumbWidth: number,
-  rowHeight: number,
-) {
-  const col = index % GRID_COLS;
-  const row = Math.floor(index / GRID_COLS);
-  return {
-    x: col * (thumbWidth + GRID_GAP),
-    y: row * rowHeight,
-  };
-}
-
-/**
  * Determine which slide is active based on scroll progress.
  */
 export function getSlideIndexFromProgress(
@@ -193,38 +141,4 @@ export function getScrollTargetForSlide(
 ): number {
   const scrollPerSlide = scrollHeight / (totalSlides + 1);
   return index * scrollPerSlide;
-}
-
-/**
- * Compute the stacked-view appearance of a slide when viewing targetSlide.
- * Used for the grid-exit animation: slides animate from grid positions
- * back to these stacked positions.
- */
-export function getStackedPosition(
-  index: number,
-  targetSlide: number,
-  totalSlides: number,
-): { y: string; scale: number; opacity: number; zIndex: number } {
-  if (index === targetSlide) {
-    // Target slide: fully visible, centered
-    return { y: "0%", scale: 1, opacity: 1, zIndex: totalSlides };
-  }
-  // All non-target slides: hidden
-  return {
-    y: index < targetSlide ? "-60px" : "150vh",
-    scale: index < targetSlide ? 0.85 : 1,
-    opacity: 0,
-    zIndex: index,
-  };
-}
-
-/** Duration of the grid-entry animation (seconds). */
-export const GRID_SLIDE_DURATION = 0.5;
-
-/**
- * Stagger delay for grid entry. All slides move simultaneously
- * with a subtle stagger for visual polish.
- */
-export function getStaggerDelay(index: number, totalSlides: number): number {
-  return (totalSlides - 1 - index) * 0.02;
 }
