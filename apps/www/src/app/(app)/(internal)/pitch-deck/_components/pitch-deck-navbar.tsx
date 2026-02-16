@@ -18,6 +18,13 @@ const navLinkClass =
 export function PitchDeckNavbar() {
   return (
     <div className="flex items-center gap-0.5">
+      {/* Home link */}
+      <Button asChild variant="none" size="sm" className={navLinkClass}>
+        <NextLink href="/" prefetch>
+          Home
+        </NextLink>
+      </Button>
+
       {/* Resources dropdown */}
       <NavigationMenu viewport={false} className="static [&>div]:!static">
         <NavigationMenuList>
@@ -41,13 +48,6 @@ export function PitchDeckNavbar() {
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
-
-      {/* Home link */}
-      <Button asChild variant="none" size="sm" className={navLinkClass}>
-        <NextLink href="/" prefetch>
-          Home
-        </NextLink>
-      </Button>
     </div>
   );
 }
