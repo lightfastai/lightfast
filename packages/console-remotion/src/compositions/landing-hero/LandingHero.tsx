@@ -23,7 +23,7 @@ const CELL_W = 512;
 const CELL_H = 512;
 const PLANE_WIDTH = CELL_W * 3;
 const PLANE_HEIGHT = CELL_H * 3;
-const PLANE_SCALE = 0.88;
+const PLANE_SCALE = 1.1;
 const ISO_TILT_DEGREES = 54.7356;
 const ISO_ROTATE_Z_DEGREES = -45;
 
@@ -40,43 +40,53 @@ export const LandingHero: React.FC = () => {
         backgroundColor: COLORS.background,
       }}
     >
-      {/* Centering wrapper — keeps translate separate from 3D context */}
-      <div
+      {/* Content layer — masked so components fade into the background at all edges */}
+      <AbsoluteFill
         style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          transform: "translate(-50%, -50%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse 65% 65% at center, black 40%, transparent 90%)",
+          maskImage:
+            "radial-gradient(ellipse 65% 65% at center, black 40%, transparent 90%)",
         }}
       >
-      <div
-        style={{
-          width: PLANE_WIDTH,
-          height: PLANE_HEIGHT,
-          transform: `
-            rotateX(${ISO_TILT_DEGREES}deg)
-            rotateZ(${ISO_ROTATE_Z_DEGREES}deg)
-            scale(${PLANE_SCALE})
-          `,
-          transformOrigin: "center center",
-          transformStyle: "preserve-3d",
-        }}
-      >
-        <GridLines
-          cellW={CELL_W}
-          cellH={CELL_H}
-          planeW={PLANE_WIDTH}
-          planeH={PLANE_HEIGHT}
-          startFrame={SECTION_TIMING.GRID.start}
-        />
+        {/* Centering wrapper — keeps translate separate from 3D context */}
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+        <div
+          style={{
+            width: PLANE_WIDTH,
+            height: PLANE_HEIGHT,
+            transform: `
+              rotateX(${ISO_TILT_DEGREES}deg)
+              rotateZ(${ISO_ROTATE_Z_DEGREES}deg)
+              scale(${PLANE_SCALE})
+            `,
+            transformOrigin: "center center",
+            transformStyle: "preserve-3d",
+          }}
+        >
+          <GridLines
+            cellW={CELL_W}
+            cellH={CELL_H}
+            planeW={PLANE_WIDTH}
+            planeH={PLANE_HEIGHT}
+            startFrame={SECTION_TIMING.GRID.start}
+          />
 
-        <StreamEvents />
-        <IngestedData />
-      </div>
-      </div>
+          <StreamEvents />
+          <IngestedData />
+        </div>
+        </div>
 
-      {/* LogoAnimation uses its own math-based iso projection — render outside CSS 3D plane */}
-      <LogoAnimation />
+        {/* LogoAnimation uses its own math-based iso projection — render outside CSS 3D plane */}
+        <LogoAnimation />
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };

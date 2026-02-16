@@ -42,6 +42,7 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
   const opacity = interpolate(entrance, [0, 1], [0, 1]);
 
   return (
+    // Outer wrapper: positioning + 3D context (no overflow — preserve-3d needs overflow:visible)
     <div
       style={{
         position: "absolute",
@@ -51,17 +52,34 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
         opacity,
         width,
         height,
-        backgroundColor: COLORS.cardWhite,
-        borderRadius: 12,
-        border: `1px solid ${COLORS.border}`,
-        overflow: "hidden",
+        transformStyle: "preserve-3d",
         ...(maskImage && {
           WebkitMaskImage: maskImage,
           maskImage,
         }),
       }}
     >
-      {children}
+      {/* Card surface visual — background + border only, no children */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundColor: COLORS.cardWhite,
+          borderRadius: 12,
+          border: `1px solid ${COLORS.border}`,
+        }}
+      />
+      {/* Children live directly in the preserve-3d context — no overflow:hidden in the chain */}
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          transformStyle: "preserve-3d",
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 };

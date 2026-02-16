@@ -40,6 +40,12 @@ export const GridLines: React.FC<GridLinesProps> = ({
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
 
+  const DASH_SPEED = 0.5;
+  // Vertical line 1 flows down, line 2 flows up
+  const vOffsets = [-frame * DASH_SPEED, frame * DASH_SPEED];
+  // Horizontal line 1 flows right, line 2 flows left
+  const hOffsets = [-frame * DASH_SPEED, frame * DASH_SPEED];
+
   return (
     <svg
       width={planeW}
@@ -57,6 +63,7 @@ export const GridLines: React.FC<GridLinesProps> = ({
           stroke={BORDER_BORDER}
           strokeWidth={2}
           strokeDasharray="8 12"
+          strokeDashoffset={vOffsets[i - 1]}
           opacity={lineOpacity}
         />
       ))}
@@ -71,6 +78,7 @@ export const GridLines: React.FC<GridLinesProps> = ({
           stroke={BORDER_BORDER}
           strokeWidth={2}
           strokeDasharray="8 12"
+          strokeDashoffset={hOffsets[i - 1]}
           opacity={lineOpacity}
         />
       ))}
