@@ -36,6 +36,7 @@ export async function exportSlidesToPdf(
     unit: "px",
     format: [width, height],
     hotfixes: ["px_scaling"],
+    compress: true,
   });
 
   // Wait for all fonts to be loaded before capturing
@@ -57,6 +58,9 @@ export async function exportSlidesToPdf(
     overflow: hidden;
     z-index: -1;
     font-family: ${resolvedFontFamily};
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   `;
   document.body.appendChild(container);
 
@@ -80,28 +84,31 @@ export async function exportSlidesToPdf(
         );
       });
 
-      // Small delay to ensure styles are computed
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      // Delay to ensure styles and fonts are fully computed at high resolution
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Capture as canvas
       const slideElement = renderContainer.firstElementChild as HTMLElement;
       const canvas = await html2canvas(slideElement, {
         width,
         height,
-        scale: 1,
+        scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: null,
+        backgroundColor: "#ffffff",
+        imageTimeout: 0,
         onclone: (clonedDoc) => {
           // Ensure the cloned document has font CSS variable classes and resolved font-family
           clonedDoc.documentElement.className = document.documentElement.className;
           clonedDoc.body.style.fontFamily = resolvedFontFamily;
+          clonedDoc.body.style.setProperty("-webkit-font-smoothing", "antialiased");
+          clonedDoc.body.style.setProperty("text-rendering", "optimizeLegibility");
         },
       });
 
       // Add canvas as image to PDF
-      // Use PNG format for high quality (no JPEG artifacts)
-      const imgData = canvas.toDataURL("image/png", 1.0);
+      // JPEG at 0.92 quality is visually indistinguishable from PNG but ~10-20x smaller
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
 
       // First page is already created, add new pages for subsequent slides
       if (i > 0) {
@@ -109,7 +116,7 @@ export async function exportSlidesToPdf(
       }
 
       // Add image at position (0, 0) with full page dimensions
-      pdf.addImage(imgData, "PNG", 0, 0, width, height);
+      pdf.addImage(imgData, "JPEG", 0, 0, width, height);
     }
 
     // Clean up React root
