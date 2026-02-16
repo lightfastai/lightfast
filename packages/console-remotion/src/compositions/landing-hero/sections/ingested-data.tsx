@@ -1,7 +1,7 @@
 import type React from "react";
 import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { cn } from "../../../lib/cn";
-import { IsometricCard } from "../shared/IsometricCard";
+import { IsometricCard } from "../shared/isometric-card";
 import {
   SPRING_CONFIGS,
   MOTION_DURATION,

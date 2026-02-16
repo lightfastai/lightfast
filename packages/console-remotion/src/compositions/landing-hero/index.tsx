@@ -1,6 +1,6 @@
 import type { RenderMediaOptions } from "@remotion/renderer";
 
-export { LandingHero } from "./LandingHero";
+export { LandingHero } from "./landing-hero";
 
 /**
  * Balanced preset for high-quality GIF output:

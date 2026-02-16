@@ -28,7 +28,7 @@ async function main() {
   console.log("Selecting composition...");
   const composition = await selectComposition({
     serveUrl: bundled,
-    id: "LandingHero",
+    id: "landing-hero",
   });
 
   console.log(`Rendering ${composition.width}x${composition.height} @ ${composition.fps}fps...`);

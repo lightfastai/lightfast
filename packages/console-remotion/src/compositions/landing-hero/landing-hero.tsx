@@ -1,10 +1,10 @@
 import type React from "react";
 import { AbsoluteFill, delayRender, continueRender } from "remotion";
 import { useEffect, useState } from "react";
-import { StreamEvents } from "./sections/StreamEvents";
-import { LogoAnimation } from "./sections/LogoAnimation";
-import { IngestedData } from "./sections/IngestedData";
-import { GridLines } from "./shared/GridLines";
+import { StreamEvents } from "./sections/stream-events";
+import { LogoAnimation } from "./sections/logo-animation";
+import { IngestedData } from "./sections/ingested-data";
+import { GridLines } from "./shared/grid-lines";
 import { SECTION_TIMING } from "./shared/timing";
 import { ensureFontsLoaded } from "./shared/fonts";
 
