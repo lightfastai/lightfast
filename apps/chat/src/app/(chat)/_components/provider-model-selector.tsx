@@ -15,7 +15,7 @@ import {
 	CommandItem,
 	CommandList,
 } from "@repo/ui/components/ui/command";
-import { Icons } from "@repo/ui/components/ui/icons";
+import { Icons } from "@repo/ui/components/icons";
 import {
 	Popover,
 	PopoverContent,

@@ -6,7 +6,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@repo/ui/components/ui/popover";
-import { Icons } from "@repo/ui/components/ui/icons";
+import { Icons } from "@repo/ui/components/icons";
 import { cn } from "@repo/ui/lib/utils";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";

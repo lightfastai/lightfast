@@ -23,7 +23,7 @@ export function AppHeader() {
 				<div className="flex h-4 items-center px-4">
 					<Separator orientation="vertical" />
 				</div>
-				<Button variant="ghost" size="xs" asChild>
+				<Button variant="ghost" size="sm" asChild>
 					<Link
 						href="https://github.com/lightfastai/lightfast"
 						target="_blank"
