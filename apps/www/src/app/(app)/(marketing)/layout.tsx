@@ -1,4 +1,4 @@
-import { AppNavbarV2 } from "~/components/app-navbar-v2";
+import { AppNavbar } from "~/components/app-navbar";
 import { AppFooter } from "~/components/app-footer";
 
 export default function MarketingLayout({
@@ -11,7 +11,7 @@ export default function MarketingLayout({
       {/* Navbar - fixed overlay */}
       <header className="fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto w-full">
-          <AppNavbarV2 />
+          <AppNavbar />
         </div>
       </header>
 
