@@ -80,7 +80,7 @@ export function LissajousHero() {
   };
 
   return (
-    <div className="relative w-full bg-muted rounded-sm overflow-hidden p-2">
+    <div className="relative w-full bg-card/40 rounded-sm overflow-hidden p-2">
       <GridSection
         rows={9}
         cols={16}

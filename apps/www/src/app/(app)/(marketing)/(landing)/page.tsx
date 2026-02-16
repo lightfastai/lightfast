@@ -146,9 +146,9 @@ const SHOW_INTRODUCING_SECTION = false;
 const SHOW_WORKFLOW_SECTION = false;
 const SHOW_INTEGRATIONS_SECTION = true;
 const SHOW_FEATURE_VISUALS_SECTION = false;
-const SHOW_CONNECT_TOOLS_SECTION = false;
+const SHOW_CONNECT_TOOLS_SECTION = true;
 const SHOW_FAQ_SECTION = true;
-const SHOW_CHANGELOG_SECTION = false;
+const SHOW_CHANGELOG_SECTION = true;
 const SHOW_CTA_SECTION = true;
 const SHOW_UNICORN_SECTION = false;
 
@@ -239,12 +239,12 @@ export default function HomePage() {
       <JsonLd code={structuredData} />
 
       {/* Grid-based landing page */}
-      <div className="min-h-screen bg-background flex flex-col items-center max-w-[1400px] mx-auto px-8 md:px-16 lg:px-24">
+      <div className="min-h-screen bg-background">
         {/* Hero Section */}
         {SHOW_HERO_SECTION &&
           (DISABLE_HERO_GRID ? (
             /* Full-width hero without grid - Lightfield style */
-            <section className="relative ml-[calc(50%-50dvw)] min-h-screen w-[100dvw] bg-background overflow-hidden">
+            <section className="relative min-h-screen w-full bg-background overflow-hidden">
               {/* Hero visual - overflow wrapper clips the image at section edges */}
               <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
                 {/* Inner container: width/height control size, top/right control position.
@@ -293,9 +293,11 @@ export default function HomePage() {
               </div>
 
               {/* Changelog badge - pinned to bottom of initial viewport */}
-              <div className="absolute inset-x-0 top-0 h-screen pointer-events-none flex items-end pb-8">
-                <div className="pointer-events-auto">
-                  <HeroChangelogBadge />
+              <div className="absolute inset-x-0 top-0 z-30 h-screen pointer-events-none flex items-end pb-8">
+                <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+                  <div className="pointer-events-auto">
+                    <HeroChangelogBadge />
+                  </div>
                 </div>
               </div>
             </section>
@@ -680,11 +682,12 @@ export default function HomePage() {
         {/* Introducing Section */}
         {SHOW_INTRODUCING_SECTION && (
           <section className="w-full bg-background py-24 md:py-32">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16 mb-16">
-              {/* Left: Badge */}
-              <div>
-                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
-                  Introducing Lightfast
+            <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16 mb-16">
+                {/* Left: Badge */}
+                <div>
+                  <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                    Introducing Lightfast
                   </span>
                 </div>
 
@@ -710,23 +713,25 @@ export default function HomePage() {
               </div>
 
               {/* Lissajous Hero */}
-            <Link
-              href="/blog/announcing-lightfast"
-              className="block w-full rounded-sm overflow-hidden"
-            >
-              <LissajousHero />
-            </Link>
+              <Link
+                href="/blog/announcing-lightfast"
+                className="block w-full rounded-sm overflow-hidden"
+              >
+                <LissajousHero />
+              </Link>
+            </div>
           </section>
         )}
 
         {/* Workflow Section */}
         {SHOW_WORKFLOW_SECTION && (
           <section className="w-full bg-background py-24 md:py-32">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16 mb-8">
-              {/* Left: Badge */}
-              <div>
-                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
-                  AI Agents That Know Your Context
+            <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16 mb-8">
+                {/* Left: Badge */}
+                <div>
+                  <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                    AI Agents That Know Your Context
                   </span>
                 </div>
 
@@ -745,9 +750,10 @@ export default function HomePage() {
                 </div>
               </div>
 
-            {/* Workflow Visual */}
-            <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border">
-              <WorkflowVisual />
+              {/* Workflow Visual */}
+              <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border">
+                <WorkflowVisual />
+              </div>
             </div>
           </section>
         )}
@@ -755,32 +761,36 @@ export default function HomePage() {
         {/* Integrations Section */}
         {SHOW_INTEGRATIONS_SECTION && (
           <section className="w-full py-16">
-            <IntegrationShowcase />
+            <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+              <IntegrationShowcase />
+            </div>
           </section>
         )}
 
         {/* Feature Visuals Section */}
         {SHOW_FEATURE_VISUALS_SECTION && (
           <section className="dark w-full min-h-screen bg-background relative overflow-hidden">
-            {/* Content - full width, left-aligned like hero */}
-            <div className="w-full py-24 relative z-10">
-              <FeatureVisualsTabs />
+            <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+              {/* Content - full width, left-aligned like hero */}
+              <div className="w-full py-24 relative z-10">
+                <FeatureVisualsTabs />
+              </div>
+              {/* Platform Access Cards with dither background */}
+              <div className="relative mt-32">
+                {/* Cards */}
+                <div className="relative z-10 w-full">
+                  <PlatformAccessCards />
+                </div>
+              </div>
             </div>
-            {/* Platform Access Cards with dither background */}
-            <div className="relative mt-32">
-              {/* Cards */}
-              <div className="relative z-10 w-full">
-                <PlatformAccessCards />
-              </div>
-              {/* Gradient background - full width, pulled up to overlap cards */}
-              <div className="relative w-screen h-[500px] -mt-[150px] left-1/2 -translate-x-1/2">
-                <Image
-                  src="/images/nascent_remix.webp"
-                  alt="Lightfast visual background"
-                  fill
-                  className="object-cover"
-                />
-              </div>
+            {/* Gradient background - full width, pulled up to overlap cards */}
+            <div className="relative w-full h-[500px] -mt-[150px]">
+              <Image
+                src="/images/nascent_remix.webp"
+                alt="Lightfast visual background"
+                fill
+                className="object-cover"
+              />
             </div>
           </section>
         )}
@@ -788,32 +798,33 @@ export default function HomePage() {
         {/* Connect Your Tools Section */}
         {SHOW_CONNECT_TOOLS_SECTION && (
           <section className="w-full bg-background py-24 md:py-32">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
-              {/* Left: Badge */}
-              <div>
-                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
-                  Connect Your Tools
+            <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
+                {/* Left: Badge */}
+                <div>
+                  <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                    Connect Your Tools
                   </span>
                 </div>
 
                 {/* Right: Content + Cards - spans 2 columns */}
                 <div className="lg:col-span-2">
-                  <p className="text-base md:text-lg leading-relaxed text-muted-foreground max-w-xl mb-12">
+                  <p className="text-base md:text-md leading-relaxed text-foreground/80 max-w-xl mb-12">
                     Pull in knowledge from where your team already works.
                     GitHub, Linear, Notion, Slack, and more—all searchable in
                     one place.
                   </p>
 
                   {/* Benefits Grid - negative margin to align icon/title with text above */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 -ml-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {benefits.map((benefit) => {
                       const Icon = benefit.icon;
                       return (
                         <div
                           key={benefit.title}
-                          className="border border-border rounded-none p-8"
+                          className="border border-border rounded-md p-8"
                         >
-                          <div className="mb-4">
+                          <div className="mb-12">
                             <Icon className="w-5 h-5 text-muted-foreground" />
                           </div>
                           <h3 className="mb-2 text-base font-medium">
@@ -828,20 +839,25 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+            </div>
           </section>
         )}
 
         {/* FAQ Section */}
         {SHOW_FAQ_SECTION && (
           <section className="w-full bg-background py-24 md:py-32">
-            <FAQSection />
+            <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+              <FAQSection />
+            </div>
           </section>
         )}
 
         {/* Changelog Preview */}
         {SHOW_CHANGELOG_SECTION && (
           <section className="w-full bg-background py-24 md:py-32">
-            <ChangelogPreview />
+            <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+              <ChangelogPreview />
+            </div>
           </section>
         )}
       </div>
@@ -852,11 +868,13 @@ export default function HomePage() {
       {/* Unicorn Studio Section */}
       {SHOW_UNICORN_SECTION && (
         <section className="w-full">
-          <div className="h-[600px] border border-border rounded-xs overflow-hidden">
-            <UnicornScene
-              projectId="l4I4U2goI9votcrBdYG1"
-              className="w-full h-full"
-            />
+          <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+            <div className="h-[600px] border border-border rounded-xs overflow-hidden">
+              <UnicornScene
+                projectId="l4I4U2goI9votcrBdYG1"
+                className="w-full h-full"
+              />
+            </div>
           </div>
         </section>
       )}
