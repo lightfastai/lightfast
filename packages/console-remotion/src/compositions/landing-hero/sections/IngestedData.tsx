@@ -313,7 +313,9 @@ export const IngestedData: React.FC = () => {
               // translateZ lifts content above the isometric plane; the parent's
               // rotateX(54.7°) projects Z into screen-Y so this appears as a
               // vertical float-above → drop-down.
-              const rowZ = interpolate(entrance, [0, 1], [60, 0]);
+              const rowZ = interpolate(entrance, [0, 1], [60, 0], {
+                extrapolateRight: "clamp",
+              });
               const wireframeOpacity = rowVisible * interpolate(
                 entrance, [0.0, 0.7, 1.0], [0.5, 0.5, 0],
                 { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
