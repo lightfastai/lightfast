@@ -162,7 +162,7 @@ const richTextBaseComponents = {
       <div className="relative aspect-[4/3] my-6 rounded-xs overflow-hidden bg-card">
         <Image
           src={src}
-          alt={alt || ""}
+          alt={alt ?? ""}
           fill
           priority
           quality={85}

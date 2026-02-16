@@ -6,7 +6,6 @@ import { Feed } from "feed";
  * Mirrors the blog feed pattern from generate-feed.ts
  */
 export async function generateChangelogFeed(): Promise<Feed> {
-  const entries = await changelog.getEntries();
   const baseUrl = "https://lightfast.ai";
   const buildDate = new Date();
 
@@ -33,33 +32,41 @@ export async function generateChangelogFeed(): Promise<Feed> {
     },
   });
 
-  // Add entries to feed (newest first, limit 50)
-  entries.slice(0, 50).forEach((entry) => {
-    const url = `${baseUrl}/changelog/${entry.slug || entry._slug}`;
+  try {
+    const entries = await changelog.getEntries();
 
-    // Use publishedAt if available, fall back to createdAt
-    const publishedDate = entry.publishedAt
-      ? new Date(entry.publishedAt)
-      : entry._sys?.createdAt
-        ? new Date(entry._sys.createdAt)
-        : buildDate;
+    // Add entries to feed (newest first, limit 50)
+    entries.slice(0, 50).forEach((entry) => {
+      const url = `${baseUrl}/changelog/${entry.slug || entry._slug}`;
 
-    // Use AEO fields for enhanced descriptions
-    const description =
-      entry.excerpt ||
-      entry.tldr ||
-      entry.body?.plainText?.slice(0, 300) ||
-      "View the latest updates from Lightfast";
+      // Use publishedAt if available, fall back to createdAt
+      const publishedDate = entry.publishedAt
+        ? new Date(entry.publishedAt)
+        : entry._sys?.createdAt
+          ? new Date(entry._sys.createdAt)
+          : buildDate;
 
-    feed.addItem({
-      title: entry._title ?? "Untitled",
-      id: url,
-      link: url,
-      description,
-      date: publishedDate,
-      ...(entry.featuredImage?.url ? { image: entry.featuredImage.url } : {}),
+      // Use AEO fields for enhanced descriptions
+      const description =
+        entry.excerpt ||
+        entry.tldr ||
+        entry.body?.plainText?.slice(0, 300) ||
+        "View the latest updates from Lightfast";
+
+      feed.addItem({
+        title: entry._title ?? "Untitled",
+        id: url,
+        link: url,
+        description,
+        date: publishedDate,
+        ...(entry.featuredImage?.url
+          ? { image: entry.featuredImage.url }
+          : {}),
+      });
     });
-  });
+  } catch {
+    // Return empty feed when CMS is unavailable
+  }
 
   return feed;
 }
