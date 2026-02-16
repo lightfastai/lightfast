@@ -7,7 +7,6 @@ import { Body } from "@vendor/cms/components/body";
 import { Feed } from "@vendor/cms/components/feed";
 import { JsonLd } from "@vendor/seo/json-ld";
 import { SocialShare } from "~/components/blog-social-share";
-import { SidebarBreadcrumb } from "~/components/blog-sidebar-breadcrumb";
 
 type BlogPostPageProps = {
   params: Promise<{ slug: string }>;
@@ -252,32 +251,31 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             {/* Structured data for SEO */}
             <JsonLd code={structuredData as any} />
 
-            <article className="max-w-7xl mx-auto px-4 pb-32 pt-8">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-                <SidebarBreadcrumb
-                  categoryName={primaryCategory?._title}
-                  postTitle={post._title || "Post"}
-                  postSlug={slug}
-                />
-                <div className="md:col-span-8 lg:col-span-6">
+            <article className="w-full max-w-2xl mx-auto px-4 pb-32 pt-24">
+              <p className="text-sm text-muted-foreground mb-8">
+                Blog
+                {primaryCategory?._title ? (
+                  <> / {primaryCategory._title}</>
+                ) : null}
+              </p>
                   {/* Header */}
                   <header className="space-y-6">
                     <div className="space-y-4">
                       {/* Title */}
-                      <h1 className="text-4xl md:text-4xl font-semibold tracking-tight text-foreground">
+                      <h1 className="text-2xl font-pp font-medium text-foreground">
                         {post._title}
                       </h1>
 
                       {/* Description */}
                       {post.description && (
-                        <p className="text-md text-foreground/80 leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed">
                           {post.description}
                         </p>
                       )}
                     </div>
 
                     {/* Author info and metadata */}
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-foreground/60">
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                       {/* Authors */}
                       {post.authors && post.authors.length > 0 && (
                         <div className="flex items-center gap-3">
@@ -327,7 +325,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       {/* Date */}
                       {dateStr && (
                         <>
-                          <span className="text-foreground/30">·</span>
+                          <span className="text-muted-foreground/50">·</span>
                           <time>{dateStr}</time>
                         </>
                       )}
@@ -335,7 +333,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       {/* Reading time */}
                       {post.body?.readingTime && (
                         <>
-                          <span className="text-foreground/30">·</span>
+                          <span className="text-muted-foreground/50">·</span>
                           <span>{post.body.readingTime} min read</span>
                         </>
                       )}
@@ -402,7 +400,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   {/* Author Bios */}
                   {post.authors && post.authors.length > 0 && (
                     <div className="mt-16 pt-8 border-t">
-                      <h3 className="text-sm font-semibold text-foreground/60 uppercase tracking-wide mb-6">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-6">
                         About the{" "}
                         {post.authors.length > 1 ? "Authors" : "Author"}
                       </h3>
@@ -427,7 +425,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                                   href={author.xUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-sm text-foreground/60 hover:text-foreground transition-colors"
+                                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                   @{author.xUrl.split("/").pop()}
                                 </Link>
@@ -438,8 +436,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
             </article>
           </>
         );

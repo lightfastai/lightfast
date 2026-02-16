@@ -107,7 +107,7 @@ export default async function ChangelogPage() {
                       </h2>
 
                       {item.featuredImage?.url && (
-                        <div className="relative w-[min(900px,90vw)] bg-card left-1/2 -translate-x-1/2 aspect-video rounded-lg overflow-hidden">
+                        <div className="relative w-full bg-card aspect-video rounded-lg overflow-hidden">
                           <Image
                             src={item.featuredImage.url}
                             alt={item.featuredImage?.alt || item._title || ""}

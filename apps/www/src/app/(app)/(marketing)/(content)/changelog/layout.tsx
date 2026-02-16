@@ -7,7 +7,7 @@ export default function ChangelogLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-24 pb-32">
+    <div className="max-w-2xl w-full mx-auto pt-24 pb-32 min-w-0">
       <div className="flex items-center justify-between mb-12">
         <h1 className="text-3xl font-pp text-foreground font-medium">
           Changelog

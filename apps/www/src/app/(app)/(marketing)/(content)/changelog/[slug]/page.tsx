@@ -245,7 +245,7 @@ export default async function ChangelogEntryPage({
               </h2>
 
               {entry.featuredImage?.url && (
-                <div className="relative w-[min(900px,90vw)] bg-card left-1/2 -translate-x-1/2 aspect-video rounded-lg overflow-hidden">
+                <div className="relative w-full bg-card aspect-video rounded-lg overflow-hidden">
                   <Image
                     src={entry.featuredImage.url}
                     alt={entry.featuredImage?.alt || entry._title || ""}

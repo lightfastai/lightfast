@@ -141,11 +141,11 @@ export default async function CategoryPage({ params }: Props) {
     return (
       <>
         <div className="space-y-2">
-          <div className="bg-card border border-transparent rounded-lg py-4 px-5">
-            <h2 className="text-md font-semibold mb-4">
+          <div className="bg-card/40 border border-transparent rounded-xs p-4">
+            <h2 className="text-sm font-semibold mb-4">
               Temporarily unavailable
             </h2>
-            <p className="text-muted-foreground text-md leading-relaxed">
+            <p className="text-muted-foreground text-sm leading-relaxed">
               We&apos;re having trouble loading posts right now. Please try again
               shortly or{" "}
               <Link href="/blog" className="underline">
@@ -216,11 +216,11 @@ export default async function CategoryPage({ params }: Props) {
       {/* Posts List */}
       <div className="space-y-2">
         {posts.length === 0 ? (
-          <div className="bg-card border border-transparent rounded-lg py-4 px-5">
-            <h2 className="text-md font-semibold mb-4">
+          <div className="bg-card/40 border border-transparent rounded-xs p-4">
+            <h2 className="text-sm font-semibold mb-4">
               No {displayName} posts yet
             </h2>
-            <p className="text-muted-foreground text-md leading-relaxed">
+            <p className="text-muted-foreground text-sm leading-relaxed">
               We haven't published any {displayName.toLowerCase()} posts yet.
               Check back soon or{" "}
               <Link href="/blog" className="underline">
