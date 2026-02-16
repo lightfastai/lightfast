@@ -244,16 +244,23 @@ export default function HomePage() {
         {SHOW_HERO_SECTION &&
           (DISABLE_HERO_GRID ? (
             /* Full-width hero without grid - Lightfield style */
-            <section className="relative w-full min-h-screen bg-background overflow-x-clip">
-              {/*
-                Hero layout: CSS Grid with 12 columns
-                - Mobile/Tablet: single column with padding, cards stack vertically
-                - Desktop (lg+): left text (~35%) + right visuals (~65%), visuals allowed to bleed right
-                Cards sit in the ~40-100%+ horizontal zone of the viewport.
-              */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-0 items-center min-h-screen pb-24 md:pb-32 lg:pb-40">
-                {/* Hero text - left side (narrower to push visuals right) */}
-                <div className="lg:col-span-3 xl:col-span-4 flex flex-col justify-center">
+            <section className="relative ml-[calc(50%-50dvw)] min-h-screen w-[100dvw] bg-background overflow-hidden">
+              {/* Hero visual - contained within bounded right area */}
+              <div className="pointer-events-none absolute top-[-5%] bottom-[-20%] right-[-15%] left-[25%] z-0">
+                <Image
+                  src="/images/landing-hero.gif"
+                  alt="Data flows through the Lightfast engine"
+                  fill
+                  priority
+                  unoptimized
+                  quality={100}
+                  className="object-contain object-right-top"
+                />
+              </div>
+
+              {/* Hero text - positioned on the left */}
+              <div className="relative z-20 mx-auto flex w-full max-w-[1400px] items-center min-h-screen px-8 pb-24 md:px-16 md:pb-32 lg:px-24 lg:pb-40">
+                <div className="flex max-w-[420px] flex-col justify-center">
                   <Icons.logoShort className="w-5 h-5 mb-4 text-muted-foreground" />
                   <h1 className="text-xl md:text-2xl lg:text-3xl font-pp font-medium mb-4">
                     <span className="text-muted-foreground">The</span>{" "}
@@ -271,99 +278,6 @@ export default function HomePage() {
                     </Button>
                   </div>
                 </div>
-
-                {/* Hero animation - right side */}
-                <div className="lg:col-span-9 xl:col-span-8 flex items-center justify-center">
-                  <Image
-                    src="/images/landing-hero.gif"
-                    alt="Data flows through the Lightfast engine"
-                    width={1200}
-                    height={800}
-                    unoptimized
-                    priority
-                    className="w-full h-auto max-w-3xl"
-                  />
-                </div>
-
-                {/* Layered workflow visuals - right side, allowed to bleed past viewport */}
-                {/* Nested grid: cards shifted right, overlap via shared grid areas */}
-                {!DISABLE_HERO_CARDS && (
-                  <div className="lg:col-span-9 xl:col-span-8 grid grid-cols-12 grid-rows-6 min-h-[420px] pl-32 md:min-h-[500px] lg:min-h-[560px]">
-                    {/* Component 1 - User Query card */}
-                    {/* Mobile: full width | Desktop: starts col 2, pushed right */}
-                    <div className="col-span-12 md:col-span-8 lg:col-start-2 lg:col-span-7 row-start-2 row-span-1 z-30 self-start">
-                      <div className="bg-card backdrop-blur-md rounded-lg shadow-lg px-5 py-3.5 md:px-6 md:py-4">
-                        <p className="text-sm md:text-base text-foreground leading-relaxed">
-                          when did we decide to use PostgreSQL for the analytics
-                          service and what were the reasons?
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Component 2 - AI Response with workflow steps */}
-                    {/* Mobile: full width | Desktop: starts col 1, spans 10 */}
-                    <div className="col-span-12 md:col-span-10 lg:col-start-1 lg:col-span-8 row-start-3 row-span-2 z-20 self-start -mt-1 md:-mt-2">
-                      <div className="bg-card/40 backdrop-blur-md rounded-lg shadow-lg p-4 md:p-5">
-                        {/* Agent Header */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <Icons.logoShort className="w-5 h-5 text-primary" />
-                        </div>
-
-                        {/* Agent Message */}
-                        <p className="text-sm md:text-base text-foreground/90 mb-4 leading-relaxed">
-                          I&apos;ll help you find when we decided to use
-                          PostgreSQL for the analytics service. Let me search
-                          through your team&apos;s memory.
-                        </p>
-
-                        {/* Workflow Steps - Vertical Pills */}
-                        <div className="flex flex-col gap-2">
-                          {/* Step 1 - Search */}
-                          <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
-                            <Search className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <p className="text-xs md:text-sm text-foreground truncate">
-                              <span className="font-medium">Search</span>{" "}
-                              <span className="text-muted-foreground">
-                                all accounts sorted by last interaction date
-                                an...
-                              </span>
-                            </p>
-                          </div>
-
-                          {/* Step 2 - Contents */}
-                          <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
-                            <RefreshCw className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <p className="text-xs md:text-sm text-foreground truncate">
-                              <span className="font-medium">Contents</span>{" "}
-                              <span className="text-muted-foreground">
-                                17 accounts answered – what are the key deta...
-                              </span>
-                            </p>
-                          </div>
-
-                          {/* Step 3 - Graph */}
-                          <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
-                            <Link2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <p className="text-xs md:text-sm text-foreground truncate">
-                              <span className="font-medium">Graph</span>{" "}
-                              <span className="text-muted-foreground">
-                                found connections between 8 entities across...
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Component 3 - Search Results */}
-                    {/* Mobile: full width | Desktop: cols 5-13 (bleeds right), rows 4-6 */}
-                    <div className="col-span-12 md:col-start-3 md:col-span-10 lg:col-start-5 lg:col-span-9 row-start-4 row-span-3 z-10 self-start -mt-2 md:-mt-4">
-                      <div className="bg-background/60 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden max-h-[320px] md:max-h-[380px] lg:max-h-[420px]">
-                        <SearchDemo />
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Changelog badge - pinned to bottom of initial viewport */}
