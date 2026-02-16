@@ -31,7 +31,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
-    "next": "catalog:next15",
+    "next": "catalog:next16",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },

@@ -39,12 +39,12 @@ catalog:
   '@t3-oss/env-core': ^0.13.10
   '@t3-oss/env-nextjs': ^0.13.10
   resumable-stream: ^2.0.0
-  '@clerk/backend': 2.18.1
-  '@clerk/elements': 0.23.63
-  '@clerk/nextjs': 6.33.5
-  '@clerk/shared': 3.28.0
-  '@clerk/themes': 2.4.19
-  '@clerk/types': 4.52.0
+  '@clerk/backend': 2.31.0
+  '@clerk/elements': 0.24.8
+  '@clerk/nextjs': 6.37.4
+  '@clerk/shared': 3.45.0
+  '@clerk/themes': 2.4.52
+  '@clerk/types': 4.101.15
   zustand: ^5.0.7
   geist: ^1.3.1
   neverthrow: ^8.2.0
@@ -69,8 +69,6 @@ catalogs:
     zod: ^3.25.76
   zod4:
     zod: ^4.0.0
-  next15:
-    next: ^15.5.7
   next16:
     next: ^16.1.6
 onlyBuiltDependencies:

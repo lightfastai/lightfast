@@ -31,7 +31,7 @@
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
-    "next": "catalog:next15",
+    "next": "catalog:next16",
     "react": "19.2.1",
     "superjson": "catalog:"
   },

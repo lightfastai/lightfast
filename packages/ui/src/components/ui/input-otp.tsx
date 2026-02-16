@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { OTPInput, OTPInputContext } from "input-otp"
+import { OTPInput, OTPInputContext, type OTPInputProps } from "input-otp"
 import { MinusIcon } from "lucide-react"
 import { cva } from "class-variance-authority"
 import type { VariantProps } from "class-variance-authority"
@@ -31,7 +31,7 @@ function InputOTP({
   containerClassName,
   size = "default",
   ...props
-}: React.ComponentProps<typeof OTPInput> & {
+}: Omit<OTPInputProps, "size"> & {
   containerClassName?: string
   size?: "default" | "lg"
 }) {
@@ -44,7 +44,7 @@ function InputOTP({
           containerClassName
         )}
         className={cn("disabled:cursor-not-allowed", className)}
-        {...props}
+        {...(props as OTPInputProps)}
       />
     </InputOTPSizeContext.Provider>
   )
