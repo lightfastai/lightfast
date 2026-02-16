@@ -16,6 +16,7 @@ import { LissajousHero } from "~/components/lissajous-hero";
 import { GridSection } from "~/components/grid-section";
 import { WorkflowVisual } from "~/components/landing/workflow-visual";
 import { SearchDemo } from "~/components/search-demo";
+import { WaitlistCTA } from "~/components/waitlist-cta";
 import { exposureTrial } from "~/lib/fonts";
 
 const benefits = [
@@ -143,12 +144,12 @@ const DISABLE_HERO_CARDS = true;
 const SHOW_HERO_SECTION = true;
 const SHOW_INTRODUCING_SECTION = false;
 const SHOW_WORKFLOW_SECTION = false;
-const SHOW_INTEGRATIONS_SECTION = false;
+const SHOW_INTEGRATIONS_SECTION = true;
 const SHOW_FEATURE_VISUALS_SECTION = false;
 const SHOW_CONNECT_TOOLS_SECTION = false;
 const SHOW_FAQ_SECTION = true;
 const SHOW_CHANGELOG_SECTION = false;
-const SHOW_CTA_SECTION = false;
+const SHOW_CTA_SECTION = true;
 const SHOW_UNICORN_SECTION = false;
 
 export default function HomePage() {
@@ -238,19 +239,19 @@ export default function HomePage() {
       <JsonLd code={structuredData} />
 
       {/* Grid-based landing page */}
-      <div className="min-h-screen bg-background flex flex-col items-center">
+      <div className="min-h-screen bg-background flex flex-col items-center max-w-[1400px] mx-auto px-8 md:px-16 lg:px-24">
         {/* Hero Section */}
         {SHOW_HERO_SECTION &&
           (DISABLE_HERO_GRID ? (
             /* Full-width hero without grid - Lightfield style */
-            <section className="w-full min-h-screen bg-background overflow-x-clip py-12 md:py-16 lg:py-20">
+            <section className="relative w-full min-h-screen bg-background overflow-x-clip">
               {/*
                 Hero layout: CSS Grid with 12 columns
                 - Mobile/Tablet: single column with padding, cards stack vertically
                 - Desktop (lg+): left text (~35%) + right visuals (~65%), visuals allowed to bleed right
                 Cards sit in the ~40-100%+ horizontal zone of the viewport.
               */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-0 items-center min-h-[calc(100vh-10rem)] px-6 md:px-12 lg:pl-20 lg:pr-0">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-0 items-center min-h-screen pb-24 md:pb-32 lg:pb-40">
                 {/* Hero text - left side (narrower to push visuals right) */}
                 <div className="lg:col-span-3 xl:col-span-4 flex flex-col justify-center">
                   <Icons.logoShort className="w-5 h-5 mb-4 text-muted-foreground" />
@@ -269,10 +270,19 @@ export default function HomePage() {
                       </Link>
                     </Button>
                   </div>
-                  {/* Changelog badge - below CTA on mobile, absolute bottom-left on lg */}
-                  <div className="mt-8 lg:mt-12">
-                    <HeroChangelogBadge />
-                  </div>
+                </div>
+
+                {/* Hero animation - right side */}
+                <div className="lg:col-span-9 xl:col-span-8 flex items-center justify-center">
+                  <Image
+                    src="/images/landing-hero.gif"
+                    alt="Data flows through the Lightfast engine"
+                    width={1200}
+                    height={800}
+                    unoptimized
+                    priority
+                    className="w-full h-auto max-w-3xl"
+                  />
                 </div>
 
                 {/* Layered workflow visuals - right side, allowed to bleed past viewport */}
@@ -354,6 +364,13 @@ export default function HomePage() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Changelog badge - pinned to bottom of initial viewport */}
+              <div className="absolute inset-x-0 top-0 h-screen pointer-events-none flex items-end pb-8">
+                <div className="pointer-events-auto">
+                  <HeroChangelogBadge />
+                </div>
               </div>
             </section>
           ) : (
@@ -737,12 +754,11 @@ export default function HomePage() {
         {/* Introducing Section */}
         {SHOW_INTRODUCING_SECTION && (
           <section className="w-full bg-background py-24 md:py-32">
-            <div className="w-full px-8 md:px-16 lg:px-24">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16 mb-16">
-                {/* Left: Badge */}
-                <div>
-                  <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
-                    Introducing Lightfast
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16 mb-16">
+              {/* Left: Badge */}
+              <div>
+                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                  Introducing Lightfast
                   </span>
                 </div>
 
@@ -768,25 +784,23 @@ export default function HomePage() {
               </div>
 
               {/* Lissajous Hero */}
-              <Link
-                href="/blog/announcing-lightfast"
-                className="block w-full rounded-sm overflow-hidden"
-              >
-                <LissajousHero />
-              </Link>
-            </div>
+            <Link
+              href="/blog/announcing-lightfast"
+              className="block w-full rounded-sm overflow-hidden"
+            >
+              <LissajousHero />
+            </Link>
           </section>
         )}
 
         {/* Workflow Section */}
         {SHOW_WORKFLOW_SECTION && (
           <section className="w-full bg-background py-24 md:py-32">
-            <div className="w-full px-8 md:px-16 lg:px-24">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16 mb-8">
-                {/* Left: Badge */}
-                <div>
-                  <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
-                    AI Agents That Know Your Context
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16 mb-8">
+              {/* Left: Badge */}
+              <div>
+                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                  AI Agents That Know Your Context
                   </span>
                 </div>
 
@@ -805,17 +819,16 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Workflow Visual */}
-              <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border">
-                <WorkflowVisual />
-              </div>
+            {/* Workflow Visual */}
+            <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border">
+              <WorkflowVisual />
             </div>
           </section>
         )}
 
         {/* Integrations Section */}
         {SHOW_INTEGRATIONS_SECTION && (
-          <section className="w-full max-w-7xl mx-auto py-16">
+          <section className="w-full py-16">
             <IntegrationShowcase />
           </section>
         )}
@@ -824,13 +837,13 @@ export default function HomePage() {
         {SHOW_FEATURE_VISUALS_SECTION && (
           <section className="dark w-full min-h-screen bg-background relative overflow-hidden">
             {/* Content - full width, left-aligned like hero */}
-            <div className="w-full px-8 md:px-16 lg:px-24 py-24 relative z-10">
+            <div className="w-full py-24 relative z-10">
               <FeatureVisualsTabs />
             </div>
             {/* Platform Access Cards with dither background */}
             <div className="relative mt-32">
               {/* Cards */}
-              <div className="relative z-10 w-full px-8 md:px-16 lg:px-24">
+              <div className="relative z-10 w-full">
                 <PlatformAccessCards />
               </div>
               {/* Gradient background - full width, pulled up to overlap cards */}
@@ -849,12 +862,11 @@ export default function HomePage() {
         {/* Connect Your Tools Section */}
         {SHOW_CONNECT_TOOLS_SECTION && (
           <section className="w-full bg-background py-24 md:py-32">
-            <div className="w-full px-8 md:px-16 lg:px-24">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
-                {/* Left: Badge */}
-                <div>
-                  <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
-                    Connect Your Tools
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
+              {/* Left: Badge */}
+              <div>
+                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                  Connect Your Tools
                   </span>
                 </div>
 
@@ -890,65 +902,30 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-            </div>
           </section>
         )}
 
         {/* FAQ Section */}
         {SHOW_FAQ_SECTION && (
           <section className="w-full bg-background py-24 md:py-32">
-            <div className="w-full px-8 md:px-16 lg:px-24">
-              <FAQSection />
-            </div>
+            <FAQSection />
           </section>
         )}
 
         {/* Changelog Preview */}
         {SHOW_CHANGELOG_SECTION && (
           <section className="w-full bg-background py-24 md:py-32">
-            <div className="w-full px-8 md:px-16 lg:px-24">
-              <ChangelogPreview />
-            </div>
+            <ChangelogPreview />
           </section>
         )}
       </div>
 
       {/* CTA Section */}
-      {SHOW_CTA_SECTION && (
-        <section className="relative w-full h-fit p-4 bg-[var(--pitch-deck-red)] overflow-hidden">
-          {/* Grid overlay */}
-          <GridSection
-            rows={6}
-            cols={12}
-            borderVariant="simple"
-            borderColorClass="border-[var(--pitch-deck-red-overlay)]/30"
-            cellBackground="bg-transparent"
-            interactive
-            hoverClass="hover:bg-[var(--pitch-deck-red-overlay)]"
-          />
-
-          {/* Centered content */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 pointer-events-none">
-            <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-              <Icons.logoShort className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal text-white tracking-tight">
-                Try Lightfast Now
-              </h2>
-            </div>
-            <Button
-              asChild
-              size="lg"
-              className="rounded-full bg-white text-[var(--pitch-deck-red)] hover:bg-white/90 pointer-events-auto"
-            >
-              <Link href="/early-access">Join Early Access</Link>
-            </Button>
-          </div>
-        </section>
-      )}
+      {SHOW_CTA_SECTION && <WaitlistCTA />}
 
       {/* Unicorn Studio Section */}
       {SHOW_UNICORN_SECTION && (
-        <section className="w-full max-w-7xl mx-auto">
+        <section className="w-full">
           <div className="h-[600px] border border-border rounded-xs overflow-hidden">
             <UnicornScene
               projectId="l4I4U2goI9votcrBdYG1"
