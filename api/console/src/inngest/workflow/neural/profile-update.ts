@@ -52,6 +52,12 @@ export const profileUpdate = inngest.createFunction(
     // Handle failures gracefully - complete job as failed
     onFailure: async ({ event, error }) => {
       const originalEvent = event.data.event;
+      if (!originalEvent) {
+        log.error("Neural profile update failed with missing event data", {
+          error: error.message,
+        });
+        return;
+      }
       const { workspaceId, actorId } = originalEvent.data;
       const eventId = originalEvent.id;
 
