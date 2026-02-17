@@ -1,17 +1,15 @@
-import type { UIMessage, ToolSet } from "ai";
+import type { UIMessage } from "ai";
 import type { Memory } from "../../memory";
 import type { Agent } from "../../primitives/agent";
-import type { ToolFactorySet } from "../../primitives/tool";
 import {
-	GenericBadRequestError,
 	MethodNotAllowedError,
 	NoMessagesError,
 	toApiError
 } from "../errors";
-import type {ApiError} from "../errors";
+import type { ApiError } from "../errors";
 import { resumeStream, streamChat } from "../runtime";
 import type { ResumeOptions } from "../runtime";
-import type { RequestContext, SystemContext } from "./types";
+import type { RequestContext } from "./types";
 import type { LifecycleCallbacks } from "../lifecycle";
 
 /**

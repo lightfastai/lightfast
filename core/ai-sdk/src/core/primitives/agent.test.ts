@@ -1,7 +1,5 @@
-import type { ToolSet } from "ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { InMemoryMemory } from "../memory/adapters/in-memory";
 import { createAgent } from "./agent";
 import { createTool } from "./tool";
 
@@ -21,10 +19,7 @@ interface TestRuntimeContext {
 }
 
 describe("createAgent", () => {
-	let memory: InMemoryMemory;
-
 	beforeEach(() => {
-		memory = new InMemoryMemory();
 		vi.clearAllMocks();
 	});
 
@@ -44,7 +39,7 @@ describe("createAgent", () => {
 		const testTool = () => ({
 			description: "Test tool",
 			inputSchema: z.object({ query: z.string() }),
-			execute: async ({ query }: { query: string }) => `Result: ${query}`,
+			execute: ({ query }: { query: string }) => Promise.resolve(`Result: ${query}`),
 		});
 
 		const tools = {
@@ -65,8 +60,8 @@ describe("createAgent", () => {
 		const toolFactory = createTool<TestRuntimeContext>({
 			description: "Context-aware tool",
 			inputSchema: z.object({ message: z.string() }),
-			execute: async ({ message }, context) => {
-				return `${message} from ${context.sessionId}`;
+			execute: ({ message }, context) => {
+				return Promise.resolve(`${message} from ${context.sessionId}`);
 			},
 		});
 
@@ -93,7 +88,7 @@ describe("createAgent", () => {
 			const tool = createTool<TestRuntimeContext>({
 				description: `Tool for session ${context.sessionId}`,
 				inputSchema: z.object({ input: z.string() }),
-				execute: async ({ input }) => `Processed: ${input}`,
+				execute: ({ input }) => Promise.resolve(`Processed: ${input}`),
 			});
 
 			return {
@@ -152,7 +147,7 @@ describe("createAgent", () => {
 		expect(agent).toBeDefined();
 	});
 
-	it("should handle agent configuration validation", async () => {
+	it("should handle agent configuration validation", () => {
 		// Test that required fields are validated during stream execution
 		const agent = createAgent({
 			name: "test-agent",
@@ -208,8 +203,8 @@ describe("agent utility functions", () => {
 		const toolFactory = createTool<TestRuntimeContext>({
 			description: "Resolvable tool",
 			inputSchema: z.object({ value: z.string() }),
-			execute: async ({ value }, context) => {
-				return `${value}-${context.sessionId}`;
+			execute: ({ value }, context) => {
+				return Promise.resolve(`${value}-${context.sessionId}`);
 			},
 		});
 

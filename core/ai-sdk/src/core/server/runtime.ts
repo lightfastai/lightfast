@@ -1,6 +1,5 @@
 import type {
 	UIMessage,
-	ToolSet,
 	UIMessagePart,
 	UIDataTypes,
 	UITools,
@@ -34,11 +33,6 @@ import { Err, Ok } from "./result";
 import type { Result } from "./result";
 import type {
 	LifecycleCallbacks,
-	ErrorLifecycleEvent,
-	StreamStartEvent,
-	StreamCompleteEvent,
-	AgentStartEvent,
-	AgentCompleteEvent,
 } from "./lifecycle";
 
 export interface ResumeOptions {
@@ -234,7 +228,6 @@ export async function streamChat<
 	const { allMessages } = processResult.value;
 
 	// Call onAgentStart lifecycle callback
-	const agentStartTime = Date.now();
 	const agentName =
 		"config" in agent && agent.config?.name ? agent.config.name : "unknown";
 	onAgentStart?.({
@@ -607,7 +600,7 @@ export async function streamChat<
 	if (shouldEnableResume && resumeOptions?.failOnStreamError) {
 		if (resumeSetupPromise) {
 			try {
-				await resumeSetupPromise;
+				await (resumeSetupPromise as Promise<void>);
 			} catch (error) {
 				const normalizedError =
 					error instanceof ApiError

@@ -20,11 +20,25 @@ export default [
       // Allow empty object type
       "@typescript-eslint/no-empty-object-type": "off",
       // Disable unused variable checks for underscore-prefixed vars
-      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "destructuredArrayIgnorePattern": "^_" }],
       // Disable misused promises
       "@typescript-eslint/no-misused-promises": "off",
       // Finally, disable no-explicit-any (the hardest one)
       "@typescript-eslint/no-explicit-any": "off",
+    }
+  },
+  {
+    // Test file specific overrides
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+    rules: {
+      // vitest mocks use unbound methods frequently
+      "@typescript-eslint/unbound-method": "off",
+      // Test async generators for mock streams don't need await
+      "@typescript-eslint/require-await": "off",
+      // Empty functions are common in test mocks
+      "@typescript-eslint/no-empty-function": "off",
+      // import() type annotations are used in vi.importActual
+      "@typescript-eslint/consistent-type-imports": "off",
     }
   }
 ];

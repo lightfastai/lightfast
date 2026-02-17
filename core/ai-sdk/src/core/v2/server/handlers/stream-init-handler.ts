@@ -10,7 +10,6 @@ import type { LoggerFactory } from "../../logger";
 import { LogEventName, noopLogger } from "../../logger";
 import { uuidv4 } from "../../utils/uuid";
 import { getDeltaStreamKey, getMessageKey, getSessionKey } from "../keys";
-import type { SessionState } from "../runtime/types";
 import { DeltaStreamType } from "../stream/types";
 
 interface LightfastDBMessage {
@@ -75,7 +74,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 
 	// Read operations in parallel (Promise.all for better typing)
 	const [existingState, existingMessages] = await Promise.all([
-		redis.get(sessionKey) as Promise<SessionState | null>,
+		redis.get(sessionKey),
 		redis.json.get(messageKey, "$"),
 	]);
 

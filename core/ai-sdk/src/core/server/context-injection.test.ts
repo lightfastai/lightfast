@@ -1,6 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { z } from "zod";
-import type { UIMessage } from "ai";
 import { createUserMessage } from "../test-utils/message-helpers";
 import { createAgent } from "../primitives/agent";
 import { createTool } from "../primitives/tool";
@@ -10,7 +9,7 @@ import type { SystemContext, RequestContext, RuntimeContext } from "./adapters/t
 
 // Mock the AI SDK's streamText
 vi.mock("ai", async () => {
-	const actual = await vi.importActual<typeof import("ai")>("ai");
+	const actual: typeof import("ai") = await vi.importActual("ai");
 	return {
 		...actual,
 		streamText: vi.fn(),
@@ -49,14 +48,14 @@ describe("Context Injection from Request to Tools", () => {
 			inputSchema: z.object({ 
 				action: z.string() 
 			}),
-			execute: async ({ action }, context) => {
+			execute: ({ action }, context) => {
 				// Capture the full context that the tool receives
 				capturedContext = context;
-				return { 
+				return Promise.resolve({
 					result: `Executed ${action}`,
 					sessionId: context.sessionId,
 					userAgent: (context as AgentRuntimeContext & CustomRequestContext).userAgent,
-				};
+				});
 			},
 		});
 
@@ -142,9 +141,9 @@ describe("Context Injection from Request to Tools", () => {
 		const mergeTestTool = createTool<any>({
 			description: "Tests context merging",
 			inputSchema: z.object({ test: z.string() }),
-			execute: async (input, context) => {
+			execute: (_input, context) => {
 				capturedContext = context;
-				return { success: true };
+				return Promise.resolve({ success: true });
 			},
 		});
 
@@ -223,13 +222,13 @@ describe("Context Injection from Request to Tools", () => {
 			const dynamicTool = createTool<any>({
 				description: `Tool for session ${context.sessionId}`,
 				inputSchema: z.object({ input: z.string() }),
-				execute: async ({ input }, ctx) => {
+				execute: ({ input }, ctx) => {
 					toolExecutionContext = ctx;
-					return { 
+					return Promise.resolve({
 						result: input,
 						sessionFromCreation: toolCreationContext.sessionId,
 						sessionFromExecution: ctx.sessionId,
-					};
+					});
 				},
 			});
 
@@ -295,9 +294,9 @@ describe("Context Injection from Request to Tools", () => {
 		const toolWithOptionalContext = createTool({
 			description: "Tool without required context",
 			inputSchema: z.object({ value: z.string() }),
-			execute: async ({ value }, context) => {
+			execute: ({ value }, context) => {
 				capturedContext = context;
-				return { processed: value.toUpperCase() };
+				return Promise.resolve({ processed: value.toUpperCase() });
 			},
 		});
 
@@ -354,18 +353,18 @@ describe("Context Injection from Request to Tools", () => {
 		const firstTool = createTool<any>({
 			description: "First tool in chain",
 			inputSchema: z.object({ input: z.string() }),
-			execute: async ({ input }, context) => {
+			execute: ({ input }, context) => {
 				contexts.push({ tool: "first", context });
-				return { next: `processed-${input}` };
+				return Promise.resolve({ next: `processed-${input}` });
 			},
 		});
 
 		const secondTool = createTool<any>({
 			description: "Second tool in chain",
 			inputSchema: z.object({ data: z.string() }),
-			execute: async ({ data }, context) => {
+			execute: ({ data }, context) => {
 				contexts.push({ tool: "second", context });
-				return { final: data.toUpperCase() };
+				return Promise.resolve({ final: data.toUpperCase() });
 			},
 		});
 

@@ -8,7 +8,7 @@ import type { Agent } from "../../agent";
 import type { ILogger } from "../../logger";
 import { LogEventName, noopLogger } from "../../logger";
 import { EventWriter } from "../events/event-writer";
-import { getMessageKey, getSessionKey } from "../keys";
+import { getSessionKey } from "../keys";
 import { MessageReader } from "../readers/message-reader";
 import { StreamWriter } from "../stream/stream-writer";
 import { MessageWriter } from "../writers/message-writer";
@@ -222,7 +222,7 @@ export class AgentRuntime implements Runtime {
 				state.assistantMessageId,
 			);
 
-			if (assistantMessage && assistantMessage.parts) {
+			if (assistantMessage?.parts) {
 				// Add tool result part using AI SDK v5 format
 				// Tool parts use type: "tool-{toolName}" and state to indicate result
 				const toolResultPart: any = {
@@ -305,7 +305,7 @@ export class AgentRuntime implements Runtime {
 				state.assistantMessageId,
 			);
 
-			if (assistantMessage && assistantMessage.parts) {
+			if (assistantMessage?.parts) {
 				// Add error tool result part using AI SDK v5 format
 				// Tool parts use type: "tool-{toolName}" and state to indicate error
 				const errorResultPart: any = {
@@ -393,7 +393,7 @@ export class AgentRuntime implements Runtime {
 			}
 
 			// Agent makes decision and streams response
-			const { decision, chunkCount, fullContent } =
+			const { decision, chunkCount: _chunkCount, fullContent: _fullContent } =
 				await agent.makeDecisionForRuntime(
 					sessionId,
 					state.resourceId,

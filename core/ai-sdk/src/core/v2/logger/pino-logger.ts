@@ -6,7 +6,6 @@ import type { Logger as PinoLogger } from "pino";
 import type {
 	ILogger,
 	LogEventContextMap,
-	LogEventName,
 	LoggerFactory,
 } from "./types";
 

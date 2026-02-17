@@ -1,7 +1,6 @@
 import { convertToModelMessages } from "ai";
 import type {
 	ModelMessage,
-	Tool,
 	ToolSet,
 	UIMessage,
 	UIMessageStreamWriter,
@@ -11,16 +10,12 @@ import type {
 	PrepareStepFunction,
 	StreamTextTransform,
 	StreamTextOnChunkCallback,
-	StreamTextOnErrorCallback,
 	StreamTextOnFinishCallback,
 	StreamTextOnStepFinishCallback,
-	TelemetrySettings,
-	StepResult,
  streamText } from "ai";
 import type { Memory } from "../memory";
 import {
 	AgentConfigurationError,
-	AgentStreamError,
 	CacheOperationError,
 	ContextCreationError,
 	MessageConversionError,
@@ -29,7 +24,7 @@ import {
 } from "../server/errors";
 import type { SystemContext, RuntimeContext } from "../server/adapters/types";
 import type { ProviderCache } from "./cache";
-import type { ToolFactory, ToolFactorySet } from "./tool";
+import type { ToolFactorySet } from "./tool";
 
 // Extract the base streamText parameters type
 type StreamTextParams = Parameters<typeof streamText>[0];
@@ -163,7 +158,7 @@ export class Agent<
 	>({
 		sessionId,
 		messages,
-		memory,
+		memory: _memory,
 		resourceId,
 		systemContext,
 		requestContext,

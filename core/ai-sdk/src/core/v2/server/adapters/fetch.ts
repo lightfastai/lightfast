@@ -13,8 +13,6 @@ import { handleAgentStep } from "../handlers/runtime/step-handler";
 import { handleToolCall } from "../handlers/runtime/tool-handler";
 import { handleStreamInit } from "../handlers/stream-init-handler";
 import { handleStreamSSE } from "../handlers/stream-sse-handler";
-import { getSessionKey } from "../keys";
-import type { SessionState } from "../runtime/types";
 
 export interface FetchRequestHandlerOptions<TRuntimeContext = unknown> {
 	agent: Agent<TRuntimeContext>;
@@ -221,8 +219,8 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 
 					case "tool-execution-complete": {
 						// Handle POST /workers/tool-execution-complete
-						const body =
-							(await request.json()) as ToolExecutionCompleteRequestBody;
+						const _body =
+							(await request.json()) as ToolExecutionCompleteRequestBody; // consumed for type validation
 						console.log(
 							`[V2 Worker Handler] Processing tool.execution.complete event`,
 						);
@@ -233,7 +231,7 @@ export function fetchRequestHandler<TRuntimeContext = unknown>(
 
 					case "agent-loop-complete": {
 						// Handle POST /workers/agent-loop-complete
-						const body = (await request.json()) as AgentLoopCompleteRequestBody;
+						const _body = (await request.json()) as AgentLoopCompleteRequestBody;
 						console.log(
 							`[V2 Worker Handler] Processing agent.loop.complete event`,
 						);

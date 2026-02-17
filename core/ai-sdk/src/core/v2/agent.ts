@@ -3,26 +3,18 @@
  * Encapsulates agent behavior with system prompt and tools
  */
 
-import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
-import { gateway } from "@ai-sdk/gateway";
 import type { Redis } from "@upstash/redis";
 import {
 	convertToModelMessages,
-	smoothStream,
 	streamText,
-	wrapLanguageModel,
 } from "ai";
 import type { Tool as AiTool, ToolSet, UIMessage } from "ai";
-import { BraintrustMiddleware } from "braintrust";
 import type { z } from "zod";
-import type { ToolFactory, ToolFactorySet } from "../primitives/tool";
+import type { ToolFactorySet } from "../primitives/tool";
 import { EventWriter } from "./server/events/event-writer";
-import { getDeltaStreamKey } from "./server/keys";
 import { MessageReader } from "./server/readers/message-reader";
 import { StreamWriter } from "./server/stream/stream-writer";
-import { StreamStatus } from "./server/stream/types";
 import { MessageWriter } from "./server/writers/message-writer";
-import { AgentDecisionSchema } from "./workers/schemas";
 import type { AgentDecision, WorkerConfig } from "./workers/schemas";
 
 // Legacy v2 tool definition (for backward compatibility)

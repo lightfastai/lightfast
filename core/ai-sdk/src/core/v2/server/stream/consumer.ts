@@ -4,7 +4,6 @@
  */
 
 import type { Redis } from "@upstash/redis";
-import type { UIMessage } from "ai";
 import { uuidv4 } from "../../utils/uuid";
 import { getDeltaStreamKey } from "../keys";
 import {
@@ -13,7 +12,7 @@ import {
 	
 	
 } from "./types";
-import type {DeltaStreamMessage, ToolCallPart, ToolResultPart} from "./types";
+import type {DeltaStreamMessage} from "./types";
 
 // Redis stream types
 type StreamField = string;
@@ -207,7 +206,7 @@ export class StreamConsumer {
 				// Handle client disconnect
 				signal?.addEventListener("abort", () => {
 					console.log("Client disconnected, cleaning up subscription");
-					subscription?.unsubscribe();
+					void subscription?.unsubscribe();
 					controller.close();
 				});
 			},
@@ -227,7 +226,7 @@ export class StreamConsumer {
 		signal: AbortSignal,
 		onMessage: (message: DeltaStreamMessage) => Promise<void>,
 		onError?: (error: Error) => Promise<void>,
-		onComplete?: () => Promise<void>,
+		_onComplete?: () => Promise<void>,
 	): Promise<void> {
 		const streamKey = getDeltaStreamKey(streamId);
 		const groupName = `consumer-group-${uuidv4()}`;
@@ -311,7 +310,7 @@ export class StreamConsumer {
 			}
 
 			// Cleanup
-			subscription.unsubscribe();
+			void subscription.unsubscribe();
 		} catch (error) {
 			if (onError) {
 				await onError(error as Error);

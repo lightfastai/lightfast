@@ -176,12 +176,12 @@ describe("Result", () => {
 
 	describe("complex scenarios", () => {
 		it("should handle async operations returning Results", async () => {
-			const asyncOk = async (): Promise<Result<string, Error>> => {
-				return Ok("async success");
+			const asyncOk = (): Promise<Result<string, Error>> => {
+				return Promise.resolve(Ok("async success"));
 			};
 
-			const asyncErr = async (): Promise<Result<string, Error>> => {
-				return Err(new Error("async error"));
+			const asyncErr = (): Promise<Result<string, Error>> => {
+				return Promise.resolve(Err(new Error("async error")));
 			};
 
 			const result1 = await asyncOk();

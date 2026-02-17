@@ -3,13 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { createUserMessage, createSystemMessage, createAssistantMessage, getMessageText } from "../test-utils/message-helpers";
 import { InMemoryMemory } from "../memory/adapters/in-memory";
-import { 
+import {
 	AgentConfigurationError,
 	CacheOperationError,
-	ContextCreationError,
 	MessageConversionError,
 	NoMessagesError,
-	ToolExecutionError
 } from "../server/errors";
 import { createAgent } from "./agent";
 import { createTool } from "./tool";
@@ -45,7 +43,7 @@ const createDummyTools = (): ToolFactorySet<TestRuntimeContext> => ({
 	dummyTool: createTool<TestRuntimeContext>({
 		description: "Dummy tool",
 		inputSchema: z.object({ input: z.string() }),
-		execute: async ({ input }) => ({ result: input }),
+		execute: ({ input }) => Promise.resolve({ result: input }),
 	}),
 });
 
@@ -59,10 +57,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 		// Default successful mock for convertToModelMessages
 		const { convertToModelMessages } = await import("ai");
 		vi.mocked(convertToModelMessages).mockImplementation(
-			(messages: Omit<UIMessage, 'id'>[], options?: { tools?: ToolSet; ignoreIncompleteToolCalls?: boolean }) =>
-				messages.map((msg) => ({ 
-					role: msg.role, 
-					content: getMessageText(msg as UIMessage) || "" 
+			(messages: Omit<UIMessage, 'id'>[], _options?: { tools?: ToolSet; ignoreIncompleteToolCalls?: boolean }) =>
+				messages.map((msg) => ({
+					role: msg.role,
+					content: getMessageText(msg as UIMessage) || ""
 				}))
 		);
 	});
@@ -163,8 +161,8 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 
 			expect(mockCache.applySystemCaching).toHaveBeenCalledWith("Original system message");
 			expect(mockCache.applyMessageCaching).toHaveBeenCalled();
-			expect(streamParams.messages!).toHaveLength(2); // system + user message
-			expect(streamParams.messages![0]).toEqual(createSystemMessage("cached-system", "Cached system message"));
+			expect(streamParams.messages).toHaveLength(2); // system + user message
+			expect(streamParams.messages?.[0]).toEqual(createSystemMessage("cached-system", "Cached system message"));
 		});
 
 		it("should handle cache provider errors with CacheOperationError", () => {
@@ -212,7 +210,7 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 				requestContext: {},
 			});
 
-			expect(streamParams.messages![0]).toEqual({
+			expect(streamParams.messages?.[0]).toEqual({
 				role: "system",
 				content: "Simple system message"
 			});
@@ -267,12 +265,12 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 				requestContext: {},
 			});
 
-			expect(streamParams.messages![0]).toEqual({
+			expect(streamParams.messages?.[0]).toEqual({
 				role: "system",
 				content: "You are a test assistant"
 			});
-			expect((streamParams.messages![1] as any).content).toEqual("Hello");
-			expect((streamParams.messages![2] as any).content).toEqual("Hi there");
+			expect((streamParams.messages?.[1] as any).content).toEqual("Hello");
+			expect((streamParams.messages?.[2] as any).content).toEqual("Hi there");
 		});
 	});
 
@@ -373,10 +371,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 			const contextTool = createTool<TestRuntimeContext>({
 				description: "Context-aware tool",
 				inputSchema: z.object({ input: z.string() }),
-				execute: async ({ input }, context) => ({ result: `${input}-${context.sessionId}` }),
+				execute: ({ input }, _context) => Promise.resolve({ result: `${input}-${_context.sessionId}` }),
 			});
 
-			const toolsFunction = (context: TestRuntimeContext): ToolFactorySet<TestRuntimeContext> => ({
+			const toolsFunction = (_context: TestRuntimeContext): ToolFactorySet<TestRuntimeContext> => ({
 				contextTool: contextTool,
 			});
 
@@ -433,10 +431,10 @@ describe("Agent buildStreamParams - Comprehensive Core Tests", () => {
 			const goodTool = createTool<TestRuntimeContext>({
 				description: "Good tool",
 				inputSchema: z.object({ input: z.string() }),
-				execute: async ({ input }) => ({ result: input }),
+				execute: ({ input }) => Promise.resolve({ result: input }),
 			});
 
-			const badToolFactory = (context: TestRuntimeContext) => {
+			const badToolFactory = (_context: TestRuntimeContext) => {
 				throw new Error("Individual tool factory failed");
 			};
 

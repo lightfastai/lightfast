@@ -1,5 +1,5 @@
 import type { ModelMessage, UIMessage } from "ai";
-import type { CacheControl, ProviderCache } from "../base";
+import type { ProviderCache } from "../base";
 import type { CacheStrategy } from "../strategy/base";
 import { ClineConversationStrategy } from "../strategy/cline-conversation";
 
@@ -61,14 +61,11 @@ export class AnthropicProviderCache implements ProviderCache {
 		];
 	}
 
-	private get cacheSystemPrompt(): boolean {
-		// For Cline strategy, always cache system prompt
-		return true;
-	}
+	private readonly cacheSystemPrompt: boolean = true;
 
 	applyMessageCaching<TMessage extends UIMessage>(
 		messages: ModelMessage[],
-		originalMessages: TMessage[],
+		_originalMessages: TMessage[],
 	): ModelMessage[] {
 		if (!this.enabled) {
 			return messages;
