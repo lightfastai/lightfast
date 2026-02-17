@@ -251,7 +251,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             {/* Structured data for SEO */}
             <JsonLd code={structuredData as any} />
 
-            <article className="w-full max-w-2xl mx-auto px-4 pb-32 pt-24">
+            <article className="w-full max-w-2xl mx-auto pb-32 pt-24">
               <p className="text-sm text-muted-foreground mb-8">
                 Blog
                 {primaryCategory?._title ? (
