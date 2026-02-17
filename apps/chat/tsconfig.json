@@ -27,6 +27,7 @@
   ],
   "exclude": [
     "node_modules",
-    "src/eval/**/*.ts"
+    "src/eval/**/*.ts",
+    "**/*.test.ts"
   ]
 }
