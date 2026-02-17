@@ -18,7 +18,7 @@
           "group": "marketing",
           "paths": [
             "/",
-            "/opengraph-image",
+            "/opengraph-image-:hash",
             "/api/og/search-demo",
             "/pricing/:path*",
             "/changelog",
