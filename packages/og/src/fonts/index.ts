@@ -2,10 +2,10 @@ export async function loadFonts(): Promise<
 	{ name: string; data: ArrayBuffer; weight: 400 | 700; style: "normal" }[]
 > {
 	const [book, bold] = await Promise.all([
-		fetch(new URL("./PPNeueMontreal-Book.woff2", import.meta.url)).then(
+		fetch(new URL("./PPNeueMontreal-Book.woff", import.meta.url)).then(
 			(res) => res.arrayBuffer(),
 		),
-		fetch(new URL("./PPNeueMontreal-Bold.woff2", import.meta.url)).then(
+		fetch(new URL("./PPNeueMontreal-Bold.woff", import.meta.url)).then(
 			(res) => res.arrayBuffer(),
 		),
 	]);
