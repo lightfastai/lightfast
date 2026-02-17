@@ -4,7 +4,7 @@ import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
 import { db } from "@db/chat/client";
 import { LightfastChatSession, LightfastChatMessage } from "@db/chat";
-import { DEFAULT_SESSION_TITLE } from "@db/chat/constants";
+
 import { desc, eq, lt, and, like, sql } from "drizzle-orm";
 import { formatMySqlDateTime } from "@repo/lib/datetime";
 import { inngest } from "../../inngest/client/client";
@@ -234,7 +234,7 @@ export const sessionRouter = {
 				// Check if it's a duplicate key error
 				const errorMessage =
 					error instanceof Error ? error.message : "Unknown error";
-				const errorCode = (error as { code?: string })?.code;
+				const errorCode = (error as { code?: string } | null)?.code;
 
 				if (
 					errorCode === "ER_DUP_ENTRY" ||

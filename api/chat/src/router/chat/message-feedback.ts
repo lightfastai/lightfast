@@ -3,11 +3,10 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
 import { db } from "@db/chat/client";
-import { 
-  LightfastChatSession, 
+import {
+  LightfastChatSession,
   LightfastChatMessage,
   LightfastChatMessageFeedback,
-  insertLightfastChatMessageFeedbackSchema
 } from "@db/chat";
 import { eq, and } from "drizzle-orm";
 

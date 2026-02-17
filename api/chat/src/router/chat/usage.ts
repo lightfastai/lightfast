@@ -5,20 +5,19 @@ import { protectedProcedure } from "../../trpc";
 import { db } from "@db/chat/client";
 import {
 	LightfastChatUsage,
-	insertLightfastChatUsageSchema,
 	LightfastChatQuotaReservation,
 	RESERVATION_STATUS,
 } from "@db/chat";
 import { eq, and, sql, lt } from "drizzle-orm";
-import { toZonedTime, format } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 import { differenceInDays } from "date-fns";
 import { clerkClient } from "@clerk/nextjs/server";
 import { uuidv4 } from "@repo/lib/uuid";
 import {
 	BILLING_LIMITS,
 	ClerkPlanKey,
-	calculateBillingPeriodForUser,
-	fetchSubscriptionData,
+	getSubscriptionState,
+	calculateBillingPeriodFromSubscription,
 	GRACE_PERIOD_DAYS,
 } from "@repo/chat-billing";
 import { formatMySqlDateTime } from "@repo/lib/datetime";
@@ -27,18 +26,8 @@ type ChatDbTransaction = Parameters<
 	Parameters<(typeof db)["transaction"]>[0]
 >[0];
 
-const billingLogger = {
-	info: (message: string, metadata?: Record<string, unknown>) =>
-		console.log(message, metadata ?? {}),
-	warn: (message: string, metadata?: Record<string, unknown>) =>
-		console.warn(message, metadata ?? {}),
-	error: (message: string, metadata?: Record<string, unknown>) =>
-		console.error(message, metadata ?? {}),
-};
-
 function getMessageLimitsForPlan(planKey: ClerkPlanKey) {
-	const planConfig =
-		BILLING_LIMITS[planKey] ?? BILLING_LIMITS[ClerkPlanKey.FREE_TIER];
+	const planConfig = BILLING_LIMITS[planKey];
 
 	return {
 		nonPremiumMessages: planConfig.nonPremiumMessagesPerMonth,
@@ -52,24 +41,24 @@ export async function calculateBillingPeriod(
 	timezone = "UTC",
 ): Promise<string> {
 	const client = await clerkClient();
-	return calculateBillingPeriodForUser({
-		userId,
-		timezone,
-		fetcher: {
-			getUserBillingSubscription: (id: string) =>
-				client.billing.getUserBillingSubscription(id),
-		},
-		logger: billingLogger,
-	});
+	try {
+		const subscription = await client.billing.getUserBillingSubscription(userId);
+		return calculateBillingPeriodFromSubscription(subscription, { timezone });
+	} catch {
+		return calculateBillingPeriodFromSubscription(null, { timezone });
+	}
 }
 
 // Shared function to get user subscription data from Clerk
 export async function getUserSubscriptionData(userId: string) {
 	const client = await clerkClient();
-	return fetchSubscriptionData(userId, {
-		getUserBillingSubscription: (id: string) =>
-			client.billing.getUserBillingSubscription(id),
-	}, { logger: billingLogger });
+	try {
+		const subscription = await client.billing.getUserBillingSubscription(userId);
+		return { subscription, ...getSubscriptionState(subscription) };
+	} catch (error) {
+		console.error(`[Billing] Failed to fetch subscription for user ${userId}:`, error);
+		return { subscription: null, ...getSubscriptionState(null) };
+	}
 }
 
 // Helper function to get usage by period (shared logic)
@@ -247,7 +236,7 @@ export const usageRouter = {
 							error.message.includes("unique constraint"))
 					) {
 						// Use UPDATE with WHERE clause for atomic increment
-						const result = await tx
+						await tx
 							.update(LightfastChatUsage)
 							.set({
 								nonPremiumMessages: sql`${LightfastChatUsage.nonPremiumMessages} + ${input.count}`,
@@ -308,7 +297,7 @@ export const usageRouter = {
 							error.message.includes("unique constraint"))
 					) {
 						// Use UPDATE with WHERE clause for atomic increment
-						const result = await tx
+						await tx
 							.update(LightfastChatUsage)
 							.set({
 								premiumMessages: sql`${LightfastChatUsage.premiumMessages} + ${input.count}`,
@@ -347,7 +336,7 @@ export const usageRouter = {
 
 			// Calculate billing period using shared function for consistency
 			const period =
-				input.period ||
+				input.period ??
 				(await calculateBillingPeriod(ctx.session.userId, input.timezone));
 
 			const usage = await getUsageByPeriod(ctx.session.userId, period);
@@ -357,7 +346,7 @@ export const usageRouter = {
 		const inGracePeriod = subscription?.status === "past_due";
 		let graceDaysRemaining = 0;
 
-		if (inGracePeriod && subscription?.pastDueAt) {
+		if (inGracePeriod && subscription.pastDueAt) {
 			// Calculate days since payment failure using pastDueAt timestamp
 			const failureDate = toZonedTime(
 				new Date(subscription.pastDueAt),
@@ -604,6 +593,14 @@ export const usageRouter = {
 					});
 				}
 
+				// Verify ownership
+				if (reservation[0].clerkUserId !== ctx.session.userId) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "You don't have permission to modify this reservation",
+					});
+				}
+
 				if (reservation[0].status !== RESERVATION_STATUS.RESERVED) {
 					throw new TRPCError({
 						code: "CONFLICT",
@@ -664,6 +661,14 @@ export const usageRouter = {
 					});
 				}
 
+				// Verify ownership
+				if (reservation[0].clerkUserId !== ctx.session.userId) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "You don't have permission to modify this reservation",
+					});
+				}
+
 				if (reservation[0].status !== RESERVATION_STATUS.RESERVED) {
 					throw new TRPCError({
 						code: "CONFLICT",
@@ -693,7 +698,7 @@ export const usageRouter = {
 				expiredBefore: z.string().datetime(),
 			}),
 		)
-		.mutation(async ({ ctx, input }) => {
+		.mutation(async ({ ctx: _ctx, input }) => {
 			return await db.transaction(async (tx) => {
 				const expiredBeforeDate = new Date(input.expiredBefore);
 				const expiredBefore = formatMySqlDateTime(expiredBeforeDate);
@@ -716,7 +721,6 @@ export const usageRouter = {
 				}
 
 				// Mark them as expired
-				const expiredIds = expiredReservations.map((r) => r.id);
 				await tx
 					.update(LightfastChatQuotaReservation)
 					.set({

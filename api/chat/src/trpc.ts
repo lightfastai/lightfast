@@ -52,7 +52,7 @@ export const createTRPCContext = async (opts: {
 
   // Extract only what we need to avoid Clerk type inference issues
   const session: ChatSession = {
-    userId: clerkSession?.userId ?? null,
+    userId: clerkSession.userId ?? null,
   };
 
   if (session.userId) {
@@ -157,7 +157,7 @@ export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
 export const protectedProcedure = sentrifiedProcedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (!ctx.session?.userId) {
+    if (!ctx.session.userId) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
     

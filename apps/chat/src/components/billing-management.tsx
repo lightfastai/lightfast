@@ -15,10 +15,11 @@ interface BillingManagementProps {
 }
 
 export function BillingManagement({ currentPlan }: BillingManagementProps) {
-	const { subscription } = useBillingData();
+	const { hasActiveSubscription } = useBillingData();
 
-	// Determine plan state from subscription data
-	const isPaidPlan = subscription.hasActiveSubscription || currentPlan === ClerkPlanKey.PLUS_TIER;
+	// Falls back to currentPlan (server-resolved from Clerk) so users in a
+	// temporary non-active state (e.g. past_due grace period) still see paid UI.
+	const isPaidPlan = hasActiveSubscription || currentPlan === ClerkPlanKey.PLUS_TIER;
 	const isFreePlan = !isPaidPlan;
 
 	return (

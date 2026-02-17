@@ -307,8 +307,8 @@ export const messageRouter = {
             charLimit !== null && pagination.oversizeRecordId === msg.id;
 
           const previewLimit = tooLarge
-            ? Math.min(charLimit ?? OVERSIZED_PREVIEW_CHAR_LIMIT, OVERSIZED_PREVIEW_CHAR_LIMIT)
-            : charLimit ?? OVERSIZED_PREVIEW_CHAR_LIMIT;
+            ? Math.min(charLimit, OVERSIZED_PREVIEW_CHAR_LIMIT)
+            : OVERSIZED_PREVIEW_CHAR_LIMIT;
 
           const preview = tooLarge
             ? createPreviewParts(
@@ -334,12 +334,11 @@ export const messageRouter = {
           };
         });
 
-      const nextCursor = hasMore && pagination.selectedRecords.length > 0
+      const lastSelected = pagination.selectedRecords[pagination.selectedRecords.length - 1];
+      const nextCursor = hasMore && pagination.selectedRecords.length > 0 && lastSelected
         ? {
-            createdAt:
-              pagination.selectedRecords[pagination.selectedRecords.length - 1]!
-                .createdAt,
-            id: pagination.selectedRecords[pagination.selectedRecords.length - 1]!.id,
+            createdAt: lastSelected.createdAt,
+            id: lastSelected.id,
           }
         : null;
 

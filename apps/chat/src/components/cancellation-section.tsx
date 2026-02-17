@@ -1,10 +1,5 @@
 "use client";
 
-
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
@@ -32,18 +27,13 @@ interface CancellationSectionProps {
 export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 	const trpc = useTRPC();
 	const {
-		subscription,
 		hasActiveSubscription,
 		isCanceled,
 		refreshSubscription,
 		revalidatePayments,
+		billingInterval,
+		activePaidItem,
 	} = useBillingData();
-	
-	// Extract subscription state from query data
-	const {
-		billingInterval = "month" as const,
-		paidSubscriptionItems = [],
-	} = subscription;
 	const router = useRouter();
 
 	// Only show for paid plans
@@ -72,7 +62,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 				toast({
 					title: "Error",
 					description:
-						(error instanceof Error ? error.message : null) || "Failed to cancel subscription. Please try again.",
+						(error instanceof Error ? error.message : null) ?? "Failed to cancel subscription. Please try again.",
 					variant: "destructive",
 				});
 			},
@@ -81,7 +71,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 
 	// Handle subscription cancellation
 	const handleCancelSubscription = () => {
-		if (!paidSubscriptionItems[0]?.id) {
+		if (!activePaidItem?.id) {
 			toast({
 				title: "Error",
 				description: "No active paid subscription found to cancel.",
@@ -96,7 +86,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 
 		if (confirmed) {
 			cancelSubscriptionMutation.mutate({
-				subscriptionItemId: paidSubscriptionItems[0].id,
+				subscriptionItemId: activePaidItem.id,
 				endNow: false, // Cancel at end of billing period
 			});
 		}

@@ -13,7 +13,6 @@ import {
 	LightfastChatArtifact,
 	LightfastChatSession,
 	ARTIFACT_KINDS,
-	insertLightfastChatArtifactSchema,
 	selectLightfastChatArtifactSchema,
 } from "@db/chat";
 
