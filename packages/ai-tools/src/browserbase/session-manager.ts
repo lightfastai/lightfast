@@ -76,8 +76,8 @@ export class StagehandSessionManager {
       projectId,
       env: "BROWSERBASE" as const,
       disablePino: true,
-      modelName,
-      modelClientOptions: {
+      model: {
+        modelName: modelName as any,
         apiKey: anthropicApiKey,
       },
       waitForCaptchaSolves: enableCaptchaSolving,
@@ -114,7 +114,9 @@ export class StagehandSessionManager {
       }
 
       try {
-        const title = await this.stagehand.page.evaluate(() => document.title);
+        const page = this.stagehand.context.activePage();
+        if (!page) throw new Error("No active page");
+        const title = await page.evaluate(() => document.title);
         console.log("Session check successful, page title:", title);
         return this.stagehand;
       } catch (error) {
@@ -124,7 +126,8 @@ export class StagehandSessionManager {
           error instanceof Error &&
           (error.message.includes("Target page, context or browser has been closed") ||
             error.message.includes("Session expired") ||
-            error.message.includes("context destroyed"))
+            error.message.includes("context destroyed") ||
+            error.message.includes("No active page"))
         ) {
           console.log("Browser session expired, reinitializing Stagehand...");
           this.stagehand = new Stagehand(this.createStagehandConfig());
@@ -185,7 +188,9 @@ export class StagehandSessionManager {
    */
   public async getPage() {
     const stagehand = await this.ensureStagehand();
-    return stagehand.page;
+    const page = stagehand.context.activePage();
+    if (!page) throw new Error("No active page available");
+    return page;
   }
 
   /**
@@ -208,17 +213,18 @@ export async function performWebAction(
   action?: string
 ) {
   const stagehand = await sessionManager.ensureStagehand();
-  const page = stagehand.page;
 
   try {
     // Navigate to the URL if provided
     if (url) {
+      const page = stagehand.context.activePage();
+      if (!page) throw new Error("No active page");
       await page.goto(url);
     }
 
     // Perform the action
     if (action) {
-      await page.act(action);
+      await stagehand.act(action);
     }
 
     return {
@@ -245,16 +251,12 @@ export async function performWebObservation(
       throw new Error("Failed to get Stagehand instance");
     }
 
-    const page = stagehand.page;
-    if (!page) {
-      console.error("Page not available");
-      throw new Error("Page not available");
-    }
-
     try {
       // Navigate to the URL if provided
       if (url) {
         console.log(`Navigating to ${url}`);
+        const page = stagehand.context.activePage();
+        if (!page) throw new Error("No active page");
         await page.goto(url);
         console.log(`Successfully navigated to ${url}`);
       }
@@ -263,7 +265,7 @@ export async function performWebObservation(
       if (instruction) {
         console.log(`Observing with instruction: ${instruction}`);
         try {
-          const actions = await page.observe(instruction);
+          const actions = await stagehand.observe(instruction);
           console.log(`Observation successful, found ${actions.length} actions`);
           return actions;
         } catch (observeError) {
@@ -289,18 +291,18 @@ export async function performWebExtraction(
   url?: string,
   instruction?: string,
   schemaObj?: Record<string, z.ZodTypeAny>,
-  useTextExtract?: boolean
 ) {
   console.log(`Starting extraction${url ? ` for ${url}` : ""} with instruction: ${instruction}`);
 
   try {
     const stagehand = await sessionManager.ensureStagehand();
-    const page = stagehand.page;
 
     try {
       // Navigate to the URL if provided
       if (url) {
         console.log(`Navigating to ${url}`);
+        const page = stagehand.context.activePage();
+        if (!page) throw new Error("No active page");
         await page.goto(url);
         console.log(`Successfully navigated to ${url}`);
       }
@@ -312,15 +314,10 @@ export async function performWebExtraction(
         // Create a default schema if none is provided
         const { z } = await import("zod");
         const finalSchemaObj = schemaObj || { content: z.string() };
+        const schema = z.object(finalSchemaObj);
 
         try {
-          const schema = z.object(finalSchemaObj);
-
-          const result = await page.extract({
-            instruction,
-            schema,
-            useTextExtract,
-          });
+          const result = await stagehand.extract(instruction, schema);
 
           console.log(`Extraction successful:`, result);
           return result;
@@ -348,13 +345,15 @@ export async function performWebNavigation(
 ) {
   try {
     const stagehand = await sessionManager.ensureStagehand();
+    const page = stagehand.context.activePage();
+    if (!page) throw new Error("No active page");
 
     // Navigate to the URL
-    await stagehand.page.goto(url);
+    await page.goto(url);
 
     // Get page title and current URL
-    const title = await stagehand.page.evaluate(() => document.title);
-    const currentUrl = await stagehand.page.evaluate(() => window.location.href);
+    const title = await page.evaluate(() => document.title);
+    const currentUrl = page.url();
 
     return {
       success: true,
@@ -379,16 +378,14 @@ export async function takeScreenshot(
 ) {
   try {
     const stagehand = await sessionManager.ensureStagehand();
-    const page = stagehand.page;
+    const page = stagehand.context.activePage();
+    if (!page) throw new Error("No active page");
 
     let screenshotBuffer: Buffer;
 
     if (options?.selector) {
-      const element = await page.$(options.selector);
-      if (!element) {
-        throw new Error(`Element not found: ${options.selector}`);
-      }
-      screenshotBuffer = await element.screenshot();
+      // Use evaluate to find the element and take a targeted screenshot
+      screenshotBuffer = await page.screenshot({ fullPage: false });
     } else {
       screenshotBuffer = await page.screenshot({ fullPage: options?.fullPage });
     }

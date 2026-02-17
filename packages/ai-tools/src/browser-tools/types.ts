@@ -39,10 +39,6 @@ export const stagehandExtractSchema = z.object({
   url: z.string().optional().describe("URL to navigate to (optional if already on a page)"),
   instruction: z.string().describe('What to extract (e.g., "extract all product prices")'),
   schema: z.record(z.unknown()).optional().describe("Zod schema definition for data extraction"),
-  useTextExtract: z
-    .boolean()
-    .optional()
-    .describe("Set true for larger-scale extractions, false for small extractions"),
 });
 
 export const stagehandScreenshotSchema = z.object({
