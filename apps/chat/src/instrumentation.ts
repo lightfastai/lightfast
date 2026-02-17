@@ -51,6 +51,6 @@ const register = async () => {
   }
 };
 
-register();
+void register();
 
 export const onRequestError = captureRequestError;
