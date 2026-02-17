@@ -48,7 +48,8 @@ import { resolveActor } from "./actor-resolution";
 import { detectAndCreateRelationships } from "./relationship-detection";
 import { nanoid } from "nanoid";
 import type { SourceActor, SourceReference } from "@repo/console-types";
-import { createJob, updateJobStatus, completeJob, recordJobMetric, getJobByInngestRunId } from "../../../lib/jobs";
+import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../../lib/jobs";
+import { createNeuralOnFailureHandler } from "./on-failure-handler";
 import type {
   NeuralObservationCaptureInput,
   NeuralObservationCaptureOutputSuccess,
@@ -393,35 +394,22 @@ export const observationCapture = inngest.createFunction(
     },
 
     // Handle failures gracefully - complete job as failed
-    onFailure: async ({ event, error }) => {
-      // event in onFailure is FailureEventPayload where data.event contains the original event
-      const originalEvent = event.data.event;
-      const { workspaceId, sourceEvent } = originalEvent.data;
-      const eventId = originalEvent.id;
-
-      log.error("Neural observation capture failed", {
-        workspaceId,
-        sourceId: sourceEvent.sourceId,
-        error: error.message,
-      });
-
-      // Try to find and fail the job by inngestRunId
-      if (eventId) {
-        const job = await getJobByInngestRunId(eventId);
-        if (job) {
-          await completeJob({
-            jobId: job.id,
-            status: "failed",
-            output: {
-              inngestFunctionId: "neural.observation.capture",
-              status: "failure",
-              sourceId: sourceEvent.sourceId,
-              error: error.message,
-            } satisfies NeuralObservationCaptureOutputFailure,
-          });
-        }
-      }
-    },
+    onFailure: createNeuralOnFailureHandler(
+      "apps-console/neural/observation.capture",
+      {
+        logMessage: "Neural observation capture failed",
+        logContext: ({ workspaceId, sourceEvent }) => ({
+          workspaceId,
+          sourceId: sourceEvent.sourceId,
+        }),
+        buildOutput: ({ data: { sourceEvent }, error }) => ({
+          inngestFunctionId: "neural.observation.capture",
+          status: "failure",
+          sourceId: sourceEvent.sourceId,
+          error,
+        } satisfies NeuralObservationCaptureOutputFailure),
+      },
+    ),
   },
   { event: "apps-console/neural/observation.capture" },
   async ({ event, step }) => {

@@ -25,7 +25,8 @@ import {
   buildNeuralTelemetry,
 } from "./ai-helpers";
 import { buildExtractionPrompt } from "./llm-entity-extraction";
-import { createJob, updateJobStatus, completeJob, getJobByInngestRunId } from "../../../lib/jobs";
+import { createJob, updateJobStatus, completeJob } from "../../../lib/jobs";
+import { createNeuralOnFailureHandler } from "./on-failure-handler";
 import type {
   NeuralLLMEntityExtractionInput,
   NeuralLLMEntityExtractionOutputSuccess,
@@ -44,33 +45,19 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
     },
 
     // Handle failures gracefully - complete job as failed
-    onFailure: async ({ event, error }) => {
-      const originalEvent = event.data.event;
-      const { workspaceId, observationId } = originalEvent.data;
-      const eventId = originalEvent.id;
-
-      log.error("Neural LLM entity extraction failed", {
-        workspaceId,
-        observationId,
-        error: error.message,
-      });
-
-      if (eventId) {
-        const job = await getJobByInngestRunId(eventId);
-        if (job) {
-          await completeJob({
-            jobId: job.id,
-            status: "failed",
-            output: {
-              inngestFunctionId: "neural.llm-entity-extraction",
-              status: "failure",
-              observationId,
-              error: error.message,
-            } satisfies NeuralLLMEntityExtractionOutputFailure,
-          });
-        }
-      }
-    },
+    onFailure: createNeuralOnFailureHandler(
+      "apps-console/neural/llm-entity-extraction.requested",
+      {
+        logMessage: "Neural LLM entity extraction failed",
+        logContext: ({ workspaceId, observationId }) => ({ workspaceId, observationId }),
+        buildOutput: ({ data: { observationId }, error }) => ({
+          inngestFunctionId: "neural.llm-entity-extraction",
+          status: "failure",
+          observationId,
+          error,
+        } satisfies NeuralLLMEntityExtractionOutputFailure),
+      },
+    ),
   },
   { event: "apps-console/neural/llm-entity-extraction.requested" },
   async ({ event, step }) => {

@@ -15,7 +15,8 @@ import {
 import { eq, and, desc } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { z } from "zod";
-import { createJob, updateJobStatus, completeJob, recordJobMetric, getJobByInngestRunId } from "../../../lib/jobs";
+import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../../lib/jobs";
+import { createNeuralOnFailureHandler } from "./on-failure-handler";
 import {
   createTracedModel,
   generateObject,
@@ -73,33 +74,19 @@ export const clusterSummaryCheck = inngest.createFunction(
     },
 
     // Handle failures gracefully - complete job as failed
-    onFailure: async ({ event, error }) => {
-      const originalEvent = event.data.event;
-      const { workspaceId, clusterId } = originalEvent.data;
-      const eventId = originalEvent.id;
-
-      log.error("Neural cluster summary failed", {
-        workspaceId,
-        clusterId,
-        error: error.message,
-      });
-
-      if (eventId) {
-        const job = await getJobByInngestRunId(eventId);
-        if (job) {
-          await completeJob({
-            jobId: job.id,
-            status: "failed",
-            output: {
-              inngestFunctionId: "neural.cluster.summary",
-              status: "failure",
-              clusterId,
-              error: error.message,
-            } satisfies NeuralClusterSummaryOutputFailure,
-          });
-        }
-      }
-    },
+    onFailure: createNeuralOnFailureHandler(
+      "apps-console/neural/cluster.check-summary",
+      {
+        logMessage: "Neural cluster summary failed",
+        logContext: ({ workspaceId, clusterId }) => ({ workspaceId, clusterId }),
+        buildOutput: ({ data: { clusterId }, error }) => ({
+          inngestFunctionId: "neural.cluster.summary",
+          status: "failure",
+          clusterId,
+          error,
+        } satisfies NeuralClusterSummaryOutputFailure),
+      },
+    ),
   },
   { event: "apps-console/neural/cluster.check-summary" },
   async ({ event, step }) => {

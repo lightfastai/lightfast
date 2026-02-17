@@ -45,7 +45,21 @@ export const recordActivity = inngest.createFunction(
   },
   { event: "apps-console/activity.record" },
   async ({ events, step }) => {
+    // Guard: Inngest's batchEvents config should never deliver an empty array,
+    // but defend against it to avoid a Postgres error on INSERT with no values.
+    if (events.length === 0) {
+      log.warn("Received empty activity batch, skipping");
+      return {
+        success: true,
+        workspaceId: undefined,
+        batchSize: 0,
+        insertedCount: 0,
+        timestamp: new Date().toISOString(),
+      };
+    }
+
     const batchSize = events.length;
+    // Safe after the length guard above
     const workspaceId = events[0].data.workspaceId;
 
     log.info("Processing activity batch", {

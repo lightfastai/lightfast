@@ -17,7 +17,8 @@ import {
 import { eq, and, desc, sql } from "drizzle-orm";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 import { log } from "@vendor/observability/log";
-import { createJob, updateJobStatus, completeJob, recordJobMetric, getJobByInngestRunId } from "../../../lib/jobs";
+import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../../lib/jobs";
+import { createNeuralOnFailureHandler } from "./on-failure-handler";
 import { upsertOrgActorIdentity } from "../../../lib/actor-identity";
 import type {
   NeuralProfileUpdateInput,
@@ -50,39 +51,19 @@ export const profileUpdate = inngest.createFunction(
     },
 
     // Handle failures gracefully - complete job as failed
-    onFailure: async ({ event, error }) => {
-      const originalEvent = event.data.event;
-      if (!originalEvent) {
-        log.error("Neural profile update failed with missing event data", {
-          error: error.message,
-        });
-        return;
-      }
-      const { workspaceId, actorId } = originalEvent.data;
-      const eventId = originalEvent.id;
-
-      log.error("Neural profile update failed", {
-        workspaceId,
-        actorId,
-        error: error.message,
-      });
-
-      if (eventId) {
-        const job = await getJobByInngestRunId(eventId);
-        if (job) {
-          await completeJob({
-            jobId: job.id,
-            status: "failed",
-            output: {
-              inngestFunctionId: "neural.profile.update",
-              status: "failure",
-              actorId,
-              error: error.message,
-            } satisfies NeuralProfileUpdateOutputFailure,
-          });
-        }
-      }
-    },
+    onFailure: createNeuralOnFailureHandler(
+      "apps-console/neural/profile.update",
+      {
+        logMessage: "Neural profile update failed",
+        logContext: ({ workspaceId, actorId }) => ({ workspaceId, actorId }),
+        buildOutput: ({ data: { actorId }, error }) => ({
+          inngestFunctionId: "neural.profile.update",
+          status: "failure",
+          actorId,
+          error,
+        } satisfies NeuralProfileUpdateOutputFailure),
+      },
+    ),
   },
   { event: "apps-console/neural/profile.update" },
   async ({ event, step }) => {
