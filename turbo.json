@@ -46,7 +46,7 @@
       "env": []
     },
     "typecheck": {
-      "dependsOn": [],
+      "dependsOn": ["^build"],
       "outputs": [".cache/tsbuildinfo.json"],
       "env": []
     },

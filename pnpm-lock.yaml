@@ -1676,6 +1676,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.22
+      eslint:
+        specifier: 'catalog:'
+        version: 9.38.0(jiti@2.6.1)
       tsup:
         specifier: ^8.5.0
         version: 8.5.0(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
