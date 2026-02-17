@@ -1,3 +1,5 @@
+import "../env";
+
 // Re-export of Vercel Blob functionality with explicit named exports for better tree-shaking
 
 // Value exports (classes and functions)
