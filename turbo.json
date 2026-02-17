@@ -41,7 +41,7 @@
       "outputLogs": "new-only"
     },
     "lint": {
-      "dependsOn": [],
+      "dependsOn": ["^build"],
       "outputs": [".cache/.eslintcache"],
       "env": []
     },

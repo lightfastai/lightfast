@@ -17,7 +17,7 @@ jobs:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      lightfast-core: ${{ steps.changes.outputs.lightfast-core }}
+      general: ${{ steps.changes.outputs.general }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,17 +27,20 @@ jobs:
         id: changes
         with:
           filters: |
-            lightfast-core:
-              - 'core/lightfast/**'
-              - 'core/mcp/**'
+            general:
+              - 'apps/**'
+              - 'packages/**'
+              - 'vendor/**'
+              - 'api/**'
+              - 'internal/**'
               - 'pnpm-lock.yaml'
               - '.github/workflows/ci.yml'
 
-  # Fast feedback: Lint first (quickest to fail)
+  # Lint all general packages
   lint:
     name: Lint
     needs: changes
-    if: needs.changes.outputs.lightfast-core == 'true'
+    if: needs.changes.outputs.general == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -60,13 +63,19 @@ jobs:
       - name: Lint packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo lint --filter=lightfast --filter=@lightfastai/mcp
+        run: |
+          pnpm turbo lint \
+            --filter='./apps/*' \
+            --filter='./packages/*' \
+            --filter='./vendor/*' \
+            --filter='./api/*' \
+            --continue
 
-  # Type checking (medium speed)
+  # Type check all general packages
   typecheck:
     name: Type Check
     needs: changes
-    if: needs.changes.outputs.lightfast-core == 'true'
+    if: needs.changes.outputs.general == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -89,90 +98,26 @@ jobs:
       - name: Type check packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo typecheck --filter=lightfast --filter=@lightfastai/mcp
-
-  # Test (simple test run on Node 22)
-  test:
-    name: Test
-    needs: changes
-    if: needs.changes.outputs.lightfast-core == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Test lightfast
-        env:
-          SKIP_ENV_VALIDATION: "true"
-        run: pnpm --filter lightfast test
-
-
-  # Build check (runs on Node 22)
-  build:
-    name: Build
-    needs: changes
-    if: needs.changes.outputs.lightfast-core == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        env:
-          SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp
-
-      - name: Check build outputs
         run: |
-          echo "📦 lightfast build outputs:"
-          ls -la core/lightfast/dist/
-          echo ""
-          echo "📦 @lightfastai/mcp build outputs:"
-          ls -la core/mcp/dist/
-          echo "✅ All builds completed successfully"
+          pnpm turbo typecheck \
+            --filter='./apps/*' \
+            --filter='./packages/*' \
+            --filter='./vendor/*' \
+            --filter='./api/*' \
+            --continue
 
   # Summary job (required status check)
   ci-success:
     name: CI Success
-    if: always() && needs.changes.outputs.lightfast-core == 'true'
-    needs: [changes, lint, typecheck, test, build]
+    if: always() && needs.changes.outputs.general == 'true'
+    needs: [changes, lint, typecheck]
     runs-on: ubuntu-latest
     steps:
       - name: Check all jobs
         run: |
           if [[ "${{ needs.lint.result }}" != "success" || \
-                "${{ needs.typecheck.result }}" != "success" || \
-                "${{ needs.test.result }}" != "success" || \
-                "${{ needs.build.result }}" != "success" ]]; then
-            echo "❌ Some CI checks failed"
+                "${{ needs.typecheck.result }}" != "success" ]]; then
+            echo "Some CI checks failed"
             exit 1
           fi
-          echo "✅ All CI checks passed!"
+          echo "All CI checks passed!"

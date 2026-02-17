@@ -1,0 +1,178 @@
+name: Core CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel previous runs on new pushes to the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Detect changes to only run CI when needed
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.changes.outputs.core }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            core:
+              - 'core/lightfast/**'
+              - 'core/mcp/**'
+              - 'pnpm-lock.yaml'
+              - '.github/workflows/ci-core.yml'
+
+  # Fast feedback: Lint first (quickest to fail)
+  lint:
+    name: Lint
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.2
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint packages
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm turbo lint --filter=lightfast --filter=@lightfastai/mcp
+
+  # Type checking (medium speed)
+  typecheck:
+    name: Type Check
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.2
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check packages
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm turbo typecheck --filter=lightfast --filter=@lightfastai/mcp
+
+  # Test (simple test run on Node 22)
+  test:
+    name: Test
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.2
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test lightfast
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm --filter lightfast test
+
+
+  # Build check (runs on Node 22)
+  build:
+    name: Build
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.2
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp
+
+      - name: Check build outputs
+        run: |
+          echo "lightfast build outputs:"
+          ls -la core/lightfast/dist/
+          echo ""
+          echo "@lightfastai/mcp build outputs:"
+          ls -la core/mcp/dist/
+          echo "All builds completed successfully"
+
+  # Summary job (required status check)
+  core-ci-success:
+    name: Core CI Success
+    if: always() && needs.changes.outputs.core == 'true'
+    needs: [changes, lint, typecheck, test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all jobs
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" || \
+                "${{ needs.typecheck.result }}" != "success" || \
+                "${{ needs.test.result }}" != "success" || \
+                "${{ needs.build.result }}" != "success" ]]; then
+            echo "Some Core CI checks failed"
+            exit 1
+          fi
+          echo "All Core CI checks passed!"
