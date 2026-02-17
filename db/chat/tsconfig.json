@@ -3,6 +3,6 @@
   "compilerOptions": {
     "tsBuildInfoFile": ".cache/tsbuildinfo.json"
   },
-  "include": ["env.ts", "src"],
+  "include": ["env.ts", "client.ts", "src"],
   "exclude": ["node_modules", "dist"]
 }
