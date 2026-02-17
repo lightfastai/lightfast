@@ -270,7 +270,7 @@ export default function HomePage() {
 
               {/* Hero text - positioned on the left */}
               <div className="relative z-20 mx-auto flex w-full max-w-[1400px] items-start pt-[18vh] md:pt-[15vh] lg:items-center lg:pt-0 min-h-screen px-8 pb-24 md:px-16 md:pb-32 lg:px-24 lg:pb-40">
-                <div className="flex max-w-sm md:max-w-lg flex-col justify-center w-full">
+                <div className="flex max-w-sm md:max-w-lg lg:max-w-sm flex-col justify-center w-full">
                   <Icons.logoShort className="hidden md:block w-5 h-5 mb-4 text-muted-foreground" />
                   <h1 className="text-4xl md:text-3xl lg:text-3xl font-pp font-medium mb-4">
                     <span className="text-muted-foreground">The</span>{" "}
