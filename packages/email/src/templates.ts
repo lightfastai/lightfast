@@ -1,1 +1,1 @@
-export * from "./templates/code-email";
+export { codeEmailText, CodeEmail } from "./templates/code-email";
