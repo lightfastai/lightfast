@@ -13,12 +13,6 @@ interface SessionData {
 	resourceId: string;
 }
 
-interface StreamData {
-	id: string;
-	sessionId: string;
-	createdAt: string;
-}
-
 /**
  * Redis-based implementation of Memory interface
  */

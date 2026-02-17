@@ -79,6 +79,7 @@ export type InferToolContext<T> = T extends ToolFactory<infer C> ? C : never;
 /**
  * Type helper to extract the return type of a tool factory
  */
-export type InferTool<T> = T extends ToolFactory<infer _>
+ 
+export type InferTool<T> = T extends ToolFactory<infer _TContext>
 	? ReturnType<T>
 	: never;

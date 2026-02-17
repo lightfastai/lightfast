@@ -428,7 +428,8 @@ function mapAiSdkErrorToApiError(error: AISDKError, operation: string): ApiError
 
 	const lowerName = error.name.toLowerCase();
 	let statusCode = typeof (error as { statusCode?: number }).statusCode === "number"
-		? (error as { statusCode?: number }).statusCode!
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		? ((error as { statusCode?: number }).statusCode!)
 		: undefined;
 
 	let category = LightfastErrorCategory.Stream;

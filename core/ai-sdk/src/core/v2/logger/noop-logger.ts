@@ -2,7 +2,7 @@
  * No-op logger implementation for when logging is disabled
  */
 
-import type { ILogger, LogEventContextMap, LogEventName } from "./types";
+import type { ILogger, LogEventContextMap } from "./types";
 
 export class NoopLogger implements ILogger {
 	trace(_message: string, _context?: Record<string, any>): void {

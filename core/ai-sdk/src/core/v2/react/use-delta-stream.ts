@@ -227,7 +227,7 @@ export function useDeltaStream(
 												break;
 											}
 										}
-									} catch (e) {
+									} catch {
 										// Silently ignore malformed messages
 									}
 								}

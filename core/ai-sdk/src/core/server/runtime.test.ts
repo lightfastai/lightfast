@@ -6,8 +6,6 @@ import {
 	NoUserMessageError,
 	SessionForbiddenError,
 	SessionNotFoundError,
-	toAgentApiError,
-	toMemoryApiError,
 } from "./errors";
 import {
 	processMessage,
@@ -21,7 +19,7 @@ import type { Memory } from "../memory";
 
 // Mock the pieces of the AI SDK we interact with
 vi.mock("ai", async () => {
-	const actual = await vi.importActual<typeof import("ai")>("ai");
+	const actual: typeof import("ai") = await vi.importActual("ai");
 	return {
 		...actual,
 		streamText: vi.fn(),

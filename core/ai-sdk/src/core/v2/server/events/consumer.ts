@@ -222,7 +222,7 @@ export class EventConsumer {
 				// Handle client disconnect
 				signal?.addEventListener("abort", () => {
 					console.log("Client disconnected, cleaning up event subscription");
-					subscription?.unsubscribe();
+					void subscription?.unsubscribe();
 					controller.close();
 				});
 			},
@@ -325,7 +325,7 @@ export class EventConsumer {
 			}
 
 			// Cleanup
-			subscription.unsubscribe();
+			void subscription.unsubscribe();
 		} catch (error) {
 			if (onError) {
 				await onError(error as Error);

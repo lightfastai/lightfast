@@ -1,12 +1,3 @@
-import type { 
-  UIMessage, 
-  LanguageModelUsage,
-  FinishReason,
-  CallWarning,
-  GeneratedFile,
-  LanguageModelRequestMetadata,
-  LanguageModelResponseMetadata
-} from "ai";
 import type { ApiError } from "./errors";
 import type { SystemContext, RequestContext } from "./adapters/types";
 
@@ -55,20 +46,6 @@ export interface AgentStartEvent extends BaseLifecycleEvent {
   agentName: string;
   /** Number of messages in the conversation */
   messageCount: number;
-}
-
-/**
- * The base type from UIMessageStreamOnFinishCallback
- */
-interface UIMessageStreamOnFinishEvent<UI_MESSAGE extends UIMessage = UIMessage> {
-  /** The updated list of messages */
-  messages: UI_MESSAGE[];
-  /** Whether the response is a continuation */
-  isContinuation: boolean;
-  /** Whether the stream was aborted */
-  isAborted: boolean;
-  /** The response message that was generated */
-  responseMessage: UI_MESSAGE;
 }
 
 /**

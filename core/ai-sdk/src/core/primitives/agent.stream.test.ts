@@ -1,6 +1,5 @@
-import type { ToolSet, UIMessage, CoreMessage } from "ai";
+import type { UIMessage } from "ai";
 
-type MessageWithContent = CoreMessage;
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createUserMessage, createAssistantMessage, getMessageText } from "../test-utils/message-helpers";
 import { z } from "zod";
@@ -58,7 +57,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 			const longRunningTool = createTool<TestRuntimeContext>({
 				description: "Long running tool that should be cancellable",
 				inputSchema: z.object({ task: z.string() }),
-				execute: async ({ task }, context) => {
+				execute: async ({ task }, _context) => {
 					// Simulate long-running operation
 					await new Promise((resolve) => setTimeout(resolve, 2000));
 					return { result: `Completed: ${task}` };
@@ -95,7 +94,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 
 			// Verify that the stream params contain the long-running tool
 			expect(streamParams.tools).toHaveProperty("longRunningTool");
-			expect(streamParams.tools!.longRunningTool).toHaveProperty("execute");
+			expect(streamParams.tools?.longRunningTool).toHaveProperty("execute");
 		});
 
 		it("should build params for handling partial message corruption", () => {
@@ -211,8 +210,8 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 
 				expect(streamParams).toBeDefined();
 				expect(streamParams.tools).toHaveProperty("statefulTool");
-				expect(streamParams.tools!.statefulTool).toHaveProperty("execute");
-				expect(typeof streamParams.tools!.statefulTool!.execute).toBe("function");
+				expect(streamParams.tools?.statefulTool).toHaveProperty("execute");
+				expect(typeof streamParams.tools?.statefulTool?.execute).toBe("function");
 			}
 		});
 
@@ -274,7 +273,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 					callB: z.boolean().optional(),
 					depth: z.number().default(0),
 				}),
-				execute: async ({ callB, depth }, context) => {
+				execute: ({ callB, depth }, _context) => {
 					recursionDepth++;
 
 					if (depth > MAX_RECURSION) {
@@ -284,13 +283,13 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 					if (callB) {
 						// In a real scenario, this would somehow trigger Tool B
 						// For testing, we simulate the circular dependency
-						return {
+						return Promise.resolve({
 							result: "A called B",
 							depth: depth + 1,
 							recursionDepth,
-						};
+						});
 					}
-					return { result: "A completed", depth, recursionDepth };
+					return Promise.resolve({ result: "A completed", depth, recursionDepth });
 				},
 			});
 
@@ -300,7 +299,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 					callA: z.boolean().optional(),
 					depth: z.number().default(0),
 				}),
-				execute: async ({ callA, depth }, context) => {
+				execute: ({ callA, depth }, _context) => {
 					recursionDepth++;
 
 					if (depth > MAX_RECURSION) {
@@ -309,13 +308,13 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 
 					if (callA) {
 						// In a real scenario, this would somehow trigger Tool A
-						return {
+						return Promise.resolve({
 							result: "B called A",
 							depth: depth + 1,
 							recursionDepth,
-						};
+						});
 					}
-					return { result: "B completed", depth, recursionDepth };
+					return Promise.resolve({ result: "B completed", depth, recursionDepth });
 				},
 			});
 
@@ -346,8 +345,8 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 			expect(streamParams.tools).toHaveProperty("toolA");
 			expect(streamParams.tools).toHaveProperty("toolB");
 			// Both tools should be properly configured even with circular dependencies
-			expect(typeof streamParams.tools!.toolA!.execute).toBe("function");
-			expect(typeof streamParams.tools!.toolB!.execute).toBe("function");
+			expect(typeof streamParams.tools?.toolA?.execute).toBe("function");
+			expect(typeof streamParams.tools?.toolB?.execute).toBe("function");
 		});
 
 		it("should configure tools with strict schema validation", () => {
@@ -359,8 +358,8 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 					email: z.string().email(),
 					options: z.array(z.string()).max(5),
 				}),
-				execute: async (validatedInput, context) => {
-					return { result: "Validation passed", input: validatedInput };
+				execute: (validatedInput, _context) => {
+					return Promise.resolve({ result: "Validation passed", input: validatedInput });
 				},
 			});
 
@@ -384,7 +383,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 				{ options: Array(10).fill("opt") }, // too many options
 			];
 
-			for (const [index, invalidInput] of invalidInputs.entries()) {
+			for (const [index, _invalidInput] of invalidInputs.entries()) {
 				// Build stream params with tool configured
 				const streamParams = agent.buildStreamParams({
 					sessionId: `validation-session-${index}`,
@@ -473,7 +472,7 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 		});
 
 		it("should handle tool factory errors", () => {
-			const errorTool = (context: TestRuntimeContext) => {
+			const errorTool = (_context: TestRuntimeContext) => {
 				throw new Error("Tool factory failed");
 			};
 

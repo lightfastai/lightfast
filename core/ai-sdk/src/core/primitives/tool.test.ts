@@ -14,8 +14,8 @@ describe("createTool", () => {
 			inputSchema: z.object({
 				message: z.string(),
 			}),
-			execute: async ({ message }, context) => {
-				return { result: `Hello ${message} from ${context.sessionId}` };
+			execute: ({ message }, context) => {
+				return Promise.resolve({ result: `Hello ${message} from ${context.sessionId}` });
 			},
 		});
 
@@ -28,8 +28,8 @@ describe("createTool", () => {
 			inputSchema: z.object({
 				message: z.string(),
 			}),
-			execute: async ({ message }, context) => {
-				return { result: `Hello ${message} from ${context.sessionId}` };
+			execute: ({ message }, context) => {
+				return Promise.resolve({ result: `Hello ${message} from ${context.sessionId}` });
 			},
 		});
 
@@ -55,8 +55,8 @@ describe("createTool", () => {
 				count: z.number().min(1).max(10),
 				name: z.string().min(2),
 			}),
-			execute: async ({ count, name }, context) => {
-				return { result: `${name}: ${count}` };
+			execute: ({ count, name }, _context) => {
+				return Promise.resolve({ result: `${name}: ${count}` });
 			},
 		});
 
@@ -82,11 +82,11 @@ describe("createTool", () => {
 				processed: z.string(),
 				timestamp: z.number(),
 			}),
-			execute: async ({ value }, context) => {
-				return {
+			execute: ({ value }, _context) => {
+				return Promise.resolve({
 					processed: value.toUpperCase(),
 					timestamp: Date.now(),
-				};
+				});
 			},
 		});
 
@@ -139,8 +139,8 @@ describe("createTool", () => {
 			inputSchema: z.object({
 				text: z.string(),
 			}),
-			execute: async ({ text }) => {
-				return { uppercase: text.toUpperCase() };
+			execute: ({ text }) => {
+				return Promise.resolve({ uppercase: text.toUpperCase() });
 			},
 		});
 

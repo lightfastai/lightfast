@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	AgentConfigurationError,
 	AgentStreamError,
@@ -6,14 +6,12 @@ import {
 	BadRequestError,
 	CacheOperationError,
 	ContextCreationError,
-	ForbiddenError,
 	GenericBadRequestError,
 	InternalServerError,
 	InvalidPathError,
 	MessageConversionError,
 	MethodNotAllowedError,
 	NoMessagesError,
-	NotFoundError,
 	toAgentApiError,
 	ToolExecutionError,
 	UnauthorizedError,
@@ -222,7 +220,7 @@ describe("Error Handling - Critical Edge Cases", () => {
 			const error = new GenericBadRequestError("Test error");
 
 			// Mock toJSON to throw
-			const originalToJSON = error.toJSON;
+			const originalToJSON = error.toJSON.bind(error);
 			error.toJSON = vi.fn().mockImplementation(() => {
 				throw new Error("toJSON failed");
 			});
@@ -231,7 +229,7 @@ describe("Error Handling - Critical Edge Cases", () => {
 			expect(() => {
 				try {
 					error.toJSON();
-				} catch (e) {
+				} catch {
 					// Fallback error representation
 					const fallback = {
 						error: error.message,
