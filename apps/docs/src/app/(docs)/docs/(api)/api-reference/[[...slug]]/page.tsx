@@ -254,7 +254,6 @@ export async function generateMetadata({
     return createMetadata({
       title: "API Reference – Lightfast",
       description: "Complete API reference for Lightfast neural memory. REST endpoints and MCP tools for team memory integration.",
-      image: "https://lightfast.ai/og.jpg",
       metadataBase: new URL("https://lightfast.ai/docs"),
       keywords: [
         "API reference",
@@ -305,15 +304,6 @@ export async function generateMetadata({
         siteName: "Lightfast Documentation",
         type: "website",
         locale: "en_US",
-        images: [
-          {
-            url: "https://lightfast.ai/og.jpg",
-            width: 1200,
-            height: 630,
-            alt: "Lightfast API Reference",
-            type: "image/jpeg",
-          }
-        ],
       },
       twitter: {
         card: "summary_large_image",
@@ -321,7 +311,6 @@ export async function generateMetadata({
         description: "Complete API reference for Lightfast neural memory. REST endpoints and MCP tools.",
         site: "@lightfastai",
         creator: "@lightfastai",
-        images: ["https://lightfast.ai/og.jpg"],
       },
       category: "Technology",
     });
@@ -336,7 +325,6 @@ export async function generateMetadata({
     return createMetadata({
       title: "Page Not Found – Lightfast API Reference",
       description: "The requested API documentation page could not be found",
-      image: "https://lightfast.ai/og.jpg",
       metadataBase: new URL("https://lightfast.ai/docs"),
       robots: {
         index: false,
@@ -353,7 +341,6 @@ export async function generateMetadata({
   return createMetadata({
     title,
     description,
-    image: "https://lightfast.ai/og.jpg",
     metadataBase: new URL("https://lightfast.ai/docs"),
     keywords: [
       "API reference",
@@ -403,15 +390,6 @@ export async function generateMetadata({
       siteName: "Lightfast API Reference",
       type: "article",
       locale: "en_US",
-      images: [
-        {
-          url: "https://lightfast.ai/og.jpg",
-          width: 1200,
-          height: 630,
-          alt: title,
-          type: "image/jpeg",
-        }
-      ],
     },
     twitter: {
       card: "summary_large_image",
@@ -419,7 +397,6 @@ export async function generateMetadata({
       description,
       site: "@lightfastai",
       creator: "@lightfastai",
-      images: ["https://lightfast.ai/og.jpg"],
     },
     category: "Technology",
   });

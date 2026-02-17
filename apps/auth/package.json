@@ -23,6 +23,7 @@
     "@clerk/types": "catalog:",
     "@hookform/resolvers": "^3.10.0",
     "@repo/app-urls": "workspace:*",
+    "@repo/og": "workspace:*",
     "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",

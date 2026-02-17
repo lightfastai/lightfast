@@ -40,7 +40,6 @@ export const metadata: Metadata = createMetadata({
     title: "Lightfast Pricing",
     description:
       "Memory layer for every size team. Start free, scale transparently. Neural Memory, semantic search, and unlimited sources available.",
-    images: ["https://lightfast.ai/og.jpg"],
   },
   alternates: {
     canonical: "https://lightfast.ai/pricing",

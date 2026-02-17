@@ -18,15 +18,19 @@
           "group": "marketing",
           "paths": [
             "/",
+            "/opengraph-image-:hash",
             "/api/og/search-demo",
             "/pricing",
+            "/pricing/opengraph-image-:hash",
             "/changelog",
             "/changelog/:path*",
             "/blog",
             "/blog/:path*",
             "/use-cases",
             "/use-cases/:path",
+            "/use-cases/:path/opengraph-image-:hash",
             "/early-access",
+            "/early-access/opengraph-image-:hash",
             "/legal/:path*",
             "/search",
             "/preview",
@@ -55,7 +59,12 @@
       "routing": [
         {
           "group": "auth",
-          "paths": ["/sign-in", "/sign-in/:path*", "/sign-up"]
+          "paths": [
+            "/sign-in",
+            "/sign-in/:path*",
+            "/sign-up",
+            "/sign-up/opengraph-image-:hash"
+          ]
         }
       ]
     }

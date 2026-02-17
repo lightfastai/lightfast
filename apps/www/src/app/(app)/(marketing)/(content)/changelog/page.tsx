@@ -17,21 +17,12 @@ export const metadata: Metadata = {
     type: "website",
     url: "https://lightfast.ai/changelog",
     siteName: "Lightfast",
-    images: [
-      {
-        url: "https://lightfast.ai/og.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Lightfast Changelog",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Lightfast Changelog",
     description:
       "Product updates, new features, and improvements from Lightfast",
-    images: ["https://lightfast.ai/og.jpg"],
     creator: "@lightfastai",
   },
   alternates: {

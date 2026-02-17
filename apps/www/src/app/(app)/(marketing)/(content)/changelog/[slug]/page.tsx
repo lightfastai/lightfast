@@ -57,7 +57,6 @@ export async function generateMetadata({
 
   const canonicalUrl =
     entry.seo?.canonicalUrl || `https://lightfast.ai/changelog/${slug}`;
-  const ogImage = entry.featuredImage?.url || "https://lightfast.ai/og.jpg";
   const publishedTime = entry.publishedAt || entry._sys?.createdAt;
 
   return {
@@ -81,20 +80,11 @@ export async function generateMetadata({
       url: canonicalUrl,
       siteName: "Lightfast",
       publishedTime: publishedTime ?? undefined,
-      images: [
-        {
-          url: ogImage,
-          width: entry.featuredImage?.width ?? 1200,
-          height: entry.featuredImage?.height ?? 630,
-          alt: entry.featuredImage?.alt ?? title,
-        },
-      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [ogImage],
       creator: "@lightfastai",
     },
     ...(entry.seo?.noIndex ? { robots: { index: false } } : {}),

@@ -28,6 +28,7 @@
     "@repo/console-billing": "workspace:*",
     "@repo/email": "workspace:*",
     "@repo/lib": "workspace:*",
+    "@repo/og": "workspace:*",
     "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",

@@ -53,8 +53,6 @@ export async function generateMetadata({
     `${post._title} - Lightfast blog`;
 
   const canonicalUrl = `https://lightfast.ai/blog/${slug}`;
-  const ogImage = post.featuredImage?.url || "https://lightfast.ai/og.jpg";
-
   return {
     title: post._title ?? undefined,
     description: description ?? undefined,
@@ -79,20 +77,11 @@ export async function generateMetadata({
       authors: post.authors
         ?.map((author) => author._title ?? "")
         .filter(Boolean),
-      images: [
-        {
-          url: ogImage,
-          width: post.featuredImage?.width ?? 1200,
-          height: post.featuredImage?.height ?? 630,
-          alt: post.featuredImage?.alt ?? post._title ?? "",
-        },
-      ],
     },
     twitter: {
       card: "summary_large_image",
       title: post._title ?? "Blog Post",
       description,
-      images: [ogImage],
       creator: "@lightfastai",
     },
   } satisfies Metadata;
