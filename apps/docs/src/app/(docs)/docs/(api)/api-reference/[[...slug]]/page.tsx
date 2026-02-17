@@ -1,4 +1,5 @@
-import { getApiPage, getApiPages, type ApiPageType } from "@/src/lib/source";
+import { getApiPage, getApiPages  } from "@/src/lib/source";
+import type {ApiPageType} from "@/src/lib/source";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { DocsLayout } from "@/src/components/docs-layout";
@@ -39,7 +40,7 @@ export default async function Page({
   // OpenAPI pages have a getAPIPageProps method from openapiPlugin
   if ("getAPIPageProps" in page.data && typeof page.data.getAPIPageProps === "function") {
     const props = page.data.getAPIPageProps();
-    const title = page.data.title || "API Reference";
+    const title = page.data.title ?? "API Reference";
     const description = page.data.description;
 
     // Build structured data for OpenAPI endpoint pages

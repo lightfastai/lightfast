@@ -38,6 +38,9 @@ export function useDocsSearch(delayMs = 100) {
     }
 
     if (!debouncedQuery.trim()) {
+      // Resetting state when query becomes empty is intentional —
+      // this synchronizes UI state with the external "no query" condition.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults('empty');
       setIsLoading(false);
       setError(undefined);

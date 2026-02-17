@@ -79,6 +79,7 @@ export function Search() {
 
   // Reset selected index when results change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting derived UI state from results is intentional
     setSelectedIndex(0);
   }, [results]);
 

@@ -14,7 +14,7 @@ const sharedIntegrations = () => [
 ];
 
 const register = () => {
-  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  // eslint-disable-next-line turbo/no-undeclared-env-vars, no-restricted-properties
   if (process.env.NEXT_RUNTIME === "nodejs") {
     init({
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
@@ -33,7 +33,7 @@ const register = () => {
     });
   }
 
-  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  // eslint-disable-next-line turbo/no-undeclared-env-vars, no-restricted-properties
   if (process.env.NEXT_RUNTIME === "edge") {
     init({
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
