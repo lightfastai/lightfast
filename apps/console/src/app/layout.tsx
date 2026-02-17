@@ -3,18 +3,11 @@ import type { Metadata, Viewport } from "next";
 import "~/styles/globals.css";
 
 import { siteConfig } from "@repo/site-config";
-import { Toaster } from "@repo/ui/components/ui/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { fonts as geistFonts } from "@repo/ui/lib/fonts";
 import { ppNeueMontreal, exposurePlus } from "~/lib/fonts";
-import { ClerkProvider } from "@clerk/nextjs";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
-import { TRPCReactProvider } from "@repo/console-trpc/react";
 import { createMetadata } from "@vendor/seo/metadata";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { ConsoleNotificationsProvider } from "~/components/notifications-provider";
-import { env } from "~/env";
-import { authUrl } from "~/lib/related-projects";
 
 export const metadata: Metadata = createMetadata({
   title: "Console",
@@ -57,38 +50,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      signInUrl={`${authUrl}/sign-in`}
-      signUpUrl={`${authUrl}/sign-up`}
-      signInFallbackRedirectUrl="/account/teams/new"
-      signUpFallbackRedirectUrl="/account/teams/new"
-      taskUrls={{
-        "choose-organization": "/account/teams/new",
-      }}
-    >
-      <html lang="en" suppressHydrationWarning>
-        <head />
-        <body
-          className={cn(
-            "dark bg-background min-h-screen antialiased",
-            geistFonts,
-            ppNeueMontreal.variable,
-            exposurePlus.variable,
-          )}
-        >
-          <NuqsAdapter>
-            <TRPCReactProvider>
-              <ConsoleNotificationsProvider>
-                {children}
-                <Toaster />
-              </ConsoleNotificationsProvider>
-            </TRPCReactProvider>
-          </NuqsAdapter>
-          <VercelAnalytics />
-          <SpeedInsights />
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" suppressHydrationWarning>
+      <head />
+      <body
+        className={cn(
+          "dark bg-background min-h-screen antialiased",
+          geistFonts,
+          ppNeueMontreal.variable,
+          exposurePlus.variable,
+        )}
+      >
+        {children}
+        <VercelAnalytics />
+        <SpeedInsights />
+      </body>
+    </html>
   );
 }
