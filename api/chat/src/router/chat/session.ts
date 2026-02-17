@@ -234,7 +234,7 @@ export const sessionRouter = {
 				// Check if it's a duplicate key error
 				const errorMessage =
 					error instanceof Error ? error.message : "Unknown error";
-				const errorCode = (error as { code?: string }).code;
+				const errorCode = (error as { code?: string } | null)?.code;
 
 				if (
 					errorCode === "ER_DUP_ENTRY" ||

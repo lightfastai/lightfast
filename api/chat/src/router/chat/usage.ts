@@ -586,7 +586,7 @@ export const usageRouter = {
 				reservationId: z.string(),
 			}),
 		)
-		.mutation(async ({ ctx: _ctx, input }) => {
+		.mutation(async ({ ctx, input }) => {
 			return await db.transaction(async (tx) => {
 				// Get reservation details
 				const reservation = await tx
@@ -599,6 +599,14 @@ export const usageRouter = {
 					throw new TRPCError({
 						code: "NOT_FOUND",
 						message: "Reservation not found",
+					});
+				}
+
+				// Verify ownership
+				if (reservation[0].clerkUserId !== ctx.session.userId) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "You don't have permission to modify this reservation",
 					});
 				}
 
@@ -646,7 +654,7 @@ export const usageRouter = {
 				reservationId: z.string(),
 			}),
 		)
-		.mutation(async ({ ctx: _ctx, input }) => {
+		.mutation(async ({ ctx, input }) => {
 			return await db.transaction(async (tx) => {
 				// Get reservation details
 				const reservation = await tx
@@ -659,6 +667,14 @@ export const usageRouter = {
 					throw new TRPCError({
 						code: "NOT_FOUND",
 						message: "Reservation not found",
+					});
+				}
+
+				// Verify ownership
+				if (reservation[0].clerkUserId !== ctx.session.userId) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "You don't have permission to modify this reservation",
 					});
 				}
 
