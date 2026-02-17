@@ -11,7 +11,7 @@ export default async function BlogListingLayout({
   const allCategories = await categoriesAPI.getCategories();
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 pt-24 pb-32">
+    <div className="w-full max-w-2xl mx-auto pt-24 pb-32">
       <div className="flex items-center justify-between mb-12">
         <h1 className="text-3xl font-pp text-foreground font-medium">Blog</h1>
         <Link
