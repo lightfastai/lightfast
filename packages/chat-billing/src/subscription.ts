@@ -3,7 +3,7 @@ import { format, toZonedTime } from "date-fns-tz";
 import { isWithinInterval } from "date-fns";
 
 import type { BillingInterval } from "./types";
-import { ClerkPlanKey } from "./types";
+import { ClerkPlanKey, getClerkPlanId } from "./types";
 
 export interface BillingLogger {
   info?(message: string, metadata?: Record<string, unknown>): void;
@@ -22,7 +22,7 @@ export interface SubscriptionData {
 
 export interface DeriveSubscriptionOptions {
   logger?: BillingLogger;
-  freePlanIds?: string[];
+  freePlanId?: string;
 }
 
 export function deriveSubscriptionData({
@@ -35,7 +35,7 @@ export function deriveSubscriptionData({
   options?: DeriveSubscriptionOptions;
 }): SubscriptionData {
   const logger = options?.logger;
-  const freePlanIds = options?.freePlanIds ?? ["cplan_free", "free-tier"];
+  const freePlanId = options?.freePlanId ?? getClerkPlanId(ClerkPlanKey.FREE_TIER);
 
   if (!subscription) {
     logger?.info?.(
@@ -53,11 +53,9 @@ export function deriveSubscriptionData({
   }
 
   const allItems = subscription.subscriptionItems ?? [];
-  const paidSubscriptionItems = allItems.filter((item) => {
-    const planId = item?.plan?.id ?? "";
-    const planName = item?.plan?.name ?? "";
-    return !freePlanIds.includes(planId) && !freePlanIds.includes(planName);
-  });
+  const paidSubscriptionItems = allItems.filter(
+    (item) => item?.plan?.id !== freePlanId,
+  );
 
   const planKey = paidSubscriptionItems.length > 0 ? ClerkPlanKey.PLUS_TIER : ClerkPlanKey.FREE_TIER;
   const billingInterval: BillingInterval =
@@ -170,13 +168,13 @@ export async function calculateBillingPeriodForUser(
     fetcher: BillingSubscriptionFetcher;
     logger?: BillingLogger;
     now?: Date;
-    freePlanIds?: string[];
+    freePlanId?: string;
   },
 ): Promise<string> {
-  const { userId, timezone, fetcher, logger, now, freePlanIds } = params;
+  const { userId, timezone, fetcher, logger, now, freePlanId } = params;
   const subscriptionData = await fetchSubscriptionData(userId, fetcher, {
     logger,
-    freePlanIds,
+    freePlanId,
   });
 
   return calculateBillingPeriodFromSubscription(userId, subscriptionData, {

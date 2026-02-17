@@ -2,10 +2,9 @@
 
 import { useMemo } from "react";
 import { usePaymentAttempts } from "@clerk/nextjs/experimental";
+import { ClerkPlanKey, getClerkPlanId } from "@repo/chat-billing";
 import { useTRPC } from "@repo/chat-trpc/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-
-const FREE_PLAN_IDS = ["cplan_free", "free-tier"];
 
 export function useBillingData() {
 	const trpc = useTRPC();
@@ -41,14 +40,11 @@ export function useBillingData() {
 			};
 		}
 
+		const freePlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
 		const allItems = subscription.subscriptionItems;
-		const paidSubscriptionItems = allItems.filter((item) => {
-			const planId = item.plan?.id ?? "";
-			const planName = item.plan?.name ?? "";
-			return (
-				!FREE_PLAN_IDS.includes(planId) && !FREE_PLAN_IDS.includes(planName)
-			);
-		});
+		const paidSubscriptionItems = allItems.filter(
+			(item) => item.plan?.id !== freePlanId,
+		);
 
 		// During plan transitions Clerk keeps multiple items (e.g. old "canceled"
 		// + new "upcoming"). Use the active item for state derivation.
