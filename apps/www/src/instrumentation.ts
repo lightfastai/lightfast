@@ -9,7 +9,11 @@ const register = () => {
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
       environment: env.NEXT_PUBLIC_VERCEL_ENV,
       tracesSampleRate: 1,
+      profilesSampleRate: 0,
       debug: false,
+      _experiments: {
+        enableLogs: true,
+      },
     });
   }
 
@@ -19,7 +23,11 @@ const register = () => {
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
       environment: env.NEXT_PUBLIC_VERCEL_ENV,
       tracesSampleRate: 1,
+      profilesSampleRate: 0,
       debug: false,
+      _experiments: {
+        enableLogs: true,
+      },
     });
   }
 };
