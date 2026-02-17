@@ -10,7 +10,7 @@ import { AppNavbarMenu } from "./app-navbar-menu";
  */
 export function AppNavbar() {
   return (
-    <div id="app-navbar" className="shrink-0 py-4 page-gutter bg-transparent">
+    <div id="app-navbar" className="shrink-0 py-4 page-gutter bg-background md:bg-transparent border-b border-border md:border-b-0">
       {/* Centered nav container */}
       <div className="relative flex items-center justify-center">
         {/* Desktop: Centered nav pill */}
