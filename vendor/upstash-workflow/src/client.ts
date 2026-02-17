@@ -108,8 +108,6 @@ let clientInstance: WorkflowClient | null = null;
  * @returns WorkflowClient instance
  */
 export function getWorkflowClient(config?: WorkflowConfig): WorkflowClient {
-  if (!clientInstance) {
-    clientInstance = new WorkflowClient(config);
-  }
+  clientInstance ??= new WorkflowClient(config);
   return clientInstance;
 }
