@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import type NextError from "next/error";
 import { useEffect } from "react";
 import { GeistMono } from "geist/font/mono";
@@ -17,8 +18,7 @@ interface GlobalErrorProperties {
 
 const GlobalError = ({ error, reset }: GlobalErrorProperties) => {
 	useEffect(() => {
-		// Log error to console in development
-		console.error("Global error:", error);
+		Sentry.captureException(error);
 	}, [error]);
 
 	return (

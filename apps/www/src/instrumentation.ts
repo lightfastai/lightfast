@@ -1,6 +1,17 @@
-import { captureRequestError, init } from "@sentry/nextjs";
+import {
+  captureConsoleIntegration,
+  captureRequestError,
+  extraErrorDataIntegration,
+  init,
+  spotlightIntegration,
+} from "@sentry/nextjs";
 
 import { env } from "~/env";
+
+const sharedIntegrations = () => [
+  captureConsoleIntegration({ levels: ["error", "warn"] }),
+  extraErrorDataIntegration({ depth: 3 }),
+];
 
 const register = () => {
   // eslint-disable-next-line turbo/no-undeclared-env-vars, no-restricted-properties
@@ -14,6 +25,12 @@ const register = () => {
       _experiments: {
         enableLogs: true,
       },
+      integrations: [
+        ...sharedIntegrations(),
+        ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
+          ? [spotlightIntegration()]
+          : []),
+      ],
     });
   }
 
@@ -28,6 +45,7 @@ const register = () => {
       _experiments: {
         enableLogs: true,
       },
+      integrations: sharedIntegrations(),
     });
   }
 };

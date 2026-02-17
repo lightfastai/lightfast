@@ -3,9 +3,13 @@ import type { NextConfig } from "next/types";
 
 import "./src/env";
 
+import { withSentry } from "@vendor/next/next-config-builder";
+
+import { env } from "./src/env";
+
 const withMDX = createMDX();
 
-const config: NextConfig = {
+let config: NextConfig = {
   reactStrictMode: true,
 
   images: {
@@ -19,10 +23,14 @@ const config: NextConfig = {
   },
 
   /** Enables hot reloading for local packages without a build step */
-  transpilePackages: ["@repo/ui", "@repo/url-utils", "@vendor/seo"],
+  transpilePackages: ["@repo/ui", "@repo/url-utils", "@vendor/seo", "@vendor/observability", "@vendor/next"],
 
   /** Asset prefix for serving through console app rewrites (/docs path) */
   assetPrefix: "/docs",
 };
+
+if (env.VERCEL) {
+  config = withSentry(config);
+}
 
 export default withMDX(config);

@@ -1,7 +1,10 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+import { sentryEnv } from "@vendor/observability/sentry-env";
+
 export const env = createEnv({
+  extends: [sentryEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])

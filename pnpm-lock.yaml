@@ -1157,9 +1157,18 @@ importers:
       '@repo/url-utils':
         specifier: workspace:*
         version: link:../../packages/url-utils
+      '@sentry/nextjs':
+        specifier: ^10.20.0
+        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@4.1.12)
+      '@vendor/next':
+        specifier: workspace:*
+        version: link:../../vendor/next
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
       '@vendor/seo':
         specifier: workspace:*
         version: link:../../vendor/seo
@@ -1254,12 +1263,18 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 9.38.0(jiti@2.6.1)
+      import-in-the-middle:
+        specifier: 'catalog:'
+        version: 1.15.0
       postcss:
         specifier: catalog:tailwind4
         version: 8.5.6
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
+      require-in-the-middle:
+        specifier: 'catalog:'
+        version: 7.5.2
       tailwindcss:
         specifier: catalog:tailwind4
         version: 4.1.11
