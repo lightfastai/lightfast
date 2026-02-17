@@ -27,7 +27,7 @@ export function buildApiPageTree(): PageTree.Root {
     index: undefined,
     children: openapiPages.map((page): PageTree.Item => ({
       type: "page",
-      name: page.data.title || "Untitled",
+      name: page.data.title ?? "Untitled",
       url: page.url,
       external: false,
     })),
@@ -49,7 +49,7 @@ export function buildApiPageTree(): PageTree.Root {
  * "search" -> "Search"
  * "find-similar" -> "Find Similar"
  */
-function formatTagName(tag: string): string {
+function _formatTagName(tag: string): string {
   return tag
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))

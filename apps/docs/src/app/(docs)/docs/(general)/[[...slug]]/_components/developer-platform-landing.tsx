@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
-import { Zap, Package, BookOpen, type LucideIcon } from "lucide-react";
+import { Zap, Package, BookOpen  } from "lucide-react";
+import type {LucideIcon} from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 
 type CardVariant = "glass" | "muted" | "red";

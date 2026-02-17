@@ -21,7 +21,9 @@ const mcpMdxPath = resolve(
 );
 
 // 1. Load OpenAPI spec and extract schema names
-const spec = JSON.parse(readFileSync(openApiPath, "utf-8"));
+const spec = JSON.parse(readFileSync(openApiPath, "utf-8")) as {
+  components?: { schemas?: Record<string, unknown> };
+};
 const schemaNames = Object.keys(spec.components?.schemas ?? {});
 
 console.log(`Found ${schemaNames.length} schemas in OpenAPI spec`);

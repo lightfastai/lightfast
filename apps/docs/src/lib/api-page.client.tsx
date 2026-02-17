@@ -41,7 +41,7 @@ export default defineClientConfig({
         // Enhance bearer token input for Lightfast API keys
         if (
           field.original?.type === "http" &&
-          field.original?.scheme === "bearer"
+          field.original.scheme === "bearer"
         ) {
           // Currently returns the field as-is
           // The default implementation handles localStorage persistence

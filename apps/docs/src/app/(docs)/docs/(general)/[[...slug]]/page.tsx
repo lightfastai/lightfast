@@ -1,4 +1,4 @@
-import { getPage, getPages, type DocsPageType } from "@/src/lib/source";
+import { getPage, getPages  } from "@/src/lib/source";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { DeveloperPlatformLanding } from "./_components/developer-platform-landing";
@@ -71,7 +71,7 @@ export default async function Page({
 
   // Type-safe access using collection type from fumadocs-mdx v14
   // DocsPageType includes runtime properties (body, toc) from DocData
-  const pageData = page.data as DocsPageType;
+  const pageData = page.data;
   const MDX = pageData.body;
   const toc = pageData.toc;
   const frontmatter = pageData;
@@ -136,8 +136,8 @@ export default async function Page({
   const techArticleEntity: TechArticle = {
     "@type": "TechArticle",
     "@id": `https://lightfast.ai/docs/${slug.join("/")}#article`,
-    headline: title ?? "Documentation",
-    description: description ?? "Documentation for Lightfast neural memory — Learn how to integrate the memory layer for software teams via a simple REST API and MCP tools. Build search by meaning with sources.",
+    headline: title,
+    description: description,
     url: `https://lightfast.ai/docs/${slug.join("/")}`,
     author: frontmatter.author
       ? { "@type": "Person", name: frontmatter.author }
@@ -174,7 +174,7 @@ export default async function Page({
       <DocsLayout toc={toc}>
         <article className="max-w-none">
           {/* Page Header */}
-          {(title !== undefined || description !== undefined) && (
+          {(title || description) && (
             <div className="flex w-full flex-col items-center text-center mb-16 max-w-3xl mx-auto">
               {title ? (
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] text-balance font-[family-name:var(--font-exposure-plus)]">
@@ -312,9 +312,10 @@ export async function generateMetadata({
   const noindex = frontmatter.noindex ?? false;
   const nofollow = frontmatter.nofollow ?? false;
 
-  // Use ogTitle/ogDescription overrides if provided, otherwise use page title/description
+  // Use ogTitle/ogDescription/ogImage overrides if provided, otherwise use defaults
   const ogTitle = frontmatter.ogTitle ?? title;
   const ogDescription = frontmatter.ogDescription ?? description;
+  const ogImage = frontmatter.ogImage ?? `https://lightfast.ai/docs${pageUrl}/og`;
 
   // Enhance the metadata with comprehensive SEO properties
   return createMetadata({

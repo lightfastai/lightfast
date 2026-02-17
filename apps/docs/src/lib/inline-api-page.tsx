@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { openapi } from "@/src/lib/openapi";
 import { createAPIPage } from "fumadocs-openapi/ui";
 
