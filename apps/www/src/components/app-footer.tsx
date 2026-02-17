@@ -24,7 +24,7 @@ export function AppFooter() {
     <footer className="dark w-full bg-background text-foreground">
       <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 pt-16 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 pt-16 pb-16">
           {/* Logo - left column */}
           <div>
             <NextLink href="/" aria-label="Lightfast">
@@ -123,17 +123,16 @@ export function AppFooter() {
           </div>
         </div>
 
-        {/* Bottom Bar - same grid structure for alignment */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 py-6">
-          {/* Copyright - left column */}
+        {/* Bottom Bar */}
+        <div className="flex flex-col gap-4 py-6 lg:grid lg:grid-cols-2 lg:gap-12">
+          {/* Copyright */}
           <p className="text-muted-foreground text-sm">
             © {siteConfig.name} {new Date().getFullYear()}
           </p>
 
-          {/* Right column with nested 3-column grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Col 1: Legal links (aligns with Product nav above) */}
-            <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 col-span-2 lg:col-span-1">
+          {/* Row 2 on mobile: Legal links / On desktop: right column */}
+          <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+            <nav className="flex flex-wrap items-center gap-x-6 gap-y-2">
               <NextLink
                 href={`mailto:${emailConfig.hello}`}
                 className="text-muted-foreground hover:text-foreground text-sm transition-colors"
@@ -154,17 +153,19 @@ export function AppFooter() {
               </NextLink>
             </nav>
 
-            {/* Col 2: Empty spacer (aligns with Resources nav above) */}
+            {/* Spacer (desktop only) */}
             <div className="hidden lg:block" />
 
-            {/* Col 3: Location (aligns with Connect nav above) */}
-            <p className="text-muted-foreground text-sm">Built in Melbourne</p>
+            {/* Location (desktop only, mobile shown above) */}
+            <p className="hidden lg:block text-muted-foreground text-sm">
+              Built in Melbourne
+            </p>
           </div>
         </div>
       </div>
 
       {/* Lissajous patterns grid */}
-      <div className="mx-auto w-full max-w-[1400px] py-16 px-8 md:px-16 lg:px-24">
+      <div className="hidden md:block mx-auto w-full max-w-[1400px] md:pt-32 md:pb-16 md:px-16 lg:px-24">
         <div className="grid grid-cols-3 md:grid-cols-9 gap-4">
           {FOOTER_PATTERNS.map((pattern, index) => (
             <div

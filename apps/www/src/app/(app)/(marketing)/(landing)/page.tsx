@@ -248,15 +248,13 @@ export default function HomePage() {
               {/* Hero visual - overflow wrapper clips the image at section edges */}
               <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
                 {/* Inner container: width/height control size, top/right control position.
-                    Changing top/right only MOVES the image without distorting it. */}
+                    Changing top/right only MOVES the image without distorting it.
+                    Mobile: larger + centered lower. Tablet: intermediate. Desktop: original. */}
                 <div
-                  className="absolute"
-                  style={{
-                    width: '80%',
-                    height: '95%',
-                    top: '5%',
-                    right: '-12.5%',
-                  }}
+                  className="absolute
+                    w-[150%] h-[90%] top-[22%] -right-[42%]
+                    md:w-[100%] md:h-[85%] md:top-[25%] md:-right-[10%]
+                    lg:w-[80%] lg:h-[95%] lg:top-[5%] lg:-right-[12.5%]"
                 >
                   <Image
                     src="/images/landing-hero.gif"
@@ -265,16 +263,16 @@ export default function HomePage() {
                     priority
                     unoptimized
                     quality={100}
-                    className="object-contain object-right-top"
+                    className="object-contain object-[65%_25%] md:object-right-top"
                   />
                 </div>
               </div>
 
               {/* Hero text - positioned on the left */}
-              <div className="relative z-20 mx-auto flex w-full max-w-[1400px] items-center min-h-screen px-8 pb-24 md:px-16 md:pb-32 lg:px-24 lg:pb-40">
-                <div className="flex max-w-[420px] flex-col justify-center">
-                  <Icons.logoShort className="w-5 h-5 mb-4 text-muted-foreground" />
-                  <h1 className="text-xl md:text-2xl lg:text-3xl font-pp font-medium mb-4">
+              <div className="relative z-20 mx-auto flex w-full max-w-[1400px] items-start pt-[18vh] md:pt-[15vh] lg:items-center lg:pt-0 min-h-screen px-8 pb-24 md:px-16 md:pb-32 lg:px-24 lg:pb-40">
+                <div className="flex max-w-sm md:max-w-lg flex-col justify-center w-full">
+                  <Icons.logoShort className="hidden md:block w-5 h-5 mb-4 text-muted-foreground" />
+                  <h1 className="text-4xl md:text-3xl lg:text-3xl font-pp font-medium mb-4">
                     <span className="text-muted-foreground">The</span>{" "}
                     <span className="text-primary">memory layer</span>{" "}
                     <span className="text-muted-foreground">
