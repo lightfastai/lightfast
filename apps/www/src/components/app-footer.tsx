@@ -21,7 +21,7 @@ const FOOTER_PATTERNS = [
 
 export function AppFooter() {
   return (
-    <footer className="dark w-full bg-background text-foreground">
+    <footer className="dark w-full h-full flex flex-col bg-background text-foreground">
       <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 pt-16 pb-16">
@@ -165,7 +165,7 @@ export function AppFooter() {
       </div>
 
       {/* Lissajous patterns grid */}
-      <div className="hidden md:block mx-auto w-full max-w-[1400px] md:pt-32 md:pb-16 md:px-16 lg:px-24">
+      <div className="hidden md:block mt-auto mx-auto w-full max-w-[1400px] md:py-16 md:px-16 lg:px-24">
         <div className="grid grid-cols-3 md:grid-cols-9 gap-4">
           {FOOTER_PATTERNS.map((pattern, index) => (
             <div
