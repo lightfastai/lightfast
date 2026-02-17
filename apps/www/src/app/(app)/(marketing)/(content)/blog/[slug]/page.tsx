@@ -102,7 +102,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
 
   return (
-    <Feed draft={isDraft} queries={[blog.postQuery(slug) as any]}>
+    <Feed draft={isDraft} queries={[blog.postQuery(slug)]}>
       {async ([data]) => {
         "use server";
 
