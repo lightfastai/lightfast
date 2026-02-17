@@ -10,7 +10,6 @@ import { SignUpEmailInput } from "./sign-up-email-input";
 import { SignUpPassword } from "./sign-up-password";
 import { SignUpCodeVerification } from "./sign-up-code-verification";
 import { OAuthSignUp } from "./oauth-sign-up";
-import { siteConfig } from "@repo/site-config";
 import { env } from "~/env";
 
 export function SignUpForm() {
