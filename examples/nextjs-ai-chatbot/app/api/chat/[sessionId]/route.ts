@@ -11,10 +11,10 @@ import { RedisMemory } from "@lightfastai/ai-sdk/memory/adapters/redis";
 import { v4 as uuidv4 } from "uuid";
 
 // Define the runtime context type
-type AppRuntimeContext = {
+interface AppRuntimeContext {
   userId: string;
   sessionId: string;
-};
+}
 
 // Empty tools object (can be extended with actual tools)
 const chatTools = {};
@@ -55,8 +55,10 @@ const handler = async (
     // Create memory instance
     // Requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars
     const memory = new RedisMemory({
-      url: process.env.UPSTASH_REDIS_REST_URL || "",
-      token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
+      // eslint-disable-next-line turbo/no-undeclared-env-vars
+      url: process.env.UPSTASH_REDIS_REST_URL ?? "",
+      // eslint-disable-next-line turbo/no-undeclared-env-vars
+      token: process.env.UPSTASH_REDIS_REST_TOKEN ?? "",
     });
 
     // Use fetchRequestHandler with inline agent definition
