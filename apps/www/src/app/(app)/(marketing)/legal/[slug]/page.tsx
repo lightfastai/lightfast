@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { legal, type LegalPostQueryResponse } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
-import { Feed } from "@vendor/cms/components/feed";
+import { Feed, isDraft } from "@vendor/cms/components/feed";
 
 type LegalPageProps = {
   params: Promise<{ slug: string }>;
@@ -34,7 +34,7 @@ export default async function LegalPage({ params }: LegalPageProps) {
   const { slug } = await params;
 
   return (
-    <Feed queries={[legal.postQuery(slug)]}>
+    <Feed draft={isDraft} queries={[legal.postQuery(slug)]}>
       {async ([data]) => {
         "use server";
 

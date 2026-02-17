@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { blog, type Post } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
-import { Feed } from "@vendor/cms/components/feed";
+import { Feed, isDraft } from "@vendor/cms/components/feed";
 import { JsonLd } from "@vendor/seo/json-ld";
 import { SocialShare } from "~/components/blog-social-share";
 
@@ -102,7 +102,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
 
   return (
-    <Feed queries={[blog.postQuery(slug) as any]}>
+    <Feed draft={isDraft} queries={[blog.postQuery(slug) as any]}>
       {async ([data]) => {
         "use server";
 

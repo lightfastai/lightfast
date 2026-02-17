@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { changelog, type ChangelogEntriesQueryResponse } from "@vendor/cms";
-import { Feed } from "@vendor/cms/components/feed";
+import { Feed, isDraft } from "@vendor/cms/components/feed";
 import { ArrowRight } from "lucide-react";
 
 export function AnnouncementBadge() {
   return (
-    <Feed queries={[changelog.entriesQuery]}>
+    <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
       {async ([data]) => {
         "use server";
 

@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { changelog, type ChangelogEntriesQueryResponse } from "@vendor/cms";
-import { Feed } from "@vendor/cms/components/feed";
+import { Feed, isDraft } from "@vendor/cms/components/feed";
 import { ArrowRight } from "lucide-react";
 
 export const revalidate = 300;
 
 export function ChangelogPreview() {
   return (
-    <Feed queries={[changelog.entriesQuery]}>
+    <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
       {async ([data]) => {
         "use server";
 

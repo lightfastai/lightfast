@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { changelog, type ChangelogEntriesQueryResponse } from "@vendor/cms";
-import { Feed } from "@vendor/cms/components/feed";
+import { Feed, isDraft } from "@vendor/cms/components/feed";
 
 export function HeroChangelogBadge() {
   return (
-    <Feed queries={[changelog.entriesQuery]}>
+    <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
       {async ([data]) => {
         "use server";
 

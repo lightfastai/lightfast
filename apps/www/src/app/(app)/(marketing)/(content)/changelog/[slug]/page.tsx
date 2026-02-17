@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { changelog, type ChangelogEntryQueryResponse } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
-import { Feed } from "@vendor/cms/components/feed";
+import { Feed, isDraft } from "@vendor/cms/components/feed";
 import { JsonLd } from "@vendor/seo/json-ld";
 import {
   Accordion,
@@ -118,7 +118,7 @@ export default async function ChangelogEntryPage({
   const { slug } = await params;
 
   return (
-    <Feed queries={[changelog.entryBySlugQuery(slug)]}>
+    <Feed draft={isDraft} queries={[changelog.entryBySlugQuery(slug)]}>
       {async ([data]) => {
         "use server";
 

@@ -3,7 +3,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { changelog, type ChangelogEntriesQueryResponse } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
-import { Feed } from "@vendor/cms/components/feed";
+import { Feed, isDraft } from "@vendor/cms/components/feed";
 import { Button } from "@repo/ui/components/ui/button";
 
 export const metadata: Metadata = {
@@ -51,7 +51,7 @@ export const revalidate = 300;
 
 export default async function ChangelogPage() {
   return (
-    <Feed queries={[changelog.entriesQuery]}>
+    <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
       {async ([data]) => {
         "use server";
 
