@@ -1,7 +1,8 @@
 import { sql } from "drizzle-orm";
 import { datetime, json, mysqlTable, primaryKey, varchar } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { ARTIFACT_KINDS, type ArtifactKind } from "@repo/chat-ai-types";
+import { ARTIFACT_KINDS } from "@repo/chat-ai-types";
+import type { ArtifactKind } from "@repo/chat-ai-types";
 
 import { uuidv4 } from "@repo/lib/uuid";
 

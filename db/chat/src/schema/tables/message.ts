@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   datetime,
   index,
@@ -11,8 +11,6 @@ import type { LightfastAppChatUIMessage } from "@repo/chat-ai-types";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { uuidv4 } from "@repo/lib/uuid";
-
-import { LightfastChatSession } from "./session";
 
 /**
  * LightfastChatMessage table represents individual messages within a chat session

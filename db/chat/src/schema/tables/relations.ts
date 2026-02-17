@@ -6,7 +6,6 @@ import { LightfastChatMessageFeedback } from "./message-feedback";
 import { LightfastChatStream } from "./stream";
 import { LightfastChatArtifact } from "./artifact";
 import { LightfastChatSessionShare } from "./session-share";
-import { LightfastChatAttachment } from "./attachment";
 
 /**
  * Drizzle Relations
