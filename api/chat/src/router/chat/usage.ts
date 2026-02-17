@@ -16,8 +16,8 @@ import { uuidv4 } from "@repo/lib/uuid";
 import {
 	BILLING_LIMITS,
 	ClerkPlanKey,
-	calculateBillingPeriodForUser,
-	fetchSubscriptionData,
+	getSubscriptionState,
+	calculateBillingPeriodFromSubscription,
 	GRACE_PERIOD_DAYS,
 } from "@repo/chat-billing";
 import { formatMySqlDateTime } from "@repo/lib/datetime";
@@ -25,15 +25,6 @@ import { formatMySqlDateTime } from "@repo/lib/datetime";
 type ChatDbTransaction = Parameters<
 	Parameters<(typeof db)["transaction"]>[0]
 >[0];
-
-const billingLogger = {
-	info: (message: string, metadata?: Record<string, unknown>) =>
-		console.log(message, metadata ?? {}),
-	warn: (message: string, metadata?: Record<string, unknown>) =>
-		console.warn(message, metadata ?? {}),
-	error: (message: string, metadata?: Record<string, unknown>) =>
-		console.error(message, metadata ?? {}),
-};
 
 function getMessageLimitsForPlan(planKey: ClerkPlanKey) {
 	const planConfig = BILLING_LIMITS[planKey];
@@ -50,24 +41,24 @@ export async function calculateBillingPeriod(
 	timezone = "UTC",
 ): Promise<string> {
 	const client = await clerkClient();
-	return calculateBillingPeriodForUser({
-		userId,
-		timezone,
-		fetcher: {
-			getUserBillingSubscription: (id: string) =>
-				client.billing.getUserBillingSubscription(id),
-		},
-		logger: billingLogger,
-	});
+	try {
+		const subscription = await client.billing.getUserBillingSubscription(userId);
+		return calculateBillingPeriodFromSubscription(subscription, { timezone });
+	} catch {
+		return calculateBillingPeriodFromSubscription(null, { timezone });
+	}
 }
 
 // Shared function to get user subscription data from Clerk
 export async function getUserSubscriptionData(userId: string) {
 	const client = await clerkClient();
-	return fetchSubscriptionData(userId, {
-		getUserBillingSubscription: (id: string) =>
-			client.billing.getUserBillingSubscription(id),
-	}, { logger: billingLogger });
+	try {
+		const subscription = await client.billing.getUserBillingSubscription(userId);
+		return { subscription, ...getSubscriptionState(subscription) };
+	} catch (error) {
+		console.error(`[Billing] Failed to fetch subscription for user ${userId}:`, error);
+		return { subscription: null, ...getSubscriptionState(null) };
+	}
 }
 
 // Helper function to get usage by period (shared logic)

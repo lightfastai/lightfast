@@ -1,185 +1,109 @@
-import type { BillingSubscription, BillingSubscriptionItem, BillingPlan } from "@clerk/backend";
+import type { BillingSubscription, BillingSubscriptionItem } from "@clerk/backend";
 import { format, toZonedTime } from "date-fns-tz";
 import { isWithinInterval } from "date-fns";
 
 import type { BillingInterval } from "./types";
 import { ClerkPlanKey, getClerkPlanId } from "./types";
 
-export interface BillingLogger {
-  info?(message: string, metadata?: Record<string, unknown>): void;
-  warn?(message: string, metadata?: Record<string, unknown>): void;
-  error?(message: string, metadata?: Record<string, unknown>): void;
-}
-
-export interface SubscriptionData {
-  subscription: BillingSubscription | null;
-  paidSubscriptionItems: BillingSubscriptionItem[];
+export interface SubscriptionState {
   planKey: ClerkPlanKey;
   hasActiveSubscription: boolean;
+  activePaidItem: BillingSubscriptionItem | null;
+  paidSubscriptionItems: BillingSubscriptionItem[];
   billingInterval: BillingInterval;
-  error?: string;
 }
 
-export interface DeriveSubscriptionOptions {
-  logger?: BillingLogger;
-  freePlanId?: string;
-}
-
-export function deriveSubscriptionData({
-  userId,
-  subscription,
-  options,
-}: {
-  userId: string;
-  subscription: BillingSubscription | null;
-  options?: DeriveSubscriptionOptions;
-}): SubscriptionData {
-  const logger = options?.logger;
-  const freePlanId = options?.freePlanId ?? getClerkPlanId(ClerkPlanKey.FREE_TIER);
+/**
+ * Derive billing state from a raw Clerk subscription.
+ * Pure function — no fetching, no logging, no side effects.
+ */
+export function getSubscriptionState(
+  subscription: BillingSubscription | null,
+): SubscriptionState {
+  const freePlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
 
   if (!subscription) {
-    logger?.info?.(
-      `[Billing] No billing data found for user ${userId}, defaulting to free tier`,
-      { userId },
-    );
-
     return {
-      subscription: null,
-      paidSubscriptionItems: [],
       planKey: ClerkPlanKey.FREE_TIER,
       hasActiveSubscription: false,
+      activePaidItem: null,
+      paidSubscriptionItems: [],
       billingInterval: "month",
     };
   }
 
-  const allItems = subscription.subscriptionItems ?? [];
-  const paidSubscriptionItems = allItems.filter(
-    (item) => item?.plan?.id !== freePlanId,
+  const paidSubscriptionItems = subscription.subscriptionItems.filter(
+    (item) => item.plan?.id !== freePlanId,
   );
 
-  const planKey = paidSubscriptionItems.length > 0 ? ClerkPlanKey.PLUS_TIER : ClerkPlanKey.FREE_TIER;
+  // During plan transitions Clerk keeps multiple items (e.g. old "canceled"
+  // + new "upcoming"). Use the active item for state derivation.
+  const activePaidItem =
+    paidSubscriptionItems.find((item) => item.status === "active") ?? null;
+
+  const planKey =
+    paidSubscriptionItems.length > 0
+      ? ClerkPlanKey.PLUS_TIER
+      : ClerkPlanKey.FREE_TIER;
+
+  const hasActiveSubscription =
+    subscription.status === "active" && activePaidItem != null;
+
   const billingInterval: BillingInterval =
-    paidSubscriptionItems[0]?.planPeriod === "annual" ? "annual" : "month";
-
-  if (paidSubscriptionItems.length > 0) {
-    logger?.info?.(`[Billing] User ${userId} has plus plan`, {
-      userId,
-      paidItems: paidSubscriptionItems.length,
-      planPeriod: paidSubscriptionItems[0]?.planPeriod,
-    });
-  } else {
-    logger?.info?.(`[Billing] User ${userId} has free plan`, { userId });
-  }
-
-  let hasActiveSubscription = false;
-  if (typeof subscription.status === "string") {
-    hasActiveSubscription = subscription.status === "active" && paidSubscriptionItems.length > 0;
-  } else {
-    logger?.warn?.("[Billing] Unexpected subscription status format", {
-      userId,
-      statusType: typeof subscription.status,
-    });
-  }
+    (activePaidItem ?? paidSubscriptionItems[0])?.planPeriod === "annual"
+      ? "annual"
+      : "month";
 
   return {
-    subscription,
-    paidSubscriptionItems,
     planKey,
     hasActiveSubscription,
+    activePaidItem,
+    paidSubscriptionItems,
     billingInterval,
   };
 }
 
-export interface BillingSubscriptionFetcher {
-  getUserBillingSubscription(userId: string): Promise<BillingSubscription>;
-}
-
-export async function fetchSubscriptionData(
-  userId: string,
-  fetcher: BillingSubscriptionFetcher,
-  options?: DeriveSubscriptionOptions,
-): Promise<SubscriptionData> {
-  try {
-    const subscription = await fetcher.getUserBillingSubscription(userId);
-    return deriveSubscriptionData({ userId, subscription, options });
-  } catch (error) {
-    const logger = options?.logger;
-    const message = error instanceof Error ? error.message : "Unknown error";
-    logger?.error?.(`[Billing] Failed to fetch subscription for user ${userId}`, {
-      userId,
-      error: message,
-    });
-
-    return {
-      subscription: null,
-      paidSubscriptionItems: [],
-      planKey: ClerkPlanKey.FREE_TIER,
-      hasActiveSubscription: false,
-      billingInterval: "month",
-      error: `Clerk API error: ${message}`,
-    };
-  }
-}
-
-export interface CalculateBillingPeriodOptions {
-  timezone?: string;
-  now?: Date;
-  logger?: BillingLogger;
-}
-
+/**
+ * Calculate the billing period identifier for a subscription.
+ * Returns "YYYY-MM-DD" for active paid subscriptions (based on period start),
+ * or "YYYY-MM" for free/inactive users.
+ */
 export function calculateBillingPeriodFromSubscription(
-  userId: string,
-  subscriptionData: SubscriptionData,
-  options: CalculateBillingPeriodOptions = {},
+  subscription: BillingSubscription | null,
+  options: { timezone?: string; now?: Date } = {},
 ): string {
-  const { timezone = "UTC", now = new Date(), logger } = options;
+  const { timezone = "UTC", now = new Date() } = options;
   const zonedNow = toZonedTime(now, timezone);
 
-  if (!subscriptionData.subscription || !subscriptionData.hasActiveSubscription) {
+  if (!subscription) {
     return format(zonedNow, "yyyy-MM");
   }
 
-  const activePaidItem = subscriptionData.paidSubscriptionItems.find((item) =>
-    Boolean(item?.periodStart && item?.periodEnd),
+  const { hasActiveSubscription, paidSubscriptionItems } =
+    getSubscriptionState(subscription);
+
+  if (!hasActiveSubscription) {
+    return format(zonedNow, "yyyy-MM");
+  }
+
+  const activePaidItem = paidSubscriptionItems.find((item) =>
+    Boolean(item.periodStart && item.periodEnd),
   );
 
   if (activePaidItem?.periodStart && activePaidItem.periodEnd) {
-    const periodStart = toZonedTime(new Date(activePaidItem.periodStart), timezone);
-    const periodEnd = toZonedTime(new Date(activePaidItem.periodEnd), timezone);
+    const periodStart = toZonedTime(
+      new Date(activePaidItem.periodStart),
+      timezone,
+    );
+    const periodEnd = toZonedTime(
+      new Date(activePaidItem.periodEnd),
+      timezone,
+    );
 
     if (isWithinInterval(zonedNow, { start: periodStart, end: periodEnd })) {
-      const billingPeriodId = format(periodStart, "yyyy-MM-dd");
-      logger?.info?.(`[Billing] User ${userId} in billing period ${billingPeriodId}`, {
-        userId,
-        billingPeriodId,
-        planPeriod: activePaidItem.planPeriod,
-      });
-      return billingPeriodId;
+      return format(periodStart, "yyyy-MM-dd");
     }
   }
 
   return format(zonedNow, "yyyy-MM");
-}
-
-export async function calculateBillingPeriodForUser(
-  params: {
-    userId: string;
-    timezone?: string;
-    fetcher: BillingSubscriptionFetcher;
-    logger?: BillingLogger;
-    now?: Date;
-    freePlanId?: string;
-  },
-): Promise<string> {
-  const { userId, timezone, fetcher, logger, now, freePlanId } = params;
-  const subscriptionData = await fetchSubscriptionData(userId, fetcher, {
-    logger,
-    freePlanId,
-  });
-
-  return calculateBillingPeriodFromSubscription(userId, subscriptionData, {
-    timezone,
-    now,
-    logger,
-  });
 }
