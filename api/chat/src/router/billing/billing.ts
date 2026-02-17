@@ -3,126 +3,51 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
 import { clerkClient } from "@clerk/nextjs/server";
-import { deriveSubscriptionData } from "@repo/chat-billing";
-import type { SubscriptionData, SubscriptionItemData } from "./types";
-
-const billingLogger = {
-  info: (message: string, metadata?: Record<string, unknown>) =>
-    console.log(message, metadata ?? {}),
-  warn: (message: string, metadata?: Record<string, unknown>) =>
-    console.warn(message, metadata ?? {}),
-  error: (message: string, metadata?: Record<string, unknown>) =>
-    console.error(message, metadata ?? {}),
-};
 
 export const billingRouter = {
   /**
-   * Get user's subscription data with computed state
-   * Replicates useSubscriptionState logic server-side for unified data fetching
+   * Get user's billing subscription from Clerk
    */
-  getSubscription: protectedProcedure.query(
-    async ({
-      ctx,
-    }): Promise<{
-      subscription: SubscriptionData | null;
-      paidSubscriptionItems: SubscriptionItemData[];
-      freeTierSubscriptionItems: SubscriptionItemData[];
-      allSubscriptionItems: SubscriptionItemData[];
-      isCanceled: boolean;
-      hasActiveSubscription: boolean;
-      nextBillingDate: string | null;
-      billingInterval: "month" | "annual";
-    }> => {
-      try {
-        const client = await clerkClient();
+  getSubscription: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const client = await clerkClient();
+      const subscription = await client.billing.getUserBillingSubscription(
+        ctx.session.userId,
+      );
+      return subscription;
+    } catch (error) {
+      // Preserve intentional TRPCErrors (e.g. ownership checks)
+      if (error instanceof TRPCError) throw error;
 
-        // Get the subscription data from Clerk
-        const subscription = await client.billing.getUserBillingSubscription(
-          ctx.session.userId,
-        );
-        const derived = deriveSubscriptionData({
-          userId: ctx.session.userId,
-          subscription,
-          options: { logger: billingLogger },
-        });
+      console.error(
+        `Failed to get subscription for user ${ctx.session.userId}:`,
+        error,
+      );
 
-        const subscriptionData = JSON.parse(
-          JSON.stringify(subscription),
-        ) as SubscriptionData | null;
-        const allSubscriptionItems: SubscriptionItemData[] =
-          subscriptionData?.subscriptionItems ?? [];
-
-        const paidSubscriptionItems = derived.paidSubscriptionItems.map(
-          (item) => JSON.parse(JSON.stringify(item)) as SubscriptionItemData,
-        );
-        const freeTierSubscriptionItems = allSubscriptionItems.filter(
-          (item) => !paidSubscriptionItems.some((paid) => paid.id === item.id),
-        );
-
-        const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
-        const nextBillingDate = subscriptionData?.nextPayment?.date;
-        const billingInterval = derived.billingInterval;
-
-        return {
-          // Raw data (now plain objects)
-          subscription: subscriptionData,
-          paidSubscriptionItems,
-          freeTierSubscriptionItems,
-          allSubscriptionItems,
-
-          // Computed state
-          isCanceled,
-          hasActiveSubscription: derived.hasActiveSubscription,
-          nextBillingDate: nextBillingDate
-            ? new Date(nextBillingDate).toISOString()
-            : null,
-          billingInterval,
-        };
-      } catch (error) {
-        // Preserve intentional TRPCErrors (e.g. ownership checks)
-        if (error instanceof TRPCError) throw error;
-
-        console.error(
-          `Failed to get subscription for user ${ctx.session.userId}:`,
-          error,
-        );
-
-        // Handle specific Clerk errors
-        if (error instanceof Error) {
-          if (error.message.includes("not found")) {
-            // Return null subscription data instead of throwing
-            return {
-              subscription: null,
-              paidSubscriptionItems: [],
-              freeTierSubscriptionItems: [],
-              allSubscriptionItems: [],
-              isCanceled: false,
-              hasActiveSubscription: false,
-              nextBillingDate: null,
-              billingInterval: "month",
-            };
-          }
-
-          if (
-            error.message.includes("unauthorized") ||
-            error.message.includes("forbidden")
-          ) {
-            throw new TRPCError({
-              code: "FORBIDDEN",
-              message:
-                "You don't have permission to access billing information",
-            });
-          }
+      if (error instanceof Error) {
+        if (error.message.includes("not found")) {
+          return null;
         }
 
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message:
-            "Failed to retrieve subscription information. Please try again later.",
-        });
+        if (
+          error.message.includes("unauthorized") ||
+          error.message.includes("forbidden")
+        ) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message:
+              "You don't have permission to access billing information",
+          });
+        }
       }
-    },
-  ),
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message:
+          "Failed to retrieve subscription information. Please try again later.",
+      });
+    }
+  }),
 
   /**
    * Cancel a subscription item
@@ -136,80 +61,65 @@ export const billingRouter = {
         endNow: z.boolean().default(false),
       }),
     )
-    .mutation(
-      async ({
-        ctx,
-        input,
-      }): Promise<{
-        success: boolean;
-        subscriptionItem: SubscriptionItemData;
-      }> => {
-        try {
-          const client = await clerkClient();
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const client = await clerkClient();
 
-          // Verify ownership: item must belong to requesting user
-          const subscription =
-            await client.billing.getUserBillingSubscription(
-              ctx.session.userId,
-            );
-          const ownsItem = subscription.subscriptionItems.some(
-            (item) => item.id === input.subscriptionItemId,
+        // Verify ownership: item must belong to requesting user
+        const subscription =
+          await client.billing.getUserBillingSubscription(
+            ctx.session.userId,
           );
-          if (!ownsItem) {
+        const ownsItem = subscription.subscriptionItems.some(
+          (item) => item.id === input.subscriptionItemId,
+        );
+        if (!ownsItem) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message:
+              "You don't have permission to cancel this subscription",
+          });
+        }
+
+        await client.billing.cancelSubscriptionItem(
+          input.subscriptionItemId,
+          { endNow: input.endNow },
+        );
+
+        return { success: true as const };
+      } catch (error) {
+        // Preserve intentional TRPCErrors (e.g. ownership checks)
+        if (error instanceof TRPCError) throw error;
+
+        console.error(
+          `Failed to cancel subscription item ${input.subscriptionItemId}:`,
+          error,
+        );
+
+        if (error instanceof Error) {
+          if (error.message.includes("not found")) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Subscription item not found",
+            });
+          }
+
+          if (
+            error.message.includes("unauthorized") ||
+            error.message.includes("forbidden")
+          ) {
             throw new TRPCError({
               code: "FORBIDDEN",
               message:
                 "You don't have permission to cancel this subscription",
             });
           }
-
-          // Cancel the subscription item using Clerk's billing API
-          const result = await client.billing.cancelSubscriptionItem(
-            input.subscriptionItemId,
-            { endNow: input.endNow },
-          );
-
-          return {
-            success: true,
-            subscriptionItem: JSON.parse(
-              JSON.stringify(result),
-            ) as SubscriptionItemData,
-          };
-        } catch (error) {
-          // Preserve intentional TRPCErrors (e.g. ownership checks)
-          if (error instanceof TRPCError) throw error;
-
-          console.error(
-            `Failed to cancel subscription item ${input.subscriptionItemId}:`,
-            error,
-          );
-
-          // Handle specific Clerk errors
-          if (error instanceof Error) {
-            if (error.message.includes("not found")) {
-              throw new TRPCError({
-                code: "NOT_FOUND",
-                message: "Subscription item not found",
-              });
-            }
-
-            if (
-              error.message.includes("unauthorized") ||
-              error.message.includes("forbidden")
-            ) {
-              throw new TRPCError({
-                code: "FORBIDDEN",
-                message:
-                  "You don't have permission to cancel this subscription",
-              });
-            }
-          }
-
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to cancel subscription. Please try again later.",
-          });
         }
-      },
-    ),
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to cancel subscription. Please try again later.",
+        });
+      }
+    }),
 } satisfies TRPCRouterRecord;

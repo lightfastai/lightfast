@@ -15,10 +15,9 @@ interface BillingManagementProps {
 }
 
 export function BillingManagement({ currentPlan }: BillingManagementProps) {
-	const { subscription } = useBillingData();
+	const { hasActiveSubscription } = useBillingData();
 
-	// Determine plan state from subscription data
-	const isPaidPlan = subscription.hasActiveSubscription || currentPlan === ClerkPlanKey.PLUS_TIER;
+	const isPaidPlan = hasActiveSubscription || currentPlan === ClerkPlanKey.PLUS_TIER;
 	const isFreePlan = !isPaidPlan;
 
 	return (
