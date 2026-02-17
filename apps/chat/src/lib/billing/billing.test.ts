@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import { getCurrentPeriod } from "~/services/usage.service";
 import { GRACE_PERIOD_DAYS } from "./types";
