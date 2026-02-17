@@ -1,42 +1,38 @@
 import { basehub } from "basehub";
-import type { CreateOp, Operation } from "basehub/api-transaction";
+import type { Operation } from "basehub/api-transaction";
 import { basehubEnv } from "@vendor/cms/env";
 import { markdownToBaseHubJson } from "../utils/markdown-to-basehub";
-
-// Extract the instance value type from CreateOp for properly typed mutation values
-type CreateInstanceOp = Extract<CreateOp, { type: "instance" }>;
-type MutationValue = NonNullable<CreateInstanceOp["value"]>;
 
 // Extract update operation types
 type UpdateOp = Extract<Operation, { type: "update" }>;
 type UpdateValue = NonNullable<UpdateOp["value"]>;
 
 // Return type for mutation functions
-type MutationResult = {
+interface MutationResult {
   transaction: { message: string | null; status: string };
-};
+}
 
 /**
  * SEO input for changelog entries
  */
-export type ChangelogSeoInput = {
+export interface ChangelogSeoInput {
   metaTitle?: string;
   metaDescription?: string;
   focusKeyword?: string;
   secondaryKeyword?: string;
   canonicalUrl?: string;
   noIndex?: boolean;
-  faq?: Array<{
+  faq?: {
     question: string;
     answer: string;
-  }>;
-};
+  }[];
+}
 
 /**
  * Input type for creating a changelog entry via BaseHub mutation.
  * Maps to ChangelogPagesItem schema fields.
  */
-export type ChangelogEntryInput = {
+export interface ChangelogEntryInput {
   /** Main title displayed in changelog list (e.g., "Neural Memory Foundation") */
   title: string;
   /** Version slug for URL (e.g., "0-2" -> /changelog/0-2) */
@@ -62,7 +58,7 @@ export type ChangelogEntryInput = {
   tldr?: string;
   /** SEO metadata and FAQ schema */
   seo?: ChangelogSeoInput;
-};
+}
 
 const getMutationClient = () => {
   return basehub({ token: basehubEnv.BASEHUB_ADMIN_TOKEN });

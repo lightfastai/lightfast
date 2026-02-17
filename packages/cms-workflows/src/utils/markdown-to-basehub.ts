@@ -9,26 +9,9 @@ import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import type {
-  Root,
   Content,
-  Paragraph,
-  Heading,
-  Text,
-  Strong,
-  Emphasis,
-  InlineCode,
-  Code,
-  List,
   ListItem,
-  Link,
-  ThematicBreak,
-  Blockquote,
-  Table,
-  TableRow,
   TableCell,
-  Image,
-  Break,
-  Delete,
 } from "mdast";
 
 // Import official basehub RichTextNode type for type compatibility
@@ -69,34 +52,6 @@ function createTextNode(text: string, marks: Mark[] = []): RichTextNode {
     (node as { marks?: Mark[] }).marks = [...marks];
   }
   return node;
-}
-
-/**
- * Generate a slug from heading text for the id attribute
- */
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
-}
-
-/**
- * Extract plain text from mdast node for slugification
- */
-function extractText(node: Content): string {
-  if (node.type === "text") {
-    return node.value;
-  }
-  if ("children" in node && Array.isArray(node.children)) {
-    return node.children.map(extractText).join("");
-  }
-  if (node.type === "inlineCode") {
-    return node.value;
-  }
-  return "";
 }
 
 /**
@@ -143,14 +98,14 @@ function convertInlineContent(
         };
         result.push(
           ...convertInlineContent(
-            (child as Delete).children as Content[],
+            (child).children as Content[],
             deleteCtx,
           ),
         );
         break;
       }
       case "inlineCode": {
-        const codeValue = (child as InlineCode).value;
+        const codeValue = (child).value;
         const codeMark: Mark = {
           type: "code",
           attrs: { isInline: true, language: "", code: codeValue },
@@ -159,7 +114,7 @@ function convertInlineContent(
         break;
       }
       case "link": {
-        const linkNode = child as Link;
+        const linkNode = child;
         const linkMark: Mark = {
           type: "link",
           attrs: { type: "link", href: linkNode.url },
@@ -175,7 +130,7 @@ function convertInlineContent(
         break;
       }
       case "image": {
-        const imgNode = child as Image;
+        const imgNode = child;
         result.push({
           type: "image" as const,
           attrs: {
@@ -208,14 +163,13 @@ function convertNode(
 ): RichTextNode | RichTextNode[] | null {
   switch (node.type) {
     case "paragraph": {
-      const para = node as Paragraph;
+      const para = node;
       const content = convertInlineContent(para.children as Content[], ctx);
       return { type: "paragraph", content };
     }
 
     case "heading": {
-      const heading = node as Heading;
-      const headingText = extractText(heading);
+      const heading = node;
       const content = convertInlineContent(heading.children as Content[], ctx);
       return {
         type: "heading" as const,
@@ -225,7 +179,7 @@ function convertNode(
     }
 
     case "code": {
-      const codeBlock = node as Code;
+      const codeBlock = node;
       return {
         type: "codeBlock" as const,
         attrs: { language: codeBlock.lang ?? undefined },
@@ -235,7 +189,7 @@ function convertNode(
     }
 
     case "list": {
-      const list = node as List;
+      const list = node;
       const listContent = list.children.map((item: ListItem) =>
         convertNode(item, ctx),
       ) as RichTextNode[];
@@ -251,7 +205,7 @@ function convertNode(
     }
 
     case "listItem": {
-      const listItem = node as ListItem;
+      const listItem = node;
       const itemContent: RichTextNode[] = [];
 
       for (const child of listItem.children) {
@@ -269,7 +223,7 @@ function convertNode(
     }
 
     case "blockquote": {
-      const blockquote = node as Blockquote;
+      const blockquote = node;
       const quoteContent: RichTextNode[] = [];
 
       for (const child of blockquote.children) {
@@ -291,17 +245,18 @@ function convertNode(
     }
 
     case "table": {
-      const table = node as Table;
+      const table = node;
       const tableContent: RichTextNode[] = [];
 
       for (let rowIndex = 0; rowIndex < table.children.length; rowIndex++) {
-        const row = table.children[rowIndex] as TableRow;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const row = table.children[rowIndex]!;
         const isHeaderRow = rowIndex === 0;
         const rowCtx = { ...ctx, isInTableHeader: isHeaderRow };
 
         const cells = row.children.map((cell: TableCell) => {
           const tableCell = cell;
-          const cellType = (isHeaderRow ? "tableHeader" : "tableCell") as "tableHeader" | "tableCell";
+          const cellType = (isHeaderRow ? "tableHeader" : "tableCell");
 
           // Table cells should contain a paragraph wrapping the inline content
           const cellInlineContent = convertInlineContent(
@@ -323,7 +278,7 @@ function convertNode(
     }
 
     case "image": {
-      const img = node as Image;
+      const img = node;
       return {
         type: "image" as const,
         attrs: {
@@ -372,12 +327,12 @@ function convertNode(
 export function markdownToBaseHubJson(markdown: string): RichTextNode[] {
   const processor = unified().use(remarkParse).use(remarkGfm);
 
-  const ast = processor.parse(markdown) as Root;
+  const ast = processor.parse(markdown);
   const ctx: ConversionContext = { marks: [], isInTableHeader: false };
   const result: RichTextNode[] = [];
 
   for (const child of ast.children) {
-    const converted = convertNode(child as Content, ctx);
+    const converted = convertNode(child, ctx);
     if (converted) {
       if (Array.isArray(converted)) {
         result.push(...converted);

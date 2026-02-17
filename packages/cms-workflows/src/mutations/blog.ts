@@ -17,25 +17,25 @@ type CreateInstanceOp = Extract<CreateOp, { type: "instance" }>;
 type MutationValue = NonNullable<CreateInstanceOp["value"]>;
 
 // Narrow input type for distribution component (matches DistributionComponent fields)
-export type DistributionInput = {
+export interface DistributionInput {
   businessGoal?: BusinessGoal | null;
   primaryProductArea?: string | null;
   targetPersona?: string | null;
   campaignTag?: string | null;
   distributionChannels?: string[] | null;
-};
+}
 
 // Narrow input type for engagement component (matches EngagementComponent fields)
-export type EngagementInput = {
+export interface EngagementInput {
   ctaType?: CTAType | null;
   ctaTitle?: string | null;
   ctaDescriptionMarkdown?: string | null;
   ctaButtonText?: string | null;
   ctaButtonUrl?: string | null;
-};
+}
 
 // Input type for creating a blog post via AI, aligned with the PostItem schema
-export type AIGeneratedPost = {
+export interface AIGeneratedPost {
   // Core content fields
   title: string;
   slug?: string;
@@ -74,7 +74,7 @@ export type AIGeneratedPost = {
   // Publishing
   publishedAt?: Date;
   status?: PostStatus;
-};
+}
 
 const getMutationClient = () => {
   return basehub({ token: basehubEnv.BASEHUB_ADMIN_TOKEN });
@@ -95,9 +95,9 @@ async function getBlogPostCollectionId(): Promise<string> {
   return (result as { blog: { post: { _id: string } } }).blog.post._id;
 }
 
-type MutationResult = {
+interface MutationResult {
   transaction: { message: string | null; status: string };
-};
+}
 
 export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<MutationResult> {
   const client = getMutationClient();
