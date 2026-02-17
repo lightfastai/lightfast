@@ -67,5 +67,5 @@ export const DEUS_LIMITS: Record<DeusPlanKey, DeusPlanLimits> = {
 } as const;
 
 export function getLimitsForPlan(planKey: DeusPlanKey): DeusPlanLimits {
-  return DEUS_LIMITS[planKey] ?? DEUS_LIMITS[DeusPlanKey.FREE];
+  return DEUS_LIMITS[planKey];
 }
