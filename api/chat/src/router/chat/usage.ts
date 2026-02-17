@@ -5,12 +5,11 @@ import { protectedProcedure } from "../../trpc";
 import { db } from "@db/chat/client";
 import {
 	LightfastChatUsage,
-	insertLightfastChatUsageSchema,
 	LightfastChatQuotaReservation,
 	RESERVATION_STATUS,
 } from "@db/chat";
 import { eq, and, sql, lt } from "drizzle-orm";
-import { toZonedTime, format } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 import { differenceInDays } from "date-fns";
 import { clerkClient } from "@clerk/nextjs/server";
 import { uuidv4 } from "@repo/lib/uuid";
@@ -37,8 +36,7 @@ const billingLogger = {
 };
 
 function getMessageLimitsForPlan(planKey: ClerkPlanKey) {
-	const planConfig =
-		BILLING_LIMITS[planKey] ?? BILLING_LIMITS[ClerkPlanKey.FREE_TIER];
+	const planConfig = BILLING_LIMITS[planKey];
 
 	return {
 		nonPremiumMessages: planConfig.nonPremiumMessagesPerMonth,
@@ -247,7 +245,7 @@ export const usageRouter = {
 							error.message.includes("unique constraint"))
 					) {
 						// Use UPDATE with WHERE clause for atomic increment
-						const result = await tx
+						await tx
 							.update(LightfastChatUsage)
 							.set({
 								nonPremiumMessages: sql`${LightfastChatUsage.nonPremiumMessages} + ${input.count}`,
@@ -308,7 +306,7 @@ export const usageRouter = {
 							error.message.includes("unique constraint"))
 					) {
 						// Use UPDATE with WHERE clause for atomic increment
-						const result = await tx
+						await tx
 							.update(LightfastChatUsage)
 							.set({
 								premiumMessages: sql`${LightfastChatUsage.premiumMessages} + ${input.count}`,
@@ -347,7 +345,7 @@ export const usageRouter = {
 
 			// Calculate billing period using shared function for consistency
 			const period =
-				input.period ||
+				input.period ??
 				(await calculateBillingPeriod(ctx.session.userId, input.timezone));
 
 			const usage = await getUsageByPeriod(ctx.session.userId, period);
@@ -357,7 +355,7 @@ export const usageRouter = {
 		const inGracePeriod = subscription?.status === "past_due";
 		let graceDaysRemaining = 0;
 
-		if (inGracePeriod && subscription?.pastDueAt) {
+		if (inGracePeriod && subscription.pastDueAt) {
 			// Calculate days since payment failure using pastDueAt timestamp
 			const failureDate = toZonedTime(
 				new Date(subscription.pastDueAt),
@@ -588,7 +586,7 @@ export const usageRouter = {
 				reservationId: z.string(),
 			}),
 		)
-		.mutation(async ({ ctx, input }) => {
+		.mutation(async ({ ctx: _ctx, input }) => {
 			return await db.transaction(async (tx) => {
 				// Get reservation details
 				const reservation = await tx
@@ -648,7 +646,7 @@ export const usageRouter = {
 				reservationId: z.string(),
 			}),
 		)
-		.mutation(async ({ ctx, input }) => {
+		.mutation(async ({ ctx: _ctx, input }) => {
 			return await db.transaction(async (tx) => {
 				// Get reservation details
 				const reservation = await tx
@@ -693,7 +691,7 @@ export const usageRouter = {
 				expiredBefore: z.string().datetime(),
 			}),
 		)
-		.mutation(async ({ ctx, input }) => {
+		.mutation(async ({ ctx: _ctx, input }) => {
 			return await db.transaction(async (tx) => {
 				const expiredBeforeDate = new Date(input.expiredBefore);
 				const expiredBefore = formatMySqlDateTime(expiredBeforeDate);
@@ -716,7 +714,6 @@ export const usageRouter = {
 				}
 
 				// Mark them as expired
-				const expiredIds = expiredReservations.map((r) => r.id);
 				await tx
 					.update(LightfastChatQuotaReservation)
 					.set({

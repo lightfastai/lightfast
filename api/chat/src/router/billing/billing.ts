@@ -46,27 +46,26 @@ export const billingRouter = {
           options: { logger: billingLogger },
         });
 
-        const subscriptionData: SubscriptionData | null = subscription
-          ? JSON.parse(JSON.stringify(subscription))
-          : null;
+        const subscriptionData: SubscriptionData =
+          JSON.parse(JSON.stringify(subscription)) as SubscriptionData;
         const allSubscriptionItems: SubscriptionItemData[] =
-          subscriptionData?.subscriptionItems ?? [];
+          subscriptionData.subscriptionItems;
 
         const freeTierPlanIds = ["cplan_free", "free-tier"];
         const paidSubscriptionItems = allSubscriptionItems.filter(
           (item) =>
-            !freeTierPlanIds.includes(item?.plan?.id ?? "") &&
-            !freeTierPlanIds.includes(item?.plan?.name ?? ""),
+            !freeTierPlanIds.includes(item.plan?.id ?? "") &&
+            !freeTierPlanIds.includes(item.plan?.name ?? ""),
         );
 
         const freeTierSubscriptionItems = allSubscriptionItems.filter(
           (item) =>
-            freeTierPlanIds.includes(item?.plan?.id ?? "") ||
-            freeTierPlanIds.includes(item?.plan?.name ?? ""),
+            freeTierPlanIds.includes(item.plan?.id ?? "") ||
+            freeTierPlanIds.includes(item.plan?.name ?? ""),
         );
 
         const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
-        const nextBillingDate = subscriptionData?.nextPayment?.date;
+        const nextBillingDate = subscriptionData.nextPayment?.date;
         const billingInterval = derived.billingInterval;
 
         return {
@@ -141,7 +140,7 @@ export const billingRouter = {
     )
     .mutation(
       async ({
-        ctx,
+        ctx: _ctx,
         input,
       }): Promise<{
         success: boolean;

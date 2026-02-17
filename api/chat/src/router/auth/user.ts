@@ -13,10 +13,10 @@ export const userRouter = {
       
       return {
         userId: ctx.session.userId,
-        email: user?.emailAddresses?.[0]?.emailAddress || null,
-        firstName: user?.firstName || null,
-        lastName: user?.lastName || null,
-        username: user?.username || null,
+        email: user?.emailAddresses[0]?.emailAddress ?? null,
+        firstName: user?.firstName ?? null,
+        lastName: user?.lastName ?? null,
+        username: user?.username ?? null,
       };
     }),
 } satisfies TRPCRouterRecord;
