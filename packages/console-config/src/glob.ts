@@ -5,7 +5,6 @@
  */
 
 import fg from "fast-glob";
-import { join } from "node:path";
 
 /**
  * Match files in a repository against glob patterns
@@ -122,18 +121,9 @@ export function validateGlobPatterns(globs: string[]): string[] {
  * ```
  */
 export function matchesGlobs(filePath: string, globs: string[]): boolean {
-  // Use fast-glob's sync matcher for checking individual files
-  const matcher = fg.sync;
-
   // Check if the file matches any of the patterns
   for (const glob of globs) {
     try {
-      const matches = matcher(glob, {
-        cwd: "/", // Dummy cwd since we're just pattern matching
-        onlyFiles: true,
-        dot: false,
-      });
-
       // Simple check: does the pattern match the file path?
       // For a more accurate check, we can use micromatch directly
       if (fg.isDynamicPattern(glob)) {
