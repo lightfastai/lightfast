@@ -1,7 +1,12 @@
 import {
+  captureConsoleIntegration,
   captureRouterTransitionStart,
+  extraErrorDataIntegration,
+  feedbackIntegration,
+  httpClientIntegration,
   init as initSentry,
   replayIntegration,
+  spotlightBrowserIntegration,
 } from "@sentry/nextjs";
 
 import { env } from "~/env";
@@ -24,6 +29,23 @@ initSentry({
       maskAllText: true,
       blockAllMedia: true,
     }),
+    httpClientIntegration({
+      failedRequestStatusCodes: [[400, 599]],
+    }),
+    captureConsoleIntegration({
+      levels: ["error", "warn"],
+    }),
+    extraErrorDataIntegration({
+      depth: 3,
+    }),
+    feedbackIntegration({
+      colorScheme: "system",
+      showBranding: false,
+      enableScreenshot: true,
+    }),
+    ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
+      ? [spotlightBrowserIntegration()]
+      : []),
   ],
 });
 
