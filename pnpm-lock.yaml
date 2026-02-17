@@ -2000,6 +2000,9 @@ importers:
       '@eslint/eslintrc':
         specifier: ^3.3.3
         version: 3.3.3
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
       '@tailwindcss/postcss':
         specifier: ^4.1.12
         version: 4.1.14
