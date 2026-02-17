@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 export interface CorsConfig {
   allowedOrigins?: string[];
@@ -86,11 +87,10 @@ export function applyCorsHeaders(
   const origin = request.headers.get("origin");
   
   // Check if origin is allowed
-  const isAllowedOrigin = origin && (
-    config.allowedOrigins?.includes(origin) ||
-    config.allowedOrigins?.includes("*") ||
-    false
-  );
+  const isAllowedOrigin =
+    origin &&
+    ((config.allowedOrigins?.includes(origin) ?? false) ||
+      (config.allowedOrigins?.includes("*") ?? false));
   
   if (!isAllowedOrigin) {
     return response;
@@ -143,11 +143,10 @@ export function handleCorsPreflightRequest(
   }
   
   const origin = request.headers.get("origin");
-  const isAllowedOrigin = origin && (
-    config.allowedOrigins?.includes(origin) ||
-    config.allowedOrigins?.includes("*") ||
-    false
-  );
+  const isAllowedOrigin =
+    origin &&
+    ((config.allowedOrigins?.includes(origin) ?? false) ||
+      (config.allowedOrigins?.includes("*") ?? false));
   
   if (!isAllowedOrigin) {
     return new NextResponse(null, { status: 403 });
