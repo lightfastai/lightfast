@@ -2,28 +2,12 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import {
   // New 2-table system
   userSources,
-  workspaceIntegrations,
-  type UserSource,
-  // Common
-  orgWorkspaces,
 } from "@db/console/schema";
+import type {UserSource} from "@db/console/schema";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
-import { z } from "zod";
-import {
-  getUserInstallations,
-  getInstallationRepositories,
-  createGitHubApp,
-  type GitHubInstallation,
-} from "@repo/console-octokit-github";
-import { decrypt } from "@repo/lib";
-import { getWorkspaceKey } from "@db/console/utils";
-import { inngest } from "@api/console/inngest";
-import { env } from "../../env";
-import yaml from "yaml";
 
-import { orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
-import { recordActivity } from "../../lib/activity";
+import { db } from "@db/console/client";
 
 /**
  * Integration Router (Simplified 2-Table Model)
@@ -38,32 +22,19 @@ import { recordActivity } from "../../lib/activity";
  */
 
 /**
- * Helper: Create GitHub App instance
- */
-function getGitHubApp() {
-  return createGitHubApp(
-    {
-      appId: env.GITHUB_APP_ID,
-      privateKey: env.GITHUB_APP_PRIVATE_KEY,
-    },
-    true // Format private key
-  );
-}
-
-/**
  * Helper: Verify user owns source
  */
 async function verifyUserSourceOwnership(
-  ctx: any,
+  userId: string,
   userSourceId: string
 ): Promise<UserSource> {
-  const result = await ctx.db
+  const result = await db
     .select()
     .from(userSources)
     .where(
       and(
         eq(userSources.id, userSourceId),
-        eq(userSources.userId, ctx.auth.userId)
+        eq(userSources.userId, userId)
       )
     )
     .limit(1);
@@ -79,6 +50,9 @@ async function verifyUserSourceOwnership(
 
   return userSource;
 }
+
+// Suppress unused export warning - kept for future use
+void verifyUserSourceOwnership;
 
 /**
  * Integration Router (Org-scoped operations)

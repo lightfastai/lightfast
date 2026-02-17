@@ -79,7 +79,7 @@ export const userApiKeysRouter = {
 						keyPrefix: prefix,
 						keySuffix: suffix,
 						isActive: true,
-						expiresAt: input.expiresAt || null,
+						expiresAt: input.expiresAt ?? null,
 					})
 					.returning({
 						id: userApiKeys.id,

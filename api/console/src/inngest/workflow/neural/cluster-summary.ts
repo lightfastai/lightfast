@@ -5,7 +5,7 @@
  * Generates LLM summary when cluster reaches threshold.
  */
 
-import { inngest, type Events } from "../../client/client";
+import { inngest } from "../../client/client";
 import { db } from "@db/console/client";
 import {
   workspaceObservationClusters,
@@ -74,7 +74,7 @@ export const clusterSummaryCheck = inngest.createFunction(
 
     // Handle failures gracefully - complete job as failed
     onFailure: async ({ event, error }) => {
-      const originalEvent = event.data.event as Events["apps-console/neural/cluster.check-summary"];
+      const originalEvent = event.data.event;
       const { workspaceId, clusterId } = originalEvent.data;
       const eventId = originalEvent.id;
 

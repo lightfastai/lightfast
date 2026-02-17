@@ -45,13 +45,6 @@ export const workspaceAccessRouter = {
         });
       }
 
-      if (!clerkOrg) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Organization not found: ${input.clerkOrgSlug}`,
-        });
-      }
-
       // Verify user has access to this organization
       const membership = await clerk.organizations.getOrganizationMembershipList({
         organizationId: clerkOrg.id,
@@ -217,6 +210,7 @@ export const workspaceAccessRouter = {
             const data = ws.sourceConfig;
             return (
               data.sourceType === "github" &&
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive check for discriminated union
               data.type === "repository" &&
               data.repoId === repo.repoId
             );
@@ -227,6 +221,7 @@ export const workspaceAccessRouter = {
           if (existing) {
             // Update existing connection (idempotent)
             const currentConfig = existing.sourceConfig;
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive check for discriminated union
             if (currentConfig.sourceType === "github" && currentConfig.type === "repository") {
               await ctx.db
                 .update(workspaceIntegrations)

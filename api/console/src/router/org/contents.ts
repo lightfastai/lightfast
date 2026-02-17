@@ -9,9 +9,10 @@ import { TRPCError } from "@trpc/server";
 import { apiKeyProcedure } from "../../trpc";
 import {
 	ContentsRequestSchema,
-	ContentsResponseSchema,
-	type ContentsResponse,
+	ContentsResponseSchema
+	
 } from "@repo/console-types/api";
+import type {ContentsResponse} from "@repo/console-types/api";
 import { db } from "@db/console/client";
 import { workspaceKnowledgeDocuments } from "@db/console/schema";
 import { inArray, eq, and } from "drizzle-orm";
@@ -74,8 +75,8 @@ export const contentsRouter = {
 
 				// Map to response format, extracting data from sourceMetadata
 				const mappedDocs = documents.map((doc) => {
-					const metadata = (doc.sourceMetadata as Record<string, unknown>) || {};
-					const frontmatter = (metadata.frontmatter as Record<string, unknown>) || {};
+					const metadata = doc.sourceMetadata as Record<string, unknown>;
+					const frontmatter = (metadata.frontmatter as Record<string, unknown> | undefined) ?? {};
 
 					// Extract path: use sourceMetadata.path (GitHub) or sourceId (other sources)
 					const path = (metadata.path as string | undefined) ?? doc.sourceId;

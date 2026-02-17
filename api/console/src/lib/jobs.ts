@@ -8,12 +8,10 @@
 import { db } from "@db/console/client";
 import { workspaceWorkflowRuns, workspaceOperationsMetrics } from "@db/console/schema";
 import type { WorkspaceWorkflowRun, WorkflowInput, WorkflowOutput, InsertWorkspaceWorkflowRun } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import type {
 	JobTrigger,
-	OperationMetricType,
-	OperationMetricUnit,
 	JobDurationTags,
 	DocumentsIndexedTags,
 	ErrorTags,
@@ -357,8 +355,8 @@ export async function recordJobMetric(
 			repositoryId: params.repositoryId ?? null,
 			type: params.type,
 			value: params.value,
-			unit: params.unit ?? undefined,
-			tags: params.tags ?? null,
+			unit: params.unit,
+			tags: params.tags,
 		});
 
 		log.debug("Recorded job metric", {

@@ -13,7 +13,6 @@
  */
 
 import { inngest } from "../../client/client";
-import type { Events } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import {
   createGitHubApp,
@@ -66,7 +65,7 @@ export const filesBatchProcessor = inngest.createFunction(
     const {
       batchId,
       workspaceId,
-      sourceId,
+      sourceId: _sourceId,
       files,
       githubInstallationId,
       repoFullName,
@@ -155,8 +154,8 @@ export const filesBatchProcessor = inngest.createFunction(
               return {
                 success: true,
                 file: file.path,
-                content: content.content || "",
-                title: file.path.split("/").pop() || file.path,
+                content: content.content,
+                title: file.path.split("/").pop() ?? file.path,
               };
             } catch (error) {
               const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -174,7 +173,7 @@ export const filesBatchProcessor = inngest.createFunction(
         );
 
         // Process successful fetches
-        const documentsToProcess: any[] = [];
+        const documentsToProcess: { name: "apps-console/documents.process"; data: Record<string, unknown> }[] = [];
 
         fetchResults.forEach((result) => {
           if (result.status === "fulfilled") {
@@ -201,10 +200,10 @@ export const filesBatchProcessor = inngest.createFunction(
                 },
               });
             } else {
-              results.errors.push(result.value.error || "Unknown error");
+              results.errors.push(result.value.error ?? "Unknown error");
             }
           } else {
-            results.errors.push(result.reason?.message || "Unknown error");
+            results.errors.push((result.reason as Error | undefined)?.message ?? "Unknown error");
           }
         });
 

@@ -64,7 +64,7 @@ export const githubPushHandler = inngest.createFunction(
       repoFullName,
       githubRepoId,
       githubInstallationId,
-      beforeSha,
+      beforeSha: _beforeSha,
       afterSha,
       branch,
       deliveryId,
@@ -107,9 +107,9 @@ export const githubPushHandler = inngest.createFunction(
     });
 
     // Step 2: Check if push events are allowed by source config
-    const pushAllowed = await step.run("check-push-allowed", async () => {
+    const pushAllowed = await step.run("check-push-allowed", () => {
       const sourceConfig = source.sourceConfig as { sync?: { events?: string[] } };
-      const events = sourceConfig?.sync?.events;
+      const events = sourceConfig.sync?.events;
 
       if (!events || events.length === 0) {
         log.info("No events configured for source", { sourceId });
@@ -233,7 +233,7 @@ export const githubPushHandler = inngest.createFunction(
         },
       });
 
-      await step.run("sync.log-dispatch", async () => {
+      await step.run("sync.log-dispatch", () => {
         log.info("Triggered full sync (config changed)", {
           sourceId,
           repoFullName,
@@ -259,7 +259,7 @@ export const githubPushHandler = inngest.createFunction(
         },
       });
 
-      await step.run("sync.log-dispatch", async () => {
+      await step.run("sync.log-dispatch", () => {
         log.info("Triggered incremental sync (normal push)", {
           sourceId,
           repoFullName,

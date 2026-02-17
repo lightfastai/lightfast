@@ -7,7 +7,7 @@
  * Debounce: 5 minutes per actor (via concurrency + debounce)
  */
 
-import { inngest, type Events } from "../../client/client";
+import { inngest } from "../../client/client";
 import { db } from "@db/console/client";
 import {
   workspaceActorProfiles,
@@ -51,7 +51,13 @@ export const profileUpdate = inngest.createFunction(
 
     // Handle failures gracefully - complete job as failed
     onFailure: async ({ event, error }) => {
-      const originalEvent = event.data.event as Events["apps-console/neural/profile.update"];
+      const originalEvent = event.data.event;
+      if (!originalEvent) {
+        log.error("Neural profile update failed with missing event data", {
+          error: error.message,
+        });
+        return;
+      }
       const { workspaceId, actorId } = originalEvent.data;
       const eventId = originalEvent.id;
 

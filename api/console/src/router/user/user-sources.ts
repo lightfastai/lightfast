@@ -204,12 +204,12 @@ export const userSourcesRouter = {
 
 				const currentInstallations = providerMetadata.installations ?? [];
 				const currentIds = new Set(
-					currentInstallations.map((i: any) => i.id.toString()),
+					currentInstallations.map((i) => i.id.toString()),
 				);
 
 				// Map GitHub installations to our format
 				const now = new Date().toISOString();
-				const newInstallations = githubInstallations.map((install: any) => {
+				const newInstallations = githubInstallations.map((install) => {
 					const account = install.account;
 					// Handle both User and Organization account types
 					const accountLogin =
@@ -221,22 +221,22 @@ export const userSourcesRouter = {
 
 					return {
 						id: install.id.toString(),
-						accountId: account?.id?.toString() ?? "",
+						accountId: account?.id.toString() ?? "",
 						accountLogin,
 						accountType,
-						avatarUrl: account?.avatar_url ?? "",
-						permissions: (install.permissions as Record<string, string>) ?? {},
-						installedAt: install.created_at ?? now,
+						avatarUrl: account && "avatar_url" in account ? account.avatar_url : "",
+						permissions: (install.permissions as Record<string, string>),
+						installedAt: install.created_at,
 						lastValidatedAt: now,
 					};
 				});
 
-				const newIds = new Set(newInstallations.map((i: any) => i.id));
+				const newIds = new Set(newInstallations.map((i) => i.id));
 
 				// Calculate changes
-				const added = newInstallations.filter((i: any) => !currentIds.has(i.id));
+				const added = newInstallations.filter((i) => !currentIds.has(i.id));
 				const removed = currentInstallations.filter(
-					(i: any) => !newIds.has(i.id),
+					(i) => !newIds.has(i.id),
 				);
 
 				// Update providerMetadata with fresh installations
@@ -257,7 +257,7 @@ export const userSourcesRouter = {
 					removed: removed.length,
 					total: newInstallations.length,
 				};
-			} catch (error: any) {
+			} catch (error: unknown) {
 				console.error("[tRPC] GitHub installation validation failed:", error);
 
 				throw new TRPCError({
@@ -370,8 +370,15 @@ export const userSourcesRouter = {
 						})
 						.returning({ id: userSources.id });
 
-					console.log("[tRPC userSources.github.storeOAuthResult] ========== Created Successfully ==========", result[0]!.id);
-					return { id: result[0]!.id, created: true };
+					const createdId = result[0]?.id;
+					if (!createdId) {
+						throw new TRPCError({
+							code: "INTERNAL_SERVER_ERROR",
+							message: "Failed to create GitHub user source",
+						});
+					}
+					console.log("[tRPC userSources.github.storeOAuthResult] ========== Created Successfully ==========", createdId);
+					return { id: createdId, created: true };
 				}
 			}),
 
@@ -450,17 +457,17 @@ export const userSourcesRouter = {
 						id: repo.id.toString(),
 						name: repo.name,
 						fullName: repo.full_name,
-						owner: repo.owner?.login ?? "",
-						description: repo.description ?? null,
-						defaultBranch: repo.default_branch ?? "main",
-						isPrivate: repo.private ?? false,
-						isArchived: repo.archived ?? false,
-						url: repo.html_url ?? "",
-						language: repo.language ?? null,
-						stargazersCount: repo.stargazers_count ?? 0,
-						updatedAt: repo.updated_at ?? new Date().toISOString(),
+						owner: repo.owner.login,
+						description: repo.description,
+						defaultBranch: repo.default_branch,
+						isPrivate: repo.private,
+						isArchived: repo.archived,
+						url: repo.html_url,
+						language: repo.language,
+						stargazersCount: repo.stargazers_count,
+						updatedAt: repo.updated_at,
 					}));
-				} catch (error: any) {
+				} catch (error: unknown) {
 					console.error("[tRPC userSources.github.repositories] Failed to fetch repositories:", error);
 
 					throw new TRPCError({
@@ -596,6 +603,7 @@ export const userSourcesRouter = {
 							);
 
 							// Check if it's a file (not directory)
+							// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive check: API may return directory type
 							if ("content" in data && "type" in data && data.type === "file") {
 								// Validate file size (max 50KB to prevent abuse)
 								const maxSize = 50 * 1024; // 50KB
@@ -615,7 +623,7 @@ export const userSourcesRouter = {
 								// Validate YAML format before returning
 								try {
 									yaml.parse(content);
-								} catch (yamlError) {
+								} catch {
 									throw new TRPCError({
 										code: "BAD_REQUEST",
 										message: "Invalid YAML format in config file.",
@@ -629,9 +637,9 @@ export const userSourcesRouter = {
 									sha: data.sha,
 								};
 							}
-						} catch (error: any) {
+						} catch (error: unknown) {
 							// 404 means file doesn't exist, try next candidate
-							if (error.status === 404) {
+							if (error && typeof error === "object" && "status" in error && (error as { status: number }).status === 404) {
 								continue;
 							}
 							// Other errors: log and continue
@@ -645,7 +653,7 @@ export const userSourcesRouter = {
 
 					// No config found
 					return { exists: false };
-				} catch (error: any) {
+				} catch (error: unknown) {
 					console.error("[tRPC userSources.github.detectConfig] Failed to detect config:", error);
 
 					throw new TRPCError({
@@ -785,8 +793,15 @@ export const userSourcesRouter = {
 						})
 						.returning({ id: userSources.id });
 
-					console.log("[tRPC userSources.vercel.storeOAuthResult] Created successfully:", result[0]!.id);
-					return { id: result[0]!.id, created: true };
+					const vercelId = result[0]?.id;
+					if (!vercelId) {
+						throw new TRPCError({
+							code: "INTERNAL_SERVER_ERROR",
+							message: "Failed to create Vercel user source",
+						});
+					}
+					console.log("[tRPC userSources.vercel.storeOAuthResult] Created successfully:", vercelId);
+					return { id: vercelId, created: true };
 				}
 			}),
 

@@ -35,7 +35,7 @@ export const organizationRouter = {
 
 			return {
 				id: clerkOrg.id, // Clerk org ID
-				slug: clerkOrg.slug ?? clerkOrg.id, // Fallback to ID if no slug
+				slug: clerkOrg.slug,
 				name: clerkOrg.name,
 				role: membership.role,
 				imageUrl: clerkOrg.imageUrl,
@@ -57,7 +57,7 @@ export const organizationRouter = {
 					clerkOrgId: z.string().optional(),
 					clerkOrgSlug: z.string().optional(),
 				})
-				.refine((data) => data.clerkOrgId || data.clerkOrgSlug, {
+				.refine((data) => data.clerkOrgId ?? data.clerkOrgSlug, {
 					message: "Either clerkOrgId or clerkOrgSlug is required",
 				}),
 		)
@@ -67,18 +67,19 @@ export const organizationRouter = {
 
 			try {
 				// Get organization by ID or slug
+				if (!input.clerkOrgId && !input.clerkOrgSlug) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "Either clerkOrgId or clerkOrgSlug is required",
+					});
+				}
+
 				const clerkOrg = await clerk.organizations.getOrganization(
 					input.clerkOrgId
 						? { organizationId: input.clerkOrgId }
-						: { slug: input.clerkOrgSlug! },
+						// eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- avoid conflicting no-non-null-assertion rule
+						: { slug: input.clerkOrgSlug as string },
 				);
-
-				if (!clerkOrg) {
-					throw new TRPCError({
-						code: "NOT_FOUND",
-						message: "Organization not found",
-					});
-				}
 
 				// Verify user has access to this organization
 				const membership = await verifyOrgMembership({
@@ -88,7 +89,7 @@ export const organizationRouter = {
 
 				return {
 					id: clerkOrg.id,
-					slug: clerkOrg.slug ?? clerkOrg.id,
+					slug: clerkOrg.slug,
 					name: clerkOrg.name,
 					imageUrl: clerkOrg.imageUrl,
 					role: membership.role,
@@ -163,7 +164,7 @@ export const organizationRouter = {
 				// Check for specific Clerk errors
 				if (error && typeof error === "object" && "errors" in error) {
 					const clerkError = error as {
-						errors?: Array<{ code: string; message: string }>;
+						errors?: { code: string; message: string }[];
 					};
 
 					console.error("[organization.create] Clerk error details", {
@@ -173,8 +174,8 @@ export const organizationRouter = {
 					if (
 						clerkError.errors?.[0]?.code === "duplicate_record" ||
 						clerkError.errors?.[0]?.code === "form_identifier_exists" ||
-						clerkError.errors?.[0]?.message?.includes("already exists") ||
-						clerkError.errors?.[0]?.message?.includes("slug is taken")
+						clerkError.errors?.[0]?.message.includes("already exists") ||
+						clerkError.errors?.[0]?.message.includes("slug is taken")
 					) {
 						throw new TRPCError({
 							code: "CONFLICT",
@@ -250,14 +251,14 @@ export const organizationRouter = {
 				// Check for specific Clerk errors
 				if (error && typeof error === "object" && "errors" in error) {
 					const clerkError = error as {
-						errors?: Array<{ code: string; message: string }>;
+						errors?: { code: string; message: string }[];
 					};
 
 					if (
 					clerkError.errors?.[0]?.code === "duplicate_record" ||
 					clerkError.errors?.[0]?.code === "form_identifier_exists" ||
-					clerkError.errors?.[0]?.message?.includes("already exists") ||
-					clerkError.errors?.[0]?.message?.includes("slug is taken")
+					clerkError.errors?.[0]?.message.includes("already exists") ||
+					clerkError.errors?.[0]?.message.includes("slug is taken")
 					) {
 						throw new TRPCError({
 							code: "CONFLICT",

@@ -17,7 +17,6 @@ import {
   workspaceStatisticsInputSchema,
   workspaceUpdateNameInputSchema,
   workspaceResolveFromGithubOrgSlugInputSchema,
-  workspaceStatisticsComparisonInputSchema,
   workspaceJobPercentilesInputSchema,
   workspacePerformanceTimeSeriesInputSchema,
   workspaceSystemHealthInputSchema,
@@ -62,13 +61,6 @@ export const workspaceRouter = {
           slug: input.clerkOrgSlug,
         });
       } catch {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Organization not found: ${input.clerkOrgSlug}`,
-        });
-      }
-
-      if (!clerkOrg) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: `Organization not found: ${input.clerkOrgSlug}`,
@@ -355,7 +347,7 @@ export const workspaceRouter = {
 
       // Extract and parse durations
       const durations = completedJobs
-        .map((j) => Number.parseInt(j.durationMs || "0", 10))
+        .map((j) => Number.parseInt(j.durationMs ?? "0", 10))
         .filter((d) => d > 0)
         .sort((a, b) => a - b);
 
@@ -373,7 +365,7 @@ export const workspaceRouter = {
       // Calculate percentiles
       const getPercentile = (p: number) => {
         const index = Math.ceil((p / 100) * durations.length) - 1;
-        return durations[index] || 0;
+        return durations[index] ?? 0;
       };
 
       return {
@@ -381,7 +373,7 @@ export const workspaceRouter = {
         p50: getPercentile(50),
         p95: getPercentile(95),
         p99: getPercentile(99),
-        max: durations[durations.length - 1] || 0,
+        max: durations[durations.length - 1] ?? 0,
         sampleSize: durations.length,
       };
     }),
@@ -429,10 +421,10 @@ export const workspaceRouter = {
       });
 
       // Group by hour
-      const hourBuckets: Map<
+      const hourBuckets = new Map<
         string,
         { jobs: typeof recentJobs; completed: number; totalDuration: number }
-      > = new Map();
+      >();
 
       // Initialize hour buckets
       for (let i = 0; i < rangeHours; i++) {
@@ -453,7 +445,7 @@ export const workspaceRouter = {
           bucket.jobs.push(job);
           if (job.status === "completed") {
             bucket.completed++;
-            const duration = Number.parseInt(job.durationMs || "0", 10);
+            const duration = Number.parseInt(job.durationMs ?? "0", 10);
             if (duration > 0) {
               bucket.totalDuration += duration;
             }
@@ -609,7 +601,7 @@ export const workspaceRouter = {
           total: sources.length,
           byType: sources.reduce(
             (acc, s) => {
-              acc[s.sourceType] = (acc[s.sourceType] || 0) + 1;
+              acc[s.sourceType] = (acc[s.sourceType] ?? 0) + 1;
               return acc;
             },
             {} as Record<string, number>,
@@ -618,6 +610,7 @@ export const workspaceRouter = {
             id: s.id,
             type: s.sourceType,
             sourceType: s.sourceType, // Canonical name
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive check for discriminated union
             displayName: s.sourceConfig.sourceType === "github" && s.sourceConfig.type === "repository"
               ? s.sourceConfig.repoFullName
               : s.sourceType,
@@ -724,7 +717,7 @@ export const workspaceRouter = {
           .where(eq(workspaceKnowledgeDocuments.workspaceId, workspaceId));
 
         return {
-          total: docCountResult?.count || 0,
+          total: docCountResult?.count ?? 0,
           chunks: Number(chunkCountResult?.total) || 0,
         };
       }),
@@ -771,12 +764,12 @@ export const workspaceRouter = {
           );
 
         return {
-          total: jobStats?.total || 0,
+          total: jobStats?.total ?? 0,
           completed: Number(jobStats?.completed) || 0,
           failed: Number(jobStats?.failed) || 0,
           successRate:
-            (jobStats?.total || 0) > 0
-              ? ((Number(jobStats?.completed) || 0) / (jobStats?.total || 0)) * 100
+            (jobStats?.total ?? 0) > 0
+              ? ((Number(jobStats?.completed) || 0) / (jobStats?.total ?? 0)) * 100
               : 0,
           avgDurationMs: Math.round(Number(jobStats?.avgDurationMs) || 0),
         };
@@ -899,7 +892,7 @@ export const workspaceRouter = {
           },
         });
 
-        if (!integration || integration.workspace?.clerkOrgId !== ctx.auth.orgId) {
+        if (!integration || integration.workspace.clerkOrgId !== ctx.auth.orgId) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Integration not found",
@@ -1022,7 +1015,14 @@ export const workspaceRouter = {
           })
           .returning({ id: workspaceIntegrations.id });
 
-        return { id: result[0]!.id, created: true, reactivated: false };
+        const insertedId = result[0]?.id;
+        if (!insertedId) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create Vercel integration",
+          });
+        }
+        return { id: insertedId, created: true, reactivated: false };
       }),
 
     /**
@@ -1042,7 +1042,7 @@ export const workspaceRouter = {
           },
         });
 
-        if (!integration || integration.workspace?.clerkOrgId !== ctx.auth.orgId) {
+        if (!integration || integration.workspace.clerkOrgId !== ctx.auth.orgId) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Integration not found",
@@ -1076,7 +1076,7 @@ export const workspaceRouter = {
           },
         });
 
-        if (!integration || integration.workspace?.clerkOrgId !== ctx.auth.orgId) {
+        if (!integration || integration.workspace.clerkOrgId !== ctx.auth.orgId) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Integration not found",

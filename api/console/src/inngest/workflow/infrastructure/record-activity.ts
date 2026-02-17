@@ -15,7 +15,6 @@
 import { inngest } from "../../client/client";
 import { db } from "@db/console/client";
 import { workspaceUserActivities } from "@db/console/schema";
-import { nanoid } from "@repo/lib";
 import { log } from "@vendor/observability/log";
 import type { ActivityMetadata } from "@repo/console-validation";
 
@@ -47,17 +46,17 @@ export const recordActivity = inngest.createFunction(
   { event: "apps-console/activity.record" },
   async ({ events, step }) => {
     const batchSize = events.length;
-    const workspaceId = events[0]?.data.workspaceId;
+    const workspaceId = events[0].data.workspaceId;
 
     log.info("Processing activity batch", {
       batchSize,
       workspaceId,
-      firstEventTimestamp: events[0]?.ts,
+      firstEventTimestamp: events[0].ts,
       lastEventTimestamp: events[events.length - 1]?.ts,
     });
 
     // Step 1: Prepare activity records
-    const activityRecords = await step.run("activity.prepare-records", async () => {
+    const activityRecords = await step.run("activity.prepare-records", () => {
       return events.map((event) => {
         const { data } = event;
 

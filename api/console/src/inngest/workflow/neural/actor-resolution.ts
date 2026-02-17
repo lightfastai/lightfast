@@ -1,4 +1,4 @@
-import type { SourceEvent, SourceActor, SourceReference } from "@repo/console-types";
+import type { SourceEvent, SourceActor } from "@repo/console-types";
 import { db } from "@db/console/client";
 import { workspaceNeuralObservations } from "@db/console/schema";
 import { eq, and, sql } from "drizzle-orm";
@@ -98,7 +98,7 @@ export async function resolveActor(
 
   // For Vercel events, try to resolve username to numeric GitHub ID
   if (sourceEvent.source === "vercel") {
-    const references = sourceEvent.references as SourceReference[];
+    const references = sourceEvent.references;
     const commitRef = references?.find((ref) => ref.type === "commit");
 
     if (commitRef?.id) {

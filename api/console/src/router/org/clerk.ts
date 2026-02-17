@@ -3,9 +3,10 @@ import { z } from "zod";
 import { userScopedProcedure } from "../../trpc";
 import { clerkClient } from "@clerk/nextjs/server";
 import {
-	getOrganizationMembership,
-	type OrgMembershipRole,
+	getOrganizationMembership
+	
 } from "@repo/console-octokit-github";
+import type {OrgMembershipRole} from "@repo/console-octokit-github";
 
 /**
  * Clerk Integration Router

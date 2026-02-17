@@ -22,7 +22,6 @@
  * ```
  */
 
-import type { M2MRouter } from "../../root";
 import { m2mRouter } from "../../root";
 import { createOrgTRPCContext } from "../../trpc";
 import { createM2MToken } from "@repo/console-clerk-m2m";

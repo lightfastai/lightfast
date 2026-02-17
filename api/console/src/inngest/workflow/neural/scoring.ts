@@ -49,7 +49,7 @@ export interface SignificanceResult {
  * Content signals that increase significance.
  * Each match adds to the score.
  */
-const SIGNIFICANCE_SIGNALS: Array<{ pattern: RegExp; weight: number; factor: string }> = [
+const SIGNIFICANCE_SIGNALS: { pattern: RegExp; weight: number; factor: string }[] = [
   // Critical keywords (high weight)
   { pattern: /\b(breaking|critical|urgent|security|vulnerability|CVE-\d+)\b/i, weight: 20, factor: "critical_keyword" },
   { pattern: /\b(hotfix|emergency|incident|outage|downtime)\b/i, weight: 15, factor: "incident_keyword" },
@@ -84,7 +84,7 @@ export function scoreSignificance(sourceEvent: SourceEvent): SignificanceResult 
   factors.push(`base:${eventType}`);
 
   // 2. Content signal matching
-  const textToAnalyze = `${sourceEvent.title} ${sourceEvent.body || ""}`.toLowerCase();
+  const textToAnalyze = `${sourceEvent.title} ${sourceEvent.body}`.toLowerCase();
 
   for (const signal of SIGNIFICANCE_SIGNALS) {
     if (signal.pattern.test(textToAnalyze)) {
@@ -102,7 +102,7 @@ export function scoreSignificance(sourceEvent: SourceEvent): SignificanceResult 
   }
 
   // 4. Content substance bonus
-  const bodyLength = sourceEvent.body?.length || 0;
+  const bodyLength = sourceEvent.body.length;
   if (bodyLength > 500) {
     score += 5;
     factors.push("substantial_content");
