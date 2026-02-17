@@ -46,26 +46,21 @@ export const billingRouter = {
           options: { logger: billingLogger },
         });
 
-        const subscriptionData: SubscriptionData =
-          JSON.parse(JSON.stringify(subscription)) as SubscriptionData;
+        const subscriptionData = JSON.parse(
+          JSON.stringify(subscription),
+        ) as SubscriptionData | null;
         const allSubscriptionItems: SubscriptionItemData[] =
-          subscriptionData.subscriptionItems;
+          subscriptionData?.subscriptionItems ?? [];
 
-        const freeTierPlanIds = ["cplan_free", "free-tier"];
-        const paidSubscriptionItems = allSubscriptionItems.filter(
-          (item) =>
-            !freeTierPlanIds.includes(item.plan?.id ?? "") &&
-            !freeTierPlanIds.includes(item.plan?.name ?? ""),
+        const paidSubscriptionItems = derived.paidSubscriptionItems.map(
+          (item) => JSON.parse(JSON.stringify(item)) as SubscriptionItemData,
         );
-
         const freeTierSubscriptionItems = allSubscriptionItems.filter(
-          (item) =>
-            freeTierPlanIds.includes(item.plan?.id ?? "") ||
-            freeTierPlanIds.includes(item.plan?.name ?? ""),
+          (item) => !paidSubscriptionItems.some((paid) => paid.id === item.id),
         );
 
         const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
-        const nextBillingDate = subscriptionData.nextPayment?.date;
+        const nextBillingDate = subscriptionData?.nextPayment?.date;
         const billingInterval = derived.billingInterval;
 
         return {
@@ -84,6 +79,9 @@ export const billingRouter = {
           billingInterval,
         };
       } catch (error) {
+        // Preserve intentional TRPCErrors (e.g. ownership checks)
+        if (error instanceof TRPCError) throw error;
+
         console.error(
           `Failed to get subscription for user ${ctx.session.userId}:`,
           error,
@@ -140,7 +138,7 @@ export const billingRouter = {
     )
     .mutation(
       async ({
-        ctx: _ctx,
+        ctx,
         input,
       }): Promise<{
         success: boolean;
@@ -148,6 +146,22 @@ export const billingRouter = {
       }> => {
         try {
           const client = await clerkClient();
+
+          // Verify ownership: item must belong to requesting user
+          const subscription =
+            await client.billing.getUserBillingSubscription(
+              ctx.session.userId,
+            );
+          const ownsItem = subscription.subscriptionItems.some(
+            (item) => item.id === input.subscriptionItemId,
+          );
+          if (!ownsItem) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message:
+                "You don't have permission to cancel this subscription",
+            });
+          }
 
           // Cancel the subscription item using Clerk's billing API
           const result = await client.billing.cancelSubscriptionItem(
@@ -162,6 +176,9 @@ export const billingRouter = {
             ) as SubscriptionItemData,
           };
         } catch (error) {
+          // Preserve intentional TRPCErrors (e.g. ownership checks)
+          if (error instanceof TRPCError) throw error;
+
           console.error(
             `Failed to cancel subscription item ${input.subscriptionItemId}:`,
             error,
