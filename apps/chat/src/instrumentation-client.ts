@@ -1,9 +1,14 @@
 import {
   browserProfilingIntegration,
   browserTracingIntegration,
+  captureConsoleIntegration,
   captureRouterTransitionStart,
+  extraErrorDataIntegration,
+  feedbackIntegration,
+  httpClientIntegration,
   init as initSentry,
   replayIntegration,
+  spotlightBrowserIntegration,
 } from "@sentry/nextjs";
 import { consoleLoggingIntegration } from "@sentry/core";
 
@@ -12,39 +17,39 @@ import { env } from "~/env";
 initSentry({
   dsn: env.NEXT_PUBLIC_SENTRY_DSN,
   environment: env.NEXT_PUBLIC_VERCEL_ENV,
-
-  // Adds request headers and IP for users, for more info visit:
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
-
-  // Adjust this value in production, or use tracesSampler for greater control
   tracesSampleRate: 1.0,
-  // Enable CPU profiling for sampled transactions
   profilesSampleRate: 1.0,
-  // Forward console.* calls as log events
   enableLogs: true,
-
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
-
-  /*
-   * This sets the sample rate to be 10%. You may want this to be 100% while
-   * in development and sample at a lower rate in production
-   */
   replaysSessionSampleRate:
     env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
   replaysOnErrorSampleRate: 1.0,
-
-  // You can remove this option if you're not planning to use the Sentry Session Replay feature:
   integrations: [
     consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
     browserTracingIntegration(),
     browserProfilingIntegration(),
     replayIntegration({
-      // Additional Replay configuration goes in here, for example:
       maskAllText: true,
       blockAllMedia: true,
     }),
+    httpClientIntegration({
+      failedRequestStatusCodes: [[400, 599]],
+    }),
+    captureConsoleIntegration({
+      levels: ["error", "warn"],
+    }),
+    extraErrorDataIntegration({
+      depth: 3,
+    }),
+    feedbackIntegration({
+      colorScheme: "system",
+      showBranding: false,
+      enableScreenshot: true,
+    }),
+    ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
+      ? [spotlightBrowserIntegration()]
+      : []),
   ],
 });
 

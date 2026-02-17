@@ -5,6 +5,7 @@ import { z } from "zod";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { braintrustEnv } from "@repo/ai/braintrust-env";
 import { env as dbEnv } from "@db/chat/env";
+import { sentryEnv } from "@vendor/observability/sentry-env";
 import { env as securityEnv } from "@vendor/security/env";
 import { env as chatApiEnv } from "@api/chat/env";
 import { env as storageEnv } from "@vendor/storage/env";
@@ -18,6 +19,7 @@ export const env = createEnv({
     dbEnv,
     storageEnv,
     securityEnv,
+    sentryEnv,
   ],
   shared: {
     NODE_ENV: z
