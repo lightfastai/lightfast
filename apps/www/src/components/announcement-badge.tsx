@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 export function AnnouncementBadge() {
   return (
     <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
-      {([data]) => {
+      {async ([data]) => {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;

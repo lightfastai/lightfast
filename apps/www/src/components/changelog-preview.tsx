@@ -8,7 +8,7 @@ export const revalidate = 300;
 export function ChangelogPreview() {
   return (
     <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
-      {([data]) => {
+      {async ([data]) => {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;

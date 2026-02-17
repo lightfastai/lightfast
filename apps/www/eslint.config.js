@@ -11,4 +11,16 @@ export default [
   ...reactConfig,
   ...nextjsConfig,
   ...restrictEnvAccess,
+  {
+    // Server Actions require async even without await expressions
+    files: [
+      "src/components/announcement-badge.tsx",
+      "src/components/changelog-preview.tsx",
+      "src/components/hero-changelog-badge.tsx",
+      "src/app/**/page.tsx",
+    ],
+    rules: {
+      "@typescript-eslint/require-await": "off",
+    },
+  },
 ];

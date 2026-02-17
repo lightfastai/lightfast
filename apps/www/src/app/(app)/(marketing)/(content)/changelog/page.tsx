@@ -44,7 +44,7 @@ export const revalidate = 300;
 export default function ChangelogPage() {
   return (
     <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
-      {([data]) => {
+      {async ([data]) => {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;

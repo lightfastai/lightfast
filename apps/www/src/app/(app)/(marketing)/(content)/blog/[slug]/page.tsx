@@ -94,7 +94,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <Feed draft={isDraft} queries={[blog.postQuery(slug)]}>
-      {([data]) => {
+      {async ([data]) => {
         "use server";
 
         const response = data as BlogPostQueryResponse;

@@ -36,7 +36,7 @@ export default async function LegalPage({ params }: LegalPageProps) {
 
   return (
     <Feed draft={isDraft} queries={[legal.postQuery(slug)]}>
-      {([data]) => {
+      {async ([data]) => {
         "use server";
 
         const response = data as LegalPostQueryResponse;

@@ -6,7 +6,7 @@ import { Feed, isDraft } from "@vendor/cms/components/feed";
 export function HeroChangelogBadge() {
   return (
     <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
-      {([data]) => {
+      {async ([data]) => {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;
