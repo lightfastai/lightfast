@@ -6,6 +6,6 @@ export { codeArtifact } from './code-artifact';
 export { Artifact } from './create-artifact';
 export { artifactDefinitions, type UIArtifact } from './artifact';
 export type { ArtifactActionContext, ArtifactToolbarContext } from './create-artifact';
-export * from './icons';
-export * from './types';
+export { CopyIcon, PlayIcon, RedoIcon, UndoIcon, MessageIcon, LogsIcon } from './icons';
+export type { ArtifactData, ArtifactState, ArtifactViewerProps, CodeArtifactProps, ArtifactApiResponse } from './types';
 
