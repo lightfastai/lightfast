@@ -5,7 +5,7 @@
  * Based on the Cursor marketing site design pattern.
  */
 
-import { type ReactNode } from "react";
+import type {ReactNode} from "react";
 import Image from "next/image";
 
 interface VisualShowcaseProps {
@@ -18,8 +18,8 @@ interface VisualShowcaseProps {
 export function VisualShowcase({
   children,
   backgroundImage = "https://imagedelivery.net/UEsH3Cp6PfMQ5nCsxDnDxQ/596ee9cd-4dcc-4b0d-18f7-c60f53b02400/public",
-  minHeight = "680px",
-  maxHeight = "min(780px, 70vh)",
+  minHeight: _minHeight = "680px",
+  maxHeight: _maxHeight = "min(780px, 70vh)",
 }: VisualShowcaseProps) {
   return (
     <div className="relative grid grid-cols-1 grid-rows-1 rounded-xs overflow-hidden bg-accent">

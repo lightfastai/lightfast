@@ -16,7 +16,6 @@ import {
   StickyNote,
   Users,
   Target,
-  UserCircle,
 } from "lucide-react";
 
 export function WorkflowVisual() {

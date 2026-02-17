@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { changelog, type ChangelogEntriesQueryResponse } from "@vendor/cms";
+import { changelog  } from "@vendor/cms";
+import type {ChangelogEntriesQueryResponse} from "@vendor/cms";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
-import { ArrowRight } from "lucide-react";
 
 export const revalidate = 300;
 
 export function ChangelogPreview() {
   return (
     <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
-      {async ([data]) => {
+      {([data]) => {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;
@@ -58,7 +58,7 @@ export function ChangelogPreview() {
                       .split("\n")
                       .filter((line) => line.trim().startsWith("-")).length
                   : 0;
-                const totalChanges = improvementsCount + fixesCount;
+                const _totalChanges = improvementsCount + fixesCount;
 
                 return (
                   <Link

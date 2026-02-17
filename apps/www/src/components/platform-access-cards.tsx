@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
-import { CheckCircle, Package, BookOpen, type LucideIcon } from "lucide-react";
+import { CheckCircle, Package, BookOpen  } from "lucide-react";
+import type {LucideIcon} from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 
 type CardVariant = "glass" | "muted" | "red";

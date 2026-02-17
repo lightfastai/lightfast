@@ -3,10 +3,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { changelog, type ChangelogEntryQueryResponse } from "@vendor/cms";
+import { changelog  } from "@vendor/cms";
+import type {ChangelogEntryQueryResponse} from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
 import { JsonLd } from "@vendor/seo/json-ld";
+import type { JsonLdData } from "@vendor/seo/json-ld";
 import {
   Accordion,
   AccordionContent,
@@ -15,9 +17,9 @@ import {
 } from "@repo/ui/components/ui/accordion";
 import { Button } from "@repo/ui/components/ui/button";
 
-type ChangelogPageProps = {
+interface ChangelogPageProps {
   params: Promise<{ slug: string }>;
-};
+}
 
 export const revalidate = 300;
 
@@ -26,7 +28,7 @@ export async function generateStaticParams(): Promise<{ slug: string }[]> {
     const entries = await changelog.getEntries();
     return entries
       .filter((entry) => !!entry.slug)
-      .map((entry) => ({ slug: entry.slug as string }));
+      .map((entry) => ({ slug: entry.slug ?? "" }));
   } catch {
     return [];
   }
@@ -47,17 +49,17 @@ export async function generateMetadata({
   if (!entry) return {};
 
   // Use SEO fields with fallbacks
-  const title = entry.seo?.metaTitle || entry._title || "Changelog";
+  const title = entry.seo?.metaTitle ?? entry._title ?? "Changelog";
   const description =
-    entry.seo?.metaDescription ||
-    entry.excerpt ||
-    entry.tldr ||
-    entry.body?.plainText?.slice(0, 160) ||
+    entry.seo?.metaDescription ??
+    entry.excerpt ??
+    entry.tldr ??
+    entry.body?.plainText?.slice(0, 160) ??
     `${entry._title} - Lightfast changelog update`;
 
   const canonicalUrl =
-    entry.seo?.canonicalUrl || `https://lightfast.ai/changelog/${slug}`;
-  const publishedTime = entry.publishedAt || entry._sys?.createdAt;
+    entry.seo?.canonicalUrl ?? `https://lightfast.ai/changelog/${slug}`;
+  const publishedTime = entry.publishedAt ?? entry._sys?.createdAt;
 
   return {
     title,
@@ -122,7 +124,7 @@ export default async function ChangelogEntryPage({
           .catch(() => ({ previous: null, next: null }));
 
         // Use publishedAt if available, fall back to createdAt
-        const publishedTime = entry.publishedAt || entry._sys?.createdAt;
+        const publishedTime = entry.publishedAt ?? entry._sys?.createdAt;
         const publishedDate = publishedTime ? new Date(publishedTime) : null;
         const dateStr = publishedDate
           ? publishedDate.toLocaleDateString(undefined, {
@@ -144,11 +146,11 @@ export default async function ChangelogEntryPage({
             : {}),
           ...(entry.slug ? { softwareVersion: entry.slug } : {}),
           description:
-            entry.seo?.metaDescription ||
-            entry.excerpt ||
-            entry.tldr ||
-            entry.body?.plainText?.slice(0, 160) ||
-            entry._title ||
+            entry.seo?.metaDescription ??
+            entry.excerpt ??
+            entry.tldr ??
+            entry.body?.plainText?.slice(0, 160) ??
+            entry._title ??
             "Lightfast changelog entry",
           ...(entry.featuredImage?.url
             ? {
@@ -216,7 +218,7 @@ export default async function ChangelogEntryPage({
         return (
           <>
             {/* Structured data for SEO */}
-            <JsonLd code={structuredData as any} />
+            <JsonLd code={structuredData as JsonLdData} />
 
             <article className="space-y-3">
               <p className="text-sm text-muted-foreground">
@@ -238,9 +240,9 @@ export default async function ChangelogEntryPage({
                 <div className="relative w-full bg-card aspect-video rounded-lg overflow-hidden">
                   <Image
                     src={entry.featuredImage.url}
-                    alt={entry.featuredImage?.alt || entry._title || ""}
-                    width={entry.featuredImage?.width || 900}
-                    height={entry.featuredImage?.height || 506}
+                    alt={entry.featuredImage.alt ?? entry._title ?? ""}
+                    width={entry.featuredImage.width ?? 900}
+                    height={entry.featuredImage.height ?? 506}
                     className="w-full h-full object-cover"
                     priority
                   />
@@ -322,7 +324,7 @@ export default async function ChangelogEntryPage({
               ) : null}
 
               {/* Previous/Next Navigation */}
-              {(adjacentEntries.previous || adjacentEntries.next) && (
+              {(adjacentEntries.previous ?? adjacentEntries.next) && (
                 <nav
                   aria-label="Changelog navigation"
                   className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-8"

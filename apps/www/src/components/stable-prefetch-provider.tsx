@@ -4,9 +4,10 @@ import {
   useCallback,
   useMemo,
   useState,
-  startTransition,
-  type ReactNode,
+  startTransition
+  
 } from "react";
+import type {ReactNode} from "react";
 import { PrefetchCrossZoneLinksContext } from "@vercel/microfrontends/next/client";
 
 /**

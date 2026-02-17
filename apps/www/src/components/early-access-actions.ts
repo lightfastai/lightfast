@@ -95,7 +95,7 @@ export async function joinEarlyAccessAction(
 		const validatedFields = earlyAccessSchema.safeParse({
 			email: formData.get("email"),
 			companySize: formData.get("companySize"),
-			sources: formData.get("sources")?.toString().split(",").filter(Boolean) ?? [],
+			sources: ((formData.get("sources") as string | null) ?? "").split(",").filter(Boolean),
 		});
 
 		// Return field errors if validation fails

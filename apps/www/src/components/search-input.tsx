@@ -105,7 +105,7 @@ export function SearchInput() {
   const [prevPlaceholder, setPrevPlaceholder] = useState<string | undefined>(
     undefined,
   );
-  const rotationCounterRef = useRef(0);
+  const [rotationCounter, setRotationCounter] = useState(0);
   const lastShownRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -117,7 +117,7 @@ export function SearchInput() {
     lastShownRef.current = rotatingPlaceholder;
 
     // Bump counter so keys change and animations replay
-    rotationCounterRef.current += 1;
+    setRotationCounter((c) => c + 1);
   }, [rotatingPlaceholder]);
 
   // Focus input on initial mount
@@ -186,7 +186,7 @@ export function SearchInput() {
                 {/* Previous text sliding out */}
                 {prevPlaceholder && (
                   <span
-                    key={`prev-${rotationCounterRef.current}`}
+                    key={`prev-${rotationCounter}`}
                     className="absolute inset-x-0 bottom-0 animate-lf-slide-up-out"
                   >
                     {prevPlaceholder}
@@ -195,7 +195,7 @@ export function SearchInput() {
                 {/* Current text sliding in */}
                 {rotatingPlaceholder && (
                   <span
-                    key={`curr-${rotationCounterRef.current}`}
+                    key={`curr-${rotationCounter}`}
                     className="absolute inset-x-0 bottom-0 animate-lf-slide-up-in"
                   >
                     {rotatingPlaceholder}

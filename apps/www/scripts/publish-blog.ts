@@ -18,19 +18,20 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import matter from "gray-matter";
 import {
-  createBlogPostFromAI,
-  type AIGeneratedPost,
-  type ContentType,
+  createBlogPostFromAI
+  
+  
 } from "@repo/cms-workflows/mutations/blog";
+import type {AIGeneratedPost, ContentType} from "@repo/cms-workflows/mutations/blog";
 import { basehub } from "basehub";
 import { basehubEnv } from "@vendor/cms/env";
 import { blog } from "@vendor/cms";
 
 // Category slug to ID mapping (populated dynamically)
-let categoryIdCache: Record<string, string> = {};
+const categoryIdCache: Record<string, string> = {};
 
 // Author slug to ID mapping (populated dynamically)
-let authorIdCache: Record<string, string> = {};
+const authorIdCache: Record<string, string> = {};
 
 async function getCategoryId(categorySlug: string): Promise<string> {
   if (categoryIdCache[categorySlug]) {
@@ -47,9 +48,9 @@ async function getCategoryId(categorySlug: string): Promise<string> {
         },
       },
     },
-  })) as { blog: { categories: { items: Array<{ _id: string; _slug: string }> } } };
+  })) as { blog: { categories: { items: { _id: string; _slug: string }[] } } };
 
-  const categories = result.blog?.categories?.items || [];
+  const categories = result.blog.categories.items;
   for (const cat of categories) {
     if (cat._slug) {
       categoryIdCache[cat._slug] = cat._id;
@@ -80,9 +81,9 @@ async function getAuthorId(authorSlug: string): Promise<string> {
         },
       },
     },
-  })) as { blog: { author: { items: Array<{ _id: string; _slug: string }> } } };
+  })) as { blog: { author: { items: { _id: string; _slug: string }[] } } };
 
-  const authors = result.blog?.author?.items || [];
+  const authors = result.blog.author.items;
   for (const author of authors) {
     if (author._slug) {
       authorIdCache[author._slug] = author._id;
@@ -120,7 +121,7 @@ interface BlogFrontmatter {
     metaDescription: string;
     focusKeyword: string;
     secondaryKeywords?: string[];
-    faq?: Array<{ question: string; answer: string }>;
+    faq?: { question: string; answer: string }[];
   };
   _internal?: InternalFields;
 }
@@ -134,7 +135,7 @@ function mapContentType(category: string, contentType?: string): ContentType {
     company: "announcement",
     product: "announcement",
   };
-  return defaults[category] || "deep-dive";
+  return defaults[category] ?? "deep-dive";
 }
 
 async function main() {
@@ -192,7 +193,7 @@ async function main() {
   }
 
   // Check SEO fields
-  if (!frontmatter.seo?.metaDescription || !frontmatter.seo?.focusKeyword) {
+  if (!frontmatter.seo.metaDescription || !frontmatter.seo.focusKeyword) {
     console.error(
       JSON.stringify({
         success: false,
@@ -267,7 +268,7 @@ async function main() {
     contentType: mapContentType(frontmatter.category, frontmatter.contentType),
     seo: {
       focusKeyword: frontmatter.seo.focusKeyword,
-      secondaryKeywords: frontmatter.seo.secondaryKeywords || [],
+      secondaryKeywords: frontmatter.seo.secondaryKeywords ?? [],
       metaDescription: frontmatter.seo.metaDescription,
       metaTitle: frontmatter.title,
     },
@@ -283,15 +284,15 @@ async function main() {
   const result = await createBlogPostFromAI(post);
 
   // Check if mutation succeeded (status can be "Completed" or "completed")
-  const transaction = result?.transaction as
+  const transaction = result.transaction as
     | { status: string; message?: string }
     | undefined;
-  const status = transaction?.status?.toLowerCase();
+  const status = transaction?.status.toLowerCase();
   if (status === "failed" || status !== "completed") {
     console.error(
       JSON.stringify({
         success: false,
-        error: `BaseHub mutation failed: ${transaction?.message || "Unknown error"}`,
+        error: `BaseHub mutation failed: ${transaction?.message ?? "Unknown error"}`,
         result,
       })
     );

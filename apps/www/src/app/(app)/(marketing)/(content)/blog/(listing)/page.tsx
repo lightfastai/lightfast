@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { blog, type Post } from "@vendor/cms";
+import { blog  } from "@vendor/cms";
+import type {Post} from "@vendor/cms";
 import {
-  JsonLd,
-  type GraphContext,
-  type Blog,
-  type Organization,
-  type WebSite,
-  type BlogPosting,
+  JsonLd
+  
+  
+  
+  
+  
 } from "@vendor/seo/json-ld";
+import type {GraphContext, BlogPosting} from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -102,8 +104,8 @@ export default async function BlogPage() {
         blogPost: posts.slice(0, 10).map((post) => {
           const blogPosting: BlogPosting = {
             "@type": "BlogPosting",
-            "@id": `https://lightfast.ai/blog/${post.slug || post._slug}`,
-            url: `https://lightfast.ai/blog/${post.slug || post._slug}`,
+            "@id": `https://lightfast.ai/blog/${post.slug ?? post._slug}`,
+            url: `https://lightfast.ai/blog/${post.slug ?? post._slug}`,
           };
 
           // Only add properties if they have values
@@ -160,7 +162,7 @@ export default async function BlogPage() {
                 className="bg-card border border-transparent rounded-xs p-4 hover:border-border/40 transition-colors"
               >
                 <Link
-                  href={`/blog/${post.slug || post._slug}`}
+                  href={`/blog/${post.slug ?? post._slug}`}
                   className="block group"
                 >
                   <h2 className="text-md font-base mb-1 group-hover:text-foreground/80 transition-colors">

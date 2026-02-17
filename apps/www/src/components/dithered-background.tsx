@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense } from "react";
 
 const ImageDithering = lazy(() =>
   import("@paper-design/shaders-react").then((mod) => ({

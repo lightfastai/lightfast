@@ -11,7 +11,7 @@ export function UseCaseGrid({ items }: UseCaseGridProps) {
   // Split items into 3 columns
   const columns: UseCaseItem[][] = [[], [], []];
   items.forEach((item, index) => {
-    columns[index % 3]!.push(item);
+    columns[index % 3]?.push(item);
   });
 
   return (

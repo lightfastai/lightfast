@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 
@@ -8,13 +8,13 @@ const Confetti = dynamic(() => import("react-confetti"), {
 	ssr: false,
 });
 
-export function ConfettiWrapper() {
-	const [mounted, setMounted] = useState(false);
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
 
-	useEffect(() => {
-		setMounted(true);
-		return () => setMounted(false);
-	}, []);
+export function ConfettiWrapper() {
+	const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
 	if (!mounted) return null;
 

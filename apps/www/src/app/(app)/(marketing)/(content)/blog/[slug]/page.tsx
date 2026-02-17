@@ -2,23 +2,25 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { blog, type Post } from "@vendor/cms";
+import { blog  } from "@vendor/cms";
+import type {Post} from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
 import { JsonLd } from "@vendor/seo/json-ld";
+import type { JsonLdData } from "@vendor/seo/json-ld";
 import { SocialShare } from "~/components/blog-social-share";
 
-type BlogPostPageProps = {
+interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
-};
+}
 
-type BlogPostQueryResponse = {
+interface BlogPostQueryResponse {
   blog?: {
     post?: {
       item?: Post | null;
     } | null;
   } | null;
-};
+}
 
 export const revalidate = 300;
 
@@ -26,8 +28,8 @@ export async function generateStaticParams(): Promise<{ slug: string }[]> {
   try {
     const posts = await blog.getPosts();
     return posts
-      .filter((post) => !!(post.slug || post._slug))
-      .map((post) => ({ slug: (post.slug || post._slug) as string }));
+      .filter((post) => !!(post.slug ?? post._slug))
+      .map((post) => ({ slug: (post.slug ?? post._slug) ?? "" }));
   } catch {
     return [];
   }
@@ -48,14 +50,14 @@ export async function generateMetadata({
   if (!post) return {};
 
   const description =
-    post.description ||
-    post.body?.plainText?.slice(0, 160) ||
+    post.description ??
+    post.body?.plainText?.slice(0, 160) ??
     `${post._title} - Lightfast blog`;
 
   const canonicalUrl = `https://lightfast.ai/blog/${slug}`;
   return {
     title: post._title ?? undefined,
-    description: description ?? undefined,
+    description,
     authors: post.authors?.map((author) => ({
       name: author._title ?? undefined,
     })),
@@ -92,7 +94,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <Feed draft={isDraft} queries={[blog.postQuery(slug)]}>
-      {async ([data]) => {
+      {([data]) => {
         "use server";
 
         const response = data as BlogPostQueryResponse;
@@ -114,13 +116,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         const categoryNames =
           (post.categories
             ?.map((c) => c._title?.toLowerCase())
-            .filter(Boolean) as string[]) || [];
+            .filter(Boolean) as string[]);
 
         // Helper function to get additional schema types based on categories
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        const getAdditionalSchemas = () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const schemas: any[] = [];
+         
+        const getAdditionalSchemas = (): Record<string, unknown>[] => {
+          const schemas: Record<string, unknown>[] = [];
 
           // Add FAQ schema from CMS data
           if (post.seo?.faq?.items && post.seo.faq.items.length > 0) {
@@ -182,7 +183,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           "@type": "BlogPosting" as const,
           headline: post._title ?? "",
           description:
-            post.description || post.body?.plainText?.slice(0, 160) || "",
+            post.description ?? post.body?.plainText?.slice(0, 160) ?? "",
           ...(publishedDate
             ? { datePublished: publishedDate.toISOString() }
             : {}),
@@ -238,7 +239,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         return (
           <>
             {/* Structured data for SEO */}
-            <JsonLd code={structuredData as any} />
+            <JsonLd code={structuredData as JsonLdData} />
 
             <article className="w-full max-w-2xl mx-auto pb-32 pt-24">
               <p className="text-sm text-muted-foreground mb-8">
@@ -274,7 +275,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                                 {author.avatar?.url ? (
                                   <Image
                                     src={author.avatar.url}
-                                    alt={author._title || "Author"}
+                                    alt={author._title ?? "Author"}
                                     width={32}
                                     height={32}
                                     className="rounded-full border-2 border-background"
@@ -290,7 +291,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                             ))}
                           </div>
                           <div>
-                            {post.authors?.map((author, idx) => (
+                            {post.authors.map((author, idx) => (
                               <span key={idx}>
                                 {author.xUrl ? (
                                   <Link
@@ -355,9 +356,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     <div className="relative aspect-video rounded-lg overflow-hidden mt-8 mb-12">
                       <Image
                         src={post.featuredImage.url}
-                        alt={post.featuredImage.alt || post._title || ""}
-                        width={post.featuredImage.width || 1200}
-                        height={post.featuredImage.height || 630}
+                        alt={post.featuredImage.alt ?? post._title ?? ""}
+                        width={post.featuredImage.width ?? 1200}
+                        height={post.featuredImage.height ?? 630}
                         className="w-full h-full object-cover"
                         priority
                       />
@@ -399,7 +400,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                             {author.avatar?.url && (
                               <Image
                                 src={author.avatar.url}
-                                alt={author._title || "Author"}
+                                alt={author._title ?? "Author"}
                                 width={48}
                                 height={48}
                                 className="rounded-full flex-shrink-0"

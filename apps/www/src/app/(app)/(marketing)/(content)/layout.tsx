@@ -1,5 +1,4 @@
 import { WaitlistCTA } from "~/components/waitlist-cta";
-import { DocsCTA } from "~/components/docs-cta";
 
 export default function ContentLayout({
   children,

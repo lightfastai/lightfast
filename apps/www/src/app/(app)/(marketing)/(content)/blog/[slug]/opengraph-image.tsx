@@ -26,7 +26,7 @@ export default async function Image({
 	try {
 		const post = await blog.getPost(slug);
 		if (post) {
-			title = post._title;
+			title = post._title ?? "Blog";
 			description = post.description ?? undefined;
 			category = post.categories?.[0]?._title ?? undefined;
 			date = post.publishedAt

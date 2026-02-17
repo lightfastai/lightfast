@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { type Post, categories as categoriesAPI } from "@vendor/cms";
+import {  categories as categoriesAPI } from "@vendor/cms";
+import type {Post} from "@vendor/cms";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { JsonLd, type GraphContext } from "@vendor/seo/json-ld";
+import { JsonLd  } from "@vendor/seo/json-ld";
+import type {GraphContext} from "@vendor/seo/json-ld";
 
 const categorySEO: Record<
   string,
@@ -55,17 +57,17 @@ const categorySEO: Record<
   },
 };
 
-type Props = {
+interface Props {
   params: Promise<{
     category: string;
   }>;
-};
+}
 
 export async function generateStaticParams() {
   try {
     const allCategories = await categoriesAPI.getCategories();
     return allCategories.map((category) => ({
-      category: category._slug || "",
+      category: category._slug ?? "",
     }));
   } catch {
     return [];
@@ -83,7 +85,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       (cat) => cat._slug?.toLowerCase() === category.toLowerCase(),
     );
   } catch {
-    return { title: seo?.metaTitle || "Blog" };
+    return { title: seo?.metaTitle ?? "Blog" };
   }
 
   if (!seo || !currentCategory) {
@@ -160,7 +162,7 @@ export default async function CategoryPage({ params }: Props) {
     notFound();
   }
 
-  const displayName = currentCategory._title || category;
+  const displayName = currentCategory._title ?? category;
 
   // TODO: Fetch real posts from CMS
   const allPosts: Post[] = [];
@@ -191,7 +193,7 @@ export default async function CategoryPage({ params }: Props) {
         "@type": "CollectionPage",
         "@id": `https://lightfast.ai/blog/topic/${category}`,
         name: displayName,
-        description: categorySEO[category]?.metaDescription || "",
+        description: categorySEO[category]?.metaDescription ?? "",
         url: `https://lightfast.ai/blog/topic/${category}`,
         isPartOf: {
           "@id": "https://lightfast.ai/blog#blog",
@@ -242,7 +244,7 @@ export default async function CategoryPage({ params }: Props) {
                 className="bg-card border border-transparent rounded-xs p-4 hover:border-border/40 transition-colors"
               >
                 <Link
-                  href={`/blog/${post.slug || post._slug}`}
+                  href={`/blog/${post.slug ?? post._slug}`}
                   className="block group"
                 >
                   <h2 className="text-md font-base mb-1 group-hover:text-foreground/80 transition-colors">

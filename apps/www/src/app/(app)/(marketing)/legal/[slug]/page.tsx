@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { legal, type LegalPostQueryResponse } from "@vendor/cms";
+import { legal  } from "@vendor/cms";
+import type {LegalPostQueryResponse} from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
 
-type LegalPageProps = {
+interface LegalPageProps {
   params: Promise<{ slug: string }>;
-};
+}
 
 export const revalidate = 300;
 
@@ -27,7 +28,7 @@ export async function generateStaticParams(): Promise<{ slug: string }[]> {
   const posts = await legal.getPosts().catch(() => []);
   return posts
     .filter((p) => !!p._slug)
-    .map((p) => ({ slug: p._slug as string }));
+    .map((p) => ({ slug: p._slug ?? "" }));
 }
 
 export default async function LegalPage({ params }: LegalPageProps) {
@@ -35,7 +36,7 @@ export default async function LegalPage({ params }: LegalPageProps) {
 
   return (
     <Feed draft={isDraft} queries={[legal.postQuery(slug)]}>
-      {async ([data]) => {
+      {([data]) => {
         "use server";
 
         const response = data as LegalPostQueryResponse;

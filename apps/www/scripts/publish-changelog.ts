@@ -17,9 +17,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import matter from "gray-matter";
 import {
-  createChangelogEntry,
-  type ChangelogEntryInput,
+  createChangelogEntry
+  
 } from "@repo/cms-workflows/mutations/changelog";
+import type {ChangelogEntryInput} from "@repo/cms-workflows/mutations/changelog";
 import { changelog } from "@vendor/cms";
 
 interface InternalFields {
@@ -45,7 +46,7 @@ interface ChangelogFrontmatter {
     metaDescription?: string;
     focusKeyword?: string;
     secondaryKeyword?: string;
-    faq?: Array<{ question: string; answer: string }>;
+    faq?: { question: string; answer: string }[];
   };
   _internal?: InternalFields;
 }
@@ -157,7 +158,7 @@ async function main() {
   const result = await createChangelogEntry(input);
 
   // Check if mutation succeeded
-  const transaction = result?.transaction as
+  const transaction = result.transaction as
     | { status: string; message?: string }
     | undefined;
   if (transaction?.status === "Failed") {

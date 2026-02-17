@@ -1,13 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Breadcrumbs, type BreadcrumbItem } from "~/components/blog-breadcrumbs";
+import { Breadcrumbs  } from "~/components/blog-breadcrumbs";
+import type {BreadcrumbItem} from "~/components/blog-breadcrumbs";
 
 interface DynamicBreadcrumbsProps {
-  categories: Array<{
+  categories: {
     _slug?: string | null;
     _title?: string | null;
-  }>;
+  }[];
 }
 
 export function DynamicBreadcrumbs({ categories }: DynamicBreadcrumbsProps) {
@@ -20,7 +21,7 @@ export function DynamicBreadcrumbs({ categories }: DynamicBreadcrumbsProps) {
   ];
 
   // Check if we're on a category page
-  const categoryMatch = pathname.match(/\/blog\/topic\/([^/]+)/);
+  const categoryMatch = /\/blog\/topic\/([^/]+)/.exec(pathname);
   if (categoryMatch) {
     const categorySlug = categoryMatch[1];
     const category = categories.find(c => c._slug === categorySlug);

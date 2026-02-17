@@ -17,7 +17,7 @@ export function CategoryNav({ categories }: CategoryNavProps) {
   const pathname = usePathname();
 
   // Extract category from pathname if on a category page
-  const currentCategory = pathname.match(/\/blog\/topic\/([^/]+)/)?.[1];
+  const currentCategory = (/\/blog\/topic\/([^/]+)/.exec(pathname))?.[1];
   const isHomePage = pathname === "/blog" || pathname === "/blog/";
 
   return (

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { JsonLd, type BreadcrumbList, type WithContext } from "@vendor/seo/json-ld";
+import { JsonLd   } from "@vendor/seo/json-ld";
+import type {BreadcrumbList, WithContext} from "@vendor/seo/json-ld";
 
 export interface BreadcrumbItem {
   name: string;

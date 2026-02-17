@@ -39,13 +39,15 @@ import { cn } from "@repo/ui/lib/utils";
 import { captureException } from "@sentry/nextjs";
 import { ConfettiWrapper } from "./confetti-wrapper";
 import {
-  joinEarlyAccessAction,
-  type EarlyAccessState,
+  joinEarlyAccessAction
+  
 } from "./early-access-actions";
+import type {EarlyAccessState} from "./early-access-actions";
 import {
-  earlyAccessFormSchema,
-  type EarlyAccessFormValues,
+  earlyAccessFormSchema
+  
 } from "./early-access-form.schema";
+import type {EarlyAccessFormValues} from "./early-access-form.schema";
 
 const COMPANY_SIZES = [
   { value: "1-10", label: "1-10 employees" },
@@ -89,6 +91,7 @@ export function EarlyAccessForm({
     reValidateMode: "onChange",
   });
   const [state, setState] = useState<EarlyAccessState>({ status: "idle" });
+  const [sourcesPopoverOpen, setSourcesPopoverOpen] = useState(false);
 
   // Watch form values for validation
   const email = form.watch("email");
@@ -240,20 +243,18 @@ export function EarlyAccessForm({
           control={form.control}
           name="sources"
           render={({ field }) => {
-            const [open, setOpen] = useState(false);
-
             return (
               <FormItem>
                 <FormLabel className="text-xs font-medium text-muted-foreground">
                   Tools your team uses
                 </FormLabel>
-                <Popover open={open} onOpenChange={setOpen}>
+                <Popover open={sourcesPopoverOpen} onOpenChange={setSourcesPopoverOpen}>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
                         variant="outline"
                         role="combobox"
-                        aria-expanded={open}
+                        aria-expanded={sourcesPopoverOpen}
                         className={cn(
                           "w-full justify-start font-normal px-2 min-h-8 h-auto py-1",
                           !field.value.length && "text-muted-foreground",

@@ -10,7 +10,7 @@ interface SocialShareProps {
   description?: string;
 }
 
-export function SocialShare({ title, url, description }: SocialShareProps) {
+export function SocialShare({ title, url, description: _description }: SocialShareProps) {
   const [copied, setCopied] = useState(false);
 
   const shareLinks = {

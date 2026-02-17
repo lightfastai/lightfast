@@ -3,13 +3,13 @@ import * as React from "react";
 import { ArrowUpRight, ArrowRight, Check, HelpCircle } from "lucide-react";
 import { createMetadata } from "@vendor/seo/metadata";
 import {
-  JsonLd,
-  type FAQPage,
-  type SoftwareApplication,
-  type WithContext,
+  JsonLd
+  
+  
+  
 } from "@vendor/seo/json-ld";
+import type {FAQPage, SoftwareApplication, WithContext} from "@vendor/seo/json-ld";
 import { siteConfig } from "@repo/site-config";
-import { exposureTrial } from "~/lib/fonts";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Tooltip,

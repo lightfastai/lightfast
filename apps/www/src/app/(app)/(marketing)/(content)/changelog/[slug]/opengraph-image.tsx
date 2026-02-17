@@ -24,7 +24,7 @@ export default async function Image({
 	try {
 		const entry = await changelog.getEntryBySlug(slug);
 		if (entry) {
-			title = entry._title;
+			title = entry._title ?? "Changelog";
 			description = entry.excerpt ?? undefined;
 			const publishedAt = entry.publishedAt ?? entry._sys?.createdAt;
 			date = publishedAt

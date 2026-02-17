@@ -42,7 +42,7 @@ export async function generateBlogFeed(): Promise<Feed> {
       })
       .slice(0, 50) // Limit to 50 most recent posts
       .forEach((post) => {
-        const url = `${baseUrl}/blog/${post.slug || post._slug}`;
+        const url = `${baseUrl}/blog/${post.slug ?? post._slug}`;
         const date = post.publishedAt ? new Date(post.publishedAt) : buildDate;
 
         feed.addItem({

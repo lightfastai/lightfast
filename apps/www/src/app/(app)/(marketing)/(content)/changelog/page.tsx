@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { changelog, type ChangelogEntriesQueryResponse } from "@vendor/cms";
+import { changelog  } from "@vendor/cms";
+import type {ChangelogEntriesQueryResponse} from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
 import { Button } from "@repo/ui/components/ui/button";
@@ -40,10 +41,10 @@ export const metadata: Metadata = {
 
 export const revalidate = 300;
 
-export default async function ChangelogPage() {
+export default function ChangelogPage() {
   return (
     <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
-      {async ([data]) => {
+      {([data]) => {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;
@@ -61,7 +62,7 @@ export default async function ChangelogPage() {
               </div>
             ) : (
               entries.map((item) => {
-                const publishedTime = item.publishedAt || item._sys?.createdAt;
+                const publishedTime = item.publishedAt ?? item._sys?.createdAt;
                 const publishedDate = publishedTime
                   ? new Date(publishedTime)
                   : null;
@@ -101,9 +102,9 @@ export default async function ChangelogPage() {
                         <div className="relative w-full bg-card aspect-video rounded-lg overflow-hidden">
                           <Image
                             src={item.featuredImage.url}
-                            alt={item.featuredImage?.alt || item._title || ""}
-                            width={item.featuredImage?.width || 900}
-                            height={item.featuredImage?.height || 506}
+                            alt={item.featuredImage.alt ?? item._title ?? ""}
+                            width={item.featuredImage.width ?? 900}
+                            height={item.featuredImage.height ?? 506}
                             className="w-full h-full object-cover"
                           />
                         </div>

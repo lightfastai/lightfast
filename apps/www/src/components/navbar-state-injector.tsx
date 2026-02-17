@@ -11,7 +11,7 @@ interface NavbarStateInjectorProps {
  * Lightweight client component that ONLY manages state
  * No UI rendering - just injects dynamic classes into the DOM
  */
-export function NavbarStateInjector({ initialPathname }: NavbarStateInjectorProps) {
+export function NavbarStateInjector({ initialPathname: _initialPathname }: NavbarStateInjectorProps) {
   const pathname = usePathname();
 
   // Handle scroll detection and DOM manipulation

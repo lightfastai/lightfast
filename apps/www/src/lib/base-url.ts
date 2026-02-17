@@ -19,7 +19,9 @@ export const createBaseUrl = (): string => {
   }
 
   // Server-side: use environment variables
+  // eslint-disable-next-line no-restricted-properties
   const vercelEnv = process.env.NEXT_PUBLIC_VERCEL_ENV;
+  // eslint-disable-next-line no-restricted-properties
   const vercelUrl = process.env.NEXT_PUBLIC_VERCEL_URL;
 
   // Production: Use custom domain for same-origin PostHog proxy
@@ -33,7 +35,7 @@ export const createBaseUrl = (): string => {
   }
 
   // Local development fallback
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing, no-restricted-properties
   const port = process.env.PORT || 3000;
   return `http://localhost:${port}`;
 };
