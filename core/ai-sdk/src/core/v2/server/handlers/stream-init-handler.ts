@@ -75,7 +75,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 
 	// Read operations in parallel (Promise.all for better typing)
 	const [existingState, existingMessages] = await Promise.all([
-		redis.get(sessionKey),
+		redis.get(sessionKey) as Promise<SessionState | null>,
 		redis.json.get(messageKey, "$"),
 	]);
 

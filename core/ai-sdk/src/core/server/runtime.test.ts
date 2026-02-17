@@ -311,6 +311,7 @@ describe("streamChat", () => {
 					})()),
 				),
 			pipeUIMessageStreamToResponse: vi.fn(),
+			toUIMessageStreamResponse: vi.fn(),
 			
 			// Additional properties
 			warnings: Promise.resolve(undefined),
@@ -680,6 +681,7 @@ describe("streamChat", () => {
 					})()),
 				),
 			pipeUIMessageStreamToResponse: vi.fn(),
+			toUIMessageStreamResponse: vi.fn(),
 			
 			// Additional properties
 			warnings: Promise.resolve(undefined),
@@ -901,6 +903,7 @@ describe("streamChat", () => {
 					})()),
 				),
 			pipeUIMessageStreamToResponse: vi.fn(),
+			toUIMessageStreamResponse: vi.fn(),
 			
 			// Additional properties
 			warnings: Promise.resolve(undefined),
