@@ -14,7 +14,7 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 import { eq, and, sql } from "drizzle-orm";
 
-import { auth, clerkClient } from "@vendor/clerk/server";
+import { auth } from "@vendor/clerk/server";
 import { getCachedUserOrgMemberships } from "@repo/console-clerk-cache";
 import { verifyM2MToken } from "@repo/console-clerk-m2m";
 import {
@@ -115,34 +115,35 @@ export const createUserTRPCContext = async (opts: { headers: Headers }) => {
     treatPendingAsSignedOut: false, // Allow pending users
   });
 
-  if (clerkSession?.userId) {
-    const isPending = !clerkSession.orgId;
-    const authType = isPending ? "clerk-pending" : "clerk-active";
+  if (clerkSession.userId) {
+    if (clerkSession.orgId) {
+      console.info(
+        `>>> tRPC User Request from ${source} by ${clerkSession.userId} (clerk-active)`,
+      );
 
-    console.info(
-      `>>> tRPC User Request from ${source} by ${clerkSession.userId} (${authType})`,
-    );
-
-    if (isPending) {
-      return {
-        auth: {
-          type: "clerk-pending" as const,
-          userId: clerkSession.userId,
-        },
-        db,
-        headers: opts.headers,
-      };
-    } else {
       return {
         auth: {
           type: "clerk-active" as const,
           userId: clerkSession.userId,
-          orgId: clerkSession.orgId!,
+          orgId: clerkSession.orgId,
         },
         db,
         headers: opts.headers,
       };
     }
+
+    console.info(
+      `>>> tRPC User Request from ${source} by ${clerkSession.userId} (clerk-pending)`,
+    );
+
+    return {
+      auth: {
+        type: "clerk-pending" as const,
+        userId: clerkSession.userId,
+      },
+      db,
+      headers: opts.headers,
+    };
   }
 
   // No authentication
@@ -204,7 +205,7 @@ export const createOrgTRPCContext = async (opts: { headers: Headers }) => {
     treatPendingAsSignedOut: true, // Pending users blocked
   });
 
-  if (clerkSession?.userId && clerkSession.orgId) {
+  if (clerkSession.userId && clerkSession.orgId) {
     console.info(
       `>>> tRPC Org Request from ${source} by ${clerkSession.userId} (clerk-active)`,
     );
@@ -615,8 +616,8 @@ export async function verifyOrgAccessAndResolve(params: {
 
   if (!result.success) {
     throw new TRPCError({
-      code: result.errorCode ?? "FORBIDDEN",
-      message: result.error ?? "Access denied",
+      code: result.errorCode,
+      message: result.error,
     });
   }
 
@@ -659,8 +660,8 @@ export async function resolveWorkspaceByName(params: {
 
   if (!result.success) {
     throw new TRPCError({
-      code: result.errorCode ?? "NOT_FOUND",
-      message: result.error ?? "Workspace not found",
+      code: result.errorCode,
+      message: result.error,
     });
   }
 
@@ -709,8 +710,8 @@ export async function resolveWorkspaceBySlug(params: {
 
   if (!result.success) {
     throw new TRPCError({
-      code: result.errorCode ?? "NOT_FOUND",
-      message: result.error ?? "Workspace not found",
+      code: result.errorCode,
+      message: result.error,
     });
   }
 
@@ -842,7 +843,7 @@ export async function verifyApiKey(params: {
     .update(userApiKeys)
     .set({ lastUsedAt: sql`CURRENT_TIMESTAMP` })
     .where(eq(userApiKeys.id, apiKey.id))
-    .catch((error) => {
+    .catch((error: unknown) => {
       console.error("Failed to update API key lastUsedAt", {
         error,
         apiKeyId: apiKey.id,
@@ -863,13 +864,13 @@ export async function verifyApiKey(params: {
  * with proper logging, error classification, and user-friendly messages.
  */
 
-type ErrorContext = {
+interface ErrorContext {
   procedure: string;
   userId?: string;
   clerkOrgId?: string;
   workspaceId?: string;
   [key: string]: unknown;
-};
+}
 
 /**
  * Handle errors in tRPC procedures with standardized logging and error messages

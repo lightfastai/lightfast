@@ -29,8 +29,8 @@ import type { SourceType } from "@repo/console-validation";
  * Type-safe event name constructors for dynamic routing
  * Uses canonical SourceType from validation schemas
  */
-type SyncTriggerEvent = `apps-console/${SourceType}.sync.trigger`;
-type SyncCompletedEvent = `apps-console/${SourceType}.sync.completed`;
+type _SyncTriggerEvent = `apps-console/${SourceType}.sync.trigger`;
+type _SyncCompletedEvent = `apps-console/${SourceType}.sync.completed`;
 
 /**
  * Unified Sync Orchestrator
@@ -60,9 +60,9 @@ export const syncOrchestrator = inngest.createFunction(
     ],
 
     // Handle failures gracefully
-    onFailure: async ({ event, error, step }) => {
+    onFailure: ({ event, error }) => {
       // event in onFailure is FailureEventPayload where data.event contains the original event
-      const originalEvent = event.data.event as Events["apps-console/sync.requested"];
+      const originalEvent = event.data.event;
       log.error("Sync orchestrator failed", {
         sourceId: originalEvent.data.sourceId,
         sourceType: originalEvent.data.sourceType,
@@ -151,7 +151,8 @@ export const syncOrchestrator = inngest.createFunction(
     });
 
     // Step 3: Verify workspace has embedding config
-    await step.run("verify-workspace-config", async () => {
+    await step.run("verify-workspace-config", () => {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: version may differ in future
       if (metadata.workspace.settings.version !== 1) {
         throw new NonRetriableError(
           `Workspace ${workspaceId} has invalid settings version.`
@@ -169,7 +170,7 @@ export const syncOrchestrator = inngest.createFunction(
     });
 
     // Step 5: Route to source-specific orchestrator
-    const sourceEvent = await step.run("route-to-source", async () => {
+    await step.run("route-to-source", async () => {
       // TypeScript knows sourceType is "github" after runtime check
       const eventName = "apps-console/github.sync.trigger" as const;
       // Convert jobId to string for event (events expect string IDs)
@@ -307,9 +308,9 @@ function extractMetricsFromSource(
   // Currently only GitHub is implemented
   if (sourceType === "github") {
     return {
-      itemsProcessed: data.filesProcessed || 0,
-      itemsFailed: data.filesFailed || 0,
-      embeddingsCreated: data.filesProcessed || 0, // Approximation
+      itemsProcessed: data.filesProcessed,
+      itemsFailed: data.filesFailed,
+      embeddingsCreated: data.filesProcessed, // Approximation
     };
   }
 

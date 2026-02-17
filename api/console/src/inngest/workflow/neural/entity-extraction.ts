@@ -16,9 +16,10 @@ import { NonRetriableError } from "inngest";
 import { db } from "@db/console/client";
 import {
   workspaceNeuralObservations,
-  workspaceNeuralEntities,
-  type ObservationReference,
+  workspaceNeuralEntities
+  
 } from "@db/console/schema";
+import type {ObservationReference} from "@db/console/schema";
 import type { ExtractedEntity } from "@repo/console-types";
 import { log } from "@vendor/observability/log";
 import { inngest } from "../../client/client";
@@ -71,7 +72,7 @@ export const entityExtraction = inngest.createFunction(
     });
 
     // Step 2: Extract entities
-    const entities = await step.run("extract-entities", async () => {
+    const entities = await step.run("extract-entities", () => {
       // Extract from text content
       const textEntities = extractEntities(
         observation.title,

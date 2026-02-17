@@ -23,9 +23,9 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceUserActivities, type InsertWorkspaceUserActivity } from "@db/console/schema";
+import { workspaceUserActivities  } from "@db/console/schema";
+import type {InsertWorkspaceUserActivity} from "@db/console/schema";
 import { inngest } from "../inngest/client/client";
-import { nanoid } from "@repo/lib";
 import { log } from "@vendor/observability/log";
 import type {
   ActivityCategory,

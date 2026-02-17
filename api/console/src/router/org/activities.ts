@@ -144,8 +144,8 @@ export const activitiesRouter = {
       // Count by category
       const byCategory = activities.reduce(
         (acc, activity) => {
-          const category = activity.category || "other";
-          acc[category] = (acc[category] || 0) + 1;
+          const category = activity.category;
+          acc[category] = (acc[category] ?? 0) + 1;
           return acc;
         },
         {} as Record<string, number>
@@ -154,8 +154,8 @@ export const activitiesRouter = {
       // Count by actor type
       const byActorType = activities.reduce(
         (acc, activity) => {
-          const actorType = activity.actorType || "unknown";
-          acc[actorType] = (acc[actorType] || 0) + 1;
+          const actorType = activity.actorType;
+          acc[actorType] = (acc[actorType] ?? 0) + 1;
           return acc;
         },
         {} as Record<string, number>

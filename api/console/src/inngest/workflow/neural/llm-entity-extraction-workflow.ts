@@ -18,7 +18,7 @@ import type { LLMEntityExtractionResponse } from "@repo/console-validation";
 import type { ExtractedEntity } from "@repo/console-types";
 import { LLM_ENTITY_EXTRACTION_CONFIG } from "@repo/console-config";
 
-import { inngest, type Events } from "../../client/client";
+import { inngest } from "../../client/client";
 import {
   createTracedModel,
   generateObject,
@@ -45,7 +45,7 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
 
     // Handle failures gracefully - complete job as failed
     onFailure: async ({ event, error }) => {
-      const originalEvent = event.data.event as Events["apps-console/neural/llm-entity-extraction.requested"];
+      const originalEvent = event.data.event;
       const { workspaceId, observationId } = originalEvent.data;
       const eventId = originalEvent.id;
 

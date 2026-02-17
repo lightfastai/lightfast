@@ -10,8 +10,6 @@
  */
 
 import { inngest } from "../../client/client";
-import type { Events } from "../../client/client";
-import { log } from "@vendor/observability/log";
 import {
   createGitHubApp,
   getThrottledInstallationOctokit,
@@ -21,7 +19,6 @@ import { validateConfig } from "@repo/console-config";
 import { env } from "../../../env";
 import yaml from "yaml";
 import { minimatch } from "minimatch";
-import { createHash } from "node:crypto";
 
 // Helper to chunk array into batches
 function chunkArray<T>(array: T[], size: number): T[][] {
@@ -105,7 +102,7 @@ export const githubSyncOrchestrator = inngest.createFunction(
       }
 
       // Try to fetch config file
-      let config: any = {};
+      let config: { include?: string[] } = {};
       const configPaths = [
         "lightfast.yml",
         ".lightfast.yml",
@@ -123,16 +120,16 @@ export const githubSyncOrchestrator = inngest.createFunction(
           );
 
           if (file) {
-            const parsed = yaml.parse(file.content);
+            const parsed: unknown = yaml.parse(file.content);
             const validated = validateConfig(parsed);
 
             if (validated.isOk()) {
-              config = validated.value;
+              config = validated.value as { include?: string[] };
               logger.info("Loaded config", { path, config });
               break;
             }
           }
-        } catch (error) {
+        } catch {
           continue;
         }
       }
@@ -149,10 +146,10 @@ export const githubSyncOrchestrator = inngest.createFunction(
 
       // Determine files based on sync mode
       if (syncMode === "incremental" && syncParams.changedFiles) {
-        const changed = syncParams.changedFiles as Array<{
+        const changed = syncParams.changedFiles as {
           path: string;
           status: "added" | "modified" | "removed";
-        }>;
+        }[];
 
         const include = config.include;
         const filtered = changed.filter((file) =>
@@ -203,7 +200,7 @@ export const githubSyncOrchestrator = inngest.createFunction(
             batchId,
             workspaceId,
             sourceId,
-            files: batch || [],
+            files: batch ?? [],
             githubInstallationId: Number.parseInt(
               (sourceConfig as { installationId: string }).installationId,
               10,

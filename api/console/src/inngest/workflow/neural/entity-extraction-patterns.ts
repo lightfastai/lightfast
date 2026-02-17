@@ -22,7 +22,7 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
     pattern: /\b(GET|POST|PUT|PATCH|DELETE)\s+(\/[^\s"'<>]{1,200})/gi,
     confidence: 0.95,
     keyExtractor: (m) => `${m[1]?.toUpperCase()} ${m[2]}`,
-    valueExtractor: (m) => m[2] || "",
+    valueExtractor: (m) => m[2] ?? "",
   },
 
   // Issue/PR References - GitHub style
@@ -30,7 +30,7 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
     category: "project",
     pattern: /(#\d{1,6})/g,
     confidence: 0.95,
-    keyExtractor: (m) => m[1] || "",
+    keyExtractor: (m) => m[1] ?? "",
   },
 
   // Issue/PR References - Linear/Jira style (e.g., ENG-123, PROJ-456)
@@ -38,7 +38,7 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
     category: "project",
     pattern: /\b([A-Z]{2,10}-\d{1,6})\b/g,
     confidence: 0.90,
-    keyExtractor: (m) => m[1] || "",
+    keyExtractor: (m) => m[1] ?? "",
   },
 
   // @mentions - GitHub/Slack style
@@ -47,7 +47,7 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
     pattern: /@([a-zA-Z0-9_-]{1,39})\b/g,
     confidence: 0.90,
     keyExtractor: (m) => `@${m[1]}`,
-    valueExtractor: (m) => m[1] || "",
+    valueExtractor: (m) => m[1] ?? "",
   },
 
   // Environment Variables - UPPERCASE_WITH_UNDERSCORES
@@ -55,7 +55,7 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
     category: "config",
     pattern: /\b([A-Z][A-Z0-9_]{2,}(?:_[A-Z0-9]+)+)\b/g,
     confidence: 0.85,
-    keyExtractor: (m) => m[1] || "",
+    keyExtractor: (m) => m[1] ?? "",
   },
 
   // File Paths - common patterns
@@ -71,8 +71,8 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
     category: "reference",
     pattern: /\b([a-f0-9]{7,40})\b/g,
     confidence: 0.70,
-    keyExtractor: (m) => m[1]?.substring(0, 7) || "",
-    valueExtractor: (m) => m[1] || "",
+    keyExtractor: (m) => m[1]?.substring(0, 7) ?? "",
+    valueExtractor: (m) => m[1] ?? "",
   },
 
   // Branch references
@@ -81,7 +81,7 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
     pattern: /\bbranch[:\s]+([a-zA-Z0-9/_-]{1,100})\b/gi,
     confidence: 0.75,
     keyExtractor: (m) => `branch:${m[1]}`,
-    valueExtractor: (m) => m[1] || "",
+    valueExtractor: (m) => m[1] ?? "",
   },
 ];
 
@@ -168,7 +168,7 @@ export function extractEntities(title: string, content: string): ExtractedEntity
  * (Already-structured data from GitHub/Vercel events)
  */
 export function extractFromReferences(
-  references: Array<{ type: string; id: string; label?: string }>
+  references: { type: string; id: string; label?: string }[]
 ): ExtractedEntity[] {
   const entities: ExtractedEntity[] = [];
 

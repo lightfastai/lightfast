@@ -9,9 +9,10 @@ import { TRPCError } from "@trpc/server";
 import { apiKeyProcedure } from "../../trpc";
 import {
 	SearchRequestSchema,
-	SearchResponseSchema,
-	type SearchResponse,
+	SearchResponseSchema
+	
 } from "@repo/console-types/api";
+import type {SearchResponse} from "@repo/console-types/api";
 import { pineconeClient } from "@repo/console-pinecone";
 import type { VectorMetadata } from "@repo/console-pinecone";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
@@ -68,7 +69,8 @@ export const searchRouter = {
 					});
 				}
 
-				if (workspace.settings.version !== 1) {
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: version may differ in future
+			if (workspace.settings.version !== 1) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
 						message: "Workspace has invalid settings",
@@ -138,11 +140,11 @@ export const searchRouter = {
 				// Map results to SearchResponse format
 				const searchResults = results.matches.map((match) => ({
 					id: match.id,
-					title: (match.metadata?.title as string) || "",
-					url: (match.metadata?.url as string) || "",
-					snippet: (match.metadata?.snippet as string) || "",
+					title: match.metadata?.title ?? "",
+					url: match.metadata?.url ?? "",
+					snippet: match.metadata?.snippet ?? "",
 					score: match.score,
-					metadata: match.metadata || {},
+					metadata: match.metadata ?? {},
 				}));
 
 				const response: SearchResponse = {

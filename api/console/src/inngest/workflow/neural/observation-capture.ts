@@ -15,7 +15,7 @@
  * 8. Emit completion event
  */
 
-import { inngest, type Events } from "../../client/client";
+import { inngest } from "../../client/client";
 import { db } from "@db/console/client";
 import {
   workspaceNeuralObservations,
@@ -322,6 +322,7 @@ async function reconcileVercelActorsForCommit(
         ...currentActor,
         id: numericActorId,
         // Preserve existing name, or use the GitHub actor's name
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: name may be null despite type
         name: currentActor.name ?? sourceActor.name,
         // Add email/avatar from GitHub if not present
         email: currentActor.email ?? sourceActor.email,
@@ -394,7 +395,7 @@ export const observationCapture = inngest.createFunction(
     // Handle failures gracefully - complete job as failed
     onFailure: async ({ event, error }) => {
       // event in onFailure is FailureEventPayload where data.event contains the original event
-      const originalEvent = event.data.event as Events["apps-console/neural/observation.capture"];
+      const originalEvent = event.data.event;
       const { workspaceId, sourceEvent } = originalEvent.data;
       const eventId = originalEvent.id;
 
@@ -533,7 +534,7 @@ export const observationCapture = inngest.createFunction(
     // Step 2: Check if event is allowed by source config
     const eventAllowed = await step.run("check-event-allowed", async () => {
       // Extract resource ID from metadata based on source type
-      const metadata = sourceEvent.metadata as Record<string, unknown>;
+      const metadata = sourceEvent.metadata;
 
       let resourceId: string | undefined;
       switch (sourceEvent.source) {
@@ -591,7 +592,7 @@ export const observationCapture = inngest.createFunction(
           resourceId,
           sourceType: sourceEvent.sourceType,
           baseEventType,
-          configuredEvents: sourceConfig?.sync?.events,
+          configuredEvents: sourceConfig.sync?.events,
         });
       }
 
@@ -635,7 +636,7 @@ export const observationCapture = inngest.createFunction(
     }
 
     // Step 3: Evaluate significance (early gate)
-    const significance = await step.run("evaluate-significance", async () => {
+    const significance = await step.run("evaluate-significance", () => {
       return scoreSignificance(sourceEvent);
     });
 
@@ -698,6 +699,7 @@ export const observationCapture = inngest.createFunction(
       }
 
       // Settings is always populated (NOT NULL with version check)
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: version may differ in future
       if (ws.settings.version !== 1) {
         throw new NonRetriableError(`Workspace ${workspaceId} has invalid settings version`);
       }
@@ -810,9 +812,9 @@ export const observationCapture = inngest.createFunction(
       }),
 
       // Entity extraction (inline, not fire-and-forget)
-      step.run("extract-entities", async () => {
-        const textEntities = extractEntities(sourceEvent.title, sourceEvent.body || "");
-        const references = sourceEvent.references as Array<{ type: string; id: string; label?: string }>;
+      step.run("extract-entities", () => {
+        const textEntities = extractEntities(sourceEvent.title, sourceEvent.body);
+        const references = sourceEvent.references as { type: string; id: string; label?: string }[];
         const refEntities = extractFromReferences(references);
 
         // Combine and deduplicate
@@ -916,7 +918,7 @@ export const observationCapture = inngest.createFunction(
         sourceType: sourceEvent.sourceType,
         sourceId: sourceEvent.sourceId,
         occurredAt: sourceEvent.occurredAt,
-        actorName: sourceEvent.actor?.name || "unknown",
+        actorName: sourceEvent.actor?.name ?? "unknown",
         // Pre-generated externalId for direct lookup (BIGINT migration)
         // This eliminates database queries during search ID normalization.
         // The observationId field stores the public nanoid identifier.
@@ -989,7 +991,7 @@ export const observationCapture = inngest.createFunction(
             externalId, // Pre-generated nanoid for API/Pinecone lookups
             workspaceId,
             occurredAt: sourceEvent.occurredAt,
-            actor: sourceEvent.actor || null,
+            actor: sourceEvent.actor ?? null,
             // actorId: null until Phase 5 (actor_profiles still uses varchar)
             // clusterId: null until Phase 5 (clusters still uses varchar)
             observationType,
@@ -1080,7 +1082,7 @@ export const observationCapture = inngest.createFunction(
       await step.run("reconcile-vercel-actors", async () => {
         // Extract commit SHAs from the push event references
         const references = sourceEvent.references as SourceReference[];
-        const commitRefs = references?.filter((ref) => ref.type === "commit") || [];
+        const commitRefs = references.filter((ref) => ref.type === "commit");
 
         if (commitRefs.length === 0 || !resolvedActor.sourceActor?.id) {
           return { reconciled: 0 };
@@ -1149,7 +1151,7 @@ export const observationCapture = inngest.createFunction(
         },
       },
       // LLM entity extraction for observations with rich content (>200 chars)
-      ...((sourceEvent.body?.length ?? 0) > 200
+      ...(sourceEvent.body.length > 200
         ? [
             {
               name: "apps-console/neural/llm-entity-extraction.requested" as const,

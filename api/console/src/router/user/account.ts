@@ -36,9 +36,9 @@ export const accountRouter = {
 				fullName:
 					user.firstName && user.lastName
 						? `${user.firstName} ${user.lastName}`
-						: user.firstName || user.lastName || null,
+						: user.firstName ?? user.lastName ?? null,
 				username: user.username,
-				primaryEmailAddress: user.primaryEmailAddress?.emailAddress || null,
+				primaryEmailAddress: user.primaryEmailAddress?.emailAddress ?? null,
 				imageUrl: user.imageUrl,
 				createdAt: new Date(user.createdAt).toISOString(),
 			};

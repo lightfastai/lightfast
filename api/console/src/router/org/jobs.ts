@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { workspaceWorkflowRuns, orgWorkspaces, type WorkflowInput } from "@db/console/schema";
+import { workspaceWorkflowRuns, orgWorkspaces  } from "@db/console/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -9,7 +9,7 @@ import { orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 import { inngest } from "@api/console/inngest";
 import { workspaceIntegrations } from "@db/console/schema";
 import { getWorkspaceKey } from "@db/console/utils";
-import { jobTriggerSchema } from "@repo/console-validation";
+
 import { recordActivity } from "../../lib/activity";
 
 /**
