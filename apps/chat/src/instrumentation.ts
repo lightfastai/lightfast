@@ -3,54 +3,52 @@ import {
   captureRequestError,
   extraErrorDataIntegration,
   init as initSentry,
-  spotlightIntegration,
-  vercelAIIntegration,
 } from "@sentry/nextjs";
 import { consoleLoggingIntegration } from "@sentry/core";
 
 import { env } from "~/env";
 
-type InitOptions = Parameters<typeof initSentry>[0];
-type Integration = ReturnType<typeof vercelAIIntegration>;
+const sharedIntegrations = () => [
+  consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
+  captureConsoleIntegration({ levels: ["error", "warn"] }),
+  extraErrorDataIntegration({ depth: 3 }),
+];
 
-const createInitOptions = (runtime: "nodejs" | "edge"): InitOptions => {
-  const asIntegration = <T extends Integration>(integration: T) => integration;
+const register = async () => {
+  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    // spotlightIntegration and vercelAIIntegration are not available in the edge bundle,
+    // so they must be dynamically imported to avoid build errors
+    const { spotlightIntegration, vercelAIIntegration } =
+      await import("@sentry/nextjs");
 
-  const integrations: Integration[] = [
-    asIntegration(vercelAIIntegration()),
-    asIntegration(consoleLoggingIntegration({ levels: ["log", "warn", "error"] })),
-    asIntegration(captureConsoleIntegration({ levels: ["error", "warn"] })),
-    asIntegration(extraErrorDataIntegration({ depth: 3 })),
-    ...(runtime === "nodejs" && env.NEXT_PUBLIC_VERCEL_ENV === "development"
-      ? [asIntegration(spotlightIntegration())]
-      : []),
-  ];
+    initSentry({
+      dsn: env.NEXT_PUBLIC_SENTRY_DSN,
+      environment: env.NEXT_PUBLIC_VERCEL_ENV,
+      tracesSampleRate: 1,
+      debug: false,
+      enableLogs: true,
+      integrations: [
+        ...sharedIntegrations(),
+        vercelAIIntegration(),
+        ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
+          ? [spotlightIntegration()]
+          : []),
+      ],
+    });
+  }
 
-  // Note: Node.js profiling integration removed due to Next.js 15.5 + Turbopack build issues
-  // with dynamic require() statements in @sentry-internal/node-cpu-profiler
-
-  const baseOptions: InitOptions = {
-    dsn: env.NEXT_PUBLIC_SENTRY_DSN,
-    environment: env.NEXT_PUBLIC_VERCEL_ENV,
-    tracesSampleRate: 1,
-    debug: false,
-    enableLogs: true,
-    integrations,
-  };
-
-	return baseOptions;
-};
-
-const register = () => {
-	// eslint-disable-next-line turbo/no-undeclared-env-vars
-	if (process.env.NEXT_RUNTIME === "nodejs") {
-		initSentry(createInitOptions("nodejs"));
-	}
-
-	// eslint-disable-next-line turbo/no-undeclared-env-vars
-	if (process.env.NEXT_RUNTIME === "edge") {
-		initSentry(createInitOptions("edge"));
-	}
+  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  if (process.env.NEXT_RUNTIME === "edge") {
+    initSentry({
+      dsn: env.NEXT_PUBLIC_SENTRY_DSN,
+      environment: env.NEXT_PUBLIC_VERCEL_ENV,
+      tracesSampleRate: 1,
+      debug: false,
+      enableLogs: true,
+      integrations: sharedIntegrations(),
+    });
+  }
 };
 
 register();
