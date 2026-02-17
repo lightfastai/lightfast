@@ -139,7 +139,7 @@ export function SignUpForm() {
 							</MicrofrontendLink>{" "}
 							and{" "}
 							<MicrofrontendLink
-								href={'/legal/terms'}
+								href={'/legal/privacy'}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"
