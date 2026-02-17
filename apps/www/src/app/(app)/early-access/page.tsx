@@ -19,7 +19,6 @@ export const metadata: Metadata = createMetadata({
     title: "Early Access – Lightfast Neural Memory for Teams",
     description:
       "Join the early access list for Lightfast neural memory built for teams.",
-    images: ["https://lightfast.ai/og.jpg"],
   },
   alternates: {
     canonical: "https://lightfast.ai/early-access",

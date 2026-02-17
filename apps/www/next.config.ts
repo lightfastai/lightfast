@@ -30,6 +30,7 @@ const wwwConfig: NextConfig = {
 
 	/** Enables hot reloading for local packages without a build step */
 	transpilePackages: [
+		"@repo/og",
 		"@repo/ui",
 		"@vendor/seo",
 		"@vendor/security",

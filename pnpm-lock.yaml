@@ -488,6 +488,9 @@ importers:
       '@repo/app-urls':
         specifier: workspace:*
         version: link:../../packages/app-urls
+      '@repo/og':
+        specifier: workspace:*
+        version: link:../../packages/og
       '@repo/site-config':
         specifier: workspace:*
         version: link:../../packages/site-config
@@ -1151,6 +1154,9 @@ importers:
       '@repo/app-urls':
         specifier: workspace:*
         version: link:../../packages/app-urls
+      '@repo/og':
+        specifier: workspace:*
+        version: link:../../packages/og
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -1308,6 +1314,9 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
+      '@repo/og':
+        specifier: workspace:*
+        version: link:../../packages/og
       '@repo/site-config':
         specifier: workspace:*
         version: link:../../packages/site-config
@@ -3636,6 +3645,28 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/og:
+    dependencies:
+      react:
+        specifier: ^19.2.1
+        version: 19.2.1
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/react':
+        specifier: ^19.1.11
+        version: 19.2.2
+      eslint:
+        specifier: 'catalog:'
+        version: 9.38.0(jiti@2.6.1)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

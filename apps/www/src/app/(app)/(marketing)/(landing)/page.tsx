@@ -109,15 +109,6 @@ export const metadata: Metadata = {
     siteName: "Lightfast",
     type: "website",
     locale: "en_US",
-    images: [
-      {
-        url: "https://lightfast.ai/og.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Lightfast – Memory Built for Teams",
-        type: "image/jpeg",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -126,7 +117,6 @@ export const metadata: Metadata = {
       "Make your team's knowledge instantly searchable. Search by meaning, not keywords. Every answer shows its source.",
     site: "@lightfastai",
     creator: "@lightfastai",
-    images: ["https://lightfast.ai/og.jpg"],
   },
   category: "Technology",
 };

@@ -217,7 +217,6 @@ export async function generateMetadata({
       title: "Documentation – Lightfast",
       description:
         "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
-      image: "https://lightfast.ai/og.jpg",
       metadataBase: new URL("https://lightfast.ai/docs"),
       keywords: [
         "Lightfast documentation",
@@ -265,15 +264,6 @@ export async function generateMetadata({
         siteName: "Lightfast Documentation",
         type: "website",
         locale: "en_US",
-        images: [
-          {
-            url: "https://lightfast.ai/og.jpg",
-            width: 1200,
-            height: 630,
-            alt: "Lightfast Documentation",
-            type: "image/jpeg",
-          },
-        ],
       },
       twitter: {
         card: "summary_large_image",
@@ -282,7 +272,6 @@ export async function generateMetadata({
           "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
         site: "@lightfastai",
         creator: "@lightfastai",
-        images: ["https://lightfast.ai/og.jpg"],
       },
       category: "Technology",
     });
@@ -297,7 +286,6 @@ export async function generateMetadata({
     return createMetadata({
       title: "Page Not Found – Lightfast Docs",
       description: "The requested documentation page could not be found",
-      image: "https://lightfast.ai/og.jpg",
       metadataBase: new URL("https://lightfast.ai/docs"),
       robots: {
         index: false,
@@ -320,9 +308,6 @@ export async function generateMetadata({
   const pageKeywords = frontmatter.keywords
     ? frontmatter.keywords.split(",").map((k: string) => k.trim())
     : [];
-  const ogImage = frontmatter.ogImage
-    ? `https://lightfast.ai${frontmatter.ogImage}`
-    : "https://lightfast.ai/og.jpg";
   const canonical = frontmatter.canonical ?? `https://lightfast.ai/docs${pageUrl}`;
   const noindex = frontmatter.noindex ?? false;
   const nofollow = frontmatter.nofollow ?? false;
@@ -335,7 +320,6 @@ export async function generateMetadata({
   return createMetadata({
     title,
     description,
-    image: ogImage,
     metadataBase: new URL("https://lightfast.ai/docs"),
     // Merge per-page keywords with default docs keywords
     keywords: [
