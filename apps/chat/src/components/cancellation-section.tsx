@@ -32,7 +32,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 		refreshSubscription,
 		revalidatePayments,
 		billingInterval,
-		paidSubscriptionItems,
+		activePaidItem,
 	} = useBillingData();
 	const router = useRouter();
 
@@ -71,7 +71,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 
 	// Handle subscription cancellation
 	const handleCancelSubscription = () => {
-		if (!paidSubscriptionItems[0]?.id) {
+		if (!activePaidItem?.id) {
 			toast({
 				title: "Error",
 				description: "No active paid subscription found to cancel.",
@@ -86,7 +86,7 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 
 		if (confirmed) {
 			cancelSubscriptionMutation.mutate({
-				subscriptionItemId: paidSubscriptionItems[0].id,
+				subscriptionItemId: activePaidItem.id,
 				endNow: false, // Cancel at end of billing period
 			});
 		}

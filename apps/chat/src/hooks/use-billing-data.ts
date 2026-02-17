@@ -27,9 +27,13 @@ export function useBillingData() {
 
 	// Derive billing state from raw Clerk subscription
 	const derived = useMemo(() => {
+		// Item type for the null-subscription fallback
+		type SubscriptionItem = NonNullable<typeof subscription>["subscriptionItems"][number];
+
 		if (!subscription) {
 			return {
-				paidSubscriptionItems: [] as never[],
+				paidSubscriptionItems: [] as SubscriptionItem[],
+				activePaidItem: null as SubscriptionItem | null,
 				hasActiveSubscription: false,
 				isCanceled: false,
 				nextBillingDate: null as string | null,
@@ -46,20 +50,26 @@ export function useBillingData() {
 			);
 		});
 
+		// During plan transitions Clerk keeps multiple items (e.g. old "canceled"
+		// + new "upcoming"). Use the active item for state derivation.
+		const activePaidItem =
+			paidSubscriptionItems.find((item) => item.status === "active") ?? null;
+
 		const hasActiveSubscription =
-			subscription.status === "active" && paidSubscriptionItems.length > 0;
-		const isCanceled = paidSubscriptionItems[0]?.canceledAt != null;
+			subscription.status === "active" && activePaidItem != null;
+		const isCanceled = activePaidItem?.canceledAt != null;
 		const nextPaymentDate = subscription.nextPayment?.date;
 		const nextBillingDate = nextPaymentDate
 			? new Date(nextPaymentDate).toISOString()
 			: null;
 		const billingInterval =
-			paidSubscriptionItems[0]?.planPeriod === "annual"
+			(activePaidItem ?? paidSubscriptionItems[0])?.planPeriod === "annual"
 				? ("annual" as const)
 				: ("month" as const);
 
 		return {
 			paidSubscriptionItems,
+			activePaidItem,
 			hasActiveSubscription,
 			isCanceled,
 			nextBillingDate,
