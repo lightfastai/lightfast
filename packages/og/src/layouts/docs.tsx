@@ -53,7 +53,7 @@ export function DocsLayout({ title, section, breadcrumb }: DocsOGProps) {
 						Lightfast
 					</span>
 					<span style={{ color: colors.border }}>/</span>
-					<span style={{ fontWeight: 400, color: colors.muted }}>
+					<span style={{ fontWeight: 400, color: colors.mutedForeground }}>
 						Docs
 					</span>
 				</div>
@@ -69,7 +69,7 @@ export function DocsLayout({ title, section, breadcrumb }: DocsOGProps) {
 						fontSize: 18,
 						fontWeight: 400,
 						fontFamily: "PP Neue Montreal",
-						color: colors.muted,
+						color: colors.mutedForeground,
 					}}
 				>
 					{section && <span>{section}</span>}
@@ -124,7 +124,7 @@ export function DocsLayout({ title, section, breadcrumb }: DocsOGProps) {
 					fontSize: 18,
 					fontWeight: 400,
 					fontFamily: "PP Neue Montreal",
-					color: colors.muted,
+					color: colors.mutedForeground,
 				}}
 			>
 				docs.lightfast.ai

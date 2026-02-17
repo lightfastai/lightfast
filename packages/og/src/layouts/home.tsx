@@ -55,7 +55,7 @@ export function HomeLayout({ tagline }: HomeOGProps) {
 						fontSize: 28,
 						fontWeight: 400,
 						fontFamily: "PP Neue Montreal",
-						color: colors.muted,
+						color: colors.mutedForeground,
 						textAlign: "center",
 						lineHeight: 1.4,
 					}}

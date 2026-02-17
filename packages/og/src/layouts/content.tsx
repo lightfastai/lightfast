@@ -108,7 +108,7 @@ export function ContentLayout({
 							fontSize: 22,
 							fontWeight: 400,
 							fontFamily: "PP Neue Montreal",
-							color: colors.muted,
+							color: colors.mutedForeground,
 							lineHeight: 1.4,
 							overflow: "hidden",
 							textOverflow: "ellipsis",
@@ -128,7 +128,7 @@ export function ContentLayout({
 					fontSize: 18,
 					fontWeight: 400,
 					fontFamily: "PP Neue Montreal",
-					color: colors.muted,
+					color: colors.mutedForeground,
 				}}
 			>
 				{author && <span>{author}</span>}

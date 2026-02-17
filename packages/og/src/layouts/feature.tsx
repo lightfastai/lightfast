@@ -60,7 +60,7 @@ export function FeatureLayout({ title, description }: FeatureOGProps) {
 							fontSize: 24,
 							fontWeight: 400,
 							fontFamily: "PP Neue Montreal",
-							color: colors.muted,
+							color: colors.mutedForeground,
 							lineHeight: 1.4,
 						}}
 					>
@@ -77,7 +77,7 @@ export function FeatureLayout({ title, description }: FeatureOGProps) {
 					fontSize: 20,
 					fontWeight: 400,
 					fontFamily: "PP Neue Montreal",
-					color: colors.muted,
+					color: colors.mutedForeground,
 				}}
 			>
 				lightfast.ai
