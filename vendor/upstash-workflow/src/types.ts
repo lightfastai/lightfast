@@ -82,6 +82,6 @@ export type WorkflowStep<TInput = unknown, TOutput = unknown> = (
 /**
  * Workflow handler function
  */
-export type WorkflowHandler<TPayload = unknown> = (
+export type WorkflowHandler<_TPayload = unknown> = (
   context: WorkflowContext,
 ) => Promise<void>;
