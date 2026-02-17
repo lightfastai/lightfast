@@ -1,0 +1,159 @@
+# .coderabbit.yaml
+language: "en-US"
+early_access: false
+
+reviews:
+  # assertive = flags real issues, chill = more lenient
+  profile: "assertive"
+
+  # Auto-approve PR when all CodeRabbit comments are resolved
+  request_changes_workflow: true
+
+  # PR summary features
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  poem: false
+  sequence_diagrams: true
+  estimate_code_review_effort: true
+
+  # Link tracking
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+
+  # Labels & reviewers
+  suggested_labels: true
+  auto_apply_labels: false
+  suggested_reviewers: false
+  auto_assign_reviewers: false
+
+  # Auto-review triggers
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    # Pause after 5 pushes to same PR to avoid noise
+    auto_pause_after_reviewed_commits: 5
+    # Skip bot PRs
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"
+    base_branches:
+      - "main"
+      - "develop"
+
+  # ── Path filters ──
+  # Exclude generated/vendored/binary files from review
+  path_filters:
+    - "!**/dist/**"
+    - "!**/node_modules/**"
+    - "!**/.next/**"
+    - "!**/.vercel/**"
+    - "!**/pnpm-lock.yaml"
+    - "!**/*.lock"
+    - "!**/drizzle/**/meta/**"
+    - "!**/__generated__/**"
+    - "!**/generated/**"
+    - "!**/*.min.js"
+    - "!**/*.min.css"
+    - "!**/*.d.ts"
+
+  # ── Path-specific review instructions ──
+  # These tell CodeRabbit HOW to review each area of the monorepo
+  path_instructions:
+    - path: "apps/**"
+      instructions: |
+        This is a Next.js 15 App Router application. Review for:
+        - Server/client component boundaries ("use client" / "use server" directives)
+        - tRPC pattern: prefetch() must be called BEFORE <HydrateClient>
+        - No direct third-party imports — must use @vendor/* abstractions
+        - Proper use of workspace:* for internal deps, catalog: for shared externals
+
+    - path: "api/**"
+      instructions: |
+        tRPC API layer. Review for:
+        - Auth boundaries: userRouter (no org), orgRouter (org required), m2mRouter (internal only)
+        - No direct third-party SDK imports — use @vendor/* packages
+        - Inngest workflow patterns in api/console/src/inngest/workflow/
+        - Proper error handling in tRPC procedures
+
+    - path: "vendor/**"
+      instructions: |
+        Vendor abstraction packages — standalone re-exports of third-party SDKs.
+        Review for:
+        - These MUST be thin wrappers, not business logic
+        - Consumers should never need to import the underlying SDK directly
+        - Env vars should be validated at the package level via env.ts
+        - Exports should be explicit (no barrel export *)
+
+    - path: "packages/**"
+      instructions: |
+        Shared internal packages (@repo/*). Review for:
+        - No direct third-party SDK imports — use @vendor/* abstractions
+        - Explicit named exports (no barrel export *)
+        - Type-only imports where applicable
+        - workspace:* protocol for internal deps
+
+    - path: "db/**"
+      instructions: |
+        Database packages using Drizzle ORM. Review for:
+        - NEVER manually created .sql migration files — only db:generate
+        - Schema changes must use Drizzle schema definitions
+        - Relations must be properly defined
+        - No raw SQL queries — use Drizzle query builder
+
+    - path: "core/ai-sdk/**"
+      instructions: |
+        Core AI SDK package (@lightfastai/ai-sdk). Review for:
+        - Public API surface stability — breaking changes need justification
+        - Test coverage for primitives (agent, tool, server)
+        - Proper error handling and types
+        - V2 migration patterns
+
+    - path: "**/*.test.ts"
+      instructions: |
+        Test files. Review for:
+        - Descriptive test names
+        - Proper assertions (not just smoke tests)
+        - No flaky patterns (timeouts, race conditions)
+        - Mock cleanup
+
+  # ── Pre-merge checks ──
+  pre_merge_checks:
+    title:
+      mode: "warning"
+      requirements: "PR title should follow conventional commits format (feat:, fix:, chore:, etc.) and be under 70 characters"
+    description:
+      mode: "warning"
+
+  # ── Tools ──
+  tools:
+    eslint:
+      enabled: true
+    ast-grep:
+      essential_rules: true
+    github-checks:
+      enabled: true
+    gitleaks:
+      enabled: true
+
+  # Finishing touches
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  web_search:
+    enabled: true
+  code_guidelines:
+    enabled: true
+  learnings:
+    scope: "auto"
+  pull_requests:
+    scope: "local"
