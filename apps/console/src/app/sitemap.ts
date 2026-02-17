@@ -102,27 +102,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.8,
     },
-    // Feature pages (no lastModified - static pages)
-    {
-      url: `${base}/features/agents`,
-      changeFrequency: "monthly",
-      priority: 0.85,
-    },
-    {
-      url: `${base}/features/connectors`,
-      changeFrequency: "monthly",
-      priority: 0.85,
-    },
-    {
-      url: `${base}/features/memory`,
-      changeFrequency: "monthly",
-      priority: 0.85,
-    },
-    {
-      url: `${base}/features/timeline`,
-      changeFrequency: "monthly",
-      priority: 0.85,
-    },
     // Use case pages (no lastModified - static pages)
     {
       url: `${base}/use-cases/technical-founders`,

@@ -127,16 +127,8 @@ export function FeatureVisualsTabs() {
         </div>
       </div>
 
-      {/* Learn more link */}
-      <div className="mt-8 pb-32">
-        <Link
-          href="/features/memory"
-          className="group inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-        >
-          <span>Learn more about memory features</span>
-          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-        </Link>
-      </div>
+      {/* Spacer */}
+      <div className="mt-8 pb-32" />
     </div>
   );
 }

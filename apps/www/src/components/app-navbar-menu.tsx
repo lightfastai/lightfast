@@ -53,9 +53,7 @@ export function AppNavbarMenu() {
       </NavigationMenu>
 
       {/* Flat nav items (Pricing, Docs) */}
-      {INTERNAL_NAV.filter(
-        (i) => i.href !== "/features" && i.href !== "/early-access",
-      ).map((item) =>
+      {INTERNAL_NAV.filter((i) => i.href !== "/early-access").map((item) =>
         item.microfrontend ? (
           <Button
             key={item.href}

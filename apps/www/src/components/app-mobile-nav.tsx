@@ -12,12 +12,7 @@ import {
 } from "@repo/ui/components/ui/sheet";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Icons } from "@repo/ui/components/icons";
-import {
-  FEATURES_NAV,
-  INTERNAL_NAV,
-  RESOURCES_NAV,
-  SOCIAL_NAV,
-} from "~/config/nav";
+import { INTERNAL_NAV, RESOURCES_NAV, SOCIAL_NAV } from "~/config/nav";
 
 export function AppMobileNav() {
   const [open, setOpen] = React.useState(false);
@@ -52,26 +47,6 @@ export function AppMobileNav() {
           <div className="flex flex-col h-[calc(100vh-5rem)]">
             <ScrollArea className="flex-1 overflow-hidden">
               <div className="px-6 space-y-6">
-                {/* Features section */}
-                <div className="space-y-3">
-                  <div className="text-sm text-muted-foreground uppercase tracking-wide">
-                    Features
-                  </div>
-                  <div className="space-y-1">
-                    {FEATURES_NAV.map((item) => (
-                      <NextLink
-                        key={item.href}
-                        href={item.href}
-                        prefetch
-                        onClick={() => setOpen(false)}
-                        className="block text-lg font-medium py-1 text-foreground hover:text-muted-foreground transition-colors"
-                      >
-                        {item.title}
-                      </NextLink>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Resources section */}
                 <div className="space-y-3">
                   <div className="text-sm text-muted-foreground uppercase tracking-wide">
@@ -98,7 +73,7 @@ export function AppMobileNav() {
                     More
                   </div>
                   <div className="space-y-1">
-                    {INTERNAL_NAV.filter((i) => i.href !== "/features").map(
+                    {INTERNAL_NAV.map(
                       (item) =>
                         item.microfrontend ? (
                           <MicrofrontendLink
