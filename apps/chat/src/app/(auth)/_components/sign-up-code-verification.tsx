@@ -19,7 +19,7 @@ export function SignUpCodeVerification({
 	onReset,
 	onError: _onError,
 }: SignUpCodeVerificationProps) {
-	const { signUp, setActive } = useSignUp();
+	const { isLoaded, signUp, setActive } = useSignUp();
 	const log = useLogger();
 	const {
 		code,
@@ -35,8 +35,7 @@ export function SignUpCodeVerification({
 	} = useCodeVerification();
 
 	async function handleComplete(value: string) {
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-		if (!signUp || !setActive) return;
+		if (!isLoaded) return;
 		
 		setIsVerifying(true);
 		setCustomError("");

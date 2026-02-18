@@ -55,8 +55,8 @@ export function SearchToolResult({ data }: { data: V1SearchResponse }) {
           </AccordionTrigger>
           <AccordionContent className="px-4">
             <div className="pt-3">
-              {results.slice(0, 10).map((result, index) => (
-                <div key={`search-result-${index}`}>
+              {results.slice(0, 10).map((result) => (
+                <div key={result.url}>
                   <a
                     href={result.url}
                     target="_blank"
@@ -86,8 +86,7 @@ export function SearchToolResult({ data }: { data: V1SearchResponse }) {
  */
 export function ContentsToolResult({ data }: { data: V1ContentsResponse }) {
   const items = data.items;
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/prefer-optional-chain
-  if (!items || items.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="text-sm text-muted-foreground italic">
         No content found
@@ -137,8 +136,7 @@ export function FindSimilarToolResult({
   data: V1FindSimilarResponse;
 }) {
   const similar = data.similar;
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/prefer-optional-chain
-  if (!similar || similar.length === 0) {
+  if (similar.length === 0) {
     return (
       <div className="text-sm text-muted-foreground italic">
         No similar items found

@@ -152,8 +152,7 @@ export const syncOrchestrator = inngest.createFunction(
 
     // Step 3: Verify workspace has embedding config
     await step.run("verify-workspace-config", () => {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: version may differ in future
-      if (metadata.workspace.settings.version !== 1) {
+      if ((metadata.workspace.settings.version as number) !== 1) {
         throw new NonRetriableError(
           `Workspace ${workspaceId} has invalid settings version.`
         );

@@ -74,8 +74,6 @@ export function useBillingData() {
 	}, [subscription]);
 
 	const sortedPayments = useMemo(() => {
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-		if (!paymentAttempts) return [];
 		return [...paymentAttempts].sort(
 			(a, b) =>
 				new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),

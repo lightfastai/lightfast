@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-
 import * as React from "react";
 import {
 	Card,
@@ -38,7 +36,7 @@ export function PaymentHistorySection() {
 				</CardHeader>
 				<CardContent className="text-center space-y-4">
 					<p className="text-muted-foreground">
-						{String(paymentsError?.message || "Failed to load payment history")}
+						{paymentsError.message || "Failed to load payment history"}
 					</p>
 				</CardContent>
 			</Card>

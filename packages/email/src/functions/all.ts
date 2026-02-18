@@ -139,12 +139,13 @@ const sendResendEmailUnsafe = async ({
   }
 
   // @IMPORTANT as of 23/04/2025, I am unsure whether this will ever happen
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (!response.data) {
+  // (Resend types say data is always defined after error check, but guarding at runtime)
+  const data = response.data as typeof response.data | undefined;
+  if (!data) {
     throw new ResendError("No data returned from Resend", 500);
   }
 
-  return response.data;
+  return data;
 };
 
 export const sendResendEmailSafe = ({

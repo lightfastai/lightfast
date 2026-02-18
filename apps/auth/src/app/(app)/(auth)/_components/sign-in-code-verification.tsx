@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useSignIn } from "@clerk/nextjs";
-import type { EmailCodeFactor } from "@clerk/types";
+import { useSignIn } from "@vendor/clerk/client";
+import type { EmailCodeFactor } from "@vendor/clerk/types";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useLogger } from "@vendor/observability/client-log";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
@@ -22,7 +22,7 @@ export function SignInCodeVerification({
   email,
   onReset,
 }: SignInCodeVerificationProps) {
-  const { signIn, setActive } = useSignIn();
+  const { isLoaded, signIn, setActive } = useSignIn();
   const log = useLogger();
   const {
     code,
@@ -39,8 +39,7 @@ export function SignInCodeVerification({
 
   const handleComplete = React.useCallback(
     async (value: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (!signIn || !setActive) return;
+      if (!isLoaded) return;
 
       setIsVerifying(true);
       setCustomError(null);
@@ -94,6 +93,7 @@ export function SignInCodeVerification({
       }
     },
     [
+      isLoaded,
       signIn,
       setActive,
       setIsVerifying,

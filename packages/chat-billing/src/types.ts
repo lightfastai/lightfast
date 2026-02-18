@@ -51,11 +51,6 @@ export function getClerkPlanId(
   const stage = resolveDeploymentStage(options?.environment);
   const mapping = CLERK_PLAN_IDS[planKey];
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (!mapping) {
-    throw new Error(`Unknown plan key: ${String(planKey)}`);
-  }
-
   return stage === "production" ? mapping.production : mapping.nonProduction;
 }
 

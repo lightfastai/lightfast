@@ -35,15 +35,12 @@ function PostHogPageView() {
 
   // Track pageviews
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (pathname && posthog) {
-      let url = window.origin + pathname;
-      if (searchParams.toString()) {
-        url = url + "?" + searchParams.toString();
-      }
-
-      posthog.capture("$pageview", { $current_url: url });
+    let url = window.origin + pathname;
+    if (searchParams.toString()) {
+      url = url + "?" + searchParams.toString();
     }
+
+    posthog.capture("$pageview", { $current_url: url });
   }, [pathname, searchParams, posthog]);
 
   return null;

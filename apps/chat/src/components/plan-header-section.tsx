@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
 import * as React from "react";
 import Link from "next/link";
@@ -24,14 +23,11 @@ export function PlanHeaderSection({ currentPlan }: PlanHeaderSectionProps) {
 			return "Get started with AI-powered conversations";
 		}
 
-		if (currentPlan === ClerkPlanKey.PLUS_TIER) {
-			if (isCanceled) {
-				return "Your plan has been cancelled";
-			}
-			return "20x more usage than Pro";
+		if (isCanceled) {
+			return "Your plan has been cancelled";
 		}
 
-		return currentPlanPricing.description;
+		return "20x more usage than Pro";
 	};
 
 	// Generate renewal info

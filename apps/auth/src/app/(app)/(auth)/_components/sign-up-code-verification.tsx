@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useSignUp } from "@clerk/nextjs";
+import { useSignUp } from "@vendor/clerk/client";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useLogger } from "@vendor/observability/client-log";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
@@ -20,7 +20,7 @@ export function SignUpCodeVerification({
 	onReset,
 	onError: _onError,
 }: SignUpCodeVerificationProps) {
-	const { signUp, setActive } = useSignUp();
+	const { isLoaded, signUp, setActive } = useSignUp();
 	const log = useLogger();
 	const {
 		code,
@@ -36,8 +36,7 @@ export function SignUpCodeVerification({
 	} = useCodeVerification();
 
 	async function handleComplete(value: string) {
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-		if (!signUp || !setActive) return;
+		if (!isLoaded) return;
 		
 		setIsVerifying(true);
 		setCustomError(null);
