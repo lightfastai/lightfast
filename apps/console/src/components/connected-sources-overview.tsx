@@ -265,8 +265,8 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
   let syncingCount = 0;
   let failedCount = 0;
   for (const c of connections) {
-    if (c.lastSyncStatus === "success") syncedCount++;
-    else if (c.lastSyncStatus === "pending") syncingCount++;
+    if (c.lastSyncStatus === "completed") syncedCount++;
+    else if (c.lastSyncStatus === "in_progress" || c.lastSyncStatus === "pending") syncingCount++;
     else if (c.lastSyncStatus === "failed") failedCount++;
   }
 

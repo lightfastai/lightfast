@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
@@ -121,6 +121,13 @@ export function WorkspaceSearch({
   // Reference to track current request for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Abort any in-flight request when the component unmounts
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
   const performSearch = (searchQuery: string) => {
       if (!searchQuery.trim()) {
         setError("Please enter a search query");
@@ -139,7 +146,7 @@ export function WorkspaceSearch({
 
       setIsSearching(true);
       setError(null);
-      setSearchResults(null);
+      // Keep previous results visible during loading to avoid flash of empty state
 
       const body: Record<string, unknown> = {
         query: searchQuery.trim(),

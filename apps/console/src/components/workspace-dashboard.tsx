@@ -14,7 +14,7 @@ import dynamic from "next/dynamic";
 
 const PerformanceMetrics = dynamic(
   () => import("./performance-metrics").then((m) => m.PerformanceMetrics),
-  { ssr: false, loading: () => <Skeleton className="h-64 w-full" /> },
+  { ssr: false, loading: () => <Skeleton className="h-80 w-full" /> },
 );
 
 interface WorkspaceDashboardProps {

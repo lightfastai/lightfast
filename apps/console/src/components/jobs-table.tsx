@@ -150,18 +150,23 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
     <>
       <div
         className={cn(
-          "border-b border-border/60 py-4 px-6 hover:bg-muted/30 transition-colors cursor-pointer",
+          "border-b border-border/60 py-4 px-6 hover:bg-muted/30 transition-colors",
+          hasDetails && "cursor-pointer",
           isExpanded && "bg-muted/30",
         )}
-        role="button"
-        tabIndex={hasDetails ? 0 : -1}
-        onClick={() => hasDetails && setIsExpanded(!isExpanded)}
-        onKeyDown={(e) => {
-          if (hasDetails && (e.key === "Enter" || e.key === " ")) {
-            e.preventDefault();
-            setIsExpanded(!isExpanded);
-          }
-        }}
+        {...(hasDetails
+          ? {
+              role: "button" as const,
+              tabIndex: 0,
+              onClick: () => setIsExpanded(!isExpanded),
+              onKeyDown: (e: React.KeyboardEvent) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setIsExpanded(!isExpanded);
+                }
+              },
+            }
+          : {})}
       >
         <div className="flex items-center gap-6">
           {/* Left: Job ID + Event Type */}
@@ -340,7 +345,7 @@ const EMPTY_STATE_MESSAGES = {
     showCTA: false,
   },
   failed: {
-    icon: CheckCircle2,
+    icon: XCircle,
     title: "No failed jobs",
     description: "Great! You have no failed jobs.",
     showCTA: false,

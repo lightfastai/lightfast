@@ -35,7 +35,7 @@ async function fetchRepositoryConfig(
 }
 
 export function RepositoryConfigDialog({ open, onOpenChange, fullName, installationId }: RepositoryConfigDialogProps) {
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ["repository-config", fullName, installationId],
     queryFn: () => fetchRepositoryConfig(fullName, installationId),
     enabled: open,
@@ -57,7 +57,7 @@ export function RepositoryConfigDialog({ open, onOpenChange, fullName, installat
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading && (
+        {(isLoading || isFetching) && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading configuration…
           </div>
@@ -92,7 +92,7 @@ export function RepositoryConfigDialog({ open, onOpenChange, fullName, installat
         )}
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" size="sm" onClick={() => void refetch()} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching} className="gap-1.5">
             <RefreshCcw className="h-3.5 w-3.5" /> Refresh
           </Button>
           <Button variant="outline" size="sm" asChild>

@@ -167,15 +167,19 @@ export function CreateWorkspaceButton() {
         }
 
         if (selectedRepositories.length > 0 && userSourceId && selectedInstallation) {
-          await bulkLinkMutation.mutateAsync({
-            workspaceId: workspace.workspaceId,
-            userSourceId,
-            installationId: selectedInstallation.id,
-            repositories: selectedRepositories.map((repo) => ({
-              repoId: repo.id,
-              repoFullName: repo.fullName,
-            })),
-          });
+          try {
+            await bulkLinkMutation.mutateAsync({
+              workspaceId: workspace.workspaceId,
+              userSourceId,
+              installationId: selectedInstallation.id,
+              repositories: selectedRepositories.map((repo) => ({
+                repoId: repo.id,
+                repoFullName: repo.fullName,
+              })),
+            });
+          } catch {
+            // Error already handled by bulkLinkMutation onError — continue with navigation
+          }
         }
 
         const repoCount = selectedRepositories.length;
@@ -186,6 +190,10 @@ export function CreateWorkspaceButton() {
         });
 
         const orgSlug = selectedOrg?.slug;
+        if (!orgSlug) {
+          router.push("/");
+          return;
+        }
         const wsName = workspace.workspaceName;
         router.push(`/${orgSlug}/${wsName}`);
       })

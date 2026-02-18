@@ -55,7 +55,8 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   let hasAccess = true;
   try {
     await requireOrgAccess(slug);
-  } catch {
+  } catch (error) {
+    console.debug("Org access denied for slug:", slug, error);
     hasAccess = false;
   }
   if (!hasAccess) {

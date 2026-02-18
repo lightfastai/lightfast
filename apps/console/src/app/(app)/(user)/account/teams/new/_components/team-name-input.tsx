@@ -101,7 +101,6 @@ export function TeamNameInput() {
               }}
               placeholder="acme-inc"
               className="h-12 text-base font-mono"
-              autoFocus
             />
           </FormControl>
           <FormDescription>
