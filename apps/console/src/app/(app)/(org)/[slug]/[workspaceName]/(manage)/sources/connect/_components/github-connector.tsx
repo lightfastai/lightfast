@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -104,10 +105,12 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
               {installations.map((inst) => (
                 <SelectItem key={inst.id} value={inst.id}>
                   <div className="flex items-center gap-2">
-                    <img
+                    <Image
                       src={inst.avatarUrl}
                       alt=""
-                      className="h-4 w-4 rounded"
+                      width={16}
+                      height={16}
+                      className="rounded"
                     />
                     <span>{inst.accountLogin}</span>
                     <span className="text-xs text-muted-foreground">
@@ -123,10 +126,12 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
 
       {installations.length === 1 && installations[0] && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <img
+          <Image
             src={installations[0].avatarUrl}
             alt=""
-            className="h-5 w-5 rounded"
+            width={20}
+            height={20}
+            className="rounded"
           />
           <span>{installations[0].accountLogin}</span>
         </div>

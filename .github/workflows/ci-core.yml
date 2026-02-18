@@ -57,6 +57,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build lightfast (required by @lightfastai/mcp)
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm --filter lightfast build
+
       - name: Lint packages
         env:
           SKIP_ENV_VALIDATION: "true"
@@ -85,6 +90,11 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build lightfast (required by @lightfastai/mcp)
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm --filter lightfast build
 
       - name: Type check packages
         env:

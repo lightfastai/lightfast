@@ -16,7 +16,7 @@ import { uuidv4 } from "@repo/lib/uuid";
 import {
 	BILLING_LIMITS,
 	ClerkPlanKey,
-	getSubscriptionState,
+	deriveSubscriptionData,
 	calculateBillingPeriodFromSubscription,
 	GRACE_PERIOD_DAYS,
 } from "@repo/chat-billing";
@@ -54,10 +54,10 @@ export async function getUserSubscriptionData(userId: string) {
 	const client = await clerkClient();
 	try {
 		const subscription = await client.billing.getUserBillingSubscription(userId);
-		return { subscription, ...getSubscriptionState(subscription) };
+		return deriveSubscriptionData({ userId, subscription });
 	} catch (error) {
 		console.error(`[Billing] Failed to fetch subscription for user ${userId}:`, error);
-		return { subscription: null, ...getSubscriptionState(null) };
+		return deriveSubscriptionData({ userId, subscription: null });
 	}
 }
 

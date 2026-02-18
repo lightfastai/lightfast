@@ -209,8 +209,8 @@ export function SearchResultCard({
                       Entities
                     </span>
                     <div className="flex flex-wrap gap-1">
-                      {result.entities.map((entity, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
+                      {result.entities.map((entity) => (
+                        <Badge key={`${entity.key}-${entity.category}`} variant="outline" className="text-xs">
                           {entity.key}
                           <span className="ml-1 text-muted-foreground">
                             ({entity.category})
