@@ -48,7 +48,7 @@ export function deriveSlug(filePath: string, basePath: string): string {
   slug = slug.replace(/\s+/g, "-");
 
   // Replace special characters with hyphens
-  slug = slug.replace(/[^a-z0-9\-\/]/g, "-");
+  slug = slug.replace(/[^a-z0-9\-/]/g, "-");
 
   // Remove consecutive hyphens
   slug = slug.replace(/-+/g, "-");
