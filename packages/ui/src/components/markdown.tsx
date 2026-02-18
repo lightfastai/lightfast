@@ -32,9 +32,8 @@ interface CodeComponentProps extends MarkdownComponentProps {
  */
 const components: Partial<ReactMarkdownComponents> = {
   // Code components - handles both inline and block code
-  code({ node, inline, className, children, ...props }: CodeComponentProps) {
-    const nodeWithPosition = node as { position?: { start: { line: number }; end: { line: number } } } | undefined;
-    const isInline = inline ?? (nodeWithPosition?.position?.start.line === nodeWithPosition?.position?.end.line);
+  code({ node: _node, inline, className, children, ...props }: CodeComponentProps) {
+    const isInline = inline ?? false;
     
     // Inline code styling
     if (isInline) {

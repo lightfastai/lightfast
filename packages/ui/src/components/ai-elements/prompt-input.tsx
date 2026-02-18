@@ -443,7 +443,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(({
               }
 
               const mediaType = uploaded.mediaType;
-              const filename = uploaded.filename;
+              const filename = uploaded.filename ?? pendingItem.filename ?? "";
               const size = uploaded.size ?? file.size;
               const finalUrl = uploaded.url ? uploaded.url : pendingItem.url;
 
@@ -628,9 +628,10 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(({
       }),
     );
 
+    const messageEl = event.currentTarget.elements.namedItem("message");
     onSubmit(
       {
-        text: (event.currentTarget.elements.namedItem("message") as HTMLTextAreaElement).value,
+        text: messageEl instanceof HTMLTextAreaElement ? messageEl.value : "",
         attachments: attachmentsPayload,
       },
       event,

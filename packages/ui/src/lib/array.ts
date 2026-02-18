@@ -29,6 +29,8 @@ function deepHash(value: unknown, cache = new WeakMap<object, string>()): string
     if (cached !== undefined) {
       return cached
     }
+    // Set a placeholder before recursing to break circular references.
+    cache.set(obj, 'circular')
     let hash: string
     if (Array.isArray(obj)) {
       // Compute hash for each element in order.
@@ -46,8 +48,10 @@ function deepHash(value: unknown, cache = new WeakMap<object, string>()): string
     return hash
   }
 
-  // Fallback if no case matched.
-  return `${type}:${String(value as string)}`
+  // Fallback for symbol and bigint types.
+  if (type === 'symbol') return `symbol:${(value as symbol).toString()}`
+  if (type === 'bigint') return `bigint:${(value as bigint).toString()}`
+  return `${type}:unknown`
 }
 
 /**

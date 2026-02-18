@@ -60,8 +60,9 @@ function useAnimation(
     onFrame?: (index: number) => void
   }
 ): { frameIndex: number; isPlaying: boolean } {
+  const { fps, autoplay, loop, onFrame } = options
   const [frameIndex, setFrameIndex] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(options.autoplay)
+  const [isPlaying, setIsPlaying] = useState(autoplay)
   const frameIdRef = useRef<number | undefined>(undefined)
   const lastTimeRef = useRef<number>(0)
   const accumulatorRef = useRef<number>(0)
@@ -71,7 +72,7 @@ function useAnimation(
       return
     }
 
-    const frameInterval = 1000 / options.fps
+    const frameInterval = 1000 / fps
 
     const animate = (currentTime: number) => {
       if (lastTimeRef.current === 0) {
@@ -88,15 +89,15 @@ function useAnimation(
         setFrameIndex((prev) => {
           const next = prev + 1
           if (next >= frames.length) {
-            if (options.loop) {
-              options.onFrame?.(0)
+            if (loop) {
+              onFrame?.(0)
               return 0
             } else {
               setIsPlaying(false)
               return prev
             }
           }
-          options.onFrame?.(next)
+          onFrame?.(next)
           return next
         })
       }
@@ -111,17 +112,17 @@ function useAnimation(
         cancelAnimationFrame(frameIdRef.current)
       }
     }
-  }, [frames, isPlaying, options])
+  }, [frames, isPlaying, fps, loop, onFrame])
 
   useEffect(() => {
     const id = requestAnimationFrame(() => {
       setFrameIndex(0)
-      setIsPlaying(options.autoplay)
+      setIsPlaying(autoplay)
     })
     lastTimeRef.current = 0
     accumulatorRef.current = 0
     return () => cancelAnimationFrame(id)
-  }, [frames, options, options.autoplay])
+  }, [frames, autoplay])
 
   return { frameIndex, isPlaying }
 }

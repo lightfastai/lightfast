@@ -15,7 +15,6 @@ interface SSRCodeBlockProps {
   language?: string;
   className?: string;
   showHeader?: boolean;
-  showLineNumbers?: boolean;
 }
 
 export async function SSRCodeBlock({
@@ -23,10 +22,8 @@ export async function SSRCodeBlock({
   language = "typescript",
   className,
   showHeader = true,
-  showLineNumbers: _showLineNumbers = true,
 }: SSRCodeBlockProps) {
   const code = children.trim();
-  const _lineCount = code.split("\n").length;
 
   // Normalize language names - handle common aliases and invalid languages
   let lang: BundledLanguage = language as BundledLanguage;

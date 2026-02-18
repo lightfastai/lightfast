@@ -26,6 +26,8 @@ interface ChatInputProps {
 	modelSelector?: React.ReactNode;
 }
 
+const noop = () => { /* no-op */ };
+
 const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 	(
 		{
@@ -46,7 +48,6 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
 		// Use controlled value if provided, otherwise use internal state
 		const message = value ?? internalMessage;
-		const noop = () => { /* no-op */ };
 		const setMessage =
 			value !== undefined ? (onChange ?? noop) : setInternalMessage;
 		const [isSending, setIsSending] = useState(false);
@@ -75,10 +76,10 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
 		// Expose the textarea ref for parent components
 		useImperativeHandle(ref, () => {
-			if (!textareaRef.current) {
-				throw new Error("Textarea ref not yet attached");
-			}
-			return textareaRef.current;
+			// Return the textarea element if available; during mounting it may be null.
+			// Callers should handle a potentially unattached ref gracefully.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return textareaRef.current!;
 		}, []);
 
 		const handleSendMessage = useCallback(async () => {

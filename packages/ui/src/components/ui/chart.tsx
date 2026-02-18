@@ -323,22 +323,18 @@ function getPayloadConfigFromPayload(
 
   let configLabelKey: string = key
 
-  if (
-    key in payloadRecord &&
-    typeof payloadRecord[key] === "string"
-  ) {
-    configLabelKey = payloadRecord[key]
-  } else if (
-    payloadPayload &&
-    key in payloadPayload &&
-    typeof payloadPayload[key] === "string"
-  ) {
-    configLabelKey = payloadPayload[key]
+  const recordValue = payloadRecord[key]
+  const payloadValue = payloadPayload?.[key]
+
+  if (key in payloadRecord && typeof recordValue === "string") {
+    configLabelKey = recordValue
+  } else if (payloadPayload && key in payloadPayload && typeof payloadValue === "string") {
+    configLabelKey = payloadValue
   }
 
-  return configLabelKey in config
-    ? config[configLabelKey]
-    : config[key]
+  const configByLabel = config[configLabelKey]
+  const configByKey = config[key]
+  return configLabelKey in config ? configByLabel : configByKey
 }
 
 export {

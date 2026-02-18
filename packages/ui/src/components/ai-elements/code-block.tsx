@@ -221,7 +221,7 @@ export const CodeBlockContent = ({
   const [html, setHtml] = useState<string>("");
   const [darkHtml, setDarkHtml] = useState<string>("");
   const mounted = useRef(false);
-  const { theme, resolvedTheme } = useTheme();
+  useTheme();
 
   // Map next-themes values to BundledTheme
   const getThemes = useCallback((): [BundledTheme, BundledTheme] => {
@@ -246,7 +246,7 @@ export const CodeBlockContent = ({
     return () => {
       mounted.current = false;
     };
-  }, [code, language, theme, resolvedTheme, preClassName, getThemes]);
+  }, [code, language, preClassName, getThemes]);
 
   return (
     <CodeBlockContext.Provider value={{ code }}>
