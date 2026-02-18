@@ -76,16 +76,13 @@ export function SignUpEmailInput({
 					return;
 				}
 
-				const hasEmail = Boolean(signUpAttempt.emailAddress);
 				const isVerified = signUpAttempt.verifications.emailAddress.status === "verified";
-				if (hasEmail) {
-					if (isVerified) {
-						log.info("[SignUpEmailInput] Email auto-verified via ticket", {
-							email: data.email,
-						});
-						onSuccess(data.email);
-						return;
-					}
+				if (signUpAttempt.emailAddress && isVerified) {
+					log.info("[SignUpEmailInput] Email auto-verified via ticket", {
+						email: data.email,
+					});
+					onSuccess(data.email);
+					return;
 				}
 
 				// Unexpected state - fall through to standard verification
