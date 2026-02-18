@@ -1,4 +1,5 @@
-import { fal, InQueueQueueStatus } from "@fal-ai/client";
+import type { InQueueQueueStatus } from "@fal-ai/client";
+import { fal } from "@fal-ai/client";
 
 export interface FalGenerateVideoOptions {
   prompt: string;
@@ -7,7 +8,7 @@ export interface FalGenerateVideoOptions {
   model: string;
 }
 
-export interface FalGenerateVideoResult extends InQueueQueueStatus {}
+export type FalGenerateVideoResult = InQueueQueueStatus;
 
 /**
  * Generate a video using Fal AI
