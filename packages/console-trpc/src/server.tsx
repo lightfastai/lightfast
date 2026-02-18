@@ -141,17 +141,17 @@ export function HydrateClient(props: { children: React.ReactNode }) {
   );
 }
 
-export function prefetch(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  queryOptions: ReturnType<TRPCQueryOptions<any>>,
+export function prefetch<T>(
+  queryOptions: ReturnType<TRPCQueryOptions<T>>,
 ) {
   const queryClient = getQueryClient();
   if (
     (queryOptions.queryKey[1] as { type?: string } | undefined)?.type ===
     "infinite"
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-    void queryClient.prefetchInfiniteQuery(queryOptions as any);
+    void queryClient.prefetchInfiniteQuery(
+      queryOptions as unknown as Parameters<typeof queryClient.prefetchInfiniteQuery>[0],
+    );
   } else {
     void queryClient.prefetchQuery(queryOptions);
   }

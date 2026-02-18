@@ -30,6 +30,7 @@
 import { log } from "@vendor/observability/log";
 import { getJobByInngestRunId, completeJob } from "../../../lib/jobs";
 import type { Events } from "../../client/client";
+import type { WorkflowOutput } from "@repo/console-validation";
 
 /** Base shape all neural workflow failure outputs must satisfy */
 interface NeuralFailureOutput {
@@ -63,10 +64,9 @@ export function createNeuralOnFailureHandler<TEventName extends keyof Events>(
     error,
   }: {
     // Inngest's FailureEventPayload wraps the original event under data.event.
-    // We use `any` here because the exact FailureEventPayload generic shape
-    // is an Inngest internal — the cast below re-establishes type safety.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    event: { data: { event: any } };
+    // The exact FailureEventPayload generic shape is an Inngest internal —
+    // the cast below re-establishes type safety.
+    event: { data: { event: unknown } };
     error: Error;
   }) => {
     const originalEvent = event.data.event as {
@@ -90,8 +90,7 @@ export function createNeuralOnFailureHandler<TEventName extends keyof Events>(
           // `NeuralFailureOutput` is intentionally broad so the factory stays
           // generic. Type safety is enforced per-workflow via `satisfies` in
           // each `buildOutput` callback; the cast here is therefore safe.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-          output: config.buildOutput({ data, error: error.message }) as any,
+          output: config.buildOutput({ data, error: error.message }) as unknown as WorkflowOutput,
         });
       }
     }

@@ -15,6 +15,7 @@ import { eq, and } from "drizzle-orm";
 import { inngest } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import { pineconeClient } from "@repo/console-pinecone";
+import type { SourceType } from "@repo/console-validation";
 
 /**
  * Delete document function (multi-source)
@@ -70,8 +71,7 @@ export const deleteDocuments = inngest.createFunction(
           return null;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety check for data integrity
-        if (workspace.settings.version !== 1) {
+        if ((workspace.settings.version as number) !== 1) {
           log.warn("Workspace has invalid settings version", { workspaceId });
           return null;
         }
@@ -96,8 +96,7 @@ export const deleteDocuments = inngest.createFunction(
             .where(
               and(
                 eq(workspaceKnowledgeDocuments.workspaceId, workspaceId),
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Drizzle enum type mismatch
-                eq(workspaceKnowledgeDocuments.sourceType, sourceType as any),
+                eq(workspaceKnowledgeDocuments.sourceType, sourceType as SourceType),
                 eq(workspaceKnowledgeDocuments.sourceId, sourceId),
               ),
             )

@@ -375,8 +375,7 @@ async function getWorkspace(
     throw new Error(`Workspace not found: ${workspaceId}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety check for data integrity
-  if (workspace.settings.version !== 1) {
+  if ((workspace.settings.version as number) !== 1) {
     throw new Error(`Workspace ${workspaceId} has invalid settings version`);
   }
 
@@ -386,7 +385,7 @@ async function getWorkspace(
 
 async function findExistingDocument(
   workspaceId: string,
-  sourceType: string,
+  sourceType: SourceType,
   sourceId: string,
 ): Promise<WorkspaceKnowledgeDocument | undefined> {
   const [existingDoc] = await db
@@ -395,8 +394,7 @@ async function findExistingDocument(
     .where(
       and(
         eq(workspaceKnowledgeDocuments.workspaceId, workspaceId),
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- Drizzle enum type mismatch
-        eq(workspaceKnowledgeDocuments.sourceType, sourceType as any),
+        eq(workspaceKnowledgeDocuments.sourceType, sourceType),
         eq(workspaceKnowledgeDocuments.sourceId, sourceId),
       ),
     )

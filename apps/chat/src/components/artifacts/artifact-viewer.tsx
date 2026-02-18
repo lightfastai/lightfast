@@ -24,10 +24,8 @@ import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 
 interface ArtifactViewerProps {
 	artifact: UIArtifact;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	metadata: any;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	setMetadata: (metadata: any) => void;
+	metadata: Record<string, unknown>;
+	setMetadata: (metadata: Record<string, unknown>) => void;
 	onClose: () => void;
 	onSaveContent?: (content: string, debounce: boolean) => void;
 	sessionId: string;
@@ -120,12 +118,12 @@ export function ArtifactViewer({
 				</div>
 				<ArtifactActions>
 					{/* Artifact actions */}
-					{artifactDefinition.actions.map((action, index) => {
+					{artifactDefinition.actions.map((action) => {
 						// Special handling for copy action
 						if (action.description.includes("clipboard")) {
 							return (
 								<ArtifactAction
-									key={index}
+									key={action.description}
 									onClick={() => void copyToClipboard(artifact.content)}
 									tooltip={action.description}
 									className={isCopied ? "text-green-600" : ""}
@@ -138,15 +136,14 @@ export function ArtifactViewer({
 						// Default action rendering
 						return (
 							<ArtifactAction
-								key={index}
+								key={action.description}
 								onClick={() =>
 									action.onClick({
 										content: artifact.content,
 										handleVersionChange,
 										currentVersionIndex,
 										isCurrentVersion,
-										// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-										metadata,
+												metadata,
 										setMetadata,
 									})
 								}
@@ -155,8 +152,7 @@ export function ArtifactViewer({
 									handleVersionChange,
 									currentVersionIndex,
 									isCurrentVersion,
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-									metadata,
+										metadata,
 									setMetadata,
 								})}
 								tooltip={action.description}
@@ -181,7 +177,6 @@ export function ArtifactViewer({
 					isCurrentVersion={isCurrentVersion}
 					getDocumentContentById={() => artifact.content}
 					isLoading={false}
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					metadata={metadata}
 					setMetadata={setMetadata}
 				/>
