@@ -49,18 +49,25 @@ export function SignInEmailInput({ onSuccess, onError }: SignInEmailInputProps) 
 				identifier: data.email,
 			});
 
-			// Send verification code
-			const emailFactor = signIn.supportedFirstFactors?.find(
-				(factor) => factor.strategy === "email_code",
-			);
+			const factors = signIn.supportedFirstFactors;
+			let emailAddressId: string | undefined;
+			if (factors) {
+				const emailFactor = factors.find(
+					(factor) => factor.strategy === "email_code",
+				);
+				if (emailFactor) {
+					emailAddressId = emailFactor.emailAddressId;
+				}
+			}
 
-			if (!emailFactor?.emailAddressId) {
-				throw new Error("Email verification is not supported");
+			if (!emailAddressId) {
+				onError("Email verification is not supported");
+				return;
 			}
 
 			await signIn.prepareFirstFactor({
 				strategy: "email_code",
-				emailAddressId: emailFactor.emailAddressId,
+				emailAddressId,
 			});
 
 			log.info("[SignInEmailInput] Authentication success", {

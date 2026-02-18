@@ -19,6 +19,10 @@ import { handleClerkError } from "~/app/lib/clerk/error-handler";
 import { useLogger } from "@vendor/observability/client-log";
 import { consoleUrl } from "~/lib/related-projects";
 
+function navigateToTeamCreation() {
+	window.location.href = `${consoleUrl}/account/teams/new`;
+}
+
 const emailSchema = z.object({
 	email: z.string().email("Please enter a valid email address"),
 });
@@ -68,20 +72,20 @@ export function SignUpEmailInput({
 				if (signUpAttempt.status === "complete") {
 					log.info("[SignUpEmailInput] Sign-up complete, redirecting to console");
 					await setActive({ session: signUpAttempt.createdSessionId });
-					window.location.href = `${consoleUrl}/account/teams/new`;
+					navigateToTeamCreation();
 					return;
 				}
 
-				// If not complete but email verified, transition to success
-				if (
-					signUpAttempt.emailAddress &&
-					signUpAttempt.verifications.emailAddress.status === "verified"
-				) {
-					log.info("[SignUpEmailInput] Email auto-verified via ticket", {
-						email: data.email,
-					});
-					onSuccess(data.email);
-					return;
+				const hasEmail = Boolean(signUpAttempt.emailAddress);
+				const isVerified = signUpAttempt.verifications.emailAddress.status === "verified";
+				if (hasEmail) {
+					if (isVerified) {
+						log.info("[SignUpEmailInput] Email auto-verified via ticket", {
+							email: data.email,
+						});
+						onSuccess(data.email);
+						return;
+					}
 				}
 
 				// Unexpected state - fall through to standard verification

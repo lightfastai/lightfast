@@ -68,7 +68,11 @@ export function SignInCodeVerification({
         });
 
         // Handle unexpected status with proper context
-        handleUnexpectedStatus(result.status ?? "unknown", {
+        let statusValue = "unknown";
+        if (result.status != null) {
+          statusValue = result.status;
+        }
+        handleUnexpectedStatus(statusValue, {
           component: "SignInCodeVerification",
           action: "verify_code",
           email,
@@ -107,18 +111,26 @@ export function SignInCodeVerification({
     setCustomError("");
     try {
       // Resend the verification code
-      const emailFactor = signIn.supportedFirstFactors?.find(
-        (factor) => factor.strategy === "email_code",
-      );
+      const factors = signIn.supportedFirstFactors;
+      let emailAddressId: string | undefined;
+      if (factors) {
+        const found = factors.find(
+          (factor) => factor.strategy === "email_code",
+        );
+        if (found) {
+          emailAddressId = found.emailAddressId;
+        }
+      }
 
-      if (!emailFactor?.emailAddressId) {
+      if (!emailAddressId) {
         setCustomError("Unable to resend code. Please try again.");
+        setIsResending(false);
         return;
       }
 
       await signIn.prepareFirstFactor({
         strategy: "email_code",
-        emailAddressId: emailFactor.emailAddressId,
+        emailAddressId,
       });
 
       // Show success message to user
@@ -140,9 +152,8 @@ export function SignInCodeVerification({
 
       // Set the user-friendly error message
       setCustomError(errorResult.userMessage);
-    } finally {
-      setIsResending(false);
     }
+    setIsResending(false);
   }
 
   // Auto-submit when code is complete (but not if there's an error showing)

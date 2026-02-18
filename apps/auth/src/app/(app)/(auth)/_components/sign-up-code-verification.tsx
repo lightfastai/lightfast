@@ -65,7 +65,11 @@ export function SignUpCodeVerification({
 				});
 				
 				// Handle unexpected status with proper context
-				handleUnexpectedStatus(result.status ?? 'unknown', {
+				let statusValue = 'unknown';
+				if (result.status != null) {
+					statusValue = result.status;
+				}
+				handleUnexpectedStatus(statusValue, {
 					component: 'SignUpCodeVerification',
 					action: 'verify_code',
 					email,
@@ -127,9 +131,8 @@ export function SignUpCodeVerification({
 			
 			// Set the user-friendly error message
 			setCustomError(errorResult.userMessage);
-		} finally {
-			setIsResending(false);
 		}
+		setIsResending(false);
 	}
 
 	// Auto-submit when code is complete (but not if there's an error showing)
