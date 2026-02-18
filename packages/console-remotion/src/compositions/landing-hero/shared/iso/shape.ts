@@ -145,7 +145,7 @@ export function createBox(b: Box3D): Shape {
 }
 
 /** A minus B — carves B out of A */
-function subtract(a: Box3D, b: Box3D): Shape {
+function _subtract(a: Box3D, b: Box3D): Shape {
   if (!aabbHit(a, b)) return createBox(a);
 
   const bSil = silhouette(b);
@@ -157,7 +157,7 @@ function subtract(a: Box3D, b: Box3D): Shape {
 }
 
 /** A ∪ B — combined volume of both boxes */
-function union(a: Box3D, b: Box3D): Shape {
+function _union(a: Box3D, b: Box3D): Shape {
   if (!aabbHit(a, b)) {
     return { faces: [...createBox(a).faces, ...createBox(b).faces] };
   }
@@ -171,7 +171,7 @@ function union(a: Box3D, b: Box3D): Shape {
 }
 
 /** A ∩ B — only the overlapping volume */
-function intersect(a: Box3D, b: Box3D): Shape {
+function _intersect(a: Box3D, b: Box3D): Shape {
   const int = aabbHit(a, b);
   if (!int) return { faces: [] };
   return createBox(int);

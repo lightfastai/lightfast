@@ -27,7 +27,7 @@ export const GridLines: React.FC<GridLinesProps> = ({
     {
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
-      easing: Easing.out(Easing.quad),
+      easing: Easing.out((t: number) => Easing.quad(t)),
     },
   );
 
@@ -54,7 +54,7 @@ export const GridLines: React.FC<GridLinesProps> = ({
     {
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
-      easing: Easing.inOut(Easing.cubic),
+      easing: Easing.inOut((t: number) => Easing.cubic(t)),
     },
   );
 
@@ -86,7 +86,7 @@ export const GridLines: React.FC<GridLinesProps> = ({
     ? interpolate(flashFrame, [0, FLASH_DURATION], [3, 28], {
         extrapolateLeft: "clamp",
         extrapolateRight: "clamp",
-        easing: Easing.out(Easing.cubic),
+        easing: Easing.out((t: number) => Easing.cubic(t)),
       })
     : 0;
   const flashOpacity = flashActive

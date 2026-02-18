@@ -313,7 +313,7 @@ export const IngestedData: React.FC = () => {
 
             {/* ── New search result items (preserve-3d for drop animation) ── */}
             {NEW_SEARCH_RESULTS.map((result, resultIndex) => {
-              const drop = dropSprings[resultIndex]!;
+              const drop = dropSprings[resultIndex] ?? 0;
               // Only render once the drop phase begins
               if (drop <= 0) return null;
 

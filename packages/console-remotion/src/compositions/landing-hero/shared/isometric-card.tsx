@@ -1,10 +1,6 @@
 import type React from "react";
 import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { SPRING_CONFIGS, MOTION_DURATION } from "./timing";
-<<<<<<< Updated upstream:packages/console-remotion/src/compositions/landing-hero/shared/isometric-card.tsx
-=======
-import { COLORS } from "./colors";
->>>>>>> Stashed changes:packages/console-remotion/src/compositions/landing-hero/shared/IsometricCard.tsx
 
 interface IsometricCardProps {
   children: React.ReactNode;
@@ -52,14 +48,7 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
         opacity,
         width,
         height,
-<<<<<<< Updated upstream:packages/console-remotion/src/compositions/landing-hero/shared/isometric-card.tsx
         transformStyle: "preserve-3d",
-=======
-        backgroundColor: COLORS.cardWhite,
-        borderRadius: 12,
-        border: `1px solid ${COLORS.border}`,
-        overflow: "hidden",
->>>>>>> Stashed changes:packages/console-remotion/src/compositions/landing-hero/shared/IsometricCard.tsx
       }}
     >
       {/* Card background */}

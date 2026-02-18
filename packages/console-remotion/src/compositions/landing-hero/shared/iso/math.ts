@@ -19,8 +19,9 @@ export function signedArea(p: Polygon): number {
   let a = 0;
   const n = p.length;
   for (let i = 0; i < n; i++) {
-    const pi = p[i]!;
-    const pj = p[(i + 1) % n]!;
+    const pi = p[i];
+    const pj = p[(i + 1) % n];
+    if (!pi || !pj) continue;
     a += pi[0] * pj[1] - pj[0] * pi[1];
   }
   return a * 0.5;
@@ -66,12 +67,14 @@ export function clipPolygon(subject: Polygon, clip: Polygon): Polygon {
     if (out.length === 0) return [];
     const inp = [...out];
     out = [];
-    const a = clip[i]!;
-    const b = clip[(i + 1) % cn]!;
+    const a = clip[i];
+    const b = clip[(i + 1) % cn];
+    if (!a || !b) continue;
 
     for (let j = 0, sn = inp.length; j < sn; j++) {
-      const cur = inp[j]!;
-      const prev = inp[(j + sn - 1) % sn]!;
+      const cur = inp[j];
+      const prev = inp[(j + sn - 1) % sn];
+      if (!cur || !prev) continue;
       const curIn = side(a, b, cur) >= -EPS;
       const prevIn = side(a, b, prev) >= -EPS;
 
@@ -91,11 +94,12 @@ export function clipPolygon(subject: Polygon, clip: Polygon): Polygon {
 }
 
 // ── Point-in-polygon (ray cast) ──────────────────────────
-function pointInPolygon(pt: Vec2, poly: Polygon): boolean {
+function _pointInPolygon(pt: Vec2, poly: Polygon): boolean {
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const pi = poly[i]!;
-    const pj = poly[j]!;
+    const pi = poly[i];
+    const pj = poly[j];
+    if (!pi || !pj) continue;
     if (pi[1] > pt[1] !== pj[1] > pt[1] && pt[0] < ((pj[0] - pi[0]) * (pt[1] - pi[1])) / (pj[1] - pi[1]) + pi[0]) {
       inside = !inside;
     }
@@ -135,7 +139,7 @@ export function polyBounds(p: Polygon): Bounds {
   return { minX, minY, maxX, maxY };
 }
 
-function mergeBounds(list: Bounds[]): Bounds {
+function _mergeBounds(list: Bounds[]): Bounds {
   return {
     minX: Math.min(...list.map((b) => b.minX)),
     minY: Math.min(...list.map((b) => b.minY)),

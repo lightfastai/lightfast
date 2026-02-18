@@ -30,7 +30,7 @@ export const LandingHero: React.FC = () => {
   const [handle] = useState(() => delayRender("Loading fonts"));
 
   useEffect(() => {
-    ensureFontsLoaded().then(() => continueRender(handle));
+    void ensureFontsLoaded().then(() => continueRender(handle));
   }, [handle]);
 
   return (

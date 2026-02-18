@@ -85,15 +85,15 @@ const eventPitches = eventHeights.map((h) => h + ROW_GAP);
 // Cumulative pitch within one cycle: cumPitch[i] = sum of eventPitches[0..i-1]
 const cumPitch: number[] = [0];
 for (let i = 0; i < N; i++) {
-  cumPitch.push(cumPitch[i]! + eventPitches[i]!);
+  cumPitch.push((cumPitch[i] ?? 0) + (eventPitches[i] ?? 0));
 }
-const CYCLE_PITCH = cumPitch[N]!;
+const CYCLE_PITCH = cumPitch[N] ?? 0;
 
 // Cumulative position for any virtual index (supports negative)
 function getCumPosition(vi: number): number {
   const cycles = Math.floor(vi / N);
   const rem = ((vi % N) + N) % N;
-  return cycles * CYCLE_PITCH + cumPitch[rem]!;
+  return cycles * CYCLE_PITCH + (cumPitch[rem] ?? 0);
 }
 
 const ROWS_TO_RENDER =
@@ -110,10 +110,10 @@ export const StreamEvents: React.FC = () => {
   const stepProgress = interpolate(stepFrame, [0, STEP_MOVE_FRAMES], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
-    easing: Easing.inOut(Easing.cubic),
+    easing: Easing.inOut((t: number) => Easing.cubic(t)),
   });
   const scrollOffset =
-    getCumPosition(stepIndex) + stepProgress * eventPitches[stepIndex % N]!;
+    getCumPosition(stepIndex) + stepProgress * (eventPitches[stepIndex % N] ?? 0);
 
   return (
     <div
@@ -128,7 +128,8 @@ export const StreamEvents: React.FC = () => {
       {Array.from({ length: ROWS_TO_RENDER }).map((_, index) => {
         const virtualIndex = index + START_INDEX;
         const normalizedIndex = ((virtualIndex % N) + N) % N;
-        const event = FEED_EVENTS[normalizedIndex]!;
+        const event = FEED_EVENTS[normalizedIndex];
+        if (!event) return null;
         const rowTop =
           FEED_PADDING_Y + getCumPosition(virtualIndex) + scrollOffset;
 

@@ -4,7 +4,6 @@ import { Logo, LOGO_VARIANTS } from "./compositions/logo";
 
 export const RemotionRoot = () => {
   return (
-<<<<<<< Updated upstream
     <>
       <Composition
         id="landing-hero"
@@ -25,15 +24,5 @@ export const RemotionRoot = () => {
         />
       ))}
     </>
-=======
-    <Composition
-      id="LandingHero"
-      component={LandingHero}
-      durationInFrames={301}
-      fps={30}
-      width={1200}
-      height={800}
-    />
->>>>>>> Stashed changes
   );
 };
