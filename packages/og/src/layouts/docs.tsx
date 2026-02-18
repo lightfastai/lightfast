@@ -59,7 +59,7 @@ export function DocsLayout({ title, section, breadcrumb }: DocsOGProps) {
 				</div>
 			</div>
 
-			{(section || (breadcrumb && breadcrumb.length > 0)) && (
+			{(section ?? (breadcrumb && breadcrumb.length > 0)) && (
 				<div
 					style={{
 						display: "flex",
