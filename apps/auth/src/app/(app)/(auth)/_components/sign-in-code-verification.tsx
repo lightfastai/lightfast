@@ -43,7 +43,7 @@ export function SignInCodeVerification({
     if (!signIn || !setActive) return;
 
     setIsVerifying(true);
-    setCustomError("");
+    setCustomError(null);
 
     try {
       // Attempt to verify the code
@@ -108,7 +108,7 @@ export function SignInCodeVerification({
     if (!signIn) return;
 
     setIsResending(true);
-    setCustomError("");
+    setCustomError(null);
     try {
       // Resend the verification code
       const factors = signIn.supportedFirstFactors;
@@ -156,11 +156,16 @@ export function SignInCodeVerification({
     setIsResending(false);
   }
 
+  const handleCompleteRef = React.useRef(handleComplete);
+  React.useEffect(() => {
+    handleCompleteRef.current = handleComplete;
+  });
+
   // Auto-submit when code is complete (but not if there's an error showing)
   React.useEffect(() => {
     if (code.length === 6 && !inlineError) {
       // Handle the promise to avoid unhandled rejection
-      handleComplete(code).catch(() => {
+      handleCompleteRef.current(code).catch(() => {
         // Error is already handled in handleComplete
       });
     }
