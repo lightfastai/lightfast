@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { FileText, ExternalLink, RefreshCcw, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -19,12 +19,6 @@ interface RepositoryConfigDialogProps {
   installationId: number; // GitHub App installation ID
 }
 
-type State =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "loaded"; exists: boolean; path?: string; content?: string }
-  | { status: "error"; message: string };
-
 async function fetchRepositoryConfig(
   fullName: string,
   installationId: number,
@@ -41,24 +35,11 @@ async function fetchRepositoryConfig(
 }
 
 export function RepositoryConfigDialog({ open, onOpenChange, fullName, installationId }: RepositoryConfigDialogProps) {
-  const [state, setState] = useState<State>({ status: "idle" });
-
-  function fetchConfig() {
-    setState({ status: "loading" });
-    fetchRepositoryConfig(fullName, installationId)
-      .then((data) => {
-        setState({ status: "loaded", exists: data.exists, path: data.path, content: data.content });
-      })
-      .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : "Failed to fetch config";
-        setState({ status: "error", message });
-        toast.error("Failed to load config", { description: message });
-      });
-  }
-
-  useEffect(() => {
-    if (open) fetchConfig();
-  }, [open, fullName, installationId]);
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["repository-config", fullName, installationId],
+    queryFn: () => fetchRepositoryConfig(fullName, installationId),
+    enabled: open,
+  });
 
   const ghLink = `https://github.com/${fullName}`;
   const filename = state.status === "loaded" && state.path ? state.path : "lightfast.yml";
