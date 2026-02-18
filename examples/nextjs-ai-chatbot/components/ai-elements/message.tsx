@@ -59,6 +59,6 @@ export const MessageAvatar = ({
     {...props}
   >
     <AvatarImage alt="" className="mt-0 mb-0" src={src} />
-    <AvatarFallback>{name?.slice(0, 2) || 'ME'}</AvatarFallback>
+    <AvatarFallback>{(name?.slice(0, 2) ?? '') || 'ME'}</AvatarFallback>
   </Avatar>
 );
