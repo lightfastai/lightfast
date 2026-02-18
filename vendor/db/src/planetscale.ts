@@ -6,7 +6,6 @@
 import { drizzle  } from "drizzle-orm/planetscale-serverless";
 import type {PlanetScaleDatabase} from "drizzle-orm/planetscale-serverless";
 import { Client  } from "@planetscale/database";
-import type {Config as PlanetScaleConfig} from "@planetscale/database";
 
 /**
  * Configuration for creating a PlanetScale database connection
@@ -33,7 +32,7 @@ export function createPlanetScaleClient(config: DatabaseConfig): Client {
  * @param config - Database configuration
  * @param schema - Optional schema object for type safety
  */
-export function createDatabase<TSchema extends Record<string, any> = Record<string, never>>(
+export function createDatabase<TSchema extends Record<string, unknown> = Record<string, never>>(
   config: DatabaseConfig,
   schema?: TSchema
 ): PlanetScaleDatabase<TSchema> {
