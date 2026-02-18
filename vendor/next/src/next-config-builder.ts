@@ -9,6 +9,8 @@ import { env } from "../env";
 
 export const config: NextConfig = withVercelToolbar()({
   poweredByHeader: false,
+  reactStrictMode: true,
+  reactCompiler: true,
   serverExternalPackages: ["import-in-the-middle", "require-in-the-middle"],
 
   compiler: {
@@ -76,6 +78,18 @@ export const config: NextConfig = withVercelToolbar()({
         ],
       },
     ];
+  },
+
+  experimental: {
+    optimizeCss: true,
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+    optimizePackageImports: [
+      "@repo/ui",
+      "lucide-react",
+    ],
   },
 
   // This is required to support PostHog trailing slash API requests

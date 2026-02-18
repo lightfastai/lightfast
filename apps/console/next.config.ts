@@ -14,8 +14,6 @@ import { getDocsUrl } from "@repo/app-urls";
 const config: NextConfig = withSentry(
   withBetterStack(
     mergeNextConfig(vendorConfig, {
-      reactStrictMode: true,
-      reactCompiler: true,
       transpilePackages: [
         // @api packages
         "@api/console",
@@ -50,11 +48,7 @@ const config: NextConfig = withSentry(
         "@vendor/seo",
       ],
       experimental: {
-        optimizeCss: true,
         optimizePackageImports: [
-          // Already present
-          "@repo/ui",
-          "lucide-react",
           // Heavy third-party libraries
           "recharts",
           "shiki",
@@ -98,10 +92,6 @@ const config: NextConfig = withSentry(
             env.NODE_ENV === "development"
               ? ["localhost:*"]
               : ["lightfast.ai", "*.lightfast.ai"],
-        },
-        staleTimes: {
-          dynamic: 30,
-          static: 180,
         },
       },
       async rewrites() {
