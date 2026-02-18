@@ -9,8 +9,8 @@ import {
   useFormContext,
   useFormState,
   useForm,
-} from "react-hook-form"
-import type {ControllerProps, FieldPath, FieldValues, UseFormProps, UseFormReturn} from "react-hook-form";
+} from "@vendor/forms"
+import type {ControllerProps, FieldPath, FieldValues, UseFormProps, UseFormReturn} from "@vendor/forms";
 
 function useFormCompat<T extends FieldValues>(
   props?: UseFormProps<T>,
