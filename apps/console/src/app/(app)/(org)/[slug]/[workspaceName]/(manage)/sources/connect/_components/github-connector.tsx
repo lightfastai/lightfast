@@ -27,7 +27,6 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
     selectedInstallationId,
     clerkOrgSlug,
     workspaceName,
-    setUserSourceId,
     setSelectedResources,
   } = useConnectForm();
 
@@ -42,10 +41,6 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
 
   const isConnected = !!githubSource?.id;
   const installations = githubSource?.installations ?? [];
-
-  useEffect(() => {
-    setUserSourceId(githubSource?.id ?? null);
-  }, [githubSource?.id, setUserSourceId]);
 
   // Auto-select first installation
   useEffect(() => {

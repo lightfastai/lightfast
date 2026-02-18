@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 import { createContext, useContext, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@repo/console-trpc/react";
 
 interface SelectedResource {
   id: string;
@@ -14,9 +16,8 @@ interface ConnectFormContextValue {
   provider: "github" | "vercel" | "linear" | "sentry";
   setProvider: (provider: "github" | "vercel" | "linear" | "sentry") => void;
 
-  // Connection state (set by child components)
+  // Connection state (derived from query data)
   userSourceId: string | null;
-  setUserSourceId: (id: string | null) => void;
 
   // GitHub-specific
   selectedInstallationId: string | null;
@@ -46,9 +47,25 @@ export function ConnectFormProvider({
   clerkOrgSlug: string;
   workspaceName: string;
 }) {
+  const trpc = useTRPC();
   const [provider, setProvider] = useState<"github" | "vercel" | "linear" | "sentry">(initialProvider);
-  const [userSourceId, setUserSourceId] = useState<string | null>(null);
   const [selectedInstallationId, setSelectedInstallationId] = useState<string | null>(null);
+
+  const { data: githubSource } = useQuery({
+    ...trpc.userSources.github.get.queryOptions(),
+    enabled: provider === "github",
+  });
+
+  const { data: vercelSource } = useQuery({
+    ...trpc.userSources.vercel.get.queryOptions(),
+    enabled: provider === "vercel",
+  });
+
+  const userSourceId = provider === "github"
+    ? githubSource?.id ?? null
+    : provider === "vercel"
+      ? vercelSource?.id ?? null
+      : null;
   const [selectedResources, setSelectedResources] = useState<SelectedResource[]>([]);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
 
@@ -56,7 +73,6 @@ export function ConnectFormProvider({
     provider,
     setProvider,
     userSourceId,
-    setUserSourceId,
     selectedInstallationId,
     setSelectedInstallationId,
     selectedResources,
