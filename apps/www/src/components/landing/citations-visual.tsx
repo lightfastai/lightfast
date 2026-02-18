@@ -77,7 +77,7 @@ export function CitationsVisual() {
                   </sup>
                 );
               }
-              return <span key={`text-${idx}`}>{part.content}</span>;
+              return <span key={`text-${part.content}-${idx}`}>{part.content}</span>;
             })}
           </p>
         </div>
