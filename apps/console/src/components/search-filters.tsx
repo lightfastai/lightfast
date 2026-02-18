@@ -78,11 +78,8 @@ export function SearchFilters({
   // Sync display state with prop changes (e.g., from URL updates)
   useEffect(() => {
     setDisplayLimit(String(limit));
-  }, [limit]);
-
-  useEffect(() => {
     setDisplayOffset(String(offset));
-  }, [offset]);
+  }, [limit, offset]);
 
   // Handle limit input blur - validate and update parent
   const handleLimitBlur = () => {

@@ -259,13 +259,16 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
     {} as Record<string, EnrichedConnection[]>
   );
 
-  // Calculate stats
+  // Calculate stats in a single pass
   const totalSources = connections.length;
-  const syncedCount = connections.filter((c) => c.lastSyncStatus === "success").length;
-  const syncingCount = connections.filter((c) =>
-    c.lastSyncStatus === "pending"
-  ).length;
-  const failedCount = connections.filter((c) => c.lastSyncStatus === "failed").length;
+  let syncedCount = 0;
+  let syncingCount = 0;
+  let failedCount = 0;
+  for (const c of connections) {
+    if (c.lastSyncStatus === "success") syncedCount++;
+    else if (c.lastSyncStatus === "pending") syncingCount++;
+    else if (c.lastSyncStatus === "failed") failedCount++;
+  }
 
   return (
     <Card>

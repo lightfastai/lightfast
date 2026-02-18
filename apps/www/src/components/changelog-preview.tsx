@@ -36,27 +36,13 @@ export function ChangelogPreview() {
               {latestEntries.map((item) => {
                 // Use publishedAt if available, fall back to createdAt
                 const publishedTime = item.publishedAt ?? item._sys?.createdAt;
-                const created = publishedTime ? new Date(publishedTime) : null;
-                const dateStr = created
-                  ? created.toLocaleDateString(undefined, {
+                const dateStr = publishedTime
+                  ? new Date(publishedTime).toLocaleDateString(undefined, {
                       year: "numeric",
                       month: "short",
                       day: "numeric",
                     })
                   : "";
-
-                // Count items in each section for display
-                const improvementsCount = item.improvements
-                  ? item.improvements
-                      .split("\n")
-                      .filter((line) => line.trim().startsWith("-")).length
-                  : 0;
-                const fixesCount = item.fixes
-                  ? item.fixes
-                      .split("\n")
-                      .filter((line) => line.trim().startsWith("-")).length
-                  : 0;
-                const _totalChanges = improvementsCount + fixesCount;
 
                 return (
                   <Link

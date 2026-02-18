@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -30,12 +30,19 @@ export function ActorFilter({
   const trpc = useTRPC();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search input so each keystroke doesn't fire a new network request
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const { data: actors } = useQuery({
     ...trpc.workspace.getActors.queryOptions({
       clerkOrgSlug: orgSlug,
       workspaceName: workspaceName,
-      search: search || undefined, // Pass search to backend for server-side filtering
+      search: debouncedSearch || undefined,
       limit: 50,
     }),
     refetchOnMount: false,

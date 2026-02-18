@@ -74,6 +74,8 @@ const DATA_SOURCES = [
   { value: "discord", label: "Discord" },
 ];
 
+const DATA_SOURCES_MAP = new Map(DATA_SOURCES.map((s) => [s.value, s]));
+
 export function EarlyAccessForm({
   initialEmail = "",
   initialCompanySize = "",
@@ -267,9 +269,7 @@ export function EarlyAccessForm({
                           <div className="flex flex-wrap gap-1 flex-1 min-w-0">
                             {field.value.length > 0 ? (
                               field.value.map((value) => {
-                                const source = DATA_SOURCES.find(
-                                  (s) => s.value === value,
-                                );
+                                const source = DATA_SOURCES_MAP.get(value);
                                 return (
                                   <Badge
                                     key={value}

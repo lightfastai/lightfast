@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   CheckCircle2,
   XCircle,
@@ -320,41 +320,40 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
   );
 }
 
+const EMPTY_STATE_MESSAGES = {
+  all: {
+    icon: PlayCircle,
+    title: "No jobs yet",
+    description: "Workflow executions will appear here once they're triggered.",
+    showCTA: true,
+  },
+  running: {
+    icon: Clock,
+    title: "No running jobs",
+    description: "There are currently no jobs in progress.",
+    showCTA: false,
+  },
+  completed: {
+    icon: CheckCircle2,
+    title: "No completed jobs",
+    description: "Successfully completed jobs will appear here.",
+    showCTA: false,
+  },
+  failed: {
+    icon: CheckCircle2,
+    title: "No failed jobs",
+    description: "Great! You have no failed jobs.",
+    showCTA: false,
+  },
+};
+
+type EmptyStateMessageConfig = (typeof EMPTY_STATE_MESSAGES)[keyof typeof EMPTY_STATE_MESSAGES];
+
 function EmptyState({ filter }: { filter: string }) {
-  const messages = {
-    all: {
-      icon: PlayCircle,
-      title: "No jobs yet",
-      description:
-        "Workflow executions will appear here once they're triggered.",
-      showCTA: true,
-    },
-    running: {
-      icon: Clock,
-      title: "No running jobs",
-      description: "There are currently no jobs in progress.",
-      showCTA: false,
-    },
-    completed: {
-      icon: CheckCircle2,
-      title: "No completed jobs",
-      description: "Successfully completed jobs will appear here.",
-      showCTA: false,
-    },
-    failed: {
-      icon: CheckCircle2,
-      title: "No failed jobs",
-      description: "Great! You have no failed jobs.",
-      showCTA: false,
-    },
-  };
-
-  type MessageConfig = (typeof messages)[keyof typeof messages];
-
-  const message: MessageConfig =
-    filter in messages
-      ? messages[filter as keyof typeof messages]
-      : messages.all;
+  const message: EmptyStateMessageConfig =
+    filter in EMPTY_STATE_MESSAGES
+      ? EMPTY_STATE_MESSAGES[filter as keyof typeof EMPTY_STATE_MESSAGES]
+      : EMPTY_STATE_MESSAGES.all;
   const Icon = message.icon;
 
   return (
@@ -428,14 +427,29 @@ function JobsTable({
     return () => clearInterval(interval);
   }, [jobs, queryClient, trpc, clerkOrgSlug, workspaceName, activeTab]);
 
-  // Filter jobs based on search
-  const filteredJobs = jobs.filter((job) => {
-    return job.name.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  // Normalize once so the filter loop doesn't lowercase on every item
+  const searchQueryLower = useMemo(
+    () => searchQuery.toLowerCase(),
+    [searchQuery],
+  );
 
-  const runningCount = jobs.filter((j) => j.status === "running").length;
-  const completedCount = jobs.filter((j) => j.status === "completed").length;
-  const failedCount = jobs.filter((j) => j.status === "failed").length;
+  const filteredJobs = useMemo(
+    () => jobs.filter((job) => job.name.toLowerCase().includes(searchQueryLower)),
+    [jobs, searchQueryLower],
+  );
+
+  // Single pass over all jobs to compute tab counts
+  const { runningCount, completedCount, failedCount } = useMemo(() => {
+    let running = 0;
+    let completed = 0;
+    let failed = 0;
+    for (const j of jobs) {
+      if (j.status === "running") running++;
+      else if (j.status === "completed") completed++;
+      else if (j.status === "failed") failed++;
+    }
+    return { runningCount: running, completedCount: completed, failedCount: failed };
+  }, [jobs]);
 
   return (
     <div className="space-y-4">

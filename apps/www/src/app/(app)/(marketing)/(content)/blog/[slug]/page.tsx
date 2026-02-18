@@ -101,11 +101,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         const post = response.blog?.post?.item;
         if (!post) notFound();
 
-        const publishedDate = post.publishedAt
-          ? new Date(post.publishedAt)
-          : null;
-        const dateStr = publishedDate
-          ? publishedDate.toLocaleDateString(undefined, {
+        const dateStr = post.publishedAt
+          ? new Date(post.publishedAt).toLocaleDateString(undefined, {
               year: "numeric",
               month: "long",
               day: "numeric",

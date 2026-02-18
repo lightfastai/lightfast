@@ -192,7 +192,6 @@ export function SignInForm({
           <SignInCodeVerification
             email={emailAddress}
             onReset={handleReset}
-            onError={handleError}
           />
         )}
       </div>
