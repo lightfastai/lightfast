@@ -51,14 +51,31 @@ const handler = async (
   // Create a simple userId for this example
   const userId = `user_${sessionId}`;
 
+  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!redisUrl || !redisToken) {
+    return new Response(
+      JSON.stringify({
+        error: "Service unavailable",
+        message: "Required environment variables are not configured",
+        requestId,
+      }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+
   try {
     // Create memory instance
     // Requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars
     const memory = new RedisMemory({
-      // eslint-disable-next-line turbo/no-undeclared-env-vars
-      url: process.env.UPSTASH_REDIS_REST_URL ?? "",
-      // eslint-disable-next-line turbo/no-undeclared-env-vars
-      token: process.env.UPSTASH_REDIS_REST_TOKEN ?? "",
+      url: redisUrl,
+      token: redisToken,
     });
 
     // Use fetchRequestHandler with inline agent definition

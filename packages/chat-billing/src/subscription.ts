@@ -73,15 +73,8 @@ export function deriveSubscriptionData({
     logger?.info?.(`[Billing] User ${userId} has free plan`, { userId });
   }
 
-  let hasActiveSubscription = false;
-  if (typeof subscription.status === "string") {
-    hasActiveSubscription = subscription.status === "active" && paidSubscriptionItems.length > 0;
-  } else {
-    logger?.warn?.("[Billing] Unexpected subscription status format", {
-      userId,
-      statusType: typeof subscription.status,
-    });
-  }
+  const hasActiveSubscription =
+    subscription.status === "active" && paidSubscriptionItems.length > 0;
 
   return {
     subscription,

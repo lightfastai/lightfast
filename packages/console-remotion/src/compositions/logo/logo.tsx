@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type React from "react";
-import { AbsoluteFill, useVideoConfig } from "remotion";
+import { AbsoluteFill, useVideoConfig } from "@vendor/remotion";
 import { cn } from "@repo/ui/lib/utils";
 
 /**

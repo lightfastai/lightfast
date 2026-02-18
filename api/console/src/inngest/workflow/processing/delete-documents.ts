@@ -15,7 +15,6 @@ import { eq, and } from "drizzle-orm";
 import { inngest } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import { pineconeClient } from "@repo/console-pinecone";
-import type { SourceType } from "@repo/console-validation";
 
 /**
  * Delete document function (multi-source)
@@ -96,7 +95,7 @@ export const deleteDocuments = inngest.createFunction(
             .where(
               and(
                 eq(workspaceKnowledgeDocuments.workspaceId, workspaceId),
-                eq(workspaceKnowledgeDocuments.sourceType, sourceType as SourceType),
+                eq(workspaceKnowledgeDocuments.sourceType, sourceType),
                 eq(workspaceKnowledgeDocuments.sourceId, sourceId),
               ),
             )

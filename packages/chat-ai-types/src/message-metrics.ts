@@ -46,7 +46,11 @@ function getPartDisplayString(part: LightfastAppChatUIMessagePart): string {
   try {
     return JSON.stringify(part);
   } catch {
-    return JSON.stringify(Object.entries(part as Record<string, unknown>));
+    try {
+      return JSON.stringify(Object.entries(part as Record<string, unknown>));
+    } catch {
+      return "[unserializable]";
+    }
   }
 }
 
