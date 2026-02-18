@@ -50,7 +50,7 @@
       "env": []
     },
     "typecheck": {
-      "dependsOn": ["transit"],
+      "dependsOn": ["^build", "transit"],
       "outputs": [".cache/tsbuildinfo.json"],
       "env": []
     },
