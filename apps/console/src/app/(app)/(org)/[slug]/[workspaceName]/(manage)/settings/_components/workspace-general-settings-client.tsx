@@ -33,6 +33,7 @@ export function WorkspaceGeneralSettingsClient({
 	slug,
 	workspaceName,
 }: WorkspaceGeneralSettingsClientProps) {
+	"use no memo";
 	const router = useRouter();
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();

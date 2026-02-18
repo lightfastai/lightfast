@@ -52,12 +52,13 @@ function AnswerPageLayout({ children }: { children: React.ReactNode }) {
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { slug } = await params;
 
-  // Verify user has access to this organization
-  // This fetches the org directly from Clerk by slug and verifies membership
-  // Independent of auth().orgSlug to avoid race conditions
+  let hasAccess = true;
   try {
     await requireOrgAccess(slug);
   } catch {
+    hasAccess = false;
+  }
+  if (!hasAccess) {
     notFound();
   }
 

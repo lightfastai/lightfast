@@ -31,6 +31,7 @@ interface TeamGeneralSettingsClientProps {
 export function TeamGeneralSettingsClient({
 	slug,
 }: TeamGeneralSettingsClientProps) {
+	"use no memo";
 	const router = useRouter();
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();

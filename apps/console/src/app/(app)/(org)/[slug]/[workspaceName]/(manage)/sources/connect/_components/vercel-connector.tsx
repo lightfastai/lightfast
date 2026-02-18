@@ -23,8 +23,6 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
     workspaceId,
   } = useConnectForm();
 
-  const [showProjectSelector, setShowProjectSelector] = useState(false);
-
   // Fetch Vercel connection status (prefetched on server)
   const { data: vercelSource, refetch } = useSuspenseQuery({
     ...trpc.userSources.vercel.get.queryOptions(),
@@ -34,9 +32,9 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
 
   const isConnected = !!vercelSource?.id;
 
-  if (autoOpen && isConnected && !showProjectSelector) {
-    setShowProjectSelector(true);
-  }
+  const [showProjectSelector, setShowProjectSelector] = useState(
+    () => autoOpen && isConnected,
+  );
 
   const handleConnectVercel = () => {
     const width = 600;

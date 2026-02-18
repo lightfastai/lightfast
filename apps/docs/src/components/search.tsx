@@ -8,7 +8,7 @@ import {
   Hash,
   AlignLeft,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Input } from "@repo/ui/components/ui/input";
 import * as Popover from "@radix-ui/react-popover";
@@ -16,9 +16,43 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDocsSearch } from "~/hooks/use-docs-search";
 
+type SearchAction =
+  | { type: "OPEN" }
+  | { type: "CLOSE" }
+  | { type: "SELECT"; index: number }
+  | { type: "NAVIGATE_DOWN"; max: number }
+  | { type: "NAVIGATE_UP"; max: number };
+
+function searchReducer(
+  state: { selectedIndex: number; open: boolean },
+  action: SearchAction,
+) {
+  switch (action.type) {
+    case "OPEN":
+      return { ...state, open: true };
+    case "CLOSE":
+      return { selectedIndex: 0, open: false };
+    case "SELECT":
+      return { ...state, selectedIndex: action.index };
+    case "NAVIGATE_DOWN":
+      return {
+        ...state,
+        selectedIndex: (state.selectedIndex + 1) % action.max,
+      };
+    case "NAVIGATE_UP":
+      return {
+        ...state,
+        selectedIndex:
+          (state.selectedIndex - 1 + action.max) % action.max,
+      };
+  }
+}
+
 export function Search() {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [open, setOpen] = useState(false);
+  const [{ selectedIndex, open }, dispatch] = useReducer(searchReducer, {
+    selectedIndex: 0,
+    open: false,
+  });
 
   const { search, setSearch, clearSearch, results, isLoading, error } =
     useDocsSearch();
@@ -31,56 +65,27 @@ export function Search() {
   const [prevResults, setPrevResults] = useState(results);
   if (prevResults !== results) {
     setPrevResults(results);
-    setSelectedIndex(0);
+    dispatch({ type: "SELECT", index: 0 });
   }
 
   const handleClose = useCallback(() => {
-    setOpen(false);
+    dispatch({ type: "CLOSE" });
     clearSearch();
-    setSelectedIndex(0);
   }, [clearSearch]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.isComposing) return;
-
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         inputRef.current?.focus();
-        setOpen(true);
-        return;
-      }
-
-      const isInputFocused = document.activeElement === inputRef.current;
-
-      if (e.key === "Escape" && isInputFocused && open) {
-        e.preventDefault();
-        e.stopPropagation();
-        handleClose();
-        inputRef.current?.blur();
-        return;
-      }
-
-      if (open && resultsList.length > 0 && isInputFocused) {
-        if (e.key === "ArrowDown") {
-          e.preventDefault();
-          setSelectedIndex((prev) => (prev + 1) % resultsList.length);
-        } else if (e.key === "ArrowUp") {
-          e.preventDefault();
-          setSelectedIndex(
-            (prev) => (prev - 1 + resultsList.length) % resultsList.length,
-          );
-        } else if (e.key === "Enter" && resultsList[selectedIndex]) {
-          e.preventDefault();
-          router.push(resultsList[selectedIndex].url);
-          handleClose();
-        }
+        dispatch({ type: "OPEN" });
       }
     }
 
     document.addEventListener("keydown", handleKeyDown, true);
     return () => document.removeEventListener("keydown", handleKeyDown, true);
-  }, [open, resultsList, selectedIndex, router, handleClose]);
+  }, []);
 
   useEffect(() => {
     if (!open && search) {
@@ -116,7 +121,7 @@ export function Search() {
             handleClose();
             inputRef.current?.blur();
           } else {
-            setOpen(true);
+            dispatch({ type: "OPEN" });
           }
         }}
       >
@@ -130,7 +135,29 @@ export function Search() {
                 placeholder="Search documentation"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                onFocus={() => setOpen(true)}
+                onFocus={() => dispatch({ type: "OPEN" })}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape" && open) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleClose();
+                    inputRef.current?.blur();
+                    return;
+                  }
+                  if (open && resultsList.length > 0) {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      dispatch({ type: "NAVIGATE_DOWN", max: resultsList.length });
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      dispatch({ type: "NAVIGATE_UP", max: resultsList.length });
+                    } else if (e.key === "Enter" && resultsList[selectedIndex]) {
+                      e.preventDefault();
+                      router.push(resultsList[selectedIndex].url);
+                      handleClose();
+                    }
+                  }
+                }}
                 className={cn(
                   "w-[420px] pl-10 pr-20 h-9",
                   "transition-all rounded-md border border-border/50",
@@ -201,7 +228,7 @@ export function Search() {
                         result.type === "heading" && "pl-7",
                       )}
                       onClick={() => handleClose()}
-                      onMouseEnter={() => setSelectedIndex(index)}
+                      onMouseEnter={() => dispatch({ type: "SELECT", index })}
                     >
                       <span className="mt-0.5 shrink-0 text-muted-foreground/50">
                         {result.type === "page" && (

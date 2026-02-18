@@ -65,7 +65,7 @@ export function EventSettings({
     return currentEvents;
   };
 
-  const [selectedEvents, setSelectedEvents] = useState<string[]>(getInitialEvents());
+  const [selectedEvents, setSelectedEvents] = useState<string[]>(() => getInitialEvents());
   const [hasChanges, setHasChanges] = useState(false);
 
   const updateMutation = useMutation({

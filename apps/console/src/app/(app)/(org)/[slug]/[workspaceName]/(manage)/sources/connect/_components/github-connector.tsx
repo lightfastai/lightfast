@@ -30,8 +30,6 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
     setSelectedResources,
   } = useConnectForm();
 
-  const [showRepoSelector, setShowRepoSelector] = useState(false);
-
   // Fetch GitHub connection status (prefetched on server)
   const { data: githubSource, refetch } = useSuspenseQuery({
     ...trpc.userSources.github.get.queryOptions(),
@@ -42,9 +40,9 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
   const isConnected = !!githubSource?.id;
   const installations = githubSource?.installations ?? [];
 
-  if (autoOpen && isConnected && installations.length > 0 && !showRepoSelector) {
-    setShowRepoSelector(true);
-  }
+  const [showRepoSelector, setShowRepoSelector] = useState(
+    () => autoOpen && isConnected && installations.length > 0,
+  );
 
   const handleConnectGitHub = () => {
     const width = 600;

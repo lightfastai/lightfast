@@ -255,6 +255,7 @@ export function EarlyAccessForm({
                         variant="outline"
                         role="combobox"
                         aria-expanded={sourcesPopoverOpen}
+                        aria-controls="sources-listbox"
                         className={cn(
                           "w-full justify-start font-normal px-2 min-h-8 h-auto py-1",
                           !field.value.length && "text-muted-foreground",
@@ -313,7 +314,7 @@ export function EarlyAccessForm({
                     </FormControl>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0" align="start">
-                    <Command>
+                    <Command id="sources-listbox">
                       <CommandInput placeholder="Search tools..." />
                       <CommandList>
                         <CommandEmpty>No tools found.</CommandEmpty>
