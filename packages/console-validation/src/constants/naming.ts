@@ -87,22 +87,9 @@ export const STORE_NAME = {
  */
 import { workspace, organization } from '@repo/console-reserved-names';
 
-/**
- * @deprecated Use @repo/console-reserved-names package directly
- * This re-export is kept for backward compatibility
- */
-export const RESERVED_WORKSPACE_NAMES = workspace.all;
+const RESERVED_WORKSPACE_NAMES = workspace.all;
 
-/**
- * Reserved organization slugs to prevent routing conflicts
- *
- * These prevent orgs from hijacking:
- * - Microfrontends routes: /pricing → www app (not org "pricing")
- * - Auth routes: /sign-in → auth app (not org "sign-in")
- * - System routes: /api, /health, etc.
- * - Error pages: /404, /500, etc.
- */
-export const RESERVED_ORGANIZATION_SLUGS = organization.all;
+const RESERVED_ORGANIZATION_SLUGS = organization.all;
 
 /**
  * Error Messages

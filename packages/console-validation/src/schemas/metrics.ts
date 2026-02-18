@@ -343,23 +343,3 @@ export type OperationMetric =
   | z.infer<typeof actorResolutionMetricSchema>
   | z.infer<typeof clusterAffinityMetricSchema>;
 
-// Legacy exports (deprecated - use operation-specific schemas above)
-/**
- * @deprecated Use operationMetricTypeSchema instead
- */
-export const metricTypeSchema = operationMetricTypeSchema;
-
-/**
- * @deprecated Use OperationMetricType instead
- */
-export type MetricType = OperationMetricType;
-
-/**
- * @deprecated Use operationMetricUnitSchema instead
- */
-export const metricUnitSchema = operationMetricUnitSchema;
-
-/**
- * @deprecated Use OperationMetricUnit instead
- */
-export type MetricUnit = OperationMetricUnit;
