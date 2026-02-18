@@ -55,7 +55,7 @@ export async function parseMDX(
     title = frontmatter.title;
   } else {
     // Try to find first h1 in the content
-    const h1Match = body.match(/^#\s+(.+)$/m);
+    const h1Match = /^#\s+(.+)$/m.exec(body);
     if (h1Match?.[1]) {
       title = h1Match[1].trim();
     }

@@ -14,6 +14,38 @@ import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-
 import { Separator } from "@repo/ui/components/ui/separator";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
+async function executeSearch(
+  body: Record<string, unknown>,
+  storeId: string,
+  signal: AbortSignal,
+): Promise<V1SearchResponse> {
+  const response = await fetch("/v1/search", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Workspace-ID": storeId,
+    },
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorData = (await response
+      .json()
+      .catch(() => ({ error: undefined, message: undefined }))) as {
+      error?: string;
+      message?: string;
+    };
+    throw new Error(
+      errorData.message ??
+        errorData.error ??
+        `Search failed: ${response.status}`,
+    );
+  }
+
+  return (await response.json()) as V1SearchResponse;
+}
+
 interface WorkspaceSearchProps {
   orgSlug: string;
   workspaceName: string;
@@ -89,8 +121,7 @@ export function WorkspaceSearch({
   // Reference to track current request for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Perform search via API route
-  const performSearch = async (searchQuery: string) => {
+  const performSearch = (searchQuery: string) => {
       if (!searchQuery.trim()) {
         setError("Please enter a search query");
         return;
@@ -103,76 +134,50 @@ export function WorkspaceSearch({
         return;
       }
 
-      // Cancel any previous request
       abortControllerRef.current?.abort();
       abortControllerRef.current = new AbortController();
 
       setIsSearching(true);
       setError(null);
-      setSearchResults(null); // Clear old results before new search
+      setSearchResults(null);
 
-      try {
-        const body: Record<string, unknown> = {
-          query: searchQuery.trim(),
-          limit,
-          offset,
-          mode,
-          filters: {
-            ...(sourceTypes.length > 0 && { sourceTypes }),
-            ...(observationTypes.length > 0 && { observationTypes }),
-            ...(actorNames.length > 0 && { actorNames }),
-            ...dateRangeFromPreset(agePreset),
-          },
-          includeContext,
-          includeHighlights,
-        };
+      const body: Record<string, unknown> = {
+        query: searchQuery.trim(),
+        limit,
+        offset,
+        mode,
+        filters: {
+          ...(sourceTypes.length > 0 && { sourceTypes }),
+          ...(observationTypes.length > 0 && { observationTypes }),
+          ...(actorNames.length > 0 && { actorNames }),
+          ...dateRangeFromPreset(agePreset),
+        },
+        includeContext,
+        includeHighlights,
+      };
 
-        const response = await fetch("/v1/search", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Workspace-ID": store.id,
-          },
-          body: JSON.stringify(body),
-          signal: abortControllerRef.current.signal,
+      executeSearch(body, store.id, abortControllerRef.current.signal)
+        .then((data) => {
+          setSearchResults(data);
+          setIsSearching(false);
+        })
+        .catch((err: unknown) => {
+          if (err instanceof Error && err.name === "AbortError") return;
+          setError(err instanceof Error ? err.message : "Search failed");
+          setSearchResults(null);
+          setIsSearching(false);
         });
-
-        if (!response.ok) {
-          const errorData = (await response
-            .json()
-            .catch(() => ({ error: undefined, message: undefined }))) as {
-            error?: string;
-            message?: string;
-          };
-          throw new Error(
-            errorData.message ??
-              errorData.error ??
-              `Search failed: ${response.status}`,
-          );
-        }
-
-        const data = (await response.json()) as V1SearchResponse;
-        setSearchResults(data);
-        setIsSearching(false);
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") {
-          return;
-        }
-        setError(err instanceof Error ? err.message : "Search failed");
-        setSearchResults(null);
-        setIsSearching(false);
-      }
   };
 
-  const handleSearch = async () => {
-    await performSearch(query);
+  const handleSearch = () => {
+    performSearch(query);
   };
 
-  const handlePromptSubmit = async (message: PromptInputMessage) => {
+  const handlePromptSubmit = (message: PromptInputMessage) => {
     const content = message.text?.trim() ?? "";
     void setQuery(content);
-    setInputValue(""); // Clear input after submission
-    await performSearch(content);
+    setInputValue("");
+    performSearch(content);
   };
 
   // Handle Cmd+Enter keyboard shortcut

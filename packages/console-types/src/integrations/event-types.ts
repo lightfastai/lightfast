@@ -672,6 +672,6 @@ export const ALL_LINEAR_EVENTS = Object.keys(LINEAR_EVENTS) as LinearEvent[];
 export const WEBHOOK_EVENT_TYPES = {
   github: ALL_GITHUB_EVENTS as string[],
   vercel: ALL_VERCEL_EVENTS as string[],
-  sentry: Object.keys(SENTRY_TO_INTERNAL) as string[],
+  sentry: Object.keys(SENTRY_TO_INTERNAL),
   linear: ALL_LINEAR_EVENTS as string[],
 };

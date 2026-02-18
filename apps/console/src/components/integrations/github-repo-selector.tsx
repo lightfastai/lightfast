@@ -29,6 +29,8 @@ interface GitHubRepoSelectorProps {
   onSelect?: (repos: { id: string; name: string; fullName: string }[]) => void;
 }
 
+const EMPTY_CONNECTED_REPO_IDS = new Set<string>();
+
 export function GitHubRepoSelector({
   open,
   onOpenChange,
@@ -36,7 +38,7 @@ export function GitHubRepoSelector({
   installationId,
   clerkOrgSlug: _clerkOrgSlug,
   workspaceName,
-  connectedRepoIds = new Set(),
+  connectedRepoIds = EMPTY_CONNECTED_REPO_IDS,
   onSelect,
 }: GitHubRepoSelectorProps) {
   const trpc = useTRPC();

@@ -2,13 +2,13 @@ import type React from "react";
 import { useCurrentFrame, interpolate, Easing } from "remotion";
 import { MOTION_DURATION, BEAM_TIMING } from "./timing";
 
-type GridLinesProps = {
+interface GridLinesProps {
   cellW: number;
   cellH: number;
   planeW: number;
   planeH: number;
   startFrame?: number;
-};
+}
 
 export const GridLines: React.FC<GridLinesProps> = ({
   cellW,

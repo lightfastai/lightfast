@@ -5,7 +5,8 @@
  * and maintaining token count limits.
  */
 
-import { Tiktoken, encodingForModel } from "js-tiktoken";
+import type { Tiktoken} from "js-tiktoken";
+import { encodingForModel } from "js-tiktoken";
 import type { Chunk, ChunkOptions } from "./types";
 
 // Cache the encoder to avoid recreating it for every chunk operation

@@ -116,7 +116,7 @@ export interface WebSearchToolOutput {
 /**
  * Tool set definition used in Lightfast chat flows.
  */
-export type LightfastAppChatToolSet = {
+export interface LightfastAppChatToolSet {
   webSearch: {
     input: WebSearchToolInput;
     output: WebSearchToolOutput;

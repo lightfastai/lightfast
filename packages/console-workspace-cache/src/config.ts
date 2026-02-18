@@ -101,7 +101,7 @@ async function fetchWorkspaceConfigFromDB(
       .limit(1),
   ]);
 
-  if (!workspace || workspace.settings.version !== 1) {
+  if (workspace?.settings.version !== 1) {
     return null;
   }
 

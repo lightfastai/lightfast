@@ -53,7 +53,7 @@ export type RelatedToolOutput = RelatedResponse;
 
 // ─── Tool Set Definition ─────────────────────────────────────────
 
-export type AnswerToolSet = {
+export interface AnswerToolSet {
   workspaceSearch: {
     input: SearchToolInput;
     output: SearchToolOutput;
@@ -74,7 +74,7 @@ export type AnswerToolSet = {
     input: RelatedToolInput;
     output: RelatedToolOutput;
   };
-};
+}
 
 export type AnswerToolName = keyof AnswerToolSet;
 
@@ -164,21 +164,11 @@ export type LightfastAnswerUIMessage = UIMessage<
 // ─── Runtime Context ─────────────────────────────────────────────
 
 /** Handler signature for logic functions injected at runtime */
-export interface SearchToolHandler {
-  (input: SearchToolInput): Promise<SearchToolOutput>;
-}
-export interface ContentsToolHandler {
-  (input: ContentsToolInput): Promise<ContentsToolOutput>;
-}
-export interface FindSimilarToolHandler {
-  (input: FindSimilarToolInput): Promise<FindSimilarToolOutput>;
-}
-export interface GraphToolHandler {
-  (input: GraphToolInput): Promise<GraphToolOutput>;
-}
-export interface RelatedToolHandler {
-  (input: RelatedToolInput): Promise<RelatedToolOutput>;
-}
+export type SearchToolHandler = (input: SearchToolInput) => Promise<SearchToolOutput>;
+export type ContentsToolHandler = (input: ContentsToolInput) => Promise<ContentsToolOutput>;
+export type FindSimilarToolHandler = (input: FindSimilarToolInput) => Promise<FindSimilarToolOutput>;
+export type GraphToolHandler = (input: GraphToolInput) => Promise<GraphToolOutput>;
+export type RelatedToolHandler = (input: RelatedToolInput) => Promise<RelatedToolOutput>;
 
 /** Runtime configuration for tool handlers, injected per-request */
 export interface AnswerToolRuntimeConfig {

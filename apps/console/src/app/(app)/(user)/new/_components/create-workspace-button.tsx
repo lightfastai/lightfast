@@ -134,7 +134,6 @@ export function CreateWorkspaceButton() {
   );
 
   const handleCreateWorkspace = async () => {
-    // Trigger form validation
     const isValid = await form.trigger();
     if (!isValid) {
       toast.error("Validation failed", {
@@ -157,48 +156,43 @@ export function CreateWorkspaceButton() {
       return;
     }
 
-    try {
-      // Step 1: Create workspace (without repositories - we'll link them separately)
-      const workspace = await createWorkspaceMutation.mutateAsync({
+    createWorkspaceMutation
+      .mutateAsync({
         clerkOrgId: selectedOrgId,
         workspaceName,
-        // Note: Don't pass githubRepository here - we use bulk link instead
-      });
+      })
+      .then(async (workspace) => {
+        if (setActive) {
+          await setActive({ organization: selectedOrgId });
+        }
 
-      // Step 2: Set active organization before bulk linking (required for org-scoped procedures)
-      if (setActive) {
-        await setActive({ organization: selectedOrgId });
-      }
+        if (selectedRepositories.length > 0 && userSourceId && selectedInstallation) {
+          await bulkLinkMutation.mutateAsync({
+            workspaceId: workspace.workspaceId,
+            userSourceId,
+            installationId: selectedInstallation.id,
+            repositories: selectedRepositories.map((repo) => ({
+              repoId: repo.id,
+              repoFullName: repo.fullName,
+            })),
+          });
+        }
 
-      // Step 3: Bulk link repositories if any selected
-      if (selectedRepositories.length > 0 && userSourceId && selectedInstallation) {
-        await bulkLinkMutation.mutateAsync({
-          workspaceId: workspace.workspaceId,
-          userSourceId,
-          installationId: selectedInstallation.id,
-          repositories: selectedRepositories.map((repo) => ({
-            repoId: repo.id,
-            repoFullName: repo.fullName,
-          })),
+        const repoCount = selectedRepositories.length;
+        toast.success("Workspace created!", {
+          description: repoCount > 0
+            ? `${workspaceName} has been created with ${repoCount} repositor${repoCount === 1 ? "y" : "ies"}.`
+            : `${workspaceName} workspace is ready. Add sources to get started.`,
         });
-      }
 
-      // Show success toast
-      const repoCount = selectedRepositories.length;
-      toast.success("Workspace created!", {
-        description: repoCount > 0
-          ? `${workspaceName} has been created with ${repoCount} repositor${repoCount === 1 ? "y" : "ies"}.`
-          : `${workspaceName} workspace is ready. Add sources to get started.`,
+        const orgSlug = selectedOrg?.slug;
+        const wsName = workspace.workspaceName;
+        router.push(`/${orgSlug}/${wsName}`);
+      })
+      .catch((error: unknown) => {
+        console.error("Workspace creation failed:", error);
+        showErrorToast(error, "Creation failed", "Failed to create workspace. Please try again.");
       });
-
-      // Redirect to workspace
-      const orgSlug = selectedOrg?.slug;
-      const wsName = workspace.workspaceName;
-      router.push(`/${orgSlug}/${wsName}`);
-    } catch (error) {
-      console.error("Workspace creation failed:", error);
-      showErrorToast(error, "Creation failed", "Failed to create workspace. Please try again.");
-    }
   };
 
   const isDisabled =

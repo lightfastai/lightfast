@@ -265,7 +265,7 @@ export class PineconeClient {
 
       const records: FetchResponse<T>["records"] = {};
       for (const [id, record] of Object.entries(result.records ?? {})) {
-        if (record && record.values) {
+        if (record?.values) {
           records[id] = {
             id: record.id,
             values: record.values,

@@ -1,4 +1,4 @@
-import { NextConfig } from "next";
+import type { NextConfig } from "next";
 import { withBetterStack as withBetterStackNext } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
@@ -137,7 +137,7 @@ export const withSentry: (sourceConfig: NextConfig) => NextConfig = (
  */
 export const withAnalyzer = (sourceConfig: NextConfig): NextConfig =>
   // Type assertion needed due to multiple Next.js versions in monorepo
-  withBundleAnalyzer()(sourceConfig as any) as NextConfig;
+  withBundleAnalyzer()(sourceConfig as any);
 
 /**
  * @type {(sourceConfig: import("next").NextConfig) => import("next").NextConfig}

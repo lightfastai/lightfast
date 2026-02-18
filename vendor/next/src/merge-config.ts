@@ -1,4 +1,4 @@
-import { NextConfig } from "next";
+import type { NextConfig } from "next";
 
 type DeepPartial<T> = T extends object
   ? { [P in keyof T]?: DeepPartial<T[P]> }
@@ -40,7 +40,7 @@ function deepMerge<T>(base: T, custom: any): T {
 
   // Arrays: concat (with primitive de-dup)
   if (Array.isArray(base) || Array.isArray(custom)) {
-    return mergeArrays(base as any, custom as any) as any as T;
+    return mergeArrays(base as any, custom) as any as T;
   }
 
   // Objects: recursive merge

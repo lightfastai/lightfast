@@ -32,12 +32,12 @@ import { getJobByInngestRunId, completeJob } from "../../../lib/jobs";
 import type { Events } from "../../client/client";
 
 /** Base shape all neural workflow failure outputs must satisfy */
-type NeuralFailureOutput = {
+interface NeuralFailureOutput {
   inngestFunctionId: string;
   status: "failure";
   error: string;
   [key: string]: unknown;
-};
+}
 
 /**
  * Creates a consistent onFailure handler for neural Inngest workflows.

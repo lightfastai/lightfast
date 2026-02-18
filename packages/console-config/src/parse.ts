@@ -6,10 +6,12 @@
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { Result, ok, err } from "neverthrow";
+import type { Result} from "neverthrow";
+import { ok, err } from "neverthrow";
 import { parse as parseYAML } from "yaml";
 import type { ZodError } from "zod";
-import { LightfastConfigSchema, type LightfastConfig } from "./schema";
+import { LightfastConfigSchema  } from "./schema";
+import type {LightfastConfig} from "./schema";
 
 /**
  * Error types for configuration loading and parsing

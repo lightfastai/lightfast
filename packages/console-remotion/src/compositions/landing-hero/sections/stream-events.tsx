@@ -2,12 +2,12 @@ import type React from "react";
 import { useCurrentFrame, interpolate, Easing } from "remotion";
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 
-type FeedEvent = {
+interface FeedEvent {
   source: "Vercel" | "GitHub" | "Sentry" | "Linear";
   label: string;
   detail: string;
   extra?: string[];
-};
+}
 
 const FEED_EVENTS: FeedEvent[] = [
   { source: "Vercel", label: "Deployment Started", detail: "web@main" },

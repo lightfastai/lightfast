@@ -2,7 +2,7 @@ import type React from "react";
 import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { SPRING_CONFIGS, MOTION_DURATION } from "./timing";
 
-type IsometricCardProps = {
+interface IsometricCardProps {
   children: React.ReactNode;
   entranceFrame: number;
   animate?: boolean;
@@ -11,7 +11,7 @@ type IsometricCardProps = {
   /** Absolute position within the isometric plane */
   x: number;
   y: number;
-};
+}
 
 export const IsometricCard: React.FC<IsometricCardProps> = ({
   children,

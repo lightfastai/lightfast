@@ -169,7 +169,7 @@ function transformVercelWebhook(
 ): SourceEvent {
   const event = transformVercelDeployment(
     webhook.payload,
-    webhook.eventType as VercelWebhookEventType,
+    webhook.eventType,
     context
   );
 

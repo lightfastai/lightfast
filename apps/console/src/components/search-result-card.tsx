@@ -82,7 +82,7 @@ export function SearchResultCard({
     setTimeout(() => setCopiedId(false), 2000);
   };
 
-  const fetchSimilar = async () => {
+  const fetchSimilar = () => {
     if (similarData) {
       setShowSimilar(true);
       return;
@@ -92,28 +92,30 @@ export function SearchResultCard({
     setSimilarError(null);
     setShowSimilar(true);
 
-    try {
-      const res = await fetch("/v1/findsimilar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Workspace-ID": storeId,
-        },
-        body: JSON.stringify({
-          id: result.id,
-          limit: 5,
-          threshold: 0.5,
-        }),
+    fetch("/v1/findsimilar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Workspace-ID": storeId,
+      },
+      body: JSON.stringify({
+        id: result.id,
+        limit: 5,
+        threshold: 0.5,
+      }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch similar items");
+        return res.json() as Promise<V1FindSimilarResponse>;
+      })
+      .then((data) => {
+        setSimilarData(data);
+        setIsLoadingSimilar(false);
+      })
+      .catch((err: unknown) => {
+        setSimilarError(err instanceof Error ? err.message : "Failed to load");
+        setIsLoadingSimilar(false);
       });
-
-      if (!res.ok) throw new Error("Failed to fetch similar items");
-      const data = (await res.json()) as V1FindSimilarResponse;
-      setSimilarData(data);
-      setIsLoadingSimilar(false);
-    } catch (err) {
-      setSimilarError(err instanceof Error ? err.message : "Failed to load");
-      setIsLoadingSimilar(false);
-    }
   };
 
   return (

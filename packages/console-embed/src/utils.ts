@@ -174,7 +174,7 @@ export const createEmbeddingProviderForStore = createEmbeddingProviderForWorkspa
  */
 export async function embedTextsInBatches(
 	provider: EmbeddingProvider,
-	items: Array<{ text: string }>,
+	items: { text: string }[],
 	options: { batchSize?: number } = {},
 ): Promise<number[][]> {
 	const batchSize = options.batchSize ?? 96;

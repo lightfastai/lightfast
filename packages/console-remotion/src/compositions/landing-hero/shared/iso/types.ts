@@ -8,31 +8,31 @@ export type Polygon = Vec2[];
 export type FaceType = "top" | "front" | "right";
 
 /** A projected 2D face with optional holes (from boolean subtraction) */
-export type Face = {
+export interface Face {
   contour: Polygon;
   holes: Polygon[];
   type: FaceType;
-};
+}
 
 /** A renderable shape: ordered collection of faces (back-to-front) */
-export type Shape = {
+export interface Shape {
   faces: Face[];
-};
+}
 
 /** Axis-aligned 3D box: (x,y) = ground plane, z = vertical */
-export type Box3D = {
+export interface Box3D {
   x: number;
   y: number;
   z: number;
   w: number; // extent along x
   h: number; // extent along y
   d: number; // extent along z (height)
-};
+}
 
 /** 2D bounding rectangle */
-export type Bounds = {
+export interface Bounds {
   minX: number;
   minY: number;
   maxX: number;
   maxY: number;
-};
+}

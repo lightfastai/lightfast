@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { OTPInput, OTPInputContext, type OTPInputProps } from "input-otp"
+import { OTPInput, OTPInputContext  } from "input-otp"
+import type {OTPInputProps} from "input-otp";
 import { MinusIcon } from "lucide-react"
 import { cva } from "class-variance-authority"
 import type { VariantProps } from "class-variance-authority"
