@@ -35,10 +35,12 @@ interface LissajousProps {
  * - a=3, b=4, δ=π/2 → Complex knot
  * - a=5, b=4, δ=π/2 → Star-like
  */
+const DEFAULT_DELTA = Math.PI / 2;
+
 export function Lissajous({
   a = 3,
   b = 2,
-  delta = Math.PI / 2,
+  delta = DEFAULT_DELTA,
   points = 500,
   stroke = "currentColor",
   strokeWidth = 1,
@@ -88,18 +90,3 @@ export function Lissajous({
     </svg>
   );
 }
-
-/** Preset configurations for common Lissajous patterns */
-export const LISSAJOUS_PRESETS = {
-  circle: { a: 1, b: 1, delta: Math.PI / 2 },
-  figure8: { a: 1, b: 2, delta: Math.PI / 2 },
-  pretzel: { a: 3, b: 2, delta: Math.PI / 2 },
-  bow: { a: 2, b: 3, delta: Math.PI / 2 },
-  knot: { a: 3, b: 4, delta: Math.PI / 2 },
-  star: { a: 5, b: 4, delta: Math.PI / 2 },
-  wave: { a: 1, b: 3, delta: Math.PI / 4 },
-  infinity: { a: 2, b: 1, delta: Math.PI / 2 },
-  clover: { a: 3, b: 1, delta: Math.PI / 2 },
-} as const;
-
-export type LissajousPreset = keyof typeof LISSAJOUS_PRESETS;

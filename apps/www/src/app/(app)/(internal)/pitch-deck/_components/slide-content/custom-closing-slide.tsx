@@ -3,7 +3,7 @@
 import { cn } from "@repo/ui/lib/utils";
 import type { PITCH_SLIDES } from "~/config/pitch-deck-data";
 
-export type SlideVariant = "responsive" | "fixed";
+type SlideVariant = "responsive" | "fixed";
 
 interface CustomClosingSlideProps {
   slide: Extract<(typeof PITCH_SLIDES)[number], { type: "title" }>;

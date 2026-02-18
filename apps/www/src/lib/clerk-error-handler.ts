@@ -45,53 +45,7 @@ type _ClerkErrorResponse =
 /**
  * Custom error class that preserves Clerk context
  */
-export class ClerkError extends Error {
-	public readonly code?: string;
-	public readonly clerkTraceId?: string;
-	public readonly httpStatus?: number;
-	public readonly isRateLimit: boolean;
-	public readonly isAlreadyExists: boolean;
-	public readonly isValidationError: boolean;
-	public readonly isUserLocked: boolean;
-	public readonly retryAfterSeconds?: number;
-	
-	constructor(
-		message: string,
-		public readonly userMessage: string,
-		metadata: {
-			code?: string;
-			clerkTraceId?: string;
-			httpStatus?: number;
-			isRateLimit: boolean;
-			isAlreadyExists: boolean;
-			isValidationError: boolean;
-			isUserLocked: boolean;
-			retryAfterSeconds?: number;
-			originalError?: unknown;
-		}
-	) {
-		super(message);
-		this.name = 'ClerkError';
-		this.code = metadata.code;
-		this.clerkTraceId = metadata.clerkTraceId;
-		this.httpStatus = metadata.httpStatus;
-		this.isRateLimit = metadata.isRateLimit;
-		this.isAlreadyExists = metadata.isAlreadyExists;
-		this.isValidationError = metadata.isValidationError;
-		this.isUserLocked = metadata.isUserLocked;
-		this.retryAfterSeconds = metadata.retryAfterSeconds;
-		
-		// Preserve original error as cause
-		if (metadata.originalError) {
-			this.cause = metadata.originalError;
-		}
-	}
-}
-
-/**
- * Common Clerk error codes we care about
- */
-export const ClerkErrorCode = {
+const ClerkErrorCode = {
 	// Authentication
 	EmailAddressExists: 'email_address_exists',
 	FormIdentifierExists: 'form_identifier_exists',
@@ -114,7 +68,7 @@ export const ClerkErrorCode = {
 	AuthorizationMissing: 'authorization_missing',
 } as const;
 
-export interface ClerkErrorContext {
+interface ClerkErrorContext {
 	action: string;
 	component?: string;
 	httpStatus?: number;
@@ -122,7 +76,7 @@ export interface ClerkErrorContext {
 	[key: string]: unknown;
 }
 
-export interface ClerkErrorResult {
+interface ClerkErrorResult {
 	message: string;
 	userMessage: string;
 	code?: string;
@@ -133,26 +87,6 @@ export interface ClerkErrorResult {
 	retryAfterSeconds?: number;
 	clerkTraceId?: string;
 	shouldLog?: boolean; // Whether to log to Sentry
-}
-
-/**
- * Safely parse JSON response
- */
-async function parseJsonSafe(response: Response): Promise<unknown> {
-	const text = await response.text();
-	
-	// Empty response
-	if (!text) {
-		return null;
-	}
-	
-	try {
-		return JSON.parse(text);
-	} catch {
-		// If JSON parsing fails, return the text as-is
-		// This could be an HTML error page or plain text error
-		return { message: text };
-	}
 }
 
 /**
@@ -352,50 +286,3 @@ export function handleClerkError(
 	};
 }
 
-/**
- * Create a ClerkError that can be thrown while preserving context
- */
-export function createClerkError(
-	result: ClerkErrorResult,
-	originalError?: unknown
-): ClerkError {
-	return new ClerkError(result.message, result.userMessage, {
-		code: result.code,
-		clerkTraceId: result.clerkTraceId,
-		isRateLimit: result.isRateLimit,
-		isAlreadyExists: result.isAlreadyExists,
-		isValidationError: result.isValidationError,
-		isUserLocked: result.isUserLocked,
-		retryAfterSeconds: result.retryAfterSeconds,
-		originalError,
-	});
-}
-
-/**
- * Helper to check if an error looks like a Clerk API error
- */
-export function isClerkAPIError(error: unknown): boolean {
-	if (!error || typeof error !== 'object') return false;
-	
-	const obj = error as Record<string, unknown>;
-	
-	// Check for either error format
-	return !!(
-		// SDK format with errors array
-		(Array.isArray(obj.errors) && (obj.errors as unknown[])[0] && typeof (obj.errors as unknown[])[0] === 'object' && 'code' in ((obj.errors as unknown[])[0] as object)) ??
-		// Backend API format with direct fields
-		(obj.code && obj.shortMessage) ??
-		// Trace ID indicates Clerk error
-		obj.clerk_trace_id
-	);
-}
-
-/**
- * Helper to check if an error is our ClerkError
- */
-export function isClerkError(error: unknown): error is ClerkError {
-	return error instanceof ClerkError;
-}
-
-// Export the safe JSON parser for use in the action
-export { parseJsonSafe };

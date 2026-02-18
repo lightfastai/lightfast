@@ -10,7 +10,7 @@ interface TitleSlideContentProps {
   variant?: SlideVariant;
 }
 
-export function TitleSlideContent({
+function TitleSlideContent({
   slide,
   variant = "responsive",
 }: TitleSlideContentProps) {

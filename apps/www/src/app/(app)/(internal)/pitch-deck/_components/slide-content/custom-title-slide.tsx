@@ -4,7 +4,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { Icons } from "@repo/ui/components/icons";
 import type { PITCH_SLIDES } from "~/config/pitch-deck-data";
 
-export type SlideVariant = "responsive" | "fixed";
+type SlideVariant = "responsive" | "fixed";
 
 interface CustomTitleSlideProps {
   slide: Extract<(typeof PITCH_SLIDES)[number], { type: "title" }>;

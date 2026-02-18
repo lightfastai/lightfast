@@ -7,14 +7,14 @@ import {
   formatLockoutTime
 } from "./error-handling";
 
-export interface ClerkErrorContext {
+interface ClerkErrorContext {
   component: string;
   action: string;
   email?: string;
   [key: string]: unknown;
 }
 
-export interface ClerkErrorResult {
+interface ClerkErrorResult {
   message: string;
   userMessage: string;
   isRateLimit: boolean;

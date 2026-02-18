@@ -3,8 +3,6 @@ import { changelog  } from "@vendor/cms";
 import type {ChangelogEntriesQueryResponse} from "@vendor/cms";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
 
-export const revalidate = 300;
-
 export function ChangelogPreview() {
   return (
     <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
