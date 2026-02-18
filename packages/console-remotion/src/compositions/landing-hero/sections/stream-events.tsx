@@ -102,6 +102,21 @@ const ROWS_TO_RENDER =
   2;
 const START_INDEX = -N;
 
+// Precomputed per-row static data — avoids repeated getCumPosition calls and
+// new array allocations on every render frame.
+const ROW_DATA = Array.from({ length: ROWS_TO_RENDER }, (_, index) => {
+  const virtualIndex = index + START_INDEX;
+  const normalizedIndex = ((virtualIndex % N) + N) % N;
+  return {
+    index,
+    event: FEED_EVENTS[normalizedIndex] ?? null,
+    baseCumPosition: getCumPosition(virtualIndex),
+  };
+});
+
+// Module-level easing — avoids creating a new closure on every frame.
+const STEP_EASING = Easing.inOut(Easing.cubic);
+
 export const StreamEvents: React.FC = () => {
   const frame = useCurrentFrame();
   const streamFrame = frame % LOOP_FRAMES;
@@ -110,7 +125,7 @@ export const StreamEvents: React.FC = () => {
   const stepProgress = interpolate(stepFrame, [0, STEP_MOVE_FRAMES], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
-    easing: Easing.inOut((t: number) => Easing.cubic(t)),
+    easing: STEP_EASING,
   });
   const scrollOffset =
     getCumPosition(stepIndex) + stepProgress * (eventPitches[stepIndex % N] ?? 0);
@@ -125,13 +140,9 @@ export const StreamEvents: React.FC = () => {
         height: FEED_HEIGHT,
       }}
     >
-      {Array.from({ length: ROWS_TO_RENDER }).map((_, index) => {
-        const virtualIndex = index + START_INDEX;
-        const normalizedIndex = ((virtualIndex % N) + N) % N;
-        const event = FEED_EVENTS[normalizedIndex];
+      {ROW_DATA.map(({ index, event, baseCumPosition }) => {
         if (!event) return null;
-        const rowTop =
-          FEED_PADDING_Y + getCumPosition(virtualIndex) + scrollOffset;
+        const rowTop = FEED_PADDING_Y + baseCumPosition + scrollOffset;
 
         return (
           <div
