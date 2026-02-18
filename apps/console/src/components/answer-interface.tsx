@@ -18,7 +18,8 @@ interface AnswerInterfaceProps {
   workspaceId: string;
 }
 
-const emptySubscribe = () => () => {};
+const emptySubscribeCleanup = () => { /* no cleanup needed */ };
+const emptySubscribe = () => emptySubscribeCleanup;
 
 export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
   const [sessionId] = useState(() => crypto.randomUUID());
