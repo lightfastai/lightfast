@@ -90,7 +90,7 @@ function verifyEventFiltering() {
 
   for (const file of files) {
     const content = readFileSync(join(datasetsDir, file), "utf-8");
-    const dataset: Dataset = JSON.parse(content);
+    const dataset = JSON.parse(content) as Dataset;
 
     console.log(`Checking ${dataset.name}...`);
 

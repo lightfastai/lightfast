@@ -164,6 +164,7 @@ async function reconcile(workspaceId: string, dryRun: boolean) {
   // Show sample mismatches
   const sampleSize = Math.min(5, mismatches.length);
   for (let i = 0; i < sampleSize; i++) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const m = mismatches[i]!;
     console.log(`  ${m.vectorId} (${m.view})`);
     console.log(`    Pinecone: ${m.pineconeObservationId}`);

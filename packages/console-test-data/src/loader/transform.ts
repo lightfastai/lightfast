@@ -147,7 +147,7 @@ function transformGitHubWebhook(
       );
       break;
     default:
-      throw new Error(`Unsupported GitHub event type: ${webhook.eventType satisfies never}`);
+      throw new Error(`Unsupported GitHub event type: ${String(webhook.eventType satisfies never)}`);
   }
 
   // Add test suffix to sourceId for uniqueness across runs

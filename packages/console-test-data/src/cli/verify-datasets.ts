@@ -90,6 +90,7 @@ function verifyDataset(name: string): VerifyResult {
       ];
       titlePrefixCache.set(source, prefixes);
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return titlePrefixCache.get(source)!;
   }
 
