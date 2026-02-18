@@ -59,6 +59,7 @@ catalog:
   '@hookform/resolvers': ^3.10.0
   import-in-the-middle: ^1.8.1
   require-in-the-middle: ^7.1.1
+  babel-plugin-react-compiler: ^1.0.0
 catalogs:
   tailwind4:
     tailwindcss: 4.1.11
