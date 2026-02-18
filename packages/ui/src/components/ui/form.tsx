@@ -7,12 +7,17 @@ import {
   Controller,
   FormProvider,
   useFormContext,
-  useFormState
-  
-  
-  
+  useFormState,
+  useForm,
 } from "react-hook-form"
-import type {ControllerProps, FieldPath, FieldValues} from "react-hook-form";
+import type {ControllerProps, FieldPath, FieldValues, UseFormProps, UseFormReturn} from "react-hook-form";
+
+function useFormCompat<T extends FieldValues>(
+  props?: UseFormProps<T>,
+): UseFormReturn<T> {
+  "use no memo";
+  return useForm(props);
+}
 
 import { cn } from "@repo/ui/lib/utils"
 import { Label } from "@repo/ui/components/ui/label"
@@ -157,6 +162,8 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
 }
 
 export {
+  useFormCompat,
+  useFormContext,
   useFormField,
   Form,
   FormItem,

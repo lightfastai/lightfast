@@ -1,9 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form } from "@repo/ui/components/ui/form";
+import { useFormCompat, Form } from "@repo/ui/components/ui/form";
 import { teamFormSchema } from "@repo/console-validation/forms";
 import type { TeamFormValues } from "@repo/console-validation/forms";
 
@@ -24,7 +23,7 @@ export function TeamFormProvider({
   initialTeamName?: string;
 }) {
   // react-hook-form for validated fields
-  const form = useForm<TeamFormValues>({
+  const form = useFormCompat<TeamFormValues>({
     resolver: zodResolver(teamFormSchema),
     defaultValues: {
       teamName: initialTeamName ?? "",

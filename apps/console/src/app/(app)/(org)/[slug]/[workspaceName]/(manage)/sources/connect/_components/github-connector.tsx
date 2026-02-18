@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -42,20 +42,9 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
   const isConnected = !!githubSource?.id;
   const installations = githubSource?.installations ?? [];
 
-  // Auto-select first installation
-  useEffect(() => {
-    const firstInstall = installations[0];
-    if (installations.length > 0 && !selectedInstallationId && firstInstall) {
-      setSelectedInstallationId(firstInstall.id);
-    }
-  }, [installations, selectedInstallationId, setSelectedInstallationId]);
-
-  // Auto-open repo selector after OAuth return
-  useEffect(() => {
-    if (autoOpen && isConnected && installations.length > 0) {
-      setShowRepoSelector(true);
-    }
-  }, [autoOpen, isConnected, installations.length]);
+  if (autoOpen && isConnected && installations.length > 0 && !showRepoSelector) {
+    setShowRepoSelector(true);
+  }
 
   const handleConnectGitHub = () => {
     const width = 600;

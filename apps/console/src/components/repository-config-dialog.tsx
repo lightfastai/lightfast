@@ -42,7 +42,7 @@ export function RepositoryConfigDialog({ open, onOpenChange, fullName, installat
   });
 
   const ghLink = `https://github.com/${fullName}`;
-  const filename = state.status === "loaded" && state.path ? state.path : "lightfast.yml";
+  const filename = data?.path ?? "lightfast.yml";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -57,29 +57,29 @@ export function RepositoryConfigDialog({ open, onOpenChange, fullName, installat
           </DialogDescription>
         </DialogHeader>
 
-        {state.status === "loading" && (
+        {isLoading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading configuration…
           </div>
         )}
 
-        {state.status === "error" && (
+        {error && (
           <div className="rounded-md border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-400">
-            {state.message}
+            {error instanceof Error ? error.message : "Failed to fetch config"}
           </div>
         )}
 
-        {state.status === "loaded" && (
-          state.exists ? (
+        {data && (
+          data.exists ? (
             <div className="space-y-3">
               <div className="rounded-md border bg-muted/40">
                 <pre className="overflow-x-auto p-4 text-xs">
-                  <code>{state.content}</code>
+                  <code>{data.content}</code>
                 </pre>
               </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Path: {state.path}</span>
-                <a href={`${ghLink}/blob/HEAD/${state.path}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline">
+                <span>Path: {data.path}</span>
+                <a href={`${ghLink}/blob/HEAD/${data.path}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline">
                   <ExternalLink className="h-3.5 w-3.5" /> Open on GitHub
                 </a>
               </div>
@@ -92,7 +92,7 @@ export function RepositoryConfigDialog({ open, onOpenChange, fullName, installat
         )}
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" size="sm" onClick={() => void fetchConfig()} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={() => void refetch()} className="gap-1.5">
             <RefreshCcw className="h-3.5 w-3.5" /> Refresh
           </Button>
           <Button variant="outline" size="sm" asChild>

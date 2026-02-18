@@ -4,12 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOrganizationList } from "@clerk/nextjs";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
 import {
+	useFormCompat,
 	Form,
 	FormControl,
 	FormDescription,
@@ -52,7 +52,7 @@ export function TeamGeneralSettingsClient({
 	}
 
 	// Initialize form with current organization name
-	const form = useForm<TeamSettingsFormValues>({
+	const form = useFormCompat<TeamSettingsFormValues>({
 		resolver: zodResolver(teamSettingsFormSchema),
 		defaultValues: {
 			teamName: organization.slug,

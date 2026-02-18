@@ -31,7 +31,6 @@ interface ConnectFormContextValue {
   clerkOrgSlug: string;
   workspaceName: string;
   workspaceId: string | null;
-  setWorkspaceId: (id: string | null) => void;
 }
 
 const ConnectFormContext = createContext<ConnectFormContextValue | null>(null);
@@ -66,8 +65,19 @@ export function ConnectFormProvider({
     : provider === "vercel"
       ? vercelSource?.id ?? null
       : null;
+
+  const installations = githubSource?.installations ?? [];
+  if (installations.length > 0 && !selectedInstallationId) {
+    const firstInstall = installations[0];
+    if (firstInstall) setSelectedInstallationId(firstInstall.id);
+  }
+
+  const { data: workspace } = useQuery({
+    ...trpc.workspace.getByName.queryOptions({ clerkOrgSlug, workspaceName }),
+  });
+  const workspaceId = workspace?.id ?? null;
+
   const [selectedResources, setSelectedResources] = useState<SelectedResource[]>([]);
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
 
   const value: ConnectFormContextValue = {
     provider,
@@ -80,7 +90,6 @@ export function ConnectFormProvider({
     clerkOrgSlug,
     workspaceName,
     workspaceId,
-    setWorkspaceId,
   };
 
   return (

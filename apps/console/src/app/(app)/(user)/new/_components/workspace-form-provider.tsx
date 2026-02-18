@@ -2,9 +2,8 @@
 
 import type { ReactNode } from "react";
 import { createContext, useContext, useState } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form } from "@repo/ui/components/ui/form";
+import { useFormCompat, Form } from "@repo/ui/components/ui/form";
 import { workspaceFormSchema } from "@repo/console-validation/forms";
 import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 
@@ -63,7 +62,7 @@ export function WorkspaceFormProvider({
   initialWorkspaceName?: string;
 }) {
   // react-hook-form for validated fields
-  const form = useForm<WorkspaceFormValues>({
+  const form = useFormCompat<WorkspaceFormValues>({
     resolver: zodResolver(workspaceFormSchema),
     defaultValues: {
       organizationId: initialOrgId ?? "",

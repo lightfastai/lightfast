@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
@@ -21,7 +21,6 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
     clerkOrgSlug,
     workspaceName,
     workspaceId,
-    setWorkspaceId,
   } = useConnectForm();
 
   const [showProjectSelector, setShowProjectSelector] = useState(false);
@@ -33,29 +32,11 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
     refetchOnWindowFocus: false,
   });
 
-  // Fetch workspace to get ID
-  const { data: workspace } = useSuspenseQuery({
-    ...trpc.workspace.getByName.queryOptions({
-      clerkOrgSlug,
-      workspaceName,
-    }),
-  });
-
   const isConnected = !!vercelSource?.id;
 
-  // Set workspace ID in context
-  useEffect(() => {
-    if (workspace.id) {
-      setWorkspaceId(workspace.id);
-    }
-  }, [workspace.id, setWorkspaceId]);
-
-  // Auto-open project selector after OAuth return
-  useEffect(() => {
-    if (autoOpen && isConnected) {
-      setShowProjectSelector(true);
-    }
-  }, [autoOpen, isConnected]);
+  if (autoOpen && isConnected && !showProjectSelector) {
+    setShowProjectSelector(true);
+  }
 
   const handleConnectVercel = () => {
     const width = 600;
