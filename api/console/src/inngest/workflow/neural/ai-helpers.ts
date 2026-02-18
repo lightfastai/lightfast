@@ -5,7 +5,7 @@
  * for use with Inngest step.ai.wrap()
  */
 
-import { generateObject, generateText, wrapLanguageModel } from "ai";
+import { generateObject, wrapLanguageModel } from "ai";
 import { gateway } from "@ai-sdk/gateway";
 import { BraintrustMiddleware } from "braintrust";
 import type { LanguageModel } from "ai";

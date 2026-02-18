@@ -15,17 +15,6 @@ import { eq, and } from "drizzle-orm";
 import { inngest } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import { pineconeClient } from "@repo/console-pinecone";
-import type { SourceType } from "@repo/console-validation";
-
-/**
- * Generic document deletion event
- */
-interface DeleteDocumentEvent {
-  workspaceId: string;
-  documentId: string;
-  sourceType: SourceType;
-  sourceId: string;
-}
 
 /**
  * Delete document function (multi-source)

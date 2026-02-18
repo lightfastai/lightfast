@@ -1,6 +1,5 @@
 import { db } from "@db/console/client";
 import { orgActorIdentities } from "@db/console/schema";
-import { and, eq } from "drizzle-orm";
 import type { SourceActor } from "@repo/console-types";
 
 interface UpsertIdentityInput {
@@ -62,24 +61,3 @@ export async function upsertOrgActorIdentity(
     });
 }
 
-/**
- * Get identity by canonical actor ID.
- * Returns Clerk user ID and source username for the given actor.
- */
-async function getOrgActorIdentity(
-  clerkOrgId: string,
-  canonicalActorId: string
-): Promise<{ clerkUserId: string | null; sourceUsername: string | null } | null> {
-  const identity = await db.query.orgActorIdentities.findFirst({
-    where: and(
-      eq(orgActorIdentities.clerkOrgId, clerkOrgId),
-      eq(orgActorIdentities.canonicalActorId, canonicalActorId)
-    ),
-    columns: {
-      clerkUserId: true,
-      sourceUsername: true,
-    },
-  });
-
-  return identity ?? null;
-}

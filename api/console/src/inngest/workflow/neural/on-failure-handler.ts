@@ -90,7 +90,7 @@ export function createNeuralOnFailureHandler<TEventName extends keyof Events>(
           // `NeuralFailureOutput` is intentionally broad so the factory stays
           // generic. Type safety is enforced per-workflow via `satisfies` in
           // each `buildOutput` callback; the cast here is therefore safe.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
           output: config.buildOutput({ data, error: error.message }) as any,
         });
       }

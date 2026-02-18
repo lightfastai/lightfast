@@ -161,13 +161,3 @@ export function classifyObservationFallback(sourceEvent: SourceEvent): {
   return { primaryCategory, secondaryCategories };
 }
 
-/**
- * Legacy function - redirects to fallback for backwards compatibility
- * @deprecated Use classifyObservationFallback or LLM classification via step.ai.wrap()
- */
-function classifyObservation(sourceEvent: SourceEvent): {
-  primaryCategory: string;
-  secondaryCategories: string[];
-} {
-  return classifyObservationFallback(sourceEvent);
-}

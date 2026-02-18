@@ -67,33 +67,3 @@ export async function ensureActorLinked(
   };
 }
 
-/**
- * Get actor identity for a Clerk user in an org.
- * Returns null if user has no linked actor identity.
- *
- * Changed from workspace-level to org-level lookup:
- * - Previous: Queried workspaceActorProfiles by workspaceId + clerkUserId
- * - Now: Queries orgActorIdentities by clerkOrgId + clerkUserId
- */
-async function getActorForClerkUser(
-  clerkOrgId: string,
-  clerkUserId: string
-): Promise<{ actorId: string; sourceUsername: string | null } | null> {
-  const identity = await db.query.orgActorIdentities.findFirst({
-    where: and(
-      eq(orgActorIdentities.clerkOrgId, clerkOrgId),
-      eq(orgActorIdentities.clerkUserId, clerkUserId)
-    ),
-    columns: {
-      canonicalActorId: true,
-      sourceUsername: true,
-    },
-  });
-
-  if (!identity) return null;
-
-  return {
-    actorId: identity.canonicalActorId,
-    sourceUsername: identity.sourceUsername,
-  };
-}

@@ -85,14 +85,6 @@ interface SkippedDocument extends BasePrepared {
   reason: string;
 }
 
-interface ProcessedDocumentResult {
-  status: "processed" | "skipped";
-  docId?: string;
-  reason?: string;
-  chunkCount?: number;
-  contentHash?: string;
-}
-
 /**
  * Compute configuration hash for a workspace
  */

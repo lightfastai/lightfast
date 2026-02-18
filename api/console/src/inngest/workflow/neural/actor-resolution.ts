@@ -99,7 +99,7 @@ export async function resolveActor(
   // For Vercel events, try to resolve username to numeric GitHub ID
   if (sourceEvent.source === "vercel") {
     const references = sourceEvent.references;
-    const commitRef = references?.find((ref) => ref.type === "commit");
+    const commitRef = references.find((ref) => ref.type === "commit");
 
     if (commitRef?.id) {
       const resolved = await resolveVercelActorViaCommitSha(
