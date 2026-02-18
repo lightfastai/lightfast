@@ -35,8 +35,8 @@ export const config: NextConfig = withVercelToolbar()({
     ],
   },
 
-  async rewrites() {
-    return [
+  rewrites() {
+    return Promise.resolve([
       {
         source: "/ingest/static/:path*",
         destination: "https://us-assets.i.posthog.com/static/:path*",
@@ -57,10 +57,10 @@ export const config: NextConfig = withVercelToolbar()({
         source: "/healthz",
         destination: "/api/health",
       },
-    ];
+    ]);
   },
 
-  async headers() {
+  headers() {
     const securityHeaders = createSecureHeaders({
       // HSTS Preload: https://hstspreload.org/
       forceHTTPSRedirect: [
@@ -69,7 +69,7 @@ export const config: NextConfig = withVercelToolbar()({
       ],
     });
 
-    return [
+    return Promise.resolve([
       {
         source: "/(.*)",
         headers: [
@@ -77,7 +77,7 @@ export const config: NextConfig = withVercelToolbar()({
           { key: "Document-Policy", value: "js-profiling" },
         ],
       },
-    ];
+    ]);
   },
 
   experimental: {
@@ -151,7 +151,7 @@ export const withSentry: (sourceConfig: NextConfig) => NextConfig = (
  */
 export const withAnalyzer = (sourceConfig: NextConfig): NextConfig =>
   // Type assertion needed due to multiple Next.js versions in monorepo
-  withBundleAnalyzer()(sourceConfig as any);
+  withBundleAnalyzer()(sourceConfig as unknown as Parameters<ReturnType<typeof withBundleAnalyzer>>[0]);
 
 /**
  * @type {(sourceConfig: import("next").NextConfig) => import("next").NextConfig}
