@@ -1,6 +1,9 @@
 import type { Thing, WithContext } from "schema-dts";
 
-// Type for JSON-LD Graph structure
+// Type for JSON-LD Graph structure.
+// @context is intentionally `string` (not the literal "https://schema.org") to
+// stay spec-compliant — JSON-LD allows any URI, inline objects, or arrays.
+// Use WithContext<Thing> when a strict "https://schema.org" literal is needed.
 interface GraphContext {
   "@context": string | Record<string, unknown> | (string | Record<string, unknown>)[];
   "@graph": Thing[];
