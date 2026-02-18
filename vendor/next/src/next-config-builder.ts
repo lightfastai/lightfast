@@ -32,6 +32,10 @@ export const config: NextConfig = withVercelToolbar()({
         protocol: "https",
         hostname: "assets.basehub.com",
       },
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+      },
     ],
   },
 

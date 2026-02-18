@@ -143,15 +143,22 @@ export function composeCspOptions(
     const defaultValue = defaultDirectives[key];
     const userValue = userDirectives[key];
 
+    // Cast to allow for keys that exist in directiveKeys but not in the
+    // narrowly-typed defaults object; at runtime this may be undefined.
+    const safeDefault = defaultValue as readonly Source[] | undefined;
+
     if (userValue && replaceDirectives.has(key)) {
       // REPLACE: scriptSrc and styleSrc replace defaults (removes nonces)
       mergedDirectives[key] = userValue;
     } else if (userValue) {
       // MERGE: other directives merge with defaults (extends them)
-      mergedDirectives[key] = mergeDirectives([...defaultValue] as Source[], userValue);
-    } else {
+      mergedDirectives[key] = mergeDirectives(
+        safeDefault != null ? ([...safeDefault] as Source[]) : [],
+        userValue,
+      );
+    } else if (safeDefault != null) {
       // Only default value - keep it
-      mergedDirectives[key] = [...defaultValue] as Source[];
+      mergedDirectives[key] = [...safeDefault] as Source[];
     }
   }
 

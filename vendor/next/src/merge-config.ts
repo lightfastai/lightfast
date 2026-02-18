@@ -152,7 +152,7 @@ export function mergeNextConfig(
   ) as unknown as NextConfig;
 
   // Special handling for rewrites (array or object form)
-  if (baseConfig.rewrites ?? customConfig.rewrites) {
+  if (baseConfig.rewrites || customConfig.rewrites) {
     const baseRewrites = baseConfig.rewrites;
     const customRewrites = customConfig.rewrites;
     merged.rewrites = async () => {
@@ -201,7 +201,7 @@ export function mergeNextConfig(
   }
 
   // redirects
-  if (baseConfig.redirects ?? customConfig.redirects) {
+  if (baseConfig.redirects || customConfig.redirects) {
     const baseRedirects = baseConfig.redirects;
     const customRedirects = customConfig.redirects;
     merged.redirects = async () => {
@@ -218,7 +218,7 @@ export function mergeNextConfig(
   }
 
   // headers
-  if (baseConfig.headers ?? customConfig.headers) {
+  if (baseConfig.headers || customConfig.headers) {
     const baseHeaders = baseConfig.headers;
     const customHeaders = customConfig.headers;
     merged.headers = async () => {
@@ -235,7 +235,7 @@ export function mergeNextConfig(
   }
 
   // webpack pipeline: run base then custom
-  if (baseConfig.webpack ?? customConfig.webpack) {
+  if (baseConfig.webpack || customConfig.webpack) {
     const baseWebpack = baseConfig.webpack;
     const customWebpack = customConfig.webpack;
     merged.webpack = (config: unknown, options) => {
