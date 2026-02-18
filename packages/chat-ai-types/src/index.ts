@@ -1,9 +1,29 @@
 // Re-export all shared types
-export * from "./attachments";
-export * from "./errors";
-export * from "./models";
-export * from "./feedback";
-export * from "./validation";
+export {
+  MAX_ATTACHMENT_COUNT,
+  MAX_ATTACHMENT_BYTES,
+  MAX_PROMPT_LENGTH,
+  IMAGE_MIME_PREFIX,
+  PDF_MIME_TYPE,
+  IMAGE_ACCEPT,
+  PDF_ACCEPT,
+  ALLOWED_ATTACHMENT_EXTENSIONS,
+  inferAttachmentKind,
+  sanitizeAttachmentFilename,
+  ensureAttachmentAllowed,
+} from "./attachments";
+export type { AttachmentKind } from "./attachments";
+export {
+  ChatErrorType,
+  RequestPayloadTooLargeError,
+  RequestBodyParseError,
+  isApiErrorResponse,
+  ERROR_STATUS_CODES,
+} from "./errors";
+export type { ApiErrorResponse, ChatError, ChatInlineError } from "./errors";
+export type { ModelFeatures, ThinkingConfig, ModelConfig, ProcessedModel } from "./models";
+export type { FeedbackData, FeedbackType } from "./feedback";
+export type { PromptErrorCode, PromptError } from "./validation";
 
 import type {
   DeepPartial,
@@ -347,4 +367,16 @@ export type {
   MessagePreviewResult,
 } from "./message-metrics";
 
-export * from "./message-loading";
+export {
+  MAX_USER_MESSAGE_CHARS,
+  MAX_CONVERSATION_HISTORY_CHARS,
+  MAX_REQUEST_PAYLOAD_BYTES,
+  MAX_JSON_PARSE_BYTES,
+  MESSAGE_INITIAL_CHAR_BUDGET,
+  MESSAGE_BACKGROUND_CHAR_BUDGET,
+  MESSAGE_HISTORY_HARD_CAP,
+  MESSAGE_FALLBACK_PAGE_SIZE,
+  MESSAGE_PAGE_STALE_TIME,
+  MESSAGE_PAGE_GC_TIME,
+} from "./message-loading";
+export type { MessageHistoryFetchState, MessageHistoryMeta } from "./message-loading";
