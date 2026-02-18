@@ -291,8 +291,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                             ))}
                           </div>
                           <div>
-                            {post.authors.map((author, idx) => (
-                              <span key={`${author._title ?? "author-text"}-${idx}`}>
+                            {post.authors.map((author) => (
+                              <span key={author._title ?? "unknown-author"}>
                                 {author.xUrl ? (
                                   <Link
                                     href={author.xUrl}

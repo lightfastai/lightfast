@@ -2,7 +2,6 @@ export {
   EVENT_CATEGORIES,
   EVENT_REGISTRY,
   ALL_INTERNAL_EVENT_TYPES,
-  INTERNAL_EVENT_TYPES,
   getEventConfig,
   getEventWeight,
   isInternalEventType,
