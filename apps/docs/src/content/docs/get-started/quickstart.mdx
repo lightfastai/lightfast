@@ -3,139 +3,115 @@ title: "Quickstart: Index Your Team's Knowledge in 5 Minutes"
 description: Index your team's first memories in 5 minutes. Connect your GitHub repository and start searching your organization's knowledge.
 keywords: quickstart, getting started, GitHub integration, team knowledge, semantic search, API setup
 ogTitle: Lightfast Quickstart - Index Your Team's Knowledge in 5 Minutes
-ogDescription: Connect GitHub, configure indexing, and start searching your engineering org's knowledge with Lightfast.
+ogDescription: Connect GitHub and start searching your engineering org's knowledge with Lightfast.
 author: Lightfast Team
 publishedAt: "2024-12-01"
-updatedAt: "2024-12-24"
+updatedAt: "2026-02-19"
 proficiencyLevel: Beginner
 ---
 
-Lightfast is the memory layer for software teams. This guide walks you through indexing your first repository and searching your engineering org's knowledge.
+Lightfast is the memory layer for software teams. It indexes everything your engineering org produces — pull requests, issues, discussions, docs, deployments — and makes it searchable with natural language. This guide walks you through connecting your first source and getting your team's knowledge into Lightfast.
 
-## Lightfast Plans Overview
+## Step 1 — Create a workspace
 
-- **Starter** – Basic search across your team's documentation.
-- **Team** – Advanced semantic search and decision tracking for $12/user/month.
-- **Business** – Auto-summaries and expertise profiles for larger teams.
+To get started, sign up at <AuthLink path="/sign-in" external>lightfast.ai</AuthLink> and create a workspace for your team. A workspace is the central place where all your connected sources are indexed and made searchable. Think of it as your team's shared memory — one place where everyone can find what they need, regardless of which tool the information originally lived in.
 
-<WwwLink path="/pricing" external>See full plan details</WwwLink>.
+During workspace creation you'll be asked to select a GitHub organization and give your workspace a name. We recommend naming it after your product or team — something like `acme-platform` or `frontend`. You can always rename it later.
 
-## Sign Up & Connect GitHub
+Once your workspace is created, you're ready to start connecting sources.
 
-To use Lightfast, you'll need to create an account and connect your GitHub repositories. This is the recommended way to get started as it automatically indexes your software team's documentation, pull requests, issues, and discussions.
+## Step 2 — Connect your sources
 
-Sign up at <AuthLink path="/sign-in" external>lightfast.ai</AuthLink> and create a workspace for your software team. When you connect your GitHub account via OAuth, you can select which repositories you want Lightfast to remember. Lightfast respects your GitHub permissions—only content you have access to will be indexed.
+From your workspace dashboard, connect the tools your team already uses. Lightfast continuously syncs content from each connected source and keeps everything up to date — no configuration files, no manual exports, no scripts to maintain.
 
-Once you're set up and your repositories are connected, you can search your engineering org's knowledge in different ways:
+**Currently supported connectors:**
 
-- **Dashboard search**: Use the web interface to search across all your indexed content with natural language queries.
-- **API integration**: Make requests to the Lightfast API from your applications using your API key (see the [Authentication guide](/docs/get-started/authentication) for details).
-- **MCP tools**: Connect AI agents and tools via the Model Context Protocol to let them query your engineering org's memory automatically.
+- [**GitHub**](/docs/connectors/github) — Repositories, pull requests, issues, code reviews, and discussions. This is the most common starting point and covers the majority of your engineering team's knowledge.
+- [**Vercel**](/docs/connectors/vercel) — Deployments, build logs, and project activity, so you can trace releases and correlate deploys with incidents.
+- [**Linear**](/docs/connectors/linear) — Issues, projects, and cycles, so your product and engineering work is searchable alongside your code.
+- [**Sentry**](/docs/connectors/sentry) — Errors and performance data, so you can trace incidents back to the code changes and decisions that caused them.
+
+To connect GitHub, click **Add source** in your workspace dashboard and authorize Lightfast via OAuth. You'll then be able to select which repositories to index. Start with the ones your team touches most — you can always add more later.
+
+Each source moves through three sync states after you connect it:
+
+- **Pending** — queued and waiting to start
+- **Syncing** — actively indexing content from the source
+- **Synced** — complete and fully searchable
+
+Most repositories complete their initial sync within 5–10 minutes depending on size. You don't need to wait for everything to finish before you start searching — results appear as soon as the first documents are indexed.
 
 <Alert>
-**Neural Memory varies by plan.** Starter has basic search. Team ($12/user/month) adds semantic search and decision tracking. Business includes auto-summaries and expertise profiles. <WwwLink path="/pricing" external>See all plans</WwwLink>.
+**Permissions are respected.** Lightfast only indexes content you have access to. Team members see search results based on their individual GitHub permissions — no one gets access to repositories they couldn't already see on GitHub.
 </Alert>
 
-## Create Your Configuration
+## Step 3 — Monitor indexing
 
-Lightfast uses a `lightfast.yml` file to control what gets indexed from your repository. This configuration file lives in your repo root and tells Lightfast exactly which files to remember, how to organize them, and which workspace they belong to.
+Once a source is connected, you can track sync progress from your workspace dashboard at <AuthLink path="/dashboard" external>lightfast.ai/dashboard</AuthLink>. You'll see real-time status for each connected source as documents are processed, along with a count of how many documents have been indexed so far.
 
-Add a `lightfast.yml` file to the root of your repository:
+**What Lightfast indexes from GitHub:**
 
-```yaml
-# Lightfast Configuration
-# Docs: https://lightfast.com/docs/get-started/config
+- **Documentation**: READMEs, wikis, docs folders, and Markdown files across all your connected repositories
+- **Pull Requests**: Code changes, review comments, approval history, and discussion threads
+- **Issues**: Bug reports, feature requests, project tracking tickets, and their comments
+- **Discussions**: Decision rationale, architecture conversations, Q&A threads, and context that would otherwise get lost
+- **People & Ownership**: Contributors, code owners, and subject matter experts based on commit and review history
 
-version: 1
-
-# Workspace identifier (optional - auto-detected from GitHub if omitted)
-# workspace: myorg/myrepo
-
-# Files to include (glob patterns - repo-relative paths)
-include:
-  - "README.md"           # Root README
-  - "docs/**/*.md"        # All Markdown in docs/
-  - "**/*.mdx"            # All MDX files
-  # - "rfcs/**/*"         # Design documents
-  # - "docs/**/*.tsx"     # React documentation components
-
-# Files are automatically excluded:
-# - **/node_modules/**
-# - **/.git/**
-# - **/dist/**
-# - **/build/**
-# - **/.next/**
-# - **/.turbo/**
-```
-
-The configuration has two main parts:
-
-- **Include patterns**: Glob patterns that match files to index. Patterns are relative to your repository root and support standard glob syntax (`*` matches files, `**` matches directories recursively).
-- **Workspace**: Optional identifier that links this config to your Lightfast workspace. If omitted, Lightfast auto-detects it from your GitHub repository.
-
-Common directories like `node_modules`, `.git`, `dist`, `build`, `.next`, and `.turbo` are automatically excluded—you don't need to specify them.
-
-Once you've created your `lightfast.yml` file, commit and push it to your repository:
-
-```bash
-git add lightfast.yml
-git commit -m "Add Lightfast configuration"
-git push origin main
-```
-
-Lightfast automatically detects the configuration and starts indexing your repository. Within minutes, your documentation will be searchable across your team's dashboard, API, and MCP tools.
-
-## Monitor Indexing & Memory Types
-
-After pushing your `lightfast.yml` configuration, Lightfast automatically starts building your memory layer. The platform indexes multiple types of content from your connected repositories, creating a searchable knowledge base that respects your GitHub permissions.
-
-**What Lightfast indexes:**
-
-- **Documentation**: READMEs, wikis, docs folders, and any files matching your include patterns
-- **Pull Requests**: Code changes, review comments, and discussion threads
-- **Issues**: Bug reports, feature requests, project tracking, and comments
-- **Discussions**: GitHub Discussions, decision rationale, and context
-- **People & Ownership**: Contributors, code owners, and subject matter experts
-
-Track your indexing progress at <AuthLink path="/dashboard" external>lightfast.ai/dashboard</AuthLink>. You'll see real-time updates as documents are processed, and most repositories complete indexing within 5-10 minutes. All software team members in your workspace can view progress and start searching as soon as content becomes available.
+All team members in your workspace can start searching as soon as the first source finishes syncing. You don't need to wait for everything to be indexed before you get value — even a single repository gives you powerful search across all its history.
 
 <Alert>
-**Permissions matter.** Lightfast only indexes content you have access to in GitHub. Software team members see search results based on their individual GitHub permissions—no one gets access to repositories they couldn't already see.
+**Re-syncing is automatic.** When your team pushes new PRs, closes issues, or publishes new docs, Lightfast picks up the changes automatically. Your team's memory stays current without any manual intervention.
 </Alert>
 
-## Search Your Engineering Knowledge
+## Step 4 — Search your engineering knowledge
 
-Once indexing completes, you can search your engineering org's memory from the dashboard, chat interface, or API. Lightfast understands natural language queries and returns answers with citations showing exactly where information came from.
+Once your sources are syncing, your team's knowledge becomes searchable from three places: the dashboard, the API, and MCP tools for AI agents.
 
-**Try these example queries:**
+**Dashboard search** at <AuthLink path="/dashboard" external>lightfast.ai</AuthLink> gives your whole team a natural language interface to everything that's been indexed. No keywords needed — just ask questions the way you'd ask a colleague.
 
-- "How does authentication work in our API?" — Find architecture decisions and implementation details
-- "What's our deployment process?" — Discover documented workflows and recent changes
-- "Why did we choose PostgreSQL over MongoDB?" — Trace decision rationale from discussions and PRs
-- "Who owns the payment service?" — Identify code owners and active contributors
+**Try these example queries to get started:**
 
-Every answer includes **source citations** with links to the original documents, pull requests, or discussions. You can verify the information and dive deeper into the full context. Search works across all indexed content—documentation, code discussions, issues, and decisions—giving you a complete view of your engineering knowledge.
+- "How does authentication work in our API?" — surfaces architecture decisions, implementation PRs, and any documentation explaining the auth flow
+- "What's our deployment process?" — finds runbooks, recent deploy PRs, and any discussions about deployment changes
+- "Why did we choose PostgreSQL over MongoDB?" — traces the decision rationale through discussions, RFCs, and issue threads
+- "Who owns the payment service?" — identifies the engineers with the most context based on commit and review history
+
+Every answer includes **source citations** — direct links to the original pull requests, issues, or documents the answer was drawn from. You can verify any claim and jump straight to the source for full context.
+
+For programmatic access, use the [TypeScript SDK](/docs/integrate/sdk) or call the [REST API](/api/getting-started/overview) directly. For AI agents, the [MCP server](/docs/integrate/mcp) exposes your team's memory as a tool that Claude, Cursor, and other agents can query automatically.
 
 <Alert>
-**Search modes adapt to your query.** Lightfast uses hybrid search combining semantic understanding with keyword matching. Complex questions trigger our neural mode for deeper reasoning, while quick lookups use fast retrieval. The API handles this automatically.
+**Search modes adapt to your query.** Lightfast uses hybrid search combining semantic understanding with keyword matching. Complex questions trigger our neural mode for deeper reasoning, while quick lookups use fast retrieval. The API lets you control this explicitly with the `mode` parameter — see the [API reference](/api/getting-started/overview) for details.
 </Alert>
 
 ## FAQ
 
 <FAQAccordion defaultValue="what-is-lightfast">
   <FAQItem value="what-is-lightfast" question="What is Lightfast?">
-    Lightfast is the memory layer for software teams and agents. It indexes documentation, pull requests, issues, discussions, and ownership data so you can search by meaning and always see source citations.
+    Lightfast is the memory layer for software teams and agents. It indexes pull requests, issues, discussions, documentation, and ownership signals from your connected tools so your team can search by meaning and always see source citations. Instead of hunting across GitHub, Linear, Notion, and Slack, your team gets one place to find what they need.
   </FAQItem>
   <FAQItem
     value="connect-github"
     question="How do I connect my GitHub account?"
   >
-    Sign up at <AuthLink path="/sign-in" external>lightfast.ai</AuthLink>, create a workspace, and connect GitHub via OAuth in the dashboard. For more about connecting GitHub with OAuth, see the GitHub docs on <a href="https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps" target="_blank" rel="noreferrer">authorizing OAuth apps</a>.
+    Sign up at <AuthLink path="/sign-in" external>lightfast.ai</AuthLink>, create a workspace, and connect GitHub via OAuth from the workspace dashboard. Select which repositories you want Lightfast to index and syncing begins automatically. For more about GitHub OAuth, see the GitHub docs on <a href="https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps" target="_blank" rel="noreferrer">authorizing OAuth apps</a>. Full setup details are in the [GitHub connector guide](/docs/connectors/github).
   </FAQItem>
   <FAQItem
     value="what-we-index"
     question="What types of content does Lightfast index?"
   >
-    Lightfast indexes documentation, pull requests, issues, discussions, and ownership signals, controlled by your `lightfast.yml` include patterns. To learn more about structuring repositories and documentation, see GitHub's guides on <a href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-repository-views/managing-repository-views" target="_blank" rel="noreferrer">repository views</a> and <a href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes" target="_blank" rel="noreferrer">README best practices</a>.
+    From GitHub, Lightfast indexes pull requests, issues, discussions, code reviews, READMEs, and documentation files, along with ownership signals derived from commit and review history. Vercel deployments and build logs are also supported. Linear and Sentry connectors are coming soon — see the [Connectors](/docs/connectors/github) section for the latest on each integration.
+  </FAQItem>
+  <FAQItem
+    value="add-more-sources"
+    question="Can I connect more repositories or sources later?"
+  >
+    Yes. You can add or remove connected sources at any time from your workspace settings. Each new source syncs automatically once connected, and removed sources stop syncing and are cleaned up from your index. There's no limit on the number of repositories you can connect.
+  </FAQItem>
+  <FAQItem
+    value="how-current"
+    question="How up to date is the indexed content?"
+  >
+    Lightfast continuously syncs changes from your connected sources. New pull requests, closed issues, and updated docs are picked up automatically — typically within a few minutes of the change happening in the source tool. You don't need to manually trigger re-indexing.
   </FAQItem>
 </FAQAccordion>
