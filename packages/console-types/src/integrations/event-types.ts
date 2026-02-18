@@ -484,7 +484,7 @@ export const ALL_INTERNAL_EVENT_TYPES = Object.keys(
 // ─── Backward-Compatible Alias ────────────────────────────────────────────────
 
 /** @deprecated Use EVENT_REGISTRY directly */
-export const INTERNAL_EVENT_TYPES = EVENT_REGISTRY;
+const INTERNAL_EVENT_TYPES = EVENT_REGISTRY;
 
 // ─── Lookup Functions ─────────────────────────────────────────────────────────
 

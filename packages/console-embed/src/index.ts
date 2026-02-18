@@ -19,10 +19,8 @@ export {
 	resolveEmbeddingDefaults,
 	createEmbeddingProvider,
 	createEmbeddingProviderForWorkspace,
-	createEmbeddingProviderForStore, // @deprecated - use createEmbeddingProviderForWorkspace
 	embedTextsInBatches,
 	type EmbeddingDefaults,
 	type EmbeddingProviderConfig,
 	type WorkspaceEmbeddingConfig,
-	type StoreEmbeddingConfig, // @deprecated - use WorkspaceEmbeddingConfig
 } from "./utils";

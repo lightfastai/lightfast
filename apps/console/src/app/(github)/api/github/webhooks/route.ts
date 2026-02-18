@@ -14,7 +14,7 @@ import {
   transformGitHubDiscussion,
 } from "@repo/console-webhooks";
 import {
-  storeWebhookPayload,
+  storeIngestionPayload,
   extractWebhookHeaders,
 } from "@repo/console-webhooks/storage";
 import { SourcesService, WorkspacesService } from "@repo/console-api-services";
@@ -196,7 +196,7 @@ async function handlePushObservation(
   }
 
   // Store raw webhook payload for permanent retention
-  await storeWebhookPayload({
+  await storeIngestionPayload({
     workspaceId: workspace.workspaceId,
     deliveryId,
     source: "github",
@@ -254,7 +254,7 @@ async function handlePullRequestEvent(
   }
 
   // Store raw webhook payload for permanent retention
-  await storeWebhookPayload({
+  await storeIngestionPayload({
     workspaceId: workspace.workspaceId,
     deliveryId,
     source: "github",
@@ -312,7 +312,7 @@ async function handleIssuesEvent(
   }
 
   // Store raw webhook payload for permanent retention
-  await storeWebhookPayload({
+  await storeIngestionPayload({
     workspaceId: workspace.workspaceId,
     deliveryId,
     source: "github",
@@ -369,7 +369,7 @@ async function handleReleaseEvent(
   }
 
   // Store raw webhook payload for permanent retention
-  await storeWebhookPayload({
+  await storeIngestionPayload({
     workspaceId: workspace.workspaceId,
     deliveryId,
     source: "github",
@@ -426,7 +426,7 @@ async function handleDiscussionEvent(
   }
 
   // Store raw webhook payload for permanent retention
-  await storeWebhookPayload({
+  await storeIngestionPayload({
     workspaceId: workspace.workspaceId,
     deliveryId,
     source: "github",

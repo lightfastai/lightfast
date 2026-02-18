@@ -131,40 +131,40 @@ export const GridLines: React.FC<GridLinesProps> = ({
       )}
 
       {/* Vertical grid lines */}
-      {[1, 2].map((i) => (
+      {[1, 2].map((n) => (
         <line
-          key={`v${i}`}
-          x1={i * cellW}
+          key={`v${n}`}
+          x1={n * cellW}
           y1={0}
-          x2={i * cellW}
+          x2={n * cellW}
           y2={planeH * drawProgress}
           style={{ stroke: "var(--border)" }}
           strokeWidth={2}
           strokeDasharray="8 12"
-          strokeDashoffset={vOffsets[i - 1]}
+          strokeDashoffset={vOffsets[n - 1]}
           opacity={lineOpacity}
         />
       ))}
       {/* Horizontal grid lines */}
-      {[1, 2].map((i) => (
+      {[1, 2].map((n) => (
         <line
-          key={`h${i}`}
+          key={`h${n}`}
           x1={0}
-          y1={i * cellH}
+          y1={n * cellH}
           x2={planeW * drawProgress}
-          y2={i * cellH}
+          y2={n * cellH}
           style={{ stroke: "var(--border)" }}
           strokeWidth={2}
           strokeDasharray="8 12"
-          strokeDashoffset={hOffsets[i - 1]}
+          strokeDashoffset={hOffsets[n - 1]}
           opacity={lineOpacity}
         />
       ))}
 
       {/* ── Beam effects ── */}
       {beamOpacity > 0 &&
-        beamXPositions.map((bx, i) => (
-          <g key={`beam-${i}`}>
+        beamXPositions.map((bx) => (
+          <g key={`beam-${bx}`}>
             {/* Glow layer — wider, translucent */}
             <line
               x1={bx}
@@ -201,9 +201,9 @@ export const GridLines: React.FC<GridLinesProps> = ({
       {/* ── Intersection flash — rings + horizontal pulse ── */}
       {flashActive && (
         <>
-          {beamXPositions.map((cx, i) => (
+          {beamXPositions.map((cx) => (
             <circle
-              key={`flash-${i}`}
+              key={`flash-${cx}`}
               cx={cx}
               cy={cellH * 2}
               r={flashRadius}

@@ -4,10 +4,10 @@ import { TRPC_ERROR_CODES_BY_KEY } from "@trpc/server/rpc";
 
 import { createCaller, createM2MCaller } from "@repo/console-trpc/server";
 
-export type DeusApiCaller = Awaited<ReturnType<typeof createCaller>>;
-export type DeusApiM2MCaller = Awaited<ReturnType<typeof createM2MCaller>>;
+type DeusApiCaller = Awaited<ReturnType<typeof createCaller>>;
+type DeusApiM2MCaller = Awaited<ReturnType<typeof createM2MCaller>>;
 
-export interface DeusApiErrorParams {
+interface DeusApiErrorParams {
   code: TRPC_ERROR_CODE_KEY;
   message: string;
   cause?: unknown;
@@ -15,7 +15,7 @@ export interface DeusApiErrorParams {
   details?: Record<string, unknown>;
 }
 
-export class DeusApiError extends Error {
+class DeusApiError extends Error {
   readonly code: TRPC_ERROR_CODE_KEY;
   readonly status?: number;
   readonly details?: Record<string, unknown>;

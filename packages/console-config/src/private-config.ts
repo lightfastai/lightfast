@@ -388,6 +388,6 @@ export type PrivateConfig = typeof PRIVATE_CONFIG;
  * // Returns: { name: "lightfast-v1", embeddingDim: 1024, ... }
  * ```
  */
-export function getPineconeIndexConfig() {
+function getPineconeIndexConfig() {
   return PRIVATE_CONFIG.pinecone.index;
 }

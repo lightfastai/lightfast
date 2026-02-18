@@ -46,13 +46,13 @@ export interface WebhookPayload {
   payload: unknown;
 }
 
-export interface GitHubWebhookPayload extends WebhookPayload {
+interface GitHubWebhookPayload extends WebhookPayload {
   source: "github";
   eventType: GitHubWebhookEventType;
   payload: PushEvent | PullRequestEvent | IssuesEvent | ReleaseEvent | DiscussionEvent;
 }
 
-export interface VercelWebhookPayloadWrapper extends WebhookPayload {
+interface VercelWebhookPayloadWrapper extends WebhookPayload {
   source: "vercel";
   eventType: VercelWebhookEventType;
   payload: VercelWebhookPayload;

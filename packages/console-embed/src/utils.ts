@@ -118,11 +118,6 @@ export interface WorkspaceEmbeddingConfig {
 }
 
 /**
- * @deprecated Use WorkspaceEmbeddingConfig instead
- */
-export type StoreEmbeddingConfig = WorkspaceEmbeddingConfig;
-
-/**
  * Create an embedding provider bound to a specific workspace's configuration
  *
  * CRITICAL: This ensures the same embedding model is used for both indexing
@@ -158,11 +153,6 @@ export function createEmbeddingProviderForWorkspace(
 		dimension: workspace.embeddingDim ?? EMBEDDING_CONFIG.cohere.dimension,
 	});
 }
-
-/**
- * @deprecated Use createEmbeddingProviderForWorkspace instead
- */
-export const createEmbeddingProviderForStore = createEmbeddingProviderForWorkspace;
 
 /**
  * Embed texts using the provided provider while respecting Cohere's 96-text limit.

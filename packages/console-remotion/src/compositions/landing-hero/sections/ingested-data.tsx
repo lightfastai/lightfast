@@ -1,6 +1,6 @@
 import type React from "react";
 import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
-import { cn } from "../../../lib/cn";
+import { cn } from "@repo/ui/lib/utils";
 import { IsometricCard } from "../shared/isometric-card";
 import {
   SPRING_CONFIGS,
@@ -96,6 +96,21 @@ const QUERY_TEXT = '"How does our authentication service work?"';
 const SIDEBAR_WIDTH = 256;
 const ROW_HEIGHT = 52;
 
+const RowContent: React.FC<{
+  item: { title: string; domain: string; timestamp: string };
+}> = ({ item }) => (
+  <>
+    <div className="truncate text-xs font-medium leading-4 text-foreground">
+      {item.title}
+    </div>
+    <div className="mt-1 flex items-center gap-2 text-xs leading-4 text-muted-foreground">
+      <span>{item.domain}</span>
+      <span className="text-muted-foreground/40">|</span>
+      <span>{item.timestamp}</span>
+    </div>
+  </>
+);
+
 export const IngestedData: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -157,23 +172,6 @@ export const IngestedData: React.FC = () => {
   const totalShift = shiftSprings.reduce((a, b) => a + b, 0);
 
   const RESULTS_HEIGHT = INITIAL_ITEMS.length * ROW_HEIGHT;
-
-  const renderRowContent = (item: {
-    title: string;
-    domain: string;
-    timestamp: string;
-  }) => (
-    <>
-      <div className="truncate text-xs font-medium leading-4 text-foreground">
-        {item.title}
-      </div>
-      <div className="mt-1 flex items-center gap-2 text-xs leading-4 text-muted-foreground">
-        <span>{item.domain}</span>
-        <span className="text-muted-foreground/40">|</span>
-        <span>{item.timestamp}</span>
-      </div>
-    </>
-  );
 
   return (
     <IsometricCard
@@ -306,7 +304,7 @@ export const IngestedData: React.FC = () => {
                     }}
                   >
                     <div className="flex h-full flex-col justify-center border-b border-border px-4 py-2">
-                      {renderRowContent(item)}
+                      <RowContent item={item} />
                     </div>
                   </div>
                 );
@@ -314,14 +312,14 @@ export const IngestedData: React.FC = () => {
             </div>
 
             {/* ── New search result items (preserve-3d for drop animation) ── */}
-            {NEW_SEARCH_RESULTS.map((result, i) => {
-              const drop = dropSprings[i]!;
+            {NEW_SEARCH_RESULTS.map((result, resultIndex) => {
+              const drop = dropSprings[resultIndex]!;
               // Only render once the drop phase begins
               if (drop <= 0) return null;
 
               // Slot = how many shift springs fired AFTER this one
               const shiftsAfter = shiftSprings
-                .slice(i + 1)
+                .slice(resultIndex + 1)
                 .reduce((a, b) => a + b, 0);
               const slot = shiftsAfter;
               const y = slot * ROW_HEIGHT;
@@ -351,7 +349,7 @@ export const IngestedData: React.FC = () => {
 
               return (
                 <div
-                  key={`new-${i}`}
+                  key={result.title}
                   className="absolute left-0 right-0"
                   style={{
                     height: ROW_HEIGHT,
@@ -376,7 +374,7 @@ export const IngestedData: React.FC = () => {
                       className="pointer-events-none absolute inset-0 flex flex-col justify-center px-4 py-2"
                       style={{ opacity: ghostOpacity }}
                     >
-                      {renderRowContent(result)}
+                      <RowContent item={result} />
                     </div>
                   )}
 
@@ -421,7 +419,7 @@ export const IngestedData: React.FC = () => {
                           : undefined
                       }
                     >
-                      {renderRowContent(result)}
+                      <RowContent item={result} />
                     </div>
                   </div>
                 </div>

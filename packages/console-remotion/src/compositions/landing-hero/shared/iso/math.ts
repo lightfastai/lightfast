@@ -31,7 +31,7 @@ export function ensureCW(p: Polygon): Polygon {
   return signedArea(p) < 0 ? [...p].reverse() : p;
 }
 
-export function ensureCCW(p: Polygon): Polygon {
+function ensureCCW(p: Polygon): Polygon {
   return signedArea(p) > 0 ? [...p].reverse() : p;
 }
 
@@ -91,7 +91,7 @@ export function clipPolygon(subject: Polygon, clip: Polygon): Polygon {
 }
 
 // ── Point-in-polygon (ray cast) ──────────────────────────
-export function pointInPolygon(pt: Vec2, poly: Polygon): boolean {
+function pointInPolygon(pt: Vec2, poly: Polygon): boolean {
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
     const pi = poly[i]!;
@@ -104,7 +104,7 @@ export function pointInPolygon(pt: Vec2, poly: Polygon): boolean {
 }
 
 // ── SVG path generation ──────────────────────────────────
-export function polygonToPath(p: Polygon): string {
+function polygonToPath(p: Polygon): string {
   if (p.length === 0) return "";
   return (
     p.map((v, i) => `${i === 0 ? "M" : "L"}${v[0].toFixed(2)},${v[1].toFixed(2)}`).join(" ") +
@@ -135,7 +135,7 @@ export function polyBounds(p: Polygon): Bounds {
   return { minX, minY, maxX, maxY };
 }
 
-export function mergeBounds(list: Bounds[]): Bounds {
+function mergeBounds(list: Bounds[]): Bounds {
   return {
     minX: Math.min(...list.map((b) => b.minX)),
     minY: Math.min(...list.map((b) => b.minY)),

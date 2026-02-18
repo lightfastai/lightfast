@@ -91,9 +91,9 @@ export const LogoAnimation: React.FC = () => {
         width={vw}
         height={vh}
       >
-        {shape.faces.map((face, i) => (
+        {shape.faces.map((face, faceIndex) => (
           <path
-            key={i}
+            key={`${face.type}-${faceIndex}`}
             d={facePath(face)}
             style={{ fill: FACE_FILL[face.type], stroke: "var(--border)" }}
             strokeWidth={1}

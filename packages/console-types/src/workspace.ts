@@ -23,7 +23,7 @@ export type WorkspaceEmbeddingConfig = z.infer<typeof workspaceEmbeddingConfigSc
  *
  * Version field enables future schema migrations
  */
-export const workspaceSettingsV1Schema = z.object({
+const workspaceSettingsV1Schema = z.object({
   version: z.literal(1),
   embedding: workspaceEmbeddingConfigSchema,
   repositories: z

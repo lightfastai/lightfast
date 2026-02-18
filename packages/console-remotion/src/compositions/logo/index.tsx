@@ -1,7 +1,6 @@
 export { Logo } from "./logo";
-export type { LogoProps } from "./logo";
 
-export interface LogoVariant {
+interface LogoVariant {
   id: string;
   width: number;
   height: number;
