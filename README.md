@@ -11,7 +11,7 @@
 
 > **Early Access** — Lightfast is currently in early access. [Request access →](https://lightfast.ai/early-access)
 
-[Website](https://lightfast.ai) · [Documentation](https://lightfast.ai/docs) · [Chat Demo](https://chat.lightfast.ai) · [Discord](https://discord.gg/YqPDfcar2C)
+[Website](https://lightfast.ai) · [Documentation](https://lightfast.ai/docs/get-started/overview) · [Chat Demo](https://chat.lightfast.ai) · [Discord](https://discord.gg/YqPDfcar2C)
 
 ## Why Lightfast?
 
