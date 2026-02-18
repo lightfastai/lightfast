@@ -187,11 +187,13 @@ export function GitHubRepoSelector({
                 return (
                   <label
                     key={repo.id}
+                    htmlFor={`repo-checkbox-${repo.id}`}
                     className={`flex items-center gap-3 p-3 rounded-md hover:bg-muted/50 cursor-pointer ${
                       isConnected ? "opacity-60 cursor-not-allowed" : ""
                     }`}
                   >
                     <Checkbox
+                      id={`repo-checkbox-${repo.id}`}
                       checked={isConnected || selectedIds.has(repo.id)}
                       disabled={isConnected}
                       onCheckedChange={() => handleToggle(repo.id)}

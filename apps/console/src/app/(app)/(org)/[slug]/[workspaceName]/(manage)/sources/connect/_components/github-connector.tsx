@@ -92,12 +92,12 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
       {/* Installation Selector */}
       {installations.length > 1 && (
         <div className="space-y-2">
-          <label className="text-sm font-medium">GitHub Installation</label>
+          <label htmlFor="github-installation-select" className="text-sm font-medium">GitHub Installation</label>
           <Select
             value={selectedInstallationId ?? undefined}
             onValueChange={setSelectedInstallationId}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger id="github-installation-select" className="w-full">
               <SelectValue placeholder="Select installation" />
             </SelectTrigger>
             <SelectContent>

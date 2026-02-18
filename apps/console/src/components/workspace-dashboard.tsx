@@ -7,10 +7,15 @@ import { MetricsSidebar } from "./metrics-sidebar";
 import { ActivityTimeline } from "./activity-timeline";
 import { StoreOverview } from "./stores-overview";
 import { ConnectedSourcesOverview } from "./connected-sources-overview";
-import { PerformanceMetrics } from "./performance-metrics";
 import { SystemHealthOverview } from "./system-health-overview";
 import { LightfastConfigOverview } from "./lightfast-config-overview";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import dynamic from "next/dynamic";
+
+const PerformanceMetrics = dynamic(
+  () => import("./performance-metrics").then((m) => m.PerformanceMetrics),
+  { ssr: false, loading: () => <Skeleton className="h-64 w-full" /> },
+);
 
 interface WorkspaceDashboardProps {
   orgSlug: string;

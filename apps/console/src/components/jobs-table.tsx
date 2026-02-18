@@ -153,7 +153,15 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
           "border-b border-border/60 py-4 px-6 hover:bg-muted/30 transition-colors cursor-pointer",
           isExpanded && "bg-muted/30",
         )}
+        role="button"
+        tabIndex={hasDetails ? 0 : -1}
         onClick={() => hasDetails && setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (hasDetails && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
       >
         <div className="flex items-center gap-6">
           {/* Left: Job ID + Event Type */}

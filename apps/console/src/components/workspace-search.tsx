@@ -173,9 +173,9 @@ export function WorkspaceSearch({
     performSearch(query);
   };
 
-  const handlePromptSubmit = (message: PromptInputMessage) => {
+  const handlePromptSubmit = async (message: PromptInputMessage): Promise<void> => {
     const content = message.text?.trim() ?? "";
-    void setQuery(content);
+    await setQuery(content);
     performSearch(content);
   };
 
@@ -189,6 +189,7 @@ export function WorkspaceSearch({
 
   return (
     <div
+      role="search"
       className="flex flex-col h-full overflow-hidden"
       onKeyDown={handleKeyDown}
     >
