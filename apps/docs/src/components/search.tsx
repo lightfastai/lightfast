@@ -75,6 +75,14 @@ export function Search() {
     clearSearch();
   }, [clearSearch]);
 
+  // Auto-focus input after it becomes visible (needed for mobile: input is
+  // display:none until open, so focus() in the keydown handler is a no-op)
+  useEffect(() => {
+    if (open) {
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  }, [open]);
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.isComposing) return;
@@ -124,7 +132,13 @@ export function Search() {
       >
         <Popover.Anchor asChild>
           <div className={cn("relative", open && "z-50")}>
-            <div className="relative flex items-center">
+            {/* Input hidden on mobile until open, always visible on desktop */}
+            <div
+              className={cn(
+                "relative items-center",
+                open ? "flex" : "hidden lg:flex",
+              )}
+            >
               <SearchIcon className="absolute left-3 h-4 w-4 text-foreground/60 pointer-events-none z-10" />
               <Input
                 ref={inputRef}
@@ -156,7 +170,7 @@ export function Search() {
                   }
                 }}
                 className={cn(
-                  "w-[420px] pl-10 pr-20 h-9",
+                  "w-[420px] max-w-[calc(100vw-2rem)] pl-10 pr-20 h-9",
                   "transition-all rounded-md border border-border/50",
                   "dark:bg-card/40 backdrop-blur-md",
                   "text-foreground/60",

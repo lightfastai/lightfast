@@ -2,10 +2,15 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { DocsSidebar } from "@/src/components/docs-sidebar";
 import { Button } from "@repo/ui/components/ui/button";
-import { SidebarProvider, SidebarInset } from "@repo/ui/components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+} from "@repo/ui/components/ui/sidebar";
+import { DocsMobileNav } from "@/src/components/docs-mobile-nav";
 import { Search } from "@/src/components/search";
 import { authUrl } from "@/src/lib/related-projects";
 import { pageTree } from "@/src/lib/source";
+import { buildApiPageTree } from "@/src/lib/build-api-tree";
 import { cn } from "@repo/ui/lib/utils";
 
 export default function GeneralDocsLayout({
@@ -14,6 +19,7 @@ export default function GeneralDocsLayout({
   children: ReactNode;
 }) {
   const signInUrl = `${authUrl}/sign-in`;
+  const apiTree = buildApiPageTree();
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -30,9 +36,17 @@ export default function GeneralDocsLayout({
         <SidebarInset className="flex flex-col flex-1 overflow-hidden">
           {/* Header with actions */}
           <header className="shrink-0 py-4 page-gutter bg-transparent">
-            <div className="flex items-center justify-end h-9">
+            <div className="flex items-center h-9">
+              {/* Left - Mobile Nav (hamburger + sheet drawer) */}
+              <DocsMobileNav
+                docsTree={pageTree}
+                apiTree={apiTree}
+                signInUrl={signInUrl}
+                activePath="docs"
+              />
+
               {/* Right side - Navigation and Sign In Button */}
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-6 ml-auto">
                 {/* Navigation */}
                 <nav className="flex items-center gap-6">
                   <Button
