@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
@@ -69,11 +69,11 @@ export function WorkspaceSearch({
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState(query);
-
-  // Sync input value with URL-persisted query when it changes
-  useEffect(() => {
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (prevQuery !== query) {
+    setPrevQuery(query);
     setInputValue(query);
-  }, [query]);
+  }
 
   // Fetch workspace's single store (1:1 relationship)
   const { data: store } = useSuspenseQuery({
@@ -153,14 +153,13 @@ export function WorkspaceSearch({
 
         const data = (await response.json()) as V1SearchResponse;
         setSearchResults(data);
+        setIsSearching(false);
       } catch (err) {
-        // Ignore AbortError (request was cancelled intentionally)
         if (err instanceof Error && err.name === "AbortError") {
-          return; // Silently ignore cancelled requests
+          return;
         }
         setError(err instanceof Error ? err.message : "Search failed");
         setSearchResults(null);
-      } finally {
         setIsSearching(false);
       }
   };

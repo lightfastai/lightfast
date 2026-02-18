@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { addBreadcrumb } from "@sentry/nextjs";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useAnswerTransport } from "~/ai/hooks/use-answer-transport";
@@ -18,16 +18,12 @@ interface AnswerInterfaceProps {
   workspaceId: string;
 }
 
-export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
-  const [sessionId, setSessionId] = useState<string>("");
-  const [isClient, setIsClient] = useState(false);
-  const formRef = useRef<PromptInputRef | null>(null);
+const emptySubscribe = () => () => {};
 
-  // Generate session ID on mount (client-only)
-  useEffect(() => {
-    setSessionId(crypto.randomUUID());
-    setIsClient(true);
-  }, []);
+export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
+  const [sessionId] = useState(() => crypto.randomUUID());
+  const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const formRef = useRef<PromptInputRef | null>(null);
 
   const transport = useAnswerTransport({
     sessionId,

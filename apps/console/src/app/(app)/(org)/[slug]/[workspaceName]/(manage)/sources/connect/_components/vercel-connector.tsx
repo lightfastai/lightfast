@@ -23,7 +23,6 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
     workspaceId,
     setWorkspaceId,
     setUserSourceId,
-    setIsConnected,
   } = useConnectForm();
 
   const [showProjectSelector, setShowProjectSelector] = useState(false);
@@ -45,11 +44,9 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
 
   const isConnected = !!vercelSource?.id;
 
-  // Sync connection state to context
   useEffect(() => {
-    setIsConnected(isConnected);
     setUserSourceId(vercelSource?.id ?? null);
-  }, [isConnected, vercelSource?.id, setIsConnected, setUserSourceId]);
+  }, [vercelSource?.id, setUserSourceId]);
 
   // Set workspace ID in context
   useEffect(() => {

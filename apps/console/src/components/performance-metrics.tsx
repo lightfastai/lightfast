@@ -13,42 +13,39 @@ interface PerformanceMetricsProps {
 	timeSeries: PerformanceTimeSeries;
 }
 
+function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+	if (!active || !payload?.[0]) return null;
+
+	const data = payload[0].payload as { hour: string; jobs: number; avgDuration: number };
+	return (
+		<div className="rounded-lg border bg-background p-3 shadow-md">
+			<p className="text-xs font-medium text-muted-foreground mb-2">
+				{data.hour}
+			</p>
+			<div className="space-y-1">
+				<p className="text-sm">
+					<span className="font-medium">{data.jobs}</span> jobs
+				</p>
+				<p className="text-sm">
+					<span className="font-medium">
+						{formatDuration(data.avgDuration * 1000)}
+					</span>{" "}
+					avg duration
+				</p>
+			</div>
+		</div>
+	);
+}
+
 export function PerformanceMetrics({
 	percentiles,
 	timeSeries,
 }: PerformanceMetricsProps) {
-
-	// Prepare chart data
 	const chartData = timeSeries.map((point) => ({
 		hour: point.hour,
 		jobs: point.jobCount,
-		avgDuration: point.avgDuration / 1000, // Convert to seconds for readability
+		avgDuration: point.avgDuration / 1000,
 	}));
-
-	// Custom tooltip for the chart
-	const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
-		if (!active || !payload?.[0]) return null;
-
-		const data = payload[0].payload as { hour: string; jobs: number; avgDuration: number };
-		return (
-			<div className="rounded-lg border bg-background p-3 shadow-md">
-				<p className="text-xs font-medium text-muted-foreground mb-2">
-					{data.hour}
-				</p>
-				<div className="space-y-1">
-					<p className="text-sm">
-						<span className="font-medium">{data.jobs}</span> jobs
-					</p>
-					<p className="text-sm">
-						<span className="font-medium">
-							{formatDuration(data.avgDuration * 1000)}
-						</span>{" "}
-						avg duration
-					</p>
-				</div>
-			</div>
-		);
-	};
 
 	const hasData = percentiles.hasData;
 

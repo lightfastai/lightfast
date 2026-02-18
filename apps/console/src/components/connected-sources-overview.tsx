@@ -128,17 +128,6 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
  * Simple Source Item for workspace.sources.list
  */
 function SimpleSourceItem({ source }: { source: Source }) {
-  const getSourceIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "github":
-        return Github;
-      default:
-        return Github;
-    }
-  };
-
-  const SourceIcon = getSourceIcon(source.type);
-
   // Check if this source is awaiting configuration
   const metadata = source.metadata as {
     status?: {
@@ -151,7 +140,7 @@ function SimpleSourceItem({ source }: { source: Source }) {
     <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent transition-colors">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="rounded-full bg-muted p-2">
-          <SourceIcon className="h-4 w-4" />
+          <Github className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

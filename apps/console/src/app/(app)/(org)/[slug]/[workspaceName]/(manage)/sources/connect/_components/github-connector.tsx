@@ -28,7 +28,6 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
     clerkOrgSlug,
     workspaceName,
     setUserSourceId,
-    setIsConnected,
     setSelectedResources,
   } = useConnectForm();
 
@@ -44,11 +43,9 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
   const isConnected = !!githubSource?.id;
   const installations = githubSource?.installations ?? [];
 
-  // Sync connection state to context
   useEffect(() => {
-    setIsConnected(isConnected);
     setUserSourceId(githubSource?.id ?? null);
-  }, [isConnected, githubSource?.id, setIsConnected, setUserSourceId]);
+  }, [githubSource?.id, setUserSourceId]);
 
   // Auto-select first installation
   useEffect(() => {

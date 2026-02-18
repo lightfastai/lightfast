@@ -15,8 +15,6 @@ interface ConnectFormContextValue {
   setProvider: (provider: "github" | "vercel" | "linear" | "sentry") => void;
 
   // Connection state (set by child components)
-  isConnected: boolean;
-  setIsConnected: (connected: boolean) => void;
   userSourceId: string | null;
   setUserSourceId: (id: string | null) => void;
 
@@ -49,7 +47,6 @@ export function ConnectFormProvider({
   workspaceName: string;
 }) {
   const [provider, setProvider] = useState<"github" | "vercel" | "linear" | "sentry">(initialProvider);
-  const [isConnected, setIsConnected] = useState(false);
   const [userSourceId, setUserSourceId] = useState<string | null>(null);
   const [selectedInstallationId, setSelectedInstallationId] = useState<string | null>(null);
   const [selectedResources, setSelectedResources] = useState<SelectedResource[]>([]);
@@ -58,8 +55,6 @@ export function ConnectFormProvider({
   const value: ConnectFormContextValue = {
     provider,
     setProvider,
-    isConnected,
-    setIsConnected,
     userSourceId,
     setUserSourceId,
     selectedInstallationId,
