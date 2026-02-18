@@ -169,7 +169,7 @@ export function AppFooter() {
         <div className="grid grid-cols-3 md:grid-cols-9 gap-4">
           {FOOTER_PATTERNS.map((pattern) => (
             <div
-              key={`${pattern.a}-${pattern.b}`}
+              key={`${pattern.a}-${pattern.b}-${pattern.delta}`}
               className="aspect-square border border-border flex items-center justify-center p-4"
             >
               <Lissajous

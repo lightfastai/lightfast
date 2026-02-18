@@ -96,12 +96,13 @@ export function EarlyAccessForm({
     reValidateMode: "onChange",
   });
   const [state, setState] = useState<EarlyAccessState>({ status: "idle" });
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const [sourcesPopoverOpen, setSourcesPopoverOpen] = useState(false);
 
   // Subscribe to form values for validation using useWatch (React Compiler compatible)
   const email = useWatch({ control: form.control, name: "email" });
   const companySize = useWatch({ control: form.control, name: "companySize" });
-  const sources = useWatch({ control: form.control, name: "sources" });
+  const sources = useWatch({ control: form.control, name: "sources", defaultValue: EMPTY_SOURCES });
 
   // Track client-side errors
   useEffect(() => {
@@ -143,7 +144,8 @@ export function EarlyAccessForm({
       setState(result);
 
       if (result.status === "success") {
-        // Clear form on success
+        // Capture email before reset so the success message can display it
+        setSubmittedEmail(values.email);
         form.reset();
       }
     } catch (error) {
@@ -177,7 +179,7 @@ export function EarlyAccessForm({
             <div className="rounded-lg border border-border bg-muted/30 p-4">
               <p className="text-sm text-muted-foreground">
                 We'll send updates to{" "}
-                <span className="font-medium text-foreground">{email}</span>
+                <span className="font-medium text-foreground">{submittedEmail}</span>
               </p>
             </div>
           </div>
@@ -402,8 +404,6 @@ export function EarlyAccessForm({
           By continuing you acknowledge that you understand and agree to our{" "}
           <Link
             href="/legal/terms"
-            target="_blank"
-            rel="noopener noreferrer"
             className="underline hover:text-foreground transition-colors"
           >
             Terms and Conditions
@@ -411,8 +411,6 @@ export function EarlyAccessForm({
           and{" "}
           <Link
             href="/legal/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
             className="underline hover:text-foreground transition-colors"
           >
             Privacy Policy

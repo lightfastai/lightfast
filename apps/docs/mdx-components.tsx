@@ -67,10 +67,9 @@ export const mdxComponents = {
         sizes="100vw"
         className={cn(
           "my-6 rounded-sm border border-border shadow-sm",
-          "w-full h-auto max-h-[400px] object-cover",
+          "w-full h-auto max-h-[400px] object-contain",
           className,
         )}
-        unoptimized
       />
     );
   },

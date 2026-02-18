@@ -105,7 +105,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           ? new Date(post.publishedAt)
           : null;
         const dateStr = publishedDate
-          ? publishedDate.toLocaleDateString(undefined, {
+          ? publishedDate.toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",
               day: "numeric",
@@ -291,8 +291,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                             ))}
                           </div>
                           <div>
-                            {post.authors.map((author, idx) => (
-                              <span key={author._title ?? `author-${idx}`}>
+                            {post.authors.map((author, authorIdx) => (
+                              <span key={`author-name-${authorIdx}`}>
                                 {author.xUrl ? (
                                   <Link
                                     href={author.xUrl}
@@ -305,7 +305,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                                 ) : (
                                   author._title
                                 )}
-                                {idx < (post.authors?.length ?? 0) - 1 && ", "}
+                                {authorIdx < (post.authors?.length ?? 0) - 1 && ", "}
                               </span>
                             ))}
                           </div>

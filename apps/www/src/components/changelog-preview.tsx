@@ -37,7 +37,7 @@ export function ChangelogPreview() {
                 // Use publishedAt if available, fall back to createdAt
                 const publishedTime = item.publishedAt ?? item._sys?.createdAt;
                 const dateStr = publishedTime
-                  ? new Date(publishedTime).toLocaleDateString(undefined, {
+                  ? new Date(publishedTime).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
                       day: "numeric",
