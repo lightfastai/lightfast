@@ -80,18 +80,17 @@ function verifyDataset(name: string): VerifyResult {
   // e.g., registry label "Metric Alert" matches both "[Metric Alert Triggered]" and "[Metric Alert Resolved]"
   const titlePrefixCache = new Map<string, string[]>();
   function getTitlePrefixes(source: string): string[] {
-    if (!titlePrefixCache.has(source)) {
-      const prefixes = [
-        ...new Set(
-          Object.values(EVENT_REGISTRY)
-            .filter((e) => e.source === source)
-            .map((e) => `[${e.label}`)
-        ),
-      ];
-      titlePrefixCache.set(source, prefixes);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return titlePrefixCache.get(source)!;
+    const cached = titlePrefixCache.get(source);
+    if (cached !== undefined) return cached;
+    const prefixes = [
+      ...new Set(
+        Object.values(EVENT_REGISTRY)
+          .filter((e) => e.source === source)
+          .map((e) => `[${e.label}`)
+      ),
+    ];
+    titlePrefixCache.set(source, prefixes);
+    return prefixes;
   }
 
   for (let i = 0; i < ds.events.length; i++) {

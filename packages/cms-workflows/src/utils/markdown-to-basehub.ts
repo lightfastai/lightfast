@@ -248,9 +248,7 @@ function convertNode(
       const table = node;
       const tableContent: RichTextNode[] = [];
 
-      for (let rowIndex = 0; rowIndex < table.children.length; rowIndex++) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const row = table.children[rowIndex]!;
+      for (const [rowIndex, row] of table.children.entries()) {
         const isHeaderRow = rowIndex === 0;
         const rowCtx = { ...ctx, isInTableHeader: isHeaderRow };
 

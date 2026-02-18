@@ -45,8 +45,7 @@ describe("getSlideScaleKeyframes", () => {
   it("scale values decrease monotonically for first slide", () => {
     const kf = getSlideScaleKeyframes(0, TOTAL);
     for (let i = 1; i < kf.output.length; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      expect(kf.output[i]).toBeLessThanOrEqual(kf.output[i - 1]!);
+      expect(kf.output[i]).toBeLessThanOrEqual(kf.output[i - 1] as number);
     }
   });
 });

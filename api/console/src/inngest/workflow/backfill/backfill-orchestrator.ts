@@ -214,9 +214,9 @@ export const backfillOrchestrator = inngest.createFunction(
 
       // Estimate total (if connector supports it)
       if (connector.estimateTotal) {
+        const estimateTotal = connector.estimateTotal.bind(connector);
         await step.run(`estimate-${entityType}`, async () => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by `if (connector.estimateTotal)` above
-          const total = await connector.estimateTotal!(config, entityType);
+          const total = await estimateTotal(config, entityType);
           log.info("[BackfillOrchestrator] Estimated total", {
             entityType,
             total,
