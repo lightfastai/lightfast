@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckIcon, CopyIcon, DownloadIcon } from "lucide-react";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { ComponentProps, HTMLAttributes } from "react";
 import { createHighlighter } from "shiki";
 import type { BundledLanguage, BundledTheme } from "shiki";
@@ -224,18 +224,17 @@ export const CodeBlockContent = ({
   const { theme, resolvedTheme } = useTheme();
 
   // Map next-themes values to BundledTheme
-  const getThemes = (): [BundledTheme, BundledTheme] => {
-    const effectiveTheme = theme === "system" ? resolvedTheme : theme;
+  const getThemes = useCallback((): [BundledTheme, BundledTheme] => {
     const lightTheme: BundledTheme = "github-light";
     const darkTheme: BundledTheme = "github-dark";
     return [lightTheme, darkTheme];
-  };
+  }, []);
 
   useEffect(() => {
     mounted.current = true;
     const [lightTheme, darkTheme] = getThemes();
 
-    highlighterManager
+    void highlighterManager
       .highlightCode(code, language, [lightTheme, darkTheme], preClassName)
       .then(([light, dark]) => {
         if (mounted.current) {
@@ -247,7 +246,7 @@ export const CodeBlockContent = ({
     return () => {
       mounted.current = false;
     };
-  }, [code, language, theme, resolvedTheme, preClassName]);
+  }, [code, language, theme, resolvedTheme, preClassName, getThemes]);
 
   return (
     <CodeBlockContext.Provider value={{ code }}>
@@ -670,11 +669,6 @@ export const CodeBlockCopyButton = ({
   const code = propCode ?? contextCode;
 
   const copyToClipboard = async () => {
-    if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
-      onError?.(new Error("Clipboard API not available"));
-      return;
-    }
-
     try {
       if (!isCopied) {
         await navigator.clipboard.writeText(code);

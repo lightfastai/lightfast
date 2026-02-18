@@ -3,7 +3,9 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
-	"sideEffects": ["*.css"],
+	"sideEffects": [
+		"*.css"
+	],
 	"exports": {
 		"./components/*": "./src/components/*.tsx",
 		"./components/chat": "./src/components/chat/index.ts",
@@ -74,6 +76,7 @@
 		"@radix-ui/react-toggle-group": "^1.1.10",
 		"@radix-ui/react-tooltip": "^1.2.7",
 		"@radix-ui/react-use-controllable-state": "^1.2.2",
+		"@tanstack/react-table": "^8.21.3",
 		"@vendor/observability": "workspace:*",
 		"ai": "catalog:",
 		"class-variance-authority": "^0.7.1",

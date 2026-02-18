@@ -28,18 +28,9 @@ import {
 } from "lucide-react";
 import { nanoid } from "nanoid";
 import {
-  
-  Children,
-  
-  
   createContext,
   forwardRef,
-  
-  
   Fragment,
-  
-  
-  
   useCallback,
   useContext,
   useEffect,
@@ -133,10 +124,10 @@ export function PromptInputAttachment({
       key={data.id}
       {...props}
     >
-      {data.mediaType?.startsWith("image/") && data.url ? (
+      {data.mediaType.startsWith("image/") && data.url ? (
         <div className="relative size-full">
           <img
-            alt={data.filename || "attachment"}
+            alt={data.filename ?? "attachment"}
             className={cn(
               "size-full rounded-md object-cover",
               isUploading && "opacity-50"
@@ -451,14 +442,10 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(({
                 continue;
               }
 
-              const mediaType =
-                uploaded.mediaType ??
-                uploaded.contentType ??
-                file.type ??
-                "application/octet-stream";
-              const filename = uploaded.filename ?? file.name;
+              const mediaType = uploaded.mediaType;
+              const filename = uploaded.filename;
               const size = uploaded.size ?? file.size;
-              const finalUrl = uploaded.url ?? pendingItem.url;
+              const finalUrl = uploaded.url ? uploaded.url : pendingItem.url;
 
               // Update the pending item with completed upload data
               setItems((prev) =>
@@ -572,12 +559,12 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(({
       return;
     }
     const onDragOver = (e: DragEvent) => {
-      if (e.dataTransfer?.types?.includes("Files")) {
+      if (e.dataTransfer?.types.includes("Files")) {
         e.preventDefault();
       }
     };
     const onDrop = (e: DragEvent) => {
-      if (e.dataTransfer?.types?.includes("Files")) {
+      if (e.dataTransfer?.types.includes("Files")) {
         e.preventDefault();
       }
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
@@ -597,12 +584,12 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(({
       return;
     }
     const onDragOver = (e: DragEvent) => {
-      if (e.dataTransfer?.types?.includes("Files")) {
+      if (e.dataTransfer?.types.includes("Files")) {
         e.preventDefault();
       }
     };
     const onDrop = (e: DragEvent) => {
-      if (e.dataTransfer?.types?.includes("Files")) {
+      if (e.dataTransfer?.types.includes("Files")) {
         e.preventDefault();
       }
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
@@ -643,7 +630,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(({
 
     onSubmit(
       {
-        text: event.currentTarget.message.value,
+        text: (event.currentTarget.elements.namedItem("message") as HTMLTextAreaElement).value,
         attachments: attachmentsPayload,
       },
       event,
@@ -732,12 +719,7 @@ export const PromptInputTextarea = ({
   };
 
   const handlePaste: ClipboardEventHandler<HTMLTextAreaElement> = (event) => {
-    const items = event.clipboardData?.items;
-
-    if (!items) {
-      return;
-    }
-
+    const items = event.clipboardData.items;
     const files: File[] = [];
 
     for (const item of items) {

@@ -41,10 +41,11 @@ function clamp(value: number): number {
 function ensureFrameSize(frame: Frame, rows: number, cols: number): Frame {
   const result: Frame = []
   for (let r = 0; r < rows; r++) {
-    const row = frame[r] || []
-    result.push([])
+    const row = frame[r] ?? []
+    const resultRow: number[] = []
+    result.push(resultRow)
     for (let c = 0; c < cols; c++) {
-      result[r]![c] = row[c] ?? 0
+      resultRow[c] = row[c] ?? 0
     }
   }
   return result
@@ -110,25 +111,31 @@ function useAnimation(
         cancelAnimationFrame(frameIdRef.current)
       }
     }
-  }, [frames, isPlaying, options.fps, options.loop, options.onFrame])
+  }, [frames, isPlaying, options])
 
   useEffect(() => {
-    setFrameIndex(0)
-    setIsPlaying(options.autoplay)
+    const id = requestAnimationFrame(() => {
+      setFrameIndex(0)
+      setIsPlaying(options.autoplay)
+    })
     lastTimeRef.current = 0
     accumulatorRef.current = 0
-  }, [frames, options.autoplay])
+    return () => cancelAnimationFrame(id)
+  }, [frames, options, options.autoplay])
 
   return { frameIndex, isPlaying }
 }
 
 function emptyFrame(rows: number, cols: number): Frame {
-  return Array.from({ length: rows }, () => Array(cols).fill(0))
+  return Array.from({ length: rows }, () => Array.from<number>({ length: cols }).fill(0))
 }
 
 function setPixel(frame: Frame, row: number, col: number, value: number): void {
   if (row >= 0 && row < frame.length && col >= 0 && col < (frame[0]?.length ?? 0)) {
-    frame[row]![col] = value
+    const rowArr = frame[row];
+    if (rowArr) {
+      rowArr[col] = value;
+    }
   }
 }
 
@@ -434,10 +441,7 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
       loop = true,
       size = 10,
       gap = 2,
-      palette = {
-        on: "currentColor",
-        off: "var(--muted-foreground)",
-      },
+      palette: paletteInput,
       brightness = 1,
       ariaLabel,
       onFrame,
@@ -448,6 +452,7 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
     },
     ref
   ) => {
+    const palette = paletteInput ?? { on: "currentColor", off: "var(--muted-foreground)" }
     const { frameIndex } = useAnimation(frames, {
       fps,
       autoplay: autoplay && !pattern,

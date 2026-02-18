@@ -45,9 +45,10 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 		const [internalMessage, setInternalMessage] = useState("");
 
 		// Use controlled value if provided, otherwise use internal state
-		const message = value !== undefined ? value : internalMessage;
+		const message = value ?? internalMessage;
+		const noop = () => { /* no-op */ };
 		const setMessage =
-			value !== undefined ? onChange || (() => {}) : setInternalMessage;
+			value !== undefined ? (onChange ?? noop) : setInternalMessage;
 		const [isSending, setIsSending] = useState(false);
 		const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -73,7 +74,12 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 		}, []);
 
 		// Expose the textarea ref for parent components
-		useImperativeHandle(ref, () => textareaRef.current!, []);
+		useImperativeHandle(ref, () => {
+			if (!textareaRef.current) {
+				throw new Error("Textarea ref not yet attached");
+			}
+			return textareaRef.current;
+		}, []);
 
 		const handleSendMessage = useCallback(async () => {
 			if (!message.trim() || disabled || isSending) return;
@@ -84,7 +90,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 
 			try {
 				await onSendMessage(currentMessage);
-			} catch (_error) {
+			} catch {
 				// Restore the message on error
 				setMessage(currentMessage);
 			} finally {
@@ -96,7 +102,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
 			(e: React.KeyboardEvent) => {
 				if (e.key === "Enter" && !e.shiftKey) {
 					e.preventDefault();
-					handleSendMessage();
+					void handleSendMessage();
 				}
 			},
 			[handleSendMessage],

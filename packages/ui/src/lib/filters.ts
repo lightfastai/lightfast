@@ -1,4 +1,3 @@
-// @ts-nocheck
 import "@tanstack/table-core";
 
 import type {
@@ -25,6 +24,9 @@ export type ElementType<T> = T extends (infer U)[] ? U : T;
 
 declare module "@tanstack/react-table" {
   interface ColumnMeta<TData extends RowData, TValue> {
+    /* Phantom property to keep TData referenced in the augmentation. */
+    readonly __data?: TData;
+
     /* The display name of the column. */
     displayName: string;
 
@@ -635,8 +637,6 @@ export function optionFilterFn<TData>(
 
   if (!value) return false;
 
-  const columnMeta = filterValue.columnMeta!;
-
   if (typeof value === "string") {
     return __optionFilterFn(value, filterValue);
   }
@@ -645,7 +645,13 @@ export function optionFilterFn<TData>(
     return __optionFilterFn(value.value, filterValue);
   }
 
-  const sanitizedValue = columnMeta.transformOptionFn!(value as never);
+  const columnMeta = filterValue.columnMeta;
+  const transformFn = columnMeta?.transformOptionFn;
+  if (!transformFn) {
+    throw new Error("transformOptionFn is required for non-string, non-ColumnOption values");
+  }
+
+  const sanitizedValue = transformFn(value as never);
   return __optionFilterFn(sanitizedValue.value, filterValue);
 }
 
@@ -696,8 +702,6 @@ export function multiOptionFilterFn<TData>(
 
   if (!value) return false;
 
-  const columnMeta = filterValue.columnMeta!;
-
   if (isStringArray(value)) {
     return __multiOptionFilterFn(value, filterValue);
   }
@@ -709,8 +713,14 @@ export function multiOptionFilterFn<TData>(
     );
   }
 
-  const sanitizedValue = (value as never[]).map((v) =>
-    columnMeta.transformOptionFn!(v),
+  const columnMeta = filterValue.columnMeta;
+  const transformFn = columnMeta?.transformOptionFn;
+  if (!transformFn) {
+    throw new Error("transformOptionFn is required for non-string, non-ColumnOption values");
+  }
+
+  const sanitizedValue = (value as never[]).map((v: never) =>
+    transformFn(v),
   );
 
   return __multiOptionFilterFn(
@@ -723,7 +733,7 @@ export function __multiOptionFilterFn<TData>(
   inputData: string[],
   filterValue: FilterModel<"multiOption", TData>,
 ) {
-  if (!inputData) return false;
+  if (inputData.length === 0) return false;
 
   if (
     filterValue.values.length === 0 ||
@@ -766,7 +776,7 @@ export function __dateFilterFn<TData>(
   inputData: Date,
   filterValue: FilterModel<"date", TData>,
 ) {
-  if (filterValue?.values.length === 0) return true;
+  if (filterValue.values.length === 0) return true;
 
   if (
     dateFilterDetails[filterValue.operator].target === "single" &&
@@ -784,6 +794,8 @@ export function __dateFilterFn<TData>(
   const d1 = filterVals[0];
   const d2 = filterVals[1];
 
+  if (!d1) return true;
+
   const value = inputData;
 
   switch (filterValue.operator) {
@@ -800,14 +812,16 @@ export function __dateFilterFn<TData>(
     case "is on or before":
       return isSameDay(value, d1) || isBefore(value, startOfDay(d1));
     case "is between":
+      if (!d2) return true;
       return isWithinInterval(value, {
         start: startOfDay(d1),
         end: endOfDay(d2),
       });
     case "is not between":
+      if (!d2) return true;
       return !isWithinInterval(value, {
-        start: startOfDay(filterValue.values[0]),
-        end: endOfDay(filterValue.values[1]),
+        start: startOfDay(d1),
+        end: endOfDay(d2),
       });
   }
 }
@@ -817,7 +831,7 @@ export function textFilterFn<TData>(
   columnId: string,
   filterValue: FilterModel<"text", TData>,
 ) {
-  const value = row.getValue<string>(columnId) ?? "";
+  const value = row.getValue<string>(columnId);
 
   return __textFilterFn(value, filterValue);
 }
@@ -826,10 +840,12 @@ export function __textFilterFn<TData>(
   inputData: string,
   filterValue: FilterModel<"text", TData>,
 ) {
-  if (filterValue?.values.length === 0) return true;
+  if (filterValue.values.length === 0) return true;
 
   const value = inputData.toLowerCase().trim();
-  const filterStr = filterValue.values[0].toLowerCase().trim();
+  const firstValue = filterValue.values[0];
+  if (firstValue === undefined) return true;
+  const filterStr = firstValue.toLowerCase().trim();
 
   if (filterStr === "") return true;
 
@@ -857,12 +873,14 @@ export function __numberFilterFn<TData>(
   inputData: number,
   filterValue: FilterModel<"number", TData>,
 ) {
-  if (filterValue.values?.length === 0) {
+  if (filterValue.values.length === 0) {
     return true;
   }
 
   const value = inputData;
   const filterVal = filterValue.values[0];
+
+  if (filterVal === undefined) return true;
 
   switch (filterValue.operator) {
     case "is":
@@ -878,13 +896,15 @@ export function __numberFilterFn<TData>(
     case "is less than or equal to":
       return value <= filterVal;
     case "is between": {
-      const lowerBound = filterValue.values[0];
+      const lowerBound = filterVal;
       const upperBound = filterValue.values[1];
+      if (upperBound === undefined) return true;
       return value >= lowerBound && value <= upperBound;
     }
     case "is not between": {
-      const lowerBound = filterValue.values[0];
+      const lowerBound = filterVal;
       const upperBound = filterValue.values[1];
+      if (upperBound === undefined) return true;
       return value < lowerBound || value > upperBound;
     }
     default:
@@ -898,10 +918,10 @@ export function createNumberRange(values: number[] | undefined) {
 
   if (!values || values.length === 0) return [a, b];
   if (values.length === 1) {
-    a = values[0];
+    a = values[0] ?? 0;
   } else {
-    a = values[0];
-    b = values[1];
+    a = values[0] ?? 0;
+    b = values[1] ?? 0;
   }
 
   const [min, max] = a < b ? [a, b] : [b, a];
@@ -946,16 +966,17 @@ export function isFilterableColumn<TData>(column: Column<TData>) {
   )
     return true;
 
-  if (!column.accessorFn || !column.columnDef.meta) {
-    // 1) Column has no accessor function
-    //    We assume this is a display column and thus has no filterable data
-    // 2) Column has no meta
-    //    We assume this column is not intended to be filtered using this component
+  if (!column.accessorFn) {
+    // Column has no accessor function
+    // We assume this is a display column and thus has no filterable data
+    warn(`Column "${column.id}" ignored - no accessor function`);
     return false;
   }
 
-  if (!column.accessorFn) {
-    warn(`Column "${column.id}" ignored - no accessor function`);
+  if (!column.columnDef.meta) {
+    // Column has no meta
+    // We assume this column is not intended to be filtered using this component
+    return false;
   }
 
   if (!column.getCanFilter()) {
