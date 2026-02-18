@@ -41,13 +41,16 @@
       "outputs": [".cache/.prettiercache"],
       "outputLogs": "new-only"
     },
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
     "lint": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["transit"],
       "outputs": [".cache/.eslintcache"],
       "env": []
     },
     "typecheck": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["transit"],
       "outputs": [".cache/tsbuildinfo.json"],
       "env": []
     },
