@@ -24,25 +24,22 @@ import { z } from "zod";
  * ```
  */
 const docsSchema = frontmatterSchema.extend({
-	// SEO meta fields
-	keywords: z.string().optional(),
-	canonical: z.string().optional(),
+	// Required fields — build fails (Zod validation) if any .mdx file omits these.
+	// title is already required by the base schema, but we add min(1) to reject "".
+	title: z.string().min(1),
+	description: z.string().min(1),
+	keywords: z.string().min(1),
+	author: z.string().min(1),
+	publishedAt: z.string().min(1),
+	updatedAt: z.string().min(1),
 
-	// OpenGraph overrides
+	// Optional overrides (have good auto-generated defaults)
+	canonical: z.string().optional(),
 	ogImage: z.string().optional(),
 	ogTitle: z.string().optional(),
 	ogDescription: z.string().optional(),
-
-	// Indexing controls
 	noindex: z.boolean().default(false),
 	nofollow: z.boolean().default(false),
-
-	// Article metadata for structured data
-	author: z.string().optional(),
-	publishedAt: z.string().optional(),
-	updatedAt: z.string().optional(),
-
-	// TechArticle-specific fields
 	proficiencyLevel: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"]).optional(),
 });
 

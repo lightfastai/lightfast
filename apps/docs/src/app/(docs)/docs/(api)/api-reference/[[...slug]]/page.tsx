@@ -38,6 +38,7 @@ export default async function Page({
 
   // Check if this is an OpenAPI-generated virtual page
   // OpenAPI pages have a getAPIPageProps method from openapiPlugin
+  // Note: OpenAPI pages bypass our Zod schema, so ?? fallbacks are needed here
   if ("getAPIPageProps" in page.data && typeof page.data.getAPIPageProps === "function") {
     const props = page.data.getAPIPageProps();
     const title = page.data.title ?? "API Reference";
@@ -98,7 +99,7 @@ export default async function Page({
     const articleEntity: Article = {
       "@type": "Article",
       "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}#article`,
-      headline: title || "API Reference",
+      headline: title,
       description: description ?? "API documentation for Lightfast neural memory",
       url: `https://lightfast.ai/docs/api-reference/${slug.join("/")}`,
       author: {
@@ -195,12 +196,12 @@ export default async function Page({
     itemListElement: breadcrumbItems
   };
 
-  // Build article entity
+  // Build article entity (MDX pages — title/description guaranteed by docsSchema)
   const articleEntity: Article = {
     "@type": "Article",
     "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}#article`,
-    headline: title || "API Reference",
-    description: description ?? "API documentation for Lightfast neural memory",
+    headline: title,
+    description,
     url: `https://lightfast.ai/docs/api-reference/${slug.join("/")}`,
     author: {
       "@id": "https://lightfast.ai/#organization"

@@ -19,24 +19,20 @@ import type {
  * These match the schema defined in source.config.ts
  */
 interface ExtendedFrontmatter {
-  // Base fumadocs fields
-  title?: string;
-  description?: string;
-  // SEO meta fields
-  keywords?: string;
+  // Required fields (enforced by docsSchema in source.config.ts)
+  title: string;
+  description: string;
+  keywords: string;
+  author: string;
+  publishedAt: string;
+  updatedAt: string;
+  // Optional overrides (have good auto-generated defaults)
   canonical?: string;
-  // OpenGraph overrides
   ogImage?: string;
   ogTitle?: string;
   ogDescription?: string;
-  // Indexing controls
   noindex?: boolean;
   nofollow?: boolean;
-  // Article metadata
-  author?: string;
-  publishedAt?: string;
-  updatedAt?: string;
-  // TechArticle fields
   proficiencyLevel?: "Beginner" | "Intermediate" | "Advanced" | "Expert";
 }
 
@@ -139,9 +135,7 @@ export default async function Page({
     headline: title,
     description: description,
     url: `https://lightfast.ai/docs/${slug.join("/")}`,
-    author: frontmatter.author
-      ? { "@type": "Person", name: frontmatter.author }
-      : { "@id": "https://lightfast.ai/#organization" },
+    author: { "@type": "Person", name: frontmatter.author },
     publisher: {
       "@id": "https://lightfast.ai/#organization",
     },
@@ -149,13 +143,9 @@ export default async function Page({
       "@type": "WebPage",
       "@id": `https://lightfast.ai/docs/${slug.join("/")}`,
     },
-    // TechArticle-specific fields
     proficiencyLevel: frontmatter.proficiencyLevel ?? "Beginner",
-    // Add article dates if available in frontmatter
-    ...(frontmatter.publishedAt
-      ? { datePublished: frontmatter.publishedAt }
-      : {}),
-    ...(frontmatter.updatedAt ? { dateModified: frontmatter.updatedAt } : {}),
+    datePublished: frontmatter.publishedAt,
+    dateModified: frontmatter.updatedAt,
   };
 
   const structuredData: GraphContext = {
@@ -299,15 +289,10 @@ export async function generateMetadata({
 
   // Build canonical URL for SEO
   const pageUrl = `/docs/${slug.join("/")}`;
-  const title = frontmatter.title
-    ? `${frontmatter.title} – Lightfast Docs`
-    : "Lightfast Docs";
-  const description = frontmatter.description ?? "Documentation for Lightfast neural memory — Learn how to integrate the memory layer for software teams via a simple REST API and MCP tools. Build search by meaning with sources.";
+  const title = `${frontmatter.title} – Lightfast Docs`;
+  const description = frontmatter.description;
 
-  // Extract per-page SEO fields from extended frontmatter with fallbacks
-  const pageKeywords = frontmatter.keywords
-    ? frontmatter.keywords.split(",").map((k: string) => k.trim())
-    : [];
+  const pageKeywords = frontmatter.keywords.split(",").map((k: string) => k.trim());
   const canonical = frontmatter.canonical ?? `https://lightfast.ai/docs${pageUrl}`;
   const noindex = frontmatter.noindex ?? false;
   const nofollow = frontmatter.nofollow ?? false;
@@ -340,9 +325,7 @@ export async function generateMetadata({
       "REST API",
       "security best practices",
     ],
-    authors: frontmatter.author
-      ? [{ name: frontmatter.author }, { name: "Lightfast", url: "https://lightfast.ai" }]
-      : [{ name: "Lightfast", url: "https://lightfast.ai" }],
+    authors: [{ name: frontmatter.author }, { name: "Lightfast", url: "https://lightfast.ai" }],
     creator: "Lightfast",
     publisher: "Lightfast",
     robots: {
@@ -367,11 +350,9 @@ export async function generateMetadata({
       type: "article",
       locale: "en_US",
       // Include article dates for better SEO and freshness signals
-      ...(frontmatter.publishedAt
-        ? { publishedTime: frontmatter.publishedAt }
-        : {}),
-      ...(frontmatter.updatedAt ? { modifiedTime: frontmatter.updatedAt } : {}),
-      ...(frontmatter.author ? { authors: [frontmatter.author] } : {}),
+      publishedTime: frontmatter.publishedAt,
+      modifiedTime: frontmatter.updatedAt,
+      authors: [frontmatter.author],
       images: [
         {
           url: ogImage,
