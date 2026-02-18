@@ -166,9 +166,10 @@ export function CreateWorkspaceButton() {
           await setActive({ organization: selectedOrgId });
         }
 
+        let repoCount = 0;
         if (selectedRepositories.length > 0 && userSourceId && selectedInstallation) {
           try {
-            await bulkLinkMutation.mutateAsync({
+            const linked = await bulkLinkMutation.mutateAsync({
               workspaceId: workspace.workspaceId,
               userSourceId,
               installationId: selectedInstallation.id,
@@ -177,12 +178,11 @@ export function CreateWorkspaceButton() {
                 repoFullName: repo.fullName,
               })),
             });
+            repoCount = linked.created + linked.reactivated;
           } catch {
             // Error already handled by bulkLinkMutation onError — continue with navigation
           }
         }
-
-        const repoCount = selectedRepositories.length;
         toast.success("Workspace created!", {
           description: repoCount > 0
             ? `${workspaceName} has been created with ${repoCount} repositor${repoCount === 1 ? "y" : "ies"}.`
