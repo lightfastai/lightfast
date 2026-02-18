@@ -41,7 +41,7 @@ export const BEAM_TIMING = {
 } as const;
 
 /** Stagger delay between rows appearing inside cards */
-export const ROW_STAGGER = {
+const ROW_STAGGER = {
   STREAM_EVENTS: 6,
   INGESTED_DATA: 24,
 } as const;

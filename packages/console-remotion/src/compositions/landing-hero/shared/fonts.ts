@@ -3,7 +3,7 @@ import { staticFile } from "remotion";
 
 let fontsLoaded = false;
 
-export const FONT_FAMILY = "Geist";
+const FONT_FAMILY = "Geist";
 
 export const ensureFontsLoaded = async () => {
   if (fontsLoaded) return;
