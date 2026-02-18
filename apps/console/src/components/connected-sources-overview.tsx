@@ -252,7 +252,7 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
   const groupedBySourceType = connections.reduce(
     (acc, connection) => {
       const sourceType = connection.resource.resourceData.sourceType;
-      acc[sourceType] ??= [];
+      acc[sourceType] = acc[sourceType] ?? [];
       acc[sourceType].push(connection);
       return acc;
     },

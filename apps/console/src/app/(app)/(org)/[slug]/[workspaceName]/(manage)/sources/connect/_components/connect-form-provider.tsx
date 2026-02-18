@@ -48,7 +48,8 @@ export function ConnectFormProvider({
 }) {
   const trpc = useTRPC();
   const [provider, setProvider] = useState<"github" | "vercel" | "linear" | "sentry">(initialProvider);
-  const [selectedInstallationId, setSelectedInstallationId] = useState<string | null>(null);
+  // Explicit user selection; null means "use the first available installation"
+  const [explicitInstallationId, setExplicitInstallationId] = useState<string | null>(null);
 
   const { data: githubSource } = useQuery({
     ...trpc.userSources.github.get.queryOptions(),
@@ -66,11 +67,12 @@ export function ConnectFormProvider({
       ? vercelSource?.id ?? null
       : null;
 
-  const installations = githubSource?.installations ?? [];
-  if (installations.length > 0 && !selectedInstallationId) {
-    const firstInstall = installations[0];
-    if (firstInstall) setSelectedInstallationId(firstInstall.id);
-  }
+  // Derive the effective installation ID without setting state during render
+  // (installations ?? []).at(0) returns T | undefined - no setState during render
+  const selectedInstallationId =
+    explicitInstallationId ?? (githubSource?.installations ?? []).at(0)?.id ?? null;
+
+  const setSelectedInstallationId = setExplicitInstallationId;
 
   const { data: workspace } = useQuery({
     ...trpc.workspace.getByName.queryOptions({ clerkOrgSlug, workspaceName }),

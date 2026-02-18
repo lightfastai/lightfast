@@ -90,9 +90,9 @@ function getOrgNavItems(orgSlug: string): NavItem[] {
 }
 
 /**
- * Render a set of navigation items
+ * Render a set of navigation items as a proper component for correct reconciliation
  */
-function renderNavItems(items: NavItem[], pathname: string) {
+function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
   return items.map((item) => {
     // For Settings, match any settings subpage (org or workspace level)
     const isActive =
@@ -157,10 +157,10 @@ export function AppSidebar() {
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {renderNavItems(
-                    getWorkspacePrimaryItems(orgSlug, workspaceName),
-                    pathname,
-                  )}
+                  <NavItems
+                    items={getWorkspacePrimaryItems(orgSlug, workspaceName)}
+                    pathname={pathname}
+                  />
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -170,10 +170,10 @@ export function AppSidebar() {
               <SidebarGroupLabel>Manage</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {renderNavItems(
-                    getWorkspaceManageItems(orgSlug, workspaceName),
-                    pathname,
-                  )}
+                  <NavItems
+                    items={getWorkspaceManageItems(orgSlug, workspaceName)}
+                    pathname={pathname}
+                  />
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -183,7 +183,7 @@ export function AppSidebar() {
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                {renderNavItems(getOrgNavItems(orgSlug), pathname)}
+                <NavItems items={getOrgNavItems(orgSlug)} pathname={pathname} />
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
