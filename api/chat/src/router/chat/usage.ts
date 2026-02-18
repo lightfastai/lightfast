@@ -43,9 +43,9 @@ export async function calculateBillingPeriod(
 	const client = await clerkClient();
 	try {
 		const subscription = await client.billing.getUserBillingSubscription(userId);
-		return calculateBillingPeriodFromSubscription(subscription, { timezone });
+		return calculateBillingPeriodFromSubscription(userId, deriveSubscriptionData({ userId, subscription }), { timezone });
 	} catch {
-		return calculateBillingPeriodFromSubscription(null, { timezone });
+		return calculateBillingPeriodFromSubscription(userId, deriveSubscriptionData({ userId, subscription: null }), { timezone });
 	}
 }
 
