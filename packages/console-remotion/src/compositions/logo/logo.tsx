@@ -1,6 +1,6 @@
 import type React from "react";
 import { AbsoluteFill, useVideoConfig } from "remotion";
-import { cn } from "../../lib/cn";
+import { cn } from "@repo/ui/lib/utils";
 
 /**
  * Lissajous parameters — same curve used in the LandingHero logo animation.
@@ -26,7 +26,7 @@ function lissajousPath(size: number, padding: number): string {
   return d + " Z";
 }
 
-export interface LogoProps {
+interface LogoProps {
   transparent?: boolean;
   strokeWidth?: number;
 }
