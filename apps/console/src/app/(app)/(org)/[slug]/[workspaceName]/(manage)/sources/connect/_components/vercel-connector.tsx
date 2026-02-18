@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
@@ -32,9 +32,16 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
 
   const isConnected = !!vercelSource?.id;
 
-  const [showProjectSelector, setShowProjectSelector] = useState(
-    () => autoOpen && isConnected,
-  );
+  const [showProjectSelector, setShowProjectSelector] = useState(false);
+
+  // Auto-open project selector after OAuth completion when autoOpen is requested.
+  // useState lazy initializer only runs on mount, so this effect handles the case
+  // where isConnected transitions from false→true after OAuth redirect + refetch.
+  useEffect(() => {
+    if (autoOpen && isConnected) {
+      setShowProjectSelector(true);
+    }
+  }, [autoOpen, isConnected]);
 
   const handleConnectVercel = () => {
     const width = 600;
