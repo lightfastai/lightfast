@@ -102,14 +102,9 @@ export function Search() {
       {open &&
         createPortal(
           <div
-            role="button"
-            tabIndex={-1}
-            aria-label="Close search"
+            aria-hidden="true"
             className="fixed inset-0 z-40 bg-black/20 backdrop-blur-md animate-in fade-in-0"
             onClick={() => handleClose()}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") handleClose();
-            }}
           />,
           document.body,
         )}
