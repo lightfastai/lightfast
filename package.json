@@ -16,7 +16,7 @@
     "clean": "git clean -xdf node_modules .turbo .internal",
     "clean:workspaces": "turbo run clean",
     "dev": "turbo run dev --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/chat",
-    "dev:app": "turbo run dev dev:inngest dev:qstash dev:ngrok dev:studio studio --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/console --filter=@db/console --filter=@repo/console-remotion",
+    "dev:app": "turbo run dev dev:inngest dev:qstash dev:ngrok dev:studio studio --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/console --filter=@db/console --filter=@repo/console-remotion --concurrency=15",
     "dev:www": "turbo watch dev -F @lightfast/www -F @repo/console-remotion --continue",
     "dev:auth": "turbo watch dev -F @lightfast/auth --continue",
     "dev:chat": "turbo watch dev -F @lightfast/chat --continue",
