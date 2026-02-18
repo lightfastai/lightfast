@@ -109,6 +109,8 @@ export async function resolveActor(
       );
 
       if (resolved) {
+        // Capture original username before overwriting id
+        const originalUsername = sourceActor.id;
         // Upgrade actor ID to numeric format
         sourceActor = {
           ...sourceActor,
@@ -116,7 +118,7 @@ export async function resolveActor(
         };
 
         log.info("Vercel actor upgraded to numeric ID", {
-          originalUsername: sourceActor.name,
+          originalUsername,
           numericId: resolved.numericId,
         });
       }
