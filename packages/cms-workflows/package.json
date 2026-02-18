@@ -15,12 +15,16 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "with-env": "dotenv -e ../../apps/www/.vercel/.env.development.local --",
+    "publish:blog": "pnpm with-env tsx scripts/publish-blog.ts",
+    "publish:changelog": "pnpm with-env tsx scripts/publish-changelog.ts"
   },
   "dependencies": {
     "@repo/ai": "workspace:*",
     "@vendor/cms": "workspace:*",
     "basehub": "^9.5.2",
+    "gray-matter": "^4.0.3",
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
     "unified": "^11.0.0",
@@ -32,8 +36,10 @@
     "@repo/typescript-config": "workspace:*",
     "@types/mdast": "^4.0.0",
     "@types/node": "catalog:",
+    "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "tsx": "^4.19.2",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

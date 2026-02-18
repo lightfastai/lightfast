@@ -4,7 +4,7 @@
  * Publish a changelog draft from thoughts/changelog/ to BaseHub CMS.
  *
  * Usage:
- *   cd apps/www && pnpm with-env pnpm tsx scripts/publish-changelog.ts <filepath>
+ *   pnpm publish:changelog -- <filepath>
  *
  * The script:
  * 1. Parses YAML frontmatter (structured to match ChangelogEntryInput)
@@ -17,10 +17,9 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import matter from "gray-matter";
 import {
-  createChangelogEntry
-  
-} from "@repo/cms-workflows/mutations/changelog";
-import type {ChangelogEntryInput} from "@repo/cms-workflows/mutations/changelog";
+  createChangelogEntry,
+} from "../src/mutations/changelog.js";
+import type { ChangelogEntryInput } from "../src/mutations/changelog.js";
 import { changelog } from "@vendor/cms";
 
 interface InternalFields {
@@ -66,7 +65,7 @@ async function main() {
       JSON.stringify({
         success: false,
         error:
-          "Usage: pnpm with-env pnpm tsx scripts/publish-changelog.ts <filepath>",
+          "Usage: pnpm publish:changelog -- <filepath>",
       })
     );
     process.exit(1);

@@ -11,6 +11,7 @@ const withMDX = createMDX();
 
 let config: NextConfig = {
   reactStrictMode: true,
+  reactCompiler: true,
 
   images: {
     formats: ["image/webp"],

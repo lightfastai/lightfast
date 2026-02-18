@@ -4,7 +4,7 @@
  * Publish a blog post from markdown to BaseHub CMS.
  *
  * Usage:
- *   cd apps/www && pnpm with-env pnpm tsx scripts/publish-blog.ts <filepath>
+ *   pnpm publish:blog -- <filepath>
  *
  * The script:
  * 1. Reads and parses the markdown file
@@ -18,11 +18,9 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import matter from "gray-matter";
 import {
-  createBlogPostFromAI
-  
-  
-} from "@repo/cms-workflows/mutations/blog";
-import type {AIGeneratedPost, ContentType} from "@repo/cms-workflows/mutations/blog";
+  createBlogPostFromAI,
+} from "../src/mutations/blog.js";
+import type { AIGeneratedPost, ContentType } from "../src/mutations/blog.js";
 import { basehub } from "basehub";
 import { basehubEnv } from "@vendor/cms/env";
 import { blog } from "@vendor/cms";
@@ -145,7 +143,7 @@ async function main() {
       JSON.stringify({
         success: false,
         error:
-          "Usage: pnpm with-env pnpm tsx scripts/publish-blog.ts <filepath>",
+          "Usage: pnpm publish:blog -- <filepath>",
       })
     );
     process.exit(1);

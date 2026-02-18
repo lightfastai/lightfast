@@ -22,6 +22,7 @@ import { env } from "~/env";
  */
 const wwwConfig: NextConfig = {
 	reactStrictMode: true,
+	reactCompiler: true,
 
 	// Next.js 16 requires explicit quality values
 	images: {

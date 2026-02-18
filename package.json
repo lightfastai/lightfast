@@ -27,6 +27,8 @@
     "cms:types": "pnpm --filter @lightfast/www cms:types",
     "cms:dev": "pnpm --filter @lightfast/www cms:dev",
     "cms:analyze": "pnpm --filter @lightfast/www cms:analyze",
+    "publish:blog": "pnpm --filter @repo/cms-workflows publish:blog",
+    "publish:changelog": "pnpm --filter @repo/cms-workflows publish:changelog",
     "brain": "turbo run eval",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
     "format:fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
