@@ -2,7 +2,8 @@
   "extends": "@repo/typescript-config/internal-package.json",
   "include": [
     "src",
-    "agents"
+    "agents",
+    "scripts"
   ],
   "exclude": [
     "node_modules"

@@ -1,5 +1,8 @@
 import { Stagehand } from "@browserbasehq/stagehand";
+import type { V3Options } from "@browserbasehq/stagehand";
 import type { z } from "zod";
+
+type BrowserSettings = NonNullable<NonNullable<V3Options['browserbaseSessionCreateParams']>['browserSettings']>;
 
 export interface StagehandConfig {
   apiKey: string;
@@ -13,7 +16,7 @@ export interface StagehandConfig {
 }
 
 export class StagehandSessionManager {
-  private static instance: StagehandSessionManager;
+  private static instance: StagehandSessionManager | undefined;
   private stagehand: Stagehand | null = null;
   private initialized = false;
   private lastUsed = Date.now();
@@ -24,7 +27,7 @@ export class StagehandSessionManager {
   private constructor(config: StagehandConfig) {
     this.config = config;
     // Schedule session cleanup to prevent memory leaks
-    this.intervalId = setInterval(() => this.checkAndCleanupSession(), 60 * 1000);
+    this.intervalId = setInterval(() => { void this.checkAndCleanupSession(); }, 60 * 1000);
   }
 
   /**
@@ -55,7 +58,7 @@ export class StagehandSessionManager {
       viewportHeight = 720,
     } = this.config;
 
-    const browserSettings: any = {
+    const browserSettings: BrowserSettings = {
       blockAds: true,
       viewport: {
         width: viewportWidth,
@@ -77,7 +80,7 @@ export class StagehandSessionManager {
       env: "BROWSERBASE" as const,
       disablePino: true,
       model: {
-        modelName: modelName as any,
+        modelName,
         apiKey: anthropicApiKey,
       },
       waitForCaptchaSolves: enableCaptchaSolving,
@@ -157,7 +160,7 @@ export class StagehandSessionManager {
       try {
         await this.stagehand.close();
       } catch (error) {
-        console.error(`Error closing idle session: ${error}`);
+        console.error(`Error closing idle session: ${String(error)}`);
       }
       this.stagehand = null;
       this.initialized = false;
@@ -172,7 +175,7 @@ export class StagehandSessionManager {
       try {
         await this.stagehand.close();
       } catch (error) {
-        console.error(`Error closing Stagehand session: ${error}`);
+        console.error(`Error closing Stagehand session: ${String(error)}`);
       }
       this.stagehand = null;
       this.initialized = false;
@@ -198,8 +201,8 @@ export class StagehandSessionManager {
    */
   public static reset(): void {
     if (StagehandSessionManager.instance) {
-      StagehandSessionManager.instance.close();
-      StagehandSessionManager.instance = null as any;
+      void StagehandSessionManager.instance.close();
+      StagehandSessionManager.instance = undefined;
     }
   }
 }
@@ -246,10 +249,6 @@ export async function performWebObservation(
 
   try {
     const stagehand = await sessionManager.ensureStagehand();
-    if (!stagehand) {
-      console.error("Failed to get Stagehand instance");
-      throw new Error("Failed to get Stagehand instance");
-    }
 
     try {
       // Navigate to the URL if provided
@@ -313,7 +312,7 @@ export async function performWebExtraction(
 
         // Create a default schema if none is provided
         const { z } = await import("zod");
-        const finalSchemaObj = schemaObj || { content: z.string() };
+        const finalSchemaObj = schemaObj ?? { content: z.string() };
         const schema = z.object(finalSchemaObj);
 
         try {

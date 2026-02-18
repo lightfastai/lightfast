@@ -481,11 +481,6 @@ export const ALL_INTERNAL_EVENT_TYPES = Object.keys(
   EVENT_REGISTRY,
 ) as InternalEventType[];
 
-// ─── Backward-Compatible Alias ────────────────────────────────────────────────
-
-/** @deprecated Use EVENT_REGISTRY directly */
-const INTERNAL_EVENT_TYPES = EVENT_REGISTRY;
-
 // ─── Lookup Functions ─────────────────────────────────────────────────────────
 
 /** Get full event config by internal type */
