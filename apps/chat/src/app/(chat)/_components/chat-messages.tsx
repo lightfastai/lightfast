@@ -187,7 +187,7 @@ const MessageAttachmentPreview = memo(function MessageAttachmentPreview({
 				if (isImage) {
 					return (
 						<a
-							key={`${attachment.url}-${index}`}
+							key={attachment.url}
 							href={attachment.url}
 							target="_blank"
 							rel="noopener noreferrer"
@@ -218,7 +218,7 @@ const MessageAttachmentPreview = memo(function MessageAttachmentPreview({
 
 				return (
 					<a
-						key={`${attachment.url}-${index}`}
+						key={attachment.url}
 						href={attachment.url}
 						target="_blank"
 						rel="noopener noreferrer"
@@ -233,6 +233,15 @@ const MessageAttachmentPreview = memo(function MessageAttachmentPreview({
 			})}
 		</div>
 	);
+});
+
+const SingleFileAttachmentPreview = memo(function SingleFileAttachmentPreview({
+	part,
+}: {
+	part: FileUIPart;
+}) {
+	const attachments = useMemo(() => [part], [part]);
+	return <MessageAttachmentPreview attachments={attachments} align="start" />;
 });
 
 const StreamingResponse = memo(function StreamingResponse({
@@ -895,10 +904,9 @@ const AssistantMessage = memo(function AssistantMessage({
 
 								if (isFileUIPart(part)) {
 									return (
-										<MessageAttachmentPreview
+										<SingleFileAttachmentPreview
 											key={`${message.id}-file-${index}`}
-											attachments={[part]}
-											align="start"
+											part={part}
 										/>
 									);
 								}
@@ -957,7 +965,7 @@ const AssistantMessage = memo(function AssistantMessage({
 											</InlineCitationCarouselHeader>
 											<InlineCitationCarouselContent>
 												{sources.map((source, index) => (
-													<InlineCitationCarouselItem key={index}>
+													<InlineCitationCarouselItem key={source.url}>
 														<InlineCitationSource
 															title={source.title ?? `Source ${index + 1}`}
 															url={source.url}

@@ -1,4 +1,3 @@
-import Script from "next/script";
 import { siteConfig } from "@repo/site-config";
 
 interface StructuredDataProps {
@@ -162,12 +161,10 @@ export function StructuredData({ type = 'WebApplication', additionalData = EMPTY
   const structuredData = getStructuredData();
 
   return (
-    <Script
+    <script
       id={`structured-data-${type}`}
       type="application/ld+json"
-      strategy="afterInteractive"
-    >
-      {JSON.stringify(structuredData, null, 2)}
-    </Script>
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData, null, 2) }}
+    />
   );
 }

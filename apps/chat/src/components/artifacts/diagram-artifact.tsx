@@ -47,7 +47,7 @@ function MermaidDiagram({ content, isStreaming = false }: MermaidDiagramProps) {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [diagramId] = useState(
-		() => `mermaid-${Math.random().toString(36).substr(2, 9)}`,
+		() => `mermaid-${Math.random().toString(36).slice(2, 11)}`,
 	);
 
 	// Initialize and render mermaid diagram

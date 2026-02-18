@@ -356,14 +356,15 @@ export function ExistingSessionChat({
     return <ChatLoadingSkeleton />;
   }
 
-  const updateMessagesCache = (
-    updater: (draft: MessagesInfiniteData) => void,
-  ) => {
-    queryClient.setQueryData<MessagesInfiniteData>(messagesQueryKey, (oldData) => {
-      if (!oldData) return oldData;
-      return produce(oldData, updater);
-    });
-  };
+  const updateMessagesCache = useCallback(
+    (updater: (draft: MessagesInfiniteData) => void) => {
+      queryClient.setQueryData<MessagesInfiniteData>(messagesQueryKey, (oldData) => {
+        if (!oldData) return oldData;
+        return produce(oldData, updater);
+      });
+    },
+    [queryClient, messagesQueryKey],
+  );
 
   const handleSessionCreation = (_firstMessage: string) => {
     // Existing sessions don't need creation
