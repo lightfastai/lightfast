@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { Github, CheckCircle2, Clock, AlertCircle, Loader2, ExternalLink, AlertTriangle } from "lucide-react";
+import { Github, Globe, CheckCircle2, Clock, AlertCircle, Loader2, ExternalLink, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import type { EnrichedConnection, Source } from "~/types";
 
@@ -82,7 +82,7 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
     <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent transition-colors">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="rounded-full bg-muted p-2">
-          <Github className="h-4 w-4" />
+          {resourceData.sourceType === "github" ? <Github className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ function SimpleSourceItem({ source }: { source: Source }) {
     <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent transition-colors">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="rounded-full bg-muted p-2">
-          <Github className="h-4 w-4" />
+          {source.type === "github" ? <Github className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -265,8 +265,8 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
   let syncingCount = 0;
   let failedCount = 0;
   for (const c of connections) {
-    if (c.lastSyncStatus === "completed") syncedCount++;
-    else if (c.lastSyncStatus === "in_progress" || c.lastSyncStatus === "pending") syncingCount++;
+    if (c.lastSyncStatus === "success") syncedCount++;
+    else if (c.lastSyncStatus === "pending") syncingCount++;
     else if (c.lastSyncStatus === "failed") failedCount++;
   }
 
@@ -321,7 +321,7 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
             {Object.entries(groupedBySourceType).map(([sourceType, sources]) => (
               <div key={sourceType}>
                 <h4 className="text-sm font-semibold mb-2 capitalize flex items-center gap-2">
-                  <Github className="h-4 w-4" />
+                  {sourceType === "github" ? <Github className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
                   {sourceType} ({sources.length})
                 </h4>
                 <div className="space-y-2">

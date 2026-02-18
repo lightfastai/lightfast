@@ -102,10 +102,12 @@ export function WorkspaceSearch({
   const [error, setError] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState(query);
   const [prevQuery, setPrevQuery] = useState(query);
-  if (prevQuery !== query) {
-    setPrevQuery(query);
-    setInputValue(query);
-  }
+  useEffect(() => {
+    if (prevQuery !== query) {
+      setPrevQuery(query);
+      setInputValue(query);
+    }
+  }, [query, prevQuery]);
 
   // Fetch workspace's single store (1:1 relationship)
   const { data: store } = useSuspenseQuery({
@@ -177,7 +179,7 @@ export function WorkspaceSearch({
   };
 
   const handleSearch = () => {
-    performSearch(query);
+    performSearch(inputValue);
   };
 
   const handlePromptSubmit = async (message: PromptInputMessage): Promise<void> => {

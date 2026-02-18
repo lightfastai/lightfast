@@ -69,12 +69,31 @@ export function SearchResultCard({
   });
   const contentError = contentQueryError instanceof Error ? contentQueryError.message : null;
 
-  const [similarData, setSimilarData] = useState<V1FindSimilarResponse | null>(
-    null,
-  );
-  const [isLoadingSimilar, setIsLoadingSimilar] = useState(false);
-  const [similarError, setSimilarError] = useState<string | null>(null);
   const [showSimilar, setShowSimilar] = useState(false);
+
+  const {
+    data: similarData,
+    isFetching: isLoadingSimilar,
+    error: similarQueryError,
+    refetch: refetchSimilar,
+  } = useQuery<V1FindSimilarResponse>({
+    queryKey: ["findSimilar", storeId, result.id],
+    queryFn: async () => {
+      const res = await fetch("/v1/findsimilar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Workspace-ID": storeId,
+        },
+        body: JSON.stringify({ id: result.id, limit: 5, threshold: 0.5 }),
+      });
+      if (!res.ok) throw new Error("Failed to fetch similar items");
+      return (await res.json()) as V1FindSimilarResponse;
+    },
+    enabled: false,
+    staleTime: Infinity,
+  });
+  const similarError = similarQueryError instanceof Error ? similarQueryError.message : null;
 
   const handleCopyId = async () => {
     await navigator.clipboard.writeText(result.id);
@@ -83,39 +102,10 @@ export function SearchResultCard({
   };
 
   const fetchSimilar = () => {
-    if (similarData) {
-      setShowSimilar(true);
-      return;
-    }
-
-    setIsLoadingSimilar(true);
-    setSimilarError(null);
     setShowSimilar(true);
-
-    fetch("/v1/findsimilar", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Workspace-ID": storeId,
-      },
-      body: JSON.stringify({
-        id: result.id,
-        limit: 5,
-        threshold: 0.5,
-      }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch similar items");
-        return res.json() as Promise<V1FindSimilarResponse>;
-      })
-      .then((data) => {
-        setSimilarData(data);
-        setIsLoadingSimilar(false);
-      })
-      .catch((err: unknown) => {
-        setSimilarError(err instanceof Error ? err.message : "Failed to load");
-        setIsLoadingSimilar(false);
-      });
+    if (!similarData) {
+      void refetchSimilar();
+    }
   };
 
   return (
