@@ -13,9 +13,9 @@ export function FeatureList({ title, features, className = "" }: FeatureListProp
 				</h3>
 			)}
 			<div className="space-y-3">
-				{features.map((feature) => (
+				{features.map((feature, index) => (
 					<p
-						key={feature}
+						key={`${feature}-${index}`}
 						className="text-muted-foreground leading-relaxed"
 					>
 						{feature}

@@ -85,8 +85,8 @@ export function ValidationErrorList({
 	return (
 		<ValidationError title={title} type={type} className={className}>
 			<ul className="space-y-1.5 list-none pl-0 m-0">
-				{errors.map((error) => (
-					<li key={error} className="flex items-start gap-2">
+				{errors.map((error, index) => (
+					<li key={`${error}-${index}`} className="flex items-start gap-2">
 						<span className="text-current opacity-70 select-none">•</span>
 						<code className="flex-1">{error}</code>
 					</li>
@@ -137,8 +137,8 @@ export function ValidationExample({
 				<div className="bg-card border border-transparent p-6 rounded-xs">
 					<div className="text-xs font-semibold mb-3 opacity-60">Valid</div>
 					<div className="space-y-2">
-						{goodArray.map((example) => (
-							<div key={example} className="flex items-start gap-3">
+						{goodArray.map((example, index) => (
+							<div key={`${example}-${index}`} className="flex items-start gap-3">
 								<CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
 								<code className="text-xs font-mono break-all">{example}</code>
 							</div>
@@ -152,8 +152,8 @@ export function ValidationExample({
 				<div className="bg-card border border-transparent p-6 rounded-xs">
 					<div className="text-xs font-semibold mb-3 opacity-60">Invalid</div>
 					<div className="space-y-2">
-						{badArray.map((example) => (
-							<div key={example} className="flex items-start gap-3">
+						{badArray.map((example, index) => (
+							<div key={`${example}-${index}`} className="flex items-start gap-3">
 								<XCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
 								<code className="text-xs font-mono break-all opacity-70">
 									{example}

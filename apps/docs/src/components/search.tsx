@@ -35,11 +35,13 @@ function searchReducer(
     case "SELECT":
       return { ...state, selectedIndex: action.index };
     case "NAVIGATE_DOWN":
+      if (action.max === 0) return state;
       return {
         ...state,
         selectedIndex: (state.selectedIndex + 1) % action.max,
       };
     case "NAVIGATE_UP":
+      if (action.max === 0) return state;
       return {
         ...state,
         selectedIndex:
