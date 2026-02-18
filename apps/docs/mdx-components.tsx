@@ -570,7 +570,7 @@ export const mdxComponents = {
         {external && (
           <>
             {" "}
-            <ExternalLink className="inline-block w-3 h-3 align-baseline" />
+            <ExternalLink aria-hidden="true" className="inline-block w-3 h-3 align-baseline" />
           </>
         )}
       </Link>
@@ -607,7 +607,7 @@ export const mdxComponents = {
         {external && (
           <>
             {" "}
-            <ExternalLink className="inline-block w-3 h-3 align-baseline" />
+            <ExternalLink aria-hidden="true" className="inline-block w-3 h-3 align-baseline" />
           </>
         )}
       </Link>
