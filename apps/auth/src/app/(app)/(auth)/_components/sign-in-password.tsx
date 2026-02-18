@@ -59,23 +59,24 @@ export function SignInPassword({ onSuccess, onError }: SignInPasswordProps) {
         });
         onSuccess();
       } else {
-        throw new Error("Sign-in incomplete");
+        log.error("[SignInPassword] Authentication failed", {
+          identifier: data.identifier,
+          error: "Sign-in incomplete",
+        });
+        onError("Sign-in could not be completed. Please try again.");
       }
     } catch (err) {
-      // Log the error
       log.error("[SignInPassword] Authentication failed", {
         identifier: data.identifier,
         error: err,
       });
 
-      // Handle the error with proper context
       const errorResult = handleClerkError(err, {
         component: "SignInPassword",
         action: "password_sign_in",
         identifier: data.identifier,
       });
 
-      // Pass the user-friendly error message to parent
       onError(errorResult.userMessage);
     }
   }

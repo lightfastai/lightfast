@@ -210,6 +210,7 @@ export default function HomePage() {
                 src="/images/landing-hero.gif"
                 alt="Data flows through the Lightfast engine"
                 fill
+                sizes="(max-width: 768px) 150vw, (max-width: 1024px) 100vw, 80vw"
                 priority
                 unoptimized
                 quality={100}

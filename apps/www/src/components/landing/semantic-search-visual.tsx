@@ -57,8 +57,8 @@ export function SemanticSearchVisual() {
 
       {/* Results */}
       <div className="flex-1 space-y-3">
-        {searchResults.map((result, index) => (
-          <div key={index} className="bg-secondary rounded-md p-3">
+        {searchResults.map((result) => (
+          <div key={result.title} className="bg-secondary rounded-md p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">

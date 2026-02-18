@@ -1,3 +1,4 @@
+import Script from "next/script";
 import { siteConfig } from "@repo/site-config";
 
 interface StructuredDataProps {
@@ -5,7 +6,9 @@ interface StructuredDataProps {
   additionalData?: Record<string, unknown>;
 }
 
-export function StructuredData({ type = 'WebApplication', additionalData = {} }: StructuredDataProps) {
+const EMPTY_ADDITIONAL_DATA: Record<string, unknown> = {};
+
+export function StructuredData({ type = 'WebApplication', additionalData = EMPTY_ADDITIONAL_DATA }: StructuredDataProps) {
   const baseUrl = "https://chat.lightfast.ai";
   
   const getStructuredData = () => {
@@ -159,11 +162,12 @@ export function StructuredData({ type = 'WebApplication', additionalData = {} }:
   const structuredData = getStructuredData();
 
   return (
-    <script
+    <Script
+      id={`structured-data-${type}`}
       type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(structuredData, null, 2)
-      }}
-    />
+      strategy="afterInteractive"
+    >
+      {JSON.stringify(structuredData, null, 2)}
+    </Script>
   );
 }

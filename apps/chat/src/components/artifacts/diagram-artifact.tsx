@@ -46,12 +46,9 @@ function MermaidDiagram({ content, isStreaming = false }: MermaidDiagramProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [diagramId, setDiagramId] = useState<string>("");
-
-	// Generate unique ID for each diagram
-	useEffect(() => {
-		setDiagramId(`mermaid-${Math.random().toString(36).substr(2, 9)}`);
-	}, []);
+	const [diagramId] = useState(
+		() => `mermaid-${Math.random().toString(36).substr(2, 9)}`,
+	);
 
 	// Initialize and render mermaid diagram
 	useEffect(() => {

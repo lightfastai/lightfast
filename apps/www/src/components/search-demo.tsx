@@ -59,9 +59,9 @@ export function SearchDemo() {
         {/* Search Results */}
         <div className="flex-1 border rounded-lg overflow-hidden">
           <div className="gap-2">
-            {searchResults.map((result, index) => (
+            {searchResults.map((result) => (
               <div
-                key={index}
+                key={result.title}
                 className="px-3 py-2 hover:bg-accent transition-colors duration-150"
               >
                 <div className="flex items-start gap-3">

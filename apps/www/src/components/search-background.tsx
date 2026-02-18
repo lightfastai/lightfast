@@ -11,6 +11,7 @@ export function SearchBackground() {
         src="/images/blue-sky.webp"
         alt=""
         fill
+        sizes="100vw"
         priority
         className="object-cover scale-110 blur-3xl"
       />

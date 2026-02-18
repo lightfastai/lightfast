@@ -68,6 +68,8 @@ import { cn } from "@repo/ui/lib/utils";
 import type { ChatInlineError } from "@repo/chat-ai-types/errors";
 import { ChatErrorType } from "@repo/chat-ai-types/errors";
 
+const EMPTY_INLINE_ERRORS: ChatInlineError[] = [];
+
 const ResponsePlaceholder = () => (
 	<div className="h-5 w-32 animate-pulse rounded bg-muted/40" />
 );
@@ -1043,7 +1045,7 @@ export function ChatMessages({
 	_isAuthenticated,
 	isExistingSessionWithNoMessages = false,
 	hasActiveStream = false,
-	inlineErrors = [],
+	inlineErrors = EMPTY_INLINE_ERRORS,
 	onInlineErrorDismiss,
 	onStreamAnimationChange,
 }: ChatMessagesProps) {

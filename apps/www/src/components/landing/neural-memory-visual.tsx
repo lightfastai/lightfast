@@ -82,8 +82,8 @@ export function NeuralMemoryVisual() {
 
         {/* Observations Feed */}
         <div className="flex-1 space-y-3">
-          {observations.map((obs, index) => (
-            <div key={index} className="bg-secondary rounded-md p-3">
+          {observations.map((obs) => (
+            <div key={obs.title} className="bg-secondary rounded-md p-3">
               <div className="flex items-start gap-3">
                 {/* Content */}
                 <div className="flex-1 min-w-0">

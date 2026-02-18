@@ -70,14 +70,14 @@ export function CitationsVisual() {
               if (part.type === "citation") {
                 return (
                   <sup
-                    key={index}
+                    key={`citation-${part.id}`}
                     className="inline-flex items-center justify-center w-4 h-4 ml-0.5 text-[10px] font-medium rounded bg-primary/20 text-primary cursor-pointer hover:bg-primary/30"
                   >
                     {part.id}
                   </sup>
                 );
               }
-              return <span key={index}>{part.content}</span>;
+              return <span key={part.content}>{part.content}</span>;
             })}
           </p>
         </div>

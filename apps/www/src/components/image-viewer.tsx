@@ -22,6 +22,7 @@ export function LightfastImageViewer({
           src={src}
           alt={alt}
           fill
+          sizes="100vw"
           className="object-cover"
           priority
         />

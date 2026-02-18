@@ -16,9 +16,8 @@ export function DownloadButton() {
       await exportSlidesToPdfLazy();
     } catch (error) {
       console.error("Failed to export slides:", error);
-    } finally {
-      setIsExporting(false);
     }
+    setIsExporting(false);
   };
 
   return (

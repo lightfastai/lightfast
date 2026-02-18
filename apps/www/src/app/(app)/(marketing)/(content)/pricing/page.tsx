@@ -491,12 +491,12 @@ export default function PricingPage() {
                   type="single"
                   collapsible
                   className="w-full"
-                  defaultValue="item-0"
+                  defaultValue="What makes Lightfast worth $20/user?"
                 >
-                  {faqs.map((faq, index) => (
+                  {faqs.map((faq) => (
                     <AccordionItem
-                      key={index}
-                      value={`item-${index}`}
+                      key={faq.question}
+                      value={faq.question}
                       className="border-b border-border last:border-b-0"
                     >
                       <AccordionTrigger

@@ -35,6 +35,7 @@ import {
   FormMessage,
 } from "@repo/ui/components/ui/form";
 import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
 import { captureException } from "@sentry/nextjs";
 import { ConfettiWrapper } from "./confetti-wrapper";
@@ -58,6 +59,8 @@ const COMPANY_SIZES = [
   { value: "1001+", label: "1001+ employees" },
 ];
 
+const EMPTY_SOURCES: string[] = [];
+
 const DATA_SOURCES = [
   { value: "github", label: "GitHub" },
   { value: "gitlab", label: "GitLab" },
@@ -74,7 +77,7 @@ const DATA_SOURCES = [
 export function EarlyAccessForm({
   initialEmail = "",
   initialCompanySize = "",
-  initialSources = [],
+  initialSources = EMPTY_SOURCES,
 }: {
   initialEmail?: string;
   initialCompanySize?: string;
@@ -202,7 +205,6 @@ export function EarlyAccessForm({
                   {...field}
                   type="email"
                   placeholder="name@company.com"
-                  autoFocus
                 />
               </FormControl>
               <FormMessage />
@@ -398,23 +400,23 @@ export function EarlyAccessForm({
         {/* Terms and Privacy */}
         <p className="text-xs text-muted-foreground">
           By continuing you acknowledge that you understand and agree to our{" "}
-          <a
+          <Link
             href="/legal/terms"
             target="_blank"
             rel="noopener noreferrer"
             className="underline hover:text-foreground transition-colors"
           >
             Terms and Conditions
-          </a>{" "}
+          </Link>{" "}
           and{" "}
-          <a
+          <Link
             href="/legal/privacy"
             target="_blank"
             rel="noopener noreferrer"
             className="underline hover:text-foreground transition-colors"
           >
             Privacy Policy
-          </a>
+          </Link>
           .
         </p>
       </form>

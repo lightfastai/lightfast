@@ -54,8 +54,8 @@ export function ColumnsSlideContent({
             : `${responsiveGridCols} gap-3 sm:gap-4 md:gap-8`
         )}
       >
-        {slide.columns.map((column, idx) => (
-          <div key={idx} className="flex flex-col">
+        {slide.columns.map((column) => (
+          <div key={column.header} className="flex flex-col">
             {/* Column header with underline */}
             <h3
               className={cn(
@@ -73,8 +73,8 @@ export function ColumnsSlideContent({
                 isFixed ? "gap-2 text-lg" : "gap-1 text-[10px] sm:gap-1.5 sm:text-xs md:gap-2 md:text-sm"
               )}
             >
-              {column.items.map((item, itemIdx) => (
-                <li key={itemIdx}>{item}</li>
+              {column.items.map((item) => (
+                <li key={item}>{item}</li>
               ))}
             </ul>
           </div>

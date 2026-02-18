@@ -96,12 +96,12 @@ export function FAQSection() {
             type="single"
             collapsible
             className="w-full"
-            defaultValue="item-0"
+            defaultValue={faqs[0]?.question}
           >
-            {faqs.map((faq, index) => (
+            {faqs.map((faq) => (
               <AccordionItem
-                key={index}
-                value={`item-${index}`}
+                key={faq.question}
+                value={faq.question}
                 className="border-b border-border last:border-b-0"
               >
                 <AccordionTrigger

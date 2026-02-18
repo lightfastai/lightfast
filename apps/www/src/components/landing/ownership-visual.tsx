@@ -79,8 +79,8 @@ export function OwnershipVisual() {
 
       {/* Ownership List */}
       <div className="flex-1 space-y-3">
-        {ownershipData.map((item, index) => (
-          <div key={index} className="bg-secondary rounded-md p-3">
+        {ownershipData.map((item) => (
+          <div key={item.person} className="bg-secondary rounded-md p-3">
             <div className="flex items-start gap-3">
               {/* Avatar */}
               <div className="w-8 h-8 rounded-full bg-card flex items-center justify-center">
@@ -104,11 +104,11 @@ export function OwnershipVisual() {
 
                 {/* Ownership tags */}
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  {item.owns.map((ownership, idx) => {
+                  {item.owns.map((ownership) => {
                     const Icon = ownership.icon;
                     return (
                       <span
-                        key={idx}
+                        key={ownership.name}
                         className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-card text-muted-foreground"
                       >
                         <Icon className="w-3 h-3" />

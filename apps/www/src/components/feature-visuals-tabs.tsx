@@ -72,6 +72,7 @@ export function FeatureVisualsTabs() {
               src="/images/nascent_remix.webp"
               alt="Abstract gradient background"
               fill
+              sizes="(max-width: 1024px) 100vw, 66vw"
               className="object-cover"
               priority
             />
@@ -95,6 +96,7 @@ export function FeatureVisualsTabs() {
                   src="/images/nascent_remix.webp"
                   alt="Abstract gradient background"
                   fill
+                  sizes="128px"
                   className="object-cover"
                 />
                 {/* Mini card overlay */}

@@ -130,6 +130,8 @@ function computeSimpleBorders(borderColorClass: string): string {
 // COMPONENT
 // ============================================================================
 
+const EMPTY_BORDERLESS_ZONE = new Set<string>();
+
 export function GridSection({
   rows,
   cols,
@@ -140,7 +142,7 @@ export function GridSection({
   borderColorClass = "border-border",
   outerBorder = true,
   cellBackground = "bg-background",
-  borderlessZone = new Set<string>(),
+  borderlessZone = EMPTY_BORDERLESS_ZONE,
   interactive = false,
   hoverClass = "",
   showLabels = false,

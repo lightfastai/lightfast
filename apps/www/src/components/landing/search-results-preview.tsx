@@ -41,11 +41,11 @@ export function SearchResultsPreview() {
       {/* Search Results - Grid matching integration-showcase exactly */}
       <div className="flex-1 overflow-auto p-3">
         <div className="grid grid-cols-2 gap-3">
-          {searchResults.map((result, idx) => {
+          {searchResults.map((result) => {
             const Icon = IntegrationIcons[result.source];
             return (
               <div
-                key={idx}
+                key={result.title}
                 className="relative flex items-center justify-center"
               >
                 <div className="bg-accent/40 border border-border/40 h-[6.25rem] px-3 flex w-full items-center justify-center rounded-xs">

@@ -173,7 +173,7 @@ export function WorkspaceSearch({
     performSearch(query);
   };
 
-  const handlePromptSubmit = (message: PromptInputMessage) => {
+  const handlePromptSubmit = async (message: PromptInputMessage) => {
     const content = message.text?.trim() ?? "";
     void setQuery(content);
     setInputValue("");
