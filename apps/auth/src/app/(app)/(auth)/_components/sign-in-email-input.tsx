@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useSignIn } from "@clerk/nextjs";
-import type { EmailCodeFactor } from "@clerk/types";
+import { useSignIn } from "@vendor/clerk/client";
+import type { EmailCodeFactor } from "@vendor/clerk/types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";

@@ -69,6 +69,9 @@ export function handleClerkError(
     configurable: true
   });
   
+  // Destructure email out of context to avoid sending PII to Sentry
+  const { email: _email, ...safeContext } = context;
+
   // Capture to Sentry with comprehensive context
   captureException(sentryError, {
     tags: {
@@ -83,7 +86,7 @@ export function handleClerkError(
             : 'validation',
     },
     extra: {
-      ...context,
+      ...safeContext,
       clerkErrorMessage: message,
       userMessage,
       originalError: error,
@@ -116,6 +119,9 @@ export function handleUnexpectedStatus(
     `[${context.component}] Unexpected status: ${status} for ${context.action}`
   );
   
+  // Destructure email and result out of context to avoid sending PII to Sentry
+  const { email: _email, result: _result, ...safeContext } = context;
+
   captureException(error, {
     tags: {
       component: context.component,
@@ -124,7 +130,7 @@ export function handleUnexpectedStatus(
       error_type: 'unexpected_status',
     },
     extra: {
-      ...context,
+      ...safeContext,
       status,
     },
   });
