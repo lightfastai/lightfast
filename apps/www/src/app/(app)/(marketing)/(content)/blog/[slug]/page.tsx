@@ -271,7 +271,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                         <div className="flex items-center gap-3">
                           <div className="flex -space-x-2">
                             {post.authors.map((author, authorIdx) => (
-                              <div key={author._title ?? `author-${authorIdx}`} className="relative">
+                              <div key={`${author._title ?? "author"}-${authorIdx}`} className="relative">
                                 {author.avatar?.url ? (
                                   <Image
                                     src={author.avatar.url}
@@ -292,7 +292,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                           </div>
                           <div>
                             {post.authors.map((author, idx) => (
-                              <span key={author._title ?? `author-text-${idx}`}>
+                              <span key={`${author._title ?? "author-text"}-${idx}`}>
                                 {author.xUrl ? (
                                   <Link
                                     href={author.xUrl}
@@ -396,7 +396,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       </h3>
                       <div className="space-y-6">
                         {post.authors.map((author, authorIdx) => (
-                          <div key={author._title ?? `author-bio-${authorIdx}`} className="flex gap-4">
+                          <div key={`${author._title ?? "author-bio"}-${authorIdx}`} className="flex gap-4">
                             {author.avatar?.url && (
                               <Image
                                 src={author.avatar.url}
