@@ -28,7 +28,7 @@ const CLERK_PLAN_IDS: Record<ClerkPlanKey, PlanMapping> = {
   },
 };
 
-function resolveDeploymentStage(explicit?: DeploymentStage | string): DeploymentStage {
+function resolveDeploymentStage(explicit?: string): DeploymentStage {
   if (explicit === "production" || explicit === "preview" || explicit === "development") {
     return explicit;
   }
@@ -46,14 +46,10 @@ function resolveDeploymentStage(explicit?: DeploymentStage | string): Deployment
 
 export function getClerkPlanId(
   planKey: ClerkPlanKey,
-  options?: { environment?: DeploymentStage | string },
+  options?: { environment?: string },
 ): string {
   const stage = resolveDeploymentStage(options?.environment);
   const mapping = CLERK_PLAN_IDS[planKey];
-
-  if (!mapping) {
-    throw new Error(`Unknown plan key: ${String(planKey)}`);
-  }
 
   return stage === "production" ? mapping.production : mapping.nonProduction;
 }
@@ -86,7 +82,7 @@ export const BILLING_LIMITS: Record<ClerkPlanKey, BillingPlanLimits> = {
 export function getMessageLimitsForPlan(
   planKey: ClerkPlanKey,
 ): BillingPlanLimits {
-  return BILLING_LIMITS[planKey] ?? BILLING_LIMITS[ClerkPlanKey.FREE_TIER];
+  return BILLING_LIMITS[planKey];
 }
 
 export enum BillingErrorCode {

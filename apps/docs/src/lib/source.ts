@@ -5,14 +5,14 @@ import { openapiSource } from "fumadocs-openapi/server";
 import { openapi } from "./openapi";
 
 // Docs source (general documentation)
-export const docsSource = loader({
+const docsSource = loader({
 	baseUrl: "/docs",
 	source: toFumadocsSource(docs, meta),
 });
 
 // API source (API reference documentation)
 // Combines manual MDX pages (getting-started, sdks-tools) with virtual OpenAPI endpoint pages
-export const apiSource = loader({
+const apiSource = loader({
 	baseUrl: "/docs/api-reference",
 	source: multiple({
 		mdx: toFumadocsSource(apiDocs, apiMeta),
@@ -31,7 +31,6 @@ export const apiSource = loader({
  * These types provide access to runtime properties (body, toc, structuredData) that
  * are added by fumadocs-mdx v14 but lost in fumadocs-core v16 loader type inference.
  */
-export type DocsPageType = (typeof docs)[number];
 export type ApiPageType = (typeof apiDocs)[number];
 
 // Export docs methods

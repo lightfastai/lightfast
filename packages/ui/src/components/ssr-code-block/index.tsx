@@ -15,7 +15,6 @@ interface SSRCodeBlockProps {
   language?: string;
   className?: string;
   showHeader?: boolean;
-  showLineNumbers?: boolean;
 }
 
 export async function SSRCodeBlock({
@@ -23,10 +22,8 @@ export async function SSRCodeBlock({
   language = "typescript",
   className,
   showHeader = true,
-  showLineNumbers = true,
 }: SSRCodeBlockProps) {
   const code = children.trim();
-  const lineCount = code.split("\n").length;
 
   // Normalize language names - handle common aliases and invalid languages
   let lang: BundledLanguage = language as BundledLanguage;
@@ -38,12 +35,17 @@ export async function SSRCodeBlock({
     plain: "plaintext" as BundledLanguage,
   };
 
-  if (languageLower in languageMap) {
-    lang = languageMap[languageLower]!;
+  const mappedLang = languageMap[languageLower];
+  if (mappedLang) {
+    lang = mappedLang;
   }
 
+  // Type for HAST tree nodes, extracted from toJsxRuntime's expected parameter
+  type HastNodes = Parameters<typeof toJsxRuntime>[0];
+
   // Generate HAST for both themes in parallel, with fallback to plain text
-  let lightHast, darkHast;
+  let lightHast: HastNodes;
+  let darkHast: HastNodes;
   try {
     [lightHast, darkHast] = await Promise.all([
       codeToHast(code, {
@@ -54,8 +56,8 @@ export async function SSRCodeBlock({
         lang,
         theme: openaiDark,
       }),
-    ]);
-  } catch (error) {
+    ]) as [HastNodes, HastNodes];
+  } catch {
     // If language is not supported, fall back to plain text
     [lightHast, darkHast] = await Promise.all([
       codeToHast(code, {
@@ -66,7 +68,7 @@ export async function SSRCodeBlock({
         lang: "text",
         theme: openaiDark,
       }),
-    ]);
+    ]) as [HastNodes, HastNodes];
   }
 
   // Convert HAST to JSX for both themes
@@ -100,7 +102,8 @@ export async function SSRCodeBlock({
       style?: React.CSSProperties;
       [key: string]: unknown;
     }) => {
-      const hasColor = style?.color && style.color !== "inherit";
+      const colorValue = style?.color;
+      const hasColor = colorValue && colorValue !== "inherit";
       const fallbackColor = mode === "light" ? "#24292e" : "#dcdcdc";
       return (
         <span
@@ -108,7 +111,7 @@ export async function SSRCodeBlock({
           className="leading-[1.7]!"
           style={{
             ...style,
-            color: hasColor ? style?.color : fallbackColor,
+            color: hasColor ? colorValue : fallbackColor,
             letterSpacing: "normal",
           }}
         />
@@ -116,22 +119,19 @@ export async function SSRCodeBlock({
     },
   });
 
-  const lightJsx = toJsxRuntime(lightHast, {
-    Fragment,
-    jsx,
-    jsxs,
-    components: createShikiComponents("light"),
-  });
+  function hastToJsx(hast: HastNodes, mode: "light" | "dark"): React.ReactNode {
+    // toJsxRuntime types depend on the `hast` module which eslint's type checker
+    // cannot fully resolve, requiring the explicit cast here
+    return toJsxRuntime(hast, {
+      Fragment,
+      jsx,
+      jsxs,
+      components: createShikiComponents(mode),
+    } as Parameters<typeof toJsxRuntime>[1]) as React.ReactNode;
+  }
 
-  const darkJsx = toJsxRuntime(darkHast, {
-    Fragment,
-    jsx,
-    jsxs,
-    components: createShikiComponents("dark"),
-  });
-
-  // Generate line numbers
-  const lineNumbers = Array.from({ length: lineCount }, (_, i) => i + 1);
+  const lightJsx = hastToJsx(lightHast, "light");
+  const darkJsx = hastToJsx(darkHast, "dark");
 
   return (
     <div className={cn("my-4", className)}>

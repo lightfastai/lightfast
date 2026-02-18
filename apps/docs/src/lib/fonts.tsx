@@ -65,6 +65,3 @@ export const exposurePlus = localFont({
   variable: "--font-exposure-plus",
   display: "swap",
 });
-
-// Legacy export for backwards compatibility
-export const exposureTrial = exposurePlus;

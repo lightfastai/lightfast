@@ -32,8 +32,8 @@ interface CodeComponentProps extends MarkdownComponentProps {
  */
 const components: Partial<ReactMarkdownComponents> = {
   // Code components - handles both inline and block code
-  code({ node, inline, className, children, ...props }: CodeComponentProps & { node?: any }) {
-    const isInline = inline || (node?.position?.start.line === node?.position?.end.line);
+  code({ node: _node, inline, className, children, ...props }: CodeComponentProps) {
+    const isInline = inline ?? false;
     
     // Inline code styling
     if (isInline) {
@@ -52,9 +52,10 @@ const components: Partial<ReactMarkdownComponents> = {
   },
 
   // Pre component for code blocks
-  pre({ node, className, children, ...props }: MarkdownComponentProps & { node?: any }) {
+  pre({ node: _node, className, children }: MarkdownComponentProps) {
     let language: BundledLanguage = "javascript";
 
+    const node = _node as { properties?: { className?: string } } | undefined;
     if (node?.properties && typeof node.properties.className === "string") {
       language = node.properties.className.replace(
         "language-",

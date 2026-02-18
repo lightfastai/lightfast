@@ -481,11 +481,6 @@ export const ALL_INTERNAL_EVENT_TYPES = Object.keys(
   EVENT_REGISTRY,
 ) as InternalEventType[];
 
-// ─── Backward-Compatible Alias ────────────────────────────────────────────────
-
-/** @deprecated Use EVENT_REGISTRY directly */
-export const INTERNAL_EVENT_TYPES = EVENT_REGISTRY;
-
 // ─── Lookup Functions ─────────────────────────────────────────────────────────
 
 /** Get full event config by internal type */
@@ -672,6 +667,6 @@ export const ALL_LINEAR_EVENTS = Object.keys(LINEAR_EVENTS) as LinearEvent[];
 export const WEBHOOK_EVENT_TYPES = {
   github: ALL_GITHUB_EVENTS as string[],
   vercel: ALL_VERCEL_EVENTS as string[],
-  sentry: Object.keys(SENTRY_TO_INTERNAL) as string[],
+  sentry: Object.keys(SENTRY_TO_INTERNAL),
   linear: ALL_LINEAR_EVENTS as string[],
 };

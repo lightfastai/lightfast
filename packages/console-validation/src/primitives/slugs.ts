@@ -150,14 +150,6 @@ export const storeNameSchema = z
   );
 
 /**
- * Store Slug Schema (Internal)
- *
- * Same as storeNameSchema - stores use name as slug.
- * Kept as separate export for consistency with workspace patterns.
- */
-export const storeSlugSchema = storeNameSchema;
-
-/**
  * Repository Full Name Schema
  *
  * Validates GitHub repository full name (owner/repo format)

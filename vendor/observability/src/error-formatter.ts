@@ -34,7 +34,7 @@ export class ErrorFormatter {
 
 export class TypedErrorFormatter<T extends Error> extends ErrorFormatter {
   constructor(
-    private readonly errorType: new (...args: any[]) => T,
+    private readonly errorType: new (...args: unknown[]) => T,
     level: string,
     context: Record<string, unknown> = {},
   ) {

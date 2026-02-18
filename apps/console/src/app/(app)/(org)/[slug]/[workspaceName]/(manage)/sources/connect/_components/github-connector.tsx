@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import Image from "next/image";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -27,12 +28,8 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
     selectedInstallationId,
     clerkOrgSlug,
     workspaceName,
-    setUserSourceId,
-    setIsConnected,
     setSelectedResources,
   } = useConnectForm();
-
-  const [showRepoSelector, setShowRepoSelector] = useState(false);
 
   // Fetch GitHub connection status (prefetched on server)
   const { data: githubSource, refetch } = useSuspenseQuery({
@@ -44,26 +41,9 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
   const isConnected = !!githubSource?.id;
   const installations = githubSource?.installations ?? [];
 
-  // Sync connection state to context
-  useEffect(() => {
-    setIsConnected(isConnected);
-    setUserSourceId(githubSource?.id ?? null);
-  }, [isConnected, githubSource?.id, setIsConnected, setUserSourceId]);
-
-  // Auto-select first installation
-  useEffect(() => {
-    const firstInstall = installations[0];
-    if (installations.length > 0 && !selectedInstallationId && firstInstall) {
-      setSelectedInstallationId(firstInstall.id);
-    }
-  }, [installations, selectedInstallationId, setSelectedInstallationId]);
-
-  // Auto-open repo selector after OAuth return
-  useEffect(() => {
-    if (autoOpen && isConnected && installations.length > 0) {
-      setShowRepoSelector(true);
-    }
-  }, [autoOpen, isConnected, installations.length]);
+  const [showRepoSelector, setShowRepoSelector] = useState(
+    () => autoOpen && isConnected && installations.length > 0,
+  );
 
   const handleConnectGitHub = () => {
     const width = 600;
@@ -113,22 +93,24 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
       {/* Installation Selector */}
       {installations.length > 1 && (
         <div className="space-y-2">
-          <label className="text-sm font-medium">GitHub Installation</label>
+          <label htmlFor="github-installation-select" className="text-sm font-medium">GitHub Installation</label>
           <Select
             value={selectedInstallationId ?? undefined}
             onValueChange={setSelectedInstallationId}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger id="github-installation-select" className="w-full">
               <SelectValue placeholder="Select installation" />
             </SelectTrigger>
             <SelectContent>
               {installations.map((inst) => (
                 <SelectItem key={inst.id} value={inst.id}>
                   <div className="flex items-center gap-2">
-                    <img
+                    <Image
                       src={inst.avatarUrl}
                       alt=""
-                      className="h-4 w-4 rounded"
+                      width={16}
+                      height={16}
+                      className="rounded"
                     />
                     <span>{inst.accountLogin}</span>
                     <span className="text-xs text-muted-foreground">
@@ -144,10 +126,12 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
 
       {installations.length === 1 && installations[0] && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <img
+          <Image
             src={installations[0].avatarUrl}
             alt=""
-            className="h-5 w-5 rounded"
+            width={20}
+            height={20}
+            className="rounded"
           />
           <span>{installations[0].accountLogin}</span>
         </div>

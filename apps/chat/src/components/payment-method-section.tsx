@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import * as React from "react";
 import { usePaymentMethods } from "@clerk/nextjs/experimental";
 import { Button } from "@repo/ui/components/ui/button";
@@ -56,7 +55,7 @@ export function PaymentMethodSection({ currentPlan }: PaymentMethodSectionProps)
 				</CardHeader>
 				<CardContent className="text-center space-y-4">
 					<p className="text-muted-foreground">
-						{String(error?.message ?? "Failed to load payment methods")}
+						{error.message || "Failed to load payment methods"}
 					</p>
 				</CardContent>
 			</Card>
@@ -64,7 +63,7 @@ export function PaymentMethodSection({ currentPlan }: PaymentMethodSectionProps)
 	}
 
 	// Get the primary payment method (usually the first one)
-	const primaryPaymentMethod = paymentMethods?.[0];
+	const primaryPaymentMethod = paymentMethods[0];
 
 	return (
 		<Card>

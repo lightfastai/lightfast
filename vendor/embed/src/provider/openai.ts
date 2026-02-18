@@ -36,7 +36,7 @@ export class OpenAIEmbedding implements EmbeddingProvider {
    *
    * @throws Error - Always throws in Phase 1
    */
-  async embed(_texts: string[]): Promise<EmbedResponse> {
+  embed(_texts: string[]): Promise<EmbedResponse> {
     throw new Error(
       "OpenAI embeddings not implemented in Phase 1. Use CharHashEmbedding instead. OpenAI integration will be added in Phase 2.",
     );

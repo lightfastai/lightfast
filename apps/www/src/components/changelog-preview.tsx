@@ -3,8 +3,6 @@ import { changelog  } from "@vendor/cms";
 import type {ChangelogEntriesQueryResponse} from "@vendor/cms";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
 
-export const revalidate = 300;
-
 export function ChangelogPreview() {
   return (
     <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
@@ -38,27 +36,13 @@ export function ChangelogPreview() {
               {latestEntries.map((item) => {
                 // Use publishedAt if available, fall back to createdAt
                 const publishedTime = item.publishedAt ?? item._sys?.createdAt;
-                const created = publishedTime ? new Date(publishedTime) : null;
-                const dateStr = created
-                  ? created.toLocaleDateString(undefined, {
+                const dateStr = publishedTime
+                  ? new Date(publishedTime).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
                       day: "numeric",
                     })
                   : "";
-
-                // Count items in each section for display
-                const improvementsCount = item.improvements
-                  ? item.improvements
-                      .split("\n")
-                      .filter((line) => line.trim().startsWith("-")).length
-                  : 0;
-                const fixesCount = item.fixes
-                  ? item.fixes
-                      .split("\n")
-                      .filter((line) => line.trim().startsWith("-")).length
-                  : 0;
-                const _totalChanges = improvementsCount + fixesCount;
 
                 return (
                   <Link

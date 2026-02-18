@@ -51,9 +51,9 @@ export function ShowcaseSlideContent({
             isFixed ? "gap-6" : "gap-2 sm:gap-3 md:gap-4"
           )}
         >
-          {slide.metadata.map((item, idx) => (
+          {slide.metadata.map((item) => (
             <div
-              key={idx}
+              key={item.label}
               className={cn(
                 "border-b border-neutral-300",
                 isFixed ? "pb-4" : "pb-1.5 sm:pb-2 md:pb-3"

@@ -21,8 +21,6 @@ import { env } from "~/env";
  * with Next.js 16's NextConfig.
  */
 const wwwConfig: NextConfig = {
-	reactStrictMode: true,
-
 	// Next.js 16 requires explicit quality values
 	images: {
 		qualities: [10, 75, 100],
@@ -50,11 +48,8 @@ const wwwConfig: NextConfig = {
 
 	// Add automatic static optimization where possible
 	experimental: {
-		optimizeCss: true,
 		optimizePackageImports: [
-			"@repo/ui",
 			"jotai",
-			"lucide-react",
 			"react-confetti",
 			"framer-motion",
 			"date-fns",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "@repo/ui/components/ui/input";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Switch } from "@repo/ui/components/ui/switch";
@@ -74,15 +74,19 @@ export function SearchFilters({
   // Local display state for number inputs to allow empty field during editing
   const [displayLimit, setDisplayLimit] = useState(String(limit));
   const [displayOffset, setDisplayOffset] = useState(String(offset));
+  const [prevLimit, setPrevLimit] = useState(limit);
+  const [prevOffset, setPrevOffset] = useState(offset);
 
   // Sync display state with prop changes (e.g., from URL updates)
-  useEffect(() => {
+  // Using setState-during-render instead of useEffect to stay React Compiler compatible
+  if (prevLimit !== limit) {
+    setPrevLimit(limit);
     setDisplayLimit(String(limit));
-  }, [limit]);
-
-  useEffect(() => {
+  }
+  if (prevOffset !== offset) {
+    setPrevOffset(offset);
     setDisplayOffset(String(offset));
-  }, [offset]);
+  }
 
   // Handle limit input blur - validate and update parent
   const handleLimitBlur = () => {

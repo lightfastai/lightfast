@@ -1,9 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { SortedResult } from '~/app/(docs)/api/search/route';
-
-export type { SortedResult };
 
 // In-memory cache for GET requests (survives re-renders, cleared on page reload)
 const queryCache = new Map<string, SortedResult[]>();
@@ -28,15 +26,8 @@ export function useDocsSearch(delayMs = 100) {
   const [error, setError] = useState<Error | undefined>();
 
   const debouncedQuery = useDebounce(search, delayMs);
-  const onStartRef = useRef<(() => void) | undefined>(undefined);
 
   useEffect(() => {
-    // Cancel previous in-flight request
-    if (onStartRef.current) {
-      onStartRef.current();
-      onStartRef.current = undefined;
-    }
-
     if (!debouncedQuery.trim()) {
       // Resetting state when query becomes empty is intentional —
       // this synchronizes UI state with the external "no query" condition.
@@ -48,10 +39,7 @@ export function useDocsSearch(delayMs = 100) {
     }
 
     setIsLoading(true);
-    let interrupt = false;
-    onStartRef.current = () => {
-      interrupt = true;
-    };
+    const controller = new AbortController();
 
     const url = new URL('/api/search', window.location.origin);
     url.searchParams.set('query', debouncedQuery);
@@ -66,25 +54,26 @@ export function useDocsSearch(delayMs = 100) {
       return;
     }
 
-    void fetch(url)
+    void fetch(url, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error('Search request failed');
         return res.json() as Promise<SortedResult[]>;
       })
       .then((data) => {
-        if (interrupt) return;
         queryCache.set(cacheKey, data);
         setResults(data);
         setError(undefined);
       })
       .catch((err: Error) => {
-        if (interrupt) return;
+        if (err.name === 'AbortError') return;
         setError(err);
         setResults('empty');
       })
       .finally(() => {
-        if (!interrupt) setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       });
+
+    return () => controller.abort();
   }, [debouncedQuery]);
 
   const clearSearch = useCallback(() => {

@@ -14,7 +14,6 @@ import { env } from "~/env";
 
 let config: NextConfig = withBetterStack(
 	mergeNextConfig(vendorConfig, {
-		reactStrictMode: true,
 		transpilePackages: [
 			"@repo/og",
 			"@repo/ui",

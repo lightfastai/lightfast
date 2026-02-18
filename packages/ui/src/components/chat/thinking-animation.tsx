@@ -64,37 +64,16 @@ export const ThinkingAnimation = memo(function ThinkingAnimation() {
 				</defs>
 			</svg>
 
-			<style jsx>{`
-				@keyframes pulse {
-					0%, 100% {
-						opacity: 0.4;
-					}
-					50% {
-						opacity: 0.7;
-					}
-				}
-
+			<style dangerouslySetInnerHTML={{ __html: `
 				@keyframes gradient {
-					0% {
-						background-position: 0% 50%;
-					}
-					50% {
-						background-position: 100% 50%;
-					}
-					100% {
-						background-position: 0% 50%;
-					}
+					0% { background-position: 0% 50%; }
+					50% { background-position: 100% 50%; }
+					100% { background-position: 0% 50%; }
 				}
-
-				.animate-pulse {
-					animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-				}
-
 				.animate-gradient {
 					animation: gradient 3s ease infinite;
 				}
-			`}</style>
+			` }} />
 		</>
 	);
 });
-

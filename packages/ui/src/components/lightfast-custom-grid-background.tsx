@@ -133,7 +133,7 @@ function Root({
     }
   }, [density]);
 
-  const { divisions, opacity } = getGridSpacing();
+  const { divisions } = getGridSpacing();
 
   if (mode === "flex") {
     // Flex mode: Grid adapts to container content

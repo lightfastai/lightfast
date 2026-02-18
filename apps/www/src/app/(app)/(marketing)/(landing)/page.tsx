@@ -9,6 +9,8 @@ import { IntegrationShowcase } from "~/components/integration-showcase";
 import { ChangelogPreview } from "~/components/changelog-preview";
 import { HeroChangelogBadge } from "~/components/hero-changelog-badge";
 import { WaitlistCTA } from "~/components/waitlist-cta";
+import { JsonLd } from "@vendor/seo/json-ld";
+import type {GraphContext, Organization, WebSite, SoftwareApplication, FAQPage, Question} from "@vendor/seo/json-ld";
 
 const benefits = [
   {
@@ -48,8 +50,6 @@ const benefits = [
       "Your data stays yours. Complete tenant isolation with enterprise-grade security.",
   },
 ];
-import { JsonLd } from "@vendor/seo/json-ld";
-import type {GraphContext, Organization, WebSite, SoftwareApplication, FAQPage, Question} from "@vendor/seo/json-ld";
 
 // SEO metadata for the landing page
 export const metadata: Metadata = {
@@ -210,6 +210,7 @@ export default function HomePage() {
                 src="/images/landing-hero.gif"
                 alt="Data flows through the Lightfast engine"
                 fill
+                sizes="(max-width: 768px) 150vw, (max-width: 1024px) 100vw, 80vw"
                 priority
                 unoptimized
                 quality={100}

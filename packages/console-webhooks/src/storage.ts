@@ -48,9 +48,6 @@ export async function storeIngestionPayload(
   return record.id;
 }
 
-/** @deprecated Use storeIngestionPayload instead */
-export const storeWebhookPayload = storeIngestionPayload;
-
 /**
  * Extract relevant headers from request for storage.
  * Captures headers useful for debugging and context.

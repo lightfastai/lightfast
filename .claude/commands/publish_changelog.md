@@ -52,7 +52,7 @@ Example: `/publish_changelog thoughts/changelog/my-changelog.md`
 4. **Execute publish:**
    - If user confirms "Publish now":
      ```bash
-     cd apps/www && pnpm with-env pnpm tsx scripts/publish-changelog.ts {absolute_filepath}
+     pnpm publish:changelog -- {absolute_filepath}
      ```
    - Parse the JSON output from stdout
    - Handle errors from stderr

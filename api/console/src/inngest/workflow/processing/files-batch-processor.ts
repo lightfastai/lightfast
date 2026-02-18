@@ -12,7 +12,8 @@
  * 5. Emits completion event with real counts
  */
 
-import { inngest, type Events } from "../../client/client";
+import { inngest } from "../../client/client";
+import type { Events } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import {
   createGitHubApp,

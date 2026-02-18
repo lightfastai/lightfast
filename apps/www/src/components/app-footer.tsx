@@ -167,9 +167,9 @@ export function AppFooter() {
       {/* Lissajous patterns grid */}
       <div className="hidden md:block mt-auto mx-auto w-full max-w-[1400px] md:py-16 md:px-16 lg:px-24">
         <div className="grid grid-cols-3 md:grid-cols-9 gap-4">
-          {FOOTER_PATTERNS.map((pattern, index) => (
+          {FOOTER_PATTERNS.map((pattern) => (
             <div
-              key={index}
+              key={`${pattern.a}-${pattern.b}-${pattern.delta}`}
               className="aspect-square border border-border flex items-center justify-center p-4"
             >
               <Lissajous

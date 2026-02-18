@@ -29,6 +29,8 @@ interface GitHubRepoSelectorProps {
   onSelect?: (repos: { id: string; name: string; fullName: string }[]) => void;
 }
 
+const EMPTY_CONNECTED_REPO_IDS = new Set<string>();
+
 export function GitHubRepoSelector({
   open,
   onOpenChange,
@@ -36,7 +38,7 @@ export function GitHubRepoSelector({
   installationId,
   clerkOrgSlug: _clerkOrgSlug,
   workspaceName,
-  connectedRepoIds = new Set(),
+  connectedRepoIds = EMPTY_CONNECTED_REPO_IDS,
   onSelect,
 }: GitHubRepoSelectorProps) {
   const trpc = useTRPC();
@@ -185,11 +187,13 @@ export function GitHubRepoSelector({
                 return (
                   <label
                     key={repo.id}
+                    htmlFor={`repo-checkbox-${repo.id}`}
                     className={`flex items-center gap-3 p-3 rounded-md hover:bg-muted/50 cursor-pointer ${
                       isConnected ? "opacity-60 cursor-not-allowed" : ""
                     }`}
                   >
                     <Checkbox
+                      id={`repo-checkbox-${repo.id}`}
                       checked={isConnected || selectedIds.has(repo.id)}
                       disabled={isConnected}
                       onCheckedChange={() => handleToggle(repo.id)}

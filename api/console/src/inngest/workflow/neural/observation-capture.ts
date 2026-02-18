@@ -322,9 +322,8 @@ async function reconcileVercelActorsForCommit(
       const updatedActor: SourceActor = {
         ...currentActor,
         id: numericActorId,
-        // Preserve existing name, or use the GitHub actor's name
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: name may be null despite type
-        name: currentActor.name ?? sourceActor.name,
+        // Preserve existing name, or use the GitHub actor's name (may be null at runtime despite type)
+        name: (currentActor.name as string | null | undefined) ?? sourceActor.name,
         // Add email/avatar from GitHub if not present
         email: currentActor.email ?? sourceActor.email,
         avatarUrl: currentActor.avatarUrl ?? sourceActor.avatarUrl,
@@ -687,8 +686,7 @@ export const observationCapture = inngest.createFunction(
       }
 
       // Settings is always populated (NOT NULL with version check)
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: version may differ in future
-      if (ws.settings.version !== 1) {
+      if ((ws.settings.version as number) !== 1) {
         throw new NonRetriableError(`Workspace ${workspaceId} has invalid settings version`);
       }
 

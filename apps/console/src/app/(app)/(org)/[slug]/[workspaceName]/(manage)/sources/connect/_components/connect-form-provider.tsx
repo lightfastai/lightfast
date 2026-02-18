@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 import { createContext, useContext, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@repo/console-trpc/react";
 
 interface SelectedResource {
   id: string;
@@ -14,11 +16,8 @@ interface ConnectFormContextValue {
   provider: "github" | "vercel" | "linear" | "sentry";
   setProvider: (provider: "github" | "vercel" | "linear" | "sentry") => void;
 
-  // Connection state (set by child components)
-  isConnected: boolean;
-  setIsConnected: (connected: boolean) => void;
+  // Connection state (derived from query data)
   userSourceId: string | null;
-  setUserSourceId: (id: string | null) => void;
 
   // GitHub-specific
   selectedInstallationId: string | null;
@@ -32,7 +31,6 @@ interface ConnectFormContextValue {
   clerkOrgSlug: string;
   workspaceName: string;
   workspaceId: string | null;
-  setWorkspaceId: (id: string | null) => void;
 }
 
 const ConnectFormContext = createContext<ConnectFormContextValue | null>(null);
@@ -48,20 +46,45 @@ export function ConnectFormProvider({
   clerkOrgSlug: string;
   workspaceName: string;
 }) {
+  const trpc = useTRPC();
   const [provider, setProvider] = useState<"github" | "vercel" | "linear" | "sentry">(initialProvider);
-  const [isConnected, setIsConnected] = useState(false);
-  const [userSourceId, setUserSourceId] = useState<string | null>(null);
-  const [selectedInstallationId, setSelectedInstallationId] = useState<string | null>(null);
+  // Explicit user selection; null means "use the first available installation"
+  const [explicitInstallationId, setExplicitInstallationId] = useState<string | null>(null);
+
+  const { data: githubSource } = useQuery({
+    ...trpc.userSources.github.get.queryOptions(),
+    enabled: provider === "github",
+  });
+
+  const { data: vercelSource } = useQuery({
+    ...trpc.userSources.vercel.get.queryOptions(),
+    enabled: provider === "vercel",
+  });
+
+  const userSourceId = provider === "github"
+    ? githubSource?.id ?? null
+    : provider === "vercel"
+      ? vercelSource?.id ?? null
+      : null;
+
+  // Derive the effective installation ID without setting state during render
+  // (installations ?? []).at(0) returns T | undefined - no setState during render
+  const selectedInstallationId =
+    explicitInstallationId ?? (githubSource?.installations ?? []).at(0)?.id ?? null;
+
+  const setSelectedInstallationId = setExplicitInstallationId;
+
+  const { data: workspace } = useQuery({
+    ...trpc.workspace.getByName.queryOptions({ clerkOrgSlug, workspaceName }),
+  });
+  const workspaceId = workspace?.id ?? null;
+
   const [selectedResources, setSelectedResources] = useState<SelectedResource[]>([]);
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
 
   const value: ConnectFormContextValue = {
     provider,
     setProvider,
-    isConnected,
-    setIsConnected,
     userSourceId,
-    setUserSourceId,
     selectedInstallationId,
     setSelectedInstallationId,
     selectedResources,
@@ -69,7 +92,6 @@ export function ConnectFormProvider({
     clerkOrgSlug,
     workspaceName,
     workspaceId,
-    setWorkspaceId,
   };
 
   return (

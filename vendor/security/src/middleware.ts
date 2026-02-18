@@ -1,4 +1,5 @@
-import { defaults, type Options } from "@nosecone/next";
+import { defaults  } from "@nosecone/next";
+import type {Options} from "@nosecone/next";
 
 // biome-ignore lint/performance/noBarrelFile: "re-exporting"
 export { createMiddleware as securityMiddleware } from "@nosecone/next";

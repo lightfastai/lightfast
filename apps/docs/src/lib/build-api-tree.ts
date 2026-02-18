@@ -43,15 +43,3 @@ export function buildApiPageTree(): PageTree.Root {
     ],
   };
 }
-
-/**
- * Format tag names for display
- * "search" -> "Search"
- * "find-similar" -> "Find Similar"
- */
-function _formatTagName(tag: string): string {
-  return tag
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}

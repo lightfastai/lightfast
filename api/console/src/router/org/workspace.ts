@@ -610,8 +610,7 @@ export const workspaceRouter = {
             id: s.id,
             type: s.sourceType,
             sourceType: s.sourceType, // Canonical name
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive check for discriminated union
-            displayName: s.sourceConfig.sourceType === "github" && s.sourceConfig.type === "repository"
+            displayName: s.sourceConfig.sourceType === "github"
               ? s.sourceConfig.repoFullName
               : s.sourceType,
             documentCount: s.documentCount,

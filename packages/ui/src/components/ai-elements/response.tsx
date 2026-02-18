@@ -2,7 +2,7 @@
 
 import { cn } from "@repo/ui/lib/utils";
 import type { ComponentProps } from "react";
-import { memo, isValidElement, useEffect } from "react";
+import { memo, isValidElement } from "react";
 import { Streamdown } from "streamdown";
 import {
   CodeBlock,

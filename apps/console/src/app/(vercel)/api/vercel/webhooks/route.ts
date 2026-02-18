@@ -18,7 +18,7 @@ import {
   validateWebhookTimestamp,
 } from "@repo/console-webhooks";
 import {
-  storeWebhookPayload,
+  storeIngestionPayload,
   extractWebhookHeaders,
 } from "@repo/console-webhooks/storage";
 import { log } from "@vendor/observability/log";
@@ -59,7 +59,7 @@ async function handleDeploymentEvent(
   const { workspaceId } = workspace;
 
   // Store raw webhook payload for permanent retention
-  await storeWebhookPayload({
+  await storeIngestionPayload({
     workspaceId,
     deliveryId: payload.id,
     source: "vercel",

@@ -18,4 +18,4 @@ export interface ServerSession {
 
 export type Session = AuthSession | ServerSession;
 
-export type { ClerkAPIError } from "@clerk/types";
+export type { ClerkAPIError, EmailCodeFactor, OAuthStrategy } from "@clerk/types";

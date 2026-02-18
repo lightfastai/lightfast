@@ -21,7 +21,7 @@ import { hashContent } from "./hash";
  *
  * @param filePath - Repo-relative file path
  * @param content - Full MDX file content
- * @returns Promise resolving to MDX metadata
+ * @returns MDX metadata
  *
  * @example
  * ```typescript
@@ -32,7 +32,7 @@ import { hashContent } from "./hash";
  * # API Reference
  * ...`;
  *
- * const metadata = await parseMDX("docs/api.mdx", content);
+ * const metadata = parseMDX("docs/api.mdx", content);
  * // Returns: {
  * //   frontmatter: { title: "API Reference", description: "..." },
  * //   title: "API Reference",
@@ -42,10 +42,10 @@ import { hashContent } from "./hash";
  * // }
  * ```
  */
-export async function parseMDX(
+export function parseMDX(
   filePath: string,
   content: string,
-): Promise<MDXMetadata> {
+): MDXMetadata {
   // Parse frontmatter using gray-matter
   const { data: frontmatter, content: body } = matter(content);
 
@@ -55,7 +55,7 @@ export async function parseMDX(
     title = frontmatter.title;
   } else {
     // Try to find first h1 in the content
-    const h1Match = body.match(/^#\s+(.+)$/m);
+    const h1Match = /^#\s+(.+)$/m.exec(body);
     if (h1Match?.[1]) {
       title = h1Match[1].trim();
     }

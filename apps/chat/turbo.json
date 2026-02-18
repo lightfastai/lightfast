@@ -12,10 +12,11 @@
         "SENTRY_PROJECT",
         "SENTRY_AUTH_TOKEN"
       ],
-      "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "next-env.d.ts"]
     },
     "dev": {
       "persistent": true
-    }
+    },
+    "transit": {}
   }
 }

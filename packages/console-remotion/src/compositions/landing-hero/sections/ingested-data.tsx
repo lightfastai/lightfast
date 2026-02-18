@@ -1,6 +1,6 @@
 import type React from "react";
 import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
-import { cn } from "../../../lib/cn";
+import { cn } from "@repo/ui/lib/utils";
 import { IsometricCard } from "../shared/isometric-card";
 import {
   SPRING_CONFIGS,
@@ -96,6 +96,21 @@ const QUERY_TEXT = '"How does our authentication service work?"';
 const SIDEBAR_WIDTH = 256;
 const ROW_HEIGHT = 52;
 
+const RowContent: React.FC<{
+  item: { title: string; domain: string; timestamp: string };
+}> = ({ item }) => (
+  <>
+    <div className="truncate text-xs font-medium leading-4 text-foreground">
+      {item.title}
+    </div>
+    <div className="mt-1 flex items-center gap-2 text-xs leading-4 text-muted-foreground">
+      <span>{item.domain}</span>
+      <span className="text-muted-foreground/40">|</span>
+      <span>{item.timestamp}</span>
+    </div>
+  </>
+);
+
 export const IngestedData: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -131,49 +146,39 @@ export const IngestedData: React.FC = () => {
   const ARRIVAL_INTERVAL = 38; // frames between consecutive item cycles
   const DROP_DELAY = 14; // frames after shift starts before drop begins
 
-  // Phase 1 — shift: existing items slide down to make room
-  const shiftSprings = NEW_SEARCH_RESULTS.map((_, k) => {
-    const shiftFrame = RESULTS_START + k * ARRIVAL_INTERVAL;
-    return spring({
-      frame: frame - shiftFrame,
+  // Single pass: compute both shift and drop springs together to avoid two
+  // separate .map() allocations and a .reduce() on every frame.
+  const N_RESULTS = NEW_SEARCH_RESULTS.length;
+  const shiftValues: number[] = new Array<number>(N_RESULTS);
+  const dropValues: number[] = new Array<number>(N_RESULTS);
+  let totalShift = 0;
+  for (let k = 0; k < N_RESULTS; k++) {
+    const baseFrame = RESULTS_START + k * ARRIVAL_INTERVAL;
+    const sv = spring({
+      frame: frame - baseFrame,
       fps,
       config: SPRING_CONFIGS.SNAPPY,
       durationInFrames: MOTION_DURATION.ROW_ENTRANCE,
     });
-  });
-
-  // Phase 2 — drop: new item drops in after the gap has opened
-  const dropSprings = NEW_SEARCH_RESULTS.map((_, k) => {
-    const dropFrame = RESULTS_START + k * ARRIVAL_INTERVAL + DROP_DELAY;
-    return spring({
-      frame: frame - dropFrame,
+    const dv = spring({
+      frame: frame - baseFrame - DROP_DELAY,
       fps,
       config: SPRING_CONFIGS.SNAPPY,
       durationInFrames: MOTION_DURATION.ROW_ENTRANCE,
     });
-  });
+    shiftValues[k] = sv;
+    dropValues[k] = dv;
+    totalShift += sv;
+  }
 
-  // Total downward shift applied to initial items (sum of shift springs)
-  const totalShift = shiftSprings.reduce((a, b) => a + b, 0);
+  // Suffix sums: suffixShift[i] = sum of shiftValues[i..N_RESULTS-1].
+  // Replaces the per-item .slice(resultIndex+1).reduce() in the render loop.
+  const suffixShift: number[] = new Array<number>(N_RESULTS + 1).fill(0);
+  for (let i = N_RESULTS - 1; i >= 0; i--) {
+    suffixShift[i] = (suffixShift[i + 1] ?? 0) + (shiftValues[i] ?? 0);
+  }
 
   const RESULTS_HEIGHT = INITIAL_ITEMS.length * ROW_HEIGHT;
-
-  const renderRowContent = (item: {
-    title: string;
-    domain: string;
-    timestamp: string;
-  }) => (
-    <>
-      <div className="truncate text-xs font-medium leading-4 text-foreground">
-        {item.title}
-      </div>
-      <div className="mt-1 flex items-center gap-2 text-xs leading-4 text-muted-foreground">
-        <span>{item.domain}</span>
-        <span className="text-muted-foreground/40">|</span>
-        <span>{item.timestamp}</span>
-      </div>
-    </>
-  );
 
   return (
     <IsometricCard
@@ -306,7 +311,7 @@ export const IngestedData: React.FC = () => {
                     }}
                   >
                     <div className="flex h-full flex-col justify-center border-b border-border px-4 py-2">
-                      {renderRowContent(item)}
+                      <RowContent item={item} />
                     </div>
                   </div>
                 );
@@ -314,16 +319,14 @@ export const IngestedData: React.FC = () => {
             </div>
 
             {/* ── New search result items (preserve-3d for drop animation) ── */}
-            {NEW_SEARCH_RESULTS.map((result, i) => {
-              const drop = dropSprings[i]!;
+            {NEW_SEARCH_RESULTS.map((result, resultIndex) => {
+              const drop = dropValues[resultIndex] ?? 0;
               // Only render once the drop phase begins
               if (drop <= 0) return null;
 
-              // Slot = how many shift springs fired AFTER this one
-              const shiftsAfter = shiftSprings
-                .slice(i + 1)
-                .reduce((a, b) => a + b, 0);
-              const slot = shiftsAfter;
+              // Slot = sum of shift springs that fired AFTER this one.
+              // suffixShift[resultIndex+1] is the precomputed suffix sum.
+              const slot = suffixShift[resultIndex + 1] ?? 0;
               const y = slot * ROW_HEIGHT;
 
               // 3D drop: new item floats from z=60 down to z=0
@@ -351,7 +354,7 @@ export const IngestedData: React.FC = () => {
 
               return (
                 <div
-                  key={`new-${i}`}
+                  key={result.title}
                   className="absolute left-0 right-0"
                   style={{
                     height: ROW_HEIGHT,
@@ -376,7 +379,7 @@ export const IngestedData: React.FC = () => {
                       className="pointer-events-none absolute inset-0 flex flex-col justify-center px-4 py-2"
                       style={{ opacity: ghostOpacity }}
                     >
-                      {renderRowContent(result)}
+                      <RowContent item={result} />
                     </div>
                   )}
 
@@ -421,7 +424,7 @@ export const IngestedData: React.FC = () => {
                           : undefined
                       }
                     >
-                      {renderRowContent(result)}
+                      <RowContent item={result} />
                     </div>
                   </div>
                 </div>

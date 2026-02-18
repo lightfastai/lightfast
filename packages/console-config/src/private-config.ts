@@ -373,21 +373,3 @@ export const PRIVATE_CONFIG = {
  * Type for the complete private configuration
  */
 export type PrivateConfig = typeof PRIVATE_CONFIG;
-
-/**
- * Get Pinecone index configuration
- *
- * Note: Index name is the same for all environments ("lightfast-v1").
- * Environment separation is handled at the Pinecone project level via different API keys.
- *
- * @returns Index configuration with name, dimension, model, and provider
- *
- * @example
- * ```typescript
- * const indexConfig = getPineconeIndexConfig();
- * // Returns: { name: "lightfast-v1", embeddingDim: 1024, ... }
- * ```
- */
-export function getPineconeIndexConfig() {
-  return PRIVATE_CONFIG.pinecone.index;
-}

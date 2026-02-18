@@ -41,10 +41,11 @@ function clamp(value: number): number {
 function ensureFrameSize(frame: Frame, rows: number, cols: number): Frame {
   const result: Frame = []
   for (let r = 0; r < rows; r++) {
-    const row = frame[r] || []
-    result.push([])
+    const row = frame[r] ?? []
+    const resultRow: number[] = []
+    result.push(resultRow)
     for (let c = 0; c < cols; c++) {
-      result[r]![c] = row[c] ?? 0
+      resultRow[c] = row[c] ?? 0
     }
   }
   return result
@@ -59,8 +60,9 @@ function useAnimation(
     onFrame?: (index: number) => void
   }
 ): { frameIndex: number; isPlaying: boolean } {
+  const { fps, autoplay, loop, onFrame } = options
   const [frameIndex, setFrameIndex] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(options.autoplay)
+  const [isPlaying, setIsPlaying] = useState(autoplay)
   const frameIdRef = useRef<number | undefined>(undefined)
   const lastTimeRef = useRef<number>(0)
   const accumulatorRef = useRef<number>(0)
@@ -70,7 +72,7 @@ function useAnimation(
       return
     }
 
-    const frameInterval = 1000 / options.fps
+    const frameInterval = 1000 / fps
 
     const animate = (currentTime: number) => {
       if (lastTimeRef.current === 0) {
@@ -87,15 +89,15 @@ function useAnimation(
         setFrameIndex((prev) => {
           const next = prev + 1
           if (next >= frames.length) {
-            if (options.loop) {
-              options.onFrame?.(0)
+            if (loop) {
+              onFrame?.(0)
               return 0
             } else {
               setIsPlaying(false)
               return prev
             }
           }
-          options.onFrame?.(next)
+          onFrame?.(next)
           return next
         })
       }
@@ -110,25 +112,31 @@ function useAnimation(
         cancelAnimationFrame(frameIdRef.current)
       }
     }
-  }, [frames, isPlaying, options.fps, options.loop, options.onFrame])
+  }, [frames, isPlaying, fps, loop, onFrame])
 
   useEffect(() => {
-    setFrameIndex(0)
-    setIsPlaying(options.autoplay)
+    const id = requestAnimationFrame(() => {
+      setFrameIndex(0)
+      setIsPlaying(autoplay)
+    })
     lastTimeRef.current = 0
     accumulatorRef.current = 0
-  }, [frames, options.autoplay])
+    return () => cancelAnimationFrame(id)
+  }, [frames, autoplay])
 
   return { frameIndex, isPlaying }
 }
 
 function emptyFrame(rows: number, cols: number): Frame {
-  return Array.from({ length: rows }, () => Array(cols).fill(0))
+  return Array.from({ length: rows }, () => Array.from<number>({ length: cols }).fill(0))
 }
 
 function setPixel(frame: Frame, row: number, col: number, value: number): void {
   if (row >= 0 && row < frame.length && col >= 0 && col < (frame[0]?.length ?? 0)) {
-    frame[row]![col] = value
+    const rowArr = frame[row];
+    if (rowArr) {
+      rowArr[col] = value;
+    }
   }
 }
 
@@ -434,10 +442,7 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
       loop = true,
       size = 10,
       gap = 2,
-      palette = {
-        on: "currentColor",
-        off: "var(--muted-foreground)",
-      },
+      palette: paletteInput,
       brightness = 1,
       ariaLabel,
       onFrame,
@@ -448,6 +453,7 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
     },
     ref
   ) => {
+    const palette = paletteInput ?? { on: "currentColor", off: "var(--muted-foreground)" }
     const { frameIndex } = useAnimation(frames, {
       fps,
       autoplay: autoplay && !pattern,

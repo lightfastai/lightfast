@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -38,63 +39,61 @@ export function SearchResultCard({
   storeId: string;
 }) {
   const scorePercent = Math.round(result.score * 100);
-  const [contentData, setContentData] = useState<{
-    content: string | null;
-    metadata: Record<string, unknown> | null;
-  } | null>(null);
-  const [isLoadingContent, setIsLoadingContent] = useState(false);
-  const [contentError, setContentError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState(false);
 
-  // Similar items state
-  const [similarData, setSimilarData] = useState<V1FindSimilarResponse | null>(
-    null,
-  );
-  const [isLoadingSimilar, setIsLoadingSimilar] = useState(false);
-  const [similarError, setSimilarError] = useState<string | null>(null);
-  const [showSimilar, setShowSimilar] = useState(false);
-
-  // Fetch content when expanded
-  useEffect(() => {
-    if (isExpanded && !contentData && !isLoadingContent) {
-      setIsLoadingContent(true);
-      setContentError(null);
-
-      fetch("/v1/contents", {
+  const {
+    data: contentData,
+    error: contentQueryError,
+    isLoading: isLoadingContent,
+  } = useQuery({
+    queryKey: ["v1-contents", storeId, result.id],
+    queryFn: async () => {
+      const res = await fetch("/v1/contents", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-Workspace-ID": storeId,
         },
         body: JSON.stringify({ ids: [result.id] }),
-      })
-        .then(async (res) => {
-          if (!res.ok) throw new Error("Failed to fetch content");
-          const data = (await res.json()) as V1ContentsResponse;
-          const item = data.items[0];
-          if (item) {
-            setContentData({
-              content: item.content ?? null,
-              metadata: item.metadata ?? null,
-            });
-          } else {
-            // Set contentData to empty object to prevent re-fetch loop
-            setContentData({ content: null, metadata: null });
-            setContentError("Content not found");
-          }
-        })
-        .catch((err) => {
-          // Set contentData to empty object to prevent re-fetch loop
-          setContentData({ content: null, metadata: null });
-          setContentError(
-            err instanceof Error ? err.message : "Failed to load",
-          );
-        })
-        .finally(() => {
-          setIsLoadingContent(false);
-        });
-    }
-  }, [isExpanded, contentData, isLoadingContent, result.id, storeId]);
+      });
+      if (!res.ok) throw new Error("Failed to fetch content");
+      const data = (await res.json()) as V1ContentsResponse;
+      const item = data.items[0];
+      if (!item) return { content: null, metadata: null };
+      return {
+        content: item.content ?? null,
+        metadata: item.metadata ?? null,
+      };
+    },
+    enabled: isExpanded,
+  });
+  const contentError = contentQueryError instanceof Error ? contentQueryError.message : null;
+
+  const [showSimilar, setShowSimilar] = useState(false);
+
+  const {
+    data: similarData,
+    isFetching: isLoadingSimilar,
+    error: similarQueryError,
+    refetch: refetchSimilar,
+  } = useQuery<V1FindSimilarResponse>({
+    queryKey: ["findSimilar", storeId, result.id],
+    queryFn: async () => {
+      const res = await fetch("/v1/findsimilar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Workspace-ID": storeId,
+        },
+        body: JSON.stringify({ id: result.id, limit: 5, threshold: 0.5 }),
+      });
+      if (!res.ok) throw new Error("Failed to fetch similar items");
+      return (await res.json()) as V1FindSimilarResponse;
+    },
+    enabled: false,
+    staleTime: Infinity,
+  });
+  const similarError = similarQueryError instanceof Error ? similarQueryError.message : null;
 
   const handleCopyId = async () => {
     await navigator.clipboard.writeText(result.id);
@@ -102,37 +101,10 @@ export function SearchResultCard({
     setTimeout(() => setCopiedId(false), 2000);
   };
 
-  const fetchSimilar = async () => {
-    if (similarData) {
-      setShowSimilar(true);
-      return;
-    }
-
-    setIsLoadingSimilar(true);
-    setSimilarError(null);
+  const fetchSimilar = () => {
     setShowSimilar(true);
-
-    try {
-      const res = await fetch("/v1/findsimilar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Workspace-ID": storeId,
-        },
-        body: JSON.stringify({
-          id: result.id,
-          limit: 5,
-          threshold: 0.5,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch similar items");
-      const data = (await res.json()) as V1FindSimilarResponse;
-      setSimilarData(data);
-    } catch (err) {
-      setSimilarError(err instanceof Error ? err.message : "Failed to load");
-    } finally {
-      setIsLoadingSimilar(false);
+    if (!similarData) {
+      void refetchSimilar();
     }
   };
 
@@ -228,7 +200,7 @@ export function SearchResultCard({
                     </span>
                     <div className="flex flex-wrap gap-1">
                       {result.entities.map((entity, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
+                        <Badge key={`${entity.key}-${entity.category}-${idx}`} variant="outline" className="text-xs">
                           {entity.key}
                           <span className="ml-1 text-muted-foreground">
                             ({entity.category})

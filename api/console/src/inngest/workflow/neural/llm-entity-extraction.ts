@@ -10,16 +10,6 @@
  * - "Using the new caching layer" → definition: caching-layer
  */
 
-import { log } from "@vendor/observability/log";
-import { llmEntityExtractionResponseSchema } from "@repo/console-validation";
-import { LLM_ENTITY_EXTRACTION_CONFIG } from "@repo/console-config";
-import type { ExtractedEntity } from "@repo/console-types";
-import {
-  createTracedModel,
-  generateObject,
-  buildNeuralTelemetry,
-} from "./ai-helpers";
-
 /**
  * Build the prompt for LLM entity extraction
  */
@@ -51,89 +41,3 @@ GUIDELINES:
 Return entities with confidence scores reflecting how certain you are about the extraction.`;
 }
 
-/**
- * Extract entities from observation content using LLM
- *
- * This complements rule-based extraction by identifying contextual entities
- * that regex patterns cannot catch. Examples:
- * - "Deployed the auth service to production" → service: auth-service
- * - "Sarah and John reviewed the PR" → engineer: sarah, engineer: john
- * - "Using the new caching layer" → definition: caching-layer
- *
- * Future enhancements could include:
- * - Entity relationship extraction ("X depends on Y")
- * - Sentiment analysis ("auth is broken" → status inference)
- * - Temporal context extraction ("last week's deployment")
- */
-export async function extractEntitiesWithLLM(
-  title: string,
-  content: string,
-  options?: {
-    observationId?: string;
-    requestId?: string;
-  }
-): Promise<ExtractedEntity[]> {
-  const { observationId, requestId } = options ?? {};
-  const config = LLM_ENTITY_EXTRACTION_CONFIG;
-
-  // Check content length threshold
-  if (content.length < config.minContentLength) {
-    log.debug("LLM entity extraction skipped - content too short", {
-      requestId,
-      observationId,
-      contentLength: content.length,
-      threshold: config.minContentLength,
-    });
-    return [];
-  }
-
-  const startTime = Date.now();
-
-  try {
-    const { object } = await generateObject({
-      model: createTracedModel("openai/gpt-5.1-instant"),
-      schema: llmEntityExtractionResponseSchema,
-      prompt: buildExtractionPrompt(title, content),
-      temperature: config.temperature,
-      experimental_telemetry: buildNeuralTelemetry("neural-entity-extraction", {
-        observationId: observationId ?? "unknown",
-        contentLength: content.length,
-      }),
-    });
-
-    const latency = Date.now() - startTime;
-
-    // Filter by confidence threshold and convert to ExtractedEntity format
-    const entities: ExtractedEntity[] = object.entities
-      .filter((e) => e.confidence >= config.minConfidence)
-      .map((e) => ({
-        category: e.category,
-        key: e.key,
-        value: e.value,
-        confidence: e.confidence,
-        evidence: e.reasoning ?? `LLM extracted: ${e.category}`,
-      }));
-
-    log.info("LLM entity extraction completed", {
-      requestId,
-      observationId,
-      rawCount: object.entities.length,
-      filteredCount: entities.length,
-      latency,
-    });
-
-    return entities;
-  } catch (error) {
-    const latency = Date.now() - startTime;
-
-    log.error("LLM entity extraction failed", {
-      requestId,
-      observationId,
-      error,
-      latency,
-    });
-
-    // Graceful degradation - return empty array on failure
-    return [];
-  }
-}

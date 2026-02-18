@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -35,6 +35,7 @@ import {
   FormMessage,
 } from "@repo/ui/components/ui/form";
 import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
 import { captureException } from "@sentry/nextjs";
 import { ConfettiWrapper } from "./confetti-wrapper";
@@ -58,6 +59,8 @@ const COMPANY_SIZES = [
   { value: "1001+", label: "1001+ employees" },
 ];
 
+const EMPTY_SOURCES: string[] = [];
+
 const DATA_SOURCES = [
   { value: "github", label: "GitHub" },
   { value: "gitlab", label: "GitLab" },
@@ -71,10 +74,12 @@ const DATA_SOURCES = [
   { value: "discord", label: "Discord" },
 ];
 
+const DATA_SOURCES_MAP = new Map(DATA_SOURCES.map((s) => [s.value, s]));
+
 export function EarlyAccessForm({
   initialEmail = "",
   initialCompanySize = "",
-  initialSources = [],
+  initialSources = EMPTY_SOURCES,
 }: {
   initialEmail?: string;
   initialCompanySize?: string;
@@ -91,12 +96,13 @@ export function EarlyAccessForm({
     reValidateMode: "onChange",
   });
   const [state, setState] = useState<EarlyAccessState>({ status: "idle" });
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const [sourcesPopoverOpen, setSourcesPopoverOpen] = useState(false);
 
-  // Watch form values for validation
-  const email = form.watch("email");
-  const companySize = form.watch("companySize");
-  const sources = form.watch("sources");
+  // Subscribe to form values for validation using useWatch (React Compiler compatible)
+  const email = useWatch({ control: form.control, name: "email" });
+  const companySize = useWatch({ control: form.control, name: "companySize" });
+  const sources = useWatch({ control: form.control, name: "sources", defaultValue: EMPTY_SOURCES });
 
   // Track client-side errors
   useEffect(() => {
@@ -138,7 +144,8 @@ export function EarlyAccessForm({
       setState(result);
 
       if (result.status === "success") {
-        // Clear form on success
+        // Capture email before reset so the success message can display it
+        setSubmittedEmail(values.email);
         form.reset();
       }
     } catch (error) {
@@ -172,7 +179,7 @@ export function EarlyAccessForm({
             <div className="rounded-lg border border-border bg-muted/30 p-4">
               <p className="text-sm text-muted-foreground">
                 We'll send updates to{" "}
-                <span className="font-medium text-foreground">{email}</span>
+                <span className="font-medium text-foreground">{submittedEmail}</span>
               </p>
             </div>
           </div>
@@ -202,7 +209,6 @@ export function EarlyAccessForm({
                   {...field}
                   type="email"
                   placeholder="name@company.com"
-                  autoFocus
                 />
               </FormControl>
               <FormMessage />
@@ -255,6 +261,7 @@ export function EarlyAccessForm({
                         variant="outline"
                         role="combobox"
                         aria-expanded={sourcesPopoverOpen}
+                        aria-controls="sources-listbox"
                         className={cn(
                           "w-full justify-start font-normal px-2 min-h-8 h-auto py-1",
                           !field.value.length && "text-muted-foreground",
@@ -264,9 +271,7 @@ export function EarlyAccessForm({
                           <div className="flex flex-wrap gap-1 flex-1 min-w-0">
                             {field.value.length > 0 ? (
                               field.value.map((value) => {
-                                const source = DATA_SOURCES.find(
-                                  (s) => s.value === value,
-                                );
+                                const source = DATA_SOURCES_MAP.get(value);
                                 return (
                                   <Badge
                                     key={value}
@@ -313,7 +318,7 @@ export function EarlyAccessForm({
                     </FormControl>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0" align="start">
-                    <Command>
+                    <Command id="sources-listbox">
                       <CommandInput placeholder="Search tools..." />
                       <CommandList>
                         <CommandEmpty>No tools found.</CommandEmpty>
@@ -397,23 +402,19 @@ export function EarlyAccessForm({
         {/* Terms and Privacy */}
         <p className="text-xs text-muted-foreground">
           By continuing you acknowledge that you understand and agree to our{" "}
-          <a
+          <Link
             href="/legal/terms"
-            target="_blank"
-            rel="noopener noreferrer"
             className="underline hover:text-foreground transition-colors"
           >
             Terms and Conditions
-          </a>{" "}
+          </Link>{" "}
           and{" "}
-          <a
+          <Link
             href="/legal/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
             className="underline hover:text-foreground transition-colors"
           >
             Privacy Policy
-          </a>
+          </Link>
           .
         </p>
       </form>

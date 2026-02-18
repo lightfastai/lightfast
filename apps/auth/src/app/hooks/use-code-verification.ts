@@ -12,17 +12,12 @@ export function useCodeVerification() {
 	const [isResending, setIsResending] = React.useState(false);
 
 	const handleCodeChange = React.useCallback((value: string) => {
-		// Clear error when user modifies the code (typing or deleting)
-		if (inlineError && value !== code) {
-			setInlineError(null);
-		}
+		// Clear error whenever user modifies the code
+		setInlineError(null);
 		setCode(value);
-	}, [code, inlineError]);
+	}, []);
 
-	/**
-	 * Set a custom error message (used by components for provider-specific errors)
-	 */
-	const setCustomError = React.useCallback((message: string) => {
+	const setCustomError = React.useCallback((message: string | null) => {
 		setInlineError(message);
 	}, []);
 
@@ -37,13 +32,13 @@ export function useCodeVerification() {
 		inlineError,
 		isRedirecting,
 		isResending,
-		
+
 		// State setters
 		setCode: handleCodeChange,
 		setIsVerifying,
 		setIsRedirecting,
 		setIsResending,
-		
+
 		// Error handling
 		setCustomError,
 		resetError,

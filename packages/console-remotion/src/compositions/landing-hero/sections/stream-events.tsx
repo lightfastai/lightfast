@@ -2,12 +2,12 @@ import type React from "react";
 import { useCurrentFrame, interpolate, Easing } from "remotion";
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 
-type FeedEvent = {
+interface FeedEvent {
   source: "Vercel" | "GitHub" | "Sentry" | "Linear";
   label: string;
   detail: string;
   extra?: string[];
-};
+}
 
 const FEED_EVENTS: FeedEvent[] = [
   { source: "Vercel", label: "Deployment Started", detail: "web@main" },
@@ -85,15 +85,15 @@ const eventPitches = eventHeights.map((h) => h + ROW_GAP);
 // Cumulative pitch within one cycle: cumPitch[i] = sum of eventPitches[0..i-1]
 const cumPitch: number[] = [0];
 for (let i = 0; i < N; i++) {
-  cumPitch.push(cumPitch[i]! + eventPitches[i]!);
+  cumPitch.push((cumPitch[i] ?? 0) + (eventPitches[i] ?? 0));
 }
-const CYCLE_PITCH = cumPitch[N]!;
+const CYCLE_PITCH = cumPitch[N] ?? 0;
 
 // Cumulative position for any virtual index (supports negative)
 function getCumPosition(vi: number): number {
   const cycles = Math.floor(vi / N);
   const rem = ((vi % N) + N) % N;
-  return cycles * CYCLE_PITCH + cumPitch[rem]!;
+  return cycles * CYCLE_PITCH + (cumPitch[rem] ?? 0);
 }
 
 const ROWS_TO_RENDER =
@@ -101,6 +101,21 @@ const ROWS_TO_RENDER =
   N * 2 +
   2;
 const START_INDEX = -N;
+
+// Precomputed per-row static data — avoids repeated getCumPosition calls and
+// new array allocations on every render frame.
+const ROW_DATA = Array.from({ length: ROWS_TO_RENDER }, (_, index) => {
+  const virtualIndex = index + START_INDEX;
+  const normalizedIndex = ((virtualIndex % N) + N) % N;
+  return {
+    index,
+    event: FEED_EVENTS[normalizedIndex] ?? null,
+    baseCumPosition: getCumPosition(virtualIndex),
+  };
+});
+
+// Module-level easing — avoids creating a new closure on every frame.
+const STEP_EASING = Easing.inOut((t: number) => Easing.cubic(t));
 
 export const StreamEvents: React.FC = () => {
   const frame = useCurrentFrame();
@@ -110,10 +125,10 @@ export const StreamEvents: React.FC = () => {
   const stepProgress = interpolate(stepFrame, [0, STEP_MOVE_FRAMES], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
-    easing: Easing.inOut(Easing.cubic),
+    easing: STEP_EASING,
   });
   const scrollOffset =
-    getCumPosition(stepIndex) + stepProgress * eventPitches[stepIndex % N]!;
+    getCumPosition(stepIndex) + stepProgress * (eventPitches[stepIndex % N] ?? 0);
 
   return (
     <div
@@ -125,16 +140,13 @@ export const StreamEvents: React.FC = () => {
         height: FEED_HEIGHT,
       }}
     >
-      {Array.from({ length: ROWS_TO_RENDER }).map((_, index) => {
-        const virtualIndex = index + START_INDEX;
-        const normalizedIndex = ((virtualIndex % N) + N) % N;
-        const event = FEED_EVENTS[normalizedIndex]!;
-        const rowTop =
-          FEED_PADDING_Y + getCumPosition(virtualIndex) + scrollOffset;
+      {ROW_DATA.map(({ index: rowIndex, event, baseCumPosition }) => {
+        if (!event) return null;
+        const rowTop = FEED_PADDING_Y + baseCumPosition + scrollOffset;
 
         return (
           <div
-            key={index}
+            key={rowIndex}
             className="absolute flex flex-col gap-2 rounded-md border border-border px-3 py-3 font-sans"
             style={{
               left: FEED_PADDING_X,
@@ -163,9 +175,9 @@ export const StreamEvents: React.FC = () => {
             </div>
             {event.extra && (
               <div className="mt-1 flex flex-col gap-1 border-t border-border/50 pt-2">
-                {event.extra.map((line, i) => (
+                {event.extra.map((line, lineIndex) => (
                   <span
-                    key={i}
+                    key={`${lineIndex}-${line}`}
                     className="truncate font-mono text-xs leading-tight text-muted-foreground/50"
                   >
                     {line}

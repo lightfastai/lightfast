@@ -40,7 +40,7 @@ export const SIGNIFICANCE_THRESHOLD = 40;
  * ```
  */
 
-export interface SignificanceResult {
+interface SignificanceResult {
   score: number;
   factors: string[];
 }

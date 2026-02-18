@@ -12,8 +12,6 @@ function mergeDirectives(...directiveArrays: readonly Source[][]): Source[] {
   const functions: (() => string)[] = [];
 
   for (const directives of directiveArrays) {
-    if (!directives) continue;
-
     for (const directive of directives) {
       if (typeof directive === "function") {
         functions.push(directive);
@@ -113,11 +111,7 @@ export function composeCspDirectives(
 export function composeCspOptions(
   ...configs: PartialCspDirectives[]
 ): Options {
-  const defaultDirectives = defaults.contentSecurityPolicy?.directives;
-
-  if (!defaultDirectives) {
-    throw new Error("Nosecone defaults do not include CSP directives");
-  }
+  const defaultDirectives = defaults.contentSecurityPolicy.directives;
 
   // Merge user configs together
   const userDirectives = composeCspDirectives(...configs);
@@ -149,18 +143,22 @@ export function composeCspOptions(
     const defaultValue = defaultDirectives[key];
     const userValue = userDirectives[key];
 
+    // Cast to allow for keys that exist in directiveKeys but not in the
+    // narrowly-typed defaults object; at runtime this may be undefined.
+    const safeDefault = defaultValue as readonly Source[] | undefined;
+
     if (userValue && replaceDirectives.has(key)) {
       // REPLACE: scriptSrc and styleSrc replace defaults (removes nonces)
       mergedDirectives[key] = userValue;
-    } else if (userValue && defaultValue) {
-      // MERGE: other directives merge with defaults (extends them)
-      mergedDirectives[key] = mergeDirectives([...defaultValue] as Source[], userValue);
     } else if (userValue) {
-      // Only user value - use it
-      mergedDirectives[key] = userValue;
-    } else if (defaultValue) {
+      // MERGE: other directives merge with defaults (extends them)
+      mergedDirectives[key] = mergeDirectives(
+        safeDefault != null ? ([...safeDefault] as Source[]) : [],
+        userValue,
+      );
+    } else if (safeDefault != null) {
       // Only default value - keep it
-      mergedDirectives[key] = [...defaultValue] as Source[];
+      mergedDirectives[key] = [...safeDefault] as Source[];
     }
   }
 

@@ -34,8 +34,6 @@ function getPartDisplayString(part: LightfastAppChatUIMessagePart): string {
   }
 
   if (
-    typeof part === "object" &&
-    part !== null &&
     "type" in part &&
     typeof (part as { type: unknown }).type === "string"
   ) {
@@ -47,8 +45,12 @@ function getPartDisplayString(part: LightfastAppChatUIMessagePart): string {
 
   try {
     return JSON.stringify(part);
-  } catch (error) {
-    return String(part);
+  } catch {
+    try {
+      return JSON.stringify(Object.entries(part as Record<string, unknown>));
+    } catch {
+      return "[unserializable]";
+    }
   }
 }
 

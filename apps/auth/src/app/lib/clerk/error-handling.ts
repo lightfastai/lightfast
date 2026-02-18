@@ -1,13 +1,6 @@
 import { isClerkAPIResponseError, isUserLockedError } from '@clerk/shared'
 import type { ClerkAPIError } from '@clerk/types'
 
-export interface AuthError {
-  code: string
-  message: string
-  longMessage: string
-  meta?: Record<string, unknown>
-}
-
 /**
  * Extract user-friendly error message from Clerk errors
  */
@@ -33,22 +26,6 @@ export function getErrorMessage(err: unknown): string {
   
   // Default error message
   return 'An unexpected error occurred. Please try again.'
-}
-
-/**
- * Get all errors from a Clerk error response
- */
-export function getAllErrors(err: unknown): AuthError[] {
-  if (isClerkAPIResponseError(err)) {
-    return err.errors.map((error: ClerkAPIError) => ({
-      code: error.code,
-      message: error.message,
-      longMessage: error.longMessage ?? error.message,
-      meta: error.meta,
-    }))
-  }
-  
-  return []
 }
 
 /**
@@ -165,33 +142,3 @@ export function formatLockoutTime(seconds: number): string {
     : `${minutes} minutes`
 }
 
-/**
- * Format error details for logging
- * @param context - The context where the error occurred
- * @param err - The error object
- * @returns Structured error data for logging
- */
-export function formatErrorForLogging(context: string, err: unknown): Record<string, unknown> {
-  const errorData: Record<string, unknown> = {
-    context,
-    timestamp: new Date().toISOString(),
-  }
-  
-  if (isClerkAPIResponseError(err)) {
-    errorData.error = {
-      message: err.message,
-      clerkErrors: err.errors,
-      status: err.status,
-    }
-  } else if (err instanceof Error) {
-    errorData.error = {
-      message: err.message,
-      stack: err.stack,
-      name: err.name
-    }
-  } else {
-    errorData.error = err
-  }
-  
-  return errorData
-}

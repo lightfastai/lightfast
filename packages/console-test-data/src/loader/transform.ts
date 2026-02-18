@@ -46,13 +46,13 @@ export interface WebhookPayload {
   payload: unknown;
 }
 
-export interface GitHubWebhookPayload extends WebhookPayload {
+interface GitHubWebhookPayload extends WebhookPayload {
   source: "github";
   eventType: GitHubWebhookEventType;
   payload: PushEvent | PullRequestEvent | IssuesEvent | ReleaseEvent | DiscussionEvent;
 }
 
-export interface VercelWebhookPayloadWrapper extends WebhookPayload {
+interface VercelWebhookPayloadWrapper extends WebhookPayload {
   source: "vercel";
   eventType: VercelWebhookEventType;
   payload: VercelWebhookPayload;
@@ -147,7 +147,7 @@ function transformGitHubWebhook(
       );
       break;
     default:
-      throw new Error(`Unsupported GitHub event type: ${webhook.eventType satisfies never}`);
+      throw new Error(`Unsupported GitHub event type: ${String(webhook.eventType satisfies never)}`);
   }
 
   // Add test suffix to sourceId for uniqueness across runs
@@ -169,7 +169,7 @@ function transformVercelWebhook(
 ): SourceEvent {
   const event = transformVercelDeployment(
     webhook.payload,
-    webhook.eventType as VercelWebhookEventType,
+    webhook.eventType,
     context
   );
 

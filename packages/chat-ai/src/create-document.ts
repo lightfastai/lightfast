@@ -61,7 +61,7 @@ export function createDocumentTool() {
       const runtimeConfig: CreateDocumentToolRuntimeConfig | undefined =
         context.tools?.createDocument;
 
-      if (!runtimeConfig?.handlers?.length) {
+      if (!runtimeConfig?.handlers.length) {
         throw new Error(
           "Create document tool runtime configuration is missing handlers.",
         );

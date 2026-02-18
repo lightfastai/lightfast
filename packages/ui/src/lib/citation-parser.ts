@@ -56,18 +56,18 @@ function parseJsonCitations(text: string): CitationData {
     const jsonBlock = text.substring(delimiterIndex + citationDelimiter.length).trim();
     const parsed = JSON.parse(jsonBlock) as { citations: CitationSource[] };
     
-    if (parsed?.citations && Array.isArray(parsed.citations)) {
+    if (Array.isArray(parsed.citations)) {
       // Validate and enhance citations
       const sources = parsed.citations.map(citation => ({
         id: citation.id,
         url: citation.url,
-        title: citation.title || generateSourceTitle(citation.url),
+        title: citation.title ?? generateSourceTitle(citation.url),
         snippet: citation.snippet
       }));
-      
+
       return { sources };
     }
-  } catch (e) {
+  } catch {
     // JSON parsing failed, will fall back to legacy parsing
   }
   
@@ -148,15 +148,15 @@ export function generateSourceTitle(url: string): string {
       // Extract main domain name (remove common TLDs and subdomains)
       const domainParts = domain.split('.');
       if (domainParts.length >= 2) {
-        title = domainParts[domainParts.length - 2] || ''; // Get the main domain name
+        title = domainParts[domainParts.length - 2] ?? ''; // Get the main domain name
       } else {
-        title = domainParts[0] || '';
+        title = domainParts[0] ?? '';
       }
     }
-    
+
     return titleCase(title);
-    
-  } catch (e) {
+
+  } catch {
     return 'External Source';
   }
 }

@@ -102,9 +102,9 @@ export async function graphLogic(
       );
 
     // Filter by allowed types if specified
-    const filteredRels = input.allowedTypes
-      ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        relationships.filter((r) => input.allowedTypes!.includes(r.relationshipType))
+    const allowedTypes = input.allowedTypes;
+    const filteredRels = allowedTypes
+      ? relationships.filter((r) => allowedTypes.includes(r.relationshipType))
       : relationships;
 
     // Collect new node IDs

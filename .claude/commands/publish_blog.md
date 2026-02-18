@@ -61,7 +61,7 @@ Example: `/publish_blog thoughts/blog/my-post.md`
 5. **Execute publish:**
    - If user confirms "Publish now":
      ```bash
-     cd apps/www && pnpm with-env pnpm tsx scripts/publish-blog.ts {absolute_filepath}
+     pnpm publish:blog -- {absolute_filepath}
      ```
    - Parse the JSON output from stdout
    - Handle errors from stderr

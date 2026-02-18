@@ -45,13 +45,18 @@ const lissajousPath =
 const lissajousLength = (() => {
   let len = 0;
   for (let i = 1; i < lissajousPoints.length; i++) {
-    const dx = lissajousPoints[i]![0] - lissajousPoints[i - 1]![0];
-    const dy = lissajousPoints[i]![1] - lissajousPoints[i - 1]![1];
+    const curr = lissajousPoints[i];
+    const prev = lissajousPoints[i - 1];
+    if (!curr || !prev) continue;
+    const dx = curr[0] - prev[0];
+    const dy = curr[1] - prev[1];
     len += Math.sqrt(dx * dx + dy * dy);
   }
-  const last = lissajousPoints[lissajousPoints.length - 1]!;
-  const first = lissajousPoints[0]!;
-  len += Math.sqrt((first[0] - last[0]) ** 2 + (first[1] - last[1]) ** 2);
+  const last = lissajousPoints[lissajousPoints.length - 1];
+  const first = lissajousPoints[0];
+  if (last && first) {
+    len += Math.sqrt((first[0] - last[0]) ** 2 + (first[1] - last[1]) ** 2);
+  }
   return len;
 })();
 
@@ -65,7 +70,7 @@ const gapLength = lissajousLength - trailLength;
 // Head dot: find the point index for a given progress [0,1]
 function headPosition(progress: number): Vec2 {
   const idx = Math.floor(progress * STEPS) % STEPS;
-  return lissajousPoints[idx]!;
+  return lissajousPoints[idx] ?? [0, 0];
 }
 
 const shape = createBox(BOX);
@@ -91,9 +96,9 @@ export const LogoAnimation: React.FC = () => {
         width={vw}
         height={vh}
       >
-        {shape.faces.map((face, i) => (
+        {shape.faces.map((face, faceIndex) => (
           <path
-            key={i}
+            key={`${face.type}-${faceIndex}`}
             d={facePath(face)}
             style={{ fill: FACE_FILL[face.type], stroke: "var(--border)" }}
             strokeWidth={1}

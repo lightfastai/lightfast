@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ChatInterface } from "../../_components/chat-interface";
 import { useCreateSession } from "~/hooks/use-create-session";
 import { useSessionId } from "~/hooks/use-session-id";
@@ -63,12 +63,14 @@ export function NewSessionChat({
 	// Model selection (authenticated users only have model selection)
 	const { selectedModelId } = useModelSelection(true);
 
+	const [prevResetKey, setPrevResetKey] = useState({ isTemporaryChat, sessionId });
+	if (prevResetKey.isTemporaryChat !== isTemporaryChat || prevResetKey.sessionId !== sessionId) {
+		setPrevResetKey({ isTemporaryChat, sessionId });
+		setHasTemporarySessionStarted(false);
+	}
+
 	const effectiveIsNewSession =
 		isTemporaryChat ? !hasTemporarySessionStarted : isNewSession;
-
-	useEffect(() => {
-		setHasTemporarySessionStarted(false);
-	}, [isTemporaryChat, sessionId]);
 
 	// Hook for creating sessions optimistically
 	const createSession = useCreateSession();

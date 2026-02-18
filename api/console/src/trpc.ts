@@ -18,9 +18,7 @@ import { auth } from "@vendor/clerk/server";
 import { getCachedUserOrgMemberships } from "@repo/console-clerk-cache";
 import { verifyM2MToken } from "@repo/console-clerk-m2m";
 import {
-  verifyOrgAccess,
   resolveWorkspaceByName as resolveWorkspace,
-  resolveWorkspaceBySlug as resolveWorkspaceBySlugFn,
 } from "@repo/console-auth-middleware";
 import { hashApiKey } from "@repo/console-api-key";
 import { userApiKeys } from "@db/console/schema";
@@ -29,7 +27,7 @@ import { userApiKeys } from "@db/console/schema";
  * Authentication Context - Discriminated Union
  * Represents exactly one authentication method per request
  */
-export type AuthContext =
+type AuthContext =
   | {
       type: "clerk-pending";
       userId: string;
@@ -269,7 +267,7 @@ const sentryMiddleware = t.middleware(
   }),
 );
 
-export const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
+const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
 
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
@@ -407,43 +405,6 @@ export const orgScopedProcedure = sentrifiedProcedure
         ...ctx,
         // Type-safe: orgId is guaranteed to exist
         auth: ctx.auth as Extract<AuthContext, { type: "clerk-active" }>,
-      },
-    });
-  });
-
-/**
- * M2M (Machine-to-Machine) Protected procedure
- *
- * Generic M2M procedure that accepts tokens from ANY M2M service.
- * For service-specific procedures, use webhookM2MProcedure or inngestM2MProcedure.
- *
- * Requires valid Clerk M2M access token in Authorization header.
- *
- * Security:
- * - Token verified with Clerk using OAuth 2.0
- * - Token contains client_id (azp claim) for audit trail
- * - Tokens can be revoked via Clerk dashboard
- * - Industry-standard authentication
- *
- * @see https://clerk.com/docs/authentication/m2m
- * @see https://trpc.io/docs/procedures
- */
-export const m2mProcedure = sentrifiedProcedure
-  .use(timingMiddleware)
-  .use(({ ctx, next }) => {
-    if (ctx.auth.type !== "m2m") {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message:
-          "M2M token required. This endpoint is for internal services only. " +
-          "Provide 'Authorization: Bearer <token>' header with valid Clerk M2M token.",
-      });
-    }
-
-    return next({
-      ctx: {
-        ...ctx,
-        auth: ctx.auth as Extract<AuthContext, { type: "m2m" }>,
       },
     });
   });
@@ -590,44 +551,6 @@ export const apiKeyProcedure = sentrifiedProcedure
   });
 
 /**
- * Helper: Verify org access and resolve org ID from slug
- *
- * This centralizes the pattern of:
- * 1. Fetching org by slug from Clerk
- * 2. Verifying user has access to the org
- * 3. Returning the org ID for database queries
- *
- * Use this in procedures that need to work with organization-scoped data
- * (repositories, integrations, etc.)
- *
- * Uses @repo/console-auth-middleware for authorization logic
- *
- * @throws {TRPCError} NOT_FOUND if org doesn't exist
- * @throws {TRPCError} FORBIDDEN if user doesn't have access
- */
-export async function verifyOrgAccessAndResolve(params: {
-  clerkOrgSlug: string;
-  userId: string;
-}): Promise<{ clerkOrgId: string; clerkOrgSlug: string }> {
-  const result = await verifyOrgAccess({
-    userId: params.userId,
-    clerkOrgSlug: params.clerkOrgSlug,
-  });
-
-  if (!result.success) {
-    throw new TRPCError({
-      code: result.errorCode,
-      message: result.error,
-    });
-  }
-
-  return {
-    clerkOrgId: result.data.clerkOrgId,
-    clerkOrgSlug: params.clerkOrgSlug,
-  };
-}
-
-/**
  * Helper: Resolve workspace by name within an org (user-facing)
  *
  * This centralizes the pattern of:
@@ -669,55 +592,6 @@ export async function resolveWorkspaceByName(params: {
     workspaceId: result.data.workspaceId,
     workspaceName: params.workspaceName,
     workspaceSlug: result.data.workspaceSlug,
-    clerkOrgId: result.data.clerkOrgId,
-  };
-}
-
-/**
- * Helper: Resolve workspace by slug within an org (internal use)
- *
- * ! INTERNAL USE ONLY - DO NOT USE IN USER-FACING ROUTES
- *
- * This helper queries by the internal `slug` field (e.g., "robust-chicken"),
- * which is used for Pinecone namespace naming and other internal operations.
- *
- * For user-facing URLs, ALWAYS use `resolveWorkspaceByName` instead,
- * which queries by the user-provided `name` field (e.g., "My Cool Project").
- *
- * This centralizes the pattern of:
- * 1. Verifying org access (via verifyOrgAccessAndResolve)
- * 2. Fetching workspace by internal slug within that org
- * 3. Returning workspace ID for database queries
- *
- * @throws {TRPCError} NOT_FOUND if org or workspace doesn't exist
- * @throws {TRPCError} FORBIDDEN if user doesn't have access to org
- */
-export async function resolveWorkspaceBySlug(params: {
-  clerkOrgSlug: string;
-  workspaceSlug: string;
-  userId: string;
-}): Promise<{
-  workspaceId: string;
-  workspaceSlug: string;
-  clerkOrgId: string;
-}> {
-  const result = await resolveWorkspaceBySlugFn({
-    clerkOrgSlug: params.clerkOrgSlug,
-    workspaceSlug: params.workspaceSlug,
-    userId: params.userId,
-    db,
-  });
-
-  if (!result.success) {
-    throw new TRPCError({
-      code: result.errorCode,
-      message: result.error,
-    });
-  }
-
-  return {
-    workspaceId: result.data.workspaceId,
-    workspaceSlug: params.workspaceSlug,
     clerkOrgId: result.data.clerkOrgId,
   };
 }
@@ -800,7 +674,7 @@ export async function verifyOrgMembership(params: {
  * @throws {TRPCError} UNAUTHORIZED if key is invalid, expired, or inactive
  * @throws {TRPCError} BAD_REQUEST if workspace ID header is missing
  */
-export async function verifyApiKey(params: {
+async function verifyApiKey(params: {
   key: string;
   workspaceId: string;
 }): Promise<{
@@ -856,107 +730,3 @@ export async function verifyApiKey(params: {
     apiKeyId: apiKey.id,
   };
 }
-
-/**
- * Standardized Error Handling Utilities
- *
- * These utilities provide consistent error handling patterns across all routers,
- * with proper logging, error classification, and user-friendly messages.
- */
-
-interface ErrorContext {
-  procedure: string;
-  userId?: string;
-  clerkOrgId?: string;
-  workspaceId?: string;
-  [key: string]: unknown;
-}
-
-/**
- * Handle errors in tRPC procedures with standardized logging and error messages
- *
- * This centralizes the pattern of:
- * 1. Logging the error with context
- * 2. Re-throwing TRPCErrors as-is
- * 3. Wrapping unknown errors in TRPCError
- *
- * Use this in try/catch blocks in procedures:
- *
- * @example
- * try {
- *   // ... operation
- * } catch (error) {
- *   handleProcedureError(error, {
- *     procedure: "repository.connect",
- *     userId: ctx.auth.userId,
- *     clerkOrgId: input.clerkOrgId,
- *   });
- * }
- */
-export function handleProcedureError(
-  error: unknown,
-  context: ErrorContext,
-  userMessage?: string,
-): never {
-  // Log error with context
-  console.error(`[tRPC Error] ${context.procedure}`, {
-    ...context,
-    error: error instanceof Error ? error.message : String(error),
-    stack: error instanceof Error ? error.stack : undefined,
-  });
-
-  // Re-throw TRPCError as-is (already properly formatted)
-  if (error instanceof TRPCError) {
-    throw error;
-  }
-
-  // Wrap unknown errors in TRPCError
-  throw new TRPCError({
-    code: "INTERNAL_SERVER_ERROR",
-    message: userMessage ?? "An unexpected error occurred",
-    cause: error,
-  });
-}
-
-/**
- * Create a standardized try/catch wrapper for procedure logic
- *
- * This provides a convenient way to wrap procedure logic with error handling:
- *
- * @example
- * connect: protectedProcedure
- *   .input(schema)
- *   .mutation(withErrorHandling(
- *     { procedure: "repository.connect" },
- *     async ({ ctx, input }) => {
- *       // ... procedure logic
- *       return result;
- *     }
- *   ))
- */
-export function withErrorHandling<TContext, TInput, TOutput>(
-  context: { procedure: string; [key: string]: unknown },
-  handler: (params: { ctx: TContext; input: TInput }) => Promise<TOutput>,
-  userMessage?: string,
-) {
-  return async (params: {
-    ctx: TContext & { auth?: { userId?: string } };
-    input: TInput;
-  }): Promise<TOutput> => {
-    try {
-      return await handler(params);
-    } catch (error) {
-      handleProcedureError(
-        error,
-        {
-          ...context,
-          userId: params.ctx.auth?.userId,
-        } as ErrorContext,
-        userMessage,
-      );
-    }
-  };
-}
-
-// Re-export for convenience
-export { TRPCError } from "@trpc/server";

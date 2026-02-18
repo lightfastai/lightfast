@@ -76,15 +76,9 @@ export function ExistingSessionChat({
 
   const messagesQueryKey = messagesInfiniteOptions.queryKey;
 
-  const baseQueryFn = messagesInfiniteOptions.queryFn;
-
-  if (!baseQueryFn) {
-    throw new Error("Missing queryFn for message list infinite query");
-  }
-
   const suspenseMessagesQuery = useSuspenseInfiniteQuery({
     queryKey: messagesQueryKey,
-    queryFn: baseQueryFn as QueryFunction<
+    queryFn: messagesInfiniteOptions.queryFn as QueryFunction<
       MessagePage,
       QueryKey,
       MessageCursor | null
@@ -131,76 +125,36 @@ export function ExistingSessionChat({
       ],
     });
 
-  if (messagesQuery.isError) {
-    const error = messagesQuery.error;
-
-    if (isNotFound(error)) {
-      notFound();
-    }
-
-    if (isUnauthorized(error)) {
-      return (
-        <div className="flex h-full items-center justify-center p-6">
-          <div className="max-w-sm text-center text-sm text-muted-foreground">
-            You no longer have access to this chat.
-          </div>
-        </div>
-      );
-    }
-
-    captureException(error, {
-      tags: { component: "ExistingSessionChat", query: "message.listInfinite" },
-      extra: { sessionId },
-    });
-
-    const handleRetry = () => {
-      void messagesQuery.refetch();
-    };
-
-    return (
-      <div className="flex h-full items-center justify-center p-6">
-        <div className="flex max-w-sm flex-col items-center gap-3 text-center">
-          <p className="text-sm text-muted-foreground">
-            {getTRPCErrorMessage(error)}
-          </p>
-          <Button size="sm" variant="outline" onClick={handleRetry}>
-            Retry loading chat
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!messagesQuery.data) {
-    return <ChatLoadingSkeleton />;
-  }
+  const backgroundFetchRef = useRef(false);
 
   const messagesData = messagesQuery.data;
-
-  const backgroundFetchRef = useRef(false);
+  const messagesPages = messagesData?.pages;
 
   const historyStats = useMemo(() => {
     let totalChars = 0;
 
-    for (const page of messagesData.pages) {
-      const pageCharCount =
-        typeof page.pageCharCount === "number"
-          ? page.pageCharCount
-          : page.items.reduce((sum, item) => {
-              const itemCharCount =
-                typeof item.metadata.charCount === "number"
-                  ? item.metadata.charCount
-                  : 0;
-              return sum + itemCharCount;
-            }, 0);
+    if (messagesPages) {
+      for (const page of messagesPages) {
+        const pageCharCount =
+          typeof page.pageCharCount === "number"
+            ? page.pageCharCount
+            : page.items.reduce((sum, item) => {
+                const itemCharCount =
+                  typeof item.metadata.charCount === "number"
+                    ? item.metadata.charCount
+                    : 0;
+                return sum + itemCharCount;
+              }, 0);
 
-      totalChars += pageCharCount;
+        totalChars += pageCharCount;
+      }
     }
 
     return {
       totalChars,
     };
-  }, [messagesData.pages]);
+  }, [messagesPages]);
+
   const effectiveBackgroundBudget = MESSAGE_BACKGROUND_CHAR_BUDGET;
   const effectiveHardCap = MESSAGE_HISTORY_HARD_CAP;
 
@@ -217,6 +171,8 @@ export function ExistingSessionChat({
   } = messagesQuery;
 
   useEffect(() => {
+    if (!messagesData) return;
+
     if (!hasNextPage) {
       setHistoryFetchState("complete");
       return;
@@ -277,6 +233,7 @@ export function ExistingSessionChat({
         backgroundFetchRef.current = false;
       });
   }, [
+    messagesData,
     effectiveBackgroundBudget,
     effectiveHardCap,
     hasHitBackgroundBudget,
@@ -289,19 +246,13 @@ export function ExistingSessionChat({
     sessionId,
   ]);
 
-  // Redirect to not-found for temporary sessions - they shouldn't be directly accessible
-  useEffect(() => {
-    if (session.isTemporary) {
-      notFound();
-    }
-  }, [session.isTemporary]);
-
   if (session.isTemporary) {
-    return null;
+    notFound();
   }
 
   const messages = useMemo<LightfastAppChatUIMessage[]>(() => {
-    return messagesData.pages
+    if (!messagesPages) return [];
+    return messagesPages
       .slice()
       .reverse()
       .flatMap((page) =>
@@ -327,21 +278,12 @@ export function ExistingSessionChat({
           };
         }),
       );
-  }, [messagesData.pages, sessionId]);
+  }, [messagesPages, sessionId]);
 
   const initialMessages = useMemo<LightfastAppChatUIMessage[]>(
     () => [...messages],
     [messages],
   );
-
-  const updateMessagesCache = (
-    updater: (draft: MessagesInfiniteData) => void,
-  ) => {
-    queryClient.setQueryData<MessagesInfiniteData>(messagesQueryKey, (oldData) => {
-      if (!oldData) return oldData;
-      return produce(oldData, updater);
-    });
-  };
 
   const incrementPageStats = useCallback(
     (page: MessagePage, charDelta: number, messageDelta: number) => {
@@ -368,6 +310,60 @@ export function ExistingSessionChat({
       page.pageMessageCount = Math.max(0, currentMessageCount - messageDelta);
     },
     [],
+  );
+
+  if (messagesQuery.isError) {
+    const error = messagesQuery.error;
+
+    if (isNotFound(error)) {
+      notFound();
+    }
+
+    if (isUnauthorized(error)) {
+      return (
+        <div className="flex h-full items-center justify-center p-6">
+          <div className="max-w-sm text-center text-sm text-muted-foreground">
+            You no longer have access to this chat.
+          </div>
+        </div>
+      );
+    }
+
+    captureException(error, {
+      tags: { component: "ExistingSessionChat", query: "message.listInfinite" },
+      extra: { sessionId },
+    });
+
+    const handleRetry = () => {
+      void messagesQuery.refetch();
+    };
+
+    return (
+      <div className="flex h-full items-center justify-center p-6">
+        <div className="flex max-w-sm flex-col items-center gap-3 text-center">
+          <p className="text-sm text-muted-foreground">
+            {getTRPCErrorMessage(error)}
+          </p>
+          <Button size="sm" variant="outline" onClick={handleRetry}>
+            Retry loading chat
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!messagesData) {
+    return <ChatLoadingSkeleton />;
+  }
+
+  const updateMessagesCache = useCallback(
+    (updater: (draft: MessagesInfiniteData) => void) => {
+      queryClient.setQueryData<MessagesInfiniteData>(messagesQueryKey, (oldData) => {
+        if (!oldData) return oldData;
+        return produce(oldData, updater);
+      });
+    },
+    [queryClient, messagesQueryKey],
   );
 
   const handleSessionCreation = (_firstMessage: string) => {

@@ -299,9 +299,9 @@ export default async function ChangelogEntryPage({
                             </AccordionTrigger>
                             <AccordionContent className="px-4">
                               <ul className="space-y-2 text-foreground/80">
-                                {items.map((item, idx) => (
+                                {items.map((item, itemIdx) => (
                                   <li
-                                    key={idx}
+                                    key={`${item}-${itemIdx}`}
                                     className="leading-relaxed text-sm"
                                   >
                                     • {item}

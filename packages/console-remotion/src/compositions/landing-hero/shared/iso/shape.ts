@@ -6,7 +6,6 @@ import {
   signedArea,
   faceToPath,
   polyBounds,
-  mergeBounds,
 } from "./math";
 
 // ── Face constructors ────────────────────────────────────
@@ -54,7 +53,7 @@ function rightFace(b: Box3D): Face {
 
 // ── Silhouette (hexagonal outline of isometric box) ──────
 
-export function silhouette(b: Box3D): Polygon {
+function silhouette(b: Box3D): Polygon {
   return ensureCW([
     project(b.x, b.y, b.z + b.d),
     project(b.x + b.w, b.y, b.z + b.d),
@@ -146,7 +145,7 @@ export function createBox(b: Box3D): Shape {
 }
 
 /** A minus B — carves B out of A */
-export function subtract(a: Box3D, b: Box3D): Shape {
+function _subtract(a: Box3D, b: Box3D): Shape {
   if (!aabbHit(a, b)) return createBox(a);
 
   const bSil = silhouette(b);
@@ -158,7 +157,7 @@ export function subtract(a: Box3D, b: Box3D): Shape {
 }
 
 /** A ∪ B — combined volume of both boxes */
-export function union(a: Box3D, b: Box3D): Shape {
+function _union(a: Box3D, b: Box3D): Shape {
   if (!aabbHit(a, b)) {
     return { faces: [...createBox(a).faces, ...createBox(b).faces] };
   }
@@ -172,7 +171,7 @@ export function union(a: Box3D, b: Box3D): Shape {
 }
 
 /** A ∩ B — only the overlapping volume */
-export function intersect(a: Box3D, b: Box3D): Shape {
+function _intersect(a: Box3D, b: Box3D): Shape {
   const int = aabbHit(a, b);
   if (!int) return { faces: [] };
   return createBox(int);
@@ -192,5 +191,3 @@ export function shapeBounds(shape: Shape): Bounds {
   return polyBounds(all);
 }
 
-/** Merge bounds from multiple shapes */
-export { mergeBounds } from "./math";

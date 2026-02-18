@@ -90,7 +90,7 @@ function verifyEventFiltering() {
 
   for (const file of files) {
     const content = readFileSync(join(datasetsDir, file), "utf-8");
-    const dataset: Dataset = JSON.parse(content);
+    const dataset = JSON.parse(content) as Dataset;
 
     console.log(`Checking ${dataset.name}...`);
 
@@ -110,7 +110,7 @@ function verifyEventFiltering() {
 
       const allowedForSource =
         ALLOWED_EVENTS[source as keyof typeof ALLOWED_EVENTS];
-      if (!allowedForSource.includes(normalizedEventType)) {
+      if (!(allowedForSource as string[]).includes(normalizedEventType)) {
         issues.push(
           `  ❌ ${dataset.name}: Event "${eventType}" (normalized: "${normalizedEventType}") not in ${source} allowed events: [${allowedForSource.join(", ")}]`,
         );

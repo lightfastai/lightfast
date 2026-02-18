@@ -7,7 +7,7 @@
 
 import { z } from "zod";
 import { nanoidSchema } from "../primitives/ids";
-import { storeNameSchema, storeSlugSchema } from "../primitives/slugs";
+import { storeNameSchema } from "../primitives/slugs";
 
 /**
  * Store Get or Create Input Schema
@@ -26,7 +26,7 @@ import { storeNameSchema, storeSlugSchema } from "../primitives/slugs";
  */
 export const storeGetOrCreateInputSchema = z.object({
   workspaceId: nanoidSchema,
-  storeSlug: storeSlugSchema,
+  storeSlug: storeNameSchema,
   embeddingDim: z.number().int().positive().default(1024),
 });
 
@@ -46,7 +46,7 @@ export type StoreGetOrCreateInput = z.infer<typeof storeGetOrCreateInputSchema>;
  * ```
  */
 export const storeGetByNameInputSchema = z.object({
-  storeSlug: storeSlugSchema,
+  storeSlug: storeNameSchema,
 });
 
 export type StoreGetByNameInput = z.infer<typeof storeGetByNameInputSchema>;
@@ -112,25 +112,6 @@ export const cohereEmbeddingModelSchema = z.enum([
 ]);
 
 export type CohereEmbeddingModel = z.infer<typeof cohereEmbeddingModelSchema>;
-
-/**
- * Embedding Model Schema (Union Type)
- *
- * Currently supports Cohere models. Will be extended to union type
- * when OpenAI/Anthropic embedding support is added.
- *
- * @example
- * ```typescript
- * // Current: Cohere only
- * const model = embeddingModelSchema.parse("embed-english-v3.0");
- *
- * // Future: Union of all providers
- * const model = embeddingModelSchema.parse("text-embedding-3-large"); // OpenAI
- * ```
- */
-export const embeddingModelSchema = cohereEmbeddingModelSchema;
-
-export type EmbeddingModel = z.infer<typeof embeddingModelSchema>;
 
 /**
  * Pinecone Region Schema
@@ -263,15 +244,15 @@ export type PineconeIndexName = z.infer<typeof pineconeIndexNameSchema>;
  */
 export const storeConfigurationSchema = z
   .object({
-    slug: storeSlugSchema,
+    slug: storeNameSchema,
     embeddingDim: z.number().int().positive(),
     pineconeMetric: pineconeMetricSchema,
     pineconeCloud: pineconeCloudSchema,
     pineconeRegion: pineconeRegionSchema,
     chunkMaxTokens: chunkMaxTokensSchema,
     chunkOverlap: chunkOverlapSchema,
-    embeddingModel: embeddingModelSchema,
-    embeddingProvider: embeddingProviderSchema,
+    embeddingModel: cohereEmbeddingModelSchema,
+    embeddingProvider: z.literal("cohere"),
   })
   .refine((data) => data.chunkOverlap < data.chunkMaxTokens, {
     message: "Chunk overlap must be less than chunk max tokens",

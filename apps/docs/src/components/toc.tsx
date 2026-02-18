@@ -17,14 +17,16 @@ function TOCContent({ items }: TOCProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeAnchor = useActiveAnchor();
 
-  // Find the index of the active item
+  // Build anchor→index Map once when items change (O(1) lookup vs O(n) findIndex)
+  const anchorIndexMap = useMemo(
+    () => new Map(items.map((item, i) => [item.url.split("#")[1] ?? "", i])),
+    [items],
+  );
+
   const activeIndex = useMemo(() => {
     if (!activeAnchor) return 0;
-    const index = items.findIndex((item) =>
-      item.url.endsWith(`#${activeAnchor}`),
-    );
-    return Math.max(0, index);
-  }, [activeAnchor, items]);
+    return Math.max(0, anchorIndexMap.get(activeAnchor) ?? 0);
+  }, [activeAnchor, anchorIndexMap]);
 
   return (
     <ScrollProvider containerRef={containerRef}>

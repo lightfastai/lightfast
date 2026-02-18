@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
@@ -13,6 +13,38 @@ import { SearchResultsPanel } from "./search-results-panel";
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+
+async function executeSearch(
+  body: Record<string, unknown>,
+  storeId: string,
+  signal: AbortSignal,
+): Promise<V1SearchResponse> {
+  const response = await fetch("/v1/search", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Workspace-ID": storeId,
+    },
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorData = (await response
+      .json()
+      .catch(() => ({ error: undefined, message: undefined }))) as {
+      error?: string;
+      message?: string;
+    };
+    throw new Error(
+      errorData.message ??
+        errorData.error ??
+        `Search failed: ${response.status}`,
+    );
+  }
+
+  return (await response.json()) as V1SearchResponse;
+}
 
 interface WorkspaceSearchProps {
   orgSlug: string;
@@ -69,11 +101,13 @@ export function WorkspaceSearch({
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState(query);
-
-  // Sync input value with URL-persisted query when it changes
+  const [prevQuery, setPrevQuery] = useState(query);
   useEffect(() => {
-    setInputValue(query);
-  }, [query]);
+    if (prevQuery !== query) {
+      setPrevQuery(query);
+      setInputValue(query);
+    }
+  }, [query, prevQuery]);
 
   // Fetch workspace's single store (1:1 relationship)
   const { data: store } = useSuspenseQuery({
@@ -89,8 +123,14 @@ export function WorkspaceSearch({
   // Reference to track current request for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Perform search via API route
-  const performSearch = async (searchQuery: string) => {
+  // Abort any in-flight request when the component unmounts
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
+  const performSearch = (searchQuery: string) => {
       if (!searchQuery.trim()) {
         setError("Please enter a search query");
         return;
@@ -103,77 +143,49 @@ export function WorkspaceSearch({
         return;
       }
 
-      // Cancel any previous request
       abortControllerRef.current?.abort();
       abortControllerRef.current = new AbortController();
 
       setIsSearching(true);
       setError(null);
-      setSearchResults(null); // Clear old results before new search
+      // Keep previous results visible during loading to avoid flash of empty state
 
-      try {
-        const body: Record<string, unknown> = {
-          query: searchQuery.trim(),
-          limit,
-          offset,
-          mode,
-          filters: {
-            ...(sourceTypes.length > 0 && { sourceTypes }),
-            ...(observationTypes.length > 0 && { observationTypes }),
-            ...(actorNames.length > 0 && { actorNames }),
-            ...dateRangeFromPreset(agePreset),
-          },
-          includeContext,
-          includeHighlights,
-        };
+      const body: Record<string, unknown> = {
+        query: searchQuery.trim(),
+        limit,
+        offset,
+        mode,
+        filters: {
+          ...(sourceTypes.length > 0 && { sourceTypes }),
+          ...(observationTypes.length > 0 && { observationTypes }),
+          ...(actorNames.length > 0 && { actorNames }),
+          ...dateRangeFromPreset(agePreset),
+        },
+        includeContext,
+        includeHighlights,
+      };
 
-        const response = await fetch("/v1/search", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Workspace-ID": store.id,
-          },
-          body: JSON.stringify(body),
-          signal: abortControllerRef.current.signal,
+      executeSearch(body, store.id, abortControllerRef.current.signal)
+        .then((data) => {
+          setSearchResults(data);
+          setIsSearching(false);
+        })
+        .catch((err: unknown) => {
+          if (err instanceof Error && err.name === "AbortError") return;
+          setError(err instanceof Error ? err.message : "Search failed");
+          setSearchResults(null);
+          setIsSearching(false);
         });
-
-        if (!response.ok) {
-          const errorData = (await response
-            .json()
-            .catch(() => ({ error: undefined, message: undefined }))) as {
-            error?: string;
-            message?: string;
-          };
-          throw new Error(
-            errorData.message ??
-              errorData.error ??
-              `Search failed: ${response.status}`,
-          );
-        }
-
-        const data = (await response.json()) as V1SearchResponse;
-        setSearchResults(data);
-      } catch (err) {
-        // Ignore AbortError (request was cancelled intentionally)
-        if (err instanceof Error && err.name === "AbortError") {
-          return; // Silently ignore cancelled requests
-        }
-        setError(err instanceof Error ? err.message : "Search failed");
-        setSearchResults(null);
-      } finally {
-        setIsSearching(false);
-      }
   };
 
-  const handleSearch = async () => {
-    await performSearch(query);
+  const handleSearch = () => {
+    performSearch(inputValue);
   };
 
-  const handlePromptSubmit = async (message: PromptInputMessage) => {
+  const handlePromptSubmit = async (message: PromptInputMessage): Promise<void> => {
     const content = message.text?.trim() ?? "";
-    void setQuery(content);
-    setInputValue(""); // Clear input after submission
-    await performSearch(content);
+    await setQuery(content);
+    performSearch(content);
   };
 
   // Handle Cmd+Enter keyboard shortcut
@@ -186,6 +198,7 @@ export function WorkspaceSearch({
 
   return (
     <div
+      role="search"
       className="flex flex-col h-full overflow-hidden"
       onKeyDown={handleKeyDown}
     >

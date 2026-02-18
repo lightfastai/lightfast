@@ -6,5 +6,4 @@ export interface NavItem extends BaseNavItem {
   microfrontend?: boolean;
 }
 
-export type { NavItemWithChildren, NavItemRecord } from "@repo/ui/types/nav";
 

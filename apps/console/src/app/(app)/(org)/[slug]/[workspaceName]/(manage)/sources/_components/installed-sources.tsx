@@ -101,11 +101,9 @@ export function InstalledSources({
 		} else if (integration.type === "vercel") {
 			const projectName = metadata?.projectName ?? "";
 			searchableName = projectName ? `${providerLabel.toLowerCase()}/${projectName}` : providerLabel;
-		} else if (integration.type === "linear" || integration.type === "sentry") { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+		} else {
 			const resourceName = metadata?.projectName ?? metadata?.workspaceName ?? "";
 			searchableName = resourceName ? `${providerLabel.toLowerCase()}/${resourceName}` : providerLabel;
-		} else {
-			searchableName = metadata?.projectName ?? providerLabel;
 		}
 
 		const matchesSearch =
@@ -210,13 +208,10 @@ export function InstalledSources({
 							} else if (integration.type === "vercel") {
 								const projectName = metadata?.projectName ?? "";
 								displayName = projectName ? `${providerLabel.toLowerCase()}/${projectName}` : providerLabel;
-							} else if (integration.type === "linear" || integration.type === "sentry") { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
-								// For Linear/Sentry, show provider/workspace or provider/project
+							} else {
+								// For Linear/Sentry and other providers, show provider/workspace or provider/project
 								const resourceName = metadata?.projectName ?? metadata?.workspaceName ?? "";
 								displayName = resourceName ? `${providerLabel.toLowerCase()}/${resourceName}` : providerLabel;
-							} else {
-								// Fallback for other providers
-								displayName = metadata?.projectName ?? providerLabel;
 							}
 
 							// Get additional metadata for GitHub
@@ -293,8 +288,7 @@ export function InstalledSources({
 									</AccordionTrigger>
 
 									{/* Expanded Event Settings - Only for providers with webhook handlers */}
-									{(integration.type === "github" || integration.type === "vercel" || integration.type === "linear" || integration.type === "sentry") && ( // eslint-disable-line @typescript-eslint/no-unnecessary-condition
-										<AccordionContent className="px-0 pb-0">
+									<AccordionContent className="px-0 pb-0">
 											<EventSettings
 												integrationId={integration.id}
 												provider={integration.type}
@@ -303,7 +297,6 @@ export function InstalledSources({
 												workspaceName={workspaceName}
 											/>
 										</AccordionContent>
-									)}
 								</AccordionItem>
 							);
 						})}

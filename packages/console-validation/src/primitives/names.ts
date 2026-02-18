@@ -78,23 +78,6 @@ export const jobNameSchema = z
   .trim();
 
 /**
- * Integration Display Name Schema
- *
- * Display name for connected integrations
- * - 1-255 characters
- * - Trimmed whitespace
- *
- * Used in: GitHub integration names, Linear integration names, etc.
- *
- * @example
- * ```typescript
- * integrationDisplayNameSchema.parse("GitHub: lightfastai"); // ✅ Valid
- * integrationDisplayNameSchema.parse("Linear Workspace"); // ✅ Valid
- * ```
- */
-export const integrationDisplayNameSchema = displayNameSchema;
-
-/**
  * Source Identifier Schema
  *
  * Source-specific external identifier (e.g., GitHub repo ID, Linear issue ID)

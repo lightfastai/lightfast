@@ -101,7 +101,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
-    "babel-plugin-react-compiler": "^1.0.0",
+    "babel-plugin-react-compiler": "catalog:",
     "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",
     "eslint-plugin-react-compiler": "19.1.0-rc.2",

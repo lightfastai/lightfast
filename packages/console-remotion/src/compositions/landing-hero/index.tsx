@@ -1,7 +1,5 @@
 import type { RenderMediaOptions } from "@remotion/renderer";
 
-export { LandingHero } from "./landing-hero";
-
 /**
  * Balanced preset for high-quality GIF output:
  * - PNG intermediates prevent JPEG artifacts around text and line edges.

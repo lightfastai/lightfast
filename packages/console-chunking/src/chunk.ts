@@ -5,7 +5,8 @@
  * and maintaining token count limits.
  */
 
-import { Tiktoken, encodingForModel } from "js-tiktoken";
+import type { Tiktoken } from "js-tiktoken";
+import { encodingForModel } from "js-tiktoken";
 import type { Chunk, ChunkOptions } from "./types";
 
 // Cache the encoder to avoid recreating it for every chunk operation
@@ -15,9 +16,7 @@ let encoder: Tiktoken | undefined = undefined;
  * Get or create the tiktoken encoder for GPT-4 (cl100k_base)
  */
 function getEncoder(): Tiktoken {
-  if (!encoder) {
-    encoder = encodingForModel("gpt-4");
-  }
+  encoder ??= encodingForModel("gpt-4");
   return encoder;
 }
 
@@ -75,7 +74,6 @@ export function chunkText(
     return [];
   }
 
-  const enc = getEncoder();
   const chunks: Chunk[] = [];
 
   // If text is small enough to fit in one chunk, return it as is
@@ -103,8 +101,7 @@ export function chunkText(
   let chunkIndex = 0;
   let segmentOffset = 0;
 
-  for (let i = 0; i < segments.length; i++) {
-    const segment = segments[i]!;
+  for (const segment of segments) {
     const segmentTokens = countTokens(segment);
 
     // If segment alone exceeds max tokens, split it further
@@ -202,8 +199,7 @@ function splitIntoSegments(text: string): string[] {
 
   const lines = text.split("\n");
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]!;
+  for (const line of lines) {
 
     // Check for code block markers
     if (line.trim().startsWith("```")) {

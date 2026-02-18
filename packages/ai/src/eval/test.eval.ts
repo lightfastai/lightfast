@@ -1,7 +1,7 @@
 import { Levenshtein } from "autoevals";
 import { Eval } from "braintrust";
 
-Eval(
+void Eval(
   "Say Hi Bot", // Replace with your project name
   {
     data: () => {
@@ -16,7 +16,7 @@ Eval(
         },
       ]; // Replace with your eval dataset
     },
-    task: async (input) => {
+    task: (input) => {
       if (input === "Bar") {
         return "Hello Bar";
       }

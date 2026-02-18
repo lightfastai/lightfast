@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { FileText, ExternalLink, RefreshCcw, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import { Button } from "@repo/ui/components/ui/button";
-import { toast } from "@repo/ui/components/ui/sonner";
+
 
 interface RepositoryConfigDialogProps {
   open: boolean;
@@ -19,43 +19,30 @@ interface RepositoryConfigDialogProps {
   installationId: number; // GitHub App installation ID
 }
 
-type State =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "loaded"; exists: boolean; path?: string; content?: string }
-  | { status: "error"; message: string };
+async function fetchRepositoryConfig(
+  fullName: string,
+  installationId: number,
+): Promise<{ exists: boolean; path?: string; content?: string }> {
+  const url = new URL("/api/github/repository-config", window.location.origin);
+  url.searchParams.set("fullName", fullName);
+  url.searchParams.set("installationId", String(installationId));
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({} as { error?: string }))) as { error?: string };
+    throw new Error(data.error ?? `HTTP ${res.status}`);
+  }
+  return (await res.json()) as { exists: boolean; path?: string; content?: string };
+}
 
 export function RepositoryConfigDialog({ open, onOpenChange, fullName, installationId }: RepositoryConfigDialogProps) {
-  const [state, setState] = useState<State>({ status: "idle" });
-
-  async function fetchConfig() {
-    try {
-      setState({ status: "loading" });
-      const url = new URL("/api/github/repository-config", window.location.origin);
-      url.searchParams.set("fullName", fullName);
-      url.searchParams.set("installationId", String(installationId));
-      const res = await fetch(url.toString());
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({} as { error?: string }))) as { error?: string };
-        throw new Error(data.error ?? `HTTP ${res.status}`);
-      }
-      const data = (await res.json()) as { exists: boolean; path?: string; content?: string };
-      setState({ status: "loaded", exists: data.exists, path: data.path, content: data.content });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to fetch config";
-      setState({ status: "error", message });
-      toast.error("Failed to load config", { description: message });
-    }
-  }
-
-  useEffect(() => {
-    if (open) void fetchConfig();
-    // Note: fetchConfig is not in deps because it's defined in component scope
-    // and changes on every render. We only want to fetch when these values change.
-  }, [open, fullName, installationId]);
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
+    queryKey: ["repository-config", fullName, installationId],
+    queryFn: () => fetchRepositoryConfig(fullName, installationId),
+    enabled: open,
+  });
 
   const ghLink = `https://github.com/${fullName}`;
-  const filename = state.status === "loaded" && state.path ? state.path : "lightfast.yml";
+  const filename = data?.path ?? "lightfast.yml";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -70,29 +57,29 @@ export function RepositoryConfigDialog({ open, onOpenChange, fullName, installat
           </DialogDescription>
         </DialogHeader>
 
-        {state.status === "loading" && (
+        {(isLoading || isFetching) && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading configuration…
           </div>
         )}
 
-        {state.status === "error" && (
+        {error && (
           <div className="rounded-md border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-400">
-            {state.message}
+            {error instanceof Error ? error.message : "Failed to fetch config"}
           </div>
         )}
 
-        {state.status === "loaded" && (
-          state.exists ? (
+        {data && (
+          data.exists ? (
             <div className="space-y-3">
               <div className="rounded-md border bg-muted/40">
                 <pre className="overflow-x-auto p-4 text-xs">
-                  <code>{state.content}</code>
+                  <code>{data.content}</code>
                 </pre>
               </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Path: {state.path}</span>
-                <a href={`${ghLink}/blob/HEAD/${state.path}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline">
+                <span>Path: {data.path}</span>
+                <a href={`${ghLink}/blob/HEAD/${data.path}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline">
                   <ExternalLink className="h-3.5 w-3.5" /> Open on GitHub
                 </a>
               </div>
@@ -105,7 +92,7 @@ export function RepositoryConfigDialog({ open, onOpenChange, fullName, installat
         )}
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" size="sm" onClick={() => void fetchConfig()} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching} className="gap-1.5">
             <RefreshCcw className="h-3.5 w-3.5" /> Refresh
           </Button>
           <Button variant="outline" size="sm" asChild>

@@ -1,4 +1,5 @@
-import { fal, InQueueQueueStatus } from "@fal-ai/client";
+import type { InQueueQueueStatus } from "@fal-ai/client";
+import { fal } from "@fal-ai/client";
 
 export interface FalGenerateImageOptions {
   prompt: string;
@@ -25,7 +26,7 @@ export interface FalGenerateImageSuccessPayload {
   };
 }
 
-export interface FalGenerateImageResult extends InQueueQueueStatus {}
+export type FalGenerateImageResult = InQueueQueueStatus;
 
 /**
  * Generate an image using Fal AI

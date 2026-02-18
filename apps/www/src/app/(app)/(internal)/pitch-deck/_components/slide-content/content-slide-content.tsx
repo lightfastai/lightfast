@@ -43,9 +43,9 @@ export function ContentSlideContent({
             {slide.leftText}
           </p>
           <div className={cn(isFixed ? "space-y-6" : "space-y-2 sm:space-y-4")}>
-            {slide.rightText.map((text, i) => (
+            {slide.rightText.map((text, textIdx) => (
               <p
-                key={i}
+                key={`right-text-${textIdx}`}
                 className={cn(
                   "border-b border-neutral-300 text-neutral-700",
                   isFixed ? "text-xl pb-4" : "text-xs sm:text-sm pb-2"

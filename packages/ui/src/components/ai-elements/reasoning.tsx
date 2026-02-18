@@ -5,7 +5,7 @@ import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
 import { cn } from "../../lib/utils";
 import { BrainIcon, ChevronDownIcon } from "lucide-react";
 import type { ComponentProps } from "react";
-import { createContext, memo, useContext, useEffect, useState } from "react";
+import { createContext, memo, useContext, useEffect, useRef, useState } from "react";
 import { Response } from "./response";
 
 interface ReasoningContextValue {
@@ -25,9 +25,9 @@ const useReasoning = () => {
 	return context;
 };
 
-export type ReasoningProps = ComponentProps<
+export type ReasoningProps = Omit<ComponentProps<
 	typeof CollapsiblePrimitive.Root
-> & {
+>, "onOpenChange"> & {
 	isStreaming?: boolean;
 	open?: boolean;
 	defaultOpen?: boolean;
@@ -49,10 +49,11 @@ export const Reasoning = memo(
 		children,
 		...props
 	}: ReasoningProps) => {
+		const onOpenChangeCallback = onOpenChange ? (v: boolean) => { onOpenChange(v); } : undefined;
 		const [isOpen, setIsOpen] = useControllableState({
 			prop: open,
 			defaultProp: defaultOpen,
-			onChange: onOpenChange,
+			onChange: onOpenChangeCallback,
 		});
 		const [duration, setDuration] = useControllableState({
 			prop: durationProp,
@@ -60,19 +61,17 @@ export const Reasoning = memo(
 		});
 
 		const [hasAutoClosed, setHasAutoClosed] = useState(false);
-		const [startTime, setStartTime] = useState<number | null>(null);
+		const startTimeRef = useRef<number | null>(null);
 
 		// Track duration when streaming starts and ends
 		useEffect(() => {
 			if (isStreaming) {
-				if (startTime === null) {
-					setStartTime(Date.now());
-				}
-			} else if (startTime !== null) {
-				setDuration(Math.ceil((Date.now() - startTime) / MS_IN_S));
-				setStartTime(null);
+				startTimeRef.current ??= Date.now();
+			} else if (startTimeRef.current !== null) {
+				setDuration(Math.ceil((Date.now() - startTimeRef.current) / MS_IN_S));
+				startTimeRef.current = null;
 			}
-		}, [isStreaming, startTime, setDuration]);
+		}, [isStreaming, setDuration]);
 
 		// Auto-open when streaming starts, auto-close when streaming ends (once only)
 		useEffect(() => {

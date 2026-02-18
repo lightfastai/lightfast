@@ -210,8 +210,6 @@ export const workspaceAccessRouter = {
             const data = ws.sourceConfig;
             return (
               data.sourceType === "github" &&
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive check for discriminated union
-              data.type === "repository" &&
               data.repoId === repo.repoId
             );
           });
@@ -221,8 +219,7 @@ export const workspaceAccessRouter = {
           if (existing) {
             // Update existing connection (idempotent)
             const currentConfig = existing.sourceConfig;
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive check for discriminated union
-            if (currentConfig.sourceType === "github" && currentConfig.type === "repository") {
+            if (currentConfig.sourceType === "github") {
               await ctx.db
                 .update(workspaceIntegrations)
                 .set({

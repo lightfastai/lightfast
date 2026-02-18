@@ -1,4 +1,4 @@
-import { NextConfig } from "next";
+import type { NextConfig } from "next";
 import { withBetterStack as withBetterStackNext } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
@@ -9,6 +9,8 @@ import { env } from "../env";
 
 export const config: NextConfig = withVercelToolbar()({
   poweredByHeader: false,
+  reactStrictMode: true,
+  reactCompiler: true,
   serverExternalPackages: ["import-in-the-middle", "require-in-the-middle"],
 
   compiler: {
@@ -30,11 +32,15 @@ export const config: NextConfig = withVercelToolbar()({
         protocol: "https",
         hostname: "assets.basehub.com",
       },
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+      },
     ],
   },
 
-  async rewrites() {
-    return [
+  rewrites() {
+    return Promise.resolve([
       {
         source: "/ingest/static/:path*",
         destination: "https://us-assets.i.posthog.com/static/:path*",
@@ -55,10 +61,10 @@ export const config: NextConfig = withVercelToolbar()({
         source: "/healthz",
         destination: "/api/health",
       },
-    ];
+    ]);
   },
 
-  async headers() {
+  headers() {
     const securityHeaders = createSecureHeaders({
       // HSTS Preload: https://hstspreload.org/
       forceHTTPSRedirect: [
@@ -67,7 +73,7 @@ export const config: NextConfig = withVercelToolbar()({
       ],
     });
 
-    return [
+    return Promise.resolve([
       {
         source: "/(.*)",
         headers: [
@@ -75,7 +81,19 @@ export const config: NextConfig = withVercelToolbar()({
           { key: "Document-Policy", value: "js-profiling" },
         ],
       },
-    ];
+    ]);
+  },
+
+  experimental: {
+    optimizeCss: true,
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+    optimizePackageImports: [
+      "@repo/ui",
+      "lucide-react",
+    ],
   },
 
   // This is required to support PostHog trailing slash API requests
@@ -137,7 +155,7 @@ export const withSentry: (sourceConfig: NextConfig) => NextConfig = (
  */
 export const withAnalyzer = (sourceConfig: NextConfig): NextConfig =>
   // Type assertion needed due to multiple Next.js versions in monorepo
-  withBundleAnalyzer()(sourceConfig as any) as NextConfig;
+  withBundleAnalyzer()(sourceConfig as unknown as Parameters<ReturnType<typeof withBundleAnalyzer>>[0]);
 
 /**
  * @type {(sourceConfig: import("next").NextConfig) => import("next").NextConfig}

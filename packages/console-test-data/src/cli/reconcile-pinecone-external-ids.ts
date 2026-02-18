@@ -162,17 +162,15 @@ async function reconcile(workspaceId: string, dryRun: boolean) {
   console.log();
 
   // Show sample mismatches
-  const sampleSize = Math.min(5, mismatches.length);
-  for (let i = 0; i < sampleSize; i++) {
-    const m = mismatches[i]!;
+  for (const m of mismatches.slice(0, 5)) {
     console.log(`  ${m.vectorId} (${m.view})`);
     console.log(`    Pinecone: ${m.pineconeObservationId}`);
     console.log(`    DB:       ${m.externalId}`);
     console.log();
   }
 
-  if (mismatches.length > sampleSize) {
-    console.log(`  ... and ${mismatches.length - sampleSize} more\n`);
+  if (mismatches.length > 5) {
+    console.log(`  ... and ${mismatches.length - 5} more\n`);
   }
 
   if (dryRun) {

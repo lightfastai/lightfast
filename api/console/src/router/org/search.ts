@@ -69,8 +69,7 @@ export const searchRouter = {
 					});
 				}
 
-				// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- runtime safety: version may differ in future
-			if (workspace.settings.version !== 1) {
+				if ((workspace.settings.version as number) !== 1) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
 						message: "Workspace has invalid settings",

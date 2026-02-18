@@ -54,8 +54,8 @@ export function ColumnsSlideContent({
             : `${responsiveGridCols} gap-3 sm:gap-4 md:gap-8`
         )}
       >
-        {slide.columns.map((column, idx) => (
-          <div key={idx} className="flex flex-col">
+        {slide.columns.map((column, colIdx) => (
+          <div key={`col-${colIdx}`} className="flex flex-col">
             {/* Column header with underline */}
             <h3
               className={cn(
@@ -74,7 +74,7 @@ export function ColumnsSlideContent({
               )}
             >
               {column.items.map((item, itemIdx) => (
-                <li key={itemIdx}>{item}</li>
+                <li key={`col-${colIdx}-item-${itemIdx}`}>{item}</li>
               ))}
             </ul>
           </div>

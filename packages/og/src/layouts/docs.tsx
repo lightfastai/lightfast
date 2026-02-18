@@ -59,7 +59,7 @@ export function DocsLayout({ title, section, breadcrumb }: DocsOGProps) {
 				</div>
 			</div>
 
-			{(section || (breadcrumb && breadcrumb.length > 0)) && (
+			{(section ?? (breadcrumb && breadcrumb.length > 0)) && (
 				<div
 					style={{
 						display: "flex",
@@ -74,8 +74,7 @@ export function DocsLayout({ title, section, breadcrumb }: DocsOGProps) {
 				>
 					{section && <span>{section}</span>}
 					{!section &&
-						breadcrumb &&
-						breadcrumb.map((crumb, i) => (
+						breadcrumb?.map((crumb, i) => (
 							<span
 								key={crumb}
 								style={{

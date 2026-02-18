@@ -38,11 +38,6 @@ export const SOCIAL_NAV: NavItem[] = [
   },
 ];
 
-export const LEGAL_NAV: NavItem[] = [
-  { title: "Terms", href: "/legal/terms" },
-  { title: "Privacy", href: "/legal/privacy" },
-];
-
 // Resources sub-navigation used for the marketing header dropdown
 export const RESOURCES_NAV: NavItem[] = [
   { title: "Changelog", href: "/changelog" },

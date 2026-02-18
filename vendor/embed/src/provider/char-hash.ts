@@ -48,13 +48,13 @@ export class CharHashEmbedding implements EmbeddingProvider {
    * @param texts - Array of text strings to embed
    * @returns Promise resolving to embed response
    */
-  async embed(texts: string[]): Promise<EmbedResponse> {
+  embed(texts: string[]): Promise<EmbedResponse> {
     const embeddings = texts.map((text) => this.hashToVector(text));
 
-    return {
+    return Promise.resolve({
       embeddings,
       model: "char-hash-1536",
-    };
+    });
   }
 
   /**
@@ -81,7 +81,9 @@ export class CharHashEmbedding implements EmbeddingProvider {
 
       // Combine multiple bytes for more variation
       const value =
-        (hash[byteIndex1]! * 256 + hash[byteIndex2]! + hash[byteIndex3]!) /
+        ((hash[byteIndex1] ?? 0) * 256 +
+          (hash[byteIndex2] ?? 0) +
+          (hash[byteIndex3] ?? 0)) /
         (256 * 256 + 256);
 
       // Map to range [-1, 1]
@@ -93,7 +95,7 @@ export class CharHashEmbedding implements EmbeddingProvider {
 
     // Avoid division by zero
     if (magnitude === 0) {
-      return new Array(this.dimension).fill(0);
+      return Array.from<number>({ length: this.dimension }).fill(0);
     }
 
     return vector.map((v) => v / magnitude);

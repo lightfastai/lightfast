@@ -21,8 +21,9 @@ export function ScrollAreaWithBorder({ children, className }: ScrollAreaWithBord
 			setIsScrolled(scrollElement.scrollTop > 0);
 		};
 
-		scrollElement.addEventListener('scroll', handleScroll);
-		return () => scrollElement.removeEventListener('scroll', handleScroll);
+		const scrollOptions = { passive: true };
+		scrollElement.addEventListener('scroll', handleScroll, scrollOptions);
+		return () => scrollElement.removeEventListener('scroll', handleScroll, scrollOptions);
 	}, []);
 
 	return (

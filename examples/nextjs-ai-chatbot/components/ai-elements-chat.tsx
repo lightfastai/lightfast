@@ -18,7 +18,7 @@ import {
   PromptInputSubmit,
 } from '@/components/ai-elements/prompt-input';
 import { Loader } from '@/components/ai-elements/loader';
-import { Bot, User } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 export function AIElementsChat() {
@@ -47,15 +47,16 @@ export function AIElementsChat() {
     });
   }, [sessionId]);
   
-  const { messages, sendMessage, status, input, handleInputChange, handleSubmit } = useChat({
+  const { messages, status, input, handleInputChange, handleSubmit } = useChat({
     transport,
     onError: (error) => {
       console.error('Chat error:', error);
     },
   });
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     handleSubmit(e);
   };
 
@@ -109,12 +110,12 @@ export function AIElementsChat() {
                   <MessageContent>
                     {message.role === 'user' ? (
                       <p className="whitespace-pre-wrap">
-                        {(message as any).parts?.[0]?.text || message.content}
+                        {message.parts.find((p) => p.type === 'text')?.text ?? ''}
                       </p>
                     ) : (
                       <div className="prose prose-sm max-w-none dark:prose-invert">
                         <ReactMarkdown>
-                          {(message as any).parts?.[0]?.text || message.content}
+                          {message.parts.find((p) => p.type === 'text')?.text ?? ''}
                         </ReactMarkdown>
                       </div>
                     )}
@@ -144,8 +145,10 @@ export function AIElementsChat() {
       {/* Input */}
       <div className="border-t bg-background p-4">
         <PromptInput onSubmit={onSubmit}>
-          <PromptInputTextarea 
+          <PromptInputTextarea
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             value={input}
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             onChange={handleInputChange}
             placeholder="Type your message..."
             disabled={status === 'streaming' || status === 'submitted'}

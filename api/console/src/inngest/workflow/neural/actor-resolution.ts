@@ -18,7 +18,7 @@ import { log } from "@vendor/observability/log";
  * Future: Add github_clerk_mappings cache table for O(1) reverse lookups.
  */
 
-export interface ResolvedActor {
+interface ResolvedActor {
   /** Original actor from source event */
   sourceActor: SourceActor | null;
   /** Canonical actor ID for this workspace (source:id format) */
@@ -99,7 +99,7 @@ export async function resolveActor(
   // For Vercel events, try to resolve username to numeric GitHub ID
   if (sourceEvent.source === "vercel") {
     const references = sourceEvent.references;
-    const commitRef = references?.find((ref) => ref.type === "commit");
+    const commitRef = references.find((ref) => ref.type === "commit");
 
     if (commitRef?.id) {
       const resolved = await resolveVercelActorViaCommitSha(
@@ -109,6 +109,8 @@ export async function resolveActor(
       );
 
       if (resolved) {
+        // Capture original username before overwriting id
+        const originalUsername = sourceActor.id;
         // Upgrade actor ID to numeric format
         sourceActor = {
           ...sourceActor,
@@ -116,7 +118,7 @@ export async function resolveActor(
         };
 
         log.info("Vercel actor upgraded to numeric ID", {
-          originalUsername: sourceActor.name,
+          originalUsername,
           numericId: resolved.numericId,
         });
       }

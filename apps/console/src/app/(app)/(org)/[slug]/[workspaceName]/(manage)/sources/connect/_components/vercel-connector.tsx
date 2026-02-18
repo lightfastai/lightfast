@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
@@ -21,12 +21,7 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
     clerkOrgSlug,
     workspaceName,
     workspaceId,
-    setWorkspaceId,
-    setUserSourceId,
-    setIsConnected,
   } = useConnectForm();
-
-  const [showProjectSelector, setShowProjectSelector] = useState(false);
 
   // Fetch Vercel connection status (prefetched on server)
   const { data: vercelSource, refetch } = useSuspenseQuery({
@@ -35,35 +30,12 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
     refetchOnWindowFocus: false,
   });
 
-  // Fetch workspace to get ID
-  const { data: workspace } = useSuspenseQuery({
-    ...trpc.workspace.getByName.queryOptions({
-      clerkOrgSlug,
-      workspaceName,
-    }),
-  });
-
   const isConnected = !!vercelSource?.id;
 
-  // Sync connection state to context
-  useEffect(() => {
-    setIsConnected(isConnected);
-    setUserSourceId(vercelSource?.id ?? null);
-  }, [isConnected, vercelSource?.id, setIsConnected, setUserSourceId]);
-
-  // Set workspace ID in context
-  useEffect(() => {
-    if (workspace.id) {
-      setWorkspaceId(workspace.id);
-    }
-  }, [workspace.id, setWorkspaceId]);
-
-  // Auto-open project selector after OAuth return
-  useEffect(() => {
-    if (autoOpen && isConnected) {
-      setShowProjectSelector(true);
-    }
-  }, [autoOpen, isConnected]);
+  // Lazy initializer: on OAuth redirect back, both autoOpen and isConnected are
+  // true at mount time (useSuspenseQuery has prefetched data server-side), so we
+  // can derive the initial value directly without a synchronous effect.
+  const [showProjectSelector, setShowProjectSelector] = useState(() => autoOpen && isConnected);
 
   const handleConnectVercel = () => {
     const width = 600;

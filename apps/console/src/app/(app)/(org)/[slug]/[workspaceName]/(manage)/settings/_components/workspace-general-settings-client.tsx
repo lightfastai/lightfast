@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { produce } from "immer";
 import { Loader2 } from "lucide-react";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
 import {
+	useFormCompat,
 	Form,
 	FormControl,
 	FormDescription,
@@ -49,7 +49,7 @@ export function WorkspaceGeneralSettingsClient({
 	});
 
 	// Initialize form with current workspace name
-	const form = useForm<WorkspaceSettingsFormValues>({
+	const form = useFormCompat<WorkspaceSettingsFormValues>({
 		resolver: zodResolver(workspaceSettingsFormSchema),
 		defaultValues: {
 			workspaceName: workspace.name,

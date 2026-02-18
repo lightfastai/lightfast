@@ -118,11 +118,6 @@ export interface WorkspaceEmbeddingConfig {
 }
 
 /**
- * @deprecated Use WorkspaceEmbeddingConfig instead
- */
-export type StoreEmbeddingConfig = WorkspaceEmbeddingConfig;
-
-/**
  * Create an embedding provider bound to a specific workspace's configuration
  *
  * CRITICAL: This ensures the same embedding model is used for both indexing
@@ -160,11 +155,6 @@ export function createEmbeddingProviderForWorkspace(
 }
 
 /**
- * @deprecated Use createEmbeddingProviderForWorkspace instead
- */
-export const createEmbeddingProviderForStore = createEmbeddingProviderForWorkspace;
-
-/**
  * Embed texts using the provided provider while respecting Cohere's 96-text limit.
  *
  * @param provider - Embedding provider_instance created via {@link createEmbeddingProvider}
@@ -174,7 +164,7 @@ export const createEmbeddingProviderForStore = createEmbeddingProviderForWorkspa
  */
 export async function embedTextsInBatches(
 	provider: EmbeddingProvider,
-	items: Array<{ text: string }>,
+	items: { text: string }[],
 	options: { batchSize?: number } = {},
 ): Promise<number[][]> {
 	const batchSize = options.batchSize ?? 96;

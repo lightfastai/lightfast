@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useSignIn } from "@clerk/nextjs";
+import { useSignIn } from "@vendor/clerk/client";
+import type { EmailCodeFactor } from "@vendor/clerk/types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -49,18 +50,25 @@ export function SignInEmailInput({ onSuccess, onError }: SignInEmailInputProps) 
 				identifier: data.email,
 			});
 
-			// Send verification code
-			const emailFactor = signIn.supportedFirstFactors?.find(
-				(factor) => factor.strategy === "email_code",
-			);
+			const factors = signIn.supportedFirstFactors;
+			let emailAddressId: string | undefined;
+			if (factors) {
+				const emailFactor = factors.find(
+					(factor): factor is EmailCodeFactor => factor.strategy === "email_code",
+				);
+				if (emailFactor) {
+					emailAddressId = emailFactor.emailAddressId;
+				}
+			}
 
-			if (!emailFactor?.emailAddressId) {
-				throw new Error("Email verification is not supported");
+			if (!emailAddressId) {
+				onError("Email verification is not supported");
+				return;
 			}
 
 			await signIn.prepareFirstFactor({
 				strategy: "email_code",
-				emailAddressId: emailFactor.emailAddressId,
+				emailAddressId,
 			});
 
 			log.info("[SignInEmailInput] Authentication success", {

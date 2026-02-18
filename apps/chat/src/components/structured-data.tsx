@@ -5,7 +5,9 @@ interface StructuredDataProps {
   additionalData?: Record<string, unknown>;
 }
 
-export function StructuredData({ type = 'WebApplication', additionalData = {} }: StructuredDataProps) {
+const EMPTY_ADDITIONAL_DATA: Record<string, unknown> = {};
+
+export function StructuredData({ type = 'WebApplication', additionalData = EMPTY_ADDITIONAL_DATA }: StructuredDataProps) {
   const baseUrl = "https://chat.lightfast.ai";
   
   const getStructuredData = () => {
@@ -160,10 +162,9 @@ export function StructuredData({ type = 'WebApplication', additionalData = {} }:
 
   return (
     <script
+      id={`structured-data-${type}`}
       type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(structuredData, null, 2)
-      }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData, null, 2) }}
     />
   );
 }

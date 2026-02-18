@@ -36,12 +36,6 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 	} = useBillingData();
 	const router = useRouter();
 
-	// Only show for paid plans
-	if (currentPlan === ClerkPlanKey.FREE_TIER) {
-		return null;
-	}
-
-	// Cancel subscription mutation
 	const cancelSubscriptionMutation = useMutation(
 		trpc.billing.cancelSubscriptionItem.mutationOptions({
 			onSuccess: () => {
@@ -52,8 +46,6 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 					description:
 						"Your subscription has been cancelled successfully. You'll continue to have access until the end of your billing period.",
 				});
-				// TODO: Add revalidation logic if needed
-				// Redirect to cancellation confirmation page with plan context
 				router.push(
 					`/billing/cancelled?plan=${currentPlan}&period=${billingInterval}`,
 				);
@@ -69,7 +61,10 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 		}),
 	);
 
-	// Handle subscription cancellation
+	if (currentPlan === ClerkPlanKey.FREE_TIER || !hasActiveSubscription || isCanceled) {
+		return null;
+	}
+
 	const handleCancelSubscription = () => {
 		if (!activePaidItem?.id) {
 			toast({
@@ -91,11 +86,6 @@ export function CancellationSection({ currentPlan }: CancellationSectionProps) {
 			});
 		}
 	};
-
-	// Don't render if there's no active subscription or if already canceled
-	if (!hasActiveSubscription || isCanceled) {
-		return null;
-	}
 
 	return (
 		<Card>

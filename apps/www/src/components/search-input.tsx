@@ -102,22 +102,18 @@ export function SearchInput() {
   );
 
   // Track previous placeholder to animate it out
-  const [prevPlaceholder, setPrevPlaceholder] = useState<string | undefined>(
-    undefined,
-  );
-  const [rotationCounter, setRotationCounter] = useState(0);
+  const [placeholderAnim, setPlaceholderAnim] = useState<{
+    prev: string | undefined;
+    counter: number;
+  }>({ prev: undefined, counter: 0 });
   const lastShownRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (rotatingPlaceholder === undefined) return;
 
-    // The previous value becomes the slide-out text
-    setPrevPlaceholder(lastShownRef.current);
-    // Update the last shown ref to the new value
+    const prev = lastShownRef.current;
     lastShownRef.current = rotatingPlaceholder;
-
-    // Bump counter so keys change and animations replay
-    setRotationCounter((c) => c + 1);
+    setPlaceholderAnim((a) => ({ prev, counter: a.counter + 1 }));
   }, [rotatingPlaceholder]);
 
   // Focus input on initial mount
@@ -184,18 +180,18 @@ export function SearchInput() {
             >
               <div className="relative h-[1.75rem] overflow-hidden w-full text-muted-foreground text-2xl">
                 {/* Previous text sliding out */}
-                {prevPlaceholder && (
+                {placeholderAnim.prev && (
                   <span
-                    key={`prev-${rotationCounter}`}
+                    key={`prev-${placeholderAnim.counter}`}
                     className="absolute inset-x-0 bottom-0 animate-lf-slide-up-out"
                   >
-                    {prevPlaceholder}
+                    {placeholderAnim.prev}
                   </span>
                 )}
                 {/* Current text sliding in */}
                 {rotatingPlaceholder && (
                   <span
-                    key={`curr-${rotationCounter}`}
+                    key={`curr-${placeholderAnim.counter}`}
                     className="absolute inset-x-0 bottom-0 animate-lf-slide-up-in"
                   >
                     {rotatingPlaceholder}

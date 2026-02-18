@@ -52,25 +52,3 @@ export type DeleteOrgApiKey = z.infer<typeof deleteOrgApiKeySchema>;
 export type RotateOrgApiKey = z.infer<typeof rotateOrgApiKeySchema>;
 export type ListOrgApiKeys = z.infer<typeof listOrgApiKeysSchema>;
 
-// Backward compatibility exports
-/** @deprecated Use createOrgApiKeySchema instead */
-export const createWorkspaceApiKeySchema = createOrgApiKeySchema;
-/** @deprecated Use revokeOrgApiKeySchema instead */
-export const revokeWorkspaceApiKeySchema = revokeOrgApiKeySchema;
-/** @deprecated Use deleteOrgApiKeySchema instead */
-export const deleteWorkspaceApiKeySchema = deleteOrgApiKeySchema;
-/** @deprecated Use rotateOrgApiKeySchema instead */
-export const rotateWorkspaceApiKeySchema = rotateOrgApiKeySchema;
-/** @deprecated Use listOrgApiKeysSchema instead */
-export const listWorkspaceApiKeysSchema = listOrgApiKeysSchema;
-
-/** @deprecated Use CreateOrgApiKey instead */
-export type CreateWorkspaceApiKey = CreateOrgApiKey;
-/** @deprecated Use RevokeOrgApiKey instead */
-export type RevokeWorkspaceApiKey = RevokeOrgApiKey;
-/** @deprecated Use DeleteOrgApiKey instead */
-export type DeleteWorkspaceApiKey = DeleteOrgApiKey;
-/** @deprecated Use RotateOrgApiKey instead */
-export type RotateWorkspaceApiKey = RotateOrgApiKey;
-/** @deprecated Use ListOrgApiKeys instead */
-export type ListWorkspaceApiKeys = ListOrgApiKeys;

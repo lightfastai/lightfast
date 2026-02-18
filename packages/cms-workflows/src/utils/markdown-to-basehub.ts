@@ -248,15 +248,13 @@ function convertNode(
       const table = node;
       const tableContent: RichTextNode[] = [];
 
-      for (let rowIndex = 0; rowIndex < table.children.length; rowIndex++) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const row = table.children[rowIndex]!;
+      for (const [rowIndex, row] of table.children.entries()) {
         const isHeaderRow = rowIndex === 0;
         const rowCtx = { ...ctx, isInTableHeader: isHeaderRow };
 
         const cells = row.children.map((cell: TableCell) => {
           const tableCell = cell;
-          const cellType = (isHeaderRow ? "tableHeader" : "tableCell");
+          const cellType = isHeaderRow ? "tableHeader" as const : "tableCell" as const;
 
           // Table cells should contain a paragraph wrapping the inline content
           const cellInlineContent = convertInlineContent(

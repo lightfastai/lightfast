@@ -8,7 +8,8 @@
         ".cache/tsbuildinfo.json",
         "dist/**",
         ".next/**",
-        "!.next/cache/**"
+        "!.next/cache/**",
+        "!.next/dev/**"
       ],
       "env": [
         "NEXT_PUBLIC_*",
@@ -40,13 +41,16 @@
       "outputs": [".cache/.prettiercache"],
       "outputLogs": "new-only"
     },
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
     "lint": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["transit"],
       "outputs": [".cache/.eslintcache"],
       "env": []
     },
     "typecheck": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "transit"],
       "outputs": [".cache/tsbuildinfo.json"],
       "env": []
     },

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useSignUp } from "@clerk/nextjs";
+import { useSignUp } from "@vendor/clerk/client";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useLogger } from "@vendor/observability/client-log";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
@@ -20,7 +20,7 @@ export function SignUpCodeVerification({
 	onReset,
 	onError: _onError,
 }: SignUpCodeVerificationProps) {
-	const { signUp, setActive } = useSignUp();
+	const { isLoaded, signUp, setActive } = useSignUp();
 	const log = useLogger();
 	const {
 		code,
@@ -36,11 +36,10 @@ export function SignUpCodeVerification({
 	} = useCodeVerification();
 
 	async function handleComplete(value: string) {
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-		if (!signUp || !setActive) return;
+		if (!isLoaded) return;
 		
 		setIsVerifying(true);
-		setCustomError("");
+		setCustomError(null);
 
 		try {
 			// Attempt to verify the code
@@ -65,7 +64,11 @@ export function SignUpCodeVerification({
 				});
 				
 				// Handle unexpected status with proper context
-				handleUnexpectedStatus(result.status ?? 'unknown', {
+				let statusValue = 'unknown';
+				if (result.status != null) {
+					statusValue = result.status;
+				}
+				handleUnexpectedStatus(statusValue, {
 					component: 'SignUpCodeVerification',
 					action: 'verify_code',
 					email,
@@ -101,7 +104,7 @@ export function SignUpCodeVerification({
 		if (!signUp) return;
 
 		setIsResending(true);
-		setCustomError("");
+		setCustomError(null);
 		try {
 			// Resend the verification code
 			await signUp.prepareEmailAddressVerification({
@@ -127,16 +130,20 @@ export function SignUpCodeVerification({
 			
 			// Set the user-friendly error message
 			setCustomError(errorResult.userMessage);
-		} finally {
-			setIsResending(false);
 		}
+		setIsResending(false);
 	}
+
+	const handleCompleteRef = React.useRef(handleComplete);
+	React.useEffect(() => {
+		handleCompleteRef.current = handleComplete;
+	});
 
 	// Auto-submit when code is complete (but not if there's an error showing)
 	React.useEffect(() => {
 		if (code.length === 6 && !inlineError) {
 			// Handle the promise to avoid unhandled rejection
-			handleComplete(code).catch(() => {
+			handleCompleteRef.current(code).catch(() => {
 				// Error is already handled in handleComplete
 			});
 		}

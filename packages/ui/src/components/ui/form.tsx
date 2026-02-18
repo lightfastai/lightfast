@@ -7,12 +7,17 @@ import {
   Controller,
   FormProvider,
   useFormContext,
-  useFormState
-  
-  
-  
-} from "react-hook-form"
-import type {ControllerProps, FieldPath, FieldValues} from "react-hook-form";
+  useFormState,
+  useForm,
+} from "@vendor/forms"
+import type {ControllerProps, FieldPath, FieldValues, UseFormProps, UseFormReturn} from "@vendor/forms";
+
+function useFormCompat<T extends FieldValues>(
+  props?: UseFormProps<T>,
+): UseFormReturn<T> {
+  "use no memo";
+  return useForm(props);
+}
 
 import { cn } from "@repo/ui/lib/utils"
 import { Label } from "@repo/ui/components/ui/label"
@@ -49,11 +54,6 @@ const useFormField = () => {
   const { getFieldState } = useFormContext()
   const formState = useFormState({ name: fieldContext.name })
   const fieldState = getFieldState(fieldContext.name, formState)
-
-  if (!fieldContext) {
-    throw new Error("useFormField should be used within <FormField>")
-  }
-
   const { id } = itemContext
 
   return {
@@ -138,7 +138,7 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
 
 function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   const { error, formMessageId } = useFormField()
-  const body = error ? String(error?.message ?? "") : props.children
+  const body = error ? String(error.message ?? "") : props.children
 
   if (!body) {
     return null
@@ -157,6 +157,8 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
 }
 
 export {
+  useFormCompat,
+  useFormContext,
   useFormField,
   Form,
   FormItem,

@@ -602,9 +602,8 @@ export const userSourcesRouter = {
 								},
 							);
 
-							// Check if it's a file (not directory)
-							// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive check: API may return directory type
-							if ("content" in data && "type" in data && data.type === "file") {
+							// Check if it's a file (not directory) - octokit can return arrays for directories
+							if ("content" in data && "type" in data) {
 								// Validate file size (max 50KB to prevent abuse)
 								const maxSize = 50 * 1024; // 50KB
 								if ("size" in data && typeof data.size === "number") {
