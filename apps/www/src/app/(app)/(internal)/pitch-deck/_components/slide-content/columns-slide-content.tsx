@@ -73,8 +73,8 @@ export function ColumnsSlideContent({
                 isFixed ? "gap-2 text-lg" : "gap-1 text-[10px] sm:gap-1.5 sm:text-xs md:gap-2 md:text-sm"
               )}
             >
-              {column.items.map((item) => (
-                <li key={item}>{item}</li>
+              {column.items.map((item, idx) => (
+                <li key={`${item}-${idx}`}>{item}</li>
               ))}
             </ul>
           </div>

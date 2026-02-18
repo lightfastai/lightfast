@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -96,10 +96,10 @@ export function EarlyAccessForm({
   const [state, setState] = useState<EarlyAccessState>({ status: "idle" });
   const [sourcesPopoverOpen, setSourcesPopoverOpen] = useState(false);
 
-  // Watch form values for validation
-  const email = form.watch("email");
-  const companySize = form.watch("companySize");
-  const sources = form.watch("sources");
+  // Subscribe to form values for validation using useWatch (React Compiler compatible)
+  const email = useWatch({ control: form.control, name: "email" });
+  const companySize = useWatch({ control: form.control, name: "companySize" });
+  const sources = useWatch({ control: form.control, name: "sources" });
 
   // Track client-side errors
   useEffect(() => {

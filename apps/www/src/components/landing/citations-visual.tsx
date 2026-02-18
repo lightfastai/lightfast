@@ -66,7 +66,7 @@ export function CitationsVisual() {
         {/* Answer with inline citations */}
         <div className="bg-secondary rounded-md p-4">
           <p className="text-sm text-foreground leading-relaxed">
-            {answerWithCitations.answer.map((part, index) => {
+            {answerWithCitations.answer.map((part, idx) => {
               if (part.type === "citation") {
                 return (
                   <sup
@@ -77,7 +77,7 @@ export function CitationsVisual() {
                   </sup>
                 );
               }
-              return <span key={part.content}>{part.content}</span>;
+              return <span key={`text-${idx}`}>{part.content}</span>;
             })}
           </p>
         </div>

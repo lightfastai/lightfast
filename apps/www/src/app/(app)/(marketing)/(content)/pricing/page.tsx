@@ -491,7 +491,7 @@ export default function PricingPage() {
                   type="single"
                   collapsible
                   className="w-full"
-                  defaultValue="What makes Lightfast worth $20/user?"
+                  defaultValue={faqs[0]?.question}
                 >
                   {faqs.map((faq) => (
                     <AccordionItem
