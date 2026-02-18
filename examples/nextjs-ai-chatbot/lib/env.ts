@@ -22,7 +22,9 @@ export const env = createEnv({
    * These are accessed from process.env in the route handler
    */
   runtimeEnv: {
+    // eslint-disable-next-line turbo/no-undeclared-env-vars
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    // eslint-disable-next-line turbo/no-undeclared-env-vars
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
   },
 
