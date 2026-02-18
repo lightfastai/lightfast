@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useSignIn } from "@clerk/nextjs";
+import type { EmailCodeFactor } from "@clerk/types";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useLogger } from "@vendor/observability/client-log";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
@@ -115,7 +116,7 @@ export function SignInCodeVerification({
       let emailAddressId: string | undefined;
       if (factors) {
         const found = factors.find(
-          (factor) => factor.strategy === "email_code",
+          (factor): factor is EmailCodeFactor => factor.strategy === "email_code",
         );
         if (found) {
           emailAddressId = found.emailAddressId;

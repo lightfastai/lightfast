@@ -54,20 +54,17 @@ export function SignInPassword({ onSuccess, onError }: SignInPasswordProps) {
 
       if (result.status === "complete") {
         log.info("[SignInPassword] Authentication success", {
-          identifier: data.identifier,
           timestamp: new Date().toISOString(),
         });
         onSuccess();
       } else {
         log.error("[SignInPassword] Authentication failed", {
-          identifier: data.identifier,
           error: "Sign-in incomplete",
         });
         onError("Sign-in could not be completed. Please try again.");
       }
     } catch (err) {
       log.error("[SignInPassword] Authentication failed", {
-        identifier: data.identifier,
         error: err,
       });
 

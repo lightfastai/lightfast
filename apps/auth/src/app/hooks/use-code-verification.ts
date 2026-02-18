@@ -11,21 +11,24 @@ export function useCodeVerification() {
 	const [isRedirecting, setIsRedirecting] = React.useState(false);
 	const [isResending, setIsResending] = React.useState(false);
 
-	function handleCodeChange(value: string) {
-		// Clear error when user modifies the code (typing or deleting)
-		if (inlineError && value !== code) {
-			setInlineError(null);
-		}
-		setCode(value);
-	}
+	const handleCodeChange = React.useCallback(
+		(value: string) => {
+			// Clear error when user modifies the code (typing or deleting)
+			if (inlineError && value !== code) {
+				setInlineError(null);
+			}
+			setCode(value);
+		},
+		[inlineError, code],
+	);
 
-	function setCustomError(message: string | null) {
+	const setCustomError = React.useCallback((message: string | null) => {
 		setInlineError(message);
-	}
+	}, []);
 
-	function resetError() {
+	const resetError = React.useCallback(() => {
 		setInlineError(null);
-	}
+	}, []);
 
 	return {
 		// State

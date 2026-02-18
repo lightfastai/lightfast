@@ -29,7 +29,7 @@ export const metadata: Metadata = createMetadata({
 
 export default function SignUpPage() {
   return (
-    <Suspense>
+    <Suspense fallback={null}>
       <SignUpForm />
     </Suspense>
   );
