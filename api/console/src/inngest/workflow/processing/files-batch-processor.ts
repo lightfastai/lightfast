@@ -12,7 +12,7 @@
  * 5. Emits completion event with real counts
  */
 
-import { inngest } from "../../client/client";
+import { inngest, type Events } from "../../client/client";
 import { log } from "@vendor/observability/log";
 import {
   createGitHubApp,
@@ -173,7 +173,7 @@ export const filesBatchProcessor = inngest.createFunction(
         );
 
         // Process successful fetches
-        const documentsToProcess: { name: "apps-console/documents.process"; data: Record<string, unknown> }[] = [];
+        const documentsToProcess: { name: "apps-console/documents.process"; data: Events["apps-console/documents.process"]["data"] }[] = [];
 
         fetchResults.forEach((result) => {
           if (result.status === "fulfilled") {

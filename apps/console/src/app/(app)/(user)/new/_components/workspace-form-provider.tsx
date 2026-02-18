@@ -24,7 +24,7 @@ interface Repository {
   url: string;
   language: string | null;
   stargazersCount: number;
-  updatedAt: string;
+  updatedAt: string | null;
 }
 
 interface GitHubInstallation {
