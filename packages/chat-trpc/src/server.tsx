@@ -46,15 +46,19 @@ export function HydrateClient(props: { children: React.ReactNode }) {
   );
 }
 
-export function prefetch<T>(
-  queryOptions: ReturnType<TRPCQueryOptions<T>>,
-) {
+// DO NOT REMOVE: TRPCQueryOptions<T> does not propagate the router's transformer/errorShape
+// generics through ReturnType, causing TS2345 at every call site when T is specific.
+// Using `any` here is intentional — the runtime is fully type-safe via the router.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function prefetch(queryOptions: ReturnType<TRPCQueryOptions<any>>) {
   const queryClient = getQueryClient();
   if ((queryOptions.queryKey[1] as { type?: string } | undefined)?.type === "infinite") {
     void queryClient.prefetchInfiniteQuery(
       queryOptions as unknown as Parameters<typeof queryClient.prefetchInfiniteQuery>[0],
     );
   } else {
-    void queryClient.prefetchQuery(queryOptions);
+    void queryClient.prefetchQuery(
+      queryOptions as unknown as Parameters<typeof queryClient.prefetchQuery>[0],
+    );
   }
 }
