@@ -77,7 +77,7 @@ export class PineconeClient {
       return indexList.some(index => index.name === indexName);
     } catch (error) {
       // If list fails, assume index doesn't exist
-      console.warn(`Failed to check index existence: ${error}`);
+      console.warn(`Failed to check index existence: ${String(error)}`);
       return false;
     }
   }
@@ -118,11 +118,16 @@ export class PineconeClient {
         const vectors = request.vectors.slice(i, i + batchSize);
         const metadata = request.metadata.slice(i, i + batchSize);
 
-        const records = vectors.map((values, offset) => ({
-          id: ids[offset]!,
-          values,
-          metadata: metadata[offset]!,
-        }));
+        const records = vectors.map((values, offset) => {
+          const id = ids[offset];
+          const meta = metadata[offset];
+          if (id === undefined || meta === undefined) {
+            throw new PineconeInvalidRequestError(
+              `Missing id or metadata at offset ${String(offset)}`
+            );
+          }
+          return { id, values, metadata: meta };
+        });
 
         await targetNamespace.upsert(records);
       }
@@ -232,11 +237,11 @@ export class PineconeClient {
       });
 
       return {
-        matches: results.matches?.map((match) => ({
+        matches: results.matches.map((match) => ({
           id: match.id,
           score: match.score ?? 0,
           metadata: match.metadata as T,
-        })) ?? [],
+        })),
       };
     } catch (error) {
       this.handleError(error);
@@ -264,8 +269,8 @@ export class PineconeClient {
       const result = await targetNamespace.fetch(vectorIds);
 
       const records: FetchResponse<T>["records"] = {};
-      for (const [id, record] of Object.entries(result.records ?? {})) {
-        if (record?.values) {
+      for (const [id, record] of Object.entries(result.records)) {
+        if (record.values) {
           records[id] = {
             id: record.id,
             values: record.values,
