@@ -139,7 +139,11 @@ export function SignUpForm() {
 							</MicrofrontendLink>{" "}
 							and{" "}
 							<MicrofrontendLink
+<<<<<<< Updated upstream
 								href={'/legal/privacy'}
+=======
+								href={'/legal/terms'}
+>>>>>>> Stashed changes
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"

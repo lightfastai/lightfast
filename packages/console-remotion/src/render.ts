@@ -39,7 +39,13 @@ async function main() {
     composition,
     serveUrl: bundled,
     outputLocation: outputPath,
+<<<<<<< Updated upstream
     ...LANDING_HERO_GIF_RENDER_PROFILE,
+=======
+    scale: 1, // Render at 2× resolution (2400×1600)
+    everyNthFrame: 4, // 15fps GIF (30fps source / 2)
+    numberOfGifLoops: null, // Infinite loop
+>>>>>>> Stashed changes
   });
 
   console.log(`GIF rendered to: ${outputPath} in ${((Date.now() - startedAt) / 1000).toFixed(1)}s`);

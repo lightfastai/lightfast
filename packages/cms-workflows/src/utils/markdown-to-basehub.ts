@@ -256,7 +256,7 @@ function convertNode(
 
         const cells = row.children.map((cell: TableCell) => {
           const tableCell = cell;
-          const cellType = (isHeaderRow ? "tableHeader" : "tableCell");
+          const cellType = isHeaderRow ? "tableHeader" as const : "tableCell" as const;
 
           // Table cells should contain a paragraph wrapping the inline content
           const cellInlineContent = convertInlineContent(

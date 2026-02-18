@@ -11,7 +11,11 @@ export const MOTION_DURATION = {
   GRID_DRAW: 44,
   GRID_OPACITY: 22,
   CARD_ENTRANCE: 36,
+<<<<<<< Updated upstream
   ROW_ENTRANCE: 36,
+=======
+  ROW_ENTRANCE: 24,
+>>>>>>> Stashed changes
   LOGO_MARK_ENTRANCE: 28,
   LOGO_ROTATION: 240,
 } as const;
@@ -28,6 +32,7 @@ export const SECTION_TIMING = {
   BOTTOM_LEFT: { start: 78, entrance: 78 },
   BOTTOM_CENTER: { start: 88, entrance: 88 },
   BOTTOM_RIGHT: { start: 98, entrance: 98 },
+<<<<<<< Updated upstream
 } as const;
 
 /** Beam animation — energy pulse traveling down grid columns to IngestedData */
@@ -38,10 +43,16 @@ export const BEAM_TIMING = {
   TRAVEL_FRAMES: 50,
   /** Frame when beams arrive at IngestedData intersection (START + TRAVEL_FRAMES) */
   ARRIVAL: 100,
+=======
+>>>>>>> Stashed changes
 } as const;
 
 /** Stagger delay between rows appearing inside cards */
 export const ROW_STAGGER = {
   STREAM_EVENTS: 6,
+<<<<<<< Updated upstream
   INGESTED_DATA: 24,
+=======
+  INGESTED_DATA: 6,
+>>>>>>> Stashed changes
 } as const;
