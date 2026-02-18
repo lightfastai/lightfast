@@ -149,8 +149,8 @@ export const IngestedData: React.FC = () => {
   // Single pass: compute both shift and drop springs together to avoid two
   // separate .map() allocations and a .reduce() on every frame.
   const N_RESULTS = NEW_SEARCH_RESULTS.length;
-  const shiftValues: number[] = new Array(N_RESULTS);
-  const dropValues: number[] = new Array(N_RESULTS);
+  const shiftValues: number[] = new Array<number>(N_RESULTS);
+  const dropValues: number[] = new Array<number>(N_RESULTS);
   let totalShift = 0;
   for (let k = 0; k < N_RESULTS; k++) {
     const baseFrame = RESULTS_START + k * ARRIVAL_INTERVAL;
@@ -173,7 +173,7 @@ export const IngestedData: React.FC = () => {
 
   // Suffix sums: suffixShift[i] = sum of shiftValues[i..N_RESULTS-1].
   // Replaces the per-item .slice(resultIndex+1).reduce() in the render loop.
-  const suffixShift: number[] = new Array(N_RESULTS + 1).fill(0);
+  const suffixShift: number[] = new Array<number>(N_RESULTS + 1).fill(0);
   for (let i = N_RESULTS - 1; i >= 0; i--) {
     suffixShift[i] = (suffixShift[i + 1] ?? 0) + (shiftValues[i] ?? 0);
   }

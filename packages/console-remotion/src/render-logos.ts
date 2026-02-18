@@ -22,7 +22,7 @@ function buildIco(pngs: Buffer[]): Buffer {
   let dataOffset = HEADER + ENTRY * pngs.length;
   for (let i = 0; i < pngs.length; i++) {
     const png = pngs[i];
-    if (!png) continue;
+    if (!png) throw new Error(`Missing PNG buffer at index ${i}`);
     // Read dimensions from PNG header (IHDR chunk at byte 16)
     const w = png.readUInt32BE(16);
     const h = png.readUInt32BE(20);

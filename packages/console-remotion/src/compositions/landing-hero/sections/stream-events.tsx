@@ -115,7 +115,7 @@ const ROW_DATA = Array.from({ length: ROWS_TO_RENDER }, (_, index) => {
 });
 
 // Module-level easing — avoids creating a new closure on every frame.
-const STEP_EASING = Easing.inOut(Easing.cubic);
+const STEP_EASING = Easing.inOut((t: number) => Easing.cubic(t));
 
 export const StreamEvents: React.FC = () => {
   const frame = useCurrentFrame();
@@ -140,13 +140,13 @@ export const StreamEvents: React.FC = () => {
         height: FEED_HEIGHT,
       }}
     >
-      {ROW_DATA.map(({ index, event, baseCumPosition }) => {
+      {ROW_DATA.map(({ index: rowIndex, event, baseCumPosition }) => {
         if (!event) return null;
         const rowTop = FEED_PADDING_Y + baseCumPosition + scrollOffset;
 
         return (
           <div
-            key={index}
+            key={rowIndex}
             className="absolute flex flex-col gap-2 rounded-md border border-border px-3 py-3 font-sans"
             style={{
               left: FEED_PADDING_X,
@@ -175,9 +175,9 @@ export const StreamEvents: React.FC = () => {
             </div>
             {event.extra && (
               <div className="mt-1 flex flex-col gap-1 border-t border-border/50 pt-2">
-                {event.extra.map((line, i) => (
+                {event.extra.map((line, lineIndex) => (
                   <span
-                    key={i}
+                    key={`${lineIndex}-${line}`}
                     className="truncate font-mono text-xs leading-tight text-muted-foreground/50"
                   >
                     {line}

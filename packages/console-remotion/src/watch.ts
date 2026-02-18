@@ -5,7 +5,6 @@ import { execSync } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const compositionsDir = path.resolve(__dirname, "compositions");
-const _sharedDir = path.resolve(__dirname, "compositions/landing-hero/shared");
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let isRendering = false;

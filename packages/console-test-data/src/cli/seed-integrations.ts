@@ -151,9 +151,9 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
 
     let userSourceId: string;
 
-    if (existingSource.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      userSourceId = existingSource[0]!.id;
+    const [firstSource] = existingSource;
+    if (firstSource) {
+      userSourceId = firstSource.id;
       console.log(`  [skip] ${source.sourceType} user source already exists (${userSourceId})`);
     } else {
       userSourceId = nanoid();

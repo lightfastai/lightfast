@@ -31,25 +31,3 @@ export const LLM_ENTITY_EXTRACTION_CONFIG = {
 } as const;
 
 export type LLMEntityExtractionConfig = typeof LLM_ENTITY_EXTRACTION_CONFIG;
-
-/**
- * Classification Configuration
- *
- * Controls the LLM-based classification of observations.
- * Uses Claude Haiku for semantic classification with fallback to regex.
- */
-const CLASSIFICATION_CONFIG = {
-  /** Model for classification */
-  model: "anthropic/claude-3-5-haiku-latest" as const,
-
-  /** Temperature for classification (lower = more deterministic) */
-  temperature: 0.2,
-
-  /** Minimum confidence to trust LLM classification */
-  minConfidence: 0.6,
-
-  /** Use fallback regex for events below this significance score */
-  fallbackThreshold: 30,
-} as const;
-
-type ClassificationConfig = typeof CLASSIFICATION_CONFIG;

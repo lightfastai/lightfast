@@ -252,7 +252,7 @@ export const storeConfigurationSchema = z
     chunkMaxTokens: chunkMaxTokensSchema,
     chunkOverlap: chunkOverlapSchema,
     embeddingModel: cohereEmbeddingModelSchema,
-    embeddingProvider: embeddingProviderSchema,
+    embeddingProvider: z.literal("cohere"),
   })
   .refine((data) => data.chunkOverlap < data.chunkMaxTokens, {
     message: "Chunk overlap must be less than chunk max tokens",

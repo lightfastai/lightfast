@@ -87,10 +87,6 @@ export const STORE_NAME = {
  */
 import { workspace, organization } from '@repo/console-reserved-names';
 
-const RESERVED_WORKSPACE_NAMES = workspace.all;
-
-const RESERVED_ORGANIZATION_SLUGS = organization.all;
-
 /**
  * Error Messages
  */
