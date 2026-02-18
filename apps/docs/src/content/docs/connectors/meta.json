@@ -1,0 +1,4 @@
+{
+  "title": "Connectors",
+  "pages": ["github", "linear", "vercel", "sentry"]
+}
