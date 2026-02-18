@@ -1,197 +1,212 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@repo/ui/components/ui/button";
-import { Zap, Package, BookOpen  } from "lucide-react";
-import type {LucideIcon} from "lucide-react";
-import { cn } from "@repo/ui/lib/utils";
-
-type CardVariant = "glass" | "muted" | "red";
+import { Code2, Cpu, Bot, Building2, Github, ArrowRight, Zap, Layers } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { AlphaBanner } from "@/src/components/alpha-banner";
 
 interface NavCard {
   href: string;
   icon: LucideIcon;
   title: string;
   description: string;
-  variant: CardVariant;
+  action: string;
 }
 
-const variantStyles: Record<
-  CardVariant,
+const useCaseCards: NavCard[] = [
   {
-    card: string;
-    icon: string;
-    title: string;
-    description: string;
-    colSpan: string;
-  }
-> = {
-  glass: {
-    card: "bg-muted-foreground/20 backdrop-blur-md border-border hover:bg-muted/60",
-    icon: "text-foreground",
-    title: "text-foreground",
-    description: "text-muted-foreground",
-    colSpan: "md:col-span-6",
-  },
-  muted: {
-    card: "bg-muted border-border hover:bg-accent/10 hover:border-muted-foreground/20",
-    icon: "text-foreground",
-    title: "text-foreground",
-    description: "text-muted-foreground",
-    colSpan: "md:col-span-3",
-  },
-  red: {
-    card: "bg-[var(--pitch-deck-red)] hover:bg-[var(--pitch-deck-red-overlay)]",
-    icon: "text-primary",
-    title: "text-primary",
-    description: "text-primary",
-    colSpan: "md:col-span-3",
-  },
-};
-
-const navCards: NavCard[] = [
-  {
-    href: "/docs/get-started/quickstart",
-    icon: Zap,
-    title: "Quickstart",
+    href: "/use-cases/agent-builders",
+    icon: Bot,
+    title: "Agent Builders",
     description:
-      "Index your team's knowledge and start searching in 5 minutes.",
-    variant: "glass",
+      "Build agents that understand your team's full context — code, history, and decisions.",
+    action: "Explore",
   },
   {
-    href: "/api/overview",
-    icon: Package,
-    title: "API Reference",
-    description: "Three routes for search, contents, and similar content.",
-    variant: "muted",
+    href: "/use-cases/engineering-leaders",
+    icon: Building2,
+    title: "Engineering Leaders",
+    description:
+      "Understand velocity, team health, and knowledge distribution at a glance.",
+    action: "Explore",
   },
   {
-    href: "/docs/integrate/sdk",
-    icon: BookOpen,
-    title: "SDK & MCP",
-    description: "Integrate anywhere with the TypeScript SDK and MCP tools.",
-    variant: "red",
+    href: "/use-cases/technical-founders",
+    icon: Zap,
+    title: "Technical Founders",
+    description:
+      "Trace decisions from idea to implementation and measure engineering ROI.",
+    action: "Explore",
+  },
+  {
+    href: "/use-cases/platform-engineers",
+    icon: Cpu,
+    title: "Platform Engineers",
+    description:
+      "Monitor dependencies, predict incidents, and keep infrastructure healthy.",
+    action: "Explore",
   },
 ];
 
+const guideCards: NavCard[] = [
+  {
+    href: "/docs/integrate/sdk",
+    icon: Code2,
+    title: "TypeScript SDK",
+    description: "Integrate Lightfast into your app with a typed, minimal SDK.",
+    action: "Read guide",
+  },
+  {
+    href: "/docs/integrate/mcp",
+    icon: Layers,
+    title: "MCP Server",
+    description:
+      "Expose Lightfast as an MCP tool for use with Claude, Cursor, and other AI agents.",
+    action: "Read guide",
+  },
+  {
+    href: "/docs/integrate/github",
+    icon: Github,
+    title: "Connect GitHub",
+    description:
+      "Index your repositories, PRs, issues, and code reviews automatically.",
+    action: "Read guide",
+  },
+];
+
+function SectionBadge({ label }: { label: string }) {
+  return (
+    <div className="mb-6">
+      <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function UseCaseCard({ card }: { card: NavCard }) {
+  return (
+    <Link href={card.href} className="group">
+      <div className="h-full bg-card/40 border border-border/50 rounded-md p-6 transition-all duration-200 hover:bg-card/60 hover:border-border flex flex-col">
+        <h3 className="text-base font-medium text-foreground">{card.title}</h3>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed flex-1">
+          {card.description}
+        </p>
+        <span className="mt-6 flex items-center gap-1 text-sm text-muted-foreground">
+          {card.action} <ArrowRight className="h-3.5 w-3.5" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function NavCard({ card }: { card: NavCard }) {
+  const Icon = card.icon;
+  return (
+    <Link href={card.href} className="group">
+      <div className="h-full border border-border rounded-md p-6 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/10 flex flex-col">
+        <div className="mb-24">
+          <Icon className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <h3 className="mb-2 text-base font-medium text-foreground">
+          {card.title}
+        </h3>
+        <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+          {card.description}
+        </p>
+        <span className="mt-6 flex items-center gap-1 text-sm text-muted-foreground transition-colors group-hover:text-foreground">
+          {card.action} <ArrowRight className="h-3.5 w-3.5" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 export function DeveloperPlatformLanding() {
   return (
-    <div className="mx-auto">
-      {/* Value prop + image */}
-      <div className="h-fit grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
-        {/* Left: text */}
-        <div>
+    <div className="mx-auto space-y-16">
+      {/* Header + Banner */}
+      <div className="space-y-4">
+        <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] text-balance font-[family-name:var(--font-exposure-plus)]">
-            Memory built for teams
+            Lightfast
           </h1>
-          <p className="mt-2 text-md text-foreground/70">
-            Search everything your team knows. Get answers with sources.
+          <p className="mt-3 text-base text-muted-foreground">
+            Memory built for teams. Index everything your engineering org knows.
           </p>
-
-          <p className="mt-8 text-md text-foreground/90">
-            Lightfast is the memory layer for software teams. It indexes code,
-            docs, tickets, and conversations from across your organization so
-            people and AI agents can find what they need. It can help you:
-          </p>
-
-          <ul className="mt-3 space-y-4 list-disc pl-5">
-            <li className="text-md text-foreground/90">
-              <span className="text-foreground font-semibold">
-                Search by meaning
-              </span>
-              : Ask questions in natural language and Lightfast finds relevant
-              results even when exact keywords don&apos;t match, connecting PRs,
-              issues, docs, and discussions across your entire organization.
-            </li>
-            <li className="text-md text-foreground/90">
-              <span className="text-foreground font-semibold">
-                Get answers with citations
-              </span>
-              : Every answer includes sources showing where information came
-              from. No black-box responses — trace any claim back to a specific
-              document, PR, or conversation.
-            </li>
-            <li className="text-md text-foreground/90">
-              <span className="text-foreground font-semibold">
-                Trace decisions
-              </span>
-              : See who owns what, what depends on what, and why decisions were
-              made. Lightfast maintains relationships between content so you can
-              follow context across tools and teams.
-            </li>
-            <li className="text-md text-foreground/90">
-              <span className="text-foreground font-semibold">
-                Connect your tools
-              </span>
-              : Index content from GitHub, Linear, Notion, Slack, and Discord.
-              Lightfast continuously syncs and respects source permissions so
-              your data stays secure.
-            </li>
-            <li className="text-md text-foreground/90">
-              <span className="text-foreground font-semibold">
-                Integrate anywhere
-              </span>
-              : Three API routes and an MCP server handle everything. Search,
-              get full documents, and find similar content — works with any
-              agent framework or application in minutes.
-            </li>
-          </ul>
-
-          <div className="mt-8">
-            <Button asChild size="lg" className="rounded-full">
-              <Link href="/docs/get-started/quickstart">Join Early Access</Link>
-            </Button>
-          </div>
         </div>
 
-        {/* Right: image */}
-        <div className="flex items-center h-3/4 justify-center">
-          <div className="relative rounded-xl overflow-hidden border border-border aspect-[16/9]">
-            <Image
-              src="/images/cloud-preview.webp"
-              alt="Lightfast cloud preview"
-              width={800}
-              height={450}
-              className="w-full h-full object-cover"
-              priority
-            />
-          </div>
-        </div>
+        <AlphaBanner />
       </div>
 
-      {/* Routing cards */}
-      <div className="section-gap-b grid grid-cols-1 md:grid-cols-12 gap-4 pt-12">
-        {navCards.map((card) => {
-          const Icon = card.icon;
-          const styles = variantStyles[card.variant];
-
-          return (
-            <Link
-              key={card.href}
-              href={card.href}
-              className={cn("group", styles.colSpan)}
-            >
-              <div
-                className={cn(
-                  "relative h-full rounded-xs border p-6 transition-all duration-200",
-                  styles.card,
-                )}
-              >
-                <div className="mb-20">
-                  <Icon className={cn("h-6 w-6", styles.icon)} />
+      {/* Get Started */}
+      <section>
+        <SectionBadge label="Get started" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Quickstart — featured, 2/3 width */}
+          <Link href="/docs/get-started/quickstart" className="group md:col-span-2">
+            <div className="relative h-72 overflow-hidden rounded-md">
+              <Image
+                src="/images/nascent_remix.webp"
+                alt="Quickstart"
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 flex flex-col justify-between p-8">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-white/60">
+                    Quickstart
+                  </p>
+                  <h3 className="mt-3 text-2xl font-medium leading-tight text-white">
+                    Start searching in 5 minutes
+                  </h3>
                 </div>
-                <h3 className={cn("mb-2 text-xl font-medium", styles.title)}>
-                  {card.title}
-                </h3>
-                <p
-                  className={cn("text-sm leading-relaxed", styles.description)}
-                >
-                  {card.description}
-                </p>
+                <span className="flex items-center gap-1 text-sm text-white/70">
+                  Get started <ArrowRight className="h-3.5 w-3.5" />
+                </span>
               </div>
-            </Link>
-          );
-        })}
-      </div>
+            </div>
+          </Link>
+
+          {/* Features Overview */}
+          <Link href="/docs/features" className="group">
+            <div className="relative h-72 overflow-hidden rounded-md border border-border transition-all duration-200 hover:border-muted-foreground/40 hover:bg-muted/10">
+              <div className="absolute inset-0 flex flex-col justify-between p-8">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-foreground/60">
+                    Learn more
+                  </p>
+                  <h3 className="mt-3 text-2xl font-medium leading-tight text-foreground">
+                    Features Overview
+                  </h3>
+                </div>
+                <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                  Explore features <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* Use Cases */}
+      <section>
+        <SectionBadge label="Use cases" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          {useCaseCards.map((card) => (
+            <UseCaseCard key={card.href} card={card} />
+          ))}
+        </div>
+      </section>
+
+      {/* Guides */}
+      <section>
+        <SectionBadge label="Guides" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {guideCards.map((card) => (
+            <NavCard key={card.href} card={card} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
