@@ -18,7 +18,7 @@ import { log } from "@vendor/observability/log";
  * Future: Add github_clerk_mappings cache table for O(1) reverse lookups.
  */
 
-export interface ResolvedActor {
+interface ResolvedActor {
   /** Original actor from source event */
   sourceActor: SourceActor | null;
   /** Canonical actor ID for this workspace (source:id format) */

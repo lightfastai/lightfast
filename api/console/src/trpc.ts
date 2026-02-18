@@ -29,7 +29,7 @@ import { userApiKeys } from "@db/console/schema";
  * Authentication Context - Discriminated Union
  * Represents exactly one authentication method per request
  */
-export type AuthContext =
+type AuthContext =
   | {
       type: "clerk-pending";
       userId: string;
@@ -269,7 +269,7 @@ const sentryMiddleware = t.middleware(
   }),
 );
 
-export const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
+const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
 
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
@@ -428,7 +428,7 @@ export const orgScopedProcedure = sentrifiedProcedure
  * @see https://clerk.com/docs/authentication/m2m
  * @see https://trpc.io/docs/procedures
  */
-export const m2mProcedure = sentrifiedProcedure
+const m2mProcedure = sentrifiedProcedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type !== "m2m") {
@@ -605,7 +605,7 @@ export const apiKeyProcedure = sentrifiedProcedure
  * @throws {TRPCError} NOT_FOUND if org doesn't exist
  * @throws {TRPCError} FORBIDDEN if user doesn't have access
  */
-export async function verifyOrgAccessAndResolve(params: {
+async function verifyOrgAccessAndResolve(params: {
   clerkOrgSlug: string;
   userId: string;
 }): Promise<{ clerkOrgId: string; clerkOrgSlug: string }> {
@@ -692,7 +692,7 @@ export async function resolveWorkspaceByName(params: {
  * @throws {TRPCError} NOT_FOUND if org or workspace doesn't exist
  * @throws {TRPCError} FORBIDDEN if user doesn't have access to org
  */
-export async function resolveWorkspaceBySlug(params: {
+async function resolveWorkspaceBySlug(params: {
   clerkOrgSlug: string;
   workspaceSlug: string;
   userId: string;
@@ -800,7 +800,7 @@ export async function verifyOrgMembership(params: {
  * @throws {TRPCError} UNAUTHORIZED if key is invalid, expired, or inactive
  * @throws {TRPCError} BAD_REQUEST if workspace ID header is missing
  */
-export async function verifyApiKey(params: {
+async function verifyApiKey(params: {
   key: string;
   workspaceId: string;
 }): Promise<{
@@ -893,7 +893,7 @@ interface ErrorContext {
  *   });
  * }
  */
-export function handleProcedureError(
+function handleProcedureError(
   error: unknown,
   context: ErrorContext,
   userMessage?: string,
@@ -934,7 +934,7 @@ export function handleProcedureError(
  *     }
  *   ))
  */
-export function withErrorHandling<TContext, TInput, TOutput>(
+function withErrorHandling<TContext, TInput, TOutput>(
   context: { procedure: string; [key: string]: unknown },
   handler: (params: { ctx: TContext; input: TInput }) => Promise<TOutput>,
   userMessage?: string,
@@ -958,5 +958,3 @@ export function withErrorHandling<TContext, TInput, TOutput>(
   };
 }
 
-// Re-export for convenience
-export { TRPCError } from "@trpc/server";

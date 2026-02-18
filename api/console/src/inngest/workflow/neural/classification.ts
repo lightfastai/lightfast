@@ -9,8 +9,6 @@
 
 import type { SourceEvent } from "@repo/console-types";
 
-// Re-export types from validation schema
-export type { PrimaryCategory, ClassificationResponse } from "@repo/console-validation";
 
 /**
  * Build the classification prompt for Claude Haiku
@@ -167,7 +165,7 @@ export function classifyObservationFallback(sourceEvent: SourceEvent): {
  * Legacy function - redirects to fallback for backwards compatibility
  * @deprecated Use classifyObservationFallback or LLM classification via step.ai.wrap()
  */
-export function classifyObservation(sourceEvent: SourceEvent): {
+function classifyObservation(sourceEvent: SourceEvent): {
   primaryCategory: string;
   secondaryCategories: string[];
 } {

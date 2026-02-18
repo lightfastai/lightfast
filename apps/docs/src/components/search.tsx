@@ -28,13 +28,18 @@ export function Search() {
 
   const resultsList = results === "empty" ? [] : results;
 
+  const [prevResults, setPrevResults] = useState(results);
+  if (prevResults !== results) {
+    setPrevResults(results);
+    setSelectedIndex(0);
+  }
+
   const handleClose = useCallback(() => {
     setOpen(false);
     clearSearch();
     setSelectedIndex(0);
   }, [clearSearch]);
 
-  // Keyboard shortcuts (capture phase to fire before Radix)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.isComposing) return;
@@ -77,13 +82,6 @@ export function Search() {
     return () => document.removeEventListener("keydown", handleKeyDown, true);
   }, [open, resultsList, selectedIndex, router, handleClose]);
 
-  // Reset selected index when results change
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting derived UI state from results is intentional
-    setSelectedIndex(0);
-  }, [results]);
-
-  // Clear results when popover closes while search has text
   useEffect(() => {
     if (!open && search) {
       clearSearch();
@@ -99,8 +97,14 @@ export function Search() {
       {open &&
         createPortal(
           <div
+            role="button"
+            tabIndex={-1}
+            aria-label="Close search"
             className="fixed inset-0 z-40 bg-black/20 backdrop-blur-md animate-in fade-in-0"
             onClick={() => handleClose()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") handleClose();
+            }}
           />,
           document.body,
         )}

@@ -65,7 +65,7 @@ Return entities with confidence scores reflecting how certain you are about the 
  * - Sentiment analysis ("auth is broken" → status inference)
  * - Temporal context extraction ("last week's deployment")
  */
-export async function extractEntitiesWithLLM(
+async function extractEntitiesWithLLM(
   title: string,
   content: string,
   options?: {

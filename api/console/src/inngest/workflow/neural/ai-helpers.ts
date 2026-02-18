@@ -38,4 +38,4 @@ export function buildNeuralTelemetry(
 }
 
 // Re-export AI SDK functions for step.ai.wrap()
-export { generateObject, generateText };
+export { generateObject };

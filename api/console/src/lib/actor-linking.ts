@@ -75,7 +75,7 @@ export async function ensureActorLinked(
  * - Previous: Queried workspaceActorProfiles by workspaceId + clerkUserId
  * - Now: Queries orgActorIdentities by clerkOrgId + clerkUserId
  */
-export async function getActorForClerkUser(
+async function getActorForClerkUser(
   clerkOrgId: string,
   clerkUserId: string
 ): Promise<{ actorId: string; sourceUsername: string | null } | null> {

@@ -20,7 +20,7 @@ import type { SourceType } from "@repo/console-validation";
 /**
  * Generic document deletion event
  */
-export interface DeleteDocumentEvent {
+interface DeleteDocumentEvent {
   workspaceId: string;
   documentId: string;
   sourceType: SourceType;

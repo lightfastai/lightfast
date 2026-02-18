@@ -9,7 +9,7 @@ import { workspaceIntegrations } from "@db/console/schema";
 import { eq, sql } from "drizzle-orm";
 import type { BackfillCheckpoint } from "@repo/console-backfill";
 
-export interface BackfillState {
+interface BackfillState {
   status: "idle" | "pending" | "running" | "completed" | "failed" | "cancelled";
   startedAt?: string;
   completedAt?: string;

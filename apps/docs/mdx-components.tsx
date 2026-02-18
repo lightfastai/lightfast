@@ -52,7 +52,6 @@ export const mdxComponents = {
     src,
     alt,
     className,
-    ...props
   }: MarkdownComponentProps & {
     src?: string;
     alt?: string;
@@ -60,15 +59,18 @@ export const mdxComponents = {
     if (!src) return null;
 
     return (
-      <img
+      <Image
         src={src}
         alt={alt ?? ""}
+        width={0}
+        height={0}
+        sizes="100vw"
         className={cn(
           "my-6 rounded-sm border border-border shadow-sm",
-          "w-full max-h-[400px] object-cover",
+          "w-full h-auto max-h-[400px] object-cover",
           className,
         )}
-        {...props}
+        unoptimized
       />
     );
   },

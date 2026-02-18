@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SortedResult } from '~/app/(docs)/api/search/route';
 
-export type { SortedResult };
-
 // In-memory cache for GET requests (survives re-renders, cleared on page reload)
 const queryCache = new Map<string, SortedResult[]>();
 

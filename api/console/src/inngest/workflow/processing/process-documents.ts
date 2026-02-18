@@ -40,7 +40,7 @@ import type { SourceType } from "@repo/console-validation";
  * Generic document processing event
  * Works with any source type
  */
-export interface ProcessDocumentEvent {
+interface ProcessDocumentEvent {
   workspaceId: string;
   documentId: string;
 
@@ -85,7 +85,7 @@ interface SkippedDocument extends BasePrepared {
   reason: string;
 }
 
-export interface ProcessedDocumentResult {
+interface ProcessedDocumentResult {
   status: "processed" | "skipped";
   docId?: string;
   reason?: string;

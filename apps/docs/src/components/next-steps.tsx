@@ -10,7 +10,7 @@ const iconMap = {
   timer: Timer,
 };
 
-export interface NextStepsProps {
+interface NextStepsProps {
   steps?: {
     icon: keyof typeof iconMap;
     image?: string;
@@ -100,6 +100,7 @@ export function NextSteps({ steps = defaultSteps }: NextStepsProps) {
                       fill
                       priority
                       quality={10}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       className="object-cover"
                     />
                   )}
