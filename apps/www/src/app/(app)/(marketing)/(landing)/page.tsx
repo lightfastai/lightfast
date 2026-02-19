@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { Search, RefreshCw, Users, Zap, Link2, Shield } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -190,6 +189,8 @@ export default function HomePage() {
     <>
       {/* Structured data for SEO */}
       <JsonLd code={structuredData} />
+      {/* Preload the hero video poster so it's available before the video element is parsed */}
+      <link rel="preload" as="image" href="/images/landing-hero-poster.jpg" fetchPriority="high" />
 
       {/* Grid-based landing page */}
       <div className="min-h-screen bg-background">
@@ -206,16 +207,17 @@ export default function HomePage() {
                 md:w-[100%] md:h-[85%] md:top-[25%] md:-right-[10%]
                 lg:w-[80%] lg:h-[95%] lg:top-[5%] lg:-right-[12.5%]"
             >
-              <Image
-                src="/images/landing-hero.gif"
-                alt="Data flows through the Lightfast engine"
-                fill
-                sizes="(max-width: 768px) 150vw, (max-width: 1024px) 100vw, 80vw"
-                priority
-                unoptimized
-                quality={100}
-                className="object-contain object-[65%_25%] md:object-right-top"
-              />
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                poster="/images/landing-hero-poster.jpg"
+                className="w-full h-full object-contain object-[65%_25%] md:object-right-top"
+              >
+                <source src="/images/landing-hero.webm" type="video/webm" />
+              </video>
             </div>
           </div>
 

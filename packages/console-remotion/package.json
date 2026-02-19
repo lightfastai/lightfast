@@ -14,7 +14,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "studio": "npx remotion studio src/index.ts",
-    "render:gif": "npx tsx src/render.ts",
+    "render:webm": "npx tsx src/render.ts",
     "render:logos": "npx tsx src/render-logos.ts"
   },
   "dependencies": {
