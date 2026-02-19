@@ -7,7 +7,8 @@ This frontmatter structure maps directly to `ChangelogEntryInput` type in `@repo
 ### Core Fields
 
 - **title**: 2-3 key features (e.g., "GitHub File Sync, Semantic Search, Team Workspaces")
-- **slug**: Format: `0-<version>-lightfast-<feature-slug>` (e.g., "0-1-lightfast-github-file-sync-semantic-search")
+- **prefix**: Version identifier for breadcrumb display. Format: `\d+-\d+` (e.g., `"0-1"`). BaseHub regex: `^\d+-\d+$`
+- **slug**: Descriptive URL slug, no version prefix. Format: `lightfast-<feature-slug>` (e.g., `"lightfast-github-file-sync-semantic-search"`)
 - **publishedAt**: ISO date string (YYYY-MM-DD)
 - **body**: Main changelog content (markdown) - this is the content after frontmatter
 
@@ -37,7 +38,8 @@ These fields are stripped before publishing to BaseHub:
 ---
 # Fields that map directly to ChangelogEntryInput
 title: "Feature Name, Feature Name, Feature Name"
-slug: "0-<version>-lightfast-<feature-slug>"  # e.g., "0-1-lightfast-github-file-sync"
+prefix: "0-1"                                  # Version identifier (format: \d+-\d+), shown in breadcrumbs
+slug: "lightfast-<feature-slug>"               # Descriptive URL slug, no version prefix (e.g., "lightfast-neural-memory-foundation-2026")
 publishedAt: "YYYY-MM-DD"
 excerpt: "Short summary for listings, max 300 chars"
 tldr: "50-100 word summary for AI citation and featured snippets. Appears at top of page."

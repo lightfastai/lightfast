@@ -53,9 +53,9 @@ export function ChangelogPreview() {
                     <div className="h-full rounded-md border border-border p-4 transition-colors hover:bg-card/60">
                       {/* Version Badge and Date on same line */}
                       <div className="flex items-center gap-2 mb-4">
-                        {item.slug && (
+                        {item.prefix && (
                           <span className="inline-flex items-center h-6 px-2 rounded-md border border-border text-xs text-muted-foreground">
-                            {item.slug.slice(0, 3)}
+                            {item.prefix}
                           </span>
                         )}
                         <time className="text-sm text-muted-foreground">

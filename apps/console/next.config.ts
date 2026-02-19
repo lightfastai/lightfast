@@ -116,6 +116,22 @@ const config: NextConfig = withSentry(
             destination: "/",
             permanent: true,
           },
+          // Changelog slug migration: version-prefixed slugs → clean descriptive slugs
+          {
+            source: "/changelog/0-1-lightfast-neural-memory-foundation-2026",
+            destination: "/changelog/lightfast-neural-memory-foundation-2026",
+            permanent: true,
+          },
+          {
+            source: "/changelog/0-2-lightfast-neural-memory",
+            destination: "/changelog/lightfast-observation-entity-extraction-2026",
+            permanent: true,
+          },
+          {
+            source: "/changelog/0-3-lightfast-search-api-hybrid-retrieval",
+            destination: "/changelog/lightfast-search-api-hybrid-retrieval-2026",
+            permanent: true,
+          },
           // Bots probe these common sitemap index filenames, but Next.js only
           // generates /sitemap.xml. Without these, requests fall through to the
           // [slug] dynamic route and trigger an authenticated tRPC prefetch.

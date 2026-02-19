@@ -75,13 +75,16 @@ Every draft MUST include:
 - `seo.metaDescription`, `seo.focusKeyword` (SEO)
 - `_internal.status`, `_internal.source_prs` (traceability)
 
-### Slug Format
+### Fields: `prefix` and `slug`
 
-Always use: `0-<version>-lightfast-<feature-slug>`
+These are two separate fields:
+
+- **`prefix`**: Version identifier shown in breadcrumbs. Format: `\d+-\d+` (e.g., `0-1`, `0-2`). BaseHub regex constraint: `^\d+-\d+$`
+- **`slug`**: Descriptive URL slug, no version prefix. Format: `lightfast-<feature-slug>` (e.g., `lightfast-neural-memory-foundation-2026`)
 
 Examples:
-- `0-1-lightfast-github-file-sync-semantic-search`
-- `0-2-lightfast-pr-metadata-linear-integration`
+- prefix: `0-1` / slug: `lightfast-github-file-sync-semantic-search`
+- prefix: `0-2` / slug: `lightfast-pr-metadata-linear-integration`
 
 Recommended:
 - `seo.secondaryKeyword`, `seo.faq[]` (enhanced SEO)

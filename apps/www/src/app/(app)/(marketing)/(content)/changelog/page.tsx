@@ -79,7 +79,7 @@ export default function ChangelogPage() {
                     <article className="space-y-3">
                       <p className="text-sm text-muted-foreground">
                         Changelog
-                        {item.slug ? <> / {item.slug.slice(0, 3)}</> : null}
+                        {item.prefix ? <> / {item.prefix}</> : null}
                       </p>
 
                       <h2 className="text-2xl font-pp font-medium pb-4">

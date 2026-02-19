@@ -385,6 +385,7 @@ const changelogEntryMetaFragment = fragmentOn("PostItem", {
   _slug: true,
   _title: true,
   slug: true,
+  prefix: true,
   _sys: {
     createdAt: true,
     lastModifiedAt: true,
@@ -430,6 +431,7 @@ export interface ChangelogEntryMeta {
   _slug?: string | null;
   _title?: string | null;
   slug?: string | null;
+  prefix?: string | null;
   _sys?: {
     createdAt?: string | null;
     lastModifiedAt?: string | null;

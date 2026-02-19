@@ -35,7 +35,9 @@ export interface ChangelogSeoInput {
 export interface ChangelogEntryInput {
   /** Main title displayed in changelog list (e.g., "Neural Memory Foundation") */
   title: string;
-  /** Version slug for URL (e.g., "0-2" -> /changelog/0-2) */
+  /** Version prefix for breadcrumb display (e.g., "0-1", format: \d+-\d+) */
+  prefix: string;
+  /** Descriptive URL slug without version prefix (e.g., "lightfast-neural-memory-foundation-2026") */
   slug: string;
   /** Main content as markdown - rendered via RichText */
   body: string;
@@ -139,6 +141,8 @@ export async function createChangelogEntry(data: ChangelogEntryInput): Promise<M
             type: "instance",
             title: data.title,
             value: {
+              // Version prefix for breadcrumb (e.g., "0-1")
+              prefix: { type: "text", value: data.prefix },
               // Custom slug field (different from _slug system field)
               slug: { type: "text", value: data.slug },
               body: {
@@ -196,6 +200,9 @@ export async function updateChangelogEntry(
 
   // Build value updates object with proper type assertions
   const valueUpdates: UpdateValue = {
+    ...(data.prefix !== undefined && {
+      prefix: { type: "text" as const, value: data.prefix },
+    }),
     ...(data.body && {
       body: {
         type: "rich-text" as const,

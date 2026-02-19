@@ -144,7 +144,7 @@ export default async function ChangelogEntryPage({
           ...(publishedDate
             ? { datePublished: publishedDate.toISOString() }
             : {}),
-          ...(entry.slug ? { softwareVersion: entry.slug } : {}),
+          ...(entry.prefix ? { softwareVersion: entry.prefix } : {}),
           description:
             entry.seo?.metaDescription ??
             entry.excerpt ??
@@ -229,7 +229,7 @@ export default async function ChangelogEntryPage({
                 >
                   <Link href="/changelog">Changelog</Link>
                 </Button>
-                {entry.slug ? <> / {entry.slug.slice(0, 3)}</> : null}
+                {entry.prefix ? <> / {entry.prefix}</> : null}
               </p>
 
               <h2 className="text-2xl font-pp font-medium pb-4">

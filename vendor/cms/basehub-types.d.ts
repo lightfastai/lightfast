@@ -607,6 +607,7 @@ export interface PostItem {
     improvements: (Scalars['String'] | null)
     infrastructure: (Scalars['String'] | null)
     patches: (Scalars['String'] | null)
+    prefix: Scalars['String']
     /** ISO 8601 date string. */
     publishedAt: Scalars['String']
     seo: SeoComponent
@@ -615,7 +616,7 @@ export interface PostItem {
     __typename: 'PostItem'
 }
 
-export type PostItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'body__ASC' | 'body__DESC' | 'excerpt__ASC' | 'excerpt__DESC' | 'featuredImage__ASC' | 'featuredImage__DESC' | 'fixes__ASC' | 'fixes__DESC' | 'improvements__ASC' | 'improvements__DESC' | 'infrastructure__ASC' | 'infrastructure__DESC' | 'patches__ASC' | 'patches__DESC' | 'publishedAt__ASC' | 'publishedAt__DESC' | 'seo__ASC' | 'seo__DESC' | 'slug__ASC' | 'slug__DESC' | 'tldr__ASC' | 'tldr__DESC'
+export type PostItemOrderByEnum = '_sys_createdAt__ASC' | '_sys_createdAt__DESC' | '_sys_hash__ASC' | '_sys_hash__DESC' | '_sys_id__ASC' | '_sys_id__DESC' | '_sys_lastModifiedAt__ASC' | '_sys_lastModifiedAt__DESC' | '_sys_slug__ASC' | '_sys_slug__DESC' | '_sys_title__ASC' | '_sys_title__DESC' | 'body__ASC' | 'body__DESC' | 'excerpt__ASC' | 'excerpt__DESC' | 'featuredImage__ASC' | 'featuredImage__DESC' | 'fixes__ASC' | 'fixes__DESC' | 'improvements__ASC' | 'improvements__DESC' | 'infrastructure__ASC' | 'infrastructure__DESC' | 'patches__ASC' | 'patches__DESC' | 'prefix__ASC' | 'prefix__DESC' | 'publishedAt__ASC' | 'publishedAt__DESC' | 'seo__ASC' | 'seo__DESC' | 'slug__ASC' | 'slug__DESC' | 'tldr__ASC' | 'tldr__DESC' | 'untitled__ASC' | 'untitled__DESC'
 
 export interface PostItem_1 {
     _analyticsKey: Scalars['String']
@@ -2058,6 +2059,7 @@ export interface PostItemGenqlSelection{
     improvements?: boolean | number
     infrastructure?: boolean | number
     patches?: boolean | number
+    prefix?: boolean | number
     /** ISO 8601 date string. */
     publishedAt?: boolean | number
     seo?: SeoComponentGenqlSelection
@@ -2067,7 +2069,7 @@ export interface PostItemGenqlSelection{
     __fragmentOn?: "PostItem"
 }
 
-export interface PostItemFilterInput {AND?: (PostItemFilterInput | null),OR?: (PostItemFilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),excerpt?: (StringFilter | null),fixes?: (StringFilter | null),improvements?: (StringFilter | null),infrastructure?: (StringFilter | null),patches?: (StringFilter | null),publishedAt?: (DateFilter | null),seo?: (PostItemFilterInput__seo | null),slug?: (StringFilter | null),tldr?: (StringFilter | null)}
+export interface PostItemFilterInput {AND?: (PostItemFilterInput | null),OR?: (PostItemFilterInput | null),_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),excerpt?: (StringFilter | null),fixes?: (StringFilter | null),improvements?: (StringFilter | null),infrastructure?: (StringFilter | null),patches?: (StringFilter | null),prefix?: (StringFilter | null),publishedAt?: (DateFilter | null),seo?: (PostItemFilterInput__seo | null),slug?: (StringFilter | null),tldr?: (StringFilter | null)}
 
 export interface PostItemFilterInput__seo {_id?: (StringFilter | null),_slug?: (StringFilter | null),_sys_apiNamePath?: (StringFilter | null),_sys_createdAt?: (DateFilter | null),_sys_hash?: (StringFilter | null),_sys_id?: (StringFilter | null),_sys_idPath?: (StringFilter | null),_sys_lastModifiedAt?: (DateFilter | null),_sys_slug?: (StringFilter | null),_sys_slugPath?: (StringFilter | null),_sys_title?: (StringFilter | null),_title?: (StringFilter | null),canonicalUrl?: (StringFilter | null),faq?: (ListFilter | null),focusKeyword?: (StringFilter | null),metaDescription?: (StringFilter | null),metaTitle?: (StringFilter | null),noIndex?: (Scalars['Boolean'] | null),secondaryKeyword?: (StringFilter | null)}
 
