@@ -217,6 +217,10 @@ export default function HomePage() {
                 alt="Data flows through the Lightfast engine"
                 fill
                 priority
+                // fetchPriority explicit because Next.js <Image priority> with fill
+                // does not reliably inject fetchpriority="high" on the <img> tag —
+                // Lighthouse flags this as missing on the LCP element.
+                fetchPriority="high"
                 // Scope to mobile only — on desktop (hidden) this would preload
                 // a 2160px+ image for a display:none element. The desktop poster
                 // is covered by the <link rel="preload"> above.
@@ -243,7 +247,10 @@ export default function HomePage() {
                 poster="/images/landing-hero-poster.webp"
                 className="w-full h-full object-contain object-right-top"
               >
-                <source src="/images/landing-hero.webm" type="video/webm" />
+                {/* media query prevents the browser loading the video source on
+                    mobile — autoPlay overrides preload="none" for display:none
+                    elements, causing the full webm to download on mobile. */}
+                <source src="/images/landing-hero.webm" type="video/webm" media="(min-width: 768px)" />
               </video>
             </div>
           </div>
