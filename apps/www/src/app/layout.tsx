@@ -6,7 +6,6 @@ import { siteConfig } from "@repo/site-config";
 import { cn } from "@repo/ui/lib/utils";
 import { fonts as geistFonts } from "@repo/ui/lib/fonts";
 import { exposurePlus, ppNeueMontreal } from "~/lib/fonts";
-import { PostHogProvider } from "@vendor/analytics/posthog-client";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
 import { PrefetchCrossZoneLinks } from "@vercel/microfrontends/next/client";
@@ -159,11 +158,9 @@ export default function RootLayout({
       </head>
       <body className={cn("min-h-screen font-sans bg-background")}>
         <StablePrefetchCrossZoneLinksProvider>
-          <PostHogProvider>
-            {children}
-            <VercelAnalytics />
-            <SpeedInsights />
-          </PostHogProvider>
+          {children}
+          <VercelAnalytics />
+          <SpeedInsights />
           <PrefetchCrossZoneLinks />
         </StablePrefetchCrossZoneLinksProvider>
       </body>

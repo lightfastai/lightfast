@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "studio": "npx remotion studio src/index.ts",
     "render:webm": "npx tsx src/render.ts",
-    "render:logos": "npx tsx src/render-logos.ts"
+    "render:logos": "npx tsx src/render-logos.ts",
+    "render:lissajous": "npx tsx src/render-lissajous.ts"
   },
   "dependencies": {
     "@remotion/bundler": "^4.0.242",

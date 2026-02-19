@@ -1,23 +1,8 @@
-"use client";
-
 import NextLink from "next/link";
 
 import { emailConfig, siteConfig } from "@repo/site-config";
 import { Icons } from "@repo/ui/components/icons";
-import { Lissajous } from "./lissajous";
-
-// Different Lissajous patterns for each column (defined inline to avoid client/server boundary issues)
-const FOOTER_PATTERNS = [
-  { a: 1, b: 1, delta: Math.PI / 2 }, // circle
-  { a: 1, b: 2, delta: Math.PI / 2 }, // figure8
-  { a: 3, b: 2, delta: Math.PI / 2 }, // pretzel
-  { a: 2, b: 3, delta: Math.PI / 2 }, // bow
-  { a: 3, b: 4, delta: Math.PI / 2 }, // knot
-  { a: 5, b: 4, delta: Math.PI / 2 }, // star
-  { a: 1, b: 3, delta: Math.PI / 4 }, // wave
-  { a: 2, b: 1, delta: Math.PI / 2 }, // infinity
-  { a: 3, b: 1, delta: Math.PI / 2 }, // clover
-];
+import { LISSAJOUS_PATHS } from "~/lib/generated/lissajous-paths";
 
 export function AppFooter() {
   return (
@@ -167,19 +152,25 @@ export function AppFooter() {
       {/* Lissajous patterns grid */}
       <div className="hidden md:block mt-auto mx-auto w-full max-w-[1400px] md:py-16 md:px-16 lg:px-24">
         <div className="grid grid-cols-3 md:grid-cols-9 gap-4">
-          {FOOTER_PATTERNS.map((pattern) => (
+          {LISSAJOUS_PATHS.map((pattern) => (
             <div
-              key={`${pattern.a}-${pattern.b}-${pattern.delta}`}
+              key={pattern.name}
               className="aspect-square border border-border flex items-center justify-center p-4"
             >
-              <Lissajous
-                a={pattern.a}
-                b={pattern.b}
-                delta={pattern.delta}
+              <svg
+                viewBox="0 0 100 100"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
                 className="w-full h-full"
-                stroke="var(--border)"
-                strokeWidth={1.5}
-              />
+              >
+                <path
+                  d={pattern.d}
+                  stroke="var(--border)"
+                  strokeWidth={1.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
           ))}
         </div>
