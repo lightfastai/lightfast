@@ -191,6 +191,20 @@ export default function HomePage() {
       {/* Structured data for SEO */}
       <JsonLd code={structuredData} />
 
+      {/* Preload the video poster on desktop — the <Image priority> below preloads
+          the Next.js-optimised URL (/_next/image?...) which the browser cannot
+          reuse for the raw poster attribute on the <video> element. This link
+          targets the original URL so the browser has it in cache before the
+          video element is painted, fixing desktop LCP.
+          React 19 / Next.js 15 hoist <link> elements from Server Components to <head>. */}
+      <link
+        rel="preload"
+        as="image"
+        href="/images/landing-hero-poster.webp"
+        fetchPriority="high"
+        media="(min-width: 768px)"
+      />
+
       {/* Grid-based landing page */}
       <div className="min-h-screen bg-background">
         {/* Hero Section */}
@@ -203,6 +217,10 @@ export default function HomePage() {
                 alt="Data flows through the Lightfast engine"
                 fill
                 priority
+                // Scope to mobile only — on desktop (hidden) this would preload
+                // a 2160px+ image for a display:none element. The desktop poster
+                // is covered by the <link rel="preload"> above.
+                sizes="(max-width: 767px) 150vw, 1px"
                 className="object-contain object-[65%_25%]"
               />
             </div>
@@ -221,6 +239,7 @@ export default function HomePage() {
                 loop
                 muted
                 playsInline
+                preload="none"
                 poster="/images/landing-hero-poster.webp"
                 className="w-full h-full object-contain object-right-top"
               >
