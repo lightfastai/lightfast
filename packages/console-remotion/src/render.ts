@@ -16,7 +16,7 @@ async function main() {
   const entryPoint = path.resolve(__dirname, "index.ts");
   const outputDir = path.resolve(__dirname, "../../../apps/www/public/images");
   const webmOutputPath = path.resolve(outputDir, "landing-hero.webm");
-  const posterOutputPath = path.resolve(outputDir, "landing-hero-poster.jpg");
+  const posterOutputPath = path.resolve(outputDir, "landing-hero-poster.webp");
   await fs.mkdir(outputDir, { recursive: true });
 
   console.log("Bundling composition...");
@@ -38,8 +38,7 @@ async function main() {
     serveUrl: bundled,
     output: posterOutputPath,
     frame: LANDING_HERO_POSTER_FRAME,
-    imageFormat: "jpeg",
-    jpegQuality: 85,
+    imageFormat: "webp",
     scale: 1,
     overwrite: true,
   });

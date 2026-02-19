@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Search, RefreshCw, Users, Zap, Link2, Shield } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -189,22 +190,29 @@ export default function HomePage() {
     <>
       {/* Structured data for SEO */}
       <JsonLd code={structuredData} />
-      {/* Preload the hero video poster so it's available before the video element is parsed */}
-      <link rel="preload" as="image" href="/images/landing-hero-poster.jpg" fetchPriority="high" />
 
       {/* Grid-based landing page */}
       <div className="min-h-screen bg-background">
         {/* Hero Section */}
         <section className="relative min-h-screen w-full bg-background overflow-hidden">
-          {/* Hero visual - overflow wrapper clips the image at section edges */}
-          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-            {/* Inner container: width/height control size, top/right control position.
-                Changing top/right only MOVES the image without distorting it.
-                Mobile: larger + centered lower. Tablet: intermediate. Desktop: original. */}
+          {/* Mobile hero: static image only — no video download on mobile */}
+          <div className="md:hidden pointer-events-none absolute inset-0 z-0 overflow-hidden">
+            <div className="absolute w-[150%] h-[90%] top-[22%] -right-[42%]">
+              <Image
+                src="/images/landing-hero-poster.webp"
+                alt="Data flows through the Lightfast engine"
+                fill
+                priority
+                className="object-contain object-[65%_25%]"
+              />
+            </div>
+          </div>
+
+          {/* Desktop hero: animated WebM video */}
+          <div className="hidden md:block pointer-events-none absolute inset-0 z-0 overflow-hidden">
             <div
               className="absolute
-                w-[150%] h-[90%] top-[22%] -right-[42%]
-                md:w-[100%] md:h-[85%] md:top-[25%] md:-right-[10%]
+                w-[100%] h-[85%] top-[25%] -right-[10%]
                 lg:w-[80%] lg:h-[95%] lg:top-[5%] lg:-right-[12.5%]"
             >
               {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
@@ -213,8 +221,8 @@ export default function HomePage() {
                 loop
                 muted
                 playsInline
-                poster="/images/landing-hero-poster.jpg"
-                className="w-full h-full object-contain object-[65%_25%] md:object-right-top"
+                poster="/images/landing-hero-poster.webp"
+                className="w-full h-full object-contain object-right-top"
               >
                 <source src="/images/landing-hero.webm" type="video/webm" />
               </video>
