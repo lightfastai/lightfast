@@ -57,6 +57,10 @@ const wwwConfig: NextConfig = {
 			"clsx",
 			"tailwind-merge",
 			"@paper-design/shaders-react",
+			// lucide-react ships hundreds of icons — optimizePackageImports
+			// makes the compiler only bundle the specific icons imported rather
+			// than the full barrel, eliminating dead icon code from every chunk.
+			"lucide-react",
 		],
 	},
 
