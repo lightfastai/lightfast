@@ -1,14 +1,8 @@
-import dynamic from "next/dynamic";
 import NextLink from "next/link";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { AppNavbarMenu } from "./app-navbar-menu";
-
-// Loaded client-side only — Radix Sheet/Dialog bundle skipped on desktop
-const AppMobileNav = dynamic(
-  () => import("./app-mobile-nav").then((m) => ({ default: m.AppMobileNav })),
-  { ssr: false },
-);
+import { AppMobileNavLazy } from "./app-mobile-nav-lazy";
 
 /**
  * Server-rendered navbar component
@@ -52,7 +46,7 @@ export function AppNavbar() {
           >
             <Icons.logoShort className="w-4 h-4 text-foreground" />
           </NextLink>
-          <AppMobileNav />
+          <AppMobileNavLazy />
         </div>
       </div>
     </div>
