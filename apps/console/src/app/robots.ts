@@ -27,6 +27,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: [
           "/",
           "/llms.txt", // AI crawler guidance file (standard for LLMs to understand site)
+          "/llms-full.txt", // Full page content in markdown for AI crawlers
           "/api/og/*", // Public OG image generation endpoints
         ],
         disallow: [
