@@ -1,0 +1,236 @@
+# Lightfast — Full Content Reference
+
+> This file provides pre-processed content from Lightfast's most important pages for AI systems that prefer clean text over HTML parsing. For a structured index of all pages and URLs, see /llms.txt.
+
+---
+
+## What is Lightfast?
+
+Lightfast is the memory layer for software teams. Engineers and AI agents use Lightfast to search everything an engineering organisation knows — code, pull requests, decisions, incidents, deployments, and docs — and get answers that always cite their sources.
+
+Most engineering problems are context problems: "Who owns this?", "Why was this chosen?", "What broke last deploy?" Lightfast makes your team's entire history instantly searchable by meaning, not keywords. Every answer includes verifiable sources, so engineers trust what they find and agents don't hallucinate.
+
+**Status:** Early Access (Alpha). Developer-first. Privacy by default — complete tenant isolation.
+
+**Website:** https://lightfast.ai
+**Early access:** https://lightfast.ai/early-access
+**Documentation:** https://lightfast.ai/docs
+**Changelog:** https://lightfast.ai/changelog
+
+---
+
+## The Problem Lightfast Solves
+
+Engineering organisations run on memory. The best teams know why decisions were made, who owns what, and how systems evolved. Today, that memory lives scattered across tools, lost in DM threads, or walks out the door when someone leaves.
+
+AI coding assistants (Claude Code, Cursor, GitHub Copilot) make this worse: they start every session with zero knowledge of your codebase. Each session requires re-explaining architecture, ownership, and history — burning tokens and time. A 50,000-line codebase stuffed into Claude's context window costs roughly $0.75–$1.50 per session. With semantic retrieval, the same query costs ~$0.015. That is a 98%+ reduction in token spend.
+
+Lightfast provides the retrieval layer so AI agents search for what they need instead of loading everything into context.
+
+---
+
+## Core Capabilities
+
+**Semantic search** — Find information by meaning, not keywords. Ask "why did we move away from Postgres?" and get answers from PRs, Slack threads, and ADRs — even if they never use the word "Postgres" in the title.
+
+**Source citations** — Every answer shows exactly where it came from: which PR, which commit, which issue, which document. No black-box summaries.
+
+**Real-time indexing** — Captures knowledge as it is created across GitHub, Vercel, Linear, Sentry, and more. No manual documentation required.
+
+**Developer-first API** — Six routes cover the primary retrieval patterns:
+- `POST /v1/search` — semantic search with optional filtering by source, type, date range
+- `POST /v1/contents` — retrieve full content of specific indexed items by ID
+- `POST /v1/findsimilar` — find items semantically similar to a given item or URL
+- `POST /v1/graph` — traverse the relationship graph from a starting observation
+- `POST /v1/related` — find observations directly connected via relationships
+- `POST /v1/answer` — agentic answer generation: streams a cited answer using Claude Sonnet, backed by all retrieval tools
+
+**MCP tools** — Native integration with AI agent runtimes via Model Context Protocol. Claude Code, Cursor, and any MCP-compatible client can call Lightfast tools directly mid-conversation.
+
+**Privacy by default** — Complete tenant isolation. Your data is never used to train models or shared between organisations.
+
+---
+
+## How the Retrieval Pipeline Works
+
+Lightfast uses a four-path hybrid retrieval pipeline. Results are assembled in parallel from:
+
+1. **Vector similarity** (Pinecone) — dense embedding search for semantic meaning
+2. **Entity pattern matching** — boosts results that contain exact entity matches (service names, file paths, people)
+3. **Topic-based cluster context** — surface related items from the same topic cluster
+4. **Contributor expertise scoring** — weight results by the expertise of the author in the relevant domain
+
+Entity matches receive a +0.2 score boost. Results are then reranked in one of three modes:
+- **Fast** — passthrough, ~0ms added latency
+- **Balanced** — Cohere rerank-v3.5, ~130ms
+- **Thorough** — Claude Haiku 4.5, ~300–500ms (60% LLM weight + 40% vector weight, 0.4 relevance threshold)
+
+---
+
+## Integrations
+
+**Currently supported:**
+- **GitHub** — pull requests, commits, issues, discussions, code review comments
+- **Vercel** — deployments, build logs, deployment events
+- **Linear** — issues, projects, cycles, project updates, comments
+- **Sentry** — errors, incidents, event alerts, metric alerts
+
+**Coming soon:**
+- Slack (messages, threads, decisions)
+- Notion (docs, databases)
+
+---
+
+## MCP Integration
+
+Lightfast exposes MCP tools that AI agents can call at runtime:
+
+```
+lightfast_search(query: string, filters?: object) → SearchResult[]
+lightfast_contents(ids: string[]) → ContentItem[]
+lightfast_find_similar(id?: string, url?: string) → SearchResult[]
+lightfast_graph(id: string, depth?: number, types?: string[]) → GraphResult
+lightfast_related(id: string) → RelatedResult
+```
+
+**Example use cases with MCP:**
+- Claude Code calls `lightfast_search("who has expertise in the payments module")` before suggesting a PR reviewer
+- An incident response agent calls `lightfast_graph(observation_id)` to trace backward through deploy → PR → commit → issue
+- A code review agent calls `lightfast_find_similar(pr_id)` to surface related PRs and past decisions before leaving comments
+
+**Setup:** Install the MCP server via `npx @lightfastai/mcp` (or `npm install @lightfastai/mcp`). The underlying SDK is `npm install lightfast`. See https://lightfast.ai/docs/get-started/quickstart.
+
+---
+
+## Use Cases by Role
+
+### Agent Builders
+
+Developers building AI agents use Lightfast to ground their agents in real, citable engineering context. Common patterns:
+
+- **Automated incident root cause tracing** — when a Sentry error spikes, trace backward through the graph: which deploy, which PR, which commit, which issue prompted the change
+- **Deployment risk scoring** — given what is in a PR, what infrastructure it touches, and historical incident data, score the risk of shipping it
+- **Undocumented tribal knowledge detection** — find critical systems that only one person has ever committed to or reviewed
+- **Technical debt inventory** — classify and quantify debt: outdated dependencies, TODO comments, skipped tests, workaround patterns
+- **PR reviewer recommendation** — suggest reviewers based on file expertise, current workload, and knowledge distribution goals
+- **Shadow dependency discovery** — detect runtime dependencies not declared in package manifests
+
+### Engineering Leaders
+
+Engineering managers, VPs, and CTOs use Lightfast to surface team health signals and trace decisions from meeting to merge:
+
+- **Team cognitive load estimation** — based on active PRs, open issues, on-call rotations, estimate how overloaded each person is
+- **Knowledge gap finder** — find areas of the codebase with single-point-of-failure knowledge
+- **Meeting-to-decision-to-code tracing** — link business decisions through issues to implementations to outcomes
+- **On-call burden distribution** — track who gets paged, how often, at what hours, and whether it is equitable
+- **Sprint completion prediction** — based on historical velocity, current WIP, PR cycle times, predict what will actually ship
+- **Team attrition risk signals** — declining commit frequency, reduced PR engagement as leading indicators
+
+### Technical Founders
+
+Founders who care about the connection between engineering output and business outcomes:
+
+- **Revenue impact estimation** — given a service degradation, estimate revenue loss per minute based on traffic patterns
+- **Engineering ROI by initiative** — trace from strategic initiatives through epics, issues, PRs, deploys to business metric impact
+- **Due diligence automation** — for fundraising or M&A, auto-generate technical health reports from the knowledge graph
+- **Churn risk from incident exposure** — correlate customer-facing incidents with churn data to predict at-risk customers
+- **Build vs. buy decision support** — surface historical data on how similar internal builds performed versus third-party alternatives
+
+### Platform Engineers
+
+DevOps, SRE, and infrastructure engineers:
+
+- **CVE blast radius tracing** — given a vulnerability, find every service, dependency, and team affected
+- **Outage probability forecasting** — based on current error rate trajectories and deploy frequency, estimate outage probability
+- **Infrastructure drift detection** — detect divergence between declared and actual infrastructure
+- **Incident runbook generation** — auto-generate runbooks from historical resolution patterns
+- **Performance regression attribution** — when latency increases, identify the causal chain: deploy → code change → function → query
+
+---
+
+## Getting Started
+
+**Packages:**
+- SDK: `npm install lightfast` — https://www.npmjs.com/package/lightfast
+- MCP server: `npm install @lightfastai/mcp` — https://www.npmjs.com/package/@lightfastai/mcp
+- Source: https://github.com/lightfastai/lightfast
+
+```bash
+npm install lightfast
+```
+
+```typescript
+import { Lightfast } from 'lightfast';
+
+const client = new Lightfast({ apiKey: process.env.LIGHTFAST_API_KEY });
+
+// Search by meaning
+const results = await client.search({
+  query: "why did we switch from REST to tRPC",
+  limit: 10
+});
+
+// Fetch full content for specific items
+const content = await client.contents({
+  ids: ["obs_abc123", "obs_def456"]
+});
+
+// Find semantically similar items
+const similar = await client.findSimilar({
+  id: "obs_abc123",
+  limit: 5
+});
+```
+
+Full documentation: https://lightfast.ai/docs/get-started/quickstart
+
+---
+
+## Frequently Asked Questions
+
+**What makes Lightfast different from GitHub's built-in search?**
+GitHub search is keyword-based and searches only code files. Lightfast uses semantic search across the full engineering context — PRs, issues, discussions, deployments, incidents, and decisions — and understands meaning, not just text patterns. Searching "why did we deprecate the v1 API" returns the relevant discussion threads and ADRs even if those exact words never appeared together.
+
+**How does Lightfast reduce AI token costs?**
+Instead of loading your entire codebase into an AI agent's context window (which can cost $1–$3 per session for a mid-sized codebase at Claude Sonnet pricing), Lightfast retrieves only the 10–25 most relevant chunks for each query (~5,000–12,500 tokens). This reduces per-session input token cost by approximately 98%.
+
+**Does Lightfast work with Claude Code?**
+Yes. Lightfast exposes MCP tools that Claude Code can call natively. Once configured, Claude Code can search your entire engineering history mid-conversation without you pasting any context manually.
+
+**What is the difference between the search API and the answer API?**
+`/v1/search` returns ranked results with metadata, scores, and snippets — the raw retrieval output. `/v1/answer` is an agentic streaming endpoint powered by Claude Sonnet; it orchestrates multiple retrieval tools internally and streams back a cited answer. Use search when you want to display ranked results; use answer when you want an AI-synthesised response grounded in your workspace knowledge.
+
+**Is my data used to train AI models?**
+No. Complete tenant isolation is enforced. Your indexed data is never used to train Lightfast models, Anthropic models, or any third-party models.
+
+**What data sources does Lightfast index?**
+Currently: GitHub (PRs, commits, issues, discussions, code review comments), Vercel (deployments, build logs), Linear (issues, projects, cycles, comments), and Sentry (errors, incidents, alerts). Slack and Notion integrations are in development.
+
+**How accurate are the source citations?**
+Every answer links back to the exact source item (PR, commit, issue, document) that contributed to it. Citations are generated from retrieved sources — the system cannot cite something it did not retrieve. If a source is not indexed, it will not appear in results.
+
+**How long does initial indexing take?**
+For a typical GitHub organisation with 1–5 repositories and 12 months of history, initial indexing completes within 15–30 minutes. Ongoing indexing is real-time — new PRs, commits, and events are indexed within minutes of creation.
+
+---
+
+## Pricing
+
+Lightfast uses usage-based pricing. Details at https://lightfast.ai/pricing.
+
+During Early Access, pricing is available upon request. Contact hello@lightfast.ai or request access at https://lightfast.ai/early-access.
+
+---
+
+## Contact and Community
+
+- **Early access:** https://lightfast.ai/early-access
+- **Documentation:** https://lightfast.ai/docs
+- **Email:** hello@lightfast.ai
+- **Founder:** Jeevan Pillay — jp@lightfast.ai — https://twitter.com/jeevanpillay
+- **Discord:** https://discord.gg/YqPDfcar2C
+- **Twitter/X:** https://twitter.com/lightfastai
+- **GitHub (org):** https://github.com/lightfastai
+- **GitHub (SDK + MCP):** https://github.com/lightfastai/lightfast
+- **npm (SDK):** https://www.npmjs.com/package/lightfast
+- **npm (MCP server):** https://www.npmjs.com/package/@lightfastai/mcp

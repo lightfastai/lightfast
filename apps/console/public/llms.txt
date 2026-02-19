@@ -1,13 +1,18 @@
 # llms.txt for https://lightfast.ai
 
+> Full page content in markdown format: https://lightfast.ai/llms-full.txt
+
 ## What is Lightfast?
-Lightfast is neural memory built for teams - an AI-powered platform that enables semantic search across your entire organization's knowledge. We index GitHub, Slack, Notion, Linear, and other tools to provide instant answers with sources.
+Lightfast is the memory layer for software teams. Engineers and AI agents use Lightfast to search everything an engineering organisation knows — code, pull requests, decisions, incidents, deployments, and docs — and get answers that always cite their sources. Every answer is grounded in real organisational data, not model guesswork.
+
+## What Questions This Site Can Answer
+Lightfast's documentation, blog, and changelog answer questions about: semantic search implementation for engineering teams, hybrid retrieval and vector database architecture, RAG pipeline design, MCP (Model Context Protocol) integration for AI agents, reducing LLM token costs through retrieval instead of context stuffing, engineering team knowledge management, giving AI coding assistants persistent memory of a codebase, source-cited answer generation, and cross-tool search across GitHub, Vercel, Linear, and Sentry.
 
 ## Core Capabilities
 - **Semantic search**: Find information by meaning, not just keywords
 - **Source citations**: Every answer shows exactly where it came from
 - **Real-time indexing**: Captures knowledge as it's created across your tools
-- **Developer-first API**: Simple 4-route API (search, contents, similar, answer)
+- **Developer-first API**: Six-route API (search, contents, findsimilar, graph, related, answer)
 - **MCP tools**: Native integration with AI agents via Model Context Protocol
 - **Privacy by default**: Complete tenant isolation, your data stays yours
 
@@ -38,9 +43,8 @@ Lightfast is neural memory built for teams - an AI-powered platform that enables
 
 ## Use Cases
 - Search across code, PRs, issues, and discussions from GitHub
-- Find decisions and context from Slack conversations
-- Access documentation from Notion and Confluence
 - Track feature specs and bugs from Linear
+- Trace errors and incidents from Sentry through to the causal deploy and PR
 - Give AI agents access to company knowledge safely
 - Build custom search experiences with our API
 
@@ -66,7 +70,7 @@ Company news, team updates, and insights into building Lightfast as a business.
 These sections are updated regularly with new information:
 
 - **Changelog** (https://lightfast.ai/changelog) — Latest product updates, new features, and improvements (updated weekly)
-- **Blog** (https://lightfast.ai/blog) — Technical insights, guides, and company updates (updated bi-weekly)
+- **Blog** (https://lightfast.ai/blog) — Technical insights, guides, and company updates (updated multiple times weekly)
 - **Documentation** (https://lightfast.ai/docs) — Developer guides, API references, and integration tutorials (updated continuously)
 
 ## RSS/Atom Feeds
@@ -76,6 +80,11 @@ These sections are updated regularly with new information:
 
 ## Contact & Support
 - Email: hello@lightfast.ai
-- Twitter: @lightfastai
-- GitHub: github.com/lightfastai
+- Founder: Jeevan Pillay — jp@lightfast.ai — https://twitter.com/jeevanpillay
 - Support: support@lightfast.ai
+- Twitter: https://twitter.com/lightfastai
+- Discord: https://discord.gg/YqPDfcar2C
+- GitHub (org): https://github.com/lightfastai
+- GitHub (SDK + MCP): https://github.com/lightfastai/lightfast
+- npm (SDK): https://www.npmjs.com/package/lightfast
+- npm (MCP server): https://www.npmjs.com/package/@lightfastai/mcp
