@@ -94,6 +94,43 @@ const config: NextConfig = withSentry(
               : ["lightfast.ai", "*.lightfast.ai"],
         },
       },
+      async redirects() {
+        return [
+          {
+            source: "/features/timeline",
+            destination: "/",
+            permanent: true,
+          },
+          {
+            source: "/features/memory",
+            destination: "/",
+            permanent: true,
+          },
+          {
+            source: "/features/connectors",
+            destination: "/",
+            permanent: true,
+          },
+          {
+            source: "/features/agents",
+            destination: "/",
+            permanent: true,
+          },
+          // Bots probe these common sitemap index filenames, but Next.js only
+          // generates /sitemap.xml. Without these, requests fall through to the
+          // [slug] dynamic route and trigger an authenticated tRPC prefetch.
+          {
+            source: "/sitemap-index.xml",
+            destination: "/sitemap.xml",
+            permanent: true,
+          },
+          {
+            source: "/sitemap_index.xml",
+            destination: "/sitemap.xml",
+            permanent: true,
+          },
+        ];
+      },
       async rewrites() {
         // Proxy /docs to the docs app
         // Keep /docs prefix since docs app folder structure has app/docs/
