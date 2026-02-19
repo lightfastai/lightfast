@@ -1,8 +1,19 @@
-"use client";
-
 import { cn } from "@repo/ui/lib/utils";
 import type { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import type { SlideVariant } from "./title-slide-content";
+
+// Dynamic grid classes based on column count (2-4)
+const GRID_COLS_FIXED: Record<number, string> = {
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+  4: "grid-cols-4",
+};
+
+const GRID_COLS_RESPONSIVE: Record<number, string> = {
+  2: "grid-cols-1 sm:grid-cols-2",
+  3: "grid-cols-1 sm:grid-cols-3",
+  4: "grid-cols-2 sm:grid-cols-4",
+};
 
 interface ColumnsSlideContentProps {
   slide: Extract<(typeof PITCH_SLIDES)[number], { type: "columns" }>;
@@ -16,22 +27,9 @@ export function ColumnsSlideContent({
   const isFixed = variant === "fixed";
   const columnCount = slide.columns.length;
 
-  // Dynamic grid classes based on column count (2-4)
-  const gridColsFixed: Record<number, string> = {
-    2: "grid-cols-2",
-    3: "grid-cols-3",
-    4: "grid-cols-4",
-  };
-
-  const gridColsResponsive: Record<number, string> = {
-    2: "grid-cols-1 sm:grid-cols-2",
-    3: "grid-cols-1 sm:grid-cols-3",
-    4: "grid-cols-2 sm:grid-cols-4",
-  };
-
-  const fixedGridCols = gridColsFixed[columnCount] ?? "grid-cols-4";
+  const fixedGridCols = GRID_COLS_FIXED[columnCount] ?? "grid-cols-4";
   const responsiveGridCols =
-    gridColsResponsive[columnCount] ?? "grid-cols-2 sm:grid-cols-4";
+    GRID_COLS_RESPONSIVE[columnCount] ?? "grid-cols-2 sm:grid-cols-4";
 
   return (
     <div className={cn("flex h-full w-full flex-col", slide.textColor)}>

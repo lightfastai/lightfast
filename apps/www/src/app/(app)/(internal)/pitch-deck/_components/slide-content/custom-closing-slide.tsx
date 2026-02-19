@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@repo/ui/lib/utils";
 import type { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import type { SlideVariant } from "./title-slide-content";

@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@repo/ui/lib/utils";
 import { Icons } from "@repo/ui/components/icons";
 import type { PITCH_SLIDES } from "~/config/pitch-deck-data";
