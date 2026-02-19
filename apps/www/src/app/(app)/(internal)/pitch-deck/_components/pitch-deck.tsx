@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo, useCallback, memo } from "react";
 import {
   LazyMotion,
   m,
+  AnimatePresence,
   useScroll,
   useTransform,
   useMotionValueEvent,
@@ -73,7 +74,7 @@ export function PitchDeck() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const handlePrevSlide = () => {
+  const handlePrevSlide = useCallback(() => {
     if (currentSlide > 0) {
       const scrollTarget = getScrollTargetForSlide(
         currentSlide - 1,
@@ -82,9 +83,9 @@ export function PitchDeck() {
       );
       window.scrollTo({ top: scrollTarget, behavior: "smooth" });
     }
-  };
+  }, [currentSlide]);
 
-  const handleNextSlide = () => {
+  const handleNextSlide = useCallback(() => {
     if (currentSlide < PITCH_SLIDES.length - 1) {
       const scrollTarget = getScrollTargetForSlide(
         currentSlide + 1,
@@ -93,16 +94,16 @@ export function PitchDeck() {
       );
       window.scrollTo({ top: scrollTarget, behavior: "smooth" });
     }
-  };
+  }, [currentSlide]);
 
-  const handleIndicatorClick = (index: number) => {
+  const handleIndicatorClick = useCallback((index: number) => {
     const scrollTarget = getScrollTargetForSlide(
       index,
       PITCH_SLIDES.length,
       document.documentElement.scrollHeight,
     );
     window.scrollTo({ top: scrollTarget, behavior: "smooth" });
-  };
+  }, []);
 
   return (
     <LazyMotion features={loadMotionFeatures} strict>
@@ -122,7 +123,7 @@ export function PitchDeck() {
             aria-label="Slide viewer"
           >
             {/* Slide container */}
-            <div className="w-full relative max-w-[1200px] aspect-[16/9] overflow-visible">
+            <div className="w-full relative max-w-[860px] aspect-[16/9] overflow-visible">
               {PITCH_SLIDES.map((slide, index) => (
                 <PitchSlide
                   key={slide.id}
@@ -202,93 +203,102 @@ function SlideIndicator({
           index={index}
           totalSlides={totalSlides}
           scrollProgress={scrollProgress}
-          onClick={() => onDotClick(index)}
+          onDotClick={onDotClick}
         />
       ))}
     </div>
   );
 }
 
-function IndicatorLine({
+const IndicatorLine = memo(function IndicatorLine({
   index,
   totalSlides,
   scrollProgress,
-  onClick,
+  onDotClick,
 }: {
   index: number;
   totalSlides: number;
   scrollProgress: MotionValue<number>;
-  onClick: () => void;
+  onDotClick: (index: number) => void;
 }) {
-  const opacityKf = getIndicatorOpacityKeyframes(index, totalSlides);
-  const widthKf = getIndicatorWidthKeyframes(index, totalSlides);
+  const opacityKf = useMemo(
+    () => getIndicatorOpacityKeyframes(index, totalSlides),
+    [index, totalSlides],
+  );
+  const widthKf = useMemo(
+    () => getIndicatorWidthKeyframes(index, totalSlides),
+    [index, totalSlides],
+  );
+
+  const handleClick = useCallback(() => onDotClick(index), [onDotClick, index]);
 
   const opacity = useTransform(scrollProgress, opacityKf.input, opacityKf.output);
   const width = useTransform(scrollProgress, widthKf.input, widthKf.output);
 
   return (
     <m.button
-      onClick={onClick}
+      onClick={handleClick}
       style={{ opacity, width }}
       className="h-px min-w-6 bg-foreground cursor-pointer hover:bg-foreground/80 transition-colors block"
       aria-label={`Go to slide ${index + 1}`}
     />
   );
-}
+});
 
 function ScrollHint() {
   const [hasScrolled, setHasScrolled] = useState(false);
 
-  // Hide on first scroll - never show again
+  // Self-cleaning listener: removes itself after first positive check
   useEffect(() => {
-    if (hasScrolled) return;
-
     const handleScroll = () => {
       if (window.scrollY > 10) {
         setHasScrolled(true);
+        window.removeEventListener("scroll", handleScroll);
       }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [hasScrolled]);
-
-  if (hasScrolled) return null;
+  }, []);
 
   return (
-    <m.div
-      className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-none"
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      {/* SCROLL text */}
-      <span className="text-[10px] font-medium tracking-[0.3em] text-muted-foreground uppercase">
-        Scroll
-      </span>
+    <AnimatePresence>
+      {!hasScrolled && (
+        <m.div
+          className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-none"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* SCROLL text */}
+          <span className="text-[10px] font-medium tracking-[0.3em] text-muted-foreground uppercase">
+            Scroll
+          </span>
 
-      {/* Vertical line */}
-      <div className="h-3 w-px bg-muted-foreground/50 mt-1" />
+          {/* Vertical line */}
+          <div className="h-3 w-px bg-muted-foreground/50 mt-1" />
 
-      {/* Animated diamond indicator */}
-      <m.div
-        className="mt-1"
-        transition={{
-          duration: 1.2,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      >
-        <div className="w-2 h-2 rotate-45 border border-muted-foreground" />
-      </m.div>
+          {/* Animated diamond indicator */}
+          <m.div
+            className="mt-1"
+            transition={{
+              duration: 1.2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <div className="w-2 h-2 rotate-45 border border-muted-foreground" />
+          </m.div>
 
-      {/* Dotted line below */}
-      <div className="flex flex-col gap-1 mt-1">
-        <div className="w-px h-1 bg-muted-foreground/40" />
-        <div className="w-px h-1 bg-muted-foreground/30" />
-        <div className="w-px h-1 bg-muted-foreground/20" />
-      </div>
-    </m.div>
+          {/* Dotted line below */}
+          <div className="flex flex-col gap-1 mt-1">
+            <div className="w-px h-1 bg-muted-foreground/40" />
+            <div className="w-px h-1 bg-muted-foreground/30" />
+            <div className="w-px h-1 bg-muted-foreground/20" />
+          </div>
+        </m.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -336,7 +346,7 @@ function NavigationControls({
   );
 }
 
-function PitchSlide({
+const PitchSlide = memo(function PitchSlide({
   slide,
   index,
   totalSlides,
@@ -347,10 +357,10 @@ function PitchSlide({
   totalSlides: number;
   scrollProgress: MotionValue<number>;
 }) {
-  const yKf = getSlideYKeyframes(index, totalSlides);
-  const scaleKf = getSlideScaleKeyframes(index, totalSlides);
-  const opacityKf = getSlideOpacityKeyframes(index, totalSlides);
-  const zIndexKf = getSlideZIndexKeyframes(index, totalSlides);
+  const yKf = useMemo(() => getSlideYKeyframes(index, totalSlides), [index, totalSlides]);
+  const scaleKf = useMemo(() => getSlideScaleKeyframes(index, totalSlides), [index, totalSlides]);
+  const opacityKf = useMemo(() => getSlideOpacityKeyframes(index, totalSlides), [index, totalSlides]);
+  const zIndexKf = useMemo(() => getSlideZIndexKeyframes(index, totalSlides), [index, totalSlides]);
 
   const y = useTransform(scrollProgress, yKf.input, yKf.output);
   const scale = useTransform(scrollProgress, scaleKf.input, scaleKf.output);
@@ -376,7 +386,7 @@ function PitchSlide({
       </div>
     </m.article>
   );
-}
+});
 
 function SlideContent({ slide }: { slide: (typeof PITCH_SLIDES)[number] }) {
   return resolveSlideComponent(slide, "responsive");
