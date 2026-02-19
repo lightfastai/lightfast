@@ -119,12 +119,12 @@ export async function exportSlidesToPdf(
       pdf.addImage(imgData, "JPEG", 0, 0, width, height);
     }
 
-    // Clean up React root
-    root.unmount();
-
     // Save PDF (triggers browser download)
     pdf.save(`${filename}.pdf`);
   } finally {
+    // Always unmount the React root and remove the container, even if capture fails.
+    // Without this, a failed html2canvas call would leak the React root's fiber tree.
+    root.unmount();
     document.body.removeChild(container);
   }
 }
