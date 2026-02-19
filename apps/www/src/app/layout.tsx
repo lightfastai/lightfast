@@ -4,8 +4,7 @@ import "~/styles/globals.css";
 
 import { siteConfig } from "@repo/site-config";
 import { cn } from "@repo/ui/lib/utils";
-import { fonts as geistFonts } from "@repo/ui/lib/fonts";
-import { exposurePlus, ppNeueMontreal } from "~/lib/fonts";
+import { geistSans, geistMono, exposurePlus, ppNeueMontreal } from "~/lib/fonts";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
 import { PrefetchCrossZoneLinks } from "@vercel/microfrontends/next/client";
@@ -144,10 +143,11 @@ export default function RootLayout({
   return (
     <html
       className={cn(
-        geistFonts,
+        geistSans.variable,
+        geistMono.variable,
         ppNeueMontreal.variable,
         exposurePlus.variable,
-        "dark scrollbar-thin",
+        "touch-manipulation font-sans antialiased dark scrollbar-thin",
       )}
       lang="en"
       suppressHydrationWarning
