@@ -4,7 +4,8 @@ export const PITCH_SLIDES = [
     id: "title",
     type: "title" as const,
     title: "LIGHTFAST",
-    subtitle: "Pitch deck 2026 —",
+    subtitle:
+      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
     bgColor: "bg-[var(--pitch-deck-red)]",
   },
   // Slide 2: Problem

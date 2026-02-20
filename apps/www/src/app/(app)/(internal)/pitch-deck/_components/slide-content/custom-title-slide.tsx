@@ -30,20 +30,8 @@ export function CustomTitleSlide({
         ))}
       </div>
 
-      {/* Subtitle */}
-      <span
-        className={cn(
-          "absolute text-white/60 font-normal pointer-events-none",
-          isFixed
-            ? "left-6 bottom-6 text-sm"
-            : "left-4 bottom-4 text-[10px] sm:text-xs",
-        )}
-      >
-        {slide.subtitle}
-      </span>
-
-      {/* Centered logo + text */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* Centered logo + title + tagline */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
           <Icons.logoShort
             className={cn(
@@ -64,6 +52,18 @@ export function CustomTitleSlide({
             {slide.title}
           </h1>
         </div>
+        {slide.subtitle && (
+          <p
+            className={cn(
+              "text-white font-normal text-center",
+              isFixed
+                ? "mt-6 text-lg max-w-[600px]"
+                : "mt-3 sm:mt-4 md:mt-5 text-[10px] sm:text-xs md:text-sm lg:text-xl max-w-[80%] sm:max-w-[70%] md:max-w-[500px]",
+            )}
+          >
+            {slide.subtitle}
+          </p>
+        )}
       </div>
     </div>
   );
