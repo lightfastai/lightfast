@@ -12,6 +12,8 @@ import { StablePrefetchCrossZoneLinksProvider } from "~/components/stable-prefet
 
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Organization, WithContext } from "@vendor/seo/json-ld";
+import { ApolloTracker } from "~/components/apollo-tracker";
+import { env } from "~/env";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast – The Memory Layer for Software Teams",
@@ -159,6 +161,7 @@ export default function RootLayout({
       <body className={cn("min-h-screen font-sans bg-background")}>
         <StablePrefetchCrossZoneLinksProvider>
           {children}
+          {env.NEXT_PUBLIC_VERCEL_ENV === "production" && <ApolloTracker />}
           <VercelAnalytics />
           <SpeedInsights />
           <PrefetchCrossZoneLinks />
