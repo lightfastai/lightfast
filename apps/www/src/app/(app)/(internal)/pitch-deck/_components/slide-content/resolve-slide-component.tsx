@@ -2,7 +2,6 @@ import type { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import type { SlideVariant } from "./title-slide-content";
 import { ContentSlideContent } from "./content-slide-content";
 import { CustomTitleSlide } from "./custom-title-slide";
-import { CustomClosingSlide } from "./custom-closing-slide";
 import { ShowcaseSlideContent } from "./showcase-slide-content";
 import { ColumnsSlideContent } from "./columns-slide-content";
 
@@ -16,13 +15,9 @@ export function resolveSlideComponent(
   slide: Slide,
   variant: SlideVariant,
 ): React.ReactElement | null {
-  if (slide.type === "title") {
-    if (slide.id === "title") {
-      return <CustomTitleSlide slide={slide} variant={variant} />;
-    }
-    return <CustomClosingSlide slide={slide} variant={variant} />;
-  }
   switch (slide.type) {
+    case "title":
+      return <CustomTitleSlide slide={slide} variant={variant} />;
     case "content":
       return <ContentSlideContent slide={slide} variant={variant} />;
     case "showcase":
