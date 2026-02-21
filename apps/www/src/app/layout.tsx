@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 
 import "~/styles/globals.css";
 
-import { siteConfig } from "@repo/site-config";
 import { cn } from "@repo/ui/lib/utils";
 import { geistSans, geistMono, exposurePlus, ppNeueMontreal } from "~/lib/fonts";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
@@ -16,22 +15,21 @@ import { ApolloTracker } from "~/components/apollo-tracker";
 import { env } from "~/env";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast – The Memory Layer for Software Teams",
+  title: "Lightfast – Decisions Surfaced Across Your Tools",
   description:
-    "Neural memory for teams. Search by meaning with sources. Capture decisions and context across code, docs, and tools.",
-  image: siteConfig.ogImage,
-  applicationName: "Lightfast Neural Memory",
-  metadataBase: new URL(siteConfig.url),
+    "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+  applicationName: "Lightfast",
+  metadataBase: new URL("https://lightfast.ai"),
   authors: [
     {
-      name: siteConfig.name,
-      url: siteConfig.url,
+      name: "Lightfast",
+      url: "https://lightfast.ai",
     },
   ],
-  creator: siteConfig.name,
-  publisher: siteConfig.name,
+  creator: "Lightfast",
+  publisher: "Lightfast",
   category: "Technology",
-  classification: "Neural Memory Platform",
+  classification: "Decision Intelligence Platform",
   robots: {
     index: true,
     follow: true,
@@ -49,20 +47,19 @@ export const metadata: Metadata = createMetadata({
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: siteConfig.url,
-    title: "Lightfast – The Memory Layer for Software Teams",
+    url: "https://lightfast.ai",
+    title: "Lightfast – Decisions Surfaced Across Your Tools",
     description:
-      "Search by meaning with sources. Capture decisions, context, and ownership across your stack.",
-    siteName: siteConfig.name,
+      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+    siteName: "Lightfast",
   },
   twitter: {
     card: "summary_large_image",
     site: "@lightfastai",
     creator: "@lightfastai",
-    title: "Lightfast – The Memory Layer for Software Teams",
+    title: "Lightfast – Decisions Surfaced Across Your Tools",
     description:
-      "Semantic search with sources. Developer‑first API and MCP tools.",
-    images: [siteConfig.ogImage],
+      "Surfaces every decision your team makes — searchable, cited, and ready for people and agents.",
   },
   icons: {
     icon: "/favicon.ico",
@@ -97,7 +94,7 @@ export const metadata: Metadata = createMetadata({
     telephone: false,
   },
   alternates: {
-    canonical: siteConfig.url,
+    canonical: "https://lightfast.ai",
   },
   other: {
     "mobile-web-app-capable": "yes",
@@ -117,26 +114,26 @@ export default function RootLayout({
   const organizationSchema: WithContext<Organization> = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: siteConfig.name,
-    url: siteConfig.url,
-    logo: `${siteConfig.url}/android-chrome-512x512.png`,
+    name: "Lightfast",
+    url: "https://lightfast.ai",
+    logo: "https://lightfast.ai/android-chrome-512x512.png",
     sameAs: [
-      siteConfig.links.twitter.href,
-      siteConfig.links.github.href,
-      siteConfig.links.discord.href,
+      "https://x.com/lightfastai",
+      "https://github.com/lightfastai",
+      "https://discord.gg/YqPDfcar2C",
     ],
   };
 
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: `${siteConfig.name} – The Memory Layer for Software Teams`,
-    url: siteConfig.url,
+    name: "Lightfast – Decisions Surfaced Across Your Tools",
+    url: "https://lightfast.ai",
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${siteConfig.url}/search?q={search_term_string}`,
+        urlTemplate: "https://lightfast.ai/search?q={search_term_string}",
       },
       "query-input": "required name=search_term_string",
     },

@@ -34,7 +34,6 @@ const config: NextConfig = withSentry(
         "@repo/console-vercel",
         "@repo/console-webhooks",
         "@repo/lib",
-        "@repo/site-config",
         "@repo/ui",
         "@repo/url-utils",
         // @vendor packages
@@ -73,7 +72,6 @@ const config: NextConfig = withSentry(
           "@repo/console-webhooks",
           "@repo/console-workspace-cache",
           "@repo/lib",
-          "@repo/site-config",
           "@repo/url-utils",
           "@repo/app-urls",
           // Vendor packages

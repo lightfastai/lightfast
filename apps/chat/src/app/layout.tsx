@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 
 import "~/styles/globals.css";
 
-import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
@@ -17,17 +16,16 @@ export const metadata: Metadata = createMetadata({
   title: "Lightfast Chat - Open-Source Model Agnostic AI Chat Interface",
   description:
     "Open-source, model agnostic AI chat interface. Connect to any AI model (GPT, Claude, Gemini, Llama) through one unified interface. Free and self-hostable.",
-  image: siteConfig.ogImage,
   metadataBase: new URL("https://chat.lightfast.ai"),
   applicationName: "Lightfast Chat",
   authors: [
     {
-      name: siteConfig.name,
-      url: siteConfig.url,
+      name: "Lightfast",
+      url: "https://lightfast.ai",
     },
   ],
-  creator: siteConfig.name,
-  publisher: siteConfig.name,
+  creator: "Lightfast",
+  publisher: "Lightfast",
   category: "Developer Tools",
   classification: "Business Software",
   robots: {
@@ -57,7 +55,6 @@ export const metadata: Metadata = createMetadata({
     title: "Lightfast Chat - Open-Source Model Agnostic AI Chat Interface",
     description:
       "Open-source AI chat interface that works with any model. Connect to GPT, Claude, Gemini, Llama and more.",
-    images: [siteConfig.ogImage],
   },
   icons: {
     icon: "/favicon.ico",

@@ -1,6 +1,5 @@
 import NextLink from "next/link";
 
-import { emailConfig, siteConfig } from "@repo/site-config";
 import { Icons } from "@repo/ui/components/icons";
 import { LISSAJOUS_PATHS } from "~/lib/generated/lissajous-paths";
 
@@ -80,7 +79,7 @@ export function AppFooter() {
               </h3>
               <nav className="flex flex-col gap-2">
                 <NextLink
-                  href={siteConfig.links.twitter.href}
+                  href="https://x.com/lightfastai"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground hover:text-muted-foreground text-sm transition-colors"
@@ -88,7 +87,7 @@ export function AppFooter() {
                   Twitter
                 </NextLink>
                 <NextLink
-                  href={siteConfig.links.github.href}
+                  href="https://github.com/lightfastai"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground hover:text-muted-foreground text-sm transition-colors"
@@ -96,7 +95,7 @@ export function AppFooter() {
                   GitHub
                 </NextLink>
                 <NextLink
-                  href={siteConfig.links.discord.href}
+                  href="https://discord.gg/YqPDfcar2C"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground hover:text-muted-foreground text-sm transition-colors"
@@ -112,14 +111,14 @@ export function AppFooter() {
         <div className="flex flex-col gap-4 py-6 lg:grid lg:grid-cols-2 lg:gap-12">
           {/* Copyright */}
           <p className="text-muted-foreground text-sm">
-            © {siteConfig.name} {new Date().getFullYear()}
+            © Lightfast {new Date().getFullYear()}
           </p>
 
           {/* Row 2 on mobile: Legal links / On desktop: right column */}
           <div className="lg:grid lg:grid-cols-3 lg:gap-8">
             <nav className="flex flex-wrap items-center gap-x-6 gap-y-2">
               <NextLink
-                href={`mailto:${emailConfig.hello}`}
+                href="mailto:hello@lightfast.ai"
                 className="text-muted-foreground hover:text-foreground text-sm transition-colors"
               >
                 Contact

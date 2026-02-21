@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from "next";
 import "~/styles/globals.css";
 
 import { ClerkProvider } from "@clerk/nextjs";
-import { siteConfig } from "@repo/site-config";
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { fonts as geistFonts } from "@repo/ui/lib/fonts";
@@ -14,55 +13,44 @@ import { exposurePlus, ppNeueMontreal } from "~/lib/fonts";
 import { consoleUrl } from "~/lib/related-projects";
 
 export const metadata: Metadata = createMetadata({
-  title: `${siteConfig.name} Auth`,
-  description: `Authentication portal for ${siteConfig.name} platform`,
-  image: siteConfig.ogImage,
-  metadataBase: new URL(siteConfig.url),
-  applicationName: `${siteConfig.name} Auth`,
+  title: "Lightfast Auth",
+  description: "Authentication portal for Lightfast platform",
+  metadataBase: new URL("https://lightfast.ai"),
+  applicationName: "Lightfast Auth",
   authors: [
     {
-      name: siteConfig.name,
-      url: siteConfig.url,
+      name: "Lightfast",
+      url: "https://lightfast.ai",
     },
   ],
-  creator: siteConfig.name,
+  creator: "Lightfast",
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: siteConfig.url,
-    title: `${siteConfig.name} Auth`,
-    description: `Authentication portal for ${siteConfig.name} platform`,
-    siteName: `${siteConfig.name} Auth`,
+    url: "https://lightfast.ai",
+    title: "Lightfast Auth",
+    description: "Authentication portal for Lightfast platform",
+    siteName: "Lightfast Auth",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${siteConfig.name} Auth`,
-    description: `Authentication portal for ${siteConfig.name} platform`,
-    images: [siteConfig.ogImage],
+    title: "Lightfast Auth",
+    description: "Authentication portal for Lightfast platform",
   },
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon-16x16.png",
     apple: "/apple-touch-icon.png",
     other: [
-      {
-        rel: "icon",
-        url: "/favicon-32x32.png",
-      },
-      {
-        rel: "icon",
-        url: "/android-chrome-192x192.png",
-      },
-      {
-        rel: "icon",
-        url: "/android-chrome-512x512.png",
-      },
+      { rel: "icon", url: "/favicon-32x32.png", sizes: "32x32" },
+      { rel: "icon", url: "/android-chrome-192x192.png", sizes: "192x192" },
+      { rel: "icon", url: "/android-chrome-512x512.png", sizes: "512x512" },
     ],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: `${siteConfig.name} Auth`,
+    title: "Lightfast Auth",
   },
   formatDetection: {
     telephone: false,

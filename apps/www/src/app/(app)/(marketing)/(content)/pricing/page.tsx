@@ -9,7 +9,6 @@ import {
   
 } from "@vendor/seo/json-ld";
 import type {FAQPage, SoftwareApplication, WithContext} from "@vendor/seo/json-ld";
-import { siteConfig } from "@repo/site-config";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Tooltip,
@@ -25,13 +24,13 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast Pricing – Memory Layer That Scales",
+  title: "Lightfast Pricing – Scales With Your Team",
   description:
-    "Start with a free memory layer plan for up to 3 users. Scale Lightfast neural memory across your organization with simple per-user pricing and generous search allowances.",
+    "Start free for up to 3 users. Scale Lightfast across your organization with simple per-user pricing and generous search allowances.",
   openGraph: {
-    title: "Lightfast Pricing – Memory Layer That Scales",
+    title: "Lightfast Pricing – Scales With Your Team",
     description:
-      "Pricing for Lightfast memory layer for software teams. Start free and scale with simple per-user pricing, generous search allowances, and Neural Memory included.",
+      "Pricing for Lightfast. Start free and scale with simple per-user pricing, generous search allowances, and decision surfacing included.",
     url: "https://lightfast.ai/pricing",
     type: "website",
   },
@@ -39,7 +38,7 @@ export const metadata: Metadata = createMetadata({
     card: "summary_large_image",
     title: "Lightfast Pricing",
     description:
-      "Memory layer for every size team. Start free, scale transparently. Neural Memory, semantic search, and unlimited sources available.",
+      "For every size team. Start free, scale transparently. Decision surfacing, semantic search, and unlimited sources available.",
   },
   alternates: {
     canonical: "https://lightfast.ai/pricing",
@@ -138,7 +137,7 @@ const pricingPlans: PricingPlan[] = [
       />,
       <FeatureTooltip
         key="basic-neural"
-        term="Basic Neural Memory"
+        term="Basic Decision Surfacing"
         explanation={featureExplanations.basicNeuralMemory}
       />,
       <FeatureTooltip
@@ -170,7 +169,7 @@ const pricingPlans: PricingPlan[] = [
       "1-year retention (configurable)",
       <FeatureTooltip
         key="advanced-neural"
-        term="Advanced Neural Memory"
+        term="Advanced Decision Surfacing"
         explanation={featureExplanations.advancedNeuralMemory}
       />,
       "Auto-summaries (daily/weekly)",
@@ -217,9 +216,9 @@ const faqs = [
       "Starter includes 2 sources, Team includes 5 sources (e.g., GitHub, Linear, Slack, Notion, Confluence). Business includes unlimited sources. Additional sources are $10 each on Team plan. A source is an entire workspace or organization—a GitHub org with 100 repos counts as one source. You can also add 180-day retention (+$20/mo) or extra searches as needed.",
   },
   {
-    question: "What's included in Neural Memory?",
+    question: "What's included in decision surfacing?",
     answer:
-      "Neural Memory captures decisions, incidents, and changes from your tools. It builds expertise profiles to know who worked on what, tracks evolution over time, and generates summaries. This enables powerful queries like 'who knows about auth' or 'what decisions were made about PostgreSQL'. It's included in all paid plans.",
+      "Lightfast captures decisions, incidents, and changes from your tools. It builds expertise profiles to know who worked on what, tracks evolution over time, and generates summaries. This enables powerful queries like 'who knows about auth' or 'what decisions were made about PostgreSQL'. It's included in all paid plans.",
   },
   {
     question: "Why charge per user instead of just usage?",
@@ -234,17 +233,17 @@ const faqs = [
   {
     question: "Can small teams use the Starter plan?",
     answer:
-      "Yes! Starter plan is free forever for up to 3 users with 2 sources and 2,500 searches/month total. Perfect for small teams, open source projects, or trying Lightfast. You get basic keyword search and 14-day retention. Upgrade to Team when you need semantic search, Neural Memory, and more sources.",
+      "Yes! Starter plan is free forever for up to 3 users with 2 sources and 2,500 searches/month total. Perfect for small teams, open source projects, or trying Lightfast. You get basic keyword search and 14-day retention. Upgrade to Team when you need semantic search, decision surfacing, and more sources.",
   },
   {
     question: "How does Business plan differ from Team?",
     answer:
-      "Business includes unlimited searches and sources, 1-year retention, advanced Neural Memory with auto-summaries, actor expertise profiles, full identity mapping (OAuth/SSO), temporal state tracking, and dedicated support. It's designed for larger organizations that need everything unlimited. Contact sales for custom pricing.",
+      "Business includes unlimited searches and sources, 1-year retention, advanced decision surfacing with auto-summaries, actor expertise profiles, full identity mapping (OAuth/SSO), temporal state tracking, and dedicated support. It's designed for larger organizations that need everything unlimited. Contact sales for custom pricing.",
   },
   {
     question: "How do we estimate which plan we need?",
     answer:
-      "Start with Starter if you're 1-3 people just trying Lightfast. Choose Team if you're 3-50 people and need semantic search and Neural Memory. Most teams use 200-500 searches per user monthly, well within the 1,500 included. If you need unlimited everything, SSO, or advanced features, choose Business. You can always start small and upgrade as you grow.",
+      "Start with Starter if you're 1-3 people just trying Lightfast. Choose Team if you're 3-50 people and need semantic search and decision surfacing. Most teams use 200-500 searches per user monthly, well within the 1,500 included. If you need unlimited everything, SSO, or advanced features, choose Business. You can always start small and upgrade as you grow.",
   },
 ];
 
@@ -269,8 +268,8 @@ export default function PricingPage() {
   const softwareSchema: WithContext<SoftwareApplication> = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: siteConfig.name,
-    url: siteConfig.url,
+    name: "Lightfast",
+    url: "https://lightfast.ai",
     applicationCategory: "DeveloperApplication",
     offers: [
       {
@@ -289,7 +288,7 @@ export default function PricingPage() {
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
         description:
-          "$12 per user/month. 1,500 searches per user, 5 sources, semantic search, Neural Memory included",
+          "$12 per user/month. 1,500 searches per user, 5 sources, semantic search, decision surfacing included",
       },
       {
         "@type": "Offer",
@@ -298,7 +297,7 @@ export default function PricingPage() {
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
         description:
-          "Custom pricing. Unlimited searches and sources, advanced Neural Memory, SSO",
+          "Custom pricing. Unlimited searches and sources, advanced decision surfacing, SSO",
       },
     ],
     isAccessibleForFree: true,
@@ -318,7 +317,7 @@ export default function PricingPage() {
                 {/* Small label */}
                 <div className="mb-4">
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                    Pricing for memory layer
+                    Pricing
                   </p>
                 </div>
 
@@ -332,9 +331,9 @@ export default function PricingPage() {
                 {/* Description */}
                 <div className="mt-8 px-4">
                   <p className="text-base text-muted-foreground">
-                    Simple pricing for memory layer for software teams. Start
+                    Simple pricing that scales with your team. Start
                     free, then scale Lightfast as more people and agents rely on
-                    memory layer.
+                    it.
                   </p>
                 </div>
               </div>
