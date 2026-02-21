@@ -7,7 +7,7 @@
 [![CI Status](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml/badge.svg)](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/stargazers)
 
-**The memory layer for software teams.** Search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources.
+**Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.**
 
 > **Early Access** — Lightfast is currently in early access. [Request access →](https://lightfast.ai/early-access)
 
@@ -15,11 +15,11 @@
 
 ## Why Lightfast?
 
-Lightfast indexes code changes, PRs, docs, and decisions so engineers and AI agents can:
+Every team generates decisions across PRs, docs, incidents, and conversations — but that knowledge gets buried. Lightfast surfaces it all so engineers and AI agents can:
 
 - **Search by meaning** — not just keywords
-- **Get answers with sources** — trace decisions across your org
-- **Share memory** — production-ready retrieval for agents
+- **Get cited answers** — trace every decision back to its source
+- **Power agents** — production-ready retrieval for people and AI alike
 
 ## Supported Sources
 
