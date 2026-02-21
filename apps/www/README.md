@@ -1,8 +1,8 @@
 # Lightfast Marketing Site
 
-Marketing site for Lightfast, neural memory built for teams.
+Marketing site for Lightfast — surfaces every decision your team makes across your tools.
 
-This Next.js 15 / React 19 application powers `lightfast.ai`, including the homepage, pricing, blog, and marketing content for Lightfast team memory and developer APIs.
+This Next.js 15 / React 19 application powers `lightfast.ai`, including the homepage, pricing, blog, and marketing content for Lightfast and its developer APIs.
 
 ## Development
 

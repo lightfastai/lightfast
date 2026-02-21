@@ -53,18 +53,18 @@ const benefits = [
 
 // SEO metadata for the landing page
 export const metadata: Metadata = {
-  title: "The Memory Layer for Software Teams",
+  title: "Decisions Surfaced Across Your Tools",
   description:
-    "Search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources",
+    "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
   keywords: [
-    "team memory",
-    "neural memory for teams",
+    "decision search",
+    "decisions across tools",
     "semantic search",
     "knowledge management",
     "search by meaning",
-    "answers with sources",
-    "team knowledge base",
-    "organizational memory",
+    "cited answers",
+    "team decisions",
+    "searchable decisions",
     "decision tracking",
     "context management",
   ],
@@ -86,9 +86,9 @@ export const metadata: Metadata = {
     canonical: "https://lightfast.ai",
   },
   openGraph: {
-    title: "Lightfast – The Memory Layer for Software Teams",
+    title: "Lightfast – Decisions Surfaced Across Your Tools",
     description:
-      "Make your team's knowledge instantly searchable. Search by meaning, not keywords. Every answer shows its source.",
+      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
     url: "https://lightfast.ai",
     siteName: "Lightfast",
     type: "website",
@@ -96,9 +96,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lightfast – The Memory Layer for Software Teams",
+    title: "Lightfast – Decisions Surfaced Across Your Tools",
     description:
-      "Make your team's knowledge instantly searchable. Search by meaning, not keywords. Every answer shows its source.",
+      "Surfaces every decision your team makes — searchable, cited, and ready for people and agents.",
     site: "@lightfastai",
     creator: "@lightfastai",
   },
@@ -122,7 +122,7 @@ export default function HomePage() {
       "https://www.linkedin.com/company/lightfastai",
     ],
     description:
-      "Lightfast is memory built for teams. We help people and agents find what they need, understand context, and trace decisions across their entire organization.",
+      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
   };
 
   // Build website entity
@@ -131,7 +131,7 @@ export default function HomePage() {
     "@id": "https://lightfast.ai/#website",
     url: "https://lightfast.ai",
     name: "Lightfast",
-    description: "Memory built for teams – Search by meaning, not keywords",
+    description: "Decisions surfaced across your tools — searchable, cited, and ready",
     publisher: {
       "@id": "https://lightfast.ai/#organization",
     },
@@ -151,7 +151,7 @@ export default function HomePage() {
       url: "https://lightfast.ai/early-access",
     },
     description:
-      "Neural memory for teams. Search and find answers with sources across your entire organization.",
+      "Surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
     featureList: [
       "Search by meaning, not keywords",
       "Answers with sources",
@@ -260,10 +260,10 @@ export default function HomePage() {
             <div className="flex max-w-sm md:max-w-lg lg:max-w-sm flex-col justify-center w-full">
               <Icons.logoShort className="hidden md:block w-5 h-5 mb-4 text-muted-foreground" />
               <h1 className="text-4xl md:text-3xl lg:text-3xl font-pp font-medium mb-4">
-                <span className="text-muted-foreground">The</span>{" "}
-                <span className="text-primary">memory layer</span>{" "}
+                <span className="text-muted-foreground">Every</span>{" "}
+                <span className="text-primary">decision</span>{" "}
                 <span className="text-muted-foreground">
-                  for software teams and AI agents.
+                  your team makes, surfaced.
                 </span>
               </h1>
               <div>

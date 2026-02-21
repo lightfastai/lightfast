@@ -7,8 +7,8 @@ export const OG_HEIGHT = 630;
  */
 export const colors = {
 	// .dark theme tokens
-	background: "#1a1a1a",
-	foreground: "#d9d9d9",
+	background: "#ffffff",
+	foreground: "#000000",
 	card: "#202020",
 	cardForeground: "#d9d9d9",
 	primary: "#ffffff",

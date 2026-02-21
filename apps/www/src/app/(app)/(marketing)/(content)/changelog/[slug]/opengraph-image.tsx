@@ -1,10 +1,10 @@
 import { ImageResponse } from "next/og";
 import { ContentLayout } from "@repo/og";
-import { loadFonts } from "@repo/og/fonts";
+import { loadOGFonts } from "~/lib/og-fonts";
 import { OG_WIDTH, OG_HEIGHT } from "@repo/og/brand";
 import { changelog } from "@vendor/cms";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const alt = "Lightfast Changelog Entry";
 export const size = { width: OG_WIDTH, height: OG_HEIGHT };
 export const contentType = "image/png";
@@ -15,7 +15,7 @@ export default async function Image({
 	params: Promise<{ slug: string }>;
 }) {
 	const { slug } = await params;
-	const fonts = await loadFonts();
+	const fonts = await loadOGFonts();
 
 	let title = "Changelog";
 	let description: string | undefined;

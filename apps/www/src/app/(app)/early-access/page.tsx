@@ -4,21 +4,21 @@ import { Icons } from "@repo/ui/components/icons";
 import { EarlyAccessForm } from "~/components/early-access-form";
 
 export const metadata: Metadata = createMetadata({
-  title: "Early Access – Lightfast Neural Memory for Teams",
+  title: "Early Access – Lightfast",
   description:
-    "Join the waitlist for early access to Lightfast neural memory. Be among the first to search everything your organization knows by meaning and get answers with sources.",
+    "Join the waitlist for early access to Lightfast. Be among the first to surface every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
   openGraph: {
-    title: "Early Access – Lightfast Neural Memory for Teams",
+    title: "Early Access – Lightfast",
     description:
-      "Sign up for early access to Lightfast, team memory that lets people and agents search everything your organization knows by meaning and get answers with sources.",
+      "Sign up for early access to Lightfast. Surface every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
     url: "https://lightfast.ai/early-access",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Early Access – Lightfast Neural Memory for Teams",
+    title: "Early Access – Lightfast",
     description:
-      "Join the early access list for Lightfast neural memory built for teams.",
+      "Join the early access list for Lightfast. Decisions surfaced across your tools.",
   },
   alternates: {
     canonical: "https://lightfast.ai/early-access",

@@ -1,51 +1,27 @@
 import type { FeatureOGProps } from "../types";
-import { colors, OG_HEIGHT, OG_WIDTH } from "../brand";
-import { lissajousPath } from "../brand/logo";
+import { colors } from "../brand";
 
 export function FeatureLayout({ title, description }: FeatureOGProps) {
-	const logoSize = 64;
-	const logoPadding = 0.18;
-	const logoStroke = Math.max(1, Math.round(logoSize * 0.035));
-
 	return (
 		<div
-			style={{
-				display: "flex",
-				flexDirection: "column",
-				justifyContent: "center",
-				width: OG_WIDTH,
-				height: OG_HEIGHT,
-				backgroundColor: colors.background,
-				padding: "80px",
-			}}
+			tw="flex flex-col justify-center w-full h-full p-20"
+			style={{ backgroundColor: colors.background }}
 		>
-			<svg
-				width={logoSize}
-				height={logoSize}
-				viewBox={`0 0 ${logoSize} ${logoSize}`}
-				style={{ marginBottom: "40px" }}
-			>
-				<path
-					d={lissajousPath(logoSize, logoPadding)}
-					fill="none"
-					stroke={colors.foreground}
-					strokeWidth={logoStroke}
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				/>
-			</svg>
-
 			<div
+				tw="text-xl font-medium mb-10"
 				style={{
-					display: "flex",
-					flexDirection: "column",
-					gap: "16px",
+					fontFamily: "PP Neue Montreal",
+					color: colors.foreground,
 				}}
 			>
+				Lightfast
+			</div>
+
+			<div tw="flex flex-col" style={{ gap: "16px" }}>
 				<div
+					tw="font-bold"
 					style={{
 						fontSize: 56,
-						fontWeight: 700,
 						fontFamily: "PP Neue Montreal",
 						color: colors.foreground,
 						lineHeight: 1.1,
@@ -56,9 +32,8 @@ export function FeatureLayout({ title, description }: FeatureOGProps) {
 				</div>
 				{description && (
 					<div
+						tw="text-2xl font-normal"
 						style={{
-							fontSize: 24,
-							fontWeight: 400,
 							fontFamily: "PP Neue Montreal",
 							color: colors.mutedForeground,
 							lineHeight: 1.4,
@@ -70,12 +45,8 @@ export function FeatureLayout({ title, description }: FeatureOGProps) {
 			</div>
 
 			<div
+				tw="flex items-center mt-auto text-xl font-normal"
 				style={{
-					display: "flex",
-					alignItems: "center",
-					marginTop: "auto",
-					fontSize: 20,
-					fontWeight: 400,
 					fontFamily: "PP Neue Montreal",
 					color: colors.mutedForeground,
 				}}

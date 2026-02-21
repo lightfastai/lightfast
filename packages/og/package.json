@@ -7,7 +7,6 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./layouts/*": "./src/layouts/*.tsx",
-		"./fonts": "./src/fonts/index.ts",
 		"./brand": "./src/brand/index.ts",
 		"./types": "./src/types.ts"
 	},

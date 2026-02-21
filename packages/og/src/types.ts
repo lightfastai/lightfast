@@ -1,7 +1,3 @@
-export interface HomeOGProps {
-	tagline?: string;
-}
-
 export interface ContentOGProps {
 	title: string;
 	description?: string;

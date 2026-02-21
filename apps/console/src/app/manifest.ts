@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Lightfast - Memory Layer for Software Teams",
+    name: "Lightfast – Decisions Surfaced Across Your Tools",
     short_name: "Lightfast",
     description:
-      "The memory layer for software teams. Search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources.",
+      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
     start_url: "/",
     display: "standalone",
     background_color: "#09090b",

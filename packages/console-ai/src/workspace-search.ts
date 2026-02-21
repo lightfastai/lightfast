@@ -47,7 +47,7 @@ export function workspaceSearchTool() {
     typeof outputSchema
   >({
     description:
-      "Search through workspace neural memory for relevant documents and observations. Use this to find commits, PRs, issues, deployments, and other development events. Returns ranked results with scores, snippets, source types, and extracted entities.",
+      "Search through workspace decisions and observations across connected tools. Use this to find commits, PRs, issues, deployments, and other development events. Returns ranked results with scores, snippets, source types, and extracted entities.",
     inputSchema,
     outputSchema,
     execute: async (input, context) => {

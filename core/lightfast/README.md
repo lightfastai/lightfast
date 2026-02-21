@@ -1,6 +1,6 @@
 # lightfast
 
-TypeScript SDK for the Lightfast Neural Memory API - Build AI agents with persistent, contextual memory.
+TypeScript SDK for the Lightfast API — surface every decision your team makes across your tools, searchable, cited, and ready for people and agents.
 
 [![npm version](https://img.shields.io/npm/v/lightfast.svg)](https://www.npmjs.com/package/lightfast)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -59,7 +59,7 @@ API keys start with `sk-lf-` prefix.
 
 ### `search(request)`
 
-Search through your workspace neural memory using natural language queries.
+Search through your workspace using natural language queries.
 
 ```typescript
 const results = await lightfast.search({

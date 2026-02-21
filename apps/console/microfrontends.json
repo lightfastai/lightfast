@@ -40,8 +40,6 @@
             "/images/:path*",
             "/fonts/:path*",
             "/favicon.ico",
-            "/og.jpg",
-            "/og-bg-only.jpg",
             "/android-chrome-192x192.png",
             "/android-chrome-512x512.png",
             "/apple-touch-icon.png",

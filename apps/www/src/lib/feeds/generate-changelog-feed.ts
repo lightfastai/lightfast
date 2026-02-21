@@ -12,7 +12,7 @@ export async function generateChangelogFeed(): Promise<Feed> {
   const feed = new Feed({
     title: "Lightfast Changelog",
     description:
-      "Product updates, new features, and improvements from Lightfast - the AI memory layer for engineering teams",
+      "Product updates, new features, and improvements from Lightfast — surfaces decisions across your tools",
     id: `${baseUrl}/changelog`,
     link: `${baseUrl}/changelog`,
     language: "en",

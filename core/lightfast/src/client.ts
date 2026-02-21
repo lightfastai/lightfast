@@ -39,7 +39,7 @@ interface ApiErrorResponse {
 }
 
 /**
- * Lightfast SDK client for Neural Memory API
+ * Lightfast SDK client — surfaces decisions across your tools
  *
  * @example
  * ```typescript
@@ -68,7 +68,7 @@ export class Lightfast {
   }
 
   /**
-   * Search through workspace neural memory
+   * Search through workspace decisions and observations
    *
    * @param request - Search parameters
    * @returns Search results with scores and metadata
