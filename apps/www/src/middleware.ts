@@ -26,6 +26,11 @@ const securityHeaders = securityMiddleware(
       connectSrc: ["https://assets.unicorn.studio"],
       imgSrc: ["https://assets.unicorn.studio"],
     },
+    // Apollo website tracker
+    {
+      scriptSrc: ["https://assets.apollo.io"],
+      connectSrc: ["https://app.apollo.io"],
+    },
     // BaseHub CMS (draft mode uses Pusher for real-time updates)
     {
       connectSrc: [
