@@ -22,6 +22,14 @@ let config: NextConfig = withBetterStack(
     /** Asset prefix for serving through console app rewrites (/docs path) */
     assetPrefix: "/docs",
 
+    redirects: async () => [
+      {
+        source: "/",
+        destination: "/get-started/overview",
+        permanent: true,
+      },
+    ],
+
     images: {
       formats: ["image/webp"],
       remotePatterns: [
