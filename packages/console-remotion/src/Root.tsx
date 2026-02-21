@@ -1,6 +1,7 @@
 import { Composition, Still } from "remotion";
 import { LandingHero } from "./compositions/landing-hero/landing-hero";
 import { Logo, LOGO_VARIANTS } from "./compositions/logo";
+import { TwitterBanner, TWITTER_BANNER_CONFIG } from "./compositions/twitter-banner";
 
 export const RemotionRoot = () => {
   return (
@@ -23,6 +24,12 @@ export const RemotionRoot = () => {
           defaultProps={variant.props}
         />
       ))}
+      <Still
+        id={TWITTER_BANNER_CONFIG.id}
+        component={TwitterBanner}
+        width={TWITTER_BANNER_CONFIG.width}
+        height={TWITTER_BANNER_CONFIG.height}
+      />
     </>
   );
 };

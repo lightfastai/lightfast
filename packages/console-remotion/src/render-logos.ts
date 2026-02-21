@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
 import { LOGO_VARIANTS } from "./compositions/logo";
+import { TWITTER_BANNER_CONFIG } from "./compositions/twitter-banner";
 import { enableCssLoaders } from "./webpack-override";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -73,6 +74,22 @@ async function main() {
     });
     console.log(`  → ${variant.filename}`);
   }
+
+  // ── Render Twitter banner ────────────────────────────────
+  console.log(
+    `Rendering ${TWITTER_BANNER_CONFIG.id} (${TWITTER_BANNER_CONFIG.width}×${TWITTER_BANNER_CONFIG.height})...`,
+  );
+  const twitterComp = await selectComposition({
+    serveUrl: bundled,
+    id: TWITTER_BANNER_CONFIG.id,
+  });
+  await renderStill({
+    composition: twitterComp,
+    serveUrl: bundled,
+    output: path.join(outputDir, TWITTER_BANNER_CONFIG.filename),
+    imageFormat: "png",
+  });
+  console.log(`  → ${TWITTER_BANNER_CONFIG.filename}`);
 
   // ── Build favicon.ico (16 + 32 + 48 bundled) ───────────
   const icoSizes = ["favicon-16x16.png", "favicon-32x32.png", "favicon-48x48.png"];
