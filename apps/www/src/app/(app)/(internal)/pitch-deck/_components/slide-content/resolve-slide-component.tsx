@@ -2,6 +2,7 @@ import type { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import type { SlideVariant } from "./title-slide-content";
 import { ContentSlideContent } from "./content-slide-content";
 import { CustomTitleSlide } from "./custom-title-slide";
+import { CustomWhyNowSlide } from "./custom-why-now-slide";
 import { ShowcaseSlideContent } from "./showcase-slide-content";
 import { ColumnsSlideContent } from "./columns-slide-content";
 
@@ -18,6 +19,8 @@ export function resolveSlideComponent(
   switch (slide.type) {
     case "title":
       return <CustomTitleSlide slide={slide} variant={variant} />;
+    case "why-now":
+      return <CustomWhyNowSlide slide={slide} variant={variant} />;
     case "content":
       return <ContentSlideContent slide={slide} variant={variant} />;
     case "showcase":

@@ -3,7 +3,7 @@ export const PITCH_SLIDES = [
   {
     id: "title",
     type: "title" as const,
-    title: "LIGHTFAST",
+    title: "Lightfast",
     subtitle:
       "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
     bgColor: "bg-[var(--pitch-deck-red)]",
@@ -14,12 +14,11 @@ export const PITCH_SLIDES = [
     type: "content" as const,
     title: "The Problem.",
     gridTitle: "Problem",
-    leftText: "THE INVISIBLE COST",
+    leftText: "THE OPERATING COST",
     rightText: [
-      "Engineers spend 58% of their time understanding code—only 5% writing it. AI doesn't help because it can't access the 'why.' That's $40K+/engineer/year lost to context searching.",
-      "Knowledge lives across 8+ tools with search that doesn't understand meaning. The average company now uses 101 apps. Workers toggle between them 1,200 times per day.",
-      "When engineers leave, their understanding of 'why things were built this way' walks out with them. 42% of institutional knowledge is unique to the individual.",
-      "AI coding agents hallucinate because they operate on code in isolation, disconnected from your team's history and decisions. They waste 40%+ of tokens on brute-force navigation.",
+      "AI coding agents waste 40%+ of tokens on navigation. Today the workaround is: start every session from scratch, grep and hope.",
+      "Your tools don't talk to each other. An agent can't connect a Sentry error to the PR that caused it without brute-force searching across 4+ tools.",
+      "92% of teams report AI agent costs higher than expected. The tokens aren't the problem. The context is.",
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
@@ -32,10 +31,9 @@ export const PITCH_SLIDES = [
     gridTitle: "Solution",
     leftText: "THE CONTEXT LAYER",
     rightText: [
-      "Connect GitHub, Vercel, Linear, Sentry in 5 minutes with OAuth. Every engineering event is automatically enriched: classified, embedded across 3 views, entities extracted, relationships detected.",
-      "Search by meaning, not keywords. Two-key retrieval (vector + LLM reranking) delivers 90%+ precision. Every answer cites its source.",
-      "Serve humans and AI agents through one API. MCP tools give any AI agent native access to your team's context. Works with ANY model—Claude, GPT, Gemini, open source.",
-      "Expand beyond engineering. The same pipeline that connects a Sentry error to the PR that caused it can connect a support ticket to a customer's renewal. Engineering is the beachhead, not the ceiling.",
+      "Connect GitHub, Vercel, Linear, and Sentry in 5 minutes. Every event is automatically enriched and linked across sources.",
+      "Your agents get persistent context—search by meaning, not grep. 90%+ precision. Every answer cites its source.",
+      "One API that sits between your tools and your agents. Works with any model. A Sentry error auto-links to the PR, the deploy, and the Linear issue—one query, full context.",
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
@@ -43,38 +41,16 @@ export const PITCH_SLIDES = [
   // Slide 4: Why Now
   {
     id: "why-now",
-    type: "columns" as const,
+    type: "why-now" as const,
     title: "Why Now.",
     gridTitle: "Why Now",
-    columns: [
-      {
-        header: "AI SPENDING",
-        items: [
-          "$4B on AI coding tools in 2025—55% of all departmental AI spend",
-          "Cursor: $0 → $1B ARR in under 2 years",
-        ],
-      },
-      {
-        header: "AGENT ADOPTION",
-        items: [
-          "97% of enterprise devs use AI tools daily",
-          "41% of code is now AI-written",
-        ],
-      },
-      {
-        header: "INFRASTRUCTURE",
-        items: [
-          "Vector DBs production-ready at scale",
-          "LLM reranking viable. Embedding costs dropped 10x",
-        ],
-      },
-      {
-        header: "INDEPENDENCE",
-        items: [
-          "81% of CIOs use 3+ model families",
-          "94% of IT leaders fear vendor lock-in",
-        ],
-      },
+    image: "/images/pitch-deck-anthropic-visual.png",
+    imageAlt:
+      "Anthropic data: Software engineering is 49.7% of all agentic tool calls",
+    rightText: [
+      "Agents moved from code to operations. 50% of agentic tool calls are software engineering—but emerging across every domain. Teams run agents for triage, deployment, and ticket management. The scope exploded beyond code.",
+      "MCP connected agents to your tools. Before 2024, no standard existed. Now agents connect to GitHub, Sentry, Linear, Vercel natively. But connection isn't understanding.",
+      "The missing layer is organizational memory. Agents have intelligence and access. What they don't have is durable, cross-tool memory of your team's decisions. This is the bottleneck—and no one has built it.",
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
@@ -85,11 +61,11 @@ export const PITCH_SLIDES = [
     type: "content" as const,
     title: "How It Works.",
     gridTitle: "Architecture",
-    leftText: "FROM EVENT TO KNOWLEDGE",
+    leftText: "FROM EVENT TO DECISION",
     rightText: [
       "Every webhook event passes through a multi-stage enrichment pipeline: significance scoring → LLM classification → multi-view embedding (3 vectors per event) → entity extraction → relationship detection → actor resolution.",
       "Cross-source relationships are detected automatically—a Sentry error links to the commit that caused it, to the PR, to the Linear issue, to the deployment. 8 relationship types, zero manual tagging.",
-      "Not document indexing. A knowledge graph that understands what happened, who did it, what it relates to, and why it matters. Noise is filtered; only significant engineering moments enter the context layer.",
+      "Not document indexing. A knowledge graph that understands what happened, who did it, what it relates to, and why it matters. Noise is filtered; only significant decisions enter the context layer.",
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
