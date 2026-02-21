@@ -4,7 +4,7 @@ import "~/styles/globals.css";
 
 import { cn } from "@repo/ui/lib/utils";
 import { fonts as geistFonts } from "@repo/ui/lib/fonts";
-import { ppNeueMontreal, exposurePlus } from "~/lib/fonts";
+import { ppNeueMontreal, exposurePlus, ppSupplySans } from "~/lib/fonts";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
 
@@ -52,16 +52,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn(
+        geistFonts,
+        ppNeueMontreal.variable,
+        exposurePlus.variable,
+        ppSupplySans.variable,
+      )}
+    >
       <head />
-      <body
-        className={cn(
-          "dark bg-background min-h-screen antialiased",
-          geistFonts,
-          ppNeueMontreal.variable,
-          exposurePlus.variable,
-        )}
-      >
+      <body className="dark bg-background min-h-screen antialiased">
         {children}
         <VercelAnalytics />
         <SpeedInsights />

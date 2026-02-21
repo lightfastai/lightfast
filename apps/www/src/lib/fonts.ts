@@ -1,31 +1,21 @@
 import localFont from "next/font/local";
 
-// preload: false on ALL fonts — Vercel's microfrontend proxy rewrites
-// <link rel="preload"> URLs to include the app prefix (vc-ap-fb51eb/...)
-// but CSS @font-face declarations still reference the original
-// /_next/static/media/ paths. The browser treats these as different URLs
-// and downloads each font twice. Disabling preload means fonts load only
-// via @font-face (single download, ~600 KB saved on every mobile page load).
-
 /**
- * Geist Sans — variable font, replaces geist/font/sans import so we can
- * set preload: false. CSS variable matches the one set by the geist package
- * so @repo/ui globals.css (--font-sans: var(--font-geist-sans)) still works.
+ * Geist Sans — variable font, loaded locally so we control the CSS variable
+ * name. Matches --font-geist-sans used by @repo/ui globals.css.
  */
 export const geistSans = localFont({
   src: "../../public/fonts/geist/Geist-Variable.woff2",
   variable: "--font-geist-sans",
-  preload: false,
   display: "swap",
 });
 
 /**
- * Geist Mono — variable font, same rationale as geistSans above.
+ * Geist Mono — variable font.
  */
 export const geistMono = localFont({
   src: "../../public/fonts/geist/GeistMono-Variable.woff2",
   variable: "--font-geist-mono",
-  preload: false,
   display: "swap",
 });
 
@@ -67,7 +57,6 @@ export const ppNeueMontreal = localFont({
     },
   ],
   variable: "--font-pp-neue-montreal",
-  preload: false,
   display: "swap",
 });
 
@@ -99,7 +88,6 @@ export const exposurePlus = localFont({
     },
   ],
   variable: "--font-exposure-plus",
-  preload: false,
   display: "swap",
 });
 
@@ -110,7 +98,6 @@ export const exposurePlus = localFont({
 export const exposureTrial = localFont({
   src: "../../public/fonts/exposure-plus/exposure-plus-10.woff2",
   variable: "--font-exposure-trial",
-  preload: false,
   display: "swap",
 });
 
@@ -120,6 +107,5 @@ export const exposureTrial = localFont({
 export const ppSupplySans = localFont({
   src: "../../public/fonts/pp-supply-sans/PPSupplySans-Regular.woff2",
   variable: "--font-pp-supply-sans",
-  preload: false,
   display: "swap",
 });
