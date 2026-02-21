@@ -1,5 +1,5 @@
 export const PITCH_SLIDES = [
-  // Slide 1: Title
+  // Slide 1: Title (Sequoia: Company Purpose)
   {
     id: "title",
     type: "title" as const,
@@ -8,7 +8,7 @@ export const PITCH_SLIDES = [
       "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
     bgColor: "bg-[var(--pitch-deck-red)]",
   },
-  // Slide 2: Problem
+  // Slide 2: Problem (Sequoia: Problem)
   {
     id: "problem",
     type: "content" as const,
@@ -23,7 +23,7 @@ export const PITCH_SLIDES = [
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
   },
-  // Slide 3: Solution
+  // Slide 3: Solution (Sequoia: Solution)
   {
     id: "solution",
     type: "content" as const,
@@ -38,7 +38,7 @@ export const PITCH_SLIDES = [
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
   },
-  // Slide 4: Why Now
+  // Slide 4: Why Now (Sequoia: Why Now)
   {
     id: "why-now",
     type: "why-now" as const,
@@ -55,38 +55,7 @@ export const PITCH_SLIDES = [
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
   },
-  // Slide 5: How It Works
-  {
-    id: "architecture",
-    type: "content" as const,
-    title: "How It Works.",
-    gridTitle: "Architecture",
-    leftText: "FROM EVENT TO DECISION",
-    rightText: [
-      "Every webhook event passes through a multi-stage enrichment pipeline: significance scoring → LLM classification → multi-view embedding (3 vectors per event) → entity extraction → relationship detection → actor resolution.",
-      "Cross-source relationships are detected automatically—a Sentry error links to the commit that caused it, to the PR, to the Linear issue, to the deployment. 8 relationship types, zero manual tagging.",
-      "Not document indexing. A knowledge graph that understands what happened, who did it, what it relates to, and why it matters. Noise is filtered; only significant decisions enter the context layer.",
-    ],
-    bgColor: "bg-[#F5F5F0]",
-    textColor: "text-foreground",
-  },
-  // Slide 6: Insight
-  {
-    id: "insight",
-    type: "content" as const,
-    title: "Our Insight.",
-    gridTitle: "Insight",
-    leftText: "THE NON-OBVIOUS TRUTH",
-    rightText: [
-      "Vector search alone gives 60-70% precision—too noisy for engineers to trust. This is why enterprise search tools have low adoption.",
-      "We add a second 'key': LLM-based semantic validation after vector retrieval. The weighted combination (60% LLM + 40% vector) achieves 90%+ precision.",
-      "Multi-view embeddings (3 vectors per observation) mean queries match the right aspect of each event. Combined with cross-source relationship detection, Lightfast doesn't just find documents—it understands the web of decisions behind them.",
-      "Competitors understand what code does. Lightfast understands why it was built that way.",
-    ],
-    bgColor: "bg-[#F5F5F0]",
-    textColor: "text-foreground",
-  },
-  // Slide 7: Market Opportunity
+  // Slide 5: Market Opportunity (Sequoia: Market Size)
   {
     id: "market",
     type: "columns" as const,
@@ -118,23 +87,73 @@ export const PITCH_SLIDES = [
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
   },
-  // Slide 8: Competitive Landscape
+  // Slide 6: Competitive Landscape (Sequoia: Competition)
   {
     id: "competition",
-    type: "content" as const,
+    type: "columns" as const,
     title: "Competitive Landscape.",
     gridTitle: "Competition",
-    leftText: "WHY NOT THEM",
-    rightText: [
-      "AI coding tools (Cursor, Copilot, Cody): Best-in-class code generation. But limited to code-level context—they don't know why code was built or what decisions drove it. They read code. They don't read your team.",
-      "Enterprise search (Glean, Notion AI): Knowledge search across documents. But no engineering-specific enrichment, no entity extraction, no cross-source relationship detection. They search documents. They don't understand connections.",
-      "AI model providers (OpenAI, Anthropic): OpenAI's Memory is per-user only—zero organizational context. Anthropic is racing to own compute, not building neutral infrastructure. Both have structural incentives to increase lock-in.",
-      "Lightfast: Provider-agnostic context infrastructure. One API, any AI model. The Segment for engineering context—Segment built the neutral customer data platform and was acquired for $3.2B. Context is your company's crown jewels—it shouldn't live in a model provider's system.",
+    columns: [
+      {
+        header: "INCIDENT INTELLIGENCE",
+        items: ["PagerDuty", "Datadog", "OpsGenie"],
+      },
+      {
+        header: "ENTERPRISE AI SEARCH",
+        items: ["Glean", "Notion AI", "Atlassian Intelligence"],
+      },
+      {
+        header: "AGENT MEMORY",
+        items: ["Mem0", "Zep", "LangChain Memory"],
+      },
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
   },
-  // Slide 9: Business Model
+  // Slide 7: Product (Sequoia: Product)
+  {
+    id: "product",
+    type: "columns" as const,
+    title: "The Product.",
+    gridTitle: "Product",
+    columns: [
+      {
+        header: "API",
+        items: [
+          "4 routes: search, contents, similar, answer",
+          "MCP tools for any AI agent",
+          "REST + SDK",
+        ],
+      },
+      {
+        header: "RETRIEVAL",
+        items: [
+          "Multi-view embeddings",
+          "Vector + LLM reranking",
+          "90%+ precision, always cited",
+        ],
+      },
+      {
+        header: "ENRICHMENT",
+        items: [
+          "Auto-classify, embed, extract",
+          "Cross-source relationships",
+          "Significance gating",
+        ],
+      },
+      {
+        header: "ROADMAP",
+        items: [
+          "Expand beyond engineering",
+          "Slack, Zendesk, CRM connectors",
+          "Agent-to-agent context passing",
+        ],
+      },
+    ],
+    bgColor: "bg-[#F5F5F0]",
+    textColor: "text-foreground",
+  },
+  // Slide 8: Business Model (Sequoia: Business Model)
   {
     id: "business-model",
     type: "columns" as const,
@@ -144,48 +163,47 @@ export const PITCH_SLIDES = [
       {
         header: "FREE",
         items: [
-          "Up to 3 users. 2 integrations. Core search",
-          "PLG entry—engineer connects GitHub, sees value in 5 minutes",
-          "Conversion trigger: hit user limit or need team-wide search",
+          "Up to 3 users",
+          "2 integrations",
+          "Core search",
         ],
       },
       {
         header: "TEAM — $20/USER/MONTH",
         items: [
-          "Unlimited users. All integrations. MCP tools. Advanced search",
-          "Team of 15 = ~$300/month. Natural seat expansion as team grows",
+          "Unlimited users + integrations",
+          "MCP tools + advanced search",
           "95%+ gross margin at scale",
         ],
       },
       {
         header: "ENTERPRISE",
         items: [
-          "Custom deployment. SSO/SAML. Dedicated support. SLA",
-          "Teams past 100 people need enterprise features",
-          "Expansion trigger: security review, compliance, multi-team rollout",
+          "Custom deployment",
+          "SSO/SAML + SLA",
+          "Dedicated support",
         ],
       },
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
   },
-  // Slide 10: Team
+  // Slide 9: Team (Sequoia: Team)
   {
     id: "team",
     type: "content" as const,
     title: "The Team.",
     gridTitle: "Team",
-    leftText: "WHY ME",
+    leftText: "SOLO FOUNDER",
     rightText: [
-      "[Founder Name]: [Role], [specific relevant accomplishment]. [Personal narrative—raw conviction, not polished bio.]",
-      "The build: 16 months. 3,930 commits. $0 external funding. One founder. Real enrichment pipeline, real search with cited sources, real MCP tools. This isn't a prototype—it's a product waiting for users.",
-      "Validation: Interviewed 15+ engineering leads. 100% confirmed context loss as a top-3 pain point. I didn't research a problem—I lived it, built the solution, and now I need capital to turn it into a business.",
-      "What I need beyond capital: Customer introductions to engineering teams. Hiring network for first engineering hire. Strategic guidance on enterprise sales. I built the product alone. I need a team to build the company.",
+      "[Founder Name], [Role]. [One-line accomplishment.]",
+      "16 months. 3,930 commits. $0 external funding. Production enrichment pipeline, search with cited sources, MCP tools. Not a prototype.",
+      "15+ engineering lead interviews. 100% confirmed context loss as a top-3 pain point.",
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
   },
-  // Slide 11: Ask
+  // Slide 10: The Ask (Sequoia: Financials)
   {
     id: "ask",
     type: "showcase" as const,
@@ -200,7 +218,7 @@ export const PITCH_SLIDES = [
       {
         label: "USE OF FUNDS",
         value:
-          "60% Engineering (first hire + infrastructure), 25% GTM (design partners, Vercel Marketplace), 15% Operations",
+          "60% Engineering, 25% GTM, 15% Ops",
       },
       {
         label: "MILESTONE",
