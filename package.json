@@ -53,8 +53,8 @@
     "envmcp": "^0.2.1",
     "keytar": "^7.9.0",
     "prettier": "catalog:",
-    "turbo": "catalog:",
-    "turbo-ignore": "^2.5.5",
+    "turbo": "^2.8.10",
+    "turbo-ignore": "^2.8.10",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.46.1",
     "vite": "^6.3.5"
