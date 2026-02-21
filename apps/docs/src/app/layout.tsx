@@ -27,19 +27,19 @@ export default function Layout({ children }: { children: ReactNode }) {
 
 // Comprehensive metadata following www app pattern with createMetadata
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast Docs – Documentation for Neural Memory for Teams",
-  description: "Documentation for Lightfast neural memory — Learn how to integrate the memory layer for software teams via a simple REST API and MCP tools. Build search by meaning with sources.",
+  title: "Lightfast Docs – Surface Decisions Across Your Tools",
+  description: "Documentation for Lightfast — Learn how to surface every decision your team makes across your tools via a simple REST API and MCP tools. Searchable, cited, and ready for people and agents.",
   metadataBase: new URL("https://lightfast.ai/docs"),
   keywords: [
     "Lightfast documentation",
-    "memory layer",
-    "memory layer for software teams",
-    "software team memory",
+    "decision search",
+    "decisions across tools",
+    "team decisions",
     "engineering knowledge search",
-    "neural memory docs",
+    "cited answers",
     "semantic search",
     "semantic search docs",
-    "answers with sources",
+    "searchable decisions",
     "developer API",
     "developer API reference",
     "MCP tools",
@@ -69,8 +69,8 @@ export const metadata: Metadata = createMetadata({
     canonical: "https://lightfast.ai/docs",
   },
   openGraph: {
-    title: "Lightfast Docs – Documentation for Neural Memory for Teams",
-    description: "Documentation for Lightfast neural memory — Learn how to integrate the memory layer for software teams via a simple REST API and MCP tools. Build search by meaning with sources.",
+    title: "Lightfast Docs – Surface Decisions Across Your Tools",
+    description: "Documentation for Lightfast — Learn how to surface every decision your team makes across your tools via a simple REST API and MCP tools. Searchable, cited, and ready for people and agents.",
     url: "https://lightfast.ai/docs",
     siteName: "Lightfast Docs",
     type: "website",
@@ -78,8 +78,8 @@ export const metadata: Metadata = createMetadata({
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lightfast Docs – Documentation for Neural Memory for Teams",
-    description: "Documentation for Lightfast neural memory — Learn how to integrate the memory layer for software teams via a simple REST API and MCP tools. Build search by meaning with sources.",
+    title: "Lightfast Docs – Surface Decisions Across Your Tools",
+    description: "Documentation for Lightfast — Learn how to surface every decision your team makes across your tools via a simple REST API and MCP tools. Searchable, cited, and ready for people and agents.",
     site: "@lightfastai",
     creator: "@lightfastai",
   },
@@ -89,18 +89,9 @@ export const metadata: Metadata = createMetadata({
     shortcut: "/favicon-16x16.png",
     apple: "/apple-touch-icon.png",
     other: [
-      {
-        rel: "icon",
-        url: "/favicon-32x32.png",
-      },
-      {
-        rel: "icon",
-        url: "/android-chrome-192x192.png",
-      },
-      {
-        rel: "icon",
-        url: "/android-chrome-512x512.png",
-      },
+      { rel: "icon", url: "/favicon-32x32.png", sizes: "32x32" },
+      { rel: "icon", url: "/android-chrome-192x192.png", sizes: "192x192" },
+      { rel: "icon", url: "/android-chrome-512x512.png", sizes: "512x512" },
     ],
   },
 });

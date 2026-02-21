@@ -55,7 +55,6 @@
     "@repo/email": "0.1.0",
     "@repo/lib": "0.1.0",
     "@repo/prompt-engine": "0.1.0",
-    "@repo/site-config": "0.1.0",
     "@repo/ui": "0.0.0",
     "@repo/url-utils": "0.1.0",
     "@vendor/analytics": "0.1.0",

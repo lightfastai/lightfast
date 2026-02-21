@@ -1,73 +1,31 @@
 import type { DocsOGProps } from "../types";
-import { colors, OG_HEIGHT, OG_WIDTH } from "../brand";
-import { lissajousPath } from "../brand/logo";
+import { colors } from "../brand";
 
 export function DocsLayout({ title, section, breadcrumb }: DocsOGProps) {
-	const logoSize = 48;
-	const logoPadding = 0.14;
-	const logoStroke = Math.max(1, Math.round(logoSize * 0.035));
-
 	return (
 		<div
-			style={{
-				display: "flex",
-				flexDirection: "column",
-				width: OG_WIDTH,
-				height: OG_HEIGHT,
-				backgroundColor: colors.background,
-				padding: "80px",
-			}}
+			tw="flex flex-col w-full h-full p-20"
+			style={{ backgroundColor: colors.background }}
 		>
 			<div
-				style={{
-					display: "flex",
-					alignItems: "center",
-					gap: "16px",
-					marginBottom: "40px",
-				}}
+				tw="flex items-center mb-10 text-xl"
+				style={{ gap: "8px", fontFamily: "PP Neue Montreal" }}
 			>
-				<svg
-					width={logoSize}
-					height={logoSize}
-					viewBox={`0 0 ${logoSize} ${logoSize}`}
-				>
-					<path
-						d={lissajousPath(logoSize, logoPadding)}
-						fill="none"
-						stroke={colors.foreground}
-						strokeWidth={logoStroke}
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					/>
-				</svg>
-				<div
-					style={{
-						display: "flex",
-						alignItems: "center",
-						gap: "8px",
-						fontSize: 20,
-						fontFamily: "PP Neue Montreal",
-					}}
-				>
-					<span style={{ fontWeight: 700, color: colors.foreground }}>
-						Lightfast
-					</span>
-					<span style={{ color: colors.border }}>/</span>
-					<span style={{ fontWeight: 400, color: colors.mutedForeground }}>
-						Docs
-					</span>
-				</div>
+				<span tw="font-medium" style={{ color: colors.foreground }}>
+					Lightfast
+				</span>
+				<span style={{ color: colors.border }}>/</span>
+				<span tw="font-normal" style={{ color: colors.mutedForeground }}>
+					Docs
+				</span>
 			</div>
 
 			{(section ?? (breadcrumb && breadcrumb.length > 0)) && (
 				<div
+					tw="flex items-center mb-4 font-normal"
 					style={{
-						display: "flex",
-						alignItems: "center",
 						gap: "8px",
-						marginBottom: "16px",
 						fontSize: 18,
-						fontWeight: 400,
 						fontFamily: "PP Neue Montreal",
 						color: colors.mutedForeground,
 					}}
@@ -77,11 +35,8 @@ export function DocsLayout({ title, section, breadcrumb }: DocsOGProps) {
 						breadcrumb?.map((crumb, i) => (
 							<span
 								key={crumb}
-								style={{
-									display: "flex",
-									alignItems: "center",
-									gap: "8px",
-								}}
+								tw="flex items-center"
+								style={{ gap: "8px" }}
 							>
 								{i > 0 && (
 									<span style={{ color: colors.border }}>
@@ -94,17 +49,11 @@ export function DocsLayout({ title, section, breadcrumb }: DocsOGProps) {
 				</div>
 			)}
 
-			<div
-				style={{
-					display: "flex",
-					flex: 1,
-					alignItems: "center",
-				}}
-			>
+			<div tw="flex flex-1 items-center">
 				<div
+					tw="font-bold"
 					style={{
 						fontSize: 52,
-						fontWeight: 700,
 						fontFamily: "PP Neue Montreal",
 						color: colors.foreground,
 						lineHeight: 1.15,
@@ -116,12 +65,9 @@ export function DocsLayout({ title, section, breadcrumb }: DocsOGProps) {
 			</div>
 
 			<div
+				tw="flex items-center mt-auto font-normal"
 				style={{
-					display: "flex",
-					alignItems: "center",
-					marginTop: "auto",
 					fontSize: 18,
-					fontWeight: 400,
 					fontFamily: "PP Neue Montreal",
 					color: colors.mutedForeground,
 				}}

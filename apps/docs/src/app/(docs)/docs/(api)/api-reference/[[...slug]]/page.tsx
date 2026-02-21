@@ -59,7 +59,7 @@ export default async function Page({
         "https://github.com/lightfastai",
         "https://www.linkedin.com/company/lightfastai"
       ],
-      description: "Lightfast is memory built for teams. We help people and agents find what they need, understand context, and trace decisions across their entire organization."
+      description: "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents."
     };
 
     const websiteEntity: WebSite = {
@@ -67,7 +67,7 @@ export default async function Page({
       "@id": "https://lightfast.ai/docs#website",
       url: "https://lightfast.ai/docs",
       name: "Lightfast API Reference",
-      description: "API Reference for Lightfast neural memory — REST API and MCP tools documentation",
+      description: "API Reference for Lightfast — REST API and MCP tools documentation",
       publisher: {
         "@id": "https://lightfast.ai/#organization"
       }
@@ -100,7 +100,7 @@ export default async function Page({
       "@type": "Article",
       "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}#article`,
       headline: title,
-      description: description ?? "API documentation for Lightfast neural memory",
+      description: description ?? "API documentation for Lightfast",
       url: `https://lightfast.ai/docs/api-reference/${slug.join("/")}`,
       author: {
         "@id": "https://lightfast.ai/#organization"
@@ -160,7 +160,7 @@ export default async function Page({
       "https://github.com/lightfastai",
       "https://www.linkedin.com/company/lightfastai"
     ],
-    description: "Lightfast is memory built for teams. We help people and agents find what they need, understand context, and trace decisions across their entire organization."
+    description: "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents."
   };
 
   const websiteEntity: WebSite = {
@@ -168,7 +168,7 @@ export default async function Page({
     "@id": "https://lightfast.ai/docs#website",
     url: "https://lightfast.ai/docs",
     name: "Lightfast API Reference",
-    description: "API Reference for Lightfast neural memory — REST API and MCP tools documentation",
+    description: "API Reference for Lightfast — REST API and MCP tools documentation",
     publisher: {
       "@id": "https://lightfast.ai/#organization"
     }
@@ -255,7 +255,7 @@ export async function generateMetadata({
   if (!resolvedParams.slug || resolvedParams.slug.length === 0) {
     return createMetadata({
       title: "API Reference – Lightfast",
-      description: "Complete API reference for Lightfast neural memory. REST endpoints and MCP tools for team memory integration.",
+      description: "Complete API reference for Lightfast. REST endpoints and MCP tools for surfacing decisions across your tools.",
       metadataBase: new URL("https://lightfast.ai/docs"),
       keywords: [
         "API reference",
@@ -263,11 +263,11 @@ export async function generateMetadata({
         "MCP tools",
         "developer documentation",
         "Lightfast documentation",
-        "memory layer",
-        "memory layer for software teams",
-        "software team memory",
+        "decision search",
+        "decisions across tools",
+        "team decisions",
         "engineering knowledge search",
-        "neural memory docs",
+        "cited answers",
         "semantic search",
         "semantic search docs",
         "answers with sources",
@@ -301,7 +301,7 @@ export async function generateMetadata({
       },
       openGraph: {
         title: "API Reference – Lightfast",
-        description: "Complete API reference for Lightfast neural memory. REST endpoints and MCP tools for team memory integration.",
+        description: "Complete API reference for Lightfast. REST endpoints and MCP tools for surfacing decisions across your tools.",
         url: "https://lightfast.ai/docs/docs/api-reference",
         siteName: "Lightfast Documentation",
         type: "website",
@@ -310,7 +310,7 @@ export async function generateMetadata({
       twitter: {
         card: "summary_large_image",
         title: "API Reference – Lightfast",
-        description: "Complete API reference for Lightfast neural memory. REST endpoints and MCP tools.",
+        description: "Complete API reference for Lightfast. REST endpoints and MCP tools.",
         site: "@lightfastai",
         creator: "@lightfastai",
       },
@@ -338,7 +338,7 @@ export async function generateMetadata({
   // Build canonical URL for SEO
   const pageUrl = `/docs/api-reference/${slug.join("/")}`;
   const title = page.data.title ? `${page.data.title} – Lightfast API` : "Lightfast API Reference";
-  const description = page.data.description ?? "API documentation for Lightfast neural memory";
+  const description = page.data.description ?? "API documentation for Lightfast";
 
   return createMetadata({
     title,
@@ -349,11 +349,11 @@ export async function generateMetadata({
       "REST API",
       "MCP tools",
       "Lightfast documentation",
-      "memory layer",
-      "memory layer for software teams",
-      "software team memory",
+      "decision search",
+      "decisions across tools",
+      "team decisions",
       "engineering knowledge search",
-      "neural memory docs",
+      "cited answers",
       "semantic search",
       "semantic search docs",
       "answers with sources",

@@ -10,11 +10,11 @@ import { Button } from "@repo/ui/components/ui/button";
 export const metadata: Metadata = {
   title: "Lightfast Changelog",
   description:
-    "Product updates, new features, and improvements from Lightfast - the AI memory layer for engineering teams",
+    "Product updates, new features, and improvements from Lightfast — surfaces decisions across your tools",
   openGraph: {
     title: "Lightfast Changelog",
     description:
-      "Product updates, new features, and improvements from Lightfast - the AI memory layer for engineering teams",
+      "Product updates, new features, and improvements from Lightfast — surfaces decisions across your tools",
     type: "website",
     url: "https://lightfast.ai/changelog",
     siteName: "Lightfast",

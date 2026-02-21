@@ -1,5 +1,3 @@
-import { siteConfig } from "@repo/site-config";
-
 interface StructuredDataProps {
   type?: 'WebApplication' | 'Organization' | 'WebSite' | 'SoftwareApplication';
   additionalData?: Record<string, unknown>;
@@ -32,11 +30,11 @@ export function StructuredData({ type = 'WebApplication', additionalData = EMPTY
           },
           "creator": {
             "@type": "Organization",
-            "@id": `${siteConfig.url}#organization`
+            "@id": "https://lightfast.ai#organization"
           },
           "publisher": {
             "@type": "Organization",
-            "@id": `${siteConfig.url}#organization`
+            "@id": "https://lightfast.ai#organization"
           },
           "applicationSubCategory": "Open Source AI Chat Interface",
           "featureList": [
@@ -57,15 +55,15 @@ export function StructuredData({ type = 'WebApplication', additionalData = EMPTY
         return {
           "@context": "https://schema.org",
           "@type": "Organization",
-          "@id": `${siteConfig.url}#organization`,
-          "name": siteConfig.name,
-          "url": siteConfig.url,
-          "logo": `${siteConfig.url}/logo.png`,
+          "@id": "https://lightfast.ai#organization",
+          "name": "Lightfast",
+          "url": "https://lightfast.ai",
+          "logo": `${"https://lightfast.ai"}/logo.png`,
           "description": "Open-source AI company building model agnostic chat interfaces and developer tools for the AI ecosystem",
           "sameAs": [
-            siteConfig.links.twitter.href,
-            siteConfig.links.github.href,
-            siteConfig.links.discord.href
+            "https://x.com/lightfastai",
+            "https://github.com/lightfastai",
+            "https://discord.gg/YqPDfcar2C"
           ],
           "address": {
             "@type": "PostalAddress",
@@ -77,7 +75,7 @@ export function StructuredData({ type = 'WebApplication', additionalData = EMPTY
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "Customer Service",
-            "url": siteConfig.links.discord.href
+            "url": "https://discord.gg/YqPDfcar2C"
           },
           "foundingDate": "2024",
           "industry": "Open Source Software",
@@ -103,7 +101,7 @@ export function StructuredData({ type = 'WebApplication', additionalData = EMPTY
           "description": "Advanced AI chat interface powered by Lightfast",
           "publisher": {
             "@type": "Organization",
-            "@id": `${siteConfig.url}#organization`
+            "@id": "https://lightfast.ai#organization"
           },
           "potentialAction": {
             "@type": "SearchAction",
@@ -129,7 +127,7 @@ export function StructuredData({ type = 'WebApplication', additionalData = EMPTY
           "codeRepository": "https://github.com/lightfastai/lightfast",
           "creator": {
             "@type": "Organization", 
-            "@id": `${siteConfig.url}#organization`
+            "@id": "https://lightfast.ai#organization"
           },
           "offers": {
             "@type": "Offer",

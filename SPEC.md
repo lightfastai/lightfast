@@ -2,25 +2,25 @@
 
 Last Updated: 2025-12-09
 
-Lightfast is the memory layer for software teams. We help engineers and AI agents search everything your engineering org knows—code, PRs, docs, decisions—with answers that cite their sources.
+Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.
 
 ---
 
 ## Mission
 
-Make your engineering team's history instantly searchable and trustworthy. Capture what matters as it happens. Never lose context.
+Surface every decision your team makes — across every tool — so nothing gets lost and every answer cites its source.
 
 ## Vision
 
-Any engineer or agent can ask "what broke?", "who owns this?", "why was this decision made?" and get accurate answers with sources—across your entire engineering ecosystem, in real time.
+Any engineer or agent can ask "what broke?", "who owns this?", "why was this decision made?" and get accurate, cited answers across your entire engineering ecosystem, in real time.
 
 ---
 
 ## Positioning
 
-- **The memory layer for software teams:** Search by meaning, not keywords. Every answer shows its source.
+- **Decisions, surfaced:** Every decision your team makes across your tools — searchable, cited, and ready.
 - **Explainable by design:** See who owns what, what depends on what, and why decisions were made.
-- **Developer-first:** Four simple API routes. MCP tools for agents. Integrate in minutes.
+- **People and agents:** Four simple API routes. MCP tools for agents. Integrate in minutes.
 
 ---
 

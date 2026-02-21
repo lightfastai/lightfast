@@ -1,6 +1,5 @@
 import type { ContentOGProps } from "../types";
-import { colors, OG_HEIGHT, OG_WIDTH } from "../brand";
-import { lissajousPath } from "../brand/logo";
+import { colors } from "../brand";
 
 export function ContentLayout({
 	title,
@@ -9,69 +8,28 @@ export function ContentLayout({
 	date,
 	author,
 }: ContentOGProps) {
-	const logoSize = 48;
-	const logoPadding = 0.14;
-	const logoStroke = Math.max(1, Math.round(logoSize * 0.035));
-
 	return (
 		<div
-			style={{
-				display: "flex",
-				flexDirection: "column",
-				width: OG_WIDTH,
-				height: OG_HEIGHT,
-				backgroundColor: colors.background,
-				padding: "80px",
-			}}
+			tw="flex flex-col w-full h-full p-20"
+			style={{ backgroundColor: colors.background }}
 		>
 			<div
+				tw="text-xl font-medium mb-10"
 				style={{
-					display: "flex",
-					alignItems: "center",
-					gap: "16px",
-					marginBottom: "40px",
+					fontFamily: "PP Neue Montreal",
+					color: colors.foreground,
 				}}
 			>
-				<svg
-					width={logoSize}
-					height={logoSize}
-					viewBox={`0 0 ${logoSize} ${logoSize}`}
-				>
-					<path
-						d={lissajousPath(logoSize, logoPadding)}
-						fill="none"
-						stroke={colors.foreground}
-						strokeWidth={logoStroke}
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					/>
-				</svg>
-				<div
-					style={{
-						fontSize: 20,
-						fontWeight: 700,
-						fontFamily: "PP Neue Montreal",
-						color: colors.foreground,
-					}}
-				>
-					Lightfast
-				</div>
+				Lightfast
 			</div>
 
 			{category && (
-				<div
-					style={{
-						display: "flex",
-						marginBottom: "16px",
-					}}
-				>
+				<div tw="flex mb-4">
 					<div
+						tw="text-base font-bold uppercase"
 						style={{
-							fontSize: 16,
-							fontWeight: 700,
 							fontFamily: "PP Neue Montreal",
 							color: colors.brandBlue,
-							textTransform: "uppercase",
 							letterSpacing: "0.05em",
 						}}
 					>
@@ -80,18 +38,10 @@ export function ContentLayout({
 				</div>
 			)}
 
-			<div
-				style={{
-					display: "flex",
-					flexDirection: "column",
-					gap: "16px",
-					flex: 1,
-				}}
-			>
+			<div tw="flex flex-col flex-1" style={{ gap: "16px" }}>
 				<div
+					tw="text-5xl font-bold"
 					style={{
-						fontSize: 48,
-						fontWeight: 700,
 						fontFamily: "PP Neue Montreal",
 						color: colors.foreground,
 						lineHeight: 1.1,
@@ -104,9 +54,9 @@ export function ContentLayout({
 				</div>
 				{description && (
 					<div
+						tw="font-normal"
 						style={{
 							fontSize: 22,
-							fontWeight: 400,
 							fontFamily: "PP Neue Montreal",
 							color: colors.mutedForeground,
 							lineHeight: 1.4,
@@ -120,13 +70,10 @@ export function ContentLayout({
 			</div>
 
 			<div
+				tw="flex items-center mt-auto"
 				style={{
-					display: "flex",
-					alignItems: "center",
 					gap: "16px",
-					marginTop: "auto",
 					fontSize: 18,
-					fontWeight: 400,
 					fontFamily: "PP Neue Montreal",
 					color: colors.mutedForeground,
 				}}

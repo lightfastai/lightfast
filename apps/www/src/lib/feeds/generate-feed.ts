@@ -9,7 +9,7 @@ export async function generateBlogFeed(): Promise<Feed> {
   const feed = new Feed({
     title: "Lightfast Blog",
     description:
-      "Insights on AI-powered memory layer for software teams, semantic search, and organizational knowledge management",
+      "Insights on surfacing decisions across your tools — searchable, cited, and ready for people and agents",
     id: baseUrl,
     link: baseUrl,
     language: "en",

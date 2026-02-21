@@ -75,4 +75,22 @@ export const LOGO_VARIANTS: LogoVariant[] = [
     filename: "logo-1024-transparent.png",
     props: { transparent: true },
   },
+
+  // ── Twitter / X banner ─────────────────────────────────────
+  {
+    id: "logo-twitter-banner",
+    width: 1500,
+    height: 500,
+    filename: "twitter-banner.png",
+    props: { strokeWidth: 0 },
+  },
+
+  // ── LinkedIn banner ─────────────────────────────────────────
+  {
+    id: "logo-linkedin-banner",
+    width: 1584,
+    height: 396,
+    filename: "linkedin-banner.png",
+    props: { strokeWidth: 0 },
+  },
 ];

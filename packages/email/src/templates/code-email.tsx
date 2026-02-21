@@ -9,8 +9,6 @@ import {
   Text,
 } from "@react-email/components";
 
-import { siteConfig } from "@repo/site-config";
-
 interface CodeEmailProps {
   email: string;
   code: string;
@@ -25,8 +23,8 @@ If you did not request this, you can ignore this email.
 
 -------------------
 
-Privacy Policy: ${siteConfig.links.privacy.href}
-Terms & Conditions: ${siteConfig.links.terms.href}
+Privacy Policy: https://lightfast.ai/legal/privacy
+Terms & Conditions: https://lightfast.ai/legal/terms
 
 -------------------
 `;

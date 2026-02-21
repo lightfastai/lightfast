@@ -17,7 +17,6 @@ let config: NextConfig = withBetterStack(
 		transpilePackages: [
 			"@repo/og",
 			"@repo/ui",
-			"@repo/site-config",
 			"@repo/url-utils",
 			"@vendor/seo",
 			"@vendor/observability",

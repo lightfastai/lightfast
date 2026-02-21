@@ -90,7 +90,7 @@ export default async function Page({
       "https://www.linkedin.com/company/lightfastai",
     ],
     description:
-      "Lightfast is memory built for teams. We help people and agents find what they need, understand context, and trace decisions across their entire organization.",
+      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
   };
 
   const websiteEntity: WebSite = {
@@ -99,7 +99,7 @@ export default async function Page({
     url: "https://lightfast.ai/docs",
     name: "Lightfast Documentation",
     description:
-      "Documentation for Lightfast neural memory — Learn how to integrate team memory via a simple REST API and MCP tools",
+      "Documentation for Lightfast — Learn how to surface decisions across your tools via a simple REST API and MCP tools",
     publisher: {
       "@id": "https://lightfast.ai/#organization",
     },
@@ -206,15 +206,15 @@ export async function generateMetadata({
     return createMetadata({
       title: "Documentation – Lightfast",
       description:
-        "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
+        "Comprehensive documentation for Lightfast — surface decisions across your tools",
       metadataBase: new URL("https://lightfast.ai/docs"),
       keywords: [
         "Lightfast documentation",
-        "memory layer",
-        "memory layer for software teams",
-        "software team memory",
+        "decision search",
+        "decisions across tools",
+        "team decisions",
         "engineering knowledge search",
-        "neural memory docs",
+        "cited answers",
         "semantic search",
         "semantic search docs",
         "answers with sources",
@@ -249,7 +249,7 @@ export async function generateMetadata({
       openGraph: {
         title: "Documentation – Lightfast",
         description:
-          "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
+          "Comprehensive documentation for Lightfast — surface decisions across your tools",
         url: "https://lightfast.ai/docs/docs",
         siteName: "Lightfast Documentation",
         type: "website",
@@ -259,7 +259,7 @@ export async function generateMetadata({
         card: "summary_large_image",
         title: "Documentation – Lightfast",
         description:
-          "Comprehensive documentation for Lightfast - Team memory and neural search for modern teams",
+          "Comprehensive documentation for Lightfast — surface decisions across your tools",
         site: "@lightfastai",
         creator: "@lightfastai",
       },
@@ -311,11 +311,11 @@ export async function generateMetadata({
     keywords: [
       ...pageKeywords,
       "Lightfast documentation",
-      "memory layer",
-      "memory layer for software teams",
-      "software team memory",
+      "decision search",
+      "decisions across tools",
+      "team decisions",
       "engineering knowledge search",
-      "neural memory docs",
+      "cited answers",
       "semantic search",
       "semantic search docs",
       "answers with sources",

@@ -7,7 +7,6 @@ import { SignUpCodeVerification } from "./sign-up-code-verification";
 import { SignUpPassword } from "./sign-up-password";
 import { OAuthSignUp } from "./oauth-sign-up";
 import Link from "next/link";
-import { siteConfig } from "@repo/site-config";
 import { env } from "~/env";
 
 export function SignUpForm() {
@@ -79,7 +78,7 @@ export function SignUpForm() {
 						<p className="text-xs text-center text-muted-foreground">
 							By joining, you agree to our{" "}
 							<Link
-								href={siteConfig.links.terms.href}
+								href={"https://lightfast.ai/legal/terms"}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"
@@ -88,7 +87,7 @@ export function SignUpForm() {
 							</Link>{" "}
 							and{" "}
 							<Link
-								href={siteConfig.links.privacy.href}
+								href={"https://lightfast.ai/legal/privacy"}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"
@@ -146,7 +145,7 @@ export function SignUpForm() {
 						<p className="text-xs text-center text-muted-foreground">
 							By joining, you agree to our{" "}
 							<Link
-								href={siteConfig.links.terms.href}
+								href={"https://lightfast.ai/legal/terms"}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"
@@ -155,7 +154,7 @@ export function SignUpForm() {
 							</Link>{" "}
 							and{" "}
 							<Link
-								href={siteConfig.links.privacy.href}
+								href={"https://lightfast.ai/legal/privacy"}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-foreground hover:text-foreground/80 underline"

@@ -39,7 +39,6 @@ const wwwConfig: NextConfig = {
 		"@vendor/next",
 		"@vendor/upstash",
 		"@vendor/cms",
-		"@repo/site-config",
 		"@repo/email",
 		"@repo/lib",
 		"@paper-design/shaders-react",

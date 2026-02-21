@@ -43,7 +43,6 @@
     "@repo/chat-billing": "workspace:*",
     "@repo/chat-trpc": "workspace:*",
     "@repo/lib": "workspace:^",
-    "@repo/site-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",
     "@sentry/core": "^10.20.0",

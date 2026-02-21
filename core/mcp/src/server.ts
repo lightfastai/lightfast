@@ -34,7 +34,7 @@ export async function createServer(config: ServerConfig): Promise<void> {
   // Register search tool
   server.tool(
     "lightfast_search",
-    "Search through workspace neural memory for relevant documents and observations. Returns semantically relevant results with scores, snippets, and metadata.",
+    "Search through workspace decisions and observations across connected tools. Returns semantically relevant results with scores, snippets, and metadata.",
     V1SearchRequestSchema.shape,
     async (args) => {
       const results = await lightfast.search(args);

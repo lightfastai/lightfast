@@ -1,6 +1,6 @@
 # @lightfastai/mcp
 
-Model Context Protocol (MCP) server for Lightfast Neural Memory - Connect Claude and other AI assistants to your workspace memory.
+Model Context Protocol (MCP) server for Lightfast — Connect Claude and other AI assistants to decisions surfaced across your tools.
 
 [![npm version](https://img.shields.io/npm/v/@lightfastai/mcp.svg)](https://www.npmjs.com/package/@lightfastai/mcp)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)

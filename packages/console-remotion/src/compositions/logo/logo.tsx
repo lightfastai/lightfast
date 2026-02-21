@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import type React from "react";
 import { AbsoluteFill, useVideoConfig } from "@vendor/remotion";
-import { cn } from "@repo/ui/lib/utils";
 
 /**
  * Lissajous parameters — same curve used in the LandingHero logo animation.
@@ -39,19 +38,18 @@ export const Logo: React.FC<LogoProps> = ({
   const { width, height } = useVideoConfig();
   const size = Math.min(width, height);
 
-  // More padding at larger sizes for breathing room; less at favicon scale
-  const padding = size <= 48 ? 0.14 : size <= 192 ? 0.18 : 0.22;
+  const padding = 0.28;
   const sw = swOverride ?? Math.max(1, Math.round(size * 0.035));
 
   const path = useMemo(() => lissajousPath(size, padding), [size, padding]);
 
   return (
-    <AbsoluteFill className={cn(!transparent && "bg-background")}>
+    <AbsoluteFill style={!transparent ? { backgroundColor: "#000000" } : undefined}>
       <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         <path
           d={path}
           fill="none"
-          className="stroke-foreground"
+          stroke="#ffffff"
           strokeWidth={sw}
           strokeLinecap="round"
           strokeLinejoin="round"
