@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from "next";
 import "~/styles/globals.css";
 
 import { cn } from "@repo/ui/lib/utils";
-import { geistSans, geistMono, exposurePlus, ppNeueMontreal } from "~/lib/fonts";
+import { geistSans, geistMono, exposurePlus, ppNeueMontreal, ppSupplySans } from "~/lib/fonts";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
 import { PrefetchCrossZoneLinks } from "@vercel/microfrontends/next/client";
@@ -146,6 +146,7 @@ export default function RootLayout({
         geistMono.variable,
         ppNeueMontreal.variable,
         exposurePlus.variable,
+        ppSupplySans.variable,
         "touch-manipulation font-sans antialiased dark scrollbar-thin",
       )}
       lang="en"

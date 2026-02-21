@@ -9,7 +9,7 @@ import { fonts as geistFonts } from "@repo/ui/lib/fonts";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
 import { env } from "~/env";
-import { exposurePlus, ppNeueMontreal } from "~/lib/fonts";
+import { exposurePlus, ppNeueMontreal, ppSupplySans } from "~/lib/fonts";
 import { consoleUrl } from "~/lib/related-projects";
 
 export const metadata: Metadata = createMetadata({
@@ -85,6 +85,7 @@ export default function RootLayout({
           geistFonts,
           ppNeueMontreal.variable,
           exposurePlus.variable,
+          ppSupplySans.variable,
         )}
       >
         <head />

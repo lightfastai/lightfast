@@ -17,6 +17,11 @@ export const ensureFontsLoaded = async () => {
       url: staticFile("fonts/Geist-Medium.woff2"),
       weight: "500",
     }),
+    loadFont({
+      family: "PP Supply Sans",
+      url: staticFile("fonts/PPSupplySans-Regular.woff2"),
+      weight: "400",
+    }),
   ]);
 
   fontsLoaded = true;

@@ -71,3 +71,12 @@ export const exposurePlus = localFont({
   variable: "--font-exposure-plus",
   display: "swap",
 });
+
+/**
+ * PP Supply Sans - Brand logotype font
+ */
+export const ppSupplySans = localFont({
+  src: "../../public/fonts/pp-supply-sans/PPSupplySans-Regular.woff2",
+  variable: "--font-pp-supply-sans",
+  display: "swap",
+});

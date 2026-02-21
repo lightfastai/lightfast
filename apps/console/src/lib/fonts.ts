@@ -75,10 +75,20 @@ export const exposurePlus = localFont({
 });
 
 /**
+ * PP Supply Sans - Brand logotype font
+ */
+export const ppSupplySans = localFont({
+  src: "../../public/fonts/pp-supply-sans/PPSupplySans-Regular.woff2",
+  variable: "--font-pp-supply-sans",
+  display: "swap",
+});
+
+/**
  * Combined font classes for use in className
  */
 export const fonts = cn(
   ppNeueMontreal.variable,
   exposurePlus.variable,
+  ppSupplySans.variable,
   "touch-manipulation font-sans antialiased",
 );
