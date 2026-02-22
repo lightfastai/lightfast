@@ -1,36 +1,5 @@
 {
-	"name": "@repo/tech-stack-detector",
-	"version": "0.1.0",
-	"private": true,
-	"type": "module",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"default": "./src/index.ts"
-		}
-	},
-	"scripts": {
-		"build": "tsup",
-		"clean": "git clean -xdf .cache .turbo dist node_modules",
-		"detect": "tsx src/cli.ts",
-		"dev": "tsup --watch",
-		"format": "prettier --check . --ignore-path ../../.gitignore",
-		"lint": "eslint",
-		"typecheck": "tsc --noEmit"
-	},
-	"dependencies": {
-		"playwright": "^1.54.1"
-	},
-	"devDependencies": {
-		"@repo/eslint-config": "workspace:*",
-		"@repo/prettier-config": "workspace:*",
-		"@repo/typescript-config": "workspace:*",
-		"@types/node": "catalog:",
-		"eslint": "catalog:",
-		"prettier": "catalog:",
-		"tsup": "^8.5.0",
-		"tsx": "^4.19.2",
-		"typescript": "catalog:"
-	},
-	"prettier": "@repo/prettier-config"
+  "name": "tech-stack-detector",
+  "version": "0.0.0",
+  "private": true
 }

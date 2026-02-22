@@ -204,6 +204,20 @@
       "when": 1770624513643,
       "tag": "0028_workable_mantis",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1771741593609,
+      "tag": "0029_fine_maria_hill",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1771744698515,
+      "tag": "0030_flashy_frank_castle",
+      "breakpoints": true
     }
   ]
 }

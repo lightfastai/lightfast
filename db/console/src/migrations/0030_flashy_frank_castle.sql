@@ -1,0 +1,1 @@
+ALTER TABLE "lightfast_workspace_api_keys" ADD CONSTRAINT "lightfast_workspace_api_keys_unkey_key_id_unique" UNIQUE("unkey_key_id");

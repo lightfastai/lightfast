@@ -16,6 +16,7 @@ import { V1GraphRequestSchema } from "@repo/console-types";
 import {
   withDualAuth,
   createDualAuthErrorResponse,
+  buildRateLimitHeaders,
 } from "../lib/with-dual-auth";
 import { graphLogic } from "~/lib/v1/graph";
 
@@ -74,7 +75,9 @@ export async function POST(request: NextRequest) {
       took: Date.now() - startTime,
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: buildRateLimitHeaders(authResult.auth),
+    });
   } catch (error) {
     log.error("v1/graph POST error", {
       requestId,

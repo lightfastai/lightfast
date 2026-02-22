@@ -2,7 +2,7 @@
  * Dual Authentication Middleware for v1 Routes
  *
  * Supports both API key and Clerk session authentication.
- * - API key: Uses existing withApiKeyAuth, trusts X-Workspace-ID
+ * - API key: Uses withUnkeyAuth (Unkey edge verification)
  * - Session: Validates workspace access via org membership
  */
 
@@ -12,14 +12,18 @@ import { db } from "@db/console/client";
 import { orgWorkspaces } from "@db/console/schema";
 import { eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
-import { LIGHTFAST_API_KEY_PREFIX } from "@repo/console-api-key";
-import { withApiKeyAuth } from "./with-api-key-auth";
+import { UNKEY_API_KEY_PREFIX, withUnkeyAuth } from "./with-unkey-auth";
 
 export interface DualAuthContext {
   workspaceId: string;
   userId: string;
   authType: "api-key" | "session";
   apiKeyId?: string;
+  ratelimit?: {
+    limit: number;
+    remaining: number;
+    reset: number;
+  };
 }
 
 export interface DualAuthSuccess {
@@ -54,14 +58,12 @@ export async function withDualAuth(
 ): Promise<DualAuthResult> {
   // Check for Authorization header
   const authHeader = request.headers.get("authorization");
-  console.log(request.headers);
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
 
-    // Check if it's an API key (starts with Lightfast prefix)
-    if (token.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
-      // API key path - use existing implementation
-      const apiKeyResult = await withApiKeyAuth(request, requestId);
+    // Check if it's a Unkey-managed API key (starts with sk_lf_ prefix)
+    if (token.startsWith(UNKEY_API_KEY_PREFIX)) {
+      const apiKeyResult = await withUnkeyAuth(request, requestId);
 
       if (!apiKeyResult.success) {
         return apiKeyResult;
@@ -74,6 +76,7 @@ export async function withDualAuth(
           userId: apiKeyResult.auth.userId,
           authType: "api-key",
           apiKeyId: apiKeyResult.auth.apiKeyId,
+          ratelimit: apiKeyResult.auth.ratelimit,
         },
       };
     } else {
@@ -265,6 +268,18 @@ async function validateWorkspaceAccess(
       status: 500,
     };
   }
+}
+
+/**
+ * Build rate limit headers from auth context (only when Unkey ratelimit data is present)
+ */
+export function buildRateLimitHeaders(auth: DualAuthContext): HeadersInit {
+  if (!auth.ratelimit) return {};
+  return {
+    "X-RateLimit-Limit": String(auth.ratelimit.limit),
+    "X-RateLimit-Remaining": String(auth.ratelimit.remaining),
+    "X-RateLimit-Reset": String(auth.ratelimit.reset),
+  };
 }
 
 /**

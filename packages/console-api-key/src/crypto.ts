@@ -10,14 +10,19 @@
 import { nanoid } from "@repo/lib";
 
 /**
- * Unified API key prefix for all Lightfast keys
- * Format follows industry conventions: sk-{vendor}-{secret}
+ * API key prefix for Unkey-managed Lightfast keys.
+ * Keys are created via Unkey with prefix "sk_lf_", resulting in: sk_lf_xxxxxxxxxxxxxxxx
+ *
+ * @deprecated New keys are created by Unkey. This constant is kept for user-scoped
+ * keys that still use the local key generation path.
  */
-export const LIGHTFAST_API_KEY_PREFIX = "sk-lf-";
+export const LIGHTFAST_API_KEY_PREFIX = "sk_lf_";
 
 /**
  * Length of the random portion of the API key
  * 43 chars × 62-char alphabet = ~256 bits entropy
+ *
+ * @deprecated Unkey controls key length for org API keys. Only used for user-scoped keys.
  */
 export const API_KEY_SECRET_LENGTH = 43;
 
@@ -34,12 +39,12 @@ export const API_KEY_PREFIX = "console_sk_";
 /**
  * Generate a new API key with the unified Lightfast format
  *
- * @param prefix - The prefix to use (default: "sk-lf-")
+ * @param prefix - The prefix to use (default: "sk_lf_")
  * @returns The generated API key with ~256 bits of entropy
  *
  * @example
  * ```ts
- * const key = generateApiKey();  // "sk-lf-AbC123xYz456..."
+ * const key = generateApiKey();  // "sk_lf_AbC123xYz456..."
  * ```
  */
 export function generateApiKey(
@@ -55,7 +60,7 @@ export function generateApiKey(
 export interface OrgApiKeyResult {
   /** Full API key (only returned once, never stored) */
   key: string;
-  /** Key prefix (e.g., "sk-lf-") */
+  /** Key prefix (e.g., "sk_lf_") */
   prefix: string;
   /** Last 4 characters of the key secret (for display) */
   suffix: string;
@@ -64,18 +69,10 @@ export interface OrgApiKeyResult {
 /**
  * Generate a new organization API key, returning all parts for storage
  *
- * This is used for org-scoped API keys where we store
- * the prefix and suffix separately for display purposes.
+ * @deprecated Org API keys are now created via Unkey. Use @vendor/unkey instead.
+ * This function is still used by user-scoped API keys (user-api-keys.ts).
  *
  * @returns Object with full key, prefix, and suffix (last 4 chars)
- *
- * @example
- * ```ts
- * const { key, prefix, suffix } = generateOrgApiKey();
- * // key: "sk-lf-AbC123...XyZ789" (full key - return once)
- * // prefix: "sk-lf-"
- * // suffix: "Z789" (last 4 chars)
- * ```
  */
 export function generateOrgApiKey(): OrgApiKeyResult {
   const keySecret = nanoid(API_KEY_SECRET_LENGTH);
@@ -101,9 +98,13 @@ export function generateOrgApiKey(): OrgApiKeyResult {
  *
  * @example
  * ```ts
- * const hash = await hashApiKey("sk-lf-abc123...");
+ * const hash = await hashApiKey("sk_lf_abc123...");
  * // Returns: "abc123...def456" (64 character hex string)
  * ```
+ */
+/**
+ * @deprecated Org API key verification is now handled by Unkey. Use @vendor/unkey instead.
+ * Still used for user-scoped API keys and tRPC-level auth (api/console/src/trpc.ts).
  */
 export async function hashApiKey(key: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -117,11 +118,11 @@ export async function hashApiKey(key: string): Promise<string> {
  * Extract a preview of the API key for display purposes
  *
  * @param key - The full API key
- * @returns Preview string in format "sk-lf-...XXXX"
+ * @returns Preview string in format "sk_lf_...XXXX"
  */
 export function extractKeyPreview(key: string): string {
   const suffix = key.slice(-API_KEY_PREVIEW_LENGTH);
-  return `sk-lf-...${suffix}`;
+  return `${LIGHTFAST_API_KEY_PREFIX}...${suffix}`;
 }
 
 /**
@@ -131,15 +132,10 @@ export function extractKeyPreview(key: string): string {
  * @returns True if the key has the correct format
  */
 export function isValidApiKeyFormat(key: string): boolean {
-  // Must start with sk-lf-
-  if (!key.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
-    return false;
-  }
-
-  // Must have correct length: prefix (6) + secret (43) = 49
-  const expectedLength =
-    LIGHTFAST_API_KEY_PREFIX.length + API_KEY_SECRET_LENGTH;
-  return key.length === expectedLength;
+  if (!key) return false;
+  // Prefix-only check: Unkey controls key length for org keys, so we
+  // cannot enforce a fixed total length. Unkey handles full validation.
+  return key.startsWith(LIGHTFAST_API_KEY_PREFIX);
 }
 
 /**
