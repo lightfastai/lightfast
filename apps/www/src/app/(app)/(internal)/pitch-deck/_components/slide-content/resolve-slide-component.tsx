@@ -3,6 +3,7 @@ import type { SlideVariant } from "./title-slide-content";
 import { ContentSlideContent } from "./content-slide-content";
 import { CustomTitleSlide } from "./custom-title-slide";
 import { CustomWhyNowSlide } from "./custom-why-now-slide";
+import { CustomTeamSlide } from "./custom-team-slide";
 import { ShowcaseSlideContent } from "./showcase-slide-content";
 import { ColumnsSlideContent } from "./columns-slide-content";
 
@@ -27,6 +28,8 @@ export function resolveSlideComponent(
       return <ShowcaseSlideContent slide={slide} variant={variant} />;
     case "columns":
       return <ColumnsSlideContent slide={slide} variant={variant} />;
+    case "team":
+      return <CustomTeamSlide slide={slide} variant={variant} />;
     default:
       return null;
   }

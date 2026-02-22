@@ -2,13 +2,13 @@
 
 Last Updated: 2025-12-09
 
-Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.
+Lightfast is the memory layer for teams. Every decision across your tools — surfaced, cited, and ready for people and agents.
 
 ---
 
 ## Mission
 
-Surface every decision your team makes — across every tool — so nothing gets lost and every answer cites its source.
+Be the memory layer for every team — so nothing gets lost and every answer cites its source.
 
 ## Vision
 

@@ -45,7 +45,7 @@ export function ShowcaseSlideContent({
         {/* Metadata table */}
         <div
           className={cn(
-            "flex flex-1 flex-col justify-end",
+            "flex flex-1 flex-col justify-center",
             isFixed ? "gap-6" : "gap-2 sm:gap-3 md:gap-4"
           )}
         >
@@ -57,11 +57,11 @@ export function ShowcaseSlideContent({
                 isFixed ? "pb-4" : "pb-1.5 sm:pb-2 md:pb-3"
               )}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col">
                 <span
                   className={cn(
                     "font-medium uppercase tracking-wider text-neutral-500",
-                    isFixed ? "text-sm" : "text-[9px] sm:text-[10px] md:text-xs"
+                    isFixed ? "text-sm mb-1" : "text-[9px] sm:text-[10px] md:text-xs mb-0.5"
                   )}
                 >
                   {item.label}

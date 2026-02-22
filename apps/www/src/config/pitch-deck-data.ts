@@ -5,7 +5,7 @@ export const PITCH_SLIDES = [
     type: "title" as const,
     title: "Lightfast",
     subtitle:
-      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+      "Lightfast is the memory layer for teams. Every decision across your tools — surfaced, cited, and ready for people and agents.",
     bgColor: "bg-[var(--pitch-deck-red)]",
   },
   // Slide 2: Problem (Sequoia: Problem)
@@ -16,9 +16,9 @@ export const PITCH_SLIDES = [
     gridTitle: "Problem",
     leftText: "THE OPERATING COST",
     rightText: [
-      "AI coding agents waste 40%+ of tokens on navigation. Today the workaround is: start every session from scratch, grep and hope.",
-      "Your tools don't talk to each other. An agent can't connect a Sentry error to the PR that caused it without brute-force searching across 4+ tools.",
-      "92% of teams report AI agent costs higher than expected. The tokens aren't the problem. The context is.",
+      "Your team's decisions are spread across GitHub, Linear, Sentry, Vercel — and none of them are connected.",
+      "Finding what happened and why means searching each tool one by one.",
+      "AI agents burn tokens navigating, not building. You're paying for search, not work.",
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
@@ -29,11 +29,11 @@ export const PITCH_SLIDES = [
     type: "content" as const,
     title: "Our Solution.",
     gridTitle: "Solution",
-    leftText: "THE CONTEXT LAYER",
+    leftText: "THE MEMORY LAYER",
     rightText: [
-      "Connect GitHub, Vercel, Linear, and Sentry in 5 minutes. Every event is automatically enriched and linked across sources.",
-      "Your agents get persistent context—search by meaning, not grep. 90%+ precision. Every answer cites its source.",
-      "One API that sits between your tools and your agents. Works with any model. A Sentry error auto-links to the PR, the deploy, and the Linear issue—one query, full context.",
+      "60+ connectors across your stack — GitHub, Vercel, Linear, Sentry, and more. Lightfast captures everything automatically.",
+      "Every event is classified, linked, and cited — so you search by meaning, not by tool.",
+      "People and agents get the same API. Four routes. Full context. Always cited.",
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
@@ -48,9 +48,9 @@ export const PITCH_SLIDES = [
     imageAlt:
       "Anthropic data: Software engineering is 49.7% of all agentic tool calls",
     rightText: [
-      "Agents moved from code to operations. 50% of agentic tool calls are software engineering—but emerging across every domain. Teams run agents for triage, deployment, and ticket management. The scope exploded beyond code.",
-      "MCP connected agents to your tools. Before 2024, no standard existed. Now agents connect to GitHub, Sentry, Linear, Vercel natively. But connection isn't understanding.",
-      "The missing layer is organizational memory. Agents have intelligence and access. What they don't have is durable, cross-tool memory of your team's decisions. This is the bottleneck—and no one has built it.",
+      "AI agents exploded beyond code — teams now run them for triage, deployment, and operations.",
+      "MCP gave agents access to your tools. But access isn't understanding.",
+      "216K stars on OpenClaw. But connecting agents to tools isn't enough — without context, they burn tokens in circles.",
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
@@ -63,24 +63,26 @@ export const PITCH_SLIDES = [
     gridTitle: "Market",
     columns: [
       {
-        header: "BEACHHEAD (ALL 4 TOOLS)",
+        header: "CUSTOMERS",
         items: [
-          "14K–20K teams use GitHub + Vercel + Linear + Sentry together",
-          "At $20/user/month (~$300/month per team): $180M+ ARR before expanding beyond the beachhead",
+          "Solo founders and 1–5 person teams.",
+          "5–30 person high-growth startups.",
+          "80K apply to YC every year — all on the same stack.",
         ],
       },
       {
-        header: "SAM (3+ TOOLS)",
+        header: "MARKET SIZE",
         items: [
-          "50K+ engineering teams use GitHub, Vercel, and Sentry together",
-          "Vercel Marketplace Sentry integration: 50K+ installs—direct evidence of co-adoption",
+          "SOM: $5.8M ARR — 800 teams at $60/user/month.",
+          "SAM: $TBD",
+          "TAM: Every team running AI agents across disconnected tools.",
         ],
       },
       {
         header: "EXPANSION",
         items: [
-          "300K+ teams on any two-tool combination in engineering alone",
-          "Dev tools ($24B by 2030, 27% CAGR) is the wedge. Full context infrastructure is 10x larger",
+          "Product & Engineering today. Revenue & Growth, Customer Experience, and Business Operations next.",
+          "60+ connectors across 4 verticals.",
         ],
       },
     ],
@@ -96,15 +98,19 @@ export const PITCH_SLIDES = [
     columns: [
       {
         header: "INCIDENT INTELLIGENCE",
-        items: ["PagerDuty", "Datadog", "OpsGenie"],
+        items: ["PagerDuty", "ResolveAI"],
       },
       {
         header: "ENTERPRISE AI SEARCH",
-        items: ["Glean", "Notion AI", "Atlassian Intelligence"],
+        items: ["Glean", "Atlassian Intelligence"],
       },
       {
         header: "AGENT MEMORY",
         items: ["Mem0", "Zep", "LangChain Memory"],
+      },
+      {
+        header: "THE STATUS QUO",
+        items: ["Grep, Slack search, and asking the one person who remembers."],
       },
     ],
     bgColor: "bg-[#F5F5F0]",
@@ -191,14 +197,40 @@ export const PITCH_SLIDES = [
   // Slide 9: Team (Sequoia: Team)
   {
     id: "team",
-    type: "content" as const,
+    type: "team" as const,
     title: "The Team.",
     gridTitle: "Team",
-    leftText: "SOLO FOUNDER",
-    rightText: [
-      "[Founder Name], [Role]. [One-line accomplishment.]",
-      "16 months. 3,930 commits. $0 external funding. Production enrichment pipeline, search with cited sources, MCP tools. Not a prototype.",
-      "15+ engineering lead interviews. 100% confirmed context loss as a top-3 pain point.",
+    founder: {
+      name: "Jeevan Pillay",
+      role: "Founder & CEO",
+      location: "Melbourne, Australia",
+      tagline:
+        "Systems thinker across AI infrastructure, computational design, and material fabrication.",
+    },
+    tracks: [
+      {
+        header: "LIGHTFAST",
+        items: [
+          "Iterated through semantic code search, procedural AI graphics, an operating system for design tools, and an agent orchestration platform — before identifying the core problem: teams have no memory layer.",
+          "Architecting ingestion pipelines, semantic retrieval with citation traceability, and evaluation loops.",
+          "12 months. 3,930 commits. $0 external funding. Not a prototype.",
+        ],
+      },
+      {
+        header: "COMPUTATIONAL DESIGN",
+        items: [
+          "Generative algorithms, GPGPU shaders, procedural math — curl noise, Perlin fields, Voronoi tessellations.",
+          "Code-to-fabrication toolchains: CNC machining, 3D printing, laser projection at scale.",
+          "Led technical campaigns generating $1M+ in revenue.",
+        ],
+      },
+      {
+        header: "VALIDATION",
+        items: [
+          "15+ engineering lead interviews. 100% confirmed context loss as a top-3 pain point.",
+          "Studied the problem through founder interviews, workflow analysis, and technical research.",
+        ],
+      },
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
@@ -210,20 +242,15 @@ export const PITCH_SLIDES = [
     title: "Every team deserves a context layer.",
     gridTitle: "The Ask",
     metadata: [
-      { label: "RAISING", value: "$300K Pre-Seed" },
+      { label: "RAISING", value: "$500K SAFE" },
       {
         label: "RUNWAY",
         value: "12-18 Months (equity + R&D Tax Incentive)",
       },
-      {
-        label: "USE OF FUNDS",
-        value:
-          "60% Engineering, 25% GTM, 15% Ops",
-      },
-      {
+{
         label: "MILESTONE",
         value:
-          "Design partners by Month 3. Public beta by Month 6. $5K MRR by Month 12.",
+          "Alpha now. Public beta by Month 3. 5,000 teams on waitlist by Month 6.",
       },
       { label: "CONTACT", value: "jp@lightfast.ai" },
     ],

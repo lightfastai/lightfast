@@ -14,10 +14,11 @@ interface CaptureSlideProps {
 
 /**
  * Static slide component for screenshot capture.
- * Renders at exact dimensions without animations.
+ * Mirrors the interactive PitchSlide wrapper (same padding, same variant)
+ * so the PDF output matches what users see on screen.
  */
 export const CaptureSlide = forwardRef<HTMLDivElement, CaptureSlideProps>(
-  function CaptureSlide({ slide, width = 1920, height = 1080, fontFamily }, ref) {
+  function CaptureSlide({ slide, width = 860, height = 484, fontFamily }, ref) {
     return (
       <div
         ref={ref}
@@ -32,8 +33,9 @@ export const CaptureSlide = forwardRef<HTMLDivElement, CaptureSlideProps>(
           slide.bgColor
         )}
       >
-        <div className="relative h-full p-16 flex flex-col justify-between">
-          {resolveSlideComponent(slide, "fixed")}
+        {/* Match interactive PitchSlide wrapper: p-6 sm:p-8 md:p-12 */}
+        <div className="relative h-full w-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">
+          {resolveSlideComponent(slide, "responsive")}
         </div>
       </div>
     );

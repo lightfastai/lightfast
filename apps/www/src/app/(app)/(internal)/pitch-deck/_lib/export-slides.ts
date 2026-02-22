@@ -14,9 +14,18 @@ export interface ExportOptions {
   filename?: string;
 }
 
+/** PDF page dimensions (high-res 16:9) */
+const PDF_WIDTH = 1920;
+const PDF_HEIGHT = 1080;
+
+/**
+ * Render dimensions match the interactive slide container (max-w-[860px], 16:9)
+ * so responsive Tailwind classes produce identical output to the on-screen deck.
+ * Quality is maintained via a higher html2canvas scale factor.
+ */
 const DEFAULT_OPTIONS: Required<ExportOptions> = {
-  width: 1920,
-  height: 1080,
+  width: 860,
+  height: 484,
   filename: "lightfast-pitch-deck",
 };
 
@@ -29,12 +38,12 @@ export async function exportSlidesToPdf(
 ): Promise<void> {
   const { width, height, filename } = { ...DEFAULT_OPTIONS, ...options };
 
-  // Create PDF with landscape orientation matching slide aspect ratio
-  // jsPDF uses points (pt) as default unit, but we can specify dimensions in px
+  // Create PDF at full 1920×1080 regardless of render dimensions.
+  // The smaller render is scaled up via the high-res canvas image.
   const pdf = new jsPDF({
     orientation: "landscape",
     unit: "px",
-    format: [width, height],
+    format: [PDF_WIDTH, PDF_HEIGHT],
     hotfixes: ["px_scaling"],
     compress: true,
   });
@@ -92,7 +101,7 @@ export async function exportSlidesToPdf(
       const canvas = await html2canvas(slideElement, {
         width,
         height,
-        scale: 2,
+        scale: 4,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
@@ -112,11 +121,11 @@ export async function exportSlidesToPdf(
 
       // First page is already created, add new pages for subsequent slides
       if (i > 0) {
-        pdf.addPage([width, height], "landscape");
+        pdf.addPage([PDF_WIDTH, PDF_HEIGHT], "landscape");
       }
 
-      // Add image at position (0, 0) with full page dimensions
-      pdf.addImage(imgData, "JPEG", 0, 0, width, height);
+      // Add image scaled to full PDF page dimensions
+      pdf.addImage(imgData, "JPEG", 0, 0, PDF_WIDTH, PDF_HEIGHT);
     }
 
     // Save PDF (triggers browser download)

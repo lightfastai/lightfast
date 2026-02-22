@@ -7,7 +7,7 @@
 [![CI Status](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml/badge.svg)](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/stargazers)
 
-**Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.**
+**Lightfast is the memory layer for teams. Every decision across your tools — surfaced, cited, and ready for people and agents.**
 
 > **Early Access** — Lightfast is currently in early access. [Request access →](https://lightfast.ai/early-access)
 

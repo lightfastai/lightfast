@@ -32,22 +32,33 @@ export function CustomTitleSlide({
 
       {/* Centered logo + title + tagline */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+        <div
+          className={cn(
+            "flex items-center text-white",
+            isFixed
+              ? "gap-5"
+              : "gap-2 sm:gap-2.5 md:gap-3 lg:gap-4",
+          )}
+        >
           <Icons.logoShort
             className={cn(
-              "text-white",
+              "text-white shrink-0 [&_path]:[stroke-width:18]",
               isFixed
-                ? "w-16 h-16"
-                : "w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14",
+                ? "w-14 h-14"
+                : "w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-12 lg:h-12",
             )}
           />
           <h1
             className={cn(
-              "font-normal text-white tracking-tight",
-              isFixed
-                ? "text-8xl"
-                : "text-3xl sm:text-4xl md:text-5xl lg:text-6xl",
+              "font-medium",
+              isFixed ? "text-8xl" : "text-3xl sm:text-4xl md:text-5xl lg:text-6xl",
             )}
+            style={{
+              fontFamily: "var(--font-pp-supply-sans)",
+              letterSpacing: "0.05em",
+              lineHeight: 1,
+              transform: "translateY(0.06em)",
+            }}
           >
             {slide.title}
           </h1>
@@ -55,10 +66,10 @@ export function CustomTitleSlide({
         {slide.subtitle && (
           <p
             className={cn(
-              "text-white font-normal text-center",
+              "text-white font-medium text-center",
               isFixed
-                ? "mt-6 text-lg max-w-[600px]"
-                : "mt-3 sm:mt-4 md:mt-5 text-[10px] sm:text-xs md:text-sm lg:text-xl max-w-[80%] sm:max-w-[70%] md:max-w-[500px]",
+                ? "mt-6 text-xl max-w-[600px]"
+                : "mt-3 sm:mt-4 md:mt-5 text-xs sm:text-sm md:text-base lg:text-lg max-w-[80%] sm:max-w-[70%] md:max-w-[500px]",
             )}
           >
             {slide.subtitle}
