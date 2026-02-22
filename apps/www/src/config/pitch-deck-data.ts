@@ -14,11 +14,11 @@ export const PITCH_SLIDES = [
     type: "content" as const,
     title: "The Problem.",
     gridTitle: "Problem",
-    leftText: "THE OPERATING COST",
+    leftText: "NO MEMORY",
     rightText: [
-      "Your team's decisions are spread across GitHub, Linear, Sentry, Vercel — and none of them are connected.",
-      "Finding what happened and why means searching each tool one by one.",
-      "AI agents burn tokens navigating, not building. You're paying for search, not work.",
+      "Your team's history is spread across dozens of disconnected tools.",
+      "What happened, why, and how things connect — buried. Reconstructed manually, every time.",
+      "Agents burn tokens navigating, not building.",
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
@@ -48,9 +48,10 @@ export const PITCH_SLIDES = [
     imageAlt:
       "Anthropic data: Software engineering is 49.7% of all agentic tool calls",
     rightText: [
-      "AI agents exploded beyond code — teams now run them for triage, deployment, and operations.",
+      "AI agents went mainstream — not just for code, but triage, ops, support, and growth.",
       "MCP gave agents access to your tools. But access isn't understanding.",
-      "216K stars on OpenClaw. But connecting agents to tools isn't enough — without context, they burn tokens in circles.",
+      "Claude Code proved agents ship code. OpenClaw proved agents manage workflows.",
+      "Next: entire businesses. That requires memory.",
     ],
     bgColor: "bg-[#F5F5F0]",
     textColor: "text-foreground",
