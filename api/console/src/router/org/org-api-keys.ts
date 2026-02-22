@@ -129,7 +129,7 @@ export const orgApiKeysRouter = {
 
       const unkeyData = unkeyResponse.data;
 
-      if (!unkeyData?.keyId || !unkeyData.key) {
+      if (!unkeyData.keyId || !unkeyData.key) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create API key",
@@ -267,7 +267,7 @@ export const orgApiKeysRouter = {
           .update(orgApiKeys)
           .set({ isActive: false, updatedAt: new Date().toISOString() })
           .where(eq(orgApiKeys.id, existingKey.id));
-      } catch (e) {
+      } catch {
         // DB failed after Unkey revoke succeeded — re-enable Unkey key to stay consistent
         if (existingKey.unkeyKeyId) {
           await unkey.keys
@@ -452,7 +452,7 @@ export const orgApiKeysRouter = {
 
       const newUnkeyData = unkeyResponse.data;
 
-      if (!newUnkeyData?.keyId || !newUnkeyData.key) {
+      if (!newUnkeyData.keyId || !newUnkeyData.key) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create replacement API key",
@@ -466,7 +466,7 @@ export const orgApiKeysRouter = {
       if (existingKey.unkeyKeyId) {
         try {
           await unkey.keys.updateKey({ keyId: existingKey.unkeyKeyId, enabled: false });
-        } catch (e) {
+        } catch {
           // Rollback: disable the newly created key so we don't leave two active keys
           await unkey.keys
             .updateKey({ keyId: newUnkeyData.keyId, enabled: false })

@@ -5,7 +5,7 @@
  * Keys are created through Unkey with sk_lf_ prefix and verified via Unkey's RPC.
  */
 
-import { type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { unkey } from "@vendor/unkey";
 import { log } from "@vendor/observability/log";
 
@@ -88,13 +88,13 @@ export async function withUnkeyAuth(
           status: 403,
         },
       };
-      const mapped = codeMap[result.code ?? ""] ?? {
+      const mapped = codeMap[result.code] ?? {
         message: "Invalid API key",
         status: 401,
       };
       return {
         success: false,
-        error: { code: result.code ?? "UNAUTHORIZED", message: mapped.message },
+        error: { code: result.code, message: mapped.message },
         status: mapped.status,
       };
     }
