@@ -79,7 +79,7 @@ export const orgApiKeys = pgTable(
      * Unkey key ID for Unkey-managed keys (e.g., "key_xxx")
      * Used for management operations (revoke, update, delete) via Unkey API.
      */
-    unkeyKeyId: varchar("unkey_key_id", { length: 191 }),
+    unkeyKeyId: varchar("unkey_key_id", { length: 191 }).unique(),
 
     /**
      * Key prefix for identification (e.g., "sk_lf_")

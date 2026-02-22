@@ -10,6 +10,7 @@ import {
   rotateOrgApiKeySchema,
   listOrgApiKeysSchema,
 } from "@repo/console-validation/schemas";
+import { LIGHTFAST_API_KEY_PREFIX } from "@repo/console-api-key";
 import { unkey, UNKEY_API_ID } from "@vendor/unkey";
 import { recordCriticalActivity } from "../../lib/activity";
 
@@ -147,7 +148,7 @@ export const orgApiKeysRouter = {
           createdByUserId: ctx.auth.userId,
           name: input.name,
           keyHash: null, // Unkey manages verification — no local hash needed
-          keyPrefix: "sk_lf_",
+          keyPrefix: LIGHTFAST_API_KEY_PREFIX,
           keySuffix,
           unkeyKeyId: unkeyData.keyId,
           expiresAt: input.expiresAt?.toISOString(),
@@ -159,8 +160,8 @@ export const orgApiKeysRouter = {
 
       if (!created) {
         // Rollback: disable the Unkey key we just created
-        await unkey.keys.updateKey({ keyId: unkeyData.keyId, enabled: false }).catch(() => {
-          // Best-effort rollback
+        await unkey.keys.updateKey({ keyId: unkeyData.keyId, enabled: false }).catch((e: unknown) => {
+          console.error("Rollback (disable Unkey key) failed:", e instanceof Error ? e.message : String(e));
         });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -180,7 +181,7 @@ export const orgApiKeysRouter = {
         metadata: {
           keyId: created.publicId,
           keyName: input.name,
-          keyPreview: `sk_lf_...${keySuffix}`,
+          keyPreview: `${LIGHTFAST_API_KEY_PREFIX}...${keySuffix}`,
           expiresAt: input.expiresAt?.toISOString() ?? null,
         },
       });
@@ -190,7 +191,7 @@ export const orgApiKeysRouter = {
         id: created.publicId,
         key: unkeyData.key, // Full key - only returned once!
         name: input.name,
-        keyPreview: `sk_lf_...${keySuffix}`,
+        keyPreview: `${LIGHTFAST_API_KEY_PREFIX}...${keySuffix}`,
         expiresAt: input.expiresAt?.toISOString() ?? null,
         createdAt: new Date().toISOString(),
       };
@@ -248,18 +249,16 @@ export const orgApiKeysRouter = {
         });
       }
 
-      // Revoke in Unkey first
+      // Revoke in Unkey first — halt if it fails to prevent inconsistent state
       if (existingKey.unkeyKeyId) {
-        const { error: unkeyError } = await unkey.keys
-          .updateKey({ keyId: existingKey.unkeyKeyId, enabled: false })
-          .then((r) => ({ error: null, result: r }))
-          .catch((e: unknown) => ({
-            error: e instanceof Error ? e.message : String(e),
-            result: null,
-          }));
-        if (unkeyError) {
-          console.error("Unkey revoke failed:", unkeyError);
-          // Proceed with DB update anyway — key will be invalid on next Unkey verify
+        try {
+          await unkey.keys.updateKey({ keyId: existingKey.unkeyKeyId, enabled: false });
+        } catch (e) {
+          console.error("Unkey revoke failed:", e instanceof Error ? e.message : String(e));
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to revoke API key",
+          });
         }
       }
 
@@ -332,14 +331,17 @@ export const orgApiKeysRouter = {
         });
       }
 
-      // Delete from Unkey
+      // Delete from Unkey first — halt if it fails to prevent orphaned DB rows
       if (existingKey.unkeyKeyId) {
-        await unkey.keys
-          .deleteKey({ keyId: existingKey.unkeyKeyId })
-          .catch((e: unknown) => {
-            console.error("Unkey delete failed:", e instanceof Error ? e.message : String(e));
-            // Proceed with DB delete — key is invalid once removed from Unkey
+        try {
+          await unkey.keys.deleteKey({ keyId: existingKey.unkeyKeyId });
+        } catch (e) {
+          console.error("Unkey delete failed:", e instanceof Error ? e.message : String(e));
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to delete API key from auth provider",
           });
+        }
       }
 
       await db
@@ -412,16 +414,7 @@ export const orgApiKeysRouter = {
         });
       }
 
-      // 1. Revoke old key in Unkey
-      if (existingKey.unkeyKeyId) {
-        await unkey.keys
-          .updateKey({ keyId: existingKey.unkeyKeyId, enabled: false })
-          .catch((e: unknown) => {
-            console.error("Unkey revoke (rotate) failed:", e instanceof Error ? e.message : String(e));
-          });
-      }
-
-      // 2. Create new key in Unkey
+      // 1. Create new key in Unkey FIRST — prevents leaving user with no working key if creation fails
       const unkeyResponse = await unkey.keys.createKey({
         apiId: UNKEY_API_ID,
         prefix: "sk_lf",
@@ -453,6 +446,16 @@ export const orgApiKeysRouter = {
 
       const newKeySuffix = newUnkeyData.key.slice(-4);
 
+      // 2. Disable old key in Unkey — new key is ready so this is safe
+      if (existingKey.unkeyKeyId) {
+        try {
+          await unkey.keys.updateKey({ keyId: existingKey.unkeyKeyId, enabled: false });
+        } catch (e) {
+          console.error("Unkey revoke (rotate) failed:", e instanceof Error ? e.message : String(e));
+          // Proceed anyway — new key is ready; old key can be manually revoked
+        }
+      }
+
       // 3. DB transaction: deactivate old, insert new
       const [newKey] = await db.transaction(async (tx) => {
         await tx
@@ -468,7 +471,7 @@ export const orgApiKeysRouter = {
             createdByUserId: ctx.auth.userId,
             name: existingKey.name,
             keyHash: null,
-            keyPrefix: "sk_lf_",
+            keyPrefix: LIGHTFAST_API_KEY_PREFIX,
             keySuffix: newKeySuffix,
             unkeyKeyId: newUnkeyData.keyId,
             expiresAt: input.expiresAt?.toISOString(),
@@ -480,6 +483,19 @@ export const orgApiKeysRouter = {
       });
 
       if (!newKey) {
+        // Rollback: disable new Unkey key and attempt to re-enable old key
+        await unkey.keys
+          .updateKey({ keyId: newUnkeyData.keyId, enabled: false })
+          .catch((e: unknown) => {
+            console.error("Rollback (disable new key) failed:", e instanceof Error ? e.message : String(e));
+          });
+        if (existingKey.unkeyKeyId) {
+          await unkey.keys
+            .updateKey({ keyId: existingKey.unkeyKeyId, enabled: true })
+            .catch((e: unknown) => {
+              console.error("Rollback (re-enable old key) failed:", e instanceof Error ? e.message : String(e));
+            });
+        }
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to rotate API key",
@@ -499,7 +515,7 @@ export const orgApiKeysRouter = {
           oldKeyId: existingKey.publicId,
           newKeyId: newKey.publicId,
           keyName: existingKey.name,
-          newKeyPreview: `sk_lf_...${newKeySuffix}`,
+          newKeyPreview: `${LIGHTFAST_API_KEY_PREFIX}...${newKeySuffix}`,
         },
         relatedActivityId: existingKey.publicId,
       });
@@ -508,7 +524,7 @@ export const orgApiKeysRouter = {
         id: newKey.publicId,
         key: newUnkeyData.key, // Full key - only returned once!
         name: existingKey.name,
-        keyPreview: `sk_lf_...${newKeySuffix}`,
+        keyPreview: `${LIGHTFAST_API_KEY_PREFIX}...${newKeySuffix}`,
         expiresAt: input.expiresAt?.toISOString() ?? null,
         createdAt: new Date().toISOString(),
       };

@@ -122,7 +122,7 @@ export async function hashApiKey(key: string): Promise<string> {
  */
 export function extractKeyPreview(key: string): string {
   const suffix = key.slice(-API_KEY_PREVIEW_LENGTH);
-  return `sk_lf_...${suffix}`;
+  return `${LIGHTFAST_API_KEY_PREFIX}...${suffix}`;
 }
 
 /**

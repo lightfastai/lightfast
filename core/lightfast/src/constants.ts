@@ -37,5 +37,6 @@ export const API_KEY_SECRET_LENGTH = 43;
  * @returns true if the key has the correct prefix
  */
 export function isValidApiKeyFormat(key: string): boolean {
+  if (!key) return false;
   return key.startsWith(LIGHTFAST_API_KEY_PREFIX);
 }
