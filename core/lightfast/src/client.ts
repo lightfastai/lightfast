@@ -43,7 +43,7 @@ interface ApiErrorResponse {
  *
  * @example
  * ```typescript
- * const lightfast = new Lightfast({ apiKey: "sk-lf-..." });
+ * const lightfast = new Lightfast({ apiKey: "sk_lf_..." });
  * const results = await lightfast.search({ query: "authentication" });
  * ```
  */
@@ -276,7 +276,7 @@ export class Lightfast {
  *
  * @example
  * ```typescript
- * const lightfast = createLightfast({ apiKey: "sk-lf-..." });
+ * const lightfast = createLightfast({ apiKey: "sk_lf_..." });
  * ```
  */
 export function createLightfast(config: LightfastConfig): Lightfast {

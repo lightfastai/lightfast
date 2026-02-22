@@ -28,6 +28,7 @@ import { V1SearchRequestSchema } from "@repo/console-types";
 import {
   withDualAuth,
   createDualAuthErrorResponse,
+  buildRateLimitHeaders,
 } from "../lib/with-dual-auth";
 import { searchLogic } from "~/lib/v1/search";
 
@@ -130,7 +131,9 @@ export async function POST(request: NextRequest) {
       latency: response.latency,
     });
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: buildRateLimitHeaders(authResult.auth),
+    });
   } catch (error) {
     log.error("v1/search error", {
       requestId,
