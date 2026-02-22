@@ -58,7 +58,6 @@ export async function withDualAuth(
 ): Promise<DualAuthResult> {
   // Check for Authorization header
   const authHeader = request.headers.get("authorization");
-  console.log(request.headers);
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
 
