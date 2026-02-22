@@ -10,7 +10,7 @@ interface CodeSample {
 const sdkSamples: Record<string, string> = {
   search: `import { Lightfast } from "lightfast";
 
-const client = new Lightfast({ apiKey: "sk_..." });
+const client = new Lightfast({ apiKey: "sk_lf_..." });
 
 const results = await client.search({
   query: "authentication implementation",
@@ -26,7 +26,7 @@ console.log(results.meta.total);`,
 
   "get-contents": `import { Lightfast } from "lightfast";
 
-const client = new Lightfast({ apiKey: "sk_..." });
+const client = new Lightfast({ apiKey: "sk_lf_..." });
 
 const contents = await client.contents({
   ids: ["obs_abc123", "doc_def456"],
@@ -37,7 +37,7 @@ console.log(contents.missing);`,
 
   "find-similar": `import { Lightfast } from "lightfast";
 
-const client = new Lightfast({ apiKey: "sk_..." });
+const client = new Lightfast({ apiKey: "sk_lf_..." });
 
 const similar = await client.findSimilar({
   url: "https://github.com/org/repo/pull/123",
@@ -50,7 +50,7 @@ console.log(similar.source);`,
 
   graph: `import { Lightfast } from "lightfast";
 
-const client = new Lightfast({ apiKey: "sk_..." });
+const client = new Lightfast({ apiKey: "sk_lf_..." });
 
 const graph = await client.graph({
   id: "obs_abc123",
@@ -63,7 +63,7 @@ console.log(graph.meta.nodeCount);`,
 
   "find-related": `import { Lightfast } from "lightfast";
 
-const client = new Lightfast({ apiKey: "sk_..." });
+const client = new Lightfast({ apiKey: "sk_lf_..." });
 
 const related = await client.related({
   id: "obs_abc123",

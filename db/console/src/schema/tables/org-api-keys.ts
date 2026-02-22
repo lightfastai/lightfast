@@ -82,7 +82,7 @@ export const orgApiKeys = pgTable(
     unkeyKeyId: varchar("unkey_key_id", { length: 191 }),
 
     /**
-     * Key prefix for identification (e.g., "sk_")
+     * Key prefix for identification (e.g., "sk_lf_")
      * Helps users identify key type without exposing full key
      */
     keyPrefix: varchar("key_prefix", { length: 20 }).notNull(),

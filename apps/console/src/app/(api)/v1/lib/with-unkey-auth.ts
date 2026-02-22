@@ -2,7 +2,7 @@
  * Unkey API Key Authentication Middleware for v1 Routes
  *
  * SECURITY: Validates workspace-scoped API keys via Unkey's edge verification.
- * Keys are created through Unkey with sk_ prefix and verified via Unkey's RPC.
+ * Keys are created through Unkey with sk_lf_ prefix and verified via Unkey's RPC.
  */
 
 import { type NextRequest } from "next/server";
@@ -11,9 +11,9 @@ import { unkey } from "@vendor/unkey";
 /**
  * API key prefix for Unkey-managed keys.
  * Unkey produces keys in the format: {prefix}_{random}
- * With prefix "sk", the full key looks like: sk_xxxxxxxxxxxx
+ * With prefix "sk_lf", the full key looks like: sk_lf_xxxxxxxxxxxx
  */
-export const UNKEY_API_KEY_PREFIX = "sk_";
+export const UNKEY_API_KEY_PREFIX = "sk_lf_";
 
 export interface UnkeyAuthContext {
   workspaceId: string;

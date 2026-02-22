@@ -1,8 +1,8 @@
 /**
  * API key prefix for Unkey-managed Lightfast keys
  *
- * Keys are created via Unkey with prefix "sk", resulting in keys
- * with format: sk_xxxxxxxxxxxxxxxx
+ * Keys are created via Unkey with prefix "sk_lf", resulting in keys
+ * with format: sk_lf_xxxxxxxxxxxxxxxx
  *
  * 📝 NOTE ON DUPLICATION:
  * This constant is intentionally defined in two places:
@@ -19,7 +19,7 @@
  * complex dependency management. If this value ever needs to change, both locations
  * must be updated together.
  */
-export const LIGHTFAST_API_KEY_PREFIX = "sk_";
+export const LIGHTFAST_API_KEY_PREFIX = "sk_lf_";
 
 /**
  * Length of the random secret portion of the API key
