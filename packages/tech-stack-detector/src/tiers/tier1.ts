@@ -1,35 +1,21 @@
 import type { DetectionRule, RuleMatch, ToolSignature } from "../types.js";
 
-/** Build concise evidence for a header match by checking which specific headers triggered it */
+/** Build concise evidence by isolating which specific header triggered the rule */
 function headerEvidence(
 	rule: DetectionRule,
 	headers: Record<string, string>,
 ): string {
-	// Try common known header patterns for concise evidence
-	for (const key of [
-		"server",
-		"x-vercel-id",
-		"x-nextjs-prerender",
-		"x-nextjs-cache",
-		"x-nf-request-id",
-		"x-render-origin-server",
-		"x-railway-request-id",
-		"rsc",
-	]) {
-		if (headers[key] !== undefined) {
-			// Check if this specific header contributes to the match
-			const single: Record<string, string> = { [key]: headers[key]! };
-			if (rule.check?.(single)) {
-				return `${key}: ${headers[key]}`;
-			}
+	if (!rule.check) return "header match";
+
+	// Test each header individually to find the one(s) that trigger the check
+	for (const [key, value] of Object.entries(headers)) {
+		const single: Record<string, string> = { [key]: value };
+		if (rule.check(single)) {
+			const truncated = value.length > 60 ? value.substring(0, 60) + "..." : value;
+			return `${key}: ${truncated}`;
 		}
 	}
-	// Fallback: list x-* and server headers briefly
-	return Object.entries(headers)
-		.filter(([k]) => k.startsWith("x-") || k === "server")
-		.slice(0, 2)
-		.map(([k, v]) => `${k}: ${v}`)
-		.join(", ") || "header match";
+	return "header match";
 }
 
 interface StaticData {
@@ -141,15 +127,16 @@ function matchRule(
 		case "inline_script": {
 			if (rule.pattern) {
 				for (const script of data.inlineScripts) {
-					if (rule.pattern.test(script)) {
-						const snippet = script
-							.substring(0, 80)
-							.replace(/\s+/g, " ")
-							.trim();
-						return {
-							matched: true,
-							evidence: snippet + (script.length > 80 ? "..." : ""),
-						};
+					const m = script.match(rule.pattern);
+					if (m) {
+						// Show context around the actual match, not the start of the script
+						const idx = m.index ?? 0;
+						const start = Math.max(0, idx - 20);
+						const end = Math.min(script.length, idx + m[0].length + 40);
+						const snippet = (start > 0 ? "..." : "")
+							+ script.substring(start, end).replace(/\s+/g, " ").trim()
+							+ (end < script.length ? "..." : "");
+						return { matched: true, evidence: snippet };
 					}
 				}
 			}

@@ -175,7 +175,7 @@ export const SIGNATURES: ToolSignature[] = [
 			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => !!h["x-shopify-stage"] || !!h["x-shopid"] },
 			{ vector: "script_src", tier: 1, confidence: 0.9, domains: ["cdn.shopify.com"] },
 			{ vector: "meta_tag", tier: 1, confidence: 0.9, pattern: /Shopify\.theme/i },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /Shopify\.shop|shopify/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /Shopify\.shop|Shopify\.theme|Shopify\.cdnHost/ },
 		],
 	},
 
@@ -249,7 +249,7 @@ export const SIGNATURES: ToolSignature[] = [
 		name: "Angular",
 		category: "engineering",
 		rules: [
-			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /ng-version=|angular/ },
+			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /ng-version=|angular\.module|angular\.bootstrap/ },
 			{ vector: "data_attr", tier: 1, confidence: 0.9, pattern: /ng-version/i },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "ng" },
 		],
@@ -294,7 +294,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "engineering",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["js.stytch.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /stytch/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /stytch\.com|StytchProvider|stytchClient/i },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["api.stytch.com", "js.stytch.com"] },
 		],
 	},
@@ -303,7 +303,7 @@ export const SIGNATURES: ToolSignature[] = [
 		name: "WorkOS",
 		category: "engineering",
 		rules: [
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /workos|WorkOS/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /workos\.com|WorkOS\.init|AuthKitProvider/i },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["api.workos.com"] },
 		],
 	},
@@ -372,7 +372,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "engineering",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["d2wy8f7a9ursnm.cloudfront.net"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /Bugsnag\.start|bugsnag/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /Bugsnag\.start|Bugsnag\.notify|bugsnag-js/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "Bugsnag" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["sessions.bugsnag.com", "notify.bugsnag.com"] },
 		],
@@ -383,7 +383,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "engineering",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["js-agent.newrelic.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /NREUM|newrelic/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /NREUM|newrelic\.com|nr-data\.net/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "NREUM" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["bam.nr-data.net", "js-agent.newrelic.com"] },
 		],
@@ -396,7 +396,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "engineering",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, pattern: /algolia/ },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /algoliasearch|algolia/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /algoliasearch|algolia\.net|algolianet\.com/ },
 			{ vector: "js_global", tier: 3, confidence: 0.85, global: "algoliasearch" },
 			{ vector: "network_request", tier: 3, confidence: 0.9, pattern: /\.algolia\.net|\.algolianet\.com/ },
 		],
@@ -451,7 +451,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "customer",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["static.zdassets.com", "ekr.zdassets.com", "cdn.zendesk.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /zE\(|zESettings|zendesk/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /zE\(|zESettings|zdassets\.com/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "zE" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["ekr.zdassets.com", "static.zdassets.com"] },
 		],
@@ -462,7 +462,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "customer",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["wchat.freshchat.com", "assetscdn-wchat.freshchat.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /fcWidget|freshchat/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /fcWidget\.init|fcWidget\.open|freshchat\.com/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "fcWidget" },
 		],
 	},
@@ -493,7 +493,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "customer",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["beacon-v2.helpscout.net"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /Beacon\(['"]init['"]|helpscout/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /Beacon\(['"]init['"]|helpscout\.net/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "Beacon" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["beacon-v2.helpscout.net", "d12wqas9hcki3z.cloudfront.net"] },
 		],
@@ -558,7 +558,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "revenue",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["assets.lemonsqueezy.com", "cdn.lemonsqueezy.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /lemonsqueezy|LemonSqueezy/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /lemonsqueezy\.com|createLemonSqueezy|LemonSqueezy\.setup/i },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "createLemonSqueezy" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["api.lemonsqueezy.com"] },
 		],
@@ -569,7 +569,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "revenue",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["js.chargebee.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /Chargebee\.init|chargebee/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /Chargebee\.init|js\.chargebee\.com/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "Chargebee" },
 		],
 	},
@@ -579,7 +579,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "revenue",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["js.hs-scripts.com", "js.hsforms.net", "js.hs-analytics.net", "js.hs-banner.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /HubSpot|hbspt\.forms|hs-script-loader/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /hbspt\.forms|hs-script-loader|js\.hs-scripts\.com/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "HubSpotConversations" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["js.hs-scripts.com", "forms.hsforms.com", "api.hubspot.com"] },
 		],
@@ -657,7 +657,7 @@ export const SIGNATURES: ToolSignature[] = [
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["plausible.io"] },
 			{ vector: "script_src", tier: 1, confidence: 0.9, pattern: /plausible[^"']*\.js/ },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /plausible/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /plausible\.io|plausible\.js/ },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["plausible.io"] },
 		],
 	},
@@ -688,7 +688,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "growth",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["cdn.getkoala.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /getkoala|koala/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /getkoala\.com|koala\.init/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "ko" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["cdn.getkoala.com", "api2.getkoala.com"] },
 		],
@@ -699,7 +699,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "growth",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["assets.customer.io"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /_cio\.identify|customerio/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /_cio\.identify|_cio\.track|customer\.io/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "_cio" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["track.customer.io", "assets.customer.io"] },
 		],
@@ -710,7 +710,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "growth",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["cdn.rudderlabs.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /rudderanalytics|rudderstack/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /rudderanalytics\.load|rudderlabs\.com/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "rudderanalytics" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, pattern: /\.rudderlabs\.com|\.rudderstack\.com/ },
 		],
@@ -744,7 +744,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "growth",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["clientsdk.launchdarkly.com", "app.launchdarkly.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /launchdarkly|LDClient/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /launchdarkly\.com|LDClient\.init/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "LDClient" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["clientsdk.launchdarkly.com", "events.launchdarkly.com", "app.launchdarkly.com"] },
 		],
@@ -755,7 +755,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "growth",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["cdn.optimizely.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /optimizely/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /optimizely\.com|window\.optimizely/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "optimizely" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["cdn.optimizely.com", "logx.optimizely.com"] },
 		],
@@ -813,7 +813,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "growth",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["chimpstatic.com", "list-manage.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /mailchimp|mc\.us\d+\.list-manage/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /chimpstatic\.com|mc\.us\d+\.list-manage|mailchimp\.com/ },
 		],
 	},
 	{
@@ -822,7 +822,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "growth",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["f.convertkit.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /convertkit/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /convertkit\.com|f\.convertkit\.com/ },
 		],
 	},
 
@@ -843,7 +843,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "growth",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["consent.cookiebot.com"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /Cookiebot|CookieConsent/i },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /Cookiebot\.|cookiebot\.com/ },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "Cookiebot" },
 		],
 	},
