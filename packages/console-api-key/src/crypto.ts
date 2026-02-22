@@ -11,7 +11,7 @@ import { nanoid } from "@repo/lib";
 
 /**
  * API key prefix for Unkey-managed Lightfast keys.
- * Keys are created via Unkey with prefix "sk_lf", resulting in: sk_lf_xxxxxxxxxxxxxxxx
+ * Keys are created via Unkey with prefix "sk_lf_", resulting in: sk_lf_xxxxxxxxxxxxxxxx
  *
  * @deprecated New keys are created by Unkey. This constant is kept for user-scoped
  * keys that still use the local key generation path.
@@ -132,15 +132,10 @@ export function extractKeyPreview(key: string): string {
  * @returns True if the key has the correct format
  */
 export function isValidApiKeyFormat(key: string): boolean {
-  // Must start with sk_lf_
-  if (!key.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
-    return false;
-  }
-
-  // Must have correct length: prefix (6, "sk_lf_") + secret (43) = 49
-  const expectedLength =
-    LIGHTFAST_API_KEY_PREFIX.length + API_KEY_SECRET_LENGTH;
-  return key.length === expectedLength;
+  if (!key) return false;
+  // Prefix-only check: Unkey controls key length for org keys, so we
+  // cannot enforce a fixed total length. Unkey handles full validation.
+  return key.startsWith(LIGHTFAST_API_KEY_PREFIX);
 }
 
 /**

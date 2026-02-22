@@ -1,7 +1,7 @@
 /**
  * API key prefix for Unkey-managed Lightfast keys
  *
- * Keys are created via Unkey with prefix "sk_lf", resulting in keys
+ * Keys are created via Unkey with prefix "sk_lf_", resulting in keys
  * with format: sk_lf_xxxxxxxxxxxxxxxx
  *
  * 📝 NOTE ON DUPLICATION:
