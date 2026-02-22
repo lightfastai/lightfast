@@ -262,10 +262,25 @@ export const orgApiKeysRouter = {
         }
       }
 
-      await db
-        .update(orgApiKeys)
-        .set({ isActive: false, updatedAt: new Date().toISOString() })
-        .where(eq(orgApiKeys.id, existingKey.id));
+      try {
+        await db
+          .update(orgApiKeys)
+          .set({ isActive: false, updatedAt: new Date().toISOString() })
+          .where(eq(orgApiKeys.id, existingKey.id));
+      } catch (e) {
+        // DB failed after Unkey revoke succeeded — re-enable Unkey key to stay consistent
+        if (existingKey.unkeyKeyId) {
+          await unkey.keys
+            .updateKey({ keyId: existingKey.unkeyKeyId, enabled: true })
+            .catch((rollbackErr: unknown) => {
+              console.error("Unkey rollback (re-enable) failed:", rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr));
+            });
+        }
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update API key record",
+        });
+      }
 
       // Track API key revocation (security-critical)
       await recordCriticalActivity({

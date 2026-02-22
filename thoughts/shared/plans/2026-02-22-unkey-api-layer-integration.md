@@ -479,12 +479,13 @@ const { result: unkeyResult, error: unkeyError } = await unkey.keys.create({
     createdBy: ctx.auth.userId,
   },
   expires: input.expiresAt?.getTime(),
-  ratelimit: {
-    type: "fast",
-    limit: 1000,
-    refillRate: 1000,
-    refillInterval: 60000, // 1000 req/min
-  },
+  ratelimits: [
+    {
+      name: "default",
+      limit: 1000,
+      duration: 60000, // 1000 req/min
+    },
+  ],
 });
 
 if (unkeyError || !unkeyResult) {
