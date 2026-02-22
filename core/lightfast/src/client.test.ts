@@ -71,7 +71,7 @@ describe("LightfastMemory", () => {
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({
-            Authorization: "Bearer sk_test123abc",
+            Authorization: "Bearer sk_lf_test123abc",
             "Content-Type": "application/json",
           }),
           body: expect.stringContaining('"query":"test query"'),
