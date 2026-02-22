@@ -446,13 +446,22 @@ export const orgApiKeysRouter = {
 
       const newKeySuffix = newUnkeyData.key.slice(-4);
 
-      // 2. Disable old key in Unkey — new key is ready so this is safe
+      // 2. Disable old key in Unkey — fail and rollback if this doesn't succeed
+      //    to prevent both old and new keys being active simultaneously
       if (existingKey.unkeyKeyId) {
         try {
           await unkey.keys.updateKey({ keyId: existingKey.unkeyKeyId, enabled: false });
         } catch (e) {
-          console.error("Unkey revoke (rotate) failed:", e instanceof Error ? e.message : String(e));
-          // Proceed anyway — new key is ready; old key can be manually revoked
+          // Rollback: disable the newly created key so we don't leave two active keys
+          await unkey.keys
+            .updateKey({ keyId: newUnkeyData.keyId, enabled: false })
+            .catch((rollbackErr: unknown) => {
+              console.error("Rollback (disable new key) failed:", rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr));
+            });
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to disable old API key during rotation",
+          });
         }
       }
 
