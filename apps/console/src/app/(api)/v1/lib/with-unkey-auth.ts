@@ -7,6 +7,7 @@
 
 import { type NextRequest } from "next/server";
 import { unkey } from "@vendor/unkey";
+import { log } from "@vendor/observability/log";
 
 /**
  * API key prefix for Unkey-managed keys.
@@ -107,10 +108,27 @@ export async function withUnkeyAuth(
     const userId = meta?.createdBy;
 
     if (!workspaceId || !clerkOrgId || !userId) {
-      console.error(
-        `[${requestId}] Unkey key ${result.keyId} missing required metadata:`,
-        { workspaceId, clerkOrgId, userId },
-      );
+      log.error("Unkey key missing required metadata", {
+        requestId,
+        keyId: result.keyId,
+        workspaceId,
+        clerkOrgId,
+        userId,
+      });
+      return {
+        success: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "API key metadata incomplete",
+        },
+        status: 500,
+      };
+    }
+
+    if (!result.keyId) {
+      log.error("Unkey verification succeeded but keyId is missing", {
+        requestId,
+      });
       return {
         success: false,
         error: {
@@ -129,7 +147,7 @@ export async function withUnkeyAuth(
       auth: {
         workspaceId,
         userId,
-        apiKeyId: result.keyId ?? "",
+        apiKeyId: result.keyId,
         clerkOrgId,
         ratelimit: firstRatelimit
           ? {
@@ -141,7 +159,7 @@ export async function withUnkeyAuth(
       },
     };
   } catch (err) {
-    console.error(`[${requestId}] Unkey auth error:`, err);
+    log.error("Unkey auth error", { requestId, error: err });
     return {
       success: false,
       error: {

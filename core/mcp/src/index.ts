@@ -15,8 +15,8 @@ Options:
   --version, -v      Show version
 
 Examples:
-  npx @lightfastai/mcp --api-key sk_lf_abc123xyz
-  LIGHTFAST_API_KEY=sk_lf_abc123xyz npx @lightfastai/mcp
+  npx @lightfastai/mcp --api-key sk_lf_...
+  LIGHTFAST_API_KEY=sk_lf_... npx @lightfastai/mcp
 
 Configure in Claude Desktop (claude_desktop_config.json):
   {
