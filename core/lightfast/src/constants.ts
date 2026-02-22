@@ -1,12 +1,8 @@
 /**
- * Unified API key prefix for all Lightfast keys
- * Format: sk-{vendor}-{secret}
+ * API key prefix for Unkey-managed Lightfast keys
  *
- * ⚠️ CRITICAL: DO NOT CHANGE THIS VALUE
- * This prefix is part of the public API contract. Changing it would:
- * - Break all existing API keys in production
- * - Invalidate customer integrations
- * - Require coordinated migration across all services
+ * Keys are created via Unkey with prefix "sk", resulting in keys
+ * with format: sk_xxxxxxxxxxxxxxxx
  *
  * 📝 NOTE ON DUPLICATION:
  * This constant is intentionally defined in two places:
@@ -21,16 +17,16 @@
  *
  * This controlled duplication maintains clean package boundaries while avoiding
  * complex dependency management. If this value ever needs to change, both locations
- * must be updated together (see thoughts/shared/research/2026-02-09-type-system-standardization.md).
+ * must be updated together.
  */
-export const LIGHTFAST_API_KEY_PREFIX = "sk-lf-";
+export const LIGHTFAST_API_KEY_PREFIX = "sk_";
 
 /**
  * Length of the random secret portion of the API key
- * 43 chars × 62-char alphabet = ~256 bits entropy
+ * Unkey controls the exact key length — this is kept for backward compatibility
+ * but is no longer used for validation.
  *
- * ⚠️ CRITICAL: DO NOT CHANGE THIS VALUE
- * Changing this would invalidate all existing API keys and break authentication.
+ * @deprecated Unkey controls key length. Use isValidApiKeyFormat for validation.
  */
 export const API_KEY_SECRET_LENGTH = 43;
 
@@ -38,12 +34,8 @@ export const API_KEY_SECRET_LENGTH = 43;
  * Validate that a string matches the Lightfast API key format
  *
  * @param key - The string to validate
- * @returns true if the key has the correct prefix and length
+ * @returns true if the key has the correct prefix
  */
 export function isValidApiKeyFormat(key: string): boolean {
-  if (!key.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
-    return false;
-  }
-  const expectedLength = LIGHTFAST_API_KEY_PREFIX.length + API_KEY_SECRET_LENGTH;
-  return key.length === expectedLength;
+  return key.startsWith(LIGHTFAST_API_KEY_PREFIX);
 }

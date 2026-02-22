@@ -64,6 +64,7 @@
     "@trpc/tanstack-react-query": "catalog:",
     "@upstash/redis": "catalog:",
     "@vendor/analytics": "workspace:*",
+    "@vendor/unkey": "workspace:*",
     "@vendor/clerk": "workspace:*",
     "@vendor/cms": "workspace:^",
     "@vendor/knock": "workspace:*",

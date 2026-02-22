@@ -21,7 +21,7 @@ import { randomUUID } from "node:crypto";
 import { log } from "@vendor/observability/log";
 import { V1FindSimilarRequestSchema } from "@repo/console-types";
 
-import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
+import { withDualAuth, createDualAuthErrorResponse, buildRateLimitHeaders } from "../lib/with-dual-auth";
 import { findsimilarLogic } from "~/lib/v1/findsimilar";
 
 export async function POST(request: NextRequest) {
@@ -95,7 +95,9 @@ export async function POST(request: NextRequest) {
       latency: Date.now() - startTime,
     });
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: buildRateLimitHeaders(authResult.auth),
+    });
   } catch (error) {
     log.error("v1/findsimilar error", {
       requestId,

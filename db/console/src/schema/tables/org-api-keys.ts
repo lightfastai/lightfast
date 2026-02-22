@@ -71,12 +71,18 @@ export const orgApiKeys = pgTable(
 
     /**
      * Hashed API key value (NEVER store plaintext)
-     * Uses SHA-256 hashing
+     * Uses SHA-256 hashing. Nullable for Unkey-managed keys (Unkey handles verification).
      */
-    keyHash: text("key_hash").notNull(),
+    keyHash: text("key_hash"),
 
     /**
-     * Key prefix for identification (e.g., "sk-lf-")
+     * Unkey key ID for Unkey-managed keys (e.g., "key_xxx")
+     * Used for management operations (revoke, update, delete) via Unkey API.
+     */
+    unkeyKeyId: varchar("unkey_key_id", { length: 191 }),
+
+    /**
+     * Key prefix for identification (e.g., "sk_")
      * Helps users identify key type without exposing full key
      */
     keyPrefix: varchar("key_prefix", { length: 20 }).notNull(),

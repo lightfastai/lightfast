@@ -49,7 +49,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "API Key",
-        "description": "Use your Lightfast API key (sk-lf-...) as the bearer token. Optionally include X-Workspace-ID header."
+        "description": "Use your Lightfast API key (sk_...) as the bearer token. Optionally include X-Workspace-ID header."
       }
     },
     "schemas": {

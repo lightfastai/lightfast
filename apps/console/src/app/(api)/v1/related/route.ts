@@ -16,6 +16,7 @@ import { V1RelatedRequestSchema } from "@repo/console-types";
 import {
   withDualAuth,
   createDualAuthErrorResponse,
+  buildRateLimitHeaders,
 } from "../lib/with-dual-auth";
 import { relatedLogic } from "~/lib/v1/related";
 
@@ -71,7 +72,9 @@ export async function POST(request: NextRequest) {
       took: Date.now() - startTime,
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: buildRateLimitHeaders(authResult.auth),
+    });
   } catch (error) {
     log.error("v1/related POST error", {
       requestId,
