@@ -62,7 +62,7 @@ export async function withDualAuth(
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
 
-    // Check if it's a Unkey-managed API key (starts with sk_ prefix)
+    // Check if it's a Unkey-managed API key (starts with sk_lf_ prefix)
     if (token.startsWith(UNKEY_API_KEY_PREFIX)) {
       const apiKeyResult = await withUnkeyAuth(request, requestId);
 

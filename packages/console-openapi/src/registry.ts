@@ -39,7 +39,7 @@ registry.registerComponent("securitySchemes", "apiKey", {
   scheme: "bearer",
   bearerFormat: "API Key",
   description:
-    "Use your Lightfast API key (sk_...) as the bearer token. Optionally include X-Workspace-ID header.",
+    "Use your Lightfast API key (sk_lf_...) as the bearer token. Optionally include X-Workspace-ID header.",
 });
 
 // POST /v1/search

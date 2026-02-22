@@ -113,7 +113,7 @@ export type RelatedInput = V1RelatedRequest;
  */
 export interface LightfastConfig {
   /**
-   * Your Lightfast API key (starts with sk_)
+   * Your Lightfast API key (starts with sk_lf_)
    */
   apiKey: string;
 

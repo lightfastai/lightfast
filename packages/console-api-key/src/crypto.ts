@@ -11,12 +11,12 @@ import { nanoid } from "@repo/lib";
 
 /**
  * API key prefix for Unkey-managed Lightfast keys.
- * Keys are created via Unkey with prefix "sk", resulting in: sk_xxxxxxxxxxxxxxxx
+ * Keys are created via Unkey with prefix "sk_lf", resulting in: sk_lf_xxxxxxxxxxxxxxxx
  *
  * @deprecated New keys are created by Unkey. This constant is kept for user-scoped
  * keys that still use the local key generation path.
  */
-export const LIGHTFAST_API_KEY_PREFIX = "sk_";
+export const LIGHTFAST_API_KEY_PREFIX = "sk_lf_";
 
 /**
  * Length of the random portion of the API key
@@ -39,12 +39,12 @@ export const API_KEY_PREFIX = "console_sk_";
 /**
  * Generate a new API key with the unified Lightfast format
  *
- * @param prefix - The prefix to use (default: "sk_")
+ * @param prefix - The prefix to use (default: "sk_lf_")
  * @returns The generated API key with ~256 bits of entropy
  *
  * @example
  * ```ts
- * const key = generateApiKey();  // "sk_AbC123xYz456..."
+ * const key = generateApiKey();  // "sk_lf_AbC123xYz456..."
  * ```
  */
 export function generateApiKey(
@@ -60,7 +60,7 @@ export function generateApiKey(
 export interface OrgApiKeyResult {
   /** Full API key (only returned once, never stored) */
   key: string;
-  /** Key prefix (e.g., "sk_") */
+  /** Key prefix (e.g., "sk_lf_") */
   prefix: string;
   /** Last 4 characters of the key secret (for display) */
   suffix: string;
@@ -98,7 +98,7 @@ export function generateOrgApiKey(): OrgApiKeyResult {
  *
  * @example
  * ```ts
- * const hash = await hashApiKey("sk_abc123...");
+ * const hash = await hashApiKey("sk_lf_abc123...");
  * // Returns: "abc123...def456" (64 character hex string)
  * ```
  */
@@ -118,11 +118,11 @@ export async function hashApiKey(key: string): Promise<string> {
  * Extract a preview of the API key for display purposes
  *
  * @param key - The full API key
- * @returns Preview string in format "sk_...XXXX"
+ * @returns Preview string in format "sk_lf_...XXXX"
  */
 export function extractKeyPreview(key: string): string {
   const suffix = key.slice(-API_KEY_PREVIEW_LENGTH);
-  return `sk_...${suffix}`;
+  return `sk_lf_...${suffix}`;
 }
 
 /**
@@ -132,12 +132,12 @@ export function extractKeyPreview(key: string): string {
  * @returns True if the key has the correct format
  */
 export function isValidApiKeyFormat(key: string): boolean {
-  // Must start with sk_
+  // Must start with sk_lf_
   if (!key.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
     return false;
   }
 
-  // Must have correct length: prefix (6) + secret (43) = 49
+  // Must have correct length: prefix (6, "sk_lf_") + secret (43) = 49
   const expectedLength =
     LIGHTFAST_API_KEY_PREFIX.length + API_KEY_SECRET_LENGTH;
   return key.length === expectedLength;

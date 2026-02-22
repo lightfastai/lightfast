@@ -268,7 +268,7 @@ export const apiKeyCreatedMetadataSchema = z
   .object({
     keyId: z.string(),
     keyName: z.string(),
-    keyPreview: z.string(), // e.g., "sk_live_...abc1"
+    keyPreview: z.string(), // e.g., "sk_lf_...abc1"
     expiresAt: z.string().datetime().nullable(),
   })
   .passthrough();
