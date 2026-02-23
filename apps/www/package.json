@@ -52,7 +52,7 @@
     "geist": "catalog:",
     "html2canvas-pro": "^1.6.6",
     "jotai": "^2.12.3",
-    "jspdf": "^2.5.2",
+    "jspdf": "^4.2.0",
     "lucide-react": "catalog:",
     "neverthrow": "catalog:",
     "next": "catalog:next16",
