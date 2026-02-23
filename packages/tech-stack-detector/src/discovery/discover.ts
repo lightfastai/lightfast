@@ -65,6 +65,7 @@ export async function discover(
 	const prefixResults = await probeCommonPrefixes(
 		rootDomain,
 		discoveredHostnames,
+		discoveryTimeout,
 	);
 
 	// Phase 3: Incorporate networkDomains from tier3 browser scan

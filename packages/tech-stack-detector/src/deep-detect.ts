@@ -124,7 +124,7 @@ export async function deepDetect(
 	let networkDomains = new Set<string>();
 	if (!skipBrowser) {
 		tiersUsed.push(3);
-		const tier3Result = await runTier3(url, SIGNATURES, 15_000);
+		const tier3Result = await runTier3(url, SIGNATURES, timeout);
 		tier3Matches = tier3Result.matches;
 		networkDomains = tier3Result.networkDomains;
 	}
@@ -193,7 +193,8 @@ export async function deepDetect(
 	// Step 4: If deep mode, scan top N discovered URLs
 	const subResults: DetectionResult[] = [];
 	if (deep && discovered.length > 0) {
-		const toScan = discovered.slice(0, maxDeepScans);
+		const safeMax = Math.max(0, Math.floor(maxDeepScans || 0));
+		const toScan = discovered.slice(0, safeMax);
 
 		await runConcurrent(toScan, MAX_CONCURRENT_SCANS, async (item) => {
 			try {

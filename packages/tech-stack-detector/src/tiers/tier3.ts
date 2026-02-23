@@ -87,7 +87,7 @@ export async function runTier3(
 		for (let i = 0; i < globalsToCheck.length; i++) {
 			if (globalResults[i]) {
 				const g = globalsToCheck[i];
-			if (!g) continue;
+				if (!g) continue;
 				matches.push({
 					toolId: g.toolId,
 					vector: "js_global",

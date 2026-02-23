@@ -142,14 +142,14 @@ function formatDeepResult(result: DeepDetectionResult): string {
 function parseMaxScans(args: string[]): number | undefined {
 	const idx = args.indexOf("--max-scans");
 	if (idx === -1 || idx + 1 >= args.length) return undefined;
-	const val = parseInt(args[idx + 1] ?? "", 10);
+	const val = parseInt(String(args[idx + 1]), 10);
 	return Number.isNaN(val) ? undefined : val;
 }
 
 async function main() {
 	const args = process.argv.slice(2);
 	const flags = new Set(args.filter((a) => a.startsWith("--")));
-	const positional = args.filter((a) => !a.startsWith("--") && !isMaxScansValue(args, a));
+	const positional = args.filter((a, i) => !a.startsWith("--") && args[i - 1] !== "--max-scans");
 
 	if (positional.length === 0) {
 		console.error(
@@ -213,12 +213,6 @@ async function main() {
 	} else {
 		console.log(formatTable(result));
 	}
-}
-
-/** Check if a value is the argument to --max-scans */
-function isMaxScansValue(args: string[], value: string): boolean {
-	const idx = args.indexOf(value);
-	return idx > 0 && args[idx - 1] === "--max-scans";
 }
 
 main().catch((err) => {

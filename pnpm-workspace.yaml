@@ -60,6 +60,8 @@ catalog:
   import-in-the-middle: ^1.8.1
   require-in-the-middle: ^7.1.1
   babel-plugin-react-compiler: ^1.0.0
+  vitest: ^3.2.4
+  '@vitest/coverage-v8': ^3.2.4
 catalogs:
   tailwind4:
     tailwindcss: 4.1.11

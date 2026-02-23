@@ -27,6 +27,7 @@ export async function probeCommonPrefixes(
 	alreadyDiscovered = new Set<string>(),
 	timeout = 5_000,
 ): Promise<DiscoveredUrl[]> {
+	rootDomain = rootDomain.toLowerCase();
 	const probes = COMMON_PREFIXES
 		.filter((prefix) => !alreadyDiscovered.has(`${prefix}.${rootDomain}`))
 		.map(async (prefix): Promise<DiscoveredUrl | null> => {

@@ -29,13 +29,13 @@
 		"@repo/prettier-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
 		"@types/node": "catalog:",
-		"@vitest/coverage-v8": "^3.2.4",
+		"@vitest/coverage-v8": "catalog:",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
 		"tsup": "^8.5.0",
 		"tsx": "^4.19.2",
 		"typescript": "catalog:",
-		"vitest": "^3.2.4"
+		"vitest": "catalog:"
 	},
 	"prettier": "@repo/prettier-config"
 }

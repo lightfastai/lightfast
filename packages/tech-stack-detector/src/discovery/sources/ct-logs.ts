@@ -33,6 +33,7 @@ export async function discoverFromCtLogs(
 		if (!contentType.includes("json")) return [];
 
 		const entries = (await res.json()) as CrtShEntry[];
+		if (!Array.isArray(entries)) return [];
 		const seen = new Set<string>();
 		const results: DiscoveredUrl[] = [];
 

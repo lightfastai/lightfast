@@ -45,7 +45,9 @@ export function extractRootDomain(hostname: string): string {
  * Excludes www. as it's typically the same site.
  */
 export function isSubdomainOf(hostname: string, rootDomain: string): boolean {
-	if (hostname === rootDomain) return false;
-	if (hostname === `www.${rootDomain}`) return false;
-	return hostname.endsWith(`.${rootDomain}`);
+	const h = hostname.replace(/\.$/, "").toLowerCase();
+	const r = rootDomain.replace(/\.$/, "").toLowerCase();
+	if (h === r) return false;
+	if (h === `www.${r}`) return false;
+	return h.endsWith(`.${r}`);
 }

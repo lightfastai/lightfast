@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { runTier2 } from "./tier2.js";
 import type { ToolSignature } from "../types.js";
@@ -43,6 +43,11 @@ async function setupDns(overrides: {
 describe("runTier2", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
 	});
 
 	describe("dns_cname vector", () => {

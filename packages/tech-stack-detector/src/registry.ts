@@ -689,7 +689,7 @@ export const SIGNATURES: ToolSignature[] = [
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["cdn.getkoala.com"] },
 			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /getkoala\.com|koala\.init/ },
-			{ vector: "js_global", tier: 3, confidence: 0.9, global: "ko.identify" },
+			{ vector: "js_global", tier: 3, confidence: 0.9, global: "ko" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["cdn.getkoala.com", "api2.getkoala.com"] },
 		],
 	},
