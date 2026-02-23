@@ -1,7 +1,6 @@
 # Lightfast
 
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![License: FSL-1.1](https://img.shields.io/badge/License-FSL--1.1-orange.svg)](LICENSE-FSL.md)
+[![License: FSL-1.1-ALv2](https://img.shields.io/badge/License-FSL--1.1--ALv2-orange.svg)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/lightfast.svg)](https://www.npmjs.com/package/lightfast)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![CI Status](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml/badge.svg)](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml)
@@ -241,10 +240,8 @@ pnpm dev
 
 ## License
 
-Lightfast uses a dual licensing approach:
+Lightfast is licensed under the [Functional Source License, Version 1.1 (FSL-1.1-ALv2)](LICENSE) — a source-available license that automatically converts to Apache 2.0 after 2 years.
 
-All components are licensed under [Apache License 2.0](LICENSE) — a permissive open source license.
-
-**For Users**: You're covered by Apache-2.0 for all Lightfast components — use freely in commercial and non-commercial projects.
+**For Users**: You can use Lightfast freely for internal business purposes, education, and research. Each version becomes fully open source (Apache 2.0) two years after release.
 
 See [LICENSING.md](LICENSING.md) for complete details.

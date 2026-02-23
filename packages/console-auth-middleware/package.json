@@ -1,5 +1,6 @@
 {
   "name": "@repo/console-auth-middleware",
+  "license": "FSL-1.1-Apache-2.0",
   "version": "0.1.0",
   "private": true,
   "type": "module",
