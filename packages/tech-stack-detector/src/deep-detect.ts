@@ -5,6 +5,7 @@ import { runTier2 } from "./tiers/tier2.js";
 import { runTier3 } from "./tiers/tier3.js";
 import { discover } from "./discovery/index.js";
 import { detect } from "./pipeline.js";
+import { findUnmatchedDomains } from "./unmatched.js";
 import type {
 	DeepDetectOptions,
 	DeepDetectionResult,
@@ -129,6 +130,15 @@ export async function deepDetect(
 		networkDomains = tier3Result.networkDomains;
 	}
 
+	// Compute unmatched domains for primary
+	let primaryUnmatched: string[] | undefined;
+	if (networkDomains.size > 0) {
+		const unmatched = findUnmatchedDomains(networkDomains, domain);
+		if (unmatched.length > 0) {
+			primaryUnmatched = unmatched;
+		}
+	}
+
 	// Feed networkDomains back into discovery for additional subdomains
 	if (networkDomains.size > 0) {
 		const networkDiscovered = await discover(domain, {
@@ -188,6 +198,7 @@ export async function deepDetect(
 		totalChecked: SIGNATURES.length,
 		tiersUsed,
 		durationMs: Math.round(performance.now() - start),
+		...(primaryUnmatched && { unmatchedDomains: primaryUnmatched }),
 	};
 
 	// Step 4: If deep mode, scan top N discovered URLs
@@ -210,11 +221,23 @@ export async function deepDetect(
 	// Step 5: Merge all detected tools across all results
 	const allDetected = mergeDetectedTools([primary, ...subResults]);
 
+	// Aggregate unmatched domains across primary + sub-results
+	const allUnmatched = new Set<string>();
+	if (primary.unmatchedDomains) {
+		for (const d of primary.unmatchedDomains) allUnmatched.add(d);
+	}
+	for (const sub of subResults) {
+		if (sub.unmatchedDomains) {
+			for (const d of sub.unmatchedDomains) allUnmatched.add(d);
+		}
+	}
+
 	return {
 		primary,
 		discovered,
 		subResults,
 		allDetected,
 		totalDurationMs: Math.round(performance.now() - totalStart),
+		...(allUnmatched.size > 0 && { unmatchedDomains: [...allUnmatched].sort() }),
 	};
 }

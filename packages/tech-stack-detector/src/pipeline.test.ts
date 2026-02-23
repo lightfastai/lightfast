@@ -197,6 +197,41 @@ describe("detect", () => {
 		});
 	});
 
+	describe("unmatchedDomains", () => {
+		it("includes unmatchedDomains when Tier 3 finds unknown domains", async () => {
+			vi.mocked(runTier3).mockResolvedValue({
+				matches: [],
+				networkDomains: new Set([
+					"example.com", // target, should be filtered
+					"unknown-tool.io", // unknown, should appear
+					"mystery-service.com", // unknown, should appear
+				]),
+			});
+
+			const result = await detect("https://example.com");
+
+			expect(result.unmatchedDomains).toBeDefined();
+			expect(result.unmatchedDomains).toContain("unknown-tool.io");
+			expect(result.unmatchedDomains).toContain("mystery-service.com");
+			expect(result.unmatchedDomains).not.toContain("example.com");
+		});
+
+		it("omits unmatchedDomains when skipBrowser is true", async () => {
+			const result = await detect("https://example.com", { skipBrowser: true });
+			expect(result.unmatchedDomains).toBeUndefined();
+		});
+
+		it("omits unmatchedDomains when all domains are known", async () => {
+			vi.mocked(runTier3).mockResolvedValue({
+				matches: [],
+				networkDomains: new Set(["example.com"]),
+			});
+
+			const result = await detect("https://example.com");
+			expect(result.unmatchedDomains).toBeUndefined();
+		});
+	});
+
 	describe("result metadata", () => {
 		it("sets totalChecked to SIGNATURES.length", async () => {
 			const result = await detect("https://example.com", { skipBrowser: true });

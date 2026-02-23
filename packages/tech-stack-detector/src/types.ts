@@ -70,6 +70,7 @@ export interface DetectionResult {
 	totalChecked: number;
 	tiersUsed: Tier[];
 	durationMs: number;
+	unmatchedDomains?: string[];
 }
 
 export interface DetectOptions {
@@ -106,4 +107,5 @@ export interface DeepDetectionResult {
 	subResults: DetectionResult[];
 	allDetected: DetectedTool[];
 	totalDurationMs: number;
+	unmatchedDomains?: string[];
 }

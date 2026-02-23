@@ -2,6 +2,7 @@ export { detect } from "./pipeline.js";
 export { deepDetect } from "./deep-detect.js";
 export { discover } from "./discovery/index.js";
 export { SIGNATURES } from "./registry.js";
+export { findUnmatchedDomains } from "./unmatched.js";
 export type {
 	Category,
 	ConfidenceLevel,
