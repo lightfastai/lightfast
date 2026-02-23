@@ -37,11 +37,11 @@ export default function PricingPage() {
 					offers: [
 						{
 							"@type": "Offer",
-							name: "Open Source License",
+							name: "MIT License",
 							price: "0",
 							priceCurrency: "USD",
 							availability: "https://schema.org/InStock",
-							description: "Free and open-source forever"
+							description: "Free and open-source under MIT license"
 						}
 					],
 					"isAccessibleForFree": true,

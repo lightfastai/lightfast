@@ -10,7 +10,7 @@
     },
     "./openapi.json": "./openapi.json"
   },
-  "license": "MIT",
+  "license": "FSL-1.1-Apache-2.0",
   "scripts": {
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",

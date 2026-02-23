@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Reserved workspace names for Lightfast Console to prevent URL routing conflicts",
-  "license": "MIT",
+  "license": "FSL-1.1-Apache-2.0",
   "type": "module",
   "exports": {
     ".": {

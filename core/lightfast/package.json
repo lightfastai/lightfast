@@ -20,7 +20,7 @@
   },
   "homepage": "https://lightfast.ai",
   "bugs": "https://github.com/lightfastai/lightfast/issues",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "author": "Lightfast <hello@lightfast.ai>",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

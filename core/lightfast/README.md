@@ -3,7 +3,7 @@
 TypeScript SDK for the Lightfast API — surface every decision your team makes across your tools, searchable, cited, and ready for people and agents.
 
 [![npm version](https://img.shields.io/npm/v/lightfast.svg)](https://www.npmjs.com/package/lightfast)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
 
 ## Features
@@ -678,4 +678,4 @@ Full API documentation: [lightfast.ai/docs/api](https://lightfast.ai/docs/api)
 
 ## License
 
-Apache-2.0 © [Lightfast](https://lightfast.ai)
+MIT © [Lightfast](https://lightfast.ai)

@@ -214,6 +214,6 @@ When reporting issues, please include:
 
 ## License
 
-By contributing to Lightfast, you agree that your contributions will be licensed under the same license as the project.
+By contributing to Lightfast, you agree that your contributions will be licensed under the Functional Source License, Version 1.1 (FSL-1.1-ALv2).
 
 Thank you for contributing to Lightfast!

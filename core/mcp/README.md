@@ -3,7 +3,7 @@
 Model Context Protocol (MCP) server for Lightfast — Connect Claude and other AI assistants to decisions surfaced across your tools.
 
 [![npm version](https://img.shields.io/npm/v/@lightfastai/mcp.svg)](https://www.npmjs.com/package/@lightfastai/mcp)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
 
 ## What is MCP?
@@ -557,4 +557,4 @@ This server implements MCP protocol version **2024-11-05** via `@modelcontextpro
 
 ## License
 
-Apache-2.0 © [Lightfast](https://lightfast.ai)
+MIT © [Lightfast](https://lightfast.ai)
