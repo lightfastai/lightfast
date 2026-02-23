@@ -71,6 +71,14 @@ function formatTable(result: DetectionResult): string {
 		lines.push("");
 	}
 
+	if (result.unmatchedDomains && result.unmatchedDomains.length > 0) {
+		lines.push("  UNMATCHED DOMAINS");
+		for (const d of result.unmatchedDomains) {
+			lines.push(`    \u2022 ${d}`);
+		}
+		lines.push("");
+	}
+
 	const warnings = result.detected.filter((t) => t.level === "possible").length;
 	lines.push(
 		`  ${result.totalChecked} tools checked \u00b7 ${result.detected.length} detected \u00b7 ${warnings} warnings`,
@@ -118,6 +126,17 @@ function formatDeepResult(result: DeepDetectionResult): string {
 			lines.push("  " + "\u2500".repeat(70));
 			lines.push(formatTable(sub));
 		}
+	}
+
+	// Aggregated unmatched domains
+	if (result.unmatchedDomains && result.unmatchedDomains.length > 0) {
+		lines.push("  " + "\u2500".repeat(70));
+		lines.push("");
+		lines.push("  UNMATCHED DOMAINS (aggregated)");
+		for (const d of result.unmatchedDomains) {
+			lines.push(`    \u2022 ${d}`);
+		}
+		lines.push("");
 	}
 
 	// Summary

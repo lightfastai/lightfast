@@ -3,6 +3,7 @@ import { computeConfidence, confidenceLevel } from "./scoring.js";
 import { runTier1 } from "./tiers/tier1.js";
 import { runTier2 } from "./tiers/tier2.js";
 import { runTier3 } from "./tiers/tier3.js";
+import { findUnmatchedDomains } from "./unmatched.js";
 import type {
 	DetectOptions,
 	DetectedTool,
@@ -34,10 +35,16 @@ export async function detect(
 
 	// Tier 3 runs after (headless browser)
 	let tier3Matches: RuleMatch[] = [];
+	let unmatchedDomains: string[] | undefined;
 	if (!skipBrowser) {
 		tiersUsed.push(3);
 		const tier3Result = await runTier3(url, SIGNATURES, timeout);
 		tier3Matches = tier3Result.matches;
+
+		const unmatched = findUnmatchedDomains(tier3Result.networkDomains, domain);
+		if (unmatched.length > 0) {
+			unmatchedDomains = unmatched;
+		}
 	}
 
 	// Group all matches by toolId
@@ -78,5 +85,6 @@ export async function detect(
 		totalChecked: SIGNATURES.length,
 		tiersUsed,
 		durationMs: Math.round(performance.now() - start),
+		...(unmatchedDomains && { unmatchedDomains }),
 	};
 }
