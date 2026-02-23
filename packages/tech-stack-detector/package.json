@@ -6,7 +6,7 @@
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
-			"default": "./src/index.ts"
+			"default": "./dist/index.js"
 		}
 	},
 	"scripts": {
@@ -16,6 +16,9 @@
 		"dev": "tsup --watch",
 		"format": "prettier --check . --ignore-path ../../.gitignore",
 		"lint": "eslint",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
@@ -26,11 +29,13 @@
 		"@repo/prettier-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
 		"@types/node": "catalog:",
+		"@vitest/coverage-v8": "^3.2.4",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
 		"tsup": "^8.5.0",
 		"tsx": "^4.19.2",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vitest": "^3.2.4"
 	},
 	"prettier": "@repo/prettier-config"
 }

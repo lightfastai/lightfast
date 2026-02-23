@@ -18,7 +18,7 @@ function headerEvidence(
 	return "header match";
 }
 
-interface StaticData {
+export interface StaticData {
 	headers: Record<string, string>;
 	cookies: Record<string, string>;
 	html: string;
@@ -29,7 +29,7 @@ interface StaticData {
 	dataAttrs: string[];
 }
 
-function parseHtml(html: string): Omit<StaticData, "headers" | "cookies"> {
+export function parseHtml(html: string): Omit<StaticData, "headers" | "cookies"> {
 	const scriptSrcs: string[] = [];
 	const metaTags: string[] = [];
 	const inlineScripts: string[] = [];
@@ -38,7 +38,7 @@ function parseHtml(html: string): Omit<StaticData, "headers" | "cookies"> {
 
 	// Extract <script src="...">
 	for (const m of html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)) {
-		scriptSrcs.push(m[1]!);
+		if (m[1]) scriptSrcs.push(m[1]);
 	}
 
 	// Extract <meta ...> tags (full tag for pattern matching)
@@ -57,7 +57,7 @@ function parseHtml(html: string): Omit<StaticData, "headers" | "cookies"> {
 
 	// Extract <a href="...">
 	for (const m of html.matchAll(/<a[^>]+href=["']([^"']+)["']/gi)) {
-		htmlLinks.push(m[1]!);
+		if (m[1]) htmlLinks.push(m[1]);
 	}
 
 	// Extract data-* attributes
@@ -89,7 +89,7 @@ function matchRule(
 			}
 			if (rule.pattern) {
 				const match = Object.keys(data.cookies).find((k) =>
-					rule.pattern!.test(k),
+					rule.pattern?.test(k),
 				);
 				if (match) return { matched: true, evidence: `cookie: ${match}` };
 			}
@@ -145,6 +145,8 @@ function matchRule(
 		case "html_link": {
 			if (rule.pattern) {
 				for (const link of data.htmlLinks) {
+					// Skip non-HTTP(S) schemes
+					if (/^(mailto:|tel:|javascript:|data:)/i.test(link)) continue;
 					// Skip links pointing at the target site itself
 					try {
 						const linkHost = new URL(link, `https://${targetHostname}`).hostname;
@@ -175,13 +177,10 @@ function matchRule(
 	}
 }
 
-export async function runTier1(
+export async function fetchAndParse(
 	url: string,
-	signatures: ToolSignature[],
 	timeout = 10_000,
-): Promise<RuleMatch[]> {
-	const matches: RuleMatch[] = [];
-
+): Promise<{ data: StaticData; targetHostname: string } | null> {
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), timeout);
 
@@ -201,7 +200,7 @@ export async function runTier1(
 		});
 
 		const cookies: Record<string, string> = {};
-		const setCookie = response.headers.getSetCookie?.() ?? [];
+		const setCookie = response.headers.getSetCookie();
 		for (const c of setCookie) {
 			const [pair] = c.split(";");
 			if (pair) {
@@ -215,29 +214,50 @@ export async function runTier1(
 		const data: StaticData = { headers, cookies, ...parsed };
 		const targetHostname = new URL(url).hostname;
 
-		for (const sig of signatures) {
-			for (const rule of sig.rules) {
-				if (rule.tier !== 1) continue;
-
-				const result = matchRule(rule, data, targetHostname);
-				if (result.matched) {
-					matches.push({
-						toolId: sig.id,
-						vector: rule.vector,
-						tier: 1,
-						confidence: rule.confidence,
-						evidence: result.evidence,
-					});
-				}
-			}
-		}
+		return { data, targetHostname };
 	} catch (err) {
 		if ((err as Error).name !== "AbortError") {
 			console.error(`[tier1] fetch failed: ${(err as Error).message}`);
 		}
+		return null;
 	} finally {
 		clearTimeout(timer);
 	}
+}
+
+export function matchTier1Rules(
+	data: StaticData,
+	targetHostname: string,
+	signatures: ToolSignature[],
+): RuleMatch[] {
+	const matches: RuleMatch[] = [];
+
+	for (const sig of signatures) {
+		for (const rule of sig.rules) {
+			if (rule.tier !== 1) continue;
+
+			const result = matchRule(rule, data, targetHostname);
+			if (result.matched) {
+				matches.push({
+					toolId: sig.id,
+					vector: rule.vector,
+					tier: 1,
+					confidence: rule.confidence,
+					evidence: result.evidence,
+				});
+			}
+		}
+	}
 
 	return matches;
+}
+
+export async function runTier1(
+	url: string,
+	signatures: ToolSignature[],
+	timeout = 10_000,
+): Promise<RuleMatch[]> {
+	const result = await fetchAndParse(url, timeout);
+	if (!result) return [];
+	return matchTier1Rules(result.data, result.targetHostname, signatures);
 }

@@ -1,22 +1,37 @@
+import type { chromium as ChromiumType } from "playwright";
 import type { RuleMatch, ToolSignature } from "../types.js";
+
+export interface Tier3Result {
+	matches: RuleMatch[];
+	networkDomains: Set<string>;
+}
 
 export async function runTier3(
 	url: string,
 	signatures: ToolSignature[],
 	timeout = 15_000,
-): Promise<RuleMatch[]> {
+): Promise<Tier3Result> {
 	const matches: RuleMatch[] = [];
 
-	let chromium: typeof import("playwright").chromium;
+	const networkDomains = new Set<string>();
+
+	let chromium: typeof ChromiumType;
 	try {
 		const pw = await import("playwright");
 		chromium = pw.chromium;
 	} catch {
 		console.error("[tier3] playwright not available, skipping browser tier");
-		return matches;
+		return { matches, networkDomains };
 	}
 
-	const browser = await chromium.launch({ headless: true });
+	let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
+	try {
+		browser = await chromium.launch({ headless: true });
+	} catch (err) {
+		console.error(`[tier3] browser launch failed: ${(err as Error).message}`);
+		return { matches, networkDomains };
+	}
+
 	try {
 		const context = await browser.newContext({
 			userAgent:
@@ -25,7 +40,6 @@ export async function runTier3(
 		const page = await context.newPage();
 
 		// Capture all outbound network request domains
-		const networkDomains = new Set<string>();
 		const networkUrls: string[] = [];
 		page.on("request", (req) => {
 			try {
@@ -62,7 +76,7 @@ export async function runTier3(
 		const globalResults = await page.evaluate((names: string[]) => {
 			return names.map((name) => {
 				try {
-					// eslint-disable-next-line no-eval
+
 					return typeof eval(name) !== "undefined";
 				} catch {
 					return false;
@@ -72,7 +86,8 @@ export async function runTier3(
 
 		for (let i = 0; i < globalsToCheck.length; i++) {
 			if (globalResults[i]) {
-				const g = globalsToCheck[i]!;
+				const g = globalsToCheck[i];
+			if (!g) continue;
 				matches.push({
 					toolId: g.toolId,
 					vector: "js_global",
@@ -139,7 +154,7 @@ export async function runTier3(
 					}
 					if (rule.pattern) {
 						const match = Object.keys(cookieMap).find((k) =>
-							rule.pattern!.test(k),
+							rule.pattern?.test(k),
 						);
 						if (match) {
 							matches.push({
@@ -162,5 +177,5 @@ export async function runTier3(
 		await browser.close();
 	}
 
-	return matches;
+	return { matches, networkDomains };
 }

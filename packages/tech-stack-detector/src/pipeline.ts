@@ -36,7 +36,8 @@ export async function detect(
 	let tier3Matches: RuleMatch[] = [];
 	if (!skipBrowser) {
 		tiersUsed.push(3);
-		tier3Matches = await runTier3(url, SIGNATURES, 15_000);
+		const tier3Result = await runTier3(url, SIGNATURES, timeout);
+		tier3Matches = tier3Result.matches;
 	}
 
 	// Group all matches by toolId

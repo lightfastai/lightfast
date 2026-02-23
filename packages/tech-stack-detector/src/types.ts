@@ -76,3 +76,34 @@ export interface DetectOptions {
 	skipBrowser?: boolean;
 	timeout?: number;
 }
+
+// ━━━ Discovery Types ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export type DiscoverySource =
+	| "link_extraction"
+	| "ct_log"
+	| "common_prefix"
+	| "network_request"
+	| "path_detection";
+
+export interface DiscoveredUrl {
+	url: string;
+	source: DiscoverySource[];
+	kind: "subdomain" | "path";
+	httpStatus?: number;
+	scanned: boolean;
+}
+
+export interface DeepDetectOptions extends DetectOptions {
+	deep?: boolean;
+	maxDeepScans?: number;
+	discoveryTimeout?: number;
+}
+
+export interface DeepDetectionResult {
+	primary: DetectionResult;
+	discovered: DiscoveredUrl[];
+	subResults: DetectionResult[];
+	allDetected: DetectedTool[];
+	totalDurationMs: number;
+}
