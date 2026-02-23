@@ -8,7 +8,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "engineering",
 		rules: [
 			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => !!h["x-vercel-id"] },
-			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => h["server"] === "Vercel" },
+			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => h.server === "Vercel" },
 			{ vector: "dns_cname", tier: 2, confidence: 0.9, pattern: /vercel[-.]dns|\.vercel\.app/i },
 			{ vector: "script_src", tier: 1, confidence: 0.8, domains: ["va.vercel-scripts.com"] },
 		],
@@ -19,7 +19,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "engineering",
 		rules: [
 			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => !!h["x-nf-request-id"] },
-			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => h["server"] === "Netlify" },
+			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => h.server === "Netlify" },
 			{ vector: "dns_cname", tier: 2, confidence: 0.9, pattern: /netlify/i },
 		],
 	},
@@ -29,7 +29,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "engineering",
 		rules: [
 			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => !!h["cf-ray"] },
-			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => h["server"] === "cloudflare" },
+			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => h.server === "cloudflare" },
 			{ vector: "header", tier: 1, confidence: 0.85, check: (h) => !!h["cf-cache-status"] },
 			{ vector: "dns_cname", tier: 2, confidence: 0.9, pattern: /\.cdn\.cloudflare\.net/i },
 		],
@@ -41,8 +41,8 @@ export const SIGNATURES: ToolSignature[] = [
 		rules: [
 			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => !!h["x-amz-cf-id"] },
 			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => !!h["x-amz-cf-pop"] },
-			{ vector: "header", tier: 1, confidence: 0.85, check: (h) => (h["via"] ?? "").includes("CloudFront") },
-			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => h["server"] === "CloudFront" },
+			{ vector: "header", tier: 1, confidence: 0.85, check: (h) => (h.via ?? "").includes("CloudFront") },
+			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => h.server === "CloudFront" },
 			{ vector: "dns_cname", tier: 2, confidence: 0.9, pattern: /\.cloudfront\.net/i },
 		],
 	},
@@ -51,8 +51,8 @@ export const SIGNATURES: ToolSignature[] = [
 		name: "Fastly",
 		category: "engineering",
 		rules: [
-			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => (h["via"] ?? "").toLowerCase().includes("fastly") },
-			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => !!h["x-served-by"] && (h["x-served-by"] ?? "").includes("cache-") },
+			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => (h.via ?? "").toLowerCase().includes("fastly") },
+			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => (h["x-served-by"] ?? "").includes("cache-") },
 			{ vector: "dns_cname", tier: 2, confidence: 0.85, pattern: /\.fastly\.net/i },
 		],
 	},
@@ -80,7 +80,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "engineering",
 		rules: [
 			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => !!h["fly-request-id"] },
-			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => (h["server"] ?? "").startsWith("Fly/") },
+			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => (h.server ?? "").startsWith("Fly/") },
 			{ vector: "dns_cname", tier: 2, confidence: 0.9, pattern: /\.fly\.dev/i },
 		],
 	},
@@ -89,7 +89,7 @@ export const SIGNATURES: ToolSignature[] = [
 		name: "Heroku",
 		category: "engineering",
 		rules: [
-			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => (h["via"] ?? "").includes("vegur") },
+			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => (h.via ?? "").includes("vegur") },
 			{ vector: "dns_cname", tier: 2, confidence: 0.9, pattern: /\.herokuapp\.com|\.herokussl\.com/i },
 		],
 	},
@@ -98,7 +98,7 @@ export const SIGNATURES: ToolSignature[] = [
 		name: "GitHub Pages",
 		category: "engineering",
 		rules: [
-			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => h["server"] === "GitHub.com" },
+			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => h.server === "GitHub.com" },
 			{ vector: "dns_cname", tier: 2, confidence: 0.9, pattern: /\.github\.io/i },
 		],
 	},
@@ -186,7 +186,7 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "engineering",
 		rules: [
 			{ vector: "header", tier: 1, confidence: 0.95, check: (h) => !!h["x-nextjs-prerender"] || !!h["x-nextjs-cache"] },
-			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => !!h["rsc"] },
+			{ vector: "header", tier: 1, confidence: 0.9, check: (h) => !!h.rsc },
 			{ vector: "meta_tag", tier: 1, confidence: 0.85, pattern: /next\.js/i },
 			{ vector: "script_src", tier: 1, confidence: 0.9, pattern: /\/_next\// },
 			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /__NEXT_DATA__/ },
@@ -259,7 +259,7 @@ export const SIGNATURES: ToolSignature[] = [
 		name: "Vue.js",
 		category: "engineering",
 		rules: [
-			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /Vue\.createApp|createApp|__vue__/ },
+			{ vector: "inline_script", tier: 1, confidence: 0.85, pattern: /Vue\.createApp|createApp\(|__vue__/ },
 			{ vector: "data_attr", tier: 1, confidence: 0.85, pattern: /data-v-[a-f0-9]/i },
 			{ vector: "js_global", tier: 3, confidence: 0.9, global: "__VUE__" },
 		],
@@ -645,8 +645,8 @@ export const SIGNATURES: ToolSignature[] = [
 		category: "growth",
 		rules: [
 			{ vector: "script_src", tier: 1, confidence: 0.95, domains: ["cdn.segment.com", "cdn.segment.io"] },
-			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /analytics\.load|analytics\.identify|analytics\.track/ },
-			{ vector: "js_global", tier: 3, confidence: 0.9, global: "analytics" },
+			{ vector: "inline_script", tier: 1, confidence: 0.9, pattern: /analytics\.load\(|analytics\.identify\(|analytics\.track\(/ },
+			{ vector: "js_global", tier: 3, confidence: 0.5, global: "analytics" },
 			{ vector: "network_request", tier: 3, confidence: 0.85, domains: ["api.segment.io", "cdn.segment.com", "api.segment.com"] },
 		],
 	},

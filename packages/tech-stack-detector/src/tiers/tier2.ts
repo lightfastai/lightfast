@@ -123,7 +123,7 @@ export async function runTier2(
 					break;
 				}
 				case "robots_txt": {
-					if (rule.pattern && rule.pattern.test(dnsData.robotsTxt)) {
+					if (rule.pattern?.test(dnsData.robotsTxt)) {
 						matches.push({
 							toolId: sig.id,
 							vector: rule.vector,

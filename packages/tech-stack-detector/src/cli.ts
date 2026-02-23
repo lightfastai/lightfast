@@ -1,5 +1,15 @@
 import { detect } from "./pipeline.js";
-import type { Category, DetectedTool, DetectionResult } from "./types.js";
+import { deepDetect } from "./deep-detect.js";
+import { discover } from "./discovery/index.js";
+import { extractRootDomain } from "./discovery/utils.js";
+import { fetchAndParse } from "./tiers/tier1.js";
+import type {
+	Category,
+	DeepDetectionResult,
+	DetectedTool,
+	DetectionResult,
+	DiscoveredUrl,
+} from "./types.js";
 
 const CATEGORY_ORDER: Category[] = [
 	"engineering",
@@ -18,7 +28,8 @@ const CATEGORY_LABELS: Record<Category, string> = {
 };
 
 function renderBar(confidence: number): string {
-	const filled = Math.round(confidence * 12);
+	const clamped = Math.max(0, Math.min(1, confidence));
+	const filled = Math.round(clamped * 12);
 	return "\u2588".repeat(filled) + "\u2591".repeat(12 - filled);
 }
 
@@ -69,20 +80,132 @@ function formatTable(result: DetectionResult): string {
 	return lines.join("\n");
 }
 
+function formatDiscoveredTable(discovered: DiscoveredUrl[]): string {
+	const lines: string[] = [];
+
+	lines.push("");
+	lines.push("  DISCOVERED URLS");
+	lines.push("  " + "\u2500".repeat(70));
+
+	if (discovered.length === 0) {
+		lines.push("    No subdomains or paths discovered");
+	} else {
+		for (const d of discovered) {
+			const status = d.httpStatus ? `[${d.httpStatus}]` : "     ";
+			const sources = d.source.join(", ");
+			const scanned = d.scanned ? "\u2713" : " ";
+			const url = d.url.padEnd(40);
+			lines.push(`    ${scanned} ${status} ${url} ${d.kind.padEnd(10)} (${sources})`);
+		}
+	}
+
+	lines.push("");
+	return lines.join("\n");
+}
+
+function formatDeepResult(result: DeepDetectionResult): string {
+	const lines: string[] = [];
+
+	// Primary result
+	lines.push(formatTable(result.primary));
+
+	// Discovered URLs
+	lines.push(formatDiscoveredTable(result.discovered));
+
+	// Sub-results
+	if (result.subResults.length > 0) {
+		for (const sub of result.subResults) {
+			lines.push("  " + "\u2500".repeat(70));
+			lines.push(formatTable(sub));
+		}
+	}
+
+	// Summary
+	lines.push("  " + "\u2550".repeat(70));
+	lines.push("");
+	const primaryCount = result.primary.detected.length;
+	const subCounts = result.subResults.map(
+		(s) => `${s.domain}: ${s.detected.length} tools`,
+	);
+	const summaryParts = [
+		`Root: ${primaryCount} tools`,
+		...subCounts,
+		`Total unique: ${result.allDetected.length} tools`,
+	];
+	lines.push(`  ${summaryParts.join(" | ")}`);
+	lines.push(`  Total duration: ${result.totalDurationMs}ms`);
+	lines.push("");
+
+	return lines.join("\n");
+}
+
+function parseMaxScans(args: string[]): number | undefined {
+	const idx = args.indexOf("--max-scans");
+	if (idx === -1 || idx + 1 >= args.length) return undefined;
+	const val = parseInt(String(args[idx + 1]), 10);
+	return Number.isNaN(val) ? undefined : val;
+}
+
 async function main() {
 	const args = process.argv.slice(2);
 	const flags = new Set(args.filter((a) => a.startsWith("--")));
-	const positional = args.filter((a) => !a.startsWith("--"));
+	const positional = args.filter((a, i) => !a.startsWith("--") && args[i - 1] !== "--max-scans");
 
 	if (positional.length === 0) {
-		console.error("Usage: detect <url> [--skip-browser] [--json]");
+		console.error(
+			"Usage: detect <url> [--skip-browser] [--json] [--deep] [--discover-only] [--max-scans <n>]",
+		);
 		process.exit(1);
 	}
 
-	const url = positional[0]!;
+	const url = positional[0] ?? "";
 	const skipBrowser = flags.has("--skip-browser");
 	const jsonOutput = flags.has("--json");
+	const deepMode = flags.has("--deep");
+	const discoverOnly = flags.has("--discover-only");
+	const maxScans = parseMaxScans(args);
 
+	if (discoverOnly) {
+		// Discovery-only mode: fetch HTML, run discovery, print results
+		const normalizedUrl = url.startsWith("http") ? url : `https://${url}`;
+		const domain = new URL(normalizedUrl).hostname;
+		const rootDomain = extractRootDomain(domain);
+
+		const fetchResult = await fetchAndParse(normalizedUrl);
+		const htmlLinks = fetchResult?.data.htmlLinks ?? [];
+
+		const discovered = await discover(domain, {
+			htmlLinks,
+			rootUrl: normalizedUrl,
+		});
+
+		if (jsonOutput) {
+			console.log(JSON.stringify({ url: normalizedUrl, domain, rootDomain, discovered }, null, 2));
+		} else {
+			console.log(`\n  Discovery for ${domain} (root: ${rootDomain})`);
+			console.log(formatDiscoveredTable(discovered));
+			console.log(`  ${discovered.length} URLs discovered`);
+			console.log("");
+		}
+		return;
+	}
+
+	if (deepMode) {
+		const result = await deepDetect(url, {
+			skipBrowser,
+			deep: true,
+			maxDeepScans: maxScans ?? 5,
+		});
+
+		if (jsonOutput) {
+			console.log(JSON.stringify(result, null, 2));
+		} else {
+			console.log(formatDeepResult(result));
+		}
+		return;
+	}
+
+	// Standard detection (unchanged behavior)
 	const result = await detect(url, { skipBrowser });
 
 	if (jsonOutput) {
