@@ -21,7 +21,6 @@
     "@repo/typescript-config": "0.0.0",
     "@repo/ai": "0.1.0",
     "@repo/ai-tools": "0.0.0",
-    "@repo/app-urls": "0.1.0",
     "@repo/chat-ai": "0.1.0",
     "@repo/chat-ai-types": "0.1.0",
     "@repo/chat-api-services": "0.1.0",

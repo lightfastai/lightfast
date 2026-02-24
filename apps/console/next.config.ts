@@ -9,7 +9,6 @@ import {
   withSentry,
 } from "@vendor/next/next-config-builder";
 import { mergeNextConfig } from "@vendor/next/merge-config";
-import { getDocsUrl } from "@repo/app-urls";
 
 const config: NextConfig = withSentry(
   withBetterStack(
@@ -20,7 +19,6 @@ const config: NextConfig = withSentry(
         // @db packages
         "@db/console",
         // @repo packages
-        "@repo/app-urls",
         "@repo/console-api-services",
         "@repo/console-auth-middleware",
         "@repo/console-backfill",
@@ -73,7 +71,6 @@ const config: NextConfig = withSentry(
           "@repo/console-workspace-cache",
           "@repo/lib",
           "@repo/url-utils",
-          "@repo/app-urls",
           // Vendor packages
           "@vendor/analytics",
           "@vendor/clerk",
@@ -148,7 +145,11 @@ const config: NextConfig = withSentry(
       async rewrites() {
         // Proxy /docs to the docs app
         // Keep /docs prefix since docs app folder structure has app/docs/
-        const docsUrl = getDocsUrl();
+        const vercelEnv = process.env.NEXT_PUBLIC_VERCEL_ENV;
+        const docsUrl =
+          vercelEnv === "production" || vercelEnv === "preview" || process.env.NODE_ENV === "production"
+            ? "https://lightfast-docs.vercel.app"
+            : "http://localhost:4105";
 
         return [
           {

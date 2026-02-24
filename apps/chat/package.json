@@ -36,7 +36,6 @@
     "@lightfastai/ai-sdk": "workspace:^",
     "@radix-ui/react-visually-hidden": "^1.1.0",
     "@repo/ai": "workspace:*",
-    "@repo/app-urls": "workspace:*",
     "@repo/chat-ai": "workspace:*",
     "@repo/chat-ai-types": "workspace:*",
     "@repo/chat-api-services": "workspace:*",

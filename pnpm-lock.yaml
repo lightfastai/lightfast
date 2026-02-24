@@ -491,9 +491,6 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.65.0(react@19.2.1))
-      '@repo/app-urls':
-        specifier: workspace:*
-        version: link:../../packages/app-urls
       '@repo/og':
         specifier: workspace:*
         version: link:../../packages/og
@@ -654,9 +651,6 @@ importers:
       '@repo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
-      '@repo/app-urls':
-        specifier: workspace:*
-        version: link:../../packages/app-urls
       '@repo/chat-ai':
         specifier: workspace:*
         version: link:../../packages/chat-ai
@@ -907,9 +901,6 @@ importers:
       '@repo/ai':
         specifier: workspace:^
         version: link:../../packages/ai
-      '@repo/app-urls':
-        specifier: workspace:^
-        version: link:../../packages/app-urls
       '@repo/console-ai':
         specifier: workspace:*
         version: link:../../packages/console-ai
@@ -1151,9 +1142,6 @@ importers:
       '@radix-ui/react-portal':
         specifier: ^1.1.10
         version: 1.1.10(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      '@repo/app-urls':
-        specifier: workspace:*
-        version: link:../../packages/app-urls
       '@repo/og':
         specifier: workspace:*
         version: link:../../packages/og
@@ -1305,9 +1293,6 @@ importers:
       '@radix-ui/react-dialog':
         specifier: ^1.1.14
         version: 1.1.15(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      '@repo/app-urls':
-        specifier: workspace:*
-        version: link:../../packages/app-urls
       '@repo/console-billing':
         specifier: workspace:*
         version: link:../../packages/console-billing
@@ -2219,40 +2204,6 @@ importers:
       typescript:
         specifier: ^5.9.2
         version: 5.9.3
-
-  packages/app-urls:
-    dependencies:
-      '@t3-oss/env-nextjs':
-        specifier: ^0.12.0
-        version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
-      '@vercel/related-projects':
-        specifier: ^1.0.0
-        version: 1.0.0
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      zod:
-        specifier: catalog:zod3
-        version: 3.25.76
-    devDependencies:
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../../internal/eslint
-      '@repo/prettier-config':
-        specifier: workspace:*
-        version: link:../../internal/prettier
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 20.19.22
-      eslint:
-        specifier: 'catalog:'
-        version: 9.38.0(jiti@2.6.1)
-      prettier:
-        specifier: 'catalog:'
-        version: 3.6.2
 
   packages/chat-ai:
     dependencies:

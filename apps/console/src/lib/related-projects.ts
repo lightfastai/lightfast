@@ -1,14 +1,13 @@
 import { withRelatedProject } from '@vercel/related-projects';
-import { env } from '@repo/app-urls';
 
-const isDevelopment = env.NEXT_PUBLIC_VERCEL_ENV === 'development';
+const isDevelopment = process.env.NEXT_PUBLIC_VERCEL_ENV !== 'production' && process.env.NEXT_PUBLIC_VERCEL_ENV !== 'preview';
 
 // Get the auth URL dynamically based on environment
 // Auth is served from lightfast.ai via microfrontends (not a separate subdomain)
 export const authUrl = withRelatedProject({
   projectName: 'lightfast-auth',
   defaultHost: isDevelopment
-    ? `http://localhost:${env.NEXT_PUBLIC_AUTH_PORT}`
+    ? 'http://localhost:4104'
     : 'https://lightfast.ai',
 });
 
@@ -16,6 +15,6 @@ export const authUrl = withRelatedProject({
 export const wwwUrl = withRelatedProject({
   projectName: 'lightfast-www',
   defaultHost: isDevelopment
-    ? `http://localhost:${env.NEXT_PUBLIC_WWW_PORT}`
+    ? 'http://localhost:4101'
     : 'https://lightfast.ai',
 });
