@@ -70,7 +70,7 @@ export interface CallbackResult {
   [key: string]: unknown;
 }
 
-/** Connection provider interface — OAuth, token vault, lifecycle. No webhook methods. */
+/** Connection provider interface — OAuth, token vault, lifecycle, and optional webhook registration (gated by `requiresWebhookRegistration`). */
 export interface ConnectionProvider {
   readonly name: ProviderName;
   readonly requiresWebhookRegistration: boolean;
