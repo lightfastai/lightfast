@@ -5,6 +5,6 @@
       "~/env": ["./env.ts"]
     }
   },
-  "include": ["*.ts", "src"],
+  "include": ["env.ts", "src"],
   "exclude": ["node_modules", "dist"]
 }
