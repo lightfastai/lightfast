@@ -4,6 +4,8 @@ import type {
   TransformContext,
 } from "@repo/console-types";
 import { toExternalVercelEventType } from "@repo/console-types";
+import { validateSourceEvent } from "../validation.js";
+import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 /**
  * Vercel deployment event types
  */
@@ -60,8 +62,6 @@ export interface VercelWebhookPayload {
     [key: string]: unknown;
   };
 }
-import { validateSourceEvent } from "../validation.js";
-import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
 /**
  * Transform Vercel deployment event to SourceEvent
