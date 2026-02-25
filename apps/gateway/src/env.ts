@@ -1,0 +1,57 @@
+import { createEnv } from "@t3-oss/env-nextjs";
+import { vercel } from "@t3-oss/env-nextjs/presets-zod";
+import { z } from "zod";
+
+import { upstashEnv } from "@vendor/upstash/env";
+import { qstashEnv } from "@vendor/qstash/env";
+
+export const env = createEnv({
+  extends: [vercel(), upstashEnv, qstashEnv],
+  shared: {
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
+  },
+  server: {
+    // Service auth
+    GATEWAY_API_KEY: z.string().min(1),
+    GATEWAY_WEBHOOK_SECRET: z.string().min(1),
+    GATEWAY_BASE_URL: z
+      .string()
+      .url()
+      .default("https://gateway.lightfast.ai"),
+    ENCRYPTION_KEY: z.string().min(32),
+
+    // Console integration
+    CONSOLE_INGRESS_URL: z.string().url(),
+    CONSOLE_API_URL: z.string().url(),
+
+    // GitHub
+    GITHUB_APP_SLUG: z.string().min(1),
+    GITHUB_APP_ID: z.string().min(1),
+    GITHUB_CLIENT_ID: z.string().min(1),
+    GITHUB_CLIENT_SECRET: z.string().min(1),
+    GITHUB_WEBHOOK_SECRET: z.string().min(1),
+
+    // Vercel
+    VERCEL_CLIENT_SECRET_ID: z.string().min(1),
+    VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
+    VERCEL_INTEGRATION_SLUG: z.string().min(1),
+
+    // Linear
+    LINEAR_CLIENT_ID: z.string().min(1),
+    LINEAR_CLIENT_SECRET: z.string().min(1),
+    LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1),
+
+    // Sentry
+    SENTRY_CLIENT_ID: z.string().min(1),
+    SENTRY_CLIENT_SECRET: z.string().min(1),
+  },
+  experimental__runtimeEnv: {
+    NODE_ENV: process.env.NODE_ENV,
+  },
+  skipValidation:
+    !!process.env.SKIP_ENV_VALIDATION ||
+    process.env.npm_lifecycle_event === "lint",
+  emptyStringAsUndefined: true,
+});

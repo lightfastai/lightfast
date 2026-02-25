@@ -24,6 +24,7 @@
     "dev:console": "turbo run dev --filter=@lightfast/console",
     "dev:console:app": "turbo watch dev -F @lightfast/console --continue",
     "dev:docs": "turbo watch dev -F @lightfast/docs --continue",
+    "dev:gateway": "turbo watch dev -F @lightfast/gateway --continue",
     "dev:email": "turbo run dev:email -F @lightfast/www",
     "cms:types": "pnpm --filter @lightfast/www cms:types",
     "cms:dev": "pnpm --filter @lightfast/www cms:dev",
@@ -58,6 +59,7 @@
     "turbo-ignore": "^2.8.10",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.46.1",
+    "vercel": "^50.23.2",
     "vite": "^6.3.5"
   },
   "prettier": "@repo/prettier-config",

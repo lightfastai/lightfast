@@ -12,7 +12,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "hono": "^4.12.2"
+    "@hono/node-server": "^1.13.8",
+    "@t3-oss/env-nextjs": "catalog:",
+    "@vendor/qstash": "workspace:*",
+    "@vendor/upstash": "workspace:*",
+    "hono": "^4.12.2",
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
