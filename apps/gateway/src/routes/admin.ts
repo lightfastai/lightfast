@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { Hono } from "hono";
-import { db } from "../lib/db";
+import { db } from "@db/console/client";
 import { apiKeyAuth } from "../middleware/auth";
 import { resourceKey } from "../lib/keys";
 import { redis } from "../lib/redis";

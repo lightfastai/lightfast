@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { gwInstallations, gwResources } from "@db/console/schema";
 import { serve } from "@vendor/upstash-workflow/hono";
 import { gatewayBaseUrl } from "../lib/base-url";
-import { db } from "../lib/db";
+import { db } from "@db/console/client";
 import { webhookSeenKey, resourceKey } from "../lib/keys";
 import { qstash } from "../lib/qstash";
 import { redis } from "../lib/redis";

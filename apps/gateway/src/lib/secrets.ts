@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { gwInstallations } from "@db/console/schema";
 import { env } from "../env";
 import type { ProviderName } from "../providers/types";
-import { db } from "./db";
+import { db } from "@db/console/client";
 
 /**
  * Resolve the webhook signing secret for a provider.
