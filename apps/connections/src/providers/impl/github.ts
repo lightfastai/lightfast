@@ -1,4 +1,3 @@
-import { and, eq } from "drizzle-orm";
 import { gwInstallations } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
 import { db } from "@db/console/client";
@@ -120,41 +119,10 @@ export class GitHubProvider implements ConnectionProvider {
       throw new Error("missing installation_id");
     }
 
-    // Upsert installation (idempotent)
-    const existingRows = await db
-      .select({ id: gwInstallations.id })
-      .from(gwInstallations)
-      .where(
-        and(
-          eq(gwInstallations.provider, "github"),
-          eq(gwInstallations.externalId, installationId),
-        ),
-      )
-      .limit(1);
-
-    const existing = existingRows[0];
-
     const accountInfo = this.buildAccountInfo({ ...stateData, installationId });
+    const now = new Date().toISOString();
 
-    if (existing) {
-      await db
-        .update(gwInstallations)
-        .set({
-          status: "active",
-          providerAccountInfo: accountInfo,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(gwInstallations.id, existing.id));
-
-      return {
-        status: "connected",
-        installationId: existing.id,
-        provider: "github",
-        setupAction,
-        reactivated: true,
-      };
-    }
-
+    // Idempotent upsert keyed on unique (provider, externalId) constraint
     const rows = await db
       .insert(gwInstallations)
       .values({
@@ -165,23 +133,40 @@ export class GitHubProvider implements ConnectionProvider {
         status: "active",
         providerAccountInfo: accountInfo,
       })
-      .returning({ id: gwInstallations.id });
+      .onConflictDoUpdate({
+        target: [gwInstallations.provider, gwInstallations.externalId],
+        set: {
+          status: "active",
+          providerAccountInfo: accountInfo,
+          updatedAt: now,
+        },
+      })
+      .returning({
+        id: gwInstallations.id,
+        createdAt: gwInstallations.createdAt,
+      });
 
     const row = rows[0];
-    if (!row) throw new Error("insert_failed");
+    if (!row) throw new Error("upsert_failed");
 
-    // Fire-and-forget: notify backfill service for new connections
-    notifyBackfillService({
-      installationId: row.id,
-      provider: "github",
-      orgId: stateData.orgId ?? "",
-    }).catch(() => {});
+    // If createdAt differs from now, the row existed before this upsert
+    const reactivated = row.createdAt !== now;
+
+    if (!reactivated) {
+      // Fire-and-forget: notify backfill service for new connections
+      notifyBackfillService({
+        installationId: row.id,
+        provider: "github",
+        orgId: stateData.orgId ?? "",
+      }).catch(() => {});
+    }
 
     return {
       status: "connected",
       installationId: row.id,
       provider: "github",
       setupAction,
+      ...(reactivated && { reactivated: true }),
     };
   }
 
