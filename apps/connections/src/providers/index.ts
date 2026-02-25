@@ -4,24 +4,26 @@ import { LinearProvider } from "./impl/linear";
 import { SentryProvider } from "./impl/sentry";
 import { VercelProvider } from "./impl/vercel";
 import type {
-  WebhookProvider,
+  ConnectionProvider,
   ProviderFor,
   ProviderName,
 } from "./types";
 
 export type {
-  WebhookProvider,
+  ConnectionProvider,
   ProviderName,
-  WebhookPayload,
-  GitHubWebhookPayload,
-  VercelWebhookPayload,
-  LinearWebhookPayload,
-  SentryWebhookPayload,
-  WebhookPayloadFor,
+  OAuthTokens,
+  ProviderOptions,
+  AuthOptionsFor,
+  GitHubAuthOptions,
+  LinearAuthOptions,
   ProviderFor,
+  TokenResult,
+  JwtTokenResult,
+  CallbackResult,
 } from "./types";
 
-const providers = new Map<ProviderName, WebhookProvider>([
+const providers = new Map<ProviderName, ConnectionProvider>([
   ["github", new GitHubProvider()],
   ["vercel", new VercelProvider()],
   ["linear", new LinearProvider()],
@@ -30,8 +32,8 @@ const providers = new Map<ProviderName, WebhookProvider>([
 
 /** Type-safe provider lookup. Literal names return specific provider types. */
 export function getProvider<N extends ProviderName>(name: N): ProviderFor<N>;
-export function getProvider(name: string): WebhookProvider;
-export function getProvider(name: string): WebhookProvider {
+export function getProvider(name: string): ConnectionProvider;
+export function getProvider(name: string): ConnectionProvider {
   const provider = providers.get(name as ProviderName);
   if (!provider) {
     throw new HTTPException(400, { message: `Unknown provider: ${name}` });

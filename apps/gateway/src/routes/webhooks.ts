@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import { getQStashClient } from "@vendor/qstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { gatewayBaseUrl, consoleUrl } from "../lib/urls";
-import { getWebhookSecret } from "../lib/secrets";
 import { env } from "../env";
 import { getProvider } from "../providers";
 import type { WebhookReceiptPayload } from "@repo/gateway-types";
@@ -85,7 +84,12 @@ webhooks.post("/:provider", async (c) => {
 
   // Verify webhook signature — reject invalid webhooks immediately
   // No workflow is triggered for invalid requests.
-  const secret = await getWebhookSecret(provider.name);
+  const secret = ({
+    github: env.GITHUB_WEBHOOK_SECRET,
+    vercel: env.VERCEL_CLIENT_INTEGRATION_SECRET,
+    linear: env.LINEAR_WEBHOOK_SIGNING_SECRET,
+    sentry: env.SENTRY_CLIENT_SECRET,
+  })[provider.name];
   const valid = await provider.verifyWebhook(rawBody, headers, secret);
   if (!valid) {
     return c.json({ error: "invalid_signature" }, 401);
