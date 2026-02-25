@@ -1,0 +1,53 @@
+{
+  "name": "@db/gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./schema": "./src/schema/index.ts",
+    "./client": "./src/client.ts",
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "default": "./env.ts"
+    }
+  },
+  "license": "FSL-1.1-Apache-2.0",
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "dev:studio": "pnpm db:studio",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "db:generate": "pnpm with-env drizzle-kit generate --config=./src/drizzle.config.ts",
+    "db:migrate": "pnpm with-env drizzle-kit migrate --config=./src/drizzle.config.ts",
+    "db:push": "pnpm with-env drizzle-kit push --config=./src/drizzle.config.ts",
+    "db:studio": "pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "with-env": "dotenv -e ../../apps/gateway/.vercel/.env.development.local --"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "@repo/lib": "workspace:*",
+    "@t3-oss/env-nextjs": "catalog:",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:zod3"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "dotenv-cli": "^8.0.0",
+    "drizzle-kit": "^0.31.4",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}
