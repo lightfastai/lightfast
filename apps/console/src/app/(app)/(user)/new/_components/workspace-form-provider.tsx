@@ -42,8 +42,8 @@ interface WorkspaceFormState {
   selectedRepositories: Repository[];
   setSelectedRepositories: (repos: Repository[]) => void;
   toggleRepository: (repo: Repository) => void;
-  userSourceId: string | null;
-  setUserSourceId: (id: string | null) => void;
+  installationId: string | null;
+  setInstallationId: (id: string | null) => void;
   installations: GitHubInstallation[];
   setInstallations: (installations: GitHubInstallation[]) => void;
   selectedInstallation: GitHubInstallation | null;
@@ -73,7 +73,7 @@ export function WorkspaceFormProvider({
 
   // Additional state for GitHub integration (not validated by form schema)
   const [selectedRepositories, setSelectedRepositories] = useState<Repository[]>([]);
-  const [userSourceId, setUserSourceId] = useState<string | null>(null);
+  const [installationId, setInstallationId] = useState<string | null>(null);
   const [installations, setInstallations] = useState<GitHubInstallation[]>([]);
   const [selectedInstallation, setSelectedInstallation] = useState<GitHubInstallation | null>(null);
 
@@ -95,8 +95,8 @@ export function WorkspaceFormProvider({
           selectedRepositories,
           setSelectedRepositories,
           toggleRepository,
-          userSourceId,
-          setUserSourceId,
+          installationId,
+          setInstallationId,
           installations,
           setInstallations,
           selectedInstallation,

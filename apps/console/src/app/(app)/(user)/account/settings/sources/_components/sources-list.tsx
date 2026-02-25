@@ -44,18 +44,18 @@ export function SourcesList() {
 	const queryClient = useQueryClient();
 
 	const { data: integrations } = useSuspenseQuery({
-		...trpc.userSources.list.queryOptions(),
+		...trpc.connections.list.queryOptions(),
 		refetchOnMount: false,
 		refetchOnWindowFocus: false,
 		staleTime: 5 * 60 * 1000, // 5 minutes - integrations rarely change
 	});
 
 	const disconnectMutation = useMutation(
-		trpc.userSources.disconnect.mutationOptions({
+		trpc.connections.disconnect.mutationOptions({
 			onSuccess: () => {
 				toast.success("Integration disconnected successfully");
 				void queryClient.invalidateQueries({
-					queryKey: trpc.userSources.list.queryOptions().queryKey,
+					queryKey: trpc.connections.list.queryOptions().queryKey,
 				});
 			},
 			onError: (error) => {
@@ -78,8 +78,8 @@ export function SourcesList() {
 		if (provider === "github" || provider === "vercel") {
 			try {
 				const data = await queryClient.fetchQuery(
-					trpc.userSources.getAuthorizeUrl.queryOptions({
-						provider: provider as "github" | "vercel",
+					trpc.connections.getAuthorizeUrl.queryOptions({
+						provider,
 					}),
 				);
 
@@ -99,7 +99,7 @@ export function SourcesList() {
 					if (popup?.closed) {
 						clearInterval(pollTimer);
 						void queryClient.invalidateQueries({
-							queryKey: trpc.userSources.list.queryOptions().queryKey,
+							queryKey: trpc.connections.list.queryOptions().queryKey,
 						});
 					}
 				}, 500);

@@ -15,10 +15,11 @@
     "build:console": "turbo run build -F @lightfast/console",
     "build:docs": "turbo run build -F @lightfast/docs",
     "build:gateway": "turbo run build -F @lightfast/gateway",
+    "build:backfill": "turbo run build -F @lightfast/backfill",
     "clean": "git clean -xdf node_modules .turbo .internal",
     "clean:workspaces": "turbo run clean",
     "dev": "turbo run dev --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/chat",
-    "dev:app": "turbo run dev dev:inngest dev:qstash dev:ngrok dev:studio --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/console --filter=@lightfast/connections --filter=@db/console --concurrency=15",
+    "dev:app": "turbo run dev dev:inngest dev:qstash dev:ngrok dev:studio --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/console --filter=@lightfast/backfill --filter=@lightfast/connections --filter=@db/console --concurrency=15",
     "dev:www": "turbo watch dev -F @lightfast/www --continue",
     "dev:auth": "turbo watch dev -F @lightfast/auth --continue",
     "dev:chat": "turbo watch dev -F @lightfast/chat --continue",
@@ -26,6 +27,7 @@
     "dev:console:app": "turbo watch dev -F @lightfast/console --continue",
     "dev:docs": "turbo watch dev -F @lightfast/docs --continue",
     "dev:gateway": "turbo watch dev -F @lightfast/gateway --continue",
+    "dev:backfill": "turbo watch dev -F @lightfast/backfill --continue",
     "dev:connections": "turbo watch dev -F @lightfast/connections --continue",
     "build:connections": "turbo run build -F @lightfast/connections",
     "dev:email": "turbo run dev:email -F @lightfast/www",
@@ -49,7 +51,9 @@
     "release": "changeset publish",
     "claude": "./scripts/c",
     "remotion:studio": "pnpm --filter @repo/console-remotion studio",
-    "remotion:render": "pnpm --filter @repo/console-remotion render:gif"
+    "remotion:render": "pnpm --filter @repo/console-remotion render:gif",
+    "db:generate": "pnpm --filter @db/console db:generate",
+    "db:migrate": "pnpm --filter @db/console db:migrate"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.5",

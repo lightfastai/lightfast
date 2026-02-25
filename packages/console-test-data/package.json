@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./trigger": "./src/trigger/index.ts",
-    "./loader": "./src/loader/index.ts"
+    "./loader": "./src/loader/index.ts",
+    "./raw": "./src/raw.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -161,7 +161,7 @@ export function WorkspaceDashboard({
           <SystemHealthOverview
             health={health}
             store={store}
-            sources={sources.list}
+            sources={sources.list.map((s) => ({ ...s, type: s.type ?? "unknown", displayName: s.displayName ?? "" }))}
           />
 
           {/* Performance Metrics - Percentiles & Time Series Charts */}

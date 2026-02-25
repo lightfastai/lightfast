@@ -7,7 +7,6 @@ export {
   gwWebhookDeliveries, type GwWebhookDelivery, type InsertGwWebhookDelivery,
   // User-scoped tables
   userApiKeys, type UserApiKey, type InsertUserApiKey,
-  userSources, type UserSource, type InsertUserSource, type GitHubUserSource, type VercelUserSource,
   // Org-scoped tables
   orgWorkspaces, type OrgWorkspace, type InsertOrgWorkspace,
   orgApiKeys, type OrgApiKey, type InsertOrgApiKey, workspaceApiKeys, type WorkspaceApiKey, type InsertWorkspaceApiKey,

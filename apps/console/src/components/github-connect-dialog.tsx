@@ -44,7 +44,7 @@ export function GitHubConnectDialog({
 	const handleGitHubAuth = async () => {
 		try {
 			const data = await queryClient.fetchQuery(
-				trpc.userSources.getAuthorizeUrl.queryOptions({ provider: "github" }),
+				trpc.connections.getAuthorizeUrl.queryOptions({ provider: "github" }),
 			);
 
 			const width = 600;

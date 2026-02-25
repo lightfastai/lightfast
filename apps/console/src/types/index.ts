@@ -71,7 +71,7 @@ export interface WorkspaceMetricsSummary {
 // ============================================================================
 
 export type EnrichedConnection = RouterOutputs["workspace"]["sources"]["list"]["list"][number];
-export type GitHubIntegration = RouterOutputs["userSources"]["github"]["get"];
+export type GitHubIntegration = RouterOutputs["connections"]["github"]["get"];
 
 // ============================================================================
 // Organization

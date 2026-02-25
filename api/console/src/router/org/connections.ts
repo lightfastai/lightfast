@@ -27,10 +27,10 @@ const connectionsUrl = withRelatedProject({
 });
 
 /**
- * User Sources Router
+ * Connections Router
  *
  * Manages org-level OAuth connections (GitHub, Vercel, Linear, etc.)
- * Post-consolidation: queries gw_installations directly (org-scoped).
+ * Queries gw_installations directly (org-scoped).
  *
  * Table: gwInstallations (lightfast_gw_installations)
  * Scope: Org-scoped (active org required)
@@ -49,7 +49,7 @@ function getGitHubApp() {
 	);
 }
 
-export const userSourcesRouter = {
+export const connectionsRouter = {
 	/**
 	 * Get OAuth authorize URL from the connections service.
 	 *
@@ -106,7 +106,7 @@ export const userSourcesRouter = {
 				lastSyncAt: inst.updatedAt,
 			}));
 		} catch (error: unknown) {
-			console.error("[tRPC] Failed to fetch integrations:", error);
+			console.error("[tRPC connections.list] Failed to fetch integrations:", error);
 
 			throw new TRPCError({
 				code: "INTERNAL_SERVER_ERROR",
@@ -293,7 +293,7 @@ export const userSourcesRouter = {
 					total: newInstallations.length,
 				};
 			} catch (error: unknown) {
-				console.error("[tRPC] GitHub installation validation failed:", error);
+				console.error("[tRPC connections.github.validate] GitHub installation validation failed:", error);
 
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
@@ -386,7 +386,7 @@ export const userSourcesRouter = {
 						updatedAt: repo.updated_at,
 					}));
 				} catch (error: unknown) {
-					console.error("[tRPC userSources.github.repositories] Failed to fetch repositories:", error);
+					console.error("[tRPC connections.github.repositories] Failed to fetch repositories:", error);
 
 					throw new TRPCError({
 						code: "INTERNAL_SERVER_ERROR",
@@ -549,7 +549,7 @@ export const userSourcesRouter = {
 								continue;
 							}
 							console.error(
-								`[tRPC userSources.github.detectConfig] Error checking ${path} in ${owner}/${repo}:`,
+								`[tRPC connections.github.detectConfig] Error checking ${path} in ${owner}/${repo}:`,
 								error,
 							);
 							continue;
@@ -558,7 +558,7 @@ export const userSourcesRouter = {
 
 					return { exists: false };
 				} catch (error: unknown) {
-					console.error("[tRPC userSources.github.detectConfig] Failed to detect config:", error);
+					console.error("[tRPC connections.github.detectConfig] Failed to detect config:", error);
 
 					throw new TRPCError({
 						code: "INTERNAL_SERVER_ERROR",
@@ -628,7 +628,7 @@ export const userSourcesRouter = {
 		listProjects: orgScopedProcedure
 			.input(
 				z.object({
-					installationId: z.string(), // gwInstallations.id (was userSourceId)
+					installationId: z.string(), // gwInstallations.id
 					workspaceId: z.string(),
 					cursor: z.string().optional(),
 				}),

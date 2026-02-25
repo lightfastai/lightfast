@@ -2,5 +2,6 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
+  "forwardPorts": [3024, 4101, 4104, 4106, 4107],
   "postCreateCommand": "pnpm i"
 }

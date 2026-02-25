@@ -43,7 +43,7 @@ export function CreateWorkspaceButton() {
   const selectedOrgId = form.watch("organizationId");
 
   // Get GitHub-related state from context (now supports multiple repos)
-  const { selectedRepositories, userSourceId, selectedInstallation } =
+  const { selectedRepositories, installationId, selectedInstallation } =
     useWorkspaceForm();
 
   // Find the organization by ID from tRPC cache
@@ -167,11 +167,11 @@ export function CreateWorkspaceButton() {
         }
 
         let repoCount = 0;
-        if (selectedRepositories.length > 0 && userSourceId && selectedInstallation) {
+        if (selectedRepositories.length > 0 && installationId && selectedInstallation) {
           try {
             const linked = await bulkLinkMutation.mutateAsync({
               workspaceId: workspace.workspaceId,
-              userSourceId,
+              gwInstallationId: installationId,
               installationId: selectedInstallation.id,
               repositories: selectedRepositories.map((repo) => ({
                 repoId: repo.id,

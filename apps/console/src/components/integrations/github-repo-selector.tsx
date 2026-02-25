@@ -21,7 +21,7 @@ import { RefreshCw, Search, Lock, Globe } from "lucide-react";
 interface GitHubRepoSelectorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  userSourceId: string;
+  gwInstallationId: string;
   installationId: string;
   clerkOrgSlug: string;
   workspaceName: string;
@@ -34,7 +34,7 @@ const EMPTY_CONNECTED_REPO_IDS = new Set<string>();
 export function GitHubRepoSelector({
   open,
   onOpenChange,
-  userSourceId,
+  gwInstallationId,
   installationId,
   clerkOrgSlug: _clerkOrgSlug,
   workspaceName,
@@ -52,8 +52,8 @@ export function GitHubRepoSelector({
     error,
     refetch,
   } = useQuery({
-    ...trpc.userSources.github.repositories.queryOptions({
-      integrationId: userSourceId,
+    ...trpc.connections.github.repositories.queryOptions({
+      integrationId: gwInstallationId,
       installationId,
     }),
     enabled: open,

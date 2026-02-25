@@ -22,7 +22,7 @@ export const gwInstallations = pgTable(
     webhookSecret: text("webhook_secret"),
     metadata: jsonb("metadata"),
 
-    // Strongly-typed provider account info (replaces userSources.providerMetadata)
+    // Strongly-typed provider account info
     providerAccountInfo: jsonb("provider_account_info").$type<
       | {
           version: 1;

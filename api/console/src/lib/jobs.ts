@@ -7,7 +7,8 @@
 
 import { db } from "@db/console/client";
 import { workspaceWorkflowRuns, workspaceOperationsMetrics } from "@db/console/schema";
-import type { WorkspaceWorkflowRun, WorkflowInput, WorkflowOutput, InsertWorkspaceWorkflowRun } from "@db/console/schema";
+import type { WorkspaceWorkflowRun, InsertWorkspaceWorkflowRun } from "@db/console/schema";
+import type { WorkflowInput, WorkflowOutput } from "@repo/console-validation";
 import { eq } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import type {

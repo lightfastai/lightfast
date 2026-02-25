@@ -34,7 +34,7 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
 
   // Fetch GitHub connection status (prefetched on server)
   const { data: githubSource, refetch } = useSuspenseQuery({
-    ...trpc.userSources.github.get.queryOptions(),
+    ...trpc.connections.github.get.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
@@ -49,7 +49,7 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
   const handleConnectGitHub = async () => {
     try {
       const data = await queryClient.fetchQuery(
-        trpc.userSources.getAuthorizeUrl.queryOptions({ provider: "github" }),
+        trpc.connections.getAuthorizeUrl.queryOptions({ provider: "github" }),
       );
 
       const width = 600;
@@ -177,7 +177,7 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
         <GitHubRepoSelector
           open={showRepoSelector}
           onOpenChange={setShowRepoSelector}
-          userSourceId={githubSource.id}
+          gwInstallationId={githubSource.id}
           installationId={selectedInstallationId}
           clerkOrgSlug={clerkOrgSlug}
           workspaceName={workspaceName}

@@ -17,7 +17,7 @@ interface ConnectFormContextValue {
   setProvider: (provider: "github" | "vercel" | "linear" | "sentry") => void;
 
   // Connection state (derived from query data)
-  userSourceId: string | null;
+  installationId: string | null;
 
   // GitHub-specific
   selectedInstallationId: string | null;
@@ -52,16 +52,16 @@ export function ConnectFormProvider({
   const [explicitInstallationId, setExplicitInstallationId] = useState<string | null>(null);
 
   const { data: githubSource } = useQuery({
-    ...trpc.userSources.github.get.queryOptions(),
+    ...trpc.connections.github.get.queryOptions(),
     enabled: provider === "github",
   });
 
   const { data: vercelSource } = useQuery({
-    ...trpc.userSources.vercel.get.queryOptions(),
+    ...trpc.connections.vercel.get.queryOptions(),
     enabled: provider === "vercel",
   });
 
-  const userSourceId = provider === "github"
+  const installationId = provider === "github"
     ? githubSource?.id ?? null
     : provider === "vercel"
       ? vercelSource?.id ?? null
@@ -84,7 +84,7 @@ export function ConnectFormProvider({
   const value: ConnectFormContextValue = {
     provider,
     setProvider,
-    userSourceId,
+    installationId,
     selectedInstallationId,
     setSelectedInstallationId,
     selectedResources,

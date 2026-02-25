@@ -64,11 +64,10 @@ export class SourcesService extends DeusApiM2MService {
    */
   async markInactive(params: { githubRepoId: string; reason?: string }) {
     return await this.call(
-      "m2m.sources.updateGithubSyncStatus",
+      "m2m.sources.markGithubRepoInactive",
       (caller) =>
-        caller.sources.updateGithubSyncStatus({
+        caller.sources.markGithubRepoInactive({
           githubRepoId: params.githubRepoId,
-          isActive: false,
           reason: params.reason,
         }),
       {
@@ -88,24 +87,6 @@ export class SourcesService extends DeusApiM2MService {
       {
         fallbackMessage: "Failed to mark installation repositories inactive",
         details: { githubInstallationId },
-      },
-    );
-  }
-
-  /**
-   * Update repository config status (for webhooks)
-   */
-  async updateConfigStatus(params: {
-    githubRepoId: string;
-    configStatus: "configured" | "awaiting_config";
-    configPath: string | null;
-  }) {
-    return await this.call(
-      "m2m.sources.updateGithubConfigStatus",
-      (caller) => caller.sources.updateGithubConfigStatus(params),
-      {
-        fallbackMessage: "Failed to update repository config status",
-        details: params,
       },
     );
   }

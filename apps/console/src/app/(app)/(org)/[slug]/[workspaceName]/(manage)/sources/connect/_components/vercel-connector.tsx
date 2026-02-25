@@ -26,7 +26,7 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
 
   // Fetch Vercel connection status (prefetched on server)
   const { data: vercelSource, refetch } = useSuspenseQuery({
-    ...trpc.userSources.vercel.get.queryOptions(),
+    ...trpc.connections.vercel.get.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
@@ -41,7 +41,7 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
   const handleConnectVercel = async () => {
     try {
       const data = await queryClient.fetchQuery(
-        trpc.userSources.getAuthorizeUrl.queryOptions({ provider: "vercel" }),
+        trpc.connections.getAuthorizeUrl.queryOptions({ provider: "vercel" }),
       );
 
       const width = 600;

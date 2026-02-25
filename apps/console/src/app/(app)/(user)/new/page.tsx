@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { HydrateClient, prefetch, userTrpc } from "@repo/console-trpc/server";
+import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
 import { WorkspaceHeader } from "./_components/workspace-header";
 import { OrganizationSelector } from "./_components/organization-selector";
 import { WorkspaceNameInput } from "./_components/workspace-name-input";
@@ -31,7 +31,7 @@ import { NewWorkspaceInitializer } from "./_components/new-workspace-initializer
  *
  * Data Flow:
  * 1. (app)/layout.tsx prefetches organization.listUserOrganizations (user-scoped, no org needed)
- * 2. This page prefetches userSources.github.get (user-scoped, GitHub connection status)
+ * 2. This page prefetches connections.github.get (org-scoped, GitHub connection status)
  * 3. Data passed through to client components via HydrateClient
  * 4. NewWorkspaceInitializer reads cache + URL params to set initial form state
  * 5. OrganizationSelector uses cached orgs for dropdown
@@ -55,7 +55,7 @@ export default async function NewWorkspacePage({
 
   // Prefetch GitHub user source (user-scoped data, no org needed)
   // This prevents client-side fetch waterfall in GitHubConnector
-  prefetch(userTrpc.userSources.github.get.queryOptions());
+  prefetch(orgTrpc.connections.github.get.queryOptions());
 
   return (
     <div className="flex-1 overflow-y-auto bg-background">

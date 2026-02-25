@@ -896,11 +896,11 @@ The Inngest `backfill.requested` event currently carries `userSourceId`. Change 
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] `pnpm build:console` compiles with zero `userSources` imports in non-schema files
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm lint` passes
-- [ ] `grep -r "gatewayClient\|gatewayInstallationId" api/console/src/` returns no results
-- [ ] `grep -r "userSourceId" api/console/src/router/` returns no results (except possibly schema file)
+- [x] `pnpm build:console` compiles with zero `userSources` imports in non-schema files
+- [x] `pnpm typecheck` passes
+- [x] `pnpm lint` passes
+- [x] `grep -r "gatewayClient\|gatewayInstallationId" api/console/src/` returns no results
+- [x] `grep -r "userSourceId" api/console/src/router/` returns no results (except possibly schema file)
 
 #### Manual Verification:
 - [ ] Connection list page shows org's connections from `gw_installations`

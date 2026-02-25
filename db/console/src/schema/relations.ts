@@ -4,7 +4,6 @@ import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-docume
 import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
 import { workspaceUserActivities } from "./tables/workspace-user-activities";
 import { workspaceIntegrations } from "./tables/workspace-integrations";
-import { userSources } from "./tables/user-sources";
 import { orgWorkspaces } from "./tables/org-workspaces";
 import { workspaceNeuralObservations } from "./tables/workspace-neural-observations";
 import { workspaceObservationClusters } from "./tables/workspace-observation-clusters";
@@ -87,10 +86,6 @@ export const workspaceIntegrationsRelations = relations(workspaceIntegrations, (
   workspace: one(orgWorkspaces, {
     fields: [workspaceIntegrations.workspaceId],
     references: [orgWorkspaces.id],
-  }),
-  userSource: one(userSources, {
-    fields: [workspaceIntegrations.userSourceId],
-    references: [userSources.id],
   }),
   installation: one(gwInstallations, {
     fields: [workspaceIntegrations.installationId],

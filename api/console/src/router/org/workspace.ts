@@ -6,7 +6,7 @@ import {
   workspaceKnowledgeDocuments,
   workspaceWorkflowRuns,
   workspaceIntegrations,
-  userSources,
+  gwInstallations,
   workspaceActorProfiles,
 } from "@db/console/schema";
 import { eq, and, desc, count, sql, inArray, sum, avg, gte, like } from "drizzle-orm";
@@ -28,7 +28,6 @@ import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
 import { ensureActorLinked } from "../../lib/actor-linking";
-import { gatewayClient } from "../../lib/gateway";
 
 /**
  * Workspace router - internal procedures for API routes
@@ -108,29 +107,25 @@ export const workspaceRouter = {
   resolveFromGithubOrgSlug: publicProcedure
     .input(workspaceResolveFromGithubOrgSlugInputSchema)
     .query(async ({ input }) => {
-      // Find GitHub user source with matching installation
-      // GitHub installations are stored in providerMetadata.installations
-      const userSource = await db.query.userSources.findFirst({
+      // Find GitHub installation with matching account login
+      const installation = await db.query.gwInstallations.findFirst({
         where: and(
-          eq(userSources.sourceType, "github"),
-          eq(userSources.isActive, true),
-          sql`EXISTS (
-            SELECT 1 FROM jsonb_array_elements(${userSources.providerMetadata}->'installations') AS inst
-            WHERE inst->>'accountLogin' = ${input.githubOrgSlug}
-          )`
+          eq(gwInstallations.provider, "github"),
+          eq(gwInstallations.accountLogin, input.githubOrgSlug),
+          eq(gwInstallations.status, "active"),
         ),
       });
 
-      if (!userSource) {
+      if (!installation) {
         throw new Error(
           `No active GitHub installation found for organization: ${input.githubOrgSlug}`,
         );
       }
 
-      // Find workspace source connected to this user source
+      // Find workspace source connected to this installation
       const workspaceSource = await db.query.workspaceIntegrations.findFirst({
         where: and(
-          eq(workspaceIntegrations.userSourceId, userSource.id),
+          eq(workspaceIntegrations.installationId, installation.id),
           eq(workspaceIntegrations.isActive, true),
         ),
       });
@@ -570,11 +565,11 @@ export const workspaceRouter = {
           userId: ctx.auth.userId,
         });
 
-        // Get all workspace sources (new 2-table model)
+        // Get all workspace sources (read provider from denormalized column)
         const sources = await db
           .select({
             id: workspaceIntegrations.id,
-            sourceType: userSources.sourceType,
+            sourceType: workspaceIntegrations.provider,
             isActive: workspaceIntegrations.isActive,
             connectedAt: workspaceIntegrations.connectedAt,
             lastSyncedAt: workspaceIntegrations.lastSyncedAt,
@@ -583,10 +578,6 @@ export const workspaceRouter = {
             sourceConfig: workspaceIntegrations.sourceConfig,
           })
           .from(workspaceIntegrations)
-          .innerJoin(
-            userSources,
-            eq(workspaceIntegrations.userSourceId, userSources.id)
-          )
           .where(and(
             eq(workspaceIntegrations.workspaceId, workspaceId),
             eq(workspaceIntegrations.isActive, true),
@@ -599,7 +590,8 @@ export const workspaceRouter = {
           total: sources.length,
           byType: sources.reduce(
             (acc, s) => {
-              acc[s.sourceType] = (acc[s.sourceType] ?? 0) + 1;
+              const key = s.sourceType ?? "unknown";
+              acc[key] = (acc[key] ?? 0) + 1;
               return acc;
             },
             {} as Record<string, number>,
@@ -913,13 +905,12 @@ export const workspaceRouter = {
           workspaceId: z.string(),
           projectId: z.string(),
           projectName: z.string(),
-          userSourceId: z.string(),
-        }),
+          installationId: z.string(),        }),
       )
       .mutation(async ({ ctx, input }) => {
-        const { workspaceId, projectId, projectName, userSourceId } = input;
+        const { workspaceId, projectId, projectName, installationId } = input;
 
-        // Verify user owns the workspace
+        // Verify org owns the workspace
         const workspace = await ctx.db.query.orgWorkspaces.findFirst({
           where: and(
             eq(orgWorkspaces.id, workspaceId),
@@ -934,27 +925,27 @@ export const workspaceRouter = {
           });
         }
 
-        // Verify user owns the Vercel source
-        const userSource = await ctx.db.query.userSources.findFirst({
+        // Verify org owns the Vercel installation
+        const installation = await ctx.db.query.gwInstallations.findFirst({
           where: and(
-            eq(userSources.id, userSourceId),
-            eq(userSources.userId, ctx.auth.userId),
-            eq(userSources.sourceType, "vercel"),
+            eq(gwInstallations.id, installationId),
+            eq(gwInstallations.orgId, ctx.auth.orgId),
+            eq(gwInstallations.provider, "vercel"),
           ),
         });
 
-        if (!userSource) {
+        if (!installation) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Vercel connection not found",
           });
         }
 
-        const providerMetadata = userSource.providerMetadata;
-        if (providerMetadata.sourceType !== "vercel") {
+        const providerAccountInfo = installation.providerAccountInfo;
+        if (providerAccountInfo?.sourceType !== "vercel") {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Invalid provider metadata",
+            message: "Invalid provider account info",
           });
         }
 
@@ -984,7 +975,8 @@ export const workspaceRouter = {
           .insert(workspaceIntegrations)
           .values({
             workspaceId,
-            userSourceId,
+            installationId,
+            provider: "vercel",
             connectedBy: ctx.auth.userId,
             sourceConfig: {
               version: 1 as const,
@@ -992,9 +984,9 @@ export const workspaceRouter = {
               type: "project" as const,
               projectId,
               projectName,
-              teamId: providerMetadata.teamId,
-              teamSlug: providerMetadata.teamSlug,
-              configurationId: providerMetadata.configurationId,
+              teamId: providerAccountInfo.teamId,
+              teamSlug: providerAccountInfo.teamSlug,
+              configurationId: providerAccountInfo.configurationId,
               sync: {
                 events: [
                   "deployment.created",
@@ -1115,8 +1107,7 @@ export const workspaceRouter = {
       .input(
         z.object({
           workspaceId: z.string(),
-          userSourceId: z.string(),
-          installationId: z.string(),
+          gwInstallationId: z.string(),          installationId: z.string(), // GitHub App installation external ID
           repositories: z
             .array(
               z.object({
@@ -1144,35 +1135,35 @@ export const workspaceRouter = {
           });
         }
 
-        // 2. Verify user source ownership
-        const source = await ctx.db.query.userSources.findFirst({
+        // 2. Verify org owns the GitHub installation
+        const gwInstallation = await ctx.db.query.gwInstallations.findFirst({
           where: and(
-            eq(userSources.id, input.userSourceId),
-            eq(userSources.userId, ctx.auth.userId),
-            eq(userSources.sourceType, "github"),
+            eq(gwInstallations.id, input.gwInstallationId),
+            eq(gwInstallations.orgId, ctx.auth.orgId),
+            eq(gwInstallations.provider, "github"),
           ),
         });
 
-        if (!source) {
+        if (!gwInstallation) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "GitHub connection not found",
           });
         }
 
-        const providerMetadata = source.providerMetadata;
-        if (providerMetadata.sourceType !== "github") {
+        const providerAccountInfo = gwInstallation.providerAccountInfo;
+        if (providerAccountInfo?.sourceType !== "github") {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Invalid provider metadata",
+            message: "Invalid provider account info",
           });
         }
 
-        // Verify installation exists
-        const installation = providerMetadata.installations?.find(
+        // Verify installation exists in providerAccountInfo
+        const githubInstallation = providerAccountInfo.installations?.find(
           (i) => i.id === input.installationId,
         );
-        if (!installation) {
+        if (!githubInstallation) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Installation not found",
@@ -1183,7 +1174,7 @@ export const workspaceRouter = {
         const existing = await ctx.db.query.workspaceIntegrations.findMany({
           where: and(
             eq(workspaceIntegrations.workspaceId, input.workspaceId),
-            eq(workspaceIntegrations.userSourceId, input.userSourceId),
+            eq(workspaceIntegrations.installationId, input.gwInstallationId),
           ),
         });
 
@@ -1221,7 +1212,8 @@ export const workspaceRouter = {
         if (toCreate.length > 0) {
           const integrations = toCreate.map((repo) => ({
             workspaceId: input.workspaceId,
-            userSourceId: input.userSourceId,
+            installationId: input.gwInstallationId,
+            provider: "github" as const,
             connectedBy: ctx.auth.userId,
             providerResourceId: repo.repoId,
             sourceConfig: {
@@ -1246,27 +1238,10 @@ export const workspaceRouter = {
             connectedAt: now,
           }));
 
-          const created = await ctx.db
+          await ctx.db
             .insert(workspaceIntegrations)
             .values(integrations)
-            .returning({
-              id: workspaceIntegrations.id,
-              userSourceId: workspaceIntegrations.userSourceId,
-            });
-
-          // Populate Gateway routing cache (best-effort, non-blocking)
-          if (source.gatewayInstallationId) {
-            await Promise.allSettled(
-              toCreate.map((repo) =>
-                gatewayClient.linkResource(
-                  source.gatewayInstallationId!,
-                  repo.repoId,
-                  repo.repoFullName,
-                ),
-              ),
-            );
-          }
-
+            .returning({ id: workspaceIntegrations.id });
         }
 
         return {
@@ -1286,8 +1261,7 @@ export const workspaceRouter = {
       .input(
         z.object({
           workspaceId: z.string(),
-          userSourceId: z.string(),
-          projects: z
+          gwInstallationId: z.string(),          projects: z
             .array(
               z.object({
                 projectId: z.string(),
@@ -1314,27 +1288,27 @@ export const workspaceRouter = {
           });
         }
 
-        // 2. Verify user source ownership
-        const source = await ctx.db.query.userSources.findFirst({
+        // 2. Verify org owns the Vercel installation
+        const gwInstallation = await ctx.db.query.gwInstallations.findFirst({
           where: and(
-            eq(userSources.id, input.userSourceId),
-            eq(userSources.userId, ctx.auth.userId),
-            eq(userSources.sourceType, "vercel"),
+            eq(gwInstallations.id, input.gwInstallationId),
+            eq(gwInstallations.orgId, ctx.auth.orgId),
+            eq(gwInstallations.provider, "vercel"),
           ),
         });
 
-        if (!source) {
+        if (!gwInstallation) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Vercel connection not found",
           });
         }
 
-        const providerMetadata = source.providerMetadata;
-        if (providerMetadata.sourceType !== "vercel") {
+        const providerAccountInfo = gwInstallation.providerAccountInfo;
+        if (providerAccountInfo?.sourceType !== "vercel") {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Invalid provider metadata",
+            message: "Invalid provider account info",
           });
         }
 
@@ -1342,7 +1316,7 @@ export const workspaceRouter = {
         const existing = await ctx.db.query.workspaceIntegrations.findMany({
           where: and(
             eq(workspaceIntegrations.workspaceId, input.workspaceId),
-            eq(workspaceIntegrations.userSourceId, input.userSourceId),
+            eq(workspaceIntegrations.installationId, input.gwInstallationId),
           ),
         });
 
@@ -1380,7 +1354,8 @@ export const workspaceRouter = {
         if (toCreate.length > 0) {
           const integrations = toCreate.map((p) => ({
             workspaceId: input.workspaceId,
-            userSourceId: input.userSourceId,
+            installationId: input.gwInstallationId,
+            provider: "vercel" as const,
             connectedBy: ctx.auth.userId,
             providerResourceId: p.projectId,
             sourceConfig: {
@@ -1389,9 +1364,9 @@ export const workspaceRouter = {
               type: "project" as const,
               projectId: p.projectId,
               projectName: p.projectName,
-              teamId: providerMetadata.teamId,
-              teamSlug: providerMetadata.teamSlug,
-              configurationId: providerMetadata.configurationId,
+              teamId: providerAccountInfo.teamId,
+              teamSlug: providerAccountInfo.teamSlug,
+              configurationId: providerAccountInfo.configurationId,
               sync: {
                 events: [
                   "deployment.created",
@@ -1407,27 +1382,10 @@ export const workspaceRouter = {
             connectedAt: now,
           }));
 
-          const created = await ctx.db
+          await ctx.db
             .insert(workspaceIntegrations)
             .values(integrations)
-            .returning({
-              id: workspaceIntegrations.id,
-              userSourceId: workspaceIntegrations.userSourceId,
-            });
-
-          // Populate Gateway routing cache (best-effort, non-blocking)
-          if (source.gatewayInstallationId) {
-            await Promise.allSettled(
-              toCreate.map((p) =>
-                gatewayClient.linkResource(
-                  source.gatewayInstallationId!,
-                  p.projectId,
-                  p.projectName,
-                ),
-              ),
-            );
-          }
-
+            .returning({ id: workspaceIntegrations.id });
         }
 
         return {

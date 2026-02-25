@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { HydrateClient, prefetch, userTrpc } from "@repo/console-trpc/server";
+import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
 import { ConnectHeader } from "./_components/connect-header";
 import { ConnectInitializer } from "./_components/connect-initializer";
 import { ConnectLoading } from "./_components/connect-loading";
@@ -24,8 +24,8 @@ export default async function ConnectPage({
   const { provider = "github", connected } = await searchParams;
 
   // Prefetch user sources for all providers (no waterfall)
-  prefetch(userTrpc.userSources.github.get.queryOptions());
-  prefetch(userTrpc.userSources.vercel.get.queryOptions());
+  prefetch(orgTrpc.connections.github.get.queryOptions());
+  prefetch(orgTrpc.connections.vercel.get.queryOptions());
   // TODO: Add prefetch for Linear and Sentry when available
 
   return (

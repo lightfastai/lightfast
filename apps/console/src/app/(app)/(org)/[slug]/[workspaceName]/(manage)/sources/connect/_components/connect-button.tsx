@@ -16,7 +16,7 @@ export function ConnectButton() {
     provider,
     selectedResources,
     workspaceId,
-    userSourceId,
+    installationId,
     selectedInstallationId,
     clerkOrgSlug,
     workspaceName,
@@ -55,20 +55,20 @@ export function ConnectButton() {
   const handleConnect = () => {
     if (!workspaceId) return;
 
-    if (provider === "github" && userSourceId && selectedInstallationId) {
+    if (provider === "github" && installationId && selectedInstallationId) {
       githubMutation.mutate({
         workspaceId,
-        userSourceId,
+        gwInstallationId: installationId,
         installationId: selectedInstallationId,
         repositories: selectedResources.map((r) => ({
           repoId: r.id,
           repoFullName: r.fullName ?? r.name,
         })),
       });
-    } else if (provider === "vercel" && userSourceId) {
+    } else if (provider === "vercel" && installationId) {
       vercelMutation.mutate({
         workspaceId,
-        userSourceId,
+        gwInstallationId: installationId,
         projects: selectedResources.map((r) => ({
           projectId: r.id,
           projectName: r.name,

@@ -19,8 +19,8 @@ export function GitHubConnector() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const {
-    userSourceId,
-    setUserSourceId,
+    installationId,
+    setInstallationId,
     setInstallations,
     selectedInstallation,
     setSelectedInstallation,
@@ -30,7 +30,7 @@ export function GitHubConnector() {
   // Use user router endpoint (not org router) to support pending users
   const { data: githubUserSource, refetch: refetchIntegration } =
     useSuspenseQuery({
-      ...trpc.userSources.github.get.queryOptions(),
+      ...trpc.connections.github.get.queryOptions(),
       refetchOnMount: false,
       refetchOnWindowFocus: false,
     });
@@ -41,11 +41,11 @@ export function GitHubConnector() {
   // Track previous installations for equality comparison
   const prevInstallationsRef = useRef<typeof installations>([]);
 
-  // Effect 1: Sync userSourceId to context (only when ID value changes, not object reference)
+  // Effect 1: Sync installationId to context (only when ID value changes, not object reference)
   useEffect(() => {
     const id = githubUserSource?.id ?? null;
-    setUserSourceId(id);
-  }, [githubUserSource?.id, setUserSourceId]);
+    setInstallationId(id);
+  }, [githubUserSource?.id, setInstallationId]);
 
   // Effect 2: Sync installations array to context (with ID equality check)
   useEffect(() => {
@@ -95,7 +95,7 @@ export function GitHubConnector() {
   const handleConnectGitHub = async () => {
     try {
       const data = await queryClient.fetchQuery(
-        trpc.userSources.getAuthorizeUrl.queryOptions({ provider: "github" }),
+        trpc.connections.getAuthorizeUrl.queryOptions({ provider: "github" }),
       );
 
       const width = 600;
@@ -147,7 +147,7 @@ export function GitHubConnector() {
 
   return (
     <RepositoryPicker
-      userSourceId={userSourceId}
+      installationId={installationId}
       refetchIntegration={refetchIntegration}
     />
   );

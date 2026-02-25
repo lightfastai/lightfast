@@ -92,13 +92,14 @@ export function InstalledSources({
 		} | null | undefined;
 
 		// Build searchable display name (matches the format shown in UI)
-		const providerLabel = providerNames[integration.type] ?? integration.type;
+		const integrationType = integration.type ?? "unknown";
+		const providerLabel = providerNames[integrationType] ?? integrationType;
 		let searchableName: string;
 
-		if (integration.type === "github") {
+		if (integrationType === "github") {
 			const repoName = metadata?.repoFullName ?? "";
 			searchableName = repoName ? `${providerLabel.toLowerCase()}/${repoName}` : providerLabel;
-		} else if (integration.type === "vercel") {
+		} else if (integrationType === "vercel") {
 			const projectName = metadata?.projectName ?? "";
 			searchableName = projectName ? `${providerLabel.toLowerCase()}/${projectName}` : providerLabel;
 		} else {
@@ -108,7 +109,7 @@ export function InstalledSources({
 
 		const matchesSearch =
 			searchableName.toLowerCase().includes(filters.search.toLowerCase()) ||
-			integration.type.toLowerCase().includes(filters.search.toLowerCase());
+			integrationType.toLowerCase().includes(filters.search.toLowerCase());
 
 		// All sources are active by default in the new model
 		const matchesStatus = filters.status === "all" || filters.status === "active";
@@ -176,7 +177,8 @@ export function InstalledSources({
 				) : (
 					<Accordion type="multiple" className="rounded-sm border border-border/60 overflow-hidden bg-card">
 						{filteredIntegrations.map((integration, index) => {
-							const IconComponent = providerIcons[integration.type];
+							const integrationType = integration.type ?? "unknown";
+							const IconComponent = providerIcons[integrationType];
 
 							// Type-safe metadata access for GitHub integrations
 							const metadata = integration.metadata as {
@@ -200,12 +202,12 @@ export function InstalledSources({
 
 							// Get display name based on provider type
 							let displayName: string;
-							const providerLabel: string = providerNames[integration.type] ?? integration.type;
+							const providerLabel: string = providerNames[integrationType] ?? integrationType;
 
-							if (integration.type === "github") {
+							if (integrationType === "github") {
 								const repoName = metadata?.repoFullName ?? "";
 								displayName = repoName ? `${providerLabel.toLowerCase()}/${repoName.split("/").pop() ?? repoName}` : providerLabel;
-							} else if (integration.type === "vercel") {
+							} else if (integrationType === "vercel") {
 								const projectName = metadata?.projectName ?? "";
 								displayName = projectName ? `${providerLabel.toLowerCase()}/${projectName}` : providerLabel;
 							} else {
@@ -239,7 +241,7 @@ export function InstalledSources({
 											<div className="flex-1 min-w-0 text-left">
 												<div className="flex items-center gap-2">
 													<p className="font-medium text-foreground">{displayName}</p>
-													{integration.type === "github" && isPrivate && (
+													{integrationType === "github" && isPrivate && (
 														<span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
 															Private
 														</span>
@@ -291,7 +293,7 @@ export function InstalledSources({
 									<AccordionContent className="px-0 pb-0">
 											<EventSettings
 												integrationId={integration.id}
-												provider={integration.type}
+												provider={integrationType as "github" | "vercel" | "linear" | "sentry"}
 												currentEvents={metadata?.sync?.events ?? []}
 												clerkOrgSlug={clerkOrgSlug}
 												workspaceName={workspaceName}

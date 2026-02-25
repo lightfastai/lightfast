@@ -1,13 +1,12 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { db } from "@db/console/client";
-import { orgWorkspaces, workspaceIntegrations, userSources } from "@db/console/schema";
+import { orgWorkspaces, workspaceIntegrations, gwInstallations } from "@db/console/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { workspaceListInputSchema, workspaceCreateInputSchema } from "@repo/console-validation/schemas";
 import { clerkClient } from "@vendor/clerk/server";
 import { getWorkspaceKey, createCustomWorkspace } from "@db/console/utils";
 import { z } from "zod";
-import { inngest } from "@api/console/inngest";
 
 import { userScopedProcedure } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
@@ -97,8 +96,8 @@ export const workspaceAccessRouter = {
       workspaceCreateInputSchema.extend({
         // Optional: Connect GitHub repository during workspace creation
         githubRepository: z.object({
-          userSourceId: z.string(),
-          installationId: z.string(),
+          gwInstallationId: z.string(),
+          installationId: z.string(), // GitHub App installation external ID
           repoId: z.string(),
           repoName: z.string(),
           repoFullName: z.string(),
@@ -176,22 +175,22 @@ export const workspaceAccessRouter = {
         if (input.githubRepository) {
           const repo = input.githubRepository;
 
-          // Verify user owns the userSource
-          const userSourceResult = await ctx.db
+          // Verify the installation belongs to this org
+          const installationResult = await ctx.db
             .select()
-            .from(userSources)
+            .from(gwInstallations)
             .where(
               and(
-                eq(userSources.id, repo.userSourceId),
-                eq(userSources.userId, ctx.auth.userId),
+                eq(gwInstallations.id, repo.gwInstallationId),
+                eq(gwInstallations.orgId, input.clerkOrgId),
               ),
             )
             .limit(1);
 
-          if (!userSourceResult[0]) {
+          if (!installationResult[0]) {
             throw new TRPCError({
               code: "NOT_FOUND",
-              message: "User source not found or access denied",
+              message: "Installation not found or access denied",
             });
           }
 
@@ -202,7 +201,7 @@ export const workspaceAccessRouter = {
             .where(
               and(
                 eq(workspaceIntegrations.workspaceId, workspaceId),
-                eq(workspaceIntegrations.userSourceId, repo.userSourceId)
+                eq(workspaceIntegrations.installationId, repo.gwInstallationId)
               )
             );
 
@@ -239,7 +238,8 @@ export const workspaceAccessRouter = {
             await ctx.db.insert(workspaceIntegrations).values({
               id: workspaceSourceId,
               workspaceId,
-              userSourceId: repo.userSourceId,
+              installationId: repo.gwInstallationId,
+              provider: "github",
               connectedBy: ctx.auth.userId,
               sourceConfig: {
                 version: 1 as const,
@@ -257,24 +257,6 @@ export const workspaceAccessRouter = {
               providerResourceId: repo.repoId,
               isActive: true,
             });
-          }
-
-          // Trigger initial sync via Inngest
-          try {
-            await inngest.send({
-              name: "apps-console/sync.requested",
-              data: {
-                workspaceId,
-                workspaceKey,
-                sourceId: workspaceSourceId,
-                sourceType: "github",
-                syncMode: "full",
-                trigger: "config-change", // Initial connection
-                syncParams: {},
-              },
-            });
-          } catch (inngestError) {
-            console.error("[workspaceAccess.create] Failed to trigger initial sync:", inngestError);
           }
 
           // Record integration activity

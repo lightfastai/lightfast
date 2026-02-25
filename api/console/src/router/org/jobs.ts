@@ -1,14 +1,11 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { workspaceWorkflowRuns, orgWorkspaces  } from "@db/console/schema";
+import { workspaceWorkflowRuns } from "@db/console/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 
 import { orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
-import { inngest } from "@api/console/inngest";
-import { workspaceIntegrations } from "@db/console/schema";
-import { getWorkspaceKey } from "@db/console/utils";
 
 import { recordActivity } from "../../lib/activity";
 
@@ -334,12 +331,6 @@ export const jobsRouter = {
 				},
 			});
 
-			// TODO: Send Inngest cancellation event
-			// await inngest.send({
-			//   name: "apps-console/job.cancel",
-			//   data: { jobId: input.jobId, inngestRunId: job.inngestRunId }
-			// });
-
 			return { success: true };
 		}),
 
@@ -396,110 +387,15 @@ export const jobsRouter = {
 				});
 			}
 
-			// Determine job type and extract necessary parameters from job.input
-			const jobInput = job.input;
-
-			if (!jobInput) {
-				throw new TRPCError({
-					code: "BAD_REQUEST",
-					message: "Job has no input data - cannot restart",
-				});
-			}
-
-			// Get workspace slug for workspaceKey
-			const workspace = await db.query.orgWorkspaces.findFirst({
-				where: eq(orgWorkspaces.id, workspaceId),
-			});
-
-			if (!workspace) {
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Workspace not found",
-				});
-			}
-
-			const workspaceKey = getWorkspaceKey(workspace.slug);
-
 			// Route based on job function ID
 			switch (job.inngestFunctionId) {
 				case "source-connected":
-				case "source-sync": {
-					// Type narrowing: check jobInput discriminator for sourceId access
-					if (jobInput.inngestFunctionId !== "source-connected" && jobInput.inngestFunctionId !== "source-sync") {
-						throw new TRPCError({
-							code: "BAD_REQUEST",
-							message: "Job input type mismatch - cannot restart",
-						});
-					}
-					// Extract sourceId from job input (now properly narrowed)
-					const sourceId = jobInput.sourceId;
-
-					if (!sourceId) {
-						throw new TRPCError({
-							code: "BAD_REQUEST",
-							message: "Job input missing sourceId - cannot restart",
-						});
-					}
-
-					// Fetch workspace source to determine provider type
-					const source = await db.query.workspaceIntegrations.findFirst({
-						where: eq(workspaceIntegrations.id, sourceId),
+				case "source-sync":
+				case "apps-console/github-sync":
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "Sync jobs are no longer supported and cannot be restarted.",
 					});
-
-					if (!source) {
-						throw new TRPCError({
-							code: "NOT_FOUND",
-							message: `Source not found: ${sourceId}`,
-						});
-					}
-
-					// Determine source type from sourceConfig
-					const sourceType = source.sourceConfig.sourceType;
-
-					// Trigger new full sync via unified orchestrator
-					await inngest.send({
-						name: "apps-console/sync.requested",
-						data: {
-							workspaceId,
-							workspaceKey,
-							sourceId,
-							sourceType,
-							syncMode: "full" as const,
-							trigger: "manual" as const,
-							syncParams: {},
-						},
-					});
-					break;
-				}
-
-				case "apps-console/github-sync": {
-					// GitHub-specific sync restart (legacy function ID, not in discriminated union)
-					// Use type assertion for legacy job format
-					const legacyInput = jobInput as { sourceId?: string };
-					const sourceId = legacyInput.sourceId;
-
-					if (!sourceId) {
-						throw new TRPCError({
-							code: "BAD_REQUEST",
-							message: "Job input missing sourceId - cannot restart",
-						});
-					}
-
-					// Trigger new full sync via unified orchestrator
-					await inngest.send({
-						name: "apps-console/sync.requested",
-						data: {
-							workspaceId,
-							workspaceKey,
-							sourceId,
-							sourceType: "github" as const,
-							syncMode: "full" as const,
-							trigger: "manual" as const,
-							syncParams: {},
-						},
-					});
-					break;
-				}
 
 				default:
 					throw new TRPCError({
@@ -507,26 +403,5 @@ export const jobsRouter = {
 						message: `Cannot restart job of type: ${job.inngestFunctionId}. This job type may no longer be supported.`,
 					});
 			}
-
-			// Record activity (Tier 2: Queue-based)
-			await recordActivity({
-				workspaceId,
-				actorType: "user",
-				actorUserId: ctx.auth.userId,
-				category: "job",
-				action: "job.restarted",
-				entityType: "job",
-				entityId: input.jobId,
-				metadata: {
-					jobName: job.name,
-					originalStatus: job.status,
-					inngestFunctionId: job.inngestFunctionId,
-				},
-			});
-
-			return {
-				success: true,
-				message: "Job restart triggered successfully",
-			};
 		}),
 } satisfies TRPCRouterRecord;

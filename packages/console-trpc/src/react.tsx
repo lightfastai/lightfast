@@ -75,7 +75,6 @@ export function TRPCReactProvider({
               path.startsWith("organization.") ||
               path.startsWith("account.") ||
               path.startsWith("workspaceAccess.") ||
-              path.startsWith("userSources.") ||
               path.startsWith("userApiKeys.")
             );
           },
