@@ -55,8 +55,13 @@ export function serve<TPayload = unknown>(
   const wrappedHandler = async (context: WorkflowContext<TPayload>) => {
     try {
       if (options?.verbose) {
+        const payload = context.requestPayload;
         console.log("[Workflow] Starting workflow execution", {
-          requestPayload: context.requestPayload,
+          payloadType: typeof payload,
+          payloadKeys:
+            typeof payload === "object" && payload !== null
+              ? Object.keys(payload)
+              : undefined,
         });
       }
 
