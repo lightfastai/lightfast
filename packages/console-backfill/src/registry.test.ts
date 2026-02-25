@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 // Import directly from ./registry to avoid auto-registration side effects from ./index
-import { registerConnector, getConnector, hasConnector } from "./registry";
+import {
+  registerConnector,
+  getConnector,
+  hasConnector,
+  clearRegistry,
+} from "./registry";
 import type { BackfillConnector } from "./types";
 
 function makeConnector(provider: string): BackfillConnector {
@@ -14,8 +19,9 @@ function makeConnector(provider: string): BackfillConnector {
 }
 
 describe("registry", () => {
-  // Note: registry is a module-level Map — tests share state.
-  // We register fresh connectors per test to verify behavior.
+  beforeEach(() => {
+    clearRegistry();
+  });
 
   it("registerConnector stores connector and getConnector retrieves it", () => {
     const connector = makeConnector("github");
