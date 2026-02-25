@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Github } from "lucide-react";
 import {
 	Dialog,
@@ -41,6 +41,38 @@ export function GitHubConnectDialog({
 	const open = controlledOpen ?? internalOpen;
 	const setOpen = onOpenChange ?? setInternalOpen;
 
+	const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const successReceivedRef = useRef(false);
+
+	const cleanup = useCallback(() => {
+		if (pollTimerRef.current) {
+			clearInterval(pollTimerRef.current);
+			pollTimerRef.current = null;
+		}
+	}, []);
+
+	// Listen for postMessage from the OAuth callback page
+	useEffect(() => {
+		const handleMessage = (event: MessageEvent) => {
+			if (event.origin !== window.location.origin) return;
+			if (event.data?.type === "github_connected") {
+				successReceivedRef.current = true;
+				cleanup();
+				setOpen(false);
+				toast.success("GitHub connected", {
+					description: "Successfully connected to GitHub. You can now set up environments.",
+				});
+				onSuccess?.();
+			}
+		};
+
+		window.addEventListener("message", handleMessage);
+		return () => {
+			window.removeEventListener("message", handleMessage);
+			cleanup();
+		};
+	}, [cleanup, setOpen, onSuccess]);
+
 	const handleGitHubAuth = async () => {
 		try {
 			const data = await queryClient.fetchQuery(
@@ -52,21 +84,30 @@ export function GitHubConnectDialog({
 			const left = window.screenX + (window.outerWidth - width) / 2;
 			const top = window.screenY + (window.outerHeight - height) / 2;
 
+			successReceivedRef.current = false;
+
 			const popup = window.open(
 				data.url,
 				"github-install",
 				`width=${width},height=${height},left=${left},top=${top},popup=1`,
 			);
 
-			// Poll for popup close
-			const pollTimer = setInterval(() => {
-				if (popup?.closed) {
-					clearInterval(pollTimer);
-					setOpen(false);
-					toast.success("GitHub connected", {
-						description: "Successfully connected to GitHub. You can now set up environments.",
-					});
-					onSuccess?.();
+			if (!popup) {
+				toast.error("Popup blocked", {
+					description: "Please allow popups for this site and try again.",
+				});
+				return;
+			}
+
+			// Poll for popup close as a fallback — success is signalled via postMessage
+			pollTimerRef.current = setInterval(() => {
+				if (popup.closed) {
+					cleanup();
+					if (!successReceivedRef.current) {
+						toast.error("GitHub connection was not completed", {
+							description: "The popup was closed before authorization finished. Please try again.",
+						});
+					}
 				}
 			}, 500);
 		} catch {

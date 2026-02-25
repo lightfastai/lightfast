@@ -17,7 +17,7 @@ export default function GitHubConnectedPage() {
 		const opener = window.opener as Window | null;
 		if (opener) {
 			try {
-				opener.postMessage({ type: "github_connected" }, "*");
+				opener.postMessage({ type: "github_connected" }, window.location.origin);
 			} catch {
 				// Ignore cross-origin errors
 			}
