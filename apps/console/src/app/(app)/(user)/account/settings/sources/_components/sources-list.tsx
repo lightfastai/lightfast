@@ -104,10 +104,10 @@ export function SourcesList() {
 					}
 				}, 500);
 			} catch {
-				toast.error(`Failed to connect ${providerNames[provider as keyof typeof providerNames]}`);
+				toast.error(`Failed to connect ${providerNames[provider as keyof typeof providerNames] ?? provider}`);
 			}
 		} else {
-			toast.info(`${providerNames[provider as keyof typeof providerNames]} integration coming soon`);
+			toast.info(`${providerNames[provider as keyof typeof providerNames] ?? provider} integration coming soon`);
 		}
 	};
 
@@ -160,13 +160,15 @@ export function SourcesList() {
 						<div className="flex items-center gap-2">
 							{source.isConnected && source.integration ? (
 								<>
-									<span className="text-sm text-muted-foreground mr-2">
-										Last used{" "}
-										{formatDistanceToNow(
-											new Date(source.integration.lastSyncAt),
-											{ addSuffix: true }
-										).replace(" ago", "")}
-									</span>
+									{source.integration.lastSyncAt && (
+										<span className="text-sm text-muted-foreground mr-2">
+											Last used{" "}
+											{formatDistanceToNow(
+												new Date(source.integration.lastSyncAt),
+												{ addSuffix: true },
+											).replace(" ago", "")}
+										</span>
+									)}
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
 											<Button variant="ghost" size="icon" className="h-8 w-8">
