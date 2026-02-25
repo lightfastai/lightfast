@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { IntegrationIcons } from "@repo/ui/integration-icons";
 import { Check, ExternalLink } from "lucide-react";
 import { useConnectForm } from "./connect-form-provider";
@@ -46,7 +47,17 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
     () => autoOpen && isConnected && installations.length > 0,
   );
 
-  const handleConnectGitHub = async () => {
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleConnectGitHub = useCallback(async () => {
     try {
       const data = await queryClient.fetchQuery(
         trpc.connections.getAuthorizeUrl.queryOptions({ provider: "github" }),
@@ -63,17 +74,25 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
         `width=${width},height=${height},left=${left},top=${top},popup=1`
       );
 
+      // Clear any existing poll before starting a new one
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+      }
+
       // Poll for popup close
-      const pollTimer = setInterval(() => {
+      pollTimerRef.current = setInterval(() => {
         if (popup?.closed) {
-          clearInterval(pollTimer);
+          if (pollTimerRef.current) {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+          }
           void refetch();
         }
       }, 500);
-    } catch {
-      // Failed to get authorize URL
+    } catch (error) {
+      toast.error("Failed to connect to GitHub. Please try again.");
     }
-  };
+  }, [queryClient, trpc, refetch]);
 
   if (!isConnected) {
     return (
