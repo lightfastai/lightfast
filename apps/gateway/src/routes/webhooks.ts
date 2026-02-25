@@ -120,9 +120,16 @@ webhooks.post("/:provider", async (c) => {
     return c.json({ error: "invalid_payload" }, 400);
   }
 
-  const deliveryId = provider.extractDeliveryId(headers, payload);
-  const eventType = provider.extractEventType(headers, payload);
-  const resourceId = provider.extractResourceId(payload);
+  let deliveryId: string;
+  let eventType: string;
+  let resourceId: string;
+  try {
+    deliveryId = provider.extractDeliveryId(headers, payload);
+    eventType = provider.extractEventType(headers, payload);
+    resourceId = provider.extractResourceId(payload);
+  } catch {
+    return c.json({ error: "extraction_failed", provider: providerName }, 400);
+  }
 
   // Trigger durable workflow — processing happens asynchronously with
   // step-level retry semantics. Provider gets fast 200 ACK.
