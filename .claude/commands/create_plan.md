@@ -225,11 +225,11 @@ After structure approval:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Migration applies cleanly: `make migrate`
-- [ ] Unit tests pass: `make test-component`
-- [ ] Type checking passes: `npm run typecheck`
-- [ ] Linting passes: `make lint`
-- [ ] Integration tests pass: `make test-integration`
+- [ ] Migration applies cleanly: `pnpm db:migrate`
+- [ ] Unit tests pass: `pnpm test`
+- [ ] Type checking passes: `pnpm typecheck`
+- [ ] Linting passes: `pnpm lint`
+- [ ] Integration tests pass: `pnpm test:integration`
 
 #### Manual Verification:
 - [ ] Feature works as expected when tested via UI
@@ -322,7 +322,7 @@ After structure approval:
    - Research actual code patterns using parallel sub-tasks
    - Include specific file paths and line numbers
    - Write measurable success criteria with clear automated vs manual distinction
-   - automated steps should use `make` whenever possible - for example `make -C humanlayer-wui check` instead of `cd humanlayer-wui && bun run fmt`
+   - automated steps should use `pnpm` whenever possible - for example `pnpm lint` instead of `cd apps/console && npx eslint .`
 
 4. **Be Practical**:
    - Focus on incremental, testable changes
@@ -347,7 +347,7 @@ After structure approval:
 **Always separate success criteria into two categories:**
 
 1. **Automated Verification** (can be run by execution agents):
-   - Commands that can be run: `make test`, `npm run lint`, etc.
+   - Commands that can be run: `pnpm test`, `pnpm lint`, etc.
    - Specific files that should exist
    - Code compilation/type checking
    - Automated test suites
@@ -363,10 +363,10 @@ After structure approval:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Database migration runs successfully: `make migrate`
-- [ ] All unit tests pass: `go test ./...`
-- [ ] No linting errors: `golangci-lint run`
-- [ ] API endpoint returns 200: `curl localhost:8080/api/new-endpoint`
+- [ ] Database migration runs successfully: `pnpm db:migrate`
+- [ ] All unit tests pass: `pnpm test`
+- [ ] No linting errors: `pnpm lint`
+- [ ] Type checking passes: `pnpm typecheck`
 
 #### Manual Verification:
 - [ ] New feature appears correctly in the UI
