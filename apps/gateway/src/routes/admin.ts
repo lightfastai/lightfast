@@ -89,8 +89,10 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
  * List messages in the webhook DLQ. Requires X-API-Key authentication.
  */
 admin.get("/dlq", apiKeyAuth, async (c) => {
-  const limit = parseInt(c.req.query("limit") ?? "50", 10);
-  const offset = parseInt(c.req.query("offset") ?? "0", 10);
+  const rawLimit = parseInt(c.req.query("limit") ?? "50", 10);
+  const rawOffset = parseInt(c.req.query("offset") ?? "0", 10);
+  const limit = Math.min(Math.max(Number.isNaN(rawLimit) ? 50 : rawLimit, 1), 1000);
+  const offset = Math.max(Number.isNaN(rawOffset) ? 0 : rawOffset, 0);
 
   const dlqItems = await db
     .select()
