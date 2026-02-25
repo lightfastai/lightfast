@@ -66,7 +66,12 @@ export async function notifyBackfillService(params: {
       retries: 3,
     });
   } catch (err) {
-    console.error("[connections] Failed to notify backfill service:", err);
+    console.error("[connections] Failed to notify backfill service", {
+      installationId: params.installationId,
+      provider: params.provider,
+      backfillUrl,
+      err,
+    });
   }
 }
 
@@ -86,6 +91,10 @@ export async function cancelBackfillService(params: {
       retries: 3,
     });
   } catch (err) {
-    console.error("[connection-teardown] Failed to cancel backfill:", err);
+    console.error("[connection-teardown] Failed to cancel backfill", {
+      installationId: params.installationId,
+      backfillUrl,
+      err,
+    });
   }
 }
