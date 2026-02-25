@@ -21,7 +21,6 @@
     "@vendor/inngest": "workspace:*",
     "@vercel/related-projects": "catalog:",
     "hono": "catalog:",
-    "inngest": "catalog:",
     "zod": "catalog:zod3"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { serve } from "inngest/hono";
+import { serve } from "@vendor/inngest/hono";
 import { inngest } from "../inngest/client";
 import { backfillOrchestrator } from "../workflows/backfill-orchestrator";
 import { backfillEntityWorker } from "../workflows/entity-worker";

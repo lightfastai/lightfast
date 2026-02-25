@@ -1,4 +1,4 @@
-import { NonRetriableError } from "inngest";
+import { NonRetriableError } from "@vendor/inngest";
 import { inngest } from "../inngest/client";
 import { getConnector } from "@repo/console-backfill";
 import type { BackfillConfig } from "@repo/console-backfill";

@@ -1,4 +1,4 @@
-import { EventSchemas, Inngest } from "inngest";
+import { EventSchemas, Inngest } from "@vendor/inngest";
 import { z } from "zod";
 
 import { env } from "../env";

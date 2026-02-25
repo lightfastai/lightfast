@@ -9,6 +9,7 @@
 			"default": "./src/index.ts"
 		},
 		"./server": "./src/server.ts",
+		"./hono": "./src/hono.ts",
 		"./env": "./env.ts"
 	},
 	"license": "MIT",
@@ -36,5 +37,13 @@
 		"@inngest/middleware-sentry": "catalog:",
 		"inngest": "catalog:",
 		"zod": "catalog:zod3"
+	},
+	"peerDependencies": {
+		"hono": "catalog:"
+	},
+	"peerDependenciesMeta": {
+		"hono": {
+			"optional": true
+		}
 	}
 }
