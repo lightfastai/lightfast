@@ -1,0 +1,81 @@
+{
+  "action": "create",
+  "type": "Issue",
+  "createdAt": "2025-01-24T14:32:18.084Z",
+  "organizationId": "dc844923-f9a4-40a3-825c-dea7747e57d6",
+  "webhookTimestamp": 1706107938084,
+  "webhookId": "000042e3-d123-4980-b49f-8e140eef9329",
+  "url": "https://linear.app/acme/issue/ENG-123",
+  "actor": {
+    "id": "b5ea5f1f-8adc-4f52-b4bd-ab4e84cf51ba",
+    "type": "user",
+    "name": "Sarah Chen",
+    "email": "sarah@acme.com",
+    "url": "https://linear.app/acme/profiles/sarah-chen"
+  },
+  "data": {
+    "id": "8f7e6d5c-4b3a-2198-7f6e-5d4c3b2a1098",
+    "createdAt": "2025-01-24T14:32:18.076Z",
+    "updatedAt": "2025-01-24T14:32:18.076Z",
+    "number": 123,
+    "title": "Add user authentication to API endpoints",
+    "priority": 1,
+    "priorityLabel": "Urgent",
+    "estimate": 5,
+    "boardOrder": 0,
+    "sortOrder": -1234.56,
+    "startedAt": null,
+    "completedAt": null,
+    "canceledAt": null,
+    "autoClosedAt": null,
+    "autoArchivedAt": null,
+    "dueDate": "2025-02-07",
+    "trashed": false,
+    "snoozedUntilAt": null,
+    "labelIds": ["e0e9f98e-c90c-40cd-939e-06ff7bd57b45"],
+    "description": "Implement JWT-based authentication for all API endpoints.",
+    "descriptionState": "stored",
+    "url": "https://linear.app/acme/issue/ENG-123",
+    "identifier": "ENG-123",
+    "teamId": "72b2a2dc-6f4f-4423-9d34-24b5bd10634a",
+    "cycleId": null,
+    "projectId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "projectMilestoneId": null,
+    "previousIdentifiers": [],
+    "creatorId": "b5ea5f1f-8adc-4f52-b4bd-ab4e84cf51ba",
+    "assigneeId": "b5ea5f1f-8adc-4f52-b4bd-ab4e84cf51ba",
+    "parentId": null,
+    "stateId": "c1d2e3f4-a5b6-7890-cdef-012345678901",
+    "subscriberIds": ["b5ea5f1f-8adc-4f52-b4bd-ab4e84cf51ba"],
+    "reactionData": [],
+    "team": {
+      "id": "72b2a2dc-6f4f-4423-9d34-24b5bd10634a",
+      "key": "ENG",
+      "name": "Engineering"
+    },
+    "state": {
+      "id": "c1d2e3f4-a5b6-7890-cdef-012345678901",
+      "color": "#e2e2e2",
+      "name": "Todo",
+      "type": "unstarted"
+    },
+    "assignee": {
+      "id": "b5ea5f1f-8adc-4f52-b4bd-ab4e84cf51ba",
+      "name": "Sarah Chen",
+      "email": "sarah@acme.com",
+      "avatarUrl": "https://avatars.linear.app/b5ea5f1f.jpg"
+    },
+    "creator": {
+      "id": "b5ea5f1f-8adc-4f52-b4bd-ab4e84cf51ba",
+      "name": "Sarah Chen",
+      "email": "sarah@acme.com"
+    },
+    "labels": [
+      {
+        "id": "e0e9f98e-c90c-40cd-939e-06ff7bd57b45",
+        "color": "#eb5757",
+        "name": "Bug"
+      }
+    ]
+  }
+}

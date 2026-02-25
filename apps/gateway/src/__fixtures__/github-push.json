@@ -1,0 +1,114 @@
+{
+  "ref": "refs/heads/main",
+  "before": "9049f1265b7d61be4a8904a9a27120d2064dab3b",
+  "after": "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
+  "repository": {
+    "id": 123456789,
+    "node_id": "MDEwOlJlcG9zaXRvcnkxMjM0NTY3ODk=",
+    "name": "my-repo",
+    "full_name": "acme-org/my-repo",
+    "private": false,
+    "owner": {
+      "name": "acme-org",
+      "email": "org@acme.com",
+      "login": "acme-org",
+      "id": 111111,
+      "node_id": "MDEyOk9yZ2FuaXphdGlvbjExMTExMQ==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/111111?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/acme-org",
+      "html_url": "https://github.com/acme-org",
+      "type": "Organization",
+      "site_admin": false
+    },
+    "html_url": "https://github.com/acme-org/my-repo",
+    "description": "Main application repository",
+    "fork": false,
+    "url": "https://github.com/acme-org/my-repo",
+    "clone_url": "https://github.com/acme-org/my-repo.git",
+    "ssh_url": "git@github.com:acme-org/my-repo.git",
+    "default_branch": "main",
+    "master_branch": "main",
+    "stargazers": 42,
+    "topics": ["typescript", "api"],
+    "visibility": "public",
+    "pushed_at": 1706107938,
+    "created_at": 1609459200,
+    "updated_at": "2025-01-24T14:32:18Z"
+  },
+  "pusher": {
+    "name": "john-dev",
+    "email": "john@acme.com"
+  },
+  "sender": {
+    "login": "john-dev",
+    "id": 234567,
+    "node_id": "MDQ6VXNlcjIzNDU2Nw==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/234567?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/john-dev",
+    "html_url": "https://github.com/john-dev",
+    "type": "User",
+    "site_admin": false
+  },
+  "installation": {
+    "id": 12345678,
+    "node_id": "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uMTIzNDU2Nzg="
+  },
+  "organization": {
+    "login": "acme-org",
+    "id": 111111,
+    "node_id": "MDEyOk9yZ2FuaXphdGlvbjExMTExMQ==",
+    "url": "https://api.github.com/orgs/acme-org",
+    "description": "Acme Corp"
+  },
+  "created": false,
+  "deleted": false,
+  "forced": false,
+  "base_ref": null,
+  "compare": "https://github.com/acme-org/my-repo/compare/9049f1265b7d...0d1a26e67d8f",
+  "commits": [
+    {
+      "id": "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
+      "tree_id": "f9d2a07e9488b91af2641b26b9407fe22a451433",
+      "distinct": true,
+      "message": "feat: add user authentication to API endpoints",
+      "timestamp": "2025-01-24T14:32:18+00:00",
+      "url": "https://github.com/acme-org/my-repo/commit/0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
+      "author": {
+        "name": "John Doe",
+        "email": "john@acme.com",
+        "username": "john-dev"
+      },
+      "committer": {
+        "name": "John Doe",
+        "email": "john@acme.com",
+        "username": "john-dev"
+      },
+      "added": ["src/auth/jwt.ts", "src/auth/middleware.ts"],
+      "removed": [],
+      "modified": ["src/router/index.ts", "package.json"]
+    }
+  ],
+  "head_commit": {
+    "id": "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
+    "tree_id": "f9d2a07e9488b91af2641b26b9407fe22a451433",
+    "distinct": true,
+    "message": "feat: add user authentication to API endpoints",
+    "timestamp": "2025-01-24T14:32:18+00:00",
+    "url": "https://github.com/acme-org/my-repo/commit/0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
+    "author": {
+      "name": "John Doe",
+      "email": "john@acme.com",
+      "username": "john-dev"
+    },
+    "committer": {
+      "name": "John Doe",
+      "email": "john@acme.com",
+      "username": "john-dev"
+    },
+    "added": ["src/auth/jwt.ts", "src/auth/middleware.ts"],
+    "removed": [],
+    "modified": ["src/router/index.ts", "package.json"]
+  }
+}

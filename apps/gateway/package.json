@@ -30,6 +30,7 @@
     "zod": "catalog:zod3"
   },
   "devDependencies": {
+    "@repo/console-test-data": "workspace:*",
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
