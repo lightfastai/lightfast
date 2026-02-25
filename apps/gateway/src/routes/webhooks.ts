@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { env } from "../env";
+import { gatewayBaseUrl } from "../lib/base-url";
 import { getWebhookSecret } from "../lib/secrets";
 import { workflowClient } from "../lib/workflow-client";
 import { getProvider } from "../providers";
@@ -38,12 +38,12 @@ webhooks.post("/:provider", async (c) => {
     return c.json({ error: "invalid_signature" }, 401);
   }
 
-  // Parse payload + extract identifiers (cheap, no I/O)
-  let payload: unknown;
+  // Parse + validate payload with provider-specific Zod schema
+  let payload;
   try {
-    payload = JSON.parse(rawBody) as unknown;
+    payload = provider.parsePayload(JSON.parse(rawBody));
   } catch {
-    return c.json({ error: "invalid_json" }, 400);
+    return c.json({ error: "invalid_payload" }, 400);
   }
 
   const deliveryId = provider.extractDeliveryId(headers, payload);
@@ -62,7 +62,7 @@ webhooks.post("/:provider", async (c) => {
   };
 
   await workflowClient.trigger({
-    url: `${env.GATEWAY_BASE_URL}/workflows/webhook-receipt`,
+    url: `${gatewayBaseUrl}/workflows/webhook-receipt`,
     body: workflowPayload,
   });
 

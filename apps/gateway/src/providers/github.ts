@@ -1,6 +1,17 @@
 import { env } from "../env";
+import { gatewayBaseUrl } from "../lib/base-url";
 import { computeHmacSha256, timingSafeEqual } from "../lib/crypto";
-import type { ConnectionProvider, OAuthTokens, ProviderOptions } from "./types";
+import {
+  githubOAuthResponseSchema,
+  githubWebhookPayloadSchema,
+} from "./schemas";
+import type { GitHubWebhookPayload } from "./schemas";
+import type {
+  ConnectionProvider,
+  GitHubAuthOptions,
+  OAuthTokens,
+  WebhookPayload,
+} from "./types";
 
 const SIGNATURE_HEADER = "x-hub-signature-256";
 const DELIVERY_HEADER = "x-github-delivery";
@@ -8,21 +19,21 @@ const EVENT_HEADER = "x-github-event";
 const SIGNATURE_PREFIX = "sha256=";
 
 export class GitHubProvider implements ConnectionProvider {
-  readonly name = "github";
-  readonly requiresWebhookRegistration = false;
+  readonly name = "github" as const;
+  readonly requiresWebhookRegistration = false as const;
 
-  getAuthorizationUrl(state: string, options?: ProviderOptions): string {
+  getAuthorizationUrl(state: string, options?: GitHubAuthOptions): string {
     const url = new URL("https://github.com/login/oauth/authorize");
     url.searchParams.set("client_id", env.GITHUB_CLIENT_ID);
     url.searchParams.set("state", state);
     if (options?.redirectPath) {
-      const redirectUri = `${env.GATEWAY_BASE_URL}/connections/github/callback`;
+      const redirectUri = `${gatewayBaseUrl}/connections/github/callback`;
       url.searchParams.set("redirect_uri", redirectUri);
     }
     return url.toString();
   }
 
-  /** Build GitHub App installation URL */
+  /** Build GitHub App installation URL (GitHub-specific, not on interface) */
   getInstallationUrl(state: string, targetId?: string): string {
     const url = new URL(
       `https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`,
@@ -54,28 +65,26 @@ export class GitHubProvider implements ConnectionProvider {
       throw new Error(`GitHub token exchange failed: ${response.status}`);
     }
 
-    const data = (await response.json()) as Record<string, unknown>;
+    const rawData: unknown = await response.json();
+    const data = githubOAuthResponseSchema.parse(rawData);
 
     if (data.error) {
-      const desc = typeof data.error_description === "string"
-        ? data.error_description
-        : typeof data.error === "string"
-          ? data.error
-          : "unknown error";
+      const desc = data.error_description ?? data.error;
       throw new Error(`GitHub OAuth error: ${desc}`);
     }
 
     return {
-      accessToken: data.access_token as string,
-      scope: data.scope as string | undefined,
-      tokenType: data.token_type as string | undefined,
-      raw: data,
+      accessToken: data.access_token,
+      scope: data.scope,
+      tokenType: data.token_type,
+      raw: rawData as Record<string, unknown>,
     };
   }
 
   refreshToken(_refreshToken: string): Promise<OAuthTokens> {
-    // GitHub user OAuth tokens don't expire (no refresh flow)
-    return Promise.reject(new Error("GitHub user tokens do not support refresh"));
+    return Promise.reject(
+      new Error("GitHub user tokens do not support refresh"),
+    );
   }
 
   async revokeToken(accessToken: string): Promise<void> {
@@ -117,28 +126,25 @@ export class GitHubProvider implements ConnectionProvider {
     return timingSafeEqual(receivedSig, expectedSig);
   }
 
-  extractDeliveryId(headers: Headers, _payload: unknown): string {
+  parsePayload(raw: unknown): GitHubWebhookPayload {
+    return githubWebhookPayloadSchema.parse(raw);
+  }
+
+  extractDeliveryId(headers: Headers, _payload: WebhookPayload): string {
     return headers.get(DELIVERY_HEADER) ?? crypto.randomUUID();
   }
 
-  extractEventType(headers: Headers, _payload: unknown): string {
+  extractEventType(headers: Headers, _payload: WebhookPayload): string {
     return headers.get(EVENT_HEADER) ?? "unknown";
   }
 
-  extractResourceId(payload: unknown): string | null {
-    const p = payload as Record<string, unknown>;
-    const repo = p.repository as Record<string, unknown> | undefined;
-    const repoId = repo?.id;
-    if (repoId != null && (typeof repoId === "string" || typeof repoId === "number")) {
-      return String(repoId);
-    }
+  extractResourceId(payload: WebhookPayload): string | null {
+    const p = payload as GitHubWebhookPayload;
+    const repoId = p.repository?.id;
+    if (repoId != null) return String(repoId);
 
-    // Fallback: installation id for app events
-    const installation = p.installation as Record<string, unknown> | undefined;
-    const installId = installation?.id;
-    if (installId != null && (typeof installId === "string" || typeof installId === "number")) {
-      return String(installId);
-    }
+    const installId = p.installation?.id;
+    if (installId != null) return String(installId);
 
     return null;
   }

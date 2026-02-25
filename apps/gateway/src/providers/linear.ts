@@ -1,18 +1,29 @@
 import { env } from "../env";
+import { gatewayBaseUrl } from "../lib/base-url";
 import { computeHmacSha256, timingSafeEqual } from "../lib/crypto";
-import type { ConnectionProvider, OAuthTokens, ProviderOptions } from "./types";
+import { linearOAuthResponseSchema, linearWebhookPayloadSchema } from "./schemas";
+import type { LinearWebhookPayload } from "./schemas";
+import type {
+  LinearAuthOptions,
+  OAuthTokens,
+  WebhookPayload,
+  WebhookRegistrant,
+} from "./types";
 
 const SIGNATURE_HEADER = "linear-signature";
 const DELIVERY_HEADER = "linear-delivery";
 
-export class LinearProvider implements ConnectionProvider {
-  readonly name = "linear";
-  readonly requiresWebhookRegistration = true;
+export class LinearProvider implements WebhookRegistrant {
+  readonly name = "linear" as const;
+  readonly requiresWebhookRegistration = true as const;
 
-  getAuthorizationUrl(state: string, options?: ProviderOptions): string {
+  getAuthorizationUrl(state: string, options?: LinearAuthOptions): string {
     const url = new URL("https://linear.app/oauth/authorize");
     url.searchParams.set("client_id", env.LINEAR_CLIENT_ID);
-    url.searchParams.set("redirect_uri", `${env.GATEWAY_BASE_URL}/connections/linear/callback`);
+    url.searchParams.set(
+      "redirect_uri",
+      `${gatewayBaseUrl}/connections/linear/callback`,
+    );
     url.searchParams.set("response_type", "code");
     url.searchParams.set("scope", options?.scopes?.join(",") ?? "read,write");
     url.searchParams.set("state", state);
@@ -36,19 +47,19 @@ export class LinearProvider implements ConnectionProvider {
       throw new Error(`Linear token exchange failed: ${response.status}`);
     }
 
-    const data = (await response.json()) as Record<string, unknown>;
+    const rawData: unknown = await response.json();
+    const data = linearOAuthResponseSchema.parse(rawData);
 
     return {
-      accessToken: data.access_token as string,
-      tokenType: data.token_type as string | undefined,
-      scope: data.scope as string | undefined,
-      expiresIn: data.expires_in as number | undefined,
-      raw: data,
+      accessToken: data.access_token,
+      tokenType: data.token_type,
+      scope: data.scope,
+      expiresIn: data.expires_in,
+      raw: rawData as Record<string, unknown>,
     };
   }
 
   refreshToken(_refreshToken: string): Promise<OAuthTokens> {
-    // Linear uses long-lived tokens
     return Promise.reject(new Error("Linear tokens do not support refresh"));
   }
 
@@ -78,24 +89,23 @@ export class LinearProvider implements ConnectionProvider {
     return timingSafeEqual(signature, expectedSig);
   }
 
-  extractDeliveryId(headers: Headers, _payload: unknown): string {
+  parsePayload(raw: unknown): LinearWebhookPayload {
+    return linearWebhookPayloadSchema.parse(raw);
+  }
+
+  extractDeliveryId(headers: Headers, _payload: WebhookPayload): string {
     return headers.get(DELIVERY_HEADER) ?? crypto.randomUUID();
   }
 
-  extractEventType(_headers: Headers, payload: unknown): string {
-    const p = payload as Record<string, unknown>;
-    const type = p.type as string | undefined;
-    const action = p.action as string | undefined;
-    if (type && action) return `${type}:${action}`;
-    return type ?? "unknown";
+  extractEventType(_headers: Headers, payload: WebhookPayload): string {
+    const p = payload as LinearWebhookPayload;
+    if (p.type && p.action) return `${p.type}:${p.action}`;
+    return p.type ?? "unknown";
   }
 
-  extractResourceId(payload: unknown): string | null {
-    const p = payload as Record<string, unknown>;
-    if (p.organizationId && typeof p.organizationId === "string") {
-      return p.organizationId;
-    }
-    return null;
+  extractResourceId(payload: WebhookPayload): string | null {
+    const p = payload as LinearWebhookPayload;
+    return p.organizationId ?? null;
   }
 
   async registerWebhook(
@@ -118,8 +128,6 @@ export class LinearProvider implements ConnectionProvider {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Token will be passed via env or per-connection context;
-        // for now use the client secret for app-level auth
         Authorization: `Bearer ${env.LINEAR_CLIENT_SECRET}`,
       },
       body: JSON.stringify({
@@ -141,16 +149,22 @@ export class LinearProvider implements ConnectionProvider {
     });
 
     if (!response.ok) {
-      throw new Error(`Linear webhook registration failed: ${response.status}`);
+      throw new Error(
+        `Linear webhook registration failed: ${response.status}`,
+      );
     }
 
     const result = (await response.json()) as {
-      data?: { webhookCreate?: { success: boolean; webhook?: { id: string } } };
+      data?: {
+        webhookCreate?: { success: boolean; webhook?: { id: string } };
+      };
       errors?: unknown[];
     };
 
     if (result.errors?.length) {
-      throw new Error(`Linear webhook registration error: ${JSON.stringify(result.errors)}`);
+      throw new Error(
+        `Linear webhook registration error: ${JSON.stringify(result.errors)}`,
+      );
     }
 
     const webhookId = result.data?.webhookCreate?.webhook?.id;

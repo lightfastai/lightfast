@@ -1,17 +1,23 @@
 import { env } from "../env";
 import { computeHmacSha256, timingSafeEqual } from "../lib/crypto";
-import type { ConnectionProvider, OAuthTokens, ProviderOptions } from "./types";
+import {
+  decodeSentryToken,
+  encodeSentryToken,
+  sentryOAuthResponseSchema,
+  sentryWebhookPayloadSchema,
+} from "./schemas";
+import type { SentryWebhookPayload } from "./schemas";
+import type { OAuthTokens, WebhookPayload, WebhookRegistrant } from "./types";
 
 const SIGNATURE_HEADER = "sentry-hook-signature";
 const RESOURCE_HEADER = "sentry-hook-resource";
 const TIMESTAMP_HEADER = "sentry-hook-timestamp";
 
-export class SentryProvider implements ConnectionProvider {
-  readonly name = "sentry";
-  readonly requiresWebhookRegistration = true;
+export class SentryProvider implements WebhookRegistrant {
+  readonly name = "sentry" as const;
+  readonly requiresWebhookRegistration = true as const;
 
-  getAuthorizationUrl(state: string, _options?: ProviderOptions): string {
-    // Sentry uses external-install flow for SentryApp integrations
+  getAuthorizationUrl(state: string): string {
     const url = new URL(
       `https://sentry.io/sentry-apps/${env.SENTRY_CLIENT_ID}/external-install/`,
     );
@@ -20,12 +26,7 @@ export class SentryProvider implements ConnectionProvider {
   }
 
   async exchangeCode(code: string, _redirectUri: string): Promise<OAuthTokens> {
-    // For Sentry SentryApps, the code exchange requires the installation UUID.
-    // The installationId comes from the initial webhook payload, not redirectUri.
-    // We extract it from the code param which Sentry sends as installation:code
-    const [installationId, authCode] = code.includes(":")
-      ? code.split(":", 2)
-      : ["", code];
+    const { installationId, token: authCode } = decodeSentryToken(code);
 
     const response = await fetch(
       `https://sentry.io/api/0/sentry-app-installations/${installationId}/authorizations/`,
@@ -48,27 +49,23 @@ export class SentryProvider implements ConnectionProvider {
       throw new Error(`Sentry token exchange failed: ${response.status}`);
     }
 
-    const data = (await response.json()) as Record<string, unknown>;
+    const rawData: unknown = await response.json();
+    const data = sentryOAuthResponseSchema.parse(rawData);
 
     return {
-      accessToken: data.token as string,
-      refreshToken: data.refreshToken as string | undefined,
+      accessToken: data.token,
+      refreshToken: data.refreshToken,
       expiresIn: data.expiresAt
         ? Math.floor(
-            (new Date(data.expiresAt as string).getTime() - Date.now()) / 1000,
+            (new Date(data.expiresAt).getTime() - Date.now()) / 1000,
           )
         : undefined,
-      raw: data,
+      raw: rawData as Record<string, unknown>,
     };
   }
 
   async refreshToken(refreshToken: string): Promise<OAuthTokens> {
-    // Sentry SentryApp refresh token flow
-    // We need the installationId — stored as part of the refresh token context.
-    // By convention, we store it as `installationId:refreshToken`.
-    const [installationId, token] = refreshToken.includes(":")
-      ? refreshToken.split(":", 2)
-      : ["", refreshToken];
+    const { installationId, token } = decodeSentryToken(refreshToken);
 
     const response = await fetch(
       `https://sentry.io/api/0/sentry-app-installations/${installationId}/authorizations/`,
@@ -91,29 +88,26 @@ export class SentryProvider implements ConnectionProvider {
       throw new Error(`Sentry token refresh failed: ${response.status}`);
     }
 
-    const data = (await response.json()) as Record<string, unknown>;
+    const rawData: unknown = await response.json();
+    const data = sentryOAuthResponseSchema.parse(rawData);
 
     return {
-      accessToken: data.token as string,
-      // Carry installationId in refreshToken for next refresh
-      refreshToken: installationId
-        ? `${installationId}:${typeof data.refreshToken === "string" ? data.refreshToken : ""}`
-        : (data.refreshToken as string | undefined),
+      accessToken: data.token,
+      refreshToken:
+        installationId && data.refreshToken
+          ? encodeSentryToken({ installationId, token: data.refreshToken })
+          : data.refreshToken,
       expiresIn: data.expiresAt
         ? Math.floor(
-            (new Date(data.expiresAt as string).getTime() - Date.now()) / 1000,
+            (new Date(data.expiresAt).getTime() - Date.now()) / 1000,
           )
         : undefined,
-      raw: data,
+      raw: rawData as Record<string, unknown>,
     };
   }
 
   async revokeToken(accessToken: string): Promise<void> {
-    // accessToken stored as `installationId:token` by convention
-    const [installationId] = accessToken.includes(":")
-      ? accessToken.split(":", 2)
-      : ["", accessToken];
-
+    const { installationId } = decodeSentryToken(accessToken);
     if (!installationId) return;
 
     const response = await fetch(
@@ -143,24 +137,24 @@ export class SentryProvider implements ConnectionProvider {
     return timingSafeEqual(signature, expectedSig);
   }
 
-  extractDeliveryId(headers: Headers, _payload: unknown): string {
+  parsePayload(raw: unknown): SentryWebhookPayload {
+    return sentryWebhookPayloadSchema.parse(raw);
+  }
+
+  extractDeliveryId(headers: Headers, _payload: WebhookPayload): string {
     const resource = headers.get(RESOURCE_HEADER);
     const timestamp = headers.get(TIMESTAMP_HEADER);
     if (resource && timestamp) return `${resource}:${timestamp}`;
     return crypto.randomUUID();
   }
 
-  extractEventType(headers: Headers, _payload: unknown): string {
+  extractEventType(headers: Headers, _payload: WebhookPayload): string {
     return headers.get(RESOURCE_HEADER) ?? "unknown";
   }
 
-  extractResourceId(payload: unknown): string | null {
-    const p = payload as Record<string, unknown>;
-    const installation = p.installation as Record<string, unknown> | undefined;
-    if (installation?.uuid && typeof installation.uuid === "string") {
-      return installation.uuid;
-    }
-    return null;
+  extractResourceId(payload: WebhookPayload): string | null {
+    const p = payload as SentryWebhookPayload;
+    return p.installation?.uuid ?? null;
   }
 
   registerWebhook(
@@ -169,8 +163,7 @@ export class SentryProvider implements ConnectionProvider {
     _secret: string,
   ): Promise<string> {
     // Sentry webhook URL is registered during the SentryApp configuration
-    // in the Sentry developer settings, not via API. The callbackUrl is the
-    // public Gateway endpoint. Return a placeholder ID.
+    // in the Sentry developer settings, not via API.
     return Promise.resolve("sentry-webhook-registered");
   }
 

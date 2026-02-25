@@ -1,15 +1,17 @@
 import { env } from "../env";
 import { computeHmacSha1, timingSafeEqual } from "../lib/crypto";
-import type { ConnectionProvider, OAuthTokens, ProviderOptions } from "./types";
+import { vercelOAuthResponseSchema, vercelWebhookPayloadSchema } from "./schemas";
+import type { VercelWebhookPayload } from "./schemas";
+import type { ConnectionProvider, OAuthTokens, WebhookPayload } from "./types";
 
 const SIGNATURE_HEADER = "x-vercel-signature";
 const DELIVERY_HEADER = "x-vercel-id";
 
 export class VercelProvider implements ConnectionProvider {
-  readonly name = "vercel";
-  readonly requiresWebhookRegistration = false;
+  readonly name = "vercel" as const;
+  readonly requiresWebhookRegistration = false as const;
 
-  getAuthorizationUrl(state: string, _options?: ProviderOptions): string {
+  getAuthorizationUrl(state: string): string {
     const url = new URL(
       `https://vercel.com/integrations/${env.VERCEL_INTEGRATION_SLUG}/new`,
     );
@@ -25,39 +27,45 @@ export class VercelProvider implements ConnectionProvider {
       redirect_uri: redirectUri,
     });
 
-    const response = await fetch("https://api.vercel.com/v2/oauth/access_token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: body.toString(),
-    });
+    const response = await fetch(
+      "https://api.vercel.com/v2/oauth/access_token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString(),
+      },
+    );
 
     if (!response.ok) {
       throw new Error(`Vercel token exchange failed: ${response.status}`);
     }
 
-    const data = (await response.json()) as Record<string, unknown>;
+    const rawData: unknown = await response.json();
+    const data = vercelOAuthResponseSchema.parse(rawData);
 
     return {
-      accessToken: data.access_token as string,
-      tokenType: data.token_type as string | undefined,
-      scope: data.scope as string | undefined,
-      raw: data,
+      accessToken: data.access_token,
+      tokenType: data.token_type,
+      scope: data.scope,
+      raw: rawData as Record<string, unknown>,
     };
   }
 
   refreshToken(_refreshToken: string): Promise<OAuthTokens> {
-    // Vercel integration tokens don't expire
     return Promise.reject(new Error("Vercel tokens do not support refresh"));
   }
 
   async revokeToken(accessToken: string): Promise<void> {
-    const response = await fetch("https://api.vercel.com/v2/oauth/tokens/revoke", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
+    const response = await fetch(
+      "https://api.vercel.com/v2/oauth/tokens/revoke",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!response.ok && response.status !== 204) {
       throw new Error(`Vercel token revocation failed: ${response.status}`);
@@ -72,42 +80,36 @@ export class VercelProvider implements ConnectionProvider {
     const signature = headers.get(SIGNATURE_HEADER);
     if (!signature) return false;
 
-    // Vercel uses HMAC-SHA1 with no prefix
     const expectedSig = await computeHmacSha1(payload, secret);
     return timingSafeEqual(signature, expectedSig);
   }
 
-  extractDeliveryId(headers: Headers, payload: unknown): string {
+  parsePayload(raw: unknown): VercelWebhookPayload {
+    return vercelWebhookPayloadSchema.parse(raw);
+  }
+
+  extractDeliveryId(headers: Headers, payload: WebhookPayload): string {
     const headerId = headers.get(DELIVERY_HEADER);
     if (headerId) return headerId;
 
-    // Fallback to payload id
-    const p = payload as Record<string, unknown>;
-    if (p.id && typeof p.id === "string") return p.id;
+    const p = payload as VercelWebhookPayload;
+    if (p.id) return p.id;
 
     return crypto.randomUUID();
   }
 
-  extractEventType(_headers: Headers, payload: unknown): string {
-    const p = payload as Record<string, unknown>;
-    return (p.type as string | undefined) ?? "unknown";
+  extractEventType(_headers: Headers, payload: WebhookPayload): string {
+    const p = payload as VercelWebhookPayload;
+    return p.type ?? "unknown";
   }
 
-  extractResourceId(payload: unknown): string | null {
-    const p = payload as Record<string, unknown>;
-    const inner = p.payload as Record<string, unknown> | undefined;
-    const project = inner?.project as Record<string, unknown> | undefined;
-    const projectId = project?.id;
-    if (projectId != null && (typeof projectId === "string" || typeof projectId === "number")) {
-      return String(projectId);
-    }
+  extractResourceId(payload: WebhookPayload): string | null {
+    const p = payload as VercelWebhookPayload;
+    const projectId = p.payload?.project?.id;
+    if (projectId != null) return String(projectId);
 
-    // Fallback: team id
-    const team = inner?.team as Record<string, unknown> | undefined;
-    const teamId = team?.id;
-    if (teamId != null && (typeof teamId === "string" || typeof teamId === "number")) {
-      return String(teamId);
-    }
+    const teamId = p.payload?.team?.id;
+    if (teamId != null) return String(teamId);
 
     return null;
   }
