@@ -74,6 +74,11 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
         `width=${width},height=${height},left=${left},top=${top},popup=1`
       );
 
+      if (!popup) {
+        toast.error("Popup blocked. Please allow popups and try again.");
+        return;
+      }
+
       // Clear any existing poll before starting a new one
       if (pollTimerRef.current) {
         clearInterval(pollTimerRef.current);
@@ -81,7 +86,7 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
 
       // Poll for popup close
       pollTimerRef.current = setInterval(() => {
-        if (popup?.closed) {
+        if (popup.closed) {
           if (pollTimerRef.current) {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
