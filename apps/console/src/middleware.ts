@@ -116,8 +116,11 @@ export default clerkMiddleware(
     if (isPublicRoute(req)) {
       // Allow through without any checks
     }
-    // Team creation routes - allow pending users
+    // Team creation routes - require authentication, allow pending users
     else if (isTeamCreationRoute(req)) {
+      if (!userId) {
+        await auth.protect();
+      }
       // Allow both pending and active users
     }
     // User-scoped tRPC routes: allow both pending and active users
