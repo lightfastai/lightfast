@@ -23,7 +23,7 @@ export default async function ConnectPage({
   const { slug, workspaceName } = await params;
   const { provider = "github", connected } = await searchParams;
 
-  // Prefetch user sources for all providers (no waterfall)
+  // Prefetch connections for all providers (no waterfall)
   prefetch(orgTrpc.connections.github.get.queryOptions());
   prefetch(orgTrpc.connections.vercel.get.queryOptions());
   // TODO: Add prefetch for Linear and Sentry when available
