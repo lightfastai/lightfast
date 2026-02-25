@@ -37,11 +37,16 @@ export interface SentryInstallationToken {
 }
 
 export function encodeSentryToken(t: SentryInstallationToken): string {
+  if (t.installationId.includes(":")) {
+    throw new Error("installationId must not contain ':'");
+  }
   return `${t.installationId}:${t.token}`;
 }
 
 export function decodeSentryToken(raw: string): SentryInstallationToken {
   const idx = raw.indexOf(":");
-  if (idx === -1) return { installationId: "", token: raw };
+  if (idx === -1) {
+    throw new Error("Invalid Sentry token: missing ':' separator");
+  }
   return { installationId: raw.slice(0, idx), token: raw.slice(idx + 1) };
 }

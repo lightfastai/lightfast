@@ -114,6 +114,7 @@ export class SentryProvider implements ConnectionProvider {
   }
 
   async revokeToken(accessToken: string): Promise<void> {
+    if (!accessToken.includes(":")) return;
     const { installationId } = decodeSentryToken(accessToken);
     if (!installationId) return;
 

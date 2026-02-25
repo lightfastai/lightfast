@@ -172,8 +172,7 @@ describe("SentryProvider", () => {
       );
     });
 
-    it("is a no-op when installationId is empty", async () => {
-      // decodeSentryToken("plain-token") returns { installationId: "", token: "plain-token" }
+    it("is a no-op when token has no encoded installationId", async () => {
       await provider.revokeToken("plain-token");
       expect(mockFetch).not.toHaveBeenCalled();
     });
