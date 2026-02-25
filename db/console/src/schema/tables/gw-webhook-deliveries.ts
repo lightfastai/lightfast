@@ -1,4 +1,4 @@
-import { pgTable, varchar, timestamp, index, text } from "drizzle-orm/pg-core";
+import { pgTable, varchar, timestamp, index, uniqueIndex, text } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
 
 export const gwWebhookDeliveries = pgTable(
@@ -22,7 +22,7 @@ export const gwWebhookDeliveries = pgTable(
     receivedAt: timestamp("received_at", { mode: "string", withTimezone: true }).notNull(),
   },
   (table) => ({
-    providerDeliveryIdx: index("gw_wd_provider_delivery_idx").on(
+    providerDeliveryIdx: uniqueIndex("gw_wd_provider_delivery_idx").on(
       table.provider,
       table.deliveryId,
     ),

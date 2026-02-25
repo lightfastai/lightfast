@@ -58,7 +58,7 @@ CREATE INDEX "gw_inst_connected_by_idx" ON "lightfast_gw_installations" USING bt
 CREATE INDEX "gw_res_installation_id_idx" ON "lightfast_gw_resources" USING btree ("installation_id");--> statement-breakpoint
 CREATE INDEX "gw_res_provider_resource_idx" ON "lightfast_gw_resources" USING btree ("installation_id","provider_resource_id");--> statement-breakpoint
 CREATE INDEX "gw_tok_installation_id_idx" ON "lightfast_gw_tokens" USING btree ("installation_id");--> statement-breakpoint
-CREATE INDEX "gw_wd_provider_delivery_idx" ON "lightfast_gw_webhook_deliveries" USING btree ("provider","delivery_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "gw_wd_provider_delivery_idx" ON "lightfast_gw_webhook_deliveries" USING btree ("provider","delivery_id");--> statement-breakpoint
 CREATE INDEX "gw_wd_status_idx" ON "lightfast_gw_webhook_deliveries" USING btree ("status");--> statement-breakpoint
 ALTER TABLE "lightfast_workspace_integrations" ADD CONSTRAINT "lightfast_workspace_integrations_installation_id_lightfast_gw_installations_id_fk" FOREIGN KEY ("installation_id") REFERENCES "public"."lightfast_gw_installations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "workspace_source_installation_id_idx" ON "lightfast_workspace_integrations" USING btree ("installation_id");
