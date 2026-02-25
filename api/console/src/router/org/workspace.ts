@@ -905,7 +905,8 @@ export const workspaceRouter = {
           workspaceId: z.string(),
           projectId: z.string(),
           projectName: z.string(),
-          installationId: z.string(),        }),
+          installationId: z.string(),
+        }),
       )
       .mutation(async ({ ctx, input }) => {
         const { workspaceId, projectId, projectName, installationId } = input;
@@ -1107,7 +1108,8 @@ export const workspaceRouter = {
       .input(
         z.object({
           workspaceId: z.string(),
-          gwInstallationId: z.string(),          installationId: z.string(), // GitHub App installation external ID
+          gwInstallationId: z.string(),
+          installationId: z.string(), // GitHub App installation external ID
           repositories: z
             .array(
               z.object({
@@ -1261,7 +1263,8 @@ export const workspaceRouter = {
       .input(
         z.object({
           workspaceId: z.string(),
-          gwInstallationId: z.string(),          projects: z
+          gwInstallationId: z.string(),
+          projects: z
             .array(
               z.object({
                 projectId: z.string(),
