@@ -68,6 +68,10 @@ describe("fixture-based provider extraction (real webhook payloads)", () => {
     describe(providerName, () => {
       const provider = getProvider(providerName);
 
+      it("has fixture data (guard against vacuous passes)", () => {
+        expect(providerWebhooks.length).toBeGreaterThan(0);
+      });
+
       it(`parsePayload succeeds for all ${providerWebhooks.length} real payloads`, () => {
         for (const wh of providerWebhooks) {
           expect(() => provider.parsePayload(wh.payload)).not.toThrow();
