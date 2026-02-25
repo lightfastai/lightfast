@@ -1,4 +1,4 @@
-import { pgTable, varchar, timestamp, text, index } from "drizzle-orm/pg-core";
+import { pgTable, varchar, timestamp, text, uniqueIndex } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { nanoid } from "@repo/lib";
 import { gwInstallations } from "./gw-installations";
@@ -24,7 +24,7 @@ export const gwTokens = pgTable(
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
-    installationIdIdx: index("gw_tok_installation_id_idx").on(table.installationId),
+    installationIdIdx: uniqueIndex("gw_tok_installation_id_idx").on(table.installationId),
   }),
 );
 
