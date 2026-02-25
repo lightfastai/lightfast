@@ -156,6 +156,7 @@ describe("POST /webhooks/:provider", () => {
       expect(res.status).toBe(200);
 
       // Verify the workflow receives the complete payload including extra fields
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
       const triggeredPayload = triggerCall.body.payload;
       expect(triggeredPayload.sender).toEqual({ login: "octocat", id: 1 });
@@ -464,6 +465,7 @@ describe("POST /webhooks/:provider", () => {
         },
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
       expect(triggerCall.body).toEqual({
         provider: "github",
@@ -489,6 +491,7 @@ describe("POST /webhooks/:provider", () => {
         },
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
       expect(triggerCall.body.resourceId).toBeNull();
       expect(triggerCall.body.eventType).toBe("organization");
@@ -510,6 +513,7 @@ describe("POST /webhooks/:provider", () => {
         },
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
       expect(triggerCall.body).toEqual({
         provider: "vercel",

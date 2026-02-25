@@ -462,6 +462,7 @@ describe("webhook-delivery workflow", () => {
 
     // Assert the exact envelope shape — if any field is renamed or missing,
     // Console ingress will reject it
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const publishedBody = mockPublishJSON.mock.calls[0]![0].body;
     expect(publishedBody).toEqual({
       deliveryId: "del-envelope",
@@ -490,6 +491,7 @@ describe("webhook-delivery workflow", () => {
     const ctx = makeContext(payload);
     await capturedHandler(ctx);
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const dlqBody = mockPublishToTopic.mock.calls[0]![0].body;
     expect(dlqBody).toEqual({
       provider: "linear",

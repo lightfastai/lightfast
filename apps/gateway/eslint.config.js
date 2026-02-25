@@ -12,8 +12,8 @@ export default [
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-return": "off",
-      "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/require-await": "off",
+      // no-non-null-assertion kept enabled; use per-line disables where needed
     },
   },
 ];
