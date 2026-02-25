@@ -57,6 +57,14 @@ reviews:
     - "!**/*.min.js"
     - "!**/*.min.css"
     - "!**/*.d.ts"
+    # Non-code directories
+    - "!thoughts/**"
+    - "!scripts/**"
+    - "!docs/**"
+    - "!examples/**"
+    - "!tmp/**"
+    - "!worktrees/**"
+    - "!.claude/**"
 
   # ── Path-specific review instructions ──
   # These tell CodeRabbit HOW to review each area of the monorepo
