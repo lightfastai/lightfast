@@ -70,15 +70,14 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
     .innerJoin(gwInstallations, eq(gwResources.installationId, gwInstallations.id))
     .where(eq(gwResources.status, "active"));
 
-  let rebuilt = 0;
+  const pipeline = redis.pipeline();
   for (const r of activeResources) {
     const key = resourceKey(r.provider as ProviderName, r.providerResourceId);
-    const pipeline = redis.pipeline();
     pipeline.hset(key, { connectionId: r.installationId, orgId: r.orgId });
     pipeline.expire(key, RESOURCE_CACHE_TTL);
-    await pipeline.exec();
-    rebuilt++;
   }
+  await pipeline.exec();
+  const rebuilt = activeResources.length;
 
   return c.json({ status: "rebuilt", count: rebuilt });
 });
