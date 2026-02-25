@@ -88,9 +88,9 @@ export class GitHubProvider implements ConnectionProvider {
   }
 
   async revokeToken(accessToken: string): Promise<void> {
-    const credentials = Buffer.from(
+    const credentials = btoa(
       `${env.GITHUB_CLIENT_ID}:${env.GITHUB_CLIENT_SECRET}`,
-    ).toString("base64");
+    );
 
     const response = await fetch(
       `https://api.github.com/applications/${env.GITHUB_CLIENT_ID}/token`,

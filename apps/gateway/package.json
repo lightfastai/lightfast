@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@db/gateway": "workspace:*",
-    "@hono/node-server": "^1.13.8",
     "@repo/console-validation": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-nextjs": "catalog:",
