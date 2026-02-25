@@ -5,7 +5,7 @@ import { db } from "@db/console/client";
 import { nanoid } from "@repo/lib";
 import type { Context } from "hono";
 import { env } from "../../env";
-import { connectionsBaseUrl, gatewayBaseUrl, notifyBackfillService } from "../../lib/urls";
+import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls";
 import { decrypt } from "../../lib/crypto";
 import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store";
 import {
@@ -186,38 +186,9 @@ export class SentryProvider implements ConnectionProvider {
 
     await writeTokenRecord(installation.id, oauthTokens);
 
-    // Sentry requiresWebhookRegistration but registration is a no-op (registered in Sentry config)
-    // CRITICAL: webhook callback URL must point at the gateway, not the connections service
-    const webhookSecret = nanoid(32);
-    const callbackUrl = `${gatewayBaseUrl}/webhooks/${this.name}`;
-
-    try {
-      const webhookId = await this.registerWebhook(
-        installation.id,
-        callbackUrl,
-        webhookSecret,
-      );
-
-      await db
-        .update(gwInstallations)
-        .set({
-          webhookSecret,
-          metadata: { webhookId } as Record<string, unknown>,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(gwInstallations.id, installation.id));
-    } catch (err) {
-      await db
-        .update(gwInstallations)
-        .set({
-          metadata: {
-            webhookRegistrationError:
-              err instanceof Error ? err.message : "unknown",
-          } as Record<string, unknown>,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(gwInstallations.id, installation.id));
-    }
+    // Sentry webhook URL is configured in the Sentry dashboard, not via API.
+    // Verification uses env.SENTRY_CLIENT_SECRET in the gateway, so no
+    // per-installation webhookSecret is needed.
 
     // Notify backfill service for new connections (fire-and-forget)
     void notifyBackfillService({
