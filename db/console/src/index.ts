@@ -48,7 +48,7 @@ export type {
 } from "./schema";
 
 // Client
-export { createClient, db } from "./client";
+export { db } from "./client";
 
 // Utilities
 export { getWorkspaceKey, buildWorkspaceNamespace, buildWorkspaceSettings, createCustomWorkspace } from "./utils/workspace";
