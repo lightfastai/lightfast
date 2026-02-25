@@ -225,6 +225,26 @@ describe("pagination loop — multiple pages", () => {
   });
 });
 
+describe("fetchPage error mid-pagination", () => {
+  it("propagates fetchPage rejection on second page", async () => {
+    mockTokenResponse();
+    // Page 1 succeeds
+    mockConnector.fetchPage.mockResolvedValueOnce({
+      events: [{ deliveryId: "d1", eventType: "pull_request", payload: {} }],
+      nextCursor: { page: 2 },
+      rawCount: 1,
+    });
+    mockDispatchResponse();
+    // Page 2 throws
+    mockConnector.fetchPage.mockRejectedValueOnce(new Error("API timeout"));
+    const step = makeStep();
+
+    await expect(
+      capturedHandler({ event: makeEvent(), step }),
+    ).rejects.toThrow("API timeout");
+  });
+});
+
 describe("rate limit injection", () => {
   it("remaining < limit * 0.1 → step.sleep called", async () => {
     mockTokenResponse();
