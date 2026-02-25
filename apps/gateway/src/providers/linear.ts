@@ -5,20 +5,19 @@ import { db } from "@db/console/client";
 import { nanoid } from "@repo/lib";
 import type { Context } from "hono";
 import { env } from "../env";
-import { gatewayBaseUrl } from "../lib/base-url";
+import { gatewayBaseUrl, notifyBackfillService } from "../lib/urls";
 import { computeHmacSha256, decrypt, timingSafeEqual } from "../lib/crypto";
 import { writeTokenRecord } from "../lib/token-store";
-import { notifyBackfillService } from "../lib/backfill-notify";
 import { linearOAuthResponseSchema, linearWebhookPayloadSchema } from "./schemas";
 import type { LinearWebhookPayload } from "./schemas";
 import type {
   UnifiedProvider,
   LinearAuthOptions,
+  TokenResult,
   OAuthTokens,
   WebhookPayload,
   WebhookRegistrant,
   CallbackResult,
-  TokenResult,
 } from "./types";
 
 const SIGNATURE_HEADER = "linear-signature";
@@ -315,7 +314,7 @@ export class LinearProvider implements UnifiedProvider, WebhookRegistrant {
     const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
     return {
       accessToken: decryptedToken,
-      provider: installation.provider,
+      provider: this.name,
       expiresIn: tokenRow.expiresAt
         ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
         : null,

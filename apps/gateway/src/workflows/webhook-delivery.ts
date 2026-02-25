@@ -1,14 +1,14 @@
 import { and, eq } from "drizzle-orm";
 import { gwInstallations, gwResources } from "@db/console/schema";
 import { serve } from "@vendor/upstash-workflow/hono";
-import { gatewayBaseUrl } from "../lib/base-url";
+import { getQStashClient } from "@vendor/qstash";
+import { gatewayBaseUrl, consoleUrl } from "../lib/urls";
 import { db } from "@db/console/client";
-import { webhookSeenKey, resourceKey } from "../lib/keys";
-import { qstash } from "../lib/qstash";
-import { redis } from "../lib/redis";
-import { setResourceCache } from "../lib/resource-cache";
-import { consoleUrl } from "../lib/related-projects";
-import type { WebhookReceiptPayload } from "./types";
+import { webhookSeenKey, resourceKey } from "../lib/cache";
+import { redis } from "@vendor/upstash";
+import type { WebhookReceiptPayload } from "@repo/gateway-types";
+
+const qstash = getQStashClient();
 
 interface ConnectionInfo {
   connectionId: string;
@@ -16,7 +16,7 @@ interface ConnectionInfo {
 }
 
 /**
- * Durable webhook receipt workflow.
+ * Durable webhook delivery workflow.
  *
  * Processes verified webhook payloads with step-level durability:
  * - Step 1: Dedup — skip duplicate deliveries (idempotent, NX set)
@@ -26,7 +26,7 @@ interface ConnectionInfo {
  * If step 3 fails, only step 3 retries — dedup/resolve are already done.
  * QStash handles the retry schedule with exponential backoff.
  */
-export const webhookReceiptWorkflow = serve<WebhookReceiptPayload>(
+export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
   async (context) => {
     const data = context.requestPayload;
 
@@ -80,10 +80,10 @@ export const webhookReceiptWorkflow = serve<WebhookReceiptPayload>(
         if (!row) return null;
 
         // Populate Redis cache for next time
-        await setResourceCache(data.provider, data.resourceId, {
-          connectionId: row.installationId,
-          orgId: row.orgId,
-        });
+        await redis.hset(
+          resourceKey(data.provider, data.resourceId),
+          { connectionId: row.installationId, orgId: row.orgId },
+        );
 
         return { connectionId: row.installationId, orgId: row.orgId };
       },
@@ -130,7 +130,7 @@ export const webhookReceiptWorkflow = serve<WebhookReceiptPayload>(
   },
   {
     failureFunction: ({ context, failStatus, failResponse }) => {
-      console.error("[webhook-receipt] workflow failed", {
+      console.error("[webhook-delivery] workflow failed", {
         failStatus,
         failResponse,
         context,

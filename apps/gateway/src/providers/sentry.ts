@@ -5,10 +5,9 @@ import { db } from "@db/console/client";
 import { nanoid } from "@repo/lib";
 import type { Context } from "hono";
 import { env } from "../env";
-import { gatewayBaseUrl } from "../lib/base-url";
+import { gatewayBaseUrl, notifyBackfillService } from "../lib/urls";
 import { computeHmacSha256, decrypt, timingSafeEqual } from "../lib/crypto";
 import { writeTokenRecord, updateTokenRecord } from "../lib/token-store";
-import { notifyBackfillService } from "../lib/backfill-notify";
 import {
   decodeSentryToken,
   encodeSentryToken,
@@ -18,11 +17,11 @@ import {
 import type { SentryWebhookPayload } from "./schemas";
 import type {
   UnifiedProvider,
+  TokenResult,
   OAuthTokens,
   WebhookPayload,
   WebhookRegistrant,
   CallbackResult,
-  TokenResult,
 } from "./types";
 
 const SIGNATURE_HEADER = "sentry-hook-signature";
@@ -296,7 +295,7 @@ export class SentryProvider implements UnifiedProvider, WebhookRegistrant {
 
       return {
         accessToken: refreshed.accessToken,
-        provider: installation.provider,
+        provider: this.name,
         expiresIn: refreshed.expiresIn ?? null,
       };
     }
@@ -304,7 +303,7 @@ export class SentryProvider implements UnifiedProvider, WebhookRegistrant {
     const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
     return {
       accessToken: decryptedToken,
-      provider: installation.provider,
+      provider: this.name,
       expiresIn: tokenRow.expiresAt
         ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
         : null,

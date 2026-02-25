@@ -3,7 +3,8 @@ import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 import { serve } from "@vendor/upstash-workflow/hono";
 import { db } from "@db/console/client";
 import { decrypt } from "../lib/crypto";
-import { deleteResourceCache } from "../lib/resource-cache";
+import { resourceKey } from "../lib/cache";
+import { redis } from "@vendor/upstash";
 import { env } from "../env";
 import { getProvider } from "../providers";
 import type { ProviderName, WebhookRegistrant } from "../providers/types";
@@ -91,7 +92,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
         );
 
       for (const r of linkedResources) {
-        await deleteResourceCache(providerName, r.providerResourceId);
+        await redis.del(resourceKey(providerName, r.providerResourceId));
       }
     });
 

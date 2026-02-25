@@ -1,13 +1,15 @@
 import { Hono } from "hono";
-import { gatewayBaseUrl } from "../lib/base-url";
-import { qstash } from "../lib/qstash";
-import { consoleUrl } from "../lib/related-projects";
+import { getQStashClient } from "@vendor/qstash";
+import { getWorkflowClient } from "@vendor/upstash-workflow/client";
+import { gatewayBaseUrl, consoleUrl } from "../lib/urls";
 import { getWebhookSecret } from "../lib/secrets";
-import { workflowClient } from "../lib/workflow-client";
 import { env } from "../env";
 import { getProvider } from "../providers";
-import type { WebhookReceiptPayload } from "../workflows/types";
+import type { WebhookReceiptPayload } from "@repo/gateway-types";
 import type { WebhookEnvelope } from "@repo/gateway-types";
+
+const qstash = getQStashClient();
+const workflowClient = getWorkflowClient();
 
 const webhooks = new Hono();
 
@@ -15,7 +17,7 @@ const webhooks = new Hono();
  * POST /webhooks/:provider
  *
  * Thin verification layer. Validates provider webhook signature, extracts
- * identifiers, triggers the durable webhook-receipt workflow, returns fast 200.
+ * identifiers, triggers the durable webhook-delivery workflow, returns fast 200.
  *
  * Target: < 20ms (1 sig verify + 1 workflow trigger)
  * Invalid webhooks are rejected immediately — no workflow overhead.
@@ -113,7 +115,7 @@ webhooks.post("/:provider", async (c) => {
   };
 
   await workflowClient.trigger({
-    url: `${gatewayBaseUrl}/workflows/webhook-receipt`,
+    url: `${gatewayBaseUrl}/workflows/webhook-delivery`,
     body: workflowPayload,
   });
 

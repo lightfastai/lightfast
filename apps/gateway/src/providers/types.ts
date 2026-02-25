@@ -20,7 +20,7 @@ import type {
   LinearAuthOptions,
 } from "@repo/gateway-types";
 
-// Re-export for backward compatibility (lib/keys.ts, workflows/types.ts)
+// Re-export for backward compatibility (lib/cache.ts)
 export type { SourceType };
 
 // Re-export schema types for consumer convenience
@@ -92,13 +92,18 @@ export type AuthOptionsFor<N extends ProviderName> = N extends "github"
 
 export interface TokenResult {
   accessToken: string;
-  provider: string;
+  provider: ProviderName;
   expiresIn: number | null;
+}
+
+/** Narrowed subtype for JWT-based providers — expiresIn is always present */
+export interface JwtTokenResult extends TokenResult {
+  expiresIn: number;
 }
 
 export interface CallbackResult {
   installationId: string;
-  provider: string;
+  provider: ProviderName;
   status: string;
   [key: string]: unknown;
 }

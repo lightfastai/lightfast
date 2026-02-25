@@ -4,10 +4,9 @@ import type { GwInstallation } from "@db/console/schema";
 import { db } from "@db/console/client";
 import type { Context } from "hono";
 import { env } from "../env";
-import { gatewayBaseUrl } from "../lib/base-url";
+import { gatewayBaseUrl, notifyBackfillService } from "../lib/urls";
 import { computeHmacSha256, timingSafeEqual } from "../lib/crypto";
 import { getInstallationToken } from "../lib/github-jwt";
-import { notifyBackfillService } from "../lib/backfill-notify";
 import {
   githubOAuthResponseSchema,
   githubWebhookPayloadSchema,
@@ -16,10 +15,10 @@ import type { GitHubWebhookPayload } from "./schemas";
 import type {
   UnifiedProvider,
   GitHubAuthOptions,
+  JwtTokenResult,
   OAuthTokens,
   WebhookPayload,
   CallbackResult,
-  TokenResult,
 } from "./types";
 
 const SIGNATURE_HEADER = "x-hub-signature-256";
@@ -236,7 +235,7 @@ export class GitHubProvider implements UnifiedProvider {
     };
   }
 
-  async resolveToken(installation: GwInstallation): Promise<TokenResult> {
+  async resolveToken(installation: GwInstallation): Promise<JwtTokenResult> {
     const token = await getInstallationToken(installation.externalId);
     return {
       accessToken: token,

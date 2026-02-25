@@ -3,8 +3,8 @@ import { sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "@db/console/client";
 import { apiKeyAuth } from "../middleware/auth";
-import { redis } from "../lib/redis";
-import { setResourceCache } from "../lib/resource-cache";
+import { redis } from "@vendor/upstash";
+import { resourceKey } from "../lib/cache";
 import type { ProviderName } from "../providers/types";
 import {
   gwInstallations,
@@ -72,10 +72,10 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
 
   let rebuilt = 0;
   for (const r of activeResources) {
-    await setResourceCache(r.provider as ProviderName, r.providerResourceId, {
-      connectionId: r.installationId,
-      orgId: r.orgId,
-    });
+    await redis.hset(
+      resourceKey(r.provider as ProviderName, r.providerResourceId),
+      { connectionId: r.installationId, orgId: r.orgId },
+    );
     rebuilt++;
   }
 

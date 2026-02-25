@@ -6,11 +6,12 @@ import { nanoid } from "@repo/lib";
 import type { TenantVariables } from "../middleware/tenant";
 import { tenantMiddleware } from "../middleware/tenant";
 import { apiKeyAuth } from "../middleware/auth";
-import { oauthStateKey } from "../lib/keys";
-import { redis } from "../lib/redis";
-import { gatewayBaseUrl } from "../lib/base-url";
-import { workflowClient } from "../lib/workflow-client";
-import { setResourceCache, deleteResourceCache } from "../lib/resource-cache";
+import { oauthStateKey, resourceKey } from "../lib/cache";
+import { redis } from "@vendor/upstash";
+import { gatewayBaseUrl } from "../lib/urls";
+import { getWorkflowClient } from "@vendor/upstash-workflow/client";
+
+const workflowClient = getWorkflowClient();
 import { getProvider } from "../providers";
 import type { ProviderName } from "../providers/types";
 
@@ -318,9 +319,8 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
   if (!resource) return c.json({ error: "insert_failed" }, 500);
 
   // Populate Redis routing cache
-  await setResourceCache(
-    installation.provider as ProviderName,
-    body.providerResourceId,
+  await redis.hset(
+    resourceKey(installation.provider as ProviderName, body.providerResourceId),
     { connectionId: id, orgId: installation.orgId },
   );
 
@@ -373,9 +373,8 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
   const installation = installationRows[0];
 
   if (installation) {
-    await deleteResourceCache(
-      installation.provider as ProviderName,
-      resource.providerResourceId,
+    await redis.del(
+      resourceKey(installation.provider as ProviderName, resource.providerResourceId),
     );
   }
 

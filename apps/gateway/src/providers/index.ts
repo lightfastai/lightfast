@@ -28,6 +28,7 @@ export type {
   LinearAuthOptions,
   ProviderFor,
   TokenResult,
+  JwtTokenResult,
   CallbackResult,
 } from "./types";
 
