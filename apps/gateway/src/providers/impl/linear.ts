@@ -29,7 +29,7 @@ export class LinearProvider implements WebhookProvider {
   }
 
   extractDeliveryId(headers: Headers, _payload: WebhookPayload): string {
-    return headers.get(DELIVERY_HEADER) ?? crypto.randomUUID();
+    return headers.get(DELIVERY_HEADER) ?? stableFingerprint(_payload);
   }
 
   extractEventType(_headers: Headers, payload: WebhookPayload): string {
@@ -42,4 +42,26 @@ export class LinearProvider implements WebhookProvider {
     const p = payload as LinearWebhookPayload;
     return p.organizationId ?? null;
   }
+}
+
+/**
+ * Deterministic fingerprint from payload for idempotent delivery IDs.
+ * Uses multi-seed FNV-1a to produce a 128-bit hex string synchronously.
+ */
+function stableFingerprint(payload: WebhookPayload): string {
+  const str = JSON.stringify(payload);
+  let h1 = 0x811c9dc5;
+  let h2 = 0x050c5d1f;
+  let h3 = 0x1a47e90b;
+  let h4 = 0x7fee3cb1;
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 0x01000193);
+    h2 = Math.imul(h2 ^ c, 0x01000193);
+    h3 = Math.imul(h3 ^ c, 0x01000193);
+    h4 = Math.imul(h4 ^ c, 0x01000193);
+  }
+  return [h1, h2, h3, h4]
+    .map((h) => (h >>> 0).toString(16).padStart(8, "0"))
+    .join("");
 }

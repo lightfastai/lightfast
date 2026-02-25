@@ -69,11 +69,18 @@ describe("LinearProvider", () => {
       expect(id).toBe("del-789");
     });
 
-    it("generates UUID when header missing", () => {
-      const id = provider.extractDeliveryId(headers({}), {});
-      expect(id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-      );
+    it("generates deterministic fallback when header missing", () => {
+      const payload = { type: "Issue", action: "create", organizationId: "org-1" };
+      const id1 = provider.extractDeliveryId(headers({}), payload);
+      const id2 = provider.extractDeliveryId(headers({}), payload);
+      expect(id1).toBe(id2);
+      expect(id1).toMatch(/^[0-9a-f]{32}$/);
+    });
+
+    it("produces different IDs for different payloads", () => {
+      const id1 = provider.extractDeliveryId(headers({}), { type: "Issue", action: "create" });
+      const id2 = provider.extractDeliveryId(headers({}), { type: "Issue", action: "update" });
+      expect(id1).not.toBe(id2);
     });
   });
 
