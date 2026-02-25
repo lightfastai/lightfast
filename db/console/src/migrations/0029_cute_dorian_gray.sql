@@ -10,7 +10,7 @@ CREATE TABLE "lightfast_gw_installations" (
 	"metadata" jsonb,
 	"provider_account_info" jsonb,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "lightfast_gw_resources" (
@@ -30,7 +30,7 @@ CREATE TABLE "lightfast_gw_tokens" (
 	"expires_at" timestamp with time zone,
 	"token_type" varchar(50),
 	"scope" text,
-	"updated_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "lightfast_gw_webhook_deliveries" (
