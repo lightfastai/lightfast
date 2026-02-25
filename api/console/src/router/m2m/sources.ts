@@ -156,6 +156,7 @@ export const sourcesM2MRouter = {
         )
       );
 
+      // Record activity for each disconnected source (Tier 3: Fire-and-forget)
       sources.forEach((source) => {
         recordSystemActivity({
           workspaceId: source.workspaceId,
