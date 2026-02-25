@@ -6968,6 +6968,7 @@ packages:
   '@lightfastai/dual@1.2.2':
     resolution: {integrity: sha512-N8U5cehWJ5QoOvbW+qArJ6vlUQ+bY5vBYfZIkt7NFJLiqo1nZ0QwM2qSUpGfyqjXRFQJJrXs13Rh1nx4f0EzzA==}
     engines: {node: '>=14.0.0'}
+    cpu: [x64, arm64]
     os: [darwin, linux, win32]
     hasBin: true
 
@@ -9112,6 +9113,7 @@ packages:
 
   '@rollup/rollup-darwin-arm64@4.52.5':
     resolution: {integrity: sha512-takF3CR71mCAGA+v794QUZ0b6ZSrgJkArC+gUiG6LB6TQty9T0Mqh3m2ImRBOxS2IeYBo4lKWIieSvnEk2OQWA==}
+    cpu: [arm64]
     os: [darwin]
 
   '@rollup/rollup-darwin-arm64@4.59.0':
@@ -14341,6 +14343,7 @@ packages:
 
   libsql@0.4.7:
     resolution: {integrity: sha512-T9eIRCs6b0J1SHKYIvD8+KCJMcWZ900iZyxdnSCdqxN12Z1ijzT+jY5nrk72Jw4B0HGzms2NgpryArlJqvc3Lw==}
+    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   lighthouse-logger@2.0.2:
