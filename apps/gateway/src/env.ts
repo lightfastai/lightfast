@@ -38,6 +38,13 @@ export const env = createEnv({
     // Sentry
     SENTRY_CLIENT_ID: z.string().min(1),
     SENTRY_CLIENT_SECRET: z.string().min(1),
+
+    // Turso (gateway database)
+    TURSO_DATABASE_URL: z.string().min(1),
+    TURSO_AUTH_TOKEN: z.string().optional(),
+
+    // GitHub App (private key for installation token generation)
+    GITHUB_PRIVATE_KEY: z.string().min(1),
   },
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,

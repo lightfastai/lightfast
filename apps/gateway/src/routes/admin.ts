@@ -1,6 +1,11 @@
+import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { Hono } from "hono";
+import { db } from "../lib/db";
 import { apiKeyAuth } from "../middleware/auth";
+import { resourceKey } from "../lib/keys";
 import { redis } from "../lib/redis";
+import { installations, resources, webhookDeliveries } from "@db/gateway/schema";
 
 const admin = new Hono();
 
@@ -13,6 +18,7 @@ const startTime = Date.now();
  */
 admin.get("/health", async (c) => {
   let redisStatus = "unknown";
+  let tursoStatus = "unknown";
 
   try {
     await redis.ping();
@@ -21,12 +27,20 @@ admin.get("/health", async (c) => {
     redisStatus = "error";
   }
 
-  const allHealthy = redisStatus === "connected";
+  try {
+    await db.run(sql`SELECT 1`);
+    tursoStatus = "connected";
+  } catch {
+    tursoStatus = "error";
+  }
+
+  const allHealthy = redisStatus === "connected" && tursoStatus === "connected";
 
   return c.json(
     {
       status: allHealthy ? "ok" : "degraded",
       redis: redisStatus,
+      turso: tursoStatus,
       uptime_ms: Date.now() - startTime,
     },
     allHealthy ? 200 : 503,
@@ -41,15 +55,29 @@ admin.get("/health", async (c) => {
  *
  * Phase 9 implementation pending.
  */
-admin.post("/cache/rebuild", apiKeyAuth, (c) =>
-  c.json(
-    {
-      status: "not_implemented",
-      message: "Cache rebuild will be implemented in Phase 9",
-    },
-    501,
-  ),
-);
+admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
+  const activeResources = await db
+    .select({
+      provider: installations.provider,
+      providerResourceId: resources.providerResourceId,
+      installationId: resources.installationId,
+      orgId: installations.orgId,
+    })
+    .from(resources)
+    .innerJoin(installations, eq(resources.installationId, installations.id))
+    .where(eq(resources.status, "active"));
+
+  let rebuilt = 0;
+  for (const r of activeResources) {
+    await redis.hset(resourceKey(r.provider, r.providerResourceId), {
+      connectionId: r.installationId,
+      orgId: r.orgId,
+    });
+    rebuilt++;
+  }
+
+  return c.json({ status: "rebuilt", count: rebuilt });
+});
 
 /**
  * GET /admin/dlq
@@ -58,15 +86,20 @@ admin.post("/cache/rebuild", apiKeyAuth, (c) =>
  *
  * Phase 9 implementation pending.
  */
-admin.get("/dlq", apiKeyAuth, (c) =>
-  c.json(
-    {
-      status: "not_implemented",
-      message: "DLQ management will be implemented in Phase 9",
-    },
-    501,
-  ),
-);
+admin.get("/dlq", apiKeyAuth, async (c) => {
+  const limit = parseInt(c.req.query("limit") ?? "50", 10);
+  const offset = parseInt(c.req.query("offset") ?? "0", 10);
+
+  const dlqItems = await db
+    .select()
+    .from(webhookDeliveries)
+    .where(eq(webhookDeliveries.status, "dlq"))
+    .limit(limit)
+    .offset(offset)
+    .orderBy(webhookDeliveries.receivedAt);
+
+  return c.json({ items: dlqItems, limit, offset });
+});
 
 /**
  * POST /admin/dlq/replay
@@ -75,15 +108,20 @@ admin.get("/dlq", apiKeyAuth, (c) =>
  *
  * Phase 9 implementation pending.
  */
-admin.post("/dlq/replay", apiKeyAuth, (c) =>
-  c.json(
-    {
-      status: "not_implemented",
-      message: "DLQ replay will be implemented in Phase 9",
-    },
-    501,
-  ),
-);
+admin.post("/dlq/replay", apiKeyAuth, async (c) => {
+  const body = await c.req.json<{ deliveryIds?: string[] }>();
+
+  if (!body.deliveryIds?.length) {
+    return c.json({ error: "missing_delivery_ids" }, 400);
+  }
+
+  return c.json({
+    status: "not_yet_implemented",
+    message:
+      "DLQ replay requires webhook payload storage — planned for audit enhancement",
+    requestedIds: body.deliveryIds,
+  });
+});
 
 /**
  * POST /admin/delivery-status
@@ -92,14 +130,18 @@ admin.post("/dlq/replay", apiKeyAuth, (c) =>
  *
  * Phase 9 implementation pending.
  */
-admin.post("/delivery-status", (c) =>
-  c.json(
-    {
-      status: "not_implemented",
-      message: "Delivery status callback will be implemented in Phase 9",
-    },
-    501,
-  ),
-);
+admin.post("/delivery-status", async (c) => {
+  const body = await c.req.json<{
+    messageId?: string;
+    state?: string;
+    deliveryId?: string;
+  }>();
+
+  // Log delivery status (QStash callback)
+  // Future: update webhook_deliveries table with delivery confirmation
+  console.log("[delivery-status]", body);
+
+  return c.json({ status: "received" });
+});
 
 export { admin };

@@ -1,5 +1,8 @@
+import { and, eq } from "drizzle-orm";
+import { installations, resources } from "@db/gateway/schema";
 import { serve } from "@vendor/upstash-workflow/hono";
 import { gatewayBaseUrl } from "../lib/base-url";
+import { db } from "../lib/db";
 import { webhookSeenKey, resourceKey } from "../lib/keys";
 import { qstash } from "../lib/qstash";
 import { redis } from "../lib/redis";
@@ -42,22 +45,45 @@ export const webhookReceiptWorkflow = serve<WebhookReceiptPayload>(
       return;
     }
 
-    // Step 2: Resolve connection from resource ID via Redis cache
+    // Step 2: Resolve connection from resource ID (Redis cache → Turso fallthrough)
     const connectionInfo = await context.run<ConnectionInfo | null>(
       "resolve-connection",
       async () => {
         if (!data.resourceId) return null;
 
+        // Try Redis cache first
         const cached = await redis.hgetall<Record<string, string>>(
           resourceKey(data.provider, data.resourceId),
         );
         if (cached?.connectionId && cached.orgId) {
-          return {
-            connectionId: cached.connectionId,
-            orgId: cached.orgId,
-          };
+          return { connectionId: cached.connectionId, orgId: cached.orgId };
         }
-        return null;
+
+        // Fallthrough to Turso
+        const row = await db
+          .select({
+            installationId: resources.installationId,
+            orgId: installations.orgId,
+          })
+          .from(resources)
+          .innerJoin(installations, eq(resources.installationId, installations.id))
+          .where(
+            and(
+              eq(resources.providerResourceId, data.resourceId),
+              eq(resources.status, "active"),
+            ),
+          )
+          .get();
+
+        if (!row) return null;
+
+        // Populate Redis cache for next time
+        await redis.hset(resourceKey(data.provider, data.resourceId), {
+          connectionId: row.installationId,
+          orgId: row.orgId,
+        });
+
+        return { connectionId: row.installationId, orgId: row.orgId };
       },
     );
 

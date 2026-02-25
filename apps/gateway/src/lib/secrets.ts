@@ -1,7 +1,8 @@
+import { eq } from "drizzle-orm";
+import { installations } from "@db/gateway/schema";
 import { env } from "../env";
 import type { ProviderName } from "../providers/types";
-import { connectionKey } from "./keys";
-import { redis } from "./redis";
+import { db } from "./db";
 
 /**
  * Resolve the webhook signing secret for a provider.
@@ -27,14 +28,16 @@ export function getWebhookSecret(
 }
 
 /**
- * Get per-connection webhook secret from Redis.
- * Used for providers that support per-connection webhook secrets (Linear).
+ * Get per-connection webhook secret from Turso.
+ * Used for providers that support per-connection webhook secrets (Linear, Sentry).
  */
 export async function getConnectionWebhookSecret(
-  connectionId: string,
+  installationId: string,
 ): Promise<string | null> {
-  const conn = await redis.hgetall<{ webhookSecret?: string }>(
-    connectionKey(connectionId),
-  );
-  return conn?.webhookSecret ?? null;
+  const row = await db
+    .select({ webhookSecret: installations.webhookSecret })
+    .from(installations)
+    .where(eq(installations.id, installationId))
+    .get();
+  return row?.webhookSecret ?? null;
 }

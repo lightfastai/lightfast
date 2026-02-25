@@ -12,13 +12,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@db/gateway": "workspace:*",
     "@hono/node-server": "^1.13.8",
     "@repo/console-validation": "workspace:*",
+    "@repo/lib": "workspace:*",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/qstash": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
     "@vercel/related-projects": "catalog:",
+    "drizzle-orm": "catalog:",
     "hono": "^4.12.2",
     "zod": "catalog:zod3"
   },
