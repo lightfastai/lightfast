@@ -137,7 +137,12 @@ export const sourcesM2MRouter = {
       const sources = await db
         .select()
         .from(workspaceIntegrations)
-        .where(eq(workspaceIntegrations.providerResourceId, input.githubRepoId));
+        .where(
+          and(
+            eq(workspaceIntegrations.providerResourceId, input.githubRepoId),
+            eq(workspaceIntegrations.isActive, true)
+          )
+        );
 
       if (sources.length === 0) {
         return { success: true, updated: 0 };
