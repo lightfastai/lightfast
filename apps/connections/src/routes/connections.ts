@@ -8,7 +8,7 @@ import { tenantMiddleware } from "../middleware/tenant";
 import { apiKeyAuth } from "../middleware/auth";
 import { oauthStateKey, resourceKey } from "../lib/cache";
 import { redis } from "@vendor/upstash";
-import { gatewayBaseUrl } from "../lib/urls";
+import { connectionsBaseUrl } from "../lib/urls";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 
 const workflowClient = getWorkflowClient();
@@ -235,7 +235,7 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
 
   // Trigger durable teardown workflow
   await workflowClient.trigger({
-    url: `${gatewayBaseUrl}/workflows/connection-teardown`,
+    url: `${connectionsBaseUrl}/workflows/connection-teardown`,
     body: {
       installationId: id,
       provider: providerName,

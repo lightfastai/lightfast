@@ -4,6 +4,8 @@ import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { gatewayBaseUrl, consoleUrl } from "../lib/urls";
 import { env } from "../env";
 import { getProvider } from "../providers";
+import { webhookSeenKey } from "../lib/cache";
+import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload } from "@repo/gateway-types";
 import type { WebhookEnvelope } from "@repo/gateway-types";
 
@@ -60,7 +62,18 @@ webhooks.post("/:provider", async (c) => {
       return c.json({ error: "invalid_payload" }, 400);
     }
 
-    // Publish directly to Console ingress — skip dedup and connection resolution
+    // Dedup — same Redis SET NX as the standard webhook path.
+    // Prevents duplicates from backfill retries and re-runs.
+    const dedupResult = await redis.set(
+      webhookSeenKey(provider.name, body.deliveryId),
+      "1",
+      { nx: true, ex: 86400 },
+    );
+    if (dedupResult === null) {
+      return c.json({ status: "duplicate", deliveryId: body.deliveryId });
+    }
+
+    // Publish directly to Console ingress — skip connection resolution (pre-resolved in body)
     await qstash.publishJSON({
       url: `${consoleUrl}/api/webhooks/ingress`,
       body: {

@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 import { userSources } from "./user-sources";
+import { gwInstallations } from "./gw-installations";
 import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-validation";
 
 /**
@@ -32,10 +33,16 @@ export const workspaceIntegrations = pgTable(
       .notNull()
       .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
-    // Which user connection to use for syncing
+    // Which user connection to use for syncing (nullable: kept for migration, replaced by installationId)
     userSourceId: varchar("user_source_id", { length: 191 })
-      .notNull()
       .references(() => userSources.id, { onDelete: "cascade" }),
+
+    // Gateway installation FK (replaces userSourceId, org-scoped)
+    installationId: varchar("installation_id", { length: 191 })
+      .references(() => gwInstallations.id),
+
+    // Denormalized provider for fast filtering (replaces sourceConfig.sourceType join)
+    provider: varchar("provider", { length: 50 }),
 
     // Who connected this source to the workspace
     connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
@@ -150,6 +157,7 @@ export const workspaceIntegrations = pgTable(
   (table) => ({
     workspaceIdIdx: index("workspace_source_workspace_id_idx").on(table.workspaceId),
     userSourceIdIdx: index("workspace_source_user_source_id_idx").on(table.userSourceId),
+    installationIdIdx: index("workspace_source_installation_id_idx").on(table.installationId),
     connectedByIdx: index("workspace_source_connected_by_idx").on(table.connectedBy),
     isActiveIdx: index("workspace_source_is_active_idx").on(table.isActive),
     // Index for fast provider resource lookups (e.g., "find all sources for this repo")

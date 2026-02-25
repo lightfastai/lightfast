@@ -1,0 +1,40 @@
+{
+  "name": "@lightfast/connections",
+  "license": "FSL-1.1-Apache-2.0",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "vercel dev --listen 4110",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@db/console": "workspace:*",
+    "@repo/console-validation": "workspace:*",
+    "@repo/gateway-types": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@t3-oss/env-nextjs": "catalog:",
+    "@vendor/db": "workspace:*",
+    "@vendor/qstash": "workspace:*",
+    "@vendor/upstash": "workspace:*",
+    "@vendor/upstash-workflow": "workspace:*",
+    "@vercel/related-projects": "catalog:",
+    "drizzle-orm": "catalog:",
+    "hono": "^4.12.2",
+    "postgres": "^3.4.5",
+    "zod": "catalog:zod3"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}

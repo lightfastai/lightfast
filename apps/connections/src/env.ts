@@ -16,13 +16,29 @@ export const env = createEnv({
   server: {
     // Service auth
     GATEWAY_API_KEY: z.string().min(1),
-    GATEWAY_WEBHOOK_SECRET: z.string().min(1),
+    ENCRYPTION_KEY: z.string().min(32),
 
-    // Webhook verification secrets
-    GITHUB_WEBHOOK_SECRET: z.string().min(1),
+    // GitHub
+    GITHUB_APP_SLUG: z.string().min(1),
+    GITHUB_APP_ID: z.string().min(1),
+    GITHUB_CLIENT_ID: z.string().min(1),
+    GITHUB_CLIENT_SECRET: z.string().min(1),
+
+    // Vercel
+    VERCEL_CLIENT_SECRET_ID: z.string().min(1),
     VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
-    LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1),
+    VERCEL_INTEGRATION_SLUG: z.string().min(1),
+
+    // Linear
+    LINEAR_CLIENT_ID: z.string().min(1),
+    LINEAR_CLIENT_SECRET: z.string().min(1),
+
+    // Sentry
+    SENTRY_CLIENT_ID: z.string().min(1),
     SENTRY_CLIENT_SECRET: z.string().min(1),
+
+    // GitHub App (private key for installation token generation)
+    GITHUB_PRIVATE_KEY: z.string().min(1),
   },
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,

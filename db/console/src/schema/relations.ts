@@ -27,6 +27,7 @@ import { gwResources } from "./tables/gw-resources";
 export const gwInstallationsRelations = relations(gwInstallations, ({ many }) => ({
   tokens: many(gwTokens),
   resources: many(gwResources),
+  workspaceIntegrations: many(workspaceIntegrations),
 }));
 
 export const gwTokensRelations = relations(gwTokens, ({ one }) => ({
@@ -90,6 +91,10 @@ export const workspaceIntegrationsRelations = relations(workspaceIntegrations, (
   userSource: one(userSources, {
     fields: [workspaceIntegrations.userSourceId],
     references: [userSources.id],
+  }),
+  installation: one(gwInstallations, {
+    fields: [workspaceIntegrations.installationId],
+    references: [gwInstallations.id],
   }),
 }));
 

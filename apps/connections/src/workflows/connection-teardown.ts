@@ -8,6 +8,7 @@ import { redis } from "@vendor/upstash";
 import { env } from "../env";
 import { getProvider } from "../providers";
 import type { ProviderName } from "../providers/types";
+import { cancelBackfillService } from "../lib/urls";
 
 interface TeardownPayload {
   installationId: string;
@@ -18,11 +19,12 @@ interface TeardownPayload {
 /**
  * Durable connection teardown workflow.
  *
- * Replaces the synchronous 5-step teardown with step-level durability:
- * - Step 1: Revoke token at provider (best-effort)
- * - Step 2: Deregister webhook if applicable (best-effort)
- * - Step 3: Clean up Redis cache for linked resources
- * - Step 4: Soft-delete installation and resources in DB
+ * Durable connection teardown with step-level retries:
+ * - Step 1: Cancel any running backfill (best-effort)
+ * - Step 2: Revoke token at provider (best-effort)
+ * - Step 3: Deregister webhook if applicable (best-effort)
+ * - Step 4: Clean up Redis cache for linked resources
+ * - Step 5: Soft-delete installation and resources in DB
  *
  * Each step runs independently with automatic retries.
  */
@@ -30,7 +32,12 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
   async (context) => {
     const { installationId, provider: providerName } = context.requestPayload;
 
-    // Step 1: Revoke token at provider (best-effort)
+    // Step 1: Cancel any running backfill (best-effort, before revoking token)
+    await context.run("cancel-backfill", async () => {
+      await cancelBackfillService({ installationId });
+    });
+
+    // Step 2: Revoke token at provider (best-effort)
     await context.run("revoke-token", async () => {
       if (providerName === "github") return; // GitHub uses on-demand JWTs, no stored token
 
@@ -52,7 +59,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       }
     });
 
-    // Step 2: Deregister webhook if applicable (best-effort)
+    // Step 3: Deregister webhook if applicable (best-effort)
     await context.run("deregister-webhook", async () => {
       const provider = getProvider(providerName);
       if (!provider.requiresWebhookRegistration) return;
@@ -78,7 +85,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       }
     });
 
-    // Step 3: Clean up Redis cache for linked resources
+    // Step 4: Clean up Redis cache for linked resources
     await context.run("cleanup-cache", async () => {
       const linkedResources = await db
         .select({ providerResourceId: gwResources.providerResourceId })
@@ -95,7 +102,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       }
     });
 
-    // Step 4: Soft-delete installation and resources in DB
+    // Step 5: Soft-delete installation and resources in DB
     await context.run("soft-delete", async () => {
       await db
         .update(gwInstallations)

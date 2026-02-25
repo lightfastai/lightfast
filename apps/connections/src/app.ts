@@ -1,18 +1,16 @@
 import { Hono } from "hono";
-import { admin } from "./routes/admin";
-import { webhooks } from "./routes/webhooks";
+import { connections } from "./routes/connections";
 import { workflows } from "./routes/workflows";
 
 const app = new Hono();
 
 // Mount route groups
-app.route("/webhooks", webhooks);
-app.route("/admin", admin);
+app.route("/connections", connections);
 app.route("/workflows", workflows);
 
 // Root health check
 app.get("/", (c) =>
-  c.json({ service: "gateway", version: "1.0.0", status: "ok" }),
+  c.json({ service: "connections", version: "1.0.0", status: "ok" }),
 );
 
 export { app };
