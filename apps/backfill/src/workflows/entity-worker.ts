@@ -175,7 +175,9 @@ export const backfillEntityWorker = inngest.createFunction(
       eventsProduced += fetchResult.rawCount;
 
       // Dispatch each event to Gateway service auth endpoint
-      await step.run(`dispatch-${entityType}-p${pageNum}`, async () => {
+      // Return count from step so it survives memoized replay (callbacks are skipped on retry)
+      const dispatched = await step.run(`dispatch-${entityType}-p${pageNum}`, async () => {
+        let count = 0;
         for (const webhookEvent of fetchResult.events) {
           const response = await fetch(`${gatewayUrl}/webhooks/${provider}`, {
             method: "POST",
@@ -198,9 +200,11 @@ export const backfillEntityWorker = inngest.createFunction(
               `Gateway ingestWebhook failed: ${response.status} — ${text}`,
             );
           }
-          eventsDispatched++;
+          count++;
         }
+        return count;
       });
+      eventsDispatched += dispatched;
 
       // Rate limit sleep if near threshold (dynamic, based on response headers)
       if (
