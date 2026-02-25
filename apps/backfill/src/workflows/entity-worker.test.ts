@@ -196,6 +196,28 @@ describe("pagination loop — single page", () => {
   });
 });
 
+describe("dispatch error handling", () => {
+  it("throws when Gateway dispatch returns non-2xx response", async () => {
+    mockTokenResponse();
+    mockConnector.fetchPage.mockResolvedValueOnce({
+      events: [
+        { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
+      ],
+      nextCursor: null,
+      rawCount: 1,
+    });
+    // Dispatch returns 500
+    mockFetch.mockResolvedValueOnce(
+      new Response("Internal Server Error", { status: 500 }),
+    );
+    const step = makeStep();
+
+    await expect(
+      capturedHandler({ event: makeEvent(), step }),
+    ).rejects.toThrow("Gateway ingestWebhook failed: 500");
+  });
+});
+
 describe("pagination loop — multiple pages", () => {
   it("two pages → 2 fetch steps, cursor passed correctly", async () => {
     mockTokenResponse();
