@@ -116,8 +116,8 @@ export class VercelProvider implements ConnectionProvider {
 
     await writeTokenRecord(installation.id, oauthTokens);
 
-    // Notify backfill service for new connections (non-blocking)
-    await notifyBackfillService({
+    // Notify backfill service for new connections (fire-and-forget)
+    void notifyBackfillService({
       installationId: installation.id,
       provider: this.name,
       orgId: stateData.orgId ?? "",

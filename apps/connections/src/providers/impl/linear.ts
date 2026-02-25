@@ -247,8 +247,8 @@ export class LinearProvider implements ConnectionProvider {
         .where(eq(gwInstallations.id, installation.id));
     }
 
-    // Notify backfill service for new connections (non-blocking)
-    await notifyBackfillService({
+    // Notify backfill service for new connections (fire-and-forget)
+    void notifyBackfillService({
       installationId: installation.id,
       provider: this.name,
       orgId: stateData.orgId ?? "",

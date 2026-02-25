@@ -170,8 +170,8 @@ export class GitHubProvider implements ConnectionProvider {
     const row = rows[0];
     if (!row) throw new Error("insert_failed");
 
-    // Notify backfill service for new connections (non-blocking)
-    await notifyBackfillService({
+    // Notify backfill service for new connections (fire-and-forget)
+    void notifyBackfillService({
       installationId: row.id,
       provider: "github",
       orgId: stateData.orgId ?? "",
