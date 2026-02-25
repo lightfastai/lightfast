@@ -40,7 +40,7 @@ const eventsMap = {
         resourceName: z.string().nullable(),
       }),
       /** ISO timestamp — computed once by orchestrator */
-      since: z.string(),
+      since: z.string().datetime(),
       /** Depth in days — for logging/context */
       depth: z.union([z.literal(7), z.literal(30), z.literal(90)]),
     }),
