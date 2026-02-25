@@ -74,11 +74,38 @@ export function SourcesList() {
 		}
 	};
 
-	const handleConnect = (provider: string) => {
-		// Redirect to OAuth flow
-		if (provider === "github") {
-			// Use window.location.replace for navigation (React Compiler compatible)
-			window.location.replace("/api/github/oauth");
+	const handleConnect = async (provider: string) => {
+		if (provider === "github" || provider === "vercel") {
+			try {
+				const data = await queryClient.fetchQuery(
+					trpc.userSources.getAuthorizeUrl.queryOptions({
+						provider: provider as "github" | "vercel",
+					}),
+				);
+
+				const width = 600;
+				const height = 700;
+				const left = window.screenX + (window.outerWidth - width) / 2;
+				const top = window.screenY + (window.outerHeight - height) / 2;
+
+				const popup = window.open(
+					data.url,
+					`${provider}-authorize`,
+					`width=${width},height=${height},left=${left},top=${top},popup=1`,
+				);
+
+				// Poll for popup close
+				const pollTimer = setInterval(() => {
+					if (popup?.closed) {
+						clearInterval(pollTimer);
+						void queryClient.invalidateQueries({
+							queryKey: trpc.userSources.list.queryOptions().queryKey,
+						});
+					}
+				}, 500);
+			} catch {
+				toast.error(`Failed to connect ${providerNames[provider as keyof typeof providerNames]}`);
+			}
 		} else {
 			toast.info(`${providerNames[provider as keyof typeof providerNames]} integration coming soon`);
 		}
@@ -136,7 +163,7 @@ export function SourcesList() {
 									<span className="text-sm text-muted-foreground mr-2">
 										Last used{" "}
 										{formatDistanceToNow(
-											new Date(source.integration.lastSyncAt ?? source.integration.connectedAt),
+											new Date(source.integration.lastSyncAt),
 											{ addSuffix: true }
 										).replace(" ago", "")}
 									</span>

@@ -13,6 +13,16 @@ import { useEffect } from "react";
  */
 export default function GitHubConnectedPage() {
 	useEffect(() => {
+		// Notify parent window that GitHub is connected
+		const opener = window.opener as Window | null;
+		if (opener) {
+			try {
+				opener.postMessage({ type: "github_connected" }, "*");
+			} catch {
+				// Ignore cross-origin errors
+			}
+		}
+
 		// Auto-close after 2 seconds
 		const timer = setTimeout(() => {
 			window.close();

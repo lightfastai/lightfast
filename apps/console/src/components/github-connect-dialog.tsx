@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Github } from "lucide-react";
 import {
 	Dialog,
@@ -12,6 +12,8 @@ import {
 } from "@repo/ui/components/ui/dialog";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
+import { useTRPC } from "@repo/console-trpc/react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface GitHubConnectDialogProps {
 	children?: React.ReactNode;
@@ -32,47 +34,44 @@ export function GitHubConnectDialog({
 	onOpenChange,
 	onSuccess,
 }: GitHubConnectDialogProps) {
+	const trpc = useTRPC();
+	const queryClient = useQueryClient();
 	const [internalOpen, setInternalOpen] = useState(false);
 
 	const open = controlledOpen ?? internalOpen;
 	const setOpen = onOpenChange ?? setInternalOpen;
 
-	// Check for OAuth callback on mount
-	useEffect(() => {
-		if (typeof window === "undefined") return;
+	const handleGitHubAuth = async () => {
+		try {
+			const data = await queryClient.fetchQuery(
+				trpc.userSources.getAuthorizeUrl.queryOptions({ provider: "github" }),
+			);
 
-		const handleOAuthCallback = () => {
-			const urlParams = new URLSearchParams(window.location.search);
-			const githubAuth = urlParams.get("github_auth");
-			const githubError = urlParams.get("github_error");
+			const width = 600;
+			const height = 700;
+			const left = window.screenX + (window.outerWidth - width) / 2;
+			const top = window.screenY + (window.outerHeight - height) / 2;
 
-			if (githubAuth === "success") {
-				// OAuth successful
-				setOpen(false);
-				toast.success("GitHub connected", {
-					description: "Successfully connected to GitHub. You can now set up environments.",
-				});
+			const popup = window.open(
+				data.url,
+				"github-install",
+				`width=${width},height=${height},left=${left},top=${top},popup=1`,
+			);
 
-				// Clean up URL
-				window.history.replaceState({}, "", window.location.pathname);
-
-				// Trigger success callback
-				onSuccess?.();
-			} else if (githubError) {
-				toast.error("GitHub authorization failed", {
-					description: `Error: ${githubError}`,
-				});
-				// Clean up URL
-				window.history.replaceState({}, "", window.location.pathname);
-			}
-		};
-
-		handleOAuthCallback();
-	}, [onSuccess, setOpen, toast]);
-
-	const handleGitHubAuth = () => {
-		// Redirect to GitHub App installation
-		window.location.href = "/api/github/install-app";
+			// Poll for popup close
+			const pollTimer = setInterval(() => {
+				if (popup?.closed) {
+					clearInterval(pollTimer);
+					setOpen(false);
+					toast.success("GitHub connected", {
+						description: "Successfully connected to GitHub. You can now set up environments.",
+					});
+					onSuccess?.();
+				}
+			}, 500);
+		} catch {
+			toast.error("Failed to connect GitHub");
+		}
 	};
 
 	return (

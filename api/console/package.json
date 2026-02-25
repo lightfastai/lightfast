@@ -71,6 +71,7 @@
 		"@vendor/knock": "workspace:*",
 		"@vendor/observability": "workspace:*",
 		"@vendor/pinecone": "workspace:*",
+		"@vercel/related-projects": "catalog:",
 		"ai": "catalog:",
 		"braintrust": "catalog:",
 		"date-fns": "^4.1.0",

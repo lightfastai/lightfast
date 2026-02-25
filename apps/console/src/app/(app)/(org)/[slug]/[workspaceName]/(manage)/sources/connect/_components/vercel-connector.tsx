@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { IntegrationIcons } from "@repo/ui/integration-icons";
@@ -17,6 +17,7 @@ interface VercelConnectorProps {
 export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
   const router = useRouter();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const {
     clerkOrgSlug,
     workspaceName,
@@ -37,26 +38,33 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
   // can derive the initial value directly without a synchronous effect.
   const [showProjectSelector, setShowProjectSelector] = useState(() => autoOpen && isConnected);
 
-  const handleConnectVercel = () => {
-    const width = 600;
-    const height = 700;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
+  const handleConnectVercel = async () => {
+    try {
+      const data = await queryClient.fetchQuery(
+        trpc.userSources.getAuthorizeUrl.queryOptions({ provider: "vercel" }),
+      );
 
-    const currentPath = `/${clerkOrgSlug}/${workspaceName}/sources/connect?provider=vercel&connected=true`;
-    const popup = window.open(
-      `/api/vercel/authorize?redirect=${encodeURIComponent(currentPath)}`,
-      "vercel-authorize",
-      `width=${width},height=${height},left=${left},top=${top},popup=1`
-    );
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
 
-    // Poll for popup close
-    const pollTimer = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(pollTimer);
-        void refetch();
-      }
-    }, 500);
+      const popup = window.open(
+        data.url,
+        "vercel-authorize",
+        `width=${width},height=${height},left=${left},top=${top},popup=1`
+      );
+
+      // Poll for popup close
+      const pollTimer = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(pollTimer);
+          void refetch();
+        }
+      }, 500);
+    } catch {
+      // Failed to get authorize URL
+    }
   };
 
   if (!isConnected) {
@@ -100,7 +108,7 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
         <VercelProjectSelector
           open={showProjectSelector}
           onOpenChange={setShowProjectSelector}
-          userSourceId={vercelSource.id}
+          installationId={vercelSource.id}
           workspaceId={workspaceId}
           workspaceName={workspaceName}
           onSuccess={() => {

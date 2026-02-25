@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { Github } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { useTRPC } from "@repo/console-trpc/react";
@@ -17,6 +17,7 @@ import { RepositoryPicker } from "./repository-picker";
  */
 export function GitHubConnector() {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const {
     userSourceId,
     setUserSourceId,
@@ -91,30 +92,38 @@ export function GitHubConnector() {
   }, [installations, selectedInstallation, setSelectedInstallation]);
 
   // Handle GitHub App installation in popup
-  const handleConnectGitHub = () => {
-    const width = 600;
-    const height = 800;
-    const left = window.screen.width / 2 - width / 2;
-    const top = window.screen.height / 2 - height / 2;
+  const handleConnectGitHub = async () => {
+    try {
+      const data = await queryClient.fetchQuery(
+        trpc.userSources.getAuthorizeUrl.queryOptions({ provider: "github" }),
+      );
 
-    const popup = window.open(
-      "/api/github/install-app",
-      "github-install",
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
-    );
+      const width = 600;
+      const height = 800;
+      const left = window.screen.width / 2 - width / 2;
+      const top = window.screen.height / 2 - height / 2;
 
-    if (!popup || popup.closed) {
-      alert("Popup was blocked. Please allow popups for this site.");
-      return;
-    }
+      const popup = window.open(
+        data.url,
+        "github-install",
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
+      );
 
-    // Poll for popup close to refetch integration
-    const pollTimer = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(pollTimer);
-        void refetchIntegration();
+      if (!popup || popup.closed) {
+        alert("Popup was blocked. Please allow popups for this site.");
+        return;
       }
-    }, 500);
+
+      // Poll for popup close to refetch integration
+      const pollTimer = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(pollTimer);
+          void refetchIntegration();
+        }
+      }, 500);
+    } catch {
+      // Failed to get authorize URL
+    }
   };
 
   const hasGitHubConnection = Boolean(

@@ -2,27 +2,38 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
-import { userSources, workspaceIntegrations } from "@db/console/schema";
-import { userScopedProcedure } from "../../trpc";
+import { gwInstallations, workspaceIntegrations } from "@db/console/schema";
+import { orgScopedProcedure } from "../../trpc";
 import {
 	getUserInstallations,
 	createGitHubApp,
 	getInstallationRepositories,
 } from "@repo/console-octokit-github";
-import { decrypt } from "@repo/lib";
-import { gatewayClient } from "../../lib/gateway";
+import { getInstallationToken } from "../../lib/token-vault";
 import { env } from "../../env";
 import yaml from "yaml";
 import type { VercelProjectsResponse } from "@repo/console-vercel/types";
+import { withRelatedProject } from "@vercel/related-projects";
+
+const isDevelopment =
+	process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
+	process.env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
+
+const connectionsUrl = withRelatedProject({
+	projectName: "lightfast-connections",
+	defaultHost: isDevelopment
+		? "http://localhost:4110"
+		: "https://connections.lightfast.ai",
+});
 
 /**
  * User Sources Router
  *
- * Manages user's personal OAuth connections (GitHub, Notion, Linear, etc.)
- * These are user-level integrations that can be reused across multiple workspaces.
+ * Manages org-level OAuth connections (GitHub, Vercel, Linear, etc.)
+ * Post-consolidation: queries gw_installations directly (org-scoped).
  *
- * Table: userSources (lightfast_user_sources)
- * Scope: User-scoped (no org required)
+ * Table: gwInstallations (lightfast_gw_installations)
+ * Scope: Org-scoped (active org required)
  */
 
 /**
@@ -40,24 +51,59 @@ function getGitHubApp() {
 
 export const userSourcesRouter = {
 	/**
-	 * List user's OAuth integrations (all providers)
+	 * Get OAuth authorize URL from the connections service.
 	 *
-	 * Returns all OAuth integrations connected by the user
-	 * (GitHub, Notion, Linear, Sentry, etc.)
+	 * Proxies the connections service authorize endpoint since browsers
+	 * can't set custom headers (X-Org-Id) during popup navigation.
 	 */
-	list: userScopedProcedure.query(async ({ ctx }) => {
-		try {
-			const sources = await ctx.db
-				.select()
-				.from(userSources)
-				.where(eq(userSources.userId, ctx.auth.userId));
+	getAuthorizeUrl: orgScopedProcedure
+		.input(
+			z.object({
+				provider: z.enum(["github", "vercel", "linear", "sentry"]),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			const res = await fetch(
+				`${connectionsUrl}/connections/${input.provider}/authorize`,
+				{
+					headers: {
+						"X-Org-Id": ctx.auth.orgId,
+						"X-User-Id": ctx.auth.userId,
+					},
+				},
+			);
+			if (!res.ok) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Failed to get authorize URL",
+				});
+			}
+			return res.json() as Promise<{ url: string; state: string }>;
+		}),
 
-			return sources.map((source) => ({
-				id: source.id,
-				sourceType: source.sourceType,
-				isActive: source.isActive,
-				connectedAt: source.connectedAt,
-				lastSyncAt: source.lastSyncAt,
+	/**
+	 * List org's OAuth integrations (all providers)
+	 *
+	 * Returns all active OAuth integrations connected by the org.
+	 */
+	list: orgScopedProcedure.query(async ({ ctx }) => {
+		try {
+			const installations = await ctx.db
+				.select()
+				.from(gwInstallations)
+				.where(
+					and(
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.status, "active"),
+					),
+				);
+
+			return installations.map((inst) => ({
+				id: inst.id,
+				sourceType: inst.provider,
+				isActive: true,
+				connectedAt: inst.createdAt,
+				lastSyncAt: inst.updatedAt,
 			}));
 		} catch (error: unknown) {
 			console.error("[tRPC] Failed to fetch integrations:", error);
@@ -73,24 +119,23 @@ export const userSourcesRouter = {
 	/**
 	 * Disconnect an integration
 	 */
-	disconnect: userScopedProcedure
+	disconnect: orgScopedProcedure
 		.input(
 			z.object({
 				integrationId: z.string(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			// Verify ownership
 			const result = await ctx.db
-				.select()
-				.from(userSources)
+				.update(gwInstallations)
+				.set({ status: "revoked" })
 				.where(
 					and(
-						eq(userSources.id, input.integrationId),
-						eq(userSources.userId, ctx.auth.userId),
+						eq(gwInstallations.id, input.integrationId),
+						eq(gwInstallations.orgId, ctx.auth.orgId),
 					),
 				)
-				.limit(1);
+				.returning({ id: gwInstallations.id });
 
 			if (!result[0]) {
 				throw new TRPCError({
@@ -98,12 +143,6 @@ export const userSourcesRouter = {
 					message: "Integration not found or access denied",
 				});
 			}
-
-			// Soft delete (mark as inactive)
-			await ctx.db
-				.update(userSources)
-				.set({ isActive: false })
-				.where(eq(userSources.id, input.integrationId));
 
 			return { success: true };
 		}),
@@ -113,46 +152,45 @@ export const userSourcesRouter = {
 	 */
 	github: {
 		/**
-		 * Get user's GitHub source with installations
+		 * Get org's GitHub installation with app installations
 		 *
-		 * Returns the user's personal GitHub OAuth connection including
-		 * all GitHub App installations they have access to.
+		 * Returns the org's GitHub OAuth connection including
+		 * all GitHub App installations accessible to the org.
 		 */
-		get: userScopedProcedure.query(async ({ ctx }) => {
-			// Get user's GitHub source
+		get: orgScopedProcedure.query(async ({ ctx }) => {
 			const result = await ctx.db
 				.select()
-				.from(userSources)
+				.from(gwInstallations)
 				.where(
 					and(
-						eq(userSources.userId, ctx.auth.userId),
-						eq(userSources.sourceType, "github"),
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "github"),
+						eq(gwInstallations.status, "active"),
 					),
 				)
 				.limit(1);
 
-			const userSource = result[0];
+			const installation = result[0];
 
-			if (!userSource) {
+			if (!installation) {
 				return null;
 			}
 
-			// Return user source with installations from providerMetadata
-			const providerMetadata = userSource.providerMetadata;
-			if (providerMetadata.sourceType !== "github") {
+			const providerAccountInfo = installation.providerAccountInfo;
+			if (providerAccountInfo?.sourceType !== "github") {
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
-					message: "Invalid provider metadata type",
+					message: "Invalid provider account info type",
 				});
 			}
 
 			return {
-				id: userSource.id,
-				userId: userSource.userId,
-				sourceType: userSource.sourceType,
-				connectedAt: userSource.connectedAt,
-				isActive: userSource.isActive,
-				installations: providerMetadata.installations ?? [],
+				id: installation.id,
+				orgId: installation.orgId,
+				provider: installation.provider,
+				connectedAt: installation.createdAt,
+				status: installation.status,
+				installations: providerAccountInfo.installations ?? [],
 			};
 		}),
 
@@ -160,52 +198,48 @@ export const userSourcesRouter = {
 		 * Validate and refresh installations from GitHub API
 		 *
 		 * Re-fetches installations from GitHub using stored access token
-		 * and updates the integration's providerData.
+		 * and updates the installation's providerAccountInfo.
 		 *
 		 * Returns counts of added/removed installations.
 		 */
-		validate: userScopedProcedure.mutation(async ({ ctx }) => {
-			// Get user's GitHub integration
+		validate: orgScopedProcedure.mutation(async ({ ctx }) => {
 			const result = await ctx.db
 				.select()
-				.from(userSources)
+				.from(gwInstallations)
 				.where(
 					and(
-						eq(userSources.userId, ctx.auth.userId),
-						eq(userSources.sourceType, "github"),
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "github"),
+						eq(gwInstallations.status, "active"),
 					),
 				)
 				.limit(1);
 
-			const userSource = result[0];
+			const installation = result[0];
 
-			if (!userSource) {
+			if (!installation) {
 				throw new TRPCError({
 					code: "NOT_FOUND",
 					message: "GitHub integration not found. Please connect GitHub first.",
 				});
 			}
 
-			// Fetch fresh installations from GitHub
 			try {
-				// Get access token — Gateway vault if available, local decrypt otherwise
-				const accessToken = userSource.gatewayInstallationId
-					? (await gatewayClient.getToken(userSource.gatewayInstallationId)).accessToken
-					: decrypt(userSource.accessToken, env.ENCRYPTION_KEY);
+				// Get access token directly from gw_tokens vault
+				const accessToken = await getInstallationToken(installation.id);
 
 				const { installations: githubInstallations } =
 					await getUserInstallations(accessToken);
 
-				// Get current installations from providerMetadata
-				const providerMetadata = userSource.providerMetadata;
-				if (providerMetadata.sourceType !== "github") {
+				const providerAccountInfo = installation.providerAccountInfo;
+				if (providerAccountInfo?.sourceType !== "github") {
 					throw new TRPCError({
 						code: "INTERNAL_SERVER_ERROR",
 						message: "Invalid provider data type",
 					});
 				}
 
-				const currentInstallations = providerMetadata.installations ?? [];
+				const currentInstallations = providerAccountInfo.installations ?? [];
 				const currentIds = new Set(
 					currentInstallations.map((i) => i.id.toString()),
 				);
@@ -214,7 +248,6 @@ export const userSourcesRouter = {
 				const now = new Date().toISOString();
 				const newInstallations = githubInstallations.map((install) => {
 					const account = install.account;
-					// Handle both User and Organization account types
 					const accountLogin =
 						account && "login" in account ? account.login : "";
 					const accountType: "User" | "Organization" =
@@ -236,24 +269,23 @@ export const userSourcesRouter = {
 
 				const newIds = new Set(newInstallations.map((i) => i.id));
 
-				// Calculate changes
 				const added = newInstallations.filter((i) => !currentIds.has(i.id));
 				const removed = currentInstallations.filter(
 					(i) => !newIds.has(i.id),
 				);
 
-				// Update providerMetadata with fresh installations
+				// Update providerAccountInfo with fresh installations
 				await ctx.db
-					.update(userSources)
+					.update(gwInstallations)
 					.set({
-						providerMetadata: {
+						providerAccountInfo: {
 							version: 1 as const,
 							sourceType: "github" as const,
 							installations: newInstallations,
 						},
-						lastSyncAt: new Date().toISOString(),
+						updatedAt: now,
 					})
-					.where(eq(userSources.id, userSource.id));
+					.where(eq(gwInstallations.id, installation.id));
 
 				return {
 					added: added.length,
@@ -272,177 +304,61 @@ export const userSourcesRouter = {
 		}),
 
 		/**
-		 * Store GitHub OAuth result (called from OAuth callback route)
-		 * Stores user's GitHub connection with access token and installations
-		 *
-		 * This is user-level data - the user's personal GitHub OAuth connection.
-		 * Later, when creating a workspace, we'll create workspaceIntegrations
-		 * that link specific repos from this userSource to workspaces.
-		 */
-		storeOAuthResult: userScopedProcedure
-			.input(
-				z.object({
-					accessToken: z.string(),
-					refreshToken: z.string().optional(),
-					tokenExpiresAt: z.string().optional(),
-					installations: z.array(
-						z.object({
-							id: z.string(),
-							accountId: z.string(),
-							accountLogin: z.string(),
-							accountType: z.enum(["User", "Organization"]),
-							avatarUrl: z.string(),
-							permissions: z.record(z.string()),
-							installedAt: z.string(),
-							lastValidatedAt: z.string(),
-						}),
-					),
-				}),
-			)
-			.mutation(async ({ ctx, input }) => {
-				console.log("[tRPC userSources.github.storeOAuthResult] ========== Starting ==========");
-				console.log("[tRPC userSources.github.storeOAuthResult] User ID:", ctx.auth.userId);
-				console.log("[tRPC userSources.github.storeOAuthResult] Auth type:", ctx.auth.type);
-				console.log("[tRPC userSources.github.storeOAuthResult] Installations count:", input.installations.length);
-				console.log("[tRPC userSources.github.storeOAuthResult] Installations:", input.installations.map(i => ({
-					id: i.id,
-					accountLogin: i.accountLogin,
-					accountType: i.accountType,
-				})));
-
-				const now = new Date().toISOString();
-
-				// Check if userSource already exists for this user
-				console.log("[tRPC userSources.github.storeOAuthResult] Checking for existing userSource...");
-				const existingUserSource = await ctx.db
-					.select()
-					.from(userSources)
-					.where(
-						and(
-							eq(userSources.userId, ctx.auth.userId),
-							eq(userSources.sourceType, "github"),
-						),
-					)
-					.limit(1);
-
-				console.log("[tRPC userSources.github.storeOAuthResult] Existing userSource found:", !!existingUserSource[0]);
-
-				if (existingUserSource[0]) {
-					// Update existing userSource
-					console.log("[tRPC userSources.github.storeOAuthResult] Updating existing userSource:", existingUserSource[0].id);
-					await ctx.db
-						.update(userSources)
-						.set({
-							accessToken: input.accessToken,
-							refreshToken: input.refreshToken ?? null,
-							tokenExpiresAt: input.tokenExpiresAt
-								? new Date(input.tokenExpiresAt).toISOString()
-								: null,
-							providerMetadata: {
-								version: 1 as const,
-								sourceType: "github" as const,
-								installations: input.installations,
-							},
-							isActive: true,
-							lastSyncAt: now,
-						})
-						.where(eq(userSources.id, existingUserSource[0].id));
-
-					console.log("[tRPC userSources.github.storeOAuthResult] ========== Updated Successfully ==========");
-					return { id: existingUserSource[0].id, created: false };
-				} else {
-					// Create new userSource
-					console.log("[tRPC userSources.github.storeOAuthResult] Creating new userSource...");
-					const result = await ctx.db
-						.insert(userSources)
-						.values({
-							userId: ctx.auth.userId,
-							sourceType: "github",
-							accessToken: input.accessToken,
-							refreshToken: input.refreshToken ?? null,
-							tokenExpiresAt: input.tokenExpiresAt
-								? new Date(input.tokenExpiresAt).toISOString()
-								: null,
-							providerMetadata: {
-								version: 1 as const,
-								sourceType: "github" as const,
-								installations: input.installations,
-							},
-							isActive: true,
-							connectedAt: now,
-						})
-						.returning({ id: userSources.id });
-
-					const createdId = result[0]?.id;
-					if (!createdId) {
-						throw new TRPCError({
-							code: "INTERNAL_SERVER_ERROR",
-							message: "Failed to create GitHub user source",
-						});
-					}
-					console.log("[tRPC userSources.github.storeOAuthResult] ========== Created Successfully ==========", createdId);
-					return { id: createdId, created: true };
-				}
-			}),
-
-		/**
 		 * Get repositories for a GitHub App installation
 		 *
-		 * Validates user owns the installation, then fetches repositories
+		 * Validates org owns the installation, then fetches repositories
 		 * using a GitHub App installation token.
 		 */
-		repositories: userScopedProcedure
+		repositories: orgScopedProcedure
 			.input(
 				z.object({
-					integrationId: z.string(), // userSource.id
-					installationId: z.string(),
+					integrationId: z.string(), // gwInstallations.id
+					installationId: z.string(), // GitHub App installation external ID
 				}),
 			)
 			.query(async ({ ctx, input }) => {
-				// Verify user owns this userSource
+				// Verify org owns this installation
 				const result = await ctx.db
 					.select()
-					.from(userSources)
+					.from(gwInstallations)
 					.where(
 						and(
-							eq(userSources.id, input.integrationId),
-							eq(userSources.userId, ctx.auth.userId),
+							eq(gwInstallations.id, input.integrationId),
+							eq(gwInstallations.orgId, ctx.auth.orgId),
 						),
 					)
 					.limit(1);
 
-				const userSource = result[0];
-
-				if (!userSource) {
-					throw new TRPCError({
-						code: "NOT_FOUND",
-						message: "User source not found or access denied",
-					});
-				}
-
-				// Verify provider is GitHub
-				const providerMetadata = userSource.providerMetadata;
-				if (providerMetadata.sourceType !== "github") {
-					throw new TRPCError({
-						code: "INTERNAL_SERVER_ERROR",
-						message: "Invalid provider metadata type",
-					});
-				}
-
-				// Find the installation
-				const installations = providerMetadata.installations ?? [];
-				const installation = installations.find(
-					(i) => i.id === input.installationId,
-				);
+				const installation = result[0];
 
 				if (!installation) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
-						message: "Installation not found or not accessible to this source",
+						message: "Installation not found or access denied",
 					});
 				}
 
-				// Fetch repositories using GitHub App
+				const providerAccountInfo = installation.providerAccountInfo;
+				if (providerAccountInfo?.sourceType !== "github") {
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Invalid provider account info type",
+					});
+				}
+
+				// Verify the GitHub App installation is accessible
+				const installations = providerAccountInfo.installations ?? [];
+				const githubInstallation = installations.find(
+					(i) => i.id === input.installationId,
+				);
+
+				if (!githubInstallation) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Installation not found or not accessible to this connection",
+					});
+				}
+
 				try {
 					const app = getGitHubApp();
 					const installationIdNumber = Number.parseInt(
@@ -455,7 +371,6 @@ export const userSourcesRouter = {
 						installationIdNumber,
 					);
 
-					// Return repository data
 					return repositories.map((repo) => ({
 						id: repo.id.toString(),
 						name: repo.name,
@@ -487,59 +402,57 @@ export const userSourcesRouter = {
 		 * Checks if the repository contains a lightfast.yml configuration file
 		 * and returns its content if found.
 		 */
-		detectConfig: userScopedProcedure
+		detectConfig: orgScopedProcedure
 			.input(
 				z.object({
-					integrationId: z.string(), // userSource.id
-					installationId: z.string(),
+					integrationId: z.string(), // gwInstallations.id
+					installationId: z.string(), // GitHub App installation external ID
 					fullName: z.string(), // "owner/repo"
 					ref: z.string().optional(), // branch/tag/sha (defaults to default branch)
 				}),
 			)
 			.query(async ({ ctx, input }) => {
-				// Verify user owns this userSource
+				// Verify org owns this installation
 				const result = await ctx.db
 					.select()
-					.from(userSources)
+					.from(gwInstallations)
 					.where(
 						and(
-							eq(userSources.id, input.integrationId),
-							eq(userSources.userId, ctx.auth.userId),
+							eq(gwInstallations.id, input.integrationId),
+							eq(gwInstallations.orgId, ctx.auth.orgId),
 						),
 					)
 					.limit(1);
 
-				const userSource = result[0];
-
-				if (!userSource) {
-					throw new TRPCError({
-						code: "NOT_FOUND",
-						message: "User source not found or access denied",
-					});
-				}
-
-				// Verify provider is GitHub
-				const providerMetadata = userSource.providerMetadata;
-				if (providerMetadata.sourceType !== "github") {
-					throw new TRPCError({
-						code: "INTERNAL_SERVER_ERROR",
-						message: "Invalid provider metadata type",
-					});
-				}
-
-				// Find the installation
-				const installation = providerMetadata.installations?.find(
-					(i) => i.id === input.installationId,
-				);
+				const installation = result[0];
 
 				if (!installation) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
-						message: "Installation not found or not accessible to this source",
+						message: "Installation not found or access denied",
 					});
 				}
 
-				// Parse repository owner and name
+				const providerAccountInfo = installation.providerAccountInfo;
+				if (providerAccountInfo?.sourceType !== "github") {
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Invalid provider account info type",
+					});
+				}
+
+				// Verify the GitHub App installation is accessible
+				const githubInstallation = providerAccountInfo.installations?.find(
+					(i) => i.id === input.installationId,
+				);
+
+				if (!githubInstallation) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Installation not found or not accessible to this connection",
+					});
+				}
+
 				const [owner, repo] = input.fullName.split("/");
 				if (!owner || !repo) {
 					throw new TRPCError({
@@ -555,12 +468,10 @@ export const userSourcesRouter = {
 						10,
 					);
 
-					// Get installation octokit
 					const octokit = await app.getInstallationOctokit(
 						installationIdNumber,
 					);
 
-					// Resolve ref (default to repository default branch)
 					let ref = input.ref;
 					if (!ref) {
 						const { data: repoInfo } = await octokit.request(
@@ -574,8 +485,6 @@ export const userSourcesRouter = {
 						ref = repoInfo.default_branch;
 					}
 
-					// Validate ref format to prevent injection attacks
-					// Allow: alphanumeric, dots, dashes, slashes, underscores
 					if (ref && !/^[a-zA-Z0-9._/-]+$/.test(ref)) {
 						throw new TRPCError({
 							code: "BAD_REQUEST",
@@ -584,7 +493,6 @@ export const userSourcesRouter = {
 						});
 					}
 
-					// Try common config file names
 					const candidates = [
 						"lightfast.yml",
 						".lightfast.yml",
@@ -605,10 +513,8 @@ export const userSourcesRouter = {
 								},
 							);
 
-							// Check if it's a file (not directory) - octokit can return arrays for directories
 							if ("content" in data && "type" in data) {
-								// Validate file size (max 50KB to prevent abuse)
-								const maxSize = 50 * 1024; // 50KB
+								const maxSize = 50 * 1024;
 								if ("size" in data && typeof data.size === "number") {
 									if (data.size > maxSize) {
 										throw new TRPCError({
@@ -622,7 +528,6 @@ export const userSourcesRouter = {
 									"utf-8",
 								);
 
-								// Validate YAML format before returning
 								try {
 									yaml.parse(content);
 								} catch {
@@ -640,11 +545,9 @@ export const userSourcesRouter = {
 								};
 							}
 						} catch (error: unknown) {
-							// 404 means file doesn't exist, try next candidate
 							if (error && typeof error === "object" && "status" in error && (error as { status: number }).status === 404) {
 								continue;
 							}
-							// Other errors: log and continue
 							console.error(
 								`[tRPC userSources.github.detectConfig] Error checking ${path} in ${owner}/${repo}:`,
 								error,
@@ -653,7 +556,6 @@ export const userSourcesRouter = {
 						}
 					}
 
-					// No config found
 					return { exists: false };
 				} catch (error: unknown) {
 					console.error("[tRPC userSources.github.detectConfig] Failed to detect config:", error);
@@ -672,187 +574,95 @@ export const userSourcesRouter = {
 	 */
 	vercel: {
 		/**
-		 * Get user's Vercel source
+		 * Get org's Vercel installation
 		 *
-		 * Returns the user's Vercel OAuth connection including
+		 * Returns the org's Vercel OAuth connection including
 		 * team and configuration information.
 		 */
-		get: userScopedProcedure.query(async ({ ctx }) => {
+		get: orgScopedProcedure.query(async ({ ctx }) => {
 			const result = await ctx.db
 				.select()
-				.from(userSources)
+				.from(gwInstallations)
 				.where(
 					and(
-						eq(userSources.userId, ctx.auth.userId),
-						eq(userSources.sourceType, "vercel"),
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "vercel"),
+						eq(gwInstallations.status, "active"),
 					),
 				)
 				.limit(1);
 
-			const userSource = result[0];
+			const installation = result[0];
 
-			if (!userSource) {
+			if (!installation) {
 				return null;
 			}
 
-			const providerMetadata = userSource.providerMetadata;
-			if (providerMetadata.sourceType !== "vercel") {
+			const providerAccountInfo = installation.providerAccountInfo;
+			if (providerAccountInfo?.sourceType !== "vercel") {
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
-					message: "Invalid provider metadata type",
+					message: "Invalid provider account info type",
 				});
 			}
 
 			return {
-				id: userSource.id,
-				userId: userSource.userId,
-				sourceType: userSource.sourceType,
-				connectedAt: userSource.connectedAt,
-				isActive: userSource.isActive,
-				vercelUserId: providerMetadata.userId,
-				teamId: providerMetadata.teamId,
-				teamSlug: providerMetadata.teamSlug,
-				configurationId: providerMetadata.configurationId,
+				id: installation.id,
+				orgId: installation.orgId,
+				provider: installation.provider,
+				connectedAt: installation.createdAt,
+				status: installation.status,
+				vercelUserId: providerAccountInfo.userId,
+				teamId: providerAccountInfo.teamId,
+				teamSlug: providerAccountInfo.teamSlug,
+				configurationId: providerAccountInfo.configurationId,
 			};
 		}),
 
 		/**
-		 * Store Vercel OAuth result (called from OAuth callback route)
-		 * Stores user's Vercel connection with access token
-		 */
-		storeOAuthResult: userScopedProcedure
-			.input(
-				z.object({
-					accessToken: z.string(),
-					userId: z.string(),
-					teamId: z.string().optional(),
-					teamSlug: z.string().optional(),
-					configurationId: z.string(),
-				}),
-			)
-			.mutation(async ({ ctx, input }) => {
-				console.log("[tRPC userSources.vercel.storeOAuthResult] Starting");
-				console.log("[tRPC userSources.vercel.storeOAuthResult] Clerk User ID:", ctx.auth.userId);
-				console.log("[tRPC userSources.vercel.storeOAuthResult] Vercel User ID:", input.userId);
-				console.log("[tRPC userSources.vercel.storeOAuthResult] Team ID:", input.teamId);
-				console.log("[tRPC userSources.vercel.storeOAuthResult] Configuration ID:", input.configurationId);
-
-				const now = new Date().toISOString();
-
-				// Check if userSource already exists
-				const existingUserSource = await ctx.db
-					.select()
-					.from(userSources)
-					.where(
-						and(
-							eq(userSources.userId, ctx.auth.userId),
-							eq(userSources.sourceType, "vercel"),
-						),
-					)
-					.limit(1);
-
-				if (existingUserSource[0]) {
-					// Update existing
-					console.log("[tRPC userSources.vercel.storeOAuthResult] Updating existing userSource:", existingUserSource[0].id);
-					await ctx.db
-						.update(userSources)
-						.set({
-							accessToken: input.accessToken,
-							providerMetadata: {
-								version: 1 as const,
-								sourceType: "vercel" as const,
-								userId: input.userId,
-								teamId: input.teamId,
-								teamSlug: input.teamSlug,
-								configurationId: input.configurationId,
-							},
-							isActive: true,
-							lastSyncAt: now,
-						})
-						.where(eq(userSources.id, existingUserSource[0].id));
-
-					console.log("[tRPC userSources.vercel.storeOAuthResult] Updated successfully");
-					return { id: existingUserSource[0].id, created: false };
-				} else {
-					// Create new
-					console.log("[tRPC userSources.vercel.storeOAuthResult] Creating new userSource");
-					const result = await ctx.db
-						.insert(userSources)
-						.values({
-							userId: ctx.auth.userId,
-							sourceType: "vercel",
-							accessToken: input.accessToken,
-							providerMetadata: {
-								version: 1 as const,
-								sourceType: "vercel" as const,
-								userId: input.userId,
-								teamId: input.teamId,
-								teamSlug: input.teamSlug,
-								configurationId: input.configurationId,
-							},
-							isActive: true,
-							connectedAt: now,
-						})
-						.returning({ id: userSources.id });
-
-					const vercelId = result[0]?.id;
-					if (!vercelId) {
-						throw new TRPCError({
-							code: "INTERNAL_SERVER_ERROR",
-							message: "Failed to create Vercel user source",
-						});
-					}
-					console.log("[tRPC userSources.vercel.storeOAuthResult] Created successfully:", vercelId);
-					return { id: vercelId, created: true };
-				}
-			}),
-
-		/**
 		 * List Vercel projects for project selector
 		 *
-		 * Returns all projects from user's Vercel account with connection status.
+		 * Returns all projects from org's Vercel account with connection status.
 		 * Used by the project selector modal to show available projects.
 		 */
-		listProjects: userScopedProcedure
+		listProjects: orgScopedProcedure
 			.input(
 				z.object({
-					userSourceId: z.string(),
+					installationId: z.string(), // gwInstallations.id (was userSourceId)
 					workspaceId: z.string(),
 					cursor: z.string().optional(),
 				}),
 			)
 			.query(async ({ ctx, input }) => {
-				// 1. Verify user owns this source
-				const source = await ctx.db.query.userSources.findFirst({
+				// 1. Verify org owns this installation
+				const installation = await ctx.db.query.gwInstallations.findFirst({
 					where: and(
-						eq(userSources.id, input.userSourceId),
-						eq(userSources.userId, ctx.auth.userId),
-						eq(userSources.sourceType, "vercel"),
-						eq(userSources.isActive, true),
+						eq(gwInstallations.id, input.installationId),
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "vercel"),
+						eq(gwInstallations.status, "active"),
 					),
 				});
 
-				if (!source) {
+				if (!installation) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
 						message: "Vercel connection not found",
 					});
 				}
 
-				// 2. Get access token — Gateway vault if available, local decrypt otherwise
-				const accessToken = source.gatewayInstallationId
-					? (await gatewayClient.getToken(source.gatewayInstallationId)).accessToken
-					: decrypt(source.accessToken, env.ENCRYPTION_KEY);
+				// 2. Get access token directly from gw_tokens vault
+				const accessToken = await getInstallationToken(installation.id);
 
-				// 3. Get team ID from metadata
-				const providerMetadata = source.providerMetadata;
-				if (providerMetadata.sourceType !== "vercel") {
+				// 3. Get team ID from providerAccountInfo
+				const providerAccountInfo = installation.providerAccountInfo;
+				if (providerAccountInfo?.sourceType !== "vercel") {
 					throw new TRPCError({
 						code: "INTERNAL_SERVER_ERROR",
-						message: "Invalid provider metadata",
+						message: "Invalid provider account info",
 					});
 				}
-				const teamId = providerMetadata.teamId;
+				const teamId = providerAccountInfo.teamId;
 
 				// 4. Call Vercel API
 				const url = new URL("https://api.vercel.com/v9/projects");
@@ -870,11 +680,11 @@ export const userSourcesRouter = {
 				console.log("[Vercel Projects] Response status:", response.status);
 
 				if (response.status === 401) {
-					// Mark source as needing re-auth
+					// Mark installation as needing re-auth
 					await ctx.db
-						.update(userSources)
-						.set({ isActive: false })
-						.where(eq(userSources.id, input.userSourceId));
+						.update(gwInstallations)
+						.set({ status: "error" })
+						.where(eq(gwInstallations.id, input.installationId));
 
 					throw new TRPCError({
 						code: "UNAUTHORIZED",
@@ -898,7 +708,7 @@ export const userSourcesRouter = {
 				const connected = await ctx.db.query.workspaceIntegrations.findMany({
 					where: and(
 						eq(workspaceIntegrations.workspaceId, input.workspaceId),
-						eq(workspaceIntegrations.userSourceId, input.userSourceId),
+						eq(workspaceIntegrations.installationId, input.installationId),
 						eq(workspaceIntegrations.isActive, true),
 					),
 					columns: { providerResourceId: true },
@@ -922,17 +732,17 @@ export const userSourcesRouter = {
 		/**
 		 * Disconnect Vercel integration
 		 */
-		disconnect: userScopedProcedure.mutation(async ({ ctx }) => {
+		disconnect: orgScopedProcedure.mutation(async ({ ctx }) => {
 			const result = await ctx.db
-				.update(userSources)
-				.set({ isActive: false })
+				.update(gwInstallations)
+				.set({ status: "revoked" })
 				.where(
 					and(
-						eq(userSources.userId, ctx.auth.userId),
-						eq(userSources.sourceType, "vercel"),
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "vercel"),
 					),
 				)
-				.returning({ id: userSources.id });
+				.returning({ id: gwInstallations.id });
 
 			if (!result[0]) {
 				throw new TRPCError({

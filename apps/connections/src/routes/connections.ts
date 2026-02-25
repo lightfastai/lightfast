@@ -8,7 +8,7 @@ import { tenantMiddleware } from "../middleware/tenant";
 import { apiKeyAuth } from "../middleware/auth";
 import { oauthStateKey, resourceKey } from "../lib/cache";
 import { redis } from "@vendor/upstash";
-import { connectionsBaseUrl } from "../lib/urls";
+import { connectionsBaseUrl, consoleUrl } from "../lib/urls";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 
 const workflowClient = getWorkflowClient();
@@ -100,17 +100,13 @@ connections.get("/:provider/callback", async (c) => {
   }
 
   try {
-    const result = await provider.handleCallback(c, stateData);
-    return c.json(result);
+    await provider.handleCallback(c, stateData);
+    return c.redirect(`${consoleUrl}/${provider.name}/connected`);
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";
-    if (message === "missing code" || message === "missing installation_id") {
-      return c.json({ error: "missing_params", message }, 400);
-    }
-    if (message === "insert_failed") {
-      return c.json({ error: "insert_failed" }, 500);
-    }
-    return c.json({ error: "callback_failed", message }, 502);
+    return c.redirect(
+      `${consoleUrl}/${provider.name}/connected?error=${encodeURIComponent(message)}`,
+    );
   }
 });
 

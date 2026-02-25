@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -23,6 +23,7 @@ interface GitHubConnectorProps {
 
 export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const {
     setSelectedInstallationId,
     selectedInstallationId,
@@ -45,26 +46,33 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
     () => autoOpen && isConnected && installations.length > 0,
   );
 
-  const handleConnectGitHub = () => {
-    const width = 600;
-    const height = 700;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
+  const handleConnectGitHub = async () => {
+    try {
+      const data = await queryClient.fetchQuery(
+        trpc.userSources.getAuthorizeUrl.queryOptions({ provider: "github" }),
+      );
 
-    const currentPath = `/${clerkOrgSlug}/${workspaceName}/sources/connect?provider=github&connected=true`;
-    const popup = window.open(
-      `/api/github/install-app?redirect=${encodeURIComponent(currentPath)}`,
-      "github-install",
-      `width=${width},height=${height},left=${left},top=${top},popup=1`
-    );
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
 
-    // Poll for popup close
-    const pollTimer = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(pollTimer);
-        void refetch();
-      }
-    }, 500);
+      const popup = window.open(
+        data.url,
+        "github-install",
+        `width=${width},height=${height},left=${left},top=${top},popup=1`
+      );
+
+      // Poll for popup close
+      const pollTimer = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(pollTimer);
+          void refetch();
+        }
+      }, 500);
+    } catch {
+      // Failed to get authorize URL
+    }
   };
 
   if (!isConnected) {
