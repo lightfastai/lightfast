@@ -86,10 +86,12 @@ describe("GitHubProvider", () => {
     });
 
     it("generates UUID when header missing", () => {
-      const id = provider.extractDeliveryId(headers({}), {});
-      expect(id).toMatch(
+      const id1 = provider.extractDeliveryId(headers({}), {});
+      const id2 = provider.extractDeliveryId(headers({}), {});
+      expect(id1).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
       );
+      expect(id1).not.toBe(id2);
     });
   });
 
