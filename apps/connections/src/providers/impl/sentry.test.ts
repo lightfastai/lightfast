@@ -278,6 +278,7 @@ describe("SentryProvider", () => {
         "tok-1",
         expect.objectContaining({ accessToken: "refreshed-access" }),
         "encrypted-refresh",
+        expect.any(String), // existingExpiresAt
       );
       expect(result.accessToken).toBe("refreshed-access");
     });

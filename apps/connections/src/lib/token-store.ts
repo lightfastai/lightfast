@@ -37,20 +37,22 @@ export async function updateTokenRecord(
   tokenId: string,
   oauthTokens: OAuthTokens,
   existingRefreshToken: string | null,
+  existingExpiresAt: string | null,
 ): Promise<void> {
   const encryptedAccess = await encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
   const newEncryptedRefresh = oauthTokens.refreshToken
     ? await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY)
     : existingRefreshToken;
+  const newExpiresAt = oauthTokens.expiresIn
+    ? new Date(Date.now() + oauthTokens.expiresIn * 1000).toISOString()
+    : existingExpiresAt;
 
   await db
     .update(gwTokens)
     .set({
       accessToken: encryptedAccess,
       refreshToken: newEncryptedRefresh,
-      expiresAt: oauthTokens.expiresIn
-        ? new Date(Date.now() + oauthTokens.expiresIn * 1000).toISOString()
-        : null,
+      expiresAt: newExpiresAt,
       updatedAt: new Date().toISOString(),
     })
     .where(eq(gwTokens.id, tokenId));

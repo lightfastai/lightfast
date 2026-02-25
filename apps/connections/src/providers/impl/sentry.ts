@@ -223,7 +223,7 @@ export class SentryProvider implements ConnectionProvider {
       const decryptedRefresh = await decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
       const refreshed = await this.refreshToken(decryptedRefresh);
 
-      await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken);
+      await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
 
       return {
         accessToken: refreshed.accessToken,
