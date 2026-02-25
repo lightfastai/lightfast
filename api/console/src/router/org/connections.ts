@@ -548,11 +548,7 @@ export const connectionsRouter = {
 							if (error && typeof error === "object" && "status" in error && (error as { status: number }).status === 404) {
 								continue;
 							}
-							console.error(
-								`[tRPC connections.github.detectConfig] Error checking ${path} in ${owner}/${repo}:`,
-								error,
-							);
-							continue;
+							throw error;
 						}
 					}
 
