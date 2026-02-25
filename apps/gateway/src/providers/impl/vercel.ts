@@ -31,11 +31,13 @@ export class VercelProvider implements WebhookProvider {
   }
 
   extractDeliveryId(headers: Headers, payload: WebhookPayload): string {
-    const headerId = headers.get(DELIVERY_HEADER);
-    if (headerId) return headerId;
-
+    // Prefer payload id — it is stable across retries of the same event.
+    // x-vercel-id is a per-request tracing header and changes on each retry.
     const p = payload as VercelWebhookPayload;
     if (p.id) return p.id;
+
+    const headerId = headers.get(DELIVERY_HEADER);
+    if (headerId) return headerId;
 
     return crypto.randomUUID();
   }

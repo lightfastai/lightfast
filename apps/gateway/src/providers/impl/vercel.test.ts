@@ -60,17 +60,20 @@ describe("VercelProvider", () => {
   });
 
   describe("extractDeliveryId", () => {
-    it("prefers x-vercel-id header", () => {
+    it("prefers payload.id over header", () => {
       const id = provider.extractDeliveryId(
         headers({ "x-vercel-id": "hdr-123" }),
         { id: "body-456" },
       );
-      expect(id).toBe("hdr-123");
+      expect(id).toBe("body-456");
     });
 
-    it("falls back to payload.id", () => {
-      const id = provider.extractDeliveryId(headers({}), { id: "body-456" });
-      expect(id).toBe("body-456");
+    it("falls back to x-vercel-id header", () => {
+      const id = provider.extractDeliveryId(
+        headers({ "x-vercel-id": "hdr-123" }),
+        {},
+      );
+      expect(id).toBe("hdr-123");
     });
 
     it("generates UUID when both missing", () => {
