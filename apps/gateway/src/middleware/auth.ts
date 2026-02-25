@@ -1,4 +1,5 @@
 import type { Context, MiddlewareHandler } from "hono";
+import { timingSafeStringEqual } from "../lib/crypto";
 import { env } from "../env";
 
 /**
@@ -9,7 +10,7 @@ import { env } from "../env";
 export const apiKeyAuth: MiddlewareHandler = async (c: Context, next) => {
   const apiKey = c.req.header("X-API-Key");
 
-  if (!apiKey || apiKey !== env.GATEWAY_API_KEY) {
+  if (!apiKey || !timingSafeStringEqual(apiKey, env.GATEWAY_API_KEY)) {
     return c.json({ error: "unauthorized" }, 401);
   }
 

@@ -67,6 +67,24 @@ export function timingSafeEqual(a: string, b: string): boolean {
   return result === 0 && a === b;
 }
 
+/**
+ * Timing-safe comparison of two arbitrary strings.
+ * Encodes both as UTF-8 and performs constant-time byte comparison.
+ */
+export function timingSafeStringEqual(a: string, b: string): boolean {
+  const encoder = new TextEncoder();
+  const aBytes = encoder.encode(a);
+  const bBytes = encoder.encode(b);
+
+  if (aBytes.length !== bBytes.length) return false;
+
+  let result = 0;
+  for (let i = 0; i < aBytes.length; i++) {
+    result |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
+  }
+  return result === 0;
+}
+
 // Helpers
 
 function hexToBytes(hex: string): Uint8Array<ArrayBuffer> {
