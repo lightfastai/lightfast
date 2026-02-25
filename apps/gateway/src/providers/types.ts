@@ -14,8 +14,8 @@ import type { LinearProvider } from "./linear";
 import type { SentryProvider } from "./sentry";
 import type {
   ProviderName,
-  ConnectionProvider,
   OAuthTokens,
+  ProviderOptions,
   GitHubAuthOptions,
   LinearAuthOptions,
 } from "@repo/gateway-types";
@@ -46,8 +46,6 @@ export type {
   ResourceStatus,
   DeliveryStatus,
   OAuthTokens,
-  ConnectionProvider,
-  WebhookRegistrant,
   GitHubAuthOptions,
   LinearAuthOptions,
   ProviderOptions,
@@ -55,9 +53,6 @@ export type {
 } from "@repo/gateway-types";
 
 // ── Gateway-Specific Type Maps ──
-
-/** Narrow ConnectionProvider with the gateway's concrete WebhookPayload union */
-export type GatewayConnectionProvider = ConnectionProvider<WebhookPayload>;
 
 /** Type map: narrow webhook payload per provider name */
 export type WebhookPayloadFor<N extends ProviderName> = N extends "github"
@@ -88,7 +83,7 @@ export type AuthOptionsFor<N extends ProviderName> = N extends "github"
     ? LinearAuthOptions
     : Record<string, never>;
 
-// ── Strategy Types (merged from strategies/types.ts) ──
+// ── Provider Interface ──
 
 export interface TokenResult {
   accessToken: string;
@@ -108,16 +103,42 @@ export interface CallbackResult {
   [key: string]: unknown;
 }
 
-/** Unified provider = ConnectionProvider + strategy methods in a single class. */
-export interface UnifiedProvider<TPayload = unknown>
-  extends ConnectionProvider<TPayload> {
+/** Single interface for all gateway providers. */
+export interface Provider {
+  readonly name: ProviderName;
+  readonly requiresWebhookRegistration: boolean;
+
+  // OAuth
+  getAuthorizationUrl(state: string, options?: ProviderOptions): string;
+  exchangeCode(code: string, redirectUri: string): Promise<OAuthTokens>;
+  refreshToken(refreshToken: string): Promise<OAuthTokens>;
+  revokeToken(accessToken: string): Promise<void>;
+
+  // Webhook verification
+  verifyWebhook(
+    payload: string,
+    headers: Headers,
+    secret: string,
+  ): Promise<boolean>;
+  parsePayload(raw: unknown): WebhookPayload;
+  extractDeliveryId(headers: Headers, payload: WebhookPayload): string;
+  extractEventType(headers: Headers, payload: WebhookPayload): string;
+  extractResourceId(payload: WebhookPayload): string | null;
+
+  // Webhook registration (only when requiresWebhookRegistration)
+  registerWebhook?(
+    connectionId: string,
+    callbackUrl: string,
+    secret: string,
+  ): Promise<string>;
+  deregisterWebhook?(connectionId: string, webhookId: string): Promise<void>;
+
+  // Lifecycle
   handleCallback(
     c: Context,
     stateData: Record<string, string>,
   ): Promise<CallbackResult>;
-
   resolveToken(installation: GwInstallation): Promise<TokenResult>;
-
   buildAccountInfo(
     stateData: Record<string, string>,
     oauthTokens?: OAuthTokens,

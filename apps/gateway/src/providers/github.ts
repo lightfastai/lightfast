@@ -13,7 +13,7 @@ import {
 } from "./schemas";
 import type { GitHubWebhookPayload } from "./schemas";
 import type {
-  UnifiedProvider,
+  Provider,
   GitHubAuthOptions,
   JwtTokenResult,
   OAuthTokens,
@@ -26,7 +26,7 @@ const DELIVERY_HEADER = "x-github-delivery";
 const EVENT_HEADER = "x-github-event";
 const SIGNATURE_PREFIX = "sha256=";
 
-export class GitHubProvider implements UnifiedProvider {
+export class GitHubProvider implements Provider {
   readonly name = "github" as const;
   readonly requiresWebhookRegistration = false as const;
 

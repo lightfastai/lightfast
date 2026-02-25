@@ -13,8 +13,6 @@ export type {
 
 export type {
   OAuthTokens,
-  ConnectionProvider,
-  WebhookRegistrant,
   GitHubAuthOptions,
   LinearAuthOptions,
   ProviderOptions,

@@ -16,11 +16,10 @@ import {
 } from "./schemas";
 import type { SentryWebhookPayload } from "./schemas";
 import type {
-  UnifiedProvider,
+  Provider,
   TokenResult,
   OAuthTokens,
   WebhookPayload,
-  WebhookRegistrant,
   CallbackResult,
 } from "./types";
 
@@ -28,7 +27,7 @@ const SIGNATURE_HEADER = "sentry-hook-signature";
 const RESOURCE_HEADER = "sentry-hook-resource";
 const TIMESTAMP_HEADER = "sentry-hook-timestamp";
 
-export class SentryProvider implements UnifiedProvider, WebhookRegistrant {
+export class SentryProvider implements Provider {
   readonly name = "sentry" as const;
   readonly requiresWebhookRegistration = true as const;
 

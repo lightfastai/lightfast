@@ -11,7 +11,7 @@ import { writeTokenRecord } from "../lib/token-store";
 import { vercelOAuthResponseSchema, vercelWebhookPayloadSchema } from "./schemas";
 import type { VercelWebhookPayload } from "./schemas";
 import type {
-  UnifiedProvider,
+  Provider,
   TokenResult,
   OAuthTokens,
   WebhookPayload,
@@ -21,7 +21,7 @@ import type {
 const SIGNATURE_HEADER = "x-vercel-signature";
 const DELIVERY_HEADER = "x-vercel-id";
 
-export class VercelProvider implements UnifiedProvider {
+export class VercelProvider implements Provider {
   readonly name = "vercel" as const;
   readonly requiresWebhookRegistration = false as const;
 

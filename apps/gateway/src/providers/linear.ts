@@ -11,19 +11,18 @@ import { writeTokenRecord } from "../lib/token-store";
 import { linearOAuthResponseSchema, linearWebhookPayloadSchema } from "./schemas";
 import type { LinearWebhookPayload } from "./schemas";
 import type {
-  UnifiedProvider,
+  Provider,
   LinearAuthOptions,
   TokenResult,
   OAuthTokens,
   WebhookPayload,
-  WebhookRegistrant,
   CallbackResult,
 } from "./types";
 
 const SIGNATURE_HEADER = "linear-signature";
 const DELIVERY_HEADER = "linear-delivery";
 
-export class LinearProvider implements UnifiedProvider, WebhookRegistrant {
+export class LinearProvider implements Provider {
   readonly name = "linear" as const;
   readonly requiresWebhookRegistration = true as const;
 

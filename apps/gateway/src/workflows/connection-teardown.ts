@@ -7,7 +7,7 @@ import { resourceKey } from "../lib/cache";
 import { redis } from "@vendor/upstash";
 import { env } from "../env";
 import { getProvider } from "../providers";
-import type { ProviderName, WebhookRegistrant } from "../providers/types";
+import type { ProviderName } from "../providers/types";
 
 interface TeardownPayload {
   installationId: string;
@@ -66,13 +66,12 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       const installation = installationRows[0];
       if (!installation) return;
 
-      const registrant = provider as WebhookRegistrant;
       const meta = installation.metadata as Record<string, unknown> | null;
       const webhookId = meta?.webhookId as string | undefined;
 
       if (webhookId) {
         try {
-          await registrant.deregisterWebhook(installationId, webhookId);
+          await provider.deregisterWebhook(installationId, webhookId);
         } catch {
           // Best-effort — swallow errors
         }
