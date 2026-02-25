@@ -11,6 +11,7 @@
 
 import { db } from "@db/console";
 import { workspaceIntegrations } from "@db/console/schema";
+import type { InsertWorkspaceIntegration } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
 import { eq, and } from "drizzle-orm";
 
@@ -128,7 +129,7 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       workspaceId,
       connectedBy: userId,
       provider: source.sourceType,
-      sourceConfig: source.sourceConfig as never,
+      sourceConfig: source.sourceConfig as InsertWorkspaceIntegration["sourceConfig"],
       providerResourceId: source.providerResourceId,
       isActive: true,
       lastSyncStatus: "success",
