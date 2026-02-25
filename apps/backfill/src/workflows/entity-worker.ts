@@ -70,7 +70,10 @@ export const backfillEntityWorker = inngest.createFunction(
       async () => {
         const response = await fetch(
           `${connectionsUrl}/connections/${installationId}/token`,
-          { headers: { "X-API-Key": env.GATEWAY_API_KEY } },
+          {
+            headers: { "X-API-Key": env.GATEWAY_API_KEY },
+            signal: AbortSignal.timeout(30_000),
+          },
         );
         if (!response.ok) {
           throw new Error(
@@ -142,7 +145,10 @@ export const backfillEntityWorker = inngest.createFunction(
             if (status === 401) {
               const tokenResponse = await fetch(
                 `${connectionsUrl}/connections/${installationId}/token`,
-                { headers: { "X-API-Key": env.GATEWAY_API_KEY } },
+                {
+                  headers: { "X-API-Key": env.GATEWAY_API_KEY },
+                  signal: AbortSignal.timeout(30_000),
+                },
               );
               if (!tokenResponse.ok) throw err; // Can't refresh — rethrow original
               const { accessToken: freshToken } =
@@ -193,6 +199,7 @@ export const backfillEntityWorker = inngest.createFunction(
               payload: webhookEvent.payload,
               receivedAt: Date.now(),
             }),
+            signal: AbortSignal.timeout(30_000),
           });
           if (!response.ok) {
             const text = await response.text().catch(() => "unknown");
