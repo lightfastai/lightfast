@@ -37,20 +37,31 @@ vi.mock("@vendor/upstash", () => ({
 
 vi.mock("@db/console/client", () => ({
   db: {
-    select: () => ({
-      from: () => ({
-        where: () => {
-          const result = mockDbQuery();
-          (result as Record<string, unknown>).limit = () => result;
-          return result;
-        },
-      }),
-    }),
+    select: () => {
+      const builder = {
+        from: () => builder,
+        where: () => builder,
+        limit: () => builder,
+        then: (
+          resolve: (v: unknown) => unknown,
+          reject: (e: unknown) => unknown,
+        ) => mockDbQuery().then(resolve, reject),
+      };
+      return builder;
+    },
     update: () => ({
       set: () => ({
         where: () => mockDbUpdate(),
       }),
     }),
+    transaction: (fn: (tx: unknown) => Promise<unknown>) =>
+      fn({
+        update: () => ({
+          set: () => ({
+            where: () => mockDbUpdate(),
+          }),
+        }),
+      }),
   },
 }));
 
