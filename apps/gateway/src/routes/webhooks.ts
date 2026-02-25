@@ -7,6 +7,7 @@ import { getProvider } from "../providers";
 import { webhookSeenKey } from "../lib/cache";
 import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/gateway-types";
+import { timingSafeEqual } from "../lib/crypto";
 
 const qstash = getQStashClient();
 const workflowClient = getWorkflowClient();
@@ -39,7 +40,7 @@ webhooks.post("/:provider", async (c) => {
   // Service auth path — backfill or other internal service
   // Pre-resolved connectionId/orgId provided in body; skip HMAC/dedup/resolution.
   const apiKey = c.req.header("X-API-Key");
-  if (apiKey && apiKey === env.GATEWAY_API_KEY) {
+  if (apiKey && timingSafeEqual(apiKey, env.GATEWAY_API_KEY)) {
     const body = await c.req.json<{
       connectionId: string;
       orgId: string;
