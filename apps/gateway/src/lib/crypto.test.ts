@@ -59,4 +59,16 @@ describe("timingSafeEqual", () => {
   it("returns true for two empty strings", () => {
     expect(timingSafeEqual("", "")).toBe(true);
   });
+
+  it("returns true for identical HMAC-SHA256 hex digests", async () => {
+    const sig1 = await computeHmacSha256("payload", "secret");
+    const sig2 = await computeHmacSha256("payload", "secret");
+    expect(timingSafeEqual(sig1, sig2)).toBe(true);
+  });
+
+  it("returns false for different HMAC-SHA256 hex digests", async () => {
+    const sig1 = await computeHmacSha256("payload-a", "secret");
+    const sig2 = await computeHmacSha256("payload-b", "secret");
+    expect(timingSafeEqual(sig1, sig2)).toBe(false);
+  });
 });
