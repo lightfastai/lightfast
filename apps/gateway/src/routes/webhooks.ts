@@ -6,8 +6,7 @@ import { env } from "../env";
 import { getProvider } from "../providers";
 import { webhookSeenKey } from "../lib/cache";
 import { redis } from "@vendor/upstash";
-import type { WebhookReceiptPayload } from "@repo/gateway-types";
-import type { WebhookEnvelope } from "@repo/gateway-types";
+import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/gateway-types";
 
 const qstash = getQStashClient();
 const workflowClient = getWorkflowClient();
