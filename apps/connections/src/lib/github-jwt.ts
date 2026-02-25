@@ -86,6 +86,16 @@ async function importPrivateKey(base64Pem: string): Promise<CryptoKey> {
   // Decode base64 → PEM string
   const pem = atob(base64Pem);
 
+  // GitHub issues PKCS#1 keys (BEGIN RSA PRIVATE KEY) but Web Crypto
+  // only supports PKCS#8 (BEGIN PRIVATE KEY). Detect and reject early.
+  if (pem.includes("-----BEGIN RSA PRIVATE KEY-----")) {
+    throw new Error(
+      "GITHUB_PRIVATE_KEY is in PKCS#1 format (RSA PRIVATE KEY). " +
+        "Web Crypto requires PKCS#8. Convert with: " +
+        "openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem",
+    );
+  }
+
   // Strip PEM headers and decode inner base64
   const pemContents = pem
     .replace(/-----BEGIN PRIVATE KEY-----/g, "")
