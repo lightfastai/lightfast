@@ -13,6 +13,12 @@ export const env = createEnv({
   shared: {},
   server: {
     /**
+     * Gateway API key for authenticating requests to the Gateway service.
+     * The Gateway URL is resolved via @vercel/related-projects.
+     */
+    GATEWAY_API_KEY: z.string().min(1),
+
+    /**
      * Encryption key for decrypting OAuth tokens from database
      * Must match the key used by apps/console to encrypt tokens
      *

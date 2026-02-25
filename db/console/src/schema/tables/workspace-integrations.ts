@@ -128,6 +128,9 @@ export const workspaceIntegrations = pgTable(
      */
     providerResourceId: varchar("provider_resource_id", { length: 191 }).notNull().$type<SourceIdentifier>(),
 
+    // Gateway connection reference (cross-database, nullable until migration/reconnection)
+    gatewayInstallationId: varchar("gateway_installation_id", { length: 191 }),
+
     // Status
     isActive: boolean("is_active").notNull().default(true),
 

@@ -24,6 +24,10 @@
 		"./lib/activity": {
 			"types": "./dist/lib/activity.d.ts",
 			"default": "./src/lib/activity.ts"
+		},
+		"./lib/gateway": {
+			"types": "./dist/lib/gateway.d.ts",
+			"default": "./src/lib/gateway.ts"
 		}
 	},
 	"license": "FSL-1.1-Apache-2.0",
@@ -48,6 +52,7 @@
 		"@repo/console-clerk-m2m": "workspace:*",
 		"@repo/console-config": "workspace:*",
 		"@repo/console-embed": "workspace:*",
+		"@repo/console-gateway-client": "workspace:*",
 		"@repo/console-octokit-github": "workspace:*",
 		"@repo/console-pinecone": "workspace:*",
 		"@repo/console-types": "workspace:*",
@@ -67,6 +72,7 @@
 		"@vendor/knock": "workspace:*",
 		"@vendor/observability": "workspace:*",
 		"@vendor/pinecone": "workspace:*",
+		"@vercel/related-projects": "catalog:",
 		"ai": "catalog:",
 		"braintrust": "catalog:",
 		"date-fns": "^4.1.0",
