@@ -18,6 +18,7 @@
     "@vendor/qstash": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
+    "@vercel/related-projects": "catalog:",
     "hono": "^4.12.2",
     "zod": "catalog:zod3"
   },

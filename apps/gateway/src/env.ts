@@ -16,15 +16,7 @@ export const env = createEnv({
     // Service auth
     GATEWAY_API_KEY: z.string().min(1),
     GATEWAY_WEBHOOK_SECRET: z.string().min(1),
-    GATEWAY_BASE_URL: z
-      .string()
-      .url()
-      .default("https://gateway.lightfast.ai"),
     ENCRYPTION_KEY: z.string().min(32),
-
-    // Console integration
-    CONSOLE_INGRESS_URL: z.string().url(),
-    CONSOLE_API_URL: z.string().url(),
 
     // GitHub
     GITHUB_APP_SLUG: z.string().min(1),

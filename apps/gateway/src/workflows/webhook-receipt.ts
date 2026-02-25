@@ -1,8 +1,9 @@
 import { serve } from "@vendor/upstash-workflow/hono";
-import { env } from "../env";
+import { gatewayBaseUrl } from "../lib/base-url";
 import { webhookSeenKey, resourceKey } from "../lib/keys";
 import { qstash } from "../lib/qstash";
 import { redis } from "../lib/redis";
+import { consoleUrl } from "../lib/related-projects";
 import type { WebhookReceiptPayload } from "./types";
 
 interface ConnectionInfo {
@@ -83,7 +84,7 @@ export const webhookReceiptWorkflow = serve<WebhookReceiptPayload>(
     // The delivery-status callback is called on final success or failure.
     await context.run("publish-to-console", async () => {
       await qstash.publishJSON({
-        url: env.CONSOLE_INGRESS_URL,
+        url: `${consoleUrl}/api/webhooks/ingress`,
         body: {
           deliveryId: data.deliveryId,
           connectionId: connectionInfo.connectionId,
@@ -95,7 +96,7 @@ export const webhookReceiptWorkflow = serve<WebhookReceiptPayload>(
         },
         retries: 5,
         deduplicationId: `${data.provider}:${data.deliveryId}`,
-        callback: `${env.GATEWAY_BASE_URL}/admin/delivery-status`,
+        callback: `${gatewayBaseUrl}/admin/delivery-status`,
       });
     });
   },

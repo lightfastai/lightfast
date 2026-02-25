@@ -7,9 +7,6 @@
       "env": [
         "GATEWAY_API_KEY",
         "GATEWAY_WEBHOOK_SECRET",
-        "GATEWAY_BASE_URL",
-        "CONSOLE_INGRESS_URL",
-        "CONSOLE_API_URL",
         "GITHUB_APP_SLUG",
         "GITHUB_APP_ID",
         "GITHUB_CLIENT_ID",
