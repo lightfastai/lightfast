@@ -39,14 +39,18 @@ connections.get("/:provider/authorize", tenantMiddleware, async (c) => {
   const state = nanoid();
   const connectedBy = c.req.header("X-User-Id") ?? "unknown";
 
-  // Store OAuth state in Redis (10-minute TTL)
-  await redis.hset(oauthStateKey(state), {
-    provider: provider.name,
-    orgId,
-    connectedBy,
-    createdAt: Date.now().toString(),
-  });
-  await redis.expire(oauthStateKey(state), 600);
+  // Store OAuth state in Redis (10-minute TTL) — atomic pipeline
+  const key = oauthStateKey(state);
+  await redis
+    .pipeline()
+    .hset(key, {
+      provider: provider.name,
+      orgId,
+      connectedBy,
+      createdAt: Date.now().toString(),
+    })
+    .expire(key, 600)
+    .exec();
 
   const url = provider.getAuthorizationUrl(state);
 
