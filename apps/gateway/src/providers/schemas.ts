@@ -52,7 +52,14 @@ export type VercelWebhookPayload = z.infer<typeof vercelWebhookPayloadSchema>;
 export type LinearWebhookPayload = z.infer<typeof linearWebhookPayloadSchema>;
 export type SentryWebhookPayload = z.infer<typeof sentryWebhookPayloadSchema>;
 
-/** Union of all webhook payloads */
+/**
+ * Union of all webhook payloads.
+ *
+ * Not a discriminated union — narrowing is handled by the provider strategy
+ * pattern: each {@link WebhookProvider} implementation knows its own payload
+ * type and casts internally. Use {@link WebhookPayloadFor<N>} when you need
+ * compile-time narrowing by provider name.
+ */
 export type WebhookPayload =
   | GitHubWebhookPayload
   | VercelWebhookPayload
