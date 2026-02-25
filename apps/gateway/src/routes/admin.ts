@@ -148,9 +148,11 @@ admin.post("/delivery-status", async (c) => {
     deliveryId?: string;
   }>();
 
+  const { messageId, state, deliveryId } = body;
+
   // Log delivery status (QStash callback)
   // Future: update webhook_deliveries table with delivery confirmation
-  console.log("[delivery-status]", body);
+  console.log("[delivery-status]", { messageId, state, deliveryId });
 
   return c.json({ status: "received" });
 });
