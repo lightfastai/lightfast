@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../../env", () => ({
   env: {
@@ -28,6 +28,10 @@ import { VercelProvider } from "./vercel";
 const provider = new VercelProvider();
 
 describe("VercelProvider", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("has correct provider name and webhook flag", () => {
     expect(provider.name).toBe("vercel");
     expect(provider.requiresWebhookRegistration).toBe(false);
