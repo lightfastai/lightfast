@@ -33,10 +33,14 @@ export const workspaceIntegrations = pgTable(
       .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
     // Gateway installation FK (org-scoped)
+    // TODO(NOT-NULL): Nullable during phased migration. Will become .notNull() with
+    // onDelete: "cascade" after existing rows are backfilled with gw_installations refs.
     installationId: varchar("installation_id", { length: 191 })
       .references(() => gwInstallations.id, { onDelete: "set null" }),
 
     // Denormalized provider for fast filtering (replaces sourceConfig.sourceType join)
+    // TODO(NOT-NULL): Nullable during phased migration. Will become .notNull() after
+    // existing rows are backfilled with provider values from gw_installations.
     provider: varchar("provider", { length: 50 }),
 
     // Who connected this source to the workspace
