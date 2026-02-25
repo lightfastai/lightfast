@@ -245,16 +245,19 @@ describe("fetchPage — issue", () => {
     expect(result.events[0]!.eventType).toBe("issues");
   });
 
-  it("100 items → nextCursor: { page: 2 }; fewer → null", async () => {
+  it("100 items → nextCursor: { page: 2 }", async () => {
     const items = Array.from({ length: 100 }, (_, i) => makeIssue(i + 1));
     mockFetch.mockResolvedValueOnce(mockResponse(items));
 
     const result = await githubBackfillConnector.fetchPage(makeConfig(), "issue", null);
     expect(result.nextCursor).toEqual({ page: 2 });
+  });
 
+  it("fewer than 100 items → nextCursor: null", async () => {
     mockFetch.mockResolvedValueOnce(mockResponse([makeIssue(1)]));
-    const result2 = await githubBackfillConnector.fetchPage(makeConfig(), "issue", null);
-    expect(result2.nextCursor).toBeNull();
+
+    const result = await githubBackfillConnector.fetchPage(makeConfig(), "issue", null);
+    expect(result.nextCursor).toBeNull();
   });
 });
 
