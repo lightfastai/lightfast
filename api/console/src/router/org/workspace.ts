@@ -25,9 +25,6 @@ import {
 import { z } from "zod";
 import { clerkClient } from "@vendor/clerk/server";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
-import { inngest } from "@api/console/inngest";
-import { hasConnector, getConnector } from "@repo/console-backfill";
-
 import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
 import { ensureActorLinked } from "../../lib/actor-linking";
@@ -1270,27 +1267,6 @@ export const workspaceRouter = {
             );
           }
 
-          // Auto-trigger backfill for newly connected integrations
-          if (hasConnector("github")) {
-            const connector = getConnector("github");
-            const defaultEntityTypes = connector?.defaultEntityTypes ?? [];
-
-            await inngest.send(
-              created.map((integration) => ({
-                name: "apps-console/backfill.requested" as const,
-                data: {
-                  integrationId: integration.id,
-                  workspaceId: input.workspaceId,
-                  clerkOrgId: ctx.auth.orgId,
-                  provider: "github" as const,
-                  userSourceId: integration.userSourceId,
-                  depth: 30,
-                  entityTypes: defaultEntityTypes,
-                  requestedBy: ctx.auth.userId,
-                },
-              })),
-            );
-          }
         }
 
         return {
@@ -1452,27 +1428,6 @@ export const workspaceRouter = {
             );
           }
 
-          // Auto-trigger backfill for newly connected integrations
-          if (hasConnector("vercel")) {
-            const connector = getConnector("vercel");
-            const defaultEntityTypes = connector?.defaultEntityTypes ?? ["deployment"];
-
-            await inngest.send(
-              created.map((integration) => ({
-                name: "apps-console/backfill.requested" as const,
-                data: {
-                  integrationId: integration.id,
-                  workspaceId: input.workspaceId,
-                  clerkOrgId: ctx.auth.orgId,
-                  provider: "vercel" as const,
-                  userSourceId: integration.userSourceId,
-                  depth: 30,
-                  entityTypes: defaultEntityTypes,
-                  requestedBy: ctx.auth.userId,
-                },
-              })),
-            );
-          }
         }
 
         return {

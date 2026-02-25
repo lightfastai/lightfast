@@ -1,9 +1,13 @@
 import { Hono } from "hono";
 import { gatewayBaseUrl } from "../lib/base-url";
+import { qstash } from "../lib/qstash";
+import { consoleUrl } from "../lib/related-projects";
 import { getWebhookSecret } from "../lib/secrets";
 import { workflowClient } from "../lib/workflow-client";
+import { env } from "../env";
 import { getProvider } from "../providers";
 import type { WebhookReceiptPayload } from "../workflows/types";
+import type { WebhookEnvelope } from "@repo/gateway-types";
 
 const webhooks = new Hono();
 
@@ -15,6 +19,10 @@ const webhooks = new Hono();
  *
  * Target: < 20ms (1 sig verify + 1 workflow trigger)
  * Invalid webhooks are rejected immediately — no workflow overhead.
+ *
+ * Service auth bypass: When X-API-Key header is present and valid, the request
+ * is from an internal service (e.g. backfill). Skips HMAC verification, dedup,
+ * and connection resolution — publishes directly to Console via QStash.
  */
 webhooks.post("/:provider", async (c) => {
   const providerName = c.req.param("provider");
@@ -24,6 +32,49 @@ webhooks.post("/:provider", async (c) => {
     provider = getProvider(providerName);
   } catch {
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
+  }
+
+  // Service auth path — backfill or other internal service
+  // Pre-resolved connectionId/orgId provided in body; skip HMAC/dedup/resolution.
+  const apiKey = c.req.header("X-API-Key");
+  if (apiKey && apiKey === env.GATEWAY_API_KEY) {
+    const body = await c.req.json<{
+      connectionId: string;
+      orgId: string;
+      deliveryId: string;
+      eventType: string;
+      payload: unknown;
+      receivedAt: number;
+    }>();
+
+    if (!body.connectionId || !body.orgId || !body.deliveryId || !body.payload) {
+      return c.json({ error: "missing_required_fields" }, 400);
+    }
+
+    // Parse payload through provider schema (validates structure, applies .passthrough())
+    let parsedPayload;
+    try {
+      parsedPayload = provider.parsePayload(body.payload);
+    } catch {
+      return c.json({ error: "invalid_payload" }, 400);
+    }
+
+    // Publish directly to Console ingress — skip dedup and connection resolution
+    await qstash.publishJSON({
+      url: `${consoleUrl}/api/webhooks/ingress`,
+      body: {
+        deliveryId: body.deliveryId,
+        connectionId: body.connectionId,
+        orgId: body.orgId,
+        provider: provider.name,
+        eventType: body.eventType,
+        payload: parsedPayload,
+        receivedAt: body.receivedAt,
+      } satisfies WebhookEnvelope,
+      retries: 5,
+    });
+
+    return c.json({ status: "accepted", deliveryId: body.deliveryId });
   }
 
   // Read raw body for HMAC verification

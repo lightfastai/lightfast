@@ -1,0 +1,21 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "GATEWAY_URL",
+        "GATEWAY_API_KEY",
+        "INNGEST_EVENT_KEY",
+        "INNGEST_SIGNING_KEY",
+        "GITHUB_APP_ID",
+        "GITHUB_APP_PRIVATE_KEY"
+      ],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "persistent": true
+    }
+  }
+}

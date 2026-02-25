@@ -1,26 +1,27 @@
 {
-  "name": "@repo/console-backfill",
+  "name": "@lightfast/backfill",
   "license": "FSL-1.1-Apache-2.0",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "sideEffects": false,
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
-  },
   "scripts": {
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc --watch",
+    "dev": "vercel dev --listen 4109",
+    "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@octokit/webhooks-types": "^7.6.1",
-    "@repo/console-validation": "workspace:*",
-    "@repo/console-webhooks": "workspace:*"
+    "@repo/console-backfill": "workspace:*",
+    "@repo/gateway-types": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@t3-oss/env-nextjs": "catalog:",
+    "@vendor/inngest": "workspace:*",
+    "@vercel/related-projects": "catalog:",
+    "hono": "^4.12.2",
+    "inngest": "catalog:",
+    "xstate": "^5.19.0",
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

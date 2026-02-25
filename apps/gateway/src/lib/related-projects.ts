@@ -13,3 +13,11 @@ export const consoleUrl = withRelatedProject({
     ? "http://localhost:4107"
     : "https://lightfast.ai",
 });
+
+// Get the backfill service URL dynamically based on environment
+export const backfillUrl = withRelatedProject({
+  projectName: "lightfast-backfill",
+  defaultHost: isDevelopment
+    ? "http://localhost:4109"
+    : "https://backfill.lightfast.ai",
+});

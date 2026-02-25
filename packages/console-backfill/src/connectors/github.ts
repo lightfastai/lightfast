@@ -1,21 +1,12 @@
 /**
  * GitHub Backfill Connector
  *
- * Fetches historical PRs, issues, and releases from GitHub API,
- * adapts them into webhook-compatible shapes, and transforms them
- * using the existing battle-tested transformers.
+ * Fetches historical PRs, issues, and releases from GitHub API using the
+ * installation token from the Gateway token vault. Produces webhook-shaped
+ * payloads (adapter output) ready for direct ingestion through Gateway's
+ * service auth endpoint.
  */
-import {
-  createGitHubApp,
-  getThrottledInstallationOctokit,
-} from "@repo/console-octokit-github";
-import {
-  transformGitHubPullRequest,
-  transformGitHubIssue,
-  transformGitHubRelease,
-} from "@repo/console-webhooks/transformers";
-import type { SourceEvent, TransformContext } from "@repo/console-types";
-import type { BackfillConnector, BackfillConfig, BackfillPage } from "../types.js";
+import type { BackfillConnector, BackfillConfig, BackfillPage, BackfillWebhookEvent } from "../types.js";
 import {
   adaptGitHubPRForTransformer,
   adaptGitHubIssueForTransformer,
@@ -40,175 +31,177 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     entityType: string,
     cursor: GitHubCursor | null,
   ): Promise<BackfillPage<GitHubCursor>> {
-    const sourceConfig = config.sourceConfig;
-    const installationId = Number(sourceConfig.installationId);
-    const repoFullName = sourceConfig.repoFullName as string;
+    // resourceName holds "owner/repo", providerResourceId holds the numeric GitHub repo ID
+    const resource = config.resources[0];
+    if (!resource?.resourceName) {
+      throw new Error(`No resource found for GitHub backfill (installationId: ${config.installationId})`);
+    }
 
-    // Create GitHub App and get throttled Octokit for installation
-    const app = createGitHubApp({
-      appId: process.env.GITHUB_APP_ID!,
-      privateKey: process.env.GITHUB_APP_PRIVATE_KEY!,
-    });
-    const octokit = await getThrottledInstallationOctokit(app, installationId);
+    const repoFullName = resource.resourceName;
+    const repoId = Number(resource.providerResourceId);  // Real repo ID — fixes check-event-allowed gate
 
     const [owner, repo] = repoFullName.split("/");
     if (!owner || !repo) {
-      throw new Error(`Invalid repoFullName: ${repoFullName}`);
+      throw new Error(`Invalid resourceName (expected owner/repo): ${repoFullName}`);
     }
 
-    const page = cursor?.page ?? 1;
-    const context: TransformContext = {
-      deliveryId: `backfill-${config.integrationId}-${entityType}-p${page}`,
-      receivedAt: new Date(),
+    const repoData = {
+      full_name: repoFullName,
+      html_url: `https://github.com/${repoFullName}`,
+      id: repoId,
     };
+
+    const page = cursor?.page ?? 1;
 
     switch (entityType) {
       case "pull_request":
-        return this.fetchPullRequests(octokit, owner, repo, page, config.since, context);
+        return this.fetchPullRequests(config, owner, repo, page, repoData);
       case "issue":
-        return this.fetchIssues(octokit, owner, repo, page, config.since, context);
+        return this.fetchIssues(config, owner, repo, page, repoData);
       case "release":
-        return this.fetchReleases(octokit, owner, repo, page, config.since, context);
+        return this.fetchReleases(config, owner, repo, page, repoData);
       default:
         throw new Error(`Unsupported entity type: ${entityType}`);
     }
   }
 
   private async fetchPullRequests(
-    octokit: Awaited<ReturnType<typeof getThrottledInstallationOctokit>>,
+    config: BackfillConfig,
     owner: string,
     repo: string,
     page: number,
-    since: string,
-    context: TransformContext,
+    repoData: { full_name: string; html_url: string; id: number },
   ): Promise<BackfillPage<GitHubCursor>> {
-    const response = await octokit.rest.pulls.list({
-      owner,
-      repo,
-      state: "all",
-      sort: "updated",
-      direction: "desc",
-      per_page: 100,
-      page,
+    const url = new URL(`https://api.github.com/repos/${owner}/${repo}/pulls`);
+    url.searchParams.set("state", "all");
+    url.searchParams.set("sort", "updated");
+    url.searchParams.set("direction", "desc");
+    url.searchParams.set("per_page", "100");
+    url.searchParams.set("page", String(page));
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${config.accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
     });
 
-    const repoData = { full_name: `${owner}/${repo}`, html_url: `https://github.com/${owner}/${repo}`, id: 0 };
-    const sinceDate = new Date(since);
-
-    // Filter items within the time window
-    const filtered = response.data.filter(pr => new Date(pr.updated_at) >= sinceDate);
-
-    const events: SourceEvent[] = [];
-    for (const pr of filtered) {
-      try {
-        const adapted = adaptGitHubPRForTransformer(pr as unknown as Record<string, unknown>, repoData as unknown as Record<string, unknown>);
-        const event = transformGitHubPullRequest(adapted, context);
-        events.push(event);
-      } catch (err) {
-        console.error(`[GitHubBackfill] Failed to transform PR #${pr.number}:`, err);
-      }
+    if (!response.ok) {
+      throw new Error(`GitHub API returned ${response.status} fetching PRs for ${owner}/${repo}`);
     }
 
-    const rateLimit = parseGitHubRateLimit(response.headers as Record<string, string>);
+    const data = (await response.json()) as Array<Record<string, unknown>>;
+    const sinceDate = new Date(config.since);
 
-    // Continue if page was full AND all items were within window
-    const hasMore = response.data.length === 100 && filtered.length === response.data.length;
+    const filtered = data.filter(pr => new Date(pr.updated_at as string) >= sinceDate);
+
+    const events: BackfillWebhookEvent[] = filtered.map((pr) => ({
+      deliveryId: `backfill-${config.installationId}-pr-${pr.number as number}`,
+      eventType: "pull_request",
+      payload: adaptGitHubPRForTransformer(pr, repoData as unknown as Record<string, unknown>),
+    }));
+
+    const rateLimit = parseGitHubRateLimit(Object.fromEntries(response.headers.entries()));
+    const hasMore = data.length === 100 && filtered.length === data.length;
 
     return {
       events,
       nextCursor: hasMore ? { page: page + 1 } : null,
-      rawCount: response.data.length,
+      rawCount: data.length,
       rateLimit,
     };
   }
 
   private async fetchIssues(
-    octokit: Awaited<ReturnType<typeof getThrottledInstallationOctokit>>,
+    config: BackfillConfig,
     owner: string,
     repo: string,
     page: number,
-    since: string,
-    context: TransformContext,
+    repoData: { full_name: string; html_url: string; id: number },
   ): Promise<BackfillPage<GitHubCursor>> {
-    const response = await octokit.rest.issues.listForRepo({
-      owner,
-      repo,
-      state: "all",
-      sort: "updated",
-      since, // GitHub Issues API handles since filtering server-side
-      per_page: 100,
-      page,
+    const url = new URL(`https://api.github.com/repos/${owner}/${repo}/issues`);
+    url.searchParams.set("state", "all");
+    url.searchParams.set("sort", "updated");
+    url.searchParams.set("since", config.since);  // GitHub Issues API handles since server-side
+    url.searchParams.set("per_page", "100");
+    url.searchParams.set("page", String(page));
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${config.accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
     });
 
-    const repoData = { full_name: `${owner}/${repo}`, html_url: `https://github.com/${owner}/${repo}`, id: 0 };
-
-    // Filter out PRs (items with pull_request key are PRs, not issues)
-    const issuesOnly = response.data.filter(item => !item.pull_request);
-
-    const events: SourceEvent[] = [];
-    for (const issue of issuesOnly) {
-      try {
-        const adapted = adaptGitHubIssueForTransformer(issue as unknown as Record<string, unknown>, repoData as unknown as Record<string, unknown>);
-        const event = transformGitHubIssue(adapted, context);
-        events.push(event);
-      } catch (err) {
-        console.error(`[GitHubBackfill] Failed to transform issue #${issue.number}:`, err);
-      }
+    if (!response.ok) {
+      throw new Error(`GitHub API returned ${response.status} fetching issues for ${owner}/${repo}`);
     }
 
-    const rateLimit = parseGitHubRateLimit(response.headers as Record<string, string>);
-    const hasMore = response.data.length === 100;
+    const data = (await response.json()) as Array<Record<string, unknown>>;
+
+    // Filter out PRs (items with pull_request key are PRs, not issues)
+    const issuesOnly = data.filter(item => !item.pull_request);
+
+    const events: BackfillWebhookEvent[] = issuesOnly.map((issue) => ({
+      deliveryId: `backfill-${config.installationId}-issue-${issue.number as number}`,
+      eventType: "issues",
+      payload: adaptGitHubIssueForTransformer(issue, repoData as unknown as Record<string, unknown>),
+    }));
+
+    const rateLimit = parseGitHubRateLimit(Object.fromEntries(response.headers.entries()));
+    const hasMore = data.length === 100;
 
     return {
       events,
       nextCursor: hasMore ? { page: page + 1 } : null,
-      rawCount: response.data.length,
+      rawCount: data.length,
       rateLimit,
     };
   }
 
   private async fetchReleases(
-    octokit: Awaited<ReturnType<typeof getThrottledInstallationOctokit>>,
+    config: BackfillConfig,
     owner: string,
     repo: string,
     page: number,
-    since: string,
-    context: TransformContext,
+    repoData: { full_name: string; html_url: string; id: number },
   ): Promise<BackfillPage<GitHubCursor>> {
-    const response = await octokit.rest.repos.listReleases({
-      owner,
-      repo,
-      per_page: 100,
-      page,
+    const url = new URL(`https://api.github.com/repos/${owner}/${repo}/releases`);
+    url.searchParams.set("per_page", "100");
+    url.searchParams.set("page", String(page));
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${config.accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
     });
 
-    const repoData = { full_name: `${owner}/${repo}`, html_url: `https://github.com/${owner}/${repo}`, id: 0 };
-    const sinceDate = new Date(since);
+    if (!response.ok) {
+      throw new Error(`GitHub API returned ${response.status} fetching releases for ${owner}/${repo}`);
+    }
 
-    // Filter releases within the time window
-    const filtered = response.data.filter(release => {
-      const publishedAt = release.published_at || release.created_at;
+    const data = (await response.json()) as Array<Record<string, unknown>>;
+    const sinceDate = new Date(config.since);
+
+    const filtered = data.filter(release => {
+      const publishedAt = (release.published_at ?? release.created_at) as string | undefined;
       return publishedAt ? new Date(publishedAt) >= sinceDate : false;
     });
 
-    const events: SourceEvent[] = [];
-    for (const release of filtered) {
-      try {
-        const adapted = adaptGitHubReleaseForTransformer(release as unknown as Record<string, unknown>, repoData as unknown as Record<string, unknown>);
-        const event = transformGitHubRelease(adapted, context);
-        events.push(event);
-      } catch (err) {
-        console.error(`[GitHubBackfill] Failed to transform release ${release.tag_name}:`, err);
-      }
-    }
+    const events: BackfillWebhookEvent[] = filtered.map((release) => ({
+      deliveryId: `backfill-${config.installationId}-release-${release.id as number}`,
+      eventType: "release",
+      payload: adaptGitHubReleaseForTransformer(release, repoData as unknown as Record<string, unknown>),
+    }));
 
-    const rateLimit = parseGitHubRateLimit(response.headers as Record<string, string>);
-    const hasMore = response.data.length === 100 && filtered.length === response.data.length;
+    const rateLimit = parseGitHubRateLimit(Object.fromEntries(response.headers.entries()));
+    const hasMore = data.length === 100 && filtered.length === data.length;
 
     return {
       events,
       nextCursor: hasMore ? { page: page + 1 } : null,
-      rawCount: response.data.length,
+      rawCount: data.length,
       rateLimit,
     };
   }
