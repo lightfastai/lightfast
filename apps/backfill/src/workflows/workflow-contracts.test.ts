@@ -13,7 +13,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 let orchestratorHandler: (args: { event: any; step: any }) => Promise<unknown>;
 let entityWorkerHandler: (args: { event: any; step: any }) => Promise<unknown>;
-let entityWorkerOnFailure: (args: { error: any; event: any; step: any }) => Promise<unknown>;
+let entityWorkerOnFailure: ((args: { error: any; event: any; step: any }) => Promise<unknown>) | undefined;
 
 // Track createFunction calls in order: orchestrator loads first, then entity worker
 const capturedFunctions: Array<{ config: any; handler: any }> = [];
@@ -251,7 +251,8 @@ describe("orchestrator ↔ entity worker event contract", () => {
       sleep: vi.fn().mockResolvedValue(undefined),
     };
 
-    await entityWorkerOnFailure({
+    expect(entityWorkerOnFailure, "entity worker did not register onFailure handler").toBeDefined();
+    await entityWorkerOnFailure!({
       error: new Error("something broke"),
       event: {
         data: {
