@@ -8,7 +8,7 @@
  * (e.g. pr.additions), these tests surface it immediately instead of
  * silently dropping backfilled events in production.
  */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeAll } from "vitest";
 
 // Skip env validation for transitive @db/console imports
 vi.hoisted(() => {
@@ -117,10 +117,14 @@ const vercelListDeployment = {
 };
 
 describe("GitHub PR: adapter → transformer round-trip", () => {
-  const adapted = adaptGitHubPRForTransformer(
-    githubListPR as unknown as Record<string, unknown>,
-    repoData as unknown as Record<string, unknown>,
-  );
+  let adapted: ReturnType<typeof adaptGitHubPRForTransformer>;
+
+  beforeAll(() => {
+    adapted = adaptGitHubPRForTransformer(
+      githubListPR as unknown as Record<string, unknown>,
+      repoData as unknown as Record<string, unknown>,
+    );
+  });
 
   it("transformer does not throw", () => {
     expect(() => transformGitHubPullRequest(adapted, context)).not.toThrow();
@@ -184,10 +188,14 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
 });
 
 describe("GitHub Issue: adapter → transformer round-trip", () => {
-  const adapted = adaptGitHubIssueForTransformer(
-    githubListIssue as unknown as Record<string, unknown>,
-    repoData as unknown as Record<string, unknown>,
-  );
+  let adapted: ReturnType<typeof adaptGitHubIssueForTransformer>;
+
+  beforeAll(() => {
+    adapted = adaptGitHubIssueForTransformer(
+      githubListIssue as unknown as Record<string, unknown>,
+      repoData as unknown as Record<string, unknown>,
+    );
+  });
 
   it("transformer does not throw", () => {
     expect(() => transformGitHubIssue(adapted, context)).not.toThrow();
@@ -217,10 +225,14 @@ describe("GitHub Issue: adapter → transformer round-trip", () => {
 });
 
 describe("GitHub Release: adapter → transformer round-trip", () => {
-  const adapted = adaptGitHubReleaseForTransformer(
-    githubListRelease as unknown as Record<string, unknown>,
-    repoData as unknown as Record<string, unknown>,
-  );
+  let adapted: ReturnType<typeof adaptGitHubReleaseForTransformer>;
+
+  beforeAll(() => {
+    adapted = adaptGitHubReleaseForTransformer(
+      githubListRelease as unknown as Record<string, unknown>,
+      repoData as unknown as Record<string, unknown>,
+    );
+  });
 
   it("transformer does not throw", () => {
     expect(() => transformGitHubRelease(adapted, context)).not.toThrow();
@@ -252,10 +264,17 @@ describe("GitHub Release: adapter → transformer round-trip", () => {
 });
 
 describe("Vercel Deployment: adapter → transformer round-trip", () => {
-  const { webhookPayload, eventType } = adaptVercelDeploymentForTransformer(
-    vercelListDeployment as unknown as Record<string, unknown>,
-    "my-app",
-  );
+  let webhookPayload: ReturnType<typeof adaptVercelDeploymentForTransformer>["webhookPayload"];
+  let eventType: ReturnType<typeof adaptVercelDeploymentForTransformer>["eventType"];
+
+  beforeAll(() => {
+    const result = adaptVercelDeploymentForTransformer(
+      vercelListDeployment as unknown as Record<string, unknown>,
+      "my-app",
+    );
+    webhookPayload = result.webhookPayload;
+    eventType = result.eventType;
+  });
 
   it("transformer does not throw", () => {
     expect(() =>
