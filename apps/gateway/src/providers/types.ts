@@ -1,3 +1,5 @@
+import type { Context } from "hono";
+import type { GwInstallation } from "@db/console/schema";
 import type { SourceType } from "@repo/console-validation";
 import type {
   GitHubWebhookPayload as GH,
@@ -13,6 +15,7 @@ import type { SentryProvider } from "./sentry";
 import type {
   ProviderName,
   ConnectionProvider,
+  OAuthTokens,
   GitHubAuthOptions,
   LinearAuthOptions,
 } from "@repo/gateway-types";
@@ -84,3 +87,34 @@ export type AuthOptionsFor<N extends ProviderName> = N extends "github"
   : N extends "linear"
     ? LinearAuthOptions
     : Record<string, never>;
+
+// ── Strategy Types (merged from strategies/types.ts) ──
+
+export interface TokenResult {
+  accessToken: string;
+  provider: string;
+  expiresIn: number | null;
+}
+
+export interface CallbackResult {
+  installationId: string;
+  provider: string;
+  status: string;
+  [key: string]: unknown;
+}
+
+/** Unified provider = ConnectionProvider + strategy methods in a single class. */
+export interface UnifiedProvider<TPayload = unknown>
+  extends ConnectionProvider<TPayload> {
+  handleCallback(
+    c: Context,
+    stateData: Record<string, string>,
+  ): Promise<CallbackResult>;
+
+  resolveToken(installation: GwInstallation): Promise<TokenResult>;
+
+  buildAccountInfo(
+    stateData: Record<string, string>,
+    oauthTokens?: OAuthTokens,
+  ): GwInstallation["providerAccountInfo"];
+}

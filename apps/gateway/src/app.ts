@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { admin } from "./routes/admin";
-import { connections } from "./routes/connections/index";
+import { connections } from "./routes/connections";
 import { webhooks } from "./routes/webhooks";
 import { workflows } from "./routes/workflows";
 

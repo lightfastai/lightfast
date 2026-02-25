@@ -1,19 +1,30 @@
+import { eq } from "drizzle-orm";
+import { gwInstallations, gwTokens } from "@db/console/schema";
+import type { GwInstallation } from "@db/console/schema";
+import { db } from "@db/console/client";
+import { nanoid } from "@repo/lib";
+import type { Context } from "hono";
 import { env } from "../env";
 import { gatewayBaseUrl } from "../lib/base-url";
-import { computeHmacSha256, timingSafeEqual } from "../lib/crypto";
+import { computeHmacSha256, decrypt, timingSafeEqual } from "../lib/crypto";
+import { writeTokenRecord } from "../lib/token-store";
+import { notifyBackfillService } from "../lib/backfill-notify";
 import { linearOAuthResponseSchema, linearWebhookPayloadSchema } from "./schemas";
 import type { LinearWebhookPayload } from "./schemas";
 import type {
+  UnifiedProvider,
   LinearAuthOptions,
   OAuthTokens,
   WebhookPayload,
   WebhookRegistrant,
+  CallbackResult,
+  TokenResult,
 } from "./types";
 
 const SIGNATURE_HEADER = "linear-signature";
 const DELIVERY_HEADER = "linear-delivery";
 
-export class LinearProvider implements WebhookRegistrant {
+export class LinearProvider implements UnifiedProvider, WebhookRegistrant {
   readonly name = "linear" as const;
   readonly requiresWebhookRegistration = true as const;
 
@@ -204,5 +215,117 @@ export class LinearProvider implements WebhookRegistrant {
         `Linear webhook deregistration failed: ${response.status}`,
       );
     }
+  }
+
+  // ── Strategy methods ──
+
+  async handleCallback(
+    c: Context,
+    stateData: Record<string, string>,
+  ): Promise<CallbackResult> {
+    const code = c.req.query("code");
+    if (!code) throw new Error("missing code");
+
+    const redirectUri = `${gatewayBaseUrl}/connections/${this.name}/callback`;
+    const oauthTokens = await this.exchangeCode(code, redirectUri);
+
+    const externalId =
+      (oauthTokens.raw.team_id as string | undefined)?.toString() ??
+      (oauthTokens.raw.organization_id as string | undefined)?.toString() ??
+      (oauthTokens.raw.installation as string | undefined)?.toString() ??
+      nanoid();
+
+    const rows = await db
+      .insert(gwInstallations)
+      .values({
+        provider: this.name,
+        externalId,
+        connectedBy: stateData.connectedBy ?? "unknown",
+        orgId: stateData.orgId ?? "",
+        status: "active",
+        providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
+      })
+      .returning({ id: gwInstallations.id });
+
+    const installation = rows[0];
+    if (!installation) throw new Error("insert_failed");
+
+    await writeTokenRecord(installation.id, oauthTokens);
+
+    // Register webhook (Linear requires API-level webhook registration)
+    const webhookSecret = nanoid(32);
+    const callbackUrl = `${gatewayBaseUrl}/webhooks/${this.name}`;
+
+    try {
+      const webhookId = await this.registerWebhook(
+        installation.id,
+        callbackUrl,
+        webhookSecret,
+      );
+
+      await db
+        .update(gwInstallations)
+        .set({
+          webhookSecret,
+          metadata: { webhookId } as Record<string, unknown>,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(gwInstallations.id, installation.id));
+    } catch (err) {
+      await db
+        .update(gwInstallations)
+        .set({
+          metadata: {
+            webhookRegistrationError:
+              err instanceof Error ? err.message : "unknown",
+          } as Record<string, unknown>,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(gwInstallations.id, installation.id));
+    }
+
+    // Notify backfill service for new connections (non-blocking)
+    await notifyBackfillService({
+      installationId: installation.id,
+      provider: this.name,
+      orgId: stateData.orgId ?? "",
+    });
+
+    return {
+      status: "connected",
+      installationId: installation.id,
+      provider: this.name,
+    };
+  }
+
+  async resolveToken(installation: GwInstallation): Promise<TokenResult> {
+    const tokenRows = await db
+      .select()
+      .from(gwTokens)
+      .where(eq(gwTokens.installationId, installation.id))
+      .limit(1);
+
+    const tokenRow = tokenRows[0];
+    if (!tokenRow) throw new Error("no_token_found");
+
+    if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
+      throw new Error("token_expired");
+    }
+
+    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    return {
+      accessToken: decryptedToken,
+      provider: installation.provider,
+      expiresIn: tokenRow.expiresAt
+        ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
+        : null,
+    };
+  }
+
+  buildAccountInfo(
+    _stateData: Record<string, string>,
+    _oauthTokens?: OAuthTokens,
+  ): GwInstallation["providerAccountInfo"] {
+    return { version: 1, sourceType: "linear" };
   }
 }
