@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, varchar, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, varchar, timestamp, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
 import { gwInstallations } from "./gw-installations";
 
@@ -28,7 +28,7 @@ export const gwResources = pgTable(
   },
   (table) => ({
     installationIdIdx: index("gw_res_installation_id_idx").on(table.installationId),
-    providerResourceIdx: index("gw_res_provider_resource_idx").on(
+    providerResourceIdx: uniqueIndex("gw_res_provider_resource_idx").on(
       table.installationId,
       table.providerResourceId,
     ),

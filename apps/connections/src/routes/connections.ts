@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { gwInstallations, gwResources } from "@db/console/schema";
 import { db } from "@db/console/client";
 import { Hono } from "hono";
@@ -304,6 +304,14 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
       providerResourceId: body.providerResourceId,
       resourceName: body.resourceName,
       status: "active",
+    })
+    .onConflictDoUpdate({
+      target: [gwResources.installationId, gwResources.providerResourceId],
+      set: {
+        status: "active",
+        resourceName: body.resourceName,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      },
     })
     .returning();
 
