@@ -166,6 +166,9 @@ describe("gwResources", () => {
   });
 });
 
+// These two tests must run sequentially (Vitest default within a describe).
+// The first inserts data; the afterEach resetTestDb clears it; the second
+// asserts the table is empty. Do not run in parallel or reorder.
 describe("resetTestDb isolation", () => {
   it("first test inserts data", async () => {
     const inst = fixtures.installation({ orgId: "org-leak-check" });
