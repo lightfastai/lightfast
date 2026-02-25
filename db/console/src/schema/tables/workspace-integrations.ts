@@ -34,7 +34,7 @@ export const workspaceIntegrations = pgTable(
 
     // Gateway installation FK (org-scoped)
     installationId: varchar("installation_id", { length: 191 })
-      .references(() => gwInstallations.id),
+      .references(() => gwInstallations.id, { onDelete: "set null" }),
 
     // Denormalized provider for fast filtering (replaces sourceConfig.sourceType join)
     provider: varchar("provider", { length: 50 }),
