@@ -31,8 +31,12 @@ export const loadRawDataset = (name: string): { name: string; webhooks: RawWebho
   if (!existsSync(filePath)) {
     throw new Error(`Dataset not found: ${filePath}`);
   }
-  const raw = JSON.parse(readFileSync(filePath, "utf-8")) as RawDataset;
-  return { name: raw.name, webhooks: raw.webhooks };
+  const raw: unknown = JSON.parse(readFileSync(filePath, "utf-8"));
+  if (!raw || typeof raw !== "object" || !Array.isArray((raw as RawDataset).webhooks)) {
+    throw new Error(`Invalid dataset ${filePath}: missing or non-array "webhooks" field`);
+  }
+  const dataset = raw as RawDataset;
+  return { name: dataset.name, webhooks: dataset.webhooks };
 };
 
 /** Load raw webhooks from all sandbox datasets */
@@ -43,7 +47,11 @@ export const loadAllRawWebhooks = (): RawWebhook[] => {
   return readdirSync(datasetsDir)
     .filter((f) => f.startsWith("sandbox-") && f.endsWith(".json"))
     .flatMap((f) => {
-      const raw = JSON.parse(readFileSync(join(datasetsDir, f), "utf-8")) as RawDataset;
-      return raw.webhooks;
+      const filePath = join(datasetsDir, f);
+      const raw: unknown = JSON.parse(readFileSync(filePath, "utf-8"));
+      if (!raw || typeof raw !== "object" || !Array.isArray((raw as RawDataset).webhooks)) {
+        throw new Error(`Invalid dataset ${filePath}: missing or non-array "webhooks" field`);
+      }
+      return (raw as RawDataset).webhooks;
     });
 };
