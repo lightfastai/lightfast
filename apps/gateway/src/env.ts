@@ -41,7 +41,7 @@ export const env = createEnv({
 
     // Turso (gateway database)
     TURSO_DATABASE_URL: z.string().min(1),
-    TURSO_AUTH_TOKEN: z.string().optional(),
+    TURSO_AUTH_TOKEN: z.string().min(1),
 
     // GitHub App (private key for installation token generation)
     GITHUB_PRIVATE_KEY: z.string().min(1),

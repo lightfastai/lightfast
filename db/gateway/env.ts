@@ -4,7 +4,7 @@ import { z } from "zod";
 export const env = createEnv({
   server: {
     TURSO_DATABASE_URL: z.string().min(1),
-    TURSO_AUTH_TOKEN: z.string().optional(),
+    TURSO_AUTH_TOKEN: z.string().min(1),
   },
   experimental__runtimeEnv: {},
   skipValidation:
