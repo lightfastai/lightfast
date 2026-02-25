@@ -50,7 +50,7 @@ webhooks.post("/:provider", async (c) => {
       receivedAt: number;
     }>();
 
-    if (!body.connectionId || !body.orgId || !body.deliveryId || !body.payload) {
+    if (!body.connectionId || !body.orgId || !body.deliveryId || !body.eventType || !body.payload) {
       return c.json({ error: "missing_required_fields" }, 400);
     }
 
