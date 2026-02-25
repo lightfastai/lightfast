@@ -16,13 +16,22 @@ trigger.post("/", async (c) => {
     return c.json({ error: "unauthorized" }, 401);
   }
 
-  const body = await c.req.json<{
+  let body: {
     installationId: string;
     provider: string;
     orgId: string;
     depth?: 7 | 30 | 90;
     entityTypes?: string[];
-  }>();
+  };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid_json" }, 400);
+  }
+
+  if (!body || typeof body !== "object") {
+    return c.json({ error: "invalid_json" }, 400);
+  }
 
   if (!body.installationId || !body.provider || !body.orgId) {
     return c.json({ error: "missing_required_fields" }, 400);
@@ -54,7 +63,16 @@ trigger.post("/cancel", async (c) => {
     return c.json({ error: "unauthorized" }, 401);
   }
 
-  const body = await c.req.json<{ installationId: string }>();
+  let body: { installationId: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid_json" }, 400);
+  }
+
+  if (!body || typeof body !== "object") {
+    return c.json({ error: "invalid_json" }, 400);
+  }
 
   if (!body.installationId) {
     return c.json({ error: "missing_installationId" }, 400);
