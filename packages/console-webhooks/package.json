@@ -10,22 +10,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./github": {
-      "types": "./dist/github.d.ts",
-      "default": "./dist/github.js"
-    },
-    "./vercel": {
-      "types": "./dist/vercel.d.ts",
-      "default": "./dist/vercel.js"
-    },
-    "./common": {
-      "types": "./dist/common.d.ts",
-      "default": "./dist/common.js"
-    },
-    "./types": {
-      "types": "./dist/types.d.ts",
-      "default": "./dist/types.js"
-    },
     "./transformers": {
       "types": "./dist/transformers/index.d.ts",
       "default": "./dist/transformers/index.js"

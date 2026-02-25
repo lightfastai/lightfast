@@ -28,8 +28,6 @@ const securityHeaders = securityMiddleware(
 const isPublicRoute = createRouteMatcher([
   "/api/health(.*)",
   "/api/inngest(.*)",
-  "/api/github/webhooks", // GitHub webhook endpoint (CRITICAL: must be public)
-  "/api/vercel/webhooks", // Vercel webhook endpoint
   "/robots.txt",
   "/sitemap(.*)",
   "/llms.txt", // AI crawler guidance file
@@ -45,10 +43,8 @@ const isPublicRoute = createRouteMatcher([
 const isTeamCreationRoute = createRouteMatcher([
   "/account/teams/new", // Team/org creation flow
   "/new(.*)", // Workspace creation flow
-  "/api/github(.*)",
-  "/api/vercel/authorize", // Vercel OAuth initiation
-  "/api/vercel/callback", // Vercel OAuth callback
-  "/vercel/connected", // Vercel OAuth success page
+  "/vercel/connected", // Vercel OAuth success page (used by connections service redirect)
+  "/github/connected", // GitHub OAuth success page (used by connections service redirect)
   "/api/organizations(.*)",
 ]);
 
@@ -102,17 +98,6 @@ export default clerkMiddleware(
     const { userId, orgId } = await auth({ treatPendingAsSignedOut: false });
     const isPending = Boolean(userId && !orgId);
 
-    // Log middleware flow for GitHub routes
-    if (req.nextUrl.pathname.startsWith('/api/github')) {
-      console.log("[Middleware] GitHub route detected:", {
-        path: req.nextUrl.pathname,
-        userId,
-        orgId,
-        isPending,
-        isTeamCreationRoute: isTeamCreationRoute(req),
-      });
-    }
-
     // Helper to apply headers and return redirect
     const createRedirectResponse = async (url: URL) => {
       console.log("[Middleware] Creating redirect response to:", url.toString());
@@ -134,9 +119,6 @@ export default clerkMiddleware(
     // Team creation routes - allow pending users
     else if (isTeamCreationRoute(req)) {
       // Allow both pending and active users
-      if (req.nextUrl.pathname.startsWith('/api/github')) {
-        console.log("[Middleware] Allowing GitHub route (team creation)");
-      }
     }
     // User-scoped tRPC routes: allow both pending and active users
     else if (isUserScopedRoute(req)) {

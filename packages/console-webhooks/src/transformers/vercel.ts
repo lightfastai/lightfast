@@ -4,10 +4,62 @@ import type {
   TransformContext,
 } from "@repo/console-types";
 import { toExternalVercelEventType } from "@repo/console-types";
-import type {
-  VercelWebhookPayload,
-  VercelWebhookEventType,
-} from "../vercel.js";
+/**
+ * Vercel deployment event types
+ */
+export type VercelWebhookEventType =
+  | "deployment.created"
+  | "deployment.succeeded"
+  | "deployment.ready"
+  | "deployment.error"
+  | "deployment.canceled"
+  | "deployment.check-rerequested";
+
+/**
+ * Vercel webhook payload structure
+ */
+export interface VercelWebhookPayload {
+  id: string;
+  type: string;
+  createdAt: number;
+  region?: string;
+  payload: {
+    deployment?: {
+      id: string;
+      name: string;
+      url?: string;
+      readyState?: "READY" | "ERROR" | "BUILDING" | "QUEUED" | "CANCELED";
+      errorCode?: string;
+      meta?: {
+        githubCommitSha?: string;
+        githubCommitRef?: string;
+        githubCommitMessage?: string;
+        githubCommitAuthorName?: string;
+        githubCommitAuthorLogin?: string;
+        githubOrg?: string;
+        githubRepo?: string;
+        githubDeployment?: string;
+        githubCommitOrg?: string;
+        githubCommitRepo?: string;
+        githubCommitRepoId?: string;
+        githubPrId?: string;
+      };
+    };
+    project?: {
+      id: string;
+      name: string;
+    };
+    team?: {
+      id: string;
+      slug?: string;
+      name?: string;
+    };
+    user?: {
+      id: string;
+    };
+    [key: string]: unknown;
+  };
+}
 import { validateSourceEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 

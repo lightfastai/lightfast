@@ -41,7 +41,6 @@
     "@repo/console-backfill": "workspace:*",
     "@repo/console-clerk-cache": "workspace:*",
     "@repo/console-embed": "workspace:*",
-    "@repo/console-oauth": "workspace:^",
     "@repo/console-octokit-github": "workspace:*",
     "@repo/console-pinecone": "workspace:*",
     "@repo/console-rerank": "workspace:*",
