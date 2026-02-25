@@ -234,7 +234,7 @@ describe("GET /connections/:provider/callback", () => {
     });
   });
 
-  it("returns 400 when provider mismatch in state (non-github)", async () => {
+  it("returns 400 when provider mismatch in state", async () => {
     mockGetProvider.mockReturnValue({ ...mockProvider, name: "vercel" });
     mockRedisHgetall.mockResolvedValue({
       provider: "linear",

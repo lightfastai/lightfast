@@ -94,8 +94,7 @@ connections.get("/:provider/callback", async (c) => {
     return c.json({ error: "invalid_or_expired_state" }, 400);
   }
 
-  // For standard OAuth providers, validate provider matches state
-  if (provider.name !== "github" && stateData.provider !== provider.name) {
+  if (stateData.provider !== provider.name) {
     return c.json({ error: "invalid_or_expired_state" }, 400);
   }
 
