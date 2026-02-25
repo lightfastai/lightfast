@@ -666,14 +666,9 @@ export const connectionsRouter = {
 				url.searchParams.set("limit", "100");
 				if (input.cursor) url.searchParams.set("until", input.cursor);
 
-				console.log("[Vercel Projects] Fetching from:", url.toString());
-				console.log("[Vercel Projects] teamId:", teamId);
-
 				const response = await fetch(url.toString(), {
 					headers: { Authorization: `Bearer ${accessToken}` },
 				});
-
-				console.log("[Vercel Projects] Response status:", response.status);
 
 				if (response.status === 401) {
 					// Mark installation as needing re-auth
@@ -689,8 +684,7 @@ export const connectionsRouter = {
 				}
 
 				if (!response.ok) {
-					const errorText = await response.text();
-					console.error("[Vercel API Error]", response.status, errorText);
+					console.error("[Vercel API Error]", response.status);
 					throw new TRPCError({
 						code: "INTERNAL_SERVER_ERROR",
 						message: "Failed to fetch Vercel projects",
@@ -698,7 +692,6 @@ export const connectionsRouter = {
 				}
 
 				const data = (await response.json()) as VercelProjectsResponse;
-				console.log("[Vercel Projects] Response data:", JSON.stringify(data, null, 2));
 
 				// 5. Get already-connected projects for this workspace
 				const connected = await ctx.db.query.workspaceIntegrations.findMany({
