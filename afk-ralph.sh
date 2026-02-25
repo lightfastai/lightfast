@@ -27,9 +27,9 @@ for ((i=1; i<=$iterations; i++)); do
 
   script -q "$TMPFILE" claude --dangerously-skip-permissions -p \
     "/implement_plan $plan
-    Implement ONLY ONE PHASE then stop.
-    Run automated verification for that phase.
-    Commit your changes.
+    Execute ALL phases consecutively without pausing for manual verification.
+    After completing all automated verification for a phase, proceed to the next.
+    Commit your changes after each phase.
     If all phases are complete, output <promise>COMPLETE</promise>." || true
 
   echo "  Finished at $(date '+%H:%M:%S')."
