@@ -10,10 +10,10 @@ import { oauthStateKey, resourceKey } from "../lib/cache";
 import { redis } from "@vendor/upstash";
 import { connectionsBaseUrl, consoleUrl } from "../lib/urls";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
-
-const workflowClient = getWorkflowClient();
 import { getProvider } from "../providers";
 import type { ProviderName } from "../providers/types";
+
+const workflowClient = getWorkflowClient();
 
 const connections = new Hono<{ Variables: TenantVariables }>();
 
