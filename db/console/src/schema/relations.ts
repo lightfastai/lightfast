@@ -12,6 +12,9 @@ import { workspaceActorProfiles } from "./tables/workspace-actor-profiles";
 import { orgActorIdentities } from "./tables/org-actor-identities";
 import { workspaceTemporalStates } from "./tables/workspace-temporal-states";
 import { workspaceObservationRelationships } from "./tables/workspace-observation-relationships";
+import { gwInstallations } from "./tables/gw-installations";
+import { gwTokens } from "./tables/gw-tokens";
+import { gwResources } from "./tables/gw-resources";
 
 /**
  * Define relations between tables for Drizzle ORM queries
@@ -19,6 +22,26 @@ import { workspaceObservationRelationships } from "./tables/workspace-observatio
  * Note: Organizations are managed by Clerk, not in our database.
  * Tables reference Clerk org IDs via clerkOrgId fields (no FK constraints).
  */
+
+// Gateway relations
+export const gwInstallationsRelations = relations(gwInstallations, ({ many }) => ({
+  tokens: many(gwTokens),
+  resources: many(gwResources),
+}));
+
+export const gwTokensRelations = relations(gwTokens, ({ one }) => ({
+  installation: one(gwInstallations, {
+    fields: [gwTokens.installationId],
+    references: [gwInstallations.id],
+  }),
+}));
+
+export const gwResourcesRelations = relations(gwResources, ({ one }) => ({
+  installation: one(gwInstallations, {
+    fields: [gwResources.installationId],
+    references: [gwInstallations.id],
+  }),
+}));
 
 export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
   documents: many(workspaceKnowledgeDocuments),
