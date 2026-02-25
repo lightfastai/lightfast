@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import { admin } from "./routes/admin";
 import { webhooks } from "./routes/webhooks";
 import { workflows } from "./routes/workflows";
+import { version as VERSION } from "../package.json";
 
 const app = new Hono();
 
@@ -29,7 +30,7 @@ app.route("/workflows", workflows);
 
 // Root health check
 app.get("/", (c) =>
-  c.json({ service: "gateway", version: "1.0.0", status: "ok" }),
+  c.json({ service: "gateway", version: VERSION, status: "ok" }),
 );
 
 export { app };
