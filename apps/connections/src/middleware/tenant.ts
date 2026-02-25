@@ -11,6 +11,7 @@ export interface TenantVariables {
  * 1. X-Org-Id header (for Console → Gateway API calls)
  * 2. Query param ?org_id (for OAuth callbacks)
  */
+// 191-char limit: MySQL utf8mb4 uses 4 bytes/char → 767-byte index cap ÷ 4 = 191
 const ORG_ID_RE = /^[a-zA-Z0-9_-]{1,191}$/;
 
 export const tenantMiddleware = createMiddleware<{
