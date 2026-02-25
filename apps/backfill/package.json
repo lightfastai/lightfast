@@ -20,7 +20,7 @@
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/inngest": "workspace:*",
     "@vercel/related-projects": "catalog:",
-    "hono": "^4.12.2",
+    "hono": "catalog:",
     "inngest": "catalog:",
     "zod": "catalog:zod3"
   },

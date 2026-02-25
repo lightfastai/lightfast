@@ -54,6 +54,8 @@ catalog:
   '@inngest/middleware-sentry': ^0.1.2
   nanoid: ^5.1.5
   drizzle-orm: ^0.43.1
+  hono: ^4.12.2
+  postgres: ^3.4.5
   drizzle-zod: ^0.7.1
   react-hook-form: ^7.61.1
   '@hookform/resolvers': ^3.10.0

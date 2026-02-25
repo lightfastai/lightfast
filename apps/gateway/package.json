@@ -25,8 +25,8 @@
     "@vendor/upstash-workflow": "workspace:*",
     "@vercel/related-projects": "catalog:",
     "drizzle-orm": "catalog:",
-    "hono": "^4.12.2",
-    "postgres": "^3.4.5",
+    "hono": "catalog:",
+    "postgres": "catalog:",
     "zod": "catalog:zod3"
   },
   "devDependencies": {
