@@ -26,28 +26,15 @@ export interface BackfillConfig {
   installationId: string;
   /** Provider name */
   provider: SourceType;
-  /** Number of days to backfill */
-  depth: 7 | 30 | 90;
   /** ISO timestamp = now - depth days */
   since: string;
-  /** Entity types to fetch */
-  entityTypes: string[];
   /** Decrypted access token from Gateway token vault */
   accessToken: string;
-  /** Active resources from GET /connections/:id */
-  resources: Array<{
+  /** Single resource for this work unit */
+  resource: {
     providerResourceId: string;
     resourceName: string | null;
-  }>;
-}
-
-export interface BackfillCheckpoint<TCursor = unknown> {
-  currentEntityType: string;
-  cursor: TCursor | null;
-  eventsProduced: number;
-  eventsDispatched: number;
-  errors: Array<{ entityType: string; message: string; timestamp: string }>;
-  updatedAt: string;
+  };
 }
 
 export interface BackfillConnector<TCursor = unknown> {

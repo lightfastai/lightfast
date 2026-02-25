@@ -20,7 +20,6 @@
     "@vercel/related-projects": "catalog:",
     "hono": "^4.12.2",
     "inngest": "catalog:",
-    "xstate": "^5.19.0",
     "zod": "catalog:zod3"
   },
   "devDependencies": {

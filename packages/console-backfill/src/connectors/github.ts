@@ -32,8 +32,8 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     cursor: GitHubCursor | null,
   ): Promise<BackfillPage<GitHubCursor>> {
     // resourceName holds "owner/repo", providerResourceId holds the numeric GitHub repo ID
-    const resource = config.resources[0];
-    if (!resource?.resourceName) {
+    const resource = config.resource;
+    if (!resource.resourceName) {
       throw new Error(`No resource found for GitHub backfill (installationId: ${config.installationId})`);
     }
 
@@ -96,7 +96,7 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     const filtered = data.filter(pr => new Date(pr.updated_at as string) >= sinceDate);
 
     const events: BackfillWebhookEvent[] = filtered.map((pr) => ({
-      deliveryId: `backfill-${config.installationId}-pr-${pr.number as number}`,
+      deliveryId: `backfill-${config.installationId}-${config.resource.providerResourceId}-pr-${pr.number as number}`,
       eventType: "pull_request",
       payload: adaptGitHubPRForTransformer(pr, repoData as unknown as Record<string, unknown>),
     }));
@@ -143,7 +143,7 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     const issuesOnly = data.filter(item => !item.pull_request);
 
     const events: BackfillWebhookEvent[] = issuesOnly.map((issue) => ({
-      deliveryId: `backfill-${config.installationId}-issue-${issue.number as number}`,
+      deliveryId: `backfill-${config.installationId}-${config.resource.providerResourceId}-issue-${issue.number as number}`,
       eventType: "issues",
       payload: adaptGitHubIssueForTransformer(issue, repoData as unknown as Record<string, unknown>),
     }));
@@ -190,7 +190,7 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     });
 
     const events: BackfillWebhookEvent[] = filtered.map((release) => ({
-      deliveryId: `backfill-${config.installationId}-release-${release.id as number}`,
+      deliveryId: `backfill-${config.installationId}-${config.resource.providerResourceId}-release-${release.id as number}`,
       eventType: "release",
       payload: adaptGitHubReleaseForTransformer(release, repoData as unknown as Record<string, unknown>),
     }));

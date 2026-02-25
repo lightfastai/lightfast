@@ -42,4 +42,30 @@ trigger.post("/", async (c) => {
   return c.json({ status: "accepted", installationId: body.installationId });
 });
 
+/**
+ * POST /trigger/cancel
+ *
+ * Called by Gateway when a connection is deleted/revoked.
+ * Cancels any running backfill for this installation.
+ */
+trigger.post("/cancel", async (c) => {
+  const apiKey = c.req.header("X-API-Key");
+  if (!apiKey || apiKey !== env.GATEWAY_API_KEY) {
+    return c.json({ error: "unauthorized" }, 401);
+  }
+
+  const body = await c.req.json<{ installationId: string }>();
+
+  if (!body.installationId) {
+    return c.json({ error: "missing_installationId" }, 400);
+  }
+
+  await inngest.send({
+    name: "apps-backfill/run.cancelled",
+    data: { installationId: body.installationId },
+  });
+
+  return c.json({ status: "cancelled", installationId: body.installationId });
+});
+
 export { trigger };

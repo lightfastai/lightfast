@@ -24,6 +24,40 @@ const eventsMap = {
       installationId: z.string(),
     }),
   },
+  "apps-backfill/entity.requested": {
+    data: z.object({
+      /** Correlation ID — matches the orchestrator's trigger event */
+      installationId: z.string(),
+      /** Provider name */
+      provider: z.string(),
+      /** Clerk organization ID */
+      orgId: z.string(),
+      /** Single entity type for this work unit */
+      entityType: z.string(),
+      /** Single resource for this work unit */
+      resource: z.object({
+        providerResourceId: z.string(),
+        resourceName: z.string().nullable(),
+      }),
+      /** ISO timestamp — computed once by orchestrator */
+      since: z.string(),
+      /** Depth in days — for logging/context */
+      depth: z.union([z.literal(7), z.literal(30), z.literal(90)]),
+    }),
+  },
+  "apps-backfill/entity.completed": {
+    data: z.object({
+      installationId: z.string(),
+      provider: z.string(),
+      entityType: z.string(),
+      resourceId: z.string(),
+      success: z.boolean(),
+      eventsProduced: z.number(),
+      eventsDispatched: z.number(),
+      pagesProcessed: z.number(),
+      error: z.string().optional(),
+    }),
+  },
 };
 
 export const inngest = new Inngest({

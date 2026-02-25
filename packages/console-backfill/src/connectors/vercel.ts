@@ -29,12 +29,7 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
   readonly defaultEntityTypes = ["deployment"];
 
   async validateScopes(config: BackfillConfig): Promise<void> {
-    const resource = config.resources[0];
-    if (!resource) {
-      throw new Error("No resource found for Vercel backfill");
-    }
-
-    const projectId = resource.providerResourceId;
+    const projectId = config.resource.providerResourceId;
     const url = new URL("https://api.vercel.com/v6/deployments");
     url.searchParams.set("projectId", projectId);
     url.searchParams.set("limit", "1");
@@ -66,15 +61,10 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
     config: BackfillConfig,
     cursor: VercelCursor | null,
   ): Promise<BackfillPage<VercelCursor>> {
-    const resource = config.resources[0];
-    if (!resource) {
-      throw new Error("No resource found for Vercel backfill");
-    }
-
     // providerResourceId is the Vercel project ID
-    const projectId = resource.providerResourceId;
+    const projectId = config.resource.providerResourceId;
     // resourceName is the project name
-    const projectName = resource.resourceName ?? projectId;
+    const projectName = config.resource.resourceName ?? projectId;
 
     // Build request URL
     const url = new URL("https://api.vercel.com/v6/deployments");
@@ -107,7 +97,7 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
         projectName,
       );
       return {
-        deliveryId: `backfill-${config.installationId}-deploy-${deployment.uid as string}`,
+        deliveryId: `backfill-${config.installationId}-${config.resource.providerResourceId}-deploy-${deployment.uid as string}`,
         eventType,
         payload: webhookPayload,
       };
