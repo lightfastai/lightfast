@@ -39,6 +39,10 @@ export async function createGitHubAppJWT(): Promise<string> {
 export async function getInstallationToken(
   installationId: string,
 ): Promise<string> {
+  if (!/^\d+$/.test(installationId)) {
+    throw new Error("Invalid GitHub installation ID: must be numeric");
+  }
+
   const jwt = await createGitHubAppJWT();
 
   const controller = new AbortController();
