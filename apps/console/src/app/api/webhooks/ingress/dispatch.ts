@@ -20,6 +20,17 @@ import type { ResolvedWorkspace } from "./resolve-workspace";
 /**
  * Route GitHub webhook events to the appropriate transformer.
  * Returns null for unsupported event types.
+ *
+ * Safety: `payload` is typed as `unknown` because `WebhookEnvelope.payload` is
+ * a cross-service boundary type. The casts below are safe because:
+ *  1. The gateway verifies HMAC signatures (webhook authenticity) before accepting payloads
+ *  2. The gateway runs `provider.parsePayload()` (Zod) to validate structure — invalid
+ *     payloads are rejected with 400 and never forwarded to Console
+ *  3. Each transformer validates its output via `validateSourceEvent()` (Zod safeParse)
+ *
+ * Full runtime validation of every provider event shape (PushEvent, PullRequestEvent, etc.)
+ * is intentionally omitted — these types mirror upstream provider API contracts which are
+ * already enforced by HMAC-authenticated webhook delivery.
  */
 function transformGitHubEvent(
   eventType: string,
@@ -45,6 +56,7 @@ function transformGitHubEvent(
 /**
  * Route Linear webhook events to the appropriate transformer.
  * Gateway encodes eventType as "Type:action" (e.g., "Issue:create", "Comment:update").
+ * See transformGitHubEvent JSDoc for payload trust model.
  */
 function transformLinearEvent(
   eventType: string,
@@ -61,6 +73,7 @@ function transformLinearEvent(
 /**
  * Route Sentry webhook events to the appropriate transformer.
  * Gateway uses the sentry-hook-resource header as eventType ("issue", "error", etc.).
+ * See transformGitHubEvent JSDoc for payload trust model.
  */
 function transformSentryEvent(
   eventType: string,
@@ -84,6 +97,7 @@ function transformSentryEvent(
 /**
  * Route Vercel webhook events to the appropriate transformer.
  * All Vercel events are deployment events.
+ * See transformGitHubEvent JSDoc for payload trust model.
  */
 function transformVercelEvent(
   eventType: string,
