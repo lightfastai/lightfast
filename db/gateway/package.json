@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@libsql/client": "^0.14.0",
+    "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-nextjs": "catalog:",
     "drizzle-orm": "catalog:",

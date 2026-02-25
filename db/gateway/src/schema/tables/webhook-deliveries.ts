@@ -1,5 +1,6 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { nanoid } from "@repo/lib";
+import { PROVIDER_NAMES, DELIVERY_STATUSES } from "@repo/gateway-types";
 
 export const webhookDeliveries = sqliteTable(
   "gw_webhook_deliveries",
@@ -8,13 +9,13 @@ export const webhookDeliveries = sqliteTable(
       .primaryKey()
       .$defaultFn(() => nanoid()),
     provider: text("provider", {
-      enum: ["github", "vercel", "linear", "sentry"],
+      enum: [...PROVIDER_NAMES],
     }).notNull(),
     deliveryId: text("delivery_id").notNull(),
     eventType: text("event_type").notNull(),
     installationId: text("installation_id"),
     status: text("status", {
-      enum: ["delivered", "dlq", "duplicate"],
+      enum: [...DELIVERY_STATUSES],
     }).notNull(),
     receivedAt: integer("received_at", { mode: "timestamp" }).notNull(),
   },

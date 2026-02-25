@@ -10,6 +10,12 @@ import type { GitHubProvider } from "./github";
 import type { VercelProvider } from "./vercel";
 import type { LinearProvider } from "./linear";
 import type { SentryProvider } from "./sentry";
+import type {
+  ProviderName,
+  ConnectionProvider,
+  GitHubAuthOptions,
+  LinearAuthOptions,
+} from "@repo/gateway-types";
 
 // Re-export for backward compatibility (lib/keys.ts, workflows/types.ts)
 export type { SourceType };
@@ -24,46 +30,33 @@ export type {
   SentryInstallationToken,
 } from "./schemas";
 
-// ── Provider Name (subset of SourceType with actual implementations) ──
+// Re-export everything from @repo/gateway-types
+export {
+  PROVIDER_NAMES,
+  INSTALLATION_STATUSES,
+  RESOURCE_STATUSES,
+  DELIVERY_STATUSES,
+} from "@repo/gateway-types";
+export type {
+  ProviderName,
+  InstallationStatus,
+  ResourceStatus,
+  DeliveryStatus,
+  OAuthTokens,
+  ConnectionProvider,
+  WebhookRegistrant,
+  GitHubAuthOptions,
+  LinearAuthOptions,
+  ProviderOptions,
+  WebhookReceiptPayload,
+} from "@repo/gateway-types";
 
-export type ProviderName = "github" | "vercel" | "linear" | "sentry";
+// ── Gateway-Specific Type Maps ──
 
-// ── Per-Provider Auth Options ──
+/** Narrow ConnectionProvider with the gateway's concrete WebhookPayload union */
+export type GatewayConnectionProvider = ConnectionProvider<WebhookPayload>;
 
-export interface GitHubAuthOptions {
-  redirectPath?: string;
-}
-
-export interface LinearAuthOptions {
-  scopes?: string[];
-}
-
-/**
- * Union of all provider auth options.
- * Generic callers pass this; typed callers use per-provider types.
- */
-export type ProviderOptions = GitHubAuthOptions | LinearAuthOptions;
-
-/** Type map: narrow auth options per provider name */
-export type AuthOptionsFor<N extends ProviderName> = N extends "github"
-  ? GitHubAuthOptions
-  : N extends "linear"
-    ? LinearAuthOptions
-    : Record<string, never>;
-
-// ── OAuth Tokens (unchanged) ──
-
-export interface OAuthTokens {
-  accessToken: string;
-  refreshToken?: string;
-  expiresIn?: number;
-  scope?: string;
-  tokenType?: string;
-  raw: Record<string, unknown>;
-}
-
-// ── Webhook Payload Type Map ──
-
+/** Type map: narrow webhook payload per provider name */
 export type WebhookPayloadFor<N extends ProviderName> = N extends "github"
   ? GH
   : N extends "vercel"
@@ -74,60 +67,7 @@ export type WebhookPayloadFor<N extends ProviderName> = N extends "github"
         ? SN
         : never;
 
-// ── ConnectionProvider Interface ──
-
-/**
- * Base interface for all providers.
- * Non-generic for consumer compatibility — callers with a runtime string
- * get this type from getProvider().
- *
- * Providers that support webhook registration implement WebhookRegistrant
- * instead, which extends this with required register/deregister methods.
- */
-export interface ConnectionProvider {
-  readonly name: ProviderName;
-  readonly requiresWebhookRegistration: boolean;
-
-  // OAuth
-  getAuthorizationUrl(state: string, options?: ProviderOptions): string;
-  exchangeCode(code: string, redirectUri: string): Promise<OAuthTokens>;
-  refreshToken(refreshToken: string): Promise<OAuthTokens>;
-  revokeToken(accessToken: string): Promise<void>;
-
-  // Webhook verification (Web Crypto only — no Node.js crypto)
-  verifyWebhook(
-    payload: string,
-    headers: Headers,
-    secret: string,
-  ): Promise<boolean>;
-
-  /** Validate raw JSON payload against the provider's Zod schema */
-  parsePayload(raw: unknown): WebhookPayload;
-
-  extractDeliveryId(headers: Headers, payload: WebhookPayload): string;
-  extractEventType(headers: Headers, payload: WebhookPayload): string;
-  extractResourceId(payload: WebhookPayload): string | null;
-}
-
-// ── WebhookRegistrant (Linear, Sentry) ──
-
-/**
- * Providers that support programmatic webhook registration.
- * `requiresWebhookRegistration` is `true` at the type level.
- * register/deregister are required, not optional.
- */
-export interface WebhookRegistrant extends ConnectionProvider {
-  readonly requiresWebhookRegistration: true;
-  registerWebhook(
-    connectionId: string,
-    callbackUrl: string,
-    secret: string,
-  ): Promise<string>;
-  deregisterWebhook(connectionId: string, webhookId: string): Promise<void>;
-}
-
-// ── Provider Type Map (for getProvider overloads) ──
-
+/** Type map: narrow provider class per provider name */
 export type ProviderFor<N extends ProviderName> = N extends "github"
   ? GitHubProvider
   : N extends "vercel"
@@ -137,3 +77,10 @@ export type ProviderFor<N extends ProviderName> = N extends "github"
       : N extends "sentry"
         ? SentryProvider
         : never;
+
+/** Type map: narrow auth options per provider name */
+export type AuthOptionsFor<N extends ProviderName> = N extends "github"
+  ? GitHubAuthOptions
+  : N extends "linear"
+    ? LinearAuthOptions
+    : Record<string, never>;

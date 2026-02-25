@@ -6,6 +6,10 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { nanoid } from "@repo/lib";
+import {
+  PROVIDER_NAMES,
+  INSTALLATION_STATUSES,
+} from "@repo/gateway-types";
 
 export const installations = sqliteTable(
   "gw_installations",
@@ -14,14 +18,14 @@ export const installations = sqliteTable(
       .primaryKey()
       .$defaultFn(() => nanoid()),
     provider: text("provider", {
-      enum: ["github", "vercel", "linear", "sentry"],
+      enum: [...PROVIDER_NAMES],
     }).notNull(),
     externalId: text("external_id").notNull(),
     accountLogin: text("account_login"),
     connectedBy: text("connected_by").notNull(),
     orgId: text("org_id").notNull(),
     status: text("status", {
-      enum: ["pending", "active", "error", "revoked"],
+      enum: [...INSTALLATION_STATUSES],
     }).notNull(),
     webhookSecret: text("webhook_secret"),
     metadata: text("metadata", { mode: "json" }),

@@ -1,5 +1,6 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { nanoid } from "@repo/lib";
+import { RESOURCE_STATUSES } from "@repo/gateway-types";
 import { installations } from "./installations";
 
 export const resources = sqliteTable(
@@ -14,7 +15,7 @@ export const resources = sqliteTable(
     providerResourceId: text("provider_resource_id").notNull(),
     resourceName: text("resource_name"),
     status: text("status", {
-      enum: ["active", "removed"],
+      enum: [...RESOURCE_STATUSES],
     }).notNull(),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
