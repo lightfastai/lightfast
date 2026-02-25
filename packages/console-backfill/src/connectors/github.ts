@@ -38,7 +38,10 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     }
 
     const repoFullName = resource.resourceName;
-    const repoId = Number(resource.providerResourceId);  // Real repo ID — fixes check-event-allowed gate
+    const repoId = Number(resource.providerResourceId);
+    if (!Number.isFinite(repoId)) {
+      throw new Error(`Invalid providerResourceId for GitHub backfill (installationId: ${config.installationId}, providerResourceId: ${String(resource.providerResourceId)})`);
+    }
 
     const [owner, repo] = repoFullName.split("/");
     if (!owner || !repo) {
