@@ -6,6 +6,7 @@ import { db } from "@db/console/client";
 import { webhookSeenKey, resourceKey } from "../lib/keys";
 import { qstash } from "../lib/qstash";
 import { redis } from "../lib/redis";
+import { setResourceCache } from "../lib/resource-cache";
 import { consoleUrl } from "../lib/related-projects";
 import type { WebhookReceiptPayload } from "./types";
 
@@ -79,7 +80,7 @@ export const webhookReceiptWorkflow = serve<WebhookReceiptPayload>(
         if (!row) return null;
 
         // Populate Redis cache for next time
-        await redis.hset(resourceKey(data.provider, data.resourceId), {
+        await setResourceCache(data.provider, data.resourceId, {
           connectionId: row.installationId,
           orgId: row.orgId,
         });

@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { webhookReceiptWorkflow } from "../workflows/webhook-receipt";
+import { connectionTeardownWorkflow } from "../workflows/connection-teardown";
 
 const workflows = new Hono();
 
@@ -10,5 +11,13 @@ const workflows = new Hono();
  * The serve() handler manages QStash signature verification automatically.
  */
 workflows.post("/webhook-receipt", webhookReceiptWorkflow);
+
+/**
+ * POST /workflows/connection-teardown
+ *
+ * Durable connection teardown. Triggered by DELETE /connections/:provider/:id.
+ * Steps: revoke token, deregister webhook, clean cache, soft-delete DB records.
+ */
+workflows.post("/connection-teardown", connectionTeardownWorkflow);
 
 export { workflows };
