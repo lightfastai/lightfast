@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { pgTable, varchar, timestamp, text, index, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
 import type { ClerkUserId } from "@repo/console-validation";
@@ -52,7 +53,10 @@ export const gwInstallations = pgTable(
     >(),
 
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
     providerExternalIdx: uniqueIndex("gw_inst_provider_external_idx").on(

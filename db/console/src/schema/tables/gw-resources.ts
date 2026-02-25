@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { pgTable, varchar, timestamp, index } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
 import { gwInstallations } from "./gw-installations";
@@ -20,7 +21,10 @@ export const gwResources = pgTable(
     status: varchar("status", { length: 50 }).notNull(), // active|removed
 
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
     installationIdIdx: index("gw_res_installation_id_idx").on(table.installationId),
