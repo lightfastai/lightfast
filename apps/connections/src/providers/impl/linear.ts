@@ -181,6 +181,39 @@ export class LinearProvider implements ConnectionProvider {
 
   // ── Strategy methods ──
 
+  /**
+   * Fetch the viewer's organization ID from the Linear API.
+   * Returns the org ID or the viewer's own ID as a stable external identifier.
+   */
+  private async fetchLinearExternalId(accessToken: string): Promise<string> {
+    const response = await fetch("https://api.linear.app/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        query: `{ viewer { id organization { id } } }`,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Linear viewer query failed: ${response.status}`);
+    }
+
+    const result = (await response.json()) as {
+      data?: { viewer?: { id: string; organization?: { id: string } } };
+    };
+
+    const orgId = result.data?.viewer?.organization?.id;
+    if (orgId) return orgId;
+
+    const viewerId = result.data?.viewer?.id;
+    if (viewerId) return viewerId;
+
+    throw new Error("Linear API did not return a viewer or organization ID");
+  }
+
   async handleCallback(
     c: Context,
     stateData: Record<string, string>,
@@ -191,12 +224,11 @@ export class LinearProvider implements ConnectionProvider {
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
 
-    const externalId =
-      (oauthTokens.raw.team_id as string | undefined)?.toString() ??
-      (oauthTokens.raw.organization_id as string | undefined)?.toString() ??
-      (oauthTokens.raw.installation as string | undefined)?.toString() ??
-      nanoid();
+    const externalId = await this.fetchLinearExternalId(oauthTokens.accessToken);
+    const accountInfo = this.buildAccountInfo(stateData, oauthTokens);
+    const now = new Date().toISOString();
 
+    // Idempotent upsert keyed on unique (provider, externalId) constraint
     const rows = await db
       .insert(gwInstallations)
       .values({
@@ -205,59 +237,78 @@ export class LinearProvider implements ConnectionProvider {
         connectedBy: stateData.connectedBy ?? "unknown",
         orgId: stateData.orgId ?? "",
         status: "active",
-        providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
+        providerAccountInfo: accountInfo,
       })
-      .returning({ id: gwInstallations.id });
+      .onConflictDoUpdate({
+        target: [gwInstallations.provider, gwInstallations.externalId],
+        set: {
+          status: "active",
+          connectedBy: stateData.connectedBy ?? "unknown",
+          orgId: stateData.orgId ?? "",
+          providerAccountInfo: accountInfo,
+          updatedAt: now,
+        },
+      })
+      .returning({
+        id: gwInstallations.id,
+        createdAt: gwInstallations.createdAt,
+      });
 
     const installation = rows[0];
-    if (!installation) throw new Error("insert_failed");
+    if (!installation) throw new Error("upsert_failed");
 
     await writeTokenRecord(installation.id, oauthTokens);
 
-    // Register webhook (Linear requires API-level webhook registration)
+    const reactivated = installation.createdAt !== now;
+
+    // Register webhook only for new connections (Linear requires API-level webhook registration)
     // CRITICAL: webhook callback URL must point at the gateway, not the connections service
-    const webhookSecret = nanoid(32);
-    const callbackUrl = `${gatewayBaseUrl}/webhooks/${this.name}`;
+    if (!reactivated) {
+      const webhookSecret = nanoid(32);
+      const callbackUrl = `${gatewayBaseUrl}/webhooks/${this.name}`;
 
-    try {
-      const webhookId = await this.registerWebhook(
-        installation.id,
-        callbackUrl,
-        webhookSecret,
-      );
-
-      await db
-        .update(gwInstallations)
-        .set({
+      try {
+        const webhookId = await this.registerWebhook(
+          installation.id,
+          callbackUrl,
           webhookSecret,
-          metadata: { webhookId } as Record<string, unknown>,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(gwInstallations.id, installation.id));
-    } catch (err) {
-      await db
-        .update(gwInstallations)
-        .set({
-          metadata: {
-            webhookRegistrationError:
-              err instanceof Error ? err.message : "unknown",
-          } as Record<string, unknown>,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(gwInstallations.id, installation.id));
-    }
+        );
 
-    // Notify backfill service for new connections (fire-and-forget)
-    void notifyBackfillService({
-      installationId: installation.id,
-      provider: this.name,
-      orgId: stateData.orgId ?? "",
-    });
+        await db
+          .update(gwInstallations)
+          .set({
+            webhookSecret,
+            metadata: { webhookId } as Record<string, unknown>,
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(gwInstallations.id, installation.id));
+      } catch (err) {
+        await db
+          .update(gwInstallations)
+          .set({
+            status: "error",
+            metadata: {
+              webhookRegistrationError:
+                err instanceof Error ? err.message : "unknown",
+            } as Record<string, unknown>,
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(gwInstallations.id, installation.id));
+      }
+
+      // Notify backfill service for new connections (fire-and-forget)
+      notifyBackfillService({
+        installationId: installation.id,
+        provider: this.name,
+        orgId: stateData.orgId ?? "",
+      }).catch(() => {});
+    }
 
     return {
       status: "connected",
       installationId: installation.id,
       provider: this.name,
+      ...(reactivated && { reactivated: true }),
     };
   }
 
