@@ -144,17 +144,20 @@ export const sourcesM2MRouter = {
       }
 
       const now = new Date().toISOString();
-      const updates = await Promise.all(
-        sources.map((source) =>
-          db
+      const updates = await db.transaction(async (tx) => {
+        const results = [];
+        for (const source of sources) {
+          const result = await tx
             .update(workspaceIntegrations)
             .set({
               isActive: false,
               updatedAt: now,
             })
-            .where(eq(workspaceIntegrations.id, source.id))
-        )
-      );
+            .where(eq(workspaceIntegrations.id, source.id));
+          results.push(result);
+        }
+        return results;
+      });
 
       // Record activity for each disconnected source (Tier 3: Fire-and-forget)
       sources.forEach((source) => {
