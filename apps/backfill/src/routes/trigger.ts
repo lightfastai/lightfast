@@ -42,16 +42,24 @@ trigger.post("/", async (c) => {
     return c.json({ error: "invalid_depth" }, 400);
   }
 
-  await inngest.send({
-    name: "apps-backfill/run.requested",
-    data: {
-      installationId: body.installationId,
-      provider: body.provider,
-      orgId: body.orgId,
-      depth: body.depth ?? 30,
-      entityTypes: body.entityTypes,
-    },
-  });
+  try {
+    await inngest.send({
+      name: "apps-backfill/run.requested",
+      data: {
+        installationId: body.installationId,
+        provider: body.provider,
+        orgId: body.orgId,
+        depth: body.depth ?? 30,
+        entityTypes: body.entityTypes,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to send backfill event to Inngest", err);
+    return c.json(
+      { error: "temporary_failure", message: "Failed to enqueue backfill" },
+      502,
+    );
+  }
 
   return c.json({ status: "accepted", installationId: body.installationId });
 });
@@ -83,10 +91,18 @@ trigger.post("/cancel", async (c) => {
     return c.json({ error: "missing_installationId" }, 400);
   }
 
-  await inngest.send({
-    name: "apps-backfill/run.cancelled",
-    data: { installationId: body.installationId },
-  });
+  try {
+    await inngest.send({
+      name: "apps-backfill/run.cancelled",
+      data: { installationId: body.installationId },
+    });
+  } catch (err) {
+    console.error("Failed to send cancel event to Inngest", err);
+    return c.json(
+      { error: "temporary_failure", message: "Failed to enqueue cancellation" },
+      502,
+    );
+  }
 
   return c.json({ status: "cancelled", installationId: body.installationId });
 });
