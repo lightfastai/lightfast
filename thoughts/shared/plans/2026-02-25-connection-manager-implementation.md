@@ -497,10 +497,10 @@ When `bulkLink*` mutations link resources (repos, projects), they should also ca
 #### Success Criteria
 
 **Automated:**
-- [ ] `pnpm --filter @db/console db:generate` produces a clean migration
-- [ ] `pnpm build:console` compiles
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm lint` passes
+- [ ] `pnpm --filter @db/console db:generate` produces a clean migration (requires DB credentials — run manually)
+- [x] `pnpm build:console` compiles
+- [x] `pnpm typecheck` passes
+- [x] `pnpm lint` passes
 
 **Manual:**
 - [ ] OAuth flow via Gateway → Console `userSources` record created with `gatewayInstallationId`
@@ -511,6 +511,12 @@ When `bulkLink*` mutations link resources (repos, projects), they should also ca
 - [ ] `bulkLink` → Gateway resource routing cache populated
 
 **Implementation Note**: This is the largest remaining phase. Implement connection sync (6.3) first, then token migration (6.5), then resource linking (6.6). Pause for end-to-end testing after each sub-phase.
+
+**Implementation Deviations:**
+- Gateway URL resolved via `@vercel/related-projects` instead of `GATEWAY_API_URL` env var (matches project pattern)
+- Token-consuming code uses dual path: `gatewayInstallationId` → Gateway vault, else → local `decrypt()` (backward-compatible with pre-Gateway connections)
+- Connection sync endpoint uses `serve()` from `@vendor/upstash-workflow/nextjs` for QStash sig verification (same pattern as ingress)
+- Gateway-managed userSources store `"gw:<installationId>"` sentinel in `accessToken` column (column is `notNull`)
 
 ---
 

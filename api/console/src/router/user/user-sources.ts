@@ -10,6 +10,7 @@ import {
 	getInstallationRepositories,
 } from "@repo/console-octokit-github";
 import { decrypt } from "@repo/lib";
+import { gatewayClient } from "../../lib/gateway";
 import { env } from "../../env";
 import yaml from "yaml";
 import type { VercelProjectsResponse } from "@repo/console-vercel/types";
@@ -187,8 +188,10 @@ export const userSourcesRouter = {
 
 			// Fetch fresh installations from GitHub
 			try {
-				// Decrypt access token before use
-				const accessToken = decrypt(userSource.accessToken, env.ENCRYPTION_KEY);
+				// Get access token — Gateway vault if available, local decrypt otherwise
+				const accessToken = userSource.gatewayInstallationId
+					? (await gatewayClient.getToken(userSource.gatewayInstallationId)).accessToken
+					: decrypt(userSource.accessToken, env.ENCRYPTION_KEY);
 
 				const { installations: githubInstallations } =
 					await getUserInstallations(accessToken);
@@ -836,8 +839,10 @@ export const userSourcesRouter = {
 					});
 				}
 
-				// 2. Decrypt token
-				const accessToken = decrypt(source.accessToken, env.ENCRYPTION_KEY);
+				// 2. Get access token — Gateway vault if available, local decrypt otherwise
+				const accessToken = source.gatewayInstallationId
+					? (await gatewayClient.getToken(source.gatewayInstallationId)).accessToken
+					: decrypt(source.accessToken, env.ENCRYPTION_KEY);
 
 				// 3. Get team ID from metadata
 				const providerMetadata = source.providerMetadata;

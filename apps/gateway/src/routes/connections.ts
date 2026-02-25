@@ -7,7 +7,9 @@ import { db } from "../lib/db";
 import { encrypt, decrypt } from "../lib/crypto";
 import { gatewayBaseUrl } from "../lib/base-url";
 import { oauthStateKey, resourceKey } from "../lib/keys";
+import { qstash } from "../lib/qstash";
 import { redis } from "../lib/redis";
+import { consoleUrl } from "../lib/related-projects";
 import { apiKeyAuth } from "../middleware/auth";
 import type { TenantVariables } from "../middleware/tenant";
 import { tenantMiddleware } from "../middleware/tenant";
@@ -108,6 +110,14 @@ connections.get("/:provider/callback", async (c) => {
         .set({ status: "active", updatedAt: new Date() })
         .where(eq(installations.id, existing.id));
 
+      await notifyConsoleSync({
+        installationId: existing.id,
+        provider: "github",
+        orgId: stateData.orgId,
+        connectedBy: stateData.connectedBy ?? "unknown",
+        externalId: installationId,
+      });
+
       return c.json({
         status: "connected",
         installationId: existing.id,
@@ -130,6 +140,14 @@ connections.get("/:provider/callback", async (c) => {
 
     const row = rows[0];
     if (!row) return c.json({ error: "insert_failed" }, 500);
+
+    await notifyConsoleSync({
+      installationId: row.id,
+      provider: "github",
+      orgId: stateData.orgId,
+      connectedBy: stateData.connectedBy ?? "unknown",
+      externalId: installationId,
+    });
 
     return c.json({
       status: "connected",
@@ -240,6 +258,20 @@ connections.get("/:provider/callback", async (c) => {
         .where(eq(installations.id, installation.id));
     }
   }
+
+  const externalId =
+    (oauthTokens.raw.team_id as string | undefined)?.toString() ??
+    (oauthTokens.raw.organization_id as string | undefined)?.toString() ??
+    (oauthTokens.raw.installation as string | undefined)?.toString() ??
+    "";
+
+  await notifyConsoleSync({
+    installationId: installation.id,
+    provider: provider.name,
+    orgId: stateData.orgId,
+    connectedBy: stateData.connectedBy ?? "unknown",
+    externalId,
+  });
 
   return c.json({
     status: "connected",
@@ -496,6 +528,12 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
     .set({ status: "removed" })
     .where(eq(resources.installationId, id));
 
+  await notifyConsoleRemoved({
+    installationId: id,
+    provider: providerName,
+    orgId: installation.orgId,
+  });
+
   return c.json({ status: "revoked", installationId: id });
 });
 
@@ -623,5 +661,48 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
 
   return c.json({ status: "removed", resourceId });
 });
+
+/**
+ * Notify Console about a new or reactivated connection via QStash.
+ * Best-effort — failure here should not block the OAuth response.
+ */
+async function notifyConsoleSync(params: {
+  installationId: string;
+  provider: string;
+  orgId: string;
+  connectedBy: string;
+  externalId: string;
+  accountLogin?: string;
+}) {
+  try {
+    await qstash.publishJSON({
+      url: `${consoleUrl}/api/connections/sync`,
+      body: params,
+      retries: 3,
+    });
+  } catch (err) {
+    console.error("[connections] Failed to notify Console of sync:", err);
+  }
+}
+
+/**
+ * Notify Console about a removed connection via QStash.
+ * Best-effort — failure here should not block the teardown response.
+ */
+async function notifyConsoleRemoved(params: {
+  installationId: string;
+  provider: string;
+  orgId: string;
+}) {
+  try {
+    await qstash.publishJSON({
+      url: `${consoleUrl}/api/connections/removed`,
+      body: params,
+      retries: 3,
+    });
+  } catch (err) {
+    console.error("[connections] Failed to notify Console of removal:", err);
+  }
+}
 
 export { connections };

@@ -17,6 +17,7 @@ import { eq } from "drizzle-orm";
 import { NonRetriableError } from "inngest";
 import { log } from "@vendor/observability/log";
 import { decrypt } from "@repo/lib";
+import { gatewayClient } from "../../../lib/gateway";
 import { getConnector } from "@repo/console-backfill";
 import type { BackfillConfig, BackfillCheckpoint } from "@repo/console-backfill";
 import { env } from "../../../env";
@@ -129,6 +130,15 @@ export const backfillOrchestrator = inngest.createFunction(
         throw new NonRetriableError(`User source not found: ${userSourceId}`);
       }
 
+      // Gateway-managed tokens: fetch from Gateway token vault
+      if (source.gatewayInstallationId) {
+        const { accessToken } = await gatewayClient.getToken(
+          source.gatewayInstallationId,
+        );
+        return accessToken;
+      }
+
+      // Legacy tokens: decrypt locally
       if (!source.accessToken) {
         throw new NonRetriableError(`No access token for source: ${userSourceId}`);
       }

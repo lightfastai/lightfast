@@ -31,6 +31,7 @@ import { hasConnector, getConnector } from "@repo/console-backfill";
 import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
 import { ensureActorLinked } from "../../lib/actor-linking";
+import { gatewayClient } from "../../lib/gateway";
 
 /**
  * Workspace router - internal procedures for API routes
@@ -1256,6 +1257,19 @@ export const workspaceRouter = {
               userSourceId: workspaceIntegrations.userSourceId,
             });
 
+          // Populate Gateway routing cache (best-effort, non-blocking)
+          if (source.gatewayInstallationId) {
+            await Promise.allSettled(
+              toCreate.map((repo) =>
+                gatewayClient.linkResource(
+                  source.gatewayInstallationId!,
+                  repo.repoId,
+                  repo.repoFullName,
+                ),
+              ),
+            );
+          }
+
           // Auto-trigger backfill for newly connected integrations
           if (hasConnector("github")) {
             const connector = getConnector("github");
@@ -1424,6 +1438,19 @@ export const workspaceRouter = {
               id: workspaceIntegrations.id,
               userSourceId: workspaceIntegrations.userSourceId,
             });
+
+          // Populate Gateway routing cache (best-effort, non-blocking)
+          if (source.gatewayInstallationId) {
+            await Promise.allSettled(
+              toCreate.map((p) =>
+                gatewayClient.linkResource(
+                  source.gatewayInstallationId!,
+                  p.projectId,
+                  p.projectName,
+                ),
+              ),
+            );
+          }
 
           // Auto-trigger backfill for newly connected integrations
           if (hasConnector("vercel")) {
