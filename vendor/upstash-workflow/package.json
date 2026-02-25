@@ -10,6 +10,7 @@
     },
     "./env": "./env.ts",
     "./client": "./src/client.ts",
+    "./hono": "./src/hono.ts",
     "./nextjs": "./src/nextjs.ts",
     "./types": "./src/types.ts"
   },
@@ -25,6 +26,7 @@
   "dependencies": {
     "@t3-oss/env-nextjs": "catalog:",
     "@upstash/workflow": "^0.2.22",
+    "hono": "^4.12.2",
     "next": "catalog:next16",
     "zod": "catalog:zod3"
   },

@@ -16,6 +16,7 @@
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/qstash": "workspace:*",
     "@vendor/upstash": "workspace:*",
+    "@vendor/upstash-workflow": "workspace:*",
     "hono": "^4.12.2",
     "zod": "catalog:zod3"
   },

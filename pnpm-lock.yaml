@@ -1299,6 +1299,9 @@ importers:
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
+      '@vendor/upstash-workflow':
+        specifier: workspace:*
+        version: link:../../vendor/upstash-workflow
       hono:
         specifier: ^4.12.2
         version: 4.12.2
@@ -4809,6 +4812,9 @@ importers:
       '@upstash/workflow':
         specifier: ^0.2.22
         version: 0.2.22(react@19.2.1)
+      hono:
+        specifier: ^4.12.2
+        version: 4.12.2
       next:
         specifier: catalog:next16
         version: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)

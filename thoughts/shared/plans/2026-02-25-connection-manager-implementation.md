@@ -329,86 +329,313 @@ export function getProvider(name: string): ConnectionProvider {
 
 ---
 
-## Phase 3: Webhook Receipt Pipeline
+## Phase 3: Webhook Receipt Pipeline (Upstash Workflow)
 
 ### Overview
-Implement the hot path: receive webhook → verify signature → deduplicate → resolve connection → publish to QStash → return 200. This is the Gateway's primary function.
+Implement the webhook receipt pipeline as two layers: a thin Hono route that verifies signatures and returns a fast ACK to the provider, then triggers a durable Upstash Workflow for the multi-step processing (dedup → resolve connection → publish to Console via QStash). Each step is independently retried — if QStash publish fails after dedup, only the publish retries.
+
+**Architecture:**
+```
+Provider (GitHub, Vercel, etc.)
+        │
+        ▼
+POST /webhooks/:provider  ←── thin Hono route (verify sig, fast 200)
+        │
+        ▼
+WorkflowClient.trigger()  ←── kicks off durable workflow
+        │
+        ▼
+QStash → POST /workflows/webhook-receipt  ←── serve() endpoint
+                    │
+        ┌───────────▼──────────────┐
+        │  Step 1: dedup           │ ← skipped on retry
+        │  Step 2: resolve-conn    │ ← skipped on retry
+        │  Step 3: publish/dlq     │ ← retried from here
+        └──────────────────────────┘
+```
+
+**Why two layers?**
+- Invalid webhooks are rejected immediately with no workflow overhead (no QStash step scheduling, no Redis dedup key consumed)
+- Valid webhooks get a fast 200 ACK (provider doesn't wait for dedup/resolve/publish)
+- Each processing step is independently retried with step-level durability
+- Workflow execution is visible in the Upstash Workflow dashboard
+
+`@upstash/workflow/hono` already exists in the installed package — we need to add a `./hono` export to `@vendor/upstash-workflow`.
 
 ### Changes Required:
 
-#### 1. Webhook Receipt Route
-**File**: `apps/gateway/src/routes/webhooks.ts`
+#### 3.1. Add Hono Adapter to `@vendor/upstash-workflow`
+**File**: `vendor/upstash-workflow/src/hono.ts`
+
+Create a Hono-specific `serve()` wrapper, mirroring the existing `nextjs.ts` pattern:
 
 ```typescript
-// POST /webhooks/:provider
-app.post("/webhooks/:provider", async (c) => {
-  const provider = getProvider(c.req.param("provider"))
+import { serve as upstashServe } from "@upstash/workflow/hono"
+import type { WorkflowHandler } from "./types"
+
+export function serve<TPayload = unknown>(
+  handler: WorkflowHandler,
+  options?: {
+    verbose?: boolean
+    disableTelemetry?: boolean
+    initialPayloadParser?: (raw: string) => TPayload
+    failureFunction?: (params: { context: any; failStatus: number; failResponse: string }) => Promise<void>
+  },
+) {
+  const wrappedHandler: WorkflowHandler = async (context) => {
+    try {
+      if (options?.verbose) {
+        console.log("[Workflow] Starting workflow execution", {
+          requestPayload: context.requestPayload,
+        })
+      }
+      await handler(context)
+    } catch (error) {
+      console.error("[Workflow] Workflow execution failed:", error)
+      throw error
+    }
+  }
+
+  return upstashServe<TPayload>(wrappedHandler, {
+    disableTelemetry: options?.disableTelemetry ?? false,
+    initialPayloadParser: options?.initialPayloadParser,
+    failureFunction: options?.failureFunction,
+  })
+}
+```
+
+**File**: `vendor/upstash-workflow/package.json` — add `"./hono": "./src/hono.ts"` export
+
+**File**: `vendor/upstash-workflow/package.json` — add `hono` to dependencies (for type resolution)
+
+#### 3.2. Webhook Receipt Payload Type
+**File**: `apps/gateway/src/workflows/types.ts`
+
+Define the internal payload contract between the route and the workflow:
+
+```typescript
+export interface WebhookReceiptPayload {
+  provider: string
+  deliveryId: string
+  eventType: string
+  resourceId: string | null
+  payload: unknown
+  receivedAt: number
+}
+```
+
+#### 3.3. Webhook Receipt Route (Thin Verification Layer)
+**File**: `apps/gateway/src/routes/webhooks.ts`
+
+The route handler does only two things: verify the provider's webhook signature, and trigger the durable workflow. Returns 200 immediately to the provider.
+
+```typescript
+import { Hono } from "hono"
+import { getProvider } from "../providers"
+import { getWebhookSecret } from "../lib/secrets"
+import { workflowClient } from "../lib/workflow-client"
+import { env } from "../env"
+
+const webhooks = new Hono()
+
+/**
+ * POST /webhooks/:provider
+ *
+ * Thin verification layer. Validates provider signature, extracts identifiers,
+ * triggers durable workflow, returns fast 200 ACK.
+ *
+ * Target: < 20ms (1 sig verify + 1 workflow trigger)
+ */
+webhooks.post("/:provider", async (c) => {
+  const providerName = c.req.param("provider")
+
+  let provider
+  try {
+    provider = getProvider(providerName)
+  } catch {
+    return c.json({ error: "unknown_provider", provider: providerName }, 400)
+  }
+
+  // Read raw body for HMAC verification
   const rawBody = await c.req.text()
   const headers = c.req.raw.headers
 
-  // 1. Verify signature
-  const secret = getWebhookSecret(provider.name)
+  // Verify webhook signature — reject invalid webhooks immediately
+  const secret = await getWebhookSecret(provider.name)
   const valid = await provider.verifyWebhook(rawBody, headers, secret)
-  if (!valid) return c.json({ error: "invalid_signature" }, 401)
+  if (!valid) {
+    return c.json({ error: "invalid_signature" }, 401)
+  }
 
-  const payload = JSON.parse(rawBody)
+  // Parse payload + extract identifiers (cheap, no I/O)
+  let payload: unknown
+  try {
+    payload = JSON.parse(rawBody) as unknown
+  } catch {
+    return c.json({ error: "invalid_json" }, 400)
+  }
 
-  // 2. Dedup check
   const deliveryId = provider.extractDeliveryId(headers, payload)
-  const deduped = await redis.set(
-    keys.webhookSeen(provider.name, deliveryId), "1",
-    { nx: true, ex: 86400 }
-  )
-  if (!deduped) return c.json({ status: "duplicate" }, 200)
-
-  // 3. Resolve connection
-  const resourceId = provider.extractResourceId(payload)
   const eventType = provider.extractEventType(headers, payload)
+  const resourceId = provider.extractResourceId(payload)
 
-  let connectionInfo: { connectionId: string; orgId: string } | null = null
-  if (resourceId) {
-    connectionInfo = await redis.hgetall(keys.resource(provider.name, resourceId))
-  }
-
-  if (!connectionInfo) {
-    // Publish to DLQ topic for unresolvable webhooks
-    await qstash.publishJSON({
-      topic: "webhook-dlq",
-      body: { provider: provider.name, deliveryId, eventType, resourceId, payload },
-    })
-    return c.json({ status: "unresolvable" }, 200)
-  }
-
-  // 4. Publish to QStash for delivery to Console
-  await qstash.publishJSON({
-    url: env.CONSOLE_INGRESS_URL,
+  // Trigger durable workflow — processing happens asynchronously
+  await workflowClient.trigger({
+    url: `${env.GATEWAY_BASE_URL}/workflows/webhook-receipt`,
     body: {
-      deliveryId,
-      connectionId: connectionInfo.connectionId,
-      orgId: connectionInfo.orgId,
       provider: provider.name,
+      deliveryId,
       eventType,
+      resourceId,
       payload,
       receivedAt: Date.now(),
     },
-    retries: 5,
-    deduplicationId: `${provider.name}:${deliveryId}`,
-    callback: `${env.GATEWAY_BASE_URL}/admin/delivery-status`,
   })
 
-  // 5. Return 200
   return c.json({ status: "accepted", deliveryId }, 200)
 })
+
+export { webhooks }
 ```
 
-#### 2. Webhook Secret Resolution
+#### 3.4. Webhook Receipt Workflow (Durable Pipeline)
+**File**: `apps/gateway/src/workflows/webhook-receipt.ts`
+
+Uses `serve()` from the Hono adapter. Each step is independently retried — if the QStash publish to Console fails, only step 3 retries (dedup and resolve are already complete).
+
+```typescript
+import { serve } from "@vendor/upstash-workflow/hono"
+import { redis } from "../lib/redis"
+import { qstash } from "../lib/qstash"
+import { webhookSeenKey, resourceKey } from "../lib/keys"
+import { env } from "../env"
+import type { WebhookReceiptPayload } from "./types"
+
+interface ConnectionInfo {
+  connectionId: string
+  orgId: string
+}
+
+export const webhookReceiptWorkflow = serve<WebhookReceiptPayload>(
+  async (context) => {
+    const data = context.requestPayload
+
+    // Step 1: Deduplication — set NX (only if not exists), TTL 24h
+    const isDuplicate = await context.run("dedup", async () => {
+      const result = await redis.set(
+        webhookSeenKey(data.provider, data.deliveryId),
+        "1",
+        { nx: true, ex: 86400 },
+      )
+      return !result // null = key already existed = duplicate
+    })
+
+    if (isDuplicate) return // workflow ends — duplicate delivery
+
+    // Step 2: Resolve connection from resource ID via Redis cache
+    const connectionInfo = await context.run<ConnectionInfo | null>(
+      "resolve-connection",
+      async () => {
+        if (!data.resourceId) return null
+
+        const cached = await redis.hgetall<Record<string, string>>(
+          resourceKey(data.provider, data.resourceId),
+        )
+        if (cached?.connectionId && cached.orgId) {
+          return { connectionId: cached.connectionId, orgId: cached.orgId }
+        }
+        return null
+      },
+    )
+
+    // Step 3: Publish — either to Console ingress or to DLQ
+    if (!connectionInfo) {
+      await context.run("publish-to-dlq", async () => {
+        await qstash.publishToTopic({
+          topic: "webhook-dlq",
+          body: {
+            provider: data.provider,
+            deliveryId: data.deliveryId,
+            eventType: data.eventType,
+            resourceId: data.resourceId,
+            payload: data.payload,
+            receivedAt: data.receivedAt,
+          },
+        })
+      })
+      return
+    }
+
+    await context.run("publish-to-console", async () => {
+      await qstash.publishJSON({
+        url: env.CONSOLE_INGRESS_URL,
+        body: {
+          deliveryId: data.deliveryId,
+          connectionId: connectionInfo.connectionId,
+          orgId: connectionInfo.orgId,
+          provider: data.provider,
+          eventType: data.eventType,
+          payload: data.payload,
+          receivedAt: data.receivedAt,
+        },
+        retries: 5,
+        deduplicationId: `${data.provider}:${data.deliveryId}`,
+        callback: `${env.GATEWAY_BASE_URL}/admin/delivery-status`,
+      })
+    })
+  },
+  {
+    failureFunction: async ({ context, failStatus, failResponse }) => {
+      console.error("[webhook-receipt] workflow failed", {
+        failStatus,
+        failResponse,
+        workflowRunId: context.workflowRunId,
+      })
+    },
+  },
+)
+```
+
+#### 3.5. Workflow Client Setup
+**File**: `apps/gateway/src/lib/workflow-client.ts`
+
+Re-exports the `WorkflowClient` singleton for triggering workflows from route handlers:
+
+```typescript
+import { getWorkflowClient } from "@vendor/upstash-workflow/client"
+
+export const workflowClient = getWorkflowClient()
+```
+
+#### 3.6. Mount Workflow Route
+**File**: `apps/gateway/src/routes/workflows.ts`
+
+Mounts the workflow `serve()` handler on the Hono app:
+
+```typescript
+import { Hono } from "hono"
+import { webhookReceiptWorkflow } from "../workflows/webhook-receipt"
+
+const workflows = new Hono()
+
+// Upstash Workflow calls back to this endpoint for each step
+workflows.post("/webhook-receipt", webhookReceiptWorkflow)
+
+export { workflows }
+```
+
+**File**: `apps/gateway/src/app.ts` — mount the workflows router at `/workflows`
+
+#### 3.7. Webhook Secret Resolution
 **File**: `apps/gateway/src/lib/secrets.ts`
 
 For GitHub and Vercel: global webhook secrets from environment variables.
 For Linear and Sentry: per-connection webhook secrets stored in `connection:{id}` Redis hash.
 
 ```typescript
-async function getWebhookSecret(provider: string): Promise<string> {
+import { env } from "../env"
+
+export async function getWebhookSecret(provider: string): Promise<string> {
   switch (provider) {
     case "github": return env.GITHUB_WEBHOOK_SECRET
     case "vercel": return env.VERCEL_CLIENT_INTEGRATION_SECRET
@@ -425,87 +652,68 @@ async function getWebhookSecret(provider: string): Promise<string> {
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Integration tests: mock webhook → verify → dedup → QStash publish (mocked) completes successfully
-- [ ] Duplicate webhook returns 200 without QStash publish
-- [ ] Invalid signature returns 401
-- [ ] Unknown resource routes to DLQ topic
+- [x] `pnpm --filter @vendor/upstash-workflow build` compiles with new Hono export
+- [x] `pnpm --filter @lightfast/gateway build` compiles
 - [x] `pnpm typecheck` passes
 - [x] `pnpm lint` passes
+- [ ] Integration tests: mock webhook → verify → workflow trigger → dedup → resolve → QStash publish (mocked)
+- [ ] Duplicate webhook: workflow ends after dedup step (no QStash publish)
+- [ ] Invalid signature: rejected at route level (no workflow triggered)
+- [ ] Unknown resource: routes to DLQ topic via workflow step
 
 #### Manual Verification:
-- [ ] Send a real GitHub webhook (via ngrok) and verify it arrives in QStash dashboard
-- [ ] Send a duplicate delivery ID and verify it's deduplicated
-- [ ] Send an invalid signature and verify 401 response
+- [ ] Send a real GitHub webhook (via ngrok) and verify the workflow executes all steps in Upstash dashboard
+- [ ] Send a duplicate delivery ID and verify it's deduplicated at step 1
+- [ ] Send an invalid signature and verify 401 response (no workflow triggered)
+- [ ] Verify workflow step-level retry: kill Redis mid-workflow, verify it resumes from failed step
 
 **Implementation Note**: Pause for manual webhook receipt testing before proceeding.
 
 ---
 
-## Phase 4: Console Webhook Ingress
+## Phase 4: Console Webhook Ingress (Upstash Workflow)
 
 ### Overview
-Create a single endpoint in Console that receives verified webhooks from Gatewayvia QStash. This replaces the existing 832 lines across two webhook route handlers.
+Create a durable webhook ingress pipeline in Console using Upstash Workflow's `serve()`. Instead of a plain route handler that could fail mid-processing, each step (resolve workspace → store payload → transform → dispatch to Inngest) gets step-level durability — if step 3 fails, the workflow retries from step 3, not from scratch.
+
+This replaces the existing 832 lines across two webhook route handlers with a single, durable workflow endpoint.
+
+**Architecture:**
+```
+Gateway → QStash → Console serve() endpoint → durable step pipeline → Inngest
+                                    │
+                    ┌───────────────▼────────────────┐
+                    │  Step 1: resolve-workspace      │ ← skipped on retry
+                    │  Step 2: store-payload          │ ← skipped on retry
+                    │  Step 3: transform              │ ← retried from here
+                    │  Step 4: dispatch-to-inngest    │
+                    └─────────────────────────────────┘
+```
+
+`@vendor/upstash-workflow` is already vendored and ready — `serve()` exports `{ POST }` directly compatible with Next.js App Router. QStash signature verification is handled automatically by the workflow SDK (it validates `Upstash-Signature` headers on every invocation).
 
 ### Changes Required:
 
-#### 1. New Ingress Endpoint
-**File**: `apps/console/src/app/api/webhooks/ingress/route.ts` (~80 lines)
+#### 4.1. Webhook Envelope Types
+**File**: `packages/console-types/src/webhooks/envelope.ts`
+
+Define the shared contract between Gateway and Console:
 
 ```typescript
-import { Receiver } from "@vendor/qstash"
-import { storeIngestionPayload, extractWebhookHeaders } from "@repo/console-webhooks"
-import { inngest } from "@vendor/inngest"
-// Import existing transformers
-import { transformGitHubPush, transformGitHubPullRequest, ... } from "@repo/console-webhooks"
-import { transformVercelDeployment } from "@repo/console-webhooks"
-import { linearTransformers } from "@repo/console-webhooks"
-import { sentryTransformers } from "@repo/console-webhooks"
-
-export async function POST(request: NextRequest) {
-  // 1. Verify QStash signature
-  const receiver = new Receiver({ ... })
-  const body = await request.text()
-  const isValid = await receiver.verify({
-    signature: request.headers.get("upstash-signature") ?? "",
-    body,
-  })
-  if (!isValid) return NextResponse.json({ error: "invalid_signature" }, { status: 401 })
-
-  // 2. Parse envelope
-  const envelope = JSON.parse(body) as WebhookEnvelope
-  const { deliveryId, connectionId, orgId, provider, eventType, payload, receivedAt } = envelope
-
-  // 3. Resolve workspace from orgId
-  const workspace = await resolveWorkspaceFromOrgId(orgId)
-  if (!workspace) return NextResponse.json({ error: "workspace_not_found" }, { status: 200 })
-
-  // 4. Store raw payload
-  await storeIngestionPayload({
-    workspaceId: workspace.workspaceId,
-    deliveryId,
-    source: provider,
-    payload: JSON.stringify(payload),
-    headers: {},
-  })
-
-  // 5. Transform and dispatch to Inngest
-  await dispatchToInngest(provider, eventType, payload, workspace, deliveryId)
-
-  return NextResponse.json({ received: true })
+export interface WebhookEnvelope {
+  deliveryId: string
+  connectionId: string
+  orgId: string
+  provider: "github" | "vercel" | "linear" | "sentry"
+  eventType: string
+  payload: unknown
+  receivedAt: number
 }
 ```
 
-The `dispatchToInngest` function routes to existing Inngest events:
-- GitHub push → `apps-console/github.push` (existing) + `apps-console/neural/observation.capture`
-- GitHub PR/issues/release/discussion → `apps-console/neural/observation.capture`
-- Vercel deployment → `apps-console/neural/observation.capture`
-- Linear → `apps-console/neural/observation.capture` (using `linearTransformers` map)
-- Sentry → `apps-console/neural/observation.capture` (using `sentryTransformers` map)
+Export from `@repo/console-types` package index.
 
-#### 2. Console-side Gatewaysignature verification
-Add QStash signature verification to `@vendor/qstash` package (already done in Phase 1 via `receiver.ts`).
-
-#### 3. Workspace resolution helper
+#### 4.2. Workspace Resolution Helper
 **File**: `apps/console/src/app/api/webhooks/ingress/resolve-workspace.ts`
 
 Creates a `resolveWorkspaceFromOrgId(orgId)` function that queries `orgWorkspaces` by `clerkOrgId`. This replaces the per-provider workspace resolution in the current handlers (GitHub's tRPC-based slug resolution and Vercel's direct Drizzle join).
@@ -514,22 +722,196 @@ The Gateway sends `orgId` (Clerk org ID) directly, so Console just does a simple
 
 For events that need a specific workspace integration (e.g., to check which events are enabled), the `connectionId` from the envelope maps back to a `workspaceIntegrations` row via the relational record that was created during connection setup.
 
+```typescript
+import { db, eq } from "@db/console"
+import { orgWorkspaces } from "@db/console/schema"
+
+export async function resolveWorkspaceFromOrgId(orgId: string) {
+  const workspace = await db.query.orgWorkspaces.findFirst({
+    where: eq(orgWorkspaces.clerkOrgId, orgId),
+  })
+  return workspace ?? null
+}
+```
+
+#### 4.3. Ingress Workflow Endpoint
+**File**: `apps/console/src/app/api/webhooks/ingress/route.ts`
+
+Uses `serve()` from `@vendor/upstash-workflow/nextjs`. Each processing stage is a durable `context.run()` step — completed steps are skipped on retry, failures are retried from the failed step only.
+
+```typescript
+import { serve } from "@vendor/upstash-workflow/nextjs"
+import type { WebhookEnvelope } from "@repo/console-types"
+import { resolveWorkspaceFromOrgId } from "./resolve-workspace"
+import { storeIngestionPayload } from "@repo/console-webhooks"
+import { inngest } from "@vendor/inngest"
+
+export const { POST } = serve<WebhookEnvelope>(
+  async (context) => {
+    const envelope = context.requestPayload
+
+    // Step 1: Resolve workspace from orgId
+    const workspace = await context.run("resolve-workspace", async () => {
+      const ws = await resolveWorkspaceFromOrgId(envelope.orgId)
+      if (!ws) return null
+      return { workspaceId: ws.id, workspaceName: ws.name }
+    })
+
+    if (!workspace) return // graceful skip — no workspace found
+
+    // Step 2: Store raw payload in workspaceIngestionPayloads
+    await context.run("store-payload", async () => {
+      await storeIngestionPayload({
+        workspaceId: workspace.workspaceId,
+        deliveryId: envelope.deliveryId,
+        source: envelope.provider,
+        payload: JSON.stringify(envelope.payload),
+        headers: {},
+      })
+    })
+
+    // Step 3: Dispatch to Inngest
+    // Routes to existing Inngest events based on provider + eventType.
+    // Transformers remain in @repo/console-webhooks — called by Inngest handlers, not here.
+    await context.run("dispatch-to-inngest", async () => {
+      await dispatchToInngest(envelope, workspace)
+    })
+  },
+  {
+    // Raw body comes as string from QStash — parse into typed envelope
+    initialPayloadParser: (raw: string): WebhookEnvelope => {
+      return JSON.parse(raw) as WebhookEnvelope
+    },
+    failureFunction: async ({ context, failStatus, failResponse }) => {
+      console.error("[webhook-ingress] workflow failed", {
+        failStatus,
+        failResponse,
+        workflowRunId: context.workflowRunId,
+      })
+    },
+  },
+)
+```
+
+**Note on QStash signature verification**: The `serve()` function from `@upstash/workflow` automatically verifies the `Upstash-Signature` header on every invocation using `QSTASH_CURRENT_SIGNING_KEY` / `QSTASH_NEXT_SIGNING_KEY` environment variables. No manual `Receiver.verify()` call needed.
+
+#### 4.4. Inngest Dispatch Router
+**File**: `apps/console/src/app/api/webhooks/ingress/dispatch.ts`
+
+Maps provider + eventType to existing Inngest events. Keeps the dispatch logic isolated from the workflow steps.
+
+```typescript
+import { inngest } from "@vendor/inngest"
+import type { WebhookEnvelope } from "@repo/console-types"
+
+interface WorkspaceInfo {
+  workspaceId: string
+  workspaceName: string
+}
+
+export async function dispatchToInngest(
+  envelope: WebhookEnvelope,
+  workspace: WorkspaceInfo,
+) {
+  const { provider, eventType, payload, deliveryId, connectionId } = envelope
+
+  switch (provider) {
+    case "github":
+      if (eventType === "push") {
+        // Existing push handler + observation capture
+        await inngest.send({
+          name: "apps-console/github.push",
+          data: { payload, workspaceId: workspace.workspaceId, deliveryId },
+        })
+      }
+      // All GitHub events → observation capture
+      await inngest.send({
+        name: "apps-console/neural/observation.capture",
+        data: {
+          source: "github",
+          eventType,
+          payload,
+          workspaceId: workspace.workspaceId,
+          deliveryId,
+        },
+      })
+      break
+
+    case "vercel":
+      await inngest.send({
+        name: "apps-console/neural/observation.capture",
+        data: {
+          source: "vercel",
+          eventType,
+          payload,
+          workspaceId: workspace.workspaceId,
+          deliveryId,
+        },
+      })
+      break
+
+    case "linear":
+      await inngest.send({
+        name: "apps-console/neural/observation.capture",
+        data: {
+          source: "linear",
+          eventType,
+          payload,
+          workspaceId: workspace.workspaceId,
+          deliveryId,
+        },
+      })
+      break
+
+    case "sentry":
+      await inngest.send({
+        name: "apps-console/neural/observation.capture",
+        data: {
+          source: "sentry",
+          eventType,
+          payload,
+          workspaceId: workspace.workspaceId,
+          deliveryId,
+        },
+      })
+      break
+  }
+}
+```
+
+#### 4.5. Console Environment Setup
+**File**: `apps/console/.env` (or `.vercel/.env.development.local`)
+
+Ensure QStash signing keys are available for `serve()` signature verification:
+
+```
+QSTASH_TOKEN=...
+QSTASH_CURRENT_SIGNING_KEY=...
+QSTASH_NEXT_SIGNING_KEY=...
+```
+
+These may already exist if `@vendor/upstash-workflow` env validation is active. Verify they're set.
+
+For local development, `UPSTASH_WORKFLOW_URL` should point to the ngrok tunnel (already configured via `pnpm dev:app`).
+
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Integration test: mock QStash delivery with valid signature → 200 response + Inngest event fired
-- [ ] Invalid QStash signature → 401 response
-- [ ] Unknown workspace → 200 response (graceful skip)
-- [ ] `pnpm build:console` compiles
-- [ ] `pnpm typecheck` passes
+- [ ] `pnpm build:console` compiles with the new workflow route
+- [ ] `pnpm typecheck` passes — `WebhookEnvelope` type shared correctly between Gateway and Console
 - [ ] `pnpm lint` passes
+- [ ] Integration test: mock QStash delivery → workflow executes all 3 steps → Inngest event fired
+- [ ] Invalid QStash signature → rejected by `serve()` automatically (401)
+- [ ] Unknown workspace → workflow returns gracefully after step 1 (no error)
 
 #### Manual Verification:
-- [ ] End-to-end: GitHub webhook → Gateway→ QStash → Console ingress → Inngest event visible in Inngest dashboard
+- [ ] End-to-end: GitHub webhook → Gateway → QStash → Console `serve()` ingress → Inngest event visible in Inngest dashboard
 - [ ] Verify `workspaceIngestionPayloads` table has the raw payload stored
+- [ ] Verify Upstash Workflow dashboard shows completed workflow runs with step-level detail
 - [ ] Verify existing observation capture pipeline processes the event correctly
+- [ ] Simulate step failure (e.g., DB down): verify workflow retries from failed step, not from scratch
 
-**Implementation Note**: This is the critical integration point. Pause for thorough end-to-end manual testing.
+**Implementation Note**: This is the critical integration point. Pause for thorough end-to-end manual testing. Verify both the happy path and the retry/durability behavior.
 
 ---
 
@@ -1030,25 +1412,175 @@ Deploy the Gateway to production, update provider webhook URLs, and verify end-t
 
 ## Testing Strategy
 
-### Unit Tests:
-- Provider `verifyWebhook` against known test vectors (replay recorded webhooks)
-- Provider OAuth URL generation
-- Redis key convention functions
-- Crypto encrypt/decrypt round-trip
-- Webhook deduplication logic
+The gateway's webhook pipeline has 5 discrete steps, each with distinct failure modes:
+1. Signature verification (crypto correctness per provider)
+2. Payload extraction (provider-specific header/body traversal)
+3. Deduplication (Redis NX semantics)
+4. Connection resolution (Redis hash lookup)
+5. QStash publication (payload shape and routing)
 
-### Integration Tests:
-- Full webhook receipt pipeline (mock provider → Gateway→ mock QStash → verify publish call)
-- Setup workflow (mock provider → mock Console API → verify Redis state)
-- Teardown workflow (verify all Redis keys cleaned up)
-- Token vault (verify decryption and response format)
-- Cache rebuild (mock Console API → verify Redis populated)
+### Test Infrastructure
 
-### End-to-End Tests:
-- GitHub push → Gateway→ Console → Inngest (staging environment)
-- OAuth flow → connection created → webhook receipt → event processed
+**vitest** as test runner. Config at `apps/gateway/vitest.config.ts`:
+```ts
+import { defineConfig } from "vitest/config";
+export default defineConfig({
+  test: { globals: true, environment: "node" },
+});
+```
 
-### Manual Testing Steps:
+Scripts in `apps/gateway/package.json`:
+```json
+"test": "vitest run",
+"test:watch": "vitest"
+```
+
+### Layer 1: Pure Unit Tests (zero mocks)
+
+**`apps/gateway/src/__tests__/crypto.test.ts`** — Web Crypto API functions:
+- `computeHmacSha256` — known test vector (message + secret → expected hex)
+- `computeHmacSha1` — known test vector (Vercel's algorithm)
+- `timingSafeEqual` — equal strings return true, different strings return false, different lengths return false
+- `encrypt` / `decrypt` roundtrip — encrypt plaintext, decrypt recovers original
+- `encrypt` produces different ciphertext each call (random IV)
+
+**`apps/gateway/src/__tests__/keys.test.ts`** — Redis key format functions:
+- Each key function returns the exact expected string pattern
+- `webhookSeenKey("github", "abc-123")` → `"gw:webhook:seen:github:abc-123"`
+- `resourceKey("linear", "org-456")` → `"gw:resource:linear:org-456"`
+- All 7 key functions covered
+
+### Layer 2: Provider Verification Tests (real crypto, no network)
+
+One test file per provider:
+- `apps/gateway/src/__tests__/providers/github.test.ts`
+- `apps/gateway/src/__tests__/providers/vercel.test.ts`
+- `apps/gateway/src/__tests__/providers/linear.test.ts`
+- `apps/gateway/src/__tests__/providers/sentry.test.ts`
+
+Each file covers:
+1. **Valid signature → true**: Compute HMAC using the same function the provider uses, put it in the expected header, call `verifyWebhook` → must return `true`
+2. **Tampered body → false**: Append `"x"` to body, same signature → must return `false`
+3. **Missing signature header → false**: No signature header → must return `false`
+4. **Wrong secret → false**: Different secret for verification → must return `false`
+5. **extractDeliveryId**: Headers with the correct header → returns that value; missing header → returns a UUID
+6. **extractEventType**: Headers with event → returns that value; missing → returns `"unknown"`
+7. **extractResourceId**: Payload with expected fields → returns correct ID; empty payload → returns `null`
+
+**Vercel-specific note:** `verifyWebhook` uses `computeHmacSha1` — tests must compute with SHA-1 to get a valid signature.
+
+### Layer 3: Integration Tests (mocked Redis + QStash, real Hono)
+
+**`apps/gateway/src/__tests__/routes/webhooks.test.ts`**
+
+Setup:
+- `vi.mock("../../env")` — return deterministic env values (secrets, URLs)
+- `vi.mock("../../lib/workflow-client")` — mock `workflowClient.trigger()`
+- Import `app` from `../../app` and use `app.request()` for in-process HTTP testing
+
+Test matrix (all scenarios):
+
+| Scenario | Setup | Expected |
+|----------|-------|----------|
+| Unknown provider | POST /webhooks/notreal | 400, `{error: "unknown_provider"}` |
+| Missing signature header | No sig header | 401, `{error: "invalid_signature"}` |
+| Wrong signature | Computed with different secret | 401, `{error: "invalid_signature"}` |
+| Invalid JSON body | `rawBody = "not json"` with valid sig | 400, `{error: "invalid_json"}` |
+| Happy path | Valid sig, valid JSON | 200, `{status: "accepted", deliveryId}`, `workflowClient.trigger` called with correct payload shape |
+
+For the happy path, assert on the workflow trigger payload shape:
+```ts
+expect(workflowClient.trigger).toHaveBeenCalledWith(
+  expect.objectContaining({
+    url: expect.stringContaining("/workflows/webhook-receipt"),
+    body: expect.objectContaining({
+      deliveryId: expect.any(String),
+      provider: "github",
+      eventType: "push",
+    }),
+  })
+);
+```
+
+### Layer 4: Fixture-Based Contract Tests
+
+**Directory:** `apps/gateway/src/__tests__/fixtures/`
+
+One JSON fixture per provider per event type:
+```
+fixtures/
+  github/
+    push.json
+    pull_request.opened.json
+    installation.created.json
+  vercel/
+    deployment.created.json
+  linear/
+    issue.create.json
+  sentry/
+    event_alert.triggered.json
+```
+
+Each fixture file:
+```json
+{
+  "headers": { "x-github-event": "push", "x-github-delivery": "abc-123" },
+  "body": { /* real webhook payload */ },
+  "expectedDeliveryId": "abc-123",
+  "expectedEventType": "push",
+  "expectedResourceId": "12345678"
+}
+```
+
+Integrated into Layer 2 provider test files — iterate over fixtures and assert extraction correctness.
+
+### File Structure
+
+```
+apps/gateway/
+├── vitest.config.ts                          # NEW
+├── package.json                              # MODIFIED: vitest dev dep + test scripts
+└── src/
+    └── __tests__/
+        ├── fixtures/
+        │   ├── github/
+        │   │   ├── push.json
+        │   │   ├── pull_request.opened.json
+        │   │   └── installation.created.json
+        │   ├── vercel/
+        │   │   └── deployment.created.json
+        │   ├── linear/
+        │   │   └── issue.create.json
+        │   └── sentry/
+        │       └── event_alert.triggered.json
+        ├── crypto.test.ts                    # Layer 1
+        ├── keys.test.ts                      # Layer 1
+        ├── providers/
+        │   ├── github.test.ts                # Layer 2 + Layer 4
+        │   ├── vercel.test.ts                # Layer 2 + Layer 4
+        │   ├── linear.test.ts                # Layer 2 + Layer 4
+        │   └── sentry.test.ts                # Layer 2 + Layer 4
+        └── routes/
+            └── webhooks.test.ts              # Layer 3
+```
+
+### Critical Implementation Details
+
+- **Vercel SHA-1**: The Vercel provider is the only one using SHA-1. Tests must call `computeHmacSha1` (not `computeHmacSha256`) when constructing valid Vercel test signatures.
+- **Hono in-process testing**: `app.request()` takes a path + `RequestInit` object. The Hono `app` from `src/app.ts` has all routes mounted. No HTTP server needed.
+- **vi.mock path resolution**: Mocks must use relative paths matching the imports: `vi.mock("../../env", ...)`, etc.
+- **env mock shape**: `src/env.ts` exports `env` object via `@t3-oss/env-nextjs` createEnv. Mock must return the flat `env` export with string values for all used env vars.
+- **`timingSafeEqual` note**: `timingSafeEqual` pads/slices to 64 hex chars (32 bytes). Tests should use HMAC outputs (64 hex chars for SHA-256, 40 for SHA-1) which are already within or below this range.
+
+### Verification Commands
+
+```bash
+pnpm --filter @lightfast/gateway test        # Run all tests
+pnpm --filter @lightfast/gateway test:watch   # Watch mode
+pnpm --filter @lightfast/gateway typecheck    # Ensure test files don't break types
+```
+
+### Manual Testing Steps (post-automated):
 1. Trigger a GitHub push webhook via ngrok and verify it flows through to Inngest
 2. Complete a full GitHub OAuth flow in the connect UI
 3. Disconnect a source and verify teardown completes
