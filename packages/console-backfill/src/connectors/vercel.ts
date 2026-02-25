@@ -85,11 +85,13 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
     const data = (await response.json()) as VercelDeploymentsResponse;
     const sinceDate = new Date(config.since);
 
-    // Filter deployments within the time window
+    // Filter deployments within the time window and with a valid uid
     const filtered = data.deployments.filter((deployment) => {
       const created = deployment.created as number | undefined;
       return created ? new Date(created) >= sinceDate : false;
-    });
+    }).filter((deployment): deployment is Record<string, unknown> & { uid: string } =>
+      typeof deployment.uid === "string",
+    );
 
     const events: BackfillWebhookEvent[] = filtered.map((deployment) => {
       const { webhookPayload, eventType } = adaptVercelDeploymentForTransformer(
@@ -97,7 +99,7 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
         projectName,
       );
       return {
-        deliveryId: `backfill-${config.installationId}-${config.resource.providerResourceId}-deploy-${deployment.uid as string}`,
+        deliveryId: `backfill-${config.installationId}-${config.resource.providerResourceId}-deploy-${deployment.uid}`,
         eventType,
         payload: webhookPayload,
       };
