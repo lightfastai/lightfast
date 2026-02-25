@@ -6,4 +6,14 @@ export default [
     ignores: ["dist/**"],
   },
   ...baseConfig,
+  {
+    files: ["**/*.test.ts"],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "@typescript-eslint/require-await": "off",
+    },
+  },
 ];

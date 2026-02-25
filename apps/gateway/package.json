@@ -5,11 +5,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && pnpm with-env tsx -e 'import \"./src/env.ts\"'",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "vercel dev --listen 4108",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
     "@db/console": "workspace:*",
@@ -32,9 +34,11 @@
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
+    "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "prettier": "@repo/prettier-config"
 }
