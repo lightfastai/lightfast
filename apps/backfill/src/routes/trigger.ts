@@ -37,6 +37,11 @@ trigger.post("/", async (c) => {
     return c.json({ error: "missing_required_fields" }, 400);
   }
 
+  const validDepths = [7, 30, 90] as const;
+  if (body.depth != null && !validDepths.includes(body.depth)) {
+    return c.json({ error: "invalid_depth" }, 400);
+  }
+
   await inngest.send({
     name: "apps-backfill/run.requested",
     data: {
