@@ -44,8 +44,7 @@ export type {
 } from "./sentry.js";
 
 // Validation utilities
-export { validateSourceEvent } from "./validation.js";
-export type { ValidationResult } from "./validation.js";
+export { validateSourceEvent, type ValidationResult } from "./validation.js";
 
 // Sanitization utilities
 export {
@@ -59,8 +58,12 @@ export {
 } from "./sanitize.js";
 
 // Storage utilities
-export { storeIngestionPayload, extractWebhookHeaders } from "./storage.js";
-export type { StoreIngestionPayloadParams, StoreWebhookPayloadParams } from "./storage.js";
+export {
+  storeIngestionPayload,
+  extractWebhookHeaders,
+  type StoreIngestionPayloadParams,
+  type StoreWebhookPayloadParams,
+} from "./storage.js";
 
 // Transformers
 export {
