@@ -9,6 +9,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "vercel dev --listen 4110",
     "lint": "eslint",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -34,7 +35,8 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "prettier": "@repo/prettier-config"
 }
