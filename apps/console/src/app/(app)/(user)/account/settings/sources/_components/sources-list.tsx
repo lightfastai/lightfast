@@ -1,6 +1,7 @@
 "use client";
 "use no memo";
 
+import { useEffect, useRef } from "react";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -42,6 +43,15 @@ const providerDescriptions = {
 export function SourcesList() {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
+	const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+	useEffect(() => {
+		return () => {
+			if (pollTimerRef.current) {
+				clearInterval(pollTimerRef.current);
+			}
+		};
+	}, []);
 
 	const { data: integrations } = useSuspenseQuery({
 		...trpc.connections.list.queryOptions(),
@@ -95,9 +105,12 @@ export function SourcesList() {
 				);
 
 				// Poll for popup close
-				const pollTimer = setInterval(() => {
+				pollTimerRef.current = setInterval(() => {
 					if (popup?.closed) {
-						clearInterval(pollTimer);
+						if (pollTimerRef.current) {
+							clearInterval(pollTimerRef.current);
+							pollTimerRef.current = null;
+						}
 						void queryClient.invalidateQueries({
 							queryKey: trpc.connections.list.queryOptions().queryKey,
 						});
