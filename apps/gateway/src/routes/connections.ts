@@ -1,5 +1,9 @@
 import { and, eq } from "drizzle-orm";
-import { installations, resources, tokens } from "@db/gateway/schema";
+import {
+  gwInstallations,
+  gwResources,
+  gwTokens,
+} from "@db/console/schema";
 import { nanoid } from "@repo/lib";
 import { Hono } from "hono";
 import type { WebhookRegistrant, ProviderName } from "../providers/types";
@@ -93,22 +97,43 @@ connections.get("/:provider/callback", async (c) => {
     await redis.del(oauthStateKey(githubState));
 
     // Upsert installation (idempotent)
-    const existing = await db
-      .select({ id: installations.id })
-      .from(installations)
+    const existingRows = await db
+      .select({ id: gwInstallations.id })
+      .from(gwInstallations)
       .where(
         and(
-          eq(installations.provider, "github"),
-          eq(installations.externalId, installationId),
+          eq(gwInstallations.provider, "github"),
+          eq(gwInstallations.externalId, installationId),
         ),
       )
-      .get();
+      .limit(1);
+
+    const existing = existingRows[0];
 
     if (existing) {
       await db
-        .update(installations)
-        .set({ status: "active", updatedAt: new Date() })
-        .where(eq(installations.id, existing.id));
+        .update(gwInstallations)
+        .set({
+          status: "active",
+          providerAccountInfo: {
+            version: 1,
+            sourceType: "github",
+            installations: [
+              {
+                id: installationId,
+                accountId: installationId,
+                accountLogin: stateData.accountLogin ?? "unknown",
+                accountType: "Organization",
+                avatarUrl: "",
+                permissions: {},
+                installedAt: new Date().toISOString(),
+                lastValidatedAt: new Date().toISOString(),
+              },
+            ],
+          },
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(gwInstallations.id, existing.id));
 
       await notifyConsoleSync({
         installationId: existing.id,
@@ -128,15 +153,31 @@ connections.get("/:provider/callback", async (c) => {
     }
 
     const rows = await db
-      .insert(installations)
+      .insert(gwInstallations)
       .values({
         provider: "github",
         externalId: installationId,
         connectedBy: stateData.connectedBy ?? "unknown",
         orgId: stateData.orgId,
         status: "active",
+        providerAccountInfo: {
+          version: 1,
+          sourceType: "github",
+          installations: [
+            {
+              id: installationId,
+              accountId: installationId,
+              accountLogin: stateData.accountLogin ?? "unknown",
+              accountType: "Organization",
+              avatarUrl: "",
+              permissions: {},
+              installedAt: new Date().toISOString(),
+              lastValidatedAt: new Date().toISOString(),
+            },
+          ],
+        },
       })
-      .returning({ id: installations.id });
+      .returning({ id: gwInstallations.id });
 
     const row = rows[0];
     if (!row) return c.json({ error: "insert_failed" }, 500);
@@ -187,20 +228,40 @@ connections.get("/:provider/callback", async (c) => {
     );
   }
 
+  const externalId =
+    (oauthTokens.raw.team_id as string | undefined)?.toString() ??
+    (oauthTokens.raw.organization_id as string | undefined)?.toString() ??
+    (oauthTokens.raw.installation as string | undefined)?.toString() ??
+    nanoid();
+
+  // Build providerAccountInfo based on provider
+  const providerAccountInfo =
+    provider.name === "vercel"
+      ? ({
+          version: 1 as const,
+          sourceType: "vercel" as const,
+          userId: stateData.connectedBy ?? "unknown",
+          teamId: (oauthTokens.raw.team_id as string | undefined) ?? undefined,
+          teamSlug:
+            (oauthTokens.raw.team_slug as string | undefined) ?? undefined,
+          configurationId: externalId,
+        } as const)
+      : ({
+          version: 1 as const,
+          sourceType: provider.name,
+        } as const);
+
   const installationRows = await db
-    .insert(installations)
+    .insert(gwInstallations)
     .values({
       provider: provider.name,
-      externalId:
-        (oauthTokens.raw.team_id as string | undefined)?.toString() ??
-        (oauthTokens.raw.organization_id as string | undefined)?.toString() ??
-        (oauthTokens.raw.installation as string | undefined)?.toString() ??
-        nanoid(),
+      externalId,
       connectedBy: stateData.connectedBy ?? "unknown",
       orgId: stateData.orgId,
       status: "active",
+      providerAccountInfo,
     })
-    .returning({ id: installations.id });
+    .returning({ id: gwInstallations.id });
 
   const installation = installationRows[0];
   if (!installation) return c.json({ error: "insert_failed" }, 500);
@@ -213,12 +274,12 @@ connections.get("/:provider/callback", async (c) => {
     ? await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY)
     : null;
 
-  await db.insert(tokens).values({
+  await db.insert(gwTokens).values({
     installationId: installation.id,
     accessToken: encryptedAccess,
     refreshToken: encryptedRefresh,
     expiresAt: oauthTokens.expiresIn
-      ? new Date(Date.now() + oauthTokens.expiresIn * 1000)
+      ? new Date(Date.now() + oauthTokens.expiresIn * 1000).toISOString()
       : null,
     tokenType: oauthTokens.tokenType,
     scope: oauthTokens.scope,
@@ -238,39 +299,37 @@ connections.get("/:provider/callback", async (c) => {
       );
 
       await db
-        .update(installations)
+        .update(gwInstallations)
         .set({
           webhookSecret,
           metadata: { webhookId } as Record<string, unknown>,
-          updatedAt: new Date(),
+          updatedAt: new Date().toISOString(),
         })
-        .where(eq(installations.id, installation.id));
+        .where(eq(gwInstallations.id, installation.id));
     } catch (err) {
       await db
-        .update(installations)
+        .update(gwInstallations)
         .set({
           metadata: {
             webhookRegistrationError:
               err instanceof Error ? err.message : "unknown",
           } as Record<string, unknown>,
-          updatedAt: new Date(),
+          updatedAt: new Date().toISOString(),
         })
-        .where(eq(installations.id, installation.id));
+        .where(eq(gwInstallations.id, installation.id));
     }
   }
-
-  const externalId =
-    (oauthTokens.raw.team_id as string | undefined)?.toString() ??
-    (oauthTokens.raw.organization_id as string | undefined)?.toString() ??
-    (oauthTokens.raw.installation as string | undefined)?.toString() ??
-    "";
 
   await notifyConsoleSync({
     installationId: installation.id,
     provider: provider.name,
     orgId: stateData.orgId,
     connectedBy: stateData.connectedBy ?? "unknown",
-    externalId,
+    externalId:
+      (oauthTokens.raw.team_id as string | undefined)?.toString() ??
+      (oauthTokens.raw.organization_id as string | undefined)?.toString() ??
+      (oauthTokens.raw.installation as string | undefined)?.toString() ??
+      "",
   });
 
   return c.json({
@@ -289,11 +348,13 @@ connections.get("/:provider/callback", async (c) => {
 connections.get("/:id/token", apiKeyAuth, async (c) => {
   const id = c.req.param("id");
 
-  const installation = await db
+  const installationRows = await db
     .select()
-    .from(installations)
-    .where(eq(installations.id, id))
-    .get();
+    .from(gwInstallations)
+    .where(eq(gwInstallations.id, id))
+    .limit(1);
+
+  const installation = installationRows[0];
 
   if (!installation) {
     return c.json({ error: "not_found" }, 404);
@@ -328,18 +389,20 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
   }
 
   // OAuth providers: decrypt stored token
-  const tokenRow = await db
+  const tokenRows = await db
     .select()
-    .from(tokens)
-    .where(eq(tokens.installationId, id))
-    .get();
+    .from(gwTokens)
+    .where(eq(gwTokens.installationId, id))
+    .limit(1);
+
+  const tokenRow = tokenRows[0];
 
   if (!tokenRow) {
     return c.json({ error: "no_token_found" }, 404);
   }
 
   // Check expiry and refresh if needed
-  if (tokenRow.expiresAt && tokenRow.expiresAt < new Date()) {
+  if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
     if (!tokenRow.refreshToken) {
       return c.json(
         { error: "token_expired", message: "no refresh token available" },
@@ -347,7 +410,7 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
       );
     }
 
-    const provider = getProvider(installation.provider);
+    const provider = getProvider(installation.provider as ProviderName);
     const decryptedRefresh = await decrypt(
       tokenRow.refreshToken,
       env.ENCRYPTION_KEY,
@@ -363,16 +426,16 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
         : tokenRow.refreshToken;
 
       await db
-        .update(tokens)
+        .update(gwTokens)
         .set({
           accessToken: encryptedAccess,
           refreshToken: newEncryptedRefresh,
           expiresAt: refreshed.expiresIn
-            ? new Date(Date.now() + refreshed.expiresIn * 1000)
+            ? new Date(Date.now() + refreshed.expiresIn * 1000).toISOString()
             : null,
-          updatedAt: new Date(),
+          updatedAt: new Date().toISOString(),
         })
-        .where(eq(tokens.id, tokenRow.id));
+        .where(eq(gwTokens.id, tokenRow.id));
 
       return c.json({
         accessToken: refreshed.accessToken,
@@ -395,7 +458,9 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
     accessToken: decryptedToken,
     provider: installation.provider,
     expiresIn: tokenRow.expiresAt
-      ? Math.floor((tokenRow.expiresAt.getTime() - Date.now()) / 1000)
+      ? Math.floor(
+          (new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000,
+        )
       : null,
   });
 });
@@ -408,8 +473,8 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
 connections.get("/:id", apiKeyAuth, async (c) => {
   const id = c.req.param("id");
 
-  const installation = await db.query.installations.findFirst({
-    where: eq(installations.id, id),
+  const installation = await db.query.gwInstallations.findFirst({
+    where: eq(gwInstallations.id, id),
     with: {
       tokens: {
         columns: {
@@ -420,7 +485,7 @@ connections.get("/:id", apiKeyAuth, async (c) => {
           updatedAt: true,
         },
       },
-      resources: { where: eq(resources.status, "active") },
+      resources: { where: eq(gwResources.status, "active") },
     },
   });
 
@@ -459,11 +524,13 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
   const providerName = c.req.param("provider") as ProviderName;
   const id = c.req.param("id");
 
-  const installation = await db
+  const installationRows = await db
     .select()
-    .from(installations)
-    .where(and(eq(installations.id, id), eq(installations.provider, providerName)))
-    .get();
+    .from(gwInstallations)
+    .where(and(eq(gwInstallations.id, id), eq(gwInstallations.provider, providerName)))
+    .limit(1);
+
+  const installation = installationRows[0];
 
   if (!installation) {
     return c.json({ error: "not_found" }, 404);
@@ -473,11 +540,13 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
 
   // Revoke token at provider (best-effort)
   if (installation.provider !== "github") {
-    const tokenRow = await db
+    const tokenRows = await db
       .select()
-      .from(tokens)
-      .where(eq(tokens.installationId, id))
-      .get();
+      .from(gwTokens)
+      .where(eq(gwTokens.installationId, id))
+      .limit(1);
+
+    const tokenRow = tokenRows[0];
 
     if (tokenRow) {
       try {
@@ -508,25 +577,25 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
 
   // Clean up Redis cache for linked resources
   const linkedResources = await db
-    .select({ providerResourceId: resources.providerResourceId })
-    .from(resources)
-    .where(and(eq(resources.installationId, id), eq(resources.status, "active")));
+    .select({ providerResourceId: gwResources.providerResourceId })
+    .from(gwResources)
+    .where(and(eq(gwResources.installationId, id), eq(gwResources.status, "active")));
 
   for (const r of linkedResources) {
-    await redis.del(resourceKey(installation.provider, r.providerResourceId));
+    await redis.del(resourceKey(installation.provider as ProviderName, r.providerResourceId));
   }
 
   // Mark installation as revoked (soft delete — preserves audit trail)
   await db
-    .update(installations)
-    .set({ status: "revoked", updatedAt: new Date() })
-    .where(eq(installations.id, id));
+    .update(gwInstallations)
+    .set({ status: "revoked", updatedAt: new Date().toISOString() })
+    .where(eq(gwInstallations.id, id));
 
   // Mark resources as removed
   await db
-    .update(resources)
+    .update(gwResources)
     .set({ status: "removed" })
-    .where(eq(resources.installationId, id));
+    .where(eq(gwResources.installationId, id));
 
   await notifyConsoleRemoved({
     installationId: id,
@@ -545,11 +614,13 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
 connections.post("/:id/resources", apiKeyAuth, async (c) => {
   const id = c.req.param("id");
 
-  const installation = await db
+  const installationRows = await db
     .select()
-    .from(installations)
-    .where(eq(installations.id, id))
-    .get();
+    .from(gwInstallations)
+    .where(eq(gwInstallations.id, id))
+    .limit(1);
+
+  const installation = installationRows[0];
 
   if (!installation) {
     return c.json({ error: "not_found" }, 404);
@@ -571,17 +642,19 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
     return c.json({ error: "missing_provider_resource_id" }, 400);
   }
 
-  const existing = await db
-    .select({ id: resources.id })
-    .from(resources)
+  const existingRows = await db
+    .select({ id: gwResources.id })
+    .from(gwResources)
     .where(
       and(
-        eq(resources.installationId, id),
-        eq(resources.providerResourceId, body.providerResourceId),
-        eq(resources.status, "active"),
+        eq(gwResources.installationId, id),
+        eq(gwResources.providerResourceId, body.providerResourceId),
+        eq(gwResources.status, "active"),
       ),
     )
-    .get();
+    .limit(1);
+
+  const existing = existingRows[0];
 
   if (existing) {
     return c.json(
@@ -591,7 +664,7 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
   }
 
   const resourceRows = await db
-    .insert(resources)
+    .insert(gwResources)
     .values({
       installationId: id,
       providerResourceId: body.providerResourceId,
@@ -604,7 +677,7 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
   if (!resource) return c.json({ error: "insert_failed" }, 500);
 
   // Populate Redis routing cache
-  await redis.hset(resourceKey(installation.provider, body.providerResourceId), {
+  await redis.hset(resourceKey(installation.provider as ProviderName, body.providerResourceId), {
     connectionId: id,
     orgId: installation.orgId,
   });
@@ -628,11 +701,13 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
   const id = c.req.param("id");
   const resourceId = c.req.param("resourceId");
 
-  const resource = await db
+  const resourceRows = await db
     .select()
-    .from(resources)
-    .where(and(eq(resources.id, resourceId), eq(resources.installationId, id)))
-    .get();
+    .from(gwResources)
+    .where(and(eq(gwResources.id, resourceId), eq(gwResources.installationId, id)))
+    .limit(1);
+
+  const resource = resourceRows[0];
 
   if (!resource) {
     return c.json({ error: "not_found" }, 404);
@@ -643,19 +718,21 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
   }
 
   await db
-    .update(resources)
+    .update(gwResources)
     .set({ status: "removed" })
-    .where(eq(resources.id, resourceId));
+    .where(eq(gwResources.id, resourceId));
 
-  const installation = await db
-    .select({ provider: installations.provider })
-    .from(installations)
-    .where(eq(installations.id, id))
-    .get();
+  const installationRows = await db
+    .select({ provider: gwInstallations.provider })
+    .from(gwInstallations)
+    .where(eq(gwInstallations.id, id))
+    .limit(1);
+
+  const installation = installationRows[0];
 
   if (installation) {
     await redis.del(
-      resourceKey(installation.provider, resource.providerResourceId),
+      resourceKey(installation.provider as ProviderName, resource.providerResourceId),
     );
   }
 

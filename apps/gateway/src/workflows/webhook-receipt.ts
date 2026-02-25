@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { installations, resources } from "@db/gateway/schema";
+import { gwInstallations, gwResources } from "@db/console/schema";
 import { serve } from "@vendor/upstash-workflow/hono";
 import { gatewayBaseUrl } from "../lib/base-url";
 import { db } from "../lib/db";
@@ -45,7 +45,7 @@ export const webhookReceiptWorkflow = serve<WebhookReceiptPayload>(
       return;
     }
 
-    // Step 2: Resolve connection from resource ID (Redis cache → Turso fallthrough)
+    // Step 2: Resolve connection from resource ID (Redis cache → PlanetScale fallthrough)
     const connectionInfo = await context.run<ConnectionInfo | null>(
       "resolve-connection",
       async () => {
@@ -59,22 +59,23 @@ export const webhookReceiptWorkflow = serve<WebhookReceiptPayload>(
           return { connectionId: cached.connectionId, orgId: cached.orgId };
         }
 
-        // Fallthrough to Turso
-        const row = await db
+        // Fallthrough to PlanetScale
+        const rows = await db
           .select({
-            installationId: resources.installationId,
-            orgId: installations.orgId,
+            installationId: gwResources.installationId,
+            orgId: gwInstallations.orgId,
           })
-          .from(resources)
-          .innerJoin(installations, eq(resources.installationId, installations.id))
+          .from(gwResources)
+          .innerJoin(gwInstallations, eq(gwResources.installationId, gwInstallations.id))
           .where(
             and(
-              eq(resources.providerResourceId, data.resourceId),
-              eq(resources.status, "active"),
+              eq(gwResources.providerResourceId, data.resourceId),
+              eq(gwResources.status, "active"),
             ),
           )
-          .get();
+          .limit(1);
 
+        const row = rows[0];
         if (!row) return null;
 
         // Populate Redis cache for next time

@@ -5,7 +5,12 @@ import { db } from "../lib/db";
 import { apiKeyAuth } from "../middleware/auth";
 import { resourceKey } from "../lib/keys";
 import { redis } from "../lib/redis";
-import { installations, resources, webhookDeliveries } from "@db/gateway/schema";
+import type { ProviderName } from "../providers/types";
+import {
+  gwInstallations,
+  gwResources,
+  gwWebhookDeliveries,
+} from "@db/console/schema";
 
 const admin = new Hono();
 
@@ -14,11 +19,11 @@ const startTime = Date.now();
 /**
  * GET /admin/health
  *
- * Health check endpoint. Checks Redis connectivity.
+ * Health check endpoint. Checks Redis and PlanetScale connectivity.
  */
 admin.get("/health", async (c) => {
   let redisStatus = "unknown";
-  let tursoStatus = "unknown";
+  let databaseStatus = "unknown";
 
   try {
     await redis.ping();
@@ -28,19 +33,19 @@ admin.get("/health", async (c) => {
   }
 
   try {
-    await db.run(sql`SELECT 1`);
-    tursoStatus = "connected";
+    await db.execute(sql`SELECT 1`);
+    databaseStatus = "connected";
   } catch {
-    tursoStatus = "error";
+    databaseStatus = "error";
   }
 
-  const allHealthy = redisStatus === "connected" && tursoStatus === "connected";
+  const allHealthy = redisStatus === "connected" && databaseStatus === "connected";
 
   return c.json(
     {
       status: allHealthy ? "ok" : "degraded",
       redis: redisStatus,
-      turso: tursoStatus,
+      database: databaseStatus,
       uptime_ms: Date.now() - startTime,
     },
     allHealthy ? 200 : 503,
@@ -50,26 +55,24 @@ admin.get("/health", async (c) => {
 /**
  * POST /admin/cache/rebuild
  *
- * Rebuild Redis cache from Console API (PlanetScale source of truth).
+ * Rebuild Redis cache from PlanetScale (source of truth).
  * Requires X-API-Key authentication.
- *
- * Phase 9 implementation pending.
  */
 admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
   const activeResources = await db
     .select({
-      provider: installations.provider,
-      providerResourceId: resources.providerResourceId,
-      installationId: resources.installationId,
-      orgId: installations.orgId,
+      provider: gwInstallations.provider,
+      providerResourceId: gwResources.providerResourceId,
+      installationId: gwResources.installationId,
+      orgId: gwInstallations.orgId,
     })
-    .from(resources)
-    .innerJoin(installations, eq(resources.installationId, installations.id))
-    .where(eq(resources.status, "active"));
+    .from(gwResources)
+    .innerJoin(gwInstallations, eq(gwResources.installationId, gwInstallations.id))
+    .where(eq(gwResources.status, "active"));
 
   let rebuilt = 0;
   for (const r of activeResources) {
-    await redis.hset(resourceKey(r.provider, r.providerResourceId), {
+    await redis.hset(resourceKey(r.provider as ProviderName, r.providerResourceId), {
       connectionId: r.installationId,
       orgId: r.orgId,
     });
@@ -83,8 +86,6 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
  * GET /admin/dlq
  *
  * List messages in the webhook DLQ. Requires X-API-Key authentication.
- *
- * Phase 9 implementation pending.
  */
 admin.get("/dlq", apiKeyAuth, async (c) => {
   const limit = parseInt(c.req.query("limit") ?? "50", 10);
@@ -92,11 +93,11 @@ admin.get("/dlq", apiKeyAuth, async (c) => {
 
   const dlqItems = await db
     .select()
-    .from(webhookDeliveries)
-    .where(eq(webhookDeliveries.status, "dlq"))
+    .from(gwWebhookDeliveries)
+    .where(eq(gwWebhookDeliveries.status, "dlq"))
     .limit(limit)
     .offset(offset)
-    .orderBy(webhookDeliveries.receivedAt);
+    .orderBy(gwWebhookDeliveries.receivedAt);
 
   return c.json({ items: dlqItems, limit, offset });
 });

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { upstashEnv } from "@vendor/upstash/env";
 import { qstashEnv } from "@vendor/qstash/env";
-import { env as dbEnv } from "@db/gateway/env";
+import { dbEnv } from "@vendor/db/env";
 
 export const env = createEnv({
   extends: [vercel(), upstashEnv, qstashEnv, dbEnv],

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { installations } from "@db/gateway/schema";
+import { gwInstallations } from "@db/console/schema";
 import { env } from "../env";
 import type { ProviderName } from "../providers/types";
 import { db } from "./db";
@@ -28,16 +28,17 @@ export function getWebhookSecret(
 }
 
 /**
- * Get per-connection webhook secret from Turso.
+ * Get per-connection webhook secret from PlanetScale.
  * Used for providers that support per-connection webhook secrets (Linear, Sentry).
  */
 export async function getConnectionWebhookSecret(
   installationId: string,
 ): Promise<string | null> {
-  const row = await db
-    .select({ webhookSecret: installations.webhookSecret })
-    .from(installations)
-    .where(eq(installations.id, installationId))
-    .get();
-  return row?.webhookSecret ?? null;
+  const rows = await db
+    .select({ webhookSecret: gwInstallations.webhookSecret })
+    .from(gwInstallations)
+    .where(eq(gwInstallations.id, installationId))
+    .limit(1);
+
+  return rows[0]?.webhookSecret ?? null;
 }
