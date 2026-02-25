@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 
@@ -13,5 +14,15 @@ export function getMigrationsPath(): string {
   // schemaPath resolves to db/console/src/schema/index.ts
   // dirname twice: schema/index.ts → schema/ → src/
   const srcDir = dirname(dirname(schemaPath));
-  return join(srcDir, "migrations");
+  const migrationsDir = join(srcDir, "migrations");
+
+  if (!existsSync(migrationsDir)) {
+    throw new Error(
+      `Migrations directory not found at ${migrationsDir}. ` +
+        `@db/console/schema resolved to ${schemaPath} — ` +
+        `verify the export map in @db/console/package.json still points into src/.`,
+    );
+  }
+
+  return migrationsDir;
 }
