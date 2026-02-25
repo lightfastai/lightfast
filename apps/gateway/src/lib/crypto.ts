@@ -70,6 +70,9 @@ export function timingSafeEqual(a: string, b: string): boolean {
 // Helpers
 
 function hexToBytes(hex: string): Uint8Array<ArrayBuffer> {
+  if (hex.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(hex)) {
+    throw new Error("hexToBytes: invalid hex string");
+  }
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
     bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
