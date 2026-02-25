@@ -25,12 +25,12 @@ import type {
  */
 async function verifyInstallationAccess(
   userId: string,
-  integrationId: string,
+  installationId: string,
   db: ResourceOwnershipContext["db"]
 ): Promise<ResourceOwnershipResult> {
   try {
     const installation = await db.query.gwInstallations.findFirst({
-      where: eq(gwInstallations.id, integrationId),
+      where: eq(gwInstallations.id, installationId),
     });
 
     if (!installation) {
