@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
@@ -37,8 +37,19 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
   // true at mount time (useSuspenseQuery has prefetched data server-side), so we
   // can derive the initial value directly without a synchronous effect.
   const [showProjectSelector, setShowProjectSelector] = useState(() => autoOpen && isConnected);
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Clean up polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+    };
+  }, []);
 
   const handleConnectVercel = async () => {
+    setConnectError(null);
+
     try {
       const data = await queryClient.fetchQuery(
         trpc.connections.getAuthorizeUrl.queryOptions({ provider: "vercel" }),
@@ -55,15 +66,22 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
         `width=${width},height=${height},left=${left},top=${top},popup=1`
       );
 
+      if (!popup) {
+        setConnectError("Popup was blocked. Please allow popups for this site and try again.");
+        return;
+      }
+
       // Poll for popup close
-      const pollTimer = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(pollTimer);
+      pollTimerRef.current = setInterval(() => {
+        if (popup.closed) {
+          if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+          pollTimerRef.current = null;
           void refetch();
         }
       }, 500);
-    } catch {
-      // Failed to get authorize URL
+    } catch (err) {
+      console.error("Failed to get Vercel authorize URL:", err);
+      setConnectError("Failed to start Vercel authorization. Please try again.");
     }
   };
 
@@ -78,6 +96,9 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
           <IntegrationIcons.vercel className="h-4 w-4 mr-2" />
           Connect Vercel
         </Button>
+        {connectError && (
+          <p className="text-sm text-destructive mt-2">{connectError}</p>
+        )}
       </div>
     );
   }
