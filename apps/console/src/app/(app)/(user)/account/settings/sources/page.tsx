@@ -25,7 +25,7 @@ import { SourcesListLoading } from "./_components/sources-list-loading";
  * 4. Suspense shows loading state during hydration
  */
 export default function SourcesSettingsPage() {
-	// Prefetch user's personal integrations
+	// Prefetch org-level connections
 	// CRITICAL: This must happen BEFORE HydrateClient wrapping
 	prefetch(orgTrpc.connections.list.queryOptions());
 

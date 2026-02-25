@@ -36,10 +36,6 @@ connections.get("/:provider/authorize", tenantMiddleware, async (c) => {
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
 
-  if (!orgId) {
-    return c.json({ error: "missing_org_id" }, 400);
-  }
-
   const state = nanoid();
   const connectedBy = c.req.header("X-User-Id") ?? "unknown";
 

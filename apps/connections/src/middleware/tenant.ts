@@ -17,9 +17,10 @@ export const tenantMiddleware: MiddlewareHandler = createMiddleware<{
 }>(async (c, next) => {
   const orgId = c.req.header("X-Org-Id") ?? c.req.query("org_id");
 
-  if (orgId) {
-    c.set("orgId", orgId);
+  if (!orgId) {
+    return c.json({ error: "missing_org_id" }, 400);
   }
 
+  c.set("orgId", orgId);
   await next();
 });
