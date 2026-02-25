@@ -107,5 +107,23 @@ describe("GitHubProvider", () => {
         installations: [expect.objectContaining({ accountLogin: "unknown" })],
       });
     });
+
+    it("uses accountType from stateData", () => {
+      const info = provider.buildAccountInfo({
+        installationId: "inst-42",
+        accountLogin: "my-user",
+        accountType: "User",
+      });
+      expect(info).toMatchObject({
+        installations: [expect.objectContaining({ accountType: "User" })],
+      });
+    });
+
+    it("defaults accountType to 'unknown' when not provided", () => {
+      const info = provider.buildAccountInfo({ installationId: "inst-1" });
+      expect(info).toMatchObject({
+        installations: [expect.objectContaining({ accountType: "unknown" })],
+      });
+    });
   });
 });
