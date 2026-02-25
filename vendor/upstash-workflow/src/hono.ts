@@ -1,6 +1,6 @@
 import { serve as upstashServe } from "@upstash/workflow/hono";
 import type { Context } from "hono";
-import type { WorkflowHandler } from "./types";
+import type { WorkflowContext, WorkflowHandler } from "./types";
 
 /**
  * Create a Hono route handler for a workflow
@@ -25,7 +25,7 @@ import type { WorkflowHandler } from "./types";
  * ```
  */
 export function serve<TPayload = unknown>(
-  handler: WorkflowHandler,
+  handler: WorkflowHandler<TPayload>,
   options?: {
     /**
      * Enable verbose logging
@@ -52,7 +52,7 @@ export function serve<TPayload = unknown>(
     }) => Promise<void>;
   },
 ): (ctx: Context) => Promise<Response> {
-  const wrappedHandler: WorkflowHandler = async (context) => {
+  const wrappedHandler = async (context: WorkflowContext<TPayload>) => {
     try {
       if (options?.verbose) {
         console.log("[Workflow] Starting workflow execution", {

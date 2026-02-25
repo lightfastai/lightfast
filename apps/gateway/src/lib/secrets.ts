@@ -1,6 +1,7 @@
 import { env } from "../env";
-import { redis } from "./redis";
+import type { SourceType } from "../providers/types";
 import { connectionKey } from "./keys";
+import { redis } from "./redis";
 
 /**
  * Resolve the webhook signing secret for a provider.
@@ -10,7 +11,7 @@ import { connectionKey } from "./keys";
  * Sentry uses a per-integration client secret.
  */
 export function getWebhookSecret(
-  provider: string,
+  provider: SourceType,
   _connectionId?: string,
 ): Promise<string> {
   switch (provider) {
@@ -22,10 +23,12 @@ export function getWebhookSecret(
       return Promise.resolve(env.LINEAR_WEBHOOK_SIGNING_SECRET);
     case "sentry":
       return Promise.resolve(env.SENTRY_CLIENT_SECRET);
-    default:
-      return Promise.reject(
-        new Error(`No webhook secret configured for provider: ${provider}`),
+    default: {
+      const _exhaustive: never = provider;
+      throw new Error(
+        `No webhook secret configured for provider: ${String(_exhaustive)}`,
       );
+    }
   }
 }
 

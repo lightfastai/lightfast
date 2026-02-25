@@ -3,9 +3,9 @@ import { GitHubProvider } from "./github";
 import { LinearProvider } from "./linear";
 import { SentryProvider } from "./sentry";
 import { VercelProvider } from "./vercel";
-import type { ConnectionProvider } from "./types";
+import type { ConnectionProvider, SourceType } from "./types";
 
-export type { ConnectionProvider };
+export type { ConnectionProvider, SourceType };
 
 const providers = new Map<string, ConnectionProvider>([
   ["github", new GitHubProvider()],

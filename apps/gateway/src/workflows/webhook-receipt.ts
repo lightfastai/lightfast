@@ -23,7 +23,7 @@ interface ConnectionInfo {
  */
 export const webhookReceiptWorkflow = serve<WebhookReceiptPayload>(
   async (context) => {
-    const data = context.requestPayload as WebhookReceiptPayload;
+    const data = context.requestPayload;
 
     // Step 1: Deduplication — SET NX (only if not exists), TTL 24h
     // Returns true if this is a duplicate (key already existed).

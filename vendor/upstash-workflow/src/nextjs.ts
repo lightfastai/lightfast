@@ -1,5 +1,5 @@
 import { serve as upstashServe } from "@upstash/workflow/nextjs";
-import type { WorkflowHandler } from "./types";
+import type { WorkflowContext, WorkflowHandler } from "./types";
 
 /**
  * Create a Next.js API route handler for a workflow
@@ -28,7 +28,7 @@ import type { WorkflowHandler } from "./types";
  * ```
  */
 export function serve<TPayload = unknown>(
-  handler: WorkflowHandler,
+  handler: WorkflowHandler<TPayload>,
   options?: {
     /**
      * Enable verbose logging
@@ -42,7 +42,7 @@ export function serve<TPayload = unknown>(
   },
 ) {
   // Wrap handler with error logging
-  const wrappedHandler: WorkflowHandler = async (context) => {
+  const wrappedHandler = async (context: WorkflowContext<TPayload>) => {
     try {
       if (options?.verbose) {
         console.log("[Workflow] Starting workflow execution", {

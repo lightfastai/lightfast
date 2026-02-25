@@ -1,3 +1,7 @@
+import type { SourceType } from "@repo/console-validation";
+
+export type { SourceType };
+
 export interface OAuthTokens {
   accessToken: string;
   refreshToken?: string;
@@ -14,7 +18,7 @@ export interface ProviderOptions {
 }
 
 export interface ConnectionProvider {
-  readonly name: string;
+  readonly name: SourceType;
   readonly requiresWebhookRegistration: boolean;
 
   // OAuth

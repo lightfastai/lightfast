@@ -3,6 +3,7 @@
  *
  * All keys are namespaced under `gw:` to avoid collisions.
  */
+import type { SourceType } from "../providers/types";
 
 /** Connection state keyed by connection ID */
 export const connectionKey = (id: string) => `gw:connection:${id}`;
@@ -12,11 +13,11 @@ export const orgConnectionsKey = (orgId: string) =>
   `gw:org:${orgId}:connections`;
 
 /** Provider account → connection mapping */
-export const providerAccountKey = (provider: string, accountId: string) =>
+export const providerAccountKey = (provider: SourceType, accountId: string) =>
   `gw:provider:${provider}:account:${accountId}`;
 
 /** Resource → connection mapping (for webhook routing) */
-export const resourceKey = (provider: string, resourceId: string) =>
+export const resourceKey = (provider: SourceType, resourceId: string) =>
   `gw:resource:${provider}:${resourceId}`;
 
 /** Set of resource IDs linked to a connection */
@@ -27,5 +28,5 @@ export const connectionResourcesKey = (connId: string) =>
 export const oauthStateKey = (token: string) => `gw:oauth:state:${token}`;
 
 /** Deduplication key for received webhooks (TTL 86400s) */
-export const webhookSeenKey = (provider: string, deliveryId: string) =>
+export const webhookSeenKey = (provider: SourceType, deliveryId: string) =>
   `gw:webhook:seen:${provider}:${deliveryId}`;
