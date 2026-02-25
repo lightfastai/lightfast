@@ -20,6 +20,7 @@ export const gwResources = pgTable(
     status: varchar("status", { length: 50 }).notNull(), // active|removed
 
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     installationIdIdx: index("gw_res_installation_id_idx").on(table.installationId),
