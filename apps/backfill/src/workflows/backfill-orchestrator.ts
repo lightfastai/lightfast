@@ -76,10 +76,10 @@ export const backfillOrchestrator = inngest.createFunction(
         ? entityTypes
         : connector.defaultEntityTypes;
 
-    // Compute `since` once — all work units use the same time window
-    const since = new Date(
-      Date.now() - depth * 24 * 60 * 60 * 1000,
-    ).toISOString();
+    // Compute `since` inside a step so it's deterministic across retries/replays
+    const since = await step.run("compute-since", () =>
+      new Date(Date.now() - depth * 24 * 60 * 60 * 1000).toISOString(),
+    );
 
     // ── Step 3: Enumerate work units (resource x entityType) ──
     const workUnits = connection.resources.flatMap((resource) =>
