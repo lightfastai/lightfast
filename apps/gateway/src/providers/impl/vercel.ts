@@ -6,6 +6,8 @@ import type {
   WebhookPayload,
 } from "../types";
 
+// Vercel webhooks use HMAC-SHA1 (not SHA-256). This is imposed by Vercel's
+// webhook infrastructure — see https://vercel.com/docs/webhooks/webhooks-api
 const SIGNATURE_HEADER = "x-vercel-signature";
 const DELIVERY_HEADER = "x-vercel-id";
 
