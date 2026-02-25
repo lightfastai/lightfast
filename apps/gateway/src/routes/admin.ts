@@ -111,18 +111,26 @@ admin.get("/dlq", apiKeyAuth, async (c) => {
  * Phase 9 implementation pending.
  */
 admin.post("/dlq/replay", apiKeyAuth, async (c) => {
-  const body = await c.req.json<{ deliveryIds?: string[] }>();
+  let body: { deliveryIds?: string[] };
+  try {
+    body = await c.req.json<{ deliveryIds?: string[] }>();
+  } catch {
+    return c.json({ error: "invalid_json" }, 400);
+  }
 
   if (!body.deliveryIds?.length) {
     return c.json({ error: "missing_delivery_ids" }, 400);
   }
 
-  return c.json({
-    status: "not_yet_implemented",
-    message:
-      "DLQ replay requires webhook payload storage — planned for audit enhancement",
-    requestedIds: body.deliveryIds,
-  });
+  return c.json(
+    {
+      status: "not_yet_implemented",
+      message:
+        "DLQ replay requires webhook payload storage — planned for audit enhancement",
+      requestedIds: body.deliveryIds,
+    },
+    501,
+  );
 });
 
 /**
