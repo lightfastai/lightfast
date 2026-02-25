@@ -49,11 +49,11 @@ describe("timingSafeEqual", () => {
   });
 
   it("returns false for different lengths", () => {
-    expect(timingSafeEqual("short", "longer-string")).toBe(false);
+    expect(timingSafeEqual("abcd", "abcdef1234")).toBe(false);
   });
 
   it("returns false for empty vs non-empty", () => {
-    expect(timingSafeEqual("", "a")).toBe(false);
+    expect(timingSafeEqual("", "ab")).toBe(false);
   });
 
   it("returns true for two empty strings", () => {

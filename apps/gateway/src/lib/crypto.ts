@@ -55,16 +55,15 @@ export async function computeHmacSha1(
  * Timing-safe comparison of two hex strings.
  */
 export function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
+  const aBytes = hexToBytes(a);
+  const bBytes = hexToBytes(b);
 
-  const aBytes = hexToBytes(a.padEnd(64, "0").slice(0, 64));
-  const bBytes = hexToBytes(b.padEnd(64, "0").slice(0, 64));
-
-  let result = 0;
-  for (let i = 0; i < aBytes.length; i++) {
+  let result = aBytes.length ^ bBytes.length;
+  const maxLen = Math.max(aBytes.length, bBytes.length);
+  for (let i = 0; i < maxLen; i++) {
     result |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
   }
-  return result === 0 && a === b;
+  return result === 0;
 }
 
 /**
