@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { encrypt, decrypt } from "./crypto";
 
-const TEST_KEY = "a]b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2";
+const TEST_KEY = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2";
 
 describe("crypto", () => {
   it("round-trips plaintext through encrypt → decrypt", async () => {
