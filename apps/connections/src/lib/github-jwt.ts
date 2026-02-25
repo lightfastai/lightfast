@@ -55,11 +55,14 @@ export async function getInstallationToken(
 
   if (!response.ok) {
     throw new Error(
-      `GitHub installation token request failed: ${response.status} ${await response.text()}`,
+      `GitHub installation token request failed: ${response.status}`,
     );
   }
 
-  const data = (await response.json()) as { token: string };
+  const data = (await response.json()) as Record<string, unknown>;
+  if (typeof data.token !== "string" || data.token.length === 0) {
+    throw new Error("GitHub installation token response missing valid token");
+  }
   return data.token;
 }
 
