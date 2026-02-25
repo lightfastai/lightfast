@@ -173,7 +173,16 @@
       "Read(//tmp/repos/humanlayer/.claude/commands/**)",
       "Read(//private/tmp/repos/humanlayer/.claude/commands/**)",
       "mcp__exa__web_search_exa",
-      "Bash(pnpm --filter @repo/console-validation build:*)"
+      "Bash(pnpm --filter @repo/console-validation build:*)",
+      "Bash(pnpm --filter:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm start:*)",
+      "Bash(pnpm why:*)",
+      "Bash(pnpm outdated:*)",
+      "Bash(pnpm info:*)",
+      "Bash(SKIP_ENV_VALIDATION=true pnpm build:*)",
+      "Bash(SKIP_ENV_VALIDATION=true pnpm typecheck:*)",
+      "Bash(SKIP_ENV_VALIDATION=true pnpm --filter:*)"
     ],
     "deny": []
   },
