@@ -22,7 +22,7 @@ export async function getInstallationToken(installationId: string): Promise<stri
 
 /**
  * Get a decrypted access token along with provider info for an installation.
- * For providers with refresh tokens, refreshes inline if expired.
+ * Reads and decrypts the stored token and returns the provider.
  */
 export async function getInstallationTokenWithRefresh(
   installationId: string,
