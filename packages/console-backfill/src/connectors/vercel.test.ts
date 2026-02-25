@@ -147,8 +147,9 @@ describe("fetchPage — deployment", () => {
     );
 
     const result = await vercelBackfillConnector.fetchPage(config, "deployment", null);
-    // The project name in the adapted payload should be the providerResourceId
     expect(result.events).toHaveLength(1);
+    const payload = result.events[0]!.payload as { payload: { project: { name: string } } };
+    expect(payload.payload.project.name).toBe("prj-fallback");
   });
 
   it("rate limit headers parsed from response", async () => {
