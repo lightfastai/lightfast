@@ -5,8 +5,10 @@ import { env } from "../env";
  * Gateway base URL derived from Vercel system environment variables.
  */
 export const gatewayBaseUrl = (() => {
-  if (env.VERCEL_ENV === "preview" && env.VERCEL_URL) {
-    return `https://${env.VERCEL_URL}`;
+  if (env.VERCEL_ENV === "preview") {
+    return env.VERCEL_URL
+      ? `https://${env.VERCEL_URL}`
+      : "http://localhost:4108";
   }
 
   if (env.VERCEL_PROJECT_PRODUCTION_URL) {
