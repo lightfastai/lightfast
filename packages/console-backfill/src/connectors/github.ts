@@ -84,6 +84,7 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
         Authorization: `Bearer ${config.accessToken}`,
         Accept: "application/vnd.github.v3+json",
       },
+      signal: AbortSignal.timeout(30_000),
     });
 
     if (!response.ok) {
@@ -131,6 +132,7 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
         Authorization: `Bearer ${config.accessToken}`,
         Accept: "application/vnd.github.v3+json",
       },
+      signal: AbortSignal.timeout(30_000),
     });
 
     if (!response.ok) {
@@ -175,6 +177,7 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
         Authorization: `Bearer ${config.accessToken}`,
         Accept: "application/vnd.github.v3+json",
       },
+      signal: AbortSignal.timeout(30_000),
     });
 
     if (!response.ok) {
