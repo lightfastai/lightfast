@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { Github } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useWorkspaceForm } from "./workspace-form-provider";
 import { RepositoryPicker } from "./repository-picker";
@@ -91,6 +92,19 @@ export function GitHubConnector() {
     }
   }, [installations, selectedInstallation, setSelectedInstallation]);
 
+  // Ref for popup poll timer so we can clean it up on unmount
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Clear poll timer on unmount to prevent refetch on unmounted component
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, []);
+
   // Handle GitHub App installation in popup
   const handleConnectGitHub = async () => {
     try {
@@ -114,15 +128,24 @@ export function GitHubConnector() {
         return;
       }
 
+      // Clear any existing poll timer before starting a new one
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+      }
+
       // Poll for popup close to refetch integration
-      const pollTimer = setInterval(() => {
+      pollTimerRef.current = setInterval(() => {
         if (popup.closed) {
-          clearInterval(pollTimer);
+          if (pollTimerRef.current) {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+          }
           void refetchIntegration();
         }
       }, 500);
-    } catch {
-      // Failed to get authorize URL
+    } catch (error) {
+      console.error("Failed to get GitHub authorize URL:", error);
+      toast.error("Failed to connect to GitHub. Please try again.");
     }
   };
 
