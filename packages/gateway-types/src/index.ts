@@ -20,4 +20,4 @@ export type {
   ProviderOptions,
 } from "./interfaces";
 
-export type { WebhookReceiptPayload } from "./webhooks";
+export type { WebhookReceiptPayload, WebhookEnvelope } from "./webhooks";
