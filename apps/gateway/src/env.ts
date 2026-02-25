@@ -4,9 +4,10 @@ import { z } from "zod";
 
 import { upstashEnv } from "@vendor/upstash/env";
 import { qstashEnv } from "@vendor/qstash/env";
+import { env as dbEnv } from "@db/gateway/env";
 
 export const env = createEnv({
-  extends: [vercel(), upstashEnv, qstashEnv],
+  extends: [vercel(), upstashEnv, qstashEnv, dbEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -38,10 +39,6 @@ export const env = createEnv({
     // Sentry
     SENTRY_CLIENT_ID: z.string().min(1),
     SENTRY_CLIENT_SECRET: z.string().min(1),
-
-    // Turso (gateway database)
-    TURSO_DATABASE_URL: z.string().min(1),
-    TURSO_AUTH_TOKEN: z.string().min(1),
 
     // GitHub App (private key for installation token generation)
     GITHUB_PRIVATE_KEY: z.string().min(1),
