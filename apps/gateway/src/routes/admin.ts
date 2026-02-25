@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { db } from "@db/console/client";
 import { apiKeyAuth } from "../middleware/auth";
 import { redis } from "@vendor/upstash";
-import { resourceKey } from "../lib/cache";
+import { resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache";
 import type { ProviderName } from "../providers/types";
 import {
   gwInstallations,
@@ -72,10 +72,11 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
 
   let rebuilt = 0;
   for (const r of activeResources) {
-    await redis.hset(
-      resourceKey(r.provider as ProviderName, r.providerResourceId),
-      { connectionId: r.installationId, orgId: r.orgId },
-    );
+    const key = resourceKey(r.provider as ProviderName, r.providerResourceId);
+    const pipeline = redis.pipeline();
+    pipeline.hset(key, { connectionId: r.installationId, orgId: r.orgId });
+    pipeline.expire(key, RESOURCE_CACHE_TTL);
+    await pipeline.exec();
     rebuilt++;
   }
 

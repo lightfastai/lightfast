@@ -4,7 +4,7 @@ import { serve } from "@vendor/upstash-workflow/hono";
 import { getQStashClient } from "@vendor/qstash";
 import { gatewayBaseUrl, consoleUrl } from "../lib/urls";
 import { db } from "@db/console/client";
-import { webhookSeenKey, resourceKey } from "../lib/cache";
+import { webhookSeenKey, resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache";
 import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload } from "@repo/gateway-types";
 
@@ -79,11 +79,12 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
         const row = rows[0];
         if (!row) return null;
 
-        // Populate Redis cache for next time
-        await redis.hset(
-          resourceKey(data.provider, data.resourceId),
-          { connectionId: row.installationId, orgId: row.orgId },
-        );
+        // Populate Redis cache for next time (with TTL to prevent stale mappings)
+        const key = resourceKey(data.provider, data.resourceId);
+        const pipeline = redis.pipeline();
+        pipeline.hset(key, { connectionId: row.installationId, orgId: row.orgId });
+        pipeline.expire(key, RESOURCE_CACHE_TTL);
+        await pipeline.exec();
 
         return { connectionId: row.installationId, orgId: row.orgId };
       },

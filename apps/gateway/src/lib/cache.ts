@@ -9,6 +9,9 @@ import type { SourceType } from "@repo/console-validation";
 export const resourceKey = (provider: SourceType, resourceId: string) =>
   `gw:resource:${provider}:${resourceId}`;
 
+/** TTL for resource → connection cache entries (24 hours) */
+export const RESOURCE_CACHE_TTL = 86400;
+
 /** Deduplication key for received webhooks (TTL 86400s) */
 export const webhookSeenKey = (provider: SourceType, deliveryId: string) =>
   `gw:webhook:seen:${provider}:${deliveryId}`;
