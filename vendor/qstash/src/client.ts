@@ -94,11 +94,15 @@ export class QStashClient {
 }
 
 let clientInstance: QStashClient | null = null;
+let currentToken: string | undefined;
 
 /**
  * Get or create the default QStash client singleton
  */
 export function getQStashClient(token?: string): QStashClient {
-  clientInstance ??= new QStashClient(token);
+  if (!clientInstance || (token && token !== currentToken)) {
+    clientInstance = new QStashClient(token);
+    currentToken = token;
+  }
   return clientInstance;
 }
