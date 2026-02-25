@@ -24,7 +24,7 @@
     "html_url": "https://github.com/acme-org/my-repo",
     "description": "Main application repository",
     "fork": false,
-    "url": "https://github.com/acme-org/my-repo",
+    "url": "https://api.github.com/repos/acme-org/my-repo",
     "clone_url": "https://github.com/acme-org/my-repo.git",
     "ssh_url": "git@github.com:acme-org/my-repo.git",
     "default_branch": "main",
