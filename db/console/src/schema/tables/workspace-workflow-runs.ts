@@ -179,12 +179,6 @@ export const workspaceWorkflowRuns = pgTable(
 export type {
   WorkflowInput,
   WorkflowOutput,
-  SourceConnectedGitHubInput,
-  SourceConnectedGitHubOutputSuccess,
-  SourceConnectedGitHubOutputFailure,
-  SourceSyncGitHubInput,
-  SourceSyncGitHubOutputSuccess,
-  SourceSyncGitHubOutputFailure,
   GitHubSourceMetadata,
 } from "@repo/console-validation";
 
