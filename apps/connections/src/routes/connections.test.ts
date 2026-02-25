@@ -78,6 +78,11 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
   getWorkflowClient: () => ({ trigger: mockWorkflowTrigger }),
 }));
 
+// Chain-mock: ignores table/column/condition context so results are purely
+// order-dependent (mockResolvedValueOnce). If query shapes change, assertions
+// may silently pass with wrong data. Full query correctness is covered by
+// PGlite-backed integration tests. If stronger unit-test guarantees are needed,
+// replace with table/condition-aware stubs.
 vi.mock("@db/console/client", () => ({
   db: {
     query: {
