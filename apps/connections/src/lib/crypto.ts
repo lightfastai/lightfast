@@ -6,12 +6,18 @@
 
 const ALGORITHM = "AES-GCM";
 const IV_LENGTH = 12; // 96-bit IV for GCM
+const EXPECTED_HEX_LENGTH = 64; // 64 hex chars = 32 bytes = 256 bits for AES-256
 
 /**
  * Derive an AES-GCM CryptoKey from a hex-encoded secret
  */
 async function deriveKey(hexSecret: string): Promise<CryptoKey> {
-  const keyBytes = hexToBytes(hexSecret.padEnd(64, "0").slice(0, 64));
+  if (hexSecret.length !== EXPECTED_HEX_LENGTH) {
+    throw new Error(
+      `Encryption key must be exactly ${EXPECTED_HEX_LENGTH} hex characters (256-bit), got ${hexSecret.length}`,
+    );
+  }
+  const keyBytes = hexToBytes(hexSecret);
   return crypto.subtle.importKey("raw", keyBytes, { name: ALGORITHM }, false, [
     "encrypt",
     "decrypt",
@@ -68,7 +74,7 @@ export async function decrypt(
 
 // Helpers
 
-function hexToBytes(hex: string): Uint8Array<ArrayBuffer> {
+function hexToBytes(hex: string): Uint8Array {
   if (hex.length % 2 !== 0) {
     throw new Error(`Invalid hex string: odd length (${hex.length})`);
   }

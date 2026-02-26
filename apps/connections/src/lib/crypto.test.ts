@@ -58,10 +58,10 @@ describe("crypto", () => {
     await expect(decrypt(tampered, TEST_KEY)).rejects.toThrow();
   });
 
-  it("pads short keys to 32 bytes", async () => {
+  it("rejects short keys", async () => {
     const shortKey = "abcdef";
-    const encrypted = await encrypt("test", shortKey);
-    const decrypted = await decrypt(encrypted, shortKey);
-    expect(decrypted).toBe("test");
+    await expect(encrypt("test", shortKey)).rejects.toThrow(
+      "Encryption key must be exactly 64 hex characters",
+    );
   });
 });
