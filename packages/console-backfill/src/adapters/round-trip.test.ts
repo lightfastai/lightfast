@@ -132,7 +132,6 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
 
   it("produces a SourceEvent with non-empty sourceId", () => {
     const event = transformGitHubPullRequest(adapted, context);
-    expect(event.sourceId).toBeTruthy();
     expect(event.sourceId.length).toBeGreaterThan(0);
   });
 
@@ -203,7 +202,6 @@ describe("GitHub Issue: adapter → transformer round-trip", () => {
 
   it("produces a SourceEvent with non-empty sourceId", () => {
     const event = transformGitHubIssue(adapted, context);
-    expect(event.sourceId).toBeTruthy();
     expect(event.sourceId).toContain("10");
   });
 
@@ -240,7 +238,6 @@ describe("GitHub Release: adapter → transformer round-trip", () => {
 
   it("produces a SourceEvent with non-empty sourceId containing tag", () => {
     const event = transformGitHubRelease(adapted, context);
-    expect(event.sourceId).toBeTruthy();
     expect(event.sourceId).toContain("v2.0.0");
   });
 
@@ -284,7 +281,6 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
 
   it("produces a SourceEvent with non-empty sourceId", () => {
     const event = transformVercelDeployment(webhookPayload, eventType, context);
-    expect(event.sourceId).toBeTruthy();
     expect(event.sourceId).toContain("dpl-abc123xyz");
   });
 

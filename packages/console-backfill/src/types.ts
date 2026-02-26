@@ -28,7 +28,11 @@ export interface BackfillConfig {
   provider: SourceType;
   /** ISO timestamp = now - depth days */
   since: string;
-  /** Decrypted access token from Gateway token vault */
+  /**
+   * Decrypted access token from Gateway token vault.
+   * @internal SENSITIVE — never log or serialize BackfillConfig objects directly.
+   * Use only for Authorization headers within connectors.
+   */
   accessToken: string;
   /** Single resource for this work unit */
   resource: {
