@@ -1,8 +1,7 @@
 import { createEnv } from "@t3-oss/env-core";
 import { vercel } from "@t3-oss/env-core/presets-zod";
-import { z } from "zod";
-
 import { env as inngestEnv } from "@vendor/inngest/env";
+import { z } from "zod";
 
 /** Module-level validated env for non-Hono contexts (Inngest workflows, module-level init). */
 export const env = createEnv({

@@ -1,7 +1,8 @@
-import { NonRetriableError } from "@vendor/inngest";
-import { inngest } from "../inngest/client.js";
 import { getConnector } from "@repo/console-backfill";
+import { NonRetriableError } from "@vendor/inngest";
+
 import { env } from "../env.js";
+import { inngest } from "../inngest/client.js";
 import { connectionsUrl } from "../lib/related-projects.js";
 
 export const backfillOrchestrator = inngest.createFunction(
@@ -30,7 +31,7 @@ export const backfillOrchestrator = inngest.createFunction(
   async ({ event, step }) => {
     const { installationId, provider, orgId, depth, entityTypes } = event.data;
 
-    if (!depth || depth <= 0) {
+    if (depth <= 0) {
       throw new NonRetriableError(
         `Invalid depth: ${depth} — must be a positive number of days`,
       );
@@ -44,7 +45,7 @@ export const backfillOrchestrator = inngest.createFunction(
           headers: { "X-API-Key": env.GATEWAY_API_KEY },
           signal: AbortSignal.timeout(10_000),
         },
-      ).catch((err) => {
+      ).catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "TimeoutError") {
           throw new Error(
             `Gateway getConnection request timed out for ${installationId}`,

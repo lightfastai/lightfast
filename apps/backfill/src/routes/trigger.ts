@@ -1,13 +1,18 @@
-import { timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
+import { timingSafeEqual } from "node:crypto";
+
 import { getEnv } from "../env-hono.js";
 import { inngest } from "../inngest/client.js";
 
 function isValidApiKey(key: string | undefined, expected: string): boolean {
-  if (!key) return false;
+  if (!key) {
+    return false;
+  }
   const a = Buffer.from(key);
   const b = Buffer.from(expected);
-  if (a.length !== b.length) return false;
+  if (a.length !== b.length) {
+    return false;
+  }
   return timingSafeEqual(a, b);
 }
 
@@ -35,10 +40,6 @@ trigger.post("/", async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: "invalid_json" }, 400);
-  }
-
-  if (!body || typeof body !== "object") {
     return c.json({ error: "invalid_json" }, 400);
   }
 
@@ -89,10 +90,6 @@ trigger.post("/cancel", async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: "invalid_json" }, 400);
-  }
-
-  if (!body || typeof body !== "object") {
     return c.json({ error: "invalid_json" }, 400);
   }
 

@@ -1,8 +1,9 @@
-import { NonRetriableError } from "@vendor/inngest";
-import { inngest } from "../inngest/client.js";
-import { getConnector } from "@repo/console-backfill";
 import type { BackfillConfig } from "@repo/console-backfill";
+import { getConnector } from "@repo/console-backfill";
+import { NonRetriableError } from "@vendor/inngest";
+
 import { env } from "../env.js";
+import { inngest } from "../inngest/client.js";
 import { gatewayUrl, connectionsUrl } from "../lib/related-projects.js";
 
 export const backfillEntityWorker = inngest.createFunction(
@@ -150,7 +151,9 @@ export const backfillEntityWorker = inngest.createFunction(
                   signal: AbortSignal.timeout(30_000),
                 },
               );
-              if (!tokenResponse.ok) throw err; // Can't refresh — rethrow original
+              if (!tokenResponse.ok) {
+                throw err; // Can't refresh — rethrow original
+              }
               const { accessToken: freshToken } =
                 (await tokenResponse.json()) as { accessToken: string };
               config.accessToken = freshToken;
@@ -236,7 +239,9 @@ export const backfillEntityWorker = inngest.createFunction(
         }
       }
 
-      if (!fetchResult.nextCursor) break;
+      if (!fetchResult.nextCursor) {
+        break;
+      }
       cursor = fetchResult.nextCursor;
       pageNum++;
     }
