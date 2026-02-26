@@ -142,7 +142,8 @@ export const backfillOrchestrator = inngest.createFunction(
     // Each waitForEvent is dispatched in parallel via Promise.all
     // As each entity.completed event arrives, the matching wait resolves
     // Escape single quotes for CEL string literals to prevent syntax errors
-    const celEscape = (v: string) => v.replace(/'/g, "\\'");
+    const celEscape = (v: string) =>
+      v.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 
     const completionResults = await Promise.all(
       workUnits.map(async (wu) => {
