@@ -83,6 +83,16 @@ export class VercelProvider implements ConnectionProvider {
 
   // ── Strategy methods ──
 
+  private deriveExternalId(
+    raw: Record<string, unknown>,
+  ): string | undefined {
+    return (
+      (raw.team_id as string | undefined)?.toString() ??
+      (raw.organization_id as string | undefined)?.toString() ??
+      (raw.installation as string | undefined)?.toString()
+    );
+  }
+
   async handleCallback(
     c: Context,
     stateData: Record<string, string>,
@@ -93,11 +103,7 @@ export class VercelProvider implements ConnectionProvider {
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
 
-    const externalId =
-      (oauthTokens.raw.team_id as string | undefined)?.toString() ??
-      (oauthTokens.raw.organization_id as string | undefined)?.toString() ??
-      (oauthTokens.raw.installation as string | undefined)?.toString() ??
-      nanoid();
+    const externalId = this.deriveExternalId(oauthTokens.raw) ?? nanoid();
 
     const rows = await db
       .insert(gwInstallations)
@@ -159,11 +165,7 @@ export class VercelProvider implements ConnectionProvider {
     oauthTokens?: OAuthTokens,
   ): GwInstallation["providerAccountInfo"] {
     const raw = oauthTokens?.raw ?? {};
-    const externalId =
-      (raw.team_id as string | undefined)?.toString() ??
-      (raw.organization_id as string | undefined)?.toString() ??
-      (raw.installation as string | undefined)?.toString() ??
-      "";
+    const externalId = this.deriveExternalId(raw) ?? "";
 
     return {
       version: 1,
