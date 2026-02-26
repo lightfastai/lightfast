@@ -30,6 +30,12 @@ export const backfillOrchestrator = inngest.createFunction(
   async ({ event, step }) => {
     const { installationId, provider, orgId, depth, entityTypes } = event.data;
 
+    if (!depth || depth <= 0) {
+      throw new NonRetriableError(
+        `Invalid depth: ${depth} — must be a positive number of days`,
+      );
+    }
+
     // ── Step 1: Fetch connection details from Gateway ──
     const connection = await step.run("get-connection", async () => {
       const response = await fetch(
