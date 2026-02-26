@@ -37,17 +37,17 @@ const {
     mockRedisHset: vi.fn().mockResolvedValue("OK"),
     mockRedisHgetall: vi
       .fn()
-      .mockResolvedValue(null) as ReturnType<typeof vi.fn>,
+      .mockResolvedValue(null),
     mockRedisExpire: vi.fn().mockResolvedValue(1),
     mockRedisDel: vi.fn().mockResolvedValue(1),
     mockWorkflowTrigger: vi
       .fn()
       .mockResolvedValue({ workflowRunId: "wf-1" }),
-    mockFindFirst: vi.fn().mockResolvedValue(null) as ReturnType<typeof vi.fn>,
-    mockSelectLimit: vi.fn().mockResolvedValue([]) as ReturnType<typeof vi.fn>,
+    mockFindFirst: vi.fn().mockResolvedValue(null),
+    mockSelectLimit: vi.fn().mockResolvedValue([]),
     mockInsertReturning: vi
       .fn()
-      .mockResolvedValue([]) as ReturnType<typeof vi.fn>,
+      .mockResolvedValue([]),
     mockUpdateWhere: vi.fn().mockResolvedValue(undefined),
     mockGetProvider: vi.fn().mockReturnValue(mockProvider),
     mockProvider,

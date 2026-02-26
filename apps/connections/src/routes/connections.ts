@@ -1,15 +1,15 @@
-import { and, eq, sql } from "drizzle-orm";
-import { gwInstallations, gwResources } from "@db/console/schema";
 import { db } from "@db/console/client";
-import { Hono } from "hono";
+import { gwInstallations, gwResources } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
+import { redis } from "@vendor/upstash";
+import { getWorkflowClient } from "@vendor/upstash-workflow/client";
+import { and, eq, sql } from "drizzle-orm";
+import { Hono } from "hono";
+import { oauthStateKey, resourceKey } from "../lib/cache";
+import { connectionsBaseUrl, consoleUrl } from "../lib/urls";
+import { apiKeyAuth } from "../middleware/auth";
 import type { TenantVariables } from "../middleware/tenant";
 import { tenantMiddleware } from "../middleware/tenant";
-import { apiKeyAuth } from "../middleware/auth";
-import { oauthStateKey, resourceKey } from "../lib/cache";
-import { redis } from "@vendor/upstash";
-import { connectionsBaseUrl, consoleUrl } from "../lib/urls";
-import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { getProvider } from "../providers";
 import type { ProviderName } from "../providers/types";
 
@@ -65,10 +65,10 @@ async function resolveAndConsumeState(
   c: { req: { query(key: string): string | undefined } },
 ): Promise<Record<string, string> | null> {
   const state = c.req.query("state");
-  if (!state) return null;
+  if (!state) {return null;}
 
   const stateData = await redis.hgetall<Record<string, string>>(oauthStateKey(state));
-  if (!stateData?.orgId) return null;
+  if (!stateData?.orgId) {return null;}
 
   await redis.del(oauthStateKey(state));
   return stateData;
@@ -321,7 +321,7 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
     .returning();
 
   const resource = resourceRows[0];
-  if (!resource) return c.json({ error: "insert_failed" }, 500);
+  if (!resource) {return c.json({ error: "insert_failed" }, 500);}
 
   // Populate Redis routing cache
   await redis.hset(

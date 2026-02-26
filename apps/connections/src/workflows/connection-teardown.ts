@@ -1,14 +1,14 @@
-import { and, eq } from "drizzle-orm";
-import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
-import { serve } from "@vendor/upstash-workflow/hono";
 import { db } from "@db/console/client";
-import { decrypt } from "../lib/crypto";
-import { resourceKey } from "../lib/cache";
+import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 import { redis } from "@vendor/upstash";
+import { serve } from "@vendor/upstash-workflow/hono";
+import { and, eq } from "drizzle-orm";
 import { env } from "../env";
+import { resourceKey } from "../lib/cache";
+import { decrypt } from "../lib/crypto";
+import { cancelBackfillService } from "../lib/urls";
 import { getProvider } from "../providers";
 import type { ProviderName } from "../providers/types";
-import { cancelBackfillService } from "../lib/urls";
 
 interface TeardownPayload {
   installationId: string;
@@ -43,7 +43,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
 
     // Step 2: Revoke token at provider (best-effort)
     await context.run("revoke-token", async () => {
-      if (providerName === "github") return; // GitHub uses on-demand JWTs, no stored token
+      if (providerName === "github") {return;} // GitHub uses on-demand JWTs, no stored token
 
       const provider = getProvider(providerName);
       const tokenRows = await db
@@ -53,7 +53,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
         .limit(1);
 
       const tokenRow = tokenRows[0];
-      if (!tokenRow) return;
+      if (!tokenRow) {return;}
 
       try {
         const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
@@ -66,7 +66,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
     // Step 3: Deregister webhook if applicable (best-effort)
     await context.run("deregister-webhook", async () => {
       const provider = getProvider(providerName);
-      if (!provider.requiresWebhookRegistration) return;
+      if (!provider.requiresWebhookRegistration) {return;}
 
       const installationRows = await db
         .select()
@@ -75,7 +75,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
         .limit(1);
 
       const installation = installationRows[0];
-      if (!installation) return;
+      if (!installation) {return;}
 
       const meta = installation.metadata as Record<string, unknown> | null;
       const webhookId = meta?.webhookId as string | undefined;

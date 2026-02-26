@@ -1,9 +1,4 @@
-import type { Context } from "hono";
 import type { GwInstallation } from "@db/console/schema";
-import type { GitHubProvider } from "./impl/github";
-import type { VercelProvider } from "./impl/vercel";
-import type { LinearProvider } from "./impl/linear";
-import type { SentryProvider } from "./impl/sentry";
 import type {
   ProviderName,
   OAuthTokens,
@@ -11,6 +6,11 @@ import type {
   GitHubAuthOptions,
   LinearAuthOptions,
 } from "@repo/gateway-types";
+import type { Context } from "hono";
+import type { GitHubProvider } from "./impl/github";
+import type { LinearProvider } from "./impl/linear";
+import type { SentryProvider } from "./impl/sentry";
+import type { VercelProvider } from "./impl/vercel";
 
 // Re-export everything from @repo/gateway-types
 export {

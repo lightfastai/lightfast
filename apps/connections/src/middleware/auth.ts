@@ -1,5 +1,5 @@
-import { timingSafeEqual } from "node:crypto";
 import type { Context, MiddlewareHandler } from "hono";
+import { timingSafeEqual } from "node:crypto";
 import { getEnv } from "../env";
 
 /**

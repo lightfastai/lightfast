@@ -1,13 +1,13 @@
-import { eq } from "drizzle-orm";
+import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { db } from "@db/console/client";
 import { nanoid } from "@repo/lib";
+import { eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env";
-import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls";
 import { decrypt } from "../../lib/crypto";
 import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store";
+import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls";
 import {
   decodeSentryToken,
   encodeSentryToken,
@@ -114,9 +114,9 @@ export class SentryProvider implements ConnectionProvider {
   }
 
   async revokeToken(accessToken: string): Promise<void> {
-    if (!accessToken.includes(":")) return;
+    if (!accessToken.includes(":")) {return;}
     const { installationId } = decodeSentryToken(accessToken);
-    if (!installationId) return;
+    if (!installationId) {return;}
 
     const response = await fetch(
       `https://sentry.io/api/0/sentry-app-installations/${installationId}/`,
@@ -158,7 +158,7 @@ export class SentryProvider implements ConnectionProvider {
     stateData: Record<string, string>,
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
-    if (!code) throw new Error("missing code");
+    if (!code) {throw new Error("missing code");}
 
     // Sentry's exchangeCode handles the composite installationId:authCode internally
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
@@ -183,7 +183,7 @@ export class SentryProvider implements ConnectionProvider {
       .returning({ id: gwInstallations.id });
 
     const installation = rows[0];
-    if (!installation) throw new Error("insert_failed");
+    if (!installation) {throw new Error("insert_failed");}
 
     await writeTokenRecord(installation.id, oauthTokens);
 
@@ -213,7 +213,7 @@ export class SentryProvider implements ConnectionProvider {
       .limit(1);
 
     const tokenRow = tokenRows[0];
-    if (!tokenRow) throw new Error("no_token_found");
+    if (!tokenRow) {throw new Error("no_token_found");}
 
     // Check expiry and refresh if needed (Sentry supports token refresh)
     if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {

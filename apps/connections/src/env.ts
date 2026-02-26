@@ -1,16 +1,16 @@
+import { linearEnv } from "@repo/console-linear/env";
+import { githubOAuthEnv } from "@repo/console-octokit-github/oauth-env";
+import { sentryIntegrationEnv } from "@repo/console-sentry/env";
+import { vercelOAuthEnv } from "@repo/console-vercel/oauth-env";
 import { createEnv } from "@t3-oss/env-core";
 import { vercel } from "@t3-oss/env-core/presets-zod";
+import { dbEnv } from "@vendor/db/env";
+import { qstashEnv } from "@vendor/qstash/env";
+import { upstashEnv } from "@vendor/upstash/env";
 import type { Context } from "hono";
 import { env as honoEnv } from "hono/adapter";
 import { z } from "zod";
 
-import { githubOAuthEnv } from "@repo/console-octokit-github/oauth-env";
-import { linearEnv } from "@repo/console-linear/env";
-import { sentryIntegrationEnv } from "@repo/console-sentry/env";
-import { vercelOAuthEnv } from "@repo/console-vercel/oauth-env";
-import { upstashEnv } from "@vendor/upstash/env";
-import { qstashEnv } from "@vendor/qstash/env";
-import { dbEnv } from "@vendor/db/env";
 
 const server = {
   GATEWAY_API_KEY: z.string().min(1),
@@ -21,6 +21,7 @@ const server = {
 export const getEnv = (c: Context) =>
   createEnv({
     server,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     runtimeEnv: honoEnv(c),
     emptyStringAsUndefined: true,
   });

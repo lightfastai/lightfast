@@ -1,5 +1,5 @@
-import { withRelatedProject } from "@vendor/related-projects";
 import { getQStashClient } from "@vendor/qstash";
+import { withRelatedProject } from "@vendor/related-projects";
 import { env } from "../env";
 
 /**

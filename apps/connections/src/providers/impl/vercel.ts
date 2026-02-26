@@ -1,13 +1,13 @@
-import { eq } from "drizzle-orm";
+import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { db } from "@db/console/client";
 import { nanoid } from "@repo/lib";
+import { eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env";
-import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls";
 import { decrypt } from "../../lib/crypto";
 import { writeTokenRecord } from "../../lib/token-store";
+import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls";
 import { vercelOAuthResponseSchema } from "../schemas";
 import type {
   ConnectionProvider,
@@ -98,7 +98,7 @@ export class VercelProvider implements ConnectionProvider {
     stateData: Record<string, string>,
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
-    if (!code) throw new Error("missing code");
+    if (!code) {throw new Error("missing code");}
 
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
@@ -118,7 +118,7 @@ export class VercelProvider implements ConnectionProvider {
       .returning({ id: gwInstallations.id });
 
     const installation = rows[0];
-    if (!installation) throw new Error("insert_failed");
+    if (!installation) {throw new Error("insert_failed");}
 
     await writeTokenRecord(installation.id, oauthTokens);
 
@@ -127,7 +127,7 @@ export class VercelProvider implements ConnectionProvider {
       installationId: installation.id,
       provider: this.name,
       orgId: stateData.orgId ?? "",
-    }).catch((err) => {
+    }).catch((err: unknown) => {
       console.error(
         `[${this.name}] backfill notification failed for installation=${installation.id} org=${stateData.orgId}`,
         err,
@@ -149,7 +149,7 @@ export class VercelProvider implements ConnectionProvider {
       .limit(1);
 
     const tokenRow = tokenRows[0];
-    if (!tokenRow) throw new Error("no_token_found");
+    if (!tokenRow) {throw new Error("no_token_found");}
 
     if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
       throw new Error("token_expired");

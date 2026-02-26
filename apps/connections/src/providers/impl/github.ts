@@ -1,10 +1,10 @@
+import { db } from "@db/console/client";
 import { gwInstallations } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { db } from "@db/console/client";
 import type { Context } from "hono";
 import { env } from "../../env";
-import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls";
 import { getInstallationToken } from "../../lib/github-jwt";
+import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls";
 import { githubOAuthResponseSchema } from "../schemas";
 import type {
   ConnectionProvider,
@@ -35,7 +35,7 @@ export class GitHubProvider implements ConnectionProvider {
       `https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`,
     );
     url.searchParams.set("state", state);
-    if (targetId) url.searchParams.set("target_id", targetId);
+    if (targetId) {url.searchParams.set("target_id", targetId);}
     return url.toString();
   }
 
@@ -157,7 +157,7 @@ export class GitHubProvider implements ConnectionProvider {
       });
 
     const row = rows[0];
-    if (!row) throw new Error("upsert_failed");
+    if (!row) {throw new Error("upsert_failed");}
 
     // If createdAt differs from now, the row existed before this upsert
     const reactivated = row.createdAt !== now;
@@ -204,7 +204,7 @@ export class GitHubProvider implements ConnectionProvider {
           accountLogin: stateData.accountLogin ?? "unknown",
           accountType: (stateData.accountType === "User" || stateData.accountType === "Organization"
             ? stateData.accountType
-            : "User") as "User" | "Organization",
+            : "User"),
           avatarUrl: "",
           permissions: {},
           installedAt: new Date().toISOString(),

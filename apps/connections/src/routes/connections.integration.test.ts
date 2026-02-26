@@ -40,7 +40,7 @@ const {
 
   return {
     mockRedisHset: vi.fn().mockResolvedValue("OK"),
-    mockRedisHgetall: vi.fn().mockResolvedValue(null) as ReturnType<typeof vi.fn>,
+    mockRedisHgetall: vi.fn().mockResolvedValue(null),
     mockRedisExpire: vi.fn().mockResolvedValue(1),
     mockRedisDel: vi.fn().mockResolvedValue(1),
     mockWorkflowTrigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
