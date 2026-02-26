@@ -550,7 +550,7 @@ importers:
         version: link:../../vendor/seo
       '@vercel/microfrontends':
         specifier: ^2.3.0
-        version: 2.3.0(@vercel/analytics@1.5.0(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(@vercel/speed-insights@1.2.0(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.21.0)(yaml@2.8.1))
+        version: 2.3.0(@vercel/analytics@1.5.0(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(@vercel/speed-insights@1.2.0(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.21.0)(yaml@2.8.1))
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.0.0
@@ -753,7 +753,7 @@ importers:
         version: 10.20.0
       '@sentry/nextjs':
         specifier: ^10.20.0
-        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
+        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
       '@sentry/profiling-node':
         specifier: ^10.20.0
         version: 10.20.0
@@ -1136,7 +1136,7 @@ importers:
         version: 2.0.2(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
       '@sentry/nextjs':
         specifier: ^10.20.0
-        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
+        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
@@ -1187,7 +1187,7 @@ importers:
         version: link:../../vendor/upstash-workflow
       '@vercel/microfrontends':
         specifier: ^2.3.0
-        version: 2.3.0(@vercel/analytics@1.5.0(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(@vercel/speed-insights@1.2.0(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.21.0)(yaml@2.8.1))
+        version: 2.3.0(@vercel/analytics@1.5.0(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(@vercel/speed-insights@1.2.0(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.21.0)(yaml@2.8.1))
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.0.0
@@ -1320,7 +1320,7 @@ importers:
         version: link:../../packages/url-utils
       '@sentry/nextjs':
         specifier: ^10.20.0
-        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
+        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@4.1.12)
@@ -1562,7 +1562,7 @@ importers:
         version: 2.0.2(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
       '@sentry/nextjs':
         specifier: ^10.20.0
-        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
+        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
@@ -4628,7 +4628,7 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
-      '@t3-oss/env-nextjs':
+      '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
       concurrently:
@@ -4771,7 +4771,7 @@ importers:
         version: 0.2.1(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)
       '@sentry/nextjs':
         specifier: ^10.20.0
-        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
+        version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
@@ -24828,7 +24828,7 @@ snapshots:
       - supports-color
       - webpack
 
-  '@sentry/nextjs@10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.102.1)':
+  '@sentry/nextjs@10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.37.0
@@ -24840,7 +24840,7 @@ snapshots:
       '@sentry/opentelemetry': 10.20.0(@opentelemetry/api@1.9.0)(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/semantic-conventions@1.37.0)
       '@sentry/react': 10.20.0(react@19.2.1)
       '@sentry/vercel-edge': 10.20.0
-      '@sentry/webpack-plugin': 4.4.0(encoding@0.1.13)(webpack@5.102.1)
+      '@sentry/webpack-plugin': 4.4.0(encoding@0.1.13)(webpack@5.105.0)
       chalk: 3.0.0
       next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       resolve: 1.22.8
@@ -24855,7 +24855,7 @@ snapshots:
       - supports-color
       - webpack
 
-  '@sentry/nextjs@10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)':
+  '@sentry/nextjs@10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.102.1)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.37.0
@@ -24867,7 +24867,7 @@ snapshots:
       '@sentry/opentelemetry': 10.20.0(@opentelemetry/api@1.9.0)(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/semantic-conventions@1.37.0)
       '@sentry/react': 10.20.0(react@19.2.1)
       '@sentry/vercel-edge': 10.20.0
-      '@sentry/webpack-plugin': 4.4.0(encoding@0.1.13)(webpack@5.105.0)
+      '@sentry/webpack-plugin': 4.4.0(encoding@0.1.13)(webpack@5.102.1)
       chalk: 3.0.0
       next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       resolve: 1.22.8
@@ -26735,6 +26735,30 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
+  '@vercel/microfrontends@2.3.0(@vercel/analytics@1.5.0(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(@vercel/speed-insights@1.2.0(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.21.0)(yaml@2.8.1))':
+    dependencies:
+      '@next/env': 16.0.10
+      '@types/md5': 2.3.6
+      ajv: 8.17.1
+      commander: 12.1.0
+      cookie: 1.0.2
+      fast-glob: 3.3.3
+      http-proxy: 1.18.1
+      jsonc-parser: 3.3.1
+      md5: 2.3.0
+      nanoid: 3.3.11
+      path-to-regexp: 6.3.0
+      semver: 7.7.3
+    optionalDependencies:
+      '@vercel/analytics': 1.5.0(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)
+      '@vercel/speed-insights': 1.2.0(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)
+      next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      react: 19.2.1
+      react-dom: 19.2.1(react@19.2.1)
+      vite: 7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.21.0)(yaml@2.8.1)
+    transitivePeerDependencies:
+      - debug
+
   '@vercel/microfrontends@2.3.0(@vercel/analytics@1.5.0(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(@vercel/speed-insights@1.2.0(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))':
     dependencies:
       '@next/env': 16.0.10
@@ -26756,30 +26780,6 @@ snapshots:
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
       vite: 7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)
-    transitivePeerDependencies:
-      - debug
-
-  '@vercel/microfrontends@2.3.0(@vercel/analytics@1.5.0(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(@vercel/speed-insights@1.2.0(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1))(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.21.0)(yaml@2.8.1))':
-    dependencies:
-      '@next/env': 16.0.10
-      '@types/md5': 2.3.6
-      ajv: 8.17.1
-      commander: 12.1.0
-      cookie: 1.0.2
-      fast-glob: 3.3.3
-      http-proxy: 1.18.1
-      jsonc-parser: 3.3.1
-      md5: 2.3.0
-      nanoid: 3.3.11
-      path-to-regexp: 6.3.0
-      semver: 7.7.3
-    optionalDependencies:
-      '@vercel/analytics': 1.5.0(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)
-      '@vercel/speed-insights': 1.2.0(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)
-      next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      react: 19.2.1
-      react-dom: 19.2.1(react@19.2.1)
-      vite: 7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.21.0)(yaml@2.8.1)
     transitivePeerDependencies:
       - debug
 

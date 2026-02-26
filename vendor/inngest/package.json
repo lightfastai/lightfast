@@ -25,7 +25,7 @@
 		"@repo/eslint-config": "workspace:*",
 		"@repo/prettier-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
-		"@t3-oss/env-nextjs": "catalog:",
+		"@t3-oss/env-core": "catalog:",
 		"concurrently": "^9.1.0",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
