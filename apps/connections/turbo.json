@@ -4,22 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": [
-        "GATEWAY_API_KEY",
-        "ENCRYPTION_KEY",
-        "GITHUB_APP_SLUG",
-        "GITHUB_APP_ID",
-        "GITHUB_CLIENT_ID",
-        "GITHUB_CLIENT_SECRET",
-        "GITHUB_APP_PRIVATE_KEY",
-        "VERCEL_CLIENT_ID",
-        "VERCEL_CLIENT_INTEGRATION_SECRET",
-        "VERCEL_INTEGRATION_SLUG",
-        "LINEAR_CLIENT_ID",
-        "LINEAR_CLIENT_SECRET",
-        "SENTRY_CLIENT_ID",
-        "SENTRY_CLIENT_SECRET"
-      ],
+      "env": [],
       "outputs": ["dist/**"]
     },
     "dev": {
