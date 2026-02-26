@@ -119,6 +119,16 @@ export class GitHubProvider implements ConnectionProvider {
       throw new Error("missing installation_id");
     }
 
+    const orgId = stateData.orgId;
+    const connectedBy = stateData.connectedBy;
+
+    if (!orgId) {
+      throw new Error("missing orgId in state data");
+    }
+    if (!connectedBy) {
+      throw new Error("missing connectedBy in state data");
+    }
+
     const accountInfo = this.buildAccountInfo({ ...stateData, installationId });
     const now = new Date().toISOString();
 
@@ -128,8 +138,8 @@ export class GitHubProvider implements ConnectionProvider {
       .values({
         provider: "github",
         externalId: installationId,
-        connectedBy: stateData.connectedBy ?? "unknown",
-        orgId: stateData.orgId ?? "",
+        connectedBy,
+        orgId,
         status: "active",
         providerAccountInfo: accountInfo,
       })
@@ -157,7 +167,7 @@ export class GitHubProvider implements ConnectionProvider {
       notifyBackfillService({
         installationId: row.id,
         provider: "github",
-        orgId: stateData.orgId ?? "",
+        orgId,
       }).catch(() => {});
     }
 
