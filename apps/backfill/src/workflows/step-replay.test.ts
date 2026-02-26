@@ -52,8 +52,8 @@ function createReplayStep(journal: JournalEntry[]) {
     if (!entry || entry.name !== expectedName || entry.type !== expectedType) {
       throw new Error(
         `Step replay mismatch at index ${index - 1}: ` +
-          `expected ${entry?.type}("${entry?.name}"), ` +
-          `got ${expectedType}("${expectedName}")`,
+          `expected ${expectedType}("${expectedName}"), ` +
+          `got ${entry?.type}("${entry?.name}")`,
       );
     }
     return entry.returnValue;
