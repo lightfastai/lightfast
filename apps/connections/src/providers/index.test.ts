@@ -73,6 +73,6 @@ describe("getProvider", () => {
   });
 
   it("throws for unknown provider", () => {
-    expect(() => getProvider("unknown")).toThrow();
+    expect(() => getProvider("unknown")).toThrow("Unknown provider: unknown");
   });
 });
