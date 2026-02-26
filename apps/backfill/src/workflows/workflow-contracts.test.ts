@@ -11,8 +11,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── Capture handlers from both workflows ──
 
-let orchestratorHandler: (args: { event: any; step: any }) => Promise<unknown>;
-let entityWorkerHandler: (args: { event: any; step: any }) => Promise<unknown>;
+let orchestratorHandler!: (args: { event: any; step: any }) => Promise<unknown>;
+let entityWorkerHandler!: (args: { event: any; step: any }) => Promise<unknown>;
 let entityWorkerOnFailure: ((args: { error: any; event: any; step: any }) => Promise<unknown>) | undefined;
 
 // Track createFunction calls in order: orchestrator loads first, then entity worker
