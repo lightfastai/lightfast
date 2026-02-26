@@ -1,12 +1,7 @@
 {
-  "extends": "@repo/typescript-config/base.json",
+  "extends": "@repo/typescript-config/hono.json",
   "compilerOptions": {
-    "lib": ["ES2022"],
-    "outDir": "dist",
-    "rootDir": ".",
-    "noEmit": false,
-    "declaration": true,
-    "declarationMap": true
+    "rootDir": "."
   },
   "include": ["src", "api"],
   "exclude": ["node_modules", "dist"]
