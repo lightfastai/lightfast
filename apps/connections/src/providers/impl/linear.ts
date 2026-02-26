@@ -80,7 +80,7 @@ export class LinearProvider implements ConnectionProvider {
       },
     });
 
-    if (!response.ok && response.status !== 204) {
+    if (!response.ok) {
       throw new Error(`Linear token revocation failed: ${response.status}`);
     }
   }
