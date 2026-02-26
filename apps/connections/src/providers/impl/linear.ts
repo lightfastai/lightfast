@@ -89,6 +89,7 @@ export class LinearProvider implements ConnectionProvider {
     _connectionId: string,
     callbackUrl: string,
     secret: string,
+    accessToken?: string,
   ): Promise<string> {
     const mutation = `
       mutation WebhookCreate($input: WebhookCreateInput!) {
@@ -101,12 +102,16 @@ export class LinearProvider implements ConnectionProvider {
       }
     `;
 
+    if (!accessToken) {
+      throw new Error("Linear webhook registration requires an access token");
+    }
+
     const response = await fetch("https://api.linear.app/graphql", {
       method: "POST",
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${env.LINEAR_CLIENT_SECRET}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         query: mutation,
@@ -156,6 +161,7 @@ export class LinearProvider implements ConnectionProvider {
   async deregisterWebhook(
     _connectionId: string,
     webhookId: string,
+    accessToken?: string,
   ): Promise<void> {
     const mutation = `
       mutation WebhookDelete($id: String!) {
@@ -165,12 +171,16 @@ export class LinearProvider implements ConnectionProvider {
       }
     `;
 
+    if (!accessToken) {
+      throw new Error("Linear webhook deregistration requires an access token");
+    }
+
     const response = await fetch("https://api.linear.app/graphql", {
       method: "POST",
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${env.LINEAR_CLIENT_SECRET}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         query: mutation,
@@ -279,6 +289,7 @@ export class LinearProvider implements ConnectionProvider {
           installation.id,
           callbackUrl,
           webhookSecret,
+          oauthTokens.accessToken,
         );
 
         await db
