@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc && pnpm with-env tsx -e 'import \"./src/env.ts\"'",
+    "build": "tsc && pnpm with-env node dist/src/env.js",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "vercel dev --listen 4109",
     "lint": "eslint",
@@ -31,7 +31,6 @@
     "dotenv-cli": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "tsx": "^4.19.2",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
