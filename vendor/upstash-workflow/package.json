@@ -5,14 +5,29 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/src/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./env": "./env.ts",
-    "./client": "./src/client.ts",
-    "./hono": "./src/hono.ts",
-    "./nextjs": "./src/nextjs.ts",
-    "./types": "./src/types.ts"
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "default": "./env.ts"
+    },
+    "./client": {
+      "types": "./dist/src/client.d.ts",
+      "default": "./src/client.ts"
+    },
+    "./hono": {
+      "types": "./dist/src/hono.d.ts",
+      "default": "./src/hono.ts"
+    },
+    "./nextjs": {
+      "types": "./dist/src/nextjs.d.ts",
+      "default": "./src/nextjs.ts"
+    },
+    "./types": {
+      "types": "./dist/src/types.d.ts",
+      "default": "./src/types.ts"
+    }
   },
   "license": "MIT",
   "scripts": {

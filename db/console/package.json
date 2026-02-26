@@ -9,9 +9,18 @@
       "types": "./dist/src/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./schema": "./src/schema/index.ts",
-    "./client": "./src/client.ts",
-    "./utils": "./src/utils/workspace.ts",
+    "./schema": {
+      "types": "./dist/src/schema/index.d.ts",
+      "default": "./src/schema/index.ts"
+    },
+    "./client": {
+      "types": "./dist/src/client.d.ts",
+      "default": "./src/client.ts"
+    },
+    "./utils": {
+      "types": "./dist/src/utils/workspace.d.ts",
+      "default": "./src/utils/workspace.ts"
+    },
     "./env": {
       "types": "./dist/env.d.ts",
       "default": "./env.ts"

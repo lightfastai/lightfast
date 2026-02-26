@@ -1,12 +1,11 @@
 {
-  "extends": "@repo/typescript-config/base.json",
+  "extends": "@repo/typescript-config/internal-package.json",
   "compilerOptions": {
-    "outDir": "dist",
     "rootDir": ".",
-    "lib": ["ES2022"],
-    "target": "ES2022",
-    "module": "ESNext"
+    "paths": {
+      "~/env": ["./env.ts"]
+    }
   },
-  "include": ["env.ts", "src/**/*.ts"],
-  "exclude": ["dist", "node_modules"]
+  "include": ["env.ts", "src"],
+  "exclude": ["node_modules", "dist"]
 }

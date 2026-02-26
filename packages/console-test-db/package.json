@@ -5,10 +5,17 @@
   "type": "module",
   "license": "FSL-1.1-Apache-2.0",
   "exports": {
-    ".": "./src/index.ts",
-    "./fixtures": "./src/fixtures.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./fixtures": {
+      "types": "./dist/fixtures.d.ts",
+      "default": "./src/fixtures.ts"
+    }
   },
   "scripts": {
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/"
   },
