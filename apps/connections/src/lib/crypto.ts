@@ -18,10 +18,13 @@ async function deriveKey(hexSecret: string): Promise<CryptoKey> {
     );
   }
   const keyBytes = hexToBytes(hexSecret);
-  return crypto.subtle.importKey("raw", keyBytes, { name: ALGORITHM }, false, [
-    "encrypt",
-    "decrypt",
-  ]);
+  return crypto.subtle.importKey(
+    "raw",
+    keyBytes.buffer as ArrayBuffer,
+    { name: ALGORITHM },
+    false,
+    ["encrypt", "decrypt"],
+  );
 }
 
 /**

@@ -202,7 +202,9 @@ export class GitHubProvider implements ConnectionProvider {
           id,
           accountId: id,
           accountLogin: stateData.accountLogin ?? "unknown",
-          accountType: stateData.accountType ?? "unknown",
+          accountType: (stateData.accountType === "User" || stateData.accountType === "Organization"
+            ? stateData.accountType
+            : "User") as "User" | "Organization",
           avatarUrl: "",
           permissions: {},
           installedAt: new Date().toISOString(),
