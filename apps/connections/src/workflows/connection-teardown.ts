@@ -34,7 +34,11 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
 
     // Step 1: Cancel any running backfill (best-effort, before revoking token)
     await context.run("cancel-backfill", async () => {
-      await cancelBackfillService({ installationId });
+      try {
+        await cancelBackfillService({ installationId });
+      } catch {
+        // Best-effort — swallow errors so teardown proceeds
+      }
     });
 
     // Step 2: Revoke token at provider (best-effort)
