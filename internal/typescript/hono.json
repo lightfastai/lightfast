@@ -3,8 +3,8 @@
   "extends": "./base.json",
   "compilerOptions": {
     "lib": ["ES2022"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "skipLibCheck": true,
@@ -12,6 +12,7 @@
     "noEmit": false,
     "declaration": true,
     "declarationMap": true,
+    "rootDir": "${configDir}",
     "outDir": "${configDir}/dist"
   },
   "exclude": ["node_modules", "dist"]

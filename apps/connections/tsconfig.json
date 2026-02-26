@@ -1,7 +1,9 @@
 {
   "extends": "@repo/typescript-config/hono.json",
   "compilerOptions": {
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
