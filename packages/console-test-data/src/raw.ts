@@ -48,7 +48,12 @@ export const loadAllRawWebhooks = (): RawWebhook[] => {
     .filter((f) => f.startsWith("sandbox-") && f.endsWith(".json"))
     .flatMap((f) => {
       const filePath = join(datasetsDir, f);
-      const raw: unknown = JSON.parse(readFileSync(filePath, "utf-8"));
+      let raw: unknown;
+      try {
+        raw = JSON.parse(readFileSync(filePath, "utf-8"));
+      } catch (err) {
+        throw new Error(`Failed to parse dataset ${filePath}: ${err instanceof Error ? err.message : err}`);
+      }
       if (!raw || typeof raw !== "object" || !Array.isArray((raw as RawDataset).webhooks)) {
         throw new Error(`Invalid dataset ${filePath}: missing or non-array "webhooks" field`);
       }
