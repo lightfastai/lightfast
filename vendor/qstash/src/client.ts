@@ -60,8 +60,8 @@ export class QStashClient {
       headers,
       ...(retries !== undefined && { retries }),
       ...(delay !== undefined && { delay }),
-      ...(deduplicationId && { deduplicationId }),
-      ...(callback && { callback }),
+      ...(deduplicationId !== undefined && { deduplicationId }),
+      ...(callback !== undefined && { callback }),
     });
 
     return {
@@ -86,7 +86,7 @@ export class QStashClient {
       headers,
       ...(retries !== undefined && { retries }),
       ...(delay !== undefined && { delay }),
-      ...(deduplicationId && { deduplicationId }),
+      ...(deduplicationId !== undefined && { deduplicationId }),
     });
 
     return [{ messageId: result.messageId }];
