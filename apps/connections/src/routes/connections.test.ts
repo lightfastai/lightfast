@@ -336,7 +336,7 @@ describe("GET /connections/:id", () => {
     expect(res.status).toBe(404);
   });
 
-  it("returns connection details when found", async () => {
+  it("returns hasToken=true for github (on-demand token generation)", async () => {
     mockFindFirst.mockResolvedValue({
       id: "conn-1",
       provider: "github",
