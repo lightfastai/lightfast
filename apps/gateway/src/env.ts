@@ -23,6 +23,8 @@ const server = {
 /** Validated env from the Hono request context — use in route handlers. */
 export const getEnv = (c: Context) =>
   createEnv({
+    clientPrefix: "" as const,
+    client: {},
     server,
     runtimeEnv: honoEnv(c),
     emptyStringAsUndefined: true,
@@ -30,6 +32,8 @@ export const getEnv = (c: Context) =>
 
 /** Module-level validated env for non-Hono contexts (workflows, utilities, module-level init). */
 export const env = createEnv({
+  clientPrefix: "" as const,
+  client: {},
   extends: [vercel(), upstashEnv, qstashEnv, dbEnv],
   shared: {
     NODE_ENV: z

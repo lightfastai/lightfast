@@ -2,6 +2,8 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const upstashEnv = createEnv({
+  clientPrefix: "" as const,
+  client: {},
   server: {
     KV_REST_API_URL: z.string().url(),
     KV_REST_API_TOKEN: z.string().min(1),

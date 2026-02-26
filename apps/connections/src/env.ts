@@ -20,6 +20,8 @@ const server = {
 /** Validated env from the Hono request context — use in route handlers. */
 export const getEnv = (c: Context) =>
   createEnv({
+    clientPrefix: "" as const,
+    client: {},
     server,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     runtimeEnv: honoEnv(c),
@@ -28,6 +30,8 @@ export const getEnv = (c: Context) =>
 
 /** Module-level validated env for non-Hono contexts (workflows, utilities, module-level init). */
 export const env = createEnv({
+  clientPrefix: "" as const,
+  client: {},
   extends: [
     vercel(),
     upstashEnv,

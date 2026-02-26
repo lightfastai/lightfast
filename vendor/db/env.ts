@@ -2,6 +2,8 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const dbEnv = createEnv({
+  clientPrefix: "" as const,
+  client: {},
   server: {
     DATABASE_HOST: z
       .string()

@@ -6,6 +6,8 @@ import { z } from "zod";
  * This validates required environment variables for the event system
  */
 export const env = createEnv({
+	clientPrefix: "" as const,
+	client: {},
 	server: {
 		// Redis Configuration (Required for streaming and state management)
 		KV_REST_API_URL: z.string().url().describe("Upstash Redis REST API URL"),

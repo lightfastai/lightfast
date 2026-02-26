@@ -13,6 +13,8 @@ import { z } from "zod";
  * - QSTASH_URL: Override QStash API endpoint
  */
 export const qstashEnv = createEnv({
+  clientPrefix: "" as const,
+  client: {},
   server: {
     QSTASH_TOKEN: z.string().min(1),
     QSTASH_URL: z.string().url().optional(),

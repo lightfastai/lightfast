@@ -2,6 +2,8 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const env = createEnv({
+  clientPrefix: "" as const,
+  client: {},
   server: {
     INNGEST_APP_NAME: z.string().min(1).startsWith("lightfast-"),
     INNGEST_EVENT_KEY: z.string().min(1).optional(),
