@@ -45,19 +45,46 @@ export async function writeTokenRecord(
     });
 }
 
+/** Minimum base64-decoded byte length for a valid AES-GCM encrypted value (12-byte IV + 16-byte tag). */
+const MIN_ENCRYPTED_BYTES = 28;
+
+function assertEncryptedFormat(value: string): void {
+  try {
+    const decoded = atob(value);
+    if (decoded.length < MIN_ENCRYPTED_BYTES) {
+      throw new Error("too short");
+    }
+  } catch {
+    throw new Error(
+      "existingEncryptedRefreshToken does not appear to be an encrypted value — refusing to persist potentially plaintext token",
+    );
+  }
+}
+
 /**
  * Update an existing token record after refresh.
+ *
+ * @param existingEncryptedRefreshToken - The already-encrypted refresh token from the DB.
+ *   Must be the raw encrypted (base64) value as stored; never pass a plaintext token.
  */
 export async function updateTokenRecord(
   tokenId: string,
   oauthTokens: OAuthTokens,
-  existingRefreshToken: string | null,
+  existingEncryptedRefreshToken: string | null,
   existingExpiresAt: string | null,
 ): Promise<void> {
   const encryptedAccess = await encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
-  const newEncryptedRefresh = oauthTokens.refreshToken
-    ? await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY)
-    : existingRefreshToken;
+
+  let newEncryptedRefresh: string | null;
+  if (oauthTokens.refreshToken) {
+    newEncryptedRefresh = await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY);
+  } else if (existingEncryptedRefreshToken) {
+    assertEncryptedFormat(existingEncryptedRefreshToken);
+    newEncryptedRefresh = existingEncryptedRefreshToken;
+  } else {
+    newEncryptedRefresh = null;
+  }
+
   const newExpiresAt = oauthTokens.expiresIn
     ? new Date(Date.now() + oauthTokens.expiresIn * 1000).toISOString()
     : existingExpiresAt;
