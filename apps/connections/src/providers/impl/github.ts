@@ -64,15 +64,22 @@ export class GitHubProvider implements ConnectionProvider {
     const rawData: unknown = await response.json();
     const data = githubOAuthResponseSchema.parse(rawData);
 
-    if ("error" in data) {
-      const desc = data.error_description ?? data.error;
+    if ("error" in data && data.error) {
+      const errorData = data as { error: string; error_description?: string };
+      const desc = errorData.error_description ?? errorData.error;
       throw new Error(`GitHub OAuth error: ${desc}`);
     }
 
+    const successData = data as {
+      access_token: string;
+      scope?: string;
+      token_type?: string;
+    };
+
     return {
-      accessToken: data.access_token,
-      scope: data.scope,
-      tokenType: data.token_type,
+      accessToken: successData.access_token,
+      scope: successData.scope,
+      tokenType: successData.token_type,
       raw: rawData as Record<string, unknown>,
     };
   }
