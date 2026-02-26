@@ -1,6 +1,7 @@
 import { db } from "@db/console/client";
 import { gwInstallations } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
+import { and, eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { getInstallationToken } from "../../lib/github-jwt.js";
@@ -137,7 +138,20 @@ export class GitHubProvider implements ConnectionProvider {
     }
 
     const accountInfo = this.buildAccountInfo({ ...stateData, installationId });
-    const now = new Date().toISOString();
+
+    // Check if this installation already exists (reactivation vs new)
+    const existing = await db
+      .select({ id: gwInstallations.id })
+      .from(gwInstallations)
+      .where(
+        and(
+          eq(gwInstallations.provider, "github"),
+          eq(gwInstallations.externalId, installationId),
+        ),
+      )
+      .limit(1);
+
+    const reactivated = existing.length > 0;
 
     // Idempotent upsert keyed on unique (provider, externalId) constraint
     const rows = await db
@@ -155,19 +169,14 @@ export class GitHubProvider implements ConnectionProvider {
         set: {
           status: "active",
           providerAccountInfo: accountInfo,
-          updatedAt: now,
         },
       })
       .returning({
         id: gwInstallations.id,
-        createdAt: gwInstallations.createdAt,
       });
 
     const row = rows[0];
     if (!row) {throw new Error("upsert_failed");}
-
-    // If createdAt differs from now, the row existed before this upsert
-    const reactivated = row.createdAt !== now;
 
     if (!reactivated) {
       // Fire-and-forget: notify backfill service for new connections
