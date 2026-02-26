@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "@db/console/client";
-import { apiKeyAuth } from "../middleware/auth";
+import { apiKeyAuth, qstashAuth } from "../middleware/auth";
 import { redis } from "@vendor/upstash";
 import { resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache";
 import type { ProviderName } from "../providers/types";
@@ -140,7 +140,7 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
  *
  * Phase 9 implementation pending.
  */
-admin.post("/delivery-status", async (c) => {
+admin.post("/delivery-status", qstashAuth, async (c) => {
   const body = await c.req.json<{
     messageId?: string;
     state?: string;
