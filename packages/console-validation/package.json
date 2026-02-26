@@ -8,31 +8,31 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/index.js"
     },
     "./primitives": {
       "types": "./dist/primitives/index.d.ts",
-      "default": "./src/primitives/index.ts"
+      "default": "./dist/primitives/index.js"
     },
     "./schemas": {
       "types": "./dist/schemas/index.d.ts",
-      "default": "./src/schemas/index.ts"
+      "default": "./dist/schemas/index.js"
     },
     "./forms": {
       "types": "./dist/forms/index.d.ts",
-      "default": "./src/forms/index.ts"
+      "default": "./dist/forms/index.js"
     },
     "./constants": {
       "types": "./dist/constants/index.d.ts",
-      "default": "./src/constants/index.ts"
+      "default": "./dist/constants/index.js"
     },
     "./utils": {
       "types": "./dist/utils/index.d.ts",
-      "default": "./src/utils/index.ts"
+      "default": "./dist/utils/index.js"
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsup && tsc --incremental false",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit"
@@ -49,6 +49,7 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "tsup": "^8.5.0",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

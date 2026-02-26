@@ -3,7 +3,7 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: {
     "src/index": "src/index.ts",
-    "src/env": "src/env.ts",
+    env: "env.ts",
   },
   format: ["esm"],
   dts: false,

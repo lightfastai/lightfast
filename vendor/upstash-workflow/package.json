@@ -6,32 +6,32 @@
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/src/index.js"
     },
     "./env": {
       "types": "./dist/env.d.ts",
-      "default": "./env.ts"
+      "default": "./dist/env.js"
     },
     "./client": {
       "types": "./dist/src/client.d.ts",
-      "default": "./src/client.ts"
+      "default": "./dist/src/client.js"
     },
     "./hono": {
       "types": "./dist/src/hono.d.ts",
-      "default": "./src/hono.ts"
+      "default": "./dist/src/hono.js"
     },
     "./nextjs": {
       "types": "./dist/src/nextjs.d.ts",
-      "default": "./src/nextjs.ts"
+      "default": "./dist/src/nextjs.js"
     },
     "./types": {
       "types": "./dist/src/types.d.ts",
-      "default": "./src/types.ts"
+      "default": "./dist/src/types.js"
     }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "tsup && tsc --incremental false",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
@@ -52,6 +52,7 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "tsup": "^8.5.0",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"
