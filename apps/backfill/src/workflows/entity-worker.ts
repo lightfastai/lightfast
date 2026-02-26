@@ -183,31 +183,39 @@ export const backfillEntityWorker = inngest.createFunction(
       // Dispatch each event to Gateway service auth endpoint
       // Return count from step so it survives memoized replay (callbacks are skipped on retry)
       const dispatched = await step.run(`dispatch-${entityType}-p${pageNum}`, async () => {
+        const BATCH_SIZE = 5;
+        const events = fetchResult.events;
         let count = 0;
-        for (const webhookEvent of fetchResult.events) {
-          const response = await fetch(`${gatewayUrl}/webhooks/${provider}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-API-Key": env.GATEWAY_API_KEY,
-            },
-            body: JSON.stringify({
-              connectionId: installationId,
-              orgId,
-              deliveryId: webhookEvent.deliveryId,
-              eventType: webhookEvent.eventType,
-              payload: webhookEvent.payload,
-              receivedAt: Date.now(),
+
+        for (let i = 0; i < events.length; i += BATCH_SIZE) {
+          const batch = events.slice(i, i + BATCH_SIZE);
+          await Promise.all(
+            batch.map(async (webhookEvent) => {
+              const response = await fetch(`${gatewayUrl}/webhooks/${provider}`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-API-Key": env.GATEWAY_API_KEY,
+                },
+                body: JSON.stringify({
+                  connectionId: installationId,
+                  orgId,
+                  deliveryId: webhookEvent.deliveryId,
+                  eventType: webhookEvent.eventType,
+                  payload: webhookEvent.payload,
+                  receivedAt: Date.now(),
+                }),
+                signal: AbortSignal.timeout(30_000),
+              });
+              if (!response.ok) {
+                const text = await response.text().catch(() => "unknown");
+                throw new Error(
+                  `Gateway ingestWebhook failed: ${response.status} — ${text}`,
+                );
+              }
             }),
-            signal: AbortSignal.timeout(30_000),
-          });
-          if (!response.ok) {
-            const text = await response.text().catch(() => "unknown");
-            throw new Error(
-              `Gateway ingestWebhook failed: ${response.status} — ${text}`,
-            );
-          }
-          count++;
+          );
+          count += batch.length;
         }
         return count;
       });
