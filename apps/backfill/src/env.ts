@@ -1,5 +1,4 @@
 import { createEnv } from "@t3-oss/env-core";
-import { vercel } from "@t3-oss/env-core/presets-zod";
 import type { Context } from "hono";
 import { env as honoEnv } from "hono/adapter";
 import { z } from "zod";
@@ -20,7 +19,7 @@ export const getEnv = (c: Context) =>
 
 /** Module-level validated env for non-Hono contexts (Inngest workflows, module-level init). */
 export const env = createEnv({
-  extends: [vercel(), inngestEnv],
+  extends: [inngestEnv],
   server,
   runtimeEnv: {
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
