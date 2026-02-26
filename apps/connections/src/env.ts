@@ -38,7 +38,19 @@ export const env = createEnv({
     SENTRY_CLIENT_SECRET: z.string().min(1),
 
     // GitHub App (private key for installation token generation)
-    GITHUB_PRIVATE_KEY: z.string().min(1),
+    GITHUB_PRIVATE_KEY: z.string().refine(
+      (key) => {
+        const normalized = key.replace(/\\n/g, "\n");
+        return (
+          /-----BEGIN (RSA )?PRIVATE KEY-----/.test(normalized) &&
+          /-----END (RSA )?PRIVATE KEY-----/.test(normalized)
+        );
+      },
+      {
+        message:
+          "GITHUB_PRIVATE_KEY must be a PEM-formatted private key containing BEGIN/END PRIVATE KEY markers",
+      },
+    ),
   },
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
