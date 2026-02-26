@@ -39,7 +39,7 @@ vi.mock("../lib/related-projects", () => ({
 }));
 
 // Force module load to capture handler
-await import("./entity-worker");
+await import("./entity-worker.js");
 
 // ── Helpers ──
 

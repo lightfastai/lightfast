@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { serve } from "@vendor/inngest/hono";
-import { inngest } from "../inngest/client";
-import { backfillOrchestrator } from "../workflows/backfill-orchestrator";
-import { backfillEntityWorker } from "../workflows/entity-worker";
+import { inngest } from "../inngest/client.js";
+import { backfillOrchestrator } from "../workflows/backfill-orchestrator.js";
+import { backfillEntityWorker } from "../workflows/entity-worker.js";
 
 const inngestRoute = new Hono();
 

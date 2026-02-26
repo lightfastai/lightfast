@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { trigger } from "./routes/trigger";
-import { inngestRoute } from "./routes/inngest";
+import { trigger } from "./routes/trigger.js";
+import { inngestRoute } from "./routes/inngest.js";
 
 const app = new Hono();
 

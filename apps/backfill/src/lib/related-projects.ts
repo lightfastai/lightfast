@@ -1,6 +1,6 @@
 import { withRelatedProject } from "@vercel/related-projects";
 
-import { env } from "../env";
+import { env } from "../env.js";
 
 const isDevelopment =
   env.VERCEL_ENV !== "production" && env.VERCEL_ENV !== "preview";

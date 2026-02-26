@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
-import { getEnv } from "../env";
-import { inngest } from "../inngest/client";
+import { getEnv } from "../env-hono.js";
+import { inngest } from "../inngest/client.js";
 
 function isValidApiKey(key: string | undefined, expected: string): boolean {
   if (!key) return false;

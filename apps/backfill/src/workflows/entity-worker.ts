@@ -1,9 +1,9 @@
 import { NonRetriableError } from "@vendor/inngest";
-import { inngest } from "../inngest/client";
+import { inngest } from "../inngest/client.js";
 import { getConnector } from "@repo/console-backfill";
 import type { BackfillConfig } from "@repo/console-backfill";
-import { env } from "../env";
-import { gatewayUrl, connectionsUrl } from "../lib/related-projects";
+import { env } from "../env.js";
+import { gatewayUrl, connectionsUrl } from "../lib/related-projects.js";
 
 export const backfillEntityWorker = inngest.createFunction(
   {

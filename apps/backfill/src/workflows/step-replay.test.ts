@@ -113,8 +113,8 @@ vi.mock("../lib/related-projects", () => ({
 }));
 
 // Force module load to capture handlers
-await import("./entity-worker");
-await import("./backfill-orchestrator");
+await import("./entity-worker.js");
+await import("./backfill-orchestrator.js");
 
 // ── Shared fixtures ──
 

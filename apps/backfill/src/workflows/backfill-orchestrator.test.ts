@@ -35,7 +35,7 @@ vi.mock("../lib/related-projects", () => ({
 }));
 
 // Force module load to capture handler
-await import("./backfill-orchestrator");
+await import("./backfill-orchestrator.js");
 
 // ── Helpers ──
 

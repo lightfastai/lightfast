@@ -13,7 +13,7 @@ vi.mock("../inngest/client", () => ({
 }));
 
 import { Hono } from "hono";
-import { trigger } from "./trigger";
+import { trigger } from "./trigger.js";
 
 const app = new Hono();
 app.route("/trigger", trigger);

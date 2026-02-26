@@ -1,7 +1,7 @@
 import { EventSchemas, Inngest } from "@vendor/inngest";
 import { z } from "zod";
 
-import { env } from "../env";
+import { env } from "../env.js";
 
 const eventsMap = {
   "apps-backfill/run.requested": z.object({

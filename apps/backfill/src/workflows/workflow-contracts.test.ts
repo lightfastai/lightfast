@@ -48,8 +48,8 @@ vi.mock("../lib/related-projects", () => ({
 }));
 
 // Load both modules to capture handlers
-await import("./backfill-orchestrator");
-await import("./entity-worker");
+await import("./backfill-orchestrator.js");
+await import("./entity-worker.js");
 
 // Assign by function ID
 for (const fn of capturedFunctions) {
