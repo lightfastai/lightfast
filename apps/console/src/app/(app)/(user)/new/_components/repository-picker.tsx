@@ -22,11 +22,11 @@ import { useWorkspaceForm } from "./workspace-form-provider";
  * Client island for multi-repository selection with installation filtering and search
  */
 interface RepositoryPickerProps {
-  installationId: string | null;
+  gwInstallationId: string | null;
   refetchIntegration: () => void;
 }
 
-export function RepositoryPicker({ installationId, refetchIntegration }: RepositoryPickerProps) {
+export function RepositoryPicker({ gwInstallationId, refetchIntegration }: RepositoryPickerProps) {
   const trpc = useTRPC();
   const [searchQuery, setSearchQuery] = useState("");
   const {
@@ -41,10 +41,10 @@ export function RepositoryPicker({ installationId, refetchIntegration }: Reposit
   // Fetch repositories for selected installation
   const { data: repositoriesData, isLoading: isLoadingRepos } = useQuery({
     ...trpc.connections.github.repositories.queryOptions({
-      integrationId: installationId ?? "",
+      integrationId: gwInstallationId ?? "",
       installationId: selectedInstallation?.id ?? "",
     }),
-    enabled: Boolean(installationId && selectedInstallation),
+    enabled: Boolean(gwInstallationId && selectedInstallation),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });

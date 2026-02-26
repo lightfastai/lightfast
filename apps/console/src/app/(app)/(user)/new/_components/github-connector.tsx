@@ -20,8 +20,8 @@ export function GitHubConnector() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const {
-    installationId,
-    setInstallationId,
+    gwInstallationId,
+    setGwInstallationId,
     setInstallations,
     selectedInstallation,
     setSelectedInstallation,
@@ -42,11 +42,11 @@ export function GitHubConnector() {
   // Track previous installations for equality comparison
   const prevInstallationsRef = useRef<typeof installations>([]);
 
-  // Effect 1: Sync installationId to context (only when ID value changes, not object reference)
+  // Effect 1: Sync gwInstallationId to context (only when ID value changes, not object reference)
   useEffect(() => {
     const id = githubUserSource?.id ?? null;
-    setInstallationId(id);
-  }, [githubUserSource?.id, setInstallationId]);
+    setGwInstallationId(id);
+  }, [githubUserSource?.id, setGwInstallationId]);
 
   // Effect 2: Sync installations array to context (with ID equality check)
   useEffect(() => {
@@ -170,7 +170,7 @@ export function GitHubConnector() {
 
   return (
     <RepositoryPicker
-      installationId={installationId}
+      gwInstallationId={gwInstallationId}
       refetchIntegration={refetchIntegration}
     />
   );
