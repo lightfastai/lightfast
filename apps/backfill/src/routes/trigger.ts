@@ -1,12 +1,12 @@
 import { timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
-import { env } from "../env";
+import { getEnv } from "../env";
 import { inngest } from "../inngest/client";
 
-function isValidApiKey(key: string | undefined): boolean {
+function isValidApiKey(key: string | undefined, expected: string): boolean {
   if (!key) return false;
   const a = Buffer.from(key);
-  const b = Buffer.from(env.GATEWAY_API_KEY);
+  const b = Buffer.from(expected);
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
 }
@@ -20,7 +20,8 @@ const trigger = new Hono();
  * Validates X-API-Key and sends an Inngest event to start the backfill.
  */
 trigger.post("/", async (c) => {
-  if (!isValidApiKey(c.req.header("X-API-Key"))) {
+  const { GATEWAY_API_KEY } = getEnv(c);
+  if (!isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY)) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
@@ -79,7 +80,8 @@ trigger.post("/", async (c) => {
  * Cancels any running backfill for this installation.
  */
 trigger.post("/cancel", async (c) => {
-  if (!isValidApiKey(c.req.header("X-API-Key"))) {
+  const { GATEWAY_API_KEY } = getEnv(c);
+  if (!isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY)) {
     return c.json({ error: "unauthorized" }, 401);
   }
 

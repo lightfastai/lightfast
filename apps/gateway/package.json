@@ -18,6 +18,7 @@
     "@repo/console-validation": "workspace:*",
     "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
+    "@t3-oss/env-core": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/db": "workspace:*",
     "@vendor/qstash": "workspace:*",

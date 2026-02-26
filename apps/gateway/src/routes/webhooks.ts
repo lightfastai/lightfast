@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { getQStashClient } from "@vendor/qstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { gatewayBaseUrl, consoleUrl } from "../lib/urls";
-import { env } from "../env";
+import { getEnv } from "../env";
 import { getProvider } from "../providers";
 import { webhookSeenKey } from "../lib/cache";
 import { redis } from "@vendor/upstash";
@@ -36,6 +36,8 @@ webhooks.post("/:provider", async (c) => {
   } catch {
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
+
+  const env = getEnv(c);
 
   // Service auth path — backfill or other internal service
   // Pre-resolved connectionId/orgId provided in body; skip HMAC/dedup/resolution.

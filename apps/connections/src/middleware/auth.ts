@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import type { Context, MiddlewareHandler } from "hono";
-import { env } from "../env";
+import { getEnv } from "../env";
 
 /**
  * X-API-Key authentication middleware for service-to-service calls.
@@ -12,7 +12,8 @@ export const apiKeyAuth: MiddlewareHandler = async (c: Context, next) => {
     return c.json({ error: "unauthorized" }, 401);
   }
 
-  const expected = Buffer.from(env.GATEWAY_API_KEY);
+  const { GATEWAY_API_KEY } = getEnv(c);
+  const expected = Buffer.from(GATEWAY_API_KEY);
   const received = Buffer.from(apiKey);
 
   if (
