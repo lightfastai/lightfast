@@ -1,4 +1,4 @@
-import type { Context, MiddlewareHandler } from "hono";
+import type { MiddlewareHandler } from "hono";
 import { timingSafeStringEqual } from "../lib/crypto";
 import { env } from "../env";
 
@@ -7,7 +7,7 @@ import { env } from "../env";
  *
  * Validates the X-API-Key header against the GATEWAY_API_KEY env var.
  */
-export const apiKeyAuth: MiddlewareHandler = async (c: Context, next) => {
+export const apiKeyAuth: MiddlewareHandler = async (c, next) => {
   const apiKey = c.req.header("X-API-Key");
 
   if (!apiKey || !timingSafeStringEqual(apiKey, env.GATEWAY_API_KEY)) {
