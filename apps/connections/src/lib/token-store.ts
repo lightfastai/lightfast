@@ -18,16 +18,31 @@ export async function writeTokenRecord(
     ? await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY)
     : null;
 
-  await db.insert(gwTokens).values({
-    installationId,
-    accessToken: encryptedAccess,
-    refreshToken: encryptedRefresh,
-    expiresAt: oauthTokens.expiresIn
-      ? new Date(Date.now() + oauthTokens.expiresIn * 1000).toISOString()
-      : null,
-    tokenType: oauthTokens.tokenType,
-    scope: oauthTokens.scope,
-  });
+  await db
+    .insert(gwTokens)
+    .values({
+      installationId,
+      accessToken: encryptedAccess,
+      refreshToken: encryptedRefresh,
+      expiresAt: oauthTokens.expiresIn
+        ? new Date(Date.now() + oauthTokens.expiresIn * 1000).toISOString()
+        : null,
+      tokenType: oauthTokens.tokenType,
+      scope: oauthTokens.scope,
+    })
+    .onConflictDoUpdate({
+      target: gwTokens.installationId,
+      set: {
+        accessToken: encryptedAccess,
+        refreshToken: encryptedRefresh,
+        expiresAt: oauthTokens.expiresIn
+          ? new Date(Date.now() + oauthTokens.expiresIn * 1000).toISOString()
+          : null,
+        tokenType: oauthTokens.tokenType,
+        scope: oauthTokens.scope,
+        updatedAt: new Date().toISOString(),
+      },
+    });
 }
 
 /**
