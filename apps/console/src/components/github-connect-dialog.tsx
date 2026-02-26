@@ -75,6 +75,9 @@ export function GitHubConnectDialog({
 
 	const handleGitHubAuth = async () => {
 		try {
+			// Clear any existing polling interval before starting a new auth flow
+			cleanup();
+
 			const data = await queryClient.fetchQuery(
 				trpc.connections.getAuthorizeUrl.queryOptions({ provider: "github" }),
 			);
