@@ -1,57 +1,49 @@
+import { createEnv as createCoreEnv } from "@t3-oss/env-core";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
+import type { Context } from "hono";
+import { env as honoEnv } from "hono/adapter";
 import { z } from "zod";
 
+import { githubOAuthEnv } from "@repo/console-octokit-github/oauth-env";
+import { linearEnv } from "@repo/console-linear/env";
+import { sentryIntegrationEnv } from "@repo/console-sentry/env";
+import { vercelOAuthEnv } from "@repo/console-vercel/oauth-env";
 import { upstashEnv } from "@vendor/upstash/env";
 import { qstashEnv } from "@vendor/qstash/env";
 import { dbEnv } from "@vendor/db/env";
 
+const server = {
+  GATEWAY_API_KEY: z.string().min(1),
+  ENCRYPTION_KEY: z.string().min(32),
+};
+
+/** Validated env from the Hono request context — use in route handlers. */
+export const getEnv = (c: Context) =>
+  createCoreEnv({
+    server,
+    runtimeEnv: honoEnv(c),
+    emptyStringAsUndefined: true,
+  });
+
+/** Module-level validated env for non-Hono contexts (workflows, utilities, module-level init). */
 export const env = createEnv({
-  extends: [vercel(), upstashEnv, qstashEnv, dbEnv],
+  extends: [
+    vercel(),
+    upstashEnv,
+    qstashEnv,
+    dbEnv,
+    githubOAuthEnv,
+    vercelOAuthEnv,
+    linearEnv,
+    sentryIntegrationEnv,
+  ],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
   },
-  server: {
-    // Service auth
-    GATEWAY_API_KEY: z.string().min(1),
-    ENCRYPTION_KEY: z.string().min(32),
-
-    // GitHub
-    GITHUB_APP_SLUG: z.string().min(1),
-    GITHUB_APP_ID: z.string().min(1),
-    GITHUB_CLIENT_ID: z.string().min(1),
-    GITHUB_CLIENT_SECRET: z.string().min(1),
-
-    // Vercel
-    VERCEL_CLIENT_SECRET_ID: z.string().min(1),
-    VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
-    VERCEL_INTEGRATION_SLUG: z.string().min(1),
-
-    // Linear
-    LINEAR_CLIENT_ID: z.string().min(1),
-    LINEAR_CLIENT_SECRET: z.string().min(1),
-
-    // Sentry
-    SENTRY_CLIENT_ID: z.string().min(1),
-    SENTRY_CLIENT_SECRET: z.string().min(1),
-
-    // GitHub App (private key for installation token generation)
-    GITHUB_PRIVATE_KEY: z.string().refine(
-      (key) => {
-        const normalized = key.replace(/\\n/g, "\n");
-        return (
-          /-----BEGIN (RSA )?PRIVATE KEY-----/.test(normalized) &&
-          /-----END (RSA )?PRIVATE KEY-----/.test(normalized)
-        );
-      },
-      {
-        message:
-          "GITHUB_PRIVATE_KEY must be a PEM-formatted private key containing BEGIN/END PRIVATE KEY markers",
-      },
-    ),
-  },
+  server,
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
   },

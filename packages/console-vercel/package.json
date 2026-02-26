@@ -10,6 +10,10 @@
       "types": "./dist/env.d.ts",
       "default": "./src/env.ts"
     },
+    "./oauth-env": {
+      "types": "./dist/env.d.ts",
+      "default": "./src/env.ts"
+    },
     "./types": {
       "types": "./dist/types.d.ts",
       "default": "./src/types.ts"
