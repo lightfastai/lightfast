@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { connections } from "./routes/connections";
 import { workflows } from "./routes/workflows";
+import { version as VERSION } from "../package.json";
 
 const app = new Hono();
 
@@ -10,7 +11,7 @@ app.route("/workflows", workflows);
 
 // Root health check
 app.get("/", (c) =>
-  c.json({ service: "connections", version: "1.0.0", status: "ok" }),
+  c.json({ service: "connections", version: VERSION, status: "ok" }),
 );
 
 export { app };
