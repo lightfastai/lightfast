@@ -1,6 +1,7 @@
 {
   "extends": "@repo/typescript-config/internal-package.json",
   "compilerOptions": {
+    "tsBuildInfoFile": "dist/.tsbuildinfo.json",
     "paths": {
       "~/env": ["./env.ts"]
     }
