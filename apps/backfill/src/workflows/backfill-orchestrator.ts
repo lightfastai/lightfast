@@ -34,8 +34,18 @@ export const backfillOrchestrator = inngest.createFunction(
     const connection = await step.run("get-connection", async () => {
       const response = await fetch(
         `${connectionsUrl}/connections/${installationId}`,
-        { headers: { "X-API-Key": env.GATEWAY_API_KEY } },
-      );
+        {
+          headers: { "X-API-Key": env.GATEWAY_API_KEY },
+          signal: AbortSignal.timeout(10_000),
+        },
+      ).catch((err) => {
+        if (err instanceof DOMException && err.name === "TimeoutError") {
+          throw new Error(
+            `Gateway getConnection request timed out for ${installationId}`,
+          );
+        }
+        throw err;
+      });
       if (!response.ok) {
         throw new Error(
           `Gateway getConnection failed: ${response.status} for ${installationId}`,
@@ -125,13 +135,16 @@ export const backfillOrchestrator = inngest.createFunction(
     // ── Step 5: Wait for all completion events ──
     // Each waitForEvent is dispatched in parallel via Promise.all
     // As each entity.completed event arrives, the matching wait resolves
+    // Escape single quotes for CEL string literals to prevent syntax errors
+    const celEscape = (v: string) => v.replace(/'/g, "\\'");
+
     const completionResults = await Promise.all(
       workUnits.map(async (wu) => {
         const result = await step.waitForEvent(
           `wait-${wu.workUnitId}`,
           {
             event: "apps-backfill/entity.completed",
-            if: `async.data.installationId == '${installationId}' && async.data.resourceId == '${wu.resource.providerResourceId}' && async.data.entityType == '${wu.entityType}'`,
+            if: `async.data.installationId == '${celEscape(installationId)}' && async.data.resourceId == '${celEscape(wu.resource.providerResourceId)}' && async.data.entityType == '${celEscape(wu.entityType)}'`,
             timeout: "4h",
           },
         );
