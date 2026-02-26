@@ -30,7 +30,7 @@ export class VercelProvider implements ConnectionProvider {
 
   async exchangeCode(code: string, redirectUri: string): Promise<OAuthTokens> {
     const body = new URLSearchParams({
-      client_id: env.VERCEL_CLIENT_ID,
+      client_id: env.VERCEL_CLIENT_SECRET_ID,
       client_secret: env.VERCEL_CLIENT_INTEGRATION_SECRET,
       code,
       redirect_uri: redirectUri,

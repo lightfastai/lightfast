@@ -9,7 +9,7 @@ vi.mock("../env", () => ({
     GITHUB_CLIENT_ID: "gh-client-id",
     GITHUB_CLIENT_SECRET: "gh-client-secret",
     GITHUB_APP_PRIVATE_KEY: "test-key",
-    VERCEL_CLIENT_ID: "vc-client-id",
+    VERCEL_CLIENT_SECRET_ID: "vc-client-id",
     VERCEL_CLIENT_INTEGRATION_SECRET: "vc-secret",
     VERCEL_INTEGRATION_SLUG: "test-integration",
     LINEAR_CLIENT_ID: "lin-client-id",
