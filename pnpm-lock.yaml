@@ -642,7 +642,7 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
-      '@t3-oss/env-nextjs':
+      '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
       '@vendor/inngest':

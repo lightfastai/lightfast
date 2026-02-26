@@ -17,7 +17,7 @@
     "@repo/console-backfill": "workspace:*",
     "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
-    "@t3-oss/env-nextjs": "catalog:",
+    "@t3-oss/env-core": "catalog:",
     "@vendor/inngest": "workspace:*",
     "@vercel/related-projects": "catalog:",
     "hono": "catalog:",
