@@ -1,6 +1,5 @@
-import { createEnv as createCoreEnv } from "@t3-oss/env-core";
-import { createEnv } from "@t3-oss/env-nextjs";
-import { vercel } from "@t3-oss/env-nextjs/presets-zod";
+import { createEnv } from "@t3-oss/env-core";
+import { vercel } from "@t3-oss/env-core/presets-zod";
 import type { Context } from "hono";
 import { env as honoEnv } from "hono/adapter";
 import { z } from "zod";
@@ -23,7 +22,7 @@ const server = {
 
 /** Validated env from the Hono request context — use in route handlers. */
 export const getEnv = (c: Context) =>
-  createCoreEnv({
+  createEnv({
     server,
     runtimeEnv: honoEnv(c),
     emptyStringAsUndefined: true,
@@ -38,8 +37,15 @@ export const env = createEnv({
       .default("development"),
   },
   server,
-  experimental__runtimeEnv: {
+  runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
+    GATEWAY_WEBHOOK_SECRET: process.env.GATEWAY_WEBHOOK_SECRET,
+    GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
+    VERCEL_CLIENT_INTEGRATION_SECRET:
+      process.env.VERCEL_CLIENT_INTEGRATION_SECRET,
+    LINEAR_WEBHOOK_SIGNING_SECRET: process.env.LINEAR_WEBHOOK_SIGNING_SECRET,
+    SENTRY_CLIENT_SECRET: process.env.SENTRY_CLIENT_SECRET,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

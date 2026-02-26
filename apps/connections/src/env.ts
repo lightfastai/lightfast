@@ -1,6 +1,5 @@
-import { createEnv as createCoreEnv } from "@t3-oss/env-core";
-import { createEnv } from "@t3-oss/env-nextjs";
-import { vercel } from "@t3-oss/env-nextjs/presets-zod";
+import { createEnv } from "@t3-oss/env-core";
+import { vercel } from "@t3-oss/env-core/presets-zod";
 import type { Context } from "hono";
 import { env as honoEnv } from "hono/adapter";
 import { z } from "zod";
@@ -20,7 +19,7 @@ const server = {
 
 /** Validated env from the Hono request context — use in route handlers. */
 export const getEnv = (c: Context) =>
-  createCoreEnv({
+  createEnv({
     server,
     runtimeEnv: honoEnv(c),
     emptyStringAsUndefined: true,
@@ -44,8 +43,10 @@ export const env = createEnv({
       .default("development"),
   },
   server,
-  experimental__runtimeEnv: {
+  runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
+    ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

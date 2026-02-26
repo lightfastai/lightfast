@@ -24,7 +24,7 @@
 		"@planetscale/database": "^1.19.0",
 		"@repo/ai": "workspace:*",
 		"@repo/lib": "workspace:*",
-		"@t3-oss/env-nextjs": "catalog:",
+		"@t3-oss/env-core": "catalog:",
 		"ai": "catalog:",
 		"drizzle-orm": "catalog:",
 		"drizzle-zod": "catalog:",

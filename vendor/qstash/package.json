@@ -33,7 +33,7 @@
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
-    "@t3-oss/env-nextjs": "catalog:",
+    "@t3-oss/env-core": "catalog:",
     "@upstash/qstash": "^2.8.1",
     "zod": "catalog:zod3"
   }

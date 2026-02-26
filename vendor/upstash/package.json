@@ -35,7 +35,7 @@
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
-    "@t3-oss/env-nextjs": "catalog:",
+    "@t3-oss/env-core": "catalog:",
     "@upstash/redis": "^1.35.1",
     "zod": "catalog:zod3"
   }

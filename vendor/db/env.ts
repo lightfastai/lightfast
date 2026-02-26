@@ -1,8 +1,7 @@
-import { createEnv } from "@t3-oss/env-nextjs";
+import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const dbEnv = createEnv({
-  shared: {},
   server: {
     DATABASE_HOST: z
       .string()
@@ -13,8 +12,11 @@ export const dbEnv = createEnv({
     DATABASE_USERNAME: z.string().startsWith("pscale_api_"),
     DATABASE_PASSWORD: z.string().startsWith("pscale_pw_"),
   },
-  client: {},
-  experimental__runtimeEnv: {},
+  runtimeEnv: {
+    DATABASE_HOST: process.env.DATABASE_HOST,
+    DATABASE_USERNAME: process.env.DATABASE_USERNAME,
+    DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,
+  },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
 });
