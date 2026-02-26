@@ -17,6 +17,8 @@ import type {
   CallbackResult,
 } from "../types";
 
+const FETCH_TIMEOUT_MS = 15_000;
+
 export class LinearProvider implements ConnectionProvider {
   readonly name = "linear" as const;
   readonly requiresWebhookRegistration = true as const;
@@ -37,6 +39,7 @@ export class LinearProvider implements ConnectionProvider {
   async exchangeCode(code: string, redirectUri: string): Promise<OAuthTokens> {
     const response = await fetch("https://api.linear.app/oauth/token", {
       method: "POST",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         client_id: env.LINEAR_CLIENT_ID,
@@ -70,6 +73,7 @@ export class LinearProvider implements ConnectionProvider {
   async revokeToken(accessToken: string): Promise<void> {
     const response = await fetch("https://api.linear.app/oauth/revoke", {
       method: "POST",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization: `Bearer ${accessToken}`,
@@ -99,6 +103,7 @@ export class LinearProvider implements ConnectionProvider {
 
     const response = await fetch("https://api.linear.app/graphql", {
       method: "POST",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${env.LINEAR_CLIENT_SECRET}`,
@@ -162,6 +167,7 @@ export class LinearProvider implements ConnectionProvider {
 
     const response = await fetch("https://api.linear.app/graphql", {
       method: "POST",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${env.LINEAR_CLIENT_SECRET}`,
@@ -188,6 +194,7 @@ export class LinearProvider implements ConnectionProvider {
   private async fetchLinearExternalId(accessToken: string): Promise<string> {
     const response = await fetch("https://api.linear.app/graphql", {
       method: "POST",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
