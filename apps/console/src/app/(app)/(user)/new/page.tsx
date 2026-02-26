@@ -53,8 +53,8 @@ export default async function NewWorkspacePage({
   const teamSlugHint = params.teamSlug;
   const initialWorkspaceName = params.workspaceName ?? "";
 
-  // Prefetch GitHub user source (user-scoped data, no org needed)
-  // This prevents client-side fetch waterfall in GitHubConnector
+  // Prefetch org-scoped GitHub connection status (requires active org context)
+  // Avoids client-side fetch waterfall in GitHubConnector
   prefetch(orgTrpc.connections.github.get.queryOptions());
 
   return (
