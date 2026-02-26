@@ -84,4 +84,20 @@ describe("timingSafeEqual", () => {
     const sig2 = await computeHmacSha256("payload-b", "secret");
     expect(timingSafeEqual(sig1, sig2)).toBe(false);
   });
+
+  it("detects single-character tamper in HMAC-SHA256 digest", async () => {
+    const sig = await computeHmacSha256("webhook-payload", "wh_secret");
+    expect(sig).toHaveLength(64);
+    expect(timingSafeEqual(sig, sig)).toBe(true);
+    const tampered = sig[0] === "a" ? "b" + sig.slice(1) : "a" + sig.slice(1);
+    expect(timingSafeEqual(sig, tampered)).toBe(false);
+  });
+
+  it("detects single-character tamper in HMAC-SHA1 digest", async () => {
+    const sig = await computeHmacSha1("webhook-payload", "wh_secret");
+    expect(sig).toHaveLength(40);
+    expect(timingSafeEqual(sig, sig)).toBe(true);
+    const tampered = sig[0] === "a" ? "b" + sig.slice(1) : "a" + sig.slice(1);
+    expect(timingSafeEqual(sig, tampered)).toBe(false);
+  });
 });
