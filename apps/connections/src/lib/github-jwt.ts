@@ -21,7 +21,7 @@ export async function createGitHubAppJWT(): Promise<string> {
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
   const signingInput = `${encodedHeader}.${encodedPayload}`;
 
-  const key = await importPrivateKey(env.GITHUB_PRIVATE_KEY);
+  const key = await importPrivateKey(env.GITHUB_APP_PRIVATE_KEY);
   const signature = await crypto.subtle.sign(
     "RSASSA-PKCS1-v1_5",
     key,
@@ -90,7 +90,7 @@ async function importPrivateKey(base64Pem: string): Promise<CryptoKey> {
   // only supports PKCS#8 (BEGIN PRIVATE KEY). Detect and reject early.
   if (pem.includes("-----BEGIN RSA PRIVATE KEY-----")) {
     throw new Error(
-      "GITHUB_PRIVATE_KEY is in PKCS#1 format (RSA PRIVATE KEY). " +
+      "GITHUB_APP_PRIVATE_KEY is in PKCS#1 format (RSA PRIVATE KEY). " +
         "Web Crypto requires PKCS#8. Convert with: " +
         "openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem",
     );
@@ -122,7 +122,12 @@ function base64UrlEncode(str: string): string {
 }
 
 function base64UrlEncodeBytes(bytes: Uint8Array): string {
-  return btoa(String.fromCharCode(...bytes))
+  const CHUNK_SIZE = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK_SIZE));
+  }
+  return btoa(binary)
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
