@@ -6,14 +6,10 @@ import { z } from "zod";
 
 import { env as inngestEnv } from "@vendor/inngest/env";
 
-const server = {
-  GATEWAY_API_KEY: z.string().min(1),
-};
-
 /** Validated env from the Hono request context — use in route handlers. */
 export const getEnv = (c: Context) =>
   createEnv({
-    server,
+    server: { GATEWAY_API_KEY: z.string().min(1) },
     runtimeEnv: honoEnv(c),
     emptyStringAsUndefined: true,
   });
@@ -21,7 +17,7 @@ export const getEnv = (c: Context) =>
 /** Module-level validated env for non-Hono contexts (Inngest workflows, module-level init). */
 export const env = createEnv({
   extends: [vercel(), inngestEnv],
-  server,
+  server: { GATEWAY_API_KEY: z.string().min(1) },
   runtimeEnv: {
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
   },
