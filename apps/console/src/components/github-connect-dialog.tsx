@@ -110,8 +110,11 @@ export function GitHubConnectDialog({
 					}
 				}
 			}, 500);
-		} catch {
-			toast.error("Failed to connect GitHub");
+		} catch (e) {
+			console.error("GitHub connect failed:", e);
+			toast.error("Failed to connect GitHub", {
+				description: e instanceof Error ? e.message : String(e),
+			});
 		}
 	};
 
