@@ -4,8 +4,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    }
+  },
   "scripts": {
-    "build": "tsup && pnpm with-env node dist/src/env.js",
+    "build": "tsup && node scripts/build-vercel.mjs && pnpm with-env node dist/src/env.js",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "vercel dev --listen 4108",
     "lint": "eslint",
