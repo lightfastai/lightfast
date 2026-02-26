@@ -80,6 +80,7 @@ describe("fixture-based provider extraction (real webhook payloads)", () => {
 
       it("extractResourceId returns expected value for all payloads", () => {
         const expectations = extractionExpectations[providerName];
+        if (!expectations) throw new Error(`No expectations for ${providerName}`);
         for (const wh of providerWebhooks) {
           const parsed = provider.parsePayload(wh.payload);
           const actual = provider.extractResourceId(parsed);

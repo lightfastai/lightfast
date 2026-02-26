@@ -3,7 +3,7 @@
  *
  * All keys are namespaced under `gw:` to share the same namespace as the gateway.
  */
-import type { SourceType } from "@repo/console-validation";
+import type { ProviderName } from "@repo/gateway-types";
 
 /** Connection state keyed by connection ID */
 export const connectionKey = (id: string) => `gw:connection:${id}`;
@@ -13,11 +13,11 @@ export const orgConnectionsKey = (orgId: string) =>
   `gw:org:${orgId}:connections`;
 
 /** Provider account → connection mapping */
-export const providerAccountKey = (provider: SourceType, accountId: string) =>
+export const providerAccountKey = (provider: ProviderName, accountId: string) =>
   `gw:provider:${provider}:account:${accountId}`;
 
 /** Resource → connection mapping (for webhook routing) */
-export const resourceKey = (provider: SourceType, resourceId: string) =>
+export const resourceKey = (provider: ProviderName, resourceId: string) =>
   `gw:resource:${provider}:${resourceId}`;
 
 /** Set of resource IDs linked to a connection */

@@ -7,6 +7,7 @@ import { db } from "@db/console/client";
 import { webhookSeenKey, resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache.js";
 import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload } from "@repo/gateway-types";
+import type { WorkflowContext } from "@vendor/upstash-workflow/types";
 
 const qstash = getQStashClient();
 
@@ -27,7 +28,7 @@ interface ConnectionInfo {
  * QStash handles the retry schedule with exponential backoff.
  */
 export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
-  async (context) => {
+  async (context: WorkflowContext<WebhookReceiptPayload>) => {
     const data = context.requestPayload;
 
     // Step 1: Deduplication — SET NX (only if not exists), TTL 24h

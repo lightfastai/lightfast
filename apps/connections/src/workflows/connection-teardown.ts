@@ -9,6 +9,7 @@ import { decrypt } from "../lib/crypto.js";
 import { cancelBackfillService } from "../lib/urls.js";
 import { getProvider } from "../providers/index.js";
 import type { ProviderName } from "../providers/types.js";
+import type { WorkflowContext } from "@vendor/upstash-workflow/types";
 
 interface TeardownPayload {
   installationId: string;
@@ -29,7 +30,7 @@ interface TeardownPayload {
  * Each step runs independently with automatic retries.
  */
 export const connectionTeardownWorkflow = serve<TeardownPayload>(
-  async (context) => {
+  async (context: WorkflowContext<TeardownPayload>) => {
     const { installationId, provider: providerName } = context.requestPayload;
 
     // Step 1: Cancel any running backfill (best-effort, before revoking token)
