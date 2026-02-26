@@ -89,7 +89,7 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
 admin.get("/dlq", apiKeyAuth, async (c) => {
   const rawLimit = parseInt(c.req.query("limit") ?? "50", 10);
   const rawOffset = parseInt(c.req.query("offset") ?? "0", 10);
-  const limit = Math.min(Math.max(Number.isNaN(rawLimit) ? 50 : rawLimit, 1), 1000);
+  const limit = Math.min(Math.max(Number.isNaN(rawLimit) ? 50 : rawLimit, 1), 100);
   const offset = Math.max(Number.isNaN(rawOffset) ? 0 : rawOffset, 0);
 
   const dlqItems = await db
