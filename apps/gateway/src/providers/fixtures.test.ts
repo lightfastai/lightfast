@@ -9,8 +9,8 @@
  */
 import { describe, it, expect } from "vitest";
 import { loadAllRawWebhooks, type RawWebhook } from "@repo/console-test-data/raw";
-import { getProvider } from "./index";
-import type { ProviderName } from "./types";
+import { getProvider } from "./index.js";
+import type { ProviderName } from "./types.js";
 
 // ── Load all sandbox datasets ──
 

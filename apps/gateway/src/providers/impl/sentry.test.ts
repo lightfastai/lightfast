@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { computeHmacSha256 } from "../../lib/crypto";
-import { SentryProvider } from "./sentry";
+import { computeHmacSha256 } from "../../lib/crypto.js";
+import { SentryProvider } from "./sentry.js";
 
 const provider = new SentryProvider();
 const secret = "test-sentry-secret";

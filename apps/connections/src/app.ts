@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { connections } from "./routes/connections";
-import { workflows } from "./routes/workflows";
+import { connections } from "./routes/connections.js";
+import { workflows } from "./routes/workflows.js";
 const app = new Hono();
 
 // Health check

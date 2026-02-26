@@ -1,10 +1,10 @@
 import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "@db/console/client";
-import { apiKeyAuth, qstashAuth } from "../middleware/auth";
+import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
 import { redis } from "@vendor/upstash";
-import { resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache";
-import type { ProviderName } from "../providers/types";
+import { resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache.js";
+import type { ProviderName } from "../providers/types.js";
 import {
   gwInstallations,
   gwResources,

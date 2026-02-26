@@ -1,10 +1,10 @@
-import { computeHmacSha1, timingSafeEqual } from "../../lib/crypto";
-import { vercelWebhookPayloadSchema } from "../schemas";
-import type { VercelWebhookPayload } from "../schemas";
+import { computeHmacSha1, timingSafeEqual } from "../../lib/crypto.js";
+import { vercelWebhookPayloadSchema } from "../schemas.js";
+import type { VercelWebhookPayload } from "../schemas.js";
 import type {
   WebhookProvider,
   WebhookPayload,
-} from "../types";
+} from "../types.js";
 
 // Vercel webhooks use HMAC-SHA1 (not SHA-256). This is imposed by Vercel's
 // webhook infrastructure — see https://vercel.com/docs/webhooks/webhooks-api

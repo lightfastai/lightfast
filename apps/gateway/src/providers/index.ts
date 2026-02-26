@@ -1,13 +1,13 @@
 import { HTTPException } from "hono/http-exception";
-import { GitHubProvider } from "./impl/github";
-import { LinearProvider } from "./impl/linear";
-import { SentryProvider } from "./impl/sentry";
-import { VercelProvider } from "./impl/vercel";
+import { GitHubProvider } from "./impl/github.js";
+import { LinearProvider } from "./impl/linear.js";
+import { SentryProvider } from "./impl/sentry.js";
+import { VercelProvider } from "./impl/vercel.js";
 import type {
   WebhookProvider,
   ProviderFor,
   ProviderName,
-} from "./types";
+} from "./types.js";
 
 export type {
   WebhookProvider,
@@ -19,7 +19,7 @@ export type {
   SentryWebhookPayload,
   WebhookPayloadFor,
   ProviderFor,
-} from "./types";
+} from "./types.js";
 
 const providers = new Map<ProviderName, WebhookProvider>([
   ["github", new GitHubProvider()],

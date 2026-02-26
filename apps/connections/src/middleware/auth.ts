@@ -1,6 +1,6 @@
 import type { Context, MiddlewareHandler } from "hono";
 import { timingSafeEqual } from "node:crypto";
-import { getEnv } from "../env";
+import { getEnv } from "../env.js";
 
 /**
  * X-API-Key authentication middleware for service-to-service calls.

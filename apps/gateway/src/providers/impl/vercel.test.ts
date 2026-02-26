@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { computeHmacSha1 } from "../../lib/crypto";
-import { VercelProvider } from "./vercel";
+import { computeHmacSha1 } from "../../lib/crypto.js";
+import { VercelProvider } from "./vercel.js";
 
 const provider = new VercelProvider();
 const secret = "test-vercel-secret";

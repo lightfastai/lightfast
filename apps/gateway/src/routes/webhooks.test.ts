@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { computeHmacSha256, computeHmacSha1 } from "../lib/crypto";
+import { computeHmacSha256, computeHmacSha1 } from "../lib/crypto.js";
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 
@@ -39,7 +39,7 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
 // ── Import app after mocks ──
 
 import { Hono } from "hono";
-import { webhooks } from "./webhooks";
+import { webhooks } from "./webhooks.js";
 
 const app = new Hono();
 app.route("/webhooks", webhooks);

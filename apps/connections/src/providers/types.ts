@@ -7,10 +7,10 @@ import type {
   LinearAuthOptions,
 } from "@repo/gateway-types";
 import type { Context } from "hono";
-import type { GitHubProvider } from "./impl/github";
-import type { LinearProvider } from "./impl/linear";
-import type { SentryProvider } from "./impl/sentry";
-import type { VercelProvider } from "./impl/vercel";
+import type { GitHubProvider } from "./impl/github.js";
+import type { LinearProvider } from "./impl/linear.js";
+import type { SentryProvider } from "./impl/sentry.js";
+import type { VercelProvider } from "./impl/vercel.js";
 
 // Re-export everything from @repo/gateway-types
 export {

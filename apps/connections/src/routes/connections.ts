@@ -5,13 +5,13 @@ import { redis } from "@vendor/upstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
-import { oauthStateKey, resourceKey } from "../lib/cache";
-import { connectionsBaseUrl, consoleUrl } from "../lib/urls";
-import { apiKeyAuth } from "../middleware/auth";
-import type { TenantVariables } from "../middleware/tenant";
-import { tenantMiddleware } from "../middleware/tenant";
-import { getProvider } from "../providers";
-import type { ProviderName } from "../providers/types";
+import { oauthStateKey, resourceKey } from "../lib/cache.js";
+import { connectionsBaseUrl, consoleUrl } from "../lib/urls.js";
+import { apiKeyAuth } from "../middleware/auth.js";
+import type { TenantVariables } from "../middleware/tenant.js";
+import { tenantMiddleware } from "../middleware/tenant.js";
+import { getProvider } from "../providers/index.js";
+import type { ProviderName } from "../providers/types.js";
 
 const workflowClient = getWorkflowClient();
 

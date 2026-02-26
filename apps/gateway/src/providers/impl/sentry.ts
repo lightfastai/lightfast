@@ -1,10 +1,10 @@
-import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto";
-import { sentryWebhookPayloadSchema } from "../schemas";
-import type { SentryWebhookPayload } from "../schemas";
+import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto.js";
+import { sentryWebhookPayloadSchema } from "../schemas.js";
+import type { SentryWebhookPayload } from "../schemas.js";
 import type {
   WebhookProvider,
   WebhookPayload,
-} from "../types";
+} from "../types.js";
 
 const SIGNATURE_HEADER = "sentry-hook-signature";
 const RESOURCE_HEADER = "sentry-hook-resource";

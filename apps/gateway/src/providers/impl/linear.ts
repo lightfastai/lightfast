@@ -1,10 +1,10 @@
-import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto";
-import { linearWebhookPayloadSchema } from "../schemas";
-import type { LinearWebhookPayload } from "../schemas";
+import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto.js";
+import { linearWebhookPayloadSchema } from "../schemas.js";
+import type { LinearWebhookPayload } from "../schemas.js";
 import type {
   WebhookProvider,
   WebhookPayload,
-} from "../types";
+} from "../types.js";
 
 const SIGNATURE_HEADER = "linear-signature";
 const DELIVERY_HEADER = "linear-delivery";

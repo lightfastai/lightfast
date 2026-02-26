@@ -4,21 +4,21 @@ import type { GwInstallation } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
 import { eq } from "drizzle-orm";
 import type { Context } from "hono";
-import { env } from "../../env";
-import { decrypt } from "../../lib/crypto";
-import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store";
-import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls";
+import { env } from "../../env.js";
+import { decrypt } from "../../lib/crypto.js";
+import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store.js";
+import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls.js";
 import {
   decodeSentryToken,
   encodeSentryToken,
   sentryOAuthResponseSchema,
-} from "../schemas";
+} from "../schemas.js";
 import type {
   ConnectionProvider,
   TokenResult,
   OAuthTokens,
   CallbackResult,
-} from "../types";
+} from "../types.js";
 
 export class SentryProvider implements ConnectionProvider {
   readonly name = "sentry" as const;

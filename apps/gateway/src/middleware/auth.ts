@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 import { Receiver } from "@vendor/qstash";
-import { timingSafeStringEqual } from "../lib/crypto";
-import { getEnv } from "../env";
+import { timingSafeStringEqual } from "../lib/crypto.js";
+import { getEnv } from "../env.js";
 
 /**
  * X-API-Key authentication middleware for Console → Gateway calls.

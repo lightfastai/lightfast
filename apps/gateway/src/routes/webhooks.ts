@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 import { getQStashClient } from "@vendor/qstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
-import { gatewayBaseUrl, consoleUrl } from "../lib/urls";
-import { getEnv } from "../env";
-import { getProvider } from "../providers";
-import { webhookSeenKey } from "../lib/cache";
+import { gatewayBaseUrl, consoleUrl } from "../lib/urls.js";
+import { getEnv } from "../env.js";
+import { getProvider } from "../providers/index.js";
+import { webhookSeenKey } from "../lib/cache.js";
 import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/gateway-types";
-import { timingSafeEqual } from "../lib/crypto";
+import { timingSafeEqual } from "../lib/crypto.js";
 
 const qstash = getQStashClient();
 const workflowClient = getWorkflowClient();

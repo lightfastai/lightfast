@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { computeHmacSha256 } from "../../lib/crypto";
-import { GitHubProvider } from "./github";
+import { computeHmacSha256 } from "../../lib/crypto.js";
+import { GitHubProvider } from "./github.js";
 
 const provider = new GitHubProvider();
 const secret = "test-webhook-secret";

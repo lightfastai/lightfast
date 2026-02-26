@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { computeHmacSha256 } from "../../lib/crypto";
-import { LinearProvider } from "./linear";
+import { computeHmacSha256 } from "../../lib/crypto.js";
+import { LinearProvider } from "./linear.js";
 
 const provider = new LinearProvider();
 const secret = "test-linear-secret";

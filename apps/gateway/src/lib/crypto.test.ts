@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeHmacSha256, computeHmacSha1, timingSafeEqual } from "./crypto";
+import { computeHmacSha256, computeHmacSha1, timingSafeEqual } from "./crypto.js";
 
 describe("computeHmacSha256", () => {
   it("produces correct hex signature for known input", async () => {

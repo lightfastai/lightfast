@@ -91,7 +91,7 @@ vi.mock("../lib/urls", () => ({
 // ── Import app after mocks ──
 
 import { Hono } from "hono";
-import { connections } from "./connections";
+import { connections } from "./connections.js";
 
 const app = new Hono();
 app.route("/connections", connections);

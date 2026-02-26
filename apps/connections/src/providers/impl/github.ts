@@ -2,17 +2,17 @@ import { db } from "@db/console/client";
 import { gwInstallations } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
 import type { Context } from "hono";
-import { env } from "../../env";
-import { getInstallationToken } from "../../lib/github-jwt";
-import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls";
-import { githubOAuthResponseSchema } from "../schemas";
+import { env } from "../../env.js";
+import { getInstallationToken } from "../../lib/github-jwt.js";
+import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls.js";
+import { githubOAuthResponseSchema } from "../schemas.js";
 import type {
   ConnectionProvider,
   GitHubAuthOptions,
   JwtTokenResult,
   OAuthTokens,
   CallbackResult,
-} from "../types";
+} from "../types.js";
 
 export class GitHubProvider implements ConnectionProvider {
   readonly name = "github" as const;

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { webhookDeliveryWorkflow } from "../workflows/webhook-delivery";
+import { webhookDeliveryWorkflow } from "../workflows/webhook-delivery.js";
 
 const workflows = new Hono();
 

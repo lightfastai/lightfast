@@ -1,6 +1,6 @@
 import { getQStashClient } from "@vendor/qstash";
 import { withRelatedProject } from "@vendor/related-projects";
-import { env } from "../env";
+import { env } from "../env.js";
 
 /**
  * Connections service base URL (self).

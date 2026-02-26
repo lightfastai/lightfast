@@ -1,4 +1,4 @@
-import { env } from "../env";
+import { env } from "../env.js";
 
 /**
  * Create a GitHub App JWT for authenticating as the App.

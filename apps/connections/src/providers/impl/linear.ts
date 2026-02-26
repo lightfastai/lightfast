@@ -4,18 +4,18 @@ import type { GwInstallation } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
 import { eq } from "drizzle-orm";
 import type { Context } from "hono";
-import { env } from "../../env";
-import { decrypt } from "../../lib/crypto";
-import { writeTokenRecord } from "../../lib/token-store";
-import { connectionsBaseUrl, gatewayBaseUrl, notifyBackfillService } from "../../lib/urls";
-import { linearOAuthResponseSchema } from "../schemas";
+import { env } from "../../env.js";
+import { decrypt } from "../../lib/crypto.js";
+import { writeTokenRecord } from "../../lib/token-store.js";
+import { connectionsBaseUrl, gatewayBaseUrl, notifyBackfillService } from "../../lib/urls.js";
+import { linearOAuthResponseSchema } from "../schemas.js";
 import type {
   ConnectionProvider,
   LinearAuthOptions,
   TokenResult,
   OAuthTokens,
   CallbackResult,
-} from "../types";
+} from "../types.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
 

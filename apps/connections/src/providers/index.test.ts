@@ -53,7 +53,7 @@ import {
   VercelProvider,
   LinearProvider,
   SentryProvider,
-} from "./index";
+} from "./index.js";
 
 describe("getProvider", () => {
   it("returns GitHubProvider for 'github'", () => {

@@ -4,11 +4,11 @@ import type {
   LinearWebhookPayload as LN,
   SentryWebhookPayload as SN,
   WebhookPayload,
-} from "./schemas";
-import type { GitHubProvider } from "./impl/github";
-import type { VercelProvider } from "./impl/vercel";
-import type { LinearProvider } from "./impl/linear";
-import type { SentryProvider } from "./impl/sentry";
+} from "./schemas.js";
+import type { GitHubProvider } from "./impl/github.js";
+import type { VercelProvider } from "./impl/vercel.js";
+import type { LinearProvider } from "./impl/linear.js";
+import type { SentryProvider } from "./impl/sentry.js";
 import type { ProviderName } from "@repo/gateway-types";
 
 // Re-export schema types for consumer convenience
@@ -18,7 +18,7 @@ export type {
   LinearWebhookPayload,
   SentryWebhookPayload,
   WebhookPayload,
-} from "./schemas";
+} from "./schemas.js";
 
 // Re-export from @repo/gateway-types
 export {

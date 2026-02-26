@@ -3,12 +3,12 @@ import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 import { redis } from "@vendor/upstash";
 import { serve } from "@vendor/upstash-workflow/hono";
 import { and, eq } from "drizzle-orm";
-import { env } from "../env";
-import { resourceKey } from "../lib/cache";
-import { decrypt } from "../lib/crypto";
-import { cancelBackfillService } from "../lib/urls";
-import { getProvider } from "../providers";
-import type { ProviderName } from "../providers/types";
+import { env } from "../env.js";
+import { resourceKey } from "../lib/cache.js";
+import { decrypt } from "../lib/crypto.js";
+import { cancelBackfillService } from "../lib/urls.js";
+import { getProvider } from "../providers/index.js";
+import type { ProviderName } from "../providers/types.js";
 
 interface TeardownPayload {
   installationId: string;

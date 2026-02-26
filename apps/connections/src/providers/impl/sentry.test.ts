@@ -31,10 +31,10 @@ vi.mock("../../lib/token-store", () => ({
   updateTokenRecord: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { SentryProvider } from "./sentry";
+import { SentryProvider } from "./sentry.js";
 import { db } from "@db/console/client";
-import { decrypt } from "../../lib/crypto";
-import { updateTokenRecord } from "../../lib/token-store";
+import { decrypt } from "../../lib/crypto.js";
+import { updateTokenRecord } from "../../lib/token-store.js";
 
 const provider = new SentryProvider();
 

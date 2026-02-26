@@ -1,9 +1,9 @@
 import { db } from "@db/console/client";
 import { gwTokens } from "@db/console/schema";
 import { eq } from "@vendor/db";
-import { env } from "../env";
-import type { OAuthTokens } from "../providers/types";
-import { encrypt } from "./crypto";
+import { env } from "../env.js";
+import type { OAuthTokens } from "../providers/types.js";
+import { encrypt } from "./crypto.js";
 
 /**
  * Write an encrypted token record for an installation.

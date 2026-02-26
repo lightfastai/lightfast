@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { connectionTeardownWorkflow } from "../workflows/connection-teardown";
+import { connectionTeardownWorkflow } from "../workflows/connection-teardown.js";
 
 const workflows = new Hono();
 

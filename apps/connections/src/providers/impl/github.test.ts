@@ -39,9 +39,9 @@ vi.mock("../../lib/github-jwt", () => ({
   getInstallationToken: vi.fn().mockResolvedValue("test-token"),
 }));
 
-import { GitHubProvider } from "./github";
-import { getInstallationToken } from "../../lib/github-jwt";
-import { notifyBackfillService } from "../../lib/urls";
+import { GitHubProvider } from "./github.js";
+import { getInstallationToken } from "../../lib/github-jwt.js";
+import { notifyBackfillService } from "../../lib/urls.js";
 
 const provider = new GitHubProvider();
 

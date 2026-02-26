@@ -23,7 +23,7 @@ vi.mock("@db/console/schema", () => ({
   gwTokens: {},
 }));
 
-import { VercelProvider } from "./vercel";
+import { VercelProvider } from "./vercel.js";
 
 const provider = new VercelProvider();
 

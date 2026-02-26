@@ -35,9 +35,9 @@ vi.mock("../../lib/token-store", () => ({
   writeTokenRecord: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { LinearProvider } from "./linear";
+import { LinearProvider } from "./linear.js";
 import { db } from "@db/console/client";
-import { decrypt } from "../../lib/crypto";
+import { decrypt } from "../../lib/crypto.js";
 
 const provider = new LinearProvider();
 

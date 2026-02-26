@@ -1,12 +1,12 @@
-import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto";
+import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto.js";
 import {
   githubWebhookPayloadSchema,
-} from "../schemas";
-import type { GitHubWebhookPayload } from "../schemas";
+} from "../schemas.js";
+import type { GitHubWebhookPayload } from "../schemas.js";
 import type {
   WebhookProvider,
   WebhookPayload,
-} from "../types";
+} from "../types.js";
 
 const SIGNATURE_HEADER = "x-hub-signature-256";
 const DELIVERY_HEADER = "x-github-delivery";

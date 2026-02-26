@@ -1,5 +1,5 @@
 import { withRelatedProject } from "@vendor/related-projects";
-import { env } from "../env";
+import { env } from "../env.js";
 
 /**
  * Gateway base URL derived from Vercel system environment variables.
