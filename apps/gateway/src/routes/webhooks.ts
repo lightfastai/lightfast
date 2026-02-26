@@ -131,7 +131,7 @@ webhooks.post("/:provider", async (c) => {
 
   let deliveryId: string;
   let eventType: string;
-  let resourceId: string;
+  let resourceId: string | null;
   try {
     deliveryId = provider.extractDeliveryId(headers, payload);
     eventType = provider.extractEventType(headers, payload);
