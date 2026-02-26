@@ -22,6 +22,7 @@ const providerIcons = {
 
 const providerNames = {
 	github: "GitHub",
+	vercel: "Vercel",
 };
 
 const providerDescriptions = {
