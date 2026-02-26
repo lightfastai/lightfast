@@ -117,7 +117,7 @@ function makeContext(payload: {
 }) {
   return {
     requestPayload: payload,
-    run: vi.fn((_name: string, fn: () => unknown) => fn()),
+    run: vi.fn(async (_name: string, fn: () => unknown) => fn()),
   };
 }
 
