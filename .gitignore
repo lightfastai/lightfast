@@ -145,6 +145,5 @@ worktrees/
 # Pnpm store
 .pnpm-store/
 
-# Dual CLI local files
-.dual/.local/
-.auth/
+# MCP
+.env.mcp

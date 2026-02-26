@@ -31,15 +31,15 @@ Given the latest `apps/connections/` service and `api/console/src/router/user/us
 
 **Yes, we've fully moved to org-level connections.** The legacy `userSources` naming layer has been completely removed.
 
-### Migration Status: COMPLETE
+### Migration Status: IN PROGRESS (Phase 3 next)
 
 The following work was completed on `feat/gateway-foundation`:
 
-1. **Router rename** (Phase 1): `userSources` router renamed to `connections`, moved from `userRouter` to `orgRouter`. All 14 frontend files updated from `trpc.userSources.*` to `trpc.connections.*`. Server prefetches switched from `userTrpc` to `orgTrpc`. Client splitLink updated. Empty stub routers (`org/integration.ts`, `org/sources.ts`) deleted.
+1. **Router rename** (Phase 1): **COMPLETE.** `userSources` router renamed to `connections`, moved from `userRouter` to `orgRouter`. All 14 frontend files updated from `trpc.userSources.*` to `trpc.connections.*`. Server prefetches switched from `userTrpc` to `orgTrpc`. Client splitLink updated. Empty stub routers (`org/integration.ts`, `org/sources.ts`) deleted.
 
-2. **Legacy table drop** (Phase 2): `lightfast_user_sources` table deleted. `workspaceIntegrations.userSourceId` column and FK dropped. `workspaceIntegrations.gatewayInstallationId` redundant string column dropped. Seed script updated to no longer reference `userSources`.
+2. **Legacy table drop** (Phase 2): **COMPLETE.** `lightfast_user_sources` table deleted. `workspaceIntegrations.userSourceId` column and FK dropped. `workspaceIntegrations.gatewayInstallationId` redundant string column dropped. Seed script updated to no longer reference `userSources`.
 
-3. **sourceConfig split** (Phase 3): **Skipped.** After analysis, the split of `sourceConfig` into `resourceMeta` + `syncConfig` + `backfillState` was deemed not worth the effort. With GitHub push sync removed (no more `branches`/`paths` in sync config), the sync portion is just `{ events: InternalEventType[], autoSync: boolean }` — too thin to justify its own column. The `sourceConfig` JSONB blob remains as-is.
+3. **sourceConfig split** (Phase 3): **TODO.** Split `sourceConfig` into `resourceMeta` + `syncConfig` + `backfillState`. With GitHub push sync removed, the sync portion is simplified to `{ events: InternalEventType[], autoSync: boolean }`. See plan: `thoughts/shared/plans/2026-02-25-user-sources-deletion-connections-migration.md`.
 
 ---
 
@@ -119,9 +119,9 @@ Browser detects popup close → tRPC refetch of connections.github.get
 
 ---
 
-## sourceConfig — Why We Kept It
+## sourceConfig — Current Shape (to be split in Phase 3)
 
-The `sourceConfig` JSONB column on `workspaceIntegrations` stores both resource identity and sync preferences in a single discriminated union blob:
+The `sourceConfig` JSONB column on `workspaceIntegrations` currently stores both resource identity and sync preferences in a single discriminated union blob. Phase 3 will split this into `resourceMeta` + `syncConfig` + `backfillState`:
 
 ### GitHub Repository
 ```jsonc
@@ -163,7 +163,7 @@ The `sourceConfig` JSONB column on `workspaceIntegrations` stores both resource 
 
 **Key detail**: `sync.events` stores Lightfast's internal event type keys (`InternalEventType` from `packages/console-types/src/integrations/event-types.ts`), not the raw provider webhook format. These are the granular event types like `"github:pull-request.opened"`, not category-level keys like `"pull_request"`.
 
-**Why the split was skipped**: The original plan proposed splitting `sourceConfig` into `resourceMeta` (identity) + `syncConfig` (preferences) + `backfillState` (tracking). However, with GitHub push sync removed, `syncConfig` would only contain `{ events: string[], autoSync: boolean }` — two fields. Not worth 8+ write path changes and a data migration. If backfill state tracking is needed later, it can be added as a standalone column without splitting `sourceConfig`.
+**Phase 3 split plan**: The `sourceConfig` will be split into `resourceMeta` (identity) + `syncConfig` (preferences) + `backfillState` (tracking). With GitHub push sync removed, `syncConfig` is simplified to `{ events: string[], autoSync: boolean }`. See implementation plan: `thoughts/shared/plans/2026-02-25-user-sources-deletion-connections-migration.md`.
 
 ---
 
