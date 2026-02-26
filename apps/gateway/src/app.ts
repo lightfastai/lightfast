@@ -29,4 +29,4 @@ app.route("/api/webhooks", webhooks);
 app.route("/api/admin", admin);
 app.route("/api/workflows", workflows);
 
-export { app };
+export default app;

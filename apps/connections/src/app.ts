@@ -10,4 +10,4 @@ app.get("/", (c) => c.json({ service: "connections", status: "ok" }));
 app.route("/api/connections", connections);
 app.route("/api/workflows", workflows);
 
-export { app };
+export default app;
