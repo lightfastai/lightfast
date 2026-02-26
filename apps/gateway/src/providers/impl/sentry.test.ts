@@ -72,6 +72,26 @@ describe("SentryProvider", () => {
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
       );
     });
+
+    it("generates UUID when only resource header present", () => {
+      const id = provider.extractDeliveryId(
+        headers({ "sentry-hook-resource": "issue" }),
+        {},
+      );
+      expect(id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      );
+    });
+
+    it("generates UUID when only timestamp header present", () => {
+      const id = provider.extractDeliveryId(
+        headers({ "sentry-hook-timestamp": "1700000000" }),
+        {},
+      );
+      expect(id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      );
+    });
   });
 
   describe("extractEventType", () => {
