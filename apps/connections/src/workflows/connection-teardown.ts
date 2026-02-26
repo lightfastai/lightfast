@@ -97,11 +97,12 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
           ),
         );
 
-      await Promise.all(
-        linkedResources.map((r) =>
-          redis.del(resourceKey(providerName, r.providerResourceId)),
-        ),
+      const keys = linkedResources.map((r) =>
+        resourceKey(providerName, r.providerResourceId),
       );
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
     });
 
     // Step 5: Soft-delete installation and resources in DB

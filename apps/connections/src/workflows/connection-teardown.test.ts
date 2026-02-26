@@ -182,7 +182,11 @@ describe("connection-teardown workflow", () => {
     expect(mockDecrypt).toHaveBeenCalled();
     expect(provider.revokeToken).toHaveBeenCalledWith("decrypted-token");
     expect(provider.deregisterWebhook).toHaveBeenCalledWith("inst-1", "wh-1");
-    expect(mockRedisDel).toHaveBeenCalledTimes(2);
+    expect(mockRedisDel).toHaveBeenCalledTimes(1);
+    expect(mockRedisDel).toHaveBeenCalledWith(
+      "gw:resource:linear:res-1",
+      "gw:resource:linear:res-2",
+    );
     expect(mockDbUpdate).toHaveBeenCalledTimes(2);
   });
 
@@ -358,10 +362,12 @@ describe("connection-teardown workflow", () => {
     });
     await capturedHandler(ctx);
 
-    expect(mockRedisDel).toHaveBeenCalledTimes(3);
-    expect(mockRedisDel).toHaveBeenCalledWith("gw:resource:github:repo-a");
-    expect(mockRedisDel).toHaveBeenCalledWith("gw:resource:github:repo-b");
-    expect(mockRedisDel).toHaveBeenCalledWith("gw:resource:github:repo-c");
+    expect(mockRedisDel).toHaveBeenCalledTimes(1);
+    expect(mockRedisDel).toHaveBeenCalledWith(
+      "gw:resource:github:repo-a",
+      "gw:resource:github:repo-b",
+      "gw:resource:github:repo-c",
+    );
   });
 
   it("handles zero active resources gracefully", async () => {
