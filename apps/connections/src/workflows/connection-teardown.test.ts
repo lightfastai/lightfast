@@ -106,7 +106,7 @@ vi.mock("../providers", () => ({
 vi.mock("../providers/types", () => ({}));
 
 // Force module load to trigger serve() and capture the handler
-await import("./connection-teardown");
+await import("./connection-teardown.js");
 
 // ── Test helpers ──
 

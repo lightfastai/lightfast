@@ -58,7 +58,7 @@ vi.mock("../lib/urls", () => ({
 let mockDbRows: { installationId: string; orgId: string }[] = [];
 
 // Force module load to trigger serve() and capture the handler
-await import("./webhook-delivery");
+await import("./webhook-delivery.js");
 
 // ── Test helpers ──
 

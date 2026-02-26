@@ -1,28 +1,27 @@
 # User-Sources Deletion & Connections Migration Plan
 
-**Status: COMPLETE** (Phase 3 skipped — see below)
+**Status: IN PROGRESS** (Phase 3 — sourceConfig split)
 
 ## Overview
 
-Delete the legacy `userSources` naming layer and `lightfast_user_sources` table, rename the tRPC router to `connections` under `orgRouter`. Originally also planned to split the monolithic `sourceConfig` JSONB column into `resourceMeta` + `syncConfig` + `backfillState`, but this was skipped after analysis.
+Delete the legacy `userSources` naming layer and `lightfast_user_sources` table, rename the tRPC router to `connections` under `orgRouter`, and split the monolithic `sourceConfig` JSONB column into `resourceMeta` + `syncConfig` + `backfillState`.
 
-This implements the remaining work from the gateway-console DB consolidation: Phases 6 (client-side refactor) and 7 (route & package cleanup) from `thoughts/shared/plans/2026-02-25-gateway-console-db-consolidation.md`.
+This implements the remaining work from the gateway-console DB consolidation: Phases 6 (client-side refactor) and 7 (route & package cleanup) from `thoughts/shared/plans/2026-02-25-gateway-console-db-consolidation.md`, plus the `sourceConfig` split (Phase 5).
 
-## Completion Summary
+## Progress Summary
 
 | Phase | Description | Status |
 |-------|-------------|--------|
 | Phase 1 | Router rename `userSources` → `connections` | **COMPLETE** |
 | Phase 2 | Drop legacy `user_sources` table + columns | **COMPLETE** |
-| Phase 3 | `sourceConfig` split into `resourceMeta` + `syncConfig` + `backfillState` | **SKIPPED** |
-
-**Phase 3 skip rationale**: With GitHub push sync removed (no more `branches`/`paths` in sync config), the sync portion is just `{ events: InternalEventType[], autoSync: boolean }` — two fields. Not worth 8+ write path changes and a data migration. If backfill state tracking is needed later, it can be added as a standalone column without splitting `sourceConfig`.
+| Phase 3a | `sourceConfig` split — add new columns + dual-write | **TODO** |
+| Phase 3b | `sourceConfig` split — cut over reads + drop old column | **TODO** |
 
 ## Current State (post-migration)
 
 All migration work has been completed on `feat/gateway-foundation`. The codebase is now in the desired end state for Phases 1 and 2.
 
-### Architecture
+### Current Architecture (Phases 1-2 complete)
 
 ```
 orgRouter
@@ -36,7 +35,7 @@ orgRouter
 workspaceIntegrations table:
   ├── installationId                 ← FK to gwInstallations (sole FK)
   ├── provider                       ← varchar, denormalized for fast filtering
-  ├── sourceConfig (JSONB)           ← kept as-is (split was skipped)
+  ├── sourceConfig (JSONB)           ← to be split in Phase 3
   └── (userSourceId DROPPED)
   └── (gatewayInstallationId DROPPED)
 
@@ -44,18 +43,23 @@ lightfast_user_sources table: DELETED
 user-sources.ts schema file: DELETED
 ```
 
-### What Was Completed:
-- `pnpm typecheck` passes with zero references to `userSources`
-- All frontend tRPC calls use `trpc.connections.*` and `orgTrpc.connections.*`
-- Legacy table and redundant columns dropped
-- Seed script updated to no longer reference `userSources`
+### Desired End State (after Phase 3)
 
-### What We Did NOT Do (and still haven't):
+```
+workspaceIntegrations table:
+  ├── installationId                 ← FK to gwInstallations (existing, sole FK)
+  ├── provider                       ← NOT NULL (was nullable)
+  ├── resourceMeta (JSONB)           ← resource identity (was part of sourceConfig)
+  ├── syncConfig (JSONB)             ← sync preferences (was part of sourceConfig)
+  ├── backfillState (JSONB, nullable)← new column for future backfill tracking
+  └── (sourceConfig DROPPED)
+```
+
+### What We're NOT Doing:
 - **No page/route restructuring**: The `(user)/account/settings/sources/` page stays where it is despite conceptually being org-level. Route moves are a separate concern.
 - **No connections service changes**: `apps/connections/` is unchanged. The tRPC router continues to proxy OAuth through the connections service.
 - **No disconnect flow changes**: The `disconnect` procedure still updates `gwInstallations.status` directly rather than proxying through the connections service teardown endpoint. This is tracked as a separate item.
 - **No Linear/Sentry UI**: Those providers exist in the connections service but have no frontend entrypoint yet.
-- **No sourceConfig split**: Kept as-is (see Phase 3 skip rationale above).
 
 ---
 
@@ -283,26 +287,17 @@ The generated migration will:
 - ALTER TABLE `lightfast_workspace_integrations` DROP COLUMN `gateway_installation_id`
 - DROP TABLE `lightfast_user_sources` (with all its indexes)
 
-### Success Criteria:
+### Success Criteria: ALL MET
 
 #### Automated Verification:
-- [ ] Migration generates cleanly: `cd db/console && pnpm db:generate` (no errors)
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm lint`
-- [ ] Build succeeds: `pnpm build:console`
-- [ ] Zero grep results for `userSources` in `db/console/src/schema/` (the Drizzle table)
-- [ ] Zero grep results for `userSourceId` in `db/console/src/schema/`
-- [ ] Zero grep results for `gatewayInstallationId` in `db/console/src/schema/tables/workspace-integrations.ts`
-- [ ] File `db/console/src/schema/tables/user-sources.ts` does not exist
-
-#### Manual Verification:
-- [ ] Migration applies cleanly to dev database: `cd db/console && pnpm db:migrate`
-- [ ] DB Studio shows `lightfast_user_sources` table no longer exists
-- [ ] DB Studio shows `user_source_id` and `gateway_installation_id` columns removed from `lightfast_workspace_integrations`
-- [ ] Existing `workspaceIntegrations` rows with `installationId` are preserved
-- [ ] Connect and disconnect flows still work (end-to-end)
-
-**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
+- [x] Migration generates cleanly: `cd db/console && pnpm db:generate` (no errors)
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm lint`
+- [x] Build succeeds: `pnpm build:console`
+- [x] Zero grep results for `userSources` in `db/console/src/schema/` (the Drizzle table)
+- [x] Zero grep results for `userSourceId` in `db/console/src/schema/`
+- [x] Zero grep results for `gatewayInstallationId` in `db/console/src/schema/tables/workspace-integrations.ts`
+- [x] File `db/console/src/schema/tables/user-sources.ts` does not exist
 
 ---
 
@@ -344,8 +339,6 @@ type ResourceMeta =
 
 // syncConfig — HOW it should be synced
 type SyncConfig = {
-  branches?: string[];
-  paths?: string[];
   events?: string[];
   autoSync: boolean;
 };
@@ -359,6 +352,8 @@ type BackfillState = {
   error?: string;
 } | null;
 ```
+
+**Note**: `branches` and `paths` fields were removed from `SyncConfig` since GitHub push sync has been removed. The sync portion is now just `{ events: InternalEventType[], autoSync: boolean }`.
 
 ### Changes Required:
 
@@ -420,8 +415,6 @@ export function extractResourceMeta(config: SourceConfig) {
  */
 export function extractSyncConfig(config: SourceConfig) {
   return (config as Record<string, unknown>).sync as {
-    branches?: string[];
-    paths?: string[];
     events?: string[];
     autoSync: boolean;
   };
@@ -450,7 +443,7 @@ sourceConfig: { version: 1, sourceType: "github", ..., sync: { ... } },
 // After (dual-write):
 sourceConfig: { version: 1, sourceType: "github", ..., sync: { ... } },
 resourceMeta: { sourceType: "github", type: "repository", installationId: ..., repoId: ..., ... },
-syncConfig: { branches: ["main"], paths: ["**/*"], events: [...], autoSync: true },
+syncConfig: { events: [...], autoSync: true },
 provider: "github",
 ```
 
@@ -640,10 +633,19 @@ This generates a migration that:
 
 ## Migration Notes
 
-- **Phase 2 migration** drops the `lightfast_user_sources` table. Any existing data in this table will be lost. No active code reads from it, but verify no manual queries depend on it.
 - **Phase 3a migration** adds nullable columns. Safe to apply without downtime.
 - **Phase 3b migration** drops `source_config` and sets NOT NULL. Must run AFTER the data migration script from Phase 3a populates all rows. If any rows have NULL `resource_meta` or `sync_config` after the backfill, the NOT NULL alter will fail.
 - All migrations are forward-only. Rollback requires restoring from backup.
+
+## Remaining Open Items
+
+These items were identified during the migration but are out of scope:
+
+1. **Linear/Sentry UI**: The `connections.getAuthorizeUrl` procedure accepts `"linear"` and `"sentry"` as valid providers, but there are no frontend components for Linear/Sentry connection. Those flows exist in the connections service but have no UI entrypoint yet.
+
+2. **`disconnect` vs connection teardown**: The `connections.disconnect` procedure sets `gwInstallations.status = "revoked"` directly, bypassing the connections service `DELETE /:provider/:id` teardown workflow that handles token revocation, webhook deregistration, and cache cleanup. Whether these should proxy to the connections service teardown endpoint is unresolved.
+
+3. **`detectConfig` procedure**: The `connections.github.detectConfig` procedure searches for `lightfast.yml` files in repositories. This config detection mechanism may be obsolete — to be confirmed and potentially removed.
 
 ## References
 

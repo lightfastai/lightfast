@@ -5,10 +5,22 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./trigger": "./src/trigger/index.ts",
-    "./loader": "./src/loader/index.ts",
-    "./raw": "./src/raw.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./trigger": {
+      "types": "./dist/trigger/index.d.ts",
+      "default": "./src/trigger/index.ts"
+    },
+    "./loader": {
+      "types": "./dist/loader/index.d.ts",
+      "default": "./src/loader/index.ts"
+    },
+    "./raw": {
+      "types": "./dist/raw.d.ts",
+      "default": "./src/raw.ts"
+    }
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

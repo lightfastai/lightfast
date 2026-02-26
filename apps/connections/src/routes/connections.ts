@@ -151,7 +151,7 @@ connections.get("/:id", apiKeyAuth, async (c) => {
         ? true
         : installation.tokens.length > 0,
     tokenExpiresAt: installation.tokens[0]?.expiresAt ?? null,
-    resources: installation.resources.map((r) => ({
+    resources: installation.resources.map((r: (typeof installation.resources)[number]) => ({
       id: r.id,
       providerResourceId: r.providerResourceId,
       resourceName: r.resourceName,

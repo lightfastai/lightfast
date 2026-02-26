@@ -4,6 +4,7 @@ import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { gatewayBaseUrl, consoleUrl } from "../lib/urls.js";
 import { getEnv } from "../env.js";
 import { getProvider } from "../providers/index.js";
+import type { WebhookProvider } from "../providers/index.js";
 import { webhookSeenKey } from "../lib/cache.js";
 import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/gateway-types";
@@ -30,7 +31,7 @@ const webhooks = new Hono();
 webhooks.post("/:provider", async (c) => {
   const providerName = c.req.param("provider");
 
-  let provider;
+  let provider: WebhookProvider;
   try {
     provider = getProvider(providerName);
   } catch {

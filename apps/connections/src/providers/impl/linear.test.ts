@@ -171,7 +171,7 @@ describe("LinearProvider", () => {
       const mockLimit = vi.fn().mockResolvedValue(rows);
       const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
-      (db as Record<string, unknown>).select = vi
+      (db as unknown as Record<string, unknown>).select = vi
         .fn()
         .mockReturnValue({ from: mockFrom });
     }
