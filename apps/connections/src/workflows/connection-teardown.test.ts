@@ -19,7 +19,11 @@ const mockDecrypt = vi.fn().mockResolvedValue("decrypted-token");
 const mockRedisDel = vi.fn().mockResolvedValue(1);
 const mockDbQuery = vi.fn().mockResolvedValue([]);
 const mockDbUpdate = vi.fn().mockResolvedValue(undefined);
+const mockTxSet = vi.fn();
 
+// eq/and are intentionally no-op — these tests validate workflow step
+// orchestration, not SQL predicate correctness. The db mock's .where()
+// ignores its arguments, so strict WHERE validation is not required.
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn(),
   and: vi.fn(),
@@ -57,9 +61,12 @@ vi.mock("@db/console/client", () => ({
     transaction: (fn: (tx: unknown) => Promise<unknown>) =>
       fn({
         update: () => ({
-          set: () => ({
-            where: () => mockDbUpdate(),
-          }),
+          set: (...args: unknown[]) => {
+            mockTxSet(...args);
+            return {
+              where: () => mockDbUpdate(),
+            };
+          },
         }),
       }),
   },
@@ -136,6 +143,7 @@ describe("connection-teardown workflow", () => {
     vi.clearAllMocks();
     mockDbQuery.mockResolvedValue([]);
     mockDbUpdate.mockResolvedValue(undefined);
+    mockTxSet.mockClear();
     mockCancelBackfill.mockResolvedValue(undefined);
     mockDecrypt.mockResolvedValue("decrypted-token");
     mockRedisDel.mockResolvedValue(1);
@@ -382,7 +390,13 @@ describe("connection-teardown workflow", () => {
     });
     await capturedHandler(ctx);
 
-    // Two db.update calls: installation status → 'revoked', resources → 'removed'
     expect(mockDbUpdate).toHaveBeenCalledTimes(2);
+    expect(mockTxSet).toHaveBeenCalledTimes(2);
+    expect(mockTxSet).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "revoked" }),
+    );
+    expect(mockTxSet).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "removed" }),
+    );
   });
 });
