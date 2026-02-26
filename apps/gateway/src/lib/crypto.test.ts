@@ -37,6 +37,19 @@ describe("computeHmacSha1", () => {
     const sig = await computeHmacSha1("what do ya want for nothing?", "Jefe");
     expect(sig).toBe("effcdf6ae5eb2fa2d27416d5f184df9c259a7c79");
   });
+
+  it("handles unicode/emoji in message body", async () => {
+    const body = '{"message":"Deploy from 東京 🚀","author":"田中太郎"}';
+    const sig = await computeHmacSha1(body, "secret");
+    const sig2 = await computeHmacSha1(body, "secret");
+    expect(sig).toBe(sig2);
+    expect(sig).toHaveLength(40); // SHA-1 = 20 bytes = 40 hex chars
+  });
+
+  it("handles empty message body", async () => {
+    const sig = await computeHmacSha1("", "secret");
+    expect(sig).toHaveLength(40);
+  });
 });
 
 describe("timingSafeEqual", () => {
