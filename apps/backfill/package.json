@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc && pnpm with-env node dist/src/env.js",
+    "build": "tsc -p tsconfig.build.json && pnpm with-env node dist/src/env.js",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "vercel dev --listen 4109",
     "lint": "eslint",
