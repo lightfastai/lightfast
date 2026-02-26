@@ -270,10 +270,12 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
     );
   }
 
-  const body = await c.req.json<{
-    providerResourceId: string;
-    resourceName?: string;
-  }>();
+  let body: { providerResourceId: string; resourceName?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid_json" }, 400);
+  }
 
   if (!body.providerResourceId) {
     return c.json({ error: "missing_provider_resource_id" }, 400);
