@@ -163,4 +163,13 @@ describe("parseGitHubRateLimit", () => {
   it("returns undefined for empty object", () => {
     expect(parseGitHubRateLimit({})).toBeUndefined();
   });
+
+  it("returns undefined when headers contain non-numeric values", () => {
+    const headers = {
+      "x-ratelimit-remaining": "abc",
+      "x-ratelimit-reset": "1700000000",
+      "x-ratelimit-limit": "5000",
+    };
+    expect(parseGitHubRateLimit(headers)).toBeUndefined();
+  });
 });
