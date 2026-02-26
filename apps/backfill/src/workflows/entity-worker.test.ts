@@ -174,12 +174,13 @@ describe("pagination loop — single page", () => {
 
     await capturedHandler({ event: makeEvent(), step });
 
-    // Find the dispatch fetch call (second call — first is token)
+    // Find the dispatch fetch call (POST to gateway — first call is token GET)
     const dispatchCall = mockFetch.mock.calls.find(
-      (call) => (call[0] as string).includes("/webhooks/"),
+      (call) =>
+        (call[1] as RequestInit | undefined)?.method === "POST" &&
+        call[0] === "https://gateway.test/webhooks/github",
     );
     expect(dispatchCall).toBeDefined();
-    expect(dispatchCall![0]).toBe("https://gateway.test/webhooks/github");
     const init = dispatchCall![1] as RequestInit;
     expect(init.method).toBe("POST");
     const headers = init.headers as Record<string, string>;
