@@ -105,6 +105,11 @@ export function SourcesList() {
 					`width=${width},height=${height},left=${left},top=${top},popup=1`,
 				);
 
+				// Clear any existing poll timer before starting a new one
+				if (pollTimerRef.current) {
+					clearInterval(pollTimerRef.current);
+				}
+
 				// Poll for popup close
 				pollTimerRef.current = setInterval(() => {
 					if (popup?.closed) {
