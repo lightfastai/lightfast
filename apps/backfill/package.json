@@ -4,8 +4,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    }
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && pnpm with-env node dist/src/env.js",
+    "build": "tsup && pnpm with-env node dist/src/env.js",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "vercel dev --listen 4109",
     "lint": "eslint",
@@ -31,6 +36,7 @@
     "dotenv-cli": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "tsup": "^8.5.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
