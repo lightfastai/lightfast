@@ -7,7 +7,8 @@ import { z } from "zod";
 export const getEnv = (c: Context) =>
   createEnv({
     server: { GATEWAY_API_KEY: z.string().min(1) },
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    clientPrefix: "PUBLIC_",
+    client: {},
     runtimeEnv: honoEnv(c),
     emptyStringAsUndefined: true,
   });
