@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq } from "@vendor/db";
 import { gwTokens } from "@db/console/schema";
 import { db } from "@db/console/client";
 import { encrypt } from "./crypto";
