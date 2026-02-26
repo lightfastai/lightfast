@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../../env", () => ({
   env: {
-    VERCEL_CLIENT_SECRET_ID: "test-vc-client-id",
+    VERCEL_CLIENT_ID: "test-vc-client-id",
     VERCEL_CLIENT_INTEGRATION_SECRET: "test-vc-secret",
     VERCEL_INTEGRATION_SLUG: "test-integration",
     ENCRYPTION_KEY: "a".repeat(64),
