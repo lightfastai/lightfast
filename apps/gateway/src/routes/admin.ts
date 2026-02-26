@@ -1,5 +1,4 @@
-import { eq } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "@db/console/client";
 import { apiKeyAuth } from "../middleware/auth";
