@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "pnpm install",
-  "ignoreCommand": "npx turbo-ignore",
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
+  "ignoreCommand": "npx turbo-ignore"
 }
