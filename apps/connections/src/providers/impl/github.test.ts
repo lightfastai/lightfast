@@ -7,7 +7,7 @@ vi.mock("../../env", () => ({
     GITHUB_CLIENT_SECRET: "test-client-secret",
     GITHUB_APP_SLUG: "test-app",
     GITHUB_APP_ID: "12345",
-    GITHUB_PRIVATE_KEY: "test-key",
+    GITHUB_APP_PRIVATE_KEY: "test-key",
     ENCRYPTION_KEY: "a".repeat(64),
   },
 }));
@@ -166,7 +166,6 @@ describe("GitHubProvider", () => {
         vi.fn().mockResolvedValue({
           ok: true,
           json: vi.fn().mockResolvedValue({
-            access_token: "",
             error: "bad_verification_code",
             error_description: "The code passed is incorrect or expired.",
           }),

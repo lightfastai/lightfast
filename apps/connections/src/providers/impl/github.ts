@@ -64,7 +64,7 @@ export class GitHubProvider implements ConnectionProvider {
     const rawData: unknown = await response.json();
     const data = githubOAuthResponseSchema.parse(rawData);
 
-    if (data.error) {
+    if ("error" in data) {
       const desc = data.error_description ?? data.error;
       throw new Error(`GitHub OAuth error: ${desc}`);
     }
