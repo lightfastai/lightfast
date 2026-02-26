@@ -5,12 +5,21 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"default": "./src/index.ts"
+			"types": "./dist/src/index.d.ts",
+			"default": "./dist/src/index.js"
 		},
-		"./server": "./src/server.ts",
-		"./hono": "./src/hono.ts",
-		"./env": "./env.ts"
+		"./server": {
+			"types": "./dist/src/server.d.ts",
+			"default": "./dist/src/server.js"
+		},
+		"./hono": {
+			"types": "./dist/src/hono.d.ts",
+			"default": "./dist/src/hono.js"
+		},
+		"./env": {
+			"types": "./dist/env.d.ts",
+			"default": "./dist/env.js"
+		}
 	},
 	"license": "MIT",
 	"scripts": {
