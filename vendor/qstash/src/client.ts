@@ -1,6 +1,6 @@
 import type {
   PublishToUrlResponse,
-  PublishToApiResponse,
+  PublishToUrlGroupsResponse,
 } from "@upstash/qstash";
 import { Client } from "@upstash/qstash";
 import { qstashEnv } from "../env";
@@ -79,9 +79,8 @@ export class QStashClient {
   ): Promise<QStashPublishResponse[]> {
     const { topic, body, headers, retries, delay, deduplicationId } = options;
 
-    // Publishing to a topic returns a single response (not a URL-based response)
-    const result: PublishToApiResponse = await this.client.publishJSON({
-      topic,
+    const result: PublishToUrlGroupsResponse = await this.client.publishJSON({
+      urlGroup: topic,
       body,
       headers,
       ...(retries !== undefined && { retries }),
@@ -89,7 +88,11 @@ export class QStashClient {
       ...(deduplicationId !== undefined && { deduplicationId }),
     });
 
-    return [{ messageId: result.messageId }];
+    return result.map((r) => ({
+      messageId: r.messageId,
+      url: r.url,
+      deduplicated: r.deduplicated,
+    }));
   }
 }
 
