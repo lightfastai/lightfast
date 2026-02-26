@@ -123,10 +123,15 @@ export class VercelProvider implements ConnectionProvider {
     await writeTokenRecord(installation.id, oauthTokens);
 
     // Notify backfill service for new connections (fire-and-forget)
-    void notifyBackfillService({
+    notifyBackfillService({
       installationId: installation.id,
       provider: this.name,
       orgId: stateData.orgId ?? "",
+    }).catch((err) => {
+      console.error(
+        `[${this.name}] backfill notification failed for installation=${installation.id} org=${stateData.orgId}`,
+        err,
+      );
     });
 
     return {
