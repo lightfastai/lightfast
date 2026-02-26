@@ -28,7 +28,7 @@
   },
   "license": "FSL-1.1-Apache-2.0",
   "scripts": {
-    "build": "tsc",
+    "build": "tsup && tsc --incremental false",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "dev:studio": "pnpm db:studio",
@@ -63,6 +63,7 @@
     "drizzle-kit": "^0.31.4",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "tsup": "^8.5.0",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"
