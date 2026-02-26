@@ -12,4 +12,4 @@ app.get("/", (c) => c.json({ service: "backfill", status: "ok" }));
 app.route("/api/trigger", trigger);
 app.route("/api/inngest", inngestRoute);
 
-export { app };
+export default app;

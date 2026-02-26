@@ -1,8 +1,6 @@
-import { handle } from "hono/vercel";
-
-import { app } from "../src/app.js";
+import app from "../src/app.js";
 
 // Inngest SDK requires Node.js runtime (not Edge)
 export const config = { runtime: "nodejs" } as const;
 
-export default handle(app);
+export default app;
