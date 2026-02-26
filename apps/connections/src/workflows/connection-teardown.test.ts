@@ -2,7 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── Capture workflow handler ──
 
-let capturedHandler: (context: unknown) => Promise<void>;
+let capturedHandler: (context: unknown) => Promise<void> = () => {
+  throw new Error(
+    "serve() was never called — connection-teardown module failed to register its handler",
+  );
+};
 
 vi.mock("@vendor/upstash-workflow/hono", () => ({
   serve: (handler: (ctx: unknown) => Promise<void>) => {
