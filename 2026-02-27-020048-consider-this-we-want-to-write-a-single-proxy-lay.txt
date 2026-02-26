@@ -1,0 +1,2067 @@
+
+ ▐▛███▜▌   Claude Code v2.1.59
+▝▜█████▛▘  Opus 4.6 · Claude API
+  ▘▘ ▝▝    ~/Code/@lightfastai/lightfast
+
+❯ consider this: we want to write a single proxy layer on top of            
+  @apps/connections/ and @apps/gateway/ . basically we want to name gateway 
+   to relay. and this proxy becomes the gateway. cause right now, we hvae 3 
+   different subdomain usage. idk if i ever want users to interface with    
+  connections or the new relay (event relay) ever. they should interface    
+  with gateway (the new proxy layer). do you think is a decent              
+  architecture.                                                             
+  ⎿  Listed directory apps/connections/
+  ⎿  Listed directory apps/gateway/
+
+⏺ Let me look at what each app does currently before giving you my take.
+
+⏺ Explore(Explore connections and gateway apps) Sonnet 4.6
+  ⎿  Done (35 tool uses · 65.8k tokens · 1m 36s)
+  (ctrl+o to expand)
+
+⏺ Good question. Here's my take after looking at what each app actually does:
+
+  Current State
+
+  ┌──────────────┬───────────────────┬──────────────────────────────────────┐
+  │     App      │       Role        │           Who talks to it            │
+  ├──────────────┼───────────────────┼──────────────────────────────────────┤
+  │              │ OAuth flows,      │                                      │
+  │ connections  │ token vault,      │ Console (internal), OAuth provider   │
+  │ (4110)       │ credential        │ callbacks                            │
+  │              │ lifecycle         │                                      │
+  ├──────────────┼───────────────────┼──────────────────────────────────────┤
+  │              │ Webhook ingress,  │ External providers                   │
+  │ gateway      │ HMAC verify,      │ (GitHub/Vercel/Linear/Sentry),       │
+  │ (4108)       │ route to console  │ backfill service                     │
+  │              │ via QStash        │                                      │
+  └──────────────┴───────────────────┴──────────────────────────────────────┘
+
+  The Proxy Gateway Idea
+
+  Renaming gateway → relay makes sense - it is an event relay. And yes, a
+  unified gateway proxy as the single public surface is a legitimate pattern
+  (API Gateway / reverse proxy).
+
+  What's good about it:
+  - Single subdomain for all external traffic (gateway.lightfast.ai)
+  - Connections and relay become internal-only, no public attack surface
+  - Cross-cutting concerns (rate limiting, auth, observability) in one place
+  - Cleaner mental model: users think "gateway", not 3 services
+
+  What I'd push back on:
+
+  1. It might be unnecessary indirection. Neither app is really "user-facing"
+  today. Connections is called by your console and OAuth callbacks. Gateway is
+  called by provider webhooks. End users never hit either directly. A proxy in
+  front of two backend services that already aren't user-facing adds a hop
+  without much benefit.
+  2. Webhook latency. The current gateway targets <20ms ingestion. A proxy hop
+  (Vercel cold start + network) meaningfully increases that. Webhook providers
+  have timeout expectations.
+  3. OAuth callback complexity. Provider OAuth redirects are registered with
+  stable URLs pointing at connections. Routing these through a proxy means the
+  gateway must perfectly forward headers, query params, and redirect responses -
+   fragile for OAuth flows.
+  4. Same DB, same Redis, same types. These two apps already share @db/console,
+  the gw: Redis namespace, and @repo/gateway-types. That tight coupling suggests
+   they might be better as route groups in a single app rather than three
+  separate deployments.
+
+  What I'd Actually Consider Instead
+
+  Merge connections + gateway into a single gateway app with two route groups:
+
+  apps/gateway/
+    src/routes/
+      connections.ts   # /api/connections/* (OAuth, tokens, resources)
+      webhooks.ts      # /api/webhooks/*   (ingress, HMAC, routing)
+      admin.ts         # /api/admin/*      (health, cache, DLQ)
+      workflows.ts     # /api/workflows/*  (durable steps)
+
+  This gives you:
+  - One subdomain, one deployment, one service to monitor
+  - No proxy hop latency
+  - Shared middleware stack (auth, error handling, logging)
+  - They already share all their infrastructure dependencies
+  - The separation is maintained at the route level, which is clean enough
+
+  The main reason to keep them separate would be independent scaling - but on
+  Vercel serverless, each request is its own function invocation anyway, so
+  that's moot.
+
+  TL;DR: The proxy layer adds complexity for services that aren't user-facing.
+  I'd lean toward merging into one gateway app rather than adding a third. But
+  if you have a strong reason to keep connections and relay as separate
+  deployable units (e.g., different security boundaries for the token vault),
+  then the proxy pattern is fine - just be aware of the latency and OAuth
+  tradeoffs.
+
+  What's driving the desire for separation? Is it the token vault security
+  boundary, or something else?
+
+✻ Churned for 2m 28s
+
+❯ well yes and no to your assestment. consider this: we can allow users to  
+  directly log-in to gateway for setup of connections. even lightfast can   
+  send users there. so it handles ALL event/source/connection related stuff 
+   forever. for webhook callbacks, it can directly be sent to the relay     
+  doesnt need to go through gateway. essentially what im saying is that the 
+   gateway acts as the main entrypoint for clients. either lightfast or     
+  users using lightfast through terminal.                                   
+
+⏺ That reframes it completely - and yes, that's a solid architecture. What
+  you're describing is a control plane / data plane split:
+
+  Clients (Console, CLI, Terminal Users)          Providers (GitHub, Vercel,
+  Linear, Sentry)
+           │                                                │
+           ▼                                                ▼
+      ┌─────────┐                                    ┌──────────┐
+      │ Gateway  │  control plane                    │  Relay   │  data plane
+      │          │  - connection setup                │          │  - webhook
+  ingress
+      │          │  - OAuth flows                     │          │  - HMAC
+  verify
+      │          │  - source/resource mgmt            │          │  - route →
+  QStash → console
+      │          │  - admin (DLQ, cache)              │          │  - dedup
+      │          │  - user auth (login)               │          │  - <20ms
+  target
+      └─────────┘                                    └──────────┘
+           │                 shared                        │
+           └──────── @db/console + gw: Redis ──────────────┘
+
+  This is clean because:
+
+  1. No proxy hop for webhooks. Providers hit relay directly. The latency
+  concern disappears.
+  2. Gateway absorbs connections. OAuth, token vault, resource management -
+  that's all control plane. It belongs in the user-facing service. No reason for
+   connections to exist as a separate app.
+  3. Clear ownership boundary. Gateway owns everything a client needs. Relay
+  owns everything a provider sends. No ambiguity.
+  4. Independent scaling profiles. Control plane is low-traffic, complex
+  operations (OAuth, DB writes, user sessions). Data plane is high-throughput,
+  simple operations (verify, route, publish). Different performance
+  characteristics, different deployment concerns.
+  5. Relay becomes extremely thin. Just HMAC verify → deduplicate → resolve
+  route → publish to QStash. No auth flows, no user sessions, no admin UI. Easy
+  to reason about, hard to break.
+
+  The only thing I'd flag: the gateway needs its own auth story since users will
+   log into it directly. Right now connections uses X-Org-Id headers and
+  X-API-Key (service-to-service). If users are logging in directly, you'll want
+  Clerk or similar session auth on the gateway routes, with the API key path
+  kept for service-to-service (console → gateway).
+
+  So effectively: kill apps/connections/, merge its routes into apps/gateway/,
+  rename current apps/gateway/ to apps/relay/. Two apps, clean split. I think
+  this is the right call.
+
+  Want me to create a plan for the migration?
+
+✻ Churned for 31s
+
+❯ yes create a plan for the migration 
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ hmm for auth. not necessarily. user logs in to apps/auth. same clerk      
+  middleware used for here too.                                             
+
+⏺ Right - Clerk middleware across the board, same as console. No new auth system
+   needed.
+
+  Let me create the plan.
+
+⏺ Entered plan mode
+  Claude is now exploring and designing an implementation approach.
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ we're just think of how to architecture. no need to write code or plan. i 
+   also disagree with the connections. i think we maintai all of them.      
+  apps/connections, apps/gateway, apps/relay, apps/backfill. clean          
+  seperations.                                                              
+
+⏺ Fair point. Four services, clean boundaries:
+
+  ┌─────────────┬──────────────────────────────┬────────────────────────────┐
+  │     App     │             Role             │      Who talks to it       │
+  ├─────────────┼──────────────────────────────┼────────────────────────────┤
+  │ gateway     │ Control plane / client       │ Console, CLI, users (via   │
+  │             │ entrypoint                   │ Clerk)                     │
+  ├─────────────┼──────────────────────────────┼────────────────────────────┤
+  │ connections │ OAuth, token vault,          │ Gateway (internal)         │
+  │             │ credentials                  │                            │
+  ├─────────────┼──────────────────────────────┼────────────────────────────┤
+  │ relay       │ Webhook ingress, verify,     │ Providers directly         │
+  │             │ route                        │                            │
+  ├─────────────┼──────────────────────────────┼────────────────────────────┤
+  │ backfill    │ Historical data sync         │ Gateway / internal         │
+  │             │                              │ triggers                   │
+  └─────────────┴──────────────────────────────┴────────────────────────────┘
+
+  Gateway becomes the facade - it orchestrates connections and backfill on
+  behalf of clients, but doesn't absorb their logic. Each service owns a single
+  concern and can be reasoned about independently.
+
+  The key insight is gateway never proxies relay. Providers hit relay directly.
+  Gateway is purely the client-facing control plane that calls connections and
+  backfill as needed.
+
+  What's the next thing you want to think through on this?
+
+❯ hmm, maybe we're over thinking this. consider this what does gateway even 
+   need to do with relay. nothing really. maybe connections become gateway  
+  (since the ui for redirect callback can just be sent here before sending  
+  user back to the client or terminal). and then we have relay and backfil. 
+   consider all scenarios. evaluate properly.                               
+
+⏺ You're right, let me think through this properly.
+
+  The Simplification: Connections is the Gateway
+
+  Connections is already the client-facing service. It handles OAuth, tokens,
+  resource management, teardown workflows. That's what a gateway does - it's the
+   entry point for clients. Just rename it.
+
+  Three Services
+
+  ┌───────────────────┬────────────────────────────┬────────────────────────┐
+  │        App        │            Owns            │      Talked to by      │
+  ├───────────────────┼────────────────────────────┼────────────────────────┤
+  │ gateway (was      │ OAuth, token vault,        │ Console, CLI, users,   │
+  │ connections)      │ resource mgmt, teardown,   │ backfill (for tokens)  │
+  │                   │ admin                      │                        │
+  ├───────────────────┼────────────────────────────┼────────────────────────┤
+  │ relay (was        │ Webhook ingress, HMAC      │ Providers directly,    │
+  │ gateway)          │ verify, dedup, routing,    │ backfill (service      │
+  │                   │ DLQ                        │ auth)                  │
+  ├───────────────────┼────────────────────────────┼────────────────────────┤
+  │ backfill          │ Historical data sync       │ Triggered by gateway   │
+  │                   │                            │ via QStash             │
+  └───────────────────┴────────────────────────────┴────────────────────────┘
+
+  All Scenarios
+
+  1. User sets up a connection:
+  Console → gateway /authorize → Provider → gateway /callback → redirect back to
+   console/terminal
+
+  2. Provider sends a webhook:
+  Provider → relay (HMAC verify → dedup → resolve route from Redis → QStash →
+  console). Gateway not involved.
+
+  3. Backfill triggered:
+  Gateway callback completes → QStash → backfill starts. Backfill calls gateway
+  for tokens, publishes events through relay's service auth path.
+
+  4. Connection teardown:
+  Console → gateway /delete → durable workflow (cancel backfill, revoke token,
+  deregister webhook, clean Redis, soft-delete DB). All self-contained.
+
+  5. Resource linking (add a repo to a connection):
+  Console → gateway /resources → writes DB + populates Redis routing cache that
+  relay reads.
+
+  6. Cache rebuild:
+  Admin → gateway /cache/rebuild → reconstructs Redis routing cache from DB.
+  Lives in gateway since it owns the source data.
+
+  7. DLQ management:
+  Admin → relay /dlq → lists/replays failed deliveries. Lives in relay since it
+  owns the delivery pipeline.
+
+  Why This Works
+
+  - Gateway and relay never talk to each other. They share Redis and DB, but no
+  direct calls. Clean decoupling.
+  - No proxy hop. Webhooks hit relay directly, clients hit gateway directly.
+  - Each service has one scaling profile. Gateway: low-traffic complex ops.
+  Relay: high-throughput simple ops. Backfill: bursty batch jobs.
+  - Naming is honest. Gateway is the gate. Relay relays events. Backfill
+  backfills.
+
+  The fourth "proxy gateway" was unnecessary because there's no scenario where a
+   client needs to reach relay, or a provider needs to reach gateway. They serve
+   completely different audiences.
+
+✻ Sautéed for 40s
+
+❯ right then, consider                                                      
+  @apps/console/src/components/github-connect-dialog.tsx                    
+                                                                            
+  what would the workflow look like. basically, i'd rather have the         
+  callback a resource to send user to gateway on success first before       
+  sending back to apps/console. kinda that flow. everything goes through    
+  gateway all the time.                                                     
+  ⎿  Read apps/console/src/components/github-connect-dialog.tsx (205 lines)
+
+⏺ So the flow would be:
+
+  Console (dialog)
+    → opens popup to Gateway /connect/github
+      → Gateway redirects to GitHub OAuth
+        → GitHub callback → Connections /api/connections/github/callback
+          → Connections processes OAuth, stores tokens
+          → Connections redirects to Gateway /connect/github/success
+            → Gateway renders success page (postMessage to opener)
+              → Console receives message, closes popup
+
+  Instead of the current flow where Console talks to connections directly (via
+  tRPC connections.getAuthorizeUrl), everything routes through Gateway:
+
+  1. Console opens popup to gateway.lightfast.ai/connect/github
+  2. Gateway initiates the OAuth flow (calls connections internally or handles
+  it itself)
+  3. OAuth callback lands on connections (provider-registered URL, stable)
+  4. On success, connections redirects to gateway's success page
+  5. Gateway's success page fires postMessage back to the Console opener window
+
+  The key shift: Console never knows about connections. It only ever talks to
+  gateway. Gateway owns the client-facing URLs, the redirect UX, the
+  success/error pages. Connections stays purely internal - it does the OAuth
+  plumbing and token storage but never renders anything to the user.
+
+  This also means CLI/terminal users get the same flow - open
+  gateway.lightfast.ai/connect/github in a browser, complete OAuth, gateway
+  confirms success, CLI polls or receives callback.
+
+  Is that the mental model you're going for?
+
+❯ yes exactly. 
+
+⏺ Good. So the final architecture:
+
+  Console / CLI / Users
+          │
+          ▼
+     ┌──────────┐
+     │  Gateway  │  client-facing control plane
+     │           │  - /connect/:provider (initiate OAuth)
+     │           │  - /connect/:provider/success (render success, postMessage)
+     │           │  - /connections/* (manage, teardown)
+     │           │  - /admin/* (cache, DLQ)
+     │           │  - Clerk auth
+     │           │  - calls Connections internally
+     └──────────┘
+          │
+          ▼
+     ┌──────────────┐          ┌──────────┐
+     │ Connections   │          │  Relay   │ ◄── Providers (GitHub, Vercel,
+  etc.)
+     │ (internal)    │          │          │
+     │ - OAuth       │          │ - HMAC verify
+     │ - Token vault │          │ - dedup
+     │ - Credentials │          │ - route → QStash → Console
+     └──────────────┘          └──────────┘
+                                ┌──────────┐
+                                │ Backfill │
+                                │ - historical sync
+                                │ - tokens from Connections
+                                │ - events through Relay
+                                └──────────┘
+
+  Four services, clean boundaries. Gateway is the only thing clients ever see.
+  Connections, relay, and backfill are all internal. Want to save this as a plan
+   doc in thoughts?
+
+❯ and relay connects to then eventually a memory.lightfast.ai that handles  
+  the whole ingestion pipeline.                                             
+                                                                            
+  lightfast.ai (apps/console) itself depends on gateway for conneciton.     
+                                                                            
+                                                                            
+
+⏺ Right. So the full picture:
+
+  lightfast.ai (Console)
+          │
+          │ depends on Gateway for all connection management
+          ▼
+     ┌──────────┐
+     │  Gateway  │  gateway.lightfast.ai
+     └──────────┘
+          │
+          ▼
+     ┌──────────────┐          ┌──────────┐
+     │ Connections   │          │  Relay   │  relay.lightfast.ai
+     │ (internal)    │          │          │ ◄── Providers
+     └──────────────┘          └──────────┘
+                                     │
+                                     ▼
+                               ┌──────────┐
+                               │  Memory  │  memory.lightfast.ai
+                               │          │  - ingestion pipeline
+                               │          │  - processing
+                               │          │  - storage (vector, etc.)
+                               └──────────┘
+
+                               ┌──────────┐
+                               │ Backfill │
+                               │ - historical sync
+                               │ - → Relay → Memory
+                               └──────────┘
+
+  So relay becomes the funnel. Everything - live webhooks and backfill events -
+  flows through relay into memory. Memory owns the ingestion pipeline that
+  currently lives in console (the Inngest workflows, embeddings, storage).
+
+  That's a clean decoupling of console from the data pipeline. Console becomes
+  purely the UI/orchestration layer. It reads from memory, manages connections
+  through gateway, but never touches raw events.
+
+  Want to capture this as the target architecture doc?
+
+❯ okay now consider this. next phase. the relay basically fans out the data 
+   to multiple places. the user can essentially create a "store" in his     
+  computer. this way they always have the data. we basically have a         
+  listener observer pattern. and we output this data directly to a file in  
+  users computer for them to do whatever. this way they dont need to call   
+  the api anymore.                                                          
+
+⏺ That's a powerful pattern. Relay becomes an event bus with fan-out:
+
+  Providers ──► Relay
+                  │
+                  ├──► Memory (cloud ingestion)
+                  ├──► User Store A (local file on their machine)
+                  ├──► User Store B (another user/machine)
+                  └──► ... (any subscriber)
+
+  The user runs a CLI daemon (or background process) that holds a persistent
+  connection to relay. Relay pushes events as they arrive. The daemon writes
+  them to a local file. Now the user has a local-first copy of all their data -
+  no API calls, no latency, no rate limits. Just read the file.
+
+  This flips the model. Instead of:
+  User tool → API call → wait → response → use data
+
+  It becomes:
+  Data arrives → relay fans out → local file updated → tools read locally
+
+  The interesting implication: memory becomes optional. A user who just wants
+  their GitHub events locally doesn't need the cloud pipeline at all. They
+  connect through gateway, relay starts pushing to their local store, done.
+  Memory is just another subscriber for users who want cloud features (search,
+  embeddings, AI).
+
+  The relay subscription could be SSE, WebSocket, or even QStash pushing to a
+  CLI-exposed endpoint. The local file format matters too - SQLite would give
+  them queryable data out of the box, JSONL if they want streamability.
+
+  This also means third-party integrations become trivial. Anyone can subscribe
+  to the relay and build on top of the event stream. Relay doesn't care what the
+   subscriber does with the data.
+
+  Is the CLI daemon the delivery mechanism you're thinking, or something else?
+
+❯ yeap exactly. draw diagram 
+
+⏺ ┌─────────────────────────────┐
+                          │      lightfast.ai           │
+                          │      (Console UI)           │
+                          │                             │
+                          │  - reads from Memory        │
+                          │  - manages via Gateway      │
+                          └──────────────┬──────────────┘
+                                         │
+                          ┌──────────────▼──────────────┐
+                          │      Gateway                │
+                          │      gateway.lightfast.ai   │
+                          │                             │
+                          │  - /connect/:provider       │
+                          │  - /connect/:provider/success│
+                          │  - /connections/*           │
+                          │  - Clerk auth               │
+                          └──────────────┬──────────────┘
+                                         │
+                          ┌──────────────▼──────────────┐
+                          │      Connections            │
+                          │      (internal)             │
+                          │                             │
+                          │  - OAuth plumbing           │
+                          │  - Token vault              │
+                          │  - Credential lifecycle     │
+                          └─────────────────────────────┘
+
+
+    Providers                                              Subscribers
+    (GitHub, Vercel,                                       (fan-out)
+     Linear, Sentry)                                          │
+         │                                                    │
+         │  webhooks                          ┌───────────────┼───────────────┐
+         │                                    │               │               │
+         ▼                                    ▼               ▼               ▼
+    ┌─────────────┐                  ┌──────────────┐ ┌─────────────┐
+  ┌─────────────┐
+    │             │    fan-out       │    Memory     │ │  User CLI   │ │  User
+  CLI   │
+    │    Relay    │─────────────────►│   (cloud)     │ │  Daemon A   │ │  Daemon
+   B   │
+    │             │                  │              │ │             │ │
+      │
+    │  - verify   │                  │  - ingest    │ │  - SSE/WS   │ │  -
+  SSE/WS   │
+    │  - dedup    │                  │  - embed     │ │  - write to │ │  - write
+   to │
+    │  - route    │                  │  - store     │ │    local    │ │    local
+      │
+    │  - fan out  │                  │  - search    │ │    store    │ │    store
+      │
+    └─────────────┘                  └──────────────┘ └──────┬──────┘
+  └──────┬──────┘
+         ▲                                                   │               │
+         │                                                   ▼               ▼
+    ┌─────────────┐                                   ┌─────────────┐
+  ┌─────────────┐
+    │  Backfill   │                                   │  ~/lightfast│ │
+  ~/lightfast│
+    │             │                                   │  /store.db  │ │
+  /store.db  │
+    │  - historical                                   │             │ │
+      │
+    │    sync     │                                   │  SQLite     │ │  SQLite
+      │
+    │  - → Relay  │                                   │  local-first│ │
+  local-first│
+    └─────────────┘                                   │  queryable  │ │
+  queryable  │
+                                                      └─────────────┘
+  └─────────────┘
+
+    ┌───────────────────────────────────────────────────────────────────────────
+  ──┐
+    │  Data flow:
+    │
+    │
+    │
+    │  Provider event → Relay → fan-out → Memory (cloud, optional)
+   │
+    │                                   → Local store (always yours)
+   │
+    │
+    │
+    │  User tools just read ~/lightfast/store.db locally. No API calls.
+   │
+    └───────────────────────────────────────────────────────────────────────────
+  ──┘
+
+❯ yes exactly. consider this scenario, user has agent 1, 2, 3 on cloud      
+  (using daytona as example). we can fan-out to all of them. all has live   
+  data.                                                                     
+
+⏺ Providers ──► Relay (fan-out)
+                     │
+                     ├──► Memory (cloud, optional)
+                     │
+                     ├──► User's laptop         ~/lightfast/store.db
+                     │
+                     ├──► Daytona Agent 1        ~/lightfast/store.db
+                     │    (cloud workspace)
+                     │
+                     ├──► Daytona Agent 2        ~/lightfast/store.db
+                     │    (cloud workspace)
+                     │
+                     ├──► Daytona Agent 3        ~/lightfast/store.db
+                     │    (cloud workspace)
+                     │
+                     └──► ... N subscribers
+
+
+    ┌───────────────────────────────────────────────────────────┐
+    │                                                           │
+    │  Every subscriber gets the same store.db                  │
+    │  Same schema, same data, always in sync                   │
+    │                                                           │
+    │  Agent 1 (frontend)  → reads store.db → has full context  │
+    │  Agent 2 (backend)   → reads store.db → has full context  │
+    │  Agent 3 (infra)     → reads store.db → has full context  │
+    │                                                           │
+    │  No API calls between agents. No shared state server.     │
+    │  Each agent has a local copy. Relay keeps them in sync.   │
+    │                                                           │
+    └───────────────────────────────────────────────────────────┘
+
+  Every agent gets the full picture without talking to each other or hitting an
+  API. A PR gets opened on GitHub → webhook → relay → all three agents have it
+  in their local store instantly. Agent 1 sees the frontend changes, agent 2
+  sees the backend changes, agent 3 sees the infra impact. All from the same
+  local read.
+
+  The daemon is the only thing each environment needs. Lightweight process,
+  SSE/WS connection to relay, writes to store.db. The agents themselves are
+  totally unaware of the network - they just read a local SQLite file.
+
+  This also scales to any compute environment - Daytona, Codespaces, Modal, your
+   own VMs. Anywhere you can run the daemon, you get live data. Relay doesn't
+  care what's subscribing.
+
+❯ perfect. now consider this, we also have lightfast mcp which is FOR       
+  long-term/short-term memory that intergates directly to lightfast search  
+  api. now draw this full diagram.                                          
+
+⏺ ┌─────────────────────────────┐
+                          │      lightfast.ai           │
+                          │      (Console UI)           │
+                          │                             │
+                          │  - dashboard                │
+                          │  - manage connections       │
+                          │  - search interface         │
+                          │  - reads from Memory        │
+                          │  - manages via Gateway      │
+                          └──────────────┬──────────────┘
+                                         │
+                          ┌──────────────▼──────────────┐
+                          │      Gateway                │
+                          │      gateway.lightfast.ai   │
+                          │                             │
+                          │  - /connect/:provider       │
+                          │  - /connections/*           │
+                          │  - Clerk auth               │
+                          └──────────────┬──────────────┘
+                                         │
+                          ┌──────────────▼──────────────┐
+                          │      Connections            │
+                          │      (internal)             │
+                          │                             │
+                          │  - OAuth plumbing           │
+                          │  - Token vault              │
+                          │  - Credential lifecycle     │
+                          └─────────────────────────────┘
+
+
+
+                      DATA PLANE                          MEMORY PLANE
+
+    Providers                                    ┌──────────────────────┐
+    (GitHub, Vercel,                             │      Memory          │
+     Linear, Sentry)                             │  memory.lightfast.ai │
+         │                                       │                      │
+         │  webhooks                             │  - ingest pipeline   │
+         │                                       │  - embed / chunk     │
+         ▼                              ┌───────►│  - vector store      │
+    ┌─────────────┐                     │        │  - search API
+  ───────────────────┐
+    │             │    fan-out          │        │                      │
+      │
+    │    Relay    │─────────────────────┤        └──────────────────────┘
+      │
+    │             │                     │
+      │
+    │  - verify   │                     │
+      │
+    │  - dedup    │                     │        SUBSCRIBERS
+      │
+    │  - route    │                     │        (fan-out)
+      │
+    │  - fan out  │                     │
+      │
+    └─────────────┘                     │
+      │
+         ▲                              │
+      │
+         │                              │
+      │
+    ┌─────────────┐                     │
+      │
+    │  Backfill   │                     │
+      │
+    │  - historical sync                │
+      │
+    │  - → Relay                        │
+      │
+    └─────────────┘                     │
+      │
+                                        │
+      │
+                                        │
+      │
+         ┌──────────────────────────────┼───────────────────────────┐
+      │
+         │                              │                           │
+      │
+         ▼                              ▼                           ▼
+      │
+   ┌───────────────┐           ┌───────────────┐          ┌───────────────┐
+      │
+   │ User Laptop   │           │ Daytona       │          │ Daytona       │
+      │
+   │               │           │ Agent 1       │          │ Agent 2       │
+      │
+   │ ┌───────────┐ │           │ ┌───────────┐ │          │ ┌───────────┐ │
+      │
+   │ │  Daemon   │ │           │ │  Daemon   │ │          │ │  Daemon   │ │
+      │
+   │ │  (SSE/WS) │ │           │ │  (SSE/WS) │ │          │ │  (SSE/WS) │ │
+      │
+   │ └─────┬─────┘ │           │ └─────┬─────┘ │          │ └─────┬─────┘ │
+      │
+   │       │       │           │       │       │          │       │       │
+      │
+   │       ▼       │           │       ▼       │          │       ▼       │
+      │
+   │ ┌───────────┐ │           │ ┌───────────┐ │          │ ┌───────────┐ │
+      │
+   │ │ store.db  │ │           │ │ store.db  │ │          │ │ store.db  │ │
+      │
+   │ │ (SQLite)  │ │           │ │ (SQLite)  │ │          │ │ (SQLite)  │ │
+      │
+   │ │ live data │ │           │ │ live data │ │          │ │ live data │ │
+      │
+   │ └───────────┘ │           │ └───────────┘ │          │ └───────────┘ │
+      │
+   │       ▲       │           │       ▲       │          │       ▲       │
+      │
+   │       │       │           │       │       │          │       │       │
+      │
+   │       │ read  │           │       │ read  │          │       │ read  │
+      │
+   │       │       │           │       │       │          │       │       │
+      │
+   │ ┌─────┴─────┐ │           │ ┌─────┴─────┐ │          │ ┌─────┴─────┐ │
+      │
+   │ │Lightfast  │ │           │ │Lightfast  │ │          │ │Lightfast  │ │
+      │
+   │ │   MCP     │◄├───────────┼─┤   MCP     │◄├──────────┼─┤   MCP
+  │◄├─────────┘
+   │ │           │ │    search  │ │           │ │   search │ │           │ │
+  search
+   │ │- store.db │ │    API     │ │- store.db │ │   API    │ │- store.db │ │
+  API
+   │ │  (short   │ │           │ │  (short   │ │          │ │  (short   │ │
+   │ │   term)   │ │           │ │   term)   │ │          │ │   term)   │ │
+   │ │           │ │           │ │           │ │          │ │           │ │
+   │ │- Memory   │ │           │ │- Memory   │ │          │ │- Memory   │ │
+   │ │  search   │ │           │ │  search   │ │          │ │  search   │ │
+   │ │  (long    │ │           │ │  (long    │ │          │ │  (long    │ │
+   │ │   term)   │ │           │ │   term)   │ │          │ │   term)   │ │
+   │ └───────────┘ │           │ └───────────┘ │          │ └───────────┘ │
+   └───────────────┘           └───────────────┘          └───────────────┘
+
+
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │                                                                     │
+    │  Lightfast MCP (per environment)                                   │
+    │                                                                     │
+    │  Short-term memory:  store.db (local SQLite)                       │
+    │    → live events, recent context, immediate data                   │
+    │    → zero latency, no network                                      │
+    │                                                                     │
+    │  Long-term memory:   Memory search API                             │
+    │    → embedded/indexed historical data                              │
+    │    → semantic search across all time                               │
+    │    → API call to memory.lightfast.ai                               │
+    │                                                                     │
+    │  The MCP decides which to query based on the request.              │
+    │  Recent PR? → store.db. "How did we handle auth last year?" →      │
+    │  Memory API. Agent never thinks about where data lives.            │
+    │                                                                     │
+    └─────────────────────────────────────────────────────────────────────┘
+
+  Two-tier memory per environment. Short-term is local (store.db, fed by relay).
+   Long-term is cloud (Memory, searchable via API). The MCP abstracts both - the
+   agent just asks questions and gets answers. It never knows or cares whether
+  the data came from the local file or a network call.
+
+✻ Brewed for 30s
+
+❯ okay now consider this: we also now have: an OS layer. This is the right  
+  question. Features are emergent behavior. You don't build "Ambient        
+  Intelligence" — you build primitives that make it inevitable. Let me      
+  think at the Turing Award level.                                          
+                                                                            
+  ---                                                                       
+                                                                            
+  ## The Insight                                                            
+                                                                            
+  Every operating system in history reduces to the same problem: **mediate  
+  access to shared resources between competing processes, while maintaining 
+   invariants about the system's state.**                                   
+                                                                            
+  Linux does this for hardware. Lightfast v2 does this for a company's      
+  operations across its entire tool stack.                                  
+                                                                            
+  The question is: what are the **irreducible primitives** — the minimal    
+  set of abstractions where every feature on your list is a composition of  
+  them, and removing any one primitive makes at least one feature           
+  impossible?                                                               
+                                                                            
+  ---                                                                       
+                                                                            
+  ## The Seven Primitives                                                   
+                                                                            
+  ### P1 — The Graph                                                        
+                                                                            
+  **What it is:** A temporally-versioned, directed property graph where     
+  every meaningful thing in the company is a node and every relationship is 
+   an edge. Nodes are typed (person, task, commit, message, deploy,         
+  document, incident, feature, initiative). Edges are typed (authored,      
+  blocks, caused, references, resolves, belongs_to). Every node and edge    
+  carries a timestamp range — when it became true and when it stopped being 
+   true.                                                                    
+                                                                            
+  **Formal properties:**                                                    
+  - Append-only at the event level (you never delete history, you supersede 
+   it)                                                                      
+  - Temporally queryable ("show me the state of this subgraph at Tuesday    
+  3pm")                                                                     
+  - Every node has a canonical identity that survives across tools (your v1 
+   actor resolution, generalized to all entities)                           
+                                                                            
+  **Why it's primitive:** Without a unified graph, you have N disconnected  
+  databases. No primitive above this can function because there's nothing   
+  to compute over. This is your virtual memory — the shared address space   
+  every process reads from and writes to.                                   
+                                                                            
+  **Linux analogy:** Page tables + VFS combined. The universal "where is    
+  everything and how is it related" layer.                                  
+                                                                            
+  ---                                                                       
+                                                                            
+  ### P2 — The Event Stream                                                 
+                                                                            
+  **What it is:** An immutable, totally-ordered log of every mutation to    
+  the graph. Every webhook, every user action, every agent decision, every  
+  tool sync — everything that changes state is an event first and a graph   
+  mutation second.                                                          
+                                                                            
+  ```                                                                       
+  Event {                                                                   
+    id:          globally unique, monotonic                                 
+    timestamp:   wall clock                                                 
+    source:      which tool or agent emitted this                           
+    type:        "pull_request.merged" | "issue.created" | "message.sent" | 
+   ...                                                                      
+    actor:       resolved identity (P1 gives us this)                       
+    entities:    [node IDs affected]                                        
+    delta:       the graph mutation this event represents                   
+    causal_parent: optional — which prior event caused this one             
+  }                                                                         
+  ```                                                                       
+                                                                            
+  **Formal properties:**                                                    
+  - Immutable — events are facts. You can add interpretations, never change 
+   the event.                                                               
+  - Causal ordering — events can declare what caused them, forming a DAG of 
+   causality                                                                
+  - Every graph mutation is the consequence of an event (no side-channel    
+  writes)                                                                   
+                                                                            
+  **Why it's primitive:** Without an event stream, the graph is a static    
+  snapshot. You can't replay, you can't derive workflows, you can't audit,  
+  you can't build temporal reasoning. The event stream is what makes the    
+  graph *alive*.                                                            
+                                                                            
+  **Linux analogy:** Hardware interrupts + the system call log. The         
+  mechanism by which the outside world tells the kernel something happened. 
+                                                                            
+  ---                                                                       
+                                                                            
+  ### P3 — The Process                                                      
+                                                                            
+  **What it is:** A stateful, long-running computation bound to one or more 
+   graph entities. A process has a lifecycle (spawned → running → waiting → 
+   completed | failed), maintains its own state, and can read the graph,    
+  emit events, and invoke actions.                                          
+                                                                            
+  **Key distinction from a "workflow":** A workflow is a predefined         
+  sequence. A process is a *living computation* that reacts to the evolving 
+   state of its bound entities. It can change its behavior based on what    
+  happens. It can run for five seconds or five months.                      
+                                                                            
+  ```                                                                       
+  Process {                                                                 
+    id:           unique                                                    
+    bound_to:     [entity IDs in the graph]                                 
+    state:        running | waiting_on(condition) | completed | failed      
+    memory:       process-local state (like a thread's stack)               
+    trigger:      what events wake this process up                          
+    logic:        the computation (could be deterministic rules or an LLM   
+  reasoning step)                                                           
+  }                                                                         
+  ```                                                                       
+                                                                            
+  **Formal properties:**                                                    
+  - A process is garbage-collected when all its bound entities reach        
+  terminal states                                                           
+  - Processes can spawn child processes                                     
+  - A process can only mutate the graph by emitting events (never direct    
+  writes)                                                                   
+                                                                            
+  **Why it's primitive:** Without processes, the OS is purely reactive — it 
+   can respond to events but can't *shepherd* anything over time. Daemon    
+  processes, self-programming workflows, prediction — all require           
+  persistent computation. This is the difference between a notification     
+  system and an operating system.                                           
+                                                                            
+  **Linux analogy:** `task_struct` — the kernel's representation of a       
+  running process, with its own memory, state, and lifecycle.               
+                                                                            
+  ---                                                                       
+                                                                            
+  ### P4 — The Resolver                                                     
+                                                                            
+  **What it is:** A function that maps semantic intent to concrete actions  
+  across the tool graph, without the caller ever naming a specific tool or  
+  API.                                                                      
+                                                                            
+  ```                                                                       
+  resolve("create a task for this bug, high priority, assign to Sarah")     
+    → evaluates graph to determine:                                         
+        - team uses Linear for task management (not Jira, not Asana)        
+        - "Sarah" resolves to sarah@company.com via actor graph             
+        - "high priority" maps to Linear priority 2 (not 1, which this team 
+   reserves for outages)                                                    
+    → emits: linear.createIssue({ title, assignee, priority: 2 })           
+  ```                                                                       
+                                                                            
+  **Formal properties:**                                                    
+  - Resolution is contextual — the same intent resolves differently for     
+  different teams, different projects, different times                      
+  - Resolution is learnable — the graph accumulates how this team maps      
+  meaning to action, and resolution improves over time                      
+  - Resolution is the *only* way agents interact with external tools (they  
+  never call APIs directly)                                                 
+                                                                            
+  **Why it's primitive:** Without resolution, every agent and every         
+  workflow must be hardcoded to specific tools. Adding a new integration    
+  requires updating every workflow. Resolution is what makes the OS         
+  tool-agnostic and what allows it to scale to 100 integrations without     
+  100x complexity. It's also what makes the "Agent Kernel" possible —       
+  external agents express intent, the resolver figures out how to execute   
+  it.                                                                       
+                                                                            
+  **Linux analogy:** The virtual filesystem (VFS) layer. Programs call      
+  `open()`, `read()`, `write()` — they never talk to ext4 or NFS directly.  
+  The VFS resolves the call to the right driver. This is the same pattern,  
+  but for business operations instead of filesystems.                       
+                                                                            
+  ---                                                                       
+                                                                            
+  ### P5 — The Invariant Engine                                             
+                                                                            
+  **What it is:** A continuous constraint evaluator that runs assertions    
+  against the graph and the event stream. Invariants are rules that must    
+  always be true. When they're violated, the engine can alert, block, or    
+  trigger corrective processes.                                             
+                                                                            
+  ```                                                                       
+  Invariant {                                                               
+    id:          unique                                                     
+    scope:       which subgraph this applies to (all deploys, all PRs, team 
+   X, etc.)                                                                 
+    predicate:   a boolean function over graph state                        
+    on_violation: alert | block | spawn_process(corrective_action)          
+                                                                            
+    // Example:                                                             
+    // "Every node of type 'production_deploy' must have an incoming edge   
+    //  of type 'approved_by' from a node of type 'code_review'             
+    //  with status = 'approved'"                                           
+  }                                                                         
+  ```                                                                       
+                                                                            
+  **Formal properties:**                                                    
+  - Evaluated continuously (or on relevant event arrival — an optimization) 
+  - Invariants compose — you can build complex policies from simple         
+  predicates                                                                
+  - Violations are events themselves (they enter the event stream and can   
+  trigger processes)                                                        
+                                                                            
+  **Why it's primitive:** Without invariants, the OS has no concept of      
+  correctness. It can observe and act, but it can't enforce. Truth          
+  computation, cross-tool invariants, dry-run simulation — all require a    
+  formal mechanism for "this must be true." Invariants are also what make   
+  the economic layer possible: "spend on this project must not exceed X" is 
+   an invariant over cost-annotated edges.                                  
+                                                                            
+  **Linux analogy:** Memory protection + permissions (page table flags,     
+  file permissions, capabilities). The kernel's mechanism for enforcing     
+  "this process cannot access that memory" is exactly an invariant engine.  
+                                                                            
+  ---                                                                       
+                                                                            
+  ### P6 — The Projector                                                    
+                                                                            
+  **What it is:** A bidirectional synchronization primitive that maintains  
+  live mappings between subgraphs and external tools. Read projections pull 
+   tool state into the graph. Write projections push graph mutations out to 
+   tools.                                                                   
+                                                                            
+  ```                                                                       
+  Projection {                                                              
+    tool:        "linear" | "github" | "slack" | ...                        
+    direction:   read | write | bidirectional                               
+    mapping:     graph_schema ↔ tool_schema                                 
+    consistency: eventual | transactional (best-effort for most tools)      
+                                                                            
+    // A projection is essentially a materialized view of                   
+    // the graph, kept in sync with an external system                      
+  }                                                                         
+  ```                                                                       
+                                                                            
+  **Formal properties:**                                                    
+  - A projection is declarative — you define the mapping, the engine        
+  handles sync                                                              
+  - Projections are the *only* way the graph talks to external tools (no    
+  direct API calls scattered through code)                                  
+  - Conflict resolution follows last-write-wins with causal ordering from   
+  the event stream                                                          
+                                                                            
+  **Why it's primitive:** Without projections, the graph is an isolated     
+  data store. Projections are what make "graph-native data model" real —    
+  the graph IS the source of truth, and tools are just views. They're also  
+  what make integration scalable: adding tool #101 means defining one       
+  projection, not rewriting the agent.                                      
+                                                                            
+  **Linux analogy:** Device drivers. The kernel doesn't know how to talk to 
+   an Intel NIC vs. a Broadcom NIC. It defines a generic `net_device`       
+  interface and each driver projects kernel operations onto specific        
+  hardware.                                                                 
+                                                                            
+  ---                                                                       
+                                                                            
+  ### P7 — The Scheduler                                                    
+                                                                            
+  **What it is:** The resource allocator and orchestrator that decides what 
+   runs when, manages process priorities, computes load, and prevents       
+  overcommit.                                                               
+                                                                            
+  ```                                                                       
+  Scheduler {                                                               
+    // Manages:                                                             
+    process_queue:    prioritized queue of active processes                 
+    load_model:       per-person, per-workstream cognitive/operational load 
+    budget:           compute budget, API rate limits, cost ceilings        
+                                                                            
+    // Decisions:                                                           
+    - Which process gets the next execution slot                            
+    - Whether a new process should be spawned or queued                     
+    - Whether a human is overloaded and work should be                      
+  deferred/redistributed                                                    
+    - Whether an action's cost exceeds budget (economic constraint)         
+  }                                                                         
+  ```                                                                       
+                                                                            
+  **Formal properties:**                                                    
+  - The scheduler is the only primitive that can *prevent* action           
+  (everything else enables action)                                          
+  - Load is computed from the graph (open tasks, pending reviews, active    
+  incidents per person)                                                     
+  - The scheduler respects invariants (it won't schedule work that would    
+  violate constraints)                                                      
+                                                                            
+  **Why it's primitive:** Without a scheduler, every event triggers every   
+  relevant process immediately with no prioritization. The system collapses 
+   under load, people get overwhelmed, and costs explode. The scheduler is  
+  what makes this an OS rather than a firehose. It's also the only          
+  primitive that answers "when should we stop" — which is the Load          
+  Awareness feature.                                                        
+                                                                            
+  **Linux analogy:** The process scheduler (CFS/EEVDF) + the OOM killer +   
+  cgroups resource limits. Decides who runs, manages contention, prevents   
+  overcommit.                                                               
+                                                                            
+  ---                                                                       
+                                                                            
+  ## The Derivation Table                                                   
+                                                                            
+  Every feature is a composition. No feature requires anything outside      
+  these seven:                                                              
+                                                                            
+  | Feature | Primitives Used | How |                                       
+  |---|---|---|                                                             
+  | **Ambient Intelligence** | P1 + P2 + P6 | Projections (P6) pull events  
+  from tools → Event Stream (P2) → Graph mutations (P1). No human action    
+  required. |                                                               
+  | **Self-Programming Workflows** | P2 + P3 + P1 | Pattern detection over  
+  Event Stream (P2) → spawn Process (P3) that encodes the detected pattern, 
+   bound to relevant Graph entities (P1). |                                 
+  | **Prediction Graph** | P1 + P2 + P3 | A process (P3) continuously       
+  traverses the graph (P1) with temporal event data (P2) to compute         
+  probabilistic future states. |                                            
+  | **Company-Wide Activity Log** | P2 | The Event Stream *is* the activity 
+   log. Literally just expose it. |                                         
+  | **Universal Context Layer** | P1 + P4 | Any agent queries the Graph     
+  (P1) through the Resolver (P4), which returns relevant context without    
+  tool-specific knowledge. |                                                
+  | **Economic Layer** | P1 + P5 + P7 | Cost annotations on Graph edges     
+  (P1) + budget Invariants (P5) + Scheduler cost enforcement (P7). |        
+  | **Daemon Processes** | P3 + P1 + P2 | Every entity in the Graph (P1)    
+  auto-spawns a Process (P3) that watches for relevant Events (P2) and      
+  shepherds until resolution. |                                             
+  | **Dry-Run Simulation** | P1 + P4 + P5 | Fork the Graph (P1), resolve    
+  actions (P4) against the fork, evaluate Invariants (P5) on the simulated  
+  state. Report violations. |                                               
+  | **Ancestral Context** | P1 | Pure graph traversal up causal/ancestry    
+  edges. This is just a query pattern on the Graph. |                       
+  | **Truth Computation** | P1 + P5 + P6 | Multiple Projections (P6) feed   
+  conflicting data into the Graph (P1), Invariant Engine (P5) detects       
+  contradictions and computes consensus. |                                  
+  | **Cross-Tool Entities** | P1 + P6 | First-class Graph nodes (P1) that   
+  multiple Projections (P6) bind to. The entity lives in the graph; tools   
+  see their slice of it. |                                                  
+  | **Graph-Native Data Model** | P1 + P6 | The Graph (P1) is source of     
+  truth. Projections (P6) are materialized views into external tools.       
+  Writes go to graph first, project outward. |                              
+  | **Load Awareness** | P7 + P1 | Scheduler (P7) computes load from Graph  
+  state (P1). Prevents overcommit by throttling process spawning and        
+  redistributing work. |                                                    
+  | **Semantic Intent Resolution** | P4 + P1 | Resolver (P4) maps natural   
+  language intent to concrete actions using Graph context (P1). No tool     
+  names needed. |                                                           
+  | **Cross-Tool Invariants** | P5 + P1 + P6 | Invariants (P5) evaluated    
+  over Graph state (P1) that spans multiple tool Projections (P6). |        
+  | **Agent Kernel** | P3 + P4 + P7 + P1 | External agents register as      
+  Processes (P3), express intent through Resolver (P4), Scheduler (P7)      
+  coordinates them, Graph (P1) is shared memory. |                          
+                                                                            
+  ---                                                                       
+                                                                            
+  ## The Dependency Graph of Primitives                                     
+                                                                            
+  ```                                                                       
+  P2 (Event Stream) ──────→ P1 (Graph) ←────── P6 (Projector)               
+          │                     ↑ ↑                    │                    
+          │                     │ │                    │                    
+          ▼                     │ │                    │                    
+  P3 (Process) ────────────────┘ │                    │                     
+          │                      │                    │                     
+          ▼                      │                    │                     
+  P4 (Resolver) ────────────────┘                    │                      
+          │                                           │                     
+          ▼                                           │                     
+  P5 (Invariant Engine) ←────────────────────────────┘                      
+          │                                                                 
+          ▼                                                                 
+  P7 (Scheduler)                                                            
+  ```                                                                       
+                                                                            
+  **Boot order:** P1 → P2 → P6 → P3 → P4 → P5 → P7                          
+                                                                            
+  The Graph must exist first (nothing to compute over otherwise). The Event 
+   Stream must exist next (no way to mutate the graph). Projections come    
+  third (populate the graph from external tools). Then Processes (compute   
+  over the live graph). Then Resolution (processes need to act). Then       
+  Invariants (the system needs guardrails). Finally the Scheduler           
+  (orchestrate everything without overcommit).                              
+                                                                            
+  ---                                                                       
+                                                                            
+  ## What This Means Architecturally                                        
+                                                                            
+  Seven primitives. That's it. Every feature on your list is a              
+  configuration of these seven things, not a new subsystem. When someone    
+  asks "can Lightfast do X?" — the answer is always: which primitives does  
+  X compose, and do we have them? If yes, X is a workflow, not a feature    
+  request.                                                                  
+                                                                            
+  This is what makes it an operating system and not an application.         
+  Applications have features. Operating systems have primitives that make   
+  features possible.                                                        
+                                                                            
+  Where do you want to go from here — formal specification of each          
+  primitive's API surface, the data model for P1, or the build sequence?    
+  how does this fit in                                                      
+
+⏺ This maps cleanly. The infrastructure we designed IS the lower half of the OS.
+   Let me show how:
+
+  ══════════════════════════════════════════════════════════════════════
+                           THE PRIMITIVES MAP
+  ══════════════════════════════════════════════════════════════════════
+
+    Infrastructure we built        Primitive it implements
+    ──────────────────────         ────────────────────────
+    Relay                     →    P2 (Event Stream)
+    Connections + Backfill    →    P6 (Projector)
+    Memory                    →    P1 (Graph) — cloud, full
+    store.db                  →    P1 (Graph) — local, projected
+    Lightfast MCP             →    P4 (Resolver)
+    Gateway                   →    API surface (not a primitive)
+
+    Not yet built:
+    Process Engine            →    P3 (Process)
+    Invariant Engine          →    P5 (Invariant Engine)
+    Scheduler                 →    P7 (Scheduler)
+
+  ══════════════════════════════════════════════════════════════════════
+
+                           FULL ARCHITECTURE
+  ══════════════════════════════════════════════════════════════════════
+
+                          ┌─────────────────────┐
+                          │   lightfast.ai      │
+                          │   (Console UI)      │
+                          └──────────┬──────────┘
+                                     │
+                          ┌──────────▼──────────┐
+                          │   Gateway           │   API surface for all
+                          │   (Clerk auth)      │   client interactions
+                          └──────────┬──────────┘
+                                     │
+                 ┌───────────────────┼───────────────────┐
+                 │                   │                   │
+                 ▼                   ▼                   ▼
+    ┌─────────────────┐  ┌────────────────┐  ┌────────────────────┐
+    │  Connections     │  │  Backfill      │  │  Process Engine    │
+    │                  │  │                │  │                    │
+    │  ════ P6 ═════   │  │  ════ P6 ════  │  │  ════ P3 ═══════  │
+    │  (Projector)     │  │  (Projector,   │  │  (Process)        │
+    │                  │  │   historical)  │  │                    │
+    │  - OAuth         │  │  - bulk sync   │  │  - long-running   │
+    │  - token vault   │  │  - replay      │  │    computations   │
+    │  - bidirectional │  │  - backfill    │  │  - spawn/wait/    │
+    │    tool sync     │  │    graph from  │  │    complete        │
+    │                  │  │    tool history │  │  - bound to graph │
+    └────────┬─────────┘  └───────┬────────┘  │    entities       │
+             │                    │           │  - daemon per      │
+             │                    │           │    entity          │
+             │                    │           └─────────┬──────────┘
+             │                    │                     │
+             │                    │    emits events     │
+             │                    │         ▼           │
+             │              ┌─────▼─────────────────────▼────┐
+             │              │                                │
+    Provider │              │          Relay                 │
+    webhooks │              │                                │
+       │     │              │     ════ P2 ══════════         │
+       │     └──────────────►     (Event Stream)             │
+       │                    │                                │
+       └───────────────────►│  - immutable event log         │
+                            │  - causal ordering             │
+                            │  - every graph mutation is     │
+                            │    an event first              │
+                            │  - fan-out to subscribers      │
+                            │                                │
+                            └──────────────┬─────────────────┘
+                                           │
+                          ┌────────────────┼─────────────────────┐
+                          │                │                     │
+           ┌──────────────▼───┐   ┌────────▼────────┐   ┌───────▼───────┐
+           │                  │   │                  │   │               │
+           │  Memory (cloud)  │   │  Local Store A   │   │ Local Store B │
+           │                  │   │                  │   │               │
+           │ ════ P1 ═══════  │   │ ════ P1 ═══════  │   │ ════ P1 ════  │
+           │ (Graph — full)   │   │ (Graph — local)  │   │ (Graph—local) │
+           │                  │   │                  │   │               │
+           │ - full temporal  │   │ ┌──────────────┐ │   │ ┌───────────┐ │
+           │   graph          │   │ │  store.db    │ │   │ │ store.db  │ │
+           │ - embed/chunk    │   │ │  (SQLite)    │ │   │ │ (SQLite)  │ │
+           │ - vector store   │   │ │  projected   │ │   │ │ projected │ │
+           │ - search API     │   │ │  subgraph    │ │   │ │ subgraph  │ │
+           │                  │   │ └──────┬───────┘ │   │ └─────┬─────┘ │
+           │  ┌────────────┐  │   │        │         │   │       │       │
+           │  │ Invariant  │  │   │ ┌──────▼───────┐ │   │ ┌─────▼─────┐ │
+           │  │ Engine     │  │   │ │ Lightfast    │ │   │ │ Lightfast │ │
+           │  │            │  │   │ │ MCP          │ │   │ │ MCP       │ │
+           │  │ ═══ P5 ══  │  │   │ │              │ │   │ │           │ │
+           │  │            │  │   │ │ ═══ P4 ════  │ │   │ │ ═══ P4 ══│ │
+           │  │ - evaluate │  │   │ │ (Resolver)   │ │   │ │ (Resolver)│ │
+           │  │   against  │  │   │ │              │ │   │ │           │ │
+           │  │   full     │  │   │ │ short-term:  │ │   │ │ short:    │ │
+           │  │   graph    │  │   │ │  store.db    │ │   │ │  store.db │ │
+           │  │ - cross-   │  │   │ │ long-term:   │ │   │ │ long:     │ │
+           │  │   tool     │  │   │ │  Memory API  │ │   │ │  Memory   │ │
+           │  │   rules    │  │   │ │ resolve:     │ │   │ │  API      │ │
+           │  └────────────┘  │   │ │  intent →    │ │   │ │           │ │
+           │                  │   │ │  action via  │ │   │ │           │ │
+           │  ┌────────────┐  │   │ │  graph ctx   │ │   │ │           │ │
+           │  │ Scheduler  │  │   │ └──────────────┘ │   │ └───────────┘ │
+           │  │            │  │   │                  │   │               │
+           │  │ ═══ P7 ══  │  │   │  Agent 1         │   │  Agent 2      │
+           │  │            │  │   │  (Daytona)       │   │  (Daytona)    │
+           │  │ - priority │  │   └──────────────────┘   └───────────────┘
+           │  │ - load     │  │
+           │  │ - budget   │  │
+           │  │ - who runs │  │
+           │  │   when     │  │
+           │  └────────────┘  │
+           │                  │
+           └──────────────────┘
+
+
+  ══════════════════════════════════════════════════════════════════════
+    BOOT ORDER (what we build and when)
+  ══════════════════════════════════════════════════════════════════════
+
+    Phase 1 (now):     P1 partial (Memory) + P2 (Relay) + P6 (Connections)
+                       ↳ The graph exists, events flow, tools sync
+
+    Phase 2 (next):    P1 local (store.db) + P4 (MCP) + fan-out
+                       ↳ Local-first data, agents can query
+
+    Phase 3:           P3 (Process Engine)
+                       ↳ Long-running computations, daemon processes
+
+    Phase 4:           P5 (Invariant Engine) + P7 (Scheduler)
+                       ↳ Guardrails, prioritization, load awareness
+
+    Each phase composes on the last. No phase requires rewriting
+    the previous one. The primitives are additive.
+  ══════════════════════════════════════════════════════════════════════
+
+  The infrastructure we designed isn't separate from the OS - it's the first two
+   layers of it. Relay is P2. Connections is P6. Memory is P1. The MCP is P4. We
+   were already building the OS primitives, we just hadn't named them yet.
+
+  The three primitives we haven't built yet (Process Engine, Invariant Engine,
+  Scheduler) all sit on top of what's already there. P3 reads the graph and
+  emits events through relay. P5 evaluates against the graph. P7 orchestrates
+  P3. No new plumbing needed - just new computation over existing
+  infrastructure.
+
+✻ Cooked for 1m 3s
+
+❯ lets consdier how the process engine works with everything. like the      
+  use-cases users can use this for with everything that we have setup       
+  already in phase 1 and 2.                                                 
+
+⏺ Let me think through this concretely. By Phase 2, every environment has:
+
+  - store.db — live event data, locally queryable
+  - MCP — short-term (store.db) + long-term (Memory API)
+  - Relay — fan-out event stream
+  - Connections — bidirectional tool access via Gateway
+
+  A Process is a stateful subscriber to Relay, bound to graph entities, that can
+   read and emit. Here's what that unlocks:
+
+  ---
+  ══════════════════════════════════════════════════════════════════════
+    HOW A PROCESS WORKS
+  ══════════════════════════════════════════════════════════════════════
+
+    1. Event arrives in Relay
+    2. Relay checks: does any active Process care about this entity?
+    3. If yes → deliver event to that Process
+       If no  → check if this event should SPAWN a new Process
+    4. Process receives event, reads graph for context, computes,
+       optionally emits new events back to Relay
+    5. Process updates its own state (waiting, running, etc.)
+    6. Process completes when bound entities reach terminal state
+
+    ┌──────────┐    event     ┌──────────┐    deliver    ┌──────────┐
+    │  Relay   │─────────────►│ Process  │──────────────►│ Process  │
+    │  (P2)    │              │ Registry │               │ Instance │
+    └──────────┘              └──────────┘               │          │
+         ▲                                               │ - state  │
+         │         emit new events                       │ - bound  │
+         └───────────────────────────────────────────────│   entities
+                                                         │ - logic  │
+                                  read                   └────┬─────┘
+                            ┌─────────────┐                   │
+                            │ store.db /  │◄──────────────────┘
+                            │ Memory API  │     resolve intent
+                            │ (P1 + P4)   │────────────────────►
+                            └─────────────┘     Connections (P6)
+
+  ══════════════════════════════════════════════════════════════════════
+
+  Concrete Use Cases
+
+  1. PR Daemon
+
+  A process spawns when a PR opens. Lives until it merges or closes.
+
+    trigger:   pull_request.opened
+    bound_to:  [PR #142]
+
+    Event: pull_request.opened
+      → Process spawns
+      → reads store.db: who authored this, what files changed
+      → reads Memory (MCP): "have these files caused incidents before?"
+      → emits: pr.context_ready { risk: high, related_incidents: [#89] }
+
+    Event: check_run.completed (CI failed)
+      → Process wakes
+      → reads store.db: which test failed, what was the last commit
+      → reads Memory: "has this test been flaky?"
+      → emits: pr.ci_insight { flaky: false, likely_cause: "..." }
+
+    Event: pull_request_review.submitted (approved)
+      → Process wakes
+      → reads store.db: all checks passing? all threads resolved?
+      → emits: pr.ready_to_merge { blockers: [] }
+
+    Event: pull_request.closed (merged)
+      → Process completes, garbage collected
+
+  The user's agent (Daytona, local) sees ALL of these emitted events in
+  store.db. It didn't do the analysis — the Process did. The agent just reads
+  the conclusions locally.
+
+  ---
+  2. Deploy Watcher
+
+  Spawns on every deploy. Correlates what shipped with what happens next.
+
+    trigger:   deployment.created
+    bound_to:  [Deploy #d-871, PRs included, services affected]
+
+    Event: deployment.created
+      → Process spawns
+      → reads store.db: which PRs are in this deploy
+      → reads Memory: "what changed since last deploy to this service?"
+      → emits: deploy.manifest { prs: [...], authors: [...], risk: medium }
+
+    Event: alert.fired (error rate spike, 20 min later)
+      → Process wakes
+      → reads store.db: is this service one I'm watching?
+      → correlation: deploy was 20 min ago, error rate spiked
+      → emits: deploy.suspected_regression {
+          deploy: #d-871,
+          alert: #a-443,
+          likely_pr: #142,    ← graph traversal
+          author: sarah       ← resolved from graph
+        }
+
+    48 hours, no issues:
+      → Process emits: deploy.healthy { deploy: #d-871 }
+      → Process completes
+
+  ---
+  3. Feature Tracker
+
+  Bound to a feature that spans issues, PRs, docs across tools. Long-lived —
+  days or weeks.
+
+    trigger:   issue.labeled (label: "feature/dark-mode")
+    bound_to:  [all entities with "dark-mode" in graph]
+
+    Continuously:
+      → reads store.db: how many issues open vs closed
+      → reads store.db: which PRs are in flight
+      → reads Memory: related design docs, past discussions
+      → emits: feature.progress_update {
+          feature: "dark-mode",
+          tasks: 3/7 done,
+          prs: 2 open, 1 merged,
+          stalled: false,
+          blockers: ["waiting on design review"]
+        }
+
+    5 days no activity:
+      → emits: feature.stalled {
+          feature: "dark-mode",
+          last_activity: "PR #156 review requested",
+          days_idle: 5
+        }
+
+  ---
+  4. On-Call Companion
+
+  Spawns at rotation start, dies at rotation end. Builds context for the on-call
+   person.
+
+    trigger:   schedule.rotation_started
+    bound_to:  [on-call person, all services they own]
+
+    At spawn:
+      → reads Memory: open incidents, recent deploys, known issues
+      → emits: oncall.handoff_brief {
+          open_incidents: 2,
+          recent_deploys: [last 24h],
+          known_flaky: ["payment-service health check"],
+          previous_oncall_notes: "..."
+        }
+
+    During rotation, for every alert:
+      → Process wakes
+      → cross-references with recent deploys, known issues
+      → emits: oncall.alert_context {
+          alert: #a-501,
+          likely_related_to: deploy #d-871,
+          runbook: "https://...",
+          who_knows_this: ["sarah", "james"]  ← from graph
+        }
+
+    Rotation ends:
+      → compiles summary of everything that happened
+      → emits: oncall.rotation_summary { ... }
+      → Process completes
+
+  ---
+  5. User-Defined Process (the killer feature)
+
+  The user creates their own process through Gateway or CLI:
+
+    User: "Watch all PRs to packages/api/** and tell me if
+           anyone changes the auth middleware without updating tests"
+
+    → Gateway creates a Process:
+      trigger:   pull_request.* where files match packages/api/**
+      bound_to:  [packages/api/]
+      logic:
+        on PR event:
+          → read store.db: files changed in this PR
+          → if auth middleware changed AND no test files changed:
+            → emit: custom.alert {
+                message: "Auth middleware changed without test updates",
+                pr: #167,
+                author: james
+              }
+
+  The user defines the WHAT. The Process Engine handles the lifecycle, event
+  routing, state management, garbage collection.
+
+  ---
+  ══════════════════════════════════════════════════════════════════════
+    THE KEY INSIGHT
+  ══════════════════════════════════════════════════════════════════════
+
+    Without P3, every agent must poll store.db and do its own
+    analysis. N agents = N redundant computations over the same data.
+
+    With P3, the Process computes ONCE, emits conclusions as events,
+    and every subscriber (Memory, store.db, agents) gets the result.
+
+    Agent reads store.db:
+      Before P3:  raw events     → agent must interpret
+      After P3:   raw events     → agent can read
+                  + conclusions  → agent can ACT on
+
+    The Process Engine turns raw data into actionable knowledge.
+    The fan-out distributes that knowledge everywhere.
+
+    Relay fans out events.
+    Processes fan out understanding.
+  ══════════════════════════════════════════════════════════════════════
+
+  The Process Engine doesn't need to be a separate heavy service either. It's
+  another Relay subscriber that manages stateful computations. It could even run
+   inside Memory since it needs graph access anyway. The process definitions
+  live in the graph, the process instances are just long-lived event handlers.
+
+  Where do you want to take this?
+
+✻ Sautéed for 1m 26s
+
+❯ how can this actually drive value to a business tho. like real-world      
+  scenarios. imagine cracked defs.                                          
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ how can this actually drive value to a business tho. like real-world      
+  scenarios. imagine super crazy developers building on this.               
+
+⏺ Alright. Real scenarios, real money saved or made.
+
+  ---
+  1. Revenue Shield
+
+  Connect Stripe + deploy events + error monitoring.
+
+    Process spawns on every production deploy.
+    Watches payment success rate for next 2 hours.
+
+    Deploy goes out at 2:14pm.
+    At 2:31pm, Stripe webhook: payment_intent.failed spike.
+
+    Process correlates instantly:
+      - Deploy #d-871 shipped 17 min ago
+      - PR #142 modified checkout flow
+      - Payment failure rate: 2.1% → 14.7%
+      - Estimated revenue loss: $847/minute
+      - Author: james, currently online
+
+    Emits: deploy.revenue_regression
+      → Agent gets it in store.db
+      → Slack notification with full context
+      → Or: auto-rollback if invariant says "revert if failure > 10%"
+
+    Without this: team notices in 45 min from a customer complaint.
+    $847/min × 45 min = $38,115 saved per incident.
+
+  ---
+  2. Compliance on Autopilot (SOC2/HIPAA)
+
+  Always-running processes that continuously verify invariants:
+
+    Process: "every production deploy has an approved code review"
+    Process: "every access to customer PII is logged"
+    Process: "every incident has a post-mortem within 5 business days"
+    Process: "no secrets committed to any repo"
+    Process: "all dependencies scanned within 24h of CVE disclosure"
+
+    Auditor shows up:
+      Before Lightfast: 3 engineers × 2 weeks scrambling for evidence
+      After Lightfast:  query the graph. Every assertion has a
+                        timestamped proof chain. Export. Done.
+
+    Cost of failed audit:   $500K+ (remediation, lost deals, SOC2 gap)
+    Cost of audit prep:     ~$50K in engineer time per audit cycle
+
+    This eliminates both risks.
+
+  ---
+  3. Cross-Team Breaking Change Detector
+
+    Process watches all PRs across all repos.
+    Reads the graph: which services depend on what.
+
+    Sarah on team-payments changes the transaction schema.
+    Process sees:
+      - team-analytics imports transaction types
+      - team-reporting has a nightly job parsing transactions
+      - team-billing reads transaction events
+
+    Emits: dependency.breaking_change {
+      source: PR #203 (team-payments),
+      affected: [team-analytics, team-reporting, team-billing],
+      specific_impact: "field 'amount' renamed to 'total_amount'",
+      suggestion: "coordinate with 3 downstream teams before merge"
+    }
+
+    Without this: team-analytics pipeline breaks at 3am.
+    Oncall gets paged. 2 hours to diagnose. Then they find out
+    team-reporting is also broken. Then billing.
+
+    3 teams × incident response time × customer impact.
+    One company told me this costs them ~$200K/year in
+    cascading cross-team failures alone.
+
+  ---
+  4. The Automatic Tech Lead
+
+  A developer builds a process per team that acts like a senior engineer who
+  sees everything:
+
+    Process bound to: [all repos owned by team-backend]
+
+    Sees: james has mass of PR open for 6 days, no reviewers assigned
+    Sees: same file modified in PR #201 and PR #208 (merge conflict incoming)
+    Sees: PR #195 approved 3 days ago, CI green, never merged
+    Sees: 4 PRs all touching auth module this week (coordination needed)
+    Sees: test coverage on payments/ dropped from 84% to 71% over 2 weeks
+
+    Emits daily: team.health_digest {
+      stuck_prs: [#201],
+      conflict_risk: [#201 vs #208],
+      forgotten: [#195],
+      coordination_needed: "4 PRs touching auth — sync up",
+      quality_trend: "payments/ coverage declining"
+    }
+
+    This is a tech lead that never sleeps, never forgets,
+    and sees across every tool simultaneously.
+
+  ---
+  5. Incident Autopilot
+
+    Alert fires: "payment-service p99 latency > 2s"
+
+    Process spawns, immediately computes:
+
+    1. WHAT CHANGED (last 4 hours):
+       - Deploy #d-871 at 2:14pm (3 PRs)
+       - Config change: rate limit bumped from 100→500 req/s
+       - New Linear issue flagged "payment slowness" 1h ago
+
+    2. WHO KNOWS THIS (from graph):
+       - sarah authored the deploy PRs
+       - james changed the rate limit config
+       - sarah resolved a similar incident 3 months ago (Memory)
+
+    3. BLAST RADIUS:
+       - checkout-service depends on payment-service
+       - 3 other services make payment calls
+       - estimated user impact: ~12% of active sessions
+
+    4. WHAT WORKED LAST TIME (Memory, long-term):
+       - Similar incident 3 months ago: root cause was connection pool
+       - Resolved by: reverting rate limit + scaling pods
+
+    All of this lands in store.db within seconds.
+    The on-call engineer's agent has full context before they
+    even open their laptop.
+
+    MTTR drops from 45 min average to under 10.
+
+  ---
+  6. Customer-Facing Intelligence
+
+  Connect support (Zendesk/Intercom) + deploys + error monitoring:
+
+    Customer writes: "I can't export my reports since this morning"
+
+    Process spawns, correlates:
+      - Deploy at 9:47am touched export module
+      - Error logs show: ExportTimeoutError spiking since 9:52am
+      - 4 other customers reported similar in last hour
+      - PR #178 changed the export query (added JOIN that's slow)
+
+    Emits to support agent:
+      support.context {
+        root_cause: "PR #178 introduced slow query in export",
+        affected_customers: 5 reported, est. ~200 total,
+        fix_status: "PR #184 opened 10 min ago by sarah",
+        eta: "fix deploying in ~30 min",
+        workaround: "exports under 1000 rows still work"
+      }
+
+    Support agent responds in 2 minutes with full context
+    instead of "I'll escalate this to engineering."
+
+    Customer sees: company that has their shit together.
+    Retention, trust, NPS — all from event correlation.
+
+  ---
+  7. Self-Assembling Runbooks
+
+    Process watches HOW engineers resolve incidents over time.
+
+    Incident #89: payment-service high latency
+      → sarah checked: grafana dashboard, recent deploys, connection pools
+      → sarah ran: kubectl scale, reverted config change
+      → resolution: 23 min
+
+    Incident #134: payment-service high latency (again)
+      → james checked: grafana dashboard, recent deploys, connection pools
+      → james ran: kubectl scale (same as sarah)
+      → resolution: 31 min
+
+    Process detects the pattern:
+      emits: runbook.suggested {
+        trigger: "payment-service latency alert",
+        steps_observed: [
+          "1. Check grafana.lightfast.ai/payment-service",
+          "2. Check deploys in last 4 hours",
+          "3. Check connection pool saturation",
+          "4. If saturated: kubectl scale payment-service --replicas=N",
+          "5. If recent deploy: revert"
+        ],
+        confidence: high (observed 2x, same pattern),
+        sources: [incident #89, incident #134]
+      }
+
+    The runbook writes itself from observed behavior.
+    No one had to document anything.
+
+  ---
+  8. The "What Should I Work On" Agent
+
+  Individual developer's personal process:
+
+    Process bound to: [everything assigned to you across all tools]
+
+    You sit down Monday morning. Your agent reads store.db:
+
+    "Here's your week:
+
+     Critical:
+     - PR #201 has been waiting on your review for 3 days
+       (blocks sarah, who blocks the release)
+
+     High:
+     - Your PR #195 is approved + green. Merge it.
+     - Issue LIN-482 assigned to you, sprint ends Wednesday
+
+     Watch:
+     - Deploy going out today includes your auth changes
+     - 2 people commented on your RFC yesterday
+
+     Context you'll need:
+     - The auth module has had 3 incidents this quarter
+     - Sarah's PR #208 touches the same files as your #201"
+
+    All computed from the graph. No tool-hopping.
+    No checking GitHub, then Linear, then Slack, then email.
+    One local read.
+
+  ---
+  ══════════════════════════════════════════════════════════════════════
+
+    The pattern across all of these:
+
+    1. CORRELATION across tools that no single tool can do alone
+    2. SPEED — seconds instead of hours of manual investigation
+    3. KNOWLEDGE that accumulates (Memory) and improves over time
+    4. AUTOMATION that emerges from observation, not configuration
+
+    The Process Engine doesn't just process events.
+    It turns a company's scattered tool activity into
+    a single, queryable, actionable nervous system.
+
+    And because it all lands in store.db — every agent,
+    every environment, every developer has it locally.
+    Zero API calls. Zero latency. Always up to date.
+
+  ══════════════════════════════════════════════════════════════════════
+
+  The craziest part: none of these require Lightfast to build the features.
+  Developers build the processes. Lightfast provides the primitives. The process
+   engine is the SDK. The graph is the database. Relay is the bus. The features
+  emerge from composition.
+
+✻ Worked for 1m 45s
+
+❯ okay then if we're building the primitive. then how does the developer    
+  build "on" lightfast.                                                     
+
+⏺ The real question. Let me think about this properly.
+
+  ---
+  The Developer's Interface to Lightfast
+
+  Three layers. Raw protocols at the bottom, high-level SDK at the top.
+
+  ══════════════════════════════════════════════════════════════════════
+
+    Layer 3:   Templates / Marketplace
+               Pre-built processes, community-shared, one-click deploy
+
+    Layer 2:   @lightfast/sdk
+               TypeScript SDK, type-safe, ergonomic
+
+    Layer 1:   Protocols (the actual primitives)
+               SSE, HTTP, SQLite, WebSocket — nothing proprietary
+
+  ══════════════════════════════════════════════════════════════════════
+
+  ---
+  Layer 1: Raw Protocols
+
+  A developer who wants zero abstraction can use Lightfast with curl and
+  sqlite3:
+
+    EVENTS (Relay)
+      Subscribe:   SSE stream from relay.lightfast.ai/events
+      Emit:        POST relay.lightfast.ai/events
+      Filter:      ?entities=pr:142&types=pull_request.*
+
+    GRAPH (store.db)
+      Read:        sqlite3 ~/lightfast/store.db "SELECT ..."
+      It's just SQLite. Use any language, any ORM, any tool.
+
+    GRAPH (Memory — cloud, long-term)
+      Search:      POST memory.lightfast.ai/search
+      Query:       POST memory.lightfast.ai/graph/query
+
+    ACTIONS (Gateway → Connections)
+      Execute:     POST gateway.lightfast.ai/actions
+                   { intent: "create_issue", params: { ... } }
+
+    PROCESS (register with the engine)
+      Register:    POST gateway.lightfast.ai/processes
+      State:       GET  gateway.lightfast.ai/processes/:id
+
+  That's it. SSE, HTTP, SQLite. A Go developer, a Python developer, a Rust
+  developer — they can all use Lightfast without our SDK. The primitives are
+  protocols, not libraries.
+
+  ---
+  Layer 2: The SDK
+
+  For TypeScript developers who want it to feel native:
+
+  // @lightfast/sdk
+
+  import { defineProcess, graph, memory } from '@lightfast/sdk'
+
+  // A process is just a function with a trigger
+  export default defineProcess({
+    name: 'pr-daemon',
+    trigger: 'pull_request.opened',
+    bind: (event) => [event.pr.id],
+
+    async onEvent(event, ctx) {
+      // ctx.graph = store.db (local, zero latency)
+      const pr = await ctx.graph.get('pr', event.pr.id)
+      const files = await ctx.graph.edges(pr, 'modifies')
+
+      // ctx.memory = Memory API (cloud, semantic search)
+      const incidents = await ctx.memory.search(
+        `incidents involving ${files.map(f => f.path).join(', ')}`
+      )
+
+      // emit back to Relay → fans out everywhere
+      await ctx.emit('pr.context_ready', {
+        pr: pr.id,
+        risk: incidents.length > 0 ? 'high' : 'low',
+        related: incidents.map(i => i.id),
+      })
+    },
+
+    // process can react to multiple event types
+    on: {
+      'check_run.completed': async (event, ctx) => {
+        // CI finished — assess result
+      },
+      'pull_request.closed': async (event, ctx) => {
+        // PR merged or closed — process completes
+        return ctx.complete()
+      },
+    },
+  })
+
+  Deploy it:
+
+  lightfast deploy ./processes/pr-daemon.ts
+
+  That's it. The process is now live. Relay routes matching events to it. It
+  reads from the graph, emits conclusions, and every subscriber (store.db,
+  Memory, agents) gets the output.
+
+  ---
+  More SDK Examples
+
+  Quick one-off: Subscribe and React
+
+  Don't even need a full process. Just subscribe:
+
+  import { events } from '@lightfast/sdk'
+
+  // stream events locally — like addEventListener
+  events.on('deployment.created', async (event) => {
+    console.log(`Deploy by ${event.actor.name} to ${event.service}`)
+  })
+
+  Graph Queries
+
+  import { graph } from '@lightfast/sdk'
+
+  // local graph (store.db)
+  const openPRs = await graph.query({
+    type: 'pull_request',
+    where: { status: 'open', author: 'sarah' },
+    include: ['reviews', 'checks'],
+  })
+
+  // temporal query — state at a point in time
+  const lastFriday = await graph.at('2026-02-20T17:00:00Z').query({
+    type: 'deployment',
+    where: { service: 'payment-service' },
+  })
+
+  // traverse relationships
+  const prAuthor = await graph.traverse(
+    'pr:142',                    // start node
+    'authored_by',               // edge type
+    'person'                     // target type
+  )
+
+  Emit Events
+
+  import { emit } from '@lightfast/sdk'
+
+  // any code can emit events into Relay
+  await emit('custom.code_review_needed', {
+    pr: 'pr:142',
+    reason: 'auth middleware modified',
+    urgency: 'high',
+  })
+
+  Resolve Intent (P4)
+
+  import { resolve } from '@lightfast/sdk'
+
+  // express WHAT, not HOW
+  // the resolver figures out the tool and parameters
+  await resolve('create a task', {
+    title: 'Fix payment timeout',
+    priority: 'high',
+    assign: 'sarah',
+    team: 'backend',
+  })
+  // → resolves to Linear issue creation (because that's what this team uses)
+  // → resolves sarah to sarah@company.com
+  // → resolves priority to Linear priority 2
+
+  ---
+  Layer 3: CLI
+
+  # Subscribe to live events
+  lightfast events --filter "pull_request.*"
+
+  # Query the local graph
+  lightfast graph query --type deployment --since 24h
+
+  # Search long-term memory
+  lightfast memory search "incidents involving payment-service"
+
+  # Deploy a process
+  lightfast deploy ./my-process.ts
+
+  # List running processes
+  lightfast processes ls
+
+  # Create a quick process from the terminal
+  lightfast process create \
+    --trigger "deployment.created" \
+    --condition "service == 'payment-service'" \
+    --emit "custom.payment_deploy_alert" \
+    --notify slack:#deployments
+
+  # Check your local store
+  lightfast store stats
+  # → 14,832 events | 2,341 entities | last sync: 2s ago
+
+  # Connect a new tool
+  lightfast connect github
+  # → opens gateway.lightfast.ai/connect/github in browser
+
+  ---
+  Where Processes Run
+
+  ══════════════════════════════════════════════════════════════════════
+
+    lightfast deploy ./process.ts              → Lightfast Cloud
+    lightfast deploy ./process.ts --local      → Your machine (daemon)
+    lightfast deploy ./process.ts --self-host  → Your infra
+
+    Cloud:       managed, always-on, scales, pay per event
+    Local:       free, private, runs in the daemon alongside store.db
+    Self-host:   your infra, your rules, just subscribes to Relay
+
+    Same code. Same SDK. Different runtime.
+
+  ══════════════════════════════════════════════════════════════════════
+
+  ---
+  What a Developer's Project Looks Like
+
+  my-company-lightfast/
+  ├── lightfast.config.ts        # connections, settings
+  ├── processes/
+  │   ├── pr-daemon.ts           # spawns per PR
+  │   ├── deploy-watcher.ts      # spawns per deploy
+  │   ├── revenue-shield.ts      # always-on, watches payments
+  │   └── team-digest.ts         # daily summary per team
+  ├── invariants/                # (Phase 4, P5)
+  │   ├── no-deploy-without-review.ts
+  │   └── budget-limits.ts
+  └── package.json
+      dependencies:
+        @lightfast/sdk: "^1.0"
+
+  lightfast deploy           # deploys all processes
+  lightfast dev              # local dev, hot reload, events from Relay
+  lightfast logs pr-daemon   # stream process logs
+
+  ---
+  ══════════════════════════════════════════════════════════════════════
+
+    The principle:
+
+    Layer 1 (protocols) means you're never locked in.
+    It's SSE, HTTP, SQLite. Walk away anytime.
+
+    Layer 2 (SDK) means it's fast to build.
+    A process is a function. Deploy is one command.
+
+    Layer 3 (CLI) means it's fast to explore.
+    Subscribe to events, query the graph, search memory —
+    all from the terminal.
+
+    Lightfast doesn't own the developer's code.
+    Lightfast owns the primitives. Developers compose them.
+
+  ══════════════════════════════════════════════════════════════════════
+
+  The bet: make the primitives so good that developers build things on Lightfast
+   that we never imagined. Same way nobody at Bell Labs predicted the web when
+  they built Unix pipes.
+
+  Want me to save this full architecture to a doc in thoughts?
+
+✻ Cogitated for 1m 9s
