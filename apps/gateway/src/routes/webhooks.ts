@@ -41,17 +41,26 @@ webhooks.post("/:provider", async (c) => {
   // Pre-resolved connectionId/orgId provided in body; skip HMAC/dedup/resolution.
   const apiKey = c.req.header("X-API-Key");
   if (apiKey && timingSafeEqual(apiKey, env.GATEWAY_API_KEY)) {
-    const body = await c.req.json<{
+    let body: {
       connectionId: string;
       orgId: string;
       deliveryId: string;
       eventType: string;
       payload: unknown;
       receivedAt: number;
-    }>();
+    };
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "invalid_json" }, 400);
+    }
 
     if (!body.connectionId || !body.orgId || !body.deliveryId || !body.eventType || !body.payload) {
       return c.json({ error: "missing_required_fields" }, 400);
+    }
+
+    if (typeof body.receivedAt !== "number" || !Number.isFinite(body.receivedAt)) {
+      return c.json({ error: "invalid_field", field: "receivedAt" }, 400);
     }
 
     // Parse payload through provider schema (validates structure, applies .passthrough())
