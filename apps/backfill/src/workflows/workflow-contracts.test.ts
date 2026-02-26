@@ -60,6 +60,17 @@ for (const fn of capturedFunctions) {
   }
 }
 
+if (!orchestratorHandler) {
+  throw new Error(
+    `Missing handler for "apps-backfill/run.orchestrator" — captured IDs: ${capturedFunctions.map((f) => f.config.id).join(", ")}`,
+  );
+}
+if (!entityWorkerHandler) {
+  throw new Error(
+    `Missing handler for "apps-backfill/entity.worker" — captured IDs: ${capturedFunctions.map((f) => f.config.id).join(", ")}`,
+  );
+}
+
 // ── Helpers ──
 
 const mockConnector = {
