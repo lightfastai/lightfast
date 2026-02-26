@@ -50,26 +50,29 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
   const handleConnectVercel = async () => {
     setConnectError(null);
 
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    // Open popup synchronously to avoid browser popup blockers
+    const popup = window.open(
+      "about:blank",
+      "vercel-authorize",
+      `width=${width},height=${height},left=${left},top=${top},popup=1`
+    );
+
+    if (!popup) {
+      setConnectError("Popup was blocked. Please allow popups for this site and try again.");
+      return;
+    }
+
     try {
       const data = await queryClient.fetchQuery(
         trpc.connections.getAuthorizeUrl.queryOptions({ provider: "vercel" }),
       );
 
-      const width = 600;
-      const height = 700;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-
-      const popup = window.open(
-        data.url,
-        "vercel-authorize",
-        `width=${width},height=${height},left=${left},top=${top},popup=1`
-      );
-
-      if (!popup) {
-        setConnectError("Popup was blocked. Please allow popups for this site and try again.");
-        return;
-      }
+      popup.location.href = data.url;
 
       // Poll for popup close
       pollTimerRef.current = setInterval(() => {
@@ -80,6 +83,7 @@ export function VercelConnector({ autoOpen = false }: VercelConnectorProps) {
         }
       }, 500);
     } catch (err) {
+      popup.close();
       console.error("Failed to get Vercel authorize URL:", err);
       setConnectError("Failed to start Vercel authorization. Please try again.");
     }

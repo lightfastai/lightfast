@@ -19,7 +19,7 @@ export default function GitHubConnectedPage() {
 			try {
 				opener.postMessage({ type: "github_connected" }, window.location.origin);
 			} catch {
-				// Ignore cross-origin errors
+				// Guard against SecurityError under strict COOP/COEP or sandboxed iframes
 			}
 		}
 
