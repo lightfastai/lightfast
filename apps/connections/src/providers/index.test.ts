@@ -29,8 +29,8 @@ vi.mock("@db/console/schema", () => ({
 }));
 
 vi.mock("../lib/urls", () => ({
-  connectionsBaseUrl: "https://connections.test",
-  gatewayBaseUrl: "https://gateway.test",
+  connectionsBaseUrl: "https://connections.test/api",
+  gatewayBaseUrl: "https://gateway.test/api",
   notifyBackfillService: vi.fn(),
 }));
 

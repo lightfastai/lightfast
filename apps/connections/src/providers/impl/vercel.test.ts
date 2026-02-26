@@ -10,7 +10,7 @@ vi.mock("../../env", () => ({
 }));
 
 vi.mock("../../lib/urls", () => ({
-  connectionsBaseUrl: "https://connections.test",
+  connectionsBaseUrl: "https://connections.test/api",
   notifyBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 

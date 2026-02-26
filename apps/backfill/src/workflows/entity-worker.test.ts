@@ -34,8 +34,8 @@ vi.mock("../env", () => ({
 }));
 
 vi.mock("../lib/related-projects", () => ({
-  connectionsUrl: "https://connections.test",
-  gatewayUrl: "https://gateway.test",
+  connectionsUrl: "https://connections.test/api",
+  gatewayUrl: "https://gateway.test/api",
 }));
 
 // Force module load to capture handler
@@ -110,7 +110,7 @@ describe("get-token step", () => {
     await capturedHandler({ event: makeEvent(), step });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://connections.test/connections/inst-1/token",
+      "https://connections.test/api/connections/inst-1/token",
       { headers: { "X-API-Key": "test-key" } },
     );
   });
@@ -178,7 +178,7 @@ describe("pagination loop — single page", () => {
     const dispatchCall = mockFetch.mock.calls.find(
       (call) =>
         (call[1] as RequestInit | undefined)?.method === "POST" &&
-        call[0] === "https://gateway.test/webhooks/github",
+        call[0] === "https://gateway.test/api/webhooks/github",
     );
     expect(dispatchCall).toBeDefined();
     const init = dispatchCall![1] as RequestInit;

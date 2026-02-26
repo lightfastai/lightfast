@@ -43,8 +43,8 @@ vi.mock("../env", () => ({
 }));
 
 vi.mock("../lib/related-projects", () => ({
-  connectionsUrl: "https://connections.test",
-  gatewayUrl: "https://gateway.test",
+  connectionsUrl: "https://connections.test/api",
+  gatewayUrl: "https://gateway.test/api",
 }));
 
 // Load both modules to capture handlers

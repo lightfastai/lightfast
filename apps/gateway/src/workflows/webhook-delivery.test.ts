@@ -50,7 +50,7 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("../lib/urls", () => ({
-  gatewayBaseUrl: "https://gateway.test",
+  gatewayBaseUrl: "https://gateway.test/api",
   consoleUrl: "https://console.test",
 }));
 
@@ -162,7 +162,7 @@ describe("webhook-delivery workflow", () => {
         }),
         retries: 5,
         deduplicationId: "github:del-001",
-        callback: "https://gateway.test/admin/delivery-status",
+        callback: "https://gateway.test/api/admin/delivery-status",
       }),
     );
   });

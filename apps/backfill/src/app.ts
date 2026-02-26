@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { trigger } from "./routes/trigger";
 import { inngestRoute } from "./routes/inngest";
 
-const app = new Hono();
+const app = new Hono().basePath("/api");
 
 app.route("/trigger", trigger);
 app.route("/inngest", inngestRoute);

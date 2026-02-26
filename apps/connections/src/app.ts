@@ -3,7 +3,7 @@ import { connections } from "./routes/connections";
 import { workflows } from "./routes/workflows";
 import { version as VERSION } from "../package.json";
 
-const app = new Hono();
+const app = new Hono().basePath("/api");
 
 // Mount route groups
 app.route("/connections", connections);

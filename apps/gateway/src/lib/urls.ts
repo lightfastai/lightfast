@@ -7,15 +7,15 @@ import { env } from "../env";
 export const gatewayBaseUrl = (() => {
   if (env.VERCEL_ENV === "preview") {
     return env.VERCEL_URL
-      ? `https://${env.VERCEL_URL}`
-      : "http://localhost:4108";
+      ? `https://${env.VERCEL_URL}/api`
+      : "http://localhost:4108/api";
   }
 
   if (env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
+    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}/api`;
   }
 
-  return "http://localhost:4108";
+  return "http://localhost:4108/api";
 })();
 
 const isDevelopment =

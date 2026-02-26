@@ -21,18 +21,18 @@ export const wwwUrl = withRelatedProject({
 
 // Get the gateway URL dynamically based on environment
 // Gateway is a standalone Hono service (not part of microfrontends)
-export const gatewayUrl = withRelatedProject({
+export const gatewayUrl = `${withRelatedProject({
   projectName: 'lightfast-gateway',
   defaultHost: isDevelopment
     ? 'http://localhost:4108'
     : 'https://gateway.lightfast.ai',
-});
+})}/api`;
 
 // Get the connections service URL dynamically based on environment
 // Connections is a standalone Hono service (not part of microfrontends)
-export const connectionsUrl = withRelatedProject({
+export const connectionsUrl = `${withRelatedProject({
   projectName: 'lightfast-connections',
   defaultHost: isDevelopment
     ? 'http://localhost:4110'
     : 'https://connections.lightfast.ai',
-});
+})}/api`;

@@ -80,10 +80,10 @@ vi.mock("../providers", () => ({
 vi.mock("../providers/types", () => ({}));
 
 vi.mock("../lib/urls", () => ({
-  connectionsBaseUrl: "https://connections.test",
+  connectionsBaseUrl: "https://connections.test/api",
   consoleUrl: "https://console.test",
-  gatewayBaseUrl: "https://gateway.test",
-  backfillUrl: "https://backfill.test",
+  gatewayBaseUrl: "https://gateway.test/api",
+  backfillUrl: "https://backfill.test/api",
   notifyBackfillService: vi.fn().mockResolvedValue(undefined),
   cancelBackfillService: vi.fn().mockResolvedValue(undefined),
 }));

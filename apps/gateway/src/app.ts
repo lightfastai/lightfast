@@ -5,7 +5,7 @@ import { webhooks } from "./routes/webhooks";
 import { workflows } from "./routes/workflows";
 import { version as VERSION } from "../package.json";
 
-const app = new Hono();
+const app = new Hono().basePath("/api");
 
 // Global error handler — catches unhandled exceptions from all routes
 app.onError((err, c) => {
