@@ -64,6 +64,7 @@ export async function notifyBackfillService(params: {
       headers: { "X-API-Key": env.GATEWAY_API_KEY },
       body: params,
       retries: 3,
+      deduplicationId: `backfill:${params.provider}:${params.installationId}:${params.orgId}`,
     });
   } catch (err) {
     console.error("[connections] Failed to notify backfill service", {
@@ -89,6 +90,7 @@ export async function cancelBackfillService(params: {
       headers: { "X-API-Key": env.GATEWAY_API_KEY },
       body: params,
       retries: 3,
+      deduplicationId: `backfill-cancel:${params.installationId}`,
     });
   } catch (err) {
     console.error("[connection-teardown] Failed to cancel backfill", {
