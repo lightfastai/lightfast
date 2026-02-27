@@ -103,12 +103,12 @@ beforeEach(() => {
   redisStore.clear();
 
   redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) as Record<string, unknown>) ?? {};
+    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
     redisStore.set(key, { ...existing, ...fields });
     return Promise.resolve(1);
   });
   redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) as Record<string, string>) ?? null),
+    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
   );
   redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean; ex?: number }) => {
     if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
@@ -146,7 +146,10 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
 
     expect(qstashMock.publishJSON).toHaveBeenCalledOnce();
 
-    const call = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
+    const calls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
+    const firstCall = calls[0] as unknown[] | undefined;
+    expect(firstCall).toBeDefined();
+    const call = firstCall[0] as {
       url: string;
       body: {
         deliveryId: string;
@@ -166,7 +169,7 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
       orgId: "org-dispatch-1",
       provider: "github",
       eventType: "push",
-      receivedAt: expect.any(Number),
+      receivedAt: expect.any(Number) as unknown,
     });
     expect(call.body.payload).toBeDefined();
   });
@@ -175,7 +178,10 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
     // Verify each required field is present in the QStash envelope
     await webhookReq("github", VALID_GITHUB_BODY, { "X-API-Key": API_KEY });
 
-    const envelope = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
+    const envelopeCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
+    const envelopeFirstCall = envelopeCalls[0] as unknown[] | undefined;
+    expect(envelopeFirstCall).toBeDefined();
+    const envelope = envelopeFirstCall[0] as {
       body: Record<string, unknown>;
     };
 

@@ -5,20 +5,25 @@ import type {
   InsertGwResource,
 } from "@db/console/schema";
 
+/** Fixture types: like Insert types but with id guaranteed. */
+export type InstallationFixture = InsertGwInstallation & { id: string };
+export type TokenFixture = InsertGwToken & { id: string };
+export type ResourceFixture = InsertGwResource & { id: string };
+
 export const fixtures = {
   /**
    * Build a gwInstallations insert object with sensible defaults.
-   * All fields can be overridden.
+   * All fields can be overridden. The `id` field is always guaranteed to be a string.
    */
-  installation(overrides?: Partial<InsertGwInstallation>): InsertGwInstallation {
+  installation(overrides?: Partial<InsertGwInstallation>): InstallationFixture {
     return {
-      id: nanoid(),
       provider: "github",
       externalId: nanoid(),
-      connectedBy: `user_${nanoid()}` as InsertGwInstallation["connectedBy"],
+      connectedBy: `user_${nanoid()}`,
       orgId: `org_${nanoid()}`,
       status: "active",
       ...overrides,
+      id: overrides?.id ?? nanoid(),
     };
   },
 
@@ -27,11 +32,11 @@ export const fixtures = {
    */
   token(
     overrides: Pick<InsertGwToken, "installationId"> & Partial<InsertGwToken>,
-  ): InsertGwToken {
+  ): TokenFixture {
     return {
-      id: nanoid(),
       accessToken: `ghu_${nanoid()}`,
       ...overrides,
+      id: overrides.id ?? nanoid(),
     };
   },
 
@@ -40,13 +45,13 @@ export const fixtures = {
    */
   resource(
     overrides: Pick<InsertGwResource, "installationId"> & Partial<InsertGwResource>,
-  ): InsertGwResource {
+  ): ResourceFixture {
     return {
-      id: nanoid(),
       providerResourceId: nanoid(),
       resourceName: `repo-${nanoid().slice(0, 8)}`,
       status: "active",
       ...overrides,
+      id: overrides.id ?? nanoid(),
     };
   },
 };

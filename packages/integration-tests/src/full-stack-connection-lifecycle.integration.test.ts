@@ -30,7 +30,7 @@ import {
 } from "@repo/console-test-db";
 import type { TestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
-import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import { gwInstallations, gwResources } from "@db/console/schema";
 
 // ── Shared state ──
 let db: TestDb;
@@ -94,7 +94,6 @@ vi.mock("@vendor/inngest/hono", () => ({
 
 vi.mock("@vendor/inngest", () => ({
   Inngest: class {
-    constructor() {}
     send = inngestSendMock;
     createFunction = vi.fn(
       (
@@ -172,12 +171,12 @@ beforeEach(() => {
   );
 
   redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) as Record<string, unknown>) ?? {};
+    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
     redisStore.set(key, { ...existing, ...fields });
     return Promise.resolve(1);
   });
   redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) as Record<string, string>) ?? null),
+    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
   );
   redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean; ex?: number }) => {
     if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
@@ -198,13 +197,13 @@ beforeEach(() => {
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing = (redisStore.get(key) as Record<string, unknown>) ?? {};
+          const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
       }),
       expire: vi.fn(() => pipe),
-      exec: vi.fn(async () => { ops.forEach((op) => op()); return []; }),
+      exec: vi.fn(() => { ops.forEach((op) => op()); return []; }),
     };
     return pipe;
   });
@@ -230,7 +229,8 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
     });
 
     expect(qstashMessages).toHaveLength(1);
-    const capturedMsg = qstashMessages[0]!;
+    const capturedMsg = qstashMessages[0];
+    if (!capturedMsg) throw new Error("expected qstash message");
     expect(capturedMsg.url).toContain("/trigger");
 
     // 2. Deliver captured QStash body to backfill trigger endpoint
@@ -255,7 +255,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
           installationId: "inst-lifecycle-happy",
           provider: "github",
           orgId: "org-lifecycle-happy",
-        }),
+        }) as unknown,
       }),
     );
   });
@@ -270,14 +270,14 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
     await db.insert(gwInstallations).values(inst);
 
     const resource = fixtures.resource({
-      installationId: inst.id!,
+      installationId: inst.id,
       providerResourceId: "owner/lifecycle-repo",
       status: "active",
     });
     await db.insert(gwResources).values(resource);
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
-    expect(orchHandler).toBeDefined();
+    if (!orchHandler) throw new Error("orchestrator handler not registered");
 
     const step = makeStep({
       waitForEvent: vi.fn().mockResolvedValue({
@@ -297,7 +297,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
     // Install service router so orchestrator fetch() → connectionsApp
     const restore = installServiceRouter({ connectionsApp });
     try {
-      const result = await orchHandler!({
+      const result = await orchHandler({
         event: {
           data: {
             installationId: inst.id,
@@ -349,7 +349,10 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
 
       // QStash should have received the WebhookEnvelope
       expect(qstashMock.publishJSON).toHaveBeenCalled();
-      const envelope = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
+      const publishCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
+      const firstPublishCall = publishCalls[0] as unknown[] | undefined;
+      if (!firstPublishCall) throw new Error("expected publishJSON call");
+      const envelope = firstPublishCall[0] as {
         body: { connectionId: string; provider: string; deliveryId: string };
       };
       expect(envelope.body.connectionId).toBe("conn-lifecycle-1");
@@ -367,7 +370,8 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     await cancelBackfillService({ installationId: "inst-lifecycle-cancel" });
 
     expect(qstashMessages).toHaveLength(1);
-    const capturedMsg = qstashMessages[0]!;
+    const capturedMsg = qstashMessages[0];
+    if (!capturedMsg) throw new Error("expected qstash message");
     expect(capturedMsg.url).toContain("/trigger/cancel");
 
     // 2. Deliver captured QStash body to backfill cancel endpoint
@@ -458,7 +462,7 @@ describe("Suite 5.3 — Full teardown path", () => {
     await db.insert(gwInstallations).values(inst);
 
     const resource = fixtures.resource({
-      installationId: inst.id!,
+      installationId: inst.id,
       providerResourceId: "owner/teardown-repo",
       resourceName: "teardown-repo",
       status: "active",
@@ -486,20 +490,20 @@ describe("Suite 5.3 — Full teardown path", () => {
     // ── 3. Simulate teardown workflow step 1: cancel backfill ──
     // The connection-teardown workflow calls cancelBackfillService as its first step.
     // We simulate it here to test the full cancel delivery chain.
-    await cancelBackfillService({ installationId: inst.id! });
+    await cancelBackfillService({ installationId: inst.id });
 
     const cancelMsg = qstashMessages.find((m) => m.url.includes("/trigger/cancel"));
-    expect(cancelMsg).toBeDefined();
-    expect((cancelMsg!.body as { installationId: string }).installationId).toBe(inst.id);
+    if (!cancelMsg) throw new Error("expected cancel qstash message");
+    expect((cancelMsg.body as { installationId: string }).installationId).toBe(inst.id);
 
     // ── 4. Deliver cancel QStash to backfill → run.cancelled fires ──
     const cancelRes = await backfillApp.request("/api/trigger/cancel", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
-        ...(cancelMsg!.headers ?? {}),
+        ...(cancelMsg.headers ?? {}),
       }),
-      body: JSON.stringify(cancelMsg!.body),
+      body: JSON.stringify(cancelMsg.body),
     });
     expect(cancelRes.status).toBe(200);
     expect((await cancelRes.json() as { status: string }).status).toBe("cancelled");

@@ -93,7 +93,6 @@ vi.mock("@vendor/inngest/hono", () => ({
 
 vi.mock("@vendor/inngest", () => ({
   Inngest: class {
-    constructor() {}
     send = inngestSendMock;
     createFunction = vi.fn(
       (
@@ -138,7 +137,6 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 }));
 
 // ── Import all apps after mocks ──
-import connectionsApp from "@connections/app";
 import backfillApp from "@backfill/app";
 import gatewayApp from "@gateway/app";
 
@@ -146,7 +144,7 @@ import gatewayApp from "@gateway/app";
 await import("@backfill/orchestrator");
 
 // ── Utilities ──
-import { installServiceRouter, withEventPermutations } from "./harness.js";
+import { withEventPermutations } from "./harness.js";
 import { cancelBackfillService } from "@connections/urls";
 
 const API_KEY = "0".repeat(64);
@@ -172,12 +170,12 @@ function restoreMockImpls() {
   );
 
   redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) as Record<string, unknown>) ?? {};
+    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
     redisStore.set(key, { ...existing, ...fields });
     return Promise.resolve(1);
   });
   redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) as Record<string, string>) ?? null),
+    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
   );
   redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean; ex?: number }) => {
     if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
@@ -198,13 +196,13 @@ function restoreMockImpls() {
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing = (redisStore.get(key) as Record<string, unknown>) ?? {};
+          const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
       }),
       expire: vi.fn(() => pipe),
-      exec: vi.fn(async () => { ops.forEach((op) => op()); return []; }),
+      exec: vi.fn(() => { ops.forEach((op) => op()); return []; }),
     };
     return pipe;
   });
@@ -243,7 +241,7 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
       status: "active",
     });
     const resource = fixtures.resource({
-      installationId: inst.id!,
+      installationId: inst.id,
       providerResourceId: "owner/perm-repo",
       status: "active",
     });
@@ -262,7 +260,7 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
           label: "cancel-backfill",
           deliver: async () => {
             // Connections publishes cancel → deliver to backfill → Inngest run.cancelled
-            await cancelBackfillService({ installationId: inst.id! });
+            await cancelBackfillService({ installationId: inst.id });
             const cancelMsg = qstashMessages.find((m) => m.url.includes("/trigger/cancel"));
             if (cancelMsg) {
               await backfillApp.request("/api/trigger/cancel", {
@@ -278,7 +276,7 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
         },
         {
           label: "clear-redis-cache",
-          deliver: async () => {
+          deliver: () => {
             redisStore.delete(cacheKey);
           },
         },
@@ -303,12 +301,12 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
 
         // DB records soft-deleted
         const instRow = await db.query.gwInstallations.findFirst({
-          where: (t, { eq }) => eq(t.id, inst.id!),
+          where: (t, { eq }) => eq(t.id, inst.id),
         });
         expect(instRow?.status).toBe("revoked");
 
         const resRow = await db.query.gwResources.findFirst({
-          where: (t, { eq }) => eq(t.installationId, inst.id!),
+          where: (t, { eq }) => eq(t.installationId, inst.id),
         });
         expect(resRow?.status).toBe("removed");
 
@@ -331,7 +329,7 @@ describe("Suite 6.2 — Concurrent gateway dispatches are order-independent", ()
     const deliveryIds = ["del-perm-a", "del-perm-b", "del-perm-c"];
 
     const result = await withEventPermutations({
-      setup: async () => {
+      setup: () => {
         restoreMockImpls();
       },
 
@@ -359,7 +357,7 @@ describe("Suite 6.2 — Concurrent gateway dispatches are order-independent", ()
         },
       })),
 
-      invariant: async () => {
+      invariant: () => {
         // All 3 published to QStash
         expect(qstashMessages).toHaveLength(3);
 
@@ -407,7 +405,7 @@ describe("Suite 6.3 — Backfill notify + gateway dispatch are order-independent
             // Connections publishes notify → deliver to backfill trigger → Inngest fires
             const { notifyBackfillService } = await import("@connections/urls");
             await notifyBackfillService({
-              installationId: inst.id!,
+              installationId: inst.id,
               provider: "github",
               orgId: "org-perm-mixed",
             });
@@ -448,7 +446,7 @@ describe("Suite 6.3 — Backfill notify + gateway dispatch are order-independent
         },
       ],
 
-      invariant: async () => {
+      invariant: () => {
         // Backfill was notified (Inngest run.requested fired)
         expect(
           inngestEventsSent.some((e) => e.name === "apps-backfill/run.requested"),

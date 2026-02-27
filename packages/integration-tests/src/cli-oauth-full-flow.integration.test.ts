@@ -118,7 +118,7 @@ vi.mock("@vendor/clerk/server", () => ({
 }));
 
 vi.mock("@connections/providers", () => ({
-  getProvider: (...args: unknown[]) => mockGetProvider(...args),
+  getProvider: (...args: unknown[]): unknown => mockGetProvider(...args),
 }));
 
 // ── Imports after mocks ──
@@ -167,13 +167,13 @@ beforeEach(() => {
   redisMock.hset.mockImplementation(
     (key: string, fields: Record<string, unknown>) => {
       const existing =
-        (redisStore.get(key) as Record<string, unknown>) ?? {};
+        (redisStore.get(key) ?? {}) as Record<string, unknown>;
       redisStore.set(key, { ...existing, ...fields });
       return Promise.resolve(1);
     },
   );
   redisMock.hgetall.mockImplementation(<T>(key: string) =>
-    Promise.resolve((redisStore.get(key) as T) ?? null),
+    Promise.resolve((redisStore.get(key) ?? null) as T),
   );
   redisMock.set.mockImplementation(
     (key: string, value: unknown, opts?: { nx?: boolean }) => {
@@ -183,7 +183,7 @@ beforeEach(() => {
     },
   );
   redisMock.del.mockImplementation((...keys: string[]) => {
-    const allKeys = keys.flat() as string[];
+    const allKeys = keys.flat();
     let count = 0;
     for (const k of allKeys) {
       if (redisStore.delete(k)) count++;
@@ -191,21 +191,21 @@ beforeEach(() => {
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation(<T>(key: string) =>
-    Promise.resolve((redisStore.get(key) as T) ?? null),
+    Promise.resolve((redisStore.get(key) ?? null) as T),
   );
   redisMock.pipeline.mockImplementation(() => {
-    const ops: Array<() => void> = [];
+    const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
           const existing =
-            (redisStore.get(key) as Record<string, unknown>) ?? {};
+            (redisStore.get(key) ?? {}) as Record<string, unknown>;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
       }),
       expire: vi.fn(() => pipe),
-      exec: vi.fn(async () => {
+      exec: vi.fn(() => {
         ops.forEach((op) => op());
         return [];
       }),

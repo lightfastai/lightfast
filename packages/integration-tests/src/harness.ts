@@ -39,13 +39,13 @@ export type { TestDb };
 export function makeRedisMock(store: Map<string, unknown>) {
   const mock = {
     hset: vi.fn((key: string, fields: Record<string, unknown>) => {
-      const existing = (store.get(key) as Record<string, unknown>) ?? {};
+      const existing = (store.get(key) ?? {}) as Record<string, unknown>;
       store.set(key, { ...existing, ...fields });
       return Promise.resolve(1);
     }),
     hgetall: vi.fn(<T = Record<string, string>>(key: string): Promise<T | null> => {
       const val = store.get(key);
-      return Promise.resolve((val as T) ?? null);
+      return Promise.resolve((val ?? null) as T | null);
     }),
     set: vi.fn(
       (
@@ -77,7 +77,7 @@ export function makeRedisMock(store: Map<string, unknown>) {
       const pipe = {
         hset: vi.fn((key: string, fields: Record<string, unknown>) => {
           ops.push(() => {
-            const existing = (store.get(key) as Record<string, unknown>) ?? {};
+            const existing = (store.get(key) ?? {}) as Record<string, unknown>;
             store.set(key, { ...existing, ...fields });
           });
           return pipe;
@@ -86,7 +86,7 @@ export function makeRedisMock(store: Map<string, unknown>) {
           // TTLs not tracked in the in-memory mock
           return pipe;
         }),
-        exec: vi.fn(async () => {
+        exec: vi.fn(() => {
           ops.forEach((op) => op());
           return [];
         }),
@@ -276,7 +276,7 @@ export function withTimeFaults(
 ): ReturnType<typeof makeStep> {
   const originalRun = step.run;
   const wrappedRun = vi.fn(async (name: string, fn: () => unknown) => {
-    const result = await originalRun(name, fn);
+    const result: unknown = await originalRun(name, fn);
     const fault = faults.find((f) => f.afterStep === name);
     if (fault) {
       vi.advanceTimersByTime(fault.advanceMs);
@@ -349,7 +349,7 @@ export async function makeApiKeyFixture(
   const expiresAt =
     expiresAtRaw instanceof Date
       ? expiresAtRaw.toISOString()
-      : (expiresAtRaw ?? null);
+      : null;
 
   const record = {
     id: uid(),
@@ -400,7 +400,7 @@ export async function makeApiKeyFixture(
 
 export interface LabeledEffect {
   label: string;
-  deliver: () => Promise<void>;
+  deliver: () => void | Promise<void>;
 }
 
 export interface PermutationResult {
@@ -414,13 +414,13 @@ export interface PermutationResult {
 
 export interface PermutationConfig {
   /** Re-seed DB / Redis / mock state before each permutation */
-  setup: () => Promise<void>;
+  setup: () => void | Promise<void>;
   /** Concurrent effects whose delivery order will be permuted */
   effects: LabeledEffect[];
   /** Assert final-state correctness — called after all effects delivered */
-  invariant: () => Promise<void>;
+  invariant: () => void | Promise<void>;
   /** Tear down state between permutations (TRUNCATE, store.clear, etc.) */
-  reset: () => Promise<void>;
+  reset: () => void | Promise<void>;
   /** Max permutations to run.  Default 120 (= 5!).  Random sample if N! exceeds this. */
   maxRuns?: number;
 }
@@ -431,9 +431,11 @@ function* generatePermutations<T>(arr: T[]): Generator<T[]> {
     return;
   }
   for (let i = 0; i < arr.length; i++) {
+    const item = arr[i];
+    if (item === undefined) continue;
     const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
     for (const perm of generatePermutations(rest)) {
-      yield [arr[i]!, ...perm];
+      yield [item, ...perm];
     }
   }
 }
@@ -453,7 +455,12 @@ export async function withEventPermutations(
     const shuffled = [...allPerms];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+      const a = shuffled[i];
+      const b = shuffled[j];
+      if (a !== undefined && b !== undefined) {
+        shuffled[i] = b;
+        shuffled[j] = a;
+      }
     }
     permsToRun = shuffled.slice(0, maxRuns);
   }

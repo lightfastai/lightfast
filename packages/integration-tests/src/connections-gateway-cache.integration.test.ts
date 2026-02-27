@@ -126,12 +126,12 @@ beforeEach(() => {
   vi.clearAllMocks();
   // Restore mock implementations that clearAllMocks resets
   redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) as Record<string, unknown>) ?? {};
+    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
     redisStore.set(key, { ...existing, ...fields });
     return Promise.resolve(1);
   });
   redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) as Record<string, string>) ?? null),
+    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
   );
   redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean }) => {
     if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
@@ -199,8 +199,9 @@ describe("Suite 1.1 — Resource link populates gateway routing cache", () => {
     const cached = await redisMock.hgetall("gw:resource:github:cached-repo") as { connectionId: string; orgId: string } | null;
 
     expect(cached).not.toBeNull();
-    expect(cached!.connectionId).toBe(connectionId);
-    expect(cached!.orgId).toBe(orgId);
+    if (!cached) throw new Error("cached should not be null");
+    expect(cached.connectionId).toBe(connectionId);
+    expect(cached.orgId).toBe(orgId);
   });
 });
 
@@ -210,7 +211,7 @@ describe("Suite 1.2 — Resource unlink removes gateway routing cache", () => {
     await db.insert(gwInstallations).values(inst);
 
     const resource = fixtures.resource({
-      installationId: inst.id!,
+      installationId: inst.id,
       providerResourceId: "owner/to-unlink",
       status: "active",
     });

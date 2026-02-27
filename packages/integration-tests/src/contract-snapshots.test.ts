@@ -99,7 +99,6 @@ vi.mock("@vendor/inngest/hono", () => ({
 
 vi.mock("@vendor/inngest", () => ({
   Inngest: class {
-    constructor() {}
     send = vi.fn().mockResolvedValue({ ids: ["evt-1"] });
     createFunction = vi.fn(() => ({ id: "mock" }));
   },
@@ -162,12 +161,12 @@ beforeEach(() => {
   redisStore.clear();
 
   redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) as Record<string, unknown>) ?? {};
+    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
     redisStore.set(key, { ...existing, ...fields });
     return Promise.resolve(1);
   });
   redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) as Record<string, string>) ?? null),
+    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
   );
   redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean }) => {
     if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
@@ -188,13 +187,13 @@ beforeEach(() => {
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing = (redisStore.get(key) as Record<string, unknown>) ?? {};
+          const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
       }),
       expire: vi.fn(() => pipe),
-      exec: vi.fn(async () => { ops.forEach((op) => op()); return []; }),
+      exec: vi.fn(() => { ops.forEach((op) => op()); return []; }),
     };
     return pipe;
   });
@@ -219,7 +218,9 @@ describe("0.1 — Boundary contract shapes", () => {
     });
 
     expect(qstashMessages).toHaveLength(1);
-    expect(shapeOf(qstashMessages[0]!.body)).toMatchSnapshot();
+    const firstMsg = qstashMessages[0];
+    expect(firstMsg).toBeDefined();
+    expect(shapeOf(firstMsg.body)).toMatchSnapshot();
   });
 
   it("Shape 2: GET /connections/:id response (Backfill orchestrator reads this)", async () => {
@@ -231,7 +232,7 @@ describe("0.1 — Boundary contract shapes", () => {
     await db.insert(gwInstallations).values(inst);
 
     const resource = fixtures.resource({
-      installationId: inst.id!,
+      installationId: inst.id,
       providerResourceId: "owner/snap-repo",
       resourceName: "snap-repo",
       status: "active",
@@ -241,7 +242,7 @@ describe("0.1 — Boundary contract shapes", () => {
     const res = await connReq(`/services/connections/${inst.id}`);
     expect(res.status).toBe(200);
 
-    const json = await res.json();
+    const json: unknown = await res.json();
     expect(shapeOf(json)).toMatchSnapshot();
   });
 
@@ -255,7 +256,7 @@ describe("0.1 — Boundary contract shapes", () => {
 
     const encryptedToken = await encrypt("snap-access-token-xyz", ENCRYPTION_KEY);
     const token = fixtures.token({
-      installationId: inst.id!,
+      installationId: inst.id,
       accessToken: encryptedToken,
     });
     await db.insert(gwTokens).values(token);
@@ -263,7 +264,7 @@ describe("0.1 — Boundary contract shapes", () => {
     const res = await connReq(`/services/connections/${inst.id}/token`);
     expect(res.status).toBe(200);
 
-    const json = await res.json();
+    const json: unknown = await res.json();
     expect(shapeOf(json)).toMatchSnapshot();
   });
 
