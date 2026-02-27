@@ -6,10 +6,12 @@
       "dependsOn": ["^build"],
       "env": [
         "NEXT_PUBLIC_VERCEL_ENV",
-        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_SENTRY_DSN"
+      ],
+      "passThroughEnv": [
+        "SENTRY_AUTH_TOKEN",
         "SENTRY_ORG",
-        "SENTRY_PROJECT",
-        "SENTRY_AUTH_TOKEN"
+        "SENTRY_PROJECT"
       ],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "next-env.d.ts"]
     },

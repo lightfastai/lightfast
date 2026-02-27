@@ -39,14 +39,17 @@ jobs:
     needs: changes
     if: needs.changes.outputs.core == 'true'
     runs-on: ubuntu-latest
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -73,14 +76,17 @@ jobs:
     needs: changes
     if: needs.changes.outputs.core == 'true'
     runs-on: ubuntu-latest
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -107,14 +113,17 @@ jobs:
     needs: changes
     if: needs.changes.outputs.core == 'true'
     runs-on: ubuntu-latest
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -130,21 +139,23 @@ jobs:
           SKIP_ENV_VALIDATION: "true"
         run: pnpm --filter lightfast test
 
-
   # Build check (runs on Node 22)
   build:
     name: Build
     needs: changes
     if: needs.changes.outputs.core == 'true'
     runs-on: ubuntu-latest
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -172,17 +183,37 @@ jobs:
   # Summary job (required status check)
   core-ci-success:
     name: Core CI Success
-    if: always() && needs.changes.outputs.core == 'true'
+    if: always()
     needs: [changes, lint, typecheck, test, build]
     runs-on: ubuntu-latest
     steps:
-      - name: Check all jobs
+      - name: Evaluate results
         run: |
-          if [[ "${{ needs.lint.result }}" != "success" || \
-                "${{ needs.typecheck.result }}" != "success" || \
-                "${{ needs.test.result }}" != "success" || \
-                "${{ needs.build.result }}" != "success" ]]; then
-            echo "Some Core CI checks failed"
+          core="${{ needs.changes.outputs.core }}"
+          lint="${{ needs.lint.result }}"
+          typecheck="${{ needs.typecheck.result }}"
+          test="${{ needs.test.result }}"
+          build="${{ needs.build.result }}"
+
+          echo "changes.core     = $core"
+          echo "lint.result      = $lint"
+          echo "typecheck.result = $typecheck"
+          echo "test.result      = $test"
+          echo "build.result     = $build"
+
+          # If no relevant files changed, downstream jobs are skipped — that's OK
+          if [[ "$core" != "true" ]]; then
+            echo "No core changes detected. CI skipped intentionally."
+            exit 0
+          fi
+
+          # If relevant files changed, all jobs must succeed
+          if [[ "$lint" != "success" || \
+                "$typecheck" != "success" || \
+                "$test" != "success" || \
+                "$build" != "success" ]]; then
+            echo "One or more Core CI jobs failed."
             exit 1
           fi
-          echo "All Core CI checks passed!"
+
+          echo "All Core CI checks passed."

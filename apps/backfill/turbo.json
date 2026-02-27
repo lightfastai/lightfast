@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": [
+      "passThroughEnv": [
         "GATEWAY_URL",
         "GATEWAY_API_KEY",
         "INNGEST_EVENT_KEY",
