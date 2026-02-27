@@ -111,7 +111,7 @@ describe("get-token step", () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       "https://connections.test/services/connections/inst-1/token",
-      { headers: { "X-API-Key": "test-key" } },
+      expect.objectContaining({ headers: { "X-API-Key": "test-key" } }),
     );
   });
 

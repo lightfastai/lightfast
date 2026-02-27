@@ -107,7 +107,7 @@ describe("get-connection step", () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       "https://connections.test/services/connections/inst-1",
-      { headers: { "X-API-Key": "test-key" } },
+      expect.objectContaining({ headers: { "X-API-Key": "test-key" } }),
     );
   });
 

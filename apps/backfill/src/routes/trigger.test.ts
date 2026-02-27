@@ -6,6 +6,7 @@ const { mockInngestSend } = vi.hoisted(() => ({
 
 vi.mock("../env", () => ({
   env: { GATEWAY_API_KEY: "test-key" },
+  getEnv: () => ({ GATEWAY_API_KEY: "test-key" }),
 }));
 
 vi.mock("../inngest/client", () => ({
@@ -142,7 +143,7 @@ describe("POST /trigger/", () => {
       body: validBody,
       headers: { "X-API-Key": "test-key" },
     });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(502);
   });
 });
 
@@ -198,6 +199,6 @@ describe("POST /trigger/cancel", () => {
       body: { installationId: "inst-1" },
       headers: { "X-API-Key": "test-key" },
     });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(502);
   });
 });
