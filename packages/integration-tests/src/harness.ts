@@ -275,3 +275,122 @@ export function withTimeFaults(
   });
   return { ...step, run: wrappedRun };
 }
+
+/**
+ * Event-ordering permutation engine.
+ *
+ * Inspired by FoundationDB / TigerBeetle deterministic simulation testing,
+ * applied at the service-mesh layer.
+ *
+ * Given N concurrent side-effects (QStash deliveries, Inngest events, DB
+ * mutations, Redis ops), runs every permutation of their delivery order and
+ * asserts a final-state invariant after each.  If the invariant holds for all
+ * N! orderings the system is provably order-independent for that scenario.
+ *
+ * For N > 5 (120 permutations), a random sample is drawn instead of
+ * exhaustive enumeration.
+ *
+ * @example
+ *   const result = await withEventPermutations({
+ *     setup:  async () => { await db.insert(gwInstallations).values(inst); },
+ *     effects: [
+ *       { label: "cancel-backfill", deliver: async () => { ... } },
+ *       { label: "clear-redis",     deliver: async () => { ... } },
+ *       { label: "soft-delete-db",  deliver: async () => { ... } },
+ *     ],
+ *     invariant: async () => {
+ *       expect(redisStore.has(key)).toBe(false);
+ *       expect(instRow.status).toBe("revoked");
+ *     },
+ *     reset: async () => { await resetTestDb(); redisStore.clear(); },
+ *   });
+ *   expect(result.failures).toHaveLength(0);
+ *   expect(result.permutationsRun).toBe(6); // 3! = 6
+ */
+
+export interface LabeledEffect {
+  label: string;
+  deliver: () => Promise<void>;
+}
+
+export interface PermutationResult {
+  permutationsRun: number;
+  passed: number;
+  failures: Array<{
+    ordering: string[];
+    error: Error;
+  }>;
+}
+
+export interface PermutationConfig {
+  /** Re-seed DB / Redis / mock state before each permutation */
+  setup: () => Promise<void>;
+  /** Concurrent effects whose delivery order will be permuted */
+  effects: LabeledEffect[];
+  /** Assert final-state correctness — called after all effects delivered */
+  invariant: () => Promise<void>;
+  /** Tear down state between permutations (TRUNCATE, store.clear, etc.) */
+  reset: () => Promise<void>;
+  /** Max permutations to run.  Default 120 (= 5!).  Random sample if N! exceeds this. */
+  maxRuns?: number;
+}
+
+function* generatePermutations<T>(arr: T[]): Generator<T[]> {
+  if (arr.length <= 1) {
+    yield [...arr];
+    return;
+  }
+  for (let i = 0; i < arr.length; i++) {
+    const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
+    for (const perm of generatePermutations(rest)) {
+      yield [arr[i]!, ...perm];
+    }
+  }
+}
+
+export async function withEventPermutations(
+  config: PermutationConfig,
+): Promise<PermutationResult> {
+  const { setup, effects, invariant, reset, maxRuns = 120 } = config;
+
+  const allPerms = [...generatePermutations(effects)];
+
+  let permsToRun: typeof allPerms;
+  if (allPerms.length <= maxRuns) {
+    permsToRun = allPerms;
+  } else {
+    // Fisher-Yates shuffle, then take first maxRuns
+    const shuffled = [...allPerms];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+    }
+    permsToRun = shuffled.slice(0, maxRuns);
+  }
+
+  const result: PermutationResult = {
+    permutationsRun: permsToRun.length,
+    passed: 0,
+    failures: [],
+  };
+
+  for (const perm of permsToRun) {
+    await reset();
+    await setup();
+
+    try {
+      for (const effect of perm) {
+        await effect.deliver();
+      }
+      await invariant();
+      result.passed++;
+    } catch (error) {
+      result.failures.push({
+        ordering: perm.map((e) => e.label),
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
+    }
+  }
+
+  return result;
+}
