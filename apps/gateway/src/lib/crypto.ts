@@ -53,10 +53,17 @@ export async function computeHmacSha1(
 
 /**
  * Timing-safe comparison of two hex strings.
+ * Returns false (rather than throwing) if either input is not valid hex.
  */
 export function timingSafeEqual(a: string, b: string): boolean {
-  const aBytes = hexToBytes(a);
-  const bBytes = hexToBytes(b);
+  let aBytes: Uint8Array;
+  let bBytes: Uint8Array;
+  try {
+    aBytes = hexToBytes(a);
+    bBytes = hexToBytes(b);
+  } catch {
+    return false;
+  }
 
   let result = aBytes.length ^ bBytes.length;
   const maxLen = Math.max(aBytes.length, bBytes.length);
@@ -69,16 +76,16 @@ export function timingSafeEqual(a: string, b: string): boolean {
 /**
  * Timing-safe comparison of two arbitrary strings.
  * Encodes both as UTF-8 and performs constant-time byte comparison.
+ * Does not leak string length — iterates to max length with XOR accumulator.
  */
 export function timingSafeStringEqual(a: string, b: string): boolean {
   const encoder = new TextEncoder();
   const aBytes = encoder.encode(a);
   const bBytes = encoder.encode(b);
 
-  if (aBytes.length !== bBytes.length) return false;
-
-  let result = 0;
-  for (let i = 0; i < aBytes.length; i++) {
+  let result = aBytes.length ^ bBytes.length;
+  const maxLen = Math.max(aBytes.length, bBytes.length);
+  for (let i = 0; i < maxLen; i++) {
     result |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
   }
   return result === 0;

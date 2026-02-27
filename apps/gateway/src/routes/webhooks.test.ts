@@ -3,25 +3,29 @@ import { computeHmacSha256, computeHmacSha1 } from "../lib/crypto.js";
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 
-const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger } = vi.hoisted(
-  () => ({
-    mockPublishJSON: vi.fn().mockResolvedValue({ messageId: "msg-1" }),
-    mockRedisSet: vi.fn().mockResolvedValue("OK"),
-    mockWorkflowTrigger: vi
-      .fn()
-      .mockResolvedValue({ workflowRunId: "wf-1" }),
-  }),
-);
+const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv } =
+  vi.hoisted(() => {
+    const env = {
+      GATEWAY_API_KEY: "test-api-key",
+      GATEWAY_WEBHOOK_SECRET: "test-webhook-secret",
+      GITHUB_WEBHOOK_SECRET: "gh-secret",
+      VERCEL_CLIENT_INTEGRATION_SECRET: "vc-secret",
+      LINEAR_WEBHOOK_SIGNING_SECRET: "ln-secret",
+      SENTRY_CLIENT_SECRET: "sn-secret",
+    };
+    return {
+      mockPublishJSON: vi.fn().mockResolvedValue({ messageId: "msg-1" }),
+      mockRedisSet: vi.fn().mockResolvedValue("OK"),
+      mockWorkflowTrigger: vi
+        .fn()
+        .mockResolvedValue({ workflowRunId: "wf-1" }),
+      mockEnv: env,
+    };
+  });
 
 vi.mock("../env", () => ({
-  env: {
-    GATEWAY_API_KEY: "test-api-key",
-    GATEWAY_WEBHOOK_SECRET: "test-webhook-secret",
-    GITHUB_WEBHOOK_SECRET: "gh-secret",
-    VERCEL_CLIENT_INTEGRATION_SECRET: "vc-secret",
-    LINEAR_WEBHOOK_SIGNING_SECRET: "ln-secret",
-    SENTRY_CLIENT_SECRET: "sn-secret",
-  },
+  env: mockEnv,
+  getEnv: () => mockEnv,
 }));
 
 vi.mock("@vendor/qstash", () => ({
@@ -358,15 +362,14 @@ describe("POST /webhooks/:provider", () => {
       expect(mockPublishJSON).not.toHaveBeenCalled();
     });
 
-    it("returns 500 when body is malformed JSON", async () => {
-      // Backfill sends truncated body (network error, client bug).
-      // c.req.json() throws — no try/catch → unhandled 500.
+    it("returns 400 when body is malformed JSON", async () => {
       const res = await request("/webhooks/github", {
         body: '{"connectionId": "conn-1", "orgId": "org-',
         headers: { "X-API-Key": "test-api-key" },
       });
 
-      expect(res.status).toBe(500);
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "invalid_json" });
     });
   });
 
@@ -393,7 +396,8 @@ describe("POST /webhooks/:provider", () => {
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.status).toBe("accepted");
-      expect(json.deliveryId).toBe("del-vc-001");
+      // Vercel provider prefers payload.id over x-vercel-id header
+      expect(json.deliveryId).toBe("evt-vc-1");
       expect(mockWorkflowTrigger).toHaveBeenCalledOnce();
     });
 
@@ -517,7 +521,7 @@ describe("POST /webhooks/:provider", () => {
       const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
       expect(triggerCall.body).toEqual({
         provider: "vercel",
-        deliveryId: "del-vc-shape",
+        deliveryId: "evt-shape",
         eventType: "deployment.ready",
         resourceId: "prj_shape",
         payload: expect.objectContaining({
