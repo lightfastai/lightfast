@@ -26,7 +26,7 @@ export default async function ConnectPage({
   // Prefetch connections for all providers (no waterfall)
   prefetch(orgTrpc.connections.github.get.queryOptions());
   prefetch(orgTrpc.connections.vercel.get.queryOptions());
-  // TODO: Add prefetch for Linear and Sentry when available
+  prefetch(orgTrpc.connections.sentry.get.queryOptions());
 
   return (
     <div className="flex-1 overflow-y-auto bg-background">

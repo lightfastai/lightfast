@@ -61,11 +61,18 @@ export function ConnectFormProvider({
     enabled: provider === "vercel",
   });
 
+  const { data: sentrySource } = useQuery({
+    ...trpc.connections.sentry.get.queryOptions(),
+    enabled: provider === "sentry",
+  });
+
   const installationId = provider === "github"
     ? githubSource?.id ?? null
     : provider === "vercel"
       ? vercelSource?.id ?? null
-      : null;
+      : provider === "sentry"
+        ? sentrySource?.id ?? null
+        : null;
 
   // Derive the effective installation ID without setting state during render
   // (installations ?? []).at(0) returns T | undefined - no setState during render

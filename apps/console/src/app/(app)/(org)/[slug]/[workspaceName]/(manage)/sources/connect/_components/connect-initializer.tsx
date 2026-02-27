@@ -8,6 +8,7 @@ import { useConnectParams } from "./use-connect-params";
 import { ProviderSelector } from "./provider-selector";
 import { GitHubConnector } from "./github-connector";
 import { VercelConnector } from "./vercel-connector";
+import { SentryConnector } from "./sentry-connector";
 import { ResourcePicker } from "./resource-picker";
 import { ConnectButton } from "./connect-button";
 
@@ -55,11 +56,7 @@ export function ConnectInitializer({
                 <p className="text-muted-foreground">Linear connector coming soon</p>
               </div>
             )}
-            {provider === "sentry" && (
-              <div className="rounded-lg border border-border p-6 text-center">
-                <p className="text-muted-foreground">Sentry connector coming soon</p>
-              </div>
-            )}
+            {provider === "sentry" && <SentryConnector autoOpen={initialConnected} />}
           </Suspense>
         </Section>
 

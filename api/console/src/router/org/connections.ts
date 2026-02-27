@@ -743,4 +743,43 @@ export const connectionsRouter = {
 			return { success: true };
 		}),
 	},
+
+	/**
+	 * Sentry-specific operations
+	 */
+	sentry: {
+		/**
+		 * Get org's Sentry installation
+		 *
+		 * Returns the org's Sentry OAuth connection.
+		 * Sentry is org-level — no per-resource picker needed.
+		 */
+		get: orgScopedProcedure.query(async ({ ctx }) => {
+			const result = await ctx.db
+				.select()
+				.from(gwInstallations)
+				.where(
+					and(
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "sentry"),
+						eq(gwInstallations.status, "active"),
+					),
+				)
+				.limit(1);
+
+			const installation = result[0];
+
+			if (!installation) {
+				return null;
+			}
+
+			return {
+				id: installation.id,
+				orgId: installation.orgId,
+				provider: installation.provider,
+				connectedAt: installation.createdAt,
+				status: installation.status,
+			};
+		}),
+	},
 } satisfies TRPCRouterRecord;
