@@ -1,5 +1,6 @@
 "use client";
 
+import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 import type { UIArtifact } from "./artifact";
 import { artifactDefinitions } from "./artifact";
@@ -25,7 +26,7 @@ import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
 interface ArtifactViewerProps {
 	artifact: UIArtifact;
 	metadata: Record<string, unknown>;
-	setMetadata: (metadata: Record<string, unknown>) => void;
+	setMetadata: Dispatch<SetStateAction<Record<string, unknown>>>;
 	onClose: () => void;
 	onSaveContent?: (content: string, debounce: boolean) => void;
 	sessionId: string;

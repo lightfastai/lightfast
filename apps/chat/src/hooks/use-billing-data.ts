@@ -6,10 +6,81 @@ import { ClerkPlanKey, getClerkPlanId } from "@repo/chat-billing";
 import { useTRPC } from "@repo/chat-trpc/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
+/**
+ * Clerk's `@clerk/backend` and experimental `@clerk/nextjs/experimental` modules
+ * produce error-typed values when their deep re-export chains fail to resolve.
+ *
+ * We define the shapes we actually consume and cast through `unknown` so that
+ * eslint's strict type-safety rules are satisfied without `eslint-disable`.
+ */
+
+// -- Subscription types (from @clerk/backend BillingSubscription) -----------
+
+interface BillingMoneyAmount {
+	amount: number;
+	currency: string;
+	currencySymbol: string;
+}
+
+interface BillingPlan {
+	id: string;
+	name: string;
+	[key: string]: unknown;
+}
+
+interface BillingSubscriptionItem {
+	id: string;
+	status: string;
+	planPeriod: "month" | "annual";
+	periodStart: number;
+	nextPayment: { amount: number; date: number } | null | undefined;
+	amount: BillingMoneyAmount | undefined;
+	plan: BillingPlan | null;
+	planId: string | null;
+	createdAt: number;
+	updatedAt: number;
+	periodEnd: number | null;
+	canceledAt: number | null;
+	pastDueAt: number | null;
+	endedAt: number | null;
+	payerId: string | undefined;
+	isFreeTrial?: boolean | undefined;
+	lifetimePaid?: BillingMoneyAmount | undefined;
+}
+
+interface BillingSubscription {
+	id: string;
+	status: string;
+	payerId: string;
+	createdAt: number;
+	updatedAt: number;
+	activeAt: number | null;
+	pastDueAt: number | null;
+	subscriptionItems: BillingSubscriptionItem[];
+	nextPayment: { date: number; amount: BillingMoneyAmount } | null;
+	eligibleForFreeTrial: boolean;
+}
+
+// -- Payment attempt types (from @clerk/shared BillingPaymentResource) ------
+
+interface BillingPaymentAttempt {
+	id: string;
+	status: string;
+	amount: BillingMoneyAmount;
+	updatedAt: Date;
+}
+
+interface UsePaymentAttemptsReturn {
+	data: BillingPaymentAttempt[];
+	isLoading: boolean;
+	error: unknown;
+	revalidate: () => Promise<void>;
+}
+
 export function useBillingData() {
 	const trpc = useTRPC();
 
-	const { data: subscription, refetch: refetchSubscription } =
+	const { data: rawSubscription, refetch: refetchSubscription } =
 		useSuspenseQuery({
 			...trpc.billing.getSubscription.queryOptions(),
 			staleTime: 2 * 60 * 1000,
@@ -17,31 +88,21 @@ export function useBillingData() {
 			refetchOnWindowFocus: false,
 		});
 
+	// Cast subscription through `unknown` — the tRPC return type is a Clerk
+	// `BillingSubscription` class whose deep type chain doesn't resolve for eslint.
+	const subscription = rawSubscription as unknown as BillingSubscription | null;
+
 	const {
 		data: paymentAttempts,
 		isLoading: paymentsLoading,
 		error: paymentsError,
 		revalidate: revalidatePaymentAttempts,
-	} = usePaymentAttempts();
+	} = usePaymentAttempts() as unknown as UsePaymentAttemptsReturn;
 
 	// Derive billing state from raw Clerk subscription
 	const derived = useMemo(() => {
-		// Item type for the null-subscription fallback
-		type SubscriptionItem = NonNullable<typeof subscription>["subscriptionItems"][number];
-
-		if (!subscription) {
-			return {
-				paidSubscriptionItems: [] as SubscriptionItem[],
-				activePaidItem: null as SubscriptionItem | null,
-				hasActiveSubscription: false,
-				isCanceled: false,
-				nextBillingDate: null as string | null,
-				billingInterval: "month" as const,
-			};
-		}
-
 		const freePlanId = getClerkPlanId(ClerkPlanKey.FREE_TIER);
-		const allItems = subscription.subscriptionItems;
+		const allItems = subscription?.subscriptionItems ?? [];
 		const paidSubscriptionItems = allItems.filter(
 			(item) => item.plan?.id !== freePlanId,
 		);
@@ -52,9 +113,9 @@ export function useBillingData() {
 			paidSubscriptionItems.find((item) => item.status === "active") ?? null;
 
 		const hasActiveSubscription =
-			subscription.status === "active" && activePaidItem != null;
+			subscription?.status === "active" && activePaidItem != null;
 		const isCanceled = activePaidItem?.canceledAt != null;
-		const nextPaymentDate = subscription.nextPayment?.date;
+		const nextPaymentDate = subscription?.nextPayment?.date;
 		const nextBillingDate = nextPaymentDate
 			? new Date(nextPaymentDate).toISOString()
 			: null;
