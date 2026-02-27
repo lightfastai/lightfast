@@ -17,8 +17,7 @@ export const getEnv = (c: Context) =>
     clientPrefix: "" as const,
     client: {},
     server,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    runtimeEnv: honoEnv(c),
+    runtimeEnv: honoEnv<Record<keyof typeof server, string | undefined>>(c),
     emptyStringAsUndefined: true,
   });
 
