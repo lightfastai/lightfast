@@ -45,12 +45,14 @@ const isTeamCreationRoute = createRouteMatcher([
   "/new(.*)", // Workspace creation flow
   "/vercel/connected", // Vercel OAuth success page (used by connections service redirect)
   "/github/connected", // GitHub OAuth success page (used by connections service redirect)
+  "/sentry/connected", // Sentry OAuth success page (used by connections service redirect)
   "/api/organizations(.*)",
 ]);
 
 // User-scoped tRPC endpoint - accessible to pending users
 const isUserScopedRoute = createRouteMatcher([
   "/api/trpc/user(.*)", // All procedures under /api/trpc/user/*
+  "/cli/auth", // CLI authentication page - captures Clerk JWT for CLI onboarding
 ]);
 
 // Org-scoped tRPC endpoint - requires active org
