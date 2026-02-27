@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@db/console": "workspace:*",
+    "@neondatabase/serverless": "^1.0.2",
     "@repo/console-validation": "workspace:*",
     "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
@@ -31,7 +32,6 @@
     "@vendor/upstash-workflow": "workspace:*",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
-    "postgres": "catalog:",
     "zod": "catalog:zod3"
   },
   "devDependencies": {
