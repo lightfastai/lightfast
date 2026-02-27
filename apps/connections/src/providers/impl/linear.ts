@@ -2,7 +2,7 @@ import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { decrypt } from "../../lib/crypto.js";
@@ -245,6 +245,20 @@ export class LinearProvider implements ConnectionProvider {
     const accountInfo = this.buildAccountInfo(stateData, oauthTokens);
     const now = new Date().toISOString();
 
+    // Check if this installation already exists (reactivation vs new)
+    const existing = await db
+      .select({ id: gwInstallations.id })
+      .from(gwInstallations)
+      .where(
+        and(
+          eq(gwInstallations.provider, this.name),
+          eq(gwInstallations.externalId, externalId),
+        ),
+      )
+      .limit(1);
+
+    const reactivated = existing.length > 0;
+
     // Idempotent upsert keyed on unique (provider, externalId) constraint
     const rows = await db
       .insert(gwInstallations)
@@ -268,15 +282,12 @@ export class LinearProvider implements ConnectionProvider {
       })
       .returning({
         id: gwInstallations.id,
-        createdAt: gwInstallations.createdAt,
       });
 
     const installation = rows[0];
     if (!installation) {throw new Error("upsert_failed");}
 
     await writeTokenRecord(installation.id, oauthTokens);
-
-    const reactivated = installation.createdAt !== now;
 
     // Register webhook only for new connections (Linear requires API-level webhook registration)
     // CRITICAL: webhook callback URL must point at the gateway, not the connections service

@@ -138,6 +138,8 @@ export class GitHubProvider implements ConnectionProvider {
     }
 
     const accountInfo = this.buildAccountInfo({ ...stateData, installationId });
+    const isPendingRequest = setupAction === "request";
+    const status = isPendingRequest ? "pending" : "active";
 
     // Check if this installation already exists (reactivation vs new)
     const existing = await db
@@ -161,13 +163,13 @@ export class GitHubProvider implements ConnectionProvider {
         externalId: installationId,
         connectedBy,
         orgId,
-        status: "active",
+        status,
         providerAccountInfo: accountInfo,
       })
       .onConflictDoUpdate({
         target: [gwInstallations.provider, gwInstallations.externalId],
         set: {
-          status: "active",
+          status,
           providerAccountInfo: accountInfo,
         },
       })
@@ -178,7 +180,7 @@ export class GitHubProvider implements ConnectionProvider {
     const row = rows[0];
     if (!row) {throw new Error("upsert_failed");}
 
-    if (!reactivated) {
+    if (!reactivated && !isPendingRequest) {
       // Fire-and-forget: notify backfill service for new connections
       notifyBackfillService({
         installationId: row.id,

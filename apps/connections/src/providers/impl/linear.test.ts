@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { Context } from "hono";
 
 vi.mock("../../env", () => ({
   env: {
@@ -14,8 +15,38 @@ vi.mock("../../lib/urls", () => ({
   notifyBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Hoisted so vi.mock factories can reference them
+const dbMocks = vi.hoisted(() => {
+  // INSERT chain
+  const returning = vi.fn();
+  const onConflictDoUpdate = vi.fn().mockReturnValue({ returning });
+  const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
+  const insert = vi.fn().mockReturnValue({ values });
+
+  // SELECT chain (pre-check + resolveToken)
+  const selectLimit = vi.fn();
+  const selectWhere = vi.fn().mockReturnValue({ limit: selectLimit });
+  const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
+  const select = vi.fn().mockReturnValue({ from: selectFrom });
+
+  // UPDATE chain (webhook registration)
+  const updateWhere = vi.fn().mockResolvedValue(undefined);
+  const updateSet = vi.fn().mockReturnValue({ where: updateWhere });
+  const update = vi.fn().mockReturnValue({ set: updateSet });
+
+  return {
+    insert, values, onConflictDoUpdate, returning,
+    select, selectLimit,
+    update, updateSet, updateWhere,
+  };
+});
+
 vi.mock("@db/console/client", () => ({
-  db: {},
+  db: {
+    insert: dbMocks.insert,
+    select: dbMocks.select,
+    update: dbMocks.update,
+  },
 }));
 
 vi.mock("@db/console/schema", () => ({
@@ -24,6 +55,7 @@ vi.mock("@db/console/schema", () => ({
 }));
 
 vi.mock("drizzle-orm", () => ({
+  and: vi.fn(),
   eq: vi.fn(),
 }));
 
@@ -35,15 +67,32 @@ vi.mock("../../lib/token-store", () => ({
   writeTokenRecord: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@repo/lib", () => ({
+  nanoid: vi.fn().mockReturnValue("mock-secret-32chars-padding-here"),
+}));
+
 import { LinearProvider } from "./linear.js";
 import { db } from "@db/console/client";
 import { decrypt } from "../../lib/crypto.js";
+import { notifyBackfillService } from "../../lib/urls.js";
 
 const provider = new LinearProvider();
 
 describe("LinearProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset Drizzle INSERT chain
+    dbMocks.insert.mockReturnValue({ values: dbMocks.values });
+    dbMocks.values.mockReturnValue({ onConflictDoUpdate: dbMocks.onConflictDoUpdate });
+    dbMocks.onConflictDoUpdate.mockReturnValue({ returning: dbMocks.returning });
+    // Reset Drizzle SELECT chain
+    const selectWhere = vi.fn().mockReturnValue({ limit: dbMocks.selectLimit });
+    const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
+    dbMocks.select.mockReturnValue({ from: selectFrom });
+    // Reset Drizzle UPDATE chain
+    dbMocks.update.mockReturnValue({ set: dbMocks.updateSet });
+    dbMocks.updateSet.mockReturnValue({ where: dbMocks.updateWhere });
+    dbMocks.updateWhere.mockResolvedValue(undefined);
   });
 
   it("has correct provider name and webhook flag", () => {
@@ -147,7 +196,7 @@ describe("LinearProvider", () => {
 
     it("succeeds on 204 response", async () => {
       vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
-        ok: false,
+        ok: true,
         status: 204,
       } as Response);
 
@@ -163,6 +212,105 @@ describe("LinearProvider", () => {
       await expect(provider.revokeToken("tok-123")).rejects.toThrow(
         "Linear token revocation failed: 500",
       );
+    });
+  });
+
+  describe("handleCallback", () => {
+    function mockContext(query: Record<string, string | undefined>): Context {
+      return {
+        req: { query: (key: string) => query[key] },
+      } as unknown as Context;
+    }
+
+    it("creates installation and triggers webhook + backfill for new connections", async () => {
+      vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            access_token: "lin-tok",
+            token_type: "Bearer",
+            scope: "read,write",
+            expires_in: 315360000,
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            data: { viewer: { id: "v1", organization: { id: "org-ext-1" } } },
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            data: { webhookCreate: { success: true, webhook: { id: "wh-1" } } },
+          }),
+        } as unknown as Response);
+
+      dbMocks.selectLimit.mockResolvedValue([]); // No existing row
+      dbMocks.returning.mockResolvedValue([{ id: "inst-lin-new" }]);
+
+      const c = mockContext({ code: "auth-code" });
+      const result = await provider.handleCallback(c, {
+        orgId: "org-1",
+        connectedBy: "user-1",
+      });
+
+      expect(result).toMatchObject({
+        status: "connected",
+        installationId: "inst-lin-new",
+        provider: "linear",
+      });
+      expect(result).not.toHaveProperty("reactivated");
+      expect(notifyBackfillService).toHaveBeenCalledWith({
+        installationId: "inst-lin-new",
+        provider: "linear",
+        orgId: "org-1",
+      });
+    });
+
+    it("skips webhook + backfill for reactivated connections", async () => {
+      vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            access_token: "lin-tok",
+            token_type: "Bearer",
+            scope: "read,write",
+            expires_in: 315360000,
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            data: { viewer: { id: "v1", organization: { id: "org-ext-1" } } },
+          }),
+        } as unknown as Response);
+
+      dbMocks.selectLimit.mockResolvedValue([{ id: "inst-existing" }]); // Row exists
+      dbMocks.returning.mockResolvedValue([{ id: "inst-existing" }]);
+
+      const c = mockContext({ code: "auth-code" });
+      const result = await provider.handleCallback(c, {
+        orgId: "org-1",
+        connectedBy: "user-1",
+      });
+
+      expect(result).toMatchObject({
+        status: "connected",
+        installationId: "inst-existing",
+        provider: "linear",
+        reactivated: true,
+      });
+      expect(notifyBackfillService).not.toHaveBeenCalled();
+      // Webhook registration should NOT have been called (only 2 fetch calls, not 3)
+      expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("throws when code is missing", async () => {
+      const c = mockContext({});
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("missing code");
     });
   });
 

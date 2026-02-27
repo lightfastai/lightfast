@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Context } from "hono";
 
 vi.mock("../../env", () => ({
@@ -23,16 +23,28 @@ const dbMocks = vi.hoisted(() => {
   const onConflictDoUpdate = vi.fn().mockReturnValue({ returning });
   const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
   const insert = vi.fn().mockReturnValue({ values });
-  return { insert, values, onConflictDoUpdate, returning };
+
+  // Pre-check SELECT chain: db.select().from().where().limit()
+  const selectLimit = vi.fn();
+  const selectWhere = vi.fn().mockReturnValue({ limit: selectLimit });
+  const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
+  const select = vi.fn().mockReturnValue({ from: selectFrom });
+
+  return { insert, values, onConflictDoUpdate, returning, select, selectLimit };
 });
 
 vi.mock("@db/console/client", () => ({
-  db: { insert: dbMocks.insert },
+  db: { insert: dbMocks.insert, select: dbMocks.select },
 }));
 
 vi.mock("@db/console/schema", () => ({
   gwInstallations: {},
   gwTokens: {},
+}));
+
+vi.mock("drizzle-orm", () => ({
+  and: vi.fn(),
+  eq: vi.fn(),
 }));
 
 vi.mock("../../lib/github-jwt", () => ({
@@ -55,7 +67,7 @@ describe("GitHubProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
-    // Reset Drizzle chain
+    // Reset Drizzle INSERT chain
     dbMocks.insert.mockReturnValue({ values: dbMocks.values });
     dbMocks.values.mockReturnValue({
       onConflictDoUpdate: dbMocks.onConflictDoUpdate,
@@ -63,6 +75,10 @@ describe("GitHubProvider", () => {
     dbMocks.onConflictDoUpdate.mockReturnValue({
       returning: dbMocks.returning,
     });
+    // Reset Drizzle SELECT chain
+    const selectWhere = vi.fn().mockReturnValue({ limit: dbMocks.selectLimit });
+    const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
+    dbMocks.select.mockReturnValue({ from: selectFrom });
   });
 
   it("has correct provider name and webhook flag", () => {
@@ -189,21 +205,9 @@ describe("GitHubProvider", () => {
   });
 
   describe("handleCallback", () => {
-    const FIXED_NOW = "2026-01-15T12:00:00.000Z";
-
-    beforeEach(() => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date(FIXED_NOW));
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
     it("upserts installation and returns connected result", async () => {
-      dbMocks.returning.mockResolvedValue([
-        { id: "inst-abc", createdAt: FIXED_NOW },
-      ]);
+      dbMocks.selectLimit.mockResolvedValue([]); // New installation
+      dbMocks.returning.mockResolvedValue([{ id: "inst-abc" }]);
 
       const c = mockContext({
         installation_id: "ext-42",
@@ -234,9 +238,8 @@ describe("GitHubProvider", () => {
     });
 
     it("notifies backfill service for new installations", async () => {
-      dbMocks.returning.mockResolvedValue([
-        { id: "inst-new", createdAt: FIXED_NOW },
-      ]);
+      dbMocks.selectLimit.mockResolvedValue([]); // No existing row
+      dbMocks.returning.mockResolvedValue([{ id: "inst-new" }]);
 
       const c = mockContext({ installation_id: "ext-1" });
       await provider.handleCallback(c, {
@@ -252,9 +255,8 @@ describe("GitHubProvider", () => {
     });
 
     it("skips backfill notification for reactivated installations", async () => {
-      dbMocks.returning.mockResolvedValue([
-        { id: "inst-existing", createdAt: "2025-01-01T00:00:00.000Z" },
-      ]);
+      dbMocks.selectLimit.mockResolvedValue([{ id: "inst-existing" }]); // Row exists
+      dbMocks.returning.mockResolvedValue([{ id: "inst-existing" }]);
 
       const c = mockContext({ installation_id: "ext-1" });
       const result = await provider.handleCallback(c, {
@@ -264,6 +266,31 @@ describe("GitHubProvider", () => {
 
       expect(notifyBackfillService).not.toHaveBeenCalled();
       expect(result).toMatchObject({ reactivated: true });
+    });
+
+    it("creates pending installation and skips backfill for setup_action=request", async () => {
+      dbMocks.selectLimit.mockResolvedValue([]); // New installation
+      dbMocks.returning.mockResolvedValue([{ id: "inst-pending" }]);
+
+      const c = mockContext({
+        installation_id: "ext-42",
+        setup_action: "request",
+      });
+      const result = await provider.handleCallback(c, {
+        orgId: "org-1",
+        connectedBy: "user-1",
+      });
+
+      expect(dbMocks.values).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "pending" }),
+      );
+      expect(notifyBackfillService).not.toHaveBeenCalled();
+      expect(result).toMatchObject({
+        status: "connected",
+        installationId: "inst-pending",
+        provider: "github",
+        setupAction: "request",
+      });
     });
 
     it("throws when installation_id is missing", async () => {
@@ -288,6 +315,7 @@ describe("GitHubProvider", () => {
     });
 
     it("throws when upsert returns no rows", async () => {
+      dbMocks.selectLimit.mockResolvedValue([]); // No existing row
       dbMocks.returning.mockResolvedValue([]);
 
       const c = mockContext({ installation_id: "ext-1" });
@@ -361,10 +389,10 @@ describe("GitHubProvider", () => {
       });
     });
 
-    it("defaults accountType to 'unknown' when not provided", () => {
+    it("defaults accountType to 'User' when not provided", () => {
       const info = provider.buildAccountInfo({ installationId: "inst-1" });
       expect(info).toMatchObject({
-        installations: [expect.objectContaining({ accountType: "unknown" })],
+        installations: [expect.objectContaining({ accountType: "User" })],
       });
     });
   });
