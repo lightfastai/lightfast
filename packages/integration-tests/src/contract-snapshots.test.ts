@@ -220,6 +220,7 @@ describe("0.1 — Boundary contract shapes", () => {
     expect(qstashMessages).toHaveLength(1);
     const firstMsg = qstashMessages[0];
     expect(firstMsg).toBeDefined();
+    if (!firstMsg) return;
     expect(shapeOf(firstMsg.body)).toMatchSnapshot();
   });
 

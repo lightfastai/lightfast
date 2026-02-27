@@ -149,6 +149,7 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
     const calls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
     const firstCall = calls[0] as unknown[] | undefined;
     expect(firstCall).toBeDefined();
+    if (!firstCall) return;
     const call = firstCall[0] as {
       url: string;
       body: {
@@ -181,6 +182,7 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
     const envelopeCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
     const envelopeFirstCall = envelopeCalls[0] as unknown[] | undefined;
     expect(envelopeFirstCall).toBeDefined();
+    if (!envelopeFirstCall) return;
     const envelope = envelopeFirstCall[0] as {
       body: Record<string, unknown>;
     };

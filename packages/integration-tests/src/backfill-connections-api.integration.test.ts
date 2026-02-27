@@ -296,6 +296,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
     expect(json.resources).toHaveLength(1);
     const firstResource = json.resources[0];
     expect(firstResource).toBeDefined();
+    if (!firstResource) return;
     expect(firstResource.id).toBe(activeResource.id);
   });
 });

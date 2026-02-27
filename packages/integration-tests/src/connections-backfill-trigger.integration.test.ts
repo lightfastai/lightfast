@@ -211,6 +211,7 @@ describe("Suite 2.1 — notifyBackfillService publishes correct QStash body", ()
     const mockCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
     const firstMockCall = mockCalls[0] as unknown[] | undefined;
     expect(firstMockCall).toBeDefined();
+    if (!firstMockCall) return;
     const call = firstMockCall[0] as {
       url: string;
       headers: Record<string, string>;
@@ -236,6 +237,7 @@ describe("Suite 2.1 — notifyBackfillService publishes correct QStash body", ()
 
     const capturedMsg = qstashMessages[0];
     expect(capturedMsg).toBeDefined();
+    if (!capturedMsg) return;
     const capturedHeaders = capturedMsg.headers ?? {};
 
     // Re-deliver the captured QStash message to the backfill trigger endpoint
@@ -299,6 +301,7 @@ describe("Suite 2.3 — cancelBackfillService publishes cancel body", () => {
     const mockCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
     const firstMockCall = mockCalls[0] as unknown[] | undefined;
     expect(firstMockCall).toBeDefined();
+    if (!firstMockCall) return;
     const call = firstMockCall[0] as {
       url: string;
       headers: Record<string, string>;
@@ -316,6 +319,7 @@ describe("Suite 2.3 — cancelBackfillService publishes cancel body", () => {
 
     const capturedMsg = qstashMessages[0];
     expect(capturedMsg).toBeDefined();
+    if (!capturedMsg) return;
     const capturedHeaders = capturedMsg.headers ?? {};
 
     const res = await triggerReq("/api/trigger/cancel", {
@@ -392,6 +396,7 @@ describe("Suite 2.4 — Reactivated GitHub installation skips backfill trigger",
     const mockCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
     const firstMockCall = mockCalls[0] as unknown[] | undefined;
     expect(firstMockCall).toBeDefined();
+    if (!firstMockCall) return;
     const call = firstMockCall[0] as {
       url: string;
       body: { provider: string; orgId: string };
