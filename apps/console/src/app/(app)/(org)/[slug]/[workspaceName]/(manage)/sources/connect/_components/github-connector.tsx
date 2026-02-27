@@ -94,7 +94,7 @@ export function GitHubConnector({ autoOpen = false }: GitHubConnectorProps) {
           void refetch();
         }
       }, 500);
-    } catch (error) {
+    } catch {
       toast.error("Failed to connect to GitHub. Please try again.");
     }
   }, [queryClient, trpc, refetch]);

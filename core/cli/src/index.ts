@@ -1,9 +1,9 @@
 /**
  * CLI entrypoint
- * 
+ *
  * Exports command implementations for programmatic use.
  */
 
-export * from "./commands/validate";
-// Future: export * from "./commands/test-search";
-// Future: export * from "./commands/sync";
+// Future: export { validate } from "./commands/validate";
+// Future: export { testSearch } from "./commands/test-search";
+// Future: export { sync } from "./commands/sync";

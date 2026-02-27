@@ -237,7 +237,6 @@ export default function HomePage() {
                 w-[100%] h-[85%] top-[25%] -right-[10%]
                 lg:w-[80%] lg:h-[95%] lg:top-[5%] lg:-right-[12.5%]"
             >
-              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
               <video
                 autoPlay
                 loop

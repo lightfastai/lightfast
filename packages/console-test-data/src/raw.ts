@@ -52,7 +52,7 @@ export const loadAllRawWebhooks = (): RawWebhook[] => {
       try {
         raw = JSON.parse(readFileSync(filePath, "utf-8"));
       } catch (err) {
-        throw new Error(`Failed to parse dataset ${filePath}: ${err instanceof Error ? err.message : err}`);
+        throw new Error(`Failed to parse dataset ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
       }
       if (!raw || typeof raw !== "object" || !Array.isArray((raw as RawDataset).webhooks)) {
         throw new Error(`Invalid dataset ${filePath}: missing or non-array "webhooks" field`);

@@ -123,10 +123,10 @@ export function SourcesList() {
 					}
 				}, 500);
 			} catch {
-				toast.error(`Failed to connect ${providerNames[provider as keyof typeof providerNames] ?? provider}`);
+				toast.error(`Failed to connect ${providerNames[provider]}`);
 			}
 		} else {
-			toast.info(`${providerNames[provider as keyof typeof providerNames] ?? provider} integration coming soon`);
+			toast.info(`${provider} integration coming soon`);
 		}
 	};
 

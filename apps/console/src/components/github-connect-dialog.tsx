@@ -15,6 +15,20 @@ import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useQueryClient } from "@tanstack/react-query";
 
+interface GitHubConnectedMessage {
+	type: "github_connected";
+}
+
+function isGitHubConnectedMessage(
+	data: unknown,
+): data is GitHubConnectedMessage {
+	return (
+		typeof data === "object" &&
+		data !== null &&
+		(data as Record<string, unknown>).type === "github_connected"
+	);
+}
+
 interface GitHubConnectDialogProps {
 	children?: React.ReactNode;
 	open?: boolean;
@@ -53,9 +67,9 @@ export function GitHubConnectDialog({
 
 	// Listen for postMessage from the OAuth callback page
 	useEffect(() => {
-		const handleMessage = (event: MessageEvent) => {
+		const handleMessage = (event: MessageEvent<unknown>) => {
 			if (event.origin !== window.location.origin) return;
-			if (event.data?.type === "github_connected") {
+			if (isGitHubConnectedMessage(event.data)) {
 				successReceivedRef.current = true;
 				cleanup();
 				setOpen(false);
