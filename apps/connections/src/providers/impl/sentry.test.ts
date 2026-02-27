@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { Context } from "hono";
 
 vi.mock("../../env", () => ({
   env: {
@@ -9,12 +10,22 @@ vi.mock("../../env", () => ({
 }));
 
 vi.mock("../../lib/urls", () => ({
-  connectionsBaseUrl: "https://connections.test/api",
+  connectionsBaseUrl: "https://connections.test/services",
   notifyBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Hoisted so vi.mock factories can reference them
+const dbMocks = vi.hoisted(() => {
+  const returning = vi.fn();
+  const onConflictDoUpdate = vi.fn().mockReturnValue({ returning });
+  const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
+  const insert = vi.fn().mockReturnValue({ values });
+
+  return { insert, values, onConflictDoUpdate, returning };
+});
+
 vi.mock("@db/console/client", () => ({
-  db: {},
+  db: { insert: dbMocks.insert },
 }));
 
 vi.mock("@db/console/schema", () => ({
@@ -35,15 +46,26 @@ import { SentryProvider } from "./sentry.js";
 import { db } from "@db/console/client";
 import { decrypt } from "../../lib/crypto.js";
 import { updateTokenRecord } from "../../lib/token-store.js";
+import { notifyBackfillService } from "../../lib/urls.js";
 
 const provider = new SentryProvider();
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
+function mockContext(query: Record<string, string | undefined>): Context {
+  return {
+    req: { query: (key: string) => query[key] },
+  } as unknown as Context;
+}
+
 describe("SentryProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset Drizzle INSERT chain
+    dbMocks.insert.mockReturnValue({ values: dbMocks.values });
+    dbMocks.values.mockReturnValue({ onConflictDoUpdate: dbMocks.onConflictDoUpdate });
+    dbMocks.onConflictDoUpdate.mockReturnValue({ returning: dbMocks.returning });
   });
 
   it("has correct provider name and webhook flag", () => {
@@ -304,6 +326,71 @@ describe("SentryProvider", () => {
       await expect(
         provider.resolveToken({ id: "inst-1" } as any),
       ).rejects.toThrow("no_token_found");
+    });
+  });
+
+  describe("handleCallback", () => {
+    const exchangeCodeResponse = {
+      token: "access-tok",
+      refreshToken: "refresh-tok",
+      expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+    };
+
+    it("connects and fires backfill for new installation", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(exchangeCodeResponse),
+      });
+      dbMocks.returning.mockResolvedValue([{ id: "inst-sn-new" }]);
+
+      const c = mockContext({ code: "inst-123:auth-code" });
+      const result = await provider.handleCallback(c, {
+        orgId: "org-1",
+        connectedBy: "user-1",
+      });
+
+      expect(dbMocks.insert).toHaveBeenCalled();
+      expect(dbMocks.values).toHaveBeenCalledWith(
+        expect.objectContaining({ provider: "sentry", status: "active" }),
+      );
+      expect(dbMocks.onConflictDoUpdate).toHaveBeenCalled();
+      expect(result).toMatchObject({
+        status: "connected",
+        installationId: "inst-sn-new",
+        provider: "sentry",
+      });
+      expect(notifyBackfillService).toHaveBeenCalledWith(
+        expect.objectContaining({ installationId: "inst-sn-new" }),
+      );
+    });
+
+    it("reconnects successfully when row already exists (upsert)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(exchangeCodeResponse),
+      });
+      // Upsert returns existing row — no crash
+      dbMocks.returning.mockResolvedValue([{ id: "inst-sn-existing" }]);
+
+      const c = mockContext({ code: "inst-123:auth-code" });
+      const result = await provider.handleCallback(c, {
+        orgId: "org-1",
+        connectedBy: "user-1",
+      });
+
+      expect(result).toMatchObject({
+        status: "connected",
+        installationId: "inst-sn-existing",
+        provider: "sentry",
+      });
+      expect(notifyBackfillService).toHaveBeenCalled();
+    });
+
+    it("throws when code is missing", async () => {
+      const c = mockContext({});
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("missing code");
     });
   });
 

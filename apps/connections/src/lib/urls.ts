@@ -7,14 +7,14 @@ import { env } from "../env.js";
  */
 export const connectionsBaseUrl = (() => {
   if (env.VERCEL_ENV === "preview" && env.VERCEL_URL) {
-    return `https://${env.VERCEL_URL}/api`;
+    return `https://${env.VERCEL_URL}/services`;
   }
 
   if (env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}/api`;
+    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}/services`;
   }
 
-  return "http://localhost:4110/api";
+  return "http://localhost:3024/services";
 })();
 
 const isDevelopment =
@@ -35,7 +35,7 @@ export const gatewayBaseUrl = `${withRelatedProject({
 export const consoleUrl = withRelatedProject({
   projectName: "lightfast-console",
   defaultHost: isDevelopment
-    ? "http://localhost:4107"
+    ? "http://localhost:3024"
     : "https://lightfast.ai",
 });
 

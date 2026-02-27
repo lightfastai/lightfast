@@ -352,7 +352,7 @@ describe("Suite 2.4 — Reactivated GitHub installation skips backfill trigger",
 
     // Call GitHub OAuth callback — should upsert (not insert) since externalId already exists
     const res = await connectionsApp.request(
-      "/api/connections/github/callback?installation_id=gh-reactivate-ext-1&state=reactivate-state-1",
+      "/services/connections/github/callback?installation_id=gh-reactivate-ext-1&state=reactivate-state-1",
     );
 
     // Callback redirects on success
@@ -373,7 +373,7 @@ describe("Suite 2.4 — Reactivated GitHub installation skips backfill trigger",
 
     // Call GitHub OAuth callback for a NEW installation (no pre-existing DB row)
     const res = await connectionsApp.request(
-      "/api/connections/github/callback?installation_id=gh-brand-new-ext-1&state=new-install-state",
+      "/services/connections/github/callback?installation_id=gh-brand-new-ext-1&state=new-install-state",
     );
 
     // Callback redirects on success

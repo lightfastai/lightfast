@@ -149,6 +149,13 @@ const config: NextConfig = withSentry(
             ? "https://lightfast-docs.vercel.app"
             : "http://localhost:4105";
 
+        // Proxy connections API routes to the connections service
+        // Only in dev — production uses connections.lightfast.ai directly
+        const connectionsUrl =
+          vercelEnv === "production" || vercelEnv === "preview" || process.env.NODE_ENV === "production"
+            ? "https://connections.lightfast.ai"
+            : "http://localhost:4110";
+
         return [
           {
             source: "/docs",
@@ -157,6 +164,10 @@ const config: NextConfig = withSentry(
           {
             source: "/docs/:path*",
             destination: `${docsUrl}/docs/:path*`,
+          },
+          {
+            source: "/services/connections/:path*",
+            destination: `${connectionsUrl}/services/connections/:path*`,
           },
         ];
       },

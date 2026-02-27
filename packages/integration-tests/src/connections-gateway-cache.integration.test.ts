@@ -161,11 +161,11 @@ afterAll(async () => {
 // ── Tests ──
 
 describe("Suite 1.1 — Resource link populates gateway routing cache", () => {
-  it("POST /api/connections/:id/resources writes gw:resource:{provider}:{id} to Redis", async () => {
+  it("POST /services/connections/:id/resources writes gw:resource:{provider}:{id} to Redis", async () => {
     const inst = fixtures.installation({ provider: "github", orgId: "org-1", status: "active" });
     await db.insert(gwInstallations).values(inst);
 
-    const res = await req(`/api/connections/${inst.id}/resources`, {
+    const res = await req(`/services/connections/${inst.id}/resources`, {
       method: "POST",
       body: { providerResourceId: "owner/my-repo", resourceName: "my-repo" },
       headers: API_HEADERS,
@@ -205,7 +205,7 @@ describe("Suite 1.1 — Resource link populates gateway routing cache", () => {
 });
 
 describe("Suite 1.2 — Resource unlink removes gateway routing cache", () => {
-  it("DELETE /api/connections/:id/resources/:rid removes the Redis key", async () => {
+  it("DELETE /services/connections/:id/resources/:rid removes the Redis key", async () => {
     const inst = fixtures.installation({ provider: "github", status: "active" });
     await db.insert(gwInstallations).values(inst);
 
@@ -223,7 +223,7 @@ describe("Suite 1.2 — Resource unlink removes gateway routing cache", () => {
     });
 
     const res = await req(
-      `/api/connections/${inst.id}/resources/${resource.id}`,
+      `/services/connections/${inst.id}/resources/${resource.id}`,
       { method: "DELETE", headers: API_HEADERS },
     );
 

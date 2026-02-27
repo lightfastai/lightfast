@@ -17,4 +17,4 @@ export const connectionsUrl = `${withRelatedProject({
   defaultHost: isDevelopment
     ? "http://localhost:4110"
     : "https://connections.lightfast.ai",
-})}/api`;
+})}/services`;

@@ -253,7 +253,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
     });
     await db.insert(gwResources).values(resource);
 
-    const res = await connReq(`/api/connections/${inst.id}`);
+    const res = await connReq(`/services/connections/${inst.id}`);
 
     expect(res.status).toBe(200);
 
@@ -278,7 +278,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
   });
 
   it("returns 404 for unknown installation ID", async () => {
-    const res = await connReq("/api/connections/nonexistent-id-xyz");
+    const res = await connReq("/services/connections/nonexistent-id-xyz");
     expect(res.status).toBe(404);
   });
 
@@ -290,7 +290,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
     const removedResource = fixtures.resource({ installationId: inst.id!, status: "removed" });
     await db.insert(gwResources).values([activeResource, removedResource]);
 
-    const res = await connReq(`/api/connections/${inst.id}`);
+    const res = await connReq(`/services/connections/${inst.id}`);
     expect(res.status).toBe(200);
 
     const json = await res.json() as { resources: Array<{ id: string }> };
@@ -461,7 +461,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
     });
     await db.insert(gwTokens).values(token);
 
-    const res = await connReq(`/api/connections/${inst.id}/token`);
+    const res = await connReq(`/services/connections/${inst.id}/token`);
 
     expect(res.status).toBe(200);
 
@@ -482,7 +482,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
     });
     await db.insert(gwInstallations).values(inst);
 
-    const res = await connReq(`/api/connections/${inst.id}/token`);
+    const res = await connReq(`/services/connections/${inst.id}/token`);
 
     expect(res.status).toBe(400);
     const json = await res.json() as { error: string };
@@ -497,7 +497,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
     await db.insert(gwInstallations).values(inst);
     // No token inserted
 
-    const res = await connReq(`/api/connections/${inst.id}/token`);
+    const res = await connReq(`/services/connections/${inst.id}/token`);
 
     expect(res.status).toBe(404);
   });

@@ -30,7 +30,7 @@ vi.mock("../env", () => ({
 }));
 
 vi.mock("../lib/related-projects", () => ({
-  connectionsUrl: "https://connections.test/api",
+  connectionsUrl: "https://connections.test/services",
   gatewayUrl: "https://gateway.test/api",
 }));
 
@@ -106,7 +106,7 @@ describe("get-connection step", () => {
     await capturedHandler({ event: makeEvent(), step });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://connections.test/api/connections/inst-1",
+      "https://connections.test/services/connections/inst-1",
       { headers: { "X-API-Key": "test-key" } },
     );
   });

@@ -402,7 +402,7 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     await db.insert(gwInstallations).values(inst);
 
     const res = await connectionsApp.request(
-      `/api/connections/github/${inst.id}`,
+      `/services/connections/github/${inst.id}`,
       {
         method: "DELETE",
         headers: new Headers({ "X-API-Key": "0".repeat(64) }),
@@ -472,7 +472,7 @@ describe("Suite 5.3 — Full teardown path", () => {
 
     // ── 2. DELETE /connections/:provider/:id → teardown_initiated ──
     const deleteRes = await connectionsApp.request(
-      `/api/connections/github/${inst.id}`,
+      `/services/connections/github/${inst.id}`,
       {
         method: "DELETE",
         headers: new Headers({ "X-API-Key": "0".repeat(64) }),

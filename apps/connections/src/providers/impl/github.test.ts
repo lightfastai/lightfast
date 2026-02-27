@@ -13,7 +13,7 @@ vi.mock("../../env", () => ({
 }));
 
 vi.mock("../../lib/urls", () => ({
-  connectionsBaseUrl: "https://connections.test/api",
+  connectionsBaseUrl: "https://connections.test/services",
   notifyBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -102,7 +102,7 @@ describe("GitHubProvider", () => {
       });
       const parsed = new URL(url);
       expect(parsed.searchParams.get("redirect_uri")).toBe(
-        "https://connections.test/api/connections/github/callback",
+        "https://connections.test/services/connections/github/callback",
       );
     });
   });

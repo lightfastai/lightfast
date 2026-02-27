@@ -238,7 +238,7 @@ describe("0.1 — Boundary contract shapes", () => {
     });
     await db.insert(gwResources).values(resource);
 
-    const res = await connReq(`/api/connections/${inst.id}`);
+    const res = await connReq(`/services/connections/${inst.id}`);
     expect(res.status).toBe(200);
 
     const json = await res.json();
@@ -260,7 +260,7 @@ describe("0.1 — Boundary contract shapes", () => {
     });
     await db.insert(gwTokens).values(token);
 
-    const res = await connReq(`/api/connections/${inst.id}/token`);
+    const res = await connReq(`/services/connections/${inst.id}/token`);
     expect(res.status).toBe(200);
 
     const json = await res.json();

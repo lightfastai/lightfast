@@ -7,7 +7,7 @@ const app = new Hono();
 app.get("/", (c) => c.json({ service: "connections", status: "ok" }));
 
 // API routes
-app.route("/api/connections", connections);
-app.route("/api/workflows", workflows);
+app.route("/services/connections", connections);
+app.route("/services/connections/workflows", workflows);
 
 export default app;

@@ -5,7 +5,8 @@ import { redis } from "@vendor/upstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
-import { oauthStateKey, resourceKey } from "../lib/cache.js";
+import { html, raw } from "hono/html";
+import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
 import { connectionsBaseUrl, consoleUrl } from "../lib/urls.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import type { TenantVariables } from "../middleware/tenant.js";
@@ -22,10 +23,11 @@ const connections = new Hono<{ Variables: TenantVariables }>();
 /**
  * GET /connections/:provider/authorize
  *
- * Initiate OAuth flow. Generates state token, stores in Redis, returns
- * authorization URL for the provider.
+ * Initiate OAuth flow. Requires X-API-Key authentication (service-to-service only).
+ * Generates state token, stores in Redis, returns authorization URL for the provider.
+ * Accepts optional `redirect_to` query param for CLI/non-browser clients.
  */
-connections.get("/:provider/authorize", tenantMiddleware, async (c) => {
+connections.get("/:provider/authorize", apiKeyAuth, tenantMiddleware, async (c) => {
   const providerName = c.req.param("provider") as ProviderName;
   const orgId = c.get("orgId");
 
@@ -34,6 +36,19 @@ connections.get("/:provider/authorize", tenantMiddleware, async (c) => {
     provider = getProvider(providerName);
   } catch {
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
+  }
+
+  // Validate redirect_to — allowlist: "inline", localhost, or consoleUrl
+  const redirectTo = c.req.query("redirect_to");
+  if (redirectTo && redirectTo !== "inline") {
+    try {
+      const url = new URL(redirectTo);
+      if (url.hostname !== "localhost" && !redirectTo.startsWith(consoleUrl)) {
+        return c.json({ error: "invalid_redirect_to" }, 400);
+      }
+    } catch {
+      return c.json({ error: "invalid_redirect_to" }, 400);
+    }
   }
 
   const state = nanoid();
@@ -47,6 +62,7 @@ connections.get("/:provider/authorize", tenantMiddleware, async (c) => {
       provider: provider.name,
       orgId,
       connectedBy,
+      ...(redirectTo ? { redirectTo } : {}),
       createdAt: Date.now().toString(),
     })
     .expire(key, 600)
@@ -75,12 +91,42 @@ async function resolveAndConsumeState(
 }
 
 /**
+ * GET /connections/oauth/status
+ *
+ * Poll for OAuth completion. Used by CLI to detect when the browser
+ * OAuth flow has completed. No auth required — the state token itself
+ * is the secret (cryptographically random nanoid, known only to the initiator).
+ *
+ * IMPORTANT: Registered BEFORE /:provider/callback to prevent "oauth" matching as a provider.
+ */
+connections.get("/oauth/status", async (c) => {
+  const state = c.req.query("state");
+
+  if (!state) {
+    return c.json({ error: "missing_state" }, 400);
+  }
+
+  const result = await redis.hgetall<Record<string, string>>(oauthResultKey(state));
+
+  if (!result) {
+    return c.json({ status: "pending" });
+  }
+
+  return c.json(result);
+});
+
+/**
  * GET /connections/:provider/callback
  *
  * OAuth callback. Validates state, dispatches to provider.
+ * Supports UI-agnostic completion via redirectTo from state:
+ *   - "inline": renders HTML for CLI (browser can be closed)
+ *   - URL string: redirects to explicit URL (validated at authorize time)
+ *   - undefined: default redirect to console (backwards compatible)
  */
 connections.get("/:provider/callback", async (c) => {
   const providerName = c.req.param("provider") as ProviderName;
+  const state = c.req.query("state") ?? "";
 
   let provider;
   try {
@@ -99,10 +145,100 @@ connections.get("/:provider/callback", async (c) => {
   }
 
   try {
-    await provider.handleCallback(c, stateData);
-    return c.redirect(`${consoleUrl}/${provider.name}/connected`);
+    const result = await provider.handleCallback(c, stateData);
+
+    // Store completion result in Redis for CLI polling (5-min TTL)
+    await redis
+      .pipeline()
+      .hset(oauthResultKey(state), {
+        status: "completed",
+        provider: provider.name,
+        ...(result.reactivated ? { reactivated: "true" } : {}),
+        ...(result.setupAction ? { setupAction: result.setupAction } : {}),
+      })
+      .expire(oauthResultKey(state), 300)
+      .exec();
+
+    const redirectTo = stateData.redirectTo;
+
+    if (redirectTo === "inline") {
+      // CLI mode: render inline HTML — user can close the tab
+      return await c.html(
+        html`<!doctype html>
+          <html>
+            <head><title>Connected</title></head>
+            <body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#fafafa">
+              <div style="text-align:center">
+                <div style="font-size:48px;margin-bottom:16px">&#10003;</div>
+                <h1 style="margin:0 0 8px">Connected to ${provider.name}!</h1>
+                <p style="color:#666">You can close this tab and return to your terminal.</p>
+              </div>
+              ${raw("<script>setTimeout(()=>window.close(),2000)</script>")}
+            </body>
+          </html>`,
+      );
+    }
+
+    if (redirectTo) {
+      // Explicit redirect URL (validated during authorize)
+      const redirectUrl = new URL(redirectTo);
+      if (result.reactivated) {
+        redirectUrl.searchParams.set("reactivated", "true");
+      }
+      if (result.setupAction) {
+        redirectUrl.searchParams.set("setup_action", result.setupAction);
+      }
+      return c.redirect(redirectUrl.toString());
+    }
+
+    // Default: redirect to console (existing behavior, backwards compatible)
+    const redirectUrl = new URL(`${consoleUrl}/${provider.name}/connected`);
+    if (result.reactivated) {
+      redirectUrl.searchParams.set("reactivated", "true");
+    }
+    if (result.setupAction) {
+      redirectUrl.searchParams.set("setup_action", result.setupAction);
+    }
+    return c.redirect(redirectUrl.toString());
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";
+
+    // Store error result for CLI polling
+    await redis
+      .pipeline()
+      .hset(oauthResultKey(state), {
+        status: "failed",
+        error: message,
+      })
+      .expire(oauthResultKey(state), 300)
+      .exec();
+
+    const redirectTo = stateData.redirectTo;
+
+    if (redirectTo === "inline") {
+      return c.html(
+        html`<!doctype html>
+          <html>
+            <head><title>Connection Failed</title></head>
+            <body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#fafafa">
+              <div style="text-align:center">
+                <div style="font-size:48px;margin-bottom:16px">&#10007;</div>
+                <h1 style="margin:0 0 8px">Connection Failed</h1>
+                <p style="color:#666">${message}</p>
+                <p style="color:#999;font-size:14px">Close this tab and try again in your terminal.</p>
+              </div>
+            </body>
+          </html>`,
+        400,
+      );
+    }
+
+    if (redirectTo) {
+      return c.redirect(
+        `${redirectTo}?error=${encodeURIComponent(message)}`,
+      );
+    }
+
     return c.redirect(
       `${consoleUrl}/${provider.name}/connected?error=${encodeURIComponent(message)}`,
     );
@@ -230,7 +366,7 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
 
   // Trigger durable teardown workflow
   await workflowClient.trigger({
-    url: `${connectionsBaseUrl}/workflows/connection-teardown`,
+    url: `${connectionsBaseUrl}/connections/workflows/connection-teardown`,
     body: {
       installationId: id,
       provider: providerName,
