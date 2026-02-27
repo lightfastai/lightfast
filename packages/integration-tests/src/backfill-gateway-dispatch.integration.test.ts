@@ -108,7 +108,7 @@ beforeEach(() => {
     return Promise.resolve(1);
   });
   redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve(redisStore.get(key) ?? null),
+    Promise.resolve((redisStore.get(key) as Record<string, string>) ?? null),
   );
   redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean; ex?: number }) => {
     if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
@@ -146,7 +146,7 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
 
     expect(qstashMock.publishJSON).toHaveBeenCalledOnce();
 
-    const call = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0][0] as {
+    const call = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
       url: string;
       body: {
         deliveryId: string;
@@ -175,7 +175,7 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
     // Verify each required field is present in the QStash envelope
     await webhookReq("github", VALID_GITHUB_BODY, { "X-API-Key": API_KEY });
 
-    const envelope = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0][0] as {
+    const envelope = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
       body: Record<string, unknown>;
     };
 

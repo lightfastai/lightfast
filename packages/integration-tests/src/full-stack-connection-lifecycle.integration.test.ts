@@ -177,7 +177,7 @@ beforeEach(() => {
     return Promise.resolve(1);
   });
   redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve(redisStore.get(key) ?? null),
+    Promise.resolve((redisStore.get(key) as Record<string, string>) ?? null),
   );
   redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean; ex?: number }) => {
     if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
@@ -349,7 +349,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
 
       // QStash should have received the WebhookEnvelope
       expect(qstashMock.publishJSON).toHaveBeenCalled();
-      const envelope = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0][0] as {
+      const envelope = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
         body: { connectionId: string; provider: string; deliveryId: string };
       };
       expect(envelope.body.connectionId).toBe("conn-lifecycle-1");
@@ -519,7 +519,7 @@ describe("Suite 5.3 — Full teardown path", () => {
     // With the cache gone, gateway resolve-connection would fall through to DB.
     // DB resource status is still "active" here (soft-delete is workflow step 5),
     // but the cache miss proves the cleanup step ran correctly.
-    const cachedAfterCleanup = await redisMock.hgetall<Record<string, string>>(cacheKey);
+    const cachedAfterCleanup = await redisMock.hgetall(cacheKey) as Record<string, string> | null;
     expect(cachedAfterCleanup).toBeNull();
   });
 });

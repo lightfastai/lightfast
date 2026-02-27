@@ -156,7 +156,7 @@ beforeEach(() => {
     return Promise.resolve(1);
   });
   redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve(redisStore.get(key) ?? null),
+    Promise.resolve((redisStore.get(key) as Record<string, string>) ?? null),
   );
   redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean }) => {
     if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
@@ -209,7 +209,7 @@ describe("Suite 2.1 — notifyBackfillService publishes correct QStash body", ()
 
     expect(qstashMock.publishJSON).toHaveBeenCalledOnce();
 
-    const call = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0][0] as {
+    const call = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
       url: string;
       headers: Record<string, string>;
       body: { installationId: string; provider: string; orgId: string };
@@ -293,7 +293,7 @@ describe("Suite 2.3 — cancelBackfillService publishes cancel body", () => {
 
     expect(qstashMock.publishJSON).toHaveBeenCalledOnce();
 
-    const call = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0][0] as {
+    const call = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
       url: string;
       headers: Record<string, string>;
       body: { installationId: string };
@@ -382,7 +382,7 @@ describe("Suite 2.4 — Reactivated GitHub installation skips backfill trigger",
     // notifyBackfillService SHOULD have been called for a new connection
     expect(qstashMock.publishJSON).toHaveBeenCalledOnce();
 
-    const call = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0][0] as {
+    const call = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
       url: string;
       body: { provider: string; orgId: string };
     };

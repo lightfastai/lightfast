@@ -1,10 +1,23 @@
 {
   "extends": "@repo/typescript-config/hono.json",
   "compilerOptions": {
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "noEmit": true
+    "noEmit": true,
+    "rootDir": "../..",
+    "paths": {
+      "@connections/app": ["../../apps/connections/src/app.ts"],
+      "@backfill/app": ["../../apps/backfill/src/app.ts"],
+      "@gateway/app": ["../../apps/gateway/src/app.ts"],
+      "@connections/urls": ["../../apps/connections/src/lib/urls.ts"],
+      "@connections/crypto": ["../../apps/connections/src/lib/crypto.ts"],
+      "@connections/cache": ["../../apps/connections/src/lib/cache.ts"],
+      "@gateway/cache": ["../../apps/gateway/src/lib/cache.ts"],
+      "@gateway/webhook-delivery": ["../../apps/gateway/src/workflows/webhook-delivery.ts"],
+      "@backfill/orchestrator": ["../../apps/backfill/src/workflows/backfill-orchestrator.ts"],
+      "@backfill/entity-worker": ["../../apps/backfill/src/workflows/entity-worker.ts"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules"]

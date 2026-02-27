@@ -3963,6 +3963,9 @@ importers:
       '@vendor/upstash-workflow':
         specifier: workspace:*
         version: link:../../vendor/upstash-workflow
+      hono:
+        specifier: 'catalog:'
+        version: 4.12.2
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
