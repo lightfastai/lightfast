@@ -2,6 +2,7 @@ import { db } from "@db/console/client";
 import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 import { redis } from "@vendor/upstash";
 import { serve } from "@vendor/upstash-workflow/hono";
+import type { WorkflowContext } from "@vendor/upstash-workflow/types";
 import { and, eq } from "drizzle-orm";
 import { env } from "../env.js";
 import { resourceKey } from "../lib/cache.js";
@@ -9,7 +10,6 @@ import { decrypt } from "../lib/crypto.js";
 import { cancelBackfillService } from "../lib/urls.js";
 import { getProvider } from "../providers/index.js";
 import type { ProviderName } from "../providers/types.js";
-import type { WorkflowContext } from "@vendor/upstash-workflow/types";
 
 interface TeardownPayload {
   installationId: string;

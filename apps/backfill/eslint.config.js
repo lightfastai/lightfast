@@ -3,14 +3,14 @@ import honoConfig from "@repo/eslint-config/hono";
 /** @type {import('typescript-eslint').Config} */
 export default [
   {
-    ignores: ["dist/**"],
+    ignores: ["dist/**", ".vercel/**"],
   },
   ...honoConfig,
   {
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ["eslint.config.js", "vitest.config.ts"],
+          allowDefaultProject: ["eslint.config.js", "vitest.config.ts", "tsup.config.ts"],
         },
       },
     },
