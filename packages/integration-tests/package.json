@@ -26,6 +26,7 @@
     "@vendor/related-projects": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
+    "eslint": "catalog:",
     "hono": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

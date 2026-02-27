@@ -147,13 +147,13 @@ describe("GET /connections/:id (integration)", () => {
     await db.insert(gwInstallations).values(inst);
 
     const activeRes = fixtures.resource({
-      installationId: inst.id!,
+      installationId: inst.id,
       providerResourceId: "my-org/active-repo",
       resourceName: "active-repo",
       status: "active",
     });
     const removedRes = fixtures.resource({
-      installationId: inst.id!,
+      installationId: inst.id,
       providerResourceId: "my-org/removed-repo",
       resourceName: "removed-repo",
       status: "removed",
@@ -191,7 +191,7 @@ describe("GET /connections/:id (integration)", () => {
     const inst = fixtures.installation({ provider: "vercel", orgId: "org-1" });
     await db.insert(gwInstallations).values(inst);
 
-    const token = fixtures.token({ installationId: inst.id! });
+    const token = fixtures.token({ installationId: inst.id });
     await db.insert(gwTokens).values(token);
 
     const res = await request(`/connections/${inst.id}`, { headers: API });
@@ -337,7 +337,7 @@ describe("POST /connections/:id/resources (integration)", () => {
 
     // Pre-insert an active resource
     const existing = fixtures.resource({
-      installationId: inst.id!,
+      installationId: inst.id,
       providerResourceId: "my-org/my-repo",
       status: "active",
     });
@@ -358,7 +358,7 @@ describe("POST /connections/:id/resources (integration)", () => {
 
     // Pre-insert a removed resource for the same providerResourceId
     const removed = fixtures.resource({
-      installationId: inst.id!,
+      installationId: inst.id,
       providerResourceId: "my-org/my-repo",
       status: "removed",
     });
@@ -409,7 +409,7 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
     const inst = fixtures.installation();
     await db.insert(gwInstallations).values(inst);
 
-    const resource = fixtures.resource({ installationId: inst.id!, status: "removed" });
+    const resource = fixtures.resource({ installationId: inst.id, status: "removed" });
     await db.insert(gwResources).values(resource);
 
     const res = await request(`/connections/${inst.id}/resources/${resource.id}`, {
@@ -425,7 +425,7 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
     await db.insert(gwInstallations).values(inst);
 
     const resource = fixtures.resource({
-      installationId: inst.id!,
+      installationId: inst.id,
       providerResourceId: "my-org/my-repo",
       status: "active",
     });
@@ -442,7 +442,7 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
     const rows = await db
       .select()
       .from(gwResources)
-      .where(eq(gwResources.id, resource.id!));
+      .where(eq(gwResources.id, resource.id));
     expect(rows[0]!.status).toBe("removed");
 
     // Verify Redis cache cleanup with correct key

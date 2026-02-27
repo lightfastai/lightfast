@@ -41,7 +41,7 @@ describe("gwInstallations", () => {
     const rows = await db
       .select()
       .from(gwInstallations)
-      .where(eq(gwInstallations.id, inst.id!));
+      .where(eq(gwInstallations.id, inst.id));
 
     expect(rows).toHaveLength(1);
     expect(rows[0]!.provider).toBe("github");
@@ -92,13 +92,13 @@ describe("gwTokens", () => {
     const inst = fixtures.installation();
     await db.insert(gwInstallations).values(inst);
 
-    const token = fixtures.token({ installationId: inst.id! });
+    const token = fixtures.token({ installationId: inst.id });
     await db.insert(gwTokens).values(token);
 
     const rows = await db
       .select()
       .from(gwTokens)
-      .where(eq(gwTokens.installationId, inst.id!));
+      .where(eq(gwTokens.installationId, inst.id));
 
     expect(rows).toHaveLength(1);
     expect(rows[0]!.accessToken).toBe(token.accessToken);
@@ -108,17 +108,17 @@ describe("gwTokens", () => {
     const inst = fixtures.installation();
     await db.insert(gwInstallations).values(inst);
 
-    const token = fixtures.token({ installationId: inst.id! });
+    const token = fixtures.token({ installationId: inst.id });
     await db.insert(gwTokens).values(token);
 
     await db
       .delete(gwInstallations)
-      .where(eq(gwInstallations.id, inst.id!));
+      .where(eq(gwInstallations.id, inst.id));
 
     const remaining = await db
       .select()
       .from(gwTokens)
-      .where(eq(gwTokens.id, token.id!));
+      .where(eq(gwTokens.id, token.id));
 
     expect(remaining).toHaveLength(0);
   });
@@ -130,7 +130,7 @@ describe("gwResources", () => {
     await db.insert(gwInstallations).values(inst);
 
     const resource = fixtures.resource({
-      installationId: inst.id!,
+      installationId: inst.id,
       providerResourceId: "my-org/my-repo",
       resourceName: "my-repo",
     });
@@ -139,7 +139,7 @@ describe("gwResources", () => {
     const rows = await db
       .select()
       .from(gwResources)
-      .where(eq(gwResources.installationId, inst.id!));
+      .where(eq(gwResources.installationId, inst.id));
 
     expect(rows).toHaveLength(1);
     expect(rows[0]!.providerResourceId).toBe("my-org/my-repo");
@@ -150,17 +150,17 @@ describe("gwResources", () => {
     const inst = fixtures.installation();
     await db.insert(gwInstallations).values(inst);
 
-    const res = fixtures.resource({ installationId: inst.id! });
+    const res = fixtures.resource({ installationId: inst.id });
     await db.insert(gwResources).values(res);
 
     await db
       .delete(gwInstallations)
-      .where(eq(gwInstallations.id, inst.id!));
+      .where(eq(gwInstallations.id, inst.id));
 
     const remaining = await db
       .select()
       .from(gwResources)
-      .where(eq(gwResources.id, res.id!));
+      .where(eq(gwResources.id, res.id));
 
     expect(remaining).toHaveLength(0);
   });
