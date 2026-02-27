@@ -54,6 +54,7 @@ export default tseslint.config(
       ...tseslint.configs.stylisticTypeChecked,
     ],
     rules: {
+      // @ts-expect-error - eslint-plugin-turbo types don't narrow configs.recommended to single object
       ...turboPlugin.configs.recommended.rules,
       "@typescript-eslint/no-unused-vars": [
         "error",

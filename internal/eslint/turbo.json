@@ -1,4 +1,5 @@
 {
   "extends": ["//"],
-  "tags": ["internal"]
+  "tags": ["internal"],
+  "tasks": {}
 }

@@ -1,4 +1,5 @@
 {
   "extends": ["//"],
-  "tags": ["api"]
+  "tags": ["api"],
+  "tasks": {}
 }

@@ -51,7 +51,8 @@
         "QSTASH_CURRENT_SIGNING_KEY",
         "QSTASH_NEXT_SIGNING_KEY",
         "ENCRYPTION_KEY",
-        "GATEWAY_API_KEY"
+        "GATEWAY_API_KEY",
+        "PORT"
       ],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "next-env.d.ts"]
     },
