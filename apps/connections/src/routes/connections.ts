@@ -246,11 +246,22 @@ connections.get("/:provider/callback", async (c) => {
 });
 
 // ── Lifecycle ──
+// INTERNAL-ONLY: These endpoints are called exclusively by trusted backend
+// services (backfill orchestrator, entity worker) that hold GATEWAY_API_KEY.
+// They are NOT reachable from external clients — the console's Next.js rewrite
+// for /services/connections/* is blocked by both Clerk middleware and the
+// absence of X-API-Key on proxied requests.
+//
+// No per-org scoping is applied here; callers are responsible for passing
+// correct installationIds obtained through org-scoped flows. If these
+// endpoints are ever exposed to less-trusted callers, add tenantMiddleware
+// and an orgId WHERE clause.
 
 /**
  * GET /connections/:id
  *
- * Get connection details. Requires X-API-Key authentication.
+ * Get connection details. Internal-only, requires X-API-Key authentication.
+ * Callers: backfill-orchestrator
  */
 connections.get("/:id", apiKeyAuth, async (c) => {
   const id = c.req.param("id");
@@ -301,7 +312,8 @@ connections.get("/:id", apiKeyAuth, async (c) => {
  * GET /connections/:id/token
  *
  * Token vault — returns decrypted provider token for a connection.
- * Requires X-API-Key authentication.
+ * Internal-only, requires X-API-Key authentication.
+ * Callers: backfill entity-worker
  */
 connections.get("/:id/token", apiKeyAuth, async (c) => {
   const id = c.req.param("id");
@@ -346,7 +358,8 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
  * DELETE /connections/:provider/:id
  *
  * Teardown a connection. Triggers a durable workflow and returns immediately.
- * Requires X-API-Key authentication.
+ * Internal-only, requires X-API-Key authentication.
+ * Callers: console tRPC (org/connections.disconnect)
  */
 connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
   const providerName = c.req.param("provider") as ProviderName;
@@ -382,7 +395,8 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
 /**
  * POST /connections/:id/resources
  *
- * Link a resource to a connection. Requires X-API-Key authentication.
+ * Link a resource to a connection. Internal-only, requires X-API-Key authentication.
+ * Callers: console tRPC (org/connections, org/workspace)
  */
 connections.post("/:id/resources", apiKeyAuth, async (c) => {
   const id = c.req.param("id");
@@ -478,7 +492,8 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
 /**
  * DELETE /connections/:id/resources/:resourceId
  *
- * Unlink a resource from a connection. Requires X-API-Key authentication.
+ * Unlink a resource from a connection. Internal-only, requires X-API-Key authentication.
+ * Callers: console tRPC (org/connections, org/workspace)
  */
 connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
   const id = c.req.param("id");
