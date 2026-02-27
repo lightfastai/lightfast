@@ -77,7 +77,23 @@ interface UsePaymentAttemptsReturn {
 	revalidate: () => Promise<void>;
 }
 
-export function useBillingData() {
+export interface BillingData {
+	subscription: BillingSubscription | null;
+	refreshSubscription: () => Promise<void | undefined>;
+	paidSubscriptionItems: BillingSubscriptionItem[];
+	activePaidItem: BillingSubscriptionItem | null;
+	hasActiveSubscription: boolean;
+	isCanceled: boolean;
+	nextBillingDate: string | null;
+	billingInterval: "month" | "annual";
+	payments: BillingPaymentAttempt[];
+	failedPayments: BillingPaymentAttempt[];
+	paymentsLoading: boolean;
+	paymentsError: unknown;
+	revalidatePayments: () => Promise<void | undefined>;
+}
+
+export function useBillingData(): BillingData {
 	const trpc = useTRPC();
 
 	const { data: rawSubscription, refetch: refetchSubscription } =
@@ -148,8 +164,9 @@ export function useBillingData() {
 	return {
 		// Raw Clerk subscription
 		subscription,
-		refreshSubscription: () =>
-			refetchSubscription().catch(() => undefined),
+		refreshSubscription: async () => {
+			await refetchSubscription().catch(() => undefined);
+		},
 
 		// Derived billing state
 		...derived,
