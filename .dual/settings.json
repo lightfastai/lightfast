@@ -1,0 +1,13 @@
+{
+  "devcontainer": ".devcontainer/devcontainer.json",
+  "extra_commands": [],
+  "anonymous_volumes": [
+    "node_modules"
+  ],
+  "shared": [
+    "apps/auth/.vercel",
+    "apps/console/.vercel",
+    "apps/docs/.vercel",
+    "apps/www/.vercel"
+  ]
+}

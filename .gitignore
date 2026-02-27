@@ -70,6 +70,9 @@ dist/
 .cache
 *.tsbuildinfo
 
+# tsup bundler cache
+tsup.config.bundled_*.mjs
+
 # Generated OpenAPI spec
 packages/console-types/openapi.json
 
