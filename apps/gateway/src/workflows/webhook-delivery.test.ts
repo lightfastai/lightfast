@@ -6,6 +6,8 @@ import type { WebhookReceiptPayload } from "@repo/gateway-types";
 const mockRedisSet = vi.fn();
 const mockRedisHgetall = vi.fn();
 const mockRedisHset = vi.fn();
+const mockRedisExpire = vi.fn();
+const mockPipelineExec = vi.fn();
 const mockPublishJSON = vi.fn().mockResolvedValue({ messageId: "msg-1" });
 const mockPublishToTopic = vi.fn().mockResolvedValue([{ messageId: "msg-2" }]);
 
@@ -25,6 +27,14 @@ vi.mock("@vendor/upstash", () => ({
     set: (...args: unknown[]) => mockRedisSet(...args),
     hgetall: (...args: unknown[]) => mockRedisHgetall(...args),
     hset: (...args: unknown[]) => mockRedisHset(...args),
+    pipeline: () => {
+      const pipe = {
+        hset: (...args: unknown[]) => { mockRedisHset(...args); return pipe; },
+        expire: (...args: unknown[]) => { mockRedisExpire(...args); return pipe; },
+        exec: () => mockPipelineExec(),
+      };
+      return pipe;
+    },
   },
 }));
 
@@ -121,6 +131,8 @@ describe("webhook-delivery workflow", () => {
     mockRedisSet.mockResolvedValue("OK");
     mockRedisHgetall.mockResolvedValue(null);
     mockRedisHset.mockResolvedValue("OK");
+    mockRedisExpire.mockResolvedValue(1);
+    mockPipelineExec.mockResolvedValue([]);
     mockPublishJSON.mockResolvedValue({ messageId: "msg-1" });
     mockPublishToTopic.mockResolvedValue([{ messageId: "msg-2" }]);
     mockDbRows = [];
@@ -292,7 +304,7 @@ describe("webhook-delivery workflow", () => {
       expect(mockPublishJSON).not.toHaveBeenCalled();
     });
 
-    it("Redis hset (cache populate) throws → blocks publish even though connection was found", async () => {
+    it("Redis pipeline exec (cache populate) throws → blocks publish even though connection was found", async () => {
       // This documents current behavior: cache populate failure inside the
       // resolve-connection step causes the ENTIRE step to fail, preventing
       // publish. Upstash retries the step, but it's worth knowing this is
@@ -300,7 +312,7 @@ describe("webhook-delivery workflow", () => {
       mockRedisSet.mockResolvedValue("OK");
       mockRedisHgetall.mockResolvedValue(null); // cache miss
       mockDbRows = [{ installationId: "conn-found", orgId: "org-found" }];
-      mockRedisHset.mockRejectedValue(new Error("Redis write error"));
+      mockPipelineExec.mockRejectedValue(new Error("Redis write error"));
 
       const ctx = makeContext(makePayload());
       await expect(capturedHandler(ctx)).rejects.toThrow("Redis write error");

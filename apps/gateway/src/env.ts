@@ -26,7 +26,7 @@ export const getEnv = (c: Context) =>
     clientPrefix: "" as const,
     client: {},
     server,
-    runtimeEnv: honoEnv(c) as Record<string, string | undefined>,
+    runtimeEnv: honoEnv<Record<keyof typeof server, string | undefined>>(c),
     emptyStringAsUndefined: true,
   });
 
