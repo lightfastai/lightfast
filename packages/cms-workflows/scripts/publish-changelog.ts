@@ -32,6 +32,7 @@ interface InternalFields {
 
 interface ChangelogFrontmatter {
   title: string;
+  prefix: string;
   slug: string;
   publishedAt?: string;
   excerpt?: string;
@@ -91,7 +92,7 @@ async function main() {
   const frontmatter = data as ChangelogFrontmatter;
 
   // Validate required fields
-  const required: (keyof ChangelogFrontmatter)[] = ["title", "slug"];
+  const required: (keyof ChangelogFrontmatter)[] = ["title", "prefix", "slug"];
   for (const field of required) {
     if (!frontmatter[field]) {
       console.error(

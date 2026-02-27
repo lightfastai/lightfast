@@ -8,6 +8,7 @@ import type { UIMessage } from "ai";
 import type { Agent } from "../../agent";
 import type { LoggerFactory } from "../../logger";
 import { LogEventName, noopLogger } from "../../logger";
+import type { SessionState } from "../runtime/types";
 import { uuidv4 } from "../../utils/uuid";
 import { getDeltaStreamKey, getMessageKey, getSessionKey } from "../keys";
 import { DeltaStreamType } from "../stream/types";
@@ -74,7 +75,7 @@ export async function handleStreamInit<TRuntimeContext = unknown>(
 
 	// Read operations in parallel (Promise.all for better typing)
 	const [existingState, existingMessages] = await Promise.all([
-		redis.get(sessionKey),
+		redis.get<SessionState>(sessionKey),
 		redis.json.get(messageKey, "$"),
 	]);
 
