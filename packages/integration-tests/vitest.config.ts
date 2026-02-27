@@ -24,6 +24,8 @@ export default defineConfig({
           "@vendor/upstash-workflow",
           // DB packages — inline so @db/console/client mock resolves correctly
           "@db/console",
+          // Shared packages imported by app workflows — inline so vi.mock intercepts
+          "@repo/console-backfill",
         ],
       },
     },
@@ -41,6 +43,7 @@ export default defineConfig({
       "@gateway/cache": resolve(root, "apps/gateway/src/lib/cache.ts"),
       "@gateway/webhook-delivery": resolve(root, "apps/gateway/src/workflows/webhook-delivery.ts"),
       "@backfill/orchestrator": resolve(root, "apps/backfill/src/workflows/backfill-orchestrator.ts"),
+      "@backfill/entity-worker": resolve(root, "apps/backfill/src/workflows/entity-worker.ts"),
     },
   },
 });

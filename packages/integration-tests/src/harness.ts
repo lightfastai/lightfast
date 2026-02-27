@@ -240,3 +240,38 @@ export function makeStep(
     ...overrides,
   };
 }
+
+/**
+ * Temporal fault decorator for step mocks.
+ *
+ * Wraps a step mock to advance vi.useFakeTimers() by a specified amount
+ * after named steps complete. Useful for testing time-based expiry scenarios:
+ * - Token expiry mid-pagination: advance 55+ minutes after "get-token"
+ * - Redis cache TTL expiry: advance 25+ hours during a long backfill
+ * - OAuth state TTL expiry: advance 601+ seconds during OAuth flow
+ *
+ * Requires vi.useFakeTimers() to be active in the calling test.
+ *
+ * @example
+ *   vi.useFakeTimers();
+ *   const step = withTimeFaults(makeStep(), [
+ *     { afterStep: "get-token", advanceMs: 55 * 60_000 },
+ *   ]);
+ *   await entityHandler({ event, step });
+ *   // Connector will receive an expired token and throw 401 mid-pagination
+ */
+export function withTimeFaults(
+  step: ReturnType<typeof makeStep>,
+  faults: Array<{ afterStep: string; advanceMs: number }>,
+): ReturnType<typeof makeStep> {
+  const originalRun = step.run as ReturnType<typeof vi.fn>;
+  const wrappedRun = vi.fn(async (name: string, fn: () => unknown) => {
+    const result = await originalRun(name, fn);
+    const fault = faults.find((f) => f.afterStep === name);
+    if (fault) {
+      vi.advanceTimersByTime(fault.advanceMs);
+    }
+    return result;
+  });
+  return { ...step, run: wrappedRun };
+}

@@ -38,6 +38,7 @@ const {
   capturedHandlers,
   inngestSendMock,
   NonRetriableErrorRef,
+  mockGetConnector,
 } = await vi.hoisted(async () => {
   const { makeRedisMock, makeQStashMock } = await import("./harness.js");
   const redisStore = new Map<string, unknown>();
@@ -55,6 +56,7 @@ const {
     capturedHandlers,
     inngestSendMock: vi.fn().mockResolvedValue({ ids: ["evt-1"] }),
     NonRetriableErrorRef,
+    mockGetConnector: vi.fn(),
   };
 });
 
@@ -109,6 +111,10 @@ vi.mock("@vendor/inngest", () => {
   };
 });
 
+vi.mock("@repo/console-backfill", () => ({
+  getConnector: (...args: unknown[]) => mockGetConnector(...args),
+}));
+
 vi.mock("@vendor/related-projects", () => ({
   withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
     defaultHost,
@@ -131,9 +137,11 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 
 // ── Import apps and orchestrator after mocks ──
 import connectionsApp from "@connections/app";
+import gatewayApp from "@gateway/app";
 
-// Force backfill orchestrator to load and register its createFunction
+// Force backfill workflows to load and register their createFunction handlers
 await import("@backfill/orchestrator");
+await import("@backfill/entity-worker");
 
 // ── Utilities ──
 import { installServiceRouter, makeStep } from "./harness.js";
@@ -171,6 +179,13 @@ beforeEach(() => {
   vi.clearAllMocks();
   inngestSendMock.mockResolvedValue({ ids: ["evt-1"] });
   redisStore.clear();
+
+  // Default connector — passes orchestrator validation, fetchPage never called by orchestrator
+  mockGetConnector.mockReturnValue({
+    defaultEntityTypes: ["pull_request"],
+    supportedEntityTypes: ["pull_request"],
+    fetchPage: vi.fn(),
+  });
 
   redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
     const existing = (redisStore.get(key) as Record<string, unknown>) ?? {};
@@ -485,5 +500,75 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
     const res = await connReq(`/api/connections/${inst.id}/token`);
 
     expect(res.status).toBe(404);
+  });
+});
+
+describe("Suite 3.4 — Entity worker token refresh on 401 mid-pagination", () => {
+  it("fetches fresh token when connector throws 401 on first fetchPage call", async () => {
+    const ENCRYPTION_KEY = "a".repeat(64);
+
+    // Seed DB with an active installation + encrypted token.
+    // Use "sentry" not "github": GitHub generates JWTs on-demand (no stored token),
+    // which fails in tests. Sentry uses a standard stored OAuth token.
+    const inst = fixtures.installation({
+      provider: "sentry",
+      orgId: "org-retry-401",
+      status: "active",
+    });
+    await db.insert(gwInstallations).values(inst);
+
+    const encryptedToken = await encrypt("initial-access-token", ENCRYPTION_KEY);
+    const token = fixtures.token({
+      installationId: inst.id!,
+      accessToken: encryptedToken,
+    });
+    await db.insert(gwTokens).values(token);
+
+    const entityHandler = capturedHandlers.get("apps-backfill/entity.worker");
+    expect(entityHandler).toBeDefined();
+
+    // Connector: throws 401 on first fetchPage, returns one event on second
+    const err401 = Object.assign(new Error("Unauthorized"), { status: 401 });
+    const mockConnector = {
+      defaultEntityTypes: ["pull_request"],
+      supportedEntityTypes: ["pull_request"],
+      fetchPage: vi.fn()
+        .mockRejectedValueOnce(err401)
+        .mockResolvedValueOnce({
+          events: [
+            { deliveryId: "del-retry-1", eventType: "pull_request", payload: { number: 1 } },
+          ],
+          nextCursor: null,
+          rawCount: 1,
+        }),
+    };
+    mockGetConnector.mockReturnValue(mockConnector);
+
+    // Service router: connections (port 4110) → token endpoint
+    //                 gateway (port 4108) → accepts dispatched event
+    const restore = installServiceRouter({ connectionsApp, gatewayApp });
+    try {
+      const result = await entityHandler!({
+        event: {
+          data: {
+            installationId: inst.id,
+            provider: "sentry",
+            orgId: "org-retry-401",
+            entityType: "pull_request",
+            resource: { providerResourceId: "owner/retry-repo", resourceName: "retry-repo" },
+            since: new Date().toISOString(),
+          },
+        },
+        step: makeStep(),
+      }) as { eventsDispatched: number; pagesProcessed: number };
+
+      // fetchPage was attempted twice: once with initial token (→ 401), once after refresh
+      expect(mockConnector.fetchPage).toHaveBeenCalledTimes(2);
+      // Entity worker completed successfully after the refresh
+      expect(result.eventsDispatched).toBe(1);
+      expect(result.pagesProcessed).toBe(1);
+    } finally {
+      restore();
+    }
   });
 });
