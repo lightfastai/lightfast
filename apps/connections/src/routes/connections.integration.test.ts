@@ -394,7 +394,7 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
     const inst2 = fixtures.installation();
     await db.insert(gwInstallations).values([inst1, inst2]);
 
-    const resource = fixtures.resource({ installationId: inst2.id! });
+    const resource = fixtures.resource({ installationId: inst2.id });
     await db.insert(gwResources).values(resource);
 
     // Try to delete via inst1 — should 404 because installationId doesn't match
