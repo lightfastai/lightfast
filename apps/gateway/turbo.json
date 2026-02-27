@@ -1,6 +1,7 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "extends": ["//"],
+  "tags": ["app"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -10,12 +11,22 @@
         "GITHUB_WEBHOOK_SECRET",
         "VERCEL_CLIENT_INTEGRATION_SECRET",
         "LINEAR_WEBHOOK_SIGNING_SECRET",
-        "SENTRY_CLIENT_SECRET"
+        "SENTRY_CLIENT_SECRET",
+        "DATABASE_HOST",
+        "DATABASE_USERNAME",
+        "DATABASE_PASSWORD",
+        "KV_REST_API_URL",
+        "KV_REST_API_TOKEN",
+        "QSTASH_TOKEN",
+        "QSTASH_URL",
+        "QSTASH_CURRENT_SIGNING_KEY",
+        "QSTASH_NEXT_SIGNING_KEY"
       ],
       "outputs": ["dist/**"]
     },
     "dev": {
-      "persistent": true
+      "persistent": true,
+      "interruptible": true
     }
   }
 }

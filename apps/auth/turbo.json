@@ -1,6 +1,7 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "extends": ["//"],
+  "tags": ["app"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -15,7 +16,11 @@
       "passThroughEnv": [
         "SENTRY_AUTH_TOKEN",
         "SENTRY_ORG",
-        "SENTRY_PROJECT"
+        "SENTRY_PROJECT",
+        "CLERK_SECRET_KEY",
+        "LOGTAIL_SOURCE_TOKEN",
+        "LOGTAIL_URL",
+        "HEALTH_CHECK_AUTH_TOKEN"
       ],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "next-env.d.ts"]
     },

@@ -12,37 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Detect changes to only run CI when needed
-  changes:
-    name: Detect Changes
-    runs-on: ubuntu-latest
-    outputs:
-      general: ${{ steps.changes.outputs.general }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Check for changes
-        uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            general:
-              - 'apps/**'
-              - 'packages/**'
-              - 'vendor/**'
-              - 'api/**'
-              - 'internal/**'
-              - 'db/**'
-              - 'pnpm-lock.yaml'
-              - 'turbo.json'
-              - '.github/workflows/ci.yml'
-
-  # Lint affected packages
-  lint:
-    name: Lint
-    needs: changes
-    if: needs.changes.outputs.general == 'true'
+  quality:
+    name: Quality
     runs-on: ubuntu-latest
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -65,71 +36,31 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint affected packages
+      - name: Lint and type check affected packages
         env:
           SKIP_ENV_VALIDATION: "true"
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: pnpm turbo lint --affected --continue
+        run: pnpm turbo lint typecheck --affected --continue
 
-  # Type check affected packages
-  typecheck:
-    name: Type Check
-    needs: changes
-    if: needs.changes.outputs.general == 'true'
-    runs-on: ubuntu-latest
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Type check affected packages
-        env:
-          SKIP_ENV_VALIDATION: "true"
-          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: pnpm turbo typecheck --affected --continue
+      - name: Check boundaries
+        continue-on-error: true
+        run: pnpm turbo boundaries
 
   # Summary job (required status check)
   ci-success:
     name: CI Success
     if: always()
-    needs: [changes, lint, typecheck]
+    needs: [quality]
     runs-on: ubuntu-latest
     steps:
       - name: Evaluate results
         run: |
-          general="${{ needs.changes.outputs.general }}"
-          lint="${{ needs.lint.result }}"
-          typecheck="${{ needs.typecheck.result }}"
+          quality="${{ needs.quality.result }}"
 
-          echo "changes.general  = $general"
-          echo "lint.result      = $lint"
-          echo "typecheck.result = $typecheck"
+          echo "quality.result = $quality"
 
-          # If no relevant files changed, downstream jobs are skipped — that's OK
-          if [[ "$general" != "true" ]]; then
-            echo "No relevant changes detected. CI skipped intentionally."
-            exit 0
-          fi
-
-          # If relevant files changed, all jobs must succeed
-          if [[ "$lint" != "success" || "$typecheck" != "success" ]]; then
-            echo "One or more CI jobs failed."
+          if [[ "$quality" != "success" ]]; then
+            echo "CI quality checks failed."
             exit 1
           fi
 

@@ -4270,18 +4270,21 @@ importers:
 
   vendor/cms:
     dependencies:
-      '@repo/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
       basehub:
         specifier: ^9.5.2
         version: 9.5.2(@babel/runtime@7.28.6)(@types/react@19.2.2)(react@19.2.1)
+      clsx:
+        specifier: 'catalog:'
+        version: 2.1.1
       react:
         specifier: ^19.2.1
         version: 19.2.1
+      tailwind-merge:
+        specifier: 'catalog:'
+        version: 3.3.1
       zod:
         specifier: catalog:zod3
         version: 3.25.76
@@ -4322,12 +4325,6 @@ importers:
       '@planetscale/database':
         specifier: ^1.19.0
         version: 1.19.0
-      '@repo/ai':
-        specifier: workspace:*
-        version: link:../../packages/ai
-      '@repo/lib':
-        specifier: workspace:*
-        version: link:../../packages/lib
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)

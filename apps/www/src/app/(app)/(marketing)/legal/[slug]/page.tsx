@@ -5,6 +5,7 @@ import { legal  } from "@vendor/cms";
 import type {LegalPostQueryResponse} from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
 
 interface LegalPageProps {
   params: Promise<{ slug: string }>;
@@ -68,7 +69,7 @@ export default async function LegalPage({ params }: LegalPageProps) {
             <article className="md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4 space-y-8">
               {page.body?.json?.content ? (
                 <div className="max-w-none">
-                  <Body content={page.body.json.content} />
+                  <Body content={page.body.json.content} codeBlockComponent={SSRCodeBlock} />
                 </div>
               ) : null}
             </article>

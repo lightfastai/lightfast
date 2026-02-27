@@ -1,6 +1,7 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "extends": ["//"],
+  "tags": ["app"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -12,7 +13,26 @@
       "passThroughEnv": [
         "SENTRY_AUTH_TOKEN",
         "SENTRY_ORG",
-        "SENTRY_PROJECT"
+        "SENTRY_PROJECT",
+        "CLERK_SECRET_KEY",
+        "DATABASE_HOST",
+        "DATABASE_USERNAME",
+        "DATABASE_PASSWORD",
+        "INNGEST_APP_NAME",
+        "INNGEST_EVENT_KEY",
+        "INNGEST_SIGNING_KEY",
+        "BRAINTRUST_API_KEY",
+        "BRAINTRUST_PROJECT_NAME",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "OTEL_EXPORTER_OTLP_HEADERS",
+        "BLOB_READ_WRITE_TOKEN",
+        "BLOB_BASE_URI",
+        "ARCJET_ENV",
+        "ARCJET_KEY",
+        "EXA_API_KEY",
+        "KV_REST_API_URL",
+        "KV_REST_API_TOKEN",
+        "HEALTH_CHECK_AUTH_TOKEN"
       ],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "next-env.d.ts"]
     },
