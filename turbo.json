@@ -45,7 +45,7 @@
       "dependsOn": ["^transit"]
     },
     "lint": {
-      "dependsOn": ["transit"],
+      "dependsOn": ["^build", "transit"],
       "outputs": [".cache/.eslintcache"],
       "env": []
     },
