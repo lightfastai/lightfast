@@ -47,7 +47,7 @@ const {
     (args: { event: unknown; step: unknown }) => Promise<unknown>
   >();
   // Store NonRetriableError class so tests can check instanceof
-  const NonRetriableErrorRef = { current: Error as typeof Error };
+  const NonRetriableErrorRef = { current: Error };
 
   return {
     redisMock: makeRedisMock(redisStore),
@@ -201,7 +201,7 @@ beforeEach(() => {
     return Promise.resolve("OK");
   });
   redisMock.del.mockImplementation((...keys: string[]) => {
-    const allKeys = keys.flat() as string[];
+    const allKeys = keys.flat();
     let count = 0;
     for (const k of allKeys) { if (redisStore.delete(k)) count++; }
     return Promise.resolve(count);
@@ -210,7 +210,7 @@ beforeEach(() => {
     Promise.resolve(redisStore.get(key) ?? null),
   );
   redisMock.pipeline.mockImplementation(() => {
-    const ops: Array<() => void> = [];
+    const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
@@ -262,7 +262,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
       provider: string;
       status: string;
       orgId: string;
-      resources: Array<{ id: string; providerResourceId: string; resourceName: string | null }>;
+      resources: { id: string; providerResourceId: string; resourceName: string | null }[];
     };
 
     expect(json.id).toBe(inst.id);
@@ -293,7 +293,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
     const res = await connReq(`/services/connections/${inst.id}`);
     expect(res.status).toBe(200);
 
-    const json = await res.json() as { resources: Array<{ id: string }> };
+    const json = await res.json() as { resources: { id: string }[] };
     expect(json.resources).toHaveLength(1);
     expect(json.resources[0]!.id).toBe(activeResource.id);
   });

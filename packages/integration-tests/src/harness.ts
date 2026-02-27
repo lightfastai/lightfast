@@ -63,7 +63,7 @@ export function makeRedisMock(store: Map<string, unknown>) {
     }),
     del: vi.fn((...keys: string[]): Promise<number> => {
       // Supports both del("k1", "k2") and del(["k1", "k2"]) call styles
-      const allKeys = keys.flat() as string[];
+      const allKeys = keys.flat();
       let count = 0;
       for (const k of allKeys) {
         if (store.delete(k)) count++;
@@ -73,7 +73,7 @@ export function makeRedisMock(store: Map<string, unknown>) {
     expire: vi.fn(() => Promise.resolve(1)),
     pipeline: vi.fn(() => {
       // Lazy-evaluated pipeline — stores ops and runs them in exec()
-      const ops: Array<() => void> = [];
+      const ops: (() => void)[] = [];
       const pipe = {
         hset: vi.fn((key: string, fields: Record<string, unknown>) => {
           ops.push(() => {
@@ -105,11 +105,11 @@ export type RedisMock = ReturnType<typeof makeRedisMock>;
  * Records every `publishJSON` call in `messages` for assertion.
  * `publishToTopic` is a no-op stub (used by gateway DLQ path).
  */
-export type QStashMessage = {
+export interface QStashMessage {
   url: string;
   body: unknown;
   headers?: Record<string, string>;
-};
+}
 
 export function makeQStashMock(messages: QStashMessage[]) {
   return {
@@ -137,7 +137,7 @@ export type QStashMock = ReturnType<typeof makeQStashMock>;
  *
  * The `capturedHandlers` map is keyed by function ID from createFunction config.
  */
-export type InngestEvent = { name: string; data: unknown };
+export interface InngestEvent { name: string; data: unknown }
 
 export function makeInngestMock(
   events: InngestEvent[],
@@ -207,8 +207,18 @@ export function installServiceRouter(apps: ServiceApps): () => void {
       );
     }
 
+    // The connections app mounts routes at /services/connections/*.
+    // When the tRPC console router calls it directly (via connectionsUrl that has no
+    // /services prefix), the path arrives as /connections/... — we need to prepend
+    // /services so it matches the Hono router.  Paths that already start with
+    // /services/ (e.g. from the backfill orchestrator) are forwarded unchanged.
+    let appPath = url.pathname + url.search;
+    if (app === connectionsApp && !appPath.startsWith("/services/")) {
+      appPath = "/services" + appPath;
+    }
+
     // Forward to Hono's in-process request handler
-    return app.request(url.pathname + url.search, init);
+    return app.request(appPath, init);
   };
 
   return () => {
@@ -262,9 +272,9 @@ export function makeStep(
  */
 export function withTimeFaults(
   step: ReturnType<typeof makeStep>,
-  faults: Array<{ afterStep: string; advanceMs: number }>,
+  faults: { afterStep: string; advanceMs: number }[],
 ): ReturnType<typeof makeStep> {
-  const originalRun = step.run as ReturnType<typeof vi.fn>;
+  const originalRun = step.run;
   const wrappedRun = vi.fn(async (name: string, fn: () => unknown) => {
     const result = await originalRun(name, fn);
     const fault = faults.find((f) => f.afterStep === name);
@@ -274,6 +284,86 @@ export function withTimeFaults(
     return result;
   });
   return { ...step, run: wrappedRun };
+}
+
+/**
+ * Minimal valid WorkspaceSettings for test fixtures.
+ *
+ * The orgWorkspaces.settings column requires a specific versioned JSONB structure.
+ * Tests that need to insert workspaces should use this constant for the settings field
+ * rather than `{}` (which fails TypeScript type checking).
+ */
+export const TEST_WORKSPACE_SETTINGS = {
+  version: 1 as const,
+  embedding: {
+    indexName: "test-index",
+    namespaceName: "test-namespace",
+    embeddingDim: 1024,
+    embeddingModel: "embed-english-v3.0",
+    embeddingProvider: "cohere",
+    pineconeMetric: "cosine",
+    pineconeCloud: "aws",
+    pineconeRegion: "us-east-1",
+    chunkMaxTokens: 512,
+    chunkOverlap: 50,
+  },
+};
+
+/**
+ * Creates a test API key in the database and returns the raw key + DB record.
+ *
+ * Used by Suite 8/9 tRPC tests to seed userApiKeys for apiKeyProcedure tests.
+ *
+ * Usage:
+ *   const { rawKey, id, userId } = await makeApiKeyFixture(db, { userId: "user_1" });
+ *   headers: { Authorization: `Bearer ${rawKey}`, "X-Workspace-ID": wsId }
+ */
+export interface ApiKeyFixture {
+  rawKey: string; // "sk-lf-<nanoid>" — use in Authorization header
+  id: string;
+  userId: string;
+  keyHash: string;
+  keyPrefix: string;
+  keySuffix: string;
+  isActive: boolean;
+  expiresAt: string | null;
+}
+
+export async function makeApiKeyFixture(
+  db: TestDb,
+  overrides: {
+    userId?: string;
+    isActive?: boolean;
+    expiresAt?: Date | null;
+  } = {},
+): Promise<ApiKeyFixture> {
+  const { generateApiKey, hashApiKey } = await import("@repo/console-api-key");
+  const { userApiKeys } = await import("@db/console/schema");
+
+  // Use crypto.randomUUID for unique IDs — avoids importing @repo/lib which isn't a direct dep
+  const uid = () => crypto.randomUUID().replace(/-/g, "").slice(0, 21);
+
+  const rawKey = generateApiKey();
+  const keyHash = await hashApiKey(rawKey);
+  const expiresAtRaw = overrides.expiresAt;
+  const expiresAt =
+    expiresAtRaw instanceof Date
+      ? expiresAtRaw.toISOString()
+      : (expiresAtRaw ?? null);
+
+  const record = {
+    id: uid(),
+    userId: overrides.userId ?? `user_${uid()}`,
+    name: "test-key",
+    keyHash,
+    keyPrefix: "sk-lf-",
+    keySuffix: rawKey.slice(-4),
+    isActive: overrides.isActive ?? true,
+    expiresAt,
+  };
+
+  await db.insert(userApiKeys).values(record);
+  return { rawKey, ...record };
 }
 
 /**
@@ -316,10 +406,10 @@ export interface LabeledEffect {
 export interface PermutationResult {
   permutationsRun: number;
   passed: number;
-  failures: Array<{
+  failures: {
     ordering: string[];
     error: Error;
-  }>;
+  }[];
 }
 
 export interface PermutationConfig {

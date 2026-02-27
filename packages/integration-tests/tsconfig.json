@@ -16,7 +16,12 @@
       "@gateway/cache": ["../../apps/gateway/src/lib/cache.ts"],
       "@gateway/webhook-delivery": ["../../apps/gateway/src/workflows/webhook-delivery.ts"],
       "@backfill/orchestrator": ["../../apps/backfill/src/workflows/backfill-orchestrator.ts"],
-      "@backfill/entity-worker": ["../../apps/backfill/src/workflows/entity-worker.ts"]
+      "@backfill/entity-worker": ["../../apps/backfill/src/workflows/entity-worker.ts"],
+      "@connections/providers": ["../../apps/connections/src/providers/index.ts"],
+      "server-only": ["../../packages/integration-tests/src/__stubs__/server-only.ts"],
+      "@console/trpc": ["../../api/console/src/trpc.ts"],
+      "@console/env": ["../../api/console/src/env.ts"],
+      "@console/router/org/connections": ["../../api/console/src/router/org/connections.ts"]
     }
   },
   "include": ["src"],

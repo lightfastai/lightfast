@@ -40,7 +40,7 @@ const {
 } = await vi.hoisted(async () => {
   const { makeRedisMock, makeQStashMock } = await import("./harness.js");
   const redisStore = new Map<string, unknown>();
-  const messages: Array<{ url: string; body: unknown; headers?: Record<string, string> }> = [];
+  const messages: { url: string; body: unknown; headers?: Record<string, string> }[] = [];
   return {
     redisMock: makeRedisMock(redisStore),
     redisStore,
@@ -164,7 +164,7 @@ beforeEach(() => {
     return Promise.resolve("OK");
   });
   redisMock.del.mockImplementation((...keys: string[]) => {
-    const allKeys = keys.flat() as string[];
+    const allKeys = keys.flat();
     let count = 0;
     for (const k of allKeys) { if (redisStore.delete(k)) count++; }
     return Promise.resolve(count);
@@ -173,7 +173,7 @@ beforeEach(() => {
     Promise.resolve(redisStore.get(key) ?? null),
   );
   redisMock.pipeline.mockImplementation(() => {
-    const ops: Array<() => void> = [];
+    const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {

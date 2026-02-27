@@ -26,6 +26,11 @@ export default defineConfig({
           "@db/console",
           // Shared packages imported by app workflows — inline so vi.mock intercepts
           "@repo/console-backfill",
+          // Packages needed for Suite 8/9 tRPC tests
+          "@api/console",
+          "@vercel/related-projects",
+          "@repo/console-api-key",
+          "@sentry/core",
         ],
       },
     },
@@ -44,6 +49,14 @@ export default defineConfig({
       "@gateway/webhook-delivery": resolve(root, "apps/gateway/src/workflows/webhook-delivery.ts"),
       "@backfill/orchestrator": resolve(root, "apps/backfill/src/workflows/backfill-orchestrator.ts"),
       "@backfill/entity-worker": resolve(root, "apps/backfill/src/workflows/entity-worker.ts"),
+      // ── Connections providers — allows vi.mock('@connections/providers') to intercept ──
+      "@connections/providers": resolve(root, "apps/connections/src/providers/index.ts"),
+      // ── server-only stub — Next.js package not available in Node.js test environment ──
+      "server-only": resolve(__dirname, "src/__stubs__/server-only.ts"),
+      // ── api/console tRPC infrastructure — for Suite 8/9 tRPC caller tests ──
+      "@console/trpc": resolve(root, "api/console/src/trpc.ts"),
+      "@console/env": resolve(root, "api/console/src/env.ts"),
+      "@console/router/org/connections": resolve(root, "api/console/src/router/org/connections.ts"),
     },
   },
 });

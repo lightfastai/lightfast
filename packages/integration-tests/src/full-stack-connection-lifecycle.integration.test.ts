@@ -47,15 +47,15 @@ const {
 } = await vi.hoisted(async () => {
   const { makeRedisMock, makeQStashMock } = await import("./harness.js");
   const redisStore = new Map<string, unknown>();
-  const messages: Array<{ url: string; body: unknown; headers?: Record<string, string> }> = [];
-  const inngestEventsSent: Array<{ name: string; data: unknown }> = [];
+  const messages: { url: string; body: unknown; headers?: Record<string, string> }[] = [];
+  const inngestEventsSent: { name: string; data: unknown }[] = [];
   const capturedHandlers = new Map<
     string,
     (args: { event: unknown; step: unknown }) => Promise<unknown>
   >();
 
   const sendMock = vi.fn(
-    (event: { name: string; data: unknown } | Array<{ name: string; data: unknown }>) => {
+    (event: { name: string; data: unknown } | { name: string; data: unknown }[]) => {
       const all = Array.isArray(event) ? event : [event];
       inngestEventsSent.push(...all);
       return Promise.resolve({ ids: all.map((_, i) => `evt-${i}`) });
@@ -164,7 +164,7 @@ beforeEach(() => {
 
   // Restore Inngest send implementation
   inngestSendMock.mockImplementation(
-    (event: { name: string; data: unknown } | Array<{ name: string; data: unknown }>) => {
+    (event: { name: string; data: unknown } | { name: string; data: unknown }[]) => {
       const all = Array.isArray(event) ? event : [event];
       inngestEventsSent.push(...all);
       return Promise.resolve({ ids: all.map((_, i) => `evt-${i}`) });
@@ -185,7 +185,7 @@ beforeEach(() => {
     return Promise.resolve("OK");
   });
   redisMock.del.mockImplementation((...keys: string[]) => {
-    const allKeys = keys.flat() as string[];
+    const allKeys = keys.flat();
     let count = 0;
     for (const k of allKeys) { if (redisStore.delete(k)) count++; }
     return Promise.resolve(count);
@@ -194,7 +194,7 @@ beforeEach(() => {
     Promise.resolve(redisStore.get(key) ?? null),
   );
   redisMock.pipeline.mockImplementation(() => {
-    const ops: Array<() => void> = [];
+    const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
@@ -519,7 +519,7 @@ describe("Suite 5.3 — Full teardown path", () => {
     // With the cache gone, gateway resolve-connection would fall through to DB.
     // DB resource status is still "active" here (soft-delete is workflow step 5),
     // but the cache miss proves the cleanup step ran correctly.
-    const cachedAfterCleanup = await redisMock.hgetall(cacheKey) as Record<string, string> | null;
+    const cachedAfterCleanup = await redisMock.hgetall(cacheKey);
     expect(cachedAfterCleanup).toBeNull();
   });
 });

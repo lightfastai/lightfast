@@ -26,6 +26,11 @@ process.env.VERCEL_CLIENT_INTEGRATION_SECRET = "vc-secret";
 process.env.LINEAR_WEBHOOK_SIGNING_SECRET = "ln-secret";
 process.env.SENTRY_CLIENT_SECRET = "sn-secret";
 
+// api/console env vars — Clerk is mocked, but these prevent module-level validation failures
+process.env.NEXT_PUBLIC_VERCEL_ENV = "development";
+process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_test_placeholder";
+process.env.CLERK_SECRET_KEY = "sk_test_placeholder";
+
 // Vendor placeholders — mocked at test time, these just prevent env errors
 process.env.KV_REST_API_URL = "https://redis.test";
 process.env.KV_REST_API_TOKEN = "test-redis-token";

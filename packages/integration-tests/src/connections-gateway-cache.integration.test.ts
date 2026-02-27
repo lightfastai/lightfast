@@ -39,7 +39,7 @@ const {
 } = await vi.hoisted(async () => {
   const { makeRedisMock, makeQStashMock } = await import("./harness.js");
   const redisStore = new Map<string, unknown>();
-  const qstashMessages: Array<{ url: string; body: unknown }> = [];
+  const qstashMessages: { url: string; body: unknown }[] = [];
   return {
     redisMock: makeRedisMock(redisStore),
     redisStore,
@@ -139,7 +139,7 @@ beforeEach(() => {
     return Promise.resolve("OK");
   });
   redisMock.del.mockImplementation((...keys: string[]) => {
-    const allKeys = keys.flat() as string[];
+    const allKeys = keys.flat();
     let count = 0;
     for (const k of allKeys) { if (redisStore.delete(k)) count++; }
     return Promise.resolve(count);
@@ -267,7 +267,7 @@ describe("Suite 1.4 — Key format parity between Connections and Gateway", () =
       "@connections/cache"
     );
 
-    const testCases: Array<[string, string]> = [
+    const testCases: [string, string][] = [
       ["github", "owner/repo"],
       ["vercel", "prj_abc123"],
       ["linear", "team-xyz"],

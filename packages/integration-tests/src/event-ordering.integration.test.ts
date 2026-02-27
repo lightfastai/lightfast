@@ -46,15 +46,15 @@ const {
 } = await vi.hoisted(async () => {
   const { makeRedisMock, makeQStashMock } = await import("./harness.js");
   const redisStore = new Map<string, unknown>();
-  const messages: Array<{ url: string; body: unknown; headers?: Record<string, string> }> = [];
-  const inngestEventsSent: Array<{ name: string; data: unknown }> = [];
+  const messages: { url: string; body: unknown; headers?: Record<string, string> }[] = [];
+  const inngestEventsSent: { name: string; data: unknown }[] = [];
   const capturedHandlers = new Map<
     string,
     (args: { event: unknown; step: unknown }) => Promise<unknown>
   >();
 
   const sendMock = vi.fn(
-    (event: { name: string; data: unknown } | Array<{ name: string; data: unknown }>) => {
+    (event: { name: string; data: unknown } | { name: string; data: unknown }[]) => {
       const all = Array.isArray(event) ? event : [event];
       inngestEventsSent.push(...all);
       return Promise.resolve({ ids: all.map((_, i) => `evt-${i}`) });
@@ -164,7 +164,7 @@ async function resetStores() {
 /** Restore mock implementations that vi.clearAllMocks() resets */
 function restoreMockImpls() {
   inngestSendMock.mockImplementation(
-    (event: { name: string; data: unknown } | Array<{ name: string; data: unknown }>) => {
+    (event: { name: string; data: unknown } | { name: string; data: unknown }[]) => {
       const all = Array.isArray(event) ? event : [event];
       inngestEventsSent.push(...all);
       return Promise.resolve({ ids: all.map((_, i) => `evt-${i}`) });
@@ -185,7 +185,7 @@ function restoreMockImpls() {
     return Promise.resolve("OK");
   });
   redisMock.del.mockImplementation((...keys: string[]) => {
-    const allKeys = keys.flat() as string[];
+    const allKeys = keys.flat();
     let count = 0;
     for (const k of allKeys) { if (redisStore.delete(k)) count++; }
     return Promise.resolve(count);
@@ -194,7 +194,7 @@ function restoreMockImpls() {
     Promise.resolve(redisStore.get(key) ?? null),
   );
   redisMock.pipeline.mockImplementation(() => {
-    const ops: Array<() => void> = [];
+    const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
