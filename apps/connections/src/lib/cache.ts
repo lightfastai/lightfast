@@ -26,3 +26,6 @@ export const connectionResourcesKey = (connId: string) =>
 
 /** Short-lived OAuth state token (TTL 600s) */
 export const oauthStateKey = (token: string) => `gw:oauth:state:${token}`;
+
+/** Short-lived OAuth result for CLI polling (TTL 300s) */
+export const oauthResultKey = (state: string) => `gw:oauth:result:${state}`;

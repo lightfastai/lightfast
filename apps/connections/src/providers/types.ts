@@ -67,6 +67,8 @@ export interface CallbackResult {
   installationId: string;
   provider: ProviderName;
   status: string;
+  reactivated?: boolean;
+  setupAction?: string;
   [key: string]: unknown;
 }
 

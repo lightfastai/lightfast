@@ -183,7 +183,9 @@
       "Bash(SKIP_ENV_VALIDATION=true pnpm typecheck:*)",
       "Bash(SKIP_ENV_VALIDATION=true pnpm --filter * build:*)",
       "Bash(SKIP_ENV_VALIDATION=true pnpm --filter * typecheck:*)",
-      "Bash(SKIP_ENV_VALIDATION=true pnpm --filter * lint:*)"
+      "Bash(SKIP_ENV_VALIDATION=true pnpm --filter * lint:*)",
+      "Bash(pnpm:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   },

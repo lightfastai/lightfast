@@ -115,10 +115,19 @@ export class VercelProvider implements ConnectionProvider {
         status: "active",
         providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
       })
+      .onConflictDoUpdate({
+        target: [gwInstallations.provider, gwInstallations.externalId],
+        set: {
+          status: "active",
+          connectedBy: stateData.connectedBy ?? "unknown",
+          orgId: stateData.orgId ?? "",
+          providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
+        },
+      })
       .returning({ id: gwInstallations.id });
 
     const installation = rows[0];
-    if (!installation) {throw new Error("insert_failed");}
+    if (!installation) {throw new Error("upsert_failed");}
 
     await writeTokenRecord(installation.id, oauthTokens);
 

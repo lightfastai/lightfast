@@ -2,8 +2,8 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
-import { gwInstallations, workspaceIntegrations } from "@db/console/schema";
-import { orgScopedProcedure } from "../../trpc";
+import { gwInstallations, workspaceIntegrations, orgWorkspaces } from "@db/console/schema";
+import { orgScopedProcedure, apiKeyProcedure } from "../../trpc";
 import {
 	getUserInstallations,
 	createGitHubApp,
@@ -69,6 +69,7 @@ export const connectionsRouter = {
 					headers: {
 						"X-Org-Id": ctx.auth.orgId,
 						"X-User-Id": ctx.auth.userId,
+						"X-API-Key": env.GATEWAY_API_KEY,
 					},
 				},
 			);
@@ -78,6 +79,53 @@ export const connectionsRouter = {
 					message: "Failed to get authorize URL",
 				});
 			}
+			return res.json() as Promise<{ url: string; state: string }>;
+		}),
+
+	/**
+	 * CLI: Get OAuth authorize URL using API key auth.
+	 *
+	 * Resolves orgId from the API key's workspace, then proxies to
+	 * connections service with redirect_to=inline for CLI mode.
+	 */
+	cliAuthorize: apiKeyProcedure
+		.input(
+			z.object({
+				provider: z.enum(["github", "vercel", "sentry"]),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			// Resolve clerkOrgId from workspace
+			const workspace = await ctx.db.query.orgWorkspaces.findFirst({
+				where: eq(orgWorkspaces.id, ctx.auth.workspaceId),
+				columns: { clerkOrgId: true },
+			});
+
+			if (!workspace?.clerkOrgId) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Workspace not found or has no organization",
+				});
+			}
+
+			const res = await fetch(
+				`${connectionsUrl}/connections/${input.provider}/authorize?redirect_to=inline`,
+				{
+					headers: {
+						"X-Org-Id": workspace.clerkOrgId,
+						"X-User-Id": ctx.auth.userId,
+						"X-API-Key": env.GATEWAY_API_KEY,
+					},
+				},
+			);
+
+			if (!res.ok) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Failed to get authorize URL",
+				});
+			}
+
 			return res.json() as Promise<{ url: string; state: string }>;
 		}),
 

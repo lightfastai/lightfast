@@ -170,6 +170,8 @@ export class GitHubProvider implements ConnectionProvider {
         target: [gwInstallations.provider, gwInstallations.externalId],
         set: {
           status,
+          connectedBy,
+          orgId,
           providerAccountInfo: accountInfo,
         },
       })
