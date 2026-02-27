@@ -49,6 +49,11 @@
       "outputs": [".cache/.eslintcache"],
       "env": []
     },
+    "test": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "env": []
+    },
     "typecheck": {
       "dependsOn": ["^build", "transit"],
       "outputs": [".cache/tsbuildinfo.json"],

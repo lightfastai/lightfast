@@ -105,7 +105,7 @@
     "clean": "rm -rf dist .cache .turbo node_modules",
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest",
+    "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
