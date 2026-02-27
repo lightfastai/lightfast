@@ -3752,6 +3752,9 @@ importers:
       '@vendor/upstash-workflow':
         specifier: workspace:*
         version: link:../../vendor/upstash-workflow
+      eslint:
+        specifier: 'catalog:'
+        version: 9.38.0(jiti@2.6.1)
       hono:
         specifier: 'catalog:'
         version: 4.12.2
