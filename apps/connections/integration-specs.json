@@ -1,0 +1,144 @@
+{
+  "$comment": "Integration creation specs. Reference for configuring provider apps/integrations across environments.",
+  "github": {
+    "$comment": "GitHub App — https://github.com/settings/apps",
+    "app": {
+      "name": "lightfastai-dev",
+      "description": "Lightfast connects your GitHub repositories for AI-powered code intelligence.",
+      "public_link": "https://github.com/apps/lightfastai-dev",
+      "homepage_url": "https://lightfast.ai",
+      "public": true
+    },
+    "oauth": {
+      "callback_urls": [
+        "http://localhost:4110/api/connections/github/callback"
+      ],
+      "request_oauth_on_install": false,
+      "enable_device_flow": false
+    },
+    "post_installation": {
+      "setup_url": "http://localhost:4110/api/connections/github/callback",
+      "redirect_on_update": false
+    },
+    "webhooks": {
+      "active": true,
+      "url": "https://<ngrok-subdomain>.ngrok-free.dev/api/webhooks/github",
+      "events": [
+        "installation",
+        "installation_repositories",
+        "push",
+        "pull_request",
+        "issues",
+        "release",
+        "discussion",
+        "repository"
+      ]
+    },
+    "permissions": {
+      "repository": {
+        "contents": "read",
+        "issues": "read",
+        "metadata": "read",
+        "pull_requests": "read"
+      },
+      "organization": {
+        "members": "read"
+      },
+      "account": {}
+    },
+    "env_keys": [
+      "GITHUB_APP_ID",
+      "GITHUB_APP_PRIVATE_KEY",
+      "GITHUB_APP_SLUG",
+      "GITHUB_CLIENT_ID",
+      "GITHUB_CLIENT_SECRET",
+      "GITHUB_WEBHOOK_SECRET"
+    ]
+  },
+
+  "vercel": {
+    "$comment": "Vercel Integration — https://vercel.com/dashboard/integrations/console",
+    "integration": {
+      "name": "Lightfast",
+      "url_slug": "lightfast-dev",
+      "developer": "Lightfast AI",
+      "category": "Dev Tools",
+      "short_description": "AI-powered deployment intelligence.",
+      "website": "https://lightfast.ai",
+      "documentation_url": "https://lightfast.ai/docs",
+      "support_url": "https://lightfast.ai/support"
+    },
+    "oauth": {
+      "redirect_url": "http://localhost:4110/api/connections/vercel/callback",
+      "configuration_url": "http://localhost:4107/settings/integrations/vercel"
+    },
+    "webhooks": {
+      "url": "https://<ngrok-subdomain>.ngrok-free.dev/api/webhooks/vercel",
+      "events": [
+        "deployment.created",
+        "deployment.succeeded",
+        "deployment.ready",
+        "deployment.error",
+        "deployment.canceled",
+        "project.created",
+        "project.removed",
+        "integration-configuration.removed"
+      ]
+    },
+    "scopes": {
+      "integration-configuration": "read",
+      "deployment": "read",
+      "project": "read",
+      "project-env-vars": "none",
+      "team": "read",
+      "user": "read"
+    },
+    "env_keys": [
+      "VERCEL_INTEGRATION_SLUG",
+      "VERCEL_CLIENT_SECRET_ID",
+      "VERCEL_CLIENT_INTEGRATION_SECRET",
+      "VERCEL_REDIRECT_URI"
+    ]
+  },
+
+  "sentry": {
+    "$comment": "Sentry Public Integration — https://sentry.io/settings/<org>/developer-settings/",
+    "integration": {
+      "name": "Lightfast",
+      "author": "Lightfast AI",
+      "overview": "Lightfast connects your Sentry projects for AI-powered error intelligence and observability.",
+      "verify_installation": false,
+      "alert_rule_action": false,
+      "schema": {}
+    },
+    "oauth": {
+      "redirect_url": "http://localhost:4110/api/connections/sentry/callback",
+      "authorized_javascript_origins": []
+    },
+    "webhooks": {
+      "url": "https://<ngrok-subdomain>.ngrok-free.dev/api/webhooks/sentry",
+      "resources": [
+        "installation",
+        "issue",
+        "error",
+        "event_alert",
+        "metric_alert",
+        "comment"
+      ]
+    },
+    "permissions": {
+      "project": "read",
+      "team": "no-access",
+      "release": "no-access",
+      "distribution": "no-access",
+      "issue-and-event": "read",
+      "organization": "read",
+      "member": "no-access",
+      "alerts": "read"
+    },
+    "env_keys": [
+      "SENTRY_CLIENT_ID",
+      "SENTRY_CLIENT_SECRET"
+    ]
+  }
+}
