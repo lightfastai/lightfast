@@ -1,4 +1,5 @@
 import { HTTPException } from "hono/http-exception";
+import { env } from "../env.js";
 import { GitHubProvider } from "./impl/github.js";
 import { LinearProvider } from "./impl/linear.js";
 import { SentryProvider } from "./impl/sentry.js";
@@ -26,9 +27,15 @@ export type {
 const providers = new Map<ProviderName, ConnectionProvider>([
   ["github", new GitHubProvider()],
   ["vercel", new VercelProvider()],
-  ["linear", new LinearProvider()],
-  ["sentry", new SentryProvider()],
 ]);
+
+if (env.LINEAR_CLIENT_ID && env.LINEAR_CLIENT_SECRET) {
+  providers.set("linear", new LinearProvider());
+}
+
+if (env.SENTRY_CLIENT_ID && env.SENTRY_CLIENT_SECRET) {
+  providers.set("sentry", new SentryProvider());
+}
 
 /** Type-safe provider lookup. Literal names return specific provider types. */
 export function getProvider<N extends ProviderName>(name: N): ProviderFor<N>;

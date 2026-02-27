@@ -3,8 +3,8 @@ import { z } from "zod";
 
 export const linearEnv = createEnv({
 	server: {
-		LINEAR_CLIENT_ID: z.string().min(1),
-		LINEAR_CLIENT_SECRET: z.string().min(1),
+		LINEAR_CLIENT_ID: z.string().min(1).optional(),
+		LINEAR_CLIENT_SECRET: z.string().min(1).optional(),
 	},
 	experimental__runtimeEnv: {},
 	skipValidation:

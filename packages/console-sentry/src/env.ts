@@ -3,8 +3,8 @@ import { z } from "zod";
 
 export const sentryIntegrationEnv = createEnv({
 	server: {
-		SENTRY_CLIENT_ID: z.string().min(1),
-		SENTRY_CLIENT_SECRET: z.string().min(1),
+		SENTRY_CLIENT_ID: z.string().min(1).optional(),
+		SENTRY_CLIENT_SECRET: z.string().min(1).optional(),
 	},
 	experimental__runtimeEnv: {},
 	skipValidation:
