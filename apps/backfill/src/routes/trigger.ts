@@ -1,8 +1,21 @@
 import { Hono } from "hono";
 import { timingSafeEqual } from "node:crypto";
+import { z } from "zod";
 
 import { getEnv } from "../env.js";
 import { inngest } from "../inngest/client.js";
+
+const triggerSchema = z.object({
+  installationId: z.string().min(1),
+  provider: z.string().min(1),
+  orgId: z.string().min(1),
+  depth: z.union([z.literal(7), z.literal(30), z.literal(90)]).optional(),
+  entityTypes: z.array(z.string()).optional(),
+});
+
+const cancelSchema = z.object({
+  installationId: z.string().min(1),
+});
 
 function isValidApiKey(key: string | undefined, expected: string): boolean {
   if (!key) {
@@ -30,27 +43,21 @@ trigger.post("/", async (c) => {
     return c.json({ error: "unauthorized" }, 401);
   }
 
-  let body: {
-    installationId: string;
-    provider: string;
-    orgId: string;
-    depth?: 7 | 30 | 90;
-    entityTypes?: string[];
-  };
+  let raw: unknown;
   try {
-    body = await c.req.json();
+    raw = await c.req.json();
   } catch {
     return c.json({ error: "invalid_json" }, 400);
   }
 
-  if (!body.installationId || !body.provider || !body.orgId) {
-    return c.json({ error: "missing_required_fields" }, 400);
+  const parsed = triggerSchema.safeParse(raw);
+  if (!parsed.success) {
+    return c.json(
+      { error: "validation_error", details: parsed.error.flatten() },
+      400,
+    );
   }
-
-  const validDepths = [7, 30, 90] as const;
-  if (body.depth != null && !validDepths.includes(body.depth)) {
-    return c.json({ error: "invalid_depth" }, 400);
-  }
+  const body = parsed.data;
 
   try {
     await inngest.send({
@@ -86,16 +93,21 @@ trigger.post("/cancel", async (c) => {
     return c.json({ error: "unauthorized" }, 401);
   }
 
-  let body: { installationId: string };
+  let raw: unknown;
   try {
-    body = await c.req.json();
+    raw = await c.req.json();
   } catch {
     return c.json({ error: "invalid_json" }, 400);
   }
 
-  if (!body.installationId) {
-    return c.json({ error: "missing_installationId" }, 400);
+  const parsed = cancelSchema.safeParse(raw);
+  if (!parsed.success) {
+    return c.json(
+      { error: "validation_error", details: parsed.error.flatten() },
+      400,
+    );
   }
+  const body = parsed.data;
 
   try {
     await inngest.send({
