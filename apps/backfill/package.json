@@ -24,7 +24,7 @@
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@vendor/inngest": "workspace:*",
-    "@vercel/related-projects": "catalog:",
+    "@vendor/related-projects": "workspace:*",
     "hono": "catalog:",
     "zod": "catalog:zod3"
   },
