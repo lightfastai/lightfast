@@ -156,6 +156,13 @@ const config: NextConfig = withSentry(
             ? "https://connections.lightfast.ai"
             : "http://localhost:4110";
 
+        // Proxy gateway routes to the gateway service
+        // Only in dev — production uses gateway.lightfast.ai directly
+        const gatewayUrl =
+          vercelEnv === "production" || vercelEnv === "preview" || process.env.NODE_ENV === "production"
+            ? "https://gateway.lightfast.ai"
+            : "http://localhost:4108";
+
         return [
           {
             source: "/docs",
@@ -168,6 +175,10 @@ const config: NextConfig = withSentry(
           {
             source: "/services/connections/:path*",
             destination: `${connectionsUrl}/services/connections/:path*`,
+          },
+          {
+            source: "/services/gateway/:path*",
+            destination: `${gatewayUrl}/api/:path*`,
           },
         ];
       },

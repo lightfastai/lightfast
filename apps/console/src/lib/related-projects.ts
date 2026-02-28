@@ -27,12 +27,3 @@ export const gatewayUrl = `${withRelatedProject({
     ? 'http://localhost:4108'
     : 'https://gateway.lightfast.ai',
 })}/api`;
-
-// Get the connections service URL dynamically based on environment
-// Connections is a standalone Hono service (not part of microfrontends)
-export const connectionsUrl = `${withRelatedProject({
-  projectName: 'lightfast-connections',
-  defaultHost: isDevelopment
-    ? 'http://localhost:4110'
-    : 'https://connections.lightfast.ai',
-})}/api`;

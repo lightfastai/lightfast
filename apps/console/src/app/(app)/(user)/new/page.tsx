@@ -3,10 +3,11 @@ import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
 import { WorkspaceHeader } from "./_components/workspace-header";
 import { OrganizationSelector } from "./_components/organization-selector";
 import { WorkspaceNameInput } from "./_components/workspace-name-input";
-import { GitHubConnector } from "./_components/github-connector";
-import { GitHubConnectorLoading } from "./_components/github-connector-loading";
+import { SourcesSection } from "./_components/sources-section";
+import { SourcesSectionLoading } from "./_components/sources-section-loading";
 import { CreateWorkspaceButton } from "./_components/create-workspace-button";
 import { NewWorkspaceInitializer } from "./_components/new-workspace-initializer";
+import { NewPageHeader } from "./_components/new-page-header";
 
 /**
  * Workspace Creation Page
@@ -53,12 +54,14 @@ export default async function NewWorkspacePage({
   const teamSlugHint = params.teamSlug;
   const initialWorkspaceName = params.workspaceName ?? "";
 
-  // Prefetch org-scoped GitHub connection status (requires active org context)
-  // Avoids client-side fetch waterfall in GitHubConnector
+  // Prefetch org-scoped connection status for GitHub and Vercel
+  // Avoids client-side fetch waterfall in SourcesSection
   prefetch(orgTrpc.connections.github.get.queryOptions());
+  prefetch(orgTrpc.connections.vercel.get.queryOptions());
 
   return (
     <div className="flex-1 overflow-y-auto bg-background">
+      <NewPageHeader />
       <div className="min-h-full flex items-start justify-center py-12">
         <div className="w-full max-w-3xl px-6">
           {/* Static Header (Server Component) */}
@@ -92,23 +95,21 @@ export default async function NewWorkspacePage({
                   </div>
                 </div>
 
-                {/* Section 2: Repository (optional) */}
+                {/* Section 2: Sources (optional) */}
                 <div className="flex gap-6">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-foreground text-background font-semibold">
                     2
                   </div>
                   <div className="flex-1 space-y-6">
                     <div>
-                      <h2 className="text-xl font-semibold mb-2">
-                        Source Repository
-                      </h2>
+                      <h2 className="text-xl font-semibold mb-2">Sources</h2>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Optional: Connect a repository to start indexing immediately
+                        Select sources to connect to this workspace
                       </p>
 
-                      {/* Client Island: GitHub Connector (with Suspense boundary) */}
-                      <Suspense fallback={<GitHubConnectorLoading />}>
-                        <GitHubConnector />
+                      {/* Client Island: Sources Accordion (with Suspense boundary) */}
+                      <Suspense fallback={<SourcesSectionLoading />}>
+                        <SourcesSection />
                       </Suspense>
                     </div>
                   </div>

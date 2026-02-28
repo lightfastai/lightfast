@@ -39,8 +39,8 @@ export function CreateWorkspaceButton() {
     refetchOnWindowFocus: false,
   });
 
-  // Get GitHub-related state from context (now supports multiple repos)
-  const { selectedRepositories, gwInstallationId, selectedInstallation } =
+  // Get source selection state from context
+  const { selectedRepositories, gwInstallationId, selectedInstallation, vercelInstallationId, selectedProjects } =
     useWorkspaceForm();
 
   // Create workspace mutation with optimistic updates
@@ -118,7 +118,7 @@ export function CreateWorkspaceButton() {
     }),
   );
 
-  // Bulk link repositories mutation
+  // Bulk link GitHub repositories mutation
   const bulkLinkMutation = useMutation(
     trpc.workspace.integrations.bulkLinkGitHubRepositories.mutationOptions({
       onError: (error) => {
@@ -126,6 +126,18 @@ export function CreateWorkspaceButton() {
         // Note: Workspace is already created, just show warning
         toast.error("Repositories not linked", {
           description: "Workspace created, but failed to connect repositories. You can add them later.",
+        });
+      },
+    }),
+  );
+
+  // Bulk link Vercel projects mutation
+  const bulkLinkVercelMutation = useMutation(
+    trpc.workspace.integrations.bulkLinkVercelProjects.mutationOptions({
+      onError: (error) => {
+        console.error("Failed to link Vercel projects:", error);
+        toast.error("Vercel projects not linked", {
+          description: "Workspace created, but failed to connect Vercel projects. You can add them later.",
         });
       },
     }),
@@ -167,27 +179,46 @@ export function CreateWorkspaceButton() {
           await setActive({ organization: selectedOrgId });
         }
 
-        let repoCount = 0;
-        if (selectedRepositories.length > 0 && gwInstallationId && selectedInstallation) {
-          try {
-            const linked = await bulkLinkMutation.mutateAsync({
-              workspaceId: workspace.workspaceId,
-              gwInstallationId,
-              installationId: selectedInstallation.id,
-              repositories: selectedRepositories.map((repo) => ({
-                repoId: repo.id,
-                repoFullName: repo.fullName,
-              })),
-            });
-            repoCount = linked.created + linked.reactivated;
-          } catch {
-            // Error already handled by bulkLinkMutation onError — continue with navigation
-          }
-        }
+        // Bulk-link selected sources in parallel
+        const [githubResult, vercelResult] = await Promise.allSettled([
+          selectedRepositories.length > 0 && gwInstallationId && selectedInstallation
+            ? bulkLinkMutation.mutateAsync({
+                workspaceId: workspace.workspaceId,
+                gwInstallationId,
+                installationId: selectedInstallation.id,
+                repositories: selectedRepositories.map((repo) => ({
+                  repoId: repo.id,
+                  repoFullName: repo.fullName,
+                })),
+              })
+            : Promise.resolve(null),
+          selectedProjects.length > 0 && vercelInstallationId
+            ? bulkLinkVercelMutation.mutateAsync({
+                workspaceId: workspace.workspaceId,
+                gwInstallationId: vercelInstallationId,
+                projects: selectedProjects.map((p) => ({
+                  projectId: p.id,
+                  projectName: p.name,
+                })),
+              })
+            : Promise.resolve(null),
+        ]);
+
+        const repoCount =
+          githubResult.status === "fulfilled" && githubResult.value
+            ? githubResult.value.created + githubResult.value.reactivated
+            : 0;
+        const projectCount =
+          vercelResult.status === "fulfilled" && vercelResult.value
+            ? vercelResult.value.created + vercelResult.value.reactivated
+            : 0;
+        const totalLinked = repoCount + projectCount;
+
         toast.success("Workspace created!", {
-          description: repoCount > 0
-            ? `${workspace.workspaceName} has been created with ${repoCount} repositor${repoCount === 1 ? "y" : "ies"}.`
-            : `${workspace.workspaceName} workspace is ready. Add sources to get started.`,
+          description:
+            totalLinked > 0
+              ? `${workspace.workspaceName} has been created with ${totalLinked} source${totalLinked === 1 ? "" : "s"} linked.`
+              : `${workspace.workspaceName} workspace is ready. Add sources to get started.`,
         });
 
         const selectedOrg = organizations.find((org) => org.id === selectedOrgId);
@@ -204,9 +235,9 @@ export function CreateWorkspaceButton() {
   };
 
   const isDisabled =
-    !isValid || createWorkspaceMutation.isPending || bulkLinkMutation.isPending;
+    !isValid || createWorkspaceMutation.isPending || bulkLinkMutation.isPending || bulkLinkVercelMutation.isPending;
 
-  const isLoading = createWorkspaceMutation.isPending || bulkLinkMutation.isPending;
+  const isLoading = createWorkspaceMutation.isPending || bulkLinkMutation.isPending || bulkLinkVercelMutation.isPending;
 
   return (
     <div className="mt-8 flex justify-end">

@@ -37,8 +37,14 @@ interface GitHubInstallation {
   lastValidatedAt: string;
 }
 
+export interface VercelProject {
+  id: string;
+  name: string;
+  framework: string | null;
+}
+
 interface WorkspaceFormState {
-  // Multi-repo selection (not in react-hook-form)
+  // GitHub state
   selectedRepositories: Repository[];
   setSelectedRepositories: (repos: Repository[]) => void;
   toggleRepository: (repo: Repository) => void;
@@ -48,6 +54,13 @@ interface WorkspaceFormState {
   setInstallations: (installations: GitHubInstallation[]) => void;
   selectedInstallation: GitHubInstallation | null;
   setSelectedInstallation: (installation: GitHubInstallation | null) => void;
+
+  // Vercel state
+  vercelInstallationId: string | null;
+  setVercelInstallationId: (id: string | null) => void;
+  selectedProjects: VercelProject[];
+  setSelectedProjects: (projects: VercelProject[]) => void;
+  toggleProject: (project: VercelProject) => void;
 }
 
 const WorkspaceFormContext = createContext<WorkspaceFormState | null>(null);
@@ -88,6 +101,21 @@ export function WorkspaceFormProvider({
     });
   };
 
+  // Additional state for Vercel integration
+  const [vercelInstallationId, setVercelInstallationId] = useState<string | null>(null);
+  const [selectedProjects, setSelectedProjects] = useState<VercelProject[]>([]);
+
+  // Toggle helper for Vercel project selection
+  const toggleProject = (project: VercelProject) => {
+    setSelectedProjects((prev) => {
+      const exists = prev.find((p) => p.id === project.id);
+      if (exists) {
+        return prev.filter((p) => p.id !== project.id);
+      }
+      return [...prev, project];
+    });
+  };
+
   return (
     <Form {...form}>
       <WorkspaceFormContext.Provider
@@ -101,6 +129,11 @@ export function WorkspaceFormProvider({
           setInstallations,
           selectedInstallation,
           setSelectedInstallation,
+          vercelInstallationId,
+          setVercelInstallationId,
+          selectedProjects,
+          setSelectedProjects,
+          toggleProject,
         }}
       >
         {children}
