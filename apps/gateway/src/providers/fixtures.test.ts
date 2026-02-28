@@ -2,10 +2,17 @@
  * Fixture-based provider tests using real webhook payloads from @repo/console-test-data.
  *
  * Runs every webhook from every sandbox dataset through the gateway's provider
- * pipeline: parsePayload → extractEventType → extractResourceId.
+ * pipeline: parsePayload → extractResourceId → extractEventType → extractDeliveryId.
  *
  * Catches regressions where a real provider payload shape breaks extraction
  * logic that synthetic unit tests wouldn't surface.
+ *
+ * NOTE: RawWebhook fixtures contain only payloads, not HTTP headers. The
+ * extractEventType and extractDeliveryId tests below pass empty Headers,
+ * so providers that derive these values from headers (GitHub, Sentry) will
+ * exercise only their fallback paths here. Payload-driven providers (Vercel,
+ * Linear) are fully exercised. Header-based extraction is covered by
+ * provider-specific unit tests.
  */
 import { describe, it, expect } from "vitest";
 import { loadAllRawWebhooks, type RawWebhook } from "@repo/console-test-data/raw";
@@ -89,6 +96,9 @@ describe("fixture-based provider extraction (real webhook payloads)", () => {
         }
       });
 
+      // Empty headers: payload-driven providers (Vercel, Linear) are fully
+      // exercised; header-driven providers (GitHub, Sentry) hit fallback paths
+      // only. See file-level NOTE for details.
       it("extractEventType returns non-empty string for all payloads", () => {
         const headers = new Headers();
         for (const wh of providerWebhooks) {
