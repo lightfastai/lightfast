@@ -15,6 +15,8 @@ import type {
   CallbackResult,
 } from "../types.js";
 
+const FETCH_TIMEOUT_MS = 15_000;
+
 export class GitHubProvider implements ConnectionProvider {
   readonly name = "github" as const;
   readonly requiresWebhookRegistration = false as const;
@@ -45,6 +47,7 @@ export class GitHubProvider implements ConnectionProvider {
       "https://github.com/login/oauth/access_token",
       {
         method: "POST",
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -100,6 +103,7 @@ export class GitHubProvider implements ConnectionProvider {
       `https://api.github.com/applications/${env.GITHUB_CLIENT_ID}/token`,
       {
         method: "DELETE",
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         headers: {
           Authorization: `Basic ${credentials}`,
           "Content-Type": "application/json",
