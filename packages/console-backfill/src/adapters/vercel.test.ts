@@ -17,7 +17,7 @@ function makeDeployment(overrides: Record<string, unknown> = {}): Record<string,
   };
 }
 
-describe("adaptVercelDeploymentForTransformer — readyState mapping (via adaptVercelDeploymentForTransformer)", () => {
+describe("adaptVercelDeploymentForTransformer — readyState mapping", () => {
   it('READY → eventType: "deployment.succeeded"', () => {
     const { eventType } = adaptVercelDeploymentForTransformer(makeDeployment({ readyState: "READY" }), "my-app");
     expect(eventType).toBe("deployment.succeeded");
