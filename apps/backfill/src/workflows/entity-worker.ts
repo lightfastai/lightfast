@@ -128,6 +128,7 @@ export const backfillEntityWorker = inngest.createFunction(
               events: page.events,
               nextCursor: page.nextCursor,
               rawCount: page.rawCount,
+              refreshedToken: null as string | null,
               rateLimit: page.rateLimit
                 ? {
                     remaining: page.rateLimit.remaining,
@@ -156,10 +157,10 @@ export const backfillEntityWorker = inngest.createFunction(
               }
               const { accessToken: freshToken } =
                 (await tokenResponse.json()) as { accessToken: string };
-              config.accessToken = freshToken;
 
+              const refreshedConfig = { ...config, accessToken: freshToken };
               const page = await connector.fetchPage(
-                config,
+                refreshedConfig,
                 entityType,
                 cursor,
               );
@@ -167,6 +168,7 @@ export const backfillEntityWorker = inngest.createFunction(
                 events: page.events,
                 nextCursor: page.nextCursor,
                 rawCount: page.rawCount,
+                refreshedToken: freshToken,
                 rateLimit: page.rateLimit
                   ? {
                       remaining: page.rateLimit.remaining,
@@ -180,6 +182,11 @@ export const backfillEntityWorker = inngest.createFunction(
           }
         },
       );
+
+      // Apply refreshed token outside step boundary so it survives memoized replay
+      if (fetchResult.refreshedToken) {
+        config.accessToken = fetchResult.refreshedToken;
+      }
 
       eventsProduced += fetchResult.rawCount;
 
