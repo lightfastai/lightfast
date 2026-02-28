@@ -51,7 +51,6 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
-  // eslint-disable-next-line turbo/no-undeclared-env-vars -- runtime CLI env, not build-time
   const apiKey = values["api-key"] ?? process.env.LIGHTFAST_API_KEY;
 
   if (!apiKey) {

@@ -32,6 +32,7 @@
         "EXA_API_KEY",
         "KV_REST_API_URL",
         "KV_REST_API_TOKEN",
+        "AI_GATEWAY_API_KEY",
         "HEALTH_CHECK_AUTH_TOKEN"
       ],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "next-env.d.ts"]

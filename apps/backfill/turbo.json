@@ -6,13 +6,10 @@
     "build": {
       "dependsOn": ["^build"],
       "passThroughEnv": [
-        "GATEWAY_URL",
         "GATEWAY_API_KEY",
         "INNGEST_APP_NAME",
         "INNGEST_EVENT_KEY",
-        "INNGEST_SIGNING_KEY",
-        "GITHUB_APP_ID",
-        "GITHUB_APP_PRIVATE_KEY"
+        "INNGEST_SIGNING_KEY"
       ],
       "outputs": ["dist/**"]
     },
