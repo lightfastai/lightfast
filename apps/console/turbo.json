@@ -53,6 +53,7 @@
         "ENCRYPTION_KEY",
         "GATEWAY_API_KEY",
         "PINECONE_API_KEY",
+        "COHERE_API_KEY",
         "INNGEST_APP_NAME",
         "INNGEST_EVENT_KEY",
         "INNGEST_SIGNING_KEY",

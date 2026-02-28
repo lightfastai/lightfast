@@ -33,7 +33,8 @@
         "KV_REST_API_URL",
         "KV_REST_API_TOKEN",
         "AI_GATEWAY_API_KEY",
-        "HEALTH_CHECK_AUTH_TOKEN"
+        "HEALTH_CHECK_AUTH_TOKEN",
+        "PORT"
       ],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "next-env.d.ts"]
     },
