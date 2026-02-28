@@ -21,15 +21,10 @@ export class GitHubProvider implements ConnectionProvider {
   readonly name = "github" as const;
   readonly requiresWebhookRegistration = false as const;
 
-  getAuthorizationUrl(state: string, options?: GitHubAuthOptions): string {
-    const url = new URL("https://github.com/login/oauth/authorize");
-    url.searchParams.set("client_id", env.GITHUB_CLIENT_ID);
-    url.searchParams.set("state", state);
-    if (options?.redirectPath) {
-      const redirectUri = `${connectionsBaseUrl}/connections/github/callback`;
-      url.searchParams.set("redirect_uri", redirectUri);
-    }
-    return url.toString();
+  getAuthorizationUrl(state: string, _options?: GitHubAuthOptions): string {
+    // GitHub uses App installation flow (not OAuth).
+    // handleCallback expects installation_id from the redirect.
+    return this.getInstallationUrl(state);
   }
 
   /** Build GitHub App installation URL (GitHub-specific, not on interface) */

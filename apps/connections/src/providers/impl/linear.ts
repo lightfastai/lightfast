@@ -5,7 +5,7 @@ import { nanoid } from "@repo/lib";
 import { and, eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
-import { decrypt } from "../../lib/crypto.js";
+import { decrypt } from "@repo/lib";
 import { writeTokenRecord } from "../../lib/token-store.js";
 import { connectionsBaseUrl, gatewayBaseUrl, notifyBackfillService } from "../../lib/urls.js";
 import { linearOAuthResponseSchema } from "../schemas.js";

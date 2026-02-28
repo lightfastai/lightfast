@@ -22,7 +22,7 @@
     },
     "webhooks": {
       "active": true,
-      "url": "https://<ngrok-subdomain>.ngrok-free.dev/api/webhooks/github",
+      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/gateway/webhooks/github",
       "events": [
         "installation",
         "installation_repositories",
@@ -73,16 +73,21 @@
       "configuration_url": "http://localhost:3024/settings/integrations/vercel"
     },
     "webhooks": {
-      "url": "https://<ngrok-subdomain>.ngrok-free.dev/api/webhooks/vercel",
+      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/gateway/webhooks/vercel",
       "events": [
         "deployment.created",
         "deployment.succeeded",
         "deployment.ready",
         "deployment.error",
         "deployment.canceled",
-        "project.created",
-        "project.removed",
-        "integration-configuration.removed"
+        "deployment.integration.action.start",
+        "deployment.integration.action.cancel",
+        "deployment.integration.action.cleanup",
+        "integration-configuration.removed",
+        "marketplace.invoice.created",
+        "marketplace.invoice.paid",
+        "marketplace.invoice.notpaid",
+        "marketplace.invoice.refunded"
       ]
     },
     "scopes": {
@@ -116,13 +121,11 @@
       "authorized_javascript_origins": []
     },
     "webhooks": {
-      "url": "https://<ngrok-subdomain>.ngrok-free.dev/api/webhooks/sentry",
+      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/gateway/webhooks/sentry",
       "resources": [
-        "installation",
         "issue",
-        "error",
         "event_alert",
-        "metric_alert",
+        "seer",
         "comment"
       ]
     },

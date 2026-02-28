@@ -64,7 +64,7 @@ export const connectionsRouter = {
 		)
 		.query(async ({ ctx, input }) => {
 			const res = await fetch(
-				`${connectionsUrl}/connections/${input.provider}/authorize`,
+				`${connectionsUrl}/services/connections/${input.provider}/authorize`,
 				{
 					headers: {
 						"X-Org-Id": ctx.auth.orgId,
@@ -109,7 +109,7 @@ export const connectionsRouter = {
 			}
 
 			const res = await fetch(
-				`${connectionsUrl}/connections/${input.provider}/authorize?redirect_to=inline`,
+				`${connectionsUrl}/services/connections/${input.provider}/authorize?redirect_to=inline`,
 				{
 					headers: {
 						"X-Org-Id": workspace.clerkOrgId,
@@ -673,7 +673,7 @@ export const connectionsRouter = {
 			.input(
 				z.object({
 					installationId: z.string(), // gwInstallations.id
-					workspaceId: z.string(),
+					workspaceId: z.string().optional(),
 					cursor: z.string().optional(),
 				}),
 			)
@@ -741,17 +741,19 @@ export const connectionsRouter = {
 
 				const data = (await response.json()) as VercelProjectsResponse;
 
-				// 5. Get already-connected projects for this workspace
-				const connected = await ctx.db.query.workspaceIntegrations.findMany({
-					where: and(
-						eq(workspaceIntegrations.workspaceId, input.workspaceId),
-						eq(workspaceIntegrations.installationId, input.installationId),
-						eq(workspaceIntegrations.isActive, true),
-					),
-					columns: { providerResourceId: true },
-				});
-
-				const connectedIds = new Set(connected.map((c) => c.providerResourceId));
+				// 5. Get already-connected projects for this workspace (only when workspaceId provided)
+				let connectedIds = new Set<string>();
+				if (input.workspaceId) {
+					const connected = await ctx.db.query.workspaceIntegrations.findMany({
+						where: and(
+							eq(workspaceIntegrations.workspaceId, input.workspaceId),
+							eq(workspaceIntegrations.installationId, input.installationId),
+							eq(workspaceIntegrations.isActive, true),
+						),
+						columns: { providerResourceId: true },
+					});
+					connectedIds = new Set(connected.map((c) => c.providerResourceId));
+				}
 
 				// 6. Return with connection status
 				return {

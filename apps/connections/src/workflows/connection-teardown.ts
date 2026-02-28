@@ -6,7 +6,7 @@ import type { WorkflowContext } from "@vendor/upstash-workflow/types";
 import { and, eq } from "@vendor/db";
 import { env } from "../env.js";
 import { resourceKey } from "../lib/cache.js";
-import { decrypt } from "../lib/crypto.js";
+import { decrypt } from "@repo/lib";
 import { cancelBackfillService } from "../lib/urls.js";
 import { getProvider } from "../providers/index.js";
 import type { ProviderName } from "../providers/types.js";

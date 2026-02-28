@@ -59,21 +59,19 @@ vi.mock("drizzle-orm", () => ({
   eq: vi.fn(),
 }));
 
-vi.mock("../../lib/crypto", () => ({
-  decrypt: vi.fn().mockResolvedValue("decrypted-token"),
-}));
-
 vi.mock("../../lib/token-store", () => ({
   writeTokenRecord: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@repo/lib", () => ({
   nanoid: vi.fn().mockReturnValue("mock-secret-32chars-padding-here"),
+  decrypt: vi.fn().mockReturnValue("decrypted-token"),
+  encrypt: vi.fn().mockReturnValue("encrypted-value"),
 }));
 
 import { LinearProvider } from "./linear.js";
 import { db } from "@db/console/client";
-import { decrypt } from "../../lib/crypto.js";
+import { decrypt } from "@repo/lib";
 import { notifyBackfillService } from "../../lib/urls.js";
 
 const provider = new LinearProvider();

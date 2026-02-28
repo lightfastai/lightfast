@@ -87,8 +87,10 @@ vi.mock("@db/console/schema", () => ({
   gwTokens: { installationId: "installationId", accessToken: "accessToken" },
 }));
 
-vi.mock("../lib/crypto", () => ({
+vi.mock("@repo/lib", () => ({
+  nanoid: vi.fn().mockReturnValue("mock-id"),
   decrypt: (...args: unknown[]) => mockDecrypt(...args),
+  encrypt: vi.fn().mockReturnValue("encrypted-value"),
 }));
 
 vi.mock("../lib/cache", () => ({

@@ -38,8 +38,10 @@ vi.mock("../lib/github-jwt", () => ({
   getInstallationToken: vi.fn(),
 }));
 
-vi.mock("../lib/crypto", () => ({
+vi.mock("@repo/lib", () => ({
+  nanoid: vi.fn().mockReturnValue("mock-id"),
   decrypt: vi.fn(),
+  encrypt: vi.fn().mockReturnValue("encrypted-value"),
 }));
 
 vi.mock("../lib/token-store", () => ({

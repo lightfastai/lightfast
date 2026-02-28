@@ -3,7 +3,7 @@ import { gwTokens } from "@db/console/schema";
 import { eq } from "@vendor/db";
 import { env } from "../env.js";
 import type { OAuthTokens } from "../providers/types.js";
-import { encrypt } from "./crypto.js";
+import { encrypt } from "@repo/lib";
 
 /**
  * Write an encrypted token record for an installation.

@@ -33,8 +33,10 @@ vi.mock("@db/console/schema", () => ({
   gwTokens: {},
 }));
 
-vi.mock("../../lib/crypto", () => ({
-  decrypt: vi.fn().mockResolvedValue("decrypted-token"),
+vi.mock("@repo/lib", () => ({
+  nanoid: vi.fn().mockReturnValue("mock-id-padding-here"),
+  decrypt: vi.fn().mockReturnValue("decrypted-token"),
+  encrypt: vi.fn().mockReturnValue("encrypted-value"),
 }));
 
 vi.mock("../../lib/token-store", () => ({
@@ -44,7 +46,7 @@ vi.mock("../../lib/token-store", () => ({
 
 import { SentryProvider } from "./sentry.js";
 import { db } from "@db/console/client";
-import { decrypt } from "../../lib/crypto.js";
+import { decrypt } from "@repo/lib";
 import { updateTokenRecord } from "../../lib/token-store.js";
 import { notifyBackfillService } from "../../lib/urls.js";
 

@@ -208,6 +208,7 @@ connections.get("/:provider/callback", async (c) => {
     return c.redirect(redirectUrl.toString());
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";
+    console.error(`[${providerName}] callback error:`, err);
 
     // Store error result for CLI polling
     await redis
