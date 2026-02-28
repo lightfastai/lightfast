@@ -16,6 +16,8 @@ import type {
   CallbackResult,
 } from "../types.js";
 
+const FETCH_TIMEOUT_MS = 15_000;
+
 export class VercelProvider implements ConnectionProvider {
   readonly name = "vercel" as const;
   readonly requiresWebhookRegistration = false as const;
@@ -42,6 +44,7 @@ export class VercelProvider implements ConnectionProvider {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: body.toString(),
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       },
     );
 
@@ -73,6 +76,7 @@ export class VercelProvider implements ConnectionProvider {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       },
     );
 
