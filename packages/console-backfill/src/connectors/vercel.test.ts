@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -53,6 +53,10 @@ function makeDeploymentsResponse(
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+afterAll(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("validateScopes", () => {
