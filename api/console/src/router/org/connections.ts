@@ -5,9 +5,9 @@ import { eq, and } from "drizzle-orm";
 import { gwInstallations, workspaceIntegrations, orgWorkspaces } from "@db/console/schema";
 import { orgScopedProcedure, apiKeyProcedure } from "../../trpc";
 import {
-	getUserInstallations,
 	createGitHubApp,
 	getInstallationRepositories,
+	getAppInstallation,
 } from "@repo/console-octokit-github";
 import { getInstallationToken } from "../../lib/token-vault";
 import { env } from "../../env";
@@ -70,6 +70,7 @@ export const connectionsRouter = {
 						"X-Org-Id": ctx.auth.orgId,
 						"X-User-Id": ctx.auth.userId,
 						"X-API-Key": env.GATEWAY_API_KEY,
+						"X-Request-Source": "console-trpc",
 					},
 				},
 			);
@@ -115,6 +116,7 @@ export const connectionsRouter = {
 						"X-Org-Id": workspace.clerkOrgId,
 						"X-User-Id": ctx.auth.userId,
 						"X-API-Key": env.GATEWAY_API_KEY,
+						"X-Request-Source": "console-trpc-cli",
 					},
 				},
 			);
@@ -272,80 +274,65 @@ export const connectionsRouter = {
 				});
 			}
 
+			const providerAccountInfo = installation.providerAccountInfo;
+			if (providerAccountInfo?.sourceType !== "github") {
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Invalid provider data type",
+				});
+			}
+
 			try {
-				// Get access token directly from gw_tokens vault
-				const accessToken = await getInstallationToken(installation.id);
+				const app = getGitHubApp();
+				const installationIdNumber = Number.parseInt(installation.externalId, 10);
 
-				const { installations: githubInstallations } =
-					await getUserInstallations(accessToken);
+				// Fetch fresh installation details using App JWT
+				const githubInstallation = await getAppInstallation(app, installationIdNumber);
 
-				const providerAccountInfo = installation.providerAccountInfo;
-				if (providerAccountInfo?.sourceType !== "github") {
-					throw new TRPCError({
-						code: "INTERNAL_SERVER_ERROR",
-						message: "Invalid provider data type",
-					});
+				const account = githubInstallation.account;
+				if (!account || !("login" in account)) {
+					throw new Error("Installation response missing account data");
 				}
 
-				const currentInstallations = providerAccountInfo.installations ?? [];
-				const currentIds = new Set(
-					currentInstallations.map((i) => i.id.toString()),
-				);
-
-				// Map GitHub installations to our format
 				const now = new Date().toISOString();
-				const newInstallations = githubInstallations.map((install) => {
-					const account = install.account;
-					const accountLogin =
-						account && "login" in account ? account.login : "";
-					const accountType: "User" | "Organization" =
-						account && "type" in account && account.type === "User"
-							? "User"
-							: "Organization";
+				const refreshedInstallation = {
+					id: installation.externalId,
+					accountId: account.id.toString(),
+					accountLogin: "login" in account ? (account.login ?? "") : "",
+					accountType: ("type" in account && account.type === "User" ? "User" : "Organization") as "User" | "Organization",
+					avatarUrl: "avatar_url" in account ? (account.avatar_url ?? "") : "",
+					permissions: githubInstallation.permissions as Record<string, string>,
+					events: (githubInstallation.events as string[]) ?? [],
+					installedAt: githubInstallation.created_at,
+					lastValidatedAt: now,
+				};
 
-					return {
-						id: install.id.toString(),
-						accountId: account?.id.toString() ?? "",
-						accountLogin,
-						accountType,
-						avatarUrl: account && "avatar_url" in account ? account.avatar_url : "",
-						permissions: (install.permissions as Record<string, string>),
-						installedAt: install.created_at,
-						lastValidatedAt: now,
-					};
-				});
+				const currentInstallations = providerAccountInfo.installations ?? [];
 
-				const newIds = new Set(newInstallations.map((i) => i.id));
-
-				const added = newInstallations.filter((i) => !currentIds.has(i.id));
-				const removed = currentInstallations.filter(
-					(i) => !newIds.has(i.id),
-				);
-
-				// Update providerAccountInfo with fresh installations
+				// Update providerAccountInfo with refreshed data
 				await ctx.db
 					.update(gwInstallations)
 					.set({
 						providerAccountInfo: {
 							version: 1 as const,
 							sourceType: "github" as const,
-							installations: newInstallations,
+							installations: [refreshedInstallation],
 						},
 						updatedAt: now,
 					})
 					.where(eq(gwInstallations.id, installation.id));
 
 				return {
-					added: added.length,
-					removed: removed.length,
-					total: newInstallations.length,
+					added: currentInstallations.length === 0 ? 1 : 0,
+					removed: Math.max(0, currentInstallations.length - 1),
+					total: 1,
 				};
 			} catch (error: unknown) {
 				console.error("[tRPC connections.github.validate] GitHub installation validation failed:", error);
 
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
-					message: "Failed to validate GitHub installations",
+					message: "Failed to validate GitHub installation",
 					cause: error,
 				});
 			}
@@ -617,6 +604,45 @@ export const connectionsRouter = {
 	 * Vercel-specific operations
 	 */
 	vercel: {
+		/**
+		 * List all org's Vercel installations
+		 *
+		 * Returns all active Vercel OAuth connections (one per team).
+		 * Used by workspace creation to support multi-team selection.
+		 */
+		list: orgScopedProcedure.query(async ({ ctx }) => {
+			const results = await ctx.db
+				.select()
+				.from(gwInstallations)
+				.where(
+					and(
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "vercel"),
+						eq(gwInstallations.status, "active"),
+					),
+				);
+
+			return {
+				installations: results
+					.map((inst) => {
+						const info = inst.providerAccountInfo;
+						if (info?.sourceType !== "vercel") return null;
+						return {
+							id: inst.id,
+							orgId: inst.orgId,
+							provider: inst.provider,
+							connectedAt: inst.createdAt,
+							status: inst.status,
+							vercelUserId: info.userId,
+							teamId: info.teamId ?? null,
+							teamSlug: info.teamSlug ?? null,
+							configurationId: info.configurationId,
+						};
+					})
+					.filter((v): v is NonNullable<typeof v> => v !== null),
+			};
+		}),
+
 		/**
 		 * Get org's Vercel installation
 		 *

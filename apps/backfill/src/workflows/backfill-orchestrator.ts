@@ -42,7 +42,7 @@ export const backfillOrchestrator = inngest.createFunction(
       const response = await fetch(
         `${connectionsUrl}/connections/${installationId}`,
         {
-          headers: { "X-API-Key": env.GATEWAY_API_KEY },
+          headers: { "X-API-Key": env.GATEWAY_API_KEY, "X-Request-Source": "backfill" },
           signal: AbortSignal.timeout(10_000),
         },
       ).catch((err: unknown) => {

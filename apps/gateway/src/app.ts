@@ -1,9 +1,22 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { errorSanitizer } from "./middleware/error-sanitizer.js";
+import { logger } from "./middleware/logger.js";
+import { requestId } from "./middleware/request-id.js";
+import { sentry } from "./middleware/sentry.js";
+import { timing } from "./middleware/timing.js";
 import { admin } from "./routes/admin.js";
 import { webhooks } from "./routes/webhooks.js";
 import { workflows } from "./routes/workflows.js";
+
 const app = new Hono();
+
+// Global middleware (order matters)
+app.use(requestId);
+app.use(logger);
+app.use(sentry);
+app.use(errorSanitizer);
+app.use(timing);
 
 // Global error handler — catches unhandled exceptions from all routes
 app.onError((err, c) => {

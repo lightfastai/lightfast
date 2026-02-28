@@ -72,7 +72,7 @@ export const backfillEntityWorker = inngest.createFunction(
         const response = await fetch(
           `${connectionsUrl}/connections/${installationId}/token`,
           {
-            headers: { "X-API-Key": env.GATEWAY_API_KEY },
+            headers: { "X-API-Key": env.GATEWAY_API_KEY, "X-Request-Source": "backfill" },
             signal: AbortSignal.timeout(30_000),
           },
         );
@@ -148,7 +148,7 @@ export const backfillEntityWorker = inngest.createFunction(
               const tokenResponse = await fetch(
                 `${connectionsUrl}/connections/${installationId}/token`,
                 {
-                  headers: { "X-API-Key": env.GATEWAY_API_KEY },
+                  headers: { "X-API-Key": env.GATEWAY_API_KEY, "X-Request-Source": "backfill" },
                   signal: AbortSignal.timeout(30_000),
                 },
               );
