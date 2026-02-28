@@ -75,8 +75,8 @@ export function timingSafeEqual(a: string, b: string): boolean {
 
 /**
  * Timing-safe comparison of two arbitrary strings.
- * Encodes both as UTF-8 and performs constant-time byte comparison.
- * Does not leak string length — iterates to max length with XOR accumulator.
+ * Encodes both as UTF-8 and iterates to max length with XOR accumulator
+ * to avoid timing-based length disclosure during comparison.
  */
 export function timingSafeStringEqual(a: string, b: string): boolean {
   const encoder = new TextEncoder();
