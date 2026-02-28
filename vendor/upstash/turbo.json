@@ -1,5 +1,12 @@
 {
   "extends": ["//"],
   "tags": ["vendor"],
-  "tasks": {}
+  "tasks": {
+    "build": {
+      "passThroughEnv": [
+        "KV_REST_API_URL",
+        "KV_REST_API_TOKEN"
+      ]
+    }
+  }
 }

@@ -1,5 +1,14 @@
 {
   "extends": ["//"],
   "tags": ["packages"],
-  "tasks": {}
+  "tasks": {
+    "build": {
+      "passThroughEnv": [
+        "BRAINTRUST_API_KEY",
+        "BRAINTRUST_PROJECT_NAME",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "OTEL_EXPORTER_OTLP_HEADERS"
+      ]
+    }
+  }
 }

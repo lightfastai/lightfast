@@ -1,5 +1,12 @@
 {
   "extends": ["//"],
   "tags": ["packages"],
-  "tasks": {}
+  "tasks": {
+    "build": {
+      "passThroughEnv": [
+        "BROWSERBASE_API_KEY",
+        "BROWSERBASE_PROJECT_ID"
+      ]
+    }
+  }
 }
