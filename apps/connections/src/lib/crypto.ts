@@ -9,7 +9,10 @@ const IV_LENGTH = 12; // 96-bit IV for GCM
 const EXPECTED_HEX_LENGTH = 64; // 64 hex chars = 32 bytes = 256 bits for AES-256
 
 /**
- * Derive an AES-GCM CryptoKey from a hex-encoded secret
+ * Import a hex-encoded 256-bit secret as an AES-GCM CryptoKey.
+ *
+ * hexSecret MUST be a cryptographically random 256-bit value (64 hex chars),
+ * NOT a user-chosen password. Raw import is used — no KDF is applied.
  */
 async function deriveKey(hexSecret: string): Promise<CryptoKey> {
   if (hexSecret.length !== EXPECTED_HEX_LENGTH) {
