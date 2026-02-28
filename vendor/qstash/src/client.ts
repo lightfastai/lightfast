@@ -103,7 +103,7 @@ let currentToken: string | undefined;
  * Get or create the default QStash client singleton
  */
 export function getQStashClient(token?: string): QStashClient {
-  if (!clientInstance || (token && token !== currentToken)) {
+  if (!clientInstance || token !== currentToken) {
     clientInstance = new QStashClient(token);
     currentToken = token;
   }
