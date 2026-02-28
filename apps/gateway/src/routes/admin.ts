@@ -58,25 +58,38 @@ admin.get("/health", async (c) => {
  * Requires X-API-Key authentication.
  */
 admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
-  const activeResources = await db
-    .select({
-      provider: gwInstallations.provider,
-      providerResourceId: gwResources.providerResourceId,
-      installationId: gwResources.installationId,
-      orgId: gwInstallations.orgId,
-    })
-    .from(gwResources)
-    .innerJoin(gwInstallations, eq(gwResources.installationId, gwInstallations.id))
-    .where(eq(gwResources.status, "active"));
+  const BATCH_SIZE = 500;
+  let offset = 0;
+  let rebuilt = 0;
 
-  const pipeline = redis.pipeline();
-  for (const r of activeResources) {
-    const key = resourceKey(r.provider as ProviderName, r.providerResourceId);
-    pipeline.hset(key, { connectionId: r.installationId, orgId: r.orgId });
-    pipeline.expire(key, RESOURCE_CACHE_TTL);
+  for (;;) {
+    const batch = await db
+      .select({
+        provider: gwInstallations.provider,
+        providerResourceId: gwResources.providerResourceId,
+        installationId: gwResources.installationId,
+        orgId: gwInstallations.orgId,
+      })
+      .from(gwResources)
+      .innerJoin(gwInstallations, eq(gwResources.installationId, gwInstallations.id))
+      .where(eq(gwResources.status, "active"))
+      .limit(BATCH_SIZE)
+      .offset(offset);
+
+    if (batch.length === 0) break;
+
+    const pipeline = redis.pipeline();
+    for (const r of batch) {
+      const key = resourceKey(r.provider as ProviderName, r.providerResourceId);
+      pipeline.hset(key, { connectionId: r.installationId, orgId: r.orgId });
+      pipeline.expire(key, RESOURCE_CACHE_TTL);
+    }
+    await pipeline.exec();
+
+    rebuilt += batch.length;
+    if (batch.length < BATCH_SIZE) break;
+    offset += BATCH_SIZE;
   }
-  await pipeline.exec();
-  const rebuilt = activeResources.length;
 
   return c.json({ status: "rebuilt", count: rebuilt });
 });
