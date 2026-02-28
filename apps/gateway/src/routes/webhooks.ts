@@ -10,9 +10,6 @@ import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/gateway-types";
 import { timingSafeStringEqual } from "../lib/crypto.js";
 
-const qstash = getQStashClient();
-const workflowClient = getWorkflowClient();
-
 const webhooks = new Hono();
 
 /**
@@ -86,7 +83,7 @@ webhooks.post("/:provider", async (c) => {
     }
 
     // Publish directly to Console ingress — skip connection resolution (pre-resolved in body)
-    await qstash.publishJSON({
+    await getQStashClient().publishJSON({
       url: `${consoleUrl}/api/webhooks/ingress`,
       body: {
         deliveryId: body.deliveryId,
@@ -145,7 +142,7 @@ webhooks.post("/:provider", async (c) => {
     receivedAt: Date.now(),
   };
 
-  await workflowClient.trigger({
+  await getWorkflowClient().trigger({
     url: `${gatewayBaseUrl}/workflows/webhook-delivery`,
     body: workflowPayload,
   });
