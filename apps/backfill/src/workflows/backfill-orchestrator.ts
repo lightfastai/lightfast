@@ -144,7 +144,17 @@ export const backfillOrchestrator = inngest.createFunction(
     // As each entity.completed event arrives, the matching wait resolves
     // Escape single quotes for CEL string literals to prevent syntax errors
     const celEscape = (v: string) =>
-      v.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+      v
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r")
+        .replace(/\t/g, "\\t")
+        // eslint-disable-next-line no-control-regex
+        .replace(/[\x00-\x1f]/g, (ch) => {
+          const hex = ch.charCodeAt(0).toString(16).padStart(4, "0");
+          return `\\u${hex}`;
+        });
 
     const completionResults = await Promise.all(
       workUnits.map(async (wu) => {
