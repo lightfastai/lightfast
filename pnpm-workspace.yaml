@@ -54,6 +54,7 @@ catalog:
   nanoid: ^5.1.5
   '@electric-sql/pglite': ^0.2.17
   drizzle-orm: ^0.43.1
+  '@neondatabase/serverless': ^1.0.2
   hono: ^4.12.2
   postgres: ^3.4.5
   drizzle-zod: ^0.7.1
