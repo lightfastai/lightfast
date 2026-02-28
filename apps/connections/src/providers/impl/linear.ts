@@ -22,10 +22,22 @@ const FETCH_TIMEOUT_MS = 15_000;
 export class LinearProvider implements ConnectionProvider {
   readonly name = "linear" as const;
   readonly requiresWebhookRegistration = true as const;
+  private readonly clientId: string;
+  private readonly clientSecret: string;
+
+  constructor() {
+    if (!env.LINEAR_CLIENT_ID || !env.LINEAR_CLIENT_SECRET) {
+      throw new Error(
+        "LinearProvider requires LINEAR_CLIENT_ID and LINEAR_CLIENT_SECRET",
+      );
+    }
+    this.clientId = env.LINEAR_CLIENT_ID;
+    this.clientSecret = env.LINEAR_CLIENT_SECRET;
+  }
 
   getAuthorizationUrl(state: string, options?: LinearAuthOptions): string {
     const url = new URL("https://linear.app/oauth/authorize");
-    url.searchParams.set("client_id", env.LINEAR_CLIENT_ID);
+    url.searchParams.set("client_id", this.clientId);
     url.searchParams.set(
       "redirect_uri",
       `${connectionsBaseUrl}/connections/linear/callback`,
@@ -42,8 +54,8 @@ export class LinearProvider implements ConnectionProvider {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: env.LINEAR_CLIENT_ID,
-        client_secret: env.LINEAR_CLIENT_SECRET,
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
         redirect_uri: redirectUri,
         code,
         grant_type: "authorization_code",
