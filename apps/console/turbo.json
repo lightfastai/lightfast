@@ -52,6 +52,7 @@
         "QSTASH_NEXT_SIGNING_KEY",
         "ENCRYPTION_KEY",
         "GATEWAY_API_KEY",
+        "PINECONE_API_KEY",
         "INNGEST_APP_NAME",
         "INNGEST_EVENT_KEY",
         "INNGEST_SIGNING_KEY",
