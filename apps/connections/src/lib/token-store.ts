@@ -18,15 +18,17 @@ export async function writeTokenRecord(
     ? await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY)
     : null;
 
+  const expiresAt = oauthTokens.expiresIn
+    ? new Date(Date.now() + oauthTokens.expiresIn * 1000).toISOString()
+    : null;
+
   await db
     .insert(gwTokens)
     .values({
       installationId,
       accessToken: encryptedAccess,
       refreshToken: encryptedRefresh,
-      expiresAt: oauthTokens.expiresIn
-        ? new Date(Date.now() + oauthTokens.expiresIn * 1000).toISOString()
-        : null,
+      expiresAt,
       tokenType: oauthTokens.tokenType,
       scope: oauthTokens.scope,
     })
@@ -35,9 +37,7 @@ export async function writeTokenRecord(
       set: {
         accessToken: encryptedAccess,
         refreshToken: encryptedRefresh,
-        expiresAt: oauthTokens.expiresIn
-          ? new Date(Date.now() + oauthTokens.expiresIn * 1000).toISOString()
-          : null,
+        expiresAt,
         tokenType: oauthTokens.tokenType,
         scope: oauthTokens.scope,
         updatedAt: new Date().toISOString(),
