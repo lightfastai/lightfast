@@ -17,7 +17,14 @@ const server = {
   ENCRYPTION_KEY: z.string().min(32),
 };
 
-/** Validated env from the Hono request context — use in route handlers. */
+/**
+ * Validated env from the Hono request context — use in route handlers.
+ *
+ * Only validates app-specific server variables (GATEWAY_API_KEY, ENCRYPTION_KEY).
+ * Preset groups (vercel, upstash, db, OAuth, etc.) are validated once at module
+ * load via the module-level `env` export and should be accessed from there or
+ * from their respective package imports.
+ */
 export const getEnv = (c: Context) =>
   createEnv({
     clientPrefix: "" as const,
