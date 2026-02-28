@@ -47,7 +47,10 @@ export const backfillUrl = `${withRelatedProject({
     : "https://backfill.lightfast.ai",
 })}/api`;
 
-const qstash = getQStashClient();
+let _qstash: ReturnType<typeof getQStashClient>;
+function getClient() {
+  return (_qstash ??= getQStashClient());
+}
 
 /**
  * Notify the backfill service to start a historical backfill for a new connection.
@@ -59,7 +62,7 @@ export async function notifyBackfillService(params: {
   orgId: string;
 }): Promise<void> {
   try {
-    await qstash.publishJSON({
+    await getClient().publishJSON({
       url: `${backfillUrl}/trigger`,
       headers: { "X-API-Key": env.GATEWAY_API_KEY },
       body: params,
@@ -85,7 +88,7 @@ export async function cancelBackfillService(params: {
   installationId: string;
 }): Promise<void> {
   try {
-    await qstash.publishJSON({
+    await getClient().publishJSON({
       url: `${backfillUrl}/trigger/cancel`,
       headers: { "X-API-Key": env.GATEWAY_API_KEY },
       body: params,
