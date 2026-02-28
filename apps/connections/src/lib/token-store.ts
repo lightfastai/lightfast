@@ -48,15 +48,21 @@ export async function writeTokenRecord(
 /** Minimum base64-decoded byte length for a valid AES-GCM encrypted value (12-byte IV + 16-byte tag). */
 const MIN_ENCRYPTED_BYTES = 28;
 
+/**
+ * Best-effort check that `value` looks like an AES-GCM ciphertext (base64, >= {@link MIN_ENCRYPTED_BYTES} decoded bytes).
+ * This is a heuristic — it can admit some plaintext that happens to be valid base64 of sufficient length.
+ * For stricter validation consider a versioned prefix or non-printable-byte heuristic.
+ */
 function assertEncryptedFormat(value: string): void {
   try {
     const decoded = atob(value);
     if (decoded.length < MIN_ENCRYPTED_BYTES) {
       throw new Error("too short");
     }
-  } catch {
+  } catch (e) {
+    const reason = e instanceof Error ? e.message : String(e);
     throw new Error(
-      "existingEncryptedRefreshToken does not appear to be an encrypted value — refusing to persist potentially plaintext token",
+      `existingEncryptedRefreshToken does not appear to be an encrypted value — refusing to persist potentially plaintext token (${reason})`,
     );
   }
 }
