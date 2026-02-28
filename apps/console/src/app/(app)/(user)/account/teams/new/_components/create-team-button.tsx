@@ -115,7 +115,7 @@ export function CreateTeamButton() {
   return (
     <Button
       onClick={handleCreateTeam}
-      className="h-12 w-full text-base font-medium"
+      className="w-full"
       disabled={isDisabled}
     >
       {createOrgMutation.isPending ? (

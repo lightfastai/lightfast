@@ -81,7 +81,7 @@ export function TeamNameInput() {
       name="teamName"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Your Team Name</FormLabel>
+          <FormLabel className="text-xs font-medium text-muted-foreground">Your Team Name</FormLabel>
           <FormControl>
             <Input
               {...field}
@@ -100,13 +100,16 @@ export function TeamNameInput() {
                 handleBlur();
               }}
               placeholder="acme-inc"
-              className="h-12 text-base font-mono"
+              className="font-mono"
             />
           </FormControl>
-          <FormDescription>
-            Great team names are short and memorable
-          </FormDescription>
-          <FormMessage />
+          {form.formState.errors.teamName ? (
+            <FormMessage />
+          ) : (
+            <FormDescription className="text-xs">
+              Great team names are short and memorable
+            </FormDescription>
+          )}
         </FormItem>
       )}
     />
