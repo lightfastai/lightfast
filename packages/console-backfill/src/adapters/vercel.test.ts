@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   adaptVercelDeploymentForTransformer,
   parseVercelRateLimit,
@@ -61,12 +61,12 @@ describe("adaptVercelDeploymentForTransformer", () => {
     expect(webhookPayload.createdAt).toBe(1700000000000);
   });
 
-  it("webhookPayload.createdAt is roughly Date.now() when deployment.created is undefined", () => {
-    const before = Date.now();
+  it("webhookPayload.createdAt equals Date.now() when deployment.created is undefined", () => {
+    const fakeNow = 1700000000000;
+    vi.spyOn(Date, "now").mockReturnValue(fakeNow);
     const { webhookPayload } = adaptVercelDeploymentForTransformer(makeDeployment({ created: undefined }), "my-app");
-    const after = Date.now();
-    expect(webhookPayload.createdAt).toBeGreaterThanOrEqual(before);
-    expect(webhookPayload.createdAt).toBeLessThanOrEqual(after);
+    expect(webhookPayload.createdAt).toBe(fakeNow);
+    vi.restoreAllMocks();
   });
 
   it("webhookPayload.payload.deployment has id, name, url, readyState, meta from input", () => {
