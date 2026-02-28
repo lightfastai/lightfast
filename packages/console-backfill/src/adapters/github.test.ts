@@ -49,7 +49,7 @@ describe("adaptGitHubPRForTransformer", () => {
   it("repository is passed through from repo parameter", () => {
     const customRepo = { full_name: "other/repo", html_url: "https://github.com/other/repo", id: 99 };
     const pr = { state: "open", number: 6, user: { login: "alice" } };
-    const result = adaptGitHubPRForTransformer(pr, customRepo as unknown as Record<string, unknown>);
+    const result = adaptGitHubPRForTransformer(pr, customRepo);
     expect(result.repository).toBe(customRepo);
   });
 });

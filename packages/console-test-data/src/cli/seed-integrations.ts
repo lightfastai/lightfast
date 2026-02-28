@@ -13,7 +13,7 @@ import { db } from "@db/console";
 import { workspaceIntegrations } from "@db/console/schema";
 import type { InsertWorkspaceIntegration } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
-import { eq, and } from "drizzle-orm";
+import { eq, and } from "@vendor/db";
 
 interface SeedOptions {
   workspaceId: string;
