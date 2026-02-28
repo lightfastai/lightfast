@@ -137,7 +137,7 @@ describe("POST /trigger/", () => {
     expect(call.data.entityTypes).toEqual(["pull_request"]);
   });
 
-  it("inngest.send rejection → 500 response", async () => {
+  it("inngest.send rejection → 502 response", async () => {
     mockInngestSend.mockRejectedValueOnce(new Error("inngest error"));
     const res = await request("/trigger", {
       body: validBody,
@@ -193,7 +193,7 @@ describe("POST /trigger/cancel", () => {
     expect(call.data).toEqual({ installationId: "inst-1" });
   });
 
-  it("inngest.send rejection → 500 response", async () => {
+  it("inngest.send rejection → 502 response", async () => {
     mockInngestSend.mockRejectedValueOnce(new Error("inngest error"));
     const res = await request("/trigger/cancel", {
       body: { installationId: "inst-1" },
