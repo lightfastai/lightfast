@@ -31,14 +31,13 @@ export function WorkspaceNameInput() {
   const { workspaceName: urlWorkspaceName, setWorkspaceName: setUrlWorkspaceName } = useWorkspaceSearchParams();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const workspaceName = form.watch("workspaceName");
-
   // Initialize from URL on mount
   useEffect(() => {
-    if (urlWorkspaceName && !workspaceName) {
+    const currentName = form.getValues("workspaceName");
+    if (urlWorkspaceName && !currentName) {
       form.setValue("workspaceName", urlWorkspaceName, { shouldValidate: true });
     }
-  }, [urlWorkspaceName, workspaceName, form]);
+  }, [urlWorkspaceName, form]);
 
   // Handle debounced URL update
   const syncToUrl = (value: string) => {
@@ -62,7 +61,7 @@ export function WorkspaceNameInput() {
     }
 
     // Update URL immediately
-    void setUrlWorkspaceName(workspaceName || null);
+    void setUrlWorkspaceName(form.getValues("workspaceName") || null);
   };
 
   // Cleanup timer on unmount

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useFormContext } from "@repo/ui/components/ui/form";
+import { useFormContext, useFormState } from "@repo/ui/components/ui/form";
 import {
   useMutation,
   useQueryClient,
@@ -30,6 +30,7 @@ export function CreateWorkspaceButton() {
   const queryClient = useQueryClient();
   const { setActive } = useOrganizationList();
   const form = useFormContext<WorkspaceFormValues>();
+  const { isValid } = useFormState({ control: form.control });
 
   // Read cached organization list
   const { data: organizations } = useSuspenseQuery({
@@ -38,27 +39,24 @@ export function CreateWorkspaceButton() {
     refetchOnWindowFocus: false,
   });
 
-  // Get form values
-  const workspaceName = form.watch("workspaceName");
-  const selectedOrgId = form.watch("organizationId");
-
   // Get GitHub-related state from context (now supports multiple repos)
   const { selectedRepositories, gwInstallationId, selectedInstallation } =
     useWorkspaceForm();
-
-  // Find the organization by ID from tRPC cache
-  const selectedOrg = organizations.find((org) => org.id === selectedOrgId);
 
   // Create workspace mutation with optimistic updates
   const createWorkspaceMutation = useMutation(
     trpc.workspaceAccess.create.mutationOptions({
       onMutate: async (variables) => {
+        // Read current org at call time to avoid stale closures
+        const currentOrgId = form.getValues("organizationId");
+        const currentOrg = organizations.find((org) => org.id === currentOrgId);
+
         // Only proceed with optimistic update if we have an org slug
-        if (!selectedOrg?.slug) {
+        if (!currentOrg?.slug) {
           return { previous: undefined };
         }
 
-        const orgSlug = selectedOrg.slug;
+        const orgSlug = currentOrg.slug;
 
         // Cancel outgoing queries to prevent race conditions
         await queryClient.cancelQueries({
@@ -134,13 +132,16 @@ export function CreateWorkspaceButton() {
   );
 
   const handleCreateWorkspace = async () => {
-    const isValid = await form.trigger();
-    if (!isValid) {
+    const formValid = await form.trigger();
+    if (!formValid) {
       toast.error("Validation failed", {
         description: "Please fix the errors in the form before submitting.",
       });
       return;
     }
+
+    const selectedOrgId = form.getValues("organizationId");
+    const workspaceName = form.getValues("workspaceName");
 
     if (!selectedOrgId) {
       toast.error("Organization required", {
@@ -185,17 +186,16 @@ export function CreateWorkspaceButton() {
         }
         toast.success("Workspace created!", {
           description: repoCount > 0
-            ? `${workspaceName} has been created with ${repoCount} repositor${repoCount === 1 ? "y" : "ies"}.`
-            : `${workspaceName} workspace is ready. Add sources to get started.`,
+            ? `${workspace.workspaceName} has been created with ${repoCount} repositor${repoCount === 1 ? "y" : "ies"}.`
+            : `${workspace.workspaceName} workspace is ready. Add sources to get started.`,
         });
 
-        const orgSlug = selectedOrg?.slug;
-        if (!orgSlug) {
+        const selectedOrg = organizations.find((org) => org.id === selectedOrgId);
+        if (!selectedOrg?.slug) {
           router.push("/");
           return;
         }
-        const wsName = workspace.workspaceName;
-        router.push(`/${orgSlug}/${wsName}`);
+        router.push(`/${selectedOrg.slug}/${workspace.workspaceName}`);
       })
       .catch((error: unknown) => {
         console.error("Workspace creation failed:", error);
@@ -204,7 +204,7 @@ export function CreateWorkspaceButton() {
   };
 
   const isDisabled =
-    !form.formState.isValid || createWorkspaceMutation.isPending || bulkLinkMutation.isPending;
+    !isValid || createWorkspaceMutation.isPending || bulkLinkMutation.isPending;
 
   const isLoading = createWorkspaceMutation.isPending || bulkLinkMutation.isPending;
 
