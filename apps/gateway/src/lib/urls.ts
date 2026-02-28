@@ -11,7 +11,12 @@ export const gatewayBaseUrl = (() => {
       : "http://localhost:4108/api";
   }
 
-  if (env.VERCEL_PROJECT_PRODUCTION_URL) {
+  if (env.VERCEL_ENV === "production") {
+    if (!env.VERCEL_PROJECT_PRODUCTION_URL) {
+      throw new Error(
+        "VERCEL_PROJECT_PRODUCTION_URL is required in production but was not set",
+      );
+    }
     return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}/api`;
   }
 
