@@ -120,7 +120,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
 
         await tx
           .update(gwResources)
-          .set({ status: "removed" })
+          .set({ status: "removed", updatedAt: new Date().toISOString() })
           .where(eq(gwResources.installationId, installationId));
       });
     });
