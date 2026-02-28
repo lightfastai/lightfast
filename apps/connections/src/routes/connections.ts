@@ -83,10 +83,16 @@ async function resolveAndConsumeState(
   const state = c.req.query("state");
   if (!state) {return null;}
 
-  const stateData = await redis.hgetall<Record<string, string>>(oauthStateKey(state));
+  // Atomic read-and-delete to prevent state replay via concurrent requests
+  const key = oauthStateKey(state);
+  const [stateData] = await redis
+    .multi()
+    .hgetall<Record<string, string>>(key)
+    .del(key)
+    .exec<[Record<string, string> | null, number]>();
+
   if (!stateData?.orgId) {return null;}
 
-  await redis.del(oauthStateKey(state));
   return stateData;
 }
 
