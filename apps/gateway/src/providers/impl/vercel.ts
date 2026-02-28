@@ -5,6 +5,7 @@ import type {
   WebhookProvider,
   WebhookPayload,
 } from "../types.js";
+import type { GatewayEnv } from "../../env.js";
 
 // Vercel webhooks use HMAC-SHA1 (not SHA-256). This is imposed by Vercel's
 // webhook infrastructure — see https://vercel.com/docs/webhooks/webhooks-api
@@ -13,6 +14,10 @@ const DELIVERY_HEADER = "x-vercel-id";
 
 export class VercelProvider implements WebhookProvider {
   readonly name = "vercel" as const;
+
+  getWebhookSecret(env: GatewayEnv): string {
+    return env.VERCEL_CLIENT_INTEGRATION_SECRET;
+  }
 
   async verifyWebhook(
     payload: string,

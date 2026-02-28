@@ -20,6 +20,8 @@ const server = {
   SENTRY_CLIENT_SECRET: z.string().min(1),
 };
 
+export type GatewayEnv = ReturnType<typeof getEnv>;
+
 /** Validated env from the Hono request context — use in route handlers. */
 export const getEnv = (c: Context) =>
   createEnv({

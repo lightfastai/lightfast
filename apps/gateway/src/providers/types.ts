@@ -10,6 +10,7 @@ import type { VercelProvider } from "./impl/vercel.js";
 import type { LinearProvider } from "./impl/linear.js";
 import type { SentryProvider } from "./impl/sentry.js";
 import type { ProviderName } from "@repo/gateway-types";
+import type { GatewayEnv } from "../env.js";
 
 // Re-export schema types for consumer convenience
 export type {
@@ -58,6 +59,7 @@ export type ProviderFor<N extends ProviderName> = N extends "github"
 /** Slim webhook-only interface for gateway providers. */
 export interface WebhookProvider {
   readonly name: ProviderName;
+  getWebhookSecret(env: GatewayEnv): string;
   verifyWebhook(
     payload: string,
     headers: Headers,

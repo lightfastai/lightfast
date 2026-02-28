@@ -109,16 +109,7 @@ webhooks.post("/:provider", async (c) => {
 
   // Verify webhook signature — reject invalid webhooks immediately
   // No workflow is triggered for invalid requests.
-  const secretMap: Record<string, string | undefined> = {
-    github: env.GITHUB_WEBHOOK_SECRET,
-    vercel: env.VERCEL_CLIENT_INTEGRATION_SECRET,
-    linear: env.LINEAR_WEBHOOK_SIGNING_SECRET,
-    sentry: env.SENTRY_CLIENT_SECRET,
-  };
-  const secret = secretMap[provider.name];
-  if (!secret) {
-    return c.json({ error: "missing_webhook_secret", provider: provider.name }, 500);
-  }
+  const secret = provider.getWebhookSecret(env);
   const valid = await provider.verifyWebhook(rawBody, headers, secret);
   if (!valid) {
     return c.json({ error: "invalid_signature" }, 401);
