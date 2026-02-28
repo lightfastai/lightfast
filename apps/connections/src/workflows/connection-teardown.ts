@@ -3,7 +3,7 @@ import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 import { redis } from "@vendor/upstash";
 import { serve } from "@vendor/upstash-workflow/hono";
 import type { WorkflowContext } from "@vendor/upstash-workflow/types";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@vendor/db";
 import { env } from "../env.js";
 import { resourceKey } from "../lib/cache.js";
 import { decrypt } from "../lib/crypto.js";
