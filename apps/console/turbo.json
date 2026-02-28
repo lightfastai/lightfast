@@ -66,8 +66,11 @@
       "with": [
         "@lightfast/console#dev:inngest",
         "@lightfast/console#dev:qstash",
-        "@lightfast/console#dev:ngrok",
-        "@db/console#dev:studio"
+        "lightfast#dev:ngrok",
+        "@db/console#dev:studio",
+        "@lightfast/gateway#dev",
+        "@lightfast/backfill#dev",
+        "@lightfast/connections#dev"
       ]
     },
     "transit": {}

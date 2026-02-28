@@ -6,18 +6,17 @@
   "type": "module",
   "scripts": {
     "build": "pnpm build:prod",
-    "build:dev": "pnpm with-env:dev next build --turbopack",
-    "build:prod": "pnpm with-env:prod next build --turbopack",
+    "build:dev": "pnpm with-env next build --turbopack",
+    "build:prod": "pnpm with-env next build --turbopack",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
-    "dev": "export VC_MICROFRONTENDS_CONFIG=microfrontends.json && pnpm with-env:dev next dev --port $(microfrontends port) --turbo",
-    "dev:inngest": "export VC_MICROFRONTENDS_CONFIG=microfrontends.json && npx inngest-cli@latest dev -u http://localhost:$(microfrontends port)/api/inngest",
+    "dev": "pnpm with-env next dev --port 4107 --turbo",
+    "dev:inngest": "npx inngest-cli@latest dev -u http://localhost:3024/api/inngest -u http://localhost:4109/api/inngest",
     "dev:qstash": "npx @upstash/qstash-cli dev",
-    "dev:ngrok": "../../scripts/ngrok 3024",
+
     "lint": "eslint",
-    "start": "pnpm with-env:prod next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
+    "start": "pnpm with-env next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
     "typecheck": "tsc --noEmit",
-    "with-env:dev": "dual run --",
-    "with-env:prod": "dotenv -e ./.vercel/.env.development.local --"
+    "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
     "@ai-sdk/gateway": "catalog:",

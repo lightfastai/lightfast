@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsup && pnpm with-env node dist/src/env.js",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "vercel dev --listen 4110",
+    "dev": "pnpm with-env srvx --import tsx -p 4110 src/index.ts",
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
@@ -47,7 +47,9 @@
     "dotenv-cli": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "srvx": "^0.11.8",
     "tsup": "^8.5.0",
+    "tsx": "^4.19.2",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

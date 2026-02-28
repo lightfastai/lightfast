@@ -20,7 +20,8 @@
     "build:gateway": "echo \"lightfast-gateway\" | vercel build --yes 2>&1",
     "build:connections": "echo \"lightfast-connections\" | vercel build --yes 2>&1",
     "build:backfill": "echo \"lightfast-backfill\" | vercel build --yes 2>&1",
-    "dev:app": "turbo watch dev --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/console --filter=@lightfast/backfill --filter=@lightfast/connections --continue",
+    "dev:app": "turbo watch dev --concurrency=15 --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/console --continue",
+    "dev:ngrok": "./scripts/ngrok 3024",
     "dev:www": "turbo watch dev -F @lightfast/www --continue",
     "dev:auth": "turbo watch dev -F @lightfast/auth --continue",
     "dev:chat": "turbo watch dev -F @lightfast/chat --continue",
@@ -57,7 +58,6 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.5",
-    "@lightfastai/dual": "^1.2.2",
     "@repo/prettier-config": "workspace:*",
     "envmcp": "^0.2.1",
     "keytar": "^7.9.0",
