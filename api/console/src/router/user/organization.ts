@@ -2,6 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { clerkOrgSlugSchema } from "@repo/console-validation";
 
 import { userScopedProcedure, verifyOrgMembership } from "../../trpc";
 
@@ -116,14 +117,7 @@ export const organizationRouter = {
 	create: userScopedProcedure
 		.input(
 			z.object({
-				slug: z
-					.string()
-					.min(3, "Team name must be at least 3 characters")
-					.max(39, "Team name must be less than 39 characters")
-					.regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
-						message:
-							"Only lowercase letters, numbers, and hyphens allowed. No leading/trailing/consecutive hyphens.",
-					}),
+				slug: clerkOrgSlugSchema,
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -202,16 +196,7 @@ export const organizationRouter = {
 		.input(
 			z.object({
 				slug: z.string().min(1, "Organization slug is required"),
-				name: z
-					.string()
-					.min(3, "Team name must be at least 3 characters")
-					.max(39, "Team name must be less than 39 characters")
-					.regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers, and hyphens are allowed")
-					.regex(/^[a-z0-9]/, "Must start with a letter or number")
-					.regex(/[a-z0-9]$/, "Must end with a letter or number")
-					.refine((val) => !/-{2,}/.test(val), {
-						message: "Cannot contain consecutive hyphens",
-					}),
+				name: clerkOrgSlugSchema,
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
