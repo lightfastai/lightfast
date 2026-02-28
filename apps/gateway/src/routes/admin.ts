@@ -141,13 +141,20 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
  * Phase 9 implementation pending.
  */
 admin.post("/delivery-status", qstashAuth, async (c) => {
-  const body = await c.req.json<{
-    messageId?: string;
-    state?: string;
-    deliveryId?: string;
-  }>();
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid_json" }, 400);
+  }
 
-  const { messageId, state, deliveryId } = body;
+  const { messageId, state, deliveryId } =
+    body as Record<string, unknown>;
+
+  if (typeof messageId !== "string" || typeof state !== "string") {
+    console.warn("[delivery-status] invalid payload", JSON.stringify(body));
+    return c.json({ error: "missing_required_fields", required: ["messageId", "state"] }, 400);
+  }
 
   // Log delivery status (QStash callback)
   // Future: update webhook_deliveries table with delivery confirmation
