@@ -1,6 +1,10 @@
 import type { Context, MiddlewareHandler } from "hono";
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { getEnv } from "../env.js";
+
+function sha256(value: string): Buffer {
+  return createHash("sha256").update(value).digest();
+}
 
 /**
  * X-API-Key authentication middleware for service-to-service calls.
@@ -13,13 +17,8 @@ export const apiKeyAuth: MiddlewareHandler = async (c: Context, next) => {
   }
 
   const { GATEWAY_API_KEY } = getEnv(c);
-  const expected = Buffer.from(GATEWAY_API_KEY);
-  const received = Buffer.from(apiKey);
 
-  if (
-    expected.length !== received.length ||
-    !timingSafeEqual(expected, received)
-  ) {
+  if (!timingSafeEqual(sha256(GATEWAY_API_KEY), sha256(apiKey))) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
