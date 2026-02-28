@@ -50,6 +50,7 @@ vi.mock("@db/console/client", () => ({
         from: () => builder,
         where: () => builder,
         limit: () => builder,
+        // biome-ignore lint/suspicious/noThenProperty: intentional thenable mock for Drizzle query builder
         then: (
           resolve: (v: unknown) => unknown,
           reject: (e: unknown) => unknown,
