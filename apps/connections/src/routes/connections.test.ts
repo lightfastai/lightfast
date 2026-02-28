@@ -382,7 +382,7 @@ describe("GET /connections/:provider/callback", () => {
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("location")).toBe(
-      "https://console.test/github/connected",
+      "https://console.test/provider/github/connected",
     );
     expect(mockProvider.handleCallback).toHaveBeenCalled();
   });
@@ -486,7 +486,7 @@ describe("GET /connections/:provider/callback", () => {
     const res = await request("/connections/github/callback?state=valid");
     expect(res.status).toBe(302);
     const location = res.headers.get("location")!;
-    expect(location).toContain("https://console.test/github/connected");
+    expect(location).toContain("https://console.test/provider/github/connected");
     expect(location).toContain("error=missing%20installation_id");
   });
 

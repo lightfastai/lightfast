@@ -122,6 +122,30 @@ export const workspaceIntegrations = pgTable(
             autoSync: boolean;             // Track deployments automatically
           };
         }
+      | {
+          version: 1;
+          sourceType: "sentry";
+          type: "project";
+          organizationSlug: string;
+          projectSlug: string;
+          projectId: string;
+          sync: {
+            events?: string[];
+            autoSync: boolean;
+          };
+        }
+      | {
+          version: 1;
+          sourceType: "linear";
+          type: "team";
+          teamId: string;
+          teamKey: string;
+          teamName: string;
+          sync: {
+            events?: string[];
+            autoSync: boolean;
+          };
+        }
     >().notNull(),
 
     /**

@@ -192,7 +192,7 @@ connections.get("/:provider/callback", async (c) => {
     }
 
     // Default: redirect to console (existing behavior, backwards compatible)
-    const redirectUrl = new URL(`${consoleUrl}/${provider.name}/connected`);
+    const redirectUrl = new URL(`${consoleUrl}/provider/${provider.name}/connected`);
     if (result.reactivated) {
       redirectUrl.searchParams.set("reactivated", "true");
     }
@@ -240,7 +240,7 @@ connections.get("/:provider/callback", async (c) => {
     }
 
     return c.redirect(
-      `${consoleUrl}/${provider.name}/connected?error=${encodeURIComponent(message)}`,
+      `${consoleUrl}/provider/${provider.name}/connected?error=${encodeURIComponent(message)}`,
     );
   }
 });

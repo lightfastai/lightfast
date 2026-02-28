@@ -20,17 +20,22 @@ interface SeedOptions {
   userId: string;
 }
 
+interface DemoSource {
+  sourceConfig: InsertWorkspaceIntegration["sourceConfig"];
+  providerResourceId: string;
+  documentCount: number;
+}
+
 /**
  * Demo source definitions for all 4 providers.
  * Each entry seeds a workspaceIntegration.
  */
-const DEMO_SOURCES = [
+const DEMO_SOURCES: DemoSource[] = [
   {
-    sourceType: "github" as const,
     sourceConfig: {
-      version: 1 as const,
-      sourceType: "github" as const,
-      type: "repository" as const,
+      version: 1,
+      sourceType: "github",
+      type: "repository",
       installationId: "12345678",
       repoId: "901234567",
       repoName: "lightfast",
@@ -49,11 +54,10 @@ const DEMO_SOURCES = [
     documentCount: 0,
   },
   {
-    sourceType: "vercel" as const,
     sourceConfig: {
-      version: 1 as const,
-      sourceType: "vercel" as const,
-      type: "project" as const,
+      version: 1,
+      sourceType: "vercel",
+      type: "project",
       projectId: "prj_lightfast_console",
       projectName: "lightfast-console",
       teamId: "team_lightfastai",
@@ -68,11 +72,10 @@ const DEMO_SOURCES = [
     documentCount: 7,
   },
   {
-    sourceType: "sentry" as const,
     sourceConfig: {
-      version: 1 as const,
-      sourceType: "sentry" as const,
-      type: "project" as const,
+      version: 1,
+      sourceType: "sentry",
+      type: "project",
       organizationSlug: "lightfast",
       projectSlug: "lightfast-console",
       projectId: "4508288486826115",
@@ -85,11 +88,10 @@ const DEMO_SOURCES = [
     documentCount: 5,
   },
   {
-    sourceType: "linear" as const,
     sourceConfig: {
-      version: 1 as const,
-      sourceType: "linear" as const,
-      type: "team" as const,
+      version: 1,
+      sourceType: "linear",
+      type: "team",
       teamId: "team_lightfast_eng",
       teamKey: "LIGHT",
       teamName: "Lightfast",
@@ -120,22 +122,22 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       );
 
     if (existingIntegration.length > 0) {
-      console.log(`  [skip] ${source.sourceType} workspace integration already exists`);
+      console.log(`  [skip] ${source.sourceConfig.sourceType} workspace integration already exists`);
       continue;
     }
 
     await db.insert(workspaceIntegrations).values({
-      id: `wi-${source.sourceType}-${nanoid(8)}`,
+      id: `wi-${source.sourceConfig.sourceType}-${nanoid(8)}`,
       workspaceId,
       connectedBy: userId,
-      provider: source.sourceType,
-      sourceConfig: source.sourceConfig as InsertWorkspaceIntegration["sourceConfig"],
+      provider: source.sourceConfig.sourceType,
+      sourceConfig: source.sourceConfig,
       providerResourceId: source.providerResourceId,
       isActive: true,
       lastSyncStatus: "success",
       documentCount: source.documentCount,
     });
-    console.log(`  [created] ${source.sourceType} workspace integration`);
+    console.log(`  [created] ${source.sourceConfig.sourceType} workspace integration`);
   }
 
   console.log("\nDone! All integrations seeded.");

@@ -43,9 +43,9 @@ const isPublicRoute = createRouteMatcher([
 const isTeamCreationRoute = createRouteMatcher([
   "/account/teams/new", // Team/org creation flow
   "/new(.*)", // Workspace creation flow
-  "/vercel/connected", // Vercel OAuth success page (used by connections service redirect)
-  "/github/connected", // GitHub OAuth success page (used by connections service redirect)
-  "/sentry/connected", // Sentry OAuth success page (used by connections service redirect)
+  "/provider/vercel/connected", // Vercel OAuth success page (used by connections service redirect)
+  "/provider/github/connected", // GitHub OAuth success page (used by connections service redirect)
+  "/provider/sentry/connected", // Sentry OAuth success page (used by connections service redirect)
   "/api/organizations(.*)",
 ]);
 
