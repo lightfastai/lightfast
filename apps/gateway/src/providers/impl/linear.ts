@@ -49,12 +49,31 @@ export class LinearProvider implements WebhookProvider {
   }
 }
 
+/** Recursively sort object keys for deterministic serialization. */
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return "[" + value.map(stableStringify).join(",") + "]";
+  }
+  const sorted = Object.keys(value as Record<string, unknown>)
+    .sort()
+    .map(
+      (k) =>
+        JSON.stringify(k) +
+        ":" +
+        stableStringify((value as Record<string, unknown>)[k]),
+    );
+  return "{" + sorted.join(",") + "}";
+}
+
 /**
  * Deterministic fingerprint from payload for idempotent delivery IDs.
  * Uses multi-seed FNV-1a to produce a 128-bit hex string synchronously.
  */
 function stableFingerprint(payload: WebhookPayload): string {
-  const str = JSON.stringify(payload);
+  const str = stableStringify(payload);
   let h1 = 0x811c9dc5;
   let h2 = 0x050c5d1f;
   let h3 = 0x1a47e90b;
