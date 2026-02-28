@@ -88,8 +88,13 @@ export interface ConnectionProvider {
     connectionId: string,
     callbackUrl: string,
     secret: string,
+    accessToken?: string,
   ): Promise<string>;
-  deregisterWebhook?(connectionId: string, webhookId: string): Promise<void>;
+  deregisterWebhook?(
+    connectionId: string,
+    webhookId: string,
+    accessToken?: string,
+  ): Promise<void>;
 
   // Lifecycle
   handleCallback(
