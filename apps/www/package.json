@@ -13,6 +13,7 @@
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_WWW_PORT:-4101}",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "cms:types": "pnpm with-env pnpm --filter @vendor/cms exec basehub generate",
     "cms:dev": "pnpm with-env pnpm --filter @vendor/cms exec basehub dev",

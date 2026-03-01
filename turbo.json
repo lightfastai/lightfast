@@ -51,7 +51,12 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "cache": false,
+      "inputs": [
+        "src/**",
+        "vitest.config.ts",
+        "tsconfig.json"
+      ],
+      "outputs": [],
       "env": []
     },
     "typecheck": {

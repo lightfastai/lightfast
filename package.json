@@ -44,6 +44,7 @@
     "lint:fix": "SKIP_ENV_VALIDATION=true turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
     "lint:ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint:ws",
+    "test": "turbo run test",
     "typecheck": "SKIP_ENV_VALIDATION=true turbo run typecheck",
     "ui": "pnpm --filter @repo/ui ui",
     "vercel:link": "vercel link --repo",
@@ -67,7 +68,8 @@
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.46.1",
     "vercel": "^50.23.2",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
   },
   "prettier": "@repo/prettier-config",
   "pnpm": {
