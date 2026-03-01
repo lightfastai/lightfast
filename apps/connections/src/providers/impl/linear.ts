@@ -2,7 +2,7 @@ import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
 import { decrypt } from "@repo/lib";
-import { eq } from "drizzle-orm";
+import { eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store.js";

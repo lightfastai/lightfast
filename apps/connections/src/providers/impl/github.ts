@@ -1,7 +1,7 @@
 import { db } from "@db/console/client";
 import { gwInstallations } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { getInstallationToken, getInstallationDetails } from "../../lib/github-jwt.js";

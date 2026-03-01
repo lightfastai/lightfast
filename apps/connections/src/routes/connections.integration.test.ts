@@ -12,7 +12,7 @@ import {
 } from "@repo/console-test-db";
 import type { TestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
-import { eq } from "drizzle-orm";
+import { eq } from "@vendor/db";
 import { gwInstallations, gwTokens, gwResources } from "@db/console/schema";
 
 // ── PGlite singleton ──

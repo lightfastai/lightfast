@@ -12,7 +12,7 @@ import {
 } from "@repo/console-test-db";
 import type { TestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
-import { eq, and } from "drizzle-orm";
+import { eq, and } from "@vendor/db";
 import {
   gwInstallations,
   gwTokens,

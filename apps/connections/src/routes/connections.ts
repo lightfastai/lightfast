@@ -1,9 +1,9 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwResources } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
+import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
-import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { html, raw } from "hono/html";
 import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
