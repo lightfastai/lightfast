@@ -115,9 +115,65 @@ describe("SentryProvider", () => {
         }),
       );
       expect(result.accessToken).toBe("access-tok");
-      expect(result.refreshToken).toBe("refresh-tok");
+      // refreshToken must be encoded as installationId:token for the refresh flow
+      expect(result.refreshToken).toBe("inst-123:refresh-tok");
       expect(typeof result.expiresIn).toBe("number");
       expect(result.expiresIn).toBeGreaterThan(0);
+    });
+
+    it("returns undefined refreshToken when API omits it", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ token: "tok" }),
+      });
+
+      const result = await provider.exchangeCode("inst-1:code", "uri");
+      expect(result.refreshToken).toBeUndefined();
+    });
+
+    it("produces a refreshToken that refreshToken() can consume", async () => {
+      // Step 1: exchangeCode returns an encoded refresh token
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            token: "access-tok",
+            refreshToken: "raw-refresh-tok",
+          }),
+      });
+
+      const exchanged = await provider.exchangeCode(
+        "inst-42:auth-code",
+        "https://redirect.test",
+      );
+
+      // Step 2: The encoded refresh token should be decodable by refreshToken()
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            token: "new-access",
+            refreshToken: "new-refresh",
+          }),
+      });
+
+      const refreshed = await provider.refreshToken(exchanged.refreshToken!);
+
+      // Verify refreshToken called Sentry with the correct installationId
+      expect(mockFetch).toHaveBeenLastCalledWith(
+        "https://sentry.io/api/0/sentry-app-installations/inst-42/authorizations/",
+        expect.objectContaining({
+          body: JSON.stringify({
+            grant_type: "refresh_token",
+            refresh_token: "raw-refresh-tok",
+            client_id: "test-sn-client-id",
+            client_secret: "test-sn-secret",
+          }),
+        }),
+      );
+      expect(refreshed.accessToken).toBe("new-access");
+      // The new refresh token should also be encoded
+      expect(refreshed.refreshToken).toBe("inst-42:new-refresh");
     });
 
     it("returns undefined expiresIn when expiresAt is absent", async () => {
