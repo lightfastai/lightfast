@@ -15,6 +15,7 @@ import { z } from "zod";
 const server = {
   GATEWAY_API_KEY: z.string().min(1),
   ENCRYPTION_KEY: z.string().min(32),
+  SENTRY_DSN: z.string().url().optional(),
 };
 
 const _createEnv = (c: Context) =>
@@ -70,6 +71,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+    SENTRY_DSN: process.env.SENTRY_DSN,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

@@ -30,7 +30,8 @@
         "LINEAR_CLIENT_SECRET",
         "SENTRY_APP_SLUG",
         "SENTRY_CLIENT_ID",
-        "SENTRY_CLIENT_SECRET"
+        "SENTRY_CLIENT_SECRET",
+        "SENTRY_DSN"
       ],
       "outputs": ["dist/**"]
     },

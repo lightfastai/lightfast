@@ -18,6 +18,7 @@ const server = {
   VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
   LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1),
   SENTRY_CLIENT_SECRET: z.string().min(1),
+  SENTRY_DSN: z.string().url().optional(),
 };
 
 const _createEnv = (c: Context) =>
@@ -62,6 +63,7 @@ export const env = createEnv({
       process.env.VERCEL_CLIENT_INTEGRATION_SECRET,
     LINEAR_WEBHOOK_SIGNING_SECRET: process.env.LINEAR_WEBHOOK_SIGNING_SECRET,
     SENTRY_CLIENT_SECRET: process.env.SENTRY_CLIENT_SECRET,
+    SENTRY_DSN: process.env.SENTRY_DSN,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||
