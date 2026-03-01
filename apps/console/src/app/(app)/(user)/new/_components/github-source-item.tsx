@@ -139,6 +139,9 @@ export function GitHubSourceItem() {
             pollTimerRef.current = null;
           }
           void refetchConnection();
+          void queryClient.invalidateQueries({
+            queryKey: [["connections", "github", "repositories"]],
+          });
         }
       }, 500);
     } catch {
@@ -172,6 +175,9 @@ export function GitHubSourceItem() {
             pollTimerRef.current = null;
           }
           void refetchConnection();
+          void queryClient.invalidateQueries({
+            queryKey: [["connections", "github", "repositories"]],
+          });
         }
       }, 500);
     } catch {

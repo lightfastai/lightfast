@@ -92,7 +92,7 @@ export const connectionsRouter = {
 	cliAuthorize: apiKeyProcedure
 		.input(
 			z.object({
-				provider: z.enum(["github", "vercel", "sentry"]),
+				provider: z.enum(["github", "vercel", "linear", "sentry"]),
 			}),
 		)
 		.query(async ({ ctx, input }) => {
@@ -795,14 +795,162 @@ export const connectionsRouter = {
 	},
 
 	/**
+	 * Linear-specific operations
+	 */
+	linear: {
+		/**
+		 * List org's Linear installations
+		 *
+		 * Returns all active Linear OAuth connections with organization info.
+		 * Linear is org-level with per-team resource linking.
+		 */
+		get: orgScopedProcedure.query(async ({ ctx }) => {
+			const result = await ctx.db
+				.select()
+				.from(gwInstallations)
+				.where(
+					and(
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "linear"),
+						eq(gwInstallations.status, "active"),
+					),
+				);
+
+			return result.map((installation) => {
+				const info = installation.providerAccountInfo;
+				const orgName =
+					info?.sourceType === "linear"
+						? info.organization?.name
+						: undefined;
+				const orgUrlKey =
+					info?.sourceType === "linear"
+						? info.organization?.urlKey
+						: undefined;
+
+				return {
+					id: installation.id,
+					orgId: installation.orgId,
+					provider: installation.provider,
+					connectedAt: installation.createdAt,
+					status: installation.status,
+					organizationName: orgName ?? null,
+					organizationUrlKey: orgUrlKey ?? null,
+				};
+			});
+		}),
+
+		/**
+		 * List Linear teams for team selector
+		 *
+		 * Fetches teams from the Linear GraphQL API using stored OAuth token.
+		 * Used by workspace creation to select which team to link.
+		 */
+		listTeams: orgScopedProcedure
+			.input(
+				z.object({
+					installationId: z.string(), // gwInstallations.id
+				}),
+			)
+			.query(async ({ ctx, input }) => {
+				// 1. Verify org owns this installation
+				const installation = await ctx.db.query.gwInstallations.findFirst({
+					where: and(
+						eq(gwInstallations.id, input.installationId),
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "linear"),
+						eq(gwInstallations.status, "active"),
+					),
+				});
+
+				if (!installation) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Linear connection not found",
+					});
+				}
+
+				// 2. Get access token from gw_tokens vault
+				const accessToken = await getInstallationToken(installation.id);
+
+				// 3. Call Linear GraphQL API
+				const response = await fetch("https://api.linear.app/graphql", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: accessToken,
+					},
+					body: JSON.stringify({
+						query: `{
+							teams {
+								nodes {
+									id
+									name
+									key
+									description
+									color
+								}
+							}
+						}`,
+					}),
+					signal: AbortSignal.timeout(10_000),
+				});
+
+				if (response.status === 401) {
+					await ctx.db
+						.update(gwInstallations)
+						.set({ status: "error" })
+						.where(eq(gwInstallations.id, input.installationId));
+
+					throw new TRPCError({
+						code: "UNAUTHORIZED",
+						message: "Linear connection expired. Please reconnect.",
+					});
+				}
+
+				if (!response.ok) {
+					console.error("[Linear API Error]", response.status);
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Failed to fetch Linear teams",
+					});
+				}
+
+				const data = (await response.json()) as {
+					data?: {
+						teams?: {
+							nodes?: {
+								id: string;
+								name: string;
+								key: string;
+								description?: string;
+								color?: string;
+							}[];
+						};
+					};
+				};
+
+				const teams = data.data?.teams?.nodes ?? [];
+
+				return {
+					teams: teams.map((t) => ({
+						id: t.id,
+						name: t.name,
+						key: t.key,
+						description: t.description ?? null,
+						color: t.color ?? null,
+					})),
+				};
+			}),
+	},
+
+	/**
 	 * Sentry-specific operations
 	 */
 	sentry: {
 		/**
 		 * Get org's Sentry installation
 		 *
-		 * Returns the org's Sentry OAuth connection.
-		 * Sentry is org-level — no per-resource picker needed.
+		 * Returns the org's Sentry OAuth connection with organization info.
 		 */
 		get: orgScopedProcedure.query(async ({ ctx }) => {
 			const result = await ctx.db
@@ -823,13 +971,130 @@ export const connectionsRouter = {
 				return null;
 			}
 
+			const info = installation.providerAccountInfo;
+			const orgSlug = info?.sourceType === "sentry" ? info.organizationSlug : undefined;
+
 			return {
 				id: installation.id,
 				orgId: installation.orgId,
 				provider: installation.provider,
 				connectedAt: installation.createdAt,
 				status: installation.status,
+				organizationSlug: orgSlug ?? null,
 			};
 		}),
+
+		/**
+		 * List Sentry projects for project selector
+		 *
+		 * Returns all projects from org's Sentry account with connection status.
+		 * Used by workspace creation to select which project to link.
+		 */
+		listProjects: orgScopedProcedure
+			.input(
+				z.object({
+					installationId: z.string(),
+					workspaceId: z.string().optional(),
+				}),
+			)
+			.query(async ({ ctx, input }) => {
+				// 1. Verify org owns this installation
+				const installation = await ctx.db.query.gwInstallations.findFirst({
+					where: and(
+						eq(gwInstallations.id, input.installationId),
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "sentry"),
+						eq(gwInstallations.status, "active"),
+					),
+				});
+
+				if (!installation) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Sentry connection not found",
+					});
+				}
+
+				// 2. Get access token from gw_tokens vault
+				const accessToken = await getInstallationToken(installation.id);
+
+				// 3. Get organizationSlug from providerAccountInfo
+				const providerAccountInfo = installation.providerAccountInfo;
+				if (providerAccountInfo?.sourceType !== "sentry") {
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Invalid provider account info",
+					});
+				}
+				const orgSlug = providerAccountInfo.organizationSlug;
+				if (!orgSlug) {
+					throw new TRPCError({
+						code: "PRECONDITION_FAILED",
+						message: "Sentry organization slug not found. Please reconnect Sentry.",
+					});
+				}
+
+				// 4. Call Sentry API
+				const response = await fetch(
+					`https://sentry.io/api/0/organizations/${orgSlug}/projects/`,
+					{
+						headers: { Authorization: `Bearer ${accessToken}` },
+						signal: AbortSignal.timeout(10_000),
+					},
+				);
+
+				if (response.status === 401) {
+					await ctx.db
+						.update(gwInstallations)
+						.set({ status: "error" })
+						.where(eq(gwInstallations.id, input.installationId));
+
+					throw new TRPCError({
+						code: "UNAUTHORIZED",
+						message: "Sentry connection expired. Please reconnect.",
+					});
+				}
+
+				if (!response.ok) {
+					console.error("[Sentry API Error]", response.status);
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Failed to fetch Sentry projects",
+					});
+				}
+
+				const data = (await response.json()) as {
+					id: string;
+					slug: string;
+					name: string;
+					platform: string | null;
+					status: string;
+				}[];
+
+				// 5. Get already-connected projects for this workspace
+				let connectedIds = new Set<string>();
+				if (input.workspaceId) {
+					const connected = await ctx.db.query.workspaceIntegrations.findMany({
+						where: and(
+							eq(workspaceIntegrations.workspaceId, input.workspaceId),
+							eq(workspaceIntegrations.installationId, input.installationId),
+							eq(workspaceIntegrations.isActive, true),
+						),
+						columns: { providerResourceId: true },
+					});
+					connectedIds = new Set(connected.map((c) => c.providerResourceId));
+				}
+
+				// 6. Return with connection status
+				return {
+					projects: data.map((p) => ({
+						id: p.id,
+						slug: p.slug,
+						name: p.name,
+						platform: p.platform,
+						isConnected: connectedIds.has(p.id),
+					})),
+				};
+			}),
 	},
 } satisfies TRPCRouterRecord;

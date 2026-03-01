@@ -106,6 +106,35 @@
     ]
   },
 
+  "linear": {
+    "$comment": "Linear OAuth App — https://linear.app/settings/api/applications",
+    "application_name": "Lightfast",
+    "developer_name": "Lightfast AI",
+    "developer_url": "https://lightfast.ai",
+    "description": "Lightfast connects your Linear workspace for AI-powered project intelligence.",
+    "callback_urls": [
+      "http://localhost:3024/services/connections/linear/callback"
+    ],
+    "public": true,
+    "client_credentials": "$comment: Copy CLIENT_ID and CLIENT_SECRET after creation (secret shown only once)",
+    "webhooks": {
+      "enabled": true,
+      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/gateway/webhooks/linear",
+      "resource_types": [
+        "Issue",
+        "Comment",
+        "IssueLabel",
+        "Project",
+        "Cycle"
+      ]
+    },
+    "env_keys": [
+      "LINEAR_CLIENT_ID",
+      "LINEAR_CLIENT_SECRET",
+      "LINEAR_WEBHOOK_SIGNING_SECRET"
+    ]
+  },
+
   "sentry": {
     "$comment": "Sentry Public Integration — https://sentry.io/settings/<org>/developer-settings/",
     "integration": {

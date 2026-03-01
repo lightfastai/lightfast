@@ -60,7 +60,6 @@ export class SentryProvider implements ConnectionProvider {
     }
 
     const rawData: unknown = await response.json();
-    console.log("[sentry] token exchange response:", JSON.stringify(rawData, null, 2));
     const data = sentryOAuthResponseSchema.parse(rawData);
 
     return {
@@ -163,7 +162,6 @@ export class SentryProvider implements ConnectionProvider {
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
     const sentryInstallationId = c.req.query("installationId");
-    console.log("[sentry] callback query params:", { code, state: c.req.query("state"), installationId: sentryInstallationId });
     if (!code) {throw new Error("missing code");}
     if (!sentryInstallationId) {throw new Error("missing installationId query param");}
 
@@ -175,15 +173,24 @@ export class SentryProvider implements ConnectionProvider {
     // Use sentryInstallationId as externalId — it's the stable identifier
     const externalId = sentryInstallationId;
 
-    const raw = oauthTokens.raw;
+    const rawData: unknown = oauthTokens.raw;
+    const parsedData = sentryOAuthResponseSchema.parse(rawData);
     const now = new Date().toISOString();
 
-    console.log("[sentry] oauth tokens received:", {
-      hasAccessToken: !!oauthTokens.accessToken,
-      hasRefreshToken: !!oauthTokens.refreshToken,
-      expiresIn: oauthTokens.expiresIn,
-      rawKeys: Object.keys(oauthTokens.raw),
-    });
+    // Fetch org info using the new access token (token is scoped to one org)
+    let organizationSlug = "";
+    try {
+      const orgsResponse = await fetch("https://sentry.io/api/0/organizations/", {
+        headers: { Authorization: `Bearer ${oauthTokens.accessToken}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (orgsResponse.ok) {
+        const orgs = await orgsResponse.json() as { slug: string }[];
+        organizationSlug = orgs[0]?.slug ?? "";
+      }
+    } catch {
+      // Best-effort — organizationSlug will remain empty
+    }
 
     const accountInfo: SentryAccountInfo = {
       version: 1,
@@ -192,15 +199,12 @@ export class SentryProvider implements ConnectionProvider {
       installedAt: now,
       lastValidatedAt: now,
       raw: {
-        expiresAt: raw.expiresAt as string | undefined,
-        scopes: Array.isArray(raw.scopes) ? (raw.scopes as string[]) : undefined,
-        organization: raw.organization as { slug: string } | undefined,
+        expiresAt: parsedData.expiresAt,
+        scopes: parsedData.scopes,
       },
       installationId: sentryInstallationId,
-      organizationSlug: (raw.organization as { slug?: string } | undefined)?.slug ?? "",
+      organizationSlug,
     };
-
-    console.log("[sentry] accountInfo:", JSON.stringify(accountInfo, null, 2));
 
     const rows = await db
       .insert(gwInstallations)
@@ -231,8 +235,6 @@ export class SentryProvider implements ConnectionProvider {
     // Sentry webhook URL is configured in the Sentry dashboard, not via API.
     // Verification uses env.SENTRY_CLIENT_SECRET in the gateway, so no
     // per-installation webhookSecret is needed.
-
-    console.log("[sentry] installation complete:", { installationId: installation.id, externalId, orgId: stateData.orgId });
 
     return {
       status: "connected",

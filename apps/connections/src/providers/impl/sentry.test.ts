@@ -372,7 +372,8 @@ describe("SentryProvider", () => {
       });
     });
 
-    it("extracts organizationSlug from raw response when present", async () => {
+    it("extracts organizationSlug from separate organizations API call", async () => {
+      // First call: token exchange
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
@@ -380,8 +381,12 @@ describe("SentryProvider", () => {
             token: "access-tok",
             refreshToken: "refresh-tok",
             expiresAt: new Date(Date.now() + 3600_000).toISOString(),
-            organization: { slug: "acme-org" },
           }),
+      });
+      // Second call: GET /api/0/organizations/
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([{ slug: "acme-org" }]),
       });
       dbMocks.returning.mockResolvedValue([{ id: "inst-sn-new" }]);
 
@@ -391,14 +396,19 @@ describe("SentryProvider", () => {
         connectedBy: "user-1",
       });
 
+      // Verify organizations API was called with the new access token
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://sentry.io/api/0/organizations/",
+        expect.objectContaining({
+          headers: { Authorization: "Bearer access-tok" },
+        }),
+      );
+
       expect(dbMocks.values).toHaveBeenCalledWith(
         expect.objectContaining({
           providerAccountInfo: expect.objectContaining({
             installationId: "inst-456",
             organizationSlug: "acme-org",
-            raw: expect.objectContaining({
-              organization: { slug: "acme-org" },
-            }),
           }),
         }),
       );

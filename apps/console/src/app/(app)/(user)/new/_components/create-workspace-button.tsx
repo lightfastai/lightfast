@@ -40,7 +40,7 @@ export function CreateWorkspaceButton() {
   });
 
   // Get source selection state from context
-  const { selectedRepositories, gwInstallationId, selectedInstallation, selectedVercelInstallation, selectedProjects } =
+  const { selectedRepositories, gwInstallationId, selectedInstallation, selectedVercelInstallation, selectedProjects, sentryInstallationId, selectedSentryProjects, selectedLinearTeam } =
     useWorkspaceForm();
 
   // Create workspace mutation with optimistic updates
@@ -143,6 +143,30 @@ export function CreateWorkspaceButton() {
     }),
   );
 
+  // Bulk link Sentry projects mutation
+  const bulkLinkSentryMutation = useMutation(
+    trpc.workspace.integrations.bulkLinkSentryProjects.mutationOptions({
+      onError: (error) => {
+        console.error("Failed to link Sentry projects:", error);
+        toast.error("Sentry projects not linked", {
+          description: "Workspace created, but failed to connect Sentry projects. You can add them later.",
+        });
+      },
+    }),
+  );
+
+  // Bulk link Linear teams mutation
+  const bulkLinkLinearMutation = useMutation(
+    trpc.workspace.integrations.bulkLinkLinearTeams.mutationOptions({
+      onError: (error) => {
+        console.error("Failed to link Linear teams:", error);
+        toast.error("Linear teams not linked", {
+          description: "Workspace created, but failed to connect Linear teams. You can add them later.",
+        });
+      },
+    }),
+  );
+
   const handleCreateWorkspace = async () => {
     const formValid = await form.trigger();
     if (!formValid) {
@@ -180,7 +204,7 @@ export function CreateWorkspaceButton() {
         }
 
         // Bulk-link selected sources in parallel
-        const [githubResult, vercelResult] = await Promise.allSettled([
+        const [githubResult, vercelResult, sentryResult, linearResult] = await Promise.allSettled([
           selectedRepositories.length > 0 && gwInstallationId && selectedInstallation
             ? bulkLinkMutation.mutateAsync({
                 workspaceId: workspace.workspaceId,
@@ -202,6 +226,28 @@ export function CreateWorkspaceButton() {
                 })),
               })
             : Promise.resolve(null),
+          selectedSentryProjects.length > 0 && sentryInstallationId
+            ? bulkLinkSentryMutation.mutateAsync({
+                workspaceId: workspace.workspaceId,
+                gwInstallationId: sentryInstallationId,
+                projects: selectedSentryProjects.map((p) => ({
+                  projectId: p.id,
+                  projectSlug: p.slug,
+                  projectName: p.name,
+                })),
+              })
+            : Promise.resolve(null),
+          selectedLinearTeam
+            ? bulkLinkLinearMutation.mutateAsync({
+                workspaceId: workspace.workspaceId,
+                gwInstallationId: selectedLinearTeam.installationId,
+                teams: [{
+                  teamId: selectedLinearTeam.id,
+                  teamKey: selectedLinearTeam.key,
+                  teamName: selectedLinearTeam.name,
+                }],
+              })
+            : Promise.resolve(null),
         ]);
 
         const repoCount =
@@ -212,7 +258,15 @@ export function CreateWorkspaceButton() {
           vercelResult.status === "fulfilled" && vercelResult.value
             ? vercelResult.value.created + vercelResult.value.reactivated
             : 0;
-        const totalLinked = repoCount + projectCount;
+        const sentryCount =
+          sentryResult.status === "fulfilled" && sentryResult.value
+            ? sentryResult.value.created + sentryResult.value.reactivated
+            : 0;
+        const linearCount =
+          linearResult.status === "fulfilled" && linearResult.value
+            ? linearResult.value.created + linearResult.value.reactivated
+            : 0;
+        const totalLinked = repoCount + projectCount + sentryCount + linearCount;
 
         toast.success("Workspace created!", {
           description:
@@ -235,9 +289,9 @@ export function CreateWorkspaceButton() {
   };
 
   const isDisabled =
-    !isValid || createWorkspaceMutation.isPending || bulkLinkMutation.isPending || bulkLinkVercelMutation.isPending;
+    !isValid || createWorkspaceMutation.isPending || bulkLinkMutation.isPending || bulkLinkVercelMutation.isPending || bulkLinkSentryMutation.isPending || bulkLinkLinearMutation.isPending;
 
-  const isLoading = createWorkspaceMutation.isPending || bulkLinkMutation.isPending || bulkLinkVercelMutation.isPending;
+  const isLoading = createWorkspaceMutation.isPending || bulkLinkMutation.isPending || bulkLinkVercelMutation.isPending || bulkLinkSentryMutation.isPending || bulkLinkLinearMutation.isPending;
 
   return (
     <div className="mt-8 flex justify-end">

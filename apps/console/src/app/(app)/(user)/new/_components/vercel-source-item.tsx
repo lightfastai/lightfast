@@ -153,6 +153,9 @@ export function VercelSourceItem() {
             pollTimerRef.current = null;
           }
           void refetchConnection();
+          void queryClient.invalidateQueries({
+            queryKey: [["connections", "vercel", "listProjects"]],
+          });
         }
       }, 500);
     } catch {

@@ -1563,6 +1563,151 @@ export const workspaceRouter = {
           skipped: alreadyActive.length,
         };
       }),
+
+    /**
+     * Bulk link Sentry projects to workspace
+     *
+     * Allows connecting Sentry projects in a single operation.
+     * Handles idempotency by reactivating inactive integrations.
+     */
+    bulkLinkSentryProjects: orgScopedProcedure
+      .input(
+        z.object({
+          workspaceId: z.string(),
+          gwInstallationId: z.string(),
+          projects: z
+            .array(
+              z.object({
+                projectId: z.string(),
+                projectSlug: z.string(),
+                projectName: z.string(),
+              }),
+            )
+            .min(1)
+            .max(50),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        // 1. Verify workspace access
+        const workspace = await ctx.db.query.orgWorkspaces.findFirst({
+          where: and(
+            eq(orgWorkspaces.id, input.workspaceId),
+            eq(orgWorkspaces.clerkOrgId, ctx.auth.orgId),
+          ),
+        });
+
+        if (!workspace) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Workspace not found",
+          });
+        }
+
+        // 2. Verify org owns the Sentry installation
+        const gwInstallation = await ctx.db.query.gwInstallations.findFirst({
+          where: and(
+            eq(gwInstallations.id, input.gwInstallationId),
+            eq(gwInstallations.orgId, ctx.auth.orgId),
+            eq(gwInstallations.provider, "sentry"),
+          ),
+        });
+
+        if (!gwInstallation) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Sentry connection not found",
+          });
+        }
+
+        const providerAccountInfo = gwInstallation.providerAccountInfo;
+        if (providerAccountInfo?.sourceType !== "sentry") {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Invalid provider account info",
+          });
+        }
+
+        // 3. Get existing connections to avoid duplicates
+        const existing = await ctx.db.query.workspaceIntegrations.findMany({
+          where: and(
+            eq(workspaceIntegrations.workspaceId, input.workspaceId),
+            eq(workspaceIntegrations.installationId, input.gwInstallationId),
+          ),
+        });
+
+        const existingMap = new Map(
+          existing.map((e) => [e.providerResourceId, e]),
+        );
+
+        // 4. Categorize projects
+        const toCreate: typeof input.projects = [];
+        const toReactivate: string[] = [];
+        const alreadyActive: string[] = [];
+
+        for (const project of input.projects) {
+          const existingIntegration = existingMap.get(project.projectId);
+          if (!existingIntegration) {
+            toCreate.push(project);
+          } else if (!existingIntegration.isActive) {
+            toReactivate.push(existingIntegration.id);
+          } else {
+            alreadyActive.push(project.projectId);
+          }
+        }
+
+        const now = new Date().toISOString();
+
+        // 5. Reactivate inactive integrations
+        if (toReactivate.length > 0) {
+          await ctx.db
+            .update(workspaceIntegrations)
+            .set({ isActive: true, updatedAt: now })
+            .where(inArray(workspaceIntegrations.id, toReactivate));
+        }
+
+        // 6. Create new integrations
+        if (toCreate.length > 0) {
+          const integrations = toCreate.map((p) => ({
+            workspaceId: input.workspaceId,
+            installationId: input.gwInstallationId,
+            provider: "sentry" as const,
+            connectedBy: ctx.auth.userId,
+            providerResourceId: p.projectId,
+            sourceConfig: {
+              version: 1 as const,
+              sourceType: "sentry" as const,
+              type: "project" as const,
+              organizationSlug: providerAccountInfo.organizationSlug,
+              projectSlug: p.projectSlug,
+              projectId: p.projectId,
+              sync: {
+                events: ["issue", "error", "comment"],
+                autoSync: true,
+              },
+            },
+            isActive: true,
+            connectedAt: now,
+          }));
+
+          await ctx.db
+            .insert(workspaceIntegrations)
+            .values(integrations)
+            .returning({ id: workspaceIntegrations.id });
+
+          // Trigger backfill for newly linked projects (best-effort)
+          void notifyBackfill({
+            installationId: input.gwInstallationId,
+            provider: "sentry",
+            orgId: ctx.auth.orgId,
+          });
+        }
+
+        return {
+          created: toCreate.length,
+          reactivated: toReactivate.length,
+          skipped: alreadyActive.length,
+        };
+      }),
   },
 
   /**

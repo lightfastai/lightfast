@@ -54,10 +54,11 @@ export default async function NewWorkspacePage({
   const teamSlugHint = params.teamSlug;
   const initialWorkspaceName = params.workspaceName ?? "";
 
-  // Prefetch org-scoped connection status for GitHub, Vercel, and Sentry
+  // Prefetch org-scoped connection status for GitHub, Vercel, Linear, and Sentry
   // Avoids client-side fetch waterfall in SourcesSection
   prefetch(orgTrpc.connections.github.list.queryOptions());
   prefetch(orgTrpc.connections.vercel.list.queryOptions());
+  prefetch(orgTrpc.connections.linear.get.queryOptions());
   prefetch(orgTrpc.connections.sentry.get.queryOptions());
 
   return (

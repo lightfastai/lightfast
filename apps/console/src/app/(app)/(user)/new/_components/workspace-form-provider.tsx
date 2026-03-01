@@ -18,6 +18,12 @@ type Repository = RouterOutputs["connections"]["github"]["repositories"][number]
 export type VercelInstallation = RouterOutputs["connections"]["vercel"]["list"]["installations"][number];
 export type VercelProject = RouterOutputs["connections"]["vercel"]["listProjects"]["projects"][number];
 
+type LinearConnection = RouterOutputs["connections"]["linear"]["get"][number];
+export type LinearTeam = RouterOutputs["connections"]["linear"]["listTeams"]["teams"][number] & { installationId: string };
+
+type SentryConnection = NonNullable<RouterOutputs["connections"]["sentry"]["get"]>;
+export type SentryProject = RouterOutputs["connections"]["sentry"]["listProjects"]["projects"][number];
+
 interface WorkspaceFormState {
   // GitHub state
   selectedRepositories: Repository[];
@@ -41,9 +47,20 @@ interface WorkspaceFormState {
   setSelectedProjects: (projects: VercelProject[]) => void;
   toggleProject: (project: VercelProject) => void;
 
-  // Sentry state (org-level, no resource picker)
+  // Sentry state (org-level connection with project picker)
+  sentryConnection: SentryConnection | null;
+  setSentryConnection: (connection: SentryConnection | null) => void;
   sentryInstallationId: string | null;
   setSentryInstallationId: (id: string | null) => void;
+  selectedSentryProjects: SentryProject[];
+  setSelectedSentryProjects: (projects: SentryProject[]) => void;
+  toggleSentryProject: (project: SentryProject) => void;
+
+  // Linear state (org-level connections with team picker)
+  linearConnections: LinearConnection[];
+  setLinearConnections: (connections: LinearConnection[]) => void;
+  selectedLinearTeam: LinearTeam | null;
+  setSelectedLinearTeam: (team: LinearTeam | null) => void;
 }
 
 const WorkspaceFormContext = createContext<WorkspaceFormState | null>(null);
@@ -88,8 +105,23 @@ export function WorkspaceFormProvider({
   const [selectedVercelInstallation, setSelectedVercelInstallation] = useState<VercelInstallation | null>(null);
   const [selectedProjects, setSelectedProjects] = useState<VercelProject[]>([]);
 
-  // Additional state for Sentry integration (org-level, no resource picker)
+  // Additional state for Sentry integration (org-level connection + project picker)
+  const [sentryConnection, setSentryConnection] = useState<SentryConnection | null>(null);
   const [sentryInstallationId, setSentryInstallationId] = useState<string | null>(null);
+  const [selectedSentryProjects, setSelectedSentryProjects] = useState<SentryProject[]>([]);
+
+  // Toggle helper for single-project selection (MVP: 1 project max)
+  const toggleSentryProject = (project: SentryProject) => {
+    setSelectedSentryProjects((prev) => {
+      const exists = prev.find((p) => p.id === project.id);
+      if (exists) return [];
+      return [project];
+    });
+  };
+
+  // Additional state for Linear integration (org-level connections + team picker)
+  const [linearConnections, setLinearConnections] = useState<LinearConnection[]>([]);
+  const [selectedLinearTeam, setSelectedLinearTeam] = useState<LinearTeam | null>(null);
 
   // Toggle helper for single-project selection (MVP: 1 project max)
   const toggleProject = (project: VercelProject) => {
@@ -122,8 +154,17 @@ export function WorkspaceFormProvider({
           selectedProjects,
           setSelectedProjects,
           toggleProject,
+          sentryConnection,
+          setSentryConnection,
           sentryInstallationId,
           setSentryInstallationId,
+          selectedSentryProjects,
+          setSelectedSentryProjects,
+          toggleSentryProject,
+          linearConnections,
+          setLinearConnections,
+          selectedLinearTeam,
+          setSelectedLinearTeam,
         }}
       >
         {children}

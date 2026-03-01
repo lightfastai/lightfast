@@ -15,61 +15,61 @@ import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useWorkspaceForm } from "./workspace-form-provider";
 
-function SentryIcon({ className }: { className?: string }) {
+function LinearIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      viewBox="0 0 72 66"
+      role="img"
+      viewBox="0 0 24 24"
       fill="currentColor"
       aria-hidden="true"
     >
-      <path d="M29 2.26a3.68 3.68 0 0 0-6.38 0L1.22 42.09a3.68 3.68 0 0 0 3.19 5.52h7.85a3.68 3.68 0 0 0 3.19-1.84L29 22.18a15.65 15.65 0 0 1 8.29 13.8v5.48h-5.57a3.68 3.68 0 0 0 0 7.36h13.25a3.68 3.68 0 0 0 0-7.36h-.32V36a23 23 0 0 0-12.43-20.46L41 2.26a3.68 3.68 0 0 0-6.38 0l-2.81 4.87a23 23 0 0 0-8.59 8.6L29 2.26z" />
+      <path d="M2.886 4.18A11.982 11.982 0 0 1 11.99 0C18.624 0 24 5.376 24 12.009c0 3.64-1.62 6.903-4.18 9.105L2.887 4.18ZM1.817 5.626l16.556 16.556c-.524.33-1.075.62-1.65.866L.951 7.277c.247-.575.537-1.126.866-1.65ZM.322 9.163l14.515 14.515c-.71.172-1.443.282-2.195.322L0 11.358a12 12 0 0 1 .322-2.195Zm-.17 4.862 9.823 9.824a12.02 12.02 0 0 1-9.824-9.824Z" />
     </svg>
   );
 }
 
 /**
- * Sentry accordion item for the Sources section.
- * Fetches its own connection status (prefetched by parent page via sentry.get).
- * Shows inline project picker when connected, connect button otherwise.
+ * Linear accordion item for the Sources section.
+ * Fetches its own connection status (prefetched by parent page via linear.get).
+ * Shows inline team picker when connected, connect button otherwise.
  */
-export function SentrySourceItem() {
+export function LinearSourceItem() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const {
-    sentryConnection,
-    setSentryConnection,
-    sentryInstallationId,
-    setSentryInstallationId,
-    selectedSentryProjects,
-    setSelectedSentryProjects,
-    toggleSentryProject,
+    linearConnection,
+    setLinearConnection,
+    linearInstallationId,
+    setLinearInstallationId,
+    selectedLinearTeam,
+    setSelectedLinearTeam,
   } = useWorkspaceForm();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showPicker, setShowPicker] = useState(true);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Fetch Sentry connection (prefetched by parent page RSC)
-  const { data: sentryData, refetch: refetchConnection } = useSuspenseQuery({
-    ...trpc.connections.sentry.get.queryOptions(),
+  // Fetch Linear connection (prefetched by parent page RSC)
+  const { data: linearData, refetch: refetchConnection } = useSuspenseQuery({
+    ...trpc.connections.linear.get.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
-  const hasConnection = sentryData !== null;
+  const hasConnection = linearData !== null;
 
   // Sync connection to form state
   useEffect(() => {
-    if (sentryData?.id !== sentryConnection?.id) {
-      setSentryConnection(sentryData);
+    if (linearData?.id !== linearConnection?.id) {
+      setLinearConnection(linearData);
     }
-  }, [sentryData, sentryConnection?.id, setSentryConnection]);
+  }, [linearData, linearConnection?.id, setLinearConnection]);
 
-  // Sync sentryInstallationId from the connection
+  // Sync linearInstallationId from the connection
   useEffect(() => {
-    setSentryInstallationId(sentryData?.id ?? null);
-  }, [sentryData?.id, setSentryInstallationId]);
+    setLinearInstallationId(linearData?.id ?? null);
+  }, [linearData?.id, setLinearInstallationId]);
 
   // Cleanup poll timer on unmount
   useEffect(() => {
@@ -78,29 +78,27 @@ export function SentrySourceItem() {
     };
   }, []);
 
-  // Fetch Sentry projects (no workspaceId — workspace doesn't exist yet)
-  const { data: projectsData, isLoading: isLoadingProjects, error: projectsError } = useQuery({
-    ...trpc.connections.sentry.listProjects.queryOptions({
-      installationId: sentryInstallationId ?? "",
+  // Fetch Linear teams (no workspaceId — workspace doesn't exist yet)
+  const { data: teamsData, isLoading: isLoadingTeams, error: teamsError } = useQuery({
+    ...trpc.connections.linear.listTeams.queryOptions({
+      installationId: linearInstallationId ?? "",
     }),
-    enabled: Boolean(sentryInstallationId),
+    enabled: Boolean(linearInstallationId),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     retry: false,
   });
 
-  const projects = projectsData?.projects ?? [];
-  const filteredProjects = projects.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.slug.toLowerCase().includes(searchQuery.toLowerCase()),
+  const teams = teamsData?.teams ?? [];
+  const filteredTeams = teams.filter((t) =>
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.key.toLowerCase().includes(searchQuery.toLowerCase()),
   );
-
-  const selectedProject = selectedSentryProjects[0] ?? null;
 
   const handleConnect = async () => {
     try {
       const data = await queryClient.fetchQuery(
-        trpc.connections.getAuthorizeUrl.queryOptions({ provider: "sentry" }),
+        trpc.connections.getAuthorizeUrl.queryOptions({ provider: "linear" }),
       );
       const width = 600;
       const height = 800;
@@ -108,7 +106,7 @@ export function SentrySourceItem() {
       const top = window.screen.height / 2 - height / 2;
       const popup = window.open(
         data.url,
-        "sentry-install",
+        "linear-install",
         `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
       );
       if (!popup || popup.closed) {
@@ -124,27 +122,27 @@ export function SentrySourceItem() {
           }
           void refetchConnection();
           void queryClient.invalidateQueries({
-            queryKey: [["connections", "sentry", "listProjects"]],
+            queryKey: [["connections", "linear", "listTeams"]],
           });
         }
       }, 500);
     } catch {
-      toast.error("Failed to connect to Sentry. Please try again.");
+      toast.error("Failed to connect to Linear. Please try again.");
     }
   };
 
   return (
-    <AccordionItem value="sentry">
+    <AccordionItem value="linear">
       <AccordionTrigger className="px-4 hover:no-underline">
         <div className="flex items-center gap-3 flex-1">
-          <SentryIcon className="h-5 w-5 shrink-0" />
-          <span className="font-medium">Sentry</span>
+          <LinearIcon className="h-5 w-5 shrink-0" />
+          <span className="font-medium">Linear</span>
           {hasConnection ? (
             <Badge variant="secondary" className="text-xs">Connected</Badge>
           ) : (
             <Badge variant="outline" className="text-xs text-muted-foreground">Not connected</Badge>
           )}
-          {selectedProject && (
+          {selectedLinearTeam && (
             <Badge variant="default" className="text-xs ml-auto mr-2">
               1 selected
             </Badge>
@@ -155,36 +153,34 @@ export function SentrySourceItem() {
         {!hasConnection ? (
           <div className="flex flex-col items-center py-6 text-center gap-4">
             <p className="text-sm text-muted-foreground">
-              Connect Sentry to monitor errors and performance
+              Connect Linear to track issues and projects
             </p>
             <Button onClick={handleConnect} variant="outline">
-              <SentryIcon className="h-4 w-4 mr-2" />
-              Connect Sentry
+              <LinearIcon className="h-4 w-4 mr-2" />
+              Connect Linear
             </Button>
           </div>
         ) : (
           <div className="space-y-4 pt-2">
-            {selectedProject && !showPicker ? (
+            {selectedLinearTeam && !showPicker ? (
               /* Selected card view */
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                    <SentryIcon className="h-4 w-4" />
+                  <div
+                    className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
+                    style={{ backgroundColor: selectedLinearTeam.color ?? undefined }}
+                  >
+                    <span className="text-xs font-bold text-white">
+                      {selectedLinearTeam.key}
+                    </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">{selectedProject.name}</span>
-                      {selectedProject.platform && (
-                        <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
-                          {selectedProject.platform}
-                        </span>
-                      )}
+                      <span className="font-medium truncate">{selectedLinearTeam.name}</span>
+                      <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                        {selectedLinearTeam.key}
+                      </span>
                     </div>
-                    {sentryData?.organizationSlug && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {sentryData.organizationSlug} / {selectedProject.slug}
-                      </p>
-                    )}
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <Button variant="outline" size="sm" onClick={() => setShowPicker(true)}>
@@ -194,7 +190,7 @@ export function SentrySourceItem() {
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        setSelectedSentryProjects([]);
+                        setSelectedLinearTeam(null);
                         setShowPicker(true);
                       }}
                     >
@@ -205,74 +201,75 @@ export function SentrySourceItem() {
               </div>
             ) : (
               <>
-                {/* Org slug header + Search */}
-                <div className="flex gap-4">
-                  {sentryData?.organizationSlug && (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 shrink-0">
-                      <SentryIcon className="h-3 w-3" />
-                      <span className="text-sm font-medium">{sentryData.organizationSlug}</span>
-                    </div>
-                  )}
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Search projects..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search teams..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
 
-                {/* Project List */}
+                {/* Team List */}
                 <div className="rounded-lg border bg-card max-h-[260px] overflow-y-auto">
-                  {projectsError ? (
+                  {teamsError ? (
                     <div className="flex flex-col items-center py-6 text-center gap-3">
                       <p className="text-sm text-destructive">
-                        Failed to load projects. The connection may need to be refreshed.
+                        Failed to load teams. The connection may need to be refreshed.
                       </p>
                       <Button onClick={handleConnect} variant="outline" size="sm">
-                        Reconnect Sentry
+                        Reconnect Linear
                       </Button>
                     </div>
-                  ) : isLoadingProjects ? (
+                  ) : isLoadingTeams ? (
                     <div className="p-8 text-center text-muted-foreground">
                       <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                      Loading projects...
+                      Loading teams...
                     </div>
-                  ) : filteredProjects.length === 0 ? (
+                  ) : filteredTeams.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">
-                      {searchQuery ? "No projects match your search" : "No projects found"}
+                      {searchQuery ? "No teams match your search" : "No teams found"}
                     </div>
                   ) : (
                     <div className="divide-y">
-                      {filteredProjects.map((project) => (
+                      {filteredTeams.map((team) => (
                         <button
-                          key={project.id}
+                          key={team.id}
                           type="button"
                           className={`flex items-center gap-3 p-4 w-full text-left hover:bg-accent transition-colors cursor-pointer ${
-                            selectedProject?.id === project.id ? "bg-accent/50" : ""
+                            selectedLinearTeam?.id === team.id ? "bg-accent/50" : ""
                           }`}
                           onClick={() => {
-                            toggleSentryProject(project);
-                            setShowPicker(false);
+                            setSelectedLinearTeam(
+                              selectedLinearTeam?.id === team.id ? null : team,
+                            );
+                            if (selectedLinearTeam?.id !== team.id) {
+                              setShowPicker(false);
+                            }
                           }}
                         >
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                            <SentryIcon className="h-4 w-4" />
+                          <div
+                            className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
+                            style={{ backgroundColor: team.color ?? undefined }}
+                          >
+                            <span className="text-xs font-bold text-white">
+                              {team.key}
+                            </span>
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium truncate">{project.name}</span>
-                              {project.platform && (
-                                <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
-                                  {project.platform}
-                                </span>
-                              )}
+                              <span className="font-medium truncate">{team.name}</span>
+                              <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                                {team.key}
+                              </span>
                             </div>
-                            <p className="text-xs text-muted-foreground truncate mt-0.5">
-                              {project.slug}
-                            </p>
+                            {team.description && (
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                {team.description}
+                              </p>
+                            )}
                           </div>
                         </button>
                       ))}
@@ -280,14 +277,14 @@ export function SentrySourceItem() {
                   )}
                 </div>
 
-                {/* Missing project link */}
+                {/* Missing team link */}
                 <div className="text-center text-sm text-muted-foreground">
-                  Missing a project?{" "}
+                  Missing a team?{" "}
                   <button
                     onClick={handleConnect}
                     className="text-blue-500 hover:text-blue-600 underline-offset-4 hover:underline transition-colors"
                   >
-                    Reconnect Sentry →
+                    Reconnect Linear →
                   </button>
                 </div>
               </>
