@@ -155,7 +155,7 @@ export function InstalledSources({
 	const sortedGroups = [
 		...providerOrder
 			.filter((p) => grouped.has(p))
-			.map((p) => ({ provider: p as string, resources: grouped.get(p)! })),
+			.map((p) => ({ provider: p as string, resources: grouped.get(p) ?? [] })),
 		...[...grouped.entries()]
 			.filter(([p]) => !(providerOrder as readonly string[]).includes(p))
 			.map(([provider, resources]) => ({ provider, resources })),
@@ -271,7 +271,7 @@ function ResourceRow({
 	const metadata = integration.metadata as IntegrationMetadata | null | undefined;
 
 	const isAwaitingConfig = metadata?.status?.configStatus === "awaiting_config";
-	const documentCount = integration.documentCount || metadata?.documentCount;
+	const documentCount = integration.documentCount ?? metadata?.documentCount;
 	const isPrivate = metadata?.isPrivate;
 	const subscribedEvents = metadata?.sync?.events ?? [];
 	const eventLabel = subscribedEvents.length === 0 ? "All events" : `${subscribedEvents.length} events`;
@@ -281,7 +281,7 @@ function ResourceRow({
 	let resourceName: string;
 
 	if (integrationType === "github") {
-		resourceName = metadata?.repoFullName || "Unknown repo";
+		resourceName = metadata?.repoFullName ?? "Unknown repo";
 	} else if (integrationType === "vercel") {
 		resourceName = metadata?.projectName ?? "Unknown project";
 	} else if (integrationType === "linear") {

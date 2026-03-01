@@ -1,5 +1,5 @@
-import { createMiddleware } from "hono/factory";
 import * as Sentry from "@sentry/core";
+import { createMiddleware } from "hono/factory";
 import type { RequestIdVariables } from "./request-id.js";
 
 /**
@@ -21,7 +21,7 @@ export const sentry = createMiddleware<{
       scope.setTag("http.method", c.req.method);
       scope.setTag("http.path", c.req.path);
       const requestId = c.get("requestId");
-      if (requestId) scope.setTag("request_id", requestId);
+      if (requestId) {scope.setTag("request_id", requestId);}
       Sentry.captureException(err);
     });
     throw err;
@@ -34,7 +34,7 @@ export const sentry = createMiddleware<{
       scope.setTag("http.path", c.req.path);
       scope.setTag("http.status", String(c.res.status));
       const requestId = c.get("requestId");
-      if (requestId) scope.setTag("request_id", requestId);
+      if (requestId) {scope.setTag("request_id", requestId);}
       Sentry.captureMessage(
         `HTTP ${c.res.status}: ${c.req.method} ${c.req.path}`,
         "error",

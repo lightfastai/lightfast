@@ -63,7 +63,7 @@ export const lifecycle = createMiddleware<{
     const duration = Date.now() - start;
     const source = resolveSource(c);
     const provider =
-      c.req.path.match(/^\/api\/webhooks\/(\w+)/)?.[1] ?? undefined;
+      /^\/api\/webhooks\/(\w+)/.exec(c.req.path)?.[1] ?? undefined;
 
     const entry: Record<string, unknown> = {
       service: "gateway",
@@ -81,7 +81,7 @@ export const lifecycle = createMiddleware<{
 
     if (isDev) {
       const prefix = (entry.status as number) >= 400 ? "!!!" : ">>>";
-      let line = `${prefix} ${entry.method} ${entry.path} ${entry.status} ${duration}ms from ${source} [${entry.requestId}]`;
+      let line = `${prefix} ${c.req.method} ${c.req.path} ${entry.status as number} ${duration}ms from ${source} [${c.get("requestId")}]`;
       if (error) line += ` error="${error}"`;
       console.log(line);
     } else {

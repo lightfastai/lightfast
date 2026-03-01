@@ -40,7 +40,7 @@ const envCache = new WeakMap<object, ConnectionsEnv>();
  */
 export const getEnv = (c: Context): ConnectionsEnv => {
   const cached = envCache.get(c);
-  if (cached) return cached;
+  if (cached) {return cached;}
   const validated = _createEnv(c);
   envCache.set(c, validated);
   return validated;

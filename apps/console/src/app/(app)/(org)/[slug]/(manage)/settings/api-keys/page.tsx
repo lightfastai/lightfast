@@ -15,7 +15,7 @@ import { SecurityNotice } from "./_components/security-notice";
  * - Client island: Interactive API key list with mutations
  * - Suspense boundary: Wraps only the data-fetching component
  */
-export default async function OrgApiKeysPage() {
+export default function OrgApiKeysPage() {
   prefetch(orgTrpc.orgApiKeys.list.queryOptions());
 
   return (

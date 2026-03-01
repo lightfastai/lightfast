@@ -21,8 +21,8 @@ function resolveSource(c: {
   req: { header(name: string): string | undefined };
 }): string {
   const explicit = c.req.header("X-Request-Source");
-  if (explicit) return explicit;
-  if (c.req.header("X-API-Key")) return "service";
+  if (explicit) {return explicit;}
+  if (c.req.header("X-API-Key")) {return "service";}
   return "service";
 }
 
@@ -78,8 +78,8 @@ export const lifecycle = createMiddleware<{
 
     if (isDev) {
       const prefix = (entry.status as number) >= 400 ? "!!!" : ">>>";
-      let line = `${prefix} ${entry.method} ${entry.path} ${entry.status} ${duration}ms from ${source} [${entry.requestId}]`;
-      if (error) line += ` error="${error}"`;
+      let line = `${prefix} ${c.req.method} ${c.req.path} ${entry.status as number} ${duration}ms from ${source} [${c.get("requestId")}]`;
+      if (error) {line += ` error="${error}"`;}
       console.log(line);
     } else {
       console.log(JSON.stringify(entry));
