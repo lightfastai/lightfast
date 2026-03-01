@@ -281,6 +281,25 @@ export const workspaceRouter = {
           },
         });
 
+        // Trigger backfill for all active connections in this org (best-effort)
+        const activeInstallations = await db
+          .select({ id: gwInstallations.id, provider: gwInstallations.provider })
+          .from(gwInstallations)
+          .where(
+            and(
+              eq(gwInstallations.orgId, input.clerkOrgId),
+              eq(gwInstallations.status, "active"),
+            ),
+          );
+
+        for (const inst of activeInstallations) {
+          void notifyBackfill({
+            installationId: inst.id,
+            provider: inst.provider,
+            orgId: input.clerkOrgId,
+          });
+        }
+
         return {
           workspaceId,
           workspaceKey,
@@ -1391,6 +1410,149 @@ export const workspaceRouter = {
           void notifyBackfill({
             installationId: input.gwInstallationId,
             provider: "vercel",
+            orgId: ctx.auth.orgId,
+          });
+        }
+
+        return {
+          created: toCreate.length,
+          reactivated: toReactivate.length,
+          skipped: alreadyActive.length,
+        };
+      }),
+
+    /**
+     * Bulk link Linear teams to workspace
+     *
+     * Allows connecting Linear teams in a single operation.
+     * Handles idempotency by reactivating inactive integrations.
+     */
+    bulkLinkLinearTeams: orgScopedProcedure
+      .input(
+        z.object({
+          workspaceId: z.string(),
+          gwInstallationId: z.string(),
+          teams: z
+            .array(
+              z.object({
+                teamId: z.string(),
+                teamKey: z.string(),
+                teamName: z.string(),
+              }),
+            )
+            .min(1)
+            .max(50),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        // 1. Verify workspace access
+        const workspace = await ctx.db.query.orgWorkspaces.findFirst({
+          where: and(
+            eq(orgWorkspaces.id, input.workspaceId),
+            eq(orgWorkspaces.clerkOrgId, ctx.auth.orgId),
+          ),
+        });
+
+        if (!workspace) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Workspace not found",
+          });
+        }
+
+        // 2. Verify org owns the Linear installation
+        const gwInstallation = await ctx.db.query.gwInstallations.findFirst({
+          where: and(
+            eq(gwInstallations.id, input.gwInstallationId),
+            eq(gwInstallations.orgId, ctx.auth.orgId),
+            eq(gwInstallations.provider, "linear"),
+          ),
+        });
+
+        if (!gwInstallation) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Linear connection not found",
+          });
+        }
+
+        // 3. Get existing connections to avoid duplicates
+        const existing = await ctx.db.query.workspaceIntegrations.findMany({
+          where: and(
+            eq(workspaceIntegrations.workspaceId, input.workspaceId),
+            eq(workspaceIntegrations.installationId, input.gwInstallationId),
+          ),
+        });
+
+        const existingMap = new Map(
+          existing.map((e) => [e.providerResourceId, e]),
+        );
+
+        // 4. Categorize teams
+        const toCreate: typeof input.teams = [];
+        const toReactivate: string[] = [];
+        const alreadyActive: string[] = [];
+
+        for (const team of input.teams) {
+          const existingIntegration = existingMap.get(team.teamId);
+          if (!existingIntegration) {
+            toCreate.push(team);
+          } else if (!existingIntegration.isActive) {
+            toReactivate.push(existingIntegration.id);
+          } else {
+            alreadyActive.push(team.teamId);
+          }
+        }
+
+        const now = new Date().toISOString();
+
+        // 5. Reactivate inactive integrations
+        if (toReactivate.length > 0) {
+          await ctx.db
+            .update(workspaceIntegrations)
+            .set({ isActive: true, updatedAt: now })
+            .where(inArray(workspaceIntegrations.id, toReactivate));
+        }
+
+        // 6. Create new integrations
+        if (toCreate.length > 0) {
+          const integrations = toCreate.map((t) => ({
+            workspaceId: input.workspaceId,
+            installationId: input.gwInstallationId,
+            provider: "linear" as const,
+            connectedBy: ctx.auth.userId,
+            providerResourceId: t.teamId,
+            sourceConfig: {
+              version: 1 as const,
+              sourceType: "linear" as const,
+              type: "team" as const,
+              teamId: t.teamId,
+              teamKey: t.teamKey,
+              teamName: t.teamName,
+              sync: {
+                events: [
+                  "Issue",
+                  "Comment",
+                  "IssueLabel",
+                  "Project",
+                  "Cycle",
+                ],
+                autoSync: true,
+              },
+            },
+            isActive: true,
+            connectedAt: now,
+          }));
+
+          await ctx.db
+            .insert(workspaceIntegrations)
+            .values(integrations)
+            .returning({ id: workspaceIntegrations.id });
+
+          // Trigger backfill for newly linked teams (best-effort)
+          void notifyBackfill({
+            installationId: input.gwInstallationId,
+            provider: "linear",
             orgId: ctx.auth.orgId,
           });
         }

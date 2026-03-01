@@ -182,7 +182,7 @@ export class SentryProvider implements ConnectionProvider {
       hasAccessToken: !!oauthTokens.accessToken,
       hasRefreshToken: !!oauthTokens.refreshToken,
       expiresIn: oauthTokens.expiresIn,
-      rawKeys: Object.keys(oauthTokens.raw ?? {}),
+      rawKeys: Object.keys(oauthTokens.raw),
     });
 
     const accountInfo: SentryAccountInfo = {

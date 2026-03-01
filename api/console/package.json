@@ -37,6 +37,7 @@
 		"dev": "tsc",
 		"format": "prettier --check . --ignore-path ../../.gitignore",
 		"lint": "eslint",
+		"test": "vitest run",
 		"typecheck": "tsc --noEmit --emitDeclarationOnly false"
 	},
 	"dependencies": {
@@ -93,7 +94,8 @@
 		"@types/node": "catalog:",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vitest": "catalog:"
 	},
 	"prettier": "@repo/prettier-config"
 }
