@@ -61,7 +61,7 @@
 		"@repo/console-webhooks": "workspace:^",
 		"@repo/console-workspace-cache": "workspace:*",
 		"@repo/lib": "workspace:^",
-		"@sentry/core": "^10.20.0",
+		"@sentry/core": "catalog:",
 		"@t3-oss/env-nextjs": "^0.12.0",
 		"@tanstack/react-query": "catalog:",
 		"@trpc/client": "catalog:",

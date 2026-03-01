@@ -59,21 +59,12 @@ vi.mock("@db/console/client", () => ({
       return builder;
     },
     update: () => ({
-      set: () => ({
-        where: () => mockDbUpdate(),
-      }),
+      set: (...args: unknown[]) => {
+        mockTxSet(...args);
+        return { where: () => mockDbUpdate() };
+      },
     }),
-    transaction: (fn: (tx: unknown) => Promise<unknown>) =>
-      fn({
-        update: () => ({
-          set: (...args: unknown[]) => {
-            mockTxSet(...args);
-            return {
-              where: () => mockDbUpdate(),
-            };
-          },
-        }),
-      }),
+    batch: (queries: unknown[]) => Promise.all(queries as Promise<unknown>[]),
   },
 }));
 

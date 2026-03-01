@@ -27,7 +27,7 @@
     "@repo/console-vercel": "workspace:*",
     "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
-    "@sentry/core": "^10.20.0",
+    "@sentry/core": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@vendor/db": "workspace:*",
     "@vendor/qstash": "workspace:*",
