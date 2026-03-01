@@ -67,10 +67,7 @@
         "@lightfast/console#dev:inngest",
         "@lightfast/console#dev:qstash",
         "lightfast#dev:ngrok",
-        "@db/console#dev:studio",
-        "@lightfast/gateway#dev",
-        "@lightfast/backfill#dev",
-        "@lightfast/connections#dev"
+        "@db/console#dev:studio"
       ]
     },
     "transit": {}

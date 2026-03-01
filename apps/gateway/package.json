@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsup && pnpm with-env node dist/src/env.js",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "pnpm with-env srvx --import tsx -p 4108 src/index.ts",
+    "dev": "NODE_ENV=development pnpm with-env srvx --prod --import tsx -p 4108 src/index.ts",
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
