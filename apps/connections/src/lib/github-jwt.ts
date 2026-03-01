@@ -1,4 +1,7 @@
+import type { GitHubInstallationRaw } from "@repo/gateway-types";
 import { env } from "../env.js";
+
+export type { GitHubInstallationRaw as GitHubInstallationDetails };
 
 /**
  * Create a GitHub App JWT for authenticating as the App.
@@ -81,11 +84,91 @@ export async function getInstallationToken(
 }
 
 /**
- * Import a base64-encoded PKCS#8 PEM private key via Web Crypto.
+ * Fetch a GitHub App installation by ID using the App-level JWT.
+ * Returns account info, permissions, and subscribed webhook events.
  */
-async function importPrivateKey(base64Pem: string): Promise<CryptoKey> {
-  // Decode base64 → PEM string
-  const pem = atob(base64Pem);
+export async function getInstallationDetails(
+  installationId: string,
+): Promise<GitHubInstallationRaw> {
+  if (!/^\d+$/.test(installationId)) {
+    throw new Error("Invalid GitHub installation ID: must be numeric");
+  }
+
+  const jwt = await createGitHubAppJWT();
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => { controller.abort(); }, 10_000);
+
+  let response: Response;
+  try {
+    response = await fetch(
+      `https://api.github.com/app/installations/${installationId}`,
+      {
+        method: "GET",
+        signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "lightfast-connections",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      },
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      `GitHub installation details fetch failed: ${response.status}`,
+    );
+  }
+
+  const data = (await response.json()) as Record<string, unknown>;
+  const account = data.account as Record<string, unknown> | null;
+
+  if (!account || typeof account.login !== "string") {
+    throw new Error("GitHub installation response missing account data");
+  }
+
+  return {
+    account: {
+      login: account.login,
+      id: account.id as number,
+      type: account.type === "User" ? "User" : "Organization",
+      avatar_url: (account.avatar_url as string | undefined) ?? "",
+    },
+    permissions: (data.permissions as Record<string, string> | undefined) ?? {},
+    events: (data.events as string[] | undefined) ?? [],
+    created_at: (data.created_at as string | undefined) ?? new Date().toISOString(),
+  };
+}
+
+/**
+ * Import a PKCS#8 PEM private key via Web Crypto.
+ *
+ * Handles common env var formats:
+ *  - Raw PEM with literal `\n` characters (Vercel convention)
+ *  - Raw PEM with actual newlines
+ *  - Quoted PEM strings
+ *  - Base64-encoded PEM (legacy: entire PEM wrapped in one more base64 layer)
+ */
+async function importPrivateKey(rawKey: string): Promise<CryptoKey> {
+  // Normalize: strip quotes, replace literal \n with actual newlines
+  let pem = rawKey
+    .replace(/^["']|["']$/g, "")
+    .replace(/\\n/g, "\n");
+
+  // If it doesn't look like PEM, try base64-decoding (legacy format)
+  if (!pem.includes("-----BEGIN")) {
+    try {
+      pem = atob(pem);
+    } catch {
+      throw new Error(
+        "GITHUB_APP_PRIVATE_KEY is not a valid PEM key or base64-encoded PEM",
+      );
+    }
+  }
 
   // GitHub issues PKCS#1 keys (BEGIN RSA PRIVATE KEY) but Web Crypto
   // only supports PKCS#8 (BEGIN PRIVATE KEY). Detect and reject early.

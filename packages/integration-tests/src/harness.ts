@@ -32,6 +32,7 @@ export type { TestDb };
  * - del (variadic)
  * - expire
  * - pipeline (chaining: hset, expire, exec — for connections.authorize)
+ * - multi (chaining: hgetall, del, exec — for connections.resolveAndConsumeState)
  *
  * All methods operate on the shared `store` Map, so writes from one app are
  * immediately visible to reads in another app — simulating a shared Redis.
@@ -92,6 +93,44 @@ export function makeRedisMock(store: Map<string, unknown>) {
         }),
       };
       return pipe;
+    }),
+    multi: vi.fn(() => {
+      // Transactional multi — collects ops, returns results array from exec()
+      // Used by resolveAndConsumeState: redis.multi().hgetall(key).del(key).exec()
+      const ops: (() => unknown)[] = [];
+      const chain = {
+        hgetall: vi.fn((key: string) => {
+          ops.push(() => store.get(key) ?? null);
+          return chain;
+        }),
+        del: vi.fn((...keys: string[]) => {
+          ops.push(() => {
+            const allKeys = keys.flat();
+            let count = 0;
+            for (const k of allKeys) {
+              if (store.delete(k)) count++;
+            }
+            return count;
+          });
+          return chain;
+        }),
+        hset: vi.fn((key: string, fields: Record<string, unknown>) => {
+          ops.push(() => {
+            const existing = (store.get(key) ?? {}) as Record<string, unknown>;
+            store.set(key, { ...existing, ...fields });
+            return 1;
+          });
+          return chain;
+        }),
+        expire: vi.fn(() => {
+          ops.push(() => 1);
+          return chain;
+        }),
+        exec: vi.fn(() => {
+          return Promise.resolve(ops.map((op) => op()));
+        }),
+      };
+      return chain;
     }),
   };
   return mock;
@@ -179,16 +218,19 @@ export function makeInngestMock(
  *   // ... run tests
  *   restore(); // restore original fetch
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyHono = Hono<any>;
+
 export interface ServiceApps {
-  connectionsApp?: Hono;
-  backfillApp?: Hono;
-  gatewayApp?: Hono;
+  connectionsApp?: AnyHono;
+  backfillApp?: AnyHono;
+  gatewayApp?: AnyHono;
 }
 
 export function installServiceRouter(apps: ServiceApps): () => void {
   const { connectionsApp, backfillApp, gatewayApp } = apps;
 
-  const portToApp: Record<string, Hono | undefined> = {
+  const portToApp: Record<string, AnyHono | undefined> = {
     "4108": gatewayApp,
     "4109": backfillApp,
     "4110": connectionsApp,
@@ -312,16 +354,22 @@ export const TEST_WORKSPACE_SETTINGS = {
 /**
  * Creates a test API key in the database and returns the raw key + DB record.
  *
- * Used by Suite 8/9 tRPC tests to seed userApiKeys for apiKeyProcedure tests.
+ * Used by Suite 8/9 tRPC tests to seed orgApiKeys for apiKeyProcedure tests.
+ * Keys are org-scoped — no workspaceId required.
  *
  * Usage:
- *   const { rawKey, id, userId } = await makeApiKeyFixture(db, { userId: "user_1" });
- *   headers: { Authorization: `Bearer ${rawKey}`, "X-Workspace-ID": wsId }
+ *   const { rawKey, publicId } = await makeApiKeyFixture(db, {
+ *     userId: "user_1", clerkOrgId: "org_1",
+ *   });
+ *   headers: { Authorization: `Bearer ${rawKey}` }
  */
 export interface ApiKeyFixture {
-  rawKey: string; // "sk-lf-<nanoid>" — use in Authorization header
-  id: string;
-  userId: string;
+  rawKey: string;       // "sk-lf-<nanoid>" — use in Authorization header
+  id: string;           // alias for publicId
+  publicId: string;
+  clerkOrgId: string;
+  userId: string;       // alias for createdByUserId
+  createdByUserId: string;
   keyHash: string;
   keyPrefix: string;
   keySuffix: string;
@@ -332,13 +380,14 @@ export interface ApiKeyFixture {
 export async function makeApiKeyFixture(
   db: TestDb,
   overrides: {
-    userId?: string;
+    userId: string;
+    clerkOrgId?: string;
     isActive?: boolean;
     expiresAt?: Date | null;
-  } = {},
+  },
 ): Promise<ApiKeyFixture> {
   const { generateApiKey, hashApiKey } = await import("@repo/console-api-key");
-  const { userApiKeys } = await import("@db/console/schema");
+  const { orgApiKeys } = await import("@db/console/schema");
 
   // Use crypto.randomUUID for unique IDs — avoids importing @repo/lib which isn't a direct dep
   const uid = () => crypto.randomUUID().replace(/-/g, "").slice(0, 21);
@@ -351,9 +400,13 @@ export async function makeApiKeyFixture(
       ? expiresAtRaw.toISOString()
       : null;
 
+  const publicId = uid();
+  const clerkOrgId = overrides.clerkOrgId ?? `org_test_${uid()}`;
+
   const record = {
-    id: uid(),
-    userId: overrides.userId ?? `user_${uid()}`,
+    publicId,
+    clerkOrgId,
+    createdByUserId: overrides.userId,
     name: "test-key",
     keyHash,
     keyPrefix: "sk-lf-",
@@ -362,8 +415,13 @@ export async function makeApiKeyFixture(
     expiresAt,
   };
 
-  await db.insert(userApiKeys).values(record);
-  return { rawKey, ...record };
+  await db.insert(orgApiKeys).values(record);
+  return {
+    rawKey,
+    id: publicId,
+    userId: overrides.userId,
+    ...record,
+  };
 }
 
 /**

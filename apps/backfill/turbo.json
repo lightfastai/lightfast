@@ -9,7 +9,8 @@
         "GATEWAY_API_KEY",
         "INNGEST_APP_NAME",
         "INNGEST_EVENT_KEY",
-        "INNGEST_SIGNING_KEY"
+        "INNGEST_SIGNING_KEY",
+        "SENTRY_DSN"
       ],
       "outputs": ["dist/**"]
     },

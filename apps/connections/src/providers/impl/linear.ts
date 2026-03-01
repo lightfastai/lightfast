@@ -1,27 +1,28 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { nanoid } from "@repo/lib";
-import { and, eq } from "drizzle-orm";
+import { decrypt } from "@repo/lib";
+import { eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
-import { decrypt } from "@repo/lib";
-import { writeTokenRecord } from "../../lib/token-store.js";
-import { connectionsBaseUrl, gatewayBaseUrl, notifyBackfillService } from "../../lib/urls.js";
+import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store.js";
+import { connectionsBaseUrl } from "../../lib/urls.js";
 import { linearOAuthResponseSchema } from "../schemas.js";
 import type {
   ConnectionProvider,
+  LinearAccountInfo,
   LinearAuthOptions,
   TokenResult,
   OAuthTokens,
   CallbackResult,
+  CallbackStateData,
 } from "../types.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
 
 export class LinearProvider implements ConnectionProvider {
   readonly name = "linear" as const;
-  readonly requiresWebhookRegistration = true as const;
+  readonly requiresWebhookRegistration = false as const;
   private readonly clientId: string;
   private readonly clientSecret: string;
 
@@ -71,6 +72,7 @@ export class LinearProvider implements ConnectionProvider {
 
     return {
       accessToken: data.access_token,
+      refreshToken: data.refresh_token,
       tokenType: data.token_type,
       scope: data.scope,
       expiresIn: data.expires_in,
@@ -78,8 +80,34 @@ export class LinearProvider implements ConnectionProvider {
     };
   }
 
-  refreshToken(_refreshToken: string): Promise<OAuthTokens> {
-    return Promise.reject(new Error("Linear tokens do not support refresh"));
+  async refreshToken(refreshToken: string): Promise<OAuthTokens> {
+    const response = await fetch("https://api.linear.app/oauth/token", {
+      method: "POST",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
+      }).toString(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Linear token refresh failed: ${response.status}`);
+    }
+
+    const rawData: unknown = await response.json();
+    const data = linearOAuthResponseSchema.parse(rawData);
+
+    return {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      tokenType: data.token_type,
+      scope: data.scope,
+      expiresIn: data.expires_in,
+      raw: rawData as Record<string, unknown>,
+    };
   }
 
   async revokeToken(accessToken: string): Promise<void> {
@@ -97,123 +125,17 @@ export class LinearProvider implements ConnectionProvider {
     }
   }
 
-  async registerWebhook(
-    _connectionId: string,
-    callbackUrl: string,
-    secret: string,
-    accessToken?: string,
-  ): Promise<string> {
-    const mutation = `
-      mutation WebhookCreate($input: WebhookCreateInput!) {
-        webhookCreate(input: $input) {
-          success
-          webhook {
-            id
-          }
-        }
-      }
-    `;
-
-    if (!accessToken) {
-      throw new Error("Linear webhook registration requires an access token");
-    }
-
-    const response = await fetch("https://api.linear.app/graphql", {
-      method: "POST",
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        query: mutation,
-        variables: {
-          input: {
-            url: callbackUrl,
-            secret,
-            resourceTypes: [
-              "Issue",
-              "Comment",
-              "IssueLabel",
-              "Project",
-              "Cycle",
-            ],
-          },
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `Linear webhook registration failed: ${response.status}`,
-      );
-    }
-
-    const result = (await response.json()) as {
-      data?: {
-        webhookCreate?: { success: boolean; webhook?: { id: string } };
-      };
-      errors?: unknown[];
-    };
-
-    if (result.errors?.length) {
-      throw new Error(
-        `Linear webhook registration error: ${JSON.stringify(result.errors)}`,
-      );
-    }
-
-    const webhookId = result.data?.webhookCreate?.webhook?.id;
-    if (!webhookId) {
-      throw new Error("Linear webhook registration did not return an ID");
-    }
-
-    return webhookId;
-  }
-
-  async deregisterWebhook(
-    _connectionId: string,
-    webhookId: string,
-    accessToken?: string,
-  ): Promise<void> {
-    const mutation = `
-      mutation WebhookDelete($id: String!) {
-        webhookDelete(id: $id) {
-          success
-        }
-      }
-    `;
-
-    if (!accessToken) {
-      throw new Error("Linear webhook deregistration requires an access token");
-    }
-
-    const response = await fetch("https://api.linear.app/graphql", {
-      method: "POST",
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        query: mutation,
-        variables: { id: webhookId },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `Linear webhook deregistration failed: ${response.status}`,
-      );
-    }
-  }
-
   // ── Strategy methods ──
 
   /**
-   * Fetch the viewer's organization ID from the Linear API.
-   * Returns the org ID or the viewer's own ID as a stable external identifier.
+   * Fetch the viewer's organization info from the Linear API.
+   * Returns the external ID (org or viewer) plus organization metadata.
    */
-  private async fetchLinearExternalId(accessToken: string): Promise<string> {
+  private async fetchLinearContext(accessToken: string): Promise<{
+    externalId: string;
+    organizationName?: string;
+    organizationUrlKey?: string;
+  }> {
     const response = await fetch("https://api.linear.app/graphql", {
       method: "POST",
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
@@ -222,7 +144,7 @@ export class LinearProvider implements ConnectionProvider {
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
-        query: `{ viewer { id organization { id } } }`,
+        query: `{ viewer { id organization { id name urlKey } } }`,
       }),
     });
 
@@ -231,21 +153,32 @@ export class LinearProvider implements ConnectionProvider {
     }
 
     const result = (await response.json()) as {
-      data?: { viewer?: { id: string; organization?: { id: string } } };
+      data?: {
+        viewer?: {
+          id: string;
+          organization?: { id: string; name?: string; urlKey?: string };
+        };
+      };
     };
 
-    const orgId = result.data?.viewer?.organization?.id;
-    if (orgId) {return orgId;}
+    const org = result.data?.viewer?.organization;
+    if (org?.id) {
+      return {
+        externalId: org.id,
+        organizationName: org.name,
+        organizationUrlKey: org.urlKey,
+      };
+    }
 
     const viewerId = result.data?.viewer?.id;
-    if (viewerId) {return viewerId;}
+    if (viewerId) {return { externalId: viewerId };}
 
     throw new Error("Linear API did not return a viewer or organization ID");
   }
 
   async handleCallback(
     c: Context,
-    stateData: Record<string, string>,
+    stateData: CallbackStateData,
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
     if (!code) {throw new Error("missing code");}
@@ -253,23 +186,34 @@ export class LinearProvider implements ConnectionProvider {
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
 
-    const externalId = await this.fetchLinearExternalId(oauthTokens.accessToken);
-    const accountInfo = this.buildAccountInfo(stateData, oauthTokens);
+    const linearContext = await this.fetchLinearContext(oauthTokens.accessToken);
+    const externalId = linearContext.externalId;
     const now = new Date().toISOString();
 
-    // Check if this installation already exists (reactivation vs new)
-    const existing = await db
-      .select({ id: gwInstallations.id })
-      .from(gwInstallations)
-      .where(
-        and(
-          eq(gwInstallations.provider, this.name),
-          eq(gwInstallations.externalId, externalId),
-        ),
-      )
-      .limit(1);
+    // Extract raw Linear response (Zod-validated in exchangeCode, so fields are guaranteed present)
+    const raw = oauthTokens.raw as { token_type: string; scope: string; expires_in: number };
 
-    const reactivated = existing.length > 0;
+    const accountInfo: LinearAccountInfo = {
+      version: 1,
+      sourceType: "linear",
+      events: ["Issue", "Comment", "IssueLabel", "Project", "Cycle"],
+      installedAt: now,
+      lastValidatedAt: now,
+      raw: {
+        token_type: raw.token_type,
+        scope: raw.scope,
+        expires_in: raw.expires_in,
+      },
+      ...(linearContext.organizationName || linearContext.organizationUrlKey
+        ? {
+            organization: {
+              id: linearContext.externalId,
+              name: linearContext.organizationName,
+              urlKey: linearContext.organizationUrlKey,
+            },
+          }
+        : {}),
+    };
 
     // Idempotent upsert keyed on unique (provider, externalId) constraint
     const rows = await db
@@ -277,8 +221,8 @@ export class LinearProvider implements ConnectionProvider {
       .values({
         provider: this.name,
         externalId,
-        connectedBy: stateData.connectedBy ?? "unknown",
-        orgId: stateData.orgId ?? "",
+        connectedBy: stateData.connectedBy,
+        orgId: stateData.orgId,
         status: "active",
         providerAccountInfo: accountInfo,
       })
@@ -286,8 +230,8 @@ export class LinearProvider implements ConnectionProvider {
         target: [gwInstallations.provider, gwInstallations.externalId],
         set: {
           status: "active",
-          connectedBy: stateData.connectedBy ?? "unknown",
-          orgId: stateData.orgId ?? "",
+          connectedBy: stateData.connectedBy,
+          orgId: stateData.orgId,
           providerAccountInfo: accountInfo,
           updatedAt: now,
         },
@@ -301,55 +245,10 @@ export class LinearProvider implements ConnectionProvider {
 
     await writeTokenRecord(installation.id, oauthTokens);
 
-    // Register webhook only for new connections (Linear requires API-level webhook registration)
-    // CRITICAL: webhook callback URL must point at the gateway, not the connections service
-    if (!reactivated) {
-      const webhookSecret = nanoid(32);
-      const callbackUrl = `${gatewayBaseUrl}/webhooks/${this.name}`;
-
-      try {
-        const webhookId = await this.registerWebhook(
-          installation.id,
-          callbackUrl,
-          webhookSecret,
-          oauthTokens.accessToken,
-        );
-
-        await db
-          .update(gwInstallations)
-          .set({
-            webhookSecret,
-            metadata: { webhookId } as Record<string, unknown>,
-            updatedAt: new Date().toISOString(),
-          })
-          .where(eq(gwInstallations.id, installation.id));
-      } catch (err) {
-        await db
-          .update(gwInstallations)
-          .set({
-            status: "error",
-            metadata: {
-              webhookRegistrationError:
-                err instanceof Error ? err.message : "unknown",
-            } as Record<string, unknown>,
-            updatedAt: new Date().toISOString(),
-          })
-          .where(eq(gwInstallations.id, installation.id));
-      }
-
-      // Notify backfill service for new connections (fire-and-forget)
-      notifyBackfillService({
-        installationId: installation.id,
-        provider: this.name,
-        orgId: stateData.orgId ?? "",
-      }).catch(() => {});
-    }
-
     return {
       status: "connected",
       installationId: installation.id,
       provider: this.name,
-      ...(reactivated && { reactivated: true }),
     };
   }
 
@@ -363,11 +262,25 @@ export class LinearProvider implements ConnectionProvider {
     const tokenRow = tokenRows[0];
     if (!tokenRow) {throw new Error("no_token_found");}
 
+    // Check expiry and refresh if needed
     if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
-      throw new Error("token_expired");
+      if (!tokenRow.refreshToken) {
+        throw new Error("token_expired:no_refresh_token");
+      }
+
+      const decryptedRefresh = decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
+      const refreshed = await this.refreshToken(decryptedRefresh);
+
+      await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
+
+      return {
+        accessToken: refreshed.accessToken,
+        provider: this.name,
+        expiresIn: refreshed.expiresIn ?? null,
+      };
     }
 
-    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    const decryptedToken = decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
     return {
       accessToken: decryptedToken,
       provider: this.name,
@@ -375,12 +288,5 @@ export class LinearProvider implements ConnectionProvider {
         ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
         : null,
     };
-  }
-
-  buildAccountInfo(
-    _stateData: Record<string, string>,
-    _oauthTokens?: OAuthTokens,
-  ): GwInstallation["providerAccountInfo"] {
-    return { version: 1, sourceType: "linear" };
   }
 }

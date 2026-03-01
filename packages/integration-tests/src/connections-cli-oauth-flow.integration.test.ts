@@ -180,6 +180,41 @@ beforeEach(() => {
     };
     return pipe;
   });
+  redisMock.multi.mockImplementation(() => {
+    const ops: (() => unknown)[] = [];
+    const chain = {
+      hgetall: vi.fn((key: string) => {
+        ops.push(() => redisStore.get(key) ?? null);
+        return chain;
+      }),
+      del: vi.fn((...keys: string[]) => {
+        ops.push(() => {
+          const allKeys = keys.flat();
+          let count = 0;
+          for (const k of allKeys) {
+            if (redisStore.delete(k)) count++;
+          }
+          return count;
+        });
+        return chain;
+      }),
+      hset: vi.fn((key: string, fields: Record<string, unknown>) => {
+        ops.push(() => {
+          const existing =
+            (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          redisStore.set(key, { ...existing, ...fields });
+          return 1;
+        });
+        return chain;
+      }),
+      expire: vi.fn(() => {
+        ops.push(() => 1);
+        return chain;
+      }),
+      exec: vi.fn(() => Promise.resolve(ops.map((op) => op()))),
+    };
+    return chain;
+  });
 
   // Re-wire provider mock
   mockGetProvider.mockReturnValue(mockProvider);

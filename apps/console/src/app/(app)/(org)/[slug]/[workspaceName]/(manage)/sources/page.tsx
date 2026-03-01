@@ -62,26 +62,22 @@ function InstalledSourcesSkeleton() {
   return (
     <div className="space-y-4">
       {/* Filter bar skeleton */}
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-10 w-20" />
-        <Skeleton className="h-10 w-32" />
-        <Skeleton className="h-10 flex-1" />
-        <Skeleton className="h-10 w-48" />
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-8 flex-1" />
+        <Skeleton className="h-8 w-32" />
       </div>
-      {/* Sources list skeleton */}
-      <div className="rounded-lg border border-border/60 overflow-hidden">
-        <div className="divide-y divide-border">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-4 p-4">
-              <Skeleton className="h-10 w-10 rounded-lg" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-48" />
-              </div>
-              <Skeleton className="h-8 w-20" />
+      {/* Provider list skeleton */}
+      <div className="w-full rounded-lg border divide-y">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-5 w-20 rounded-full" />
             </div>
-          ))}
-        </div>
+            <Skeleton className="h-4 w-4" />
+          </div>
+        ))}
       </div>
     </div>
   );

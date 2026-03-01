@@ -1,5 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 
+// Set process.env vars for conditional provider registration (read at module load)
+vi.hoisted(() => {
+  process.env.SKIP_ENV_VALIDATION = "true";
+  process.env.LINEAR_CLIENT_ID = "lin-client-id";
+  process.env.LINEAR_CLIENT_SECRET = "lin-secret";
+  process.env.SENTRY_APP_SLUG = "sn-app-slug";
+  process.env.SENTRY_CLIENT_ID = "sn-client-id";
+  process.env.SENTRY_CLIENT_SECRET = "sn-secret";
+});
+
 vi.mock("../env", () => ({
   env: {
     GATEWAY_API_KEY: "test-api-key",
@@ -14,6 +24,7 @@ vi.mock("../env", () => ({
     VERCEL_INTEGRATION_SLUG: "test-integration",
     LINEAR_CLIENT_ID: "lin-client-id",
     LINEAR_CLIENT_SECRET: "lin-secret",
+    SENTRY_APP_SLUG: "sn-app-slug",
     SENTRY_CLIENT_ID: "sn-client-id",
     SENTRY_CLIENT_SECRET: "sn-secret",
   },
@@ -31,7 +42,6 @@ vi.mock("@db/console/schema", () => ({
 vi.mock("../lib/urls", () => ({
   connectionsBaseUrl: "https://connections.test/services",
   gatewayBaseUrl: "https://gateway.test/api",
-  notifyBackfillService: vi.fn(),
 }));
 
 vi.mock("../lib/github-jwt", () => ({

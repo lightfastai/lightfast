@@ -43,7 +43,6 @@
     "clean": "rm -rf dist .cache .turbo node_modules",
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --fix"
   },

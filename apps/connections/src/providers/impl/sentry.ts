@@ -1,13 +1,12 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { nanoid } from "@repo/lib";
-import { eq } from "drizzle-orm";
+import { decrypt } from "@repo/lib";
+import { eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
-import { decrypt } from "@repo/lib";
 import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store.js";
-import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls.js";
+import { connectionsBaseUrl } from "../../lib/urls.js";
 import {
   decodeSentryToken,
   encodeSentryToken,
@@ -15,9 +14,11 @@ import {
 } from "../schemas.js";
 import type {
   ConnectionProvider,
+  SentryAccountInfo,
   TokenResult,
   OAuthTokens,
   CallbackResult,
+  CallbackStateData,
 } from "../types.js";
 
 export class SentryProvider implements ConnectionProvider {
@@ -26,7 +27,7 @@ export class SentryProvider implements ConnectionProvider {
 
   getAuthorizationUrl(state: string): string {
     const url = new URL(
-      `https://sentry.io/sentry-apps/${env.SENTRY_CLIENT_ID}/external-install/`,
+      `https://sentry.io/sentry-apps/${env.SENTRY_APP_SLUG}/external-install/`,
     );
     url.searchParams.set("state", state);
     return url.toString();
@@ -53,6 +54,8 @@ export class SentryProvider implements ConnectionProvider {
     );
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("[sentry] token exchange failed:", { status: response.status, body: errorBody });
       throw new Error(`Sentry token exchange failed: ${response.status}`);
     }
 
@@ -155,38 +158,55 @@ export class SentryProvider implements ConnectionProvider {
 
   async handleCallback(
     c: Context,
-    stateData: Record<string, string>,
+    stateData: CallbackStateData,
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
+    const sentryInstallationId = c.req.query("installationId");
     if (!code) {throw new Error("missing code");}
+    if (!sentryInstallationId) {throw new Error("missing installationId query param");}
 
-    // Sentry's exchangeCode handles the composite installationId:authCode internally
+    // Encode installationId:authCode composite for exchangeCode
+    const compositeCode = encodeSentryToken({ installationId: sentryInstallationId, token: code });
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
-    const oauthTokens = await this.exchangeCode(code, redirectUri);
+    const oauthTokens = await this.exchangeCode(compositeCode, redirectUri);
 
-    const externalId =
-      (oauthTokens.raw.team_id as string | undefined)?.toString() ??
-      (oauthTokens.raw.organization_id as string | undefined)?.toString() ??
-      (oauthTokens.raw.installation as string | undefined)?.toString() ??
-      nanoid();
+    // Use sentryInstallationId as externalId — it's the stable identifier
+    const externalId = sentryInstallationId;
+
+    const rawData: unknown = oauthTokens.raw;
+    const parsedData = sentryOAuthResponseSchema.parse(rawData);
+    const now = new Date().toISOString();
+
+    const accountInfo: SentryAccountInfo = {
+      version: 1,
+      sourceType: "sentry",
+      events: ["installation", "issue", "error", "comment"],
+      installedAt: now,
+      lastValidatedAt: now,
+      raw: {
+        expiresAt: parsedData.expiresAt,
+        scopes: parsedData.scopes,
+      },
+      installationId: sentryInstallationId,
+    };
 
     const rows = await db
       .insert(gwInstallations)
       .values({
         provider: this.name,
         externalId,
-        connectedBy: stateData.connectedBy ?? "unknown",
-        orgId: stateData.orgId ?? "",
+        connectedBy: stateData.connectedBy,
+        orgId: stateData.orgId,
         status: "active",
-        providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
+        providerAccountInfo: accountInfo,
       })
       .onConflictDoUpdate({
         target: [gwInstallations.provider, gwInstallations.externalId],
         set: {
           status: "active",
-          connectedBy: stateData.connectedBy ?? "unknown",
-          orgId: stateData.orgId ?? "",
-          providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
+          connectedBy: stateData.connectedBy,
+          orgId: stateData.orgId,
+          providerAccountInfo: accountInfo,
         },
       })
       .returning({ id: gwInstallations.id });
@@ -199,13 +219,6 @@ export class SentryProvider implements ConnectionProvider {
     // Sentry webhook URL is configured in the Sentry dashboard, not via API.
     // Verification uses env.SENTRY_CLIENT_SECRET in the gateway, so no
     // per-installation webhookSecret is needed.
-
-    // Notify backfill service for new connections (fire-and-forget)
-    void notifyBackfillService({
-      installationId: installation.id,
-      provider: this.name,
-      orgId: stateData.orgId ?? "",
-    });
 
     return {
       status: "connected",
@@ -230,7 +243,7 @@ export class SentryProvider implements ConnectionProvider {
         throw new Error("token_expired:no_refresh_token");
       }
 
-      const decryptedRefresh = await decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
+      const decryptedRefresh = decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
       const refreshed = await this.refreshToken(decryptedRefresh);
 
       await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
@@ -242,7 +255,7 @@ export class SentryProvider implements ConnectionProvider {
       };
     }
 
-    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    const decryptedToken = decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
     return {
       accessToken: decryptedToken,
       provider: this.name,
@@ -250,12 +263,5 @@ export class SentryProvider implements ConnectionProvider {
         ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
         : null,
     };
-  }
-
-  buildAccountInfo(
-    _stateData: Record<string, string>,
-    _oauthTokens?: OAuthTokens,
-  ): GwInstallation["providerAccountInfo"] {
-    return { version: 1, sourceType: "sentry" };
   }
 }

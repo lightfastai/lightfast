@@ -37,7 +37,7 @@
   "dependencies": {
     "@logtail/next": "^0.2.0",
     "@next/bundle-analyzer": "^16.0.0",
-    "@sentry/nextjs": "^10.20.0",
+    "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/observability": "workspace:*",
     "@vercel/toolbar": "^0.1.28",

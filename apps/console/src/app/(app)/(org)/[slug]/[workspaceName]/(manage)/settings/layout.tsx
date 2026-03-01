@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { WorkspaceSettingsSidebar } from "~/components/workspace-settings-sidebar";
+import { SettingsSidebar } from "~/components/settings-sidebar";
 import { hasOrgRole } from "~/lib/org-access-clerk";
 
 export default async function WorkspaceSettingsLayout({
@@ -21,7 +21,10 @@ export default async function WorkspaceSettingsLayout({
 	return (
 		<div className="flex gap-12 pt-2 px-6 pb-6 w-full">
 			{/* Left Sidebar Navigation - aligns with app sidebar */}
-			<WorkspaceSettingsSidebar slug={slug} workspaceName={workspaceName} />
+			<SettingsSidebar
+				basePath={`/${slug}/${workspaceName}/settings`}
+				items={[{ name: "General", path: "" }]}
+			/>
 
 			{/* Main Content */}
 			<div className="flex-1 min-w-0 max-w-4xl space-y-6">

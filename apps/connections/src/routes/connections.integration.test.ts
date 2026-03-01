@@ -12,7 +12,7 @@ import {
 } from "@repo/console-test-db";
 import type { TestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
-import { eq } from "drizzle-orm";
+import { eq } from "@vendor/db";
 import { gwInstallations, gwTokens, gwResources } from "@db/console/schema";
 
 // ── PGlite singleton ──
@@ -85,7 +85,6 @@ vi.mock("../lib/urls", () => ({
   consoleUrl: "https://console.test",
   gatewayBaseUrl: "https://gateway.test/api",
   backfillUrl: "https://backfill.test/api",
-  notifyBackfillService: vi.fn().mockResolvedValue(undefined),
   cancelBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 

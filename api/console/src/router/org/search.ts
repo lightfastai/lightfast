@@ -47,9 +47,18 @@ export const searchRouter = {
 			const startTime = Date.now();
 			const requestId = randomUUID();
 
+			// Workspace comes from X-Workspace-ID header (API keys are now org-scoped)
+			const workspaceId = ctx.headers.get("x-workspace-id");
+			if (!workspaceId) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "X-Workspace-ID header required",
+				});
+			}
+
 			log.info("Search query", {
 				requestId,
-				workspaceId: ctx.auth.workspaceId,
+				workspaceId,
 				userId: ctx.auth.userId,
 				query: input.query,
 				topK: input.topK,
@@ -57,15 +66,23 @@ export const searchRouter = {
 			});
 
 			try {
-				// Look up workspace configuration
+				// Look up workspace configuration, validating org ownership
 				const workspace = await db.query.orgWorkspaces.findFirst({
-					where: eq(orgWorkspaces.id, ctx.auth.workspaceId),
+					where: eq(orgWorkspaces.id, workspaceId),
 				});
 
 				if (!workspace) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
 						message: "Workspace not found",
+					});
+				}
+
+				// Validate workspace belongs to the org from the API key
+				if (workspace.clerkOrgId !== ctx.auth.orgId) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "Access denied to this workspace",
 					});
 				}
 
@@ -81,7 +98,7 @@ export const searchRouter = {
 
 				log.info("Resolved index and namespace", {
 					requestId,
-					workspaceId: ctx.auth.workspaceId,
+					workspaceId,
 					userId: ctx.auth.userId,
 					indexName,
 					namespaceName,

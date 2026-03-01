@@ -11,4 +11,5 @@ export { createMiddleware as securityMiddleware } from "@nosecone/next";
 export const noseconeOptions: Options = {
   ...defaults,
   contentSecurityPolicy: false,
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
 };

@@ -4,14 +4,11 @@ export { gwTokens, type GwToken, type InsertGwToken } from "./gw-tokens";
 export { gwResources, type GwResource, type InsertGwResource } from "./gw-resources";
 export { gwWebhookDeliveries, type GwWebhookDelivery, type InsertGwWebhookDelivery } from "./gw-webhook-deliveries";
 
-// User-scoped tables
-export { userApiKeys, type UserApiKey, type InsertUserApiKey } from "./user-api-keys";
-
 // Org-scoped tables
 export { orgWorkspaces, type OrgWorkspace, type InsertOrgWorkspace } from "./org-workspaces";
 
-// Organization API Keys (workspace-scoped authentication)
-export { orgApiKeys, type OrgApiKey, type InsertOrgApiKey, workspaceApiKeys, type WorkspaceApiKey, type InsertWorkspaceApiKey } from "./org-api-keys";
+// Organization API Keys (org-scoped authentication)
+export { orgApiKeys, type OrgApiKey, type InsertOrgApiKey } from "./org-api-keys";
 
 // Workspace-scoped tables
 export { workspaceKnowledgeDocuments, type WorkspaceKnowledgeDocument, type InsertWorkspaceKnowledgeDocument } from "./workspace-knowledge-documents";

@@ -149,20 +149,17 @@ export const sourcesM2MRouter = {
       }
 
       const now = new Date().toISOString();
-      const updates = await db.transaction(async (tx) => {
-        const results = [];
-        for (const source of sources) {
-          const result = await tx
-            .update(workspaceIntegrations)
-            .set({
-              isActive: false,
-              updatedAt: now,
-            })
-            .where(eq(workspaceIntegrations.id, source.id));
-          results.push(result);
-        }
-        return results;
-      });
+      const updateQueries = sources.map((source) =>
+        db
+          .update(workspaceIntegrations)
+          .set({
+            isActive: false,
+            updatedAt: now,
+          })
+          .where(eq(workspaceIntegrations.id, source.id))
+      );
+      // Batch: deactivate all sources atomically (neon-http doesn't support transactions)
+      const updates = await db.batch(updateQueries as [typeof updateQueries[0], ...typeof updateQueries]);
 
       // Record activity for each disconnected source (Tier 3: Fire-and-forget)
       sources.forEach((source) => {
@@ -219,20 +216,20 @@ export const sourcesM2MRouter = {
 
       // Update all matching sources
       const now = new Date().toISOString();
-      const updates = await Promise.all(
-        installationSources.map((source) =>
-          db
-            .update(workspaceIntegrations)
-            .set({
-              isActive: false,
-              lastSyncedAt: now,
-              lastSyncStatus: "failed",
-              lastSyncError: "GitHub installation removed or suspended",
-              updatedAt: now,
-            })
-            .where(eq(workspaceIntegrations.id, source.id))
-        )
+      const updateQueries = installationSources.map((source) =>
+        db
+          .update(workspaceIntegrations)
+          .set({
+            isActive: false,
+            lastSyncedAt: now,
+            lastSyncStatus: "failed",
+            lastSyncError: "GitHub installation removed or suspended",
+            updatedAt: now,
+          })
+          .where(eq(workspaceIntegrations.id, source.id))
       );
+      // Batch: deactivate all sources atomically (neon-http doesn't support transactions)
+      const updates = await db.batch(updateQueries as [typeof updateQueries[0], ...typeof updateQueries]);
 
       // Record activity for each disconnected source (Tier 3: Fire-and-forget)
       installationSources.forEach((source) => {
@@ -280,57 +277,57 @@ export const sourcesM2MRouter = {
         };
       }
 
-      // Update all matching sources
+      // Filter to GitHub sources and update
       const now = new Date().toISOString();
-      const updates = await Promise.all(
-        sources.map((source) => {
-          // Type guard to ensure we're working with GitHub config
-          if (source.sourceConfig.sourceType !== "github") {
-            return Promise.resolve(null);
-          }
-
-          // Create updated config marking as archived/deleted
-          const updatedConfig = {
-            ...source.sourceConfig,
-            isArchived: true,
-          };
-
-          return db
-            .update(workspaceIntegrations)
-            .set({
-              isActive: false,
-              sourceConfig: updatedConfig,
-              lastSyncedAt: now,
-              lastSyncStatus: "failed",
-              lastSyncError: "Repository deleted on GitHub",
-              updatedAt: now,
-            })
-            .where(eq(workspaceIntegrations.id, source.id));
-        })
+      const githubSources = sources.filter(
+        (source) => source.sourceConfig.sourceType === "github"
       );
 
+      if (githubSources.length === 0) {
+        return { success: true, updated: 0 };
+      }
+
+      const updateQueries = githubSources.map((source) => {
+        const updatedConfig = {
+          ...source.sourceConfig,
+          isArchived: true,
+        };
+
+        return db
+          .update(workspaceIntegrations)
+          .set({
+            isActive: false,
+            sourceConfig: updatedConfig,
+            lastSyncedAt: now,
+            lastSyncStatus: "failed",
+            lastSyncError: "Repository deleted on GitHub",
+            updatedAt: now,
+          })
+          .where(eq(workspaceIntegrations.id, source.id));
+      });
+      // Batch: mark deleted atomically (neon-http doesn't support transactions)
+      const updates = await db.batch(updateQueries as [typeof updateQueries[0], ...typeof updateQueries]);
+
       // Record activity for each deleted source (Tier 3: Fire-and-forget)
-      sources.forEach((source) => {
-        if (source.sourceConfig.sourceType === "github") {
-          recordSystemActivity({
-            workspaceId: source.workspaceId,
-            actorType: "webhook",
-            category: "integration",
-            action: "integration.deleted",
-            entityType: "integration",
-            entityId: source.id,
-            metadata: {
-              provider: "github",
-              reason: "repository_deleted",
-              githubRepoId: input.githubRepoId,
-            },
-          });
-        }
+      githubSources.forEach((source) => {
+        recordSystemActivity({
+          workspaceId: source.workspaceId,
+          actorType: "webhook",
+          category: "integration",
+          action: "integration.deleted",
+          entityType: "integration",
+          entityId: source.id,
+          metadata: {
+            provider: "github",
+            reason: "repository_deleted",
+            githubRepoId: input.githubRepoId,
+          },
+        });
       });
 
       return {
         success: true,
-        updated: updates.filter((u) => u !== null).length,
+        updated: updates.length,
       };
     }),
 
@@ -359,65 +356,67 @@ export const sourcesM2MRouter = {
         });
       }
 
-      // Update all matching sources
+      // Filter to GitHub sources and update metadata
       const now = new Date().toISOString();
-      const updates = await Promise.all(
-        sources.map((source) => {
-          // Type guard to ensure we're working with GitHub config
-          if (source.sourceConfig.sourceType !== "github") {
-            return Promise.resolve(null);
-          }
-
-          // Merge metadata updates with existing config
-          const updatedConfig = {
-            ...source.sourceConfig,
-            ...(input.metadata.repoFullName && {
-              repoFullName: input.metadata.repoFullName,
-              repoName: input.metadata.repoFullName.split("/")[1] ?? source.sourceConfig.repoName,
-            }),
-            ...(input.metadata.defaultBranch && {
-              defaultBranch: input.metadata.defaultBranch,
-            }),
-            ...(input.metadata.isPrivate !== undefined && {
-              isPrivate: input.metadata.isPrivate,
-            }),
-            ...(input.metadata.isArchived !== undefined && {
-              isArchived: input.metadata.isArchived,
-            }),
-          };
-
-          return db
-            .update(workspaceIntegrations)
-            .set({
-              sourceConfig: updatedConfig,
-              updatedAt: now,
-            })
-            .where(eq(workspaceIntegrations.id, source.id));
-        })
+      const githubSources = sources.filter(
+        (source) => source.sourceConfig.sourceType === "github"
       );
 
+      if (githubSources.length === 0) {
+        return { success: true, updated: 0 };
+      }
+
+      const updateQueries = githubSources.map((source) => {
+        // Safe to cast: pre-filtered to github sourceType above
+        const sourceConfig = source.sourceConfig as Extract<typeof source.sourceConfig, { sourceType: "github" }>;
+        const updatedConfig = {
+          ...sourceConfig,
+          ...(input.metadata.repoFullName && {
+            repoFullName: input.metadata.repoFullName,
+            repoName: input.metadata.repoFullName.split("/")[1] ?? sourceConfig.repoName,
+          }),
+          ...(input.metadata.defaultBranch && {
+            defaultBranch: input.metadata.defaultBranch,
+          }),
+          ...(input.metadata.isPrivate !== undefined && {
+            isPrivate: input.metadata.isPrivate,
+          }),
+          ...(input.metadata.isArchived !== undefined && {
+            isArchived: input.metadata.isArchived,
+          }),
+        };
+
+        return db
+          .update(workspaceIntegrations)
+          .set({
+            sourceConfig: updatedConfig,
+            updatedAt: now,
+          })
+          .where(eq(workspaceIntegrations.id, source.id));
+      });
+      // Batch: update metadata atomically (neon-http doesn't support transactions)
+      const updates = await db.batch(updateQueries as [typeof updateQueries[0], ...typeof updateQueries]);
+
       // Record activity for each metadata update (Tier 3: Fire-and-forget)
-      sources.forEach((source) => {
-        if (source.sourceConfig.sourceType === "github") {
-          recordSystemActivity({
-            workspaceId: source.workspaceId,
-            actorType: "webhook",
-            category: "integration",
-            action: "integration.metadata_updated",
-            entityType: "integration",
-            entityId: source.id,
-            metadata: {
-              provider: "github",
-              updates: input.metadata,
-              githubRepoId: input.githubRepoId,
-            },
-          });
-        }
+      githubSources.forEach((source) => {
+        recordSystemActivity({
+          workspaceId: source.workspaceId,
+          actorType: "webhook",
+          category: "integration",
+          action: "integration.metadata_updated",
+          entityType: "integration",
+          entityId: source.id,
+          metadata: {
+            provider: "github",
+            updates: input.metadata,
+            githubRepoId: input.githubRepoId,
+          },
+        });
       });
 
       return {
         success: true,
-        updated: updates.filter((u) => u !== null).length,
+        updated: updates.length,
       };
     }),
 } satisfies TRPCRouterRecord;

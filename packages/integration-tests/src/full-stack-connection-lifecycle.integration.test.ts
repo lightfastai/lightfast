@@ -147,7 +147,7 @@ await import("@backfill/orchestrator");
 
 // ── Utilities ──
 import { installServiceRouter, makeStep } from "./harness.js";
-import { notifyBackfillService, cancelBackfillService } from "@connections/urls";
+import { cancelBackfillService } from "@connections/urls";
 
 // ── Lifecycle ──
 
@@ -220,34 +220,26 @@ afterAll(async () => {
 // ── Tests ──
 
 describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → connection details", () => {
-  it("QStash message from notifyBackfillService flows through to backfill trigger and fires Inngest event", async () => {
-    // 1. Connections publishes QStash notify message
-    await notifyBackfillService({
-      installationId: "inst-lifecycle-happy",
-      provider: "github",
-      orgId: "org-lifecycle-happy",
-    });
-
-    expect(qstashMessages).toHaveLength(1);
-    const capturedMsg = qstashMessages[0];
-    if (!capturedMsg) throw new Error("expected qstash message");
-    expect(capturedMsg.url).toContain("/trigger");
-
-    // 2. Deliver captured QStash body to backfill trigger endpoint
+  it("POST /api/trigger fires run.requested Inngest event", async () => {
+    // Deliver a backfill trigger directly to the backfill service
     const res = await backfillApp.request("/api/trigger", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
-        ...(capturedMsg.headers ?? {}),
+        "X-API-Key": "0".repeat(64),
       }),
-      body: JSON.stringify(capturedMsg.body),
+      body: JSON.stringify({
+        installationId: "inst-lifecycle-happy",
+        provider: "github",
+        orgId: "org-lifecycle-happy",
+      }),
     });
 
     expect(res.status).toBe(200);
     const json = await res.json() as { status: string };
     expect(json.status).toBe("accepted");
 
-    // 3. Inngest run.requested event should have fired
+    // Inngest run.requested event should have fired
     expect(inngestEventsSent).toContainEqual(
       expect.objectContaining({
         name: "apps-backfill/run.requested",
@@ -389,12 +381,13 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     expect(json.status).toBe("cancelled");
 
     // 3. Inngest run.cancelled event should have fired
-    expect(inngestEventsSent).toContainEqual(
-      expect.objectContaining({
-        name: "apps-backfill/run.cancelled",
-        data: { installationId: "inst-lifecycle-cancel" },
-      }),
-    );
+    // toMatchObject does recursive partial matching — extra fields like correlationId are ignored
+    const cancelEvent = inngestEventsSent.find(e => e.name === "apps-backfill/run.cancelled");
+    expect(cancelEvent).toBeDefined();
+    expect(cancelEvent).toMatchObject({
+      name: "apps-backfill/run.cancelled",
+      data: { installationId: "inst-lifecycle-cancel" },
+    });
   });
 
   it("DELETE /connections/:provider/:id triggers teardown workflow", async () => {
@@ -508,12 +501,12 @@ describe("Suite 5.3 — Full teardown path", () => {
     expect(cancelRes.status).toBe(200);
     expect((await cancelRes.json() as { status: string }).status).toBe("cancelled");
 
-    expect(inngestEventsSent).toContainEqual(
-      expect.objectContaining({
-        name: "apps-backfill/run.cancelled",
-        data: { installationId: inst.id },
-      }),
-    );
+    const cancelEvent = inngestEventsSent.find(e => e.name === "apps-backfill/run.cancelled");
+    expect(cancelEvent).toBeDefined();
+    expect(cancelEvent).toMatchObject({
+      name: "apps-backfill/run.cancelled",
+      data: { installationId: inst.id },
+    });
 
     // ── 5. Simulate teardown workflow step 4: clean Redis cache ──
     // The connection-teardown workflow calls redis.del on all resource keys.

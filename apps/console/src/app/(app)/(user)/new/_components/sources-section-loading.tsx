@@ -21,6 +21,14 @@ export function SourcesSectionLoading() {
         </div>
         <div className="h-4 w-4 bg-muted animate-pulse rounded" />
       </div>
+      {/* Linear skeleton */}
+      <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-center gap-3">
+          <div className="h-5 w-5 bg-muted animate-pulse rounded" />
+          <div className="h-4 w-16 bg-muted animate-pulse rounded" />
+        </div>
+        <div className="h-4 w-4 bg-muted animate-pulse rounded" />
+      </div>
     </div>
   );
 }

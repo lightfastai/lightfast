@@ -10,7 +10,7 @@ import { userScopedProcedure } from "../../trpc";
  * This router contains only non-table-based operations.
  *
  * Table-based operations have been moved to:
- * - API Keys: user-api-keys router
+ * - API Keys: org-api-keys router (workspace-scoped)
  * - Integrations: user-sources router
  */
 

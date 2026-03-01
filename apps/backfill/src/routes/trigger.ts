@@ -1,9 +1,10 @@
 import { Hono } from "hono";
-import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { timingSafeEqual } from "node:crypto";
 
 import { getEnv } from "../env.js";
 import { inngest } from "../inngest/client.js";
+import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 const triggerSchema = z.object({
   installationId: z.string().min(1),
@@ -29,7 +30,7 @@ function isValidApiKey(key: string | undefined, expected: string): boolean {
   return timingSafeEqual(a, b);
 }
 
-const trigger = new Hono();
+const trigger = new Hono<{ Variables: LifecycleVariables }>();
 
 /**
  * POST /trigger
@@ -68,6 +69,7 @@ trigger.post("/", async (c) => {
         orgId: body.orgId,
         depth: body.depth ?? 30,
         entityTypes: body.entityTypes,
+        correlationId: c.get("correlationId"),
       },
     });
   } catch (err) {
@@ -112,7 +114,10 @@ trigger.post("/cancel", async (c) => {
   try {
     await inngest.send({
       name: "apps-backfill/run.cancelled",
-      data: { installationId: body.installationId },
+      data: {
+        installationId: body.installationId,
+        correlationId: c.get("correlationId"),
+      },
     });
   } catch (err) {
     console.error("Failed to send cancel event to Inngest", err);

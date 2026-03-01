@@ -1,9 +1,9 @@
 import { db } from "@db/console/client";
 import { gwTokens } from "@db/console/schema";
+import { encrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
 import { env } from "../env.js";
 import type { OAuthTokens } from "../providers/types.js";
-import { encrypt } from "@repo/lib";
 
 /**
  * Write an encrypted token record for an installation.
@@ -13,9 +13,9 @@ export async function writeTokenRecord(
   installationId: string,
   oauthTokens: OAuthTokens,
 ): Promise<void> {
-  const encryptedAccess = await encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
+  const encryptedAccess = encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
   const encryptedRefresh = oauthTokens.refreshToken
-    ? await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY)
+    ? encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY)
     : null;
 
   const expiresAt = oauthTokens.expiresIn
@@ -79,11 +79,11 @@ export async function updateTokenRecord(
   existingEncryptedRefreshToken: string | null,
   existingExpiresAt: string | null,
 ): Promise<void> {
-  const encryptedAccess = await encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
+  const encryptedAccess = encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
 
   let newEncryptedRefresh: string | null;
   if (oauthTokens.refreshToken) {
-    newEncryptedRefresh = await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY);
+    newEncryptedRefresh = encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY);
   } else if (existingEncryptedRefreshToken) {
     assertEncryptedFormat(existingEncryptedRefreshToken);
     newEncryptedRefresh = existingEncryptedRefreshToken;

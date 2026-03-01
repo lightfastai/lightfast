@@ -5,14 +5,14 @@ import { z } from "zod";
 
 const server = {
   GATEWAY_API_KEY: z.string().min(1),
+  SENTRY_DSN: z.string().url().optional(),
   INNGEST_APP_NAME: z.string().min(1).startsWith("lightfast-"),
   INNGEST_EVENT_KEY: z.string().min(1).optional(),
   INNGEST_SIGNING_KEY: z.string().min(1).startsWith("signkey-").optional(),
   VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
 };
 
-/** Validated env from the Hono request context — use in route handlers. */
-export const getEnv = (c: Context) =>
+const _createEnv = (c: Context) =>
   createEnv({
     clientPrefix: "" as const,
     client: {},
@@ -21,13 +21,33 @@ export const getEnv = (c: Context) =>
     emptyStringAsUndefined: true,
   });
 
+export type BackfillEnv = ReturnType<typeof _createEnv>;
+
+const envCache = new WeakMap<object, BackfillEnv>();
+
+/** Validated env from the Hono request context — cached per request. */
+export const getEnv = (c: Context): BackfillEnv => {
+  const cached = envCache.get(c);
+  if (cached) {return cached;}
+  const validated = _createEnv(c);
+  envCache.set(c, validated);
+  return validated;
+};
+
 /** Module-level validated env for non-Hono contexts (Inngest workflows, module-level init). */
 export const env = createEnv({
   clientPrefix: "" as const,
   client: {},
+  shared: {
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
+  },
   server,
   runtimeEnv: {
+    NODE_ENV: process.env.NODE_ENV,
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
+    SENTRY_DSN: process.env.SENTRY_DSN,
     INNGEST_APP_NAME: process.env.INNGEST_APP_NAME,
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,

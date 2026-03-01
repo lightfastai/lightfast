@@ -5,11 +5,9 @@ export {
   gwTokens, type GwToken, type InsertGwToken,
   gwResources, type GwResource, type InsertGwResource,
   gwWebhookDeliveries, type GwWebhookDelivery, type InsertGwWebhookDelivery,
-  // User-scoped tables
-  userApiKeys, type UserApiKey, type InsertUserApiKey,
   // Org-scoped tables
   orgWorkspaces, type OrgWorkspace, type InsertOrgWorkspace,
-  orgApiKeys, type OrgApiKey, type InsertOrgApiKey, workspaceApiKeys, type WorkspaceApiKey, type InsertWorkspaceApiKey,
+  orgApiKeys, type OrgApiKey, type InsertOrgApiKey,
   // Workspace-scoped tables
   workspaceKnowledgeDocuments, type WorkspaceKnowledgeDocument, type InsertWorkspaceKnowledgeDocument,
   workspaceKnowledgeVectorChunks, type WorkspaceKnowledgeVectorChunk, type InsertWorkspaceKnowledgeVectorChunk,

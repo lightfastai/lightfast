@@ -18,12 +18,10 @@ const server = {
   VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
   LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1),
   SENTRY_CLIENT_SECRET: z.string().min(1),
+  SENTRY_DSN: z.string().url().optional(),
 };
 
-export type GatewayEnv = ReturnType<typeof getEnv>;
-
-/** Validated env from the Hono request context — use in route handlers. */
-export const getEnv = (c: Context) =>
+const _createEnv = (c: Context) =>
   createEnv({
     clientPrefix: "" as const,
     client: {},
@@ -31,6 +29,19 @@ export const getEnv = (c: Context) =>
     runtimeEnv: honoEnv<Record<keyof typeof server, string | undefined>>(c),
     emptyStringAsUndefined: true,
   });
+
+export type GatewayEnv = ReturnType<typeof _createEnv>;
+
+const envCache = new WeakMap<object, GatewayEnv>();
+
+/** Validated env from the Hono request context — cached per request. */
+export const getEnv = (c: Context): GatewayEnv => {
+  const cached = envCache.get(c);
+  if (cached) return cached;
+  const validated = _createEnv(c);
+  envCache.set(c, validated);
+  return validated;
+};
 
 /** Module-level validated env for non-Hono contexts (workflows, utilities, module-level init). */
 export const env = createEnv({
@@ -52,6 +63,7 @@ export const env = createEnv({
       process.env.VERCEL_CLIENT_INTEGRATION_SECRET,
     LINEAR_WEBHOOK_SIGNING_SECRET: process.env.LINEAR_WEBHOOK_SIGNING_SECRET,
     SENTRY_CLIENT_SECRET: process.env.SENTRY_CLIENT_SECRET,
+    SENTRY_DSN: process.env.SENTRY_DSN,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

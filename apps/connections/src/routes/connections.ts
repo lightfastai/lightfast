@@ -1,9 +1,9 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwResources } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
+import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
-import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { html, raw } from "hono/html";
 import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
@@ -12,7 +12,7 @@ import { apiKeyAuth } from "../middleware/auth.js";
 import type { TenantVariables } from "../middleware/tenant.js";
 import { tenantMiddleware } from "../middleware/tenant.js";
 import { getProvider } from "../providers/index.js";
-import type { ProviderName } from "../providers/types.js";
+import type { CallbackStateData, ProviderName } from "../providers/types.js";
 
 const workflowClient = getWorkflowClient();
 
@@ -141,7 +141,39 @@ connections.get("/:provider/callback", async (c) => {
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
 
-  const stateData = await resolveAndConsumeState(c);
+  let stateData = await resolveAndConsumeState(c);
+
+  // GitHub-initiated redirects (permission changes, reinstalls) arrive without
+  // our state token. If state is missing but installation_id is present, look up
+  // the existing installation to recover orgId/connectedBy.
+  if (!stateData && providerName === "github") {
+    const installationId = c.req.query("installation_id");
+    if (installationId) {
+      const existing = await db
+        .select({
+          orgId: gwInstallations.orgId,
+          connectedBy: gwInstallations.connectedBy,
+        })
+        .from(gwInstallations)
+        .where(
+          and(
+            eq(gwInstallations.provider, "github"),
+            eq(gwInstallations.externalId, installationId),
+          ),
+        )
+        .limit(1);
+
+      const row = existing[0];
+      if (row) {
+        stateData = {
+          provider: "github",
+          orgId: row.orgId,
+          connectedBy: row.connectedBy,
+        };
+      }
+    }
+  }
+
   if (!stateData) {
     return c.json({ error: "invalid_or_expired_state" }, 400);
   }
@@ -151,7 +183,13 @@ connections.get("/:provider/callback", async (c) => {
   }
 
   try {
-    const result = await provider.handleCallback(c, stateData);
+    // Narrow to typed state — orgId guaranteed by resolveAndConsumeState (line 94)
+    // connectedBy guaranteed by authorize handler (defaults to "unknown")
+    const typedState: CallbackStateData = {
+      orgId: stateData.orgId ?? "", // orgId guaranteed non-empty by resolveAndConsumeState
+      connectedBy: stateData.connectedBy ?? "unknown",
+    };
+    const result = await provider.handleCallback(c, typedState);
 
     // Store completion result in Redis for CLI polling (5-min TTL)
     await redis
@@ -164,6 +202,11 @@ connections.get("/:provider/callback", async (c) => {
       })
       .expire(oauthResultKey(state), 300)
       .exec();
+
+    // Provider-specific redirect (e.g. Vercel "next" URL to complete installation lifecycle)
+    if (typeof result.nextUrl === "string") {
+      return c.redirect(result.nextUrl);
+    }
 
     const redirectTo = stateData.redirectTo;
 

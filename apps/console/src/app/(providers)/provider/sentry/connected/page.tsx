@@ -13,6 +13,12 @@ import { useEffect } from "react";
  */
 export default function SentryConnectedPage() {
 	useEffect(() => {
+		// Notify parent via BroadcastChannel (works regardless of window.opener / COOP)
+		const channel = new BroadcastChannel("oauth-connections");
+		channel.postMessage({ type: "sentry_connected" });
+		channel.close();
+
+		// Also try postMessage (works when opener is available)
 		const opener = window.opener as Window | null;
 		if (opener) {
 			try {

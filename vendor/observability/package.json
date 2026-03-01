@@ -39,7 +39,7 @@
   "prettier": "@repo/prettier-config",
   "dependencies": {
     "@logtail/next": "^0.2.0",
-    "@sentry/nextjs": "^10.20.0",
+    "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
     "zod": "catalog:zod3"

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Github, Search, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { Search, Loader2 } from "lucide-react";
+import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
-import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Input } from "@repo/ui/components/ui/input";
 import {
   Select,
@@ -19,10 +20,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
-import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { githubEnv } from "@repo/console-octokit-github/env";
 import { useWorkspaceForm } from "./workspace-form-provider";
+import { useOAuthPopup } from "~/hooks/use-oauth-popup";
 
 /**
  * GitHub accordion item for the Sources section.
@@ -31,7 +32,6 @@ import { useWorkspaceForm } from "./workspace-form-provider";
  */
 export function GitHubSourceItem() {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const {
     gwInstallationId,
     setGwInstallationId,
@@ -45,12 +45,42 @@ export function GitHubSourceItem() {
   } = useWorkspaceForm();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [showPicker, setShowPicker] = useState(true);
   const prevInstallationsRef = useRef<typeof installations>([]);
+  const preferNewestRef = useRef(false);
+  const installationIdsBeforeRef = useRef<Set<string>>(new Set());
+
+  const { handleConnect: connectOAuth, openCustomUrl } = useOAuthPopup({
+    provider: "github",
+    queryKeysToInvalidate: [
+      trpc.connections.github.list.queryOptions().queryKey,
+      [["connections", "github", "repositories"]],
+    ],
+    onSuccess: () => {
+      preferNewestRef.current = true;
+    },
+  });
+
+  const handleConnect = () => {
+    installationIdsBeforeRef.current = new Set(
+      installations.map((i) => i.id),
+    );
+    void connectOAuth();
+  };
+
+  const handleAdjustPermissions = () => {
+    installationIdsBeforeRef.current = new Set(
+      installations.map((i) => i.id),
+    );
+    void openCustomUrl(
+      (data) =>
+        `https://github.com/apps/${githubEnv.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target?state=${data.state}`,
+    );
+  };
 
   // Fetch GitHub connection (prefetched by parent page RSC)
-  const { data: connection, refetch: refetchConnection } = useSuspenseQuery({
-    ...trpc.connections.github.get.queryOptions(),
+  const { data: connection } = useSuspenseQuery({
+    ...trpc.connections.github.list.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
@@ -58,10 +88,11 @@ export function GitHubSourceItem() {
   const connectionInstallations = connection?.installations ?? [];
   const hasConnection = Boolean(connection && connectionInstallations.length > 0);
 
-  // Sync gwInstallationId when connection changes
+  // Sync gwInstallationId from the selected installation (each GitHub org
+  // lives in its own gwInstallations row with a distinct id).
   useEffect(() => {
-    setGwInstallationId(connection?.id ?? null);
-  }, [connection?.id, setGwInstallationId]);
+    setGwInstallationId(selectedInstallation?.gwInstallationId ?? null);
+  }, [selectedInstallation?.gwInstallationId, setGwInstallationId]);
 
   // Sync installations array (with ID equality check to avoid re-renders)
   useEffect(() => {
@@ -73,12 +104,26 @@ export function GitHubSourceItem() {
     }
   }, [connectionInstallations, setInstallations]);
 
-  // Auto-select first installation
+  // Auto-select installation (prefer newest after OAuth)
   useEffect(() => {
     if (connectionInstallations.length === 0) {
       if (selectedInstallation !== null) setSelectedInstallation(null);
       return;
     }
+    // After OAuth: prefer the newly added installation
+    if (preferNewestRef.current) {
+      preferNewestRef.current = false;
+      const beforeIds = installationIdsBeforeRef.current;
+      const newInst = connectionInstallations.find(
+        (inst) => !beforeIds.has(inst.id),
+      );
+      if (newInst) {
+        setSelectedInstallation(newInst);
+        setSelectedRepositories([]);
+        return;
+      }
+    }
+    // Default: select first if current selection no longer exists
     const stillExists = selectedInstallation
       ? connectionInstallations.some((inst) => inst.id === selectedInstallation.id)
       : false;
@@ -88,14 +133,7 @@ export function GitHubSourceItem() {
         setSelectedInstallation(first);
       }
     }
-  }, [connectionInstallations, selectedInstallation, setSelectedInstallation]);
-
-  // Cleanup poll timer on unmount
-  useEffect(() => {
-    return () => {
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-    };
-  }, []);
+  }, [connectionInstallations, selectedInstallation, setSelectedInstallation, setSelectedRepositories]);
 
   // Fetch repos for selected installation
   const { data: repositoriesData, isLoading: isLoadingRepos } = useQuery({
@@ -113,84 +151,22 @@ export function GitHubSourceItem() {
     repo.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const isSelected = (repoId: string) => selectedRepositories.some((r) => r.id === repoId);
-  const selectedFromFiltered = filteredRepositories.filter((r) => isSelected(r.id)).length;
-
-  const handleSelectAll = () => {
-    const unselected = filteredRepositories.filter((r) => !isSelected(r.id));
-    setSelectedRepositories([...selectedRepositories, ...unselected]);
-  };
-
-  const handleDeselectAll = () => {
-    const filteredIds = new Set(filteredRepositories.map((r) => r.id));
-    setSelectedRepositories(selectedRepositories.filter((r) => !filteredIds.has(r.id)));
-  };
-
-  const handleAdjustPermissions = () => {
-    const width = 600;
-    const height = 800;
-    const left = window.screen.width / 2 - width / 2;
-    const top = window.screen.height / 2 - height / 2;
-    const popup = window.open(
-      `https://github.com/apps/${githubEnv.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target`,
-      "github-permissions",
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
-    );
-    const pollTimer = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(pollTimer);
-        void refetchConnection();
-      }
-    }, 500);
-  };
-
-  const handleConnect = async () => {
-    try {
-      const data = await queryClient.fetchQuery(
-        trpc.connections.getAuthorizeUrl.queryOptions({ provider: "github" }),
-      );
-      const width = 600;
-      const height = 800;
-      const left = window.screen.width / 2 - width / 2;
-      const top = window.screen.height / 2 - height / 2;
-      const popup = window.open(
-        data.url,
-        "github-install",
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
-      );
-      if (!popup || popup.closed) {
-        alert("Popup was blocked. Please allow popups for this site.");
-        return;
-      }
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-      pollTimerRef.current = setInterval(() => {
-        if (popup.closed) {
-          if (pollTimerRef.current) {
-            clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
-          }
-          void refetchConnection();
-        }
-      }, 500);
-    } catch {
-      toast.error("Failed to connect to GitHub. Please try again.");
-    }
-  };
+  const selectedRepo = selectedRepositories[0] ?? null;
 
   return (
     <AccordionItem value="github">
       <AccordionTrigger className="px-4 hover:no-underline">
         <div className="flex items-center gap-3 flex-1">
-          <Github className="h-5 w-5 shrink-0" />
+          <IntegrationLogoIcons.github className="h-5 w-5 shrink-0" />
           <span className="font-medium">GitHub</span>
           {hasConnection ? (
             <Badge variant="secondary" className="text-xs">Connected</Badge>
           ) : (
             <Badge variant="outline" className="text-xs text-muted-foreground">Not connected</Badge>
           )}
-          {selectedRepositories.length > 0 && (
+          {selectedRepo && (
             <Badge variant="default" className="text-xs ml-auto mr-2">
-              {selectedRepositories.length} selected
+              1 selected
             </Badge>
           )}
         </div>
@@ -202,132 +178,160 @@ export function GitHubSourceItem() {
               Connect GitHub to select repositories
             </p>
             <Button onClick={handleConnect} variant="outline">
-              <Github className="h-4 w-4 mr-2" />
+              <IntegrationLogoIcons.github className="h-4 w-4 mr-2" />
               Connect GitHub
             </Button>
           </div>
         ) : (
           <div className="space-y-4 pt-2">
-            {/* Installation Selector & Search */}
-            <div className="flex gap-4">
-              <Select
-                value={selectedInstallation?.accountLogin}
-                onValueChange={(login) => {
-                  const inst = installations.find((i) => i.accountLogin === login);
-                  if (inst) {
-                    setSelectedInstallation(inst);
-                    setSelectedRepositories([]);
-                  }
-                }}
-              >
-                <SelectTrigger className="w-[220px]">
-                  <div className="flex items-center gap-2">
-                    <Github className="h-4 w-4" />
-                    <SelectValue />
+            {selectedRepo && !showPicker ? (
+              /* Selected card view */
+              <div className="rounded-lg border bg-card p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
+                    <IntegrationLogoIcons.github className="h-3 w-3" />
                   </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {installations.map((inst) => (
-                    <SelectItem key={inst.id} value={inst.accountLogin}>
-                      {inst.accountLogin}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search repositories..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            {/* Selected Count & Clear */}
-            {selectedRepositories.length > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  {selectedRepositories.length} repositor{selectedRepositories.length === 1 ? "y" : "ies"} selected
-                </span>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedRepositories([])}>
-                  Clear all
-                </Button>
-              </div>
-            )}
-
-            {/* Repository List */}
-            <div className="rounded-lg border bg-card max-h-[260px] overflow-y-auto">
-              {isLoadingRepos ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                  Loading repositories...
-                </div>
-              ) : filteredRepositories.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  {searchQuery ? "No repositories match your search" : "No repositories found"}
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
-                    <span className="text-sm text-muted-foreground">
-                      {filteredRepositories.length} repositor{filteredRepositories.length === 1 ? "y" : "ies"}
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium truncate">{selectedRepo.name}</span>
+                      {selectedRepo.isPrivate && (
+                        <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                          Private
+                        </span>
+                      )}
+                    </div>
+                    {selectedRepo.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {selectedRepo.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button variant="outline" size="sm" onClick={() => setShowPicker(true)}>
+                      Change
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={selectedFromFiltered === filteredRepositories.length ? handleDeselectAll : handleSelectAll}
+                      onClick={() => {
+                        setSelectedRepositories([]);
+                        setShowPicker(true);
+                      }}
                     >
-                      {selectedFromFiltered === filteredRepositories.length ? "Deselect all" : "Select all"}
+                      Clear
                     </Button>
                   </div>
-                  <div className="divide-y">
-                    {filteredRepositories.map((repo) => (
-                      <label
-                        key={repo.id}
-                        className={`flex items-center gap-3 p-4 hover:bg-accent transition-colors cursor-pointer ${
-                          isSelected(repo.id) ? "bg-accent/50" : ""
-                        }`}
-                      >
-                        <Checkbox
-                          checked={isSelected(repo.id)}
-                          onCheckedChange={() => toggleRepository(repo)}
-                        />
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                          <Github className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Installation Selector & Search */}
+                <div className="flex gap-4">
+                  <Select
+                    value={selectedInstallation?.accountLogin}
+                    onValueChange={(login) => {
+                      const inst = installations.find((i) => i.accountLogin === login);
+                      if (inst) {
+                        setSelectedInstallation(inst);
+                        setSelectedRepositories([]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-[220px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {installations.map((inst) => (
+                        <SelectItem key={inst.id} value={inst.accountLogin}>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium truncate">{repo.name}</span>
-                            {repo.isPrivate && (
-                              <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
-                                Private
-                              </span>
+                            {inst.avatarUrl ? (
+                              <Image
+                                src={inst.avatarUrl}
+                                alt=""
+                                width={16}
+                                height={16}
+                                className="rounded-full"
+                              />
+                            ) : (
+                              <IntegrationLogoIcons.github className="h-4 w-4" />
+                            )}
+                            {inst.accountLogin}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search repositories..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                {/* Repository List */}
+                <div className="rounded-lg border bg-card max-h-[260px] overflow-y-auto">
+                  {isLoadingRepos ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                      Loading repositories...
+                    </div>
+                  ) : filteredRepositories.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      {searchQuery ? "No repositories match your search" : "No repositories found"}
+                    </div>
+                  ) : (
+                    <div className="divide-y">
+                      {filteredRepositories.map((repo) => (
+                        <button
+                          key={repo.id}
+                          type="button"
+                          className={`flex items-center gap-3 p-4 w-full text-left hover:bg-accent transition-colors cursor-pointer ${
+                            selectedRepo?.id === repo.id ? "bg-accent/50" : ""
+                          }`}
+                          onClick={() => {
+                            toggleRepository(repo);
+                            setShowPicker(false);
+                          }}
+                        >
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
+                            <IntegrationLogoIcons.github className="h-3 w-3" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium truncate">{repo.name}</span>
+                              {repo.isPrivate && (
+                                <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                                  Private
+                                </span>
+                              )}
+                            </div>
+                            {repo.description && (
+                              <p className="text-sm text-muted-foreground line-clamp-1">{repo.description}</p>
                             )}
                           </div>
-                          {repo.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-1">{repo.description}</p>
-                          )}
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-            {/* Missing repository link */}
-            <div className="text-center text-sm text-muted-foreground">
-              Missing a repository?{" "}
-              <button
-                onClick={handleAdjustPermissions}
-                className="text-blue-500 hover:text-blue-600 underline-offset-4 hover:underline transition-colors"
-              >
-                Adjust GitHub App permissions →
-              </button>
-            </div>
+                {/* Missing repository link */}
+                <div className="text-center text-sm text-muted-foreground">
+                  Missing a repository?{" "}
+                  <button
+                    onClick={handleAdjustPermissions}
+                    className="text-blue-500 hover:text-blue-600 underline-offset-4 hover:underline transition-colors"
+                  >
+                    Adjust GitHub App permissions →
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </AccordionContent>

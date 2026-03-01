@@ -1,2 +1,25 @@
-// Re-export fal client and hono server proxy
-export * from "./client";
+// Re-export fal client
+export {
+	ApiError,
+	ValidationError,
+	createFalClient,
+	fal,
+	isCompletedQueueStatus,
+	isQueueStatus,
+	isRetryableError,
+	parseEndpointId,
+	withMiddleware,
+	withProxy,
+	type CompletedQueueStatus,
+	type FalClient,
+	type InProgressQueueStatus,
+	type InQueueQueueStatus,
+	type Metrics,
+	type QueueStatus,
+	type RequestLog,
+	type Result,
+	type RunOptions,
+	type UrlOptions,
+	type ValidationErrorInfo,
+	type WebHookResponse,
+} from "./client";

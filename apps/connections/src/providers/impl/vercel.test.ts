@@ -12,7 +12,6 @@ vi.mock("../../env", () => ({
 
 vi.mock("../../lib/urls", () => ({
   connectionsBaseUrl: "https://connections.test/services",
-  notifyBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Hoisted so vi.mock factories can reference them
@@ -22,11 +21,17 @@ const dbMocks = vi.hoisted(() => {
   const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
   const insert = vi.fn().mockReturnValue({ values });
 
-  return { insert, values, onConflictDoUpdate, returning };
+  // Pre-check SELECT chain: db.select().from().where().limit()
+  const selectLimit = vi.fn();
+  const selectWhere = vi.fn().mockReturnValue({ limit: selectLimit });
+  const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
+  const select = vi.fn().mockReturnValue({ from: selectFrom });
+
+  return { insert, values, onConflictDoUpdate, returning, select, selectLimit };
 });
 
 vi.mock("@db/console/client", () => ({
-  db: { insert: dbMocks.insert },
+  db: { insert: dbMocks.insert, select: dbMocks.select },
 }));
 
 vi.mock("@db/console/schema", () => ({
@@ -34,12 +39,16 @@ vi.mock("@db/console/schema", () => ({
   gwTokens: {},
 }));
 
+vi.mock("drizzle-orm", () => ({
+  and: vi.fn(),
+  eq: vi.fn(),
+}));
+
 vi.mock("../../lib/token-store", () => ({
   writeTokenRecord: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { VercelProvider } from "./vercel.js";
-import { notifyBackfillService } from "../../lib/urls.js";
 
 const provider = new VercelProvider();
 
@@ -49,6 +58,14 @@ function mockContext(query: Record<string, string | undefined>): Context {
   } as unknown as Context;
 }
 
+const exchangeCodeResponse = {
+  access_token: "vc-tok",
+  token_type: "Bearer",
+  installation_id: "icfg_abc",
+  user_id: "vercel-user-123",
+  team_id: "team_abc",
+};
+
 describe("VercelProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -56,6 +73,10 @@ describe("VercelProvider", () => {
     dbMocks.insert.mockReturnValue({ values: dbMocks.values });
     dbMocks.values.mockReturnValue({ onConflictDoUpdate: dbMocks.onConflictDoUpdate });
     dbMocks.onConflictDoUpdate.mockReturnValue({ returning: dbMocks.returning });
+    // Reset Drizzle SELECT chain
+    const selectWhere = vi.fn().mockReturnValue({ limit: dbMocks.selectLimit });
+    const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
+    dbMocks.select.mockReturnValue({ from: selectFrom });
   });
 
   it("has correct provider name and webhook flag", () => {
@@ -81,50 +102,17 @@ describe("VercelProvider", () => {
     });
   });
 
-  describe("buildAccountInfo", () => {
-    it("builds Vercel account info from OAuth response", () => {
-      const info = provider.buildAccountInfo(
-        { connectedBy: "user-1" },
-        {
-          accessToken: "tok",
-          raw: { team_id: "team_abc", team_slug: "my-team" },
-        },
-      );
-      expect(info).toMatchObject({
-        version: 1,
-        sourceType: "vercel",
-        userId: "user-1",
-        teamId: "team_abc",
-        teamSlug: "my-team",
-      });
-    });
-
-    it("handles missing OAuth data gracefully", () => {
-      const info = provider.buildAccountInfo({ connectedBy: "user-1" });
-      expect(info).toMatchObject({
-        version: 1,
-        sourceType: "vercel",
-        userId: "user-1",
-      });
-    });
-  });
-
   describe("handleCallback", () => {
-    const exchangeCodeResponse = {
-      access_token: "vc-tok",
-      token_type: "bearer",
-      scope: "read",
-      team_id: "team_abc",
-    };
-
-    it("connects and fires backfill for new installation", async () => {
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+    it("connects new installation with account info", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      fetchSpy.mockResolvedValueOnce({
         ok: true,
         json: async () => exchangeCodeResponse,
       } as unknown as Response);
+      dbMocks.selectLimit.mockResolvedValue([]); // No existing installation
       dbMocks.returning.mockResolvedValue([{ id: "inst-vc-new" }]);
 
-      const c = mockContext({ code: "auth-code" });
+      const c = mockContext({ code: "auth-code", configurationId: "icfg_abc" });
       const result = await provider.handleCallback(c, {
         orgId: "org-1",
         connectedBy: "user-1",
@@ -132,7 +120,20 @@ describe("VercelProvider", () => {
 
       expect(dbMocks.insert).toHaveBeenCalled();
       expect(dbMocks.values).toHaveBeenCalledWith(
-        expect.objectContaining({ provider: "vercel", status: "active" }),
+        expect.objectContaining({
+          provider: "vercel",
+          status: "active",
+          providerAccountInfo: expect.objectContaining({
+            version: 1,
+            sourceType: "vercel",
+            raw: {
+              token_type: "Bearer",
+              installation_id: "icfg_abc",
+              user_id: "vercel-user-123",
+              team_id: "team_abc",
+            },
+          }),
+        }),
       );
       expect(dbMocks.onConflictDoUpdate).toHaveBeenCalled();
       expect(result).toMatchObject({
@@ -140,20 +141,20 @@ describe("VercelProvider", () => {
         installationId: "inst-vc-new",
         provider: "vercel",
       });
-      expect(notifyBackfillService).toHaveBeenCalledWith(
-        expect.objectContaining({ installationId: "inst-vc-new" }),
-      );
+      // New installation — no reactivated flag
+      expect(result.reactivated).toBeUndefined();
     });
 
-    it("reconnects successfully when row already exists (upsert)", async () => {
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+    it("marks reactivated when row already exists", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      fetchSpy.mockResolvedValueOnce({
         ok: true,
         json: async () => exchangeCodeResponse,
       } as unknown as Response);
-      // Upsert returns existing row — no crash
+      dbMocks.selectLimit.mockResolvedValue([{ id: "inst-vc-existing" }]); // Existing installation
       dbMocks.returning.mockResolvedValue([{ id: "inst-vc-existing" }]);
 
-      const c = mockContext({ code: "auth-code" });
+      const c = mockContext({ code: "auth-code", configurationId: "icfg_abc" });
       const result = await provider.handleCallback(c, {
         orgId: "org-1",
         connectedBy: "user-1",
@@ -163,15 +164,113 @@ describe("VercelProvider", () => {
         status: "connected",
         installationId: "inst-vc-existing",
         provider: "vercel",
+        reactivated: true,
       });
-      expect(notifyBackfillService).toHaveBeenCalled();
+    });
+
+    it("returns nextUrl when Vercel sends next param", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: async () => exchangeCodeResponse,
+      } as unknown as Response);
+      dbMocks.selectLimit.mockResolvedValue([]);
+      dbMocks.returning.mockResolvedValue([{ id: "inst-vc-new" }]);
+
+      const c = mockContext({
+        code: "auth-code",
+        configurationId: "icfg_abc",
+        next: "https://vercel.com/integrations/test/complete",
+      });
+      const result = await provider.handleCallback(c, {
+        orgId: "org-1",
+        connectedBy: "user-1",
+      });
+
+      expect(result.nextUrl).toBe("https://vercel.com/integrations/test/complete");
+    });
+
+    it("omits nextUrl when next param is absent", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: async () => exchangeCodeResponse,
+      } as unknown as Response);
+      dbMocks.selectLimit.mockResolvedValue([]);
+      dbMocks.returning.mockResolvedValue([{ id: "inst-vc-new" }]);
+
+      const c = mockContext({ code: "auth-code", configurationId: "icfg_abc" });
+      const result = await provider.handleCallback(c, {
+        orgId: "org-1",
+        connectedBy: "user-1",
+      });
+
+      expect(result.nextUrl).toBeUndefined();
     });
 
     it("throws when code is missing", async () => {
-      const c = mockContext({});
+      const c = mockContext({ configurationId: "icfg_abc" });
       await expect(
         provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
       ).rejects.toThrow("missing code");
+    });
+
+    it("throws when configurationId is missing", async () => {
+      const c = mockContext({ code: "auth-code" });
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("missing configurationId");
+    });
+
+    it("throws on configurationId mismatch with token exchange", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: async () => exchangeCodeResponse, // installation_id: "icfg_abc"
+      } as unknown as Response);
+
+      const c = mockContext({ code: "auth-code", configurationId: "icfg_DIFFERENT" });
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("configurationId mismatch");
+    });
+
+    it("throws when upsert returns no rows", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: async () => exchangeCodeResponse,
+      } as unknown as Response);
+      dbMocks.selectLimit.mockResolvedValue([]);
+      dbMocks.returning.mockResolvedValue([]);
+
+      const c = mockContext({ code: "auth-code", configurationId: "icfg_abc" });
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("upsert_failed");
+    });
+
+    it("uses user_id as externalId for personal accounts (no team_id)", async () => {
+      const personalResponse = { ...exchangeCodeResponse, team_id: null };
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: async () => personalResponse,
+      } as unknown as Response);
+      dbMocks.selectLimit.mockResolvedValue([]);
+      dbMocks.returning.mockResolvedValue([{ id: "inst-personal" }]);
+
+      const c = mockContext({ code: "auth-code", configurationId: "icfg_abc" });
+      await provider.handleCallback(c, {
+        orgId: "org-1",
+        connectedBy: "user-1",
+      });
+
+      expect(dbMocks.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          externalId: "vercel-user-123", // Falls back to user_id
+        }),
+      );
     });
   });
 });

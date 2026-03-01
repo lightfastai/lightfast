@@ -1,14 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`0.1 — Boundary contract shapes > Shape 1: Connections → Backfill trigger body (QStash publishJSON body) 1`] = `
-{
-  "installationId": "string",
-  "orgId": "string",
-  "provider": "string",
-}
-`;
-
-exports[`0.1 — Boundary contract shapes > Shape 2: GET /connections/:id response (Backfill orchestrator reads this) 1`] = `
+exports[`0.1 — Boundary contract shapes > Shape 1: GET /connections/:id response (Backfill orchestrator reads this) 1`] = `
 {
   "accountLogin": "null",
   "createdAt": "string",
@@ -30,7 +22,7 @@ exports[`0.1 — Boundary contract shapes > Shape 2: GET /connections/:id respon
 }
 `;
 
-exports[`0.1 — Boundary contract shapes > Shape 3: GET /connections/:id/token response (Backfill entity worker reads this) 1`] = `
+exports[`0.1 — Boundary contract shapes > Shape 2: GET /connections/:id/token response (Backfill entity worker reads this) 1`] = `
 {
   "accessToken": "string",
   "expiresIn": "null",
@@ -38,7 +30,7 @@ exports[`0.1 — Boundary contract shapes > Shape 3: GET /connections/:id/token 
 }
 `;
 
-exports[`0.1 — Boundary contract shapes > Shape 4: Backfill → Gateway POST /webhooks/:provider body (entity worker dispatch) 1`] = `
+exports[`0.1 — Boundary contract shapes > Shape 3: Backfill → Gateway POST /webhooks/:provider body (entity worker dispatch) 1`] = `
 {
   "connectionId": "string",
   "deliveryId": "string",

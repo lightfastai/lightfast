@@ -105,13 +105,6 @@ vi.mock("@console/env", () => ({
   env: { GATEWAY_API_KEY: "0".repeat(64) },
 }));
 
-vi.mock("@sentry/core", () => ({
-  trpcMiddleware:
-    () =>
-    async ({ next }: { next: () => Promise<unknown> }) =>
-      next(),
-}));
-
 vi.mock("@vendor/clerk/server", () => ({
   auth: vi.fn().mockResolvedValue({ userId: null, orgId: null }),
   clerkClient: () => ({}),

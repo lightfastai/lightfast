@@ -20,7 +20,7 @@
     "build:gateway": "echo \"lightfast-gateway\" | vercel build --yes 2>&1",
     "build:connections": "echo \"lightfast-connections\" | vercel build --yes 2>&1",
     "build:backfill": "echo \"lightfast-backfill\" | vercel build --yes 2>&1",
-    "dev:app": "turbo watch dev --concurrency=15 --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/console --continue",
+    "dev:app": "turbo watch dev --concurrency=15 --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/console --filter=@lightfast/gateway --filter=@lightfast/backfill --filter=@lightfast/connections --continue",
     "dev:ngrok": "./scripts/ngrok 3024",
     "dev:www": "turbo watch dev -F @lightfast/www --continue",
     "dev:auth": "turbo watch dev -F @lightfast/auth --continue",
@@ -44,6 +44,7 @@
     "lint:fix": "SKIP_ENV_VALIDATION=true turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
     "lint:ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint:ws",
+    "test": "turbo run test",
     "typecheck": "SKIP_ENV_VALIDATION=true turbo run typecheck",
     "ui": "pnpm --filter @repo/ui ui",
     "vercel:link": "vercel link --repo",
@@ -67,7 +68,8 @@
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.46.1",
     "vercel": "^50.23.2",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
   },
   "prettier": "@repo/prettier-config",
   "pnpm": {

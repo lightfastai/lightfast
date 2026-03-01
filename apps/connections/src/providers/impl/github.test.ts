@@ -14,7 +14,6 @@ vi.mock("../../env", () => ({
 
 vi.mock("../../lib/urls", () => ({
   connectionsBaseUrl: "https://connections.test/services",
-  notifyBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Hoisted so vi.mock factories can reference them
@@ -49,11 +48,21 @@ vi.mock("drizzle-orm", () => ({
 
 vi.mock("../../lib/github-jwt", () => ({
   getInstallationToken: vi.fn().mockResolvedValue("test-token"),
+  getInstallationDetails: vi.fn().mockResolvedValue({
+    account: {
+      login: "test-org",
+      id: 12345,
+      type: "Organization",
+      avatar_url: "https://avatars.githubusercontent.com/u/12345",
+    },
+    permissions: { contents: "read", metadata: "read" },
+    events: ["push", "pull_request"],
+    created_at: "2026-01-01T00:00:00Z",
+  }),
 }));
 
 import { GitHubProvider } from "./github.js";
-import { getInstallationToken } from "../../lib/github-jwt.js";
-import { notifyBackfillService } from "../../lib/urls.js";
+import { getInstallationToken, getInstallationDetails } from "../../lib/github-jwt.js";
 
 const provider = new GitHubProvider();
 
@@ -87,23 +96,12 @@ describe("GitHubProvider", () => {
   });
 
   describe("getAuthorizationUrl", () => {
-    it("builds correct GitHub OAuth URL with state", () => {
+    it("delegates to App installation URL", () => {
       const url = provider.getAuthorizationUrl("test-state");
       const parsed = new URL(url);
       expect(parsed.origin).toBe("https://github.com");
-      expect(parsed.pathname).toBe("/login/oauth/authorize");
-      expect(parsed.searchParams.get("client_id")).toBe("test-client-id");
+      expect(parsed.pathname).toBe("/apps/test-app/installations/new");
       expect(parsed.searchParams.get("state")).toBe("test-state");
-    });
-
-    it("includes redirect_uri when redirectPath option is set", () => {
-      const url = provider.getAuthorizationUrl("state", {
-        redirectPath: "/callback",
-      });
-      const parsed = new URL(url);
-      expect(parsed.searchParams.get("redirect_uri")).toBe(
-        "https://connections.test/services/connections/github/callback",
-      );
     });
   });
 
@@ -184,6 +182,7 @@ describe("GitHubProvider", () => {
           json: vi.fn().mockResolvedValue({
             error: "bad_verification_code",
             error_description: "The code passed is incorrect or expired.",
+            error_uri: "https://docs.github.com",
           }),
         }),
       );
@@ -205,7 +204,7 @@ describe("GitHubProvider", () => {
   });
 
   describe("handleCallback", () => {
-    it("upserts installation and returns connected result", async () => {
+    it("upserts installation with API data and returns connected result", async () => {
       dbMocks.selectLimit.mockResolvedValue([]); // New installation
       dbMocks.returning.mockResolvedValue([{ id: "inst-abc" }]);
 
@@ -216,9 +215,9 @@ describe("GitHubProvider", () => {
       const result = await provider.handleCallback(c, {
         orgId: "org-1",
         connectedBy: "user-1",
-        accountLogin: "my-org",
       });
 
+      expect(getInstallationDetails).toHaveBeenCalledWith("ext-42");
       expect(dbMocks.insert).toHaveBeenCalled();
       expect(dbMocks.values).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -227,6 +226,22 @@ describe("GitHubProvider", () => {
           connectedBy: "user-1",
           orgId: "org-1",
           status: "active",
+          providerAccountInfo: expect.objectContaining({
+            version: 1,
+            sourceType: "github",
+            events: ["push", "pull_request"],
+            raw: {
+              account: {
+                login: "test-org",
+                id: 12345,
+                type: "Organization",
+                avatar_url: "https://avatars.githubusercontent.com/u/12345",
+              },
+              permissions: { contents: "read", metadata: "read" },
+              events: ["push", "pull_request"],
+              created_at: "2026-01-01T00:00:00Z",
+            },
+          }),
         }),
       );
       expect(result).toMatchObject({
@@ -237,24 +252,7 @@ describe("GitHubProvider", () => {
       });
     });
 
-    it("notifies backfill service for new installations", async () => {
-      dbMocks.selectLimit.mockResolvedValue([]); // No existing row
-      dbMocks.returning.mockResolvedValue([{ id: "inst-new" }]);
-
-      const c = mockContext({ installation_id: "ext-1" });
-      await provider.handleCallback(c, {
-        orgId: "org-1",
-        connectedBy: "user-1",
-      });
-
-      expect(notifyBackfillService).toHaveBeenCalledWith({
-        installationId: "inst-new",
-        provider: "github",
-        orgId: "org-1",
-      });
-    });
-
-    it("skips backfill notification for reactivated installations", async () => {
+    it("marks reactivated installations", async () => {
       dbMocks.selectLimit.mockResolvedValue([{ id: "inst-existing" }]); // Row exists
       dbMocks.returning.mockResolvedValue([{ id: "inst-existing" }]);
 
@@ -264,33 +262,35 @@ describe("GitHubProvider", () => {
         connectedBy: "user-1",
       });
 
-      expect(notifyBackfillService).not.toHaveBeenCalled();
       expect(result).toMatchObject({ reactivated: true });
     });
 
-    it("creates pending installation and skips backfill for setup_action=request", async () => {
-      dbMocks.selectLimit.mockResolvedValue([]); // New installation
-      dbMocks.returning.mockResolvedValue([{ id: "inst-pending" }]);
+    it("throws unimplemented for setup_action=request", async () => {
+      const c = mockContext({ setup_action: "request" });
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("setup_action=request is not yet implemented");
+    });
 
-      const c = mockContext({
-        installation_id: "ext-42",
-        setup_action: "request",
-      });
-      const result = await provider.handleCallback(c, {
-        orgId: "org-1",
-        connectedBy: "user-1",
-      });
+    it("throws unimplemented for setup_action=update", async () => {
+      const c = mockContext({ installation_id: "ext-42", setup_action: "update" });
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("setup_action=update is not yet implemented");
+    });
 
-      expect(dbMocks.values).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "pending" }),
+    it("throws when getInstallationDetails fails (hard-fail, no garbage data)", async () => {
+      vi.mocked(getInstallationDetails).mockRejectedValueOnce(
+        new Error("GitHub installation details fetch failed: 401"),
       );
-      expect(notifyBackfillService).not.toHaveBeenCalled();
-      expect(result).toMatchObject({
-        status: "connected",
-        installationId: "inst-pending",
-        provider: "github",
-        setupAction: "request",
-      });
+
+      const c = mockContext({ installation_id: "ext-42" });
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("GitHub installation details fetch failed: 401");
+
+      // Verify no DB upsert was attempted
+      expect(dbMocks.insert).not.toHaveBeenCalled();
     });
 
     it("throws when installation_id is missing", async () => {
@@ -298,20 +298,6 @@ describe("GitHubProvider", () => {
       await expect(
         provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
       ).rejects.toThrow("missing installation_id");
-    });
-
-    it("throws when orgId is missing from state", async () => {
-      const c = mockContext({ installation_id: "ext-1" });
-      await expect(
-        provider.handleCallback(c, { connectedBy: "user-1" }),
-      ).rejects.toThrow("missing orgId in state data");
-    });
-
-    it("throws when connectedBy is missing from state", async () => {
-      const c = mockContext({ installation_id: "ext-1" });
-      await expect(
-        provider.handleCallback(c, { orgId: "org-1" }),
-      ).rejects.toThrow("missing connectedBy in state data");
     });
 
     it("throws when upsert returns no rows", async () => {
@@ -349,50 +335,6 @@ describe("GitHubProvider", () => {
         accessToken: "test-token",
         provider: "github",
         expiresIn: 3600,
-      });
-    });
-  });
-
-  describe("buildAccountInfo", () => {
-    it("builds GitHub account info with installation data", () => {
-      const info = provider.buildAccountInfo({
-        installationId: "inst-42",
-        accountLogin: "my-org",
-      });
-      expect(info).toMatchObject({
-        version: 1,
-        sourceType: "github",
-        installations: [
-          expect.objectContaining({
-            id: "inst-42",
-            accountLogin: "my-org",
-          }),
-        ],
-      });
-    });
-
-    it("defaults to 'unknown' accountLogin when not provided", () => {
-      const info = provider.buildAccountInfo({ installationId: "inst-1" });
-      expect(info).toMatchObject({
-        installations: [expect.objectContaining({ accountLogin: "unknown" })],
-      });
-    });
-
-    it("uses accountType from stateData", () => {
-      const info = provider.buildAccountInfo({
-        installationId: "inst-42",
-        accountLogin: "my-user",
-        accountType: "User",
-      });
-      expect(info).toMatchObject({
-        installations: [expect.objectContaining({ accountType: "User" })],
-      });
-    });
-
-    it("defaults accountType to 'User' when not provided", () => {
-      const info = provider.buildAccountInfo({ installationId: "inst-1" });
-      expect(info).toMatchObject({
-        installations: [expect.objectContaining({ accountType: "User" })],
       });
     });
   });

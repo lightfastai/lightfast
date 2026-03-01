@@ -7,7 +7,7 @@
 
 import { eq } from "drizzle-orm";
 import {
-  userApiKeys,
+  orgApiKeys,
   gwInstallations,
   workspaceIntegrations,
 } from "@db/console/schema";
@@ -62,7 +62,8 @@ async function verifyInstallationAccess(
 }
 
 /**
- * Verify user owns an API key
+ * Verify user owns an API key (org-scoped)
+ * Checks orgApiKeys by publicId and verifies createdByUserId
  */
 async function verifyApiKeyOwnership(
   userId: string,
@@ -70,9 +71,11 @@ async function verifyApiKeyOwnership(
   db: ResourceOwnershipContext["db"]
 ): Promise<ResourceOwnershipResult> {
   try {
-    const apiKey = await db.query.userApiKeys.findFirst({
-      where: eq(userApiKeys.id, apiKeyId),
-    });
+    const [apiKey] = await db
+      .select()
+      .from(orgApiKeys)
+      .where(eq(orgApiKeys.publicId, apiKeyId))
+      .limit(1);
 
     if (!apiKey) {
       return {
@@ -83,7 +86,7 @@ async function verifyApiKeyOwnership(
       };
     }
 
-    const authorized = apiKey.userId === userId;
+    const authorized = apiKey.createdByUserId === userId;
 
     return {
       success: true,

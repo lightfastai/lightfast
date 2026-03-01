@@ -1,18 +1,21 @@
 import { db } from "@db/console/client";
 import { gwInstallations } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
-import { getInstallationToken } from "../../lib/github-jwt.js";
-import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls.js";
-import { githubOAuthResponseSchema } from "../schemas.js";
+import { getInstallationToken, getInstallationDetails } from "../../lib/github-jwt.js";
+import {
+  githubOAuthResponseSchema,
+} from "../schemas.js";
 import type {
   ConnectionProvider,
+  GitHubAccountInfo,
   GitHubAuthOptions,
   JwtTokenResult,
   OAuthTokens,
   CallbackResult,
+  CallbackStateData,
 } from "../types.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
@@ -60,26 +63,20 @@ export class GitHubProvider implements ConnectionProvider {
       throw new Error(`GitHub token exchange failed: ${response.status}`);
     }
 
-    const rawData: unknown = await response.json();
-    const data = githubOAuthResponseSchema.parse(rawData);
+    const data = githubOAuthResponseSchema.parse(await response.json());
 
     if ("error" in data && data.error) {
-      const errorData = data as { error: string; error_description?: string };
-      const desc = errorData.error_description ?? errorData.error;
-      throw new Error(`GitHub OAuth error: ${desc}`);
+      const errorData = data as { error: string; error_description: string };
+      throw new Error(`GitHub OAuth error: ${errorData.error_description}`);
     }
 
-    const successData = data as {
-      access_token: string;
-      scope?: string;
-      token_type?: string;
-    };
+    const successData = data as { access_token: string; token_type: string; scope: string };
 
     return {
       accessToken: successData.access_token,
       scope: successData.scope,
       tokenType: successData.token_type,
-      raw: rawData as Record<string, unknown>,
+      raw: successData,
     };
   }
 
@@ -117,28 +114,42 @@ export class GitHubProvider implements ConnectionProvider {
 
   async handleCallback(
     c: Context,
-    stateData: Record<string, string>,
+    stateData: CallbackStateData,
   ): Promise<CallbackResult> {
     const installationId = c.req.query("installation_id");
     const setupAction = c.req.query("setup_action");
+
+    // ── Explicit setup_action routing ──
+
+    if (setupAction === "request") {
+      // GitHub sends setup_action=request when org admin approval is required.
+      // installation_id is absent — the installation only gets an ID when approved (via webhook).
+      throw new Error("setup_action=request is not yet implemented");
+    }
+
+    if (setupAction === "update") {
+      // GitHub sends setup_action=update when installation permissions/repos change.
+      // installation_id IS present. For now, treat as unimplemented.
+      throw new Error("setup_action=update is not yet implemented");
+    }
+
+    // ── setup_action=install (or undefined for GitHub-initiated redirects) ──
 
     if (!installationId) {
       throw new Error("missing installation_id");
     }
 
-    const orgId = stateData.orgId;
-    const connectedBy = stateData.connectedBy;
+    const installationDetails = await getInstallationDetails(installationId);
+    const now = new Date().toISOString();
 
-    if (!orgId) {
-      throw new Error("missing orgId in state data");
-    }
-    if (!connectedBy) {
-      throw new Error("missing connectedBy in state data");
-    }
-
-    const accountInfo = this.buildAccountInfo({ ...stateData, installationId });
-    const isPendingRequest = setupAction === "request";
-    const status = isPendingRequest ? "pending" : "active";
+    const accountInfo: GitHubAccountInfo = {
+      version: 1,
+      sourceType: "github",
+      events: installationDetails.events,
+      installedAt: installationDetails.created_at,
+      lastValidatedAt: now,
+      raw: installationDetails,
+    };
 
     // Check if this installation already exists (reactivation vs new)
     const existing = await db
@@ -160,17 +171,17 @@ export class GitHubProvider implements ConnectionProvider {
       .values({
         provider: "github",
         externalId: installationId,
-        connectedBy,
-        orgId,
-        status,
+        connectedBy: stateData.connectedBy,
+        orgId: stateData.orgId,
+        status: "active",
         providerAccountInfo: accountInfo,
       })
       .onConflictDoUpdate({
         target: [gwInstallations.provider, gwInstallations.externalId],
         set: {
-          status,
-          connectedBy,
-          orgId,
+          status: "active",
+          connectedBy: stateData.connectedBy,
+          orgId: stateData.orgId,
           providerAccountInfo: accountInfo,
         },
       })
@@ -180,15 +191,6 @@ export class GitHubProvider implements ConnectionProvider {
 
     const row = rows[0];
     if (!row) {throw new Error("upsert_failed");}
-
-    if (!reactivated && !isPendingRequest) {
-      // Fire-and-forget: notify backfill service for new connections
-      notifyBackfillService({
-        installationId: row.id,
-        provider: "github",
-        orgId,
-      }).catch(() => {});
-    }
 
     return {
       status: "connected",
@@ -205,31 +207,6 @@ export class GitHubProvider implements ConnectionProvider {
       accessToken: token,
       provider: "github",
       expiresIn: 3600, // GitHub installation tokens expire in 1 hour
-    };
-  }
-
-  buildAccountInfo(
-    stateData: Record<string, string>,
-    _oauthTokens?: OAuthTokens,
-  ): GwInstallation["providerAccountInfo"] {
-    const id = stateData.installationId ?? "";
-    return {
-      version: 1,
-      sourceType: "github",
-      installations: [
-        {
-          id,
-          accountId: id,
-          accountLogin: stateData.accountLogin ?? "unknown",
-          accountType: (stateData.accountType === "User" || stateData.accountType === "Organization"
-            ? stateData.accountType
-            : "User"),
-          avatarUrl: "",
-          permissions: {},
-          installedAt: new Date().toISOString(),
-          lastValidatedAt: new Date().toISOString(),
-        },
-      ],
     };
   }
 }

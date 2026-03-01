@@ -2,7 +2,6 @@
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
@@ -41,6 +40,13 @@ export function ProfileDataDisplay() {
 
 	return (
 		<div className="space-y-8">
+			<div>
+				<h2 className="text-2xl font-pp font-medium text-foreground">General</h2>
+				<p className="text-sm text-muted-foreground mt-1">
+					Manage your personal account settings.
+				</p>
+			</div>
+
 			{/* Avatar Section */}
 			<div className="space-y-4">
 				<div>
@@ -103,10 +109,7 @@ export function ProfileDataDisplay() {
 				<div>
 					<h2 className="text-xl font-semibold text-foreground">Email</h2>
 					<p className="text-sm text-muted-foreground mt-1">
-						Your primary email address. Manage emails in your{" "}
-						<Link href="/account/settings/sources" className="text-foreground hover:underline">
-							sources settings
-						</Link>.
+						Your primary email address.
 					</p>
 				</div>
 

@@ -301,6 +301,7 @@ describe("POST /webhooks/:provider", () => {
       // Verify the exact WebhookEnvelope shape published to Console
       expect(mockPublishJSON).toHaveBeenCalledWith({
         url: expect.stringContaining("/api/webhooks/ingress"),
+        headers: { "X-Correlation-Id": undefined },
         body: {
           deliveryId: "del-100",
           connectionId: "conn-1",
@@ -309,6 +310,7 @@ describe("POST /webhooks/:provider", () => {
           eventType: "push",
           payload: { repository: { id: 42 } },
           receivedAt: 1700000000,
+          correlationId: undefined,
         },
         retries: 5,
       });

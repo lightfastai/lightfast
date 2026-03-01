@@ -101,6 +101,33 @@ export async function getUserInstallations(
 }
 
 /**
+ * Get a GitHub App installation's details (account, permissions, events)
+ *
+ * Uses the App-level JWT to call GET /app/installations/{id}.
+ * Returns the full installation object including account login, type, and avatar.
+ *
+ * @param app - GitHub App instance
+ * @param installationId - The GitHub App installation ID (numeric)
+ * @returns Installation details including account info
+ */
+export async function getAppInstallation(
+	app: App,
+	installationId: number,
+): Promise<GitHubInstallation> {
+	const { data } = await app.octokit.request(
+		"GET /app/installations/{installation_id}",
+		{
+			installation_id: installationId,
+			headers: {
+				"X-GitHub-Api-Version": "2022-11-28",
+			},
+		},
+	);
+
+	return data;
+}
+
+/**
  * Get repositories accessible to an installation
  *
  * @param app - GitHub App instance

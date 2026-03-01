@@ -81,6 +81,18 @@ vi.mock("@vendor/upstash", () => ({
       };
       return chain;
     },
+    multi: () => {
+      let hgetallResult: unknown = null;
+      const chain = {
+        hgetall: (...args: unknown[]) => { hgetallResult = mockRedisHgetall(...args); return chain; },
+        del: (...args: unknown[]) => { mockRedisDel(...args); return chain; },
+        exec: async () => {
+          const resolved = await hgetallResult;
+          return [resolved, 1];
+        },
+      };
+      return chain;
+    },
   },
 }));
 
@@ -147,7 +159,6 @@ vi.mock("../lib/urls", () => ({
   consoleUrl: "https://console.test",
   gatewayBaseUrl: "https://gateway.test/api",
   backfillUrl: "https://backfill.test/api",
-  notifyBackfillService: vi.fn().mockResolvedValue(undefined),
   cancelBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -405,6 +416,69 @@ describe("GET /connections/:provider/callback", () => {
     expect(res.status).toBe(302);
     const location = res.headers.get("location")!;
     expect(location).toContain("reactivated=true");
+  });
+
+  it("redirects to nextUrl when provider returns it (Vercel lifecycle)", async () => {
+    mockRedisHgetall.mockResolvedValue({
+      provider: "github",
+      orgId: "org-1",
+      connectedBy: "user-1",
+    });
+    mockProvider.handleCallback.mockResolvedValueOnce({
+      status: "connected",
+      installationId: "inst-1",
+      provider: "github",
+      nextUrl: "https://vercel.com/integrations/test/complete",
+    });
+    const res = await request(
+      "/connections/github/callback?state=valid&installation_id=123",
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe(
+      "https://vercel.com/integrations/test/complete",
+    );
+  });
+
+  it("nextUrl takes priority over redirectTo", async () => {
+    mockRedisHgetall.mockResolvedValue({
+      provider: "github",
+      orgId: "org-1",
+      connectedBy: "user-1",
+      redirectTo: "http://localhost:4200/callback",
+    });
+    mockProvider.handleCallback.mockResolvedValueOnce({
+      status: "connected",
+      installationId: "inst-1",
+      provider: "github",
+      nextUrl: "https://vercel.com/integrations/test/complete",
+    });
+    const res = await request(
+      "/connections/github/callback?state=valid&installation_id=123",
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe(
+      "https://vercel.com/integrations/test/complete",
+    );
+  });
+
+  it("falls through to default redirect when nextUrl is absent", async () => {
+    mockRedisHgetall.mockResolvedValue({
+      provider: "github",
+      orgId: "org-1",
+      connectedBy: "user-1",
+    });
+    mockProvider.handleCallback.mockResolvedValueOnce({
+      status: "connected",
+      installationId: "inst-1",
+      provider: "github",
+    });
+    const res = await request(
+      "/connections/github/callback?state=valid&installation_id=123",
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe(
+      "https://console.test/provider/github/connected",
+    );
   });
 
   it("includes setup_action param in redirect when applicable", async () => {

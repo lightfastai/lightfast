@@ -93,14 +93,14 @@ export async function getStateHistory(
 
 /**
  * Record a new state change (closes previous state, opens new one)
- * Uses transaction for atomicity
+ * Uses batch for atomicity (neon-http doesn't support transactions)
  */
 export async function recordStateChange(
   input: Omit<InsertWorkspaceTemporalState, "id" | "isCurrent" | "createdAt" | "validTo">
 ): Promise<WorkspaceTemporalState> {
-  return db.transaction(async (tx) => {
+  const [, [newState]] = await db.batch([
     // 1. Close the previous current state (if exists)
-    await tx
+    db
       .update(workspaceTemporalStates)
       .set({
         isCurrent: false,
@@ -114,24 +114,23 @@ export async function recordStateChange(
           eq(workspaceTemporalStates.stateType, input.stateType),
           eq(workspaceTemporalStates.isCurrent, true)
         )
-      );
-
+      ),
     // 2. Insert the new current state
-    const [newState] = await tx
+    db
       .insert(workspaceTemporalStates)
       .values({
         ...input,
         isCurrent: true,
         validTo: null, // Current state has no end time
       })
-      .returning();
+      .returning(),
+  ] as const);
 
-    if (!newState) {
-      throw new Error("Failed to insert new temporal state");
-    }
+  if (!newState) {
+    throw new Error("Failed to insert new temporal state");
+  }
 
-    return newState;
-  });
+  return newState;
 }
 
 /**

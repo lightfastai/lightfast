@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, varchar, timestamp, text, index, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
 import type { ClerkUserId } from "@repo/console-validation";
+import type { ProviderAccountInfo } from "@repo/gateway-types";
 
 export const gwInstallations = pgTable(
   "lightfast_gw_installations",
@@ -22,35 +23,12 @@ export const gwInstallations = pgTable(
     webhookSecret: text("webhook_secret"),
     metadata: jsonb("metadata"),
 
-    // Strongly-typed provider account info
-    providerAccountInfo: jsonb("provider_account_info").$type<
-      | {
-          version: 1;
-          sourceType: "github";
-          installations?: {
-            id: string;
-            accountId: string;
-            accountLogin: string;
-            accountType: "User" | "Organization";
-            avatarUrl: string;
-            permissions: Record<string, string>;
-            installedAt: string;
-            lastValidatedAt: string;
-          }[];
-        }
-      | {
-          version: 1;
-          sourceType: "vercel";
-          teamId?: string;
-          teamSlug?: string;
-          userId: string;
-          configurationId: string;
-        }
-      | {
-          version: 1;
-          sourceType: "linear" | "sentry";
-        }
-    >(),
+    // Strongly-typed provider account info (discriminated union by sourceType)
+    //
+    // Every field is required unless there is a genuine reason it may not exist
+    // (e.g. Vercel personal accounts have no team). No "unknown" defaults —
+    // if data isn't available, the provider must fetch it or use "".
+    providerAccountInfo: jsonb("provider_account_info").$type<ProviderAccountInfo>(),
 
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })

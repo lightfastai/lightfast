@@ -25,10 +25,6 @@ import { Key, Copy, Trash2, Plus, RotateCcw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { showErrorToast } from "~/lib/trpc-errors";
 
-interface OrgApiKeyListProps {
-  workspaceId: string;
-}
-
 /**
  * Organization API Key List (Client Component)
  *
@@ -41,7 +37,7 @@ interface OrgApiKeyListProps {
  *
  * Uses useSuspenseQuery to consume server-prefetched data without client-side fetch.
  */
-export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
+export function OrgApiKeyList() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -51,7 +47,7 @@ export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
 
   // Use prefetched data from server (no client-side fetch)
   const { data: apiKeys } = useSuspenseQuery({
-    ...trpc.orgApiKeys.list.queryOptions({ workspaceId }),
+    ...trpc.orgApiKeys.list.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes - API keys rarely change
@@ -64,7 +60,7 @@ export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
         setNewKeyName("");
         toast.success("Organization API key created successfully");
         void queryClient.invalidateQueries({
-          queryKey: trpc.orgApiKeys.list.queryOptions({ workspaceId }).queryKey,
+          queryKey: trpc.orgApiKeys.list.queryOptions().queryKey,
         });
       },
       onError: (error) => {
@@ -78,7 +74,7 @@ export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
       onSuccess: () => {
         toast.success("API key revoked successfully");
         void queryClient.invalidateQueries({
-          queryKey: trpc.orgApiKeys.list.queryOptions({ workspaceId }).queryKey,
+          queryKey: trpc.orgApiKeys.list.queryOptions().queryKey,
         });
       },
       onError: (error) => {
@@ -92,7 +88,7 @@ export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
       onSuccess: () => {
         toast.success("API key deleted successfully");
         void queryClient.invalidateQueries({
-          queryKey: trpc.orgApiKeys.list.queryOptions({ workspaceId }).queryKey,
+          queryKey: trpc.orgApiKeys.list.queryOptions().queryKey,
         });
       },
       onError: (error) => {
@@ -107,7 +103,7 @@ export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
         setCreatedKey(data.key);
         toast.success("API key rotated successfully");
         void queryClient.invalidateQueries({
-          queryKey: trpc.orgApiKeys.list.queryOptions({ workspaceId }).queryKey,
+          queryKey: trpc.orgApiKeys.list.queryOptions().queryKey,
         });
       },
       onError: (error) => {
@@ -121,7 +117,7 @@ export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
       toast.error("Please enter a name for the API key");
       return;
     }
-    createMutation.mutate({ workspaceId, name: newKeyName.trim() });
+    createMutation.mutate({ name: newKeyName.trim() });
   };
 
   const handleCopyKey = async (key: string) => {
@@ -174,7 +170,7 @@ export function OrgApiKeyList({ workspaceId }: OrgApiKeyListProps) {
             Organization API Keys
           </h2>
           <p className="text-sm text-muted-foreground mt-2">
-            Manage API keys for programmatic access to this workspace.
+            Manage API keys for programmatic access to your organization.
           </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

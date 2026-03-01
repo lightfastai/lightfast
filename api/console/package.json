@@ -37,6 +37,7 @@
 		"dev": "tsc",
 		"format": "prettier --check . --ignore-path ../../.gitignore",
 		"lint": "eslint",
+		"test": "vitest run",
 		"typecheck": "tsc --noEmit --emitDeclarationOnly false"
 	},
 	"dependencies": {
@@ -60,7 +61,7 @@
 		"@repo/console-webhooks": "workspace:^",
 		"@repo/console-workspace-cache": "workspace:*",
 		"@repo/lib": "workspace:^",
-		"@sentry/core": "^10.20.0",
+		"@sentry/core": "catalog:",
 		"@t3-oss/env-nextjs": "^0.12.0",
 		"@tanstack/react-query": "catalog:",
 		"@trpc/client": "catalog:",
@@ -71,6 +72,7 @@
 		"@vendor/knock": "workspace:*",
 		"@vendor/observability": "workspace:*",
 		"@vendor/pinecone": "workspace:*",
+		"@vendor/related-projects": "workspace:*",
 		"@vercel/related-projects": "catalog:",
 		"ai": "catalog:",
 		"braintrust": "catalog:",
@@ -92,7 +94,8 @@
 		"@types/node": "catalog:",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vitest": "catalog:"
 	},
 	"prettier": "@repo/prettier-config"
 }

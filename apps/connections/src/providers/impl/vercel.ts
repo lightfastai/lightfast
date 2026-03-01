@@ -1,19 +1,20 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { nanoid } from "@repo/lib";
-import { eq } from "drizzle-orm";
+import { decrypt } from "@repo/lib";
+import { and, eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
-import { decrypt } from "@repo/lib";
 import { writeTokenRecord } from "../../lib/token-store.js";
-import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls.js";
+import { connectionsBaseUrl } from "../../lib/urls.js";
 import { vercelOAuthResponseSchema } from "../schemas.js";
 import type {
   ConnectionProvider,
+  VercelAccountInfo,
   TokenResult,
   OAuthTokens,
   CallbackResult,
+  CallbackStateData,
 } from "../types.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
@@ -58,7 +59,6 @@ export class VercelProvider implements ConnectionProvider {
     return {
       accessToken: data.access_token,
       tokenType: data.token_type,
-      scope: data.scope,
       raw: rawData as Record<string, unknown>,
     };
   }
@@ -87,45 +87,98 @@ export class VercelProvider implements ConnectionProvider {
 
   // ── Strategy methods ──
 
-  private deriveExternalId(
-    raw: Record<string, unknown>,
-  ): string | undefined {
-    return (
-      (raw.team_id as string | undefined)?.toString() ??
-      (raw.organization_id as string | undefined)?.toString() ??
-      (raw.installation as string | undefined)?.toString()
-    );
-  }
-
   async handleCallback(
     c: Context,
-    stateData: Record<string, string>,
+    stateData: CallbackStateData,
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
+    const configurationId = c.req.query("configurationId");
+    const next = c.req.query("next");
+
+    // ── Validate required params ──
+
     if (!code) {throw new Error("missing code");}
+    if (!configurationId) {throw new Error("missing configurationId");}
+
+    // ── Exchange code for tokens ──
 
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
 
-    const externalId = this.deriveExternalId(oauthTokens.raw) ?? nanoid();
+    const parsed = vercelOAuthResponseSchema.parse(oauthTokens.raw);
+
+    // Cross-validate: callback configurationId must match token exchange installation_id
+    if (parsed.installation_id !== configurationId) {
+      throw new Error(
+        `configurationId mismatch: callback=${configurationId} token=${parsed.installation_id}`,
+      );
+    }
+
+    // team_id for team accounts, user_id for personal accounts
+    const externalId = parsed.team_id ?? parsed.user_id;
+
+    // ── Detect reactivation ──
+
+    const existing = await db
+      .select({ id: gwInstallations.id })
+      .from(gwInstallations)
+      .where(
+        and(
+          eq(gwInstallations.provider, "vercel"),
+          eq(gwInstallations.externalId, externalId),
+        ),
+      )
+      .limit(1);
+
+    const reactivated = existing.length > 0;
+
+    // ── Build account info ──
+
+    const now = new Date().toISOString();
+
+    const accountInfo: VercelAccountInfo = {
+      version: 1,
+      sourceType: "vercel",
+      events: [
+        "deployment.created",
+        "deployment.ready",
+        "deployment.succeeded",
+        "deployment.error",
+        "deployment.canceled",
+        "project.created",
+        "project.removed",
+        "integration-configuration.removed",
+        "integration-configuration.permission-updated",
+      ],
+      installedAt: now,
+      lastValidatedAt: now,
+      raw: {
+        token_type: parsed.token_type,
+        installation_id: parsed.installation_id,
+        user_id: parsed.user_id,
+        team_id: parsed.team_id,
+      },
+    };
+
+    // ── Upsert installation ──
 
     const rows = await db
       .insert(gwInstallations)
       .values({
         provider: this.name,
         externalId,
-        connectedBy: stateData.connectedBy ?? "unknown",
-        orgId: stateData.orgId ?? "",
+        connectedBy: stateData.connectedBy,
+        orgId: stateData.orgId,
         status: "active",
-        providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
+        providerAccountInfo: accountInfo,
       })
       .onConflictDoUpdate({
         target: [gwInstallations.provider, gwInstallations.externalId],
         set: {
           status: "active",
-          connectedBy: stateData.connectedBy ?? "unknown",
-          orgId: stateData.orgId ?? "",
-          providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
+          connectedBy: stateData.connectedBy,
+          orgId: stateData.orgId,
+          providerAccountInfo: accountInfo,
         },
       })
       .returning({ id: gwInstallations.id });
@@ -135,22 +188,12 @@ export class VercelProvider implements ConnectionProvider {
 
     await writeTokenRecord(installation.id, oauthTokens);
 
-    // Notify backfill service for new connections (fire-and-forget)
-    notifyBackfillService({
-      installationId: installation.id,
-      provider: this.name,
-      orgId: stateData.orgId ?? "",
-    }).catch((err: unknown) => {
-      console.error(
-        `[${this.name}] backfill notification failed for installation=${installation.id} org=${stateData.orgId}`,
-        err,
-      );
-    });
-
     return {
       status: "connected",
       installationId: installation.id,
       provider: this.name,
+      ...(reactivated && { reactivated: true }),
+      ...(next && { nextUrl: next }),
     };
   }
 
@@ -168,30 +211,13 @@ export class VercelProvider implements ConnectionProvider {
       throw new Error("token_expired");
     }
 
-    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    const decryptedToken = decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
     return {
       accessToken: decryptedToken,
       provider: this.name,
       expiresIn: tokenRow.expiresAt
         ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
         : null,
-    };
-  }
-
-  buildAccountInfo(
-    stateData: Record<string, string>,
-    oauthTokens?: OAuthTokens,
-  ): GwInstallation["providerAccountInfo"] {
-    const raw = oauthTokens?.raw ?? {};
-    const externalId = this.deriveExternalId(raw) ?? "";
-
-    return {
-      version: 1,
-      sourceType: "vercel",
-      userId: stateData.connectedBy ?? "unknown",
-      teamId: (raw.team_id as string | undefined) ?? undefined,
-      teamSlug: (raw.team_slug as string | undefined) ?? undefined,
-      configurationId: externalId,
     };
   }
 }

@@ -96,6 +96,7 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       await context.run("publish-to-dlq", async () => {
         await qstash.publishToTopic({
           topic: "webhook-dlq",
+          headers: data.correlationId ? { "X-Correlation-Id": data.correlationId } : undefined,
           body: {
             provider: data.provider,
             deliveryId: data.deliveryId,
@@ -103,6 +104,7 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
             resourceId: data.resourceId,
             payload: data.payload,
             receivedAt: data.receivedAt,
+            correlationId: data.correlationId,
           },
         });
       });
@@ -115,6 +117,7 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     await context.run("publish-to-console", async () => {
       await qstash.publishJSON({
         url: `${consoleUrl}/api/webhooks/ingress`,
+        headers: data.correlationId ? { "X-Correlation-Id": data.correlationId } : undefined,
         body: {
           deliveryId: data.deliveryId,
           connectionId: connectionInfo.connectionId,
@@ -123,6 +126,7 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
           eventType: data.eventType,
           payload: data.payload,
           receivedAt: data.receivedAt,
+          correlationId: data.correlationId,
         },
         retries: 5,
         deduplicationId: `${data.provider}:${data.deliveryId}`,

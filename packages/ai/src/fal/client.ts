@@ -1,1 +1,26 @@
-export * from "@fal-ai/client";
+export {
+	ApiError,
+	ValidationError,
+	createFalClient,
+	fal,
+	isCompletedQueueStatus,
+	isQueueStatus,
+	isRetryableError,
+	parseEndpointId,
+	withMiddleware,
+	withProxy,
+} from "@fal-ai/client";
+export type {
+	CompletedQueueStatus,
+	FalClient,
+	InProgressQueueStatus,
+	InQueueQueueStatus,
+	Metrics,
+	QueueStatus,
+	RequestLog,
+	Result,
+	RunOptions,
+	UrlOptions,
+	ValidationErrorInfo,
+	WebHookResponse,
+} from "@fal-ai/client";

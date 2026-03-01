@@ -2,18 +2,18 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
-import { gwInstallations, workspaceIntegrations, orgWorkspaces } from "@db/console/schema";
+import { gwInstallations, workspaceIntegrations } from "@db/console/schema";
 import { orgScopedProcedure, apiKeyProcedure } from "../../trpc";
 import {
-	getUserInstallations,
 	createGitHubApp,
 	getInstallationRepositories,
+	getAppInstallation,
 } from "@repo/console-octokit-github";
 import { getInstallationToken } from "../../lib/token-vault";
 import { env } from "../../env";
 import yaml from "yaml";
 import type { VercelProjectsResponse } from "@repo/console-vercel/types";
-import { withRelatedProject } from "@vercel/related-projects";
+import { withRelatedProject } from "@vendor/related-projects";
 
 const isDevelopment =
 	process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
@@ -70,6 +70,8 @@ export const connectionsRouter = {
 						"X-Org-Id": ctx.auth.orgId,
 						"X-User-Id": ctx.auth.userId,
 						"X-API-Key": env.GATEWAY_API_KEY,
+						"X-Request-Source": "console-trpc",
+						"X-Correlation-Id": crypto.randomUUID(),
 					},
 				},
 			);
@@ -85,36 +87,25 @@ export const connectionsRouter = {
 	/**
 	 * CLI: Get OAuth authorize URL using API key auth.
 	 *
-	 * Resolves orgId from the API key's workspace, then proxies to
-	 * connections service with redirect_to=inline for CLI mode.
+	 * Uses orgId from API key auth context, proxies to connections service
+	 * with redirect_to=inline for CLI mode.
 	 */
 	cliAuthorize: apiKeyProcedure
 		.input(
 			z.object({
-				provider: z.enum(["github", "vercel", "sentry"]),
+				provider: z.enum(["github", "vercel", "linear", "sentry"]),
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			// Resolve clerkOrgId from workspace
-			const workspace = await ctx.db.query.orgWorkspaces.findFirst({
-				where: eq(orgWorkspaces.id, ctx.auth.workspaceId),
-				columns: { clerkOrgId: true },
-			});
-
-			if (!workspace?.clerkOrgId) {
-				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: "Workspace not found or has no organization",
-				});
-			}
-
 			const res = await fetch(
 				`${connectionsUrl}/services/connections/${input.provider}/authorize?redirect_to=inline`,
 				{
 					headers: {
-						"X-Org-Id": workspace.clerkOrgId,
+						"X-Org-Id": ctx.auth.orgId,
 						"X-User-Id": ctx.auth.userId,
 						"X-API-Key": env.GATEWAY_API_KEY,
+						"X-Request-Source": "console-trpc-cli",
+						"X-Correlation-Id": crypto.randomUUID(),
 					},
 				},
 			);
@@ -200,13 +191,13 @@ export const connectionsRouter = {
 	 */
 	github: {
 		/**
-		 * Get org's GitHub installation with app installations
+		 * List org's GitHub installations
 		 *
-		 * Returns the org's GitHub OAuth connection including
-		 * all GitHub App installations accessible to the org.
+		 * Returns all active GitHub App installations accessible to the org,
+		 * merged across gwInstallation rows with gwInstallationId tags.
 		 */
-		get: orgScopedProcedure.query(async ({ ctx }) => {
-			const result = await ctx.db
+		list: orgScopedProcedure.query(async ({ ctx }) => {
+			const results = await ctx.db
 				.select()
 				.from(gwInstallations)
 				.where(
@@ -215,30 +206,38 @@ export const connectionsRouter = {
 						eq(gwInstallations.provider, "github"),
 						eq(gwInstallations.status, "active"),
 					),
-				)
-				.limit(1);
+				);
 
-			const installation = result[0];
-
-			if (!installation) {
+			if (results.length === 0) {
 				return null;
 			}
 
-			const providerAccountInfo = installation.providerAccountInfo;
-			if (providerAccountInfo?.sourceType !== "github") {
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Invalid provider account info type",
+			// Read account info from cached providerAccountInfo (populated during
+			// OAuth callback and refreshed by github.validate). No live API calls —
+			// keeps .list fast and resilient to stale/deleted installations.
+			const allInstallations = results
+				.filter((row) => row.providerAccountInfo?.sourceType === "github")
+				.map((row) => {
+					const info = row.providerAccountInfo as Extract<typeof row.providerAccountInfo, { sourceType: "github" }>;
+					const account = info.raw.account;
+					return {
+						id: row.externalId,
+						accountLogin: account.login || row.externalId,
+						accountType: account.type === "User" ? "User" as const : "Organization" as const,
+						avatarUrl: account.avatar_url || "",
+						gwInstallationId: row.id,
+					};
 				});
-			}
 
+			const first = results[0];
+			if (!first) return null;
 			return {
-				id: installation.id,
-				orgId: installation.orgId,
-				provider: installation.provider,
-				connectedAt: installation.createdAt,
-				status: installation.status,
-				installations: providerAccountInfo.installations ?? [],
+				id: first.id,
+				orgId: first.orgId,
+				provider: first.provider,
+				connectedAt: first.createdAt,
+				status: first.status,
+				installations: allInstallations,
 			};
 		}),
 
@@ -272,80 +271,65 @@ export const connectionsRouter = {
 				});
 			}
 
+			const providerAccountInfo = installation.providerAccountInfo;
+			if (providerAccountInfo?.sourceType !== "github") {
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Invalid provider data type",
+				});
+			}
+
 			try {
-				// Get access token directly from gw_tokens vault
-				const accessToken = await getInstallationToken(installation.id);
+				const app = getGitHubApp();
+				const installationIdNumber = Number.parseInt(installation.externalId, 10);
 
-				const { installations: githubInstallations } =
-					await getUserInstallations(accessToken);
+				// Fetch fresh installation details using App JWT
+				const githubInstallation = await getAppInstallation(app, installationIdNumber);
 
-				const providerAccountInfo = installation.providerAccountInfo;
-				if (providerAccountInfo?.sourceType !== "github") {
-					throw new TRPCError({
-						code: "INTERNAL_SERVER_ERROR",
-						message: "Invalid provider data type",
-					});
+				const account = githubInstallation.account;
+				if (!account || !("login" in account)) {
+					throw new Error("Installation response missing account data");
 				}
 
-				const currentInstallations = providerAccountInfo.installations ?? [];
-				const currentIds = new Set(
-					currentInstallations.map((i) => i.id.toString()),
-				);
-
-				// Map GitHub installations to our format
 				const now = new Date().toISOString();
-				const newInstallations = githubInstallations.map((install) => {
-					const account = install.account;
-					const accountLogin =
-						account && "login" in account ? account.login : "";
-					const accountType: "User" | "Organization" =
-						account && "type" in account && account.type === "User"
-							? "User"
-							: "Organization";
+				const accountType: "User" | "Organization" =
+					"type" in account && account.type === "User" ? "User" : "Organization";
 
-					return {
-						id: install.id.toString(),
-						accountId: account?.id.toString() ?? "",
-						accountLogin,
-						accountType,
-						avatarUrl: account && "avatar_url" in account ? account.avatar_url : "",
-						permissions: (install.permissions as Record<string, string>),
-						installedAt: install.created_at,
-						lastValidatedAt: now,
-					};
-				});
+				const refreshedAccountInfo = {
+					version: 1 as const,
+					sourceType: "github" as const,
+					events: githubInstallation.events,
+					installedAt: githubInstallation.created_at,
+					lastValidatedAt: now,
+					raw: {
+						account: {
+							login: "login" in account ? account.login : "",
+							id: account.id,
+							type: accountType,
+							avatar_url: "avatar_url" in account ? account.avatar_url : "",
+						},
+						permissions: githubInstallation.permissions,
+						events: githubInstallation.events,
+						created_at: githubInstallation.created_at,
+					},
+				};
 
-				const newIds = new Set(newInstallations.map((i) => i.id));
-
-				const added = newInstallations.filter((i) => !currentIds.has(i.id));
-				const removed = currentInstallations.filter(
-					(i) => !newIds.has(i.id),
-				);
-
-				// Update providerAccountInfo with fresh installations
+				// Update providerAccountInfo with refreshed data
 				await ctx.db
 					.update(gwInstallations)
 					.set({
-						providerAccountInfo: {
-							version: 1 as const,
-							sourceType: "github" as const,
-							installations: newInstallations,
-						},
+						providerAccountInfo: refreshedAccountInfo,
 						updatedAt: now,
 					})
 					.where(eq(gwInstallations.id, installation.id));
 
-				return {
-					added: added.length,
-					removed: removed.length,
-					total: newInstallations.length,
-				};
+				return { added: 0, removed: 0, total: 1 };
 			} catch (error: unknown) {
 				console.error("[tRPC connections.github.validate] GitHub installation validation failed:", error);
 
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
-					message: "Failed to validate GitHub installations",
+					message: "Failed to validate GitHub installation",
 					cause: error,
 				});
 			}
@@ -386,21 +370,8 @@ export const connectionsRouter = {
 					});
 				}
 
-				const providerAccountInfo = installation.providerAccountInfo;
-				if (providerAccountInfo?.sourceType !== "github") {
-					throw new TRPCError({
-						code: "INTERNAL_SERVER_ERROR",
-						message: "Invalid provider account info type",
-					});
-				}
-
-				// Verify the GitHub App installation is accessible
-				const installations = providerAccountInfo.installations ?? [];
-				const githubInstallation = installations.find(
-					(i) => i.id === input.installationId,
-				);
-
-				if (!githubInstallation) {
+				// Verify the GitHub App installation is accessible via the table column
+				if (installation.externalId !== input.installationId) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
 						message: "Installation not found or not accessible to this connection",
@@ -481,20 +452,8 @@ export const connectionsRouter = {
 					});
 				}
 
-				const providerAccountInfo = installation.providerAccountInfo;
-				if (providerAccountInfo?.sourceType !== "github") {
-					throw new TRPCError({
-						code: "INTERNAL_SERVER_ERROR",
-						message: "Invalid provider account info type",
-					});
-				}
-
-				// Verify the GitHub App installation is accessible
-				const githubInstallation = providerAccountInfo.installations?.find(
-					(i) => i.id === input.installationId,
-				);
-
-				if (!githubInstallation) {
+				// Verify the GitHub App installation is accessible via the table column
+				if (installation.externalId !== input.installationId) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
 						message: "Installation not found or not accessible to this connection",
@@ -618,13 +577,13 @@ export const connectionsRouter = {
 	 */
 	vercel: {
 		/**
-		 * Get org's Vercel installation
+		 * List all org's Vercel installations
 		 *
-		 * Returns the org's Vercel OAuth connection including
-		 * team and configuration information.
+		 * Returns all active Vercel OAuth connections (one per team).
+		 * Used by workspace creation to support multi-team selection.
 		 */
-		get: orgScopedProcedure.query(async ({ ctx }) => {
-			const result = await ctx.db
+		list: orgScopedProcedure.query(async ({ ctx }) => {
+			const results = await ctx.db
 				.select()
 				.from(gwInstallations)
 				.where(
@@ -633,34 +592,74 @@ export const connectionsRouter = {
 						eq(gwInstallations.provider, "vercel"),
 						eq(gwInstallations.status, "active"),
 					),
-				)
-				.limit(1);
+				);
 
-			const installation = result[0];
+			// Fetch live account info from Vercel API for each installation.
+			// Wrapped in try/catch so a single failed token/network call doesn't
+			// crash the entire list — falls back to cached IDs from providerAccountInfo.
+			// TODO: Store team_slug/username in VercelOAuthRaw during callback so
+			// this can become fully cached like github.list (no live API calls).
+			const installations = await Promise.all(
+				results
+					.filter((inst) => inst.providerAccountInfo?.sourceType === "vercel")
+					.map(async (inst) => {
+						const info = inst.providerAccountInfo as Extract<typeof inst.providerAccountInfo, { sourceType: "vercel" }>;
 
-			if (!installation) {
-				return null;
-			}
+						let accountLogin: string;
+						let accountType: "Team" | "User";
 
-			const providerAccountInfo = installation.providerAccountInfo;
-			if (providerAccountInfo?.sourceType !== "vercel") {
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Invalid provider account info type",
-				});
-			}
+						try {
+							const accessToken = await getInstallationToken(inst.id);
 
-			return {
-				id: installation.id,
-				orgId: installation.orgId,
-				provider: installation.provider,
-				connectedAt: installation.createdAt,
-				status: installation.status,
-				vercelUserId: providerAccountInfo.userId,
-				teamId: providerAccountInfo.teamId,
-				teamSlug: providerAccountInfo.teamSlug,
-				configurationId: providerAccountInfo.configurationId,
-			};
+							if (info.raw.team_id) {
+								const res = await fetch(`https://api.vercel.com/v2/teams/${info.raw.team_id}`, {
+									headers: { Authorization: `Bearer ${accessToken}` },
+									signal: AbortSignal.timeout(10_000),
+								});
+								if (res.ok) {
+									const data = (await res.json()) as Record<string, unknown>;
+									accountLogin = typeof data.slug === "string" ? data.slug : info.raw.team_id;
+								} else {
+									accountLogin = info.raw.team_id;
+								}
+								accountType = "Team";
+							} else {
+								const res = await fetch("https://api.vercel.com/v2/user", {
+									headers: { Authorization: `Bearer ${accessToken}` },
+									signal: AbortSignal.timeout(10_000),
+								});
+								if (res.ok) {
+									const data = (await res.json()) as Record<string, unknown>;
+									const user = data.user as Record<string, unknown> | undefined;
+									accountLogin = typeof user?.username === "string" ? user.username : info.raw.user_id;
+								} else {
+									accountLogin = info.raw.user_id;
+								}
+								accountType = "User";
+							}
+						} catch (error) {
+							// Fall back to cached IDs when token retrieval or API call fails
+							console.warn("[connections.vercel.list] Failed to fetch account info, using cached fallback:", error);
+							accountLogin = info.raw.team_id ?? info.raw.user_id;
+							accountType = info.raw.team_id ? "Team" : "User";
+						}
+
+						return {
+							id: inst.id,
+							orgId: inst.orgId,
+							provider: inst.provider,
+							connectedAt: inst.createdAt,
+							status: inst.status,
+							userId: info.raw.user_id,
+							teamId: info.raw.team_id ?? null,
+							configurationId: info.raw.installation_id,
+							accountLogin,
+							accountType,
+						};
+					}),
+			);
+
+			return { installations };
 		}),
 
 		/**
@@ -706,7 +705,7 @@ export const connectionsRouter = {
 						message: "Invalid provider account info",
 					});
 				}
-				const teamId = providerAccountInfo.teamId;
+				const teamId = providerAccountInfo.raw.team_id;
 
 				// 4. Call Vercel API
 				const url = new URL("https://api.vercel.com/v9/projects");
@@ -795,14 +794,162 @@ export const connectionsRouter = {
 	},
 
 	/**
+	 * Linear-specific operations
+	 */
+	linear: {
+		/**
+		 * List org's Linear installations
+		 *
+		 * Returns all active Linear OAuth connections with organization info.
+		 * Linear is org-level with per-team resource linking.
+		 */
+		get: orgScopedProcedure.query(async ({ ctx }) => {
+			const result = await ctx.db
+				.select()
+				.from(gwInstallations)
+				.where(
+					and(
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "linear"),
+						eq(gwInstallations.status, "active"),
+					),
+				);
+
+			return result.map((installation) => {
+				const info = installation.providerAccountInfo;
+				const orgName =
+					info?.sourceType === "linear"
+						? info.organization?.name
+						: undefined;
+				const orgUrlKey =
+					info?.sourceType === "linear"
+						? info.organization?.urlKey
+						: undefined;
+
+				return {
+					id: installation.id,
+					orgId: installation.orgId,
+					provider: installation.provider,
+					connectedAt: installation.createdAt,
+					status: installation.status,
+					organizationName: orgName ?? null,
+					organizationUrlKey: orgUrlKey ?? null,
+				};
+			});
+		}),
+
+		/**
+		 * List Linear teams for team selector
+		 *
+		 * Fetches teams from the Linear GraphQL API using stored OAuth token.
+		 * Used by workspace creation to select which team to link.
+		 */
+		listTeams: orgScopedProcedure
+			.input(
+				z.object({
+					installationId: z.string(), // gwInstallations.id
+				}),
+			)
+			.query(async ({ ctx, input }) => {
+				// 1. Verify org owns this installation
+				const installation = await ctx.db.query.gwInstallations.findFirst({
+					where: and(
+						eq(gwInstallations.id, input.installationId),
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "linear"),
+						eq(gwInstallations.status, "active"),
+					),
+				});
+
+				if (!installation) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Linear connection not found",
+					});
+				}
+
+				// 2. Get access token from gw_tokens vault
+				const accessToken = await getInstallationToken(installation.id);
+
+				// 3. Call Linear GraphQL API
+				const response = await fetch("https://api.linear.app/graphql", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${accessToken}`,
+					},
+					body: JSON.stringify({
+						query: `{
+							teams {
+								nodes {
+									id
+									name
+									key
+									description
+									color
+								}
+							}
+						}`,
+					}),
+					signal: AbortSignal.timeout(10_000),
+				});
+
+				if (response.status === 401) {
+					await ctx.db
+						.update(gwInstallations)
+						.set({ status: "error" })
+						.where(eq(gwInstallations.id, input.installationId));
+
+					throw new TRPCError({
+						code: "UNAUTHORIZED",
+						message: "Linear connection expired. Please reconnect.",
+					});
+				}
+
+				if (!response.ok) {
+					console.error("[Linear API Error]", response.status);
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Failed to fetch Linear teams",
+					});
+				}
+
+				const data = (await response.json()) as {
+					data?: {
+						teams?: {
+							nodes?: {
+								id: string;
+								name: string;
+								key: string;
+								description?: string;
+								color?: string;
+							}[];
+						};
+					};
+				};
+
+				const teams = data.data?.teams?.nodes ?? [];
+
+				return {
+					teams: teams.map((t) => ({
+						id: t.id,
+						name: t.name,
+						key: t.key,
+						description: t.description ?? null,
+						color: t.color ?? null,
+					})),
+				};
+			}),
+	},
+
+	/**
 	 * Sentry-specific operations
 	 */
 	sentry: {
 		/**
 		 * Get org's Sentry installation
 		 *
-		 * Returns the org's Sentry OAuth connection.
-		 * Sentry is org-level — no per-resource picker needed.
+		 * Returns the org's Sentry OAuth connection with organization info.
 		 */
 		get: orgScopedProcedure.query(async ({ ctx }) => {
 			const result = await ctx.db
@@ -831,5 +978,103 @@ export const connectionsRouter = {
 				status: installation.status,
 			};
 		}),
+
+		/**
+		 * List Sentry projects for project selector
+		 *
+		 * Returns all projects from org's Sentry account with connection status.
+		 * Used by workspace creation to select which project to link.
+		 */
+		listProjects: orgScopedProcedure
+			.input(
+				z.object({
+					installationId: z.string(),
+					workspaceId: z.string().optional(),
+				}),
+			)
+			.query(async ({ ctx, input }) => {
+				// 1. Verify org owns this installation
+				const installation = await ctx.db.query.gwInstallations.findFirst({
+					where: and(
+						eq(gwInstallations.id, input.installationId),
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+						eq(gwInstallations.provider, "sentry"),
+						eq(gwInstallations.status, "active"),
+					),
+				});
+
+				if (!installation) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "Sentry connection not found",
+					});
+				}
+
+				// 2. Get access token from gw_tokens vault
+				const accessToken = await getInstallationToken(installation.id);
+
+				// 3. Call Sentry API — /api/0/projects/ works with installation tokens
+				// (scoped to the org the app is installed on, no org slug needed)
+				const response = await fetch(
+					"https://sentry.io/api/0/projects/",
+					{
+						headers: { Authorization: `Bearer ${accessToken}` },
+						signal: AbortSignal.timeout(10_000),
+					},
+				);
+
+				if (response.status === 401) {
+					await ctx.db
+						.update(gwInstallations)
+						.set({ status: "error" })
+						.where(eq(gwInstallations.id, input.installationId));
+
+					throw new TRPCError({
+						code: "UNAUTHORIZED",
+						message: "Sentry connection expired. Please reconnect.",
+					});
+				}
+
+				if (!response.ok) {
+					console.error("[Sentry API Error]", response.status);
+					throw new TRPCError({
+						code: "INTERNAL_SERVER_ERROR",
+						message: "Failed to fetch Sentry projects",
+					});
+				}
+
+				const data = (await response.json()) as {
+					id: string;
+					slug: string;
+					name: string;
+					platform: string | null;
+					status: string;
+				}[];
+
+				// 5. Get already-connected projects for this workspace
+				let connectedIds = new Set<string>();
+				if (input.workspaceId) {
+					const connected = await ctx.db.query.workspaceIntegrations.findMany({
+						where: and(
+							eq(workspaceIntegrations.workspaceId, input.workspaceId),
+							eq(workspaceIntegrations.installationId, input.installationId),
+							eq(workspaceIntegrations.isActive, true),
+						),
+						columns: { providerResourceId: true },
+					});
+					connectedIds = new Set(connected.map((c) => c.providerResourceId));
+				}
+
+				// 6. Return with connection status
+				return {
+					projects: data.map((p) => ({
+						id: p.id,
+						slug: p.slug,
+						name: p.name,
+						platform: p.platform,
+						isConnected: connectedIds.has(p.id),
+					})),
+				};
+			}),
 	},
 } satisfies TRPCRouterRecord;

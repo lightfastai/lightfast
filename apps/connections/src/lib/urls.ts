@@ -47,36 +47,9 @@ export const backfillUrl = `${withRelatedProject({
     : "https://backfill.lightfast.ai",
 })}/api`;
 
-let _qstash: ReturnType<typeof getQStashClient>;
+let _qstash: ReturnType<typeof getQStashClient> | undefined;
 function getClient() {
   return (_qstash ??= getQStashClient());
-}
-
-/**
- * Notify the backfill service to start a historical backfill for a new connection.
- * Best-effort — errors are logged but do not block the OAuth callback response.
- */
-export async function notifyBackfillService(params: {
-  installationId: string;
-  provider: string;
-  orgId: string;
-}): Promise<void> {
-  try {
-    await getClient().publishJSON({
-      url: `${backfillUrl}/trigger`,
-      headers: { "X-API-Key": env.GATEWAY_API_KEY },
-      body: params,
-      retries: 3,
-      deduplicationId: `backfill:${params.provider}:${params.installationId}:${params.orgId}`,
-    });
-  } catch (err) {
-    console.error("[connections] Failed to notify backfill service", {
-      installationId: params.installationId,
-      provider: params.provider,
-      backfillUrl,
-      err,
-    });
-  }
 }
 
 /**
@@ -86,11 +59,15 @@ export async function notifyBackfillService(params: {
  */
 export async function cancelBackfillService(params: {
   installationId: string;
+  correlationId?: string;
 }): Promise<void> {
   try {
     await getClient().publishJSON({
       url: `${backfillUrl}/trigger/cancel`,
-      headers: { "X-API-Key": env.GATEWAY_API_KEY },
+      headers: {
+        "X-API-Key": env.GATEWAY_API_KEY,
+        ...(params.correlationId ? { "X-Correlation-Id": params.correlationId } : {}),
+      },
       body: params,
       retries: 3,
       deduplicationId: `backfill-cancel:${params.installationId}`,
