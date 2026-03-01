@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Github, Search, Loader2 } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
+import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -50,7 +51,7 @@ export function GitHubSourceItem() {
   const prevInstallationsRef = useRef<typeof installations>([]);
 
   // Fetch GitHub connection (prefetched by parent page RSC)
-  const { data: connection, refetch: refetchConnection } = useSuspenseQuery({
+  const { data: connection } = useSuspenseQuery({
     ...trpc.connections.github.list.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -92,12 +93,25 @@ export function GitHubSourceItem() {
     }
   }, [connectionInstallations, selectedInstallation, setSelectedInstallation]);
 
-  // Cleanup poll timer on unmount
+  // Listen for postMessage from the connected page (fires before popup closes)
   useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === "github_connected") {
+        void queryClient.invalidateQueries({
+          queryKey: trpc.connections.github.list.queryOptions().queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: [["connections", "github", "repositories"]],
+        });
+      }
+    };
+    window.addEventListener("message", handler);
     return () => {
+      window.removeEventListener("message", handler);
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
-  }, []);
+  }, [queryClient, trpc]);
 
   // Fetch repos for selected installation
   const { data: repositoriesData, isLoading: isLoadingRepos } = useQuery({
@@ -138,7 +152,9 @@ export function GitHubSourceItem() {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
           }
-          void refetchConnection();
+          void queryClient.invalidateQueries({
+            queryKey: trpc.connections.github.list.queryOptions().queryKey,
+          });
           void queryClient.invalidateQueries({
             queryKey: [["connections", "github", "repositories"]],
           });
@@ -174,7 +190,9 @@ export function GitHubSourceItem() {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
           }
-          void refetchConnection();
+          void queryClient.invalidateQueries({
+            queryKey: trpc.connections.github.list.queryOptions().queryKey,
+          });
           void queryClient.invalidateQueries({
             queryKey: [["connections", "github", "repositories"]],
           });
@@ -189,7 +207,7 @@ export function GitHubSourceItem() {
     <AccordionItem value="github">
       <AccordionTrigger className="px-4 hover:no-underline">
         <div className="flex items-center gap-3 flex-1">
-          <Github className="h-5 w-5 shrink-0" />
+          <IntegrationLogoIcons.github className="h-5 w-5 shrink-0" />
           <span className="font-medium">GitHub</span>
           {hasConnection ? (
             <Badge variant="secondary" className="text-xs">Connected</Badge>
@@ -210,7 +228,7 @@ export function GitHubSourceItem() {
               Connect GitHub to select repositories
             </p>
             <Button onClick={handleConnect} variant="outline">
-              <Github className="h-4 w-4 mr-2" />
+              <IntegrationLogoIcons.github className="h-4 w-4 mr-2" />
               Connect GitHub
             </Button>
           </div>
@@ -221,7 +239,7 @@ export function GitHubSourceItem() {
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                    <Github className="h-3 w-3" />
+                    <IntegrationLogoIcons.github className="h-3 w-3" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -285,7 +303,7 @@ export function GitHubSourceItem() {
                                 className="rounded-full"
                               />
                             ) : (
-                              <Github className="h-4 w-4" />
+                              <IntegrationLogoIcons.github className="h-4 w-4" />
                             )}
                             {inst.accountLogin}
                           </div>
@@ -331,7 +349,7 @@ export function GitHubSourceItem() {
                           }}
                         >
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                            <Github className="h-3 w-3" />
+                            <IntegrationLogoIcons.github className="h-3 w-3" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">

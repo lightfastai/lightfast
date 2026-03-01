@@ -19,20 +19,15 @@ import {
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
 import { toast } from "@repo/ui/components/ui/sonner";
+import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
+import { FrameworkIcons } from "@repo/ui/framework-icons";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useWorkspaceForm } from "./workspace-form-provider";
 
-function VercelIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 76 65"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
-    </svg>
-  );
+function FrameworkIcon({ framework, className }: { framework: string | null; className?: string }) {
+  const icon = framework ? FrameworkIcons[framework] : null;
+  if (icon) return icon({ className });
+  return <IntegrationLogoIcons.vercel className={className} />;
 }
 
 /**
@@ -61,7 +56,7 @@ export function VercelSourceItem() {
   const prevInstallationsRef = useRef<typeof _vercelInstallations>([]);
 
   // Fetch Vercel installations (prefetched by parent page RSC)
-  const { data: listData, refetch: refetchConnection } = useSuspenseQuery({
+  const { data: listData } = useSuspenseQuery({
     ...trpc.connections.vercel.list.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -102,12 +97,25 @@ export function VercelSourceItem() {
     setVercelInstallationId(selectedVercelInstallation?.id ?? null);
   }, [selectedVercelInstallation?.id, setVercelInstallationId]);
 
-  // Cleanup poll timer on unmount
+  // Listen for postMessage from the connected page (fires before popup closes)
   useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === "vercel_connected") {
+        void queryClient.invalidateQueries({
+          queryKey: trpc.connections.vercel.list.queryOptions().queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: [["connections", "vercel", "listProjects"]],
+        });
+      }
+    };
+    window.addEventListener("message", handler);
     return () => {
+      window.removeEventListener("message", handler);
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
-  }, []);
+  }, [queryClient, trpc]);
 
   // Fetch Vercel projects (no workspaceId — workspace doesn't exist yet)
   const { data: projectsData, isLoading: isLoadingProjects, error: projectsError } = useQuery({
@@ -152,7 +160,9 @@ export function VercelSourceItem() {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
           }
-          void refetchConnection();
+          void queryClient.invalidateQueries({
+            queryKey: trpc.connections.vercel.list.queryOptions().queryKey,
+          });
           void queryClient.invalidateQueries({
             queryKey: [["connections", "vercel", "listProjects"]],
           });
@@ -171,7 +181,7 @@ export function VercelSourceItem() {
     <AccordionItem value="vercel">
       <AccordionTrigger className="px-4 hover:no-underline">
         <div className="flex items-center gap-3 flex-1">
-          <VercelIcon className="h-5 w-5 shrink-0" />
+          <IntegrationLogoIcons.vercel className="h-5 w-5 shrink-0" />
           <span className="font-medium">Vercel</span>
           {hasConnection ? (
             <Badge variant="secondary" className="text-xs">Connected</Badge>
@@ -192,7 +202,7 @@ export function VercelSourceItem() {
               Connect Vercel to select projects
             </p>
             <Button onClick={handleConnect} variant="outline">
-              <VercelIcon className="h-4 w-4 mr-2" />
+              <IntegrationLogoIcons.vercel className="h-4 w-4 mr-2" />
               Connect Vercel
             </Button>
           </div>
@@ -203,7 +213,7 @@ export function VercelSourceItem() {
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                    <VercelIcon className="h-4 w-4" />
+                    <FrameworkIcon framework={selectedProject.framework} className="h-4 w-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -253,7 +263,7 @@ export function VercelSourceItem() {
                       {connectionInstallations.map((inst) => (
                         <SelectItem key={inst.id} value={inst.id}>
                           <div className="flex items-center gap-2">
-                            <VercelIcon className="h-3 w-3" />
+                            <IntegrationLogoIcons.vercel className="h-3 w-3" />
                             {getInstallationLabel(inst)}
                           </div>
                         </SelectItem>
@@ -306,7 +316,7 @@ export function VercelSourceItem() {
                           }}
                         >
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                            <VercelIcon className="h-4 w-4" />
+                            <FrameworkIcon framework={project.framework} className="h-4 w-4" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">

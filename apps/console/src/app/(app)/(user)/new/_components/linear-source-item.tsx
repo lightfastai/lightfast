@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSuspenseQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { Search, Loader2 } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -12,36 +12,23 @@ import {
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
 import { toast } from "@repo/ui/components/ui/sonner";
+import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useWorkspaceForm } from "./workspace-form-provider";
-
-function LinearIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      role="img"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M2.886 4.18A11.982 11.982 0 0 1 11.99 0C18.624 0 24 5.376 24 12.009c0 3.64-1.62 6.903-4.18 9.105L2.887 4.18ZM1.817 5.626l16.556 16.556c-.524.33-1.075.62-1.65.866L.951 7.277c.247-.575.537-1.126.866-1.65ZM.322 9.163l14.515 14.515c-.71.172-1.443.282-2.195.322L0 11.358a12 12 0 0 1 .322-2.195Zm-.17 4.862 9.823 9.824a12.02 12.02 0 0 1-9.824-9.824Z" />
-    </svg>
-  );
-}
+import type { LinearTeam } from "./workspace-form-provider";
 
 /**
  * Linear accordion item for the Sources section.
  * Fetches its own connection status (prefetched by parent page via linear.get).
  * Shows inline team picker when connected, connect button otherwise.
+ * Aggregates teams from all Linear installations.
  */
 export function LinearSourceItem() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const {
-    linearConnection,
-    setLinearConnection,
-    linearInstallationId,
-    setLinearInstallationId,
+    linearConnections,
+    setLinearConnections,
     selectedLinearTeam,
     setSelectedLinearTeam,
   } = useWorkspaceForm();
@@ -50,46 +37,76 @@ export function LinearSourceItem() {
   const [showPicker, setShowPicker] = useState(true);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Fetch Linear connection (prefetched by parent page RSC)
-  const { data: linearData, refetch: refetchConnection } = useSuspenseQuery({
+  // Fetch Linear connections (prefetched by parent page RSC)
+  const { data: linearData } = useSuspenseQuery({
     ...trpc.connections.linear.get.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
-  const hasConnection = linearData !== null;
+  const hasConnection = linearData.length > 0;
 
-  // Sync connection to form state
+  // Sync connections to form state
   useEffect(() => {
-    if (linearData?.id !== linearConnection?.id) {
-      setLinearConnection(linearData);
+    const currentIds = linearConnections.map((c) => c.id).join(",");
+    const newIds = linearData.map((c) => c.id).join(",");
+    if (currentIds !== newIds) {
+      setLinearConnections(linearData);
     }
-  }, [linearData, linearConnection?.id, setLinearConnection]);
+  }, [linearData, linearConnections, setLinearConnections]);
 
-  // Sync linearInstallationId from the connection
+  // Listen for postMessage from the connected page (fires before popup closes)
   useEffect(() => {
-    setLinearInstallationId(linearData?.id ?? null);
-  }, [linearData?.id, setLinearInstallationId]);
-
-  // Cleanup poll timer on unmount
-  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === "linear_connected") {
+        void queryClient.invalidateQueries({
+          queryKey: trpc.connections.linear.get.queryOptions().queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: [["connections", "linear", "listTeams"]],
+        });
+      }
+    };
+    window.addEventListener("message", handler);
     return () => {
+      window.removeEventListener("message", handler);
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
-  }, []);
+  }, [queryClient, trpc]);
 
-  // Fetch Linear teams (no workspaceId — workspace doesn't exist yet)
-  const { data: teamsData, isLoading: isLoadingTeams, error: teamsError } = useQuery({
-    ...trpc.connections.linear.listTeams.queryOptions({
-      installationId: linearInstallationId ?? "",
-    }),
-    enabled: Boolean(linearInstallationId),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    retry: false,
+  // Fetch teams from ALL installations in parallel
+  const teamsQueries = useQueries({
+    queries: linearData.map((conn) => ({
+      ...trpc.connections.linear.listTeams.queryOptions({
+        installationId: conn.id,
+      }),
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      retry: false,
+    })),
   });
 
-  const teams = teamsData?.teams ?? [];
+  const isLoadingTeams = teamsQueries.some((q) => q.isLoading);
+  const teamsError = teamsQueries.every((q) => q.error) && teamsQueries.length > 0
+    ? teamsQueries[0]!.error
+    : null;
+
+  // Merge teams from all installations, tagging each with its installationId
+  const teams: LinearTeam[] = useMemo(() => {
+    const result: LinearTeam[] = [];
+    for (let i = 0; i < linearData.length; i++) {
+      const conn = linearData[i]!;
+      const query = teamsQueries[i];
+      if (query?.data?.teams) {
+        for (const team of query.data.teams) {
+          result.push({ ...team, installationId: conn.id });
+        }
+      }
+    }
+    return result;
+  }, [linearData, teamsQueries]);
+
   const filteredTeams = teams.filter((t) =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.key.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -120,7 +137,9 @@ export function LinearSourceItem() {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
           }
-          void refetchConnection();
+          void queryClient.invalidateQueries({
+            queryKey: trpc.connections.linear.get.queryOptions().queryKey,
+          });
           void queryClient.invalidateQueries({
             queryKey: [["connections", "linear", "listTeams"]],
           });
@@ -135,7 +154,7 @@ export function LinearSourceItem() {
     <AccordionItem value="linear">
       <AccordionTrigger className="px-4 hover:no-underline">
         <div className="flex items-center gap-3 flex-1">
-          <LinearIcon className="h-5 w-5 shrink-0" />
+          <IntegrationLogoIcons.linear className="h-5 w-5 shrink-0" />
           <span className="font-medium">Linear</span>
           {hasConnection ? (
             <Badge variant="secondary" className="text-xs">Connected</Badge>
@@ -156,7 +175,7 @@ export function LinearSourceItem() {
               Connect Linear to track issues and projects
             </p>
             <Button onClick={handleConnect} variant="outline">
-              <LinearIcon className="h-4 w-4 mr-2" />
+              <IntegrationLogoIcons.linear className="h-4 w-4 mr-2" />
               Connect Linear
             </Button>
           </div>

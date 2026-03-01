@@ -13,6 +13,7 @@
 		"./components/chat/*": "./src/components/chat/*.tsx",
 		"./components/ssr-code-block": "./src/components/ssr-code-block/index.tsx",
 		"./integration-icons": "./src/components/integration-icons.tsx",
+		"./framework-icons": "./src/components/framework-icons.tsx",
 		"./lib/*": "./src/lib/*.ts",
 		"./tailwind.config": "./tailwind.config.ts",
 		"./postcss.config": "./postcss.config.mjs",

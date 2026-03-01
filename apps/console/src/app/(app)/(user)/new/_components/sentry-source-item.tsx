@@ -12,21 +12,9 @@ import {
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
 import { toast } from "@repo/ui/components/ui/sonner";
+import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useWorkspaceForm } from "./workspace-form-provider";
-
-function SentryIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 72 66"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M29 2.26a3.68 3.68 0 0 0-6.38 0L1.22 42.09a3.68 3.68 0 0 0 3.19 5.52h7.85a3.68 3.68 0 0 0 3.19-1.84L29 22.18a15.65 15.65 0 0 1 8.29 13.8v5.48h-5.57a3.68 3.68 0 0 0 0 7.36h13.25a3.68 3.68 0 0 0 0-7.36h-.32V36a23 23 0 0 0-12.43-20.46L41 2.26a3.68 3.68 0 0 0-6.38 0l-2.81 4.87a23 23 0 0 0-8.59 8.6L29 2.26z" />
-    </svg>
-  );
-}
 
 /**
  * Sentry accordion item for the Sources section.
@@ -137,7 +125,7 @@ export function SentrySourceItem() {
     <AccordionItem value="sentry">
       <AccordionTrigger className="px-4 hover:no-underline">
         <div className="flex items-center gap-3 flex-1">
-          <SentryIcon className="h-5 w-5 shrink-0" />
+          <IntegrationLogoIcons.sentry className="h-5 w-5 shrink-0" />
           <span className="font-medium">Sentry</span>
           {hasConnection ? (
             <Badge variant="secondary" className="text-xs">Connected</Badge>
@@ -158,7 +146,7 @@ export function SentrySourceItem() {
               Connect Sentry to monitor errors and performance
             </p>
             <Button onClick={handleConnect} variant="outline">
-              <SentryIcon className="h-4 w-4 mr-2" />
+              <IntegrationLogoIcons.sentry className="h-4 w-4 mr-2" />
               Connect Sentry
             </Button>
           </div>
@@ -169,7 +157,7 @@ export function SentrySourceItem() {
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                    <SentryIcon className="h-4 w-4" />
+                    <IntegrationLogoIcons.sentry className="h-4 w-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -209,7 +197,7 @@ export function SentrySourceItem() {
                 <div className="flex gap-4">
                   {sentryData?.organizationSlug && (
                     <div className="flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 shrink-0">
-                      <SentryIcon className="h-3 w-3" />
+                      <IntegrationLogoIcons.sentry className="h-3 w-3" />
                       <span className="text-sm font-medium">{sentryData.organizationSlug}</span>
                     </div>
                   )}
@@ -259,7 +247,7 @@ export function SentrySourceItem() {
                           }}
                         >
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                            <SentryIcon className="h-4 w-4" />
+                            <IntegrationLogoIcons.sentry className="h-4 w-4" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
