@@ -17,15 +17,7 @@ const server = {
   ENCRYPTION_KEY: z.string().min(32),
 };
 
-/**
- * Validated env from the Hono request context — use in route handlers.
- *
- * Only validates app-specific server variables (GATEWAY_API_KEY, ENCRYPTION_KEY).
- * Preset groups (vercel, upstash, db, OAuth, etc.) are validated once at module
- * load via the module-level `env` export and should be accessed from there or
- * from their respective package imports.
- */
-export const getEnv = (c: Context) =>
+const _createEnv = (c: Context) =>
   createEnv({
     clientPrefix: "" as const,
     client: {},
@@ -33,6 +25,26 @@ export const getEnv = (c: Context) =>
     runtimeEnv: honoEnv<Record<keyof typeof server, string | undefined>>(c),
     emptyStringAsUndefined: true,
   });
+
+export type ConnectionsEnv = ReturnType<typeof _createEnv>;
+
+const envCache = new WeakMap<object, ConnectionsEnv>();
+
+/**
+ * Validated env from the Hono request context — cached per request.
+ *
+ * Only validates app-specific server variables (GATEWAY_API_KEY, ENCRYPTION_KEY).
+ * Preset groups (vercel, upstash, db, OAuth, etc.) are validated once at module
+ * load via the module-level `env` export and should be accessed from there or
+ * from their respective package imports.
+ */
+export const getEnv = (c: Context): ConnectionsEnv => {
+  const cached = envCache.get(c);
+  if (cached) return cached;
+  const validated = _createEnv(c);
+  envCache.set(c, validated);
+  return validated;
+};
 
 /** Module-level validated env for non-Hono contexts (workflows, utilities, module-level init). */
 export const env = createEnv({

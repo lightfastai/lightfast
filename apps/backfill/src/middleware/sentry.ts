@@ -1,28 +1,44 @@
-import * as Sentry from "@sentry/core";
 import { createMiddleware } from "hono/factory";
+import * as Sentry from "@sentry/core";
+import type { RequestIdVariables } from "./request-id.js";
 
 /**
- * Sentry middleware — captures unhandled errors with request context.
+ * Sentry middleware — captures errors with request context.
  *
- * Mirrors the Sentry trpcMiddleware in @api/console:
- * - Wraps each request in a Sentry span for tracing
- * - Captures exceptions with method, path, and request ID context
+ * - Captures thrown exceptions with method, path, and request ID context
+ * - Captures explicitly returned 5xx responses (not thrown as exceptions)
+ *
+ * Placed after errorSanitizer so it sees original 5xx bodies before sanitization.
  */
-export const sentry = createMiddleware(async (c, next) => {
+export const sentry = createMiddleware<{
+  Variables: RequestIdVariables;
+}>(async (c, next) => {
   try {
     await next();
   } catch (err) {
-    Sentry.withScope((scope: Sentry.Scope) => {
+    Sentry.withScope((scope) => {
       scope.setTag("service", "backfill");
       scope.setTag("http.method", c.req.method);
       scope.setTag("http.path", c.req.path);
-
-      const requestId = c.get("requestId" as never) as string | undefined;
-      if (requestId) { scope.setTag("request_id", requestId); }
-
+      const requestId = c.get("requestId");
+      if (requestId) scope.setTag("request_id", requestId);
       Sentry.captureException(err);
     });
-
     throw err;
+  }
+
+  if (c.res.status >= 500) {
+    Sentry.withScope((scope) => {
+      scope.setTag("service", "backfill");
+      scope.setTag("http.method", c.req.method);
+      scope.setTag("http.path", c.req.path);
+      scope.setTag("http.status", String(c.res.status));
+      const requestId = c.get("requestId");
+      if (requestId) scope.setTag("request_id", requestId);
+      Sentry.captureMessage(
+        `HTTP ${c.res.status}: ${c.req.method} ${c.req.path}`,
+        "error",
+      );
+    });
   }
 });

@@ -1,6 +1,7 @@
 import { createMiddleware } from "hono/factory";
+import { env } from "../env.js";
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = env.NODE_ENV === "production";
 
 /**
  * Error sanitizer middleware — prevents credential leaks in production.
@@ -13,6 +14,9 @@ export const errorSanitizer = createMiddleware(async (c, next) => {
   await next();
 
   if (isProduction && c.res.status >= 500) {
-    c.res = c.json({ error: "An unexpected error occurred" }, 500);
+    c.res = new Response(
+      JSON.stringify({ error: "An unexpected error occurred" }),
+      { status: 500, headers: { "content-type": "application/json" } },
+    );
   }
 });
