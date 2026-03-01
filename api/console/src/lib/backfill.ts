@@ -20,13 +20,16 @@ export async function notifyBackfill(params: {
   installationId: string;
   provider: string;
   orgId: string;
+  correlationId?: string;
 }): Promise<void> {
+  const correlationId = params.correlationId ?? crypto.randomUUID();
   try {
     const res = await fetch(`${gatewayUrl}/api/backfill`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-API-Key": env.GATEWAY_API_KEY,
+        "X-Correlation-Id": correlationId,
       },
       body: JSON.stringify(params),
       signal: AbortSignal.timeout(10_000),

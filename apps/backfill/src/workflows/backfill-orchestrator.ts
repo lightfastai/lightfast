@@ -29,7 +29,7 @@ export const backfillOrchestrator = inngest.createFunction(
   },
   { event: "apps-backfill/run.requested" },
   async ({ event, step }) => {
-    const { installationId, provider, orgId, depth, entityTypes } = event.data;
+    const { installationId, provider, orgId, depth, entityTypes, correlationId } = event.data;
 
     if (depth <= 0) {
       throw new NonRetriableError(
@@ -42,7 +42,11 @@ export const backfillOrchestrator = inngest.createFunction(
       const response = await fetch(
         `${connectionsUrl}/connections/${installationId}`,
         {
-          headers: { "X-API-Key": env.GATEWAY_API_KEY, "X-Request-Source": "backfill" },
+          headers: {
+            "X-API-Key": env.GATEWAY_API_KEY,
+            "X-Request-Source": "backfill",
+            ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
+          },
           signal: AbortSignal.timeout(10_000),
         },
       ).catch((err: unknown) => {
@@ -135,6 +139,7 @@ export const backfillOrchestrator = inngest.createFunction(
           resource: wu.resource,
           since,
           depth,
+          correlationId,
         },
       })),
     );

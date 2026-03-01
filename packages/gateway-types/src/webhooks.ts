@@ -11,6 +11,8 @@ export interface WebhookReceiptPayload {
   resourceId: string | null;
   payload: unknown;
   receivedAt: number;
+  /** Cross-service correlation ID for distributed tracing */
+  correlationId?: string;
 }
 
 /**
@@ -32,4 +34,6 @@ export interface WebhookEnvelope {
   payload: unknown;
   /** Unix timestamp in milliseconds when the webhook was received */
   receivedAt: number;
+  /** Cross-service correlation ID for distributed tracing */
+  correlationId?: string;
 }

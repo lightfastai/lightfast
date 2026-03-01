@@ -15,10 +15,14 @@ const eventsMap = {
     depth: z.union([z.literal(7), z.literal(30), z.literal(90)]).default(30),
     /** Entity types to backfill (defaults to connector's defaultEntityTypes) */
     entityTypes: z.array(z.string()).optional(),
+    /** Cross-service correlation ID for distributed tracing */
+    correlationId: z.string().optional(),
   }),
   "apps-backfill/run.cancelled": z.object({
     /** Gateway installation ID (matched by cancelOn) */
     installationId: z.string(),
+    /** Cross-service correlation ID for distributed tracing */
+    correlationId: z.string().optional(),
   }),
   "apps-backfill/entity.requested": z.object({
     /** Correlation ID — matches the orchestrator's trigger event */
@@ -38,6 +42,8 @@ const eventsMap = {
     since: z.string().datetime(),
     /** Depth in days — for logging/context */
     depth: z.union([z.literal(7), z.literal(30), z.literal(90)]),
+    /** Cross-service correlation ID for distributed tracing */
+    correlationId: z.string().optional(),
   }),
   "apps-backfill/entity.completed": z.object({
     installationId: z.string(),
@@ -49,6 +55,8 @@ const eventsMap = {
     eventsDispatched: z.number(),
     pagesProcessed: z.number(),
     error: z.string().optional(),
+    /** Cross-service correlation ID for distributed tracing */
+    correlationId: z.string().optional(),
   }),
 };
 

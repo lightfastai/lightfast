@@ -63,6 +63,7 @@ export const backfillEntityWorker = inngest.createFunction(
       entityType,
       resource,
       since,
+      correlationId,
     } = event.data;
 
     // ── Step 1: Self-fetch token (not passed via event — security + expiration) ──
@@ -72,7 +73,11 @@ export const backfillEntityWorker = inngest.createFunction(
         const response = await fetch(
           `${connectionsUrl}/connections/${installationId}/token`,
           {
-            headers: { "X-API-Key": env.GATEWAY_API_KEY, "X-Request-Source": "backfill" },
+            headers: {
+              "X-API-Key": env.GATEWAY_API_KEY,
+              "X-Request-Source": "backfill",
+              ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
+            },
             signal: AbortSignal.timeout(30_000),
           },
         );
@@ -148,7 +153,11 @@ export const backfillEntityWorker = inngest.createFunction(
               const tokenResponse = await fetch(
                 `${connectionsUrl}/connections/${installationId}/token`,
                 {
-                  headers: { "X-API-Key": env.GATEWAY_API_KEY, "X-Request-Source": "backfill" },
+                  headers: {
+                    "X-API-Key": env.GATEWAY_API_KEY,
+                    "X-Request-Source": "backfill",
+                    ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
+                  },
                   signal: AbortSignal.timeout(30_000),
                 },
               );
@@ -206,6 +215,7 @@ export const backfillEntityWorker = inngest.createFunction(
                 headers: {
                   "Content-Type": "application/json",
                   "X-API-Key": env.GATEWAY_API_KEY,
+                  ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
                 },
                 body: JSON.stringify({
                   connectionId: installationId,

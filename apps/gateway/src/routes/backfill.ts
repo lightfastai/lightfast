@@ -4,8 +4,9 @@ import { getQStashClient } from "@vendor/qstash";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { backfillUrl } from "../lib/urls.js";
 import { getEnv } from "../env.js";
+import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
-const backfill = new Hono();
+const backfill = new Hono<{ Variables: LifecycleVariables }>();
 
 const triggerSchema = z.object({
   installationId: z.string().min(1),
@@ -41,7 +42,10 @@ backfill.post("/", apiKeyAuth, async (c) => {
   try {
     await getQStashClient().publishJSON({
       url: `${backfillUrl}/trigger`,
-      headers: { "X-API-Key": GATEWAY_API_KEY },
+      headers: {
+        "X-API-Key": GATEWAY_API_KEY,
+        "X-Correlation-Id": c.get("correlationId"),
+      },
       body: { installationId, provider, orgId, depth, entityTypes },
       retries: 3,
       deduplicationId: `backfill:${provider}:${installationId}:${orgId}`,

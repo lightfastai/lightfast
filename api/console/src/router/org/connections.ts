@@ -71,6 +71,7 @@ export const connectionsRouter = {
 						"X-User-Id": ctx.auth.userId,
 						"X-API-Key": env.GATEWAY_API_KEY,
 						"X-Request-Source": "console-trpc",
+						"X-Correlation-Id": crypto.randomUUID(),
 					},
 				},
 			);
@@ -117,6 +118,7 @@ export const connectionsRouter = {
 						"X-User-Id": ctx.auth.userId,
 						"X-API-Key": env.GATEWAY_API_KEY,
 						"X-Request-Source": "console-trpc-cli",
+						"X-Correlation-Id": crypto.randomUUID(),
 					},
 				},
 			);

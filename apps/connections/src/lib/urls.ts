@@ -59,11 +59,15 @@ function getClient() {
  */
 export async function cancelBackfillService(params: {
   installationId: string;
+  correlationId?: string;
 }): Promise<void> {
   try {
     await getClient().publishJSON({
       url: `${backfillUrl}/trigger/cancel`,
-      headers: { "X-API-Key": env.GATEWAY_API_KEY },
+      headers: {
+        "X-API-Key": env.GATEWAY_API_KEY,
+        ...(params.correlationId ? { "X-Correlation-Id": params.correlationId } : {}),
+      },
       body: params,
       retries: 3,
       deduplicationId: `backfill-cancel:${params.installationId}`,

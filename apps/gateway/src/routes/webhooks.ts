@@ -9,8 +9,9 @@ import { webhookSeenKey } from "../lib/cache.js";
 import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/gateway-types";
 import { timingSafeStringEqual } from "../lib/crypto.js";
+import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
-const webhooks = new Hono();
+const webhooks = new Hono<{ Variables: LifecycleVariables }>();
 
 /**
  * POST /webhooks/:provider
@@ -83,8 +84,10 @@ webhooks.post("/:provider", async (c) => {
     }
 
     // Publish directly to Console ingress — skip connection resolution (pre-resolved in body)
+    const correlationId = c.get("correlationId");
     await getQStashClient().publishJSON({
       url: `${consoleUrl}/api/webhooks/ingress`,
+      headers: { "X-Correlation-Id": correlationId },
       body: {
         deliveryId: body.deliveryId,
         connectionId: body.connectionId,
@@ -93,6 +96,7 @@ webhooks.post("/:provider", async (c) => {
         eventType: body.eventType,
         payload: parsedPayload,
         receivedAt: body.receivedAt,
+        correlationId,
       } satisfies WebhookEnvelope,
       retries: 5,
     });
@@ -140,6 +144,7 @@ webhooks.post("/:provider", async (c) => {
     resourceId,
     payload,
     receivedAt: Date.now(),
+    correlationId: c.get("correlationId"),
   };
 
   await getWorkflowClient().trigger({
