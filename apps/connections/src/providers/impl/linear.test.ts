@@ -11,7 +11,6 @@ vi.mock("../../env", () => ({
 
 vi.mock("../../lib/urls", () => ({
   connectionsBaseUrl: "https://connections.test/services",
-  gatewayBaseUrl: "https://gateway.test/api",
 }));
 
 // Hoisted so vi.mock factories can reference them
@@ -22,21 +21,15 @@ const dbMocks = vi.hoisted(() => {
   const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
   const insert = vi.fn().mockReturnValue({ values });
 
-  // SELECT chain (pre-check + resolveToken)
+  // SELECT chain (resolveToken)
   const selectLimit = vi.fn();
   const selectWhere = vi.fn().mockReturnValue({ limit: selectLimit });
   const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
   const select = vi.fn().mockReturnValue({ from: selectFrom });
 
-  // UPDATE chain (webhook registration)
-  const updateWhere = vi.fn().mockResolvedValue(undefined);
-  const updateSet = vi.fn().mockReturnValue({ where: updateWhere });
-  const update = vi.fn().mockReturnValue({ set: updateSet });
-
   return {
     insert, values, onConflictDoUpdate, returning,
     select, selectLimit,
-    update, updateSet, updateWhere,
   };
 });
 
@@ -44,7 +37,6 @@ vi.mock("@db/console/client", () => ({
   db: {
     insert: dbMocks.insert,
     select: dbMocks.select,
-    update: dbMocks.update,
   },
 }));
 
@@ -54,16 +46,15 @@ vi.mock("@db/console/schema", () => ({
 }));
 
 vi.mock("drizzle-orm", () => ({
-  and: vi.fn(),
   eq: vi.fn(),
 }));
 
 vi.mock("../../lib/token-store", () => ({
   writeTokenRecord: vi.fn().mockResolvedValue(undefined),
+  updateTokenRecord: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@repo/lib", () => ({
-  nanoid: vi.fn().mockReturnValue("mock-secret-32chars-padding-here"),
   decrypt: vi.fn().mockReturnValue("decrypted-token"),
   encrypt: vi.fn().mockReturnValue("encrypted-value"),
 }));
@@ -71,6 +62,7 @@ vi.mock("@repo/lib", () => ({
 import { LinearProvider } from "./linear.js";
 import { db } from "@db/console/client";
 import { decrypt } from "@repo/lib";
+import { updateTokenRecord } from "../../lib/token-store.js";
 
 const provider = new LinearProvider();
 
@@ -85,15 +77,11 @@ describe("LinearProvider", () => {
     const selectWhere = vi.fn().mockReturnValue({ limit: dbMocks.selectLimit });
     const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
     dbMocks.select.mockReturnValue({ from: selectFrom });
-    // Reset Drizzle UPDATE chain
-    dbMocks.update.mockReturnValue({ set: dbMocks.updateSet });
-    dbMocks.updateSet.mockReturnValue({ where: dbMocks.updateWhere });
-    dbMocks.updateWhere.mockResolvedValue(undefined);
   });
 
   it("has correct provider name and webhook flag", () => {
     expect(provider.name).toBe("linear");
-    expect(provider.requiresWebhookRegistration).toBe(true);
+    expect(provider.requiresWebhookRegistration).toBe(false);
   });
 
   describe("getAuthorizationUrl", () => {
@@ -114,14 +102,6 @@ describe("LinearProvider", () => {
       });
       const parsed = new URL(url);
       expect(parsed.searchParams.get("scope")).toBe("read");
-    });
-  });
-
-  describe("refreshToken", () => {
-    it("rejects — Linear tokens do not support refresh", async () => {
-      await expect(provider.refreshToken("any")).rejects.toThrow(
-        "Linear tokens do not support refresh",
-      );
     });
   });
 
@@ -146,10 +126,32 @@ describe("LinearProvider", () => {
       expect(result.tokenType).toBe("Bearer");
       expect(result.scope).toBe("read,write");
       expect(result.expiresIn).toBe(315360000);
+      expect(result.refreshToken).toBeUndefined();
       expect(globalThis.fetch).toHaveBeenCalledWith(
         "https://api.linear.app/oauth/token",
         expect.objectContaining({ method: "POST" }),
       );
+    });
+
+    it("returns refresh token when present", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          access_token: "lin-tok-123",
+          token_type: "Bearer",
+          scope: "read,write",
+          expires_in: 3600,
+          refresh_token: "lin-rt-456",
+        }),
+      } as unknown as Response);
+
+      const result = await provider.exchangeCode(
+        "auth-code",
+        "https://redirect.test",
+      );
+
+      expect(result.refreshToken).toBe("lin-rt-456");
+      expect(result.expiresIn).toBe(3600);
     });
 
     it("throws on non-ok response", async () => {
@@ -161,6 +163,42 @@ describe("LinearProvider", () => {
       await expect(
         provider.exchangeCode("bad-code", "https://redirect.test"),
       ).rejects.toThrow("Linear token exchange failed: 401");
+    });
+  });
+
+  describe("refreshToken", () => {
+    it("exchanges refresh token for new tokens", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          access_token: "lin-tok-new",
+          token_type: "Bearer",
+          scope: "read,write",
+          expires_in: 3600,
+          refresh_token: "lin-rt-new",
+        }),
+      } as unknown as Response);
+
+      const result = await provider.refreshToken("lin-rt-old");
+
+      expect(result.accessToken).toBe("lin-tok-new");
+      expect(result.refreshToken).toBe("lin-rt-new");
+      expect(result.expiresIn).toBe(3600);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "https://api.linear.app/oauth/token",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+
+    it("throws on non-ok response", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+      } as Response);
+
+      await expect(provider.refreshToken("bad-rt")).rejects.toThrow(
+        "Linear token refresh failed: 400",
+      );
     });
   });
 
@@ -211,7 +249,7 @@ describe("LinearProvider", () => {
       } as unknown as Context;
     }
 
-    it("creates installation and triggers webhook + backfill for new connections", async () => {
+    it("creates installation on new connection", async () => {
       vi.spyOn(globalThis, "fetch")
         .mockResolvedValueOnce({
           ok: true,
@@ -227,15 +265,8 @@ describe("LinearProvider", () => {
           json: async () => ({
             data: { viewer: { id: "v1", organization: { id: "org-ext-1", name: "My Org", urlKey: "my-org" } } },
           }),
-        } as unknown as Response)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            data: { webhookCreate: { success: true, webhook: { id: "wh-1" } } },
-          }),
         } as unknown as Response);
 
-      dbMocks.selectLimit.mockResolvedValue([]); // No existing row
       dbMocks.returning.mockResolvedValue([{ id: "inst-lin-new" }]);
 
       const c = mockContext({ code: "auth-code" });
@@ -249,12 +280,14 @@ describe("LinearProvider", () => {
         installationId: "inst-lin-new",
         provider: "linear",
       });
-      expect(result).not.toHaveProperty("reactivated");
+      // Only 2 fetch calls: token exchange + viewer query (no webhook registration)
+      expect(globalThis.fetch).toHaveBeenCalledTimes(2);
       expect(dbMocks.values).toHaveBeenCalledWith(
         expect.objectContaining({
           providerAccountInfo: expect.objectContaining({
             version: 1,
             sourceType: "linear",
+            events: ["Issue", "Comment", "IssueLabel", "Project", "Cycle"],
             raw: expect.objectContaining({
               token_type: "Bearer",
               scope: "read,write",
@@ -269,7 +302,7 @@ describe("LinearProvider", () => {
       );
     });
 
-    it("skips webhook for reactivated connections", async () => {
+    it("upserts on reactivated connection", async () => {
       vi.spyOn(globalThis, "fetch")
         .mockResolvedValueOnce({
           ok: true,
@@ -287,7 +320,6 @@ describe("LinearProvider", () => {
           }),
         } as unknown as Response);
 
-      dbMocks.selectLimit.mockResolvedValue([{ id: "inst-existing" }]); // Row exists
       dbMocks.returning.mockResolvedValue([{ id: "inst-existing" }]);
 
       const c = mockContext({ code: "auth-code" });
@@ -300,9 +332,7 @@ describe("LinearProvider", () => {
         status: "connected",
         installationId: "inst-existing",
         provider: "linear",
-        reactivated: true,
       });
-      // Webhook registration should NOT have been called (only 2 fetch calls, not 3)
       expect(globalThis.fetch).toHaveBeenCalledTimes(2);
     });
 
@@ -345,13 +375,47 @@ describe("LinearProvider", () => {
       ).rejects.toThrow("no_token_found");
     });
 
-    it("throws when token is expired", async () => {
+    it("throws when token is expired and no refresh token", async () => {
       const pastDate = new Date(Date.now() - 60_000).toISOString();
-      mockDbSelect([{ accessToken: "encrypted-tok", expiresAt: pastDate }]);
+      mockDbSelect([{ accessToken: "encrypted-tok", expiresAt: pastDate, refreshToken: null }]);
 
       await expect(
         provider.resolveToken({ id: "inst-1" } as any),
-      ).rejects.toThrow("token_expired");
+      ).rejects.toThrow("token_expired:no_refresh_token");
+    });
+
+    it("refreshes expired token when refresh token exists", async () => {
+      const pastDate = new Date(Date.now() - 60_000).toISOString();
+      mockDbSelect([{
+        id: "tok-1",
+        accessToken: "encrypted-tok",
+        expiresAt: pastDate,
+        refreshToken: "encrypted-refresh",
+      }]);
+
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          access_token: "lin-tok-refreshed",
+          token_type: "Bearer",
+          scope: "read,write",
+          expires_in: 3600,
+          refresh_token: "lin-rt-new",
+        }),
+      } as unknown as Response);
+
+      const result = await provider.resolveToken({ id: "inst-1" } as any);
+
+      expect(result.accessToken).toBe("lin-tok-refreshed");
+      expect(result.provider).toBe("linear");
+      expect(result.expiresIn).toBe(3600);
+      expect(decrypt).toHaveBeenCalledWith("encrypted-refresh", "a".repeat(64));
+      expect(updateTokenRecord).toHaveBeenCalledWith(
+        "tok-1",
+        expect.objectContaining({ accessToken: "lin-tok-refreshed" }),
+        "encrypted-refresh",
+        pastDate,
+      );
     });
 
     it("returns expiresIn for token with future expiry", async () => {

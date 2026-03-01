@@ -51,16 +51,15 @@ export interface VercelOAuthRaw {
 
 /** Raw shape from Linear POST /oauth/token (minus access_token secret) */
 export interface LinearOAuthRaw {
-  token_type?: string;
-  scope?: string;
-  expires_in?: number;
+  token_type: string;
+  scope: string;
+  expires_in: number;
 }
 
 /** Raw shape from Sentry POST /api/0/sentry-app-installations/:id/authorizations/ (minus token/refreshToken secrets) */
 export interface SentryOAuthRaw {
   expiresAt?: string;
   scopes?: string[];
-  organization?: { slug: string };
 }
 
 // ── Provider Account Info Types ──
