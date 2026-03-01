@@ -102,7 +102,7 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
 
     return (
       <SidebarMenuItem key={item.title}>
-        <SidebarMenuButton asChild isActive={isActive}>
+        <SidebarMenuButton asChild isActive={isActive} size="sm">
           <Link href={item.href} prefetch={true}>
             <span>{item.title}</span>
           </Link>
