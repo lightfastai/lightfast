@@ -14,16 +14,12 @@ export interface LifecycleVariables extends RequestIdVariables {
  *
  * Priority:
  * 1. Explicit X-Request-Source header (set by callers, like x-trpc-source)
- * 2. X-API-Key present → internal service call
- * 3. Fallback "service" — backfill only receives internal calls
+ * 2. Fallback "service" — backfill only receives internal calls
  */
 function resolveSource(c: {
   req: { header(name: string): string | undefined };
 }): string {
-  const explicit = c.req.header("X-Request-Source");
-  if (explicit) {return explicit;}
-  if (c.req.header("X-API-Key")) {return "service";}
-  return "service";
+  return c.req.header("X-Request-Source") ?? "service";
 }
 
 /**
