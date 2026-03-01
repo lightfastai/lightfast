@@ -62,8 +62,8 @@ export default async function NewWorkspacePage({
   prefetch(orgTrpc.connections.sentry.get.queryOptions());
 
   return (
-    <main className="flex-1 flex items-start justify-center p-4">
-      <div className="w-full max-w-3xl space-y-4">
+    <main className="flex-1 flex items-start justify-center py-4">
+      <div className="w-full space-y-4">
         {/* Static Header (Server Component) */}
         <WorkspaceHeader />
 
