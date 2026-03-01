@@ -14,11 +14,15 @@ import { useEffect } from "react";
  */
 export default function VercelConnectedPage() {
 	useEffect(() => {
-		// Notify parent window to open the project selector
+		// Notify parent via BroadcastChannel (works regardless of window.opener / COOP)
+		const channel = new BroadcastChannel("oauth-connections");
+		channel.postMessage({ type: "vercel_connected" });
+		channel.close();
+
+		// Also try postMessage (works when opener is available)
 		const opener = window.opener as Window | null;
 		if (opener) {
 			try {
-				// Post message to parent window to trigger project selector
 				opener.postMessage({ type: "vercel_connected" }, "*");
 			} catch {
 				// Ignore cross-origin errors
