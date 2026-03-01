@@ -223,24 +223,22 @@ export const connectionsRouter = {
 				return null;
 			}
 
-			// Fetch live account info from GitHub API for each installation
-			const app = getGitHubApp();
-			const allInstallations = await Promise.all(
-				results
-					.filter((row) => row.providerAccountInfo?.sourceType === "github")
-					.map(async (row) => {
-						const installationId = Number.parseInt(row.externalId, 10);
-						const ghInstallation = await getAppInstallation(app, installationId);
-						const account = ghInstallation.account;
-						return {
-							id: row.externalId,
-							accountLogin: account && "login" in account ? account.login : row.externalId,
-							accountType: account && "type" in account && account.type === "User" ? "User" : "Organization",
-							avatarUrl: account && "avatar_url" in account ? account.avatar_url : "",
-							gwInstallationId: row.id,
-						};
-					}),
-			);
+			// Read account info from cached providerAccountInfo (populated during
+			// OAuth callback and refreshed by github.validate). No live API calls —
+			// keeps .list fast and resilient to stale/deleted installations.
+			const allInstallations = results
+				.filter((row) => row.providerAccountInfo?.sourceType === "github")
+				.map((row) => {
+					const info = row.providerAccountInfo as Extract<typeof row.providerAccountInfo, { sourceType: "github" }>;
+					const account = info.raw.account;
+					return {
+						id: row.externalId,
+						accountLogin: account.login || row.externalId,
+						accountType: account.type === "User" ? "User" as const : "Organization" as const,
+						avatarUrl: account.avatar_url || "",
+						gwInstallationId: row.id,
+					};
+				});
 
 			const first = results[0];
 			if (!first) return null;
@@ -607,42 +605,54 @@ export const connectionsRouter = {
 					),
 				);
 
-			// Fetch live account info from Vercel API for each installation
+			// Fetch live account info from Vercel API for each installation.
+			// Wrapped in try/catch so a single failed token/network call doesn't
+			// crash the entire list — falls back to cached IDs from providerAccountInfo.
+			// TODO: Store team_slug/username in VercelOAuthRaw during callback so
+			// this can become fully cached like github.list (no live API calls).
 			const installations = await Promise.all(
 				results
 					.filter((inst) => inst.providerAccountInfo?.sourceType === "vercel")
 					.map(async (inst) => {
 						const info = inst.providerAccountInfo as Extract<typeof inst.providerAccountInfo, { sourceType: "vercel" }>;
-						const accessToken = await getInstallationToken(inst.id);
 
 						let accountLogin: string;
 						let accountType: "Team" | "User";
 
-						if (info.raw.team_id) {
-							const res = await fetch(`https://api.vercel.com/v2/teams/${info.raw.team_id}`, {
-								headers: { Authorization: `Bearer ${accessToken}` },
-								signal: AbortSignal.timeout(10_000),
-							});
-							if (res.ok) {
-								const data = (await res.json()) as Record<string, unknown>;
-								accountLogin = typeof data.slug === "string" ? data.slug : info.raw.team_id;
+						try {
+							const accessToken = await getInstallationToken(inst.id);
+
+							if (info.raw.team_id) {
+								const res = await fetch(`https://api.vercel.com/v2/teams/${info.raw.team_id}`, {
+									headers: { Authorization: `Bearer ${accessToken}` },
+									signal: AbortSignal.timeout(10_000),
+								});
+								if (res.ok) {
+									const data = (await res.json()) as Record<string, unknown>;
+									accountLogin = typeof data.slug === "string" ? data.slug : info.raw.team_id;
+								} else {
+									accountLogin = info.raw.team_id;
+								}
+								accountType = "Team";
 							} else {
-								accountLogin = info.raw.team_id;
+								const res = await fetch("https://api.vercel.com/v2/user", {
+									headers: { Authorization: `Bearer ${accessToken}` },
+									signal: AbortSignal.timeout(10_000),
+								});
+								if (res.ok) {
+									const data = (await res.json()) as Record<string, unknown>;
+									const user = data.user as Record<string, unknown> | undefined;
+									accountLogin = typeof user?.username === "string" ? user.username : info.raw.user_id;
+								} else {
+									accountLogin = info.raw.user_id;
+								}
+								accountType = "User";
 							}
-							accountType = "Team";
-						} else {
-							const res = await fetch("https://api.vercel.com/v2/user", {
-								headers: { Authorization: `Bearer ${accessToken}` },
-								signal: AbortSignal.timeout(10_000),
-							});
-							if (res.ok) {
-								const data = (await res.json()) as Record<string, unknown>;
-								const user = data.user as Record<string, unknown> | undefined;
-								accountLogin = typeof user?.username === "string" ? user.username : info.raw.user_id;
-							} else {
-								accountLogin = info.raw.user_id;
-							}
-							accountType = "User";
+						} catch (error) {
+							// Fall back to cached IDs when token retrieval or API call fails
+							console.warn("[connections.vercel.list] Failed to fetch account info, using cached fallback:", error);
+							accountLogin = info.raw.team_id ?? info.raw.user_id;
+							accountType = info.raw.team_id ? "Team" : "User";
 						}
 
 						return {
@@ -971,16 +981,12 @@ export const connectionsRouter = {
 				return null;
 			}
 
-			const info = installation.providerAccountInfo;
-			const orgSlug = info?.sourceType === "sentry" ? info.organizationSlug : undefined;
-
 			return {
 				id: installation.id,
 				orgId: installation.orgId,
 				provider: installation.provider,
 				connectedAt: installation.createdAt,
 				status: installation.status,
-				organizationSlug: orgSlug ?? null,
 			};
 		}),
 
@@ -1018,25 +1024,10 @@ export const connectionsRouter = {
 				// 2. Get access token from gw_tokens vault
 				const accessToken = await getInstallationToken(installation.id);
 
-				// 3. Get organizationSlug from providerAccountInfo
-				const providerAccountInfo = installation.providerAccountInfo;
-				if (providerAccountInfo?.sourceType !== "sentry") {
-					throw new TRPCError({
-						code: "INTERNAL_SERVER_ERROR",
-						message: "Invalid provider account info",
-					});
-				}
-				const orgSlug = providerAccountInfo.organizationSlug;
-				if (!orgSlug) {
-					throw new TRPCError({
-						code: "PRECONDITION_FAILED",
-						message: "Sentry organization slug not found. Please reconnect Sentry.",
-					});
-				}
-
-				// 4. Call Sentry API
+				// 3. Call Sentry API — /api/0/projects/ works with installation tokens
+				// (scoped to the org the app is installed on, no org slug needed)
 				const response = await fetch(
-					`https://sentry.io/api/0/organizations/${orgSlug}/projects/`,
+					"https://sentry.io/api/0/projects/",
 					{
 						headers: { Authorization: `Bearer ${accessToken}` },
 						signal: AbortSignal.timeout(10_000),

@@ -41,7 +41,13 @@ export interface GitHubInstallationRaw {
   created_at: string;
 }
 
-/** Raw shape from Vercel POST /v2/oauth/access_token (minus access_token secret) */
+/**
+ * Raw shape from Vercel POST /v2/oauth/access_token (minus access_token secret).
+ *
+ * TODO: Store `team_slug` and `username` during OAuth callback so
+ * `vercel.list` can read display names from cache instead of making
+ * live API calls (same pattern as github.list).
+ */
 export interface VercelOAuthRaw {
   token_type: string;
   installation_id: string;
@@ -90,8 +96,6 @@ export interface SentryAccountInfo extends BaseAccountInfo {
   raw: SentryOAuthRaw;
   /** Sentry installation ID extracted from composite code param */
   installationId: string;
-  /** Organization slug from Sentry API response */
-  organizationSlug: string;
 }
 
 export type ProviderAccountInfo =
