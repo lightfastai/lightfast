@@ -295,7 +295,7 @@ export function CreateWorkspaceButton() {
 
   return (
     <div className="mt-8 flex justify-end">
-      <Button onClick={handleCreateWorkspace} disabled={isDisabled} size="lg">
+      <Button onClick={handleCreateWorkspace} disabled={isDisabled} size="sm">
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

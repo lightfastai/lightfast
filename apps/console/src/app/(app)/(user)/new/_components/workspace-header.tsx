@@ -1,17 +1,21 @@
+import { Icons } from "@repo/ui/components/icons";
+
 /**
  * Workspace Creation Header
  * Server component - completely static, no interactivity
  */
 export function WorkspaceHeader() {
   return (
-    <div className="mb-8">
-      <h1 className="text-3xl font-bold mb-2">Create a new workspace</h1>
-      <p className="text-muted-foreground">
-        Workspaces organize your team's knowledge and memory.{" "}
-        <span className="text-xs italic">
-          Required fields are marked with an asterisk (*).
-        </span>
-      </p>
-    </div>
+    <>
+      {/* Logo */}
+      <div className="rounded-sm bg-card p-3 w-fit">
+        <Icons.logoShort className="h-5 w-5 text-foreground" />
+      </div>
+
+      {/* Heading */}
+      <h1 className="text-2xl pb-4 font-pp font-medium text-foreground">
+        Create a new workspace
+      </h1>
+    </>
   );
 }

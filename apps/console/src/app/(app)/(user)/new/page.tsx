@@ -7,7 +7,7 @@ import { SourcesSection } from "./_components/sources-section";
 import { SourcesSectionLoading } from "./_components/sources-section-loading";
 import { CreateWorkspaceButton } from "./_components/create-workspace-button";
 import { NewWorkspaceInitializer } from "./_components/new-workspace-initializer";
-import { NewPageHeader } from "./_components/new-page-header";
+
 
 /**
  * Workspace Creation Page
@@ -62,68 +62,65 @@ export default async function NewWorkspacePage({
   prefetch(orgTrpc.connections.sentry.get.queryOptions());
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background">
-      <NewPageHeader />
-      <div className="min-h-full flex items-start justify-center py-12">
-        <div className="w-full max-w-3xl px-6">
-          {/* Static Header (Server Component) */}
-          <WorkspaceHeader />
+    <main className="flex-1 flex items-start justify-center p-4">
+      <div className="w-full max-w-3xl space-y-4">
+        {/* Static Header (Server Component) */}
+        <WorkspaceHeader />
 
-          {/* Form with Client Islands */}
-          <HydrateClient>
-            {/* Client component handles initialization from cache + URL params */}
-            <NewWorkspaceInitializer
-              teamSlugHint={teamSlugHint}
-              initialWorkspaceName={initialWorkspaceName}
-            >
-              <div className="space-y-8">
-                {/* Section 1: General */}
-                <div className="flex gap-6">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-foreground text-background font-semibold">
-                    1
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-6">
-                    <div>
-                      <h2 className="text-xl font-semibold mb-4">General</h2>
-
-                      <div className="space-y-6">
-                        {/* Client Island: Organization Selector */}
-                        <OrganizationSelector />
-
-                        {/* Client Island: Workspace Name Input */}
-                        <WorkspaceNameInput />
-                      </div>
-                    </div>
-                  </div>
+        {/* Form with Client Islands */}
+        <HydrateClient>
+          {/* Client component handles initialization from cache + URL params */}
+          <NewWorkspaceInitializer
+            teamSlugHint={teamSlugHint}
+            initialWorkspaceName={initialWorkspaceName}
+          >
+            <div className="space-y-8">
+              {/* Section 1: General */}
+              <div className="flex gap-6">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-foreground text-background font-semibold">
+                  1
                 </div>
+                <div className="flex-1 min-w-0 space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-4">General</h2>
 
-                {/* Section 2: Sources (optional) */}
-                <div className="flex gap-6">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-foreground text-background font-semibold">
-                    2
-                  </div>
-                  <div className="flex-1 space-y-6">
-                    <div>
-                      <h2 className="text-xl font-semibold mb-2">Sources</h2>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Select sources to connect to this workspace
-                      </p>
+                    <div className="space-y-6">
+                      {/* Client Island: Organization Selector */}
+                      <OrganizationSelector />
 
-                      {/* Client Island: Sources Accordion (with Suspense boundary) */}
-                      <Suspense fallback={<SourcesSectionLoading />}>
-                        <SourcesSection />
-                      </Suspense>
+                      {/* Client Island: Workspace Name Input */}
+                      <WorkspaceNameInput />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Client Island: Create Button */}
-              <CreateWorkspaceButton />
-            </NewWorkspaceInitializer>
-          </HydrateClient>
-        </div>
+              {/* Section 2: Sources (optional) */}
+              <div className="flex gap-6">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-foreground text-background font-semibold">
+                  2
+                </div>
+                <div className="flex-1 space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-2">Sources</h2>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Select sources to connect to this workspace
+                    </p>
+
+                    {/* Client Island: Sources Accordion (with Suspense boundary) */}
+                    <Suspense fallback={<SourcesSectionLoading />}>
+                      <SourcesSection />
+                    </Suspense>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Client Island: Create Button */}
+            <CreateWorkspaceButton />
+          </NewWorkspaceInitializer>
+        </HydrateClient>
       </div>
-    </div>
+    </main>
   );
 }
