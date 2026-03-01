@@ -22,33 +22,46 @@ export const gwInstallations = pgTable(
     webhookSecret: text("webhook_secret"),
     metadata: jsonb("metadata"),
 
-    // Strongly-typed provider account info
+    // Strongly-typed provider account info (discriminated union by sourceType)
+    //
+    // Every field is required unless there is a genuine reason it may not exist
+    // (e.g. Vercel personal accounts have no team). No "unknown" defaults —
+    // if data isn't available, the provider must fetch it or use "".
     providerAccountInfo: jsonb("provider_account_info").$type<
       | {
           version: 1;
           sourceType: "github";
-          installations?: {
+          installations: {
             id: string;
             accountId: string;
             accountLogin: string;
             accountType: "User" | "Organization";
             avatarUrl: string;
-            permissions: Record<string, string>;
-            installedAt: string;
-            lastValidatedAt: string;
+            permissions: Record<string, string>;  // { contents: "read", issues: "write" }
+            events: string[];                     // subscribed webhook event names
+            installedAt: string;                  // ISO 8601
+            lastValidatedAt: string;              // ISO 8601
           }[];
         }
       | {
           version: 1;
           sourceType: "vercel";
-          teamId?: string;
-          teamSlug?: string;
           userId: string;
           configurationId: string;
+          scope: string;                          // OAuth scope from token exchange
+          teamId?: string;                        // absent for personal Vercel accounts
+          teamSlug?: string;                      // absent for personal Vercel accounts
         }
       | {
           version: 1;
-          sourceType: "linear" | "sentry";
+          sourceType: "sentry";
+          installationId: string;                 // from code param (installationId:authCode)
+          organizationSlug: string;               // Sentry org slug — "" if not resolvable
+        }
+      | {
+          version: 1;
+          sourceType: "linear";
+          scope: string;                          // OAuth scope from token exchange
         }
     >(),
 

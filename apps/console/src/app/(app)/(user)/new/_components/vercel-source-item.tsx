@@ -74,7 +74,7 @@ export function VercelSourceItem() {
     const unselected = filteredProjects.filter((p) => !isSelected(p.id));
     setSelectedProjects([
       ...selectedProjects,
-      ...unselected.map((p) => ({ id: p.id, name: p.name, framework: p.framework ?? null })),
+      ...unselected,
     ]);
   };
 
@@ -229,13 +229,7 @@ export function VercelSourceItem() {
                       >
                         <Checkbox
                           checked={isSelected(project.id)}
-                          onCheckedChange={() =>
-                            toggleProject({
-                              id: project.id,
-                              name: project.name,
-                              framework: project.framework ?? null,
-                            })
-                          }
+                          onCheckedChange={() => toggleProject(project)}
                         />
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
                           <svg

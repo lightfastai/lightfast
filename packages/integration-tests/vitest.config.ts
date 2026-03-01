@@ -43,8 +43,8 @@ export default defineConfig({
       "@gateway/app": resolve(root, "apps/gateway/src/app.ts"),
       // ── Deep imports — bypasses package `exports` enforcement ──
       "@connections/urls": resolve(root, "apps/connections/src/lib/urls.ts"),
-      "@connections/crypto": resolve(root, "apps/connections/src/lib/crypto.ts"),
       "@connections/cache": resolve(root, "apps/connections/src/lib/cache.ts"),
+      "@repo/lib": resolve(root, "packages/lib/src/index.ts"),
       "@gateway/cache": resolve(root, "apps/gateway/src/lib/cache.ts"),
       "@gateway/webhook-delivery": resolve(root, "apps/gateway/src/workflows/webhook-delivery.ts"),
       "@backfill/orchestrator": resolve(root, "apps/backfill/src/workflows/backfill-orchestrator.ts"),

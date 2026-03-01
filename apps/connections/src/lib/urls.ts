@@ -47,7 +47,7 @@ export const backfillUrl = `${withRelatedProject({
     : "https://backfill.lightfast.ai",
 })}/api`;
 
-let _qstash: ReturnType<typeof getQStashClient>;
+let _qstash: ReturnType<typeof getQStashClient> | undefined;
 function getClient() {
   return (_qstash ??= getQStashClient());
 }

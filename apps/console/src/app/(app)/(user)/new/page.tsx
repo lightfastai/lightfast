@@ -57,7 +57,7 @@ export default async function NewWorkspacePage({
   // Prefetch org-scoped connection status for GitHub and Vercel
   // Avoids client-side fetch waterfall in SourcesSection
   prefetch(orgTrpc.connections.github.get.queryOptions());
-  prefetch(orgTrpc.connections.vercel.get.queryOptions());
+  prefetch(orgTrpc.connections.vercel.list.queryOptions());
 
   return (
     <div className="flex-1 overflow-y-auto bg-background">
@@ -80,7 +80,7 @@ export default async function NewWorkspacePage({
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-foreground text-background font-semibold">
                     1
                   </div>
-                  <div className="flex-1 space-y-6">
+                  <div className="flex-1 min-w-0 space-y-6">
                     <div>
                       <h2 className="text-xl font-semibold mb-4">General</h2>
 

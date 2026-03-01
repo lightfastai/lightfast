@@ -6,42 +6,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useFormCompat, Form } from "@repo/ui/components/ui/form";
 import { workspaceFormSchema } from "@repo/console-validation/forms";
 import type { WorkspaceFormValues } from "@repo/console-validation/forms";
+import type { RouterOutputs } from "@repo/console-trpc/types";
 
 /**
- * Workspace Form State
- * Shared state across all form sections (beyond react-hook-form)
+ * Types derived from tRPC RouterOutputs — never define manual interfaces.
  */
-interface Repository {
-  id: string;
-  name: string;
-  fullName: string;
-  owner: string;
-  description: string | null;
-  defaultBranch: string;
-  isPrivate: boolean;
-  isArchived: boolean;
-  url: string;
-  language: string | null;
-  stargazersCount: number;
-  updatedAt: string | null;
-}
+type GitHubGetResult = NonNullable<RouterOutputs["connections"]["github"]["get"]>;
+type GitHubInstallation = GitHubGetResult["installations"][number];
+type Repository = RouterOutputs["connections"]["github"]["repositories"][number];
 
-interface GitHubInstallation {
-  id: string;
-  accountId: string;
-  accountLogin: string;
-  accountType: "User" | "Organization";
-  avatarUrl: string;
-  permissions: Record<string, string>;
-  installedAt: string;
-  lastValidatedAt: string;
-}
-
-export interface VercelProject {
-  id: string;
-  name: string;
-  framework: string | null;
-}
+export type VercelInstallation = RouterOutputs["connections"]["vercel"]["list"]["installations"][number];
+export type VercelProject = RouterOutputs["connections"]["vercel"]["listProjects"]["projects"][number];
 
 interface WorkspaceFormState {
   // GitHub state
@@ -58,6 +33,10 @@ interface WorkspaceFormState {
   // Vercel state
   vercelInstallationId: string | null;
   setVercelInstallationId: (id: string | null) => void;
+  vercelInstallations: VercelInstallation[];
+  setVercelInstallations: (installations: VercelInstallation[]) => void;
+  selectedVercelInstallation: VercelInstallation | null;
+  setSelectedVercelInstallation: (installation: VercelInstallation | null) => void;
   selectedProjects: VercelProject[];
   setSelectedProjects: (projects: VercelProject[]) => void;
   toggleProject: (project: VercelProject) => void;
@@ -103,6 +82,8 @@ export function WorkspaceFormProvider({
 
   // Additional state for Vercel integration
   const [vercelInstallationId, setVercelInstallationId] = useState<string | null>(null);
+  const [vercelInstallations, setVercelInstallations] = useState<VercelInstallation[]>([]);
+  const [selectedVercelInstallation, setSelectedVercelInstallation] = useState<VercelInstallation | null>(null);
   const [selectedProjects, setSelectedProjects] = useState<VercelProject[]>([]);
 
   // Toggle helper for Vercel project selection
@@ -131,6 +112,10 @@ export function WorkspaceFormProvider({
           setSelectedInstallation,
           vercelInstallationId,
           setVercelInstallationId,
+          vercelInstallations,
+          setVercelInstallations,
+          selectedVercelInstallation,
+          setSelectedVercelInstallation,
           selectedProjects,
           setSelectedProjects,
           toggleProject,

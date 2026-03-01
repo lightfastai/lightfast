@@ -82,11 +82,12 @@ describe("VercelProvider", () => {
   });
 
   describe("buildAccountInfo", () => {
-    it("builds Vercel account info from OAuth response", () => {
+    it("builds Vercel account info with scope from OAuth response", () => {
       const info = provider.buildAccountInfo(
         { connectedBy: "user-1" },
         {
           accessToken: "tok",
+          scope: "read:project,read:team",
           raw: { team_id: "team_abc", team_slug: "my-team" },
         },
       );
@@ -94,17 +95,20 @@ describe("VercelProvider", () => {
         version: 1,
         sourceType: "vercel",
         userId: "user-1",
+        configurationId: "team_abc",
+        scope: "read:project,read:team",
         teamId: "team_abc",
         teamSlug: "my-team",
       });
     });
 
-    it("handles missing OAuth data gracefully", () => {
+    it("defaults scope to empty string when not in OAuth response", () => {
       const info = provider.buildAccountInfo({ connectedBy: "user-1" });
       expect(info).toMatchObject({
         version: 1,
         sourceType: "vercel",
         userId: "user-1",
+        scope: "",
       });
     });
   });

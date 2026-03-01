@@ -49,10 +49,21 @@ vi.mock("drizzle-orm", () => ({
 
 vi.mock("../../lib/github-jwt", () => ({
   getInstallationToken: vi.fn().mockResolvedValue("test-token"),
+  getInstallationDetails: vi.fn().mockResolvedValue({
+    account: {
+      login: "test-org",
+      id: 12345,
+      type: "Organization",
+      avatar_url: "https://avatars.githubusercontent.com/u/12345",
+    },
+    permissions: { contents: "read", metadata: "read" },
+    events: ["push", "pull_request"],
+    created_at: "2026-01-01T00:00:00Z",
+  }),
 }));
 
 import { GitHubProvider } from "./github.js";
-import { getInstallationToken } from "../../lib/github-jwt.js";
+import { getInstallationToken, getInstallationDetails } from "../../lib/github-jwt.js";
 import { notifyBackfillService } from "../../lib/urls.js";
 
 const provider = new GitHubProvider();
@@ -87,23 +98,12 @@ describe("GitHubProvider", () => {
   });
 
   describe("getAuthorizationUrl", () => {
-    it("builds correct GitHub OAuth URL with state", () => {
+    it("delegates to App installation URL", () => {
       const url = provider.getAuthorizationUrl("test-state");
       const parsed = new URL(url);
       expect(parsed.origin).toBe("https://github.com");
-      expect(parsed.pathname).toBe("/login/oauth/authorize");
-      expect(parsed.searchParams.get("client_id")).toBe("test-client-id");
+      expect(parsed.pathname).toBe("/apps/test-app/installations/new");
       expect(parsed.searchParams.get("state")).toBe("test-state");
-    });
-
-    it("includes redirect_uri when redirectPath option is set", () => {
-      const url = provider.getAuthorizationUrl("state", {
-        redirectPath: "/callback",
-      });
-      const parsed = new URL(url);
-      expect(parsed.searchParams.get("redirect_uri")).toBe(
-        "https://connections.test/services/connections/github/callback",
-      );
     });
   });
 
@@ -205,7 +205,7 @@ describe("GitHubProvider", () => {
   });
 
   describe("handleCallback", () => {
-    it("upserts installation and returns connected result", async () => {
+    it("upserts installation with API data and returns connected result", async () => {
       dbMocks.selectLimit.mockResolvedValue([]); // New installation
       dbMocks.returning.mockResolvedValue([{ id: "inst-abc" }]);
 
@@ -216,9 +216,9 @@ describe("GitHubProvider", () => {
       const result = await provider.handleCallback(c, {
         orgId: "org-1",
         connectedBy: "user-1",
-        accountLogin: "my-org",
       });
 
+      expect(getInstallationDetails).toHaveBeenCalledWith("ext-42");
       expect(dbMocks.insert).toHaveBeenCalled();
       expect(dbMocks.values).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -227,6 +227,18 @@ describe("GitHubProvider", () => {
           connectedBy: "user-1",
           orgId: "org-1",
           status: "active",
+          providerAccountInfo: expect.objectContaining({
+            version: 1,
+            sourceType: "github",
+            installations: [
+              expect.objectContaining({
+                accountLogin: "test-org",
+                accountType: "Organization",
+                permissions: { contents: "read", metadata: "read" },
+                events: ["push", "pull_request"],
+              }),
+            ],
+          }),
         }),
       );
       expect(result).toMatchObject({
@@ -293,6 +305,20 @@ describe("GitHubProvider", () => {
       });
     });
 
+    it("throws when getInstallationDetails fails (hard-fail, no garbage data)", async () => {
+      vi.mocked(getInstallationDetails).mockRejectedValueOnce(
+        new Error("GitHub installation details fetch failed: 401"),
+      );
+
+      const c = mockContext({ installation_id: "ext-42" });
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("GitHub installation details fetch failed: 401");
+
+      // Verify no DB upsert was attempted
+      expect(dbMocks.insert).not.toHaveBeenCalled();
+    });
+
     it("throws when installation_id is missing", async () => {
       const c = mockContext({});
       await expect(
@@ -354,43 +380,50 @@ describe("GitHubProvider", () => {
   });
 
   describe("buildAccountInfo", () => {
-    it("builds GitHub account info with installation data", () => {
-      const info = provider.buildAccountInfo({
-        installationId: "inst-42",
-        accountLogin: "my-org",
-      });
+    it("builds GitHub account info from API data", () => {
+      const apiData = {
+        account: {
+          login: "my-org",
+          id: 99,
+          type: "Organization" as const,
+          avatar_url: "https://avatars.test/99",
+        },
+        permissions: { contents: "read", issues: "write" },
+        events: ["push", "pull_request"],
+        created_at: "2026-01-15T00:00:00Z",
+      };
+      const info = provider.buildAccountInfo("inst-42", apiData);
       expect(info).toMatchObject({
         version: 1,
         sourceType: "github",
         installations: [
           expect.objectContaining({
             id: "inst-42",
+            accountId: "99",
             accountLogin: "my-org",
+            accountType: "Organization",
+            avatarUrl: "https://avatars.test/99",
+            permissions: { contents: "read", issues: "write" },
+            events: ["push", "pull_request"],
+            installedAt: "2026-01-15T00:00:00Z",
           }),
         ],
       });
     });
 
-    it("defaults to 'unknown' accountLogin when not provided", () => {
-      const info = provider.buildAccountInfo({ installationId: "inst-1" });
-      expect(info).toMatchObject({
-        installations: [expect.objectContaining({ accountLogin: "unknown" })],
-      });
-    });
-
-    it("uses accountType from stateData", () => {
-      const info = provider.buildAccountInfo({
-        installationId: "inst-42",
-        accountLogin: "my-user",
-        accountType: "User",
-      });
-      expect(info).toMatchObject({
-        installations: [expect.objectContaining({ accountType: "User" })],
-      });
-    });
-
-    it("defaults accountType to 'User' when not provided", () => {
-      const info = provider.buildAccountInfo({ installationId: "inst-1" });
+    it("uses User accountType from API data", () => {
+      const apiData = {
+        account: {
+          login: "my-user",
+          id: 42,
+          type: "User" as const,
+          avatar_url: "",
+        },
+        permissions: {},
+        events: [],
+        created_at: "2026-01-01T00:00:00Z",
+      };
+      const info = provider.buildAccountInfo("inst-42", apiData);
       expect(info).toMatchObject({
         installations: [expect.objectContaining({ accountType: "User" })],
       });

@@ -141,7 +141,39 @@ connections.get("/:provider/callback", async (c) => {
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
 
-  const stateData = await resolveAndConsumeState(c);
+  let stateData = await resolveAndConsumeState(c);
+
+  // GitHub-initiated redirects (permission changes, reinstalls) arrive without
+  // our state token. If state is missing but installation_id is present, look up
+  // the existing installation to recover orgId/connectedBy.
+  if (!stateData && providerName === "github") {
+    const installationId = c.req.query("installation_id");
+    if (installationId) {
+      const existing = await db
+        .select({
+          orgId: gwInstallations.orgId,
+          connectedBy: gwInstallations.connectedBy,
+        })
+        .from(gwInstallations)
+        .where(
+          and(
+            eq(gwInstallations.provider, "github"),
+            eq(gwInstallations.externalId, installationId),
+          ),
+        )
+        .limit(1);
+
+      const row = existing[0];
+      if (row) {
+        stateData = {
+          provider: "github",
+          orgId: row.orgId,
+          connectedBy: row.connectedBy,
+        };
+      }
+    }
+  }
+
   if (!stateData) {
     return c.json({ error: "invalid_or_expired_state" }, 400);
   }

@@ -40,7 +40,7 @@ export function CreateWorkspaceButton() {
   });
 
   // Get source selection state from context
-  const { selectedRepositories, gwInstallationId, selectedInstallation, vercelInstallationId, selectedProjects } =
+  const { selectedRepositories, gwInstallationId, selectedInstallation, selectedVercelInstallation, selectedProjects } =
     useWorkspaceForm();
 
   // Create workspace mutation with optimistic updates
@@ -192,10 +192,10 @@ export function CreateWorkspaceButton() {
                 })),
               })
             : Promise.resolve(null),
-          selectedProjects.length > 0 && vercelInstallationId
+          selectedProjects.length > 0 && selectedVercelInstallation
             ? bulkLinkVercelMutation.mutateAsync({
                 workspaceId: workspace.workspaceId,
-                gwInstallationId: vercelInstallationId,
+                gwInstallationId: selectedVercelInstallation.id,
                 projects: selectedProjects.map((p) => ({
                   projectId: p.id,
                   projectName: p.name,

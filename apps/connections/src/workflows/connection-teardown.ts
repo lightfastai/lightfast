@@ -1,12 +1,12 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import { decrypt } from "@repo/lib";
+import { and, eq } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { serve } from "@vendor/upstash-workflow/hono";
 import type { WorkflowContext } from "@vendor/upstash-workflow/types";
-import { and, eq } from "@vendor/db";
 import { env } from "../env.js";
 import { resourceKey } from "../lib/cache.js";
-import { decrypt } from "@repo/lib";
 import { cancelBackfillService } from "../lib/urls.js";
 import { getProvider } from "../providers/index.js";
 import type { ProviderName } from "../providers/types.js";
@@ -57,7 +57,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       if (!tokenRow) {return;}
 
       try {
-        const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+        const decryptedToken = decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
         await provider.revokeToken(decryptedToken);
       } catch {
         // Best-effort — swallow errors

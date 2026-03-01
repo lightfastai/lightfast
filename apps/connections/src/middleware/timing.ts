@@ -12,7 +12,7 @@ const isDev = process.env.NODE_ENV !== "production";
  * No-ops in production.
  */
 export const timing = createMiddleware(async (c, next) => {
-  if (!isDev) return next();
+  if (!isDev) { return next(); }
 
   const start = Date.now();
   const waitMs = Math.floor(Math.random() * 400) + 100;

@@ -278,7 +278,7 @@ describe("SentryProvider", () => {
       ]);
 
       // decrypt returns the composite token for refresh
-      vi.mocked(decrypt).mockResolvedValueOnce("inst-1:old-refresh-tok");
+      vi.mocked(decrypt).mockReturnValueOnce("inst-1:old-refresh-tok");
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -412,9 +412,30 @@ describe("SentryProvider", () => {
   });
 
   describe("buildAccountInfo", () => {
-    it("builds minimal Sentry account info", () => {
+    it("builds Sentry account info with installationId and organizationSlug", () => {
+      const info = provider.buildAccountInfo(
+        { sentryInstallationId: "inst-123" },
+        {
+          accessToken: "tok",
+          raw: { organization: { slug: "acme-org" } },
+        },
+      );
+      expect(info).toEqual({
+        version: 1,
+        sourceType: "sentry",
+        installationId: "inst-123",
+        organizationSlug: "acme-org",
+      });
+    });
+
+    it("defaults to empty strings when no data is available", () => {
       const info = provider.buildAccountInfo({});
-      expect(info).toEqual({ version: 1, sourceType: "sentry" });
+      expect(info).toEqual({
+        version: 1,
+        sourceType: "sentry",
+        installationId: "",
+        organizationSlug: "",
+      });
     });
   });
 });

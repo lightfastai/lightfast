@@ -10,9 +10,9 @@ import { createMiddleware } from "hono/factory";
  */
 function resolveSource(c: { req: { header(name: string): string | undefined } }): string {
   const explicit = c.req.header("X-Request-Source");
-  if (explicit) return explicit;
+  if (explicit) { return explicit; }
 
-  if (c.req.header("X-API-Key")) return "service";
+  if (c.req.header("X-API-Key")) { return "service"; }
 
   return "service";
 }
@@ -25,7 +25,7 @@ function resolveSource(c: { req: { header(name: string): string | undefined } })
  */
 export const logger = createMiddleware(async (c, next) => {
   const source = resolveSource(c);
-  const id = c.get("requestId" as never) ?? "-";
+  const id = (c.get("requestId" as never) as string | undefined) ?? "-";
   console.info(`>>> ${c.req.method} ${c.req.path} from ${source} [${id}]`);
   await next();
 });

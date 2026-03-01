@@ -81,6 +81,18 @@ vi.mock("@vendor/upstash", () => ({
       };
       return chain;
     },
+    multi: () => {
+      let hgetallResult: unknown = null;
+      const chain = {
+        hgetall: (...args: unknown[]) => { hgetallResult = mockRedisHgetall(...args); return chain; },
+        del: (...args: unknown[]) => { mockRedisDel(...args); return chain; },
+        exec: async () => {
+          const resolved = await hgetallResult;
+          return [resolved, 1];
+        },
+      };
+      return chain;
+    },
   },
 }));
 

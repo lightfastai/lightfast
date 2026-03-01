@@ -1,11 +1,10 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { nanoid } from "@repo/lib";
+import { decrypt, nanoid } from "@repo/lib";
 import { eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
-import { decrypt } from "@repo/lib";
 import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store.js";
 import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls.js";
 import {
@@ -160,6 +159,9 @@ export class SentryProvider implements ConnectionProvider {
     const code = c.req.query("code");
     if (!code) {throw new Error("missing code");}
 
+    // Extract Sentry installation ID from the composite code param (installationId:authCode)
+    const sentryInstallationId = code.includes(":") ? code.slice(0, code.indexOf(":")) : "";
+
     // Sentry's exchangeCode handles the composite installationId:authCode internally
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
@@ -170,6 +172,8 @@ export class SentryProvider implements ConnectionProvider {
       (oauthTokens.raw.installation as string | undefined)?.toString() ??
       nanoid();
 
+    const enrichedStateData = { ...stateData, sentryInstallationId };
+
     const rows = await db
       .insert(gwInstallations)
       .values({
@@ -178,7 +182,7 @@ export class SentryProvider implements ConnectionProvider {
         connectedBy: stateData.connectedBy ?? "unknown",
         orgId: stateData.orgId ?? "",
         status: "active",
-        providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
+        providerAccountInfo: this.buildAccountInfo(enrichedStateData, oauthTokens),
       })
       .onConflictDoUpdate({
         target: [gwInstallations.provider, gwInstallations.externalId],
@@ -186,7 +190,7 @@ export class SentryProvider implements ConnectionProvider {
           status: "active",
           connectedBy: stateData.connectedBy ?? "unknown",
           orgId: stateData.orgId ?? "",
-          providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
+          providerAccountInfo: this.buildAccountInfo(enrichedStateData, oauthTokens),
         },
       })
       .returning({ id: gwInstallations.id });
@@ -230,7 +234,7 @@ export class SentryProvider implements ConnectionProvider {
         throw new Error("token_expired:no_refresh_token");
       }
 
-      const decryptedRefresh = await decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
+      const decryptedRefresh = decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
       const refreshed = await this.refreshToken(decryptedRefresh);
 
       await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
@@ -242,7 +246,7 @@ export class SentryProvider implements ConnectionProvider {
       };
     }
 
-    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    const decryptedToken = decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
     return {
       accessToken: decryptedToken,
       provider: this.name,
@@ -253,9 +257,16 @@ export class SentryProvider implements ConnectionProvider {
   }
 
   buildAccountInfo(
-    _stateData: Record<string, string>,
-    _oauthTokens?: OAuthTokens,
+    stateData: Record<string, string>,
+    oauthTokens?: OAuthTokens,
   ): GwInstallation["providerAccountInfo"] {
-    return { version: 1, sourceType: "sentry" };
+    const raw = oauthTokens?.raw ?? {};
+
+    return {
+      version: 1,
+      sourceType: "sentry",
+      installationId: stateData.sentryInstallationId ?? "",
+      organizationSlug: (raw.organization as { slug?: string } | undefined)?.slug ?? "",
+    };
   }
 }

@@ -19,7 +19,7 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 
 const mockCancelBackfill = vi.fn().mockResolvedValue(undefined);
 const mockGetProvider = vi.fn();
-const mockDecrypt = vi.fn().mockResolvedValue("decrypted-token");
+const mockDecrypt = vi.fn().mockReturnValue("decrypted-token");
 const mockRedisDel = vi.fn().mockResolvedValue(1);
 const mockDbQuery = vi.fn().mockResolvedValue([]);
 const mockDbUpdate = vi.fn().mockResolvedValue(undefined);
@@ -152,7 +152,7 @@ describe("connection-teardown workflow", () => {
     mockDbUpdate.mockResolvedValue(undefined);
     mockTxSet.mockClear();
     mockCancelBackfill.mockResolvedValue(undefined);
-    mockDecrypt.mockResolvedValue("decrypted-token");
+    mockDecrypt.mockReturnValue("decrypted-token");
     mockRedisDel.mockResolvedValue(1);
   });
 

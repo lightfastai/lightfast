@@ -1,11 +1,10 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { nanoid } from "@repo/lib";
+import { decrypt, nanoid } from "@repo/lib";
 import { eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
-import { decrypt } from "@repo/lib";
 import { writeTokenRecord } from "../../lib/token-store.js";
 import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls.js";
 import { vercelOAuthResponseSchema } from "../schemas.js";
@@ -168,7 +167,7 @@ export class VercelProvider implements ConnectionProvider {
       throw new Error("token_expired");
     }
 
-    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    const decryptedToken = decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
     return {
       accessToken: decryptedToken,
       provider: this.name,
@@ -188,10 +187,11 @@ export class VercelProvider implements ConnectionProvider {
     return {
       version: 1,
       sourceType: "vercel",
-      userId: stateData.connectedBy ?? "unknown",
+      userId: stateData.connectedBy ?? "",
+      configurationId: externalId,
+      scope: oauthTokens?.scope ?? "",
       teamId: (raw.team_id as string | undefined) ?? undefined,
       teamSlug: (raw.team_slug as string | undefined) ?? undefined,
-      configurationId: externalId,
     };
   }
 }

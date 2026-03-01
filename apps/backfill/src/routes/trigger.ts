@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { timingSafeEqual } from "node:crypto";
 
 import { getEnv } from "../env.js";
 import { inngest } from "../inngest/client.js";

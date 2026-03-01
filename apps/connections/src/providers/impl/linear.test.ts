@@ -128,9 +128,17 @@ describe("LinearProvider", () => {
   });
 
   describe("buildAccountInfo", () => {
-    it("builds minimal Linear account info", () => {
+    it("builds Linear account info with scope from OAuth response", () => {
+      const info = provider.buildAccountInfo(
+        {},
+        { accessToken: "tok", scope: "read,write", raw: {} },
+      );
+      expect(info).toEqual({ version: 1, sourceType: "linear", scope: "read,write" });
+    });
+
+    it("defaults scope to empty string when not in OAuth response", () => {
       const info = provider.buildAccountInfo({});
-      expect(info).toEqual({ version: 1, sourceType: "linear" });
+      expect(info).toEqual({ version: 1, sourceType: "linear", scope: "" });
     });
   });
 

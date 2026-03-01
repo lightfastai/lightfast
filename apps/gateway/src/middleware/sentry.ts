@@ -17,8 +17,8 @@ export const sentry = createMiddleware(async (c, next) => {
       scope.setTag("http.method", c.req.method);
       scope.setTag("http.path", c.req.path);
 
-      const requestId = c.get("requestId" as never);
-      if (requestId) scope.setTag("request_id", requestId as string);
+      const requestId = c.get("requestId" as never) as string | undefined;
+      if (requestId) { scope.setTag("request_id", requestId); }
 
       Sentry.captureException(err);
     });

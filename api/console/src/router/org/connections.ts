@@ -240,7 +240,7 @@ export const connectionsRouter = {
 				provider: installation.provider,
 				connectedAt: installation.createdAt,
 				status: installation.status,
-				installations: providerAccountInfo.installations ?? [],
+				installations: providerAccountInfo.installations,
 			};
 		}),
 
@@ -295,19 +295,21 @@ export const connectionsRouter = {
 				}
 
 				const now = new Date().toISOString();
+				const accountType: "User" | "Organization" =
+					"type" in account && account.type === "User" ? "User" : "Organization";
 				const refreshedInstallation = {
 					id: installation.externalId,
 					accountId: account.id.toString(),
-					accountLogin: "login" in account ? (account.login ?? "") : "",
-					accountType: ("type" in account && account.type === "User" ? "User" : "Organization") as "User" | "Organization",
-					avatarUrl: "avatar_url" in account ? (account.avatar_url ?? "") : "",
+					accountLogin: "login" in account ? account.login : "",
+					accountType,
+					avatarUrl: "avatar_url" in account ? account.avatar_url : "",
 					permissions: githubInstallation.permissions as Record<string, string>,
-					events: (githubInstallation.events as string[]) ?? [],
+					events: githubInstallation.events,
 					installedAt: githubInstallation.created_at,
 					lastValidatedAt: now,
 				};
 
-				const currentInstallations = providerAccountInfo.installations ?? [];
+				const currentInstallations = providerAccountInfo.installations;
 
 				// Update providerAccountInfo with refreshed data
 				await ctx.db
@@ -382,7 +384,7 @@ export const connectionsRouter = {
 				}
 
 				// Verify the GitHub App installation is accessible
-				const installations = providerAccountInfo.installations ?? [];
+				const installations = providerAccountInfo.installations;
 				const githubInstallation = installations.find(
 					(i) => i.id === input.installationId,
 				);
@@ -477,7 +479,7 @@ export const connectionsRouter = {
 				}
 
 				// Verify the GitHub App installation is accessible
-				const githubInstallation = providerAccountInfo.installations?.find(
+				const githubInstallation = providerAccountInfo.installations.find(
 					(i) => i.id === input.installationId,
 				);
 

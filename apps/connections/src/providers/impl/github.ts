@@ -4,8 +4,9 @@ import type { GwInstallation } from "@db/console/schema";
 import { and, eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
-import { getInstallationToken } from "../../lib/github-jwt.js";
-import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls.js";
+import { getInstallationToken, getInstallationDetails } from "../../lib/github-jwt.js";
+import type { GitHubInstallationDetails } from "../../lib/github-jwt.js";
+import { notifyBackfillService } from "../../lib/urls.js";
 import { githubOAuthResponseSchema } from "../schemas.js";
 import type {
   ConnectionProvider,
@@ -136,7 +137,10 @@ export class GitHubProvider implements ConnectionProvider {
       throw new Error("missing connectedBy in state data");
     }
 
-    const accountInfo = this.buildAccountInfo({ ...stateData, installationId });
+    // Fetch installation data from GitHub API (hard-fail if unavailable)
+    const installationDetails = await getInstallationDetails(installationId);
+
+    const accountInfo = this.buildAccountInfo(installationId, installationDetails);
     const isPendingRequest = setupAction === "request";
     const status = isPendingRequest ? "pending" : "active";
 
@@ -209,24 +213,22 @@ export class GitHubProvider implements ConnectionProvider {
   }
 
   buildAccountInfo(
-    stateData: Record<string, string>,
-    _oauthTokens?: OAuthTokens,
+    installationId: string,
+    apiData: GitHubInstallationDetails,
   ): GwInstallation["providerAccountInfo"] {
-    const id = stateData.installationId ?? "";
     return {
       version: 1,
       sourceType: "github",
       installations: [
         {
-          id,
-          accountId: id,
-          accountLogin: stateData.accountLogin ?? "unknown",
-          accountType: (stateData.accountType === "User" || stateData.accountType === "Organization"
-            ? stateData.accountType
-            : "User"),
-          avatarUrl: "",
-          permissions: {},
-          installedAt: new Date().toISOString(),
+          id: installationId,
+          accountId: apiData.account.id.toString(),
+          accountLogin: apiData.account.login,
+          accountType: apiData.account.type,
+          avatarUrl: apiData.account.avatar_url,
+          permissions: apiData.permissions,
+          events: apiData.events,
+          installedAt: apiData.created_at,
           lastValidatedAt: new Date().toISOString(),
         },
       ],

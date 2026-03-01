@@ -136,7 +136,7 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 // ── Import apps and modules after mocks ──
 import connectionsApp from "@connections/app";
 import { notifyBackfillService } from "@connections/urls";
-import { encrypt } from "@connections/crypto";
+import { encrypt } from "@repo/lib";
 
 // ── Helpers ──
 const API_KEY = "0".repeat(64);
@@ -255,7 +255,7 @@ describe("0.1 — Boundary contract shapes", () => {
     });
     await db.insert(gwInstallations).values(inst);
 
-    const encryptedToken = await encrypt("snap-access-token-xyz", ENCRYPTION_KEY);
+    const encryptedToken = encrypt("snap-access-token-xyz", ENCRYPTION_KEY);
     const token = fixtures.token({
       installationId: inst.id,
       accessToken: encryptedToken,

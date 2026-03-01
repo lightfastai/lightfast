@@ -126,22 +126,33 @@ export function GitHubSourceItem() {
     setSelectedRepositories(selectedRepositories.filter((r) => !filteredIds.has(r.id)));
   };
 
-  const handleAdjustPermissions = () => {
-    const width = 600;
-    const height = 800;
-    const left = window.screen.width / 2 - width / 2;
-    const top = window.screen.height / 2 - height / 2;
-    const popup = window.open(
-      `https://github.com/apps/${githubEnv.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target`,
-      "github-permissions",
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
-    );
-    const pollTimer = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(pollTimer);
-        void refetchConnection();
-      }
-    }, 500);
+  const handleAdjustPermissions = async () => {
+    try {
+      const data = await queryClient.fetchQuery(
+        trpc.connections.getAuthorizeUrl.queryOptions({ provider: "github" }),
+      );
+      const width = 600;
+      const height = 800;
+      const left = window.screen.width / 2 - width / 2;
+      const top = window.screen.height / 2 - height / 2;
+      const popup = window.open(
+        `https://github.com/apps/${githubEnv.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target?state=${data.state}`,
+        "github-permissions",
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
+      );
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+      pollTimerRef.current = setInterval(() => {
+        if (popup?.closed) {
+          if (pollTimerRef.current) {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+          }
+          void refetchConnection();
+        }
+      }, 500);
+    } catch {
+      toast.error("Failed to adjust GitHub permissions. Please try again.");
+    }
   };
 
   const handleConnect = async () => {
@@ -246,20 +257,8 @@ export function GitHubSourceItem() {
               </div>
             </div>
 
-            {/* Selected Count & Clear */}
-            {selectedRepositories.length > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  {selectedRepositories.length} repositor{selectedRepositories.length === 1 ? "y" : "ies"} selected
-                </span>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedRepositories([])}>
-                  Clear all
-                </Button>
-              </div>
-            )}
-
             {/* Repository List */}
-            <div className="rounded-lg border bg-card max-h-[260px] overflow-y-auto">
+            <div className="r max-h-[260px] overflow-y-auto">
               {isLoadingRepos ? (
                 <div className="p-8 text-center text-muted-foreground">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
@@ -273,7 +272,7 @@ export function GitHubSourceItem() {
                 <>
                   <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
                     <span className="text-sm text-muted-foreground">
-                      {filteredRepositories.length} repositor{filteredRepositories.length === 1 ? "y" : "ies"}
+                      {filteredRepositories.length} repo{filteredRepositories.length === 1 ? "" : "s"}
                     </span>
                     <Button
                       variant="ghost"
@@ -296,7 +295,7 @@ export function GitHubSourceItem() {
                           onCheckedChange={() => toggleRepository(repo)}
                         />
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                          <Github className="h-4 w-4" />
+                          <Github className="h-3 w-3" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">

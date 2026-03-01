@@ -70,12 +70,18 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
   if (resourceData.sourceType === "github") {
     displayName = resourceData.repoFullName;
     detailsUrl = `https://github.com/${resourceData.repoFullName}`;
-  } else {
-    // Vercel sourceType
+  } else if (resourceData.sourceType === "vercel") {
     displayName = resourceData.projectName;
     detailsUrl = resourceData.teamSlug
       ? `https://vercel.com/${resourceData.teamSlug}/${resourceData.projectName}`
       : `https://vercel.com/dashboard`;
+  } else if (resourceData.sourceType === "sentry") {
+    displayName = `${resourceData.organizationSlug}/${resourceData.projectSlug}`;
+    detailsUrl = `https://${resourceData.organizationSlug}.sentry.io/projects/${resourceData.projectSlug}/`;
+  } else {
+    // Linear
+    displayName = resourceData.teamName;
+    detailsUrl = "https://linear.app";
   }
 
   return (

@@ -102,8 +102,7 @@ export interface ConnectionProvider {
     stateData: Record<string, string>,
   ): Promise<CallbackResult>;
   resolveToken(installation: GwInstallation): Promise<TokenResult>;
-  buildAccountInfo(
-    stateData: Record<string, string>,
-    oauthTokens?: OAuthTokens,
-  ): GwInstallation["providerAccountInfo"];
+  // buildAccountInfo is an implementation detail — each provider
+  // has its own signature (GitHub uses API data, others use stateData/tokens).
+  // It's never called polymorphically through the interface.
 }
