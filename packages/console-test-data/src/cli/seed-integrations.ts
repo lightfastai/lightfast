@@ -76,7 +76,6 @@ const DEMO_SOURCES: DemoSource[] = [
       version: 1,
       sourceType: "sentry",
       type: "project",
-      organizationSlug: "lightfast",
       projectSlug: "lightfast-console",
       projectId: "4508288486826115",
       sync: {

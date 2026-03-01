@@ -76,8 +76,8 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
       ? `https://vercel.com/${resourceData.teamSlug}/${resourceData.projectName}`
       : `https://vercel.com/dashboard`;
   } else if (resourceData.sourceType === "sentry") {
-    displayName = `${resourceData.organizationSlug}/${resourceData.projectSlug}`;
-    detailsUrl = `https://${resourceData.organizationSlug}.sentry.io/projects/${resourceData.projectSlug}/`;
+    displayName = resourceData.projectSlug;
+    detailsUrl = `https://sentry.io`;
   } else {
     // Linear
     displayName = resourceData.teamName;

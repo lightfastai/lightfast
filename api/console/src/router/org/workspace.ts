@@ -1677,7 +1677,6 @@ export const workspaceRouter = {
               version: 1 as const,
               sourceType: "sentry" as const,
               type: "project" as const,
-              organizationSlug: providerAccountInfo.organizationSlug,
               projectSlug: p.projectSlug,
               projectId: p.projectId,
               sync: {

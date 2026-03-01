@@ -126,7 +126,6 @@ export const workspaceIntegrations = pgTable(
           version: 1;
           sourceType: "sentry";
           type: "project";
-          organizationSlug: string;
           projectSlug: string;
           projectId: string;
           sync: {

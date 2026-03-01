@@ -177,21 +177,6 @@ export class SentryProvider implements ConnectionProvider {
     const parsedData = sentryOAuthResponseSchema.parse(rawData);
     const now = new Date().toISOString();
 
-    // Fetch org info using the new access token (token is scoped to one org)
-    let organizationSlug = "";
-    try {
-      const orgsResponse = await fetch("https://sentry.io/api/0/organizations/", {
-        headers: { Authorization: `Bearer ${oauthTokens.accessToken}` },
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (orgsResponse.ok) {
-        const orgs = await orgsResponse.json() as { slug: string }[];
-        organizationSlug = orgs[0]?.slug ?? "";
-      }
-    } catch {
-      // Best-effort — organizationSlug will remain empty
-    }
-
     const accountInfo: SentryAccountInfo = {
       version: 1,
       sourceType: "sentry",
@@ -203,7 +188,6 @@ export class SentryProvider implements ConnectionProvider {
         scopes: parsedData.scopes,
       },
       installationId: sentryInstallationId,
-      organizationSlug,
     };
 
     const rows = await db

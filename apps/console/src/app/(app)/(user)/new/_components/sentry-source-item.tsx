@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { Search, Loader2 } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -11,10 +11,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
-import { toast } from "@repo/ui/components/ui/sonner";
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useWorkspaceForm } from "./workspace-form-provider";
+import { useOAuthPopup } from "./use-oauth-popup";
 
 /**
  * Sentry accordion item for the Sources section.
@@ -23,7 +23,6 @@ import { useWorkspaceForm } from "./workspace-form-provider";
  */
 export function SentrySourceItem() {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const {
     sentryConnection,
     setSentryConnection,
@@ -36,10 +35,17 @@ export function SentrySourceItem() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showPicker, setShowPicker] = useState(true);
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const { handleConnect } = useOAuthPopup({
+    provider: "sentry",
+    queryKeysToInvalidate: [
+      trpc.connections.sentry.get.queryOptions().queryKey,
+      [["connections", "sentry", "listProjects"]],
+    ],
+  });
 
   // Fetch Sentry connection (prefetched by parent page RSC)
-  const { data: sentryData, refetch: refetchConnection } = useSuspenseQuery({
+  const { data: sentryData } = useSuspenseQuery({
     ...trpc.connections.sentry.get.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -59,13 +65,6 @@ export function SentrySourceItem() {
     setSentryInstallationId(sentryData?.id ?? null);
   }, [sentryData?.id, setSentryInstallationId]);
 
-  // Cleanup poll timer on unmount
-  useEffect(() => {
-    return () => {
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-    };
-  }, []);
-
   // Fetch Sentry projects (no workspaceId — workspace doesn't exist yet)
   const { data: projectsData, isLoading: isLoadingProjects, error: projectsError } = useQuery({
     ...trpc.connections.sentry.listProjects.queryOptions({
@@ -84,42 +83,6 @@ export function SentrySourceItem() {
   );
 
   const selectedProject = selectedSentryProjects[0] ?? null;
-
-  const handleConnect = async () => {
-    try {
-      const data = await queryClient.fetchQuery(
-        trpc.connections.getAuthorizeUrl.queryOptions({ provider: "sentry" }),
-      );
-      const width = 600;
-      const height = 800;
-      const left = window.screen.width / 2 - width / 2;
-      const top = window.screen.height / 2 - height / 2;
-      const popup = window.open(
-        data.url,
-        "sentry-install",
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
-      );
-      if (!popup || popup.closed) {
-        alert("Popup was blocked. Please allow popups for this site.");
-        return;
-      }
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-      pollTimerRef.current = setInterval(() => {
-        if (popup.closed) {
-          if (pollTimerRef.current) {
-            clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
-          }
-          void refetchConnection();
-          void queryClient.invalidateQueries({
-            queryKey: [["connections", "sentry", "listProjects"]],
-          });
-        }
-      }, 500);
-    } catch {
-      toast.error("Failed to connect to Sentry. Please try again.");
-    }
-  };
 
   return (
     <AccordionItem value="sentry">
@@ -168,11 +131,9 @@ export function SentrySourceItem() {
                         </span>
                       )}
                     </div>
-                    {sentryData?.organizationSlug && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {sentryData.organizationSlug} / {selectedProject.slug}
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {selectedProject.slug}
+                    </p>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <Button variant="outline" size="sm" onClick={() => setShowPicker(true)}>
@@ -195,12 +156,10 @@ export function SentrySourceItem() {
               <>
                 {/* Org slug header + Search */}
                 <div className="flex gap-4">
-                  {sentryData?.organizationSlug && (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 shrink-0">
-                      <IntegrationLogoIcons.sentry className="h-3 w-3" />
-                      <span className="text-sm font-medium">{sentryData.organizationSlug}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 shrink-0">
+                    <IntegrationLogoIcons.sentry className="h-3 w-3" />
+                    <span className="text-sm font-medium">Sentry</span>
+                  </div>
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input

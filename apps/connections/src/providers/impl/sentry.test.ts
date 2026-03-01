@@ -353,13 +353,12 @@ describe("SentryProvider", () => {
       expect(dbMocks.values).toHaveBeenCalledWith(
         expect.objectContaining({
           provider: "sentry",
-          externalId: "inst-123", // sentryInstallationId used as externalId
+          externalId: "inst-123",
           status: "active",
           providerAccountInfo: expect.objectContaining({
             version: 1,
             sourceType: "sentry",
             installationId: "inst-123",
-            organizationSlug: "",
             raw: expect.objectContaining({}),
           }),
         }),
@@ -370,48 +369,6 @@ describe("SentryProvider", () => {
         installationId: "inst-sn-new",
         provider: "sentry",
       });
-    });
-
-    it("extracts organizationSlug from separate organizations API call", async () => {
-      // First call: token exchange
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            token: "access-tok",
-            refreshToken: "refresh-tok",
-            expiresAt: new Date(Date.now() + 3600_000).toISOString(),
-          }),
-      });
-      // Second call: GET /api/0/organizations/
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve([{ slug: "acme-org" }]),
-      });
-      dbMocks.returning.mockResolvedValue([{ id: "inst-sn-new" }]);
-
-      const c = mockContext({ code: "auth-code", installationId: "inst-456" });
-      await provider.handleCallback(c, {
-        orgId: "org-1",
-        connectedBy: "user-1",
-      });
-
-      // Verify organizations API was called with the new access token
-      expect(mockFetch).toHaveBeenCalledWith(
-        "https://sentry.io/api/0/organizations/",
-        expect.objectContaining({
-          headers: { Authorization: "Bearer access-tok" },
-        }),
-      );
-
-      expect(dbMocks.values).toHaveBeenCalledWith(
-        expect.objectContaining({
-          providerAccountInfo: expect.objectContaining({
-            installationId: "inst-456",
-            organizationSlug: "acme-org",
-          }),
-        }),
-      );
     });
 
     it("reconnects successfully when row already exists (upsert)", async () => {
