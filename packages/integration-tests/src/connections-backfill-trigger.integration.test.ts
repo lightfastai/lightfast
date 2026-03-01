@@ -263,12 +263,12 @@ describe("Suite 2.3 — cancelBackfillService publishes cancel body", () => {
     expect(json.status).toBe("cancelled");
     expect(json.installationId).toBe("inst-cancel-e2e");
 
-    expect(inngestSendMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: "apps-backfill/run.cancelled",
-        data: { installationId: "inst-cancel-e2e" },
-      }),
-    );
+    expect(inngestSendMock).toHaveBeenCalledOnce();
+    // toMatchObject does recursive partial matching — extra fields like correlationId are ignored
+    expect(inngestSendMock.mock.calls[0]?.[0]).toMatchObject({
+      name: "apps-backfill/run.cancelled",
+      data: { installationId: "inst-cancel-e2e" },
+    });
   });
 });
 

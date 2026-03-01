@@ -381,12 +381,13 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     expect(json.status).toBe("cancelled");
 
     // 3. Inngest run.cancelled event should have fired
-    expect(inngestEventsSent).toContainEqual(
-      expect.objectContaining({
-        name: "apps-backfill/run.cancelled",
-        data: { installationId: "inst-lifecycle-cancel" },
-      }),
-    );
+    // toMatchObject does recursive partial matching — extra fields like correlationId are ignored
+    const cancelEvent = inngestEventsSent.find(e => e.name === "apps-backfill/run.cancelled");
+    expect(cancelEvent).toBeDefined();
+    expect(cancelEvent).toMatchObject({
+      name: "apps-backfill/run.cancelled",
+      data: { installationId: "inst-lifecycle-cancel" },
+    });
   });
 
   it("DELETE /connections/:provider/:id triggers teardown workflow", async () => {
@@ -500,12 +501,12 @@ describe("Suite 5.3 — Full teardown path", () => {
     expect(cancelRes.status).toBe(200);
     expect((await cancelRes.json() as { status: string }).status).toBe("cancelled");
 
-    expect(inngestEventsSent).toContainEqual(
-      expect.objectContaining({
-        name: "apps-backfill/run.cancelled",
-        data: { installationId: inst.id },
-      }),
-    );
+    const cancelEvent = inngestEventsSent.find(e => e.name === "apps-backfill/run.cancelled");
+    expect(cancelEvent).toBeDefined();
+    expect(cancelEvent).toMatchObject({
+      name: "apps-backfill/run.cancelled",
+      data: { installationId: inst.id },
+    });
 
     // ── 5. Simulate teardown workflow step 4: clean Redis cache ──
     // The connection-teardown workflow calls redis.del on all resource keys.

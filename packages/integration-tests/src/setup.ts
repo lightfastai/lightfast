@@ -9,6 +9,9 @@
 // Suppress @t3-oss/env-core validation — we control values via process.env
 process.env.SKIP_ENV_VALIDATION = "true";
 
+// Run as production to skip dev-only artificial delays (gateway lifecycle middleware)
+(process.env as Record<string, string>).NODE_ENV = "production";
+
 // Shared auth key used by all three services
 // Must be a valid hex string — gateway's timingSafeEqual uses hexToBytes()
 process.env.GATEWAY_API_KEY = "0".repeat(64);
@@ -25,6 +28,8 @@ process.env.GITHUB_WEBHOOK_SECRET = "gh-secret";
 process.env.VERCEL_CLIENT_INTEGRATION_SECRET = "vc-secret";
 process.env.LINEAR_WEBHOOK_SIGNING_SECRET = "ln-secret";
 process.env.SENTRY_CLIENT_SECRET = "sn-secret";
+process.env.SENTRY_APP_SLUG = "test-sentry-app";
+process.env.SENTRY_CLIENT_ID = "test-sentry-client-id";
 
 // api/console env vars — Clerk is mocked, but these prevent module-level validation failures
 process.env.NEXT_PUBLIC_VERCEL_ENV = "development";

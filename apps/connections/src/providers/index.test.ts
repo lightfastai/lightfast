@@ -1,5 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 
+// Set process.env vars for conditional provider registration (read at module load)
+vi.hoisted(() => {
+  process.env.SKIP_ENV_VALIDATION = "true";
+  process.env.LINEAR_CLIENT_ID = "lin-client-id";
+  process.env.LINEAR_CLIENT_SECRET = "lin-secret";
+  process.env.SENTRY_APP_SLUG = "sn-app-slug";
+  process.env.SENTRY_CLIENT_ID = "sn-client-id";
+  process.env.SENTRY_CLIENT_SECRET = "sn-secret";
+});
+
 vi.mock("../env", () => ({
   env: {
     GATEWAY_API_KEY: "test-api-key",

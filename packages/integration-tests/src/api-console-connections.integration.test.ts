@@ -131,14 +131,6 @@ vi.mock("@repo/console-octokit-github", () => ({
   getInstallationRepositories: mockGetInstallationRepositories,
 }));
 
-// Mock @sentry/core to avoid real Sentry initialization
-vi.mock("@sentry/core", () => ({
-  trpcMiddleware:
-    () =>
-    async ({ next }: { next: () => Promise<unknown> }) =>
-      next(),
-}));
-
 // Mock @vendor/clerk/server to avoid "server-only" import issues
 vi.mock("@vendor/clerk/server", () => ({
   auth: vi.fn().mockResolvedValue({ userId: null, orgId: null }),
@@ -350,14 +342,14 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     });
 
-    it("No X-Workspace-ID header → throws BAD_REQUEST", async () => {
+    it("Bearer token with no matching API key → throws UNAUTHORIZED", async () => {
       const caller = makeCaller(
         { type: "unauthenticated" },
         new Headers({ Authorization: "Bearer sk-lf-testkey" }),
       );
       await expect(
         caller.cliAuthorize({ provider: "github" }),
-      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     });
 
     it("Invalid API key (not in DB) → throws UNAUTHORIZED 'Invalid API key'", async () => {
@@ -412,14 +404,19 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
   });
 
   describe("8.2 — cliAuthorize procedure", () => {
-    it("Workspace not found → throws NOT_FOUND", async () => {
+    it("Valid API key → cliAuthorize succeeds (org-scoped, no workspace lookup)", async () => {
       const { rawKey } = await makeApiKeyFixture(db, {
         userId: "user_no_ws",
       });
-      const caller = apiKeyCaller(rawKey, "nonexistent-workspace-id");
-      await expect(
-        caller.cliAuthorize({ provider: "github" }),
-      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+      const restore = installServiceRouter({ connectionsApp });
+      try {
+        const caller = apiKeyCaller(rawKey, "ignored-workspace-id");
+        const result = await caller.cliAuthorize({ provider: "github" });
+        expect(result).toHaveProperty("url");
+        expect(result).toHaveProperty("state");
+      } finally {
+        restore();
+      }
     });
 
     it("Workspace with no clerkOrgId → throws NOT_FOUND", async () => {
@@ -490,6 +487,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       });
       const { rawKey, userId } = await makeApiKeyFixture(db, {
         userId: "user_happy",
+        clerkOrgId,
       });
 
       const restore = installServiceRouter({ connectionsApp });
