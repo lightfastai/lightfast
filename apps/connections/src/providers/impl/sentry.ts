@@ -14,6 +14,7 @@ import {
 } from "../schemas.js";
 import type {
   ConnectionProvider,
+  SentryAccountInfo,
   TokenResult,
   OAuthTokens,
   CallbackResult,
@@ -259,12 +260,25 @@ export class SentryProvider implements ConnectionProvider {
   buildAccountInfo(
     stateData: Record<string, string>,
     oauthTokens?: OAuthTokens,
-  ): GwInstallation["providerAccountInfo"] {
+  ): SentryAccountInfo {
     const raw = oauthTokens?.raw ?? {};
+    const now = new Date().toISOString();
+
+    // Extract scopes from token exchange response if available
+    const rawScopes = raw.scopes ?? raw.scope;
+    const scopes: string[] = Array.isArray(rawScopes)
+      ? (rawScopes as string[])
+      : typeof rawScopes === "string"
+        ? rawScopes.split(" ").filter(Boolean)
+        : [];
 
     return {
       version: 1,
       sourceType: "sentry",
+      scopes,
+      events: ["installation", "issue", "error", "comment"],
+      installedAt: now,
+      lastValidatedAt: now,
       installationId: stateData.sentryInstallationId ?? "",
       organizationSlug: (raw.organization as { slug?: string } | undefined)?.slug ?? "",
     };

@@ -7,9 +7,12 @@ import { env } from "../../env.js";
 import { getInstallationToken, getInstallationDetails } from "../../lib/github-jwt.js";
 import type { GitHubInstallationDetails } from "../../lib/github-jwt.js";
 import { notifyBackfillService } from "../../lib/urls.js";
-import { githubOAuthResponseSchema } from "../schemas.js";
+import {
+  githubOAuthResponseSchema,
+} from "../schemas.js";
 import type {
   ConnectionProvider,
+  GitHubAccountInfo,
   GitHubAuthOptions,
   JwtTokenResult,
   OAuthTokens,
@@ -61,26 +64,20 @@ export class GitHubProvider implements ConnectionProvider {
       throw new Error(`GitHub token exchange failed: ${response.status}`);
     }
 
-    const rawData: unknown = await response.json();
-    const data = githubOAuthResponseSchema.parse(rawData);
+    const data = githubOAuthResponseSchema.parse(await response.json());
 
     if ("error" in data && data.error) {
-      const errorData = data as { error: string; error_description?: string };
-      const desc = errorData.error_description ?? errorData.error;
-      throw new Error(`GitHub OAuth error: ${desc}`);
+      const errorData = data as { error: string; error_description: string };
+      throw new Error(`GitHub OAuth error: ${errorData.error_description}`);
     }
 
-    const successData = data as {
-      access_token: string;
-      scope?: string;
-      token_type?: string;
-    };
+    const successData = data as { access_token: string; token_type: string; scope: string };
 
     return {
       accessToken: successData.access_token,
       scope: successData.scope,
       tokenType: successData.token_type,
-      raw: rawData as Record<string, unknown>,
+      raw: successData,
     };
   }
 
@@ -213,25 +210,26 @@ export class GitHubProvider implements ConnectionProvider {
   }
 
   buildAccountInfo(
-    installationId: string,
+    _installationId: string,
     apiData: GitHubInstallationDetails,
-  ): GwInstallation["providerAccountInfo"] {
+  ): GitHubAccountInfo {
+    const now = new Date().toISOString();
+    // Normalize GitHub permissions Record<string, string> to string[]
+    // e.g. { "issues": "write", "contents": "read" } → ["issues:write", "contents:read"]
+    const scopes = Object.entries(apiData.permissions).map(
+      ([key, level]) => `${key}:${level}`,
+    );
     return {
       version: 1,
       sourceType: "github",
-      installations: [
-        {
-          id: installationId,
-          accountId: apiData.account.id.toString(),
-          accountLogin: apiData.account.login,
-          accountType: apiData.account.type,
-          avatarUrl: apiData.account.avatar_url,
-          permissions: apiData.permissions,
-          events: apiData.events,
-          installedAt: apiData.created_at,
-          lastValidatedAt: new Date().toISOString(),
-        },
-      ],
+      scopes,
+      events: apiData.events,
+      installedAt: apiData.created_at,
+      lastValidatedAt: now,
+      accountId: apiData.account.id.toString(),
+      accountLogin: apiData.account.login,
+      accountType: apiData.account.type,
+      avatarUrl: apiData.account.avatar_url,
     };
   }
 }

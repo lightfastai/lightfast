@@ -10,6 +10,7 @@ import { connectionsBaseUrl, gatewayBaseUrl, notifyBackfillService } from "../..
 import { linearOAuthResponseSchema } from "../schemas.js";
 import type {
   ConnectionProvider,
+  LinearAccountInfo,
   LinearAuthOptions,
   TokenResult,
   OAuthTokens,
@@ -209,10 +210,14 @@ export class LinearProvider implements ConnectionProvider {
   // ── Strategy methods ──
 
   /**
-   * Fetch the viewer's organization ID from the Linear API.
-   * Returns the org ID or the viewer's own ID as a stable external identifier.
+   * Fetch the viewer's organization info from the Linear API.
+   * Returns the external ID (org or viewer) plus organization metadata.
    */
-  private async fetchLinearExternalId(accessToken: string): Promise<string> {
+  private async fetchLinearContext(accessToken: string): Promise<{
+    externalId: string;
+    organizationName?: string;
+    organizationUrlKey?: string;
+  }> {
     const response = await fetch("https://api.linear.app/graphql", {
       method: "POST",
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
@@ -221,7 +226,7 @@ export class LinearProvider implements ConnectionProvider {
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
-        query: `{ viewer { id organization { id } } }`,
+        query: `{ viewer { id organization { id name urlKey } } }`,
       }),
     });
 
@@ -230,14 +235,25 @@ export class LinearProvider implements ConnectionProvider {
     }
 
     const result = (await response.json()) as {
-      data?: { viewer?: { id: string; organization?: { id: string } } };
+      data?: {
+        viewer?: {
+          id: string;
+          organization?: { id: string; name?: string; urlKey?: string };
+        };
+      };
     };
 
-    const orgId = result.data?.viewer?.organization?.id;
-    if (orgId) {return orgId;}
+    const org = result.data?.viewer?.organization;
+    if (org?.id) {
+      return {
+        externalId: org.id,
+        organizationName: org.name,
+        organizationUrlKey: org.urlKey,
+      };
+    }
 
     const viewerId = result.data?.viewer?.id;
-    if (viewerId) {return viewerId;}
+    if (viewerId) {return { externalId: viewerId };}
 
     throw new Error("Linear API did not return a viewer or organization ID");
   }
@@ -252,8 +268,9 @@ export class LinearProvider implements ConnectionProvider {
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
 
-    const externalId = await this.fetchLinearExternalId(oauthTokens.accessToken);
-    const accountInfo = this.buildAccountInfo(stateData, oauthTokens);
+    const linearContext = await this.fetchLinearContext(oauthTokens.accessToken);
+    const externalId = linearContext.externalId;
+    const accountInfo = this.buildAccountInfo(stateData, oauthTokens, linearContext);
     const now = new Date().toISOString();
 
     // Check if this installation already exists (reactivation vs new)
@@ -319,6 +336,10 @@ export class LinearProvider implements ConnectionProvider {
           .set({
             webhookSecret,
             metadata: { webhookId } as Record<string, unknown>,
+            providerAccountInfo: {
+              ...accountInfo,
+              events: ["Issue", "Comment", "IssueLabel", "Project", "Cycle"],
+            },
             updatedAt: new Date().toISOString(),
           })
           .where(eq(gwInstallations.id, installation.id));
@@ -379,11 +400,20 @@ export class LinearProvider implements ConnectionProvider {
   buildAccountInfo(
     _stateData: Record<string, string>,
     oauthTokens?: OAuthTokens,
-  ): GwInstallation["providerAccountInfo"] {
+    orgInfo?: { organizationName?: string; organizationUrlKey?: string },
+  ): LinearAccountInfo {
+    const now = new Date().toISOString();
+    // Normalize scope string to array: "read write" → ["read", "write"]
+    const scopes = (oauthTokens?.scope ?? "").split(" ").filter(Boolean);
     return {
       version: 1,
       sourceType: "linear",
-      scope: oauthTokens?.scope ?? "",
+      scopes,
+      events: [], // Populated after webhook registration in handleCallback
+      installedAt: now,
+      lastValidatedAt: now,
+      organizationName: orgInfo?.organizationName,
+      organizationUrlKey: orgInfo?.organizationUrlKey,
     };
   }
 }

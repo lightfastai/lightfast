@@ -1,15 +1,17 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { decrypt, nanoid } from "@repo/lib";
+import { decrypt } from "@repo/lib";
 import { eq } from "drizzle-orm";
 import type { Context } from "hono";
+import type { z } from "zod";
 import { env } from "../../env.js";
 import { writeTokenRecord } from "../../lib/token-store.js";
 import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls.js";
 import { vercelOAuthResponseSchema } from "../schemas.js";
 import type {
   ConnectionProvider,
+  VercelAccountInfo,
   TokenResult,
   OAuthTokens,
   CallbackResult,
@@ -57,7 +59,6 @@ export class VercelProvider implements ConnectionProvider {
     return {
       accessToken: data.access_token,
       tokenType: data.token_type,
-      scope: data.scope,
       raw: rawData as Record<string, unknown>,
     };
   }
@@ -86,16 +87,6 @@ export class VercelProvider implements ConnectionProvider {
 
   // ── Strategy methods ──
 
-  private deriveExternalId(
-    raw: Record<string, unknown>,
-  ): string | undefined {
-    return (
-      (raw.team_id as string | undefined)?.toString() ??
-      (raw.organization_id as string | undefined)?.toString() ??
-      (raw.installation as string | undefined)?.toString()
-    );
-  }
-
   async handleCallback(
     c: Context,
     stateData: Record<string, string>,
@@ -106,7 +97,17 @@ export class VercelProvider implements ConnectionProvider {
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
 
-    const externalId = this.deriveExternalId(oauthTokens.raw) ?? nanoid();
+    const parsed = vercelOAuthResponseSchema.parse(oauthTokens.raw);
+    // team_id for team accounts, user_id for personal accounts
+    const externalId = parsed.team_id ?? parsed.user_id;
+
+    // Fetch integration configuration for scopes
+    const config = await this.fetchConfiguration(
+      parsed.installation_id,
+      oauthTokens.accessToken,
+    );
+
+    const accountInfo = this.buildAccountInfo(parsed, config);
 
     const rows = await db
       .insert(gwInstallations)
@@ -116,7 +117,7 @@ export class VercelProvider implements ConnectionProvider {
         connectedBy: stateData.connectedBy ?? "unknown",
         orgId: stateData.orgId ?? "",
         status: "active",
-        providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
+        providerAccountInfo: accountInfo,
       })
       .onConflictDoUpdate({
         target: [gwInstallations.provider, gwInstallations.externalId],
@@ -124,7 +125,7 @@ export class VercelProvider implements ConnectionProvider {
           status: "active",
           connectedBy: stateData.connectedBy ?? "unknown",
           orgId: stateData.orgId ?? "",
-          providerAccountInfo: this.buildAccountInfo(stateData, oauthTokens),
+          providerAccountInfo: accountInfo,
         },
       })
       .returning({ id: gwInstallations.id });
@@ -177,21 +178,62 @@ export class VercelProvider implements ConnectionProvider {
     };
   }
 
-  buildAccountInfo(
-    stateData: Record<string, string>,
-    oauthTokens?: OAuthTokens,
-  ): GwInstallation["providerAccountInfo"] {
-    const raw = oauthTokens?.raw ?? {};
-    const externalId = this.deriveExternalId(raw) ?? "";
+  /**
+   * Fetch the integration configuration from Vercel to get scopes.
+   * Gracefully degrades if the API call fails.
+   */
+  private async fetchConfiguration(
+    configurationId: string,
+    accessToken: string,
+  ): Promise<{ scopes: string[] }> {
+    try {
+      const res = await fetch(
+        `https://api.vercel.com/v1/integrations/configuration/${configurationId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        },
+      );
+      if (!res.ok) {
+        console.warn(`[VercelProvider] Failed to fetch config: ${res.status}`);
+        return { scopes: [] };
+      }
+      const data = (await res.json()) as Record<string, unknown>;
+      console.log(data)
+      return {
+        scopes: Array.isArray(data.scopes) ? (data.scopes as string[]) : [],
+      };
+    } catch (err) {
+      console.warn("[VercelProvider] Config fetch failed:", err);
+      return { scopes: [] };
+    }
+  }
 
+  buildAccountInfo(
+    parsed: z.infer<typeof vercelOAuthResponseSchema>,
+    config: { scopes: string[] },
+  ): VercelAccountInfo {
+    const now = new Date().toISOString();
     return {
       version: 1,
       sourceType: "vercel",
-      userId: stateData.connectedBy ?? "",
-      configurationId: externalId,
-      scope: oauthTokens?.scope ?? "",
-      teamId: (raw.team_id as string | undefined) ?? undefined,
-      teamSlug: (raw.team_slug as string | undefined) ?? undefined,
+      scopes: config.scopes,
+      events: [
+        "deployment.created",
+        "deployment.ready",
+        "deployment.succeeded",
+        "deployment.error",
+        "deployment.canceled",
+        "project.created",
+        "project.removed",
+        "integration-configuration.removed",
+        "integration-configuration.permission-updated",
+      ],
+      installedAt: now,
+      lastValidatedAt: now,
+      userId: parsed.user_id,
+      configurationId: parsed.installation_id,
+      teamId: parsed.team_id ?? undefined,
     };
   }
 }

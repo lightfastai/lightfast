@@ -40,6 +40,10 @@ interface WorkspaceFormState {
   selectedProjects: VercelProject[];
   setSelectedProjects: (projects: VercelProject[]) => void;
   toggleProject: (project: VercelProject) => void;
+
+  // Sentry state (org-level, no resource picker)
+  sentryInstallationId: string | null;
+  setSentryInstallationId: (id: string | null) => void;
 }
 
 const WorkspaceFormContext = createContext<WorkspaceFormState | null>(null);
@@ -69,14 +73,12 @@ export function WorkspaceFormProvider({
   const [installations, setInstallations] = useState<GitHubInstallation[]>([]);
   const [selectedInstallation, setSelectedInstallation] = useState<GitHubInstallation | null>(null);
 
-  // Toggle helper for multi-repo selection
+  // Toggle helper for single-repo selection (MVP: 1 repo max)
   const toggleRepository = (repo: Repository) => {
     setSelectedRepositories((prev) => {
       const exists = prev.find((r) => r.id === repo.id);
-      if (exists) {
-        return prev.filter((r) => r.id !== repo.id);
-      }
-      return [...prev, repo];
+      if (exists) return [];
+      return [repo];
     });
   };
 
@@ -86,14 +88,15 @@ export function WorkspaceFormProvider({
   const [selectedVercelInstallation, setSelectedVercelInstallation] = useState<VercelInstallation | null>(null);
   const [selectedProjects, setSelectedProjects] = useState<VercelProject[]>([]);
 
-  // Toggle helper for Vercel project selection
+  // Additional state for Sentry integration (org-level, no resource picker)
+  const [sentryInstallationId, setSentryInstallationId] = useState<string | null>(null);
+
+  // Toggle helper for single-project selection (MVP: 1 project max)
   const toggleProject = (project: VercelProject) => {
     setSelectedProjects((prev) => {
       const exists = prev.find((p) => p.id === project.id);
-      if (exists) {
-        return prev.filter((p) => p.id !== project.id);
-      }
-      return [...prev, project];
+      if (exists) return [];
+      return [project];
     });
   };
 
@@ -119,6 +122,8 @@ export function WorkspaceFormProvider({
           selectedProjects,
           setSelectedProjects,
           toggleProject,
+          sentryInstallationId,
+          setSentryInstallationId,
         }}
       >
         {children}

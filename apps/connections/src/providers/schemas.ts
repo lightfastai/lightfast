@@ -2,16 +2,16 @@ import { z } from "zod";
 
 // ── OAuth Response Schemas ──
 
-const githubOAuthSuccessSchema = z.object({
+export const githubOAuthSuccessSchema = z.object({
   access_token: z.string(),
-  token_type: z.string().optional(),
-  scope: z.string().optional(),
+  token_type: z.string(),
+  scope: z.string(),
 });
 
-const githubOAuthErrorSchema = z.object({
+export const githubOAuthErrorSchema = z.object({
   error: z.string(),
-  error_description: z.string().optional(),
-  error_uri: z.string().optional(),
+  error_description: z.string(),
+  error_uri: z.string(),
 });
 
 export const githubOAuthResponseSchema = z.union([
@@ -21,8 +21,10 @@ export const githubOAuthResponseSchema = z.union([
 
 export const vercelOAuthResponseSchema = z.object({
   access_token: z.string(),
-  token_type: z.string().optional(),
-  scope: z.string().optional(),
+  token_type: z.string(),
+  installation_id: z.string(),
+  user_id: z.string(),
+  team_id: z.string().nullable(),
 });
 
 export const linearOAuthResponseSchema = z.object({

@@ -30,6 +30,7 @@ export default defineConfig({
           "@api/console",
           "@vercel/related-projects",
           "@repo/console-api-key",
+          "@repo/console-octokit-github",
           "@sentry/core",
         ],
       },
@@ -57,6 +58,10 @@ export default defineConfig({
       "@console/trpc": resolve(root, "api/console/src/trpc.ts"),
       "@console/env": resolve(root, "api/console/src/env.ts"),
       "@console/router/org/connections": resolve(root, "api/console/src/router/org/connections.ts"),
+      // ── GitHub octokit package — sub-exports listed FIRST (more specific aliases must precede root) ──
+      "@repo/console-octokit-github/env": resolve(root, "packages/console-octokit-github/src/env.ts"),
+      "@repo/console-octokit-github/oauth-env": resolve(root, "packages/console-octokit-github/src/oauth-env.ts"),
+      "@repo/console-octokit-github": resolve(root, "packages/console-octokit-github/src/index.ts"),
     },
   },
 });

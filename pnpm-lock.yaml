@@ -2022,6 +2022,9 @@ importers:
       '@repo/console-validation':
         specifier: workspace:*
         version: link:../../packages/console-validation
+      '@repo/gateway-types':
+        specifier: workspace:*
+        version: link:../../packages/gateway-types
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
@@ -3764,6 +3767,9 @@ importers:
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../../internal/eslint
+      '@repo/gateway-types':
+        specifier: workspace:*
+        version: link:../gateway-types
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript

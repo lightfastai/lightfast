@@ -986,7 +986,7 @@ export const workspaceRouter = {
               projectId,
               projectName,
               teamId: providerAccountInfo.teamId,
-              teamSlug: providerAccountInfo.teamSlug,
+              teamSlug: undefined,
               configurationId: providerAccountInfo.configurationId,
               sync: {
                 events: [
@@ -1153,19 +1153,8 @@ export const workspaceRouter = {
           });
         }
 
-        const providerAccountInfo = gwInstallation.providerAccountInfo;
-        if (providerAccountInfo?.sourceType !== "github") {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Invalid provider account info",
-          });
-        }
-
-        // Verify installation exists in providerAccountInfo
-        const githubInstallation = providerAccountInfo.installations?.find(
-          (i) => i.id === input.installationId,
-        );
-        if (!githubInstallation) {
+        // Verify the GitHub App installation is accessible via the table column
+        if (gwInstallation.externalId !== input.installationId) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Installation not found",
@@ -1368,7 +1357,7 @@ export const workspaceRouter = {
               projectId: p.projectId,
               projectName: p.projectName,
               teamId: providerAccountInfo.teamId,
-              teamSlug: providerAccountInfo.teamSlug,
+              teamSlug: undefined,
               configurationId: providerAccountInfo.configurationId,
               sync: {
                 events: [

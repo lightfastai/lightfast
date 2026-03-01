@@ -82,49 +82,71 @@ describe("VercelProvider", () => {
   });
 
   describe("buildAccountInfo", () => {
-    it("builds Vercel account info with scope from OAuth response", () => {
+    it("builds Vercel account info from parsed OAuth response (team)", () => {
       const info = provider.buildAccountInfo(
-        { connectedBy: "user-1" },
         {
-          accessToken: "tok",
-          scope: "read:project,read:team",
-          raw: { team_id: "team_abc", team_slug: "my-team" },
+          access_token: "tok",
+          token_type: "Bearer",
+          installation_id: "icfg_abc",
+          user_id: "vercel-user-123",
+          team_id: "team_abc",
         },
+        { scopes: ["read:project"] },
       );
       expect(info).toMatchObject({
         version: 1,
         sourceType: "vercel",
-        userId: "user-1",
-        configurationId: "team_abc",
-        scope: "read:project,read:team",
+        scopes: ["read:project"],
+        userId: "vercel-user-123",
+        configurationId: "icfg_abc",
         teamId: "team_abc",
-        teamSlug: "my-team",
       });
+      expect(info.events.length).toBeGreaterThan(0);
+      expect(info.installedAt).toBeDefined();
+      expect(info.lastValidatedAt).toBeDefined();
     });
 
-    it("defaults scope to empty string when not in OAuth response", () => {
-      const info = provider.buildAccountInfo({ connectedBy: "user-1" });
+    it("builds Vercel account info from parsed OAuth response (personal)", () => {
+      const info = provider.buildAccountInfo(
+        {
+          access_token: "tok",
+          token_type: "Bearer",
+          installation_id: "icfg_xyz",
+          user_id: "vercel-user-456",
+          team_id: null,
+        },
+        { scopes: [] },
+      );
       expect(info).toMatchObject({
         version: 1,
         sourceType: "vercel",
-        userId: "user-1",
-        scope: "",
+        userId: "vercel-user-456",
+        configurationId: "icfg_xyz",
       });
+      expect(info && "teamId" in info ? info.teamId : "missing").toBeUndefined();
     });
   });
 
   describe("handleCallback", () => {
     const exchangeCodeResponse = {
       access_token: "vc-tok",
-      token_type: "bearer",
-      scope: "read",
+      token_type: "Bearer",
+      installation_id: "icfg_abc",
+      user_id: "vercel-user-123",
       team_id: "team_abc",
     };
 
     it("connects and fires backfill for new installation", async () => {
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      // First call: token exchange
+      fetchSpy.mockResolvedValueOnce({
         ok: true,
         json: async () => exchangeCodeResponse,
+      } as unknown as Response);
+      // Second call: fetchConfiguration
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ scopes: ["read:project"] }),
       } as unknown as Response);
       dbMocks.returning.mockResolvedValue([{ id: "inst-vc-new" }]);
 
@@ -150,9 +172,16 @@ describe("VercelProvider", () => {
     });
 
     it("reconnects successfully when row already exists (upsert)", async () => {
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      // First call: token exchange
+      fetchSpy.mockResolvedValueOnce({
         ok: true,
         json: async () => exchangeCodeResponse,
+      } as unknown as Response);
+      // Second call: fetchConfiguration
+      fetchSpy.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ scopes: [] }),
       } as unknown as Response);
       // Upsert returns existing row — no crash
       dbMocks.returning.mockResolvedValue([{ id: "inst-vc-existing" }]);

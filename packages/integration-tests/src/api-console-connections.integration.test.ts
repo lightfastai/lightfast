@@ -33,6 +33,14 @@ import type { TestDb } from "@repo/console-test-db";
 // ── Shared state ──
 let db: TestDb;
 
+// ── Octokit mock functions (hoisted so vi.mock factory can reference them) ──
+const { mockCreateGitHubApp, mockGetAppInstallation, mockGetInstallationRepositories } =
+  vi.hoisted(() => ({
+    mockCreateGitHubApp: vi.fn().mockReturnValue({}),
+    mockGetAppInstallation: vi.fn(),
+    mockGetInstallationRepositories: vi.fn(),
+  }));
+
 // ── Create mock state in vi.hoisted ──
 const { redisMock, redisStore, mockGetProvider, mockProvider } =
   await vi.hoisted(async () => {
@@ -109,7 +117,18 @@ vi.mock("@vercel/related-projects", () => ({
 
 // Mock @console/env so cliAuthorize/getAuthorizeUrl can read GATEWAY_API_KEY
 vi.mock("@console/env", () => ({
-  env: { GATEWAY_API_KEY: "0".repeat(64) },
+  env: {
+    GATEWAY_API_KEY: "0".repeat(64),
+    GITHUB_APP_ID: "12345",
+    GITHUB_APP_PRIVATE_KEY: "test-private-key",
+  },
+}));
+
+// Mock @repo/console-octokit-github for github.validate and github.repositories procedures
+vi.mock("@repo/console-octokit-github", () => ({
+  createGitHubApp: mockCreateGitHubApp,
+  getAppInstallation: mockGetAppInstallation,
+  getInstallationRepositories: mockGetInstallationRepositories,
 }));
 
 // Mock @sentry/core to avoid real Sentry initialization
@@ -137,11 +156,33 @@ import type { createUserTRPCContext } from "@console/trpc";
 import { connectionsRouter } from "@console/router/org/connections";
 import connectionsApp from "@connections/app";
 import { makeApiKeyFixture, installServiceRouter, TEST_WORKSPACE_SETTINGS } from "./harness.js";
-import { orgWorkspaces } from "@db/console/schema";
+import { orgWorkspaces, gwInstallations } from "@db/console/schema";
+import type { GitHubAccountInfo } from "@repo/gateway-types";
 
 // Use crypto.randomUUID() for unique IDs — avoids importing @repo/lib
 function uid() {
   return crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+}
+
+/**
+ * Builds a valid GitHub providerAccountInfo JSONB blob for seeding test rows.
+ */
+function makeGitHubAccountInfo(overrides?: Partial<{
+  accountLogin: string;
+  accountType: "User" | "Organization";
+}>): GitHubAccountInfo {
+  return {
+    version: 1,
+    sourceType: "github",
+    scopes: ["contents:read", "metadata:read"],
+    events: ["push", "pull_request"],
+    installedAt: "2026-01-01T00:00:00Z",
+    lastValidatedAt: "2026-01-01T00:00:00Z",
+    accountId: "67890",
+    accountLogin: overrides?.accountLogin ?? "test-org",
+    accountType: overrides?.accountType ?? "Organization",
+    avatarUrl: "https://avatars.githubusercontent.com/u/67890",
+  };
 }
 
 // ── tRPC caller setup ──
@@ -248,6 +289,38 @@ beforeEach(() => {
     installationId: "inst-1",
     provider: "github",
     status: "connected",
+  });
+
+  // Re-wire octokit mocks (cleared by vi.clearAllMocks())
+  mockCreateGitHubApp.mockReturnValue({});
+  mockGetAppInstallation.mockResolvedValue({
+    account: {
+      id: 67890,
+      login: "test-org",
+      type: "Organization",
+      avatar_url: "https://avatars.githubusercontent.com/u/67890",
+    },
+    permissions: { contents: "read", metadata: "read" },
+    events: ["push", "pull_request"],
+    created_at: "2026-01-01T00:00:00Z",
+  });
+  mockGetInstallationRepositories.mockResolvedValue({
+    repositories: [
+      {
+        id: 123,
+        name: "test-repo",
+        full_name: "test-org/test-repo",
+        owner: { login: "test-org" },
+        description: "A test repository",
+        default_branch: "main",
+        private: false,
+        archived: false,
+        html_url: "https://github.com/test-org/test-repo",
+        language: "TypeScript",
+        stargazers_count: 0,
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+    ],
   });
 });
 
@@ -438,6 +511,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
   });
 
   describe("8.3 — getAuthorizeUrl procedure", () => {
+
     it("clerk-pending auth → throws FORBIDDEN (orgScopedProcedure rejects)", async () => {
       const caller = makeCaller({ type: "clerk-pending", userId: "u1" });
       await expect(
@@ -485,6 +559,330 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       } finally {
         restore();
       }
+    });
+  });
+
+  describe("8.4 — github.list procedure", () => {
+    it("Returns null when no GitHub installations exist", async () => {
+      const orgId = `org_${uid()}`;
+      const caller = clerkActiveCaller("user_1", orgId);
+      const result = await caller.github.list();
+      expect(result).toBeNull();
+    });
+
+    it("Returns connection with installations for a single row", async () => {
+      const orgId = `org_${uid()}`;
+      const rowId = uid();
+      await db.insert(gwInstallations).values({
+        id: rowId,
+        provider: "github",
+        externalId: "12345",
+        connectedBy: "user_1",
+        orgId,
+        status: "active",
+        providerAccountInfo: makeGitHubAccountInfo(),
+      });
+
+      const caller = clerkActiveCaller("user_1", orgId);
+      const result = await caller.github.list();
+
+      expect(result).not.toBeNull();
+      if (!result) throw new Error("Expected result to be non-null");
+      expect(result.installations).toHaveLength(1);
+      expect(result.installations[0]?.accountLogin).toBe("test-org");
+      expect(result.installations[0]?.gwInstallationId).toBe(rowId);
+    });
+
+    it("Merges installations from multiple rows (different externalId)", async () => {
+      const orgId = `org_${uid()}`;
+      await db.insert(gwInstallations).values([
+        {
+          provider: "github",
+          externalId: "11111",
+          connectedBy: "user_1",
+          orgId,
+          status: "active",
+          providerAccountInfo: makeGitHubAccountInfo({ accountLogin: "org-a" }),
+        },
+        {
+          provider: "github",
+          externalId: "22222",
+          connectedBy: "user_1",
+          orgId,
+          status: "active",
+          providerAccountInfo: makeGitHubAccountInfo({ accountLogin: "org-b" }),
+        },
+      ]);
+
+      const caller = clerkActiveCaller("user_1", orgId);
+      const result = await caller.github.list();
+
+      expect(result).not.toBeNull();
+      if (!result) throw new Error("Expected result to be non-null");
+      expect(result.installations).toHaveLength(2);
+      const logins = result.installations.map((i) => i.accountLogin);
+      expect(logins).toContain("org-a");
+      expect(logins).toContain("org-b");
+    });
+
+    it("Ignores non-active (revoked) rows", async () => {
+      const orgId = `org_${uid()}`;
+      await db.insert(gwInstallations).values([
+        {
+          provider: "github",
+          externalId: "33333",
+          connectedBy: "user_1",
+          orgId,
+          status: "active",
+          providerAccountInfo: makeGitHubAccountInfo({ accountLogin: "active-org" }),
+        },
+        {
+          provider: "github",
+          externalId: "44444",
+          connectedBy: "user_1",
+          orgId,
+          status: "revoked",
+          providerAccountInfo: makeGitHubAccountInfo({ accountLogin: "revoked-org" }),
+        },
+      ]);
+
+      const caller = clerkActiveCaller("user_1", orgId);
+      const result = await caller.github.list();
+
+      expect(result).not.toBeNull();
+      if (!result) throw new Error("Expected result to be non-null");
+      expect(result.installations).toHaveLength(1);
+      expect(result.installations[0]?.accountLogin).toBe("active-org");
+    });
+
+    it("Ignores non-github providers (vercel row returns null)", async () => {
+      const orgId = `org_${uid()}`;
+      await db.insert(gwInstallations).values({
+        provider: "vercel",
+        externalId: "vercel-config-55555",
+        connectedBy: "user_1",
+        orgId,
+        status: "active",
+        providerAccountInfo: {
+          version: 1 as const,
+          sourceType: "vercel" as const,
+          scopes: [],
+          events: [],
+          installedAt: "2026-01-01T00:00:00Z",
+          lastValidatedAt: "2026-01-01T00:00:00Z",
+          userId: "user-vercel",
+          configurationId: "icfg_55555",
+        },
+      });
+
+      const caller = clerkActiveCaller("user_1", orgId);
+      const result = await caller.github.list();
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("8.5 — github.validate procedure", () => {
+    it("Throws NOT_FOUND when no active GitHub installation exists", async () => {
+      const orgId = `org_${uid()}`;
+      const caller = clerkActiveCaller("user_1", orgId);
+      await expect(caller.github.validate()).rejects.toMatchObject({
+        code: "NOT_FOUND",
+      });
+    });
+
+    it("Refreshes providerAccountInfo with GitHub API data", async () => {
+      const orgId = `org_${uid()}`;
+      const rowId = uid();
+      await db.insert(gwInstallations).values({
+        id: rowId,
+        provider: "github",
+        externalId: "12345",
+        connectedBy: "user_1",
+        orgId,
+        status: "active",
+        providerAccountInfo: makeGitHubAccountInfo({ accountLogin: "old-org" }),
+      });
+
+      // Mock returns updated avatar URL
+      mockGetAppInstallation.mockResolvedValueOnce({
+        account: {
+          id: 67890,
+          login: "new-org",
+          type: "Organization",
+          avatar_url: "https://avatars.githubusercontent.com/u/99999",
+        },
+        permissions: { contents: "read", metadata: "read" },
+        events: ["push"],
+        created_at: "2026-01-01T00:00:00Z",
+      });
+
+      const caller = clerkActiveCaller("user_1", orgId);
+      await caller.github.validate();
+
+      // Verify DB was updated — query all rows and find the one we seeded
+      const allRows = await db.select().from(gwInstallations);
+      const updated = allRows.find((r) => r.id === rowId);
+      expect(updated?.providerAccountInfo?.sourceType).toBe("github");
+      if (updated?.providerAccountInfo?.sourceType === "github") {
+        expect(updated.providerAccountInfo.avatarUrl).toBe(
+          "https://avatars.githubusercontent.com/u/99999",
+        );
+        expect(updated.providerAccountInfo.accountLogin).toBe("new-org");
+      }
+    });
+
+    it("Returns correct added/removed/total counts (1 existing installation)", async () => {
+      const orgId = `org_${uid()}`;
+      await db.insert(gwInstallations).values({
+        provider: "github",
+        externalId: "12345",
+        connectedBy: "user_1",
+        orgId,
+        status: "active",
+        providerAccountInfo: makeGitHubAccountInfo(),
+      });
+
+      const caller = clerkActiveCaller("user_1", orgId);
+      const result = await caller.github.validate();
+
+      // 1 current installation → added: 0, removed: 0, total: 1
+      expect(result).toMatchObject({ added: 0, removed: 0, total: 1 });
+    });
+
+    it("Throws INTERNAL_SERVER_ERROR for inconsistent sourceType in providerAccountInfo", async () => {
+      const orgId = `org_${uid()}`;
+      await db.insert(gwInstallations).values({
+        provider: "github",
+        externalId: "12345",
+        connectedBy: "user_1",
+        orgId,
+        status: "active",
+        // provider column is "github" but JSONB sourceType is "vercel" — data inconsistency
+        providerAccountInfo: {
+          version: 1 as const,
+          sourceType: "vercel" as const,
+          scopes: [],
+          events: [],
+          installedAt: "2026-01-01T00:00:00Z",
+          lastValidatedAt: "2026-01-01T00:00:00Z",
+          userId: "user-vercel",
+          configurationId: "icfg_1",
+        },
+      });
+
+      const caller = clerkActiveCaller("user_1", orgId);
+      await expect(caller.github.validate()).rejects.toMatchObject({
+        code: "INTERNAL_SERVER_ERROR",
+      });
+    });
+  });
+
+  describe("8.6 — github.repositories procedure", () => {
+    it("Throws NOT_FOUND for unknown integrationId", async () => {
+      const orgId = `org_${uid()}`;
+      const caller = clerkActiveCaller("user_1", orgId);
+      await expect(
+        caller.github.repositories({
+          integrationId: "nonexistent-id",
+          installationId: "12345",
+        }),
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("Throws NOT_FOUND when installationId not in providerAccountInfo", async () => {
+      const orgId = `org_${uid()}`;
+      const rowId = uid();
+      await db.insert(gwInstallations).values({
+        id: rowId,
+        provider: "github",
+        externalId: "12345",
+        connectedBy: "user_1",
+        orgId,
+        status: "active",
+        providerAccountInfo: makeGitHubAccountInfo(),
+      });
+
+      const caller = clerkActiveCaller("user_1", orgId);
+      await expect(
+        caller.github.repositories({
+          integrationId: rowId,
+          installationId: "99999", // not in providerAccountInfo
+        }),
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("Returns normalized repository list", async () => {
+      const orgId = `org_${uid()}`;
+      const rowId = uid();
+      await db.insert(gwInstallations).values({
+        id: rowId,
+        provider: "github",
+        externalId: "12345",
+        connectedBy: "user_1",
+        orgId,
+        status: "active",
+        providerAccountInfo: makeGitHubAccountInfo(),
+      });
+
+      const caller = clerkActiveCaller("user_1", orgId);
+      const result = await caller.github.repositories({
+        integrationId: rowId,
+        installationId: "12345",
+      });
+
+      expect(result).toHaveLength(1);
+      const repo = result[0];
+      expect(repo?.id).toBe("123"); // number → string
+      expect(repo?.name).toBe("test-repo");
+      expect(repo?.fullName).toBe("test-org/test-repo");
+      expect(repo?.isPrivate).toBe(false);
+    });
+
+    it("Denies cross-org access (org B cannot access org A's row)", async () => {
+      const orgA = `org_${uid()}`;
+      const orgB = `org_${uid()}`;
+      const rowId = uid();
+      await db.insert(gwInstallations).values({
+        id: rowId,
+        provider: "github",
+        externalId: "12345",
+        connectedBy: "user_1",
+        orgId: orgA,
+        status: "active",
+        providerAccountInfo: makeGitHubAccountInfo(),
+      });
+
+      // Caller scoped to org B tries to access org A's installation
+      const caller = clerkActiveCaller("user_1", orgB);
+      await expect(
+        caller.github.repositories({
+          integrationId: rowId,
+          installationId: "12345",
+        }),
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    });
+
+    it("Handles empty repository list", async () => {
+      const orgId = `org_${uid()}`;
+      const rowId = uid();
+      await db.insert(gwInstallations).values({
+        id: rowId,
+        provider: "github",
+        externalId: "12345",
+        connectedBy: "user_1",
+        orgId,
+        status: "active",
+        providerAccountInfo: makeGitHubAccountInfo(),
+      });
+
+      mockGetInstallationRepositories.mockResolvedValueOnce({ repositories: [] });
+
+      const caller = clerkActiveCaller("user_1", orgId);
+      const result = await caller.github.repositories({
+        integrationId: rowId,
+        installationId: "12345",
+      });
+      expect(result).toEqual([]);
     });
   });
 });

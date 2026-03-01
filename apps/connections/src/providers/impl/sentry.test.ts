@@ -420,17 +420,20 @@ describe("SentryProvider", () => {
           raw: { organization: { slug: "acme-org" } },
         },
       );
-      expect(info).toEqual({
+      expect(info).toMatchObject({
         version: 1,
         sourceType: "sentry",
         installationId: "inst-123",
         organizationSlug: "acme-org",
       });
+      expect(info.events).toEqual(["installation", "issue", "error", "comment"]);
+      expect(info.installedAt).toBeDefined();
+      expect(info.lastValidatedAt).toBeDefined();
     });
 
     it("defaults to empty strings when no data is available", () => {
       const info = provider.buildAccountInfo({});
-      expect(info).toEqual({
+      expect(info).toMatchObject({
         version: 1,
         sourceType: "sentry",
         installationId: "",

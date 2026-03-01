@@ -28,6 +28,12 @@ export type {
   GitHubAuthOptions,
   LinearAuthOptions,
   ProviderOptions,
+  BaseAccountInfo,
+  GitHubAccountInfo,
+  VercelAccountInfo,
+  SentryAccountInfo,
+  LinearAccountInfo,
+  ProviderAccountInfo,
 } from "@repo/gateway-types";
 
 // ── Connection-Specific Type Maps ──

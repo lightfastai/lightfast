@@ -5,7 +5,6 @@ import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-quer
 import { Search, Loader2 } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
-import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Input } from "@repo/ui/components/ui/input";
 import {
   Select,
@@ -47,7 +46,7 @@ export function VercelSourceItem() {
   const {
     vercelInstallationId,
     setVercelInstallationId,
-    vercelInstallations,
+    vercelInstallations: _vercelInstallations,
     setVercelInstallations,
     selectedVercelInstallation,
     setSelectedVercelInstallation,
@@ -57,8 +56,9 @@ export function VercelSourceItem() {
   } = useWorkspaceForm();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [showPicker, setShowPicker] = useState(true);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const prevInstallationsRef = useRef<typeof vercelInstallations>([]);
+  const prevInstallationsRef = useRef<typeof _vercelInstallations>([]);
 
   // Fetch Vercel installations (prefetched by parent page RSC)
   const { data: listData, refetch: refetchConnection } = useSuspenseQuery({
@@ -67,7 +67,7 @@ export function VercelSourceItem() {
     refetchOnWindowFocus: false,
   });
 
-  const connectionInstallations = listData?.installations ?? [];
+  const connectionInstallations = listData.installations;
   const hasConnection = connectionInstallations.length > 0;
 
   // Sync installations array (with ID equality check to avoid re-renders)
@@ -125,21 +125,7 @@ export function VercelSourceItem() {
     p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const isSelected = (projectId: string) => selectedProjects.some((p) => p.id === projectId);
-  const selectedFromFiltered = filteredProjects.filter((p) => isSelected(p.id)).length;
-
-  const handleSelectAll = () => {
-    const unselected = filteredProjects.filter((p) => !isSelected(p.id));
-    setSelectedProjects([
-      ...selectedProjects,
-      ...unselected,
-    ]);
-  };
-
-  const handleDeselectAll = () => {
-    const filteredIds = new Set(filteredProjects.map((p) => p.id));
-    setSelectedProjects(selectedProjects.filter((p) => !filteredIds.has(p.id)));
-  };
+  const selectedProject = selectedProjects[0] ?? null;
 
   const handleConnect = async () => {
     try {
@@ -176,7 +162,7 @@ export function VercelSourceItem() {
 
   /** Display label for a Vercel installation */
   const getInstallationLabel = (inst: (typeof connectionInstallations)[number]) =>
-    inst.teamSlug ?? "Personal";
+    inst.accountLogin;
 
   return (
     <AccordionItem value="vercel">
@@ -189,9 +175,9 @@ export function VercelSourceItem() {
           ) : (
             <Badge variant="outline" className="text-xs text-muted-foreground">Not connected</Badge>
           )}
-          {selectedProjects.length > 0 && (
+          {selectedProject && (
             <Badge variant="default" className="text-xs ml-auto mr-2">
-              {selectedProjects.length} selected
+              1 selected
             </Badge>
           )}
         </div>
@@ -209,122 +195,144 @@ export function VercelSourceItem() {
           </div>
         ) : (
           <div className="space-y-4 pt-2">
-            {/* Team Selector & Search */}
-            <div className="flex gap-4">
-              {connectionInstallations.length > 1 && (
-                <Select
-                  value={selectedVercelInstallation?.id}
-                  onValueChange={(id) => {
-                    const inst = connectionInstallations.find((i) => i.id === id);
-                    if (inst) {
-                      setSelectedVercelInstallation(inst);
-                      setSelectedProjects([]);
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-[220px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {connectionInstallations.map((inst) => (
-                      <SelectItem key={inst.id} value={inst.id}>
-                        <div className="flex items-center gap-2">
-                          <VercelIcon className="h-3 w-3" />
-                          {getInstallationLabel(inst)}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search projects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            {/* Selected Count & Clear */}
-            {selectedProjects.length > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  {selectedProjects.length} project{selectedProjects.length === 1 ? "" : "s"} selected
-                </span>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedProjects([])}>
-                  Clear all
-                </Button>
-              </div>
-            )}
-
-            {/* Project List */}
-            <div className="rounded-lg border bg-card max-h-[260px] overflow-y-auto">
-              {projectsError ? (
-                <div className="flex flex-col items-center py-6 text-center gap-3">
-                  <p className="text-sm text-destructive">
-                    Failed to load projects. The connection may need to be refreshed.
-                  </p>
-                  <Button onClick={handleConnect} variant="outline" size="sm">
-                    Reconnect Vercel
-                  </Button>
-                </div>
-              ) : isLoadingProjects ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                  Loading projects...
-                </div>
-              ) : filteredProjects.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  {searchQuery ? "No projects match your search" : "No projects found"}
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
-                    <span className="text-sm text-muted-foreground">
-                      {filteredProjects.length} project{filteredProjects.length === 1 ? "" : "s"}
-                    </span>
+            {selectedProject && !showPicker ? (
+              /* Selected card view */
+              <div className="rounded-lg border bg-card p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
+                    <VercelIcon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium truncate">{selectedProject.name}</span>
+                      {selectedProject.framework && (
+                        <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                          {selectedProject.framework}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button variant="outline" size="sm" onClick={() => setShowPicker(true)}>
+                      Change
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={selectedFromFiltered === filteredProjects.length ? handleDeselectAll : handleSelectAll}
+                      onClick={() => {
+                        setSelectedProjects([]);
+                        setShowPicker(true);
+                      }}
                     >
-                      {selectedFromFiltered === filteredProjects.length ? "Deselect all" : "Select all"}
+                      Clear
                     </Button>
                   </div>
-                  <div className="divide-y">
-                    {filteredProjects.map((project) => (
-                      <label
-                        key={project.id}
-                        className={`flex items-center gap-3 p-4 hover:bg-accent transition-colors cursor-pointer ${
-                          isSelected(project.id) ? "bg-accent/50" : ""
-                        }`}
-                      >
-                        <Checkbox
-                          checked={isSelected(project.id)}
-                          onCheckedChange={() => toggleProject(project)}
-                        />
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                          <VercelIcon className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Team Selector & Search */}
+                <div className="flex gap-4">
+                  <Select
+                    value={selectedVercelInstallation?.id}
+                    onValueChange={(id) => {
+                      const inst = connectionInstallations.find((i) => i.id === id);
+                      if (inst) {
+                        setSelectedVercelInstallation(inst);
+                        setSelectedProjects([]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-[220px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {connectionInstallations.map((inst) => (
+                        <SelectItem key={inst.id} value={inst.id}>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium truncate">{project.name}</span>
-                            {project.framework && (
-                              <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
-                                {project.framework}
-                              </span>
-                            )}
+                            <VercelIcon className="h-3 w-3" />
+                            {getInstallationLabel(inst)}
                           </div>
-                        </div>
-                      </label>
-                    ))}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search projects..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
                   </div>
-                </>
-              )}
-            </div>
+                </div>
+
+                {/* Project List */}
+                <div className="rounded-lg border bg-card max-h-[260px] overflow-y-auto">
+                  {projectsError ? (
+                    <div className="flex flex-col items-center py-6 text-center gap-3">
+                      <p className="text-sm text-destructive">
+                        Failed to load projects. The connection may need to be refreshed.
+                      </p>
+                      <Button onClick={handleConnect} variant="outline" size="sm">
+                        Reconnect Vercel
+                      </Button>
+                    </div>
+                  ) : isLoadingProjects ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                      Loading projects...
+                    </div>
+                  ) : filteredProjects.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      {searchQuery ? "No projects match your search" : "No projects found"}
+                    </div>
+                  ) : (
+                    <div className="divide-y">
+                      {filteredProjects.map((project) => (
+                        <button
+                          key={project.id}
+                          type="button"
+                          className={`flex items-center gap-3 p-4 w-full text-left hover:bg-accent transition-colors cursor-pointer ${
+                            selectedProject?.id === project.id ? "bg-accent/50" : ""
+                          }`}
+                          onClick={() => {
+                            toggleProject(project);
+                            setShowPicker(false);
+                          }}
+                        >
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
+                            <VercelIcon className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium truncate">{project.name}</span>
+                              {project.framework && (
+                                <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                                  {project.framework}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Missing project link */}
+                <div className="text-center text-sm text-muted-foreground">
+                  Missing a project?{" "}
+                  <button
+                    onClick={handleConnect}
+                    className="text-blue-500 hover:text-blue-600 underline-offset-4 hover:underline transition-colors"
+                  >
+                    Reconnect Vercel →
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </AccordionContent>

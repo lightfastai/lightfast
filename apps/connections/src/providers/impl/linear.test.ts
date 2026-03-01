@@ -133,12 +133,15 @@ describe("LinearProvider", () => {
         {},
         { accessToken: "tok", scope: "read,write", raw: {} },
       );
-      expect(info).toEqual({ version: 1, sourceType: "linear", scope: "read,write" });
+      expect(info).toMatchObject({ version: 1, sourceType: "linear", scopes: ["read,write"] });
+      expect(info.events).toEqual([]);
+      expect(info.installedAt).toBeDefined();
+      expect(info.lastValidatedAt).toBeDefined();
     });
 
-    it("defaults scope to empty string when not in OAuth response", () => {
+    it("defaults scope to empty array when not in OAuth response", () => {
       const info = provider.buildAccountInfo({});
-      expect(info).toEqual({ version: 1, sourceType: "linear", scope: "" });
+      expect(info).toMatchObject({ version: 1, sourceType: "linear", scopes: [] });
     });
   });
 

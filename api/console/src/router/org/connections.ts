@@ -223,26 +223,34 @@ export const connectionsRouter = {
 				return null;
 			}
 
-			// Merge installations from all gwInstallation rows, tagging each with
-			// its parent gwInstallationId so the UI can pass the correct
-			// integrationId when fetching repositories.
-			const allInstallations = results.flatMap((row) => {
-				const info = row.providerAccountInfo;
-				if (info?.sourceType !== "github") return [];
-				return (info.installations ?? []).map((inst) => ({
-					...inst,
-					gwInstallationId: row.id,
-				}));
-			});
+			// Fetch live account info from GitHub API for each installation
+			const app = getGitHubApp();
+			const allInstallations = await Promise.all(
+				results
+					.filter((row) => row.providerAccountInfo?.sourceType === "github")
+					.map(async (row) => {
+						const installationId = Number.parseInt(row.externalId, 10);
+						const ghInstallation = await getAppInstallation(app, installationId);
+						const account = ghInstallation.account;
+						return {
+							id: row.externalId,
+							accountLogin: account && "login" in account ? account.login : row.externalId,
+							accountType: (account && "type" in account && account.type === "User" ? "User" : "Organization") as "User" | "Organization",
+							avatarUrl: account && "avatar_url" in account ? account.avatar_url : "",
+							gwInstallationId: row.id,
+						};
+					}),
+			);
 
-			const first = results[0]!;
+			const first = results[0];
+			if (!first) return null;
 			return {
 				id: first.id,
 				orgId: first.orgId,
 				provider: first.provider,
 				connectedAt: first.createdAt,
 				status: first.status,
-				installations: allInstallations,
+				installations: allInstallations.filter((v): v is NonNullable<typeof v> => v !== null),
 			};
 		}),
 
@@ -299,38 +307,36 @@ export const connectionsRouter = {
 				const now = new Date().toISOString();
 				const accountType: "User" | "Organization" =
 					"type" in account && account.type === "User" ? "User" : "Organization";
-				const refreshedInstallation = {
-					id: installation.externalId,
+
+				// Normalize GitHub permissions to string[] format
+				const permissions = githubInstallation.permissions as Record<string, string> | undefined;
+				const scopes = Object.entries(permissions ?? {}).map(
+					([key, level]) => `${key}:${level}`,
+				);
+
+				const refreshedAccountInfo = {
+					version: 1 as const,
+					sourceType: "github" as const,
+					scopes,
+					events: githubInstallation.events,
+					installedAt: githubInstallation.created_at,
+					lastValidatedAt: now,
 					accountId: account.id.toString(),
 					accountLogin: "login" in account ? account.login : "",
 					accountType,
 					avatarUrl: "avatar_url" in account ? account.avatar_url : "",
-					permissions: githubInstallation.permissions as Record<string, string>,
-					events: githubInstallation.events,
-					installedAt: githubInstallation.created_at,
-					lastValidatedAt: now,
 				};
-
-				const currentInstallations = providerAccountInfo.installations;
 
 				// Update providerAccountInfo with refreshed data
 				await ctx.db
 					.update(gwInstallations)
 					.set({
-						providerAccountInfo: {
-							version: 1 as const,
-							sourceType: "github" as const,
-							installations: [refreshedInstallation],
-						},
+						providerAccountInfo: refreshedAccountInfo,
 						updatedAt: now,
 					})
 					.where(eq(gwInstallations.id, installation.id));
 
-				return {
-					added: currentInstallations.length === 0 ? 1 : 0,
-					removed: Math.max(0, currentInstallations.length - 1),
-					total: 1,
-				};
+				return { added: 0, removed: 0, total: 1 };
 			} catch (error: unknown) {
 				console.error("[tRPC connections.github.validate] GitHub installation validation failed:", error);
 
@@ -377,21 +383,8 @@ export const connectionsRouter = {
 					});
 				}
 
-				const providerAccountInfo = installation.providerAccountInfo;
-				if (providerAccountInfo?.sourceType !== "github") {
-					throw new TRPCError({
-						code: "INTERNAL_SERVER_ERROR",
-						message: "Invalid provider account info type",
-					});
-				}
-
-				// Verify the GitHub App installation is accessible
-				const installations = providerAccountInfo.installations;
-				const githubInstallation = installations.find(
-					(i) => i.id === input.installationId,
-				);
-
-				if (!githubInstallation) {
+				// Verify the GitHub App installation is accessible via the table column
+				if (installation.externalId !== input.installationId) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
 						message: "Installation not found or not accessible to this connection",
@@ -472,20 +465,8 @@ export const connectionsRouter = {
 					});
 				}
 
-				const providerAccountInfo = installation.providerAccountInfo;
-				if (providerAccountInfo?.sourceType !== "github") {
-					throw new TRPCError({
-						code: "INTERNAL_SERVER_ERROR",
-						message: "Invalid provider account info type",
-					});
-				}
-
-				// Verify the GitHub App installation is accessible
-				const githubInstallation = providerAccountInfo.installations.find(
-					(i) => i.id === input.installationId,
-				);
-
-				if (!githubInstallation) {
+				// Verify the GitHub App installation is accessible via the table column
+				if (installation.externalId !== input.installationId) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
 						message: "Installation not found or not accessible to this connection",
@@ -626,25 +607,60 @@ export const connectionsRouter = {
 					),
 				);
 
-			return {
-				installations: results
-					.map((inst) => {
-						const info = inst.providerAccountInfo;
-						if (info?.sourceType !== "vercel") return null;
+			// Fetch live account info from Vercel API for each installation
+			const installations = await Promise.all(
+				results
+					.filter((inst) => inst.providerAccountInfo?.sourceType === "vercel")
+					.map(async (inst) => {
+						const info = inst.providerAccountInfo as Extract<typeof inst.providerAccountInfo, { sourceType: "vercel" }>;
+						const accessToken = await getInstallationToken(inst.id);
+
+						let accountLogin: string;
+						let accountType: "Team" | "User";
+
+						if (info.teamId) {
+							const res = await fetch(`https://api.vercel.com/v2/teams/${info.teamId}`, {
+								headers: { Authorization: `Bearer ${accessToken}` },
+								signal: AbortSignal.timeout(10_000),
+							});
+							if (res.ok) {
+								const data = (await res.json()) as Record<string, unknown>;
+								accountLogin = typeof data.slug === "string" ? data.slug : info.teamId;
+							} else {
+								accountLogin = info.teamId;
+							}
+							accountType = "Team";
+						} else {
+							const res = await fetch("https://api.vercel.com/v2/user", {
+								headers: { Authorization: `Bearer ${accessToken}` },
+								signal: AbortSignal.timeout(10_000),
+							});
+							if (res.ok) {
+								const data = (await res.json()) as Record<string, unknown>;
+								const user = data.user as Record<string, unknown> | undefined;
+								accountLogin = typeof user?.username === "string" ? user.username : info.userId;
+							} else {
+								accountLogin = info.userId;
+							}
+							accountType = "User";
+						}
+
 						return {
 							id: inst.id,
 							orgId: inst.orgId,
 							provider: inst.provider,
 							connectedAt: inst.createdAt,
 							status: inst.status,
-							vercelUserId: info.userId,
+							userId: info.userId,
 							teamId: info.teamId ?? null,
-							teamSlug: info.teamSlug ?? null,
 							configurationId: info.configurationId,
+							accountLogin,
+							accountType,
 						};
-					})
-					.filter((v): v is NonNullable<typeof v> => v !== null),
-			};
+					}),
+			);
+
+			return { installations };
 		}),
 
 		/**

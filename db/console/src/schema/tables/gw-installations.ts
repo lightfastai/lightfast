@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, varchar, timestamp, text, index, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
 import type { ClerkUserId } from "@repo/console-validation";
+import type { ProviderAccountInfo } from "@repo/gateway-types";
 
 export const gwInstallations = pgTable(
   "lightfast_gw_installations",
@@ -27,43 +28,7 @@ export const gwInstallations = pgTable(
     // Every field is required unless there is a genuine reason it may not exist
     // (e.g. Vercel personal accounts have no team). No "unknown" defaults —
     // if data isn't available, the provider must fetch it or use "".
-    providerAccountInfo: jsonb("provider_account_info").$type<
-      | {
-          version: 1;
-          sourceType: "github";
-          installations: {
-            id: string;
-            accountId: string;
-            accountLogin: string;
-            accountType: "User" | "Organization";
-            avatarUrl: string;
-            permissions: Record<string, string>;  // { contents: "read", issues: "write" }
-            events: string[];                     // subscribed webhook event names
-            installedAt: string;                  // ISO 8601
-            lastValidatedAt: string;              // ISO 8601
-          }[];
-        }
-      | {
-          version: 1;
-          sourceType: "vercel";
-          userId: string;
-          configurationId: string;
-          scope: string;                          // OAuth scope from token exchange
-          teamId?: string;                        // absent for personal Vercel accounts
-          teamSlug?: string;                      // absent for personal Vercel accounts
-        }
-      | {
-          version: 1;
-          sourceType: "sentry";
-          installationId: string;                 // from code param (installationId:authCode)
-          organizationSlug: string;               // Sentry org slug — "" if not resolvable
-        }
-      | {
-          version: 1;
-          sourceType: "linear";
-          scope: string;                          // OAuth scope from token exchange
-        }
-    >(),
+    providerAccountInfo: jsonb("provider_account_info").$type<ProviderAccountInfo>(),
 
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })

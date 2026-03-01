@@ -184,6 +184,7 @@ describe("GitHubProvider", () => {
           json: vi.fn().mockResolvedValue({
             error: "bad_verification_code",
             error_description: "The code passed is incorrect or expired.",
+            error_uri: "https://docs.github.com",
           }),
         }),
       );
@@ -230,14 +231,10 @@ describe("GitHubProvider", () => {
           providerAccountInfo: expect.objectContaining({
             version: 1,
             sourceType: "github",
-            installations: [
-              expect.objectContaining({
-                accountLogin: "test-org",
-                accountType: "Organization",
-                permissions: { contents: "read", metadata: "read" },
-                events: ["push", "pull_request"],
-              }),
-            ],
+            scopes: ["contents:read", "metadata:read"],
+            events: ["push", "pull_request"],
+            accountLogin: "test-org",
+            accountType: "Organization",
           }),
         }),
       );
@@ -396,18 +393,13 @@ describe("GitHubProvider", () => {
       expect(info).toMatchObject({
         version: 1,
         sourceType: "github",
-        installations: [
-          expect.objectContaining({
-            id: "inst-42",
-            accountId: "99",
-            accountLogin: "my-org",
-            accountType: "Organization",
-            avatarUrl: "https://avatars.test/99",
-            permissions: { contents: "read", issues: "write" },
-            events: ["push", "pull_request"],
-            installedAt: "2026-01-15T00:00:00Z",
-          }),
-        ],
+        scopes: expect.arrayContaining(["contents:read", "issues:write"]),
+        events: ["push", "pull_request"],
+        installedAt: "2026-01-15T00:00:00Z",
+        accountId: "99",
+        accountLogin: "my-org",
+        accountType: "Organization",
+        avatarUrl: "https://avatars.test/99",
       });
     });
 
@@ -425,7 +417,7 @@ describe("GitHubProvider", () => {
       };
       const info = provider.buildAccountInfo("inst-42", apiData);
       expect(info).toMatchObject({
-        installations: [expect.objectContaining({ accountType: "User" })],
+        accountType: "User",
       });
     });
   });

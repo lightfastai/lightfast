@@ -19,6 +19,7 @@
     "@repo/console-backfill": "workspace:*",
     "@repo/console-test-db": "workspace:*",
     "@repo/eslint-config": "workspace:*",
+    "@repo/gateway-types": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "@vendor/inngest": "workspace:*",
