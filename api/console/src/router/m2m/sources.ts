@@ -149,20 +149,17 @@ export const sourcesM2MRouter = {
       }
 
       const now = new Date().toISOString();
-      const updates = await db.transaction(async (tx) => {
-        const results = [];
-        for (const source of sources) {
-          const result = await tx
-            .update(workspaceIntegrations)
-            .set({
-              isActive: false,
-              updatedAt: now,
-            })
-            .where(eq(workspaceIntegrations.id, source.id));
-          results.push(result);
-        }
-        return results;
-      });
+      const updateQueries = sources.map((source) =>
+        db
+          .update(workspaceIntegrations)
+          .set({
+            isActive: false,
+            updatedAt: now,
+          })
+          .where(eq(workspaceIntegrations.id, source.id))
+      );
+      // Batch: deactivate all sources atomically (neon-http doesn't support transactions)
+      const updates = await db.batch(updateQueries as [typeof updateQueries[0], ...typeof updateQueries]);
 
       // Record activity for each disconnected source (Tier 3: Fire-and-forget)
       sources.forEach((source) => {

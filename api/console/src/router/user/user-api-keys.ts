@@ -213,16 +213,15 @@ export const userApiKeysRouter = {
 			const newKeyHash = await hashApiKey(newApiKey);
 
 			try {
-				// 3. Atomically swap keys in transaction
-				const result = await ctx.db.transaction(async (tx) => {
+				// 3. Atomically swap keys using batch (neon-http doesn't support transactions)
+				const [, [created]] = await ctx.db.batch([
 					// Revoke old key
-					await tx
+					ctx.db
 						.update(userApiKeys)
 						.set({ isActive: false })
-						.where(eq(userApiKeys.id, input.keyId));
-
+						.where(eq(userApiKeys.id, input.keyId)),
 					// Create new key with same settings
-					const [created] = await tx
+					ctx.db
 						.insert(userApiKeys)
 						.values({
 							userId: ctx.auth.userId,
@@ -239,10 +238,10 @@ export const userApiKeysRouter = {
 							keyPrefix: userApiKeys.keyPrefix,
 							keySuffix: userApiKeys.keySuffix,
 							createdAt: userApiKeys.createdAt,
-						});
+						}),
+				] as const);
 
-					return created;
-				});
+				const result = created;
 
 				// 4. Return new key ONLY THIS ONCE
 				return {

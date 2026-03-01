@@ -352,16 +352,15 @@ export const orgApiKeysRouter = {
       const { key, prefix, suffix } = generateOrgApiKey();
       const keyHash = await hashApiKey(key);
 
-      // Transaction: revoke old, create new
-      const [newKey] = await db.transaction(async (tx) => {
+      // Batch: revoke old, create new (atomic — neon-http doesn't support transactions)
+      const [, insertResult] = await db.batch([
         // Revoke old key
-        await tx
+        db
           .update(orgApiKeys)
           .set({ isActive: false, updatedAt: new Date().toISOString() })
-          .where(eq(orgApiKeys.id, existingKey.id));
-
+          .where(eq(orgApiKeys.id, existingKey.id)),
         // Create new key
-        return tx
+        db
           .insert(orgApiKeys)
           .values({
             workspaceId: existingKey.workspaceId,
@@ -376,8 +375,10 @@ export const orgApiKeysRouter = {
           .returning({
             id: orgApiKeys.id,
             publicId: orgApiKeys.publicId,
-          });
-      });
+          }),
+      ] as const);
+
+      const [newKey] = insertResult;
 
       if (!newKey) {
         throw new TRPCError({

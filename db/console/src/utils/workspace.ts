@@ -62,8 +62,8 @@ export function buildWorkspaceSettings(
  * - slug: Auto-generated from name for internal use (Pinecone)
  *
  * Concurrency Safety:
- * - Wrapped in transaction to prevent race conditions
  * - Unique constraint on (clerkOrgId, name) enforced at database level
+ * - Optimistic insert catches constraint violations
  *
  * @param clerkOrgId - Clerk organization ID
  * @param name - User-provided workspace name (must follow GitHub repo naming rules)
@@ -78,29 +78,12 @@ export async function createCustomWorkspace(
   // Slug examples: "robust-chicken", "happy-cat", "modest-pear"
   const slug = generateRandomSlug();
 
-  // Wrap in transaction to prevent race conditions
-  return await db.transaction(async (tx) => {
-    // Check if name already exists in this organization (names must be unique)
-    const { and, eq } = await import("drizzle-orm");
+  const { nanoid } = await import("@repo/lib");
+  const workspaceId = nanoid();
 
-    const existing = await tx.query.orgWorkspaces.findFirst({
-      where: and(
-        eq(orgWorkspaces.clerkOrgId, clerkOrgId),
-        eq(orgWorkspaces.name, name),
-      ),
-    });
-
-    if (existing) {
-      throw new Error(`Workspace with name "${name}" already exists`);
-    }
-
-    // Generate workspace ID first (needed for namespace)
-    const { nanoid } = await import("@repo/lib");
-    const workspaceId = nanoid();
-
-    // Create workspace with full settings
-    // Database unique constraint (workspace_org_name_idx) will catch duplicates
-    const [newWorkspace] = await tx
+  try {
+    // Optimistic insert — database unique constraint (workspace_org_name_idx) catches duplicates
+    const [newWorkspace] = await db
       .insert(orgWorkspaces)
       .values({
         id: workspaceId,
@@ -116,5 +99,15 @@ export async function createCustomWorkspace(
     }
 
     return newWorkspace.id;
-  });
+  } catch (error) {
+    // Database unique constraint (workspace_org_name_idx) catches duplicates
+    if (
+      error instanceof Error &&
+      (error.message.includes("unique constraint") ||
+        error.message.includes("duplicate key"))
+    ) {
+      throw new Error(`Workspace with name "${name}" already exists`);
+    }
+    throw error;
+  }
 }

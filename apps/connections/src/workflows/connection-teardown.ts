@@ -112,17 +112,17 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
 
     // Step 5: Soft-delete installation and resources in DB
     await context.run("soft-delete", async () => {
-      await db.transaction(async (tx) => {
-        await tx
+      // Batch: atomic soft-delete (neon-http doesn't support transactions)
+      await db.batch([
+        db
           .update(gwInstallations)
           .set({ status: "revoked", updatedAt: new Date().toISOString() })
-          .where(eq(gwInstallations.id, installationId));
-
-        await tx
+          .where(eq(gwInstallations.id, installationId)),
+        db
           .update(gwResources)
           .set({ status: "removed", updatedAt: new Date().toISOString() })
-          .where(eq(gwResources.installationId, installationId));
-      });
+          .where(eq(gwResources.installationId, installationId)),
+      ] as const);
     });
   },
   {

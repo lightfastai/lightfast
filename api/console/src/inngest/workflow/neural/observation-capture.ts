@@ -966,46 +966,47 @@ export const observationCapture = inngest.createFunction(
     const { observation, entitiesStored } = await step.run("store-observation", async () => {
       const observationType = deriveObservationType(sourceEvent);
 
-      return await db.transaction(async (tx) => {
-        // Insert observation with BIGINT id (auto-generated) and pre-generated externalId
-        // The externalId is already stored in Pinecone metadata for direct lookup.
-        // Note: clusterId and actorId are null until Phase 5 migrates those tables to BIGINT
-        const [obs] = await tx
-          .insert(workspaceNeuralObservations)
-          .values({
-            // id: auto-generated BIGINT
-            externalId, // Pre-generated nanoid for API/Pinecone lookups
-            workspaceId,
-            occurredAt: sourceEvent.occurredAt,
-            actor: sourceEvent.actor ?? null,
-            // actorId: null until Phase 5 (actor_profiles still uses varchar)
-            // clusterId: null until Phase 5 (clusters still uses varchar)
-            observationType,
-            title: sourceEvent.title,
-            content: sourceEvent.body,
-            topics,
-            significanceScore: significance.score,
-            source: sourceEvent.source,
-            sourceType: sourceEvent.sourceType,
-            sourceId: sourceEvent.sourceId,
-            sourceReferences: sourceEvent.references,
-            metadata: sourceEvent.metadata,
-            embeddingVectorId: embeddingResult.legacyVectorId, // Keep for backwards compat
-            embeddingTitleId: embeddingResult.title.vectorId,
-            embeddingContentId: embeddingResult.content.vectorId,
-            embeddingSummaryId: embeddingResult.summary.vectorId,
-            ingestionSource: event.data.ingestionSource ?? "webhook",
-          })
-          .returning();
+      // neon-http doesn't support transactions — insert observation first,
+      // then batch entity upserts (Inngest step provides retry guarantees)
 
-        if (!obs) {
-          throw new Error("Failed to insert observation");
-        }
+      // 1. Insert observation (need auto-generated BIGINT id for entity FK)
+      const [obs] = await db
+        .insert(workspaceNeuralObservations)
+        .values({
+          // id: auto-generated BIGINT
+          externalId, // Pre-generated nanoid for API/Pinecone lookups
+          workspaceId,
+          occurredAt: sourceEvent.occurredAt,
+          actor: sourceEvent.actor ?? null,
+          // actorId: null until Phase 5 (actor_profiles still uses varchar)
+          // clusterId: null until Phase 5 (clusters still uses varchar)
+          observationType,
+          title: sourceEvent.title,
+          content: sourceEvent.body,
+          topics,
+          significanceScore: significance.score,
+          source: sourceEvent.source,
+          sourceType: sourceEvent.sourceType,
+          sourceId: sourceEvent.sourceId,
+          sourceReferences: sourceEvent.references,
+          metadata: sourceEvent.metadata,
+          embeddingVectorId: embeddingResult.legacyVectorId, // Keep for backwards compat
+          embeddingTitleId: embeddingResult.title.vectorId,
+          embeddingContentId: embeddingResult.content.vectorId,
+          embeddingSummaryId: embeddingResult.summary.vectorId,
+          ingestionSource: event.data.ingestionSource ?? "webhook",
+        })
+        .returning();
 
-        // Insert entities with upsert (same transaction)
-        let entitiesStored = 0;
-        for (const entity of extractedEntities) {
-          await tx
+      if (!obs) {
+        throw new Error("Failed to insert observation");
+      }
+
+      // 2. Batch upsert entities (all reference obs.id as FK)
+      let entitiesStored = 0;
+      if (extractedEntities.length > 0) {
+        const entityQueries = extractedEntities.map((entity) =>
+          db
             .insert(workspaceNeuralEntities)
             .values({
               workspaceId,
@@ -1027,20 +1028,21 @@ export const observationCapture = inngest.createFunction(
                 occurrenceCount: sql`${workspaceNeuralEntities.occurrenceCount} + 1`,
                 updatedAt: new Date().toISOString(),
               },
-            });
-          entitiesStored++;
-        }
+            })
+        );
+        await db.batch(entityQueries as [typeof entityQueries[0], ...typeof entityQueries]);
+        entitiesStored = extractedEntities.length;
+      }
 
-        log.info("Observation and entities stored", {
-          observationId: obs.id, // Internal BIGINT
-          externalId: obs.externalId, // Public nanoid
-          observationType,
-          entitiesExtracted: extractedEntities.length,
-          entitiesStored,
-        });
-
-        return { observation: obs, entitiesStored };
+      log.info("Observation and entities stored", {
+        observationId: obs.id, // Internal BIGINT
+        externalId: obs.externalId, // Public nanoid
+        observationType,
+        entitiesExtracted: extractedEntities.length,
+        entitiesStored,
       });
+
+      return { observation: obs, entitiesStored };
     });
 
     // Step 7.5: Detect and create relationships
