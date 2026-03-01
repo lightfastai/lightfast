@@ -100,12 +100,18 @@ export async function createCustomWorkspace(
 
     return newWorkspace.id;
   } catch (error) {
-    // Database unique constraint (workspace_org_name_idx) catches duplicates
-    if (
-      error instanceof Error &&
-      (error.message.includes("unique constraint") ||
-        error.message.includes("duplicate key"))
-    ) {
+    // Detect unique constraint violation on (clerkOrgId, name).
+    // Prefer the PostgreSQL error code exposed by NeonDbError (code "23505" = UNIQUE_VIOLATION).
+    // Substring fallback retained in case the error is wrapped without a code property.
+    const isUniqueViolation =
+      (error instanceof Error &&
+        "code" in error &&
+        (error as { code: unknown }).code === "23505") ||
+      (error instanceof Error &&
+        (error.message.includes("unique constraint") ||
+          error.message.includes("duplicate key")));
+
+    if (isUniqueViolation) {
       throw new Error(`Workspace with name "${name}" already exists`);
     }
     throw error;
