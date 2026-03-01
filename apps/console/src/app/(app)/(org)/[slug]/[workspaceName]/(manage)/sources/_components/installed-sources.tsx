@@ -176,11 +176,13 @@ export function InstalledSources({
 				</div>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<Button variant="outline" size="sm" className="gap-2">
-							{filters.status === "all" && "All Integrations"}
-							{filters.status === "active" && "Active Only"}
-							{filters.status === "inactive" && "Inactive Only"}
-							<ChevronDown className="h-3.5 w-3.5" />
+						<Button variant="outline" className="w-[150px] justify-between">
+							<span className="text-left">
+								{filters.status === "all" && "All Integrations"}
+								{filters.status === "active" && "Active Only"}
+								{filters.status === "inactive" && "Inactive Only"}
+							</span>
+							<ChevronDown className="h-3.5 w-3.5 shrink-0" />
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
