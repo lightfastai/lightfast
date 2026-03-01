@@ -30,11 +30,23 @@ export type {
   ProviderOptions,
   BaseAccountInfo,
   GitHubAccountInfo,
+  GitHubInstallationRaw,
   VercelAccountInfo,
-  SentryAccountInfo,
+  VercelOAuthRaw,
   LinearAccountInfo,
+  LinearOAuthRaw,
+  SentryAccountInfo,
+  SentryOAuthRaw,
   ProviderAccountInfo,
 } from "@repo/gateway-types";
+
+// ── Callback State ──
+
+/** Typed state data passed from the route to provider.handleCallback */
+export interface CallbackStateData {
+  orgId: string;
+  connectedBy: string;
+}
 
 // ── Connection-Specific Type Maps ──
 
@@ -105,10 +117,7 @@ export interface ConnectionProvider {
   // Lifecycle
   handleCallback(
     c: Context,
-    stateData: Record<string, string>,
+    stateData: CallbackStateData,
   ): Promise<CallbackResult>;
   resolveToken(installation: GwInstallation): Promise<TokenResult>;
-  // buildAccountInfo is an implementation detail — each provider
-  // has its own signature (GitHub uses API data, others use stateData/tokens).
-  // It's never called polymorphically through the interface.
 }

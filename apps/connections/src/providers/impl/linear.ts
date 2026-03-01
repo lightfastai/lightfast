@@ -15,6 +15,7 @@ import type {
   TokenResult,
   OAuthTokens,
   CallbackResult,
+  CallbackStateData,
 } from "../types.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
@@ -260,7 +261,7 @@ export class LinearProvider implements ConnectionProvider {
 
   async handleCallback(
     c: Context,
-    stateData: Record<string, string>,
+    stateData: CallbackStateData,
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
     if (!code) {throw new Error("missing code");}
@@ -270,8 +271,29 @@ export class LinearProvider implements ConnectionProvider {
 
     const linearContext = await this.fetchLinearContext(oauthTokens.accessToken);
     const externalId = linearContext.externalId;
-    const accountInfo = this.buildAccountInfo(stateData, oauthTokens, linearContext);
     const now = new Date().toISOString();
+
+    const accountInfo: LinearAccountInfo = {
+      version: 1,
+      sourceType: "linear",
+      events: [], // Populated after webhook registration below
+      installedAt: now,
+      lastValidatedAt: now,
+      raw: {
+        token_type: oauthTokens.tokenType,
+        scope: oauthTokens.scope,
+        expires_in: oauthTokens.expiresIn ?? undefined,
+      },
+      ...(linearContext.organizationName || linearContext.organizationUrlKey
+        ? {
+            organization: {
+              id: linearContext.externalId,
+              name: linearContext.organizationName,
+              urlKey: linearContext.organizationUrlKey,
+            },
+          }
+        : {}),
+    };
 
     // Check if this installation already exists (reactivation vs new)
     const existing = await db
@@ -293,8 +315,8 @@ export class LinearProvider implements ConnectionProvider {
       .values({
         provider: this.name,
         externalId,
-        connectedBy: stateData.connectedBy ?? "unknown",
-        orgId: stateData.orgId ?? "",
+        connectedBy: stateData.connectedBy,
+        orgId: stateData.orgId,
         status: "active",
         providerAccountInfo: accountInfo,
       })
@@ -302,8 +324,8 @@ export class LinearProvider implements ConnectionProvider {
         target: [gwInstallations.provider, gwInstallations.externalId],
         set: {
           status: "active",
-          connectedBy: stateData.connectedBy ?? "unknown",
-          orgId: stateData.orgId ?? "",
+          connectedBy: stateData.connectedBy,
+          orgId: stateData.orgId,
           providerAccountInfo: accountInfo,
           updatedAt: now,
         },
@@ -361,7 +383,7 @@ export class LinearProvider implements ConnectionProvider {
       notifyBackfillService({
         installationId: installation.id,
         provider: this.name,
-        orgId: stateData.orgId ?? "",
+        orgId: stateData.orgId,
       }).catch(() => {});
     }
 
@@ -394,26 +416,6 @@ export class LinearProvider implements ConnectionProvider {
       expiresIn: tokenRow.expiresAt
         ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
         : null,
-    };
-  }
-
-  buildAccountInfo(
-    _stateData: Record<string, string>,
-    oauthTokens?: OAuthTokens,
-    orgInfo?: { organizationName?: string; organizationUrlKey?: string },
-  ): LinearAccountInfo {
-    const now = new Date().toISOString();
-    // Normalize scope string to array: "read write" → ["read", "write"]
-    const scopes = (oauthTokens?.scope ?? "").split(" ").filter(Boolean);
-    return {
-      version: 1,
-      sourceType: "linear",
-      scopes,
-      events: [], // Populated after webhook registration in handleCallback
-      installedAt: now,
-      lastValidatedAt: now,
-      organizationName: orgInfo?.organizationName,
-      organizationUrlKey: orgInfo?.organizationUrlKey,
     };
   }
 }

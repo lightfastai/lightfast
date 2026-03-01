@@ -12,7 +12,7 @@ import { apiKeyAuth } from "../middleware/auth.js";
 import type { TenantVariables } from "../middleware/tenant.js";
 import { tenantMiddleware } from "../middleware/tenant.js";
 import { getProvider } from "../providers/index.js";
-import type { ProviderName } from "../providers/types.js";
+import type { CallbackStateData, ProviderName } from "../providers/types.js";
 
 const workflowClient = getWorkflowClient();
 
@@ -183,7 +183,13 @@ connections.get("/:provider/callback", async (c) => {
   }
 
   try {
-    const result = await provider.handleCallback(c, stateData);
+    // Narrow to typed state — orgId guaranteed by resolveAndConsumeState (line 94)
+    // connectedBy guaranteed by authorize handler (defaults to "unknown")
+    const typedState: CallbackStateData = {
+      orgId: stateData.orgId ?? "", // orgId guaranteed non-empty by resolveAndConsumeState
+      connectedBy: stateData.connectedBy ?? "unknown",
+    };
+    const result = await provider.handleCallback(c, typedState);
 
     // Store completion result in Redis for CLI polling (5-min TTL)
     await redis

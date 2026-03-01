@@ -174,14 +174,20 @@ function makeGitHubAccountInfo(overrides?: Partial<{
   return {
     version: 1,
     sourceType: "github",
-    scopes: ["contents:read", "metadata:read"],
     events: ["push", "pull_request"],
     installedAt: "2026-01-01T00:00:00Z",
     lastValidatedAt: "2026-01-01T00:00:00Z",
-    accountId: "67890",
-    accountLogin: overrides?.accountLogin ?? "test-org",
-    accountType: overrides?.accountType ?? "Organization",
-    avatarUrl: "https://avatars.githubusercontent.com/u/67890",
+    raw: {
+      account: {
+        login: overrides?.accountLogin ?? "test-org",
+        id: 67890,
+        type: overrides?.accountType ?? "Organization",
+        avatar_url: "https://avatars.githubusercontent.com/u/67890",
+      },
+      permissions: { contents: "read", metadata: "read" },
+      events: ["push", "pull_request"],
+      created_at: "2026-01-01T00:00:00Z",
+    },
   };
 }
 
@@ -666,12 +672,15 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         providerAccountInfo: {
           version: 1 as const,
           sourceType: "vercel" as const,
-          scopes: [],
           events: [],
           installedAt: "2026-01-01T00:00:00Z",
           lastValidatedAt: "2026-01-01T00:00:00Z",
-          userId: "user-vercel",
-          configurationId: "icfg_55555",
+          raw: {
+            token_type: "Bearer",
+            installation_id: "icfg_55555",
+            user_id: "user-vercel",
+            team_id: null,
+          },
         },
       });
 
@@ -724,10 +733,10 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       const updated = allRows.find((r) => r.id === rowId);
       expect(updated?.providerAccountInfo?.sourceType).toBe("github");
       if (updated?.providerAccountInfo?.sourceType === "github") {
-        expect(updated.providerAccountInfo.avatarUrl).toBe(
+        expect(updated.providerAccountInfo.raw.account.avatar_url).toBe(
           "https://avatars.githubusercontent.com/u/99999",
         );
-        expect(updated.providerAccountInfo.accountLogin).toBe("new-org");
+        expect(updated.providerAccountInfo.raw.account.login).toBe("new-org");
       }
     });
 
@@ -761,12 +770,15 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         providerAccountInfo: {
           version: 1 as const,
           sourceType: "vercel" as const,
-          scopes: [],
           events: [],
           installedAt: "2026-01-01T00:00:00Z",
           lastValidatedAt: "2026-01-01T00:00:00Z",
-          userId: "user-vercel",
-          configurationId: "icfg_1",
+          raw: {
+            token_type: "Bearer",
+            installation_id: "icfg_1",
+            user_id: "user-vercel",
+            team_id: null,
+          },
         },
       });
 

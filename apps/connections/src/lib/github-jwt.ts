@@ -1,4 +1,7 @@
+import type { GitHubInstallationRaw } from "@repo/gateway-types";
 import { env } from "../env.js";
+
+export type { GitHubInstallationRaw as GitHubInstallationDetails };
 
 /**
  * Create a GitHub App JWT for authenticating as the App.
@@ -80,26 +83,13 @@ export async function getInstallationToken(
   return data.token;
 }
 
-/** Response shape from GET /app/installations/{id} */
-export interface GitHubInstallationDetails {
-  account: {
-    login: string;
-    id: number;
-    type: "User" | "Organization";
-    avatar_url: string;
-  };
-  permissions: Record<string, string>;
-  events: string[];
-  created_at: string;
-}
-
 /**
  * Fetch a GitHub App installation by ID using the App-level JWT.
  * Returns account info, permissions, and subscribed webhook events.
  */
 export async function getInstallationDetails(
   installationId: string,
-): Promise<GitHubInstallationDetails> {
+): Promise<GitHubInstallationRaw> {
   if (!/^\d+$/.test(installationId)) {
     throw new Error("Invalid GitHub installation ID: must be numeric");
   }

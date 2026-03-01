@@ -231,10 +231,18 @@ describe("GitHubProvider", () => {
           providerAccountInfo: expect.objectContaining({
             version: 1,
             sourceType: "github",
-            scopes: ["contents:read", "metadata:read"],
             events: ["push", "pull_request"],
-            accountLogin: "test-org",
-            accountType: "Organization",
+            raw: {
+              account: {
+                login: "test-org",
+                id: 12345,
+                type: "Organization",
+                avatar_url: "https://avatars.githubusercontent.com/u/12345",
+              },
+              permissions: { contents: "read", metadata: "read" },
+              events: ["push", "pull_request"],
+              created_at: "2026-01-01T00:00:00Z",
+            },
           }),
         }),
       );
@@ -277,29 +285,18 @@ describe("GitHubProvider", () => {
       expect(result).toMatchObject({ reactivated: true });
     });
 
-    it("creates pending installation and skips backfill for setup_action=request", async () => {
-      dbMocks.selectLimit.mockResolvedValue([]); // New installation
-      dbMocks.returning.mockResolvedValue([{ id: "inst-pending" }]);
+    it("throws unimplemented for setup_action=request", async () => {
+      const c = mockContext({ setup_action: "request" });
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("setup_action=request is not yet implemented");
+    });
 
-      const c = mockContext({
-        installation_id: "ext-42",
-        setup_action: "request",
-      });
-      const result = await provider.handleCallback(c, {
-        orgId: "org-1",
-        connectedBy: "user-1",
-      });
-
-      expect(dbMocks.values).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "pending" }),
-      );
-      expect(notifyBackfillService).not.toHaveBeenCalled();
-      expect(result).toMatchObject({
-        status: "connected",
-        installationId: "inst-pending",
-        provider: "github",
-        setupAction: "request",
-      });
+    it("throws unimplemented for setup_action=update", async () => {
+      const c = mockContext({ installation_id: "ext-42", setup_action: "update" });
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("setup_action=update is not yet implemented");
     });
 
     it("throws when getInstallationDetails fails (hard-fail, no garbage data)", async () => {
@@ -321,20 +318,6 @@ describe("GitHubProvider", () => {
       await expect(
         provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
       ).rejects.toThrow("missing installation_id");
-    });
-
-    it("throws when orgId is missing from state", async () => {
-      const c = mockContext({ installation_id: "ext-1" });
-      await expect(
-        provider.handleCallback(c, { connectedBy: "user-1" }),
-      ).rejects.toThrow("missing orgId in state data");
-    });
-
-    it("throws when connectedBy is missing from state", async () => {
-      const c = mockContext({ installation_id: "ext-1" });
-      await expect(
-        provider.handleCallback(c, { orgId: "org-1" }),
-      ).rejects.toThrow("missing connectedBy in state data");
     });
 
     it("throws when upsert returns no rows", async () => {
@@ -372,52 +355,6 @@ describe("GitHubProvider", () => {
         accessToken: "test-token",
         provider: "github",
         expiresIn: 3600,
-      });
-    });
-  });
-
-  describe("buildAccountInfo", () => {
-    it("builds GitHub account info from API data", () => {
-      const apiData = {
-        account: {
-          login: "my-org",
-          id: 99,
-          type: "Organization" as const,
-          avatar_url: "https://avatars.test/99",
-        },
-        permissions: { contents: "read", issues: "write" },
-        events: ["push", "pull_request"],
-        created_at: "2026-01-15T00:00:00Z",
-      };
-      const info = provider.buildAccountInfo("inst-42", apiData);
-      expect(info).toMatchObject({
-        version: 1,
-        sourceType: "github",
-        scopes: expect.arrayContaining(["contents:read", "issues:write"]),
-        events: ["push", "pull_request"],
-        installedAt: "2026-01-15T00:00:00Z",
-        accountId: "99",
-        accountLogin: "my-org",
-        accountType: "Organization",
-        avatarUrl: "https://avatars.test/99",
-      });
-    });
-
-    it("uses User accountType from API data", () => {
-      const apiData = {
-        account: {
-          login: "my-user",
-          id: 42,
-          type: "User" as const,
-          avatar_url: "",
-        },
-        permissions: {},
-        events: [],
-        created_at: "2026-01-01T00:00:00Z",
-      };
-      const info = provider.buildAccountInfo("inst-42", apiData);
-      expect(info).toMatchObject({
-        accountType: "User",
       });
     });
   });

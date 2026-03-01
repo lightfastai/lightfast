@@ -34,7 +34,7 @@ function SentryIcon({ className }: { className?: string }) {
 export function SentrySourceItem() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { sentryInstallationId, setSentryInstallationId } = useWorkspaceForm();
+  const { setSentryInstallationId } = useWorkspaceForm();
 
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 

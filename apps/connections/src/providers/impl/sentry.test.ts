@@ -34,7 +34,6 @@ vi.mock("@db/console/schema", () => ({
 }));
 
 vi.mock("@repo/lib", () => ({
-  nanoid: vi.fn().mockReturnValue("mock-id-padding-here"),
   decrypt: vi.fn().mockReturnValue("decrypted-token"),
   encrypt: vi.fn().mockReturnValue("encrypted-value"),
 }));
@@ -338,7 +337,7 @@ describe("SentryProvider", () => {
       expiresAt: new Date(Date.now() + 3600_000).toISOString(),
     };
 
-    it("connects and fires backfill for new installation", async () => {
+    it("connects and fires backfill for new installation using sentryInstallationId as externalId", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(exchangeCodeResponse),
@@ -353,7 +352,18 @@ describe("SentryProvider", () => {
 
       expect(dbMocks.insert).toHaveBeenCalled();
       expect(dbMocks.values).toHaveBeenCalledWith(
-        expect.objectContaining({ provider: "sentry", status: "active" }),
+        expect.objectContaining({
+          provider: "sentry",
+          externalId: "inst-123", // sentryInstallationId used as externalId
+          status: "active",
+          providerAccountInfo: expect.objectContaining({
+            version: 1,
+            sourceType: "sentry",
+            installationId: "inst-123",
+            organizationSlug: "",
+            raw: expect.objectContaining({}),
+          }),
+        }),
       );
       expect(dbMocks.onConflictDoUpdate).toHaveBeenCalled();
       expect(result).toMatchObject({
@@ -363,6 +373,38 @@ describe("SentryProvider", () => {
       });
       expect(notifyBackfillService).toHaveBeenCalledWith(
         expect.objectContaining({ installationId: "inst-sn-new" }),
+      );
+    });
+
+    it("extracts organizationSlug from raw response when present", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            token: "access-tok",
+            refreshToken: "refresh-tok",
+            expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+            organization: { slug: "acme-org" },
+          }),
+      });
+      dbMocks.returning.mockResolvedValue([{ id: "inst-sn-new" }]);
+
+      const c = mockContext({ code: "inst-456:auth-code" });
+      await provider.handleCallback(c, {
+        orgId: "org-1",
+        connectedBy: "user-1",
+      });
+
+      expect(dbMocks.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          providerAccountInfo: expect.objectContaining({
+            installationId: "inst-456",
+            organizationSlug: "acme-org",
+            raw: expect.objectContaining({
+              organization: { slug: "acme-org" },
+            }),
+          }),
+        }),
       );
     });
 
@@ -394,6 +436,13 @@ describe("SentryProvider", () => {
         provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
       ).rejects.toThrow("missing code");
     });
+
+    it("throws when sentryInstallationId is missing from code", async () => {
+      const c = mockContext({ code: "no-colon-code" });
+      await expect(
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+      ).rejects.toThrow("missing sentry installation ID in code");
+    });
   });
 
   describe("registerWebhook", () => {
@@ -408,37 +457,6 @@ describe("SentryProvider", () => {
       await expect(
         provider.deregisterWebhook("conn-1", "wh-1"),
       ).resolves.toBeUndefined();
-    });
-  });
-
-  describe("buildAccountInfo", () => {
-    it("builds Sentry account info with installationId and organizationSlug", () => {
-      const info = provider.buildAccountInfo(
-        { sentryInstallationId: "inst-123" },
-        {
-          accessToken: "tok",
-          raw: { organization: { slug: "acme-org" } },
-        },
-      );
-      expect(info).toMatchObject({
-        version: 1,
-        sourceType: "sentry",
-        installationId: "inst-123",
-        organizationSlug: "acme-org",
-      });
-      expect(info.events).toEqual(["installation", "issue", "error", "comment"]);
-      expect(info.installedAt).toBeDefined();
-      expect(info.lastValidatedAt).toBeDefined();
-    });
-
-    it("defaults to empty strings when no data is available", () => {
-      const info = provider.buildAccountInfo({});
-      expect(info).toMatchObject({
-        version: 1,
-        sourceType: "sentry",
-        installationId: "",
-        organizationSlug: "",
-      });
     });
   });
 });

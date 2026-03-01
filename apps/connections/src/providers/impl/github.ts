@@ -5,7 +5,6 @@ import { and, eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { getInstallationToken, getInstallationDetails } from "../../lib/github-jwt.js";
-import type { GitHubInstallationDetails } from "../../lib/github-jwt.js";
 import { notifyBackfillService } from "../../lib/urls.js";
 import {
   githubOAuthResponseSchema,
@@ -17,6 +16,7 @@ import type {
   JwtTokenResult,
   OAuthTokens,
   CallbackResult,
+  CallbackStateData,
 } from "../types.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
@@ -115,31 +115,42 @@ export class GitHubProvider implements ConnectionProvider {
 
   async handleCallback(
     c: Context,
-    stateData: Record<string, string>,
+    stateData: CallbackStateData,
   ): Promise<CallbackResult> {
     const installationId = c.req.query("installation_id");
     const setupAction = c.req.query("setup_action");
+
+    // ── Explicit setup_action routing ──
+
+    if (setupAction === "request") {
+      // GitHub sends setup_action=request when org admin approval is required.
+      // installation_id is absent — the installation only gets an ID when approved (via webhook).
+      throw new Error("setup_action=request is not yet implemented");
+    }
+
+    if (setupAction === "update") {
+      // GitHub sends setup_action=update when installation permissions/repos change.
+      // installation_id IS present. For now, treat as unimplemented.
+      throw new Error("setup_action=update is not yet implemented");
+    }
+
+    // ── setup_action=install (or undefined for GitHub-initiated redirects) ──
 
     if (!installationId) {
       throw new Error("missing installation_id");
     }
 
-    const orgId = stateData.orgId;
-    const connectedBy = stateData.connectedBy;
-
-    if (!orgId) {
-      throw new Error("missing orgId in state data");
-    }
-    if (!connectedBy) {
-      throw new Error("missing connectedBy in state data");
-    }
-
-    // Fetch installation data from GitHub API (hard-fail if unavailable)
     const installationDetails = await getInstallationDetails(installationId);
+    const now = new Date().toISOString();
 
-    const accountInfo = this.buildAccountInfo(installationId, installationDetails);
-    const isPendingRequest = setupAction === "request";
-    const status = isPendingRequest ? "pending" : "active";
+    const accountInfo: GitHubAccountInfo = {
+      version: 1,
+      sourceType: "github",
+      events: installationDetails.events,
+      installedAt: installationDetails.created_at,
+      lastValidatedAt: now,
+      raw: installationDetails,
+    };
 
     // Check if this installation already exists (reactivation vs new)
     const existing = await db
@@ -161,17 +172,17 @@ export class GitHubProvider implements ConnectionProvider {
       .values({
         provider: "github",
         externalId: installationId,
-        connectedBy,
-        orgId,
-        status,
+        connectedBy: stateData.connectedBy,
+        orgId: stateData.orgId,
+        status: "active",
         providerAccountInfo: accountInfo,
       })
       .onConflictDoUpdate({
         target: [gwInstallations.provider, gwInstallations.externalId],
         set: {
-          status,
-          connectedBy,
-          orgId,
+          status: "active",
+          connectedBy: stateData.connectedBy,
+          orgId: stateData.orgId,
           providerAccountInfo: accountInfo,
         },
       })
@@ -182,12 +193,12 @@ export class GitHubProvider implements ConnectionProvider {
     const row = rows[0];
     if (!row) {throw new Error("upsert_failed");}
 
-    if (!reactivated && !isPendingRequest) {
+    if (!reactivated) {
       // Fire-and-forget: notify backfill service for new connections
       notifyBackfillService({
         installationId: row.id,
         provider: "github",
-        orgId,
+        orgId: stateData.orgId,
       }).catch(() => {});
     }
 
@@ -206,30 +217,6 @@ export class GitHubProvider implements ConnectionProvider {
       accessToken: token,
       provider: "github",
       expiresIn: 3600, // GitHub installation tokens expire in 1 hour
-    };
-  }
-
-  buildAccountInfo(
-    _installationId: string,
-    apiData: GitHubInstallationDetails,
-  ): GitHubAccountInfo {
-    const now = new Date().toISOString();
-    // Normalize GitHub permissions Record<string, string> to string[]
-    // e.g. { "issues": "write", "contents": "read" } → ["issues:write", "contents:read"]
-    const scopes = Object.entries(apiData.permissions).map(
-      ([key, level]) => `${key}:${level}`,
-    );
-    return {
-      version: 1,
-      sourceType: "github",
-      scopes,
-      events: apiData.events,
-      installedAt: apiData.created_at,
-      lastValidatedAt: now,
-      accountId: apiData.account.id.toString(),
-      accountLogin: apiData.account.login,
-      accountType: apiData.account.type,
-      avatarUrl: apiData.account.avatar_url,
     };
   }
 }

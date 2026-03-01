@@ -235,7 +235,7 @@ export const connectionsRouter = {
 						return {
 							id: row.externalId,
 							accountLogin: account && "login" in account ? account.login : row.externalId,
-							accountType: (account && "type" in account && account.type === "User" ? "User" : "Organization") as "User" | "Organization",
+							accountType: account && "type" in account && account.type === "User" ? "User" : "Organization",
 							avatarUrl: account && "avatar_url" in account ? account.avatar_url : "",
 							gwInstallationId: row.id,
 						};
@@ -250,7 +250,7 @@ export const connectionsRouter = {
 				provider: first.provider,
 				connectedAt: first.createdAt,
 				status: first.status,
-				installations: allInstallations.filter((v): v is NonNullable<typeof v> => v !== null),
+				installations: allInstallations,
 			};
 		}),
 
@@ -308,23 +308,23 @@ export const connectionsRouter = {
 				const accountType: "User" | "Organization" =
 					"type" in account && account.type === "User" ? "User" : "Organization";
 
-				// Normalize GitHub permissions to string[] format
-				const permissions = githubInstallation.permissions as Record<string, string> | undefined;
-				const scopes = Object.entries(permissions ?? {}).map(
-					([key, level]) => `${key}:${level}`,
-				);
-
 				const refreshedAccountInfo = {
 					version: 1 as const,
 					sourceType: "github" as const,
-					scopes,
 					events: githubInstallation.events,
 					installedAt: githubInstallation.created_at,
 					lastValidatedAt: now,
-					accountId: account.id.toString(),
-					accountLogin: "login" in account ? account.login : "",
-					accountType,
-					avatarUrl: "avatar_url" in account ? account.avatar_url : "",
+					raw: {
+						account: {
+							login: "login" in account ? account.login : "",
+							id: account.id,
+							type: accountType,
+							avatar_url: "avatar_url" in account ? account.avatar_url : "",
+						},
+						permissions: githubInstallation.permissions,
+						events: githubInstallation.events,
+						created_at: githubInstallation.created_at,
+					},
 				};
 
 				// Update providerAccountInfo with refreshed data
@@ -618,16 +618,16 @@ export const connectionsRouter = {
 						let accountLogin: string;
 						let accountType: "Team" | "User";
 
-						if (info.teamId) {
-							const res = await fetch(`https://api.vercel.com/v2/teams/${info.teamId}`, {
+						if (info.raw.team_id) {
+							const res = await fetch(`https://api.vercel.com/v2/teams/${info.raw.team_id}`, {
 								headers: { Authorization: `Bearer ${accessToken}` },
 								signal: AbortSignal.timeout(10_000),
 							});
 							if (res.ok) {
 								const data = (await res.json()) as Record<string, unknown>;
-								accountLogin = typeof data.slug === "string" ? data.slug : info.teamId;
+								accountLogin = typeof data.slug === "string" ? data.slug : info.raw.team_id;
 							} else {
-								accountLogin = info.teamId;
+								accountLogin = info.raw.team_id;
 							}
 							accountType = "Team";
 						} else {
@@ -638,9 +638,9 @@ export const connectionsRouter = {
 							if (res.ok) {
 								const data = (await res.json()) as Record<string, unknown>;
 								const user = data.user as Record<string, unknown> | undefined;
-								accountLogin = typeof user?.username === "string" ? user.username : info.userId;
+								accountLogin = typeof user?.username === "string" ? user.username : info.raw.user_id;
 							} else {
-								accountLogin = info.userId;
+								accountLogin = info.raw.user_id;
 							}
 							accountType = "User";
 						}
@@ -651,9 +651,9 @@ export const connectionsRouter = {
 							provider: inst.provider,
 							connectedAt: inst.createdAt,
 							status: inst.status,
-							userId: info.userId,
-							teamId: info.teamId ?? null,
-							configurationId: info.configurationId,
+							userId: info.raw.user_id,
+							teamId: info.raw.team_id ?? null,
+							configurationId: info.raw.installation_id,
 							accountLogin,
 							accountType,
 						};
@@ -706,7 +706,7 @@ export const connectionsRouter = {
 						message: "Invalid provider account info",
 					});
 				}
-				const teamId = providerAccountInfo.teamId;
+				const teamId = providerAccountInfo.raw.team_id;
 
 				// 4. Call Vercel API
 				const url = new URL("https://api.vercel.com/v9/projects");

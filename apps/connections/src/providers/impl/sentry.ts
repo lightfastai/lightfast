@@ -1,7 +1,7 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import { decrypt, nanoid } from "@repo/lib";
+import { decrypt } from "@repo/lib";
 import { eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
@@ -18,6 +18,7 @@ import type {
   TokenResult,
   OAuthTokens,
   CallbackResult,
+  CallbackStateData,
 } from "../types.js";
 
 export class SentryProvider implements ConnectionProvider {
@@ -155,43 +156,59 @@ export class SentryProvider implements ConnectionProvider {
 
   async handleCallback(
     c: Context,
-    stateData: Record<string, string>,
+    stateData: CallbackStateData,
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
     if (!code) {throw new Error("missing code");}
 
-    // Extract Sentry installation ID from the composite code param (installationId:authCode)
+    // Extract Sentry installation ID from composite code param (installationId:authCode)
     const sentryInstallationId = code.includes(":") ? code.slice(0, code.indexOf(":")) : "";
+    if (!sentryInstallationId) {
+      throw new Error("missing sentry installation ID in code");
+    }
 
     // Sentry's exchangeCode handles the composite installationId:authCode internally
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
 
-    const externalId =
-      (oauthTokens.raw.team_id as string | undefined)?.toString() ??
-      (oauthTokens.raw.organization_id as string | undefined)?.toString() ??
-      (oauthTokens.raw.installation as string | undefined)?.toString() ??
-      nanoid();
+    // Use sentryInstallationId as externalId — it's the stable identifier
+    const externalId = sentryInstallationId;
 
-    const enrichedStateData = { ...stateData, sentryInstallationId };
+    const raw = oauthTokens.raw;
+    const now = new Date().toISOString();
+
+    const accountInfo: SentryAccountInfo = {
+      version: 1,
+      sourceType: "sentry",
+      events: ["installation", "issue", "error", "comment"],
+      installedAt: now,
+      lastValidatedAt: now,
+      raw: {
+        expiresAt: raw.expiresAt as string | undefined,
+        scopes: Array.isArray(raw.scopes) ? (raw.scopes as string[]) : undefined,
+        organization: raw.organization as { slug: string } | undefined,
+      },
+      installationId: sentryInstallationId,
+      organizationSlug: (raw.organization as { slug?: string } | undefined)?.slug ?? "",
+    };
 
     const rows = await db
       .insert(gwInstallations)
       .values({
         provider: this.name,
         externalId,
-        connectedBy: stateData.connectedBy ?? "unknown",
-        orgId: stateData.orgId ?? "",
+        connectedBy: stateData.connectedBy,
+        orgId: stateData.orgId,
         status: "active",
-        providerAccountInfo: this.buildAccountInfo(enrichedStateData, oauthTokens),
+        providerAccountInfo: accountInfo,
       })
       .onConflictDoUpdate({
         target: [gwInstallations.provider, gwInstallations.externalId],
         set: {
           status: "active",
-          connectedBy: stateData.connectedBy ?? "unknown",
-          orgId: stateData.orgId ?? "",
-          providerAccountInfo: this.buildAccountInfo(enrichedStateData, oauthTokens),
+          connectedBy: stateData.connectedBy,
+          orgId: stateData.orgId,
+          providerAccountInfo: accountInfo,
         },
       })
       .returning({ id: gwInstallations.id });
@@ -209,7 +226,7 @@ export class SentryProvider implements ConnectionProvider {
     void notifyBackfillService({
       installationId: installation.id,
       provider: this.name,
-      orgId: stateData.orgId ?? "",
+      orgId: stateData.orgId,
     });
 
     return {
@@ -254,33 +271,6 @@ export class SentryProvider implements ConnectionProvider {
       expiresIn: tokenRow.expiresAt
         ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
         : null,
-    };
-  }
-
-  buildAccountInfo(
-    stateData: Record<string, string>,
-    oauthTokens?: OAuthTokens,
-  ): SentryAccountInfo {
-    const raw = oauthTokens?.raw ?? {};
-    const now = new Date().toISOString();
-
-    // Extract scopes from token exchange response if available
-    const rawScopes = raw.scopes ?? raw.scope;
-    const scopes: string[] = Array.isArray(rawScopes)
-      ? (rawScopes as string[])
-      : typeof rawScopes === "string"
-        ? rawScopes.split(" ").filter(Boolean)
-        : [];
-
-    return {
-      version: 1,
-      sourceType: "sentry",
-      scopes,
-      events: ["installation", "issue", "error", "comment"],
-      installedAt: now,
-      lastValidatedAt: now,
-      installationId: stateData.sentryInstallationId ?? "",
-      organizationSlug: (raw.organization as { slug?: string } | undefined)?.slug ?? "",
     };
   }
 }

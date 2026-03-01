@@ -985,9 +985,9 @@ export const workspaceRouter = {
               type: "project" as const,
               projectId,
               projectName,
-              teamId: providerAccountInfo.teamId,
+              teamId: providerAccountInfo.raw.team_id ?? undefined,
               teamSlug: undefined,
-              configurationId: providerAccountInfo.configurationId,
+              configurationId: providerAccountInfo.raw.installation_id,
               sync: {
                 events: [
                   "deployment.created",
@@ -1356,9 +1356,9 @@ export const workspaceRouter = {
               type: "project" as const,
               projectId: p.projectId,
               projectName: p.projectName,
-              teamId: providerAccountInfo.teamId,
+              teamId: providerAccountInfo.raw.team_id ?? undefined,
               teamSlug: undefined,
-              configurationId: providerAccountInfo.configurationId,
+              configurationId: providerAccountInfo.raw.installation_id,
               sync: {
                 events: [
                   "deployment.created",

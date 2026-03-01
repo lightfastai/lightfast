@@ -23,8 +23,12 @@ export type { WebhookReceiptPayload, WebhookEnvelope } from "./webhooks";
 export type {
   BaseAccountInfo,
   GitHubAccountInfo,
+  GitHubInstallationRaw,
   VercelAccountInfo,
-  SentryAccountInfo,
+  VercelOAuthRaw,
   LinearAccountInfo,
+  LinearOAuthRaw,
+  SentryAccountInfo,
+  SentryOAuthRaw,
   ProviderAccountInfo,
 } from "./account-info";

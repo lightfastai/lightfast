@@ -127,24 +127,6 @@ describe("LinearProvider", () => {
     });
   });
 
-  describe("buildAccountInfo", () => {
-    it("builds Linear account info with scope from OAuth response", () => {
-      const info = provider.buildAccountInfo(
-        {},
-        { accessToken: "tok", scope: "read,write", raw: {} },
-      );
-      expect(info).toMatchObject({ version: 1, sourceType: "linear", scopes: ["read,write"] });
-      expect(info.events).toEqual([]);
-      expect(info.installedAt).toBeDefined();
-      expect(info.lastValidatedAt).toBeDefined();
-    });
-
-    it("defaults scope to empty array when not in OAuth response", () => {
-      const info = provider.buildAccountInfo({});
-      expect(info).toMatchObject({ version: 1, sourceType: "linear", scopes: [] });
-    });
-  });
-
   describe("exchangeCode", () => {
     it("returns parsed tokens on success", async () => {
       vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
@@ -245,7 +227,7 @@ describe("LinearProvider", () => {
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
-            data: { viewer: { id: "v1", organization: { id: "org-ext-1" } } },
+            data: { viewer: { id: "v1", organization: { id: "org-ext-1", name: "My Org", urlKey: "my-org" } } },
           }),
         } as unknown as Response)
         .mockResolvedValueOnce({
@@ -270,6 +252,23 @@ describe("LinearProvider", () => {
         provider: "linear",
       });
       expect(result).not.toHaveProperty("reactivated");
+      expect(dbMocks.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          providerAccountInfo: expect.objectContaining({
+            version: 1,
+            sourceType: "linear",
+            raw: expect.objectContaining({
+              token_type: "Bearer",
+              scope: "read,write",
+            }),
+            organization: {
+              id: "org-ext-1",
+              name: "My Org",
+              urlKey: "my-org",
+            },
+          }),
+        }),
+      );
       expect(notifyBackfillService).toHaveBeenCalledWith({
         installationId: "inst-lin-new",
         provider: "linear",
