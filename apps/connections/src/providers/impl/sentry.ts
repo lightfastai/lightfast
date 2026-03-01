@@ -64,7 +64,9 @@ export class SentryProvider implements ConnectionProvider {
 
     return {
       accessToken: data.token,
-      refreshToken: data.refreshToken,
+      refreshToken: data.refreshToken
+        ? encodeSentryToken({ installationId, token: data.refreshToken })
+        : undefined,
       expiresIn: data.expiresAt
         ? Math.floor(
             (new Date(data.expiresAt).getTime() - Date.now()) / 1000,
