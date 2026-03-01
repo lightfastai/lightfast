@@ -12,7 +12,7 @@ const triggerSchema = z.object({
   installationId: z.string().min(1),
   provider: z.string().min(1),
   orgId: z.string().min(1),
-  depth: z.number().int().positive().optional(),
+  depth: z.number().int().positive().default(30),
   entityTypes: z.array(z.string()).optional(),
 });
 
@@ -48,7 +48,7 @@ backfill.post("/", apiKeyAuth, async (c) => {
       },
       body: { installationId, provider, orgId, depth, entityTypes },
       retries: 3,
-      deduplicationId: `backfill:${provider}:${installationId}:${orgId}`,
+      deduplicationId: `backfill:${provider}:${installationId}:${orgId}:d=${depth}:e=${entityTypes ? [...entityTypes].sort().join(",") : ""}`,
     });
   } catch (err) {
     console.error("[gateway] Failed to forward backfill trigger", {

@@ -127,14 +127,16 @@ describe("POST /api/backfill", () => {
 
     expect(mockPublishJSON).toHaveBeenCalledWith({
       url: "https://backfill.test/api/trigger",
-      headers: { "X-API-Key": "test-api-key" },
+      headers: { "X-API-Key": "test-api-key", "X-Correlation-Id": undefined },
       body: {
         installationId: "inst-1",
         provider: "github",
         orgId: "org-1",
+        depth: 30,
+        entityTypes: undefined,
       },
       retries: 3,
-      deduplicationId: "backfill:github:inst-1:org-1",
+      deduplicationId: "backfill:github:inst-1:org-1:d=30:e=",
     });
   });
 
