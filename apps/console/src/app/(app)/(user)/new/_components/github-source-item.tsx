@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { Search, Loader2 } from "lucide-react";
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -20,10 +20,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
-import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { githubEnv } from "@repo/console-octokit-github/env";
 import { useWorkspaceForm } from "./workspace-form-provider";
+import { useOAuthPopup } from "./use-oauth-popup";
 
 /**
  * GitHub accordion item for the Sources section.
@@ -32,7 +32,6 @@ import { useWorkspaceForm } from "./workspace-form-provider";
  */
 export function GitHubSourceItem() {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const {
     gwInstallationId,
     setGwInstallationId,
@@ -47,8 +46,37 @@ export function GitHubSourceItem() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showPicker, setShowPicker] = useState(true);
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevInstallationsRef = useRef<typeof installations>([]);
+  const preferNewestRef = useRef(false);
+  const installationIdsBeforeRef = useRef<Set<string>>(new Set());
+
+  const { handleConnect: connectOAuth, openCustomUrl } = useOAuthPopup({
+    provider: "github",
+    queryKeysToInvalidate: [
+      trpc.connections.github.list.queryOptions().queryKey,
+      [["connections", "github", "repositories"]],
+    ],
+    onSuccess: () => {
+      preferNewestRef.current = true;
+    },
+  });
+
+  const handleConnect = () => {
+    installationIdsBeforeRef.current = new Set(
+      installations.map((i) => i.id),
+    );
+    void connectOAuth();
+  };
+
+  const handleAdjustPermissions = () => {
+    installationIdsBeforeRef.current = new Set(
+      installations.map((i) => i.id),
+    );
+    void openCustomUrl(
+      (data) =>
+        `https://github.com/apps/${githubEnv.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target?state=${data.state}`,
+    );
+  };
 
   // Fetch GitHub connection (prefetched by parent page RSC)
   const { data: connection } = useSuspenseQuery({
@@ -76,12 +104,26 @@ export function GitHubSourceItem() {
     }
   }, [connectionInstallations, setInstallations]);
 
-  // Auto-select first installation
+  // Auto-select installation (prefer newest after OAuth)
   useEffect(() => {
     if (connectionInstallations.length === 0) {
       if (selectedInstallation !== null) setSelectedInstallation(null);
       return;
     }
+    // After OAuth: prefer the newly added installation
+    if (preferNewestRef.current) {
+      preferNewestRef.current = false;
+      const beforeIds = installationIdsBeforeRef.current;
+      const newInst = connectionInstallations.find(
+        (inst) => !beforeIds.has(inst.id),
+      );
+      if (newInst) {
+        setSelectedInstallation(newInst);
+        setSelectedRepositories([]);
+        return;
+      }
+    }
+    // Default: select first if current selection no longer exists
     const stillExists = selectedInstallation
       ? connectionInstallations.some((inst) => inst.id === selectedInstallation.id)
       : false;
@@ -91,27 +133,7 @@ export function GitHubSourceItem() {
         setSelectedInstallation(first);
       }
     }
-  }, [connectionInstallations, selectedInstallation, setSelectedInstallation]);
-
-  // Listen for postMessage from the connected page (fires before popup closes)
-  useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type === "github_connected") {
-        void queryClient.invalidateQueries({
-          queryKey: trpc.connections.github.list.queryOptions().queryKey,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: [["connections", "github", "repositories"]],
-        });
-      }
-    };
-    window.addEventListener("message", handler);
-    return () => {
-      window.removeEventListener("message", handler);
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-    };
-  }, [queryClient, trpc]);
+  }, [connectionInstallations, selectedInstallation, setSelectedInstallation, setSelectedRepositories]);
 
   // Fetch repos for selected installation
   const { data: repositoriesData, isLoading: isLoadingRepos } = useQuery({
@@ -130,78 +152,6 @@ export function GitHubSourceItem() {
   );
 
   const selectedRepo = selectedRepositories[0] ?? null;
-
-  const handleAdjustPermissions = async () => {
-    try {
-      const data = await queryClient.fetchQuery(
-        trpc.connections.getAuthorizeUrl.queryOptions({ provider: "github" }),
-      );
-      const width = 600;
-      const height = 800;
-      const left = window.screen.width / 2 - width / 2;
-      const top = window.screen.height / 2 - height / 2;
-      const popup = window.open(
-        `https://github.com/apps/${githubEnv.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target?state=${data.state}`,
-        "github-permissions",
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
-      );
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-      pollTimerRef.current = setInterval(() => {
-        if (popup?.closed) {
-          if (pollTimerRef.current) {
-            clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
-          }
-          void queryClient.invalidateQueries({
-            queryKey: trpc.connections.github.list.queryOptions().queryKey,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: [["connections", "github", "repositories"]],
-          });
-        }
-      }, 500);
-    } catch {
-      toast.error("Failed to adjust GitHub permissions. Please try again.");
-    }
-  };
-
-  const handleConnect = async () => {
-    try {
-      const data = await queryClient.fetchQuery(
-        trpc.connections.getAuthorizeUrl.queryOptions({ provider: "github" }),
-      );
-      const width = 600;
-      const height = 800;
-      const left = window.screen.width / 2 - width / 2;
-      const top = window.screen.height / 2 - height / 2;
-      const popup = window.open(
-        data.url,
-        "github-install",
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
-      );
-      if (!popup || popup.closed) {
-        alert("Popup was blocked. Please allow popups for this site.");
-        return;
-      }
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-      pollTimerRef.current = setInterval(() => {
-        if (popup.closed) {
-          if (pollTimerRef.current) {
-            clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
-          }
-          void queryClient.invalidateQueries({
-            queryKey: trpc.connections.github.list.queryOptions().queryKey,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: [["connections", "github", "repositories"]],
-          });
-        }
-      }, 500);
-    } catch {
-      toast.error("Failed to connect to GitHub. Please try again.");
-    }
-  };
 
   return (
     <AccordionItem value="github">

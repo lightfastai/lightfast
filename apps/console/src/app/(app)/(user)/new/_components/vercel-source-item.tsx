@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { Search, Loader2 } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -18,11 +18,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
-import { toast } from "@repo/ui/components/ui/sonner";
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { FrameworkIcons } from "@repo/ui/framework-icons";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useWorkspaceForm } from "./workspace-form-provider";
+import { useOAuthPopup } from "./use-oauth-popup";
 
 function FrameworkIcon({ framework, className }: { framework: string | null; className?: string }) {
   const icon = framework ? FrameworkIcons[framework] : null;
@@ -37,7 +37,6 @@ function FrameworkIcon({ framework, className }: { framework: string | null; cla
  */
 export function VercelSourceItem() {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const {
     vercelInstallationId,
     setVercelInstallationId,
@@ -52,8 +51,27 @@ export function VercelSourceItem() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showPicker, setShowPicker] = useState(true);
-  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevInstallationsRef = useRef<typeof _vercelInstallations>([]);
+  const preferNewestRef = useRef(false);
+  const installationIdsBeforeRef = useRef<Set<string>>(new Set());
+
+  const { handleConnect: connectOAuth } = useOAuthPopup({
+    provider: "vercel",
+    queryKeysToInvalidate: [
+      trpc.connections.vercel.list.queryOptions().queryKey,
+      [["connections", "vercel", "listProjects"]],
+    ],
+    onSuccess: () => {
+      preferNewestRef.current = true;
+    },
+  });
+
+  const handleConnect = () => {
+    installationIdsBeforeRef.current = new Set(
+      connectionInstallations.map((i) => i.id),
+    );
+    void connectOAuth();
+  };
 
   // Fetch Vercel installations (prefetched by parent page RSC)
   const { data: listData } = useSuspenseQuery({
@@ -75,12 +93,26 @@ export function VercelSourceItem() {
     }
   }, [connectionInstallations, setVercelInstallations]);
 
-  // Auto-select first installation
+  // Auto-select installation (prefer newest after OAuth)
   useEffect(() => {
     if (connectionInstallations.length === 0) {
       if (selectedVercelInstallation !== null) setSelectedVercelInstallation(null);
       return;
     }
+    // After OAuth: prefer the newly added installation
+    if (preferNewestRef.current) {
+      preferNewestRef.current = false;
+      const beforeIds = installationIdsBeforeRef.current;
+      const newInst = connectionInstallations.find(
+        (inst) => !beforeIds.has(inst.id),
+      );
+      if (newInst) {
+        setSelectedVercelInstallation(newInst);
+        setSelectedProjects([]);
+        return;
+      }
+    }
+    // Default: select first if current selection no longer exists
     const stillExists = selectedVercelInstallation
       ? connectionInstallations.some((inst) => inst.id === selectedVercelInstallation.id)
       : false;
@@ -90,32 +122,12 @@ export function VercelSourceItem() {
         setSelectedVercelInstallation(first);
       }
     }
-  }, [connectionInstallations, selectedVercelInstallation, setSelectedVercelInstallation]);
+  }, [connectionInstallations, selectedVercelInstallation, setSelectedVercelInstallation, setSelectedProjects]);
 
   // Sync vercelInstallationId from the selected installation
   useEffect(() => {
     setVercelInstallationId(selectedVercelInstallation?.id ?? null);
   }, [selectedVercelInstallation?.id, setVercelInstallationId]);
-
-  // Listen for postMessage from the connected page (fires before popup closes)
-  useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type === "vercel_connected") {
-        void queryClient.invalidateQueries({
-          queryKey: trpc.connections.vercel.list.queryOptions().queryKey,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: [["connections", "vercel", "listProjects"]],
-        });
-      }
-    };
-    window.addEventListener("message", handler);
-    return () => {
-      window.removeEventListener("message", handler);
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-    };
-  }, [queryClient, trpc]);
 
   // Fetch Vercel projects (no workspaceId — workspace doesn't exist yet)
   const { data: projectsData, isLoading: isLoadingProjects, error: projectsError } = useQuery({
@@ -134,44 +146,6 @@ export function VercelSourceItem() {
   );
 
   const selectedProject = selectedProjects[0] ?? null;
-
-  const handleConnect = async () => {
-    try {
-      const data = await queryClient.fetchQuery(
-        trpc.connections.getAuthorizeUrl.queryOptions({ provider: "vercel" }),
-      );
-      const width = 600;
-      const height = 800;
-      const left = window.screen.width / 2 - width / 2;
-      const top = window.screen.height / 2 - height / 2;
-      const popup = window.open(
-        data.url,
-        "vercel-install",
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
-      );
-      if (!popup || popup.closed) {
-        alert("Popup was blocked. Please allow popups for this site.");
-        return;
-      }
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-      pollTimerRef.current = setInterval(() => {
-        if (popup.closed) {
-          if (pollTimerRef.current) {
-            clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
-          }
-          void queryClient.invalidateQueries({
-            queryKey: trpc.connections.vercel.list.queryOptions().queryKey,
-          });
-          void queryClient.invalidateQueries({
-            queryKey: [["connections", "vercel", "listProjects"]],
-          });
-        }
-      }, 500);
-    } catch {
-      toast.error("Failed to connect to Vercel. Please try again.");
-    }
-  };
 
   /** Display label for a Vercel installation */
   const getInstallationLabel = (inst: (typeof connectionInstallations)[number]) =>
