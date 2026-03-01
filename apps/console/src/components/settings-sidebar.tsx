@@ -11,6 +11,10 @@ const settingsNavigation = [
 		path: "",
 	},
 	{
+		name: "Sources",
+		path: "sources",
+	},
+	{
 		name: "API Keys",
 		path: "api-keys",
 	},

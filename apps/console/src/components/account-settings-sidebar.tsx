@@ -11,10 +11,6 @@ const accountNavigation = [
 		path: "general",
 	},
 	{
-		name: "Sources",
-		path: "sources",
-	},
-	{
 		name: "API Key",
 		path: "api-key",
 	},
