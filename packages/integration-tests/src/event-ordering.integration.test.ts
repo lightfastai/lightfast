@@ -403,7 +403,7 @@ describe("Suite 6.3 — Backfill notify + gateway dispatch are order-independent
           label: "notify-backfill",
           deliver: async () => {
             // Deliver backfill trigger directly (previously routed via notifyBackfillService)
-            await backfillApp.request("/api/trigger", {
+            const res = await backfillApp.request("/api/trigger", {
               method: "POST",
               headers: new Headers({
                 "Content-Type": "application/json",
@@ -415,6 +415,7 @@ describe("Suite 6.3 — Backfill notify + gateway dispatch are order-independent
                 orgId: "org-perm-mixed",
               }),
             });
+            expect(res.status).toBe(200);
           },
         },
         {
