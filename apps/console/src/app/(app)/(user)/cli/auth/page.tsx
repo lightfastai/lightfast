@@ -45,7 +45,7 @@ function CLIAuthContent() {
 
 	if (status === "error") {
 		return (
-			<div className="flex min-h-screen items-center justify-center">
+			<div className="flex min-h-full items-center justify-center">
 				<div className="text-center">
 					<h1 className="text-xl font-semibold">Authentication Failed</h1>
 					<p className="mt-2 text-muted-foreground">
@@ -57,7 +57,7 @@ function CLIAuthContent() {
 	}
 
 	return (
-		<div className="flex min-h-screen items-center justify-center">
+		<div className="flex min-h-full items-center justify-center">
 			<div className="text-center">
 				<h1 className="text-xl font-semibold">
 					{status === "redirecting"
@@ -76,7 +76,7 @@ export default function CLIAuthPage() {
 	return (
 		<Suspense
 			fallback={
-				<div className="flex min-h-screen items-center justify-center">
+				<div className="flex min-h-full items-center justify-center">
 					<div className="text-center">
 						<h1 className="text-xl font-semibold">Authenticating...</h1>
 						<p className="mt-2 text-muted-foreground">

@@ -14,7 +14,7 @@ import {
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useWorkspaceForm } from "./workspace-form-provider";
-import { useOAuthPopup } from "./use-oauth-popup";
+import { useOAuthPopup } from "~/hooks/use-oauth-popup";
 import type { LinearTeam } from "./workspace-form-provider";
 
 /**

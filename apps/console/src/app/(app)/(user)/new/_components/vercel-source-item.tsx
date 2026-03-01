@@ -22,7 +22,7 @@ import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { FrameworkIcons } from "@repo/ui/framework-icons";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useWorkspaceForm } from "./workspace-form-provider";
-import { useOAuthPopup } from "./use-oauth-popup";
+import { useOAuthPopup } from "~/hooks/use-oauth-popup";
 
 function FrameworkIcon({ framework, className }: { framework: string | null; className?: string }) {
   const icon = framework ? FrameworkIcons[framework] : null;

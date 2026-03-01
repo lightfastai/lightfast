@@ -23,7 +23,7 @@ import {
 import { useTRPC } from "@repo/console-trpc/react";
 import { githubEnv } from "@repo/console-octokit-github/env";
 import { useWorkspaceForm } from "./workspace-form-provider";
-import { useOAuthPopup } from "./use-oauth-popup";
+import { useOAuthPopup } from "~/hooks/use-oauth-popup";
 
 /**
  * GitHub accordion item for the Sources section.
