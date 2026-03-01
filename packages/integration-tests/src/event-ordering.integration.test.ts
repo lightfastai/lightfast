@@ -402,26 +402,19 @@ describe("Suite 6.3 — Backfill notify + gateway dispatch are order-independent
         {
           label: "notify-backfill",
           deliver: async () => {
-            // Connections publishes notify → deliver to backfill trigger → Inngest fires
-            const { notifyBackfillService } = await import("@connections/urls");
-            await notifyBackfillService({
-              installationId: inst.id,
-              provider: "github",
-              orgId: "org-perm-mixed",
+            // Deliver backfill trigger directly (previously routed via notifyBackfillService)
+            await backfillApp.request("/api/trigger", {
+              method: "POST",
+              headers: new Headers({
+                "Content-Type": "application/json",
+                "X-API-Key": API_KEY,
+              }),
+              body: JSON.stringify({
+                installationId: inst.id,
+                provider: "github",
+                orgId: "org-perm-mixed",
+              }),
             });
-            const notifyMsg = qstashMessages.find(
-              (m) => m.url.includes("/trigger") && !m.url.includes("/cancel"),
-            );
-            if (notifyMsg) {
-              await backfillApp.request("/api/trigger", {
-                method: "POST",
-                headers: new Headers({
-                  "Content-Type": "application/json",
-                  ...(notifyMsg.headers ?? {}),
-                }),
-                body: JSON.stringify(notifyMsg.body),
-              });
-            }
           },
         },
         {

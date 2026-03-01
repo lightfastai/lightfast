@@ -12,7 +12,6 @@ vi.mock("../../env", () => ({
 
 vi.mock("../../lib/urls", () => ({
   connectionsBaseUrl: "https://connections.test/services",
-  notifyBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Hoisted so vi.mock factories can reference them
@@ -39,7 +38,6 @@ vi.mock("../../lib/token-store", () => ({
 }));
 
 import { VercelProvider } from "./vercel.js";
-import { notifyBackfillService } from "../../lib/urls.js";
 
 const provider = new VercelProvider();
 
@@ -128,9 +126,6 @@ describe("VercelProvider", () => {
         installationId: "inst-vc-new",
         provider: "vercel",
       });
-      expect(notifyBackfillService).toHaveBeenCalledWith(
-        expect.objectContaining({ installationId: "inst-vc-new" }),
-      );
     });
 
     it("reconnects successfully when row already exists (upsert)", async () => {
@@ -154,7 +149,6 @@ describe("VercelProvider", () => {
         installationId: "inst-vc-existing",
         provider: "vercel",
       });
-      expect(notifyBackfillService).toHaveBeenCalled();
     });
 
     it("throws when code is missing", async () => {

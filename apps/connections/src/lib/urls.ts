@@ -53,33 +53,6 @@ function getClient() {
 }
 
 /**
- * Notify the backfill service to start a historical backfill for a new connection.
- * Best-effort — errors are logged but do not block the OAuth callback response.
- */
-export async function notifyBackfillService(params: {
-  installationId: string;
-  provider: string;
-  orgId: string;
-}): Promise<void> {
-  try {
-    await getClient().publishJSON({
-      url: `${backfillUrl}/trigger`,
-      headers: { "X-API-Key": env.GATEWAY_API_KEY },
-      body: params,
-      retries: 3,
-      deduplicationId: `backfill:${params.provider}:${params.installationId}:${params.orgId}`,
-    });
-  } catch (err) {
-    console.error("[connections] Failed to notify backfill service", {
-      installationId: params.installationId,
-      provider: params.provider,
-      backfillUrl,
-      err,
-    });
-  }
-}
-
-/**
  * Cancel any running backfill for a connection.
  * Called during connection teardown to stop wasting steps on revoked connections.
  * Best-effort — errors are logged but do not block teardown.

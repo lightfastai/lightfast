@@ -13,7 +13,7 @@ import { getInstallationToken } from "../../lib/token-vault";
 import { env } from "../../env";
 import yaml from "yaml";
 import type { VercelProjectsResponse } from "@repo/console-vercel/types";
-import { withRelatedProject } from "@vercel/related-projects";
+import { withRelatedProject } from "@vendor/related-projects";
 
 const isDevelopment =
 	process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&

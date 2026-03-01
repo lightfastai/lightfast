@@ -14,6 +14,7 @@ vi.mock("../env", () => ({
     VERCEL_INTEGRATION_SLUG: "test-integration",
     LINEAR_CLIENT_ID: "lin-client-id",
     LINEAR_CLIENT_SECRET: "lin-secret",
+    SENTRY_APP_SLUG: "sn-app-slug",
     SENTRY_CLIENT_ID: "sn-client-id",
     SENTRY_CLIENT_SECRET: "sn-secret",
   },
@@ -31,7 +32,6 @@ vi.mock("@db/console/schema", () => ({
 vi.mock("../lib/urls", () => ({
   connectionsBaseUrl: "https://connections.test/services",
   gatewayBaseUrl: "https://gateway.test/api",
-  notifyBackfillService: vi.fn(),
 }));
 
 vi.mock("../lib/github-jwt", () => ({

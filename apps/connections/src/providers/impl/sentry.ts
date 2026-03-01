@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store.js";
-import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls.js";
+import { connectionsBaseUrl } from "../../lib/urls.js";
 import {
   decodeSentryToken,
   encodeSentryToken,
@@ -27,7 +27,7 @@ export class SentryProvider implements ConnectionProvider {
 
   getAuthorizationUrl(state: string): string {
     const url = new URL(
-      `https://sentry.io/sentry-apps/${env.SENTRY_CLIENT_ID}/external-install/`,
+      `https://sentry.io/sentry-apps/${env.SENTRY_APP_SLUG}/external-install/`,
     );
     url.searchParams.set("state", state);
     return url.toString();
@@ -54,10 +54,13 @@ export class SentryProvider implements ConnectionProvider {
     );
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("[sentry] token exchange failed:", { status: response.status, body: errorBody });
       throw new Error(`Sentry token exchange failed: ${response.status}`);
     }
 
     const rawData: unknown = await response.json();
+    console.log("[sentry] token exchange response:", JSON.stringify(rawData, null, 2));
     const data = sentryOAuthResponseSchema.parse(rawData);
 
     return {
@@ -159,23 +162,28 @@ export class SentryProvider implements ConnectionProvider {
     stateData: CallbackStateData,
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
+    const sentryInstallationId = c.req.query("installationId");
+    console.log("[sentry] callback query params:", { code, state: c.req.query("state"), installationId: sentryInstallationId });
     if (!code) {throw new Error("missing code");}
+    if (!sentryInstallationId) {throw new Error("missing installationId query param");}
 
-    // Extract Sentry installation ID from composite code param (installationId:authCode)
-    const sentryInstallationId = code.includes(":") ? code.slice(0, code.indexOf(":")) : "";
-    if (!sentryInstallationId) {
-      throw new Error("missing sentry installation ID in code");
-    }
-
-    // Sentry's exchangeCode handles the composite installationId:authCode internally
+    // Encode installationId:authCode composite for exchangeCode
+    const compositeCode = encodeSentryToken({ installationId: sentryInstallationId, token: code });
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
-    const oauthTokens = await this.exchangeCode(code, redirectUri);
+    const oauthTokens = await this.exchangeCode(compositeCode, redirectUri);
 
     // Use sentryInstallationId as externalId — it's the stable identifier
     const externalId = sentryInstallationId;
 
     const raw = oauthTokens.raw;
     const now = new Date().toISOString();
+
+    console.log("[sentry] oauth tokens received:", {
+      hasAccessToken: !!oauthTokens.accessToken,
+      hasRefreshToken: !!oauthTokens.refreshToken,
+      expiresIn: oauthTokens.expiresIn,
+      rawKeys: Object.keys(oauthTokens.raw ?? {}),
+    });
 
     const accountInfo: SentryAccountInfo = {
       version: 1,
@@ -191,6 +199,8 @@ export class SentryProvider implements ConnectionProvider {
       installationId: sentryInstallationId,
       organizationSlug: (raw.organization as { slug?: string } | undefined)?.slug ?? "",
     };
+
+    console.log("[sentry] accountInfo:", JSON.stringify(accountInfo, null, 2));
 
     const rows = await db
       .insert(gwInstallations)
@@ -222,12 +232,7 @@ export class SentryProvider implements ConnectionProvider {
     // Verification uses env.SENTRY_CLIENT_SECRET in the gateway, so no
     // per-installation webhookSecret is needed.
 
-    // Notify backfill service for new connections (fire-and-forget)
-    void notifyBackfillService({
-      installationId: installation.id,
-      provider: this.name,
-      orgId: stateData.orgId,
-    });
+    console.log("[sentry] installation complete:", { installationId: installation.id, externalId, orgId: stateData.orgId });
 
     return {
       status: "connected",

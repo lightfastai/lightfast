@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { writeTokenRecord } from "../../lib/token-store.js";
-import { connectionsBaseUrl, notifyBackfillService } from "../../lib/urls.js";
+import { connectionsBaseUrl } from "../../lib/urls.js";
 import { vercelOAuthResponseSchema } from "../schemas.js";
 import type {
   ConnectionProvider,
@@ -152,18 +152,6 @@ export class VercelProvider implements ConnectionProvider {
     if (!installation) {throw new Error("upsert_failed");}
 
     await writeTokenRecord(installation.id, oauthTokens);
-
-    // Notify backfill service for new connections (fire-and-forget)
-    notifyBackfillService({
-      installationId: installation.id,
-      provider: this.name,
-      orgId: stateData.orgId,
-    }).catch((err: unknown) => {
-      console.error(
-        `[${this.name}] backfill notification failed for installation=${installation.id} org=${stateData.orgId}`,
-        err,
-      );
-    });
 
     return {
       status: "connected",

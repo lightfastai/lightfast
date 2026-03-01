@@ -427,6 +427,9 @@ importers:
       '@vendor/pinecone':
         specifier: workspace:*
         version: link:../../vendor/pinecone
+      '@vendor/related-projects':
+        specifier: workspace:*
+        version: link:../../vendor/related-projects
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.0.0

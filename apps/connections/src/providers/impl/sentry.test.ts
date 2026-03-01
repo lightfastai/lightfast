@@ -3,6 +3,7 @@ import type { Context } from "hono";
 
 vi.mock("../../env", () => ({
   env: {
+    SENTRY_APP_SLUG: "test-sn-app-slug",
     SENTRY_CLIENT_ID: "test-sn-client-id",
     SENTRY_CLIENT_SECRET: "test-sn-secret",
     ENCRYPTION_KEY: "a".repeat(64),
@@ -11,7 +12,6 @@ vi.mock("../../env", () => ({
 
 vi.mock("../../lib/urls", () => ({
   connectionsBaseUrl: "https://connections.test/services",
-  notifyBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Hoisted so vi.mock factories can reference them
@@ -47,7 +47,6 @@ import { SentryProvider } from "./sentry.js";
 import { db } from "@db/console/client";
 import { decrypt } from "@repo/lib";
 import { updateTokenRecord } from "../../lib/token-store.js";
-import { notifyBackfillService } from "../../lib/urls.js";
 
 const provider = new SentryProvider();
 
@@ -80,7 +79,7 @@ describe("SentryProvider", () => {
       const parsed = new URL(url);
       expect(parsed.origin).toBe("https://sentry.io");
       expect(parsed.pathname).toBe(
-        "/sentry-apps/test-sn-client-id/external-install/",
+        "/sentry-apps/test-sn-app-slug/external-install/",
       );
       expect(parsed.searchParams.get("state")).toBe("test-state");
     });
@@ -132,7 +131,7 @@ describe("SentryProvider", () => {
     });
 
     it("throws on non-ok response", async () => {
-      mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 401, text: () => Promise.resolve("Unauthorized") });
 
       await expect(
         provider.exchangeCode("inst-1:code", "uri"),
@@ -344,7 +343,7 @@ describe("SentryProvider", () => {
       });
       dbMocks.returning.mockResolvedValue([{ id: "inst-sn-new" }]);
 
-      const c = mockContext({ code: "inst-123:auth-code" });
+      const c = mockContext({ code: "auth-code", installationId: "inst-123" });
       const result = await provider.handleCallback(c, {
         orgId: "org-1",
         connectedBy: "user-1",
@@ -371,9 +370,6 @@ describe("SentryProvider", () => {
         installationId: "inst-sn-new",
         provider: "sentry",
       });
-      expect(notifyBackfillService).toHaveBeenCalledWith(
-        expect.objectContaining({ installationId: "inst-sn-new" }),
-      );
     });
 
     it("extracts organizationSlug from raw response when present", async () => {
@@ -389,7 +385,7 @@ describe("SentryProvider", () => {
       });
       dbMocks.returning.mockResolvedValue([{ id: "inst-sn-new" }]);
 
-      const c = mockContext({ code: "inst-456:auth-code" });
+      const c = mockContext({ code: "auth-code", installationId: "inst-456" });
       await provider.handleCallback(c, {
         orgId: "org-1",
         connectedBy: "user-1",
@@ -416,7 +412,7 @@ describe("SentryProvider", () => {
       // Upsert returns existing row — no crash
       dbMocks.returning.mockResolvedValue([{ id: "inst-sn-existing" }]);
 
-      const c = mockContext({ code: "inst-123:auth-code" });
+      const c = mockContext({ code: "auth-code", installationId: "inst-123" });
       const result = await provider.handleCallback(c, {
         orgId: "org-1",
         connectedBy: "user-1",
@@ -427,7 +423,6 @@ describe("SentryProvider", () => {
         installationId: "inst-sn-existing",
         provider: "sentry",
       });
-      expect(notifyBackfillService).toHaveBeenCalled();
     });
 
     it("throws when code is missing", async () => {
@@ -437,11 +432,11 @@ describe("SentryProvider", () => {
       ).rejects.toThrow("missing code");
     });
 
-    it("throws when sentryInstallationId is missing from code", async () => {
-      const c = mockContext({ code: "no-colon-code" });
+    it("throws when installationId query param is missing", async () => {
+      const c = mockContext({ code: "some-code" });
       await expect(
         provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
-      ).rejects.toThrow("missing sentry installation ID in code");
+      ).rejects.toThrow("missing installationId query param");
     });
   });
 

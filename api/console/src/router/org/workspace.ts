@@ -28,6 +28,7 @@ import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
 import { ensureActorLinked } from "../../lib/actor-linking";
+import { notifyBackfill } from "../../lib/backfill";
 
 /**
  * Workspace router - internal procedures for API routes
@@ -1233,6 +1234,13 @@ export const workspaceRouter = {
             .insert(workspaceIntegrations)
             .values(integrations)
             .returning({ id: workspaceIntegrations.id });
+
+          // Trigger backfill for newly linked repos (best-effort)
+          void notifyBackfill({
+            installationId: input.gwInstallationId,
+            provider: "github",
+            orgId: ctx.auth.orgId,
+          });
         }
 
         return {
@@ -1378,6 +1386,13 @@ export const workspaceRouter = {
             .insert(workspaceIntegrations)
             .values(integrations)
             .returning({ id: workspaceIntegrations.id });
+
+          // Trigger backfill for newly linked projects (best-effort)
+          void notifyBackfill({
+            installationId: input.gwInstallationId,
+            provider: "vercel",
+            orgId: ctx.auth.orgId,
+          });
         }
 
         return {

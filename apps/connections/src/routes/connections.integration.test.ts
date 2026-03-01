@@ -85,7 +85,6 @@ vi.mock("../lib/urls", () => ({
   consoleUrl: "https://console.test",
   gatewayBaseUrl: "https://gateway.test/api",
   backfillUrl: "https://backfill.test/api",
-  notifyBackfillService: vi.fn().mockResolvedValue(undefined),
   cancelBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 

@@ -14,7 +14,6 @@ vi.mock("../../env", () => ({
 
 vi.mock("../../lib/urls", () => ({
   connectionsBaseUrl: "https://connections.test/services",
-  notifyBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Hoisted so vi.mock factories can reference them
@@ -64,7 +63,6 @@ vi.mock("../../lib/github-jwt", () => ({
 
 import { GitHubProvider } from "./github.js";
 import { getInstallationToken, getInstallationDetails } from "../../lib/github-jwt.js";
-import { notifyBackfillService } from "../../lib/urls.js";
 
 const provider = new GitHubProvider();
 
@@ -254,24 +252,7 @@ describe("GitHubProvider", () => {
       });
     });
 
-    it("notifies backfill service for new installations", async () => {
-      dbMocks.selectLimit.mockResolvedValue([]); // No existing row
-      dbMocks.returning.mockResolvedValue([{ id: "inst-new" }]);
-
-      const c = mockContext({ installation_id: "ext-1" });
-      await provider.handleCallback(c, {
-        orgId: "org-1",
-        connectedBy: "user-1",
-      });
-
-      expect(notifyBackfillService).toHaveBeenCalledWith({
-        installationId: "inst-new",
-        provider: "github",
-        orgId: "org-1",
-      });
-    });
-
-    it("skips backfill notification for reactivated installations", async () => {
+    it("marks reactivated installations", async () => {
       dbMocks.selectLimit.mockResolvedValue([{ id: "inst-existing" }]); // Row exists
       dbMocks.returning.mockResolvedValue([{ id: "inst-existing" }]);
 
@@ -281,7 +262,6 @@ describe("GitHubProvider", () => {
         connectedBy: "user-1",
       });
 
-      expect(notifyBackfillService).not.toHaveBeenCalled();
       expect(result).toMatchObject({ reactivated: true });
     });
 

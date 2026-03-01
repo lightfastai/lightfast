@@ -1,19 +1,18 @@
 /**
  * 0.1 Contract Snapshot Tests
  *
- * Captures the shapes of all 4 service boundary request/response payloads
+ * Captures the shapes of service boundary request/response payloads
  * using shapeOf() (strips values, retains key structure + typeof types) and
  * toMatchSnapshot(). Catches structural drift in PRs: if a boundary payload
  * adds, removes, or renames a field, the snapshot fails and forces a deliberate
  * update.
  *
- * The 4 shapes under test:
- *   1. Connections → Backfill: QStash publishJSON body (notifyBackfillService)
- *   2. Connections GET /connections/:id → Backfill orchestrator response
- *   3. Connections GET /connections/:id/token → Backfill entity worker response
- *   4. Backfill → Gateway: POST /webhooks/:provider service-auth body
+ * The 3 shapes under test:
+ *   1. Connections GET /connections/:id → Backfill orchestrator response
+ *   2. Connections GET /connections/:id/token → Backfill entity worker response
+ *   3. Backfill → Gateway: POST /webhooks/:provider service-auth body
  *
- * Infrastructure: PGlite (shapes 2–3), QStash capture mock (shape 1).
+ * Infrastructure: PGlite (shapes 1–2), QStash capture mock (shape 3).
  * No external network calls. Each test makes a single in-process HTTP call.
  */
 import {
@@ -135,7 +134,6 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 
 // ── Import apps and modules after mocks ──
 import connectionsApp from "@connections/app";
-import { notifyBackfillService } from "@connections/urls";
 import { encrypt } from "@repo/lib";
 
 // ── Helpers ──
@@ -210,21 +208,7 @@ afterAll(async () => {
 // ── Contract Snapshot Tests ──
 
 describe("0.1 — Boundary contract shapes", () => {
-  it("Shape 1: Connections → Backfill trigger body (QStash publishJSON body)", async () => {
-    await notifyBackfillService({
-      installationId: "inst-snap-1",
-      provider: "github",
-      orgId: "org-snap-1",
-    });
-
-    expect(qstashMessages).toHaveLength(1);
-    const firstMsg = qstashMessages[0];
-    expect(firstMsg).toBeDefined();
-    if (!firstMsg) return;
-    expect(shapeOf(firstMsg.body)).toMatchSnapshot();
-  });
-
-  it("Shape 2: GET /connections/:id response (Backfill orchestrator reads this)", async () => {
+  it("Shape 1: GET /connections/:id response (Backfill orchestrator reads this)", async () => {
     const inst = fixtures.installation({
       provider: "github",
       orgId: "org-snap-2",
@@ -247,7 +231,7 @@ describe("0.1 — Boundary contract shapes", () => {
     expect(shapeOf(json)).toMatchSnapshot();
   });
 
-  it("Shape 3: GET /connections/:id/token response (Backfill entity worker reads this)", async () => {
+  it("Shape 2: GET /connections/:id/token response (Backfill entity worker reads this)", async () => {
     const inst = fixtures.installation({
       provider: "sentry",
       orgId: "org-snap-3",
@@ -269,7 +253,7 @@ describe("0.1 — Boundary contract shapes", () => {
     expect(shapeOf(json)).toMatchSnapshot();
   });
 
-  it("Shape 4: Backfill → Gateway POST /webhooks/:provider body (entity worker dispatch)", () => {
+  it("Shape 3: Backfill → Gateway POST /webhooks/:provider body (entity worker dispatch)", () => {
     // Representative object — matches what entity-worker.ts constructs and sends
     // to the gateway service-auth endpoint (POST /api/webhooks/:provider, X-API-Key).
     // If entity-worker.ts changes the dispatch body shape, update this fixture.

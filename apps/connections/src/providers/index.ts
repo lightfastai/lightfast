@@ -33,7 +33,7 @@ if (env.LINEAR_CLIENT_ID && env.LINEAR_CLIENT_SECRET) {
   providers.set("linear", new LinearProvider());
 }
 
-if (env.SENTRY_CLIENT_ID && env.SENTRY_CLIENT_SECRET) {
+if (env.SENTRY_APP_SLUG && env.SENTRY_CLIENT_ID && env.SENTRY_CLIENT_SECRET) {
   providers.set("sentry", new SentryProvider());
 }
 

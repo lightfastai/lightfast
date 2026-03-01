@@ -1,9 +1,9 @@
 /**
- * Suite 2: Connections → Backfill Trigger (QStash Contract)
+ * Suite 2: Backfill Trigger (QStash Contract)
  *
- * Verifies that the QStash message published by notifyBackfillService
- * matches the schema expected by POST /api/trigger, and that the
- * cancel message matches POST /api/trigger/cancel.
+ * Verifies the backfill trigger endpoint auth/validation, that the
+ * cancel message from cancelBackfillService matches POST /api/trigger/cancel,
+ * and that OAuth callbacks no longer trigger backfill directly.
  *
  * Infrastructure: PGlite (for reactivated-installation test), in-memory
  * QStash capture mock, Inngest send mock.
@@ -109,7 +109,6 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 import backfillApp from "@backfill/app";
 import connectionsApp from "@connections/app";
 import {
-  notifyBackfillService,
   cancelBackfillService,
 } from "@connections/urls";
 
@@ -198,75 +197,6 @@ afterAll(async () => {
 
 // ── Tests ──
 
-describe("Suite 2.1 — notifyBackfillService publishes correct QStash body", () => {
-  it("publishes to backfill trigger URL with X-API-Key and correct body shape", async () => {
-    await notifyBackfillService({
-      installationId: "inst-trigger-1",
-      provider: "github",
-      orgId: "org-trigger-1",
-    });
-
-    expect(qstashMock.publishJSON).toHaveBeenCalledOnce();
-
-    const mockCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
-    const firstMockCall = mockCalls[0] as unknown[] | undefined;
-    expect(firstMockCall).toBeDefined();
-    if (!firstMockCall) return;
-    const call = firstMockCall[0] as {
-      url: string;
-      headers: Record<string, string>;
-      body: { installationId: string; provider: string; orgId: string };
-    };
-
-    expect(call.url).toContain("/trigger");
-    expect(call.url).toContain("localhost:4109");
-    expect(call.headers).toMatchObject({ "X-API-Key": API_KEY });
-    expect(call.body).toMatchObject({
-      installationId: "inst-trigger-1",
-      provider: "github",
-      orgId: "org-trigger-1",
-    });
-  });
-
-  it("captured QStash body delivered to POST /api/trigger returns 200 and fires run.requested", async () => {
-    await notifyBackfillService({
-      installationId: "inst-e2e-1",
-      provider: "github",
-      orgId: "org-e2e-1",
-    });
-
-    const capturedMsg = qstashMessages[0];
-    expect(capturedMsg).toBeDefined();
-    if (!capturedMsg) return;
-    const capturedHeaders = capturedMsg.headers ?? {};
-
-    // Re-deliver the captured QStash message to the backfill trigger endpoint
-    const res = await triggerReq("/api/trigger", {
-      body: capturedMsg.body as Record<string, unknown>,
-      headers: capturedHeaders,
-    });
-
-    expect(res.status).toBe(200);
-
-    const json = await res.json() as { status: string; installationId: string };
-    expect(json.status).toBe("accepted");
-    expect(json.installationId).toBe("inst-e2e-1");
-
-    // Inngest event should have fired
-    expect(inngestSendMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: "apps-backfill/run.requested",
-        data: expect.objectContaining({
-          installationId: "inst-e2e-1",
-          provider: "github",
-          orgId: "org-e2e-1",
-          depth: 30,
-        }) as unknown,
-      }),
-    );
-  });
-});
-
 describe("Suite 2.2 — Backfill trigger endpoint auth and validation", () => {
   it("POST /api/trigger rejects missing API key with 401", async () => {
     const res = await triggerReq("/api/trigger", {
@@ -342,7 +272,7 @@ describe("Suite 2.3 — cancelBackfillService publishes cancel body", () => {
   });
 });
 
-describe("Suite 2.4 — Reactivated GitHub installation skips backfill trigger", () => {
+describe("Suite 2.4 — GitHub OAuth callback does not trigger backfill (moved to workspace creation)", () => {
   it("GitHub callback for pre-existing installation does NOT publish to QStash", async () => {
     // Pre-seed an existing installation in the DB
     const inst = fixtures.installation({
@@ -369,11 +299,11 @@ describe("Suite 2.4 — Reactivated GitHub installation skips backfill trigger",
     // Callback redirects on success
     expect(res.status).toBe(302);
 
-    // notifyBackfillService should NOT have been called for a reactivated connection
+    // Backfill is no longer triggered during OAuth callback
     expect(qstashMock.publishJSON).not.toHaveBeenCalled();
   });
 
-  it("Brand-new GitHub installation DOES publish to QStash", async () => {
+  it("Brand-new GitHub installation does NOT publish to QStash (backfill deferred to workspace creation)", async () => {
     // Pre-seed OAuth state in Redis
     redisStore.set("gw:oauth:state:new-install-state", {
       provider: "github",
@@ -390,19 +320,7 @@ describe("Suite 2.4 — Reactivated GitHub installation skips backfill trigger",
     // Callback redirects on success
     expect(res.status).toBe(302);
 
-    // notifyBackfillService SHOULD have been called for a new connection
-    expect(qstashMock.publishJSON).toHaveBeenCalledOnce();
-
-    const mockCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
-    const firstMockCall = mockCalls[0] as unknown[] | undefined;
-    expect(firstMockCall).toBeDefined();
-    if (!firstMockCall) return;
-    const call = firstMockCall[0] as {
-      url: string;
-      body: { provider: string; orgId: string };
-    };
-    expect(call.url).toContain("/trigger");
-    expect(call.body.provider).toBe("github");
-    expect(call.body.orgId).toBe("org-new");
+    // Backfill is no longer triggered during OAuth callback — it fires at workspace creation
+    expect(qstashMock.publishJSON).not.toHaveBeenCalled();
   });
 });

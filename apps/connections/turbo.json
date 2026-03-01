@@ -28,6 +28,7 @@
         "VERCEL_REDIRECT_URI",
         "LINEAR_CLIENT_ID",
         "LINEAR_CLIENT_SECRET",
+        "SENTRY_APP_SLUG",
         "SENTRY_CLIENT_ID",
         "SENTRY_CLIENT_SECRET"
       ],

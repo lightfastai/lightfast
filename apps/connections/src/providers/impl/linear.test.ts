@@ -12,7 +12,6 @@ vi.mock("../../env", () => ({
 vi.mock("../../lib/urls", () => ({
   connectionsBaseUrl: "https://connections.test/services",
   gatewayBaseUrl: "https://gateway.test/api",
-  notifyBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Hoisted so vi.mock factories can reference them
@@ -72,7 +71,6 @@ vi.mock("@repo/lib", () => ({
 import { LinearProvider } from "./linear.js";
 import { db } from "@db/console/client";
 import { decrypt } from "@repo/lib";
-import { notifyBackfillService } from "../../lib/urls.js";
 
 const provider = new LinearProvider();
 
@@ -269,14 +267,9 @@ describe("LinearProvider", () => {
           }),
         }),
       );
-      expect(notifyBackfillService).toHaveBeenCalledWith({
-        installationId: "inst-lin-new",
-        provider: "linear",
-        orgId: "org-1",
-      });
     });
 
-    it("skips webhook + backfill for reactivated connections", async () => {
+    it("skips webhook for reactivated connections", async () => {
       vi.spyOn(globalThis, "fetch")
         .mockResolvedValueOnce({
           ok: true,
@@ -309,7 +302,6 @@ describe("LinearProvider", () => {
         provider: "linear",
         reactivated: true,
       });
-      expect(notifyBackfillService).not.toHaveBeenCalled();
       // Webhook registration should NOT have been called (only 2 fetch calls, not 3)
       expect(globalThis.fetch).toHaveBeenCalledTimes(2);
     });

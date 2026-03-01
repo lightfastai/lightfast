@@ -5,7 +5,6 @@ import { and, eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { getInstallationToken, getInstallationDetails } from "../../lib/github-jwt.js";
-import { notifyBackfillService } from "../../lib/urls.js";
 import {
   githubOAuthResponseSchema,
 } from "../schemas.js";
@@ -192,15 +191,6 @@ export class GitHubProvider implements ConnectionProvider {
 
     const row = rows[0];
     if (!row) {throw new Error("upsert_failed");}
-
-    if (!reactivated) {
-      // Fire-and-forget: notify backfill service for new connections
-      notifyBackfillService({
-        installationId: row.id,
-        provider: "github",
-        orgId: stateData.orgId,
-      }).catch(() => {});
-    }
 
     return {
       status: "connected",

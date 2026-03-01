@@ -140,6 +140,7 @@
       "alerts": "read"
     },
     "env_keys": [
+      "SENTRY_APP_SLUG",
       "SENTRY_CLIENT_ID",
       "SENTRY_CLIENT_SECRET"
     ]

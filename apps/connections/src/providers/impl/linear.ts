@@ -6,7 +6,7 @@ import { and, eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { writeTokenRecord } from "../../lib/token-store.js";
-import { connectionsBaseUrl, gatewayBaseUrl, notifyBackfillService } from "../../lib/urls.js";
+import { connectionsBaseUrl, gatewayBaseUrl } from "../../lib/urls.js";
 import { linearOAuthResponseSchema } from "../schemas.js";
 import type {
   ConnectionProvider,
@@ -379,12 +379,6 @@ export class LinearProvider implements ConnectionProvider {
           .where(eq(gwInstallations.id, installation.id));
       }
 
-      // Notify backfill service for new connections (fire-and-forget)
-      notifyBackfillService({
-        installationId: installation.id,
-        provider: this.name,
-        orgId: stateData.orgId,
-      }).catch(() => {});
     }
 
     return {
