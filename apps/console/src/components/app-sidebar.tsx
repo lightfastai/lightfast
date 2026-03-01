@@ -202,23 +202,23 @@ export function AppSidebar() {
             </Button>
           </PopoverTrigger>
           <PopoverContent align="center" className="w-48 p-1">
-            <div className="flex flex-col gap-2">
-              <a
-                href="mailto:support@lightfast.ai"
-                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-xs text-foreground transition-colors"
-              >
-                <Mail className="h-3 w-3" />
-                <span>Contact Support</span>
-              </a>
-              <Link
-                href="https://lightfast.ai/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-xs text-foreground transition-colors"
-              >
-                <BookOpen className="h-3 w-3" />
-                <span>Help Docs</span>
-              </Link>
+            <div className="flex flex-col gap-1">
+              <Button variant="ghost" size="sm" asChild className="justify-start text-sm gap-2">
+                <a href="mailto:support@lightfast.ai">
+                  <Mail className="size-3" />
+                  Contact Support
+                </a>
+              </Button>
+              <Button variant="ghost" size="sm" asChild className="justify-start text-sm gap-2">
+                <Link
+                  href="https://lightfast.ai/docs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <BookOpen className="size-3" />
+                  Help Docs
+                </Link>
+              </Button>
             </div>
           </PopoverContent>
         </Popover>
