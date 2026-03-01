@@ -225,6 +225,13 @@
       "when": 1772372940234,
       "tag": "0031_sloppy_scarecrow",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1772374535005,
+      "tag": "0032_brainy_ted_forrester",
+      "breakpoints": true
     }
   ]
 }

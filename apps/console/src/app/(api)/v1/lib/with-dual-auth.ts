@@ -67,10 +67,28 @@ export async function withDualAuth(
         return apiKeyResult;
       }
 
+      // For v1 routes, workspace context still comes from X-Workspace-ID header
+      // TODO: Update v1 routes to accept workspace from body when removing this
+      const workspaceId = request.headers.get("x-workspace-id");
+      if (!workspaceId) {
+        log.warn("Missing X-Workspace-ID for API key auth on v1 route", {
+          requestId,
+          orgId: apiKeyResult.auth.orgId,
+        });
+        return {
+          success: false,
+          error: {
+            code: "BAD_REQUEST",
+            message: "X-Workspace-ID header required",
+          },
+          status: 400,
+        };
+      }
+
       return {
         success: true,
         auth: {
-          workspaceId: apiKeyResult.auth.workspaceId,
+          workspaceId,
           userId: apiKeyResult.auth.userId,
           authType: "api-key",
           apiKeyId: apiKeyResult.auth.apiKeyId,

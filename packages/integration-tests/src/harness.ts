@@ -355,18 +355,20 @@ export const TEST_WORKSPACE_SETTINGS = {
  * Creates a test API key in the database and returns the raw key + DB record.
  *
  * Used by Suite 8/9 tRPC tests to seed orgApiKeys for apiKeyProcedure tests.
+ * Keys are org-scoped — no workspaceId required.
  *
  * Usage:
  *   const { rawKey, publicId } = await makeApiKeyFixture(db, {
- *     workspaceId: "ws_1", clerkOrgId: "org_1", createdByUserId: "user_1",
+ *     userId: "user_1", clerkOrgId: "org_1",
  *   });
  *   headers: { Authorization: `Bearer ${rawKey}` }
  */
 export interface ApiKeyFixture {
-  rawKey: string; // "sk-lf-<nanoid>" — use in Authorization header
+  rawKey: string;       // "sk-lf-<nanoid>" — use in Authorization header
+  id: string;           // alias for publicId
   publicId: string;
-  workspaceId: string;
   clerkOrgId: string;
+  userId: string;       // alias for createdByUserId
   createdByUserId: string;
   keyHash: string;
   keyPrefix: string;
@@ -378,9 +380,8 @@ export interface ApiKeyFixture {
 export async function makeApiKeyFixture(
   db: TestDb,
   overrides: {
-    workspaceId: string;
-    clerkOrgId: string;
-    createdByUserId: string;
+    userId: string;
+    clerkOrgId?: string;
     isActive?: boolean;
     expiresAt?: Date | null;
   },
@@ -400,12 +401,12 @@ export async function makeApiKeyFixture(
       : null;
 
   const publicId = uid();
+  const clerkOrgId = overrides.clerkOrgId ?? `org_test_${uid()}`;
 
   const record = {
     publicId,
-    workspaceId: overrides.workspaceId,
-    clerkOrgId: overrides.clerkOrgId,
-    createdByUserId: overrides.createdByUserId,
+    clerkOrgId,
+    createdByUserId: overrides.userId,
     name: "test-key",
     keyHash,
     keyPrefix: "sk-lf-",
@@ -415,7 +416,12 @@ export async function makeApiKeyFixture(
   };
 
   await db.insert(orgApiKeys).values(record);
-  return { rawKey, ...record };
+  return {
+    rawKey,
+    id: publicId,
+    userId: overrides.userId,
+    ...record,
+  };
 }
 
 /**

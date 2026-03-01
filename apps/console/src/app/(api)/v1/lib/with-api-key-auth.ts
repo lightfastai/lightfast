@@ -1,8 +1,8 @@
 /**
  * API Key Authentication Middleware for v1 Routes
  *
- * SECURITY: Validates workspace-scoped API keys.
- * Keys are bound to specific workspaces - no more trusting X-Workspace-ID headers.
+ * SECURITY: Validates org-scoped API keys.
+ * Keys authenticate the org and can access all workspaces within it.
  */
 
 import type { NextRequest } from "next/server";
@@ -13,10 +13,10 @@ import { hashApiKey, isValidApiKeyFormat } from "@repo/console-api-key";
 import { log } from "@vendor/observability/log";
 
 export interface ApiKeyAuthContext {
-  workspaceId: string;
-  userId: string; // createdByUserId for audit
-  apiKeyId: string; // publicId
-  clerkOrgId: string;
+  orgId: string;      // clerkOrgId — sole scoping mechanism
+  userId: string;     // createdByUserId for audit
+  apiKeyId: string;   // publicId
+  clerkOrgId: string; // same as orgId, kept for backward compat
 }
 
 export interface AuthSuccess {
@@ -87,7 +87,6 @@ export async function withApiKeyAuth(
       .select({
         id: orgApiKeys.id,
         publicId: orgApiKeys.publicId,
-        workspaceId: orgApiKeys.workspaceId,
         clerkOrgId: orgApiKeys.clerkOrgId,
         createdByUserId: orgApiKeys.createdByUserId,
         isActive: orgApiKeys.isActive,
@@ -143,30 +142,19 @@ export async function withApiKeyAuth(
         });
       });
 
-    // 7. Log warning if X-Workspace-ID header doesn't match (for migration awareness)
-    const headerWorkspaceId = request.headers.get("x-workspace-id");
-    if (headerWorkspaceId && headerWorkspaceId !== foundKey.workspaceId) {
-      log.warn("X-Workspace-ID header does not match key binding - header ignored", {
-        requestId,
-        headerWorkspaceId,
-        keyWorkspaceId: foundKey.workspaceId,
-        apiKeyId: foundKey.publicId,
-      });
-    }
-
     log.info("API key verified", {
       requestId,
       apiKeyId: foundKey.publicId,
-      workspaceId: foundKey.workspaceId,
+      orgId: foundKey.clerkOrgId,
     });
 
     return {
       success: true,
       auth: {
-        workspaceId: foundKey.workspaceId, // From key binding, NOT header!
+        orgId: foundKey.clerkOrgId,
         userId: foundKey.createdByUserId,
         apiKeyId: foundKey.publicId,
-        clerkOrgId: foundKey.clerkOrgId,
+        clerkOrgId: foundKey.clerkOrgId, // same value as orgId, kept for backward compat
       },
     };
   } catch (error) {

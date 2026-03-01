@@ -14,7 +14,7 @@ import {
 } from "@repo/console-types/api";
 import type {ContentsResponse} from "@repo/console-types/api";
 import { db } from "@db/console/client";
-import { workspaceKnowledgeDocuments } from "@db/console/schema";
+import { workspaceKnowledgeDocuments, orgWorkspaces } from "@db/console/schema";
 import { inArray, eq, and } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
 import { randomUUID } from "node:crypto";
@@ -39,9 +39,30 @@ export const contentsRouter = {
 		.query(async ({ ctx, input }): Promise<ContentsResponse> => {
 			const requestId = randomUUID();
 
+			// Workspace comes from X-Workspace-ID header (API keys are now org-scoped)
+			const workspaceId = ctx.headers.get("x-workspace-id");
+			if (!workspaceId) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "X-Workspace-ID header required",
+				});
+			}
+
+			// Validate workspace belongs to the org from the API key
+			const workspace = await db.query.orgWorkspaces.findFirst({
+				where: eq(orgWorkspaces.id, workspaceId),
+				columns: { clerkOrgId: true },
+			});
+			if (!workspace || workspace.clerkOrgId !== ctx.auth.orgId) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "Access denied to this workspace",
+				});
+			}
+
 			log.info("Fetching contents", {
 				requestId,
-				workspaceId: ctx.auth.workspaceId,
+				workspaceId,
 				userId: ctx.auth.userId,
 				ids: input.ids,
 				count: input.ids.length,
@@ -61,13 +82,13 @@ export const contentsRouter = {
 					.where(
 						and(
 							inArray(workspaceKnowledgeDocuments.id, input.ids),
-							eq(workspaceKnowledgeDocuments.workspaceId, ctx.auth.workspaceId)
+							eq(workspaceKnowledgeDocuments.workspaceId, workspaceId)
 						)
 					);
 
 				log.info("Documents fetched", {
 					requestId,
-					workspaceId: ctx.auth.workspaceId,
+					workspaceId,
 					userId: ctx.auth.userId,
 					found: documents.length,
 					requested: input.ids.length,

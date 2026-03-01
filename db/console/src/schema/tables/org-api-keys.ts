@@ -9,17 +9,16 @@ import {
   bigint,
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
-import { orgWorkspaces } from "./org-workspaces";
 
 /**
- * Organization API Keys table for workspace-scoped API authentication
+ * Organization API Keys table for org-scoped API authentication
  *
- * Organization-scoped: Each key is bound to a specific workspace and can only
- * access that workspace's resources. This prevents the security gap where
- * user-scoped keys could access any workspace via X-Workspace-ID header.
+ * Org-scoped: Each key authenticates the org and can access all workspaces
+ * within that org. Workspace context moves to request-level input (body params)
+ * instead of key-level binding.
  *
  * Design:
- * - Each workspace can have multiple API keys
+ * - Each org can have multiple API keys
  * - Keys are stored as hashed values (NEVER store plaintext)
  * - Display only last 4 characters of key to user
  * - Support key expiration and revocation
@@ -27,7 +26,7 @@ import { orgWorkspaces } from "./org-workspaces";
  * - Track created by user for audit trail
  */
 export const orgApiKeys = pgTable(
-  "lightfast_workspace_api_keys", // Keep original table name for now
+  "lightfast_workspace_api_keys", // Keep original table name to avoid rename migration
   {
     /**
      * Unique API key identifier
@@ -47,14 +46,7 @@ export const orgApiKeys = pgTable(
       .$defaultFn(() => nanoid()),
 
     /**
-     * Workspace this key belongs to (required, enforced FK)
-     */
-    workspaceId: varchar("workspace_id", { length: 191 })
-      .notNull()
-      .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
-
-    /**
-     * Clerk Org ID for faster lookups (denormalized)
+     * Clerk Org ID — sole scoping mechanism for the key
      */
     clerkOrgId: varchar("clerk_org_id", { length: 191 }).notNull(),
 
@@ -136,9 +128,6 @@ export const orgApiKeys = pgTable(
       .notNull(),
   },
   (table) => ({
-    // Index for finding all keys for a workspace
-    workspaceIdIdx: index("ws_api_key_workspace_id_idx").on(table.workspaceId),
-
     // Index for org-level queries
     clerkOrgIdIdx: index("ws_api_key_clerk_org_id_idx").on(table.clerkOrgId),
 
@@ -148,9 +137,9 @@ export const orgApiKeys = pgTable(
     // Index for active keys lookup
     isActiveIdx: index("ws_api_key_is_active_idx").on(table.isActive),
 
-    // Composite for workspace + active keys
-    workspaceActiveIdx: index("ws_api_key_workspace_active_idx").on(
-      table.workspaceId,
+    // Composite for org + active keys (replaces workspace-scoped index)
+    clerkOrgActiveIdx: index("org_api_key_clerk_org_active_idx").on(
+      table.clerkOrgId,
       table.isActive
     ),
   })
@@ -159,11 +148,3 @@ export const orgApiKeys = pgTable(
 // Type exports
 export type OrgApiKey = typeof orgApiKeys.$inferSelect;
 export type InsertOrgApiKey = typeof orgApiKeys.$inferInsert;
-
-// Backward compatibility exports
-/** @deprecated Use orgApiKeys instead */
-export const workspaceApiKeys = orgApiKeys;
-/** @deprecated Use OrgApiKey instead */
-export type WorkspaceApiKey = OrgApiKey;
-/** @deprecated Use InsertOrgApiKey instead */
-export type InsertWorkspaceApiKey = InsertOrgApiKey;

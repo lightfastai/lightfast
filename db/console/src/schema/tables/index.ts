@@ -7,8 +7,8 @@ export { gwWebhookDeliveries, type GwWebhookDelivery, type InsertGwWebhookDelive
 // Org-scoped tables
 export { orgWorkspaces, type OrgWorkspace, type InsertOrgWorkspace } from "./org-workspaces";
 
-// Organization API Keys (workspace-scoped authentication)
-export { orgApiKeys, type OrgApiKey, type InsertOrgApiKey, workspaceApiKeys, type WorkspaceApiKey, type InsertWorkspaceApiKey } from "./org-api-keys";
+// Organization API Keys (org-scoped authentication)
+export { orgApiKeys, type OrgApiKey, type InsertOrgApiKey } from "./org-api-keys";
 
 // Workspace-scoped tables
 export { workspaceKnowledgeDocuments, type WorkspaceKnowledgeDocument, type InsertWorkspaceKnowledgeDocument } from "./workspace-knowledge-documents";

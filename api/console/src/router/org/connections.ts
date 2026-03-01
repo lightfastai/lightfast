@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
-import { gwInstallations, workspaceIntegrations, orgWorkspaces } from "@db/console/schema";
+import { gwInstallations, workspaceIntegrations } from "@db/console/schema";
 import { orgScopedProcedure, apiKeyProcedure } from "../../trpc";
 import {
 	createGitHubApp,
@@ -87,8 +87,8 @@ export const connectionsRouter = {
 	/**
 	 * CLI: Get OAuth authorize URL using API key auth.
 	 *
-	 * Resolves orgId from the API key's workspace, then proxies to
-	 * connections service with redirect_to=inline for CLI mode.
+	 * Uses orgId from API key auth context, proxies to connections service
+	 * with redirect_to=inline for CLI mode.
 	 */
 	cliAuthorize: apiKeyProcedure
 		.input(
@@ -97,24 +97,11 @@ export const connectionsRouter = {
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			// Resolve clerkOrgId from workspace
-			const workspace = await ctx.db.query.orgWorkspaces.findFirst({
-				where: eq(orgWorkspaces.id, ctx.auth.workspaceId),
-				columns: { clerkOrgId: true },
-			});
-
-			if (!workspace?.clerkOrgId) {
-				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: "Workspace not found or has no organization",
-				});
-			}
-
 			const res = await fetch(
 				`${connectionsUrl}/services/connections/${input.provider}/authorize?redirect_to=inline`,
 				{
 					headers: {
-						"X-Org-Id": workspace.clerkOrgId,
+						"X-Org-Id": ctx.auth.orgId,
 						"X-User-Id": ctx.auth.userId,
 						"X-API-Key": env.GATEWAY_API_KEY,
 						"X-Request-Source": "console-trpc-cli",

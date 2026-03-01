@@ -47,7 +47,7 @@ type AuthContext =
     }
   | {
       type: "apiKey";
-      workspaceId: string;
+      orgId: string;
       userId: string;
       apiKeyId: string;
     }
@@ -517,25 +517,15 @@ export const apiKeyProcedure = sentrifiedProcedure
 
     const apiKey = authHeader.replace("Bearer ", "");
 
-    // Verify API key and get workspace context (workspace is embedded in the key)
-    const { workspaceId, userId, apiKeyId } = await verifyApiKey(apiKey);
-
-    // If X-Workspace-ID header is provided, validate it matches the key's workspace
-    const headerWorkspaceId = ctx.headers.get("x-workspace-id");
-    if (headerWorkspaceId && headerWorkspaceId !== workspaceId) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message:
-          "X-Workspace-ID header does not match the API key's workspace. This key can only access its bound workspace.",
-      });
-    }
+    // Verify API key and get org context
+    const { orgId, userId, apiKeyId } = await verifyApiKey(apiKey);
 
     return next({
       ctx: {
         ...ctx,
         auth: {
           type: "apiKey" as const,
-          workspaceId,
+          orgId,
           userId,
           apiKeyId,
         },
@@ -668,19 +658,19 @@ export async function verifyOrgMembership(params: {
  * @throws {TRPCError} BAD_REQUEST if workspace ID header is missing
  */
 async function verifyApiKey(key: string): Promise<{
-  workspaceId: string;
+  orgId: string;
   userId: string;
   apiKeyId: string;
 }> {
   // Hash the provided key to compare with stored hash
   const keyHash = await hashApiKey(key);
 
-  // Find API key in database (org-scoped, workspace-bound)
+  // Find API key in database (org-scoped)
   const [apiKey] = await db
     .select({
       id: orgApiKeys.publicId,
       internalId: orgApiKeys.id,
-      workspaceId: orgApiKeys.workspaceId,
+      clerkOrgId: orgApiKeys.clerkOrgId,
       createdByUserId: orgApiKeys.createdByUserId,
       isActive: orgApiKeys.isActive,
       expiresAt: orgApiKeys.expiresAt,
@@ -717,7 +707,7 @@ async function verifyApiKey(key: string): Promise<{
     });
 
   return {
-    workspaceId: apiKey.workspaceId,
+    orgId: apiKey.clerkOrgId,
     userId: apiKey.createdByUserId,
     apiKeyId: apiKey.id,
   };
