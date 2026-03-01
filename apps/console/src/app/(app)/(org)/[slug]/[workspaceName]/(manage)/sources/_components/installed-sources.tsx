@@ -18,11 +18,10 @@ import {
 	AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
 import { IntegrationIcons } from "@repo/ui/integration-icons";
-import { Search, Circle, ChevronDown, Plus, AlertTriangle } from "lucide-react";
+import { Search, Circle, ChevronDown, AlertTriangle } from "lucide-react";
 import { ConfigTemplateDialog } from "~/components/config-template-dialog";
 import { useQueryStates, parseAsString, parseAsStringEnum } from "nuqs";
 import { EventSettings } from "./event-settings";
-import Link from "next/link";
 
 interface InstalledSourcesProps {
 	clerkOrgSlug: string;
@@ -155,14 +154,6 @@ export function InstalledSources({
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
-
-					{/* Add new source button */}
-					<Link href={`/${clerkOrgSlug}/${workspaceName}/sources/connect`}>
-						<Button size="sm" className="h-10">
-							<Plus className="h-4 w-4 mr-2" />
-							Add New Source
-						</Button>
-					</Link>
 				</div>
 
 				{/* Integrations list */}
