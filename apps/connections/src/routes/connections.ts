@@ -203,6 +203,11 @@ connections.get("/:provider/callback", async (c) => {
       .expire(oauthResultKey(state), 300)
       .exec();
 
+    // Provider-specific redirect (e.g. Vercel "next" URL to complete installation lifecycle)
+    if (typeof result.nextUrl === "string") {
+      return c.redirect(result.nextUrl);
+    }
+
     const redirectTo = stateData.redirectTo;
 
     if (redirectTo === "inline") {

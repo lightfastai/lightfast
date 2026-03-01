@@ -2,7 +2,7 @@ import { db } from "@db/console/client";
 import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
 import { decrypt } from "@repo/lib";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { writeTokenRecord } from "../../lib/token-store.js";
@@ -92,14 +92,47 @@ export class VercelProvider implements ConnectionProvider {
     stateData: CallbackStateData,
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
+    const configurationId = c.req.query("configurationId");
+    const next = c.req.query("next");
+
+    // ── Validate required params ──
+
     if (!code) {throw new Error("missing code");}
+    if (!configurationId) {throw new Error("missing configurationId");}
+
+    // ── Exchange code for tokens ──
 
     const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
 
     const parsed = vercelOAuthResponseSchema.parse(oauthTokens.raw);
+
+    // Cross-validate: callback configurationId must match token exchange installation_id
+    if (parsed.installation_id !== configurationId) {
+      throw new Error(
+        `configurationId mismatch: callback=${configurationId} token=${parsed.installation_id}`,
+      );
+    }
+
     // team_id for team accounts, user_id for personal accounts
     const externalId = parsed.team_id ?? parsed.user_id;
+
+    // ── Detect reactivation ──
+
+    const existing = await db
+      .select({ id: gwInstallations.id })
+      .from(gwInstallations)
+      .where(
+        and(
+          eq(gwInstallations.provider, "vercel"),
+          eq(gwInstallations.externalId, externalId),
+        ),
+      )
+      .limit(1);
+
+    const reactivated = existing.length > 0;
+
+    // ── Build account info ──
 
     const now = new Date().toISOString();
 
@@ -126,6 +159,8 @@ export class VercelProvider implements ConnectionProvider {
         team_id: parsed.team_id,
       },
     };
+
+    // ── Upsert installation ──
 
     const rows = await db
       .insert(gwInstallations)
@@ -157,6 +192,8 @@ export class VercelProvider implements ConnectionProvider {
       status: "connected",
       installationId: installation.id,
       provider: this.name,
+      ...(reactivated && { reactivated: true }),
+      ...(next && { nextUrl: next }),
     };
   }
 
