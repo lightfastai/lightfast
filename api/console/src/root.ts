@@ -14,8 +14,6 @@ import { createTRPCRouter } from "./trpc";
 import { organizationRouter } from "./router/user/organization";
 import { accountRouter } from "./router/user/account";
 import { workspaceAccessRouter } from "./router/user/workspace";
-import { userApiKeysRouter } from "./router/user/user-api-keys";
-
 // Org-scoped routers (active org required)
 import { searchRouter } from "./router/org/search";
 import { contentsRouter } from "./router/org/contents";
@@ -39,13 +37,11 @@ import { workspaceM2MRouter } from "./router/m2m/workspace";
  * Procedures:
  * - organization.*: Create/list/update organizations
  * - account.*: User profile from Clerk
- * - userApiKeys.*: API key management (lightfast_user_api_keys table)
  * - workspaceAccess.*: Workspace queries that verify access manually (listByClerkOrgSlug)
  */
 export const userRouter = createTRPCRouter({
   organization: organizationRouter,
   account: accountRouter,
-  userApiKeys: userApiKeysRouter,
   workspaceAccess: workspaceAccessRouter,
 });
 

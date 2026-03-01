@@ -10,10 +10,6 @@ const accountNavigation = [
 		name: "General",
 		path: "general",
 	},
-	{
-		name: "API Key",
-		path: "api-key",
-	},
 ];
 
 export function AccountSettingsSidebar() {

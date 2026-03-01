@@ -4,9 +4,6 @@ export { gwTokens, type GwToken, type InsertGwToken } from "./gw-tokens";
 export { gwResources, type GwResource, type InsertGwResource } from "./gw-resources";
 export { gwWebhookDeliveries, type GwWebhookDelivery, type InsertGwWebhookDelivery } from "./gw-webhook-deliveries";
 
-// User-scoped tables
-export { userApiKeys, type UserApiKey, type InsertUserApiKey } from "./user-api-keys";
-
 // Org-scoped tables
 export { orgWorkspaces, type OrgWorkspace, type InsertOrgWorkspace } from "./org-workspaces";
 
