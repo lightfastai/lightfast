@@ -49,7 +49,7 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
             className="pl-9"
           />
         </div>
-        <Button className="gap-2" asChild>
+        <Button className="gap-2" asChild size="sm">
           <Link href={`/new?teamSlug=${orgSlug}`}>
             <Plus className="h-4 w-4" />
             New workspace
@@ -84,7 +84,7 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
                   href={`/${orgSlug}/${workspace.name}`}
                   className="group"
                 >
-                  <Card className="h-full transition-colors py-0 hover:bg-accent/50 border-border/60 rounded-sm">
+                  <Card className="h-full transition-colors py-0 bg-card/40 border-border/50 hover:bg-accent/50 rounded-md">
                     <CardContent className="p-5 space-y-4">
                       {/* Header: Name */}
                       <div className="flex items-start justify-between gap-2">

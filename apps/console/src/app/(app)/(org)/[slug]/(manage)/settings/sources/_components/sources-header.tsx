@@ -7,8 +7,8 @@
 export function SourcesHeader() {
 	return (
 		<div>
-			<h2 className="text-2xl font-semibold text-foreground">Sources</h2>
-			<p className="text-base text-muted-foreground mt-1">
+			<h2 className="text-2xl font-pp font-medium text-foreground">Sources</h2>
+			<p className="text-sm text-muted-foreground mt-1">
 				Manage your team's connected integrations and data sources.
 			</p>
 		</div>

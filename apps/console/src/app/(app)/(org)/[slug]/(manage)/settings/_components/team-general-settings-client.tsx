@@ -126,6 +126,13 @@ export function TeamGeneralSettingsClient({
 
 	return (
 		<div className="space-y-8">
+			<div>
+				<h2 className="text-2xl font-pp font-medium text-foreground">General</h2>
+				<p className="text-sm text-muted-foreground mt-1">
+					Manage your team's profile and preferences.
+				</p>
+			</div>
+
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 					{/* Team Name Section */}

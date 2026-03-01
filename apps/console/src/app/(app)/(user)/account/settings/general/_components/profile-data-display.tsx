@@ -40,6 +40,13 @@ export function ProfileDataDisplay() {
 
 	return (
 		<div className="space-y-8">
+			<div>
+				<h2 className="text-2xl font-pp font-medium text-foreground">General</h2>
+				<p className="text-sm text-muted-foreground mt-1">
+					Manage your personal account settings.
+				</p>
+			</div>
+
 			{/* Avatar Section */}
 			<div className="space-y-4">
 				<div>
