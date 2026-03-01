@@ -8,6 +8,13 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Input } from "@repo/ui/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
@@ -16,33 +23,84 @@ import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useWorkspaceForm } from "./workspace-form-provider";
 
+function VercelIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 76 65"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
+    </svg>
+  );
+}
+
 /**
  * Vercel accordion item for the Sources section.
- * Fetches its own connection status (prefetched by parent page).
+ * Fetches its own connection status (prefetched by parent page via vercel.list).
  * Shows inline project picker when connected, connect button otherwise.
  */
 export function VercelSourceItem() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { vercelInstallationId, setVercelInstallationId, selectedProjects, setSelectedProjects, toggleProject } =
-    useWorkspaceForm();
+  const {
+    vercelInstallationId,
+    setVercelInstallationId,
+    vercelInstallations,
+    setVercelInstallations,
+    selectedVercelInstallation,
+    setSelectedVercelInstallation,
+    selectedProjects,
+    setSelectedProjects,
+    toggleProject,
+  } = useWorkspaceForm();
 
   const [searchQuery, setSearchQuery] = useState("");
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevInstallationsRef = useRef<typeof vercelInstallations>([]);
 
-  // Fetch Vercel connection (prefetched by parent page RSC in Phase 5)
-  const { data: connection, refetch: refetchConnection } = useSuspenseQuery({
-    ...trpc.connections.vercel.get.queryOptions(),
+  // Fetch Vercel installations (prefetched by parent page RSC)
+  const { data: listData, refetch: refetchConnection } = useSuspenseQuery({
+    ...trpc.connections.vercel.list.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
-  const hasConnection = Boolean(connection);
+  const connectionInstallations = listData?.installations ?? [];
+  const hasConnection = connectionInstallations.length > 0;
 
-  // Sync vercelInstallationId when connection changes
+  // Sync installations array (with ID equality check to avoid re-renders)
   useEffect(() => {
-    setVercelInstallationId(connection?.id ?? null);
-  }, [connection?.id, setVercelInstallationId]);
+    const prevIds = prevInstallationsRef.current.map((i) => i.id).join(",");
+    const newIds = connectionInstallations.map((i) => i.id).join(",");
+    if (prevIds !== newIds) {
+      setVercelInstallations(connectionInstallations);
+      prevInstallationsRef.current = connectionInstallations;
+    }
+  }, [connectionInstallations, setVercelInstallations]);
+
+  // Auto-select first installation
+  useEffect(() => {
+    if (connectionInstallations.length === 0) {
+      if (selectedVercelInstallation !== null) setSelectedVercelInstallation(null);
+      return;
+    }
+    const stillExists = selectedVercelInstallation
+      ? connectionInstallations.some((inst) => inst.id === selectedVercelInstallation.id)
+      : false;
+    if (!stillExists) {
+      const first = connectionInstallations[0];
+      if (first && selectedVercelInstallation?.id !== first.id) {
+        setSelectedVercelInstallation(first);
+      }
+    }
+  }, [connectionInstallations, selectedVercelInstallation, setSelectedVercelInstallation]);
+
+  // Sync vercelInstallationId from the selected installation
+  useEffect(() => {
+    setVercelInstallationId(selectedVercelInstallation?.id ?? null);
+  }, [selectedVercelInstallation?.id, setVercelInstallationId]);
 
   // Cleanup poll timer on unmount
   useEffect(() => {
@@ -116,19 +174,15 @@ export function VercelSourceItem() {
     }
   };
 
+  /** Display label for a Vercel installation */
+  const getInstallationLabel = (inst: (typeof connectionInstallations)[number]) =>
+    inst.teamSlug ?? "Personal";
+
   return (
     <AccordionItem value="vercel">
       <AccordionTrigger className="px-4 hover:no-underline">
         <div className="flex items-center gap-3 flex-1">
-          {/* Vercel triangle icon */}
-          <svg
-            className="h-5 w-5 shrink-0"
-            viewBox="0 0 76 65"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
-          </svg>
+          <VercelIcon className="h-5 w-5 shrink-0" />
           <span className="font-medium">Vercel</span>
           {hasConnection ? (
             <Badge variant="secondary" className="text-xs">Connected</Badge>
@@ -149,28 +203,49 @@ export function VercelSourceItem() {
               Connect Vercel to select projects
             </p>
             <Button onClick={handleConnect} variant="outline">
-              <svg
-                className="h-4 w-4 mr-2"
-                viewBox="0 0 76 65"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
-              </svg>
+              <VercelIcon className="h-4 w-4 mr-2" />
               Connect Vercel
             </Button>
           </div>
         ) : (
           <div className="space-y-4 pt-2">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+            {/* Team Selector & Search */}
+            <div className="flex gap-4">
+              {connectionInstallations.length > 1 && (
+                <Select
+                  value={selectedVercelInstallation?.id}
+                  onValueChange={(id) => {
+                    const inst = connectionInstallations.find((i) => i.id === id);
+                    if (inst) {
+                      setSelectedVercelInstallation(inst);
+                      setSelectedProjects([]);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-[220px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {connectionInstallations.map((inst) => (
+                      <SelectItem key={inst.id} value={inst.id}>
+                        <div className="flex items-center gap-2">
+                          <VercelIcon className="h-3 w-3" />
+                          {getInstallationLabel(inst)}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
 
             {/* Selected Count & Clear */}
@@ -232,14 +307,7 @@ export function VercelSourceItem() {
                           onCheckedChange={() => toggleProject(project)}
                         />
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                          <svg
-                            className="h-4 w-4"
-                            viewBox="0 0 76 65"
-                            fill="currentColor"
-                            aria-hidden="true"
-                          >
-                            <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
-                          </svg>
+                          <VercelIcon className="h-4 w-4" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">

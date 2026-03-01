@@ -202,13 +202,13 @@ export const connectionsRouter = {
 	 */
 	github: {
 		/**
-		 * Get org's GitHub installation with app installations
+		 * List org's GitHub installations
 		 *
-		 * Returns the org's GitHub OAuth connection including
-		 * all GitHub App installations accessible to the org.
+		 * Returns all active GitHub App installations accessible to the org,
+		 * merged across gwInstallation rows with gwInstallationId tags.
 		 */
-		get: orgScopedProcedure.query(async ({ ctx }) => {
-			const result = await ctx.db
+		list: orgScopedProcedure.query(async ({ ctx }) => {
+			const results = await ctx.db
 				.select()
 				.from(gwInstallations)
 				.where(
@@ -217,30 +217,32 @@ export const connectionsRouter = {
 						eq(gwInstallations.provider, "github"),
 						eq(gwInstallations.status, "active"),
 					),
-				)
-				.limit(1);
+				);
 
-			const installation = result[0];
-
-			if (!installation) {
+			if (results.length === 0) {
 				return null;
 			}
 
-			const providerAccountInfo = installation.providerAccountInfo;
-			if (providerAccountInfo?.sourceType !== "github") {
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Invalid provider account info type",
-				});
-			}
+			// Merge installations from all gwInstallation rows, tagging each with
+			// its parent gwInstallationId so the UI can pass the correct
+			// integrationId when fetching repositories.
+			const allInstallations = results.flatMap((row) => {
+				const info = row.providerAccountInfo;
+				if (info?.sourceType !== "github") return [];
+				return (info.installations ?? []).map((inst) => ({
+					...inst,
+					gwInstallationId: row.id,
+				}));
+			});
 
+			const first = results[0]!;
 			return {
-				id: installation.id,
-				orgId: installation.orgId,
-				provider: installation.provider,
-				connectedAt: installation.createdAt,
-				status: installation.status,
-				installations: providerAccountInfo.installations,
+				id: first.id,
+				orgId: first.orgId,
+				provider: first.provider,
+				connectedAt: first.createdAt,
+				status: first.status,
+				installations: allInstallations,
 			};
 		}),
 
@@ -642,52 +644,6 @@ export const connectionsRouter = {
 						};
 					})
 					.filter((v): v is NonNullable<typeof v> => v !== null),
-			};
-		}),
-
-		/**
-		 * Get org's Vercel installation
-		 *
-		 * Returns the org's Vercel OAuth connection including
-		 * team and configuration information.
-		 */
-		get: orgScopedProcedure.query(async ({ ctx }) => {
-			const result = await ctx.db
-				.select()
-				.from(gwInstallations)
-				.where(
-					and(
-						eq(gwInstallations.orgId, ctx.auth.orgId),
-						eq(gwInstallations.provider, "vercel"),
-						eq(gwInstallations.status, "active"),
-					),
-				)
-				.limit(1);
-
-			const installation = result[0];
-
-			if (!installation) {
-				return null;
-			}
-
-			const providerAccountInfo = installation.providerAccountInfo;
-			if (providerAccountInfo?.sourceType !== "vercel") {
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Invalid provider account info type",
-				});
-			}
-
-			return {
-				id: installation.id,
-				orgId: installation.orgId,
-				provider: installation.provider,
-				connectedAt: installation.createdAt,
-				status: installation.status,
-				vercelUserId: providerAccountInfo.userId,
-				teamId: providerAccountInfo.teamId,
-				teamSlug: providerAccountInfo.teamSlug,
-				configurationId: providerAccountInfo.configurationId,
 			};
 		}),
 

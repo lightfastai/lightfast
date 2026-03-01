@@ -11,8 +11,8 @@ import type { RouterOutputs } from "@repo/console-trpc/types";
 /**
  * Types derived from tRPC RouterOutputs — never define manual interfaces.
  */
-type GitHubGetResult = NonNullable<RouterOutputs["connections"]["github"]["get"]>;
-type GitHubInstallation = GitHubGetResult["installations"][number];
+type GitHubListResult = NonNullable<RouterOutputs["connections"]["github"]["list"]>;
+type GitHubInstallation = GitHubListResult["installations"][number];
 type Repository = RouterOutputs["connections"]["github"]["repositories"][number];
 
 export type VercelInstallation = RouterOutputs["connections"]["vercel"]["list"]["installations"][number];

@@ -32,7 +32,7 @@ import { NewPageHeader } from "./_components/new-page-header";
  *
  * Data Flow:
  * 1. (app)/layout.tsx prefetches organization.listUserOrganizations (user-scoped, no org needed)
- * 2. This page prefetches connections.github.get (org-scoped, GitHub connection status)
+ * 2. This page prefetches connections.github.list (org-scoped, GitHub connection status)
  * 3. Data passed through to client components via HydrateClient
  * 4. NewWorkspaceInitializer reads cache + URL params to set initial form state
  * 5. OrganizationSelector uses cached orgs for dropdown
@@ -56,7 +56,7 @@ export default async function NewWorkspacePage({
 
   // Prefetch org-scoped connection status for GitHub and Vercel
   // Avoids client-side fetch waterfall in SourcesSection
-  prefetch(orgTrpc.connections.github.get.queryOptions());
+  prefetch(orgTrpc.connections.github.list.queryOptions());
   prefetch(orgTrpc.connections.vercel.list.queryOptions());
 
   return (

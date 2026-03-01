@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Github, Search, Loader2 } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -50,7 +51,7 @@ export function GitHubSourceItem() {
 
   // Fetch GitHub connection (prefetched by parent page RSC)
   const { data: connection, refetch: refetchConnection } = useSuspenseQuery({
-    ...trpc.connections.github.get.queryOptions(),
+    ...trpc.connections.github.list.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
@@ -58,10 +59,11 @@ export function GitHubSourceItem() {
   const connectionInstallations = connection?.installations ?? [];
   const hasConnection = Boolean(connection && connectionInstallations.length > 0);
 
-  // Sync gwInstallationId when connection changes
+  // Sync gwInstallationId from the selected installation (each GitHub org
+  // lives in its own gwInstallations row with a distinct id).
   useEffect(() => {
-    setGwInstallationId(connection?.id ?? null);
-  }, [connection?.id, setGwInstallationId]);
+    setGwInstallationId(selectedInstallation?.gwInstallationId ?? null);
+  }, [selectedInstallation?.gwInstallationId, setGwInstallationId]);
 
   // Sync installations array (with ID equality check to avoid re-renders)
   useEffect(() => {
@@ -232,15 +234,25 @@ export function GitHubSourceItem() {
                 }}
               >
                 <SelectTrigger className="w-[220px]">
-                  <div className="flex items-center gap-2">
-                    <Github className="h-4 w-4" />
-                    <SelectValue />
-                  </div>
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {installations.map((inst) => (
                     <SelectItem key={inst.id} value={inst.accountLogin}>
-                      {inst.accountLogin}
+                      <div className="flex items-center gap-2">
+                        {inst.avatarUrl ? (
+                          <Image
+                            src={inst.avatarUrl}
+                            alt=""
+                            width={16}
+                            height={16}
+                            className="rounded-full"
+                          />
+                        ) : (
+                          <Github className="h-4 w-4" />
+                        )}
+                        {inst.accountLogin}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>

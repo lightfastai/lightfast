@@ -13,6 +13,14 @@ import { mergeNextConfig } from "@vendor/next/merge-config";
 const config: NextConfig = withSentry(
   withBetterStack(
     mergeNextConfig(vendorConfig, {
+      images: {
+        remotePatterns: [
+          {
+            protocol: "https",
+            hostname: "avatars.githubusercontent.com",
+          },
+        ],
+      },
       transpilePackages: [
         // @api packages
         "@api/console",
