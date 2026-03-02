@@ -3,6 +3,7 @@ export { gwInstallations, type GwInstallation, type InsertGwInstallation } from 
 export { gwTokens, type GwToken, type InsertGwToken } from "./gw-tokens";
 export { gwResources, type GwResource, type InsertGwResource } from "./gw-resources";
 export { gwWebhookDeliveries, type GwWebhookDelivery, type InsertGwWebhookDelivery } from "./gw-webhook-deliveries";
+export { gwBackfillRuns, type GwBackfillRun, type InsertGwBackfillRun } from "./gw-backfill-runs";
 
 // Org-scoped tables
 export { orgWorkspaces, type OrgWorkspace, type InsertOrgWorkspace } from "./org-workspaces";

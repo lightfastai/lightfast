@@ -107,6 +107,10 @@ export const workspaceIntegrations = pgTable(
             configPath?: string;
             lastConfigCheck?: string;
           };
+          backfill?: {
+            depth: 7 | 30 | 90;
+            entityTypes: string[];
+          };
         }
       | {
           version: 1;
@@ -121,6 +125,10 @@ export const workspaceIntegrations = pgTable(
             events?: string[];             // ["deployment.created", "deployment.ready", ...]
             autoSync: boolean;             // Track deployments automatically
           };
+          backfill?: {
+            depth: 7 | 30 | 90;
+            entityTypes: string[];
+          };
         }
       | {
           version: 1;
@@ -131,6 +139,10 @@ export const workspaceIntegrations = pgTable(
           sync: {
             events?: string[];
             autoSync: boolean;
+          };
+          backfill?: {
+            depth: 7 | 30 | 90;
+            entityTypes: string[];
           };
         }
       | {
@@ -143,6 +155,10 @@ export const workspaceIntegrations = pgTable(
           sync: {
             events?: string[];
             autoSync: boolean;
+          };
+          backfill?: {
+            depth: 7 | 30 | 90;
+            entityTypes: string[];
           };
         }
     >().notNull(),

@@ -232,6 +232,13 @@
       "when": 1772374535005,
       "tag": "0032_brainy_ted_forrester",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1772445514294,
+      "tag": "0033_red_bug",
+      "breakpoints": true
     }
   ]
 }

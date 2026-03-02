@@ -5,6 +5,7 @@ export {
   gwTokens, type GwToken, type InsertGwToken,
   gwResources, type GwResource, type InsertGwResource,
   gwWebhookDeliveries, type GwWebhookDelivery, type InsertGwWebhookDelivery,
+  gwBackfillRuns, type GwBackfillRun, type InsertGwBackfillRun,
   // Org-scoped tables
   orgWorkspaces, type OrgWorkspace, type InsertOrgWorkspace,
   orgApiKeys, type OrgApiKey, type InsertOrgApiKey,
