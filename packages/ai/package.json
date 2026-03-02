@@ -43,7 +43,7 @@
     "@openrouter/ai-sdk-provider": "^0.4.5",
     "@t3-oss/env-core": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
-    "ai": "5.0.15",
+    "ai": "5.0.52",
     "autoevals": "^0.0.103",
     "braintrust": "^0.2.1",
     "exa-js": "^1.6.13",

@@ -8,9 +8,9 @@ packages:
 - vendor/*
 catalog:
   '@tanstack/react-query': ^5.80.7
-  '@trpc/client': ^11.4.0
-  '@trpc/tanstack-react-query': ^11.4.0
-  '@trpc/server': ^11.4.0
+  '@trpc/client': ^11.8.0
+  '@trpc/tanstack-react-query': ^11.8.0
+  '@trpc/server': ^11.8.0
   lucide-react: ^0.451.0
   superjson: ^2.2.1
   '@types/node': ^20.16.11
@@ -20,13 +20,12 @@ catalog:
   prettier: ^3.5.3
   typescript: ^5.8.2
   typescript-eslint: ^8.46.1
-  next: ^15.5.7
   turbo: ^2.5.5
   '@ai-sdk/anthropic': 2.0.4
   '@ai-sdk/gateway': 1.0.7
   '@ai-sdk/provider': 2.0.0
   '@ai-sdk/react': 2.0.15
-  ai: 5.0.15
+  ai: 5.0.52
   '@upstash/redis': ^1.35.1
   '@vercel/blob': ^1.1.1
   '@vercel/related-projects': ^1.0.0
@@ -51,9 +50,9 @@ catalog:
   tailwind-merge: ^3.3.1
   inngest: ^3.35.1
   '@inngest/middleware-sentry': ^0.1.2
-  '@sentry/core': ^10.20.0
-  '@sentry/nextjs': ^10.20.0
-  '@sentry/profiling-node': ^10.20.0
+  '@sentry/core': ^10.27.0
+  '@sentry/nextjs': ^10.27.0
+  '@sentry/profiling-node': ^10.27.0
   nanoid: ^5.1.5
   '@electric-sql/pglite': ^0.2.17
   drizzle-orm: ^0.43.1
@@ -101,10 +100,6 @@ ignoredBuiltDependencies:
 - protobufjs
 - sharp
 linkWorkspacePackages: true
-overrides:
-  '@types/minimatch': 5.1.2
-  '@browserbasehq/stagehand>dotenv': ^17.2.1
-  zod-to-json-schema>zod: ^3.25.76
 publicHoistPattern:
 - '@ianvs/prettier-plugin-sort-imports'
 - prettier-plugin-tailwindcss
