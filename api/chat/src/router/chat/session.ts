@@ -156,7 +156,7 @@ export const sessionRouter = {
 				.where(eq(LightfastChatSession.id, input.sessionId))
 				.limit(1);
 
-			if (!session[0] || session[0].clerkUserId !== ctx.session.userId) {
+			if (session[0]?.clerkUserId !== ctx.session.userId) {
 				throw new TRPCError({
 					code: "NOT_FOUND",
 					message: "Session not found",
@@ -340,7 +340,7 @@ export const sessionRouter = {
 				.where(eq(LightfastChatSession.id, input.sessionId))
 				.limit(1);
 
-			if (!session[0] || session[0].clerkUserId !== ctx.session.userId) {
+			if (session[0]?.clerkUserId !== ctx.session.userId) {
 				throw new TRPCError({
 					code: "NOT_FOUND",
 					message: "Session not found",

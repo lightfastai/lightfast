@@ -55,8 +55,7 @@ async function prefetchFullMessageHistory(sessionId: string) {
 		}
 
 		if (
-			cursor &&
-			nextCursor.createdAt === cursor.createdAt &&
+			nextCursor.createdAt === cursor?.createdAt &&
 			nextCursor.id === cursor.id
 		) {
 			break;

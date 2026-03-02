@@ -53,7 +53,7 @@ export const contentsRouter = {
 				where: eq(orgWorkspaces.id, workspaceId),
 				columns: { clerkOrgId: true },
 			});
-			if (!workspace || workspace.clerkOrgId !== ctx.auth.orgId) {
+			if (workspace?.clerkOrgId !== ctx.auth.orgId) {
 				throw new TRPCError({
 					code: "FORBIDDEN",
 					message: "Access denied to this workspace",

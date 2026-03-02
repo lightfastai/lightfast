@@ -94,7 +94,7 @@ export async function timingSafeStringEqual(
   // Digests are always 32 bytes — constant iteration count
   let result = 0;
   for (let i = 0; i < bytesA.length; i++) {
-    result |= bytesA[i]! ^ bytesB[i]!;
+    result |= (bytesA[i] ?? 0) ^ (bytesB[i] ?? 0);
   }
   return result === 0;
 }
