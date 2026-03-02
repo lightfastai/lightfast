@@ -5,10 +5,7 @@ import pc from "picocolors";
 import select from "@inquirer/select";
 import { startAuthServer } from "../lib/auth-server.js";
 import { listOrganizations, setupOrg } from "../lib/api.js";
-import { saveConfig, getConfig } from "../lib/config.js";
-
-const getBaseUrl = () =>
-  process.env.LIGHTFAST_API_URL ?? "https://lightfast.ai";
+import { saveConfig, getConfig, getBaseUrl } from "../lib/config.js";
 
 export const loginCommand = new Command("login")
   .description("Authenticate with Lightfast and select an organization")

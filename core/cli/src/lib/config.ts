@@ -11,6 +11,9 @@ import { join } from "node:path";
 const CONFIG_DIR = join(homedir(), ".lightfast");
 const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
+export const getBaseUrl = () =>
+  process.env.LIGHTFAST_API_URL ?? "https://lightfast.ai";
+
 export interface LightfastConfig {
   orgId: string;
   orgSlug: string;

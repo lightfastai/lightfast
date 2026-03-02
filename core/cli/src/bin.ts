@@ -1,10 +1,6 @@
 #!/usr/bin/env node
 
-/**
- * CLI binary entrypoint
- *
- * Sets up commander and registers all commands.
- */
+declare const __CLI_VERSION__: string;
 
 import { Command } from "commander";
 import { loginCommand } from "./commands/login.js";
@@ -15,7 +11,7 @@ const program = new Command();
 program
   .name("lightfast")
   .description("Lightfast CLI — connect to your webhook pipeline")
-  .version("0.1.0");
+  .version(__CLI_VERSION__);
 
 program.addCommand(loginCommand);
 program.addCommand(logoutCommand);

@@ -14,22 +14,17 @@
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsup src/index.ts src/bin.ts --format esm --dts",
+    "build": "tsup",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsup src/index.ts src/bin.ts --format esm --watch",
+    "dev": "tsup --watch",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@inquirer/select": "^4.0.0",
-    "@repo/console-chunking": "workspace:*",
-    "@repo/console-config": "workspace:*",
-    "@repo/console-embed": "workspace:*",
-    "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "eventsource-parser": "^3.0.0",
-    "nanoid": "^5.0.0",
     "open": "^10.1.0",
     "ora": "^8.1.1",
     "picocolors": "^1.1.0"

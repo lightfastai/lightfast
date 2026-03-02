@@ -2,9 +2,10 @@ import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { redis } from "@vendor/upstash";
 import { cliApiKeyAuth } from "../middleware/cli-auth.js";
+import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 export const cliRouter = new Hono<{
-  Variables: { cliOrgId: string };
+  Variables: LifecycleVariables & { cliOrgId: string };
 }>();
 
 const POLL_INTERVAL_MS = 200;
@@ -41,7 +42,6 @@ cliRouter.get("/stream", cliApiKeyAuth, (c) => {
         await stream.writeSSE({
           data: JSON.stringify({ type: "ping" }),
           event: "heartbeat",
-          id: `hb-${Date.now()}`,
         });
         heartbeatCounter = 0;
       }

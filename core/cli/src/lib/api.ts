@@ -1,5 +1,4 @@
-const getBaseUrl = () =>
-  process.env.LIGHTFAST_API_URL ?? "https://lightfast.ai";
+import { getBaseUrl } from "./config.js";
 
 interface Organization {
   id: string;
@@ -46,6 +45,5 @@ export async function setupOrg(
 }
 
 export function getStreamUrl(): string {
-  const base = process.env.LIGHTFAST_API_URL ?? "https://lightfast.ai";
-  return `${base}/services/relay/api/cli/stream`;
+  return `${getBaseUrl()}/services/relay/api/cli/stream`;
 }

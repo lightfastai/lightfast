@@ -1902,27 +1902,12 @@ importers:
       '@inquirer/select':
         specifier: ^4.0.0
         version: 4.4.2(@types/node@20.19.22)
-      '@repo/console-chunking':
-        specifier: workspace:*
-        version: link:../../packages/console-chunking
-      '@repo/console-config':
-        specifier: workspace:*
-        version: link:../../packages/console-config
-      '@repo/console-embed':
-        specifier: workspace:*
-        version: link:../../packages/console-embed
-      chalk:
-        specifier: ^5.4.1
-        version: 5.6.2
       commander:
         specifier: ^13.1.0
         version: 13.1.0
       eventsource-parser:
         specifier: ^3.0.0
         version: 3.0.6
-      nanoid:
-        specifier: ^5.0.0
-        version: 5.1.6
       open:
         specifier: ^10.1.0
         version: 10.2.0
