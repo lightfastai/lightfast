@@ -161,6 +161,8 @@ describe("orchestrator ↔ entity worker event contract", () => {
     });
     // Dispatch response
     mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
+    // Persist backfill run response
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ status: "ok" }), { status: 200 }));
 
     const workerSendEventCalls: Array<[string, any]> = [];
     const workerStep = {
@@ -267,6 +269,9 @@ describe("orchestrator ↔ entity worker event contract", () => {
       sleep: vi.fn().mockResolvedValue(undefined),
     };
 
+    // Persist failed run response
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ status: "ok" }), { status: 200 }));
+
     expect(entityWorkerOnFailure, "entity worker did not register onFailure handler").toBeDefined();
     await entityWorkerOnFailure!({
       error: new Error("something broke"),
@@ -362,6 +367,8 @@ describe("orchestrator ↔ entity worker event contract", () => {
       nextCursor: null,
       rawCount: 0,
     });
+    // Persist backfill run response
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ status: "ok" }), { status: 200 }));
 
     let workerCompletionEventName: string | undefined;
     const workerStep = {

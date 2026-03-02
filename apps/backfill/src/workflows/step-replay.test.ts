@@ -173,6 +173,8 @@ describe("entity-worker step memoization replay", () => {
     mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
     mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
     mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
+    // Persist backfill run response
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ status: "ok" }), { status: 200 }));
   }
 
   it("replay produces identical result to recording (single page)", async () => {
@@ -237,6 +239,8 @@ describe("entity-worker step memoization replay", () => {
       rawCount: 1,
     });
     mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
+    // Persist backfill run response
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ status: "ok" }), { status: 200 }));
 
     const { step: recordingStep, journal } = createRecordingStep();
     const recordResult = await handler({

@@ -89,6 +89,10 @@ function mockDispatchResponse() {
   mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
 }
 
+function mockPersistRunResponse() {
+  mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ status: "ok" }), { status: 200 }));
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetConnector.mockReturnValue(mockConnector);
@@ -105,6 +109,7 @@ describe("get-token step", () => {
       nextCursor: null,
       rawCount: 0,
     });
+    mockPersistRunResponse();
     const step = makeStep();
 
     await capturedHandler({ event: makeEvent(), step });
@@ -155,6 +160,7 @@ describe("pagination loop — single page", () => {
     mockDispatchResponse();
     mockDispatchResponse();
     mockDispatchResponse();
+    mockPersistRunResponse();
     const step = makeStep();
 
     const result = (await capturedHandler({ event: makeEvent(), step })) as Record<string, unknown>;
@@ -172,6 +178,7 @@ describe("pagination loop — single page", () => {
       rawCount: 1,
     });
     mockDispatchResponse();
+    mockPersistRunResponse();
     const step = makeStep();
 
     await capturedHandler({ event: makeEvent(), step });
@@ -238,6 +245,7 @@ describe("pagination loop — multiple pages", () => {
       rawCount: 1,
     });
     mockDispatchResponse();
+    mockPersistRunResponse();
     const step = makeStep();
 
     const result = (await capturedHandler({ event: makeEvent(), step })) as Record<string, unknown>;
@@ -284,6 +292,7 @@ describe("rate limit injection", () => {
         resetAt: futureResetAt,
       },
     });
+    mockPersistRunResponse();
     const step = makeStep();
 
     await capturedHandler({ event: makeEvent(), step });
@@ -303,6 +312,7 @@ describe("rate limit injection", () => {
         resetAt: new Date(Date.now() + 60_000),
       },
     });
+    mockPersistRunResponse();
     const step = makeStep();
 
     await capturedHandler({ event: makeEvent(), step });
@@ -314,6 +324,7 @@ describe("rate limit injection", () => {
 describe("onFailure handler", () => {
   it("sends entity.completed event with success: false", async () => {
     expect(capturedOnFailure).toBeDefined();
+    mockPersistRunResponse();
     const step = makeStep();
     const failureEvent = {
       data: {
@@ -364,6 +375,7 @@ describe("completion", () => {
     });
     mockDispatchResponse();
     mockDispatchResponse();
+    mockPersistRunResponse();
     const step = makeStep();
 
     await capturedHandler({ event: makeEvent(), step });
@@ -415,11 +427,106 @@ describe("completion", () => {
     });
     mockDispatchResponse();
     mockDispatchResponse();
+    mockPersistRunResponse();
     const step = makeStep();
 
     const result = (await capturedHandler({ event: makeEvent(), step })) as Record<string, unknown>;
     expect(result.eventsProduced).toBe(5);
     expect(result.eventsDispatched).toBe(5);
     expect(result.pagesProcessed).toBe(2);
+  });
+});
+
+describe("persist-backfill-run step", () => {
+  it("POSTs completed run record to gateway after pagination", async () => {
+    mockTokenResponse();
+    mockConnector.fetchPage.mockResolvedValueOnce({
+      events: [
+        { deliveryId: "d1", eventType: "pull_request", payload: {} },
+      ],
+      nextCursor: null,
+      rawCount: 1,
+    });
+    mockDispatchResponse();
+    mockPersistRunResponse();
+    const step = makeStep();
+
+    await capturedHandler({ event: makeEvent(), step });
+
+    // Find the persist POST call (POST to gateway backfill-runs)
+    const persistCall = mockFetch.mock.calls.find(
+      (call) =>
+        (call[1] as RequestInit | undefined)?.method === "POST" &&
+        (call[0] as string).includes("/backfill-runs"),
+    );
+    expect(persistCall).toBeDefined();
+    const body = JSON.parse((persistCall![1] as RequestInit).body as string);
+    expect(body).toMatchObject({
+      entityType: "pull_request",
+      depth: 30,
+      status: "completed",
+      pagesProcessed: 1,
+      eventsProduced: 1,
+      eventsDispatched: 1,
+    });
+    expect(body.since).toBeDefined();
+  });
+
+  it("does not fail the worker when persist call fails", async () => {
+    mockTokenResponse();
+    mockConnector.fetchPage.mockResolvedValueOnce({
+      events: [],
+      nextCursor: null,
+      rawCount: 0,
+    });
+    // Persist call rejects
+    mockFetch.mockRejectedValueOnce(new Error("gateway down"));
+    const step = makeStep();
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await capturedHandler({ event: makeEvent(), step });
+    expect(result).toBeDefined();
+
+    consoleSpy.mockRestore();
+  });
+});
+
+describe("persist-failed-run step", () => {
+  it("POSTs failed run record to gateway in onFailure handler", async () => {
+    expect(capturedOnFailure).toBeDefined();
+    mockPersistRunResponse();
+    const step = makeStep();
+    const failureEvent = {
+      data: {
+        event: {
+          data: {
+            installationId: "inst-1",
+            provider: "github",
+            entityType: "issue",
+            since: "2026-01-01T00:00:00Z",
+            depth: 30,
+            resource: { providerResourceId: "456" },
+          },
+        },
+      },
+    };
+    const error = new Error("rate limit exceeded");
+
+    await capturedOnFailure!({ error, event: failureEvent, step });
+
+    const persistCall = mockFetch.mock.calls.find(
+      (call) =>
+        (call[1] as RequestInit | undefined)?.method === "POST" &&
+        (call[0] as string).includes("/backfill-runs"),
+    );
+    expect(persistCall).toBeDefined();
+    const body = JSON.parse((persistCall![1] as RequestInit).body as string);
+    expect(body).toMatchObject({
+      entityType: "issue",
+      since: "2026-01-01T00:00:00Z",
+      depth: 30,
+      status: "failed",
+      error: "rate limit exceeded",
+    });
   });
 });

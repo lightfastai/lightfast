@@ -38,6 +38,27 @@ export const backfillEntityWorker = inngest.createFunction(
     // instead of waiting 4h for a timeout
     onFailure: async ({ error, event, step }) => {
       const originalData = event.data.event.data;
+
+      // Persist failed run record (best-effort)
+      await step.run("persist-failed-run", async () => {
+        await fetch(`${gatewayUrl}/gateway/${originalData.installationId}/backfill-runs`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": env.GATEWAY_API_KEY,
+            "X-Request-Source": "backfill",
+          },
+          body: JSON.stringify({
+            entityType: originalData.entityType,
+            since: originalData.since,
+            depth: originalData.depth,
+            status: "failed",
+            error: error.message,
+          }),
+          signal: AbortSignal.timeout(10_000),
+        }).catch(() => {}); // Best-effort
+      });
+
       await step.sendEvent("notify-failure", {
         name: "apps-backfill/entity.completed",
         data: {
@@ -262,6 +283,32 @@ export const backfillEntityWorker = inngest.createFunction(
       cursor = fetchResult.nextCursor;
       pageNum++;
     }
+
+    // ── Persist backfill run record ──
+    await step.run("persist-backfill-run", async () => {
+      await fetch(`${gatewayUrl}/gateway/${installationId}/backfill-runs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": env.GATEWAY_API_KEY,
+          "X-Request-Source": "backfill",
+          ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
+        },
+        body: JSON.stringify({
+          entityType,
+          since,
+          depth: event.data.depth,
+          status: "completed",
+          pagesProcessed: pageNum,
+          eventsProduced,
+          eventsDispatched,
+        }),
+        signal: AbortSignal.timeout(10_000),
+      }).catch((err: unknown) => {
+        // Best-effort — don't fail the worker if persistence fails
+        console.error("[backfill] persist-backfill-run failed", { installationId, entityType, err });
+      });
+    });
 
     // ── Emit completion event (always — orchestrator's waitForEvent depends on this) ──
     await step.sendEvent("notify-completion", {
