@@ -48,14 +48,14 @@ jobs:
             fi
             
             # Check if it mentions lightfast or @lightfastai/mcp
-            if ! grep -qE "(\"lightfast\"|\"@lightfastai/mcp\")" "$file"; then
-              echo "::error::Changeset $file must include lightfast or @lightfastai/mcp package"
+            if ! grep -qE "(\"lightfast\"|\"@lightfastai/mcp\"|\"@lightfastai/cli\")" "$file"; then
+              echo "::error::Changeset $file must include lightfast, @lightfastai/mcp, or @lightfastai/cli package"
               exit 1
             fi
-            
+
             # Check for valid version types
-            if ! grep -E "^\"(lightfast|@lightfastai/mcp)\": (patch|minor|major)$" "$file"; then
-              echo "::error::Changeset $file must use patch, minor, or major for lightfast or @lightfastai/mcp"
+            if ! grep -E "^\"(lightfast|@lightfastai/mcp|@lightfastai/cli)\": (patch|minor|major)$" "$file"; then
+              echo "::error::Changeset $file must use patch, minor, or major for lightfast, @lightfastai/mcp, or @lightfastai/cli"
               exit 1
             fi
             

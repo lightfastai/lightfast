@@ -1,22 +1,12 @@
-#!/usr/bin/env node
-
-/**
- * CLI binary entrypoint
- * 
- * Sets up commander and registers all commands.
- */
-
 import { Command } from "commander";
+
+declare const __CLI_VERSION__: string;
 
 const program = new Command();
 
 program
   .name("lightfast")
-  .description("CLI for Lightfast configuration and testing")
-  .version("0.1.0");
-
-// Commands will be registered here in next phase
-// program.addCommand(validateCommand);
-// program.addCommand(testSearchCommand);
+  .description("CLI for the Lightfast platform")
+  .version(__CLI_VERSION__);
 
 program.parse();

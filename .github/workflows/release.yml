@@ -49,7 +49,7 @@ jobs:
       - name: Build packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo build --filter lightfast --filter @lightfastai/mcp
+        run: pnpm turbo build --filter lightfast --filter @lightfastai/mcp --filter @lightfastai/cli
 
       - name: Run tests
         env:
@@ -83,8 +83,11 @@ jobs:
           LIGHTFAST_VERSION=$(npm view lightfast version)
           MCP_VERSION=$(npm view @lightfastai/mcp version)
 
+          CLI_VERSION=$(npm view @lightfastai/cli version 2>/dev/null || echo "not-published")
+
           echo "lightfast: $LIGHTFAST_VERSION"
           echo "@lightfastai/mcp: $MCP_VERSION"
+          echo "@lightfastai/cli: $CLI_VERSION"
 
           if [ "$LIGHTFAST_VERSION" != "$MCP_VERSION" ]; then
             echo "❌ ERROR: Version drift detected!"

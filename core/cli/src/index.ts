@@ -1,9 +1,7 @@
 /**
- * CLI entrypoint
+ * @lightfastai/cli
  *
- * Exports command implementations for programmatic use.
+ * Programmatic API for the Lightfast CLI.
  */
 
-// Future: export { validate } from "./commands/validate";
-// Future: export { testSearch } from "./commands/test-search";
-// Future: export { sync } from "./commands/sync";
+export {};

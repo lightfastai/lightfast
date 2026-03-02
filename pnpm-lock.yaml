@@ -1896,31 +1896,13 @@ importers:
 
   core/cli:
     dependencies:
-      '@repo/console-chunking':
-        specifier: workspace:*
-        version: link:../../packages/console-chunking
-      '@repo/console-config':
-        specifier: workspace:*
-        version: link:../../packages/console-config
-      '@repo/console-embed':
-        specifier: workspace:*
-        version: link:../../packages/console-embed
-      chalk:
-        specifier: ^5.4.1
-        version: 5.6.2
       commander:
         specifier: ^13.1.0
         version: 13.1.0
-      ora:
-        specifier: ^8.1.1
-        version: 8.2.0
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../../internal/eslint
-      '@repo/prettier-config':
-        specifier: workspace:*
-        version: link:../../internal/prettier
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
@@ -1930,9 +1912,6 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 9.38.0(jiti@2.6.1)
-      prettier:
-        specifier: 'catalog:'
-        version: 3.6.2
       tsup:
         specifier: ^8.5.0
         version: 8.5.0(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.1)

@@ -39,7 +39,7 @@ jobs:
       - name: Lint and type check packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo lint typecheck --filter=lightfast --filter=@lightfastai/mcp --continue
+        run: pnpm turbo lint typecheck --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --continue
 
   # Test (simple test run on Node 22)
   test:
@@ -99,7 +99,7 @@ jobs:
       - name: Build packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp
+        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli
 
       - name: Check build outputs
         run: |
@@ -108,6 +108,9 @@ jobs:
           echo ""
           echo "@lightfastai/mcp build outputs:"
           ls -la core/mcp/dist/
+          echo ""
+          echo "@lightfastai/cli build outputs:"
+          ls -la core/cli/dist/
           echo "All builds completed successfully"
 
   # Summary job (required status check)
