@@ -93,7 +93,7 @@ export const lifecycle = createMiddleware<{
     addBreadcrumb({
       category: "http",
       message: `${c.req.method} ${c.req.path} ${entry.status as number}`,
-      level: error ? "error" : "info",
+      level: level === "warn" ? "warning" : level,
       data: {
         requestId: c.get("requestId"),
         duration_ms: duration,
