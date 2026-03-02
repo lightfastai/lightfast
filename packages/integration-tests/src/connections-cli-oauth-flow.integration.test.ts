@@ -1,13 +1,13 @@
 /**
  * Suite 7: Connections CLI OAuth Flow Routes
  *
- * Tests the connections service CLI OAuth route behaviors:
+ * Tests the gateway service CLI OAuth route behaviors:
  *   - GET /connections/:provider/authorize (apiKeyAuth, tenantMiddleware, validation)
  *   - GET /connections/oauth/status (polling endpoint, no auth required)
  *   - GET /connections/:provider/callback with redirect_to=inline
  *   - Full CLI poll round-trip: authorize → callback → poll
  *
- * Uses connectionsApp.request() directly — no tRPC, no service mesh router.
+ * Uses gatewayApp.request() directly — no tRPC, no service mesh router.
  * Infrastructure: PGlite (real DB), in-memory Redis Map.
  */
 import {
@@ -67,7 +67,7 @@ vi.mock("@db/console/client", () => ({
 
 vi.mock("@vendor/upstash", () => ({ redis: redisMock }));
 
-vi.mock("@connections/providers", () => ({
+vi.mock("@gateway/providers", () => ({
   getProvider: (...args: unknown[]): unknown => mockGetProvider(...args),
 }));
 
@@ -93,8 +93,8 @@ vi.mock("@vendor/related-projects", () => ({
 }));
 
 // ── Import app after mocks are registered ──
-import connectionsApp from "@connections/app";
-import { oauthStateKey, oauthResultKey } from "@connections/cache";
+import gatewayApp from "@gateway/app";
+import { oauthStateKey, oauthResultKey } from "@gateway/cache";
 
 // ── Request helpers ──
 
@@ -116,7 +116,7 @@ function req(
   path: string,
   init: { method?: string; headers?: Record<string, string> } = {},
 ) {
-  return connectionsApp.request(`/services/connections${path}`, {
+  return gatewayApp.request(`/services/gateway${path}`, {
     method: init.method ?? "GET",
     headers: init.headers ? new Headers(init.headers) : undefined,
   });

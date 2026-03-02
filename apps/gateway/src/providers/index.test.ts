@@ -40,7 +40,7 @@ vi.mock("@db/console/schema", () => ({
 }));
 
 vi.mock("../lib/urls", () => ({
-  connectionsBaseUrl: "https://connections.test/services",
+  gatewayBaseUrl: "https://gateway.test/services",
   relayBaseUrl: "https://relay.test/api",
 }));
 

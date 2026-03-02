@@ -4,7 +4,7 @@ import { NonRetriableError } from "@vendor/inngest";
 
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { relayUrl, connectionsUrl } from "../lib/related-projects.js";
+import { relayUrl, gatewayUrl } from "../lib/related-projects.js";
 
 export const backfillEntityWorker = inngest.createFunction(
   {
@@ -71,7 +71,7 @@ export const backfillEntityWorker = inngest.createFunction(
       "get-token",
       async () => {
         const response = await fetch(
-          `${connectionsUrl}/connections/${installationId}/token`,
+          `${gatewayUrl}/gateway/${installationId}/token`,
           {
             headers: {
               "X-API-Key": env.GATEWAY_API_KEY,
@@ -151,7 +151,7 @@ export const backfillEntityWorker = inngest.createFunction(
                 : undefined;
             if (status === 401) {
               const tokenResponse = await fetch(
-                `${connectionsUrl}/connections/${installationId}/token`,
+                `${gatewayUrl}/gateway/${installationId}/token`,
                 {
                   headers: {
                     "X-API-Key": env.GATEWAY_API_KEY,

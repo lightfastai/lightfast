@@ -19,11 +19,11 @@ const isDevelopment =
 	process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
 	process.env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
 
-const connectionsUrl = withRelatedProject({
-	projectName: "lightfast-connections",
+const gatewayUrl = withRelatedProject({
+	projectName: "lightfast-gateway",
 	defaultHost: isDevelopment
 		? "http://localhost:4110"
-		: "https://connections.lightfast.ai",
+		: "https://gateway.lightfast.ai",
 });
 
 /**
@@ -51,9 +51,9 @@ function getGitHubApp() {
 
 export const connectionsRouter = {
 	/**
-	 * Get OAuth authorize URL from the connections service.
+	 * Get OAuth authorize URL from the gateway service.
 	 *
-	 * Proxies the connections service authorize endpoint since browsers
+	 * Proxies the gateway service authorize endpoint since browsers
 	 * can't set custom headers (X-Org-Id) during popup navigation.
 	 */
 	getAuthorizeUrl: orgScopedProcedure
@@ -64,7 +64,7 @@ export const connectionsRouter = {
 		)
 		.query(async ({ ctx, input }) => {
 			const res = await fetch(
-				`${connectionsUrl}/services/connections/${input.provider}/authorize`,
+				`${gatewayUrl}/services/gateway/${input.provider}/authorize`,
 				{
 					headers: {
 						"X-Org-Id": ctx.auth.orgId,
@@ -98,7 +98,7 @@ export const connectionsRouter = {
 		)
 		.query(async ({ ctx, input }) => {
 			const res = await fetch(
-				`${connectionsUrl}/services/connections/${input.provider}/authorize?redirect_to=inline`,
+				`${gatewayUrl}/services/gateway/${input.provider}/authorize?redirect_to=inline`,
 				{
 					headers: {
 						"X-Org-Id": ctx.auth.orgId,

@@ -3,9 +3,9 @@ import { withRelatedProject } from "@vendor/related-projects";
 import { env } from "../env.js";
 
 /**
- * Connections service base URL (self).
+ * Gateway service base URL (self).
  */
-export const connectionsBaseUrl = (() => {
+export const gatewayBaseUrl = (() => {
   if (env.VERCEL_ENV === "preview" && env.VERCEL_URL) {
     return `https://${env.VERCEL_URL}/services`;
   }
@@ -22,7 +22,7 @@ const isDevelopment =
 
 /**
  * Relay base URL — used for webhook registration callbacks.
- * Linear webhook callbacks must point at the relay, not the connections service.
+ * Linear webhook callbacks must point at the relay, not the gateway service.
  */
 export const relayBaseUrl = `${withRelatedProject({
   projectName: "lightfast-relay",

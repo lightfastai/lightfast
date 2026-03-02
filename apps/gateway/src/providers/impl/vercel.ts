@@ -6,7 +6,7 @@ import { and, eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { writeTokenRecord } from "../../lib/token-store.js";
-import { connectionsBaseUrl } from "../../lib/urls.js";
+import { gatewayBaseUrl } from "../../lib/urls.js";
 import { vercelOAuthResponseSchema } from "../schemas.js";
 import type {
   ConnectionProvider,
@@ -102,7 +102,7 @@ export class VercelProvider implements ConnectionProvider {
 
     // ── Exchange code for tokens ──
 
-    const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
+    const redirectUri = `${gatewayBaseUrl}/gateway/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
 
     const parsed = vercelOAuthResponseSchema.parse(oauthTokens.raw);

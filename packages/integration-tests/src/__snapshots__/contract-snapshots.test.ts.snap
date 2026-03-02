@@ -43,3 +43,17 @@ exports[`0.1 — Boundary contract shapes > Shape 3: Backfill → Gateway POST /
   "receivedAt": "number",
 }
 `;
+
+exports[`0.1 — Boundary contract shapes > Shape 3: Backfill → Relay POST /webhooks/:provider body (entity worker dispatch) 1`] = `
+{
+  "connectionId": "string",
+  "deliveryId": "string",
+  "eventType": "string",
+  "orgId": "string",
+  "payload": {
+    "action": "string",
+    "number": "number",
+  },
+  "receivedAt": "number",
+}
+`;

@@ -30,7 +30,7 @@ app.onError((err, c) => {
     return err.getResponse();
   }
 
-  console.error("[connections] unhandled error", {
+  console.error("[gateway] unhandled error", {
     method: c.req.method,
     path: c.req.path,
     error: err.message,
@@ -41,10 +41,10 @@ app.onError((err, c) => {
 });
 
 // Health check
-app.get("/", (c) => c.json({ service: "connections", status: "ok" }));
+app.get("/", (c) => c.json({ service: "gateway", status: "ok" }));
 
 // API routes
-app.route("/services/connections", connections);
-app.route("/services/connections/workflows", workflows);
+app.route("/services/gateway", connections);
+app.route("/services/gateway/workflows", workflows);
 
 export default app;

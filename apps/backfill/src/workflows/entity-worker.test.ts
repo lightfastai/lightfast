@@ -34,7 +34,7 @@ vi.mock("../env", () => ({
 }));
 
 vi.mock("../lib/related-projects", () => ({
-  connectionsUrl: "https://connections.test/services",
+  gatewayUrl: "https://gateway.test/services",
   relayUrl: "https://relay.test/api",
 }));
 
@@ -110,7 +110,7 @@ describe("get-token step", () => {
     await capturedHandler({ event: makeEvent(), step });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://connections.test/services/connections/inst-1/token",
+      "https://gateway.test/services/gateway/inst-1/token",
       expect.objectContaining({
         headers: expect.objectContaining({ "X-API-Key": "test-key" }),
       }),

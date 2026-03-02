@@ -17,7 +17,7 @@ export const sentry = createMiddleware<{
     await next();
   } catch (err) {
     Sentry.withScope((scope) => {
-      scope.setTag("service", "connections");
+      scope.setTag("service", "gateway");
       scope.setTag("http.method", c.req.method);
       scope.setTag("http.path", c.req.path);
       const requestId = c.get("requestId");
@@ -29,7 +29,7 @@ export const sentry = createMiddleware<{
 
   if (c.res.status >= 500) {
     Sentry.withScope((scope) => {
-      scope.setTag("service", "connections");
+      scope.setTag("service", "gateway");
       scope.setTag("http.method", c.req.method);
       scope.setTag("http.path", c.req.path);
       scope.setTag("http.status", String(c.res.status));

@@ -7,7 +7,7 @@ import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
 import { html, raw } from "hono/html";
 import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
-import { connectionsBaseUrl, consoleUrl } from "../lib/urls.js";
+import { gatewayBaseUrl, consoleUrl } from "../lib/urls.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import type { TenantVariables } from "../middleware/tenant.js";
 import { tenantMiddleware } from "../middleware/tenant.js";
@@ -299,7 +299,7 @@ connections.get("/:provider/callback", async (c) => {
 // INTERNAL-ONLY: These endpoints are called exclusively by trusted backend
 // services (backfill orchestrator, entity worker) that hold GATEWAY_API_KEY.
 // They are NOT reachable from external clients — the console's Next.js rewrite
-// for /services/connections/* is blocked by both Clerk middleware and the
+// for /services/gateway/* is blocked by both Clerk middleware and the
 // absence of X-API-Key on proxied requests.
 //
 // No per-org scoping is applied here; callers are responsible for passing
@@ -429,7 +429,7 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
 
   // Trigger durable teardown workflow
   await workflowClient.trigger({
-    url: `${connectionsBaseUrl}/connections/workflows/connection-teardown`,
+    url: `${gatewayBaseUrl}/gateway/workflows/connection-teardown`,
     body: {
       installationId: id,
       provider: providerName,

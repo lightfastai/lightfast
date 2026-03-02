@@ -6,7 +6,7 @@
  * shapes the Backfill service expects.
  *
  * Infrastructure: PGlite (real DB for connections app), service mesh fetch
- * router (localhost:4110 → connectionsApp), Inngest function capture.
+ * router (localhost:4110 → gatewayApp), Inngest function capture.
  */
 import {
   describe,
@@ -135,7 +135,7 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 }));
 
 // ── Import apps and orchestrator after mocks ──
-import connectionsApp from "@connections/app";
+import gatewayApp from "@gateway/app";
 import relayApp from "@relay/app";
 
 // Force backfill workflows to load and register their createFunction handlers
@@ -161,7 +161,7 @@ function connReq(
   if (!headers.has("content-type") && init.body) {
     headers.set("content-type", "application/json");
   }
-  return connectionsApp.request(path, {
+  return gatewayApp.request(path, {
     method: init.method ?? "GET",
     headers,
     body: init.body ? JSON.stringify(init.body) : undefined,
@@ -252,7 +252,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
     });
     await db.insert(gwResources).values(resource);
 
-    const res = await connReq(`/services/connections/${inst.id}`);
+    const res = await connReq(`/services/gateway/${inst.id}`);
 
     expect(res.status).toBe(200);
 
@@ -277,7 +277,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
   });
 
   it("returns 404 for unknown installation ID", async () => {
-    const res = await connReq("/services/connections/nonexistent-id-xyz");
+    const res = await connReq("/services/gateway/nonexistent-id-xyz");
     expect(res.status).toBe(404);
   });
 
@@ -289,7 +289,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
     const removedResource = fixtures.resource({ installationId: inst.id, status: "removed" });
     await db.insert(gwResources).values([activeResource, removedResource]);
 
-    const res = await connReq(`/services/connections/${inst.id}`);
+    const res = await connReq(`/services/gateway/${inst.id}`);
     expect(res.status).toBe(200);
 
     const json = await res.json() as { resources: { id: string }[] };
@@ -335,7 +335,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
       }),
     });
 
-    const restore = installServiceRouter({ connectionsApp });
+    const restore = installServiceRouter({ gatewayApp });
     try {
       const result = await orchHandler({
         event: {
@@ -370,7 +370,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
 
     const step = makeStep();
 
-    const restore = installServiceRouter({ connectionsApp });
+    const restore = installServiceRouter({ gatewayApp });
     try {
       await expect(
         orchHandler({
@@ -419,7 +419,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
 
     const step = makeStep();
 
-    const restore = installServiceRouter({ connectionsApp });
+    const restore = installServiceRouter({ gatewayApp });
     try {
       const result = await orchHandler({
         event: {
@@ -463,7 +463,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
     });
     await db.insert(gwTokens).values(token);
 
-    const res = await connReq(`/services/connections/${inst.id}/token`);
+    const res = await connReq(`/services/gateway/${inst.id}/token`);
 
     expect(res.status).toBe(200);
 
@@ -484,7 +484,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
     });
     await db.insert(gwInstallations).values(inst);
 
-    const res = await connReq(`/services/connections/${inst.id}/token`);
+    const res = await connReq(`/services/gateway/${inst.id}/token`);
 
     expect(res.status).toBe(400);
     const json = await res.json() as { error: string };
@@ -499,7 +499,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
     await db.insert(gwInstallations).values(inst);
     // No token inserted
 
-    const res = await connReq(`/services/connections/${inst.id}/token`);
+    const res = await connReq(`/services/gateway/${inst.id}/token`);
 
     expect(res.status).toBe(404);
   });
@@ -548,7 +548,7 @@ describe("Suite 3.4 — Entity worker token refresh on 401 mid-pagination", () =
 
     // Service router: connections (port 4110) → token endpoint
     //                 relay (port 4108) → accepts dispatched event
-    const restore = installServiceRouter({ connectionsApp, relayApp });
+    const restore = installServiceRouter({ gatewayApp, relayApp });
     try {
       const result = await entityHandler({
         event: {

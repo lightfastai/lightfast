@@ -11,7 +11,7 @@
  *   8.3 — getAuthorizeUrl procedure (pending auth, happy path, service error)
  *
  * Infrastructure: PGlite (real DB for API key/workspace lookups), in-memory Redis,
- *   service mesh router (connectionsApp intercepts tRPC → connections fetches).
+ *   service mesh router (gatewayApp intercepts tRPC → connections fetches).
  */
 import {
   describe,
@@ -95,7 +95,7 @@ vi.mock("@vendor/qstash", () => ({
   },
 }));
 
-// @vendor/related-projects is used by the connections service (urls.ts)
+// @vendor/related-projects is used by the gateway service (urls.ts)
 vi.mock("@vendor/related-projects", () => ({
   withRelatedProject: ({ defaultHost }: { defaultHost: string }) => defaultHost,
 }));
@@ -109,7 +109,7 @@ vi.mock("@vercel/related-projects", () => ({
     projectName: string;
     defaultHost: string;
   }) => {
-    // Connections service URL needs /services prefix for service mesh to route correctly
+    // Gateway service URL needs /services prefix for service mesh to route correctly
     if (defaultHost.includes("4110")) return `${defaultHost}/services`;
     return defaultHost;
   },
@@ -137,8 +137,8 @@ vi.mock("@vendor/clerk/server", () => ({
   clerkClient: () => ({}),
 }));
 
-// Mock @connections/providers for the connections service routes
-vi.mock("@connections/providers", () => ({
+// Mock @gateway/providers for the gateway service routes
+vi.mock("@gateway/providers", () => ({
   getProvider: (...args: unknown[]): unknown => mockGetProvider(...args),
 }));
 
@@ -146,7 +146,7 @@ vi.mock("@connections/providers", () => ({
 import { createTRPCRouter, createCallerFactory } from "@console/trpc";
 import type { createUserTRPCContext } from "@console/trpc";
 import { connectionsRouter } from "@console/router/org/connections";
-import connectionsApp from "@connections/app";
+import gatewayApp from "@gateway/app";
 import { makeApiKeyFixture, installServiceRouter, TEST_WORKSPACE_SETTINGS } from "./harness.js";
 import { orgWorkspaces, gwInstallations } from "@db/console/schema";
 import type { GitHubAccountInfo } from "@repo/gateway-types";
@@ -390,7 +390,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       const { rawKey } = await makeApiKeyFixture(db, { userId: "user_valid" });
 
       // Install service router so the connections fetch succeeds
-      const restore = installServiceRouter({ connectionsApp });
+      const restore = installServiceRouter({ gatewayApp });
       try {
         const caller = apiKeyCaller(rawKey, wsId);
         const result = await caller.cliAuthorize({ provider: "github" });
@@ -408,7 +408,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       const { rawKey } = await makeApiKeyFixture(db, {
         userId: "user_no_ws",
       });
-      const restore = installServiceRouter({ connectionsApp });
+      const restore = installServiceRouter({ gatewayApp });
       try {
         const caller = apiKeyCaller(rawKey, "ignored-workspace-id");
         const result = await caller.cliAuthorize({ provider: "github" });
@@ -434,7 +434,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         settings: TEST_WORKSPACE_SETTINGS,
       });
       const { rawKey } = await makeApiKeyFixture(db, { userId: "user_ws2" });
-      const restore = installServiceRouter({ connectionsApp });
+      const restore = installServiceRouter({ gatewayApp });
       try {
         const caller = apiKeyCaller(rawKey, wsId);
         const result = await caller.cliAuthorize({ provider: "github" });
@@ -445,7 +445,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       }
     });
 
-    it("Connections service returns non-200 → throws BAD_REQUEST", async () => {
+    it("Gateway service returns non-200 → throws BAD_REQUEST", async () => {
       const wsId = uid();
       const clerkOrgId = `org_${uid()}`;
       await db.insert(orgWorkspaces).values({
@@ -464,7 +464,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         throw new Error("unknown_provider");
       });
 
-      const restore = installServiceRouter({ connectionsApp });
+      const restore = installServiceRouter({ gatewayApp });
       try {
         const caller = apiKeyCaller(rawKey, wsId);
         await expect(
@@ -475,7 +475,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       }
     });
 
-    it("Happy path: returns { url, state }, connections service receives correct headers", async () => {
+    it("Happy path: returns { url, state }, gateway service receives correct headers", async () => {
       const wsId = uid();
       const clerkOrgId = `org_${uid()}`;
       await db.insert(orgWorkspaces).values({
@@ -490,7 +490,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         clerkOrgId,
       });
 
-      const restore = installServiceRouter({ connectionsApp });
+      const restore = installServiceRouter({ gatewayApp });
       try {
         const caller = apiKeyCaller(rawKey, wsId);
         const result = await caller.cliAuthorize({ provider: "github" });
@@ -501,7 +501,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         expect(typeof r.state).toBe("string");
 
         // Verify X-Org-Id was set to clerkOrgId (state in Redis has orgId)
-        const { oauthStateKey } = await import("@connections/cache");
+        const { oauthStateKey } = await import("@gateway/cache");
         const stateData = redisStore.get(
           oauthStateKey(r.state),
         ) as Record<string, string>;
@@ -525,7 +525,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
 
     it("Happy path: returns { url, state } with clerk-active context", async () => {
       const orgId = `org_${uid()}`;
-      const restore = installServiceRouter({ connectionsApp });
+      const restore = installServiceRouter({ gatewayApp });
       try {
         const caller = clerkActiveCaller("user_clerk", orgId);
         const result = await caller.getAuthorizeUrl({
@@ -537,7 +537,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         expect(r.url).toContain("github.com");
 
         // Verify X-Org-Id was passed correctly
-        const { oauthStateKey } = await import("@connections/cache");
+        const { oauthStateKey } = await import("@gateway/cache");
         const stateData = redisStore.get(
           oauthStateKey(r.state),
         ) as Record<string, string>;
@@ -547,14 +547,14 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       }
     });
 
-    it("Connections service returns non-200 → throws BAD_REQUEST", async () => {
+    it("Gateway service returns non-200 → throws BAD_REQUEST", async () => {
       const orgId = `org_${uid()}`;
       // Make the provider throw so connections returns 400
       mockGetProvider.mockImplementationOnce(() => {
         throw new Error("unknown_provider");
       });
 
-      const restore = installServiceRouter({ connectionsApp });
+      const restore = installServiceRouter({ gatewayApp });
       try {
         const caller = clerkActiveCaller("user_clerk_err", orgId);
         await expect(

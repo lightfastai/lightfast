@@ -3,7 +3,7 @@ import { NonRetriableError } from "@vendor/inngest";
 
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { connectionsUrl } from "../lib/related-projects.js";
+import { gatewayUrl } from "../lib/related-projects.js";
 
 export const backfillOrchestrator = inngest.createFunction(
   {
@@ -37,10 +37,10 @@ export const backfillOrchestrator = inngest.createFunction(
       );
     }
 
-    // ── Step 1: Fetch connection details from Connections service ──
+    // ── Step 1: Fetch connection details from Gateway service ──
     const connection = await step.run("get-connection", async () => {
       const response = await fetch(
-        `${connectionsUrl}/connections/${installationId}`,
+        `${gatewayUrl}/gateway/${installationId}`,
         {
           headers: {
             "X-API-Key": env.GATEWAY_API_KEY,

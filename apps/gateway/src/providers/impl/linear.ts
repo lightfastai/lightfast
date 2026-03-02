@@ -6,7 +6,7 @@ import { eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store.js";
-import { connectionsBaseUrl } from "../../lib/urls.js";
+import { gatewayBaseUrl } from "../../lib/urls.js";
 import { linearOAuthResponseSchema } from "../schemas.js";
 import type {
   ConnectionProvider,
@@ -41,7 +41,7 @@ export class LinearProvider implements ConnectionProvider {
     url.searchParams.set("client_id", this.clientId);
     url.searchParams.set(
       "redirect_uri",
-      `${connectionsBaseUrl}/connections/linear/callback`,
+      `${gatewayBaseUrl}/gateway/linear/callback`,
     );
     url.searchParams.set("response_type", "code");
     url.searchParams.set("scope", options?.scopes?.join(",") ?? "read,write");
@@ -183,7 +183,7 @@ export class LinearProvider implements ConnectionProvider {
     const code = c.req.query("code");
     if (!code) {throw new Error("missing code");}
 
-    const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
+    const redirectUri = `${gatewayBaseUrl}/gateway/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
 
     const linearContext = await this.fetchLinearContext(oauthTokens.accessToken);

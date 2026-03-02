@@ -91,7 +91,7 @@ vi.mock("@vercel/related-projects", () => ({
 // ── Import apps after mocks are registered ──
 
 // Import full Hono apps via vitest path aliases (see vitest.config.ts)
-import connectionsApp from "@connections/app";
+import gatewayApp from "@gateway/app";
 import { webhookSeenKey, resourceKey as relayResourceKey } from "@relay/cache";
 
 // Force relay webhook-delivery module to load and capture its serve() handler
@@ -109,7 +109,7 @@ function req(
   if (!headers.has("content-type") && init.body) {
     headers.set("content-type", "application/json");
   }
-  return connectionsApp.request(path, {
+  return gatewayApp.request(path, {
     method: init.method ?? "GET",
     headers,
     body: init.body ? JSON.stringify(init.body) : undefined,
@@ -161,11 +161,11 @@ afterAll(async () => {
 // ── Tests ──
 
 describe("Suite 1.1 — Resource link populates relay routing cache", () => {
-  it("POST /services/connections/:id/resources writes gw:resource:{provider}:{id} to Redis", async () => {
+  it("POST /services/gateway/:id/resources writes gw:resource:{provider}:{id} to Redis", async () => {
     const inst = fixtures.installation({ provider: "github", orgId: "org-1", status: "active" });
     await db.insert(gwInstallations).values(inst);
 
-    const res = await req(`/services/connections/${inst.id}/resources`, {
+    const res = await req(`/services/gateway/${inst.id}/resources`, {
       method: "POST",
       body: { providerResourceId: "owner/my-repo", resourceName: "my-repo" },
       headers: API_HEADERS,
@@ -206,7 +206,7 @@ describe("Suite 1.1 — Resource link populates relay routing cache", () => {
 });
 
 describe("Suite 1.2 — Resource unlink removes relay routing cache", () => {
-  it("DELETE /services/connections/:id/resources/:rid removes the Redis key", async () => {
+  it("DELETE /services/gateway/:id/resources/:rid removes the Redis key", async () => {
     const inst = fixtures.installation({ provider: "github", status: "active" });
     await db.insert(gwInstallations).values(inst);
 
@@ -224,7 +224,7 @@ describe("Suite 1.2 — Resource unlink removes relay routing cache", () => {
     });
 
     const res = await req(
-      `/services/connections/${inst.id}/resources/${resource.id}`,
+      `/services/gateway/${inst.id}/resources/${resource.id}`,
       { method: "DELETE", headers: API_HEADERS },
     );
 
@@ -265,7 +265,7 @@ describe("Suite 1.3 — Teardown clears all resource cache keys", () => {
 describe("Suite 1.4 — Key format parity between Connections and Relay", () => {
   it("connections.resourceKey() matches relay.resourceKey() for the same inputs", async () => {
     const { resourceKey: connectionsKey } = await import(
-      "@connections/cache"
+      "@gateway/cache"
     );
 
     const testCases: [string, string][] = [

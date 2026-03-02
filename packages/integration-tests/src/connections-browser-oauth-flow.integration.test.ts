@@ -1,7 +1,7 @@
 /**
  * Suite 10: Browser OAuth Flow Routes
  *
- * Tests the connections service browser-initiated OAuth flow:
+ * Tests the gateway service browser-initiated OAuth flow:
  *   - GET /connections/:provider/authorize (URL + state for browser redirect)
  *   - GET /connections/:provider/callback (browser redirect, not inline)
  *   - GET /connections/oauth/status (polling for completion)
@@ -11,7 +11,7 @@
  * (or omits redirect_to entirely), so callbacks produce 302 redirects to the console
  * connected page, not inline HTML responses.
  *
- * Uses connectionsApp.request() directly — no tRPC, no service mesh router.
+ * Uses gatewayApp.request() directly — no tRPC, no service mesh router.
  * Infrastructure: PGlite (real DB), in-memory Redis Map.
  */
 import {
@@ -75,7 +75,7 @@ vi.mock("@db/console/client", () => ({
 
 vi.mock("@vendor/upstash", () => ({ redis: redisMock }));
 
-vi.mock("@connections/providers", () => ({
+vi.mock("@gateway/providers", () => ({
   getProvider: (...args: unknown[]): unknown => mockGetProvider(...args),
 }));
 
@@ -101,8 +101,8 @@ vi.mock("@vendor/related-projects", () => ({
 }));
 
 // ── Import app after mocks are registered ──
-import connectionsApp from "@connections/app";
-import { oauthStateKey, oauthResultKey } from "@connections/cache";
+import gatewayApp from "@gateway/app";
+import { oauthStateKey, oauthResultKey } from "@gateway/cache";
 import { gwInstallations } from "@db/console/schema";
 
 // ── Request helpers ──
@@ -125,7 +125,7 @@ function req(
   path: string,
   init: { method?: string; headers?: Record<string, string> } = {},
 ) {
-  return connectionsApp.request(`/services/connections${path}`, {
+  return gatewayApp.request(`/services/gateway${path}`, {
     method: init.method ?? "GET",
     headers: init.headers ? new Headers(init.headers) : undefined,
   });

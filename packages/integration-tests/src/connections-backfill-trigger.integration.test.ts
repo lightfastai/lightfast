@@ -107,10 +107,10 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 
 // ── Import apps and utilities after mocks ──
 import backfillApp from "@backfill/app";
-import connectionsApp from "@connections/app";
+import gatewayApp from "@gateway/app";
 import {
   cancelBackfillService,
-} from "@connections/urls";
+} from "@gateway/urls";
 
 // ── Request helper (backfill) ──
 const API_KEY = "0".repeat(64);
@@ -292,8 +292,8 @@ describe("Suite 2.4 — GitHub OAuth callback does not trigger backfill (moved t
     });
 
     // Call GitHub OAuth callback — should upsert (not insert) since externalId already exists
-    const res = await connectionsApp.request(
-      "/services/connections/github/callback?installation_id=gh-reactivate-ext-1&state=reactivate-state-1",
+    const res = await gatewayApp.request(
+      "/services/gateway/github/callback?installation_id=gh-reactivate-ext-1&state=reactivate-state-1",
     );
 
     // Callback redirects on success
@@ -313,8 +313,8 @@ describe("Suite 2.4 — GitHub OAuth callback does not trigger backfill (moved t
     });
 
     // Call GitHub OAuth callback for a NEW installation (no pre-existing DB row)
-    const res = await connectionsApp.request(
-      "/services/connections/github/callback?installation_id=gh-brand-new-ext-1&state=new-install-state",
+    const res = await gatewayApp.request(
+      "/services/gateway/github/callback?installation_id=gh-brand-new-ext-1&state=new-install-state",
     );
 
     // Callback redirects on success

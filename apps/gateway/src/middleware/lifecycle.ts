@@ -64,7 +64,7 @@ export const lifecycle = createMiddleware<{
     const source = resolveSource(c);
 
     const entry: Record<string, unknown> = {
-      service: "connections",
+      service: "gateway",
       requestId: c.get("requestId"),
       correlationId: c.get("correlationId"),
       method: c.req.method,

@@ -138,7 +138,7 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 }));
 
 // ── Import all apps after mocks ──
-import connectionsApp from "@connections/app";
+import gatewayApp from "@gateway/app";
 import backfillApp from "@backfill/app";
 import relayApp from "@relay/app";
 
@@ -147,7 +147,7 @@ await import("@backfill/orchestrator");
 
 // ── Utilities ──
 import { installServiceRouter, makeStep } from "./harness.js";
-import { cancelBackfillService } from "@connections/urls";
+import { cancelBackfillService } from "@gateway/urls";
 
 // ── Lifecycle ──
 
@@ -252,7 +252,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
     );
   });
 
-  it("orchestrator fetches connection from Connections service via service router", async () => {
+  it("orchestrator fetches connection from Gateway service via service router", async () => {
     // Pre-seed DB with installation + resources
     const inst = fixtures.installation({
       provider: "github",
@@ -286,8 +286,8 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
       }),
     });
 
-    // Install service router so orchestrator fetch() → connectionsApp
-    const restore = installServiceRouter({ connectionsApp });
+    // Install service router so orchestrator fetch() → gatewayApp
+    const restore = installServiceRouter({ gatewayApp });
     try {
       const result = await orchHandler({
         event: {
@@ -398,8 +398,8 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     });
     await db.insert(gwInstallations).values(inst);
 
-    const res = await connectionsApp.request(
-      `/services/connections/github/${inst.id}`,
+    const res = await gatewayApp.request(
+      `/services/gateway/github/${inst.id}`,
       {
         method: "DELETE",
         headers: new Headers({ "X-API-Key": "0".repeat(64) }),
@@ -468,8 +468,8 @@ describe("Suite 5.3 — Full teardown path", () => {
     expect(redisStore.has(cacheKey)).toBe(true);
 
     // ── 2. DELETE /connections/:provider/:id → teardown_initiated ──
-    const deleteRes = await connectionsApp.request(
-      `/services/connections/github/${inst.id}`,
+    const deleteRes = await gatewayApp.request(
+      `/services/gateway/github/${inst.id}`,
       {
         method: "DELETE",
         headers: new Headers({ "X-API-Key": "0".repeat(64) }),

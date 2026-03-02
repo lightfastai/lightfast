@@ -13,7 +13,7 @@ vi.mock("../../env", () => ({
 }));
 
 vi.mock("../../lib/urls", () => ({
-  connectionsBaseUrl: "https://connections.test/services",
+  gatewayBaseUrl: "https://gateway.test/services",
 }));
 
 // Hoisted so vi.mock factories can reference them

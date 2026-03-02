@@ -86,7 +86,7 @@ trigger.post("/", async (c) => {
 /**
  * POST /trigger/cancel
  *
- * Called by Connections service when a connection is deleted/revoked.
+ * Called by Gateway service when a connection is deleted/revoked.
  * Cancels any running backfill for this installation.
  */
 trigger.post("/cancel", async (c) => {

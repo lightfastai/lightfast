@@ -133,7 +133,7 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 }));
 
 // ── Import apps and modules after mocks ──
-import connectionsApp from "@connections/app";
+import gatewayApp from "@gateway/app";
 import { encrypt } from "@repo/lib";
 
 // ── Helpers ──
@@ -141,7 +141,7 @@ const API_KEY = "0".repeat(64);
 const ENCRYPTION_KEY = "a".repeat(64);
 
 function connReq(path: string) {
-  return connectionsApp.request(path, {
+  return gatewayApp.request(path, {
     method: "GET",
     headers: new Headers({ "X-API-Key": API_KEY }),
   });
@@ -224,7 +224,7 @@ describe("0.1 — Boundary contract shapes", () => {
     });
     await db.insert(gwResources).values(resource);
 
-    const res = await connReq(`/services/connections/${inst.id}`);
+    const res = await connReq(`/services/gateway/${inst.id}`);
     expect(res.status).toBe(200);
 
     const json: unknown = await res.json();
@@ -246,7 +246,7 @@ describe("0.1 — Boundary contract shapes", () => {
     });
     await db.insert(gwTokens).values(token);
 
-    const res = await connReq(`/services/connections/${inst.id}/token`);
+    const res = await connReq(`/services/gateway/${inst.id}/token`);
     expect(res.status).toBe(200);
 
     const json: unknown = await res.json();

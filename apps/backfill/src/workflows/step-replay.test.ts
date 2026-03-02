@@ -108,7 +108,7 @@ vi.mock("../env", () => ({
 }));
 
 vi.mock("../lib/related-projects", () => ({
-  connectionsUrl: "https://connections.test/services",
+  gatewayUrl: "https://gateway.test/services",
   relayUrl: "https://relay.test/api",
 }));
 

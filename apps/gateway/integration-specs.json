@@ -11,13 +11,13 @@
     },
     "oauth": {
       "callback_urls": [
-        "http://localhost:3024/services/connections/github/callback"
+        "http://localhost:3024/services/gateway/github/callback"
       ],
       "request_oauth_on_install": false,
       "enable_device_flow": false
     },
     "post_installation": {
-      "setup_url": "http://localhost:3024/services/connections/github/callback",
+      "setup_url": "http://localhost:3024/services/gateway/github/callback",
       "redirect_on_update": false
     },
     "webhooks": {
@@ -69,7 +69,7 @@
       "support_url": "https://lightfast.ai/support"
     },
     "oauth": {
-      "redirect_url": "http://localhost:3024/services/connections/vercel/callback",
+      "redirect_url": "http://localhost:3024/services/gateway/vercel/callback",
       "configuration_url": "http://localhost:3024/settings/integrations/vercel"
     },
     "webhooks": {
@@ -113,7 +113,7 @@
     "developer_url": "https://lightfast.ai",
     "description": "Lightfast connects your Linear workspace for AI-powered project intelligence.",
     "callback_urls": [
-      "http://localhost:3024/services/connections/linear/callback"
+      "http://localhost:3024/services/gateway/linear/callback"
     ],
     "public": true,
     "client_credentials": "$comment: Copy CLIENT_ID and CLIENT_SECRET after creation (secret shown only once)",
@@ -146,7 +146,7 @@
       "schema": {}
     },
     "oauth": {
-      "redirect_url": "http://localhost:3024/services/connections/sentry/callback",
+      "redirect_url": "http://localhost:3024/services/gateway/sentry/callback",
       "authorized_javascript_origins": []
     },
     "webhooks": {

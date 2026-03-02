@@ -211,10 +211,10 @@ export function makeInngestMock(
  * Port mapping (matches related-projects defaults):
  *   localhost:4108 → relayApp
  *   localhost:4109 → backfillApp
- *   localhost:4110 → connectionsApp
+ *   localhost:4110 → gatewayApp
  *
  * Usage:
- *   const restore = installServiceRouter({ connectionsApp, relayApp, backfillApp });
+ *   const restore = installServiceRouter({ gatewayApp, relayApp, backfillApp });
  *   // ... run tests
  *   restore(); // restore original fetch
  */
@@ -222,18 +222,18 @@ export function makeInngestMock(
 type AnyHono = Hono<any>;
 
 export interface ServiceApps {
-  connectionsApp?: AnyHono;
+  gatewayApp?: AnyHono;
   backfillApp?: AnyHono;
   relayApp?: AnyHono;
 }
 
 export function installServiceRouter(apps: ServiceApps): () => void {
-  const { connectionsApp, backfillApp, relayApp } = apps;
+  const { gatewayApp, backfillApp, relayApp } = apps;
 
   const portToApp: Record<string, AnyHono | undefined> = {
     "4108": relayApp,
     "4109": backfillApp,
-    "4110": connectionsApp,
+    "4110": gatewayApp,
   };
 
   const originalFetch = globalThis.fetch;
@@ -249,13 +249,13 @@ export function installServiceRouter(apps: ServiceApps): () => void {
       );
     }
 
-    // The connections app mounts routes at /services/connections/*.
-    // When the tRPC console router calls it directly (via connectionsUrl that has no
-    // /services prefix), the path arrives as /connections/... — we need to prepend
+    // The gateway app mounts routes at /services/gateway/*.
+    // When the tRPC console router calls it directly (via gatewayUrl that has no
+    // /services prefix), the path arrives as /gateway/... — we need to prepend
     // /services so it matches the Hono router.  Paths that already start with
     // /services/ (e.g. from the backfill orchestrator) are forwarded unchanged.
     let appPath = url.pathname + url.search;
-    if (app === connectionsApp && !appPath.startsWith("/services/")) {
+    if (app === gatewayApp && !appPath.startsWith("/services/")) {
       appPath = "/services" + appPath;
     }
 
