@@ -8,13 +8,13 @@ import { UseCaseGrid } from "~/components/use-case-grid";
 import { technicalFoundersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast for Technical Founders – Strategic Engineering Intelligence",
+  title: "Lightfast for Technical Founders – The Operating Layer for Your Stack",
   description:
-    "Connect engineering work to revenue impact. From customer churn analysis to ROI tracking, make data-driven decisions about what to build and when.",
+    "Ship the operating layer between your agents and tools. One system for observing, remembering, and acting across your entire engineering stack.",
   openGraph: {
     title: "Lightfast for Technical Founders",
     description:
-      "Connect engineering decisions to business outcomes. Track ROI, predict customer impact, and optimize for revenue.",
+      "Ship the operating layer between your agents and tools. One system for observing, remembering, and acting across your entire stack.",
     url: "https://lightfast.ai/use-cases/technical-founders",
     type: "website",
   },

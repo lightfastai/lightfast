@@ -8,13 +8,13 @@ import { UseCaseGrid } from "~/components/use-case-grid";
 import { platformEngineersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast for Platform Engineers – Infrastructure Intelligence",
+  title: "Lightfast for Platform Engineers – One Layer, Every Tool",
   description:
-    "From drift detection to cost attribution, get visibility into your entire infrastructure stack. Predict scaling events, optimize costs, and prevent security incidents.",
+    "Connect your infrastructure tools through a single operating layer. Ingest events from GitHub, Vercel, Sentry, Linear, and more — with complete tenant isolation.",
   openGraph: {
     title: "Lightfast for Platform Engineers",
     description:
-      "Infrastructure intelligence for modern platforms. Track dependencies, optimize costs, and maintain security posture.",
+      "Connect your infrastructure tools through a single operating layer. Ingest events from GitHub, Vercel, Sentry, Linear, and more.",
     url: "https://lightfast.ai/use-cases/platform-engineers",
     type: "website",
   },

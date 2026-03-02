@@ -4,21 +4,21 @@ import { SearchInterface } from "~/components/search-interface";
 import { createMetadata } from "@vendor/seo/metadata";
 
 export const metadata: Metadata = createMetadata({
-  title: "Search - AI Workflow Automation Platform",
+  title: "Search – Lightfast",
   description:
-    "Search Lightfast documentation, guides, and resources for AI workflow automation.",
+    "Search across Lightfast documentation, guides, and resources. Find what you need about the operating layer for agents and apps.",
   openGraph: {
-    title: "Search - AI Workflow Automation Platform",
+    title: "Search – Lightfast",
     description:
-      "Search Lightfast documentation, guides, and resources for AI workflow automation.",
+      "Search across Lightfast documentation, guides, and resources. Find what you need about the operating layer for agents and apps.",
     url: "https://lightfast.ai/search",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Search - AI Workflow Automation Platform",
+    title: "Search – Lightfast",
     description:
-      "Search Lightfast documentation, guides, and resources for AI workflow automation.",
+      "Search across Lightfast documentation, guides, and resources.",
     images: ["https://lightfast.ai/og.jpg"],
   },
   alternates: {

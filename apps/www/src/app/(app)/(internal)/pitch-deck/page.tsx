@@ -3,10 +3,10 @@ import { PitchDeck } from "./_components/pitch-deck";
 
 export const metadata: Metadata = {
   title: "Pitch Deck | Lightfast",
-  description: "Lightfast surfaces every decision your team makes across your tools",
+  description: "Lightfast — the operating layer between your agents and apps",
   openGraph: {
     title: "Pitch Deck | Lightfast",
-    description: "Lightfast surfaces every decision your team makes across your tools",
+    description: "Lightfast — the operating layer between your agents and apps",
     type: "website",
   },
 };

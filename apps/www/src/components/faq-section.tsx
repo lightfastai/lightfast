@@ -13,47 +13,47 @@ export const faqs = [
   {
     question: "What is Lightfast?",
     answer:
-      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents. It indexes your code, docs, tickets, and conversations so engineers and AI agents can find decisions, trace context, and get cited answers across your entire engineering org.",
+      "Lightfast is the operating layer between your agents and apps. It observes what's happening across your tools, remembers what happened, and gives agents and people a single system to reason and act through — without knowing which tools exist or how they work.",
   },
   {
-    question: "How is this different from regular search?",
+    question: "What does 'operating layer' mean?",
     answer:
-      "Traditional search matches keywords. Lightfast understands intent and meaning. Ask 'who knows about authentication' and it finds the people who've worked on auth code, discussed auth issues, or reviewed auth PRs—even if they never used that exact word. It surfaces decisions, changes, and expertise across your entire engineering org with cited answers.",
+      "Think of Lightfast like an OS for your tool stack. Instead of agents making individual API calls to GitHub, Linear, Sentry, and Slack, they operate through Lightfast — express intent, get context, take action. One integration point for every tool, every team, every workflow.",
   },
   {
-    question: "How does Lightfast surface decisions?",
+    question: "What tools do you integrate with?",
     answer:
-      "Lightfast captures the important moments across your tools — decisions made, incidents resolved, features shipped. It builds expertise profiles showing who knows what, tracks how things evolved over time, and generates summaries of team activity. This enables powerful queries like 'what decisions were made about the database migration' or 'who has context on the payment system'.",
+      "Today we support GitHub (pushes, PRs, issues, reviews), Vercel (deployments, project activity), Sentry (errors, issues, alerts), and Linear (issues, comments, projects, cycles). Slack, Notion, Confluence, and PagerDuty are coming soon. Each integration ingests events automatically and continuously.",
   },
   {
-    question: "What tools and platforms do you integrate with?",
+    question: "How does the event system work?",
     answer:
-      "We integrate with GitHub (code, PRs, issues, discussions), Linear (tickets, projects), Slack (conversations, threads), Notion (docs, wikis), Confluence (documentation), and more coming soon. Each integration is a 'source'—an entire GitHub org or Slack workspace counts as one source. We continuously sync to keep your knowledge fresh.",
+      "Lightfast ingests structured events from your connected tools in real time. Every push, pull request, deployment, error, and issue becomes a normalized event you can subscribe to, filter, and act on. Events are immutable and causally ordered — facts your agents and workflows can rely on.",
   },
   {
     question: "How do agents and AI assistants use Lightfast?",
     answer:
-      "Lightfast provides a simple 4-route API and MCP (Model Context Protocol) tools that any agent can use. Instead of dumping entire codebases into context, agents can search for exactly what they need, get answers with citations, and find related content. This means agents can access your entire knowledge base without token limits or hallucination risks.",
+      "Lightfast provides a REST API, TypeScript SDK, and MCP (Model Context Protocol) tools that any agent can use. Agents can search your workspace, get cited answers, find related context, and express intent that Lightfast resolves to the right tool and action. Same primitives for agents and people.",
+  },
+  {
+    question: "What's coming after events?",
+    answer:
+      "Next is Memory — semantic search and cited answers across your entire tool stack. Everything from the event system gets indexed, connected, and made searchable by meaning. After that, the full Operating Layer: agents express what they want in natural language, and Lightfast resolves it to the right tool, enforces your rules, and tracks everything.",
   },
   {
     question: "Is our data secure and private?",
     answer:
-      "Absolutely. Every workspace is completely isolated—separate database schemas, separate vector namespaces, separate storage buckets. Your data never mixes with others. We use industry-standard encryption, and you can delete your data anytime. We never train models on your data, and we never share it with anyone.",
+      "Every workspace is completely isolated — separate database schemas, separate vector namespaces, separate storage. Your data never mixes with others. We use industry-standard encryption at rest and in transit, and we never train on your data. You can delete your data anytime.",
   },
   {
     question: "How quickly can we get started?",
     answer:
-      "You can be searching in minutes. Connect your first source (like GitHub), and we'll start indexing immediately. Most teams see initial results within 5-10 minutes, with full indexing complete within hours depending on size. Our API has just 4 routes, and we provide SDKs for Python, TypeScript, and MCP tools for agents. No complex setup required.",
-  },
-  {
-    question: "What makes answers trustworthy?",
-    answer:
-      "Every answer cites its sources. When Lightfast says 'the authentication system uses JWT tokens,' it shows you the exact PR, document, or discussion where that information came from. You can click through to verify, see the full context, and understand who made that decision and when. No black-box AI responses—everything is explainable and verifiable.",
+      "Minutes. Connect your first source, and events start flowing immediately. Our TypeScript SDK installs with a single command, and MCP tools let AI assistants connect directly. No complex setup, no schema mapping, no custom pipelines.",
   },
   {
     question: "How does pricing work?",
     answer:
-      "We offer a free Starter plan for up to 3 users with 2 sources. Our Team plan is $20/user/month with semantic search and decision surfacing. Business plan includes unlimited everything with advanced features. You pay for users who can search, not for how much you search. Check our pricing page for full details.",
+      "We offer a free Starter plan for up to 3 users with 2 sources. Team plan is $20/user/month with full event access and semantic search. Business plan includes unlimited sources and advanced features. Check our pricing page for full details.",
   },
 ];
 
@@ -74,7 +74,7 @@ export function FAQSection() {
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8 pb-8 border-b border-border">
             <div className="space-y-1">
               <p className="text-base md:text-lg leading-relaxed text-muted-foreground">
-                Learn how Lightfast works.
+                Learn how the operating layer works.
               </p>
             </div>
 

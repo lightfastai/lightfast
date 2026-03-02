@@ -90,7 +90,7 @@ export default async function Page({
       "https://www.linkedin.com/company/lightfastai",
     ],
     description:
-      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+      "Lightfast is the operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
   };
 
   const websiteEntity: WebSite = {
@@ -99,7 +99,7 @@ export default async function Page({
     url: "https://lightfast.ai/docs",
     name: "Lightfast Documentation",
     description:
-      "Documentation for Lightfast — Learn how to surface decisions across your tools via a simple REST API and MCP tools",
+      "Documentation for Lightfast — Learn how to observe events, build memory, and act across your tool stack via a simple REST API and MCP tools",
     publisher: {
       "@id": "https://lightfast.ai/#organization",
     },

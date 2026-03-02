@@ -109,7 +109,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.85,
     },
     {
-      url: `${base}/use-cases/founding-engineers`,
+      url: `${base}/use-cases/engineering-leaders`,
+      changeFrequency: "monthly",
+      priority: 0.85,
+    },
+    {
+      url: `${base}/use-cases/platform-engineers`,
       changeFrequency: "monthly",
       priority: 0.85,
     },
