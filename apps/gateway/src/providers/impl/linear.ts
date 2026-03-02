@@ -268,7 +268,7 @@ export class LinearProvider implements ConnectionProvider {
         throw new Error("token_expired:no_refresh_token");
       }
 
-      const decryptedRefresh = decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
+      const decryptedRefresh = await decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
       const refreshed = await this.refreshToken(decryptedRefresh);
 
       await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
@@ -280,7 +280,7 @@ export class LinearProvider implements ConnectionProvider {
       };
     }
 
-    const decryptedToken = decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
     return {
       accessToken: decryptedToken,
       provider: this.name,

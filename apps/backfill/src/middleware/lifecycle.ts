@@ -1,5 +1,7 @@
+import * as Sentry from "@sentry/core";
 import { createMiddleware } from "hono/factory";
 import { env } from "../env.js";
+import { log } from "../logger.js";
 import type { RequestIdVariables } from "./request-id.js";
 
 const isDev = env.NODE_ENV !== "production";
@@ -77,8 +79,30 @@ export const lifecycle = createMiddleware<{
       let line = `${prefix} ${c.req.method} ${c.req.path} ${entry.status as number} ${duration}ms from ${source} [${c.get("requestId")}]`;
       if (error) {line += ` error="${error}"`;}
       console.log(line);
-    } else {
-      console.log(JSON.stringify(entry));
+    }
+
+    // Ship structured log to BetterStack (no-op in dev when token is absent)
+    const level = error ? "error" : (entry.status as number) >= 400 ? "warn" : "info";
+    log[level](`${c.req.method} ${c.req.path}`, entry);
+
+    // Add breadcrumb for Sentry error correlation
+    Sentry.addBreadcrumb({
+      category: "http",
+      message: `${c.req.method} ${c.req.path} ${entry.status as number}`,
+      level: error ? "error" : "info",
+      data: {
+        requestId: c.get("requestId"),
+        duration_ms: duration,
+        source,
+      },
+    });
+
+    // Flush logs — non-blocking on Edge via waitUntil, blocking fallback on Node.js
+    const flushPromise = log.flush();
+    try {
+      c.executionCtx.waitUntil(flushPromise);
+    } catch {
+      await flushPromise;
     }
   }
 });

@@ -57,7 +57,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       if (!tokenRow) {return;}
 
       try {
-        const decryptedToken = decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+        const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
         await provider.revokeToken(decryptedToken);
       } catch {
         // Best-effort — swallow errors

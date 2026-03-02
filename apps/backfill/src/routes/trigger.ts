@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { timingSafeEqual } from "node:crypto";
 
 import { getEnv } from "../env.js";
 import { inngest } from "../inngest/client.js";
@@ -22,12 +21,16 @@ function isValidApiKey(key: string | undefined, expected: string): boolean {
   if (!key) {
     return false;
   }
-  const a = Buffer.from(key);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length) {
-    return false;
+  const encoder = new TextEncoder();
+  const aBytes = encoder.encode(key);
+  const bBytes = encoder.encode(expected);
+
+  let result = aBytes.length ^ bBytes.length;
+  const maxLen = Math.max(aBytes.length, bBytes.length);
+  for (let i = 0; i < maxLen; i++) {
+    result |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
   }
-  return timingSafeEqual(a, b);
+  return result === 0;
 }
 
 const trigger = new Hono<{ Variables: LifecycleVariables }>();

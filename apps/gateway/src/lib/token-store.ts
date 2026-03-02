@@ -13,9 +13,9 @@ export async function writeTokenRecord(
   installationId: string,
   oauthTokens: OAuthTokens,
 ): Promise<void> {
-  const encryptedAccess = encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
+  const encryptedAccess = await encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
   const encryptedRefresh = oauthTokens.refreshToken
-    ? encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY)
+    ? await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY)
     : null;
 
   const expiresAt = oauthTokens.expiresIn
@@ -79,11 +79,11 @@ export async function updateTokenRecord(
   existingEncryptedRefreshToken: string | null,
   existingExpiresAt: string | null,
 ): Promise<void> {
-  const encryptedAccess = encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
+  const encryptedAccess = await encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
 
   let newEncryptedRefresh: string | null;
   if (oauthTokens.refreshToken) {
-    newEncryptedRefresh = encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY);
+    newEncryptedRefresh = await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY);
   } else if (existingEncryptedRefreshToken) {
     assertEncryptedFormat(existingEncryptedRefreshToken);
     newEncryptedRefresh = existingEncryptedRefreshToken;

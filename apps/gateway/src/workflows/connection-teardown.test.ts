@@ -19,7 +19,7 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 
 const mockCancelBackfill = vi.fn().mockResolvedValue(undefined);
 const mockGetProvider = vi.fn();
-const mockDecrypt = vi.fn().mockReturnValue("decrypted-token");
+const mockDecrypt = vi.fn().mockResolvedValue("decrypted-token");
 const mockRedisDel = vi.fn().mockResolvedValue(1);
 const mockDbQuery = vi.fn().mockResolvedValue([]);
 const mockDbUpdate = vi.fn().mockResolvedValue(undefined);
@@ -81,7 +81,7 @@ vi.mock("@db/console/schema", () => ({
 vi.mock("@repo/lib", () => ({
   nanoid: vi.fn().mockReturnValue("mock-id"),
   decrypt: (...args: unknown[]) => mockDecrypt(...args),
-  encrypt: vi.fn().mockReturnValue("encrypted-value"),
+  encrypt: vi.fn().mockResolvedValue("encrypted-value"),
 }));
 
 vi.mock("../lib/cache", () => ({
@@ -143,7 +143,7 @@ describe("connection-teardown workflow", () => {
     mockDbUpdate.mockResolvedValue(undefined);
     mockTxSet.mockClear();
     mockCancelBackfill.mockResolvedValue(undefined);
-    mockDecrypt.mockReturnValue("decrypted-token");
+    mockDecrypt.mockResolvedValue("decrypted-token");
     mockRedisDel.mockResolvedValue(1);
   });
 

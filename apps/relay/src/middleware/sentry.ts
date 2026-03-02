@@ -23,6 +23,14 @@ export const sentry = createMiddleware<{
       scope.setTag("http.path", c.req.path);
       const requestId = c.get("requestId");
       if (requestId) scope.setTag("request_id", requestId);
+      const correlationId = c.get("correlationId");
+      if (correlationId) scope.setTag("correlation_id", correlationId);
+      scope.setContext("request", {
+        method: c.req.method,
+        path: c.req.path,
+        requestId,
+        correlationId,
+      });
       Sentry.captureException(err);
     });
     throw err;
@@ -37,6 +45,14 @@ export const sentry = createMiddleware<{
       scope.setTag("http.status", String(c.res.status));
       const requestId = c.get("requestId");
       if (requestId) scope.setTag("request_id", requestId);
+      const correlationId = c.get("correlationId");
+      if (correlationId) scope.setTag("correlation_id", correlationId);
+      scope.setContext("request", {
+        method: c.req.method,
+        path: c.req.path,
+        requestId,
+        correlationId,
+      });
       Sentry.captureMessage(
         `HTTP ${c.res.status}: ${c.req.method} ${c.req.path}`,
         "error",

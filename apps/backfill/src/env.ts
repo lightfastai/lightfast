@@ -10,6 +10,7 @@ const server = {
   INNGEST_EVENT_KEY: z.string().min(1).optional(),
   INNGEST_SIGNING_KEY: z.string().min(1).startsWith("signkey-").optional(),
   VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
+  LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
 };
 
 const _createEnv = (c: Context) =>
@@ -52,6 +53,7 @@ export const env = createEnv({
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
     VERCEL_ENV: process.env.VERCEL_ENV,
+    LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

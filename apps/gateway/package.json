@@ -33,6 +33,7 @@
     "@vendor/qstash": "workspace:*",
     "@vendor/related-projects": "workspace:*",
     "@vendor/upstash": "workspace:*",
+    "@vendor/observability": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",

@@ -456,7 +456,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
     await db.insert(gwInstallations).values(inst);
 
     // Encrypt and store token in DB (as it would be stored by real OAuth flow)
-    const encryptedToken = encrypt(plainToken, ENCRYPTION_KEY);
+    const encryptedToken = await encrypt(plainToken, ENCRYPTION_KEY);
     const token = fixtures.token({
       installationId: inst.id,
       accessToken: encryptedToken,
@@ -519,7 +519,7 @@ describe("Suite 3.4 — Entity worker token refresh on 401 mid-pagination", () =
     });
     await db.insert(gwInstallations).values(inst);
 
-    const encryptedToken = encrypt("initial-access-token", ENCRYPTION_KEY);
+    const encryptedToken = await encrypt("initial-access-token", ENCRYPTION_KEY);
     const token = fixtures.token({
       installationId: inst.id,
       accessToken: encryptedToken,

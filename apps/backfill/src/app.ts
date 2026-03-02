@@ -1,6 +1,7 @@
 import "./sentry-init.js";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { log } from "./logger.js";
 import { errorSanitizer } from "./middleware/error-sanitizer.js";
 import type { LifecycleVariables } from "./middleware/lifecycle.js";
 import { lifecycle } from "./middleware/lifecycle.js";
@@ -30,7 +31,7 @@ app.onError((err, c) => {
     return err.getResponse();
   }
 
-  console.error("[backfill] unhandled error", {
+  log.error("[backfill] unhandled error", {
     method: c.req.method,
     path: c.req.path,
     error: err.message,

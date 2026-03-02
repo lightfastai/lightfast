@@ -55,8 +55,8 @@ vi.mock("../../lib/token-store", () => ({
 }));
 
 vi.mock("@repo/lib", () => ({
-  decrypt: vi.fn().mockReturnValue("decrypted-token"),
-  encrypt: vi.fn().mockReturnValue("encrypted-value"),
+  decrypt: vi.fn().mockResolvedValue("decrypted-token"),
+  encrypt: vi.fn().mockResolvedValue("encrypted-value"),
 }));
 
 import { LinearProvider } from "./linear.js";

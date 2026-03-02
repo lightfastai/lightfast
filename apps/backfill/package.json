@@ -25,6 +25,7 @@
     "@sentry/core": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@vendor/inngest": "workspace:*",
+    "@vendor/observability": "workspace:*",
     "@vendor/related-projects": "workspace:*",
     "hono": "catalog:",
     "zod": "catalog:zod3"
