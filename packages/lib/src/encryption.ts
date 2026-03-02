@@ -175,7 +175,7 @@ export async function decrypt(ciphertext: string, key: string): Promise<string> 
 		);
 
 		const decrypted = await crypto.subtle.decrypt(
-			{ name: "AES-GCM", iv: iv, tagLength: AUTH_TAG_LENGTH * 8 },
+			{ name: "AES-GCM", iv: iv as Uint8Array<ArrayBuffer>, tagLength: AUTH_TAG_LENGTH * 8 },
 			cryptoKey,
 			combined,
 		);
@@ -187,9 +187,15 @@ export async function decrypt(ciphertext: string, key: string): Promise<string> 
 			throw new DecryptionError(error.message, error);
 		}
 
-		const errorMessage = error instanceof Error ? error.message : String(error);
+		// Prefer structured DOMException check (Web Crypto standard for AES-GCM auth failures),
+		// fall back to message-based check for runtimes that surface it differently.
+		const isOperationError =
+			(error instanceof DOMException && error.name === "OperationError") ||
+			(error instanceof Error &&
+				(error.message.includes("OperationError") ||
+					error.message.includes("The operation failed")));
 
-		if (errorMessage.includes("OperationError") || errorMessage.includes("The operation failed")) {
+		if (isOperationError) {
 			throw new DecryptionError(
 				"Authentication failed - data may be corrupted or key is incorrect",
 				error,
