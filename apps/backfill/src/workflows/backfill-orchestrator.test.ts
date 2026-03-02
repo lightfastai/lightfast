@@ -137,7 +137,7 @@ describe("get-connection step", () => {
 
     await expect(
       capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Connections getConnection failed: 404");
+    ).rejects.toThrow("Gateway getConnection failed: 404");
   });
 
   it("returns early with zero counts when connection has no resources", async () => {

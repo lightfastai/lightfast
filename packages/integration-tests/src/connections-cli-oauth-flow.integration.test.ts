@@ -2,9 +2,9 @@
  * Suite 7: Connections CLI OAuth Flow Routes
  *
  * Tests the gateway service CLI OAuth route behaviors:
- *   - GET /connections/:provider/authorize (apiKeyAuth, tenantMiddleware, validation)
- *   - GET /connections/oauth/status (polling endpoint, no auth required)
- *   - GET /connections/:provider/callback with redirect_to=inline
+ *   - GET /services/gateway/:provider/authorize (apiKeyAuth, tenantMiddleware, validation)
+ *   - GET /services/gateway/oauth/status (polling endpoint, no auth required)
+ *   - GET /services/gateway/:provider/callback with redirect_to=inline
  *   - Full CLI poll round-trip: authorize → callback → poll
  *
  * Uses gatewayApp.request() directly — no tRPC, no service mesh router.

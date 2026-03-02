@@ -83,7 +83,7 @@ export const backfillEntityWorker = inngest.createFunction(
         );
         if (!response.ok) {
           throw new Error(
-            `Connections getToken failed: ${response.status} for ${installationId}`,
+            `Gateway getToken failed: ${response.status} for ${installationId}`,
           );
         }
         return response.json() as Promise<{

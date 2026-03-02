@@ -390,7 +390,7 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     });
   });
 
-  it("DELETE /connections/:provider/:id triggers teardown workflow", async () => {
+  it("DELETE /services/gateway/:provider/:id triggers teardown workflow", async () => {
     const inst = fixtures.installation({
       provider: "github",
       orgId: "org-teardown-1",
@@ -462,12 +462,12 @@ describe("Suite 5.3 — Full teardown path", () => {
     });
     await db.insert(gwResources).values(resource);
 
-    // Populate Redis resource cache (simulates what POST /connections/:id/resources does)
+    // Populate Redis resource cache (simulates what POST /services/gateway/:id/resources does)
     const cacheKey = `gw:resource:github:owner/teardown-repo`;
     redisStore.set(cacheKey, { connectionId: inst.id, orgId: "org-teardown-path" });
     expect(redisStore.has(cacheKey)).toBe(true);
 
-    // ── 2. DELETE /connections/:provider/:id → teardown_initiated ──
+    // ── 2. DELETE /services/gateway/:provider/:id → teardown_initiated ──
     const deleteRes = await gatewayApp.request(
       `/services/gateway/github/${inst.id}`,
       {

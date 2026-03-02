@@ -184,6 +184,12 @@ const config: NextConfig = withSentry(
             source: "/services/gateway/:path*",
             destination: `${gatewayUrl}/services/gateway/:path*`,
           },
+          // TODO: Remove after OAuth callback URLs are updated in provider dashboards
+          // (GitHub App, Vercel Integration, Linear App, Sentry App).
+          {
+            source: "/services/connections/:path*",
+            destination: `${gatewayUrl}/services/gateway/:path*`,
+          },
           {
             source: "/services/relay/:path*",
             destination: `${relayUrl}/api/:path*`,

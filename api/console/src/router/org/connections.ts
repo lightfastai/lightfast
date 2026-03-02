@@ -19,6 +19,8 @@ const isDevelopment =
 	process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
 	process.env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
 
+// NOTE: projectName "lightfast-gateway" must match the Vercel project name.
+// Ensure the Vercel project is renamed from "lightfast-connections" before rollout.
 const gatewayUrl = withRelatedProject({
 	projectName: "lightfast-gateway",
 	defaultHost: isDevelopment

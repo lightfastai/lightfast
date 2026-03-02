@@ -52,14 +52,14 @@ export const backfillOrchestrator = inngest.createFunction(
       ).catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "TimeoutError") {
           throw new Error(
-            `Connections getConnection request timed out for ${installationId}`,
+            `Gateway getConnection request timed out for ${installationId}`,
           );
         }
         throw err;
       });
       if (!response.ok) {
         throw new Error(
-          `Connections getConnection failed: ${response.status} for ${installationId}`,
+          `Gateway getConnection failed: ${response.status} for ${installationId}`,
         );
       }
       const conn = (await response.json()) as {

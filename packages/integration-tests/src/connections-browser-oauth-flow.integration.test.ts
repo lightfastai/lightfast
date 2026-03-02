@@ -2,9 +2,9 @@
  * Suite 10: Browser OAuth Flow Routes
  *
  * Tests the gateway service browser-initiated OAuth flow:
- *   - GET /connections/:provider/authorize (URL + state for browser redirect)
- *   - GET /connections/:provider/callback (browser redirect, not inline)
- *   - GET /connections/oauth/status (polling for completion)
+ *   - GET /services/gateway/:provider/authorize (URL + state for browser redirect)
+ *   - GET /services/gateway/:provider/callback (browser redirect, not inline)
+ *   - GET /services/gateway/oauth/status (polling for completion)
  *   - State token lifecycle (single-use via atomic MULTI, fallback recovery)
  *
  * Key difference from Suite 7 (CLI flow): the browser flow uses redirect_to=<consoleUrl>

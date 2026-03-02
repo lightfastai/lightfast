@@ -208,7 +208,7 @@ afterAll(async () => {
 // ── Contract Snapshot Tests ──
 
 describe("0.1 — Boundary contract shapes", () => {
-  it("Shape 1: GET /connections/:id response (Backfill orchestrator reads this)", async () => {
+  it("Shape 1: GET /services/gateway/:id response (Backfill orchestrator reads this)", async () => {
     const inst = fixtures.installation({
       provider: "github",
       orgId: "org-snap-2",
@@ -231,7 +231,7 @@ describe("0.1 — Boundary contract shapes", () => {
     expect(shapeOf(json)).toMatchSnapshot();
   });
 
-  it("Shape 2: GET /connections/:id/token response (Backfill entity worker reads this)", async () => {
+  it("Shape 2: GET /services/gateway/:id/token response (Backfill entity worker reads this)", async () => {
     const inst = fixtures.installation({
       provider: "sentry",
       orgId: "org-snap-3",

@@ -123,7 +123,7 @@ describe("get-token step", () => {
 
     await expect(
       capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Connections getToken failed: 401");
+    ).rejects.toThrow("Gateway getToken failed: 401");
   });
 });
 
