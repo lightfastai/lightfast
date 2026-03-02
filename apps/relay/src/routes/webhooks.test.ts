@@ -40,6 +40,21 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
   getWorkflowClient: () => ({ trigger: mockWorkflowTrigger }),
 }));
 
+vi.mock("@db/console/client", () => ({
+  db: {
+    insert: () => ({ values: () => ({ onConflictDoNothing: () => Promise.resolve() }) }),
+    update: () => ({ set: () => ({ where: () => Promise.resolve() }) }),
+  },
+}));
+
+vi.mock("@db/console/schema", () => ({
+  gwWebhookDeliveries: {},
+}));
+
+vi.mock("../lib/flags.js", () => ({
+  isConsoleFanOutEnabled: vi.fn().mockResolvedValue(true),
+}));
+
 // ── Import app after mocks ──
 
 import { Hono } from "hono";

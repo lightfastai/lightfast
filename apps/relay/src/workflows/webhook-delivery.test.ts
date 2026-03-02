@@ -45,6 +45,12 @@ vi.mock("@vendor/qstash", () => ({
   }),
 }));
 
+const mockDbInsert = vi.fn();
+const mockDbUpdate = vi.fn();
+const mockOnConflictDoNothing = vi.fn().mockResolvedValue(undefined);
+const mockDbSet = vi.fn();
+const mockDbWhere = vi.fn().mockResolvedValue(undefined);
+
 vi.mock("@db/console/client", () => ({
   db: {
     select: () => ({
@@ -56,7 +62,25 @@ vi.mock("@db/console/client", () => ({
         }),
       }),
     }),
+    insert: (...args: unknown[]) => {
+      mockDbInsert(...args);
+      return { values: () => ({ onConflictDoNothing: mockOnConflictDoNothing }) };
+    },
+    update: (...args: unknown[]) => {
+      mockDbUpdate(...args);
+      return { set: (...setArgs: unknown[]) => { mockDbSet(...setArgs); return { where: mockDbWhere }; } };
+    },
   },
+}));
+
+vi.mock("@db/console/schema", () => ({
+  gwWebhookDeliveries: {},
+  gwInstallations: {},
+  gwResources: {},
+}));
+
+vi.mock("../lib/flags.js", () => ({
+  isConsoleFanOutEnabled: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("../lib/urls", () => ({
@@ -136,6 +160,8 @@ describe("webhook-delivery workflow", () => {
     mockPublishJSON.mockResolvedValue({ messageId: "msg-1" });
     mockPublishToTopic.mockResolvedValue([{ messageId: "msg-2" }]);
     mockDbRows = [];
+    mockOnConflictDoNothing.mockResolvedValue(undefined);
+    mockDbWhere.mockResolvedValue(undefined);
   });
 
   it("stops on duplicate delivery", async () => {
@@ -160,8 +186,8 @@ describe("webhook-delivery workflow", () => {
     const ctx = makeContext(makePayload());
     await capturedHandler(ctx);
 
-    // 3 steps: dedup, resolve, publish
-    expect(ctx.run).toHaveBeenCalledTimes(3);
+    // 7 steps: dedup, persist-delivery, resolve-connection, update-connection, check-fan-out-flag, publish-to-console, update-status-delivered
+    expect(ctx.run).toHaveBeenCalledTimes(7);
     expect(mockPublishJSON).toHaveBeenCalledWith(
       expect.objectContaining({
         url: "https://console.test/api/webhooks/ingress",
@@ -211,8 +237,8 @@ describe("webhook-delivery workflow", () => {
     const ctx = makeContext(makePayload());
     await capturedHandler(ctx);
 
-    // 3 steps: dedup, resolve, publish-to-dlq
-    expect(ctx.run).toHaveBeenCalledTimes(3);
+    // 5 steps: dedup, persist-delivery, resolve-connection, publish-to-dlq, update-status-dlq
+    expect(ctx.run).toHaveBeenCalledTimes(5);
     expect(mockPublishToTopic).toHaveBeenCalledWith(
       expect.objectContaining({ topic: "webhook-dlq" }),
     );

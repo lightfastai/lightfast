@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { gwInstallations, gwResources } from "@db/console/schema";
+import { gwInstallations, gwResources, gwWebhookDeliveries } from "@db/console/schema";
 import { serve } from "@vendor/upstash-workflow/hono";
 import { getQStashClient } from "@vendor/qstash";
 import { relayBaseUrl, consoleUrl } from "../lib/urls.js";
@@ -8,6 +8,7 @@ import { webhookSeenKey, resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache.js
 import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload } from "@repo/gateway-types";
 import type { WorkflowContext } from "@vendor/upstash-workflow/types";
+import { isConsoleFanOutEnabled } from "../lib/flags.js";
 
 const qstash = getQStashClient();
 
@@ -47,7 +48,22 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       return;
     }
 
-    // Step 2: Resolve connection from resource ID (Redis cache → PlanetScale fallthrough)
+    // Step 2: Persist — store webhook for long-term replayability
+    await context.run("persist-delivery", async () => {
+      await db
+        .insert(gwWebhookDeliveries)
+        .values({
+          provider: data.provider,
+          deliveryId: data.deliveryId,
+          eventType: data.eventType,
+          status: "received",
+          payload: JSON.stringify(data.payload),
+          receivedAt: new Date(data.receivedAt).toISOString(),
+        })
+        .onConflictDoNothing();
+    });
+
+    // Step 3: Resolve connection from resource ID (Redis cache → PlanetScale fallthrough)
     const connectionInfo = await context.run<ConnectionInfo | null>(
       "resolve-connection",
       async () => {
@@ -91,7 +107,22 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       },
     );
 
-    // Step 3a: No connection found — route to DLQ for manual replay
+    // Step 3a: Update persisted record with installationId when connection is found
+    if (connectionInfo) {
+      await context.run("update-connection", async () => {
+        await db
+          .update(gwWebhookDeliveries)
+          .set({ installationId: connectionInfo.connectionId })
+          .where(
+            and(
+              eq(gwWebhookDeliveries.provider, data.provider),
+              eq(gwWebhookDeliveries.deliveryId, data.deliveryId),
+            ),
+          );
+      });
+    }
+
+    // Step 3b: No connection found — route to DLQ for manual replay
     if (!connectionInfo) {
       await context.run("publish-to-dlq", async () => {
         await qstash.publishToTopic({
@@ -108,10 +139,34 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
           },
         });
       });
+
+      // Step 3b-ii: Update persisted status to dlq — separate step for idempotent retries
+      await context.run("update-status-dlq", async () => {
+        await db
+          .update(gwWebhookDeliveries)
+          .set({ status: "dlq" })
+          .where(
+            and(
+              eq(gwWebhookDeliveries.provider, data.provider),
+              eq(gwWebhookDeliveries.deliveryId, data.deliveryId),
+            ),
+          );
+      });
       return;
     }
 
-    // Step 3b: Connection found — publish to Console ingress via QStash
+    // Step 4: Connection found — check feature flag before console delivery
+    const fanOutEnabled = await context.run("check-fan-out-flag", async () => {
+      return isConsoleFanOutEnabled(data.provider);
+    });
+
+    if (!fanOutEnabled) {
+      // Fan-out disabled — webhook is already persisted (step 2).
+      // Skip console delivery. Data is available for future replay.
+      return;
+    }
+
+    // Step 4b: Publish to Console ingress via QStash
     // QStash guarantees at-least-once delivery with 5 retries.
     // The delivery-status callback is called on final success or failure.
     await context.run("publish-to-console", async () => {
@@ -132,6 +187,19 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
         deduplicationId: `${data.provider}:${data.deliveryId}`,
         callback: `${relayBaseUrl}/admin/delivery-status`,
       });
+    });
+
+    // Step 4b-ii: Mark webhook as delivered in persistence store
+    await context.run("update-status-delivered", async () => {
+      await db
+        .update(gwWebhookDeliveries)
+        .set({ status: "delivered" })
+        .where(
+          and(
+            eq(gwWebhookDeliveries.provider, data.provider),
+            eq(gwWebhookDeliveries.deliveryId, data.deliveryId),
+          ),
+        );
     });
   },
   {

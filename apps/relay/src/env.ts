@@ -13,6 +13,9 @@ const server = {
   GATEWAY_API_KEY: z.string().min(1),
   GATEWAY_WEBHOOK_SECRET: z.string().min(1),
 
+  // Vercel Flags SDK key (provisioned by Vercel Dashboard)
+  FLAGS: z.string().optional(),
+
   // Webhook verification secrets
   GITHUB_WEBHOOK_SECRET: z.string().min(1),
   VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
@@ -56,6 +59,7 @@ export const env = createEnv({
   server,
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    FLAGS: process.env.FLAGS,
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
     GATEWAY_WEBHOOK_SECRET: process.env.GATEWAY_WEBHOOK_SECRET,
     GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,

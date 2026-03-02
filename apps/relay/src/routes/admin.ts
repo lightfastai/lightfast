@@ -1,9 +1,10 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "@db/console/client";
 import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
 import { redis } from "@vendor/upstash";
 import { resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache.js";
+import { replayDeliveries } from "../lib/replay.js";
 import type { ProviderName } from "../providers/types.js";
 import {
   gwInstallations,
@@ -120,8 +121,6 @@ admin.get("/dlq", apiKeyAuth, async (c) => {
  * POST /admin/dlq/replay
  *
  * Replay messages from the DLQ. Requires X-API-Key authentication.
- *
- * Phase 9 implementation pending.
  */
 admin.post("/dlq/replay", apiKeyAuth, async (c) => {
   let body: { deliveryIds?: string[] };
@@ -135,23 +134,95 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
     return c.json({ error: "missing_delivery_ids" }, 400);
   }
 
-  return c.json(
-    {
-      status: "not_yet_implemented",
-      message:
-        "DLQ replay requires webhook payload storage — planned for audit enhancement",
-      requestedIds: body.deliveryIds,
-    },
-    501,
-  );
+  // Fetch only DLQ entries with stored payloads
+  const deliveries = await db
+    .select()
+    .from(gwWebhookDeliveries)
+    .where(
+      and(
+        inArray(gwWebhookDeliveries.deliveryId, body.deliveryIds),
+        eq(gwWebhookDeliveries.status, "dlq"),
+      ),
+    );
+
+  if (deliveries.length === 0) {
+    return c.json(
+      { error: "no_matching_dlq_entries", requestedIds: body.deliveryIds },
+      404,
+    );
+  }
+
+  const result = await replayDeliveries(deliveries);
+  return c.json({ status: "replayed", ...result });
+});
+
+/**
+ * POST /admin/replay/catchup
+ *
+ * Replay webhooks that were persisted but never delivered (e.g., during
+ * a flag-off period). Drains the backlog by re-triggering the webhook
+ * delivery workflow for each un-delivered webhook.
+ *
+ * Requires X-API-Key authentication.
+ */
+admin.post("/replay/catchup", apiKeyAuth, async (c) => {
+  let body: {
+    provider?: string;
+    batchSize?: number;
+    since?: string;
+    until?: string;
+  };
+  try {
+    body = await c.req.json();
+  } catch {
+    body = {};
+  }
+
+  const batchSize = Math.min(Math.max(body.batchSize ?? 50, 1), 200);
+
+  // Build query: status = "received" (persisted but never delivered)
+  const conditions: Parameters<typeof and>[0][] = [eq(gwWebhookDeliveries.status, "received")];
+
+  if (body.provider) {
+    conditions.push(eq(gwWebhookDeliveries.provider, body.provider));
+  }
+  if (body.since) {
+    conditions.push(gte(gwWebhookDeliveries.receivedAt, body.since));
+  }
+  if (body.until) {
+    conditions.push(lte(gwWebhookDeliveries.receivedAt, body.until));
+  }
+
+  const deliveries = await db
+    .select()
+    .from(gwWebhookDeliveries)
+    .where(and(...conditions))
+    .orderBy(gwWebhookDeliveries.receivedAt)
+    .limit(batchSize);
+
+  if (deliveries.length === 0) {
+    return c.json({ status: "empty", message: "No un-delivered webhooks found" });
+  }
+
+  const result = await replayDeliveries(deliveries);
+
+  // Report remaining count so caller knows if more batches are needed
+  const [remaining] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(gwWebhookDeliveries)
+    .where(and(...conditions));
+
+  return c.json({
+    status: "replayed",
+    ...result,
+    remaining: remaining?.count ?? 0,
+  });
 });
 
 /**
  * POST /admin/delivery-status
  *
  * QStash delivery status callback. Called by QStash after delivery attempts.
- *
- * Phase 9 implementation pending.
  */
 admin.post("/delivery-status", qstashAuth, async (c) => {
   let body: unknown;

@@ -6,6 +6,7 @@
     "build": {
       "dependsOn": ["^build"],
       "passThroughEnv": [
+        "FLAGS",
         "GATEWAY_API_KEY",
         "GATEWAY_WEBHOOK_SECRET",
         "GITHUB_WEBHOOK_SECRET",
