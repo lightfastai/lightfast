@@ -85,14 +85,17 @@ const mockConnector = {
   fetchPage: vi.fn(),
 };
 
-function mockFetchConnection(conn: Record<string, unknown> = makeConnection()) {
-  mockFetch.mockResolvedValueOnce(
-    new Response(JSON.stringify(conn), { status: 200 }),
-  );
+function mockFetchConnection(
+  conn: Record<string, unknown> = makeConnection(),
+  history: unknown[] = [],
+) {
+  mockFetch
+    .mockResolvedValueOnce(new Response(JSON.stringify(conn), { status: 200 }))
+    .mockResolvedValueOnce(new Response(JSON.stringify(history), { status: 200 }));
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   mockGetConnector.mockReturnValue(mockConnector);
 });
 
@@ -406,5 +409,95 @@ describe("aggregation", () => {
     // First: 10, Second: 20 → total 30
     expect(result.eventsProduced).toBe(30);
     expect(result.eventsDispatched).toBe(30);
+  });
+});
+
+describe("gap-aware filtering", () => {
+  it("skips entity types fully covered by prior runs", async () => {
+    // Prior run covers "issue" with since far in the past (wider than depth=30)
+    const history = [
+      {
+        entityType: "issue",
+        since: "2020-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+        completedAt: "2026-01-02T00:00:00Z",
+      },
+    ];
+    mockFetchConnection(makeConnection(), history);
+    const step = makeStep();
+
+    const result = (await capturedHandler({
+      event: makeEvent({ depth: 30 }),
+      step,
+    })) as Record<string, unknown>;
+
+    // "issue" should be skipped for both resources, "pull_request" and "release" should run
+    // 2 resources x 3 entity types = 6 total, 2 resources x 1 skipped entity = 2 skipped
+    expect(result.skipped).toBe(2);
+    expect(result.dispatched).toBe(4);
+  });
+
+  it("includes entity types when depth escalates beyond prior run", async () => {
+    // Prior run only covers depth=7 (since ~7 days ago)
+    // New request is depth=30 (since ~30 days ago) — wider range needed
+    const recentSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const history = [
+      {
+        entityType: "issue",
+        since: recentSince,
+        depth: 7,
+        status: "completed",
+        completedAt: "2026-02-22T00:00:00Z",
+      },
+    ];
+    mockFetchConnection(makeConnection(), history);
+    const step = makeStep();
+
+    const result = (await capturedHandler({
+      event: makeEvent({ depth: 30 }),
+      step,
+    })) as Record<string, unknown>;
+
+    // Prior since (~7 days ago) > requested since (~30 days ago) → include
+    expect(result.skipped).toBe(0);
+    expect(result.dispatched).toBe(6);
+  });
+
+  it("continues with empty history when fetch fails", async () => {
+    mockFetch
+      .mockResolvedValueOnce(new Response(JSON.stringify(makeConnection()), { status: 200 }))
+      .mockRejectedValueOnce(new Error("gateway down"));
+    const step = makeStep();
+
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
+
+    // No history = no filtering, all work units dispatched
+    expect(result.skipped).toBe(0);
+  });
+
+  it("returns early when all work units are skipped", async () => {
+    // All 3 default entity types covered
+    const history = [
+      { entityType: "pull_request", since: "2020-01-01T00:00:00Z", depth: 30, status: "completed", completedAt: "2026-01-02T00:00:00Z" },
+      { entityType: "issue", since: "2020-01-01T00:00:00Z", depth: 30, status: "completed", completedAt: "2026-01-02T00:00:00Z" },
+      { entityType: "release", since: "2020-01-01T00:00:00Z", depth: 30, status: "completed", completedAt: "2026-01-02T00:00:00Z" },
+    ];
+    mockFetchConnection(makeConnection(), history);
+    const step = makeStep();
+
+    const result = (await capturedHandler({
+      event: makeEvent({ depth: 30 }),
+      step,
+    })) as Record<string, unknown>;
+
+    expect(result.success).toBe(true);
+    expect(result.workUnits).toBe(6);
+    expect(result.skipped).toBe(6);
+    expect(result.dispatched).toBe(0);
+    expect(step.sendEvent).not.toHaveBeenCalled();
   });
 });

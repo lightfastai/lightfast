@@ -127,7 +127,7 @@ const mockConnector = {
 };
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   mockGetConnector.mockReturnValue(mockConnector);
 });
 
@@ -279,7 +279,7 @@ describe("orchestrator step memoization replay", () => {
     const handler = handlers["apps-backfill/run.orchestrator"]!;
 
     // ── Recording pass ──
-    // Mock: connection fetch
+    // Mock: connection fetch + backfill history
     mockFetch.mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -298,6 +298,9 @@ describe("orchestrator step memoization replay", () => {
         }),
         { status: 200 },
       ),
+    );
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify([]), { status: 200 }),
     );
 
     // Configure waitForEvent to return a successful completion
@@ -344,6 +347,7 @@ describe("orchestrator step memoization replay", () => {
     const handler = handlers["apps-backfill/run.orchestrator"]!;
 
     // ── Recording pass ──
+    // Mock: connection fetch + backfill history
     mockFetch.mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -367,6 +371,9 @@ describe("orchestrator step memoization replay", () => {
         }),
         { status: 200 },
       ),
+    );
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify([]), { status: 200 }),
     );
 
     const waitResults = {

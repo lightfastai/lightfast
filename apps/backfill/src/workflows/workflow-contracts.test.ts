@@ -82,9 +82,8 @@ const mockConnector = {
 };
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   mockGetConnector.mockReturnValue(mockConnector);
-  mockConnector.fetchPage.mockReset();
 });
 
 /**
@@ -114,6 +113,9 @@ describe("orchestrator ↔ entity worker event contract", () => {
         }),
         { status: 200 },
       ),
+    );
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify([]), { status: 200 }),
     );
 
     const waitForEventCalls: Array<{ stepName: string; opts: any }> = [];
@@ -224,6 +226,9 @@ describe("orchestrator ↔ entity worker event contract", () => {
         { status: 200 },
       ),
     );
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify([]), { status: 200 }),
+    );
 
     const waitForEventCalls: Array<{ stepName: string; opts: any }> = [];
     const orchestratorStep = {
@@ -315,6 +320,9 @@ describe("orchestrator ↔ entity worker event contract", () => {
         { status: 200 },
       ),
     );
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify([]), { status: 200 }),
+    );
 
     let capturedEventName: string | undefined;
     const orchestratorStep = {
@@ -400,6 +408,9 @@ describe("orchestrator ↔ entity worker event contract", () => {
         }),
         { status: 200 },
       ),
+    );
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify([]), { status: 200 }),
     );
 
     let fanOutEvents: any[] = [];

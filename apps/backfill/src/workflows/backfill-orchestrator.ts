@@ -82,6 +82,28 @@ export const backfillOrchestrator = inngest.createFunction(
       return conn;
     });
 
+    // ── Step 1b: Fetch backfill history from Gateway ──
+    const backfillHistory = await step.run("get-backfill-history", async () => {
+      const response = await fetch(
+        `${gatewayUrl}/gateway/${installationId}/backfill-runs?status=completed`,
+        {
+          headers: {
+            "X-API-Key": env.GATEWAY_API_KEY,
+            "X-Request-Source": "backfill",
+            ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
+          },
+          signal: AbortSignal.timeout(10_000),
+        },
+      ).catch(() => null); // Best-effort — no history = full backfill
+
+      if (!response?.ok) {
+        return [];
+      }
+      return response.json() as Promise<
+        { entityType: string; since: string; depth: number; status: string; completedAt: string | null }[]
+      >;
+    });
+
     // ── Step 2: Resolve entity types and validate connector ──
     const connector = getConnector(
       provider as Parameters<typeof getConnector>[0],
@@ -115,12 +137,27 @@ export const backfillOrchestrator = inngest.createFunction(
       })),
     );
 
-    if (workUnits.length === 0) {
+    // ── Gap-aware filtering: skip entity types fully covered by prior runs ──
+    // A prior run "covers" an entity type if its `since` is earlier-or-equal
+    // to the requested `since` — meaning it already fetched a wider or equal range.
+    // deliveryId dedup at the relay handles any overlap on boundaries.
+    const filteredWorkUnits = workUnits.filter((wu) => {
+      const priorRun = backfillHistory.find((h) => h.entityType === wu.entityType);
+      if (!priorRun) {
+        return true; // No prior run — must fetch
+      }
+      // Prior run's since ≤ requested since → already covered
+      return new Date(priorRun.since) > new Date(since);
+    });
+
+    if (filteredWorkUnits.length === 0) {
       return {
         success: true,
         installationId,
         provider,
-        workUnits: 0,
+        workUnits: workUnits.length,
+        skipped: workUnits.length,
+        dispatched: 0,
         eventsProduced: 0,
         eventsDispatched: 0,
       };
@@ -129,7 +166,7 @@ export const backfillOrchestrator = inngest.createFunction(
     // ── Step 4: Fan-out — dispatch all work units ──
     await step.sendEvent(
       "fan-out-entity-workers",
-      workUnits.map((wu) => ({
+      filteredWorkUnits.map((wu) => ({
         name: "apps-backfill/entity.requested" as const,
         data: {
           installationId,
@@ -162,7 +199,7 @@ export const backfillOrchestrator = inngest.createFunction(
         });
 
     const completionResults = await Promise.all(
-      workUnits.map(async (wu) => {
+      filteredWorkUnits.map(async (wu) => {
         const result = await step.waitForEvent(
           `wait-${wu.workUnitId}`,
           {
@@ -198,6 +235,8 @@ export const backfillOrchestrator = inngest.createFunction(
       installationId,
       provider,
       workUnits: workUnits.length,
+      skipped: workUnits.length - filteredWorkUnits.length,
+      dispatched: filteredWorkUnits.length,
       completed: succeeded.length,
       failed: failed.length,
       eventsProduced: completionResults.reduce(
