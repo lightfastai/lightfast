@@ -58,7 +58,7 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
           eventType: data.eventType,
           status: "received",
           payload: JSON.stringify(data.payload),
-          receivedAt: new Date(data.receivedAt).toISOString(),
+          receivedAt: new Date(data.receivedAt < 1e12 ? data.receivedAt * 1000 : data.receivedAt).toISOString(),
         })
         .onConflictDoNothing();
     });
@@ -185,7 +185,7 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
         },
         retries: 5,
         deduplicationId: `${data.provider}:${data.deliveryId}`,
-        callback: `${relayBaseUrl}/admin/delivery-status`,
+        callback: `${relayBaseUrl}/admin/delivery-status?provider=${data.provider}`,
       });
     });
 

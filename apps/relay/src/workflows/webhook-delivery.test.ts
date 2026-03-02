@@ -221,7 +221,7 @@ describe("webhook-delivery workflow", () => {
         }),
         retries: 5,
         deduplicationId: "github:del-001",
-        callback: "https://relay.test/api/admin/delivery-status",
+        callback: "https://relay.test/api/admin/delivery-status?provider=github",
       }),
     );
 

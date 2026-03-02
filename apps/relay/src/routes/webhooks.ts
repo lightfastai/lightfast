@@ -97,7 +97,7 @@ webhooks.post("/:provider", async (c) => {
         installationId: body.connectionId,
         status: "received",
         payload: JSON.stringify(parsedPayload),
-        receivedAt: new Date(body.receivedAt).toISOString(),
+        receivedAt: new Date(body.receivedAt < 1e12 ? body.receivedAt * 1000 : body.receivedAt).toISOString(),
       })
       .onConflictDoNothing();
 
@@ -125,15 +125,24 @@ webhooks.post("/:provider", async (c) => {
     });
 
     // Update persisted status — QStash accepted, pending Console delivery
-    await db
-      .update(gwWebhookDeliveries)
-      .set({ status: "enqueued" })
-      .where(
-        and(
-          eq(gwWebhookDeliveries.provider, provider.name),
-          eq(gwWebhookDeliveries.deliveryId, body.deliveryId),
-        ),
-      );
+    // Best-effort: don't fail the request if status update fails after QStash accepted
+    try {
+      await db
+        .update(gwWebhookDeliveries)
+        .set({ status: "enqueued" })
+        .where(
+          and(
+            eq(gwWebhookDeliveries.provider, provider.name),
+            eq(gwWebhookDeliveries.deliveryId, body.deliveryId),
+          ),
+        );
+    } catch (err) {
+      console.error("[webhooks] failed to update delivery status after enqueue", {
+        provider: provider.name,
+        deliveryId: body.deliveryId,
+        error: err,
+      });
+    }
 
     return c.json({ status: "accepted", deliveryId: body.deliveryId });
   }

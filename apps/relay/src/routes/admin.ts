@@ -255,10 +255,15 @@ admin.post("/delivery-status", qstashAuth, async (c) => {
   if (typeof deliveryId === "string") {
     const newStatus = state === "delivered" ? "delivered" : state === "error" ? "dlq" : null;
     if (newStatus) {
+      const provider = c.req.query("provider");
+      const conditions = [eq(gwWebhookDeliveries.deliveryId, deliveryId)];
+      if (provider) {
+        conditions.push(eq(gwWebhookDeliveries.provider, provider));
+      }
       await db
         .update(gwWebhookDeliveries)
         .set({ status: newStatus })
-        .where(eq(gwWebhookDeliveries.deliveryId, deliveryId));
+        .where(and(...conditions));
     }
   }
 
