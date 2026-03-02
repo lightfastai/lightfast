@@ -2,15 +2,18 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 
-const { mockPublishJSON, mockEnv } = vi.hoisted(() => {
+const { mockPublishJSON, mockEnv, mockFetch } = vi.hoisted(() => {
   const env = {
     GATEWAY_API_KEY: "test-api-key",
   };
   return {
     mockPublishJSON: vi.fn().mockResolvedValue({ messageId: "msg-1" }),
     mockEnv: env,
+    mockFetch: vi.fn(),
   };
 });
+
+vi.stubGlobal("fetch", mockFetch);
 
 vi.mock("../env", () => ({
   env: mockEnv,
@@ -226,5 +229,65 @@ describe("POST /api/backfill", () => {
 
     expect(res.status).toBe(502);
     expect(await res.json()).toEqual({ error: "forward_failed" });
+  });
+});
+
+describe("POST /api/backfill/estimate", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns 401 without X-API-Key", async () => {
+    const res = await request("/api/backfill/estimate", {
+      body: { installationId: "inst-1", provider: "github", orgId: "org-1" },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("forwards estimate request to backfill service and returns response", async () => {
+    const estimateResponse = {
+      installationId: "inst-1",
+      provider: "github",
+      depth: 30,
+      entityTypes: ["pull_request"],
+      totals: { estimatedItems: 100, estimatedPages: 4 },
+    };
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify(estimateResponse), { status: 200 }),
+    );
+
+    const res = await request("/api/backfill/estimate", {
+      body: { installationId: "inst-1", provider: "github", orgId: "org-1" },
+      headers: { "X-API-Key": "test-api-key" },
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual(estimateResponse);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://backfill.test/api/estimate",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+          "X-API-Key": "test-api-key",
+        }),
+      }),
+    );
+  });
+
+  it("forwards error status from backfill service", async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: "connection_not_found" }), { status: 404 }),
+    );
+
+    const res = await request("/api/backfill/estimate", {
+      body: { installationId: "inst-1", provider: "github", orgId: "org-1" },
+      headers: { "X-API-Key": "test-api-key" },
+    });
+
+    expect(res.status).toBe(404);
+    expect(await res.json()).toMatchObject({ error: "connection_not_found" });
   });
 });
