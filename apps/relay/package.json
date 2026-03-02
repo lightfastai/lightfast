@@ -31,7 +31,7 @@
     "@vendor/related-projects": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
-    "@vercel/flags-core": "^1.0.1",
+    "@vendor/vercel-flags": "workspace:*",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
     "zod": "catalog:zod3"

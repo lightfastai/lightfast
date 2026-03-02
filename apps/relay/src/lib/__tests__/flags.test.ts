@@ -1,85 +1,56 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-// Reset module state between tests to isolate singleton behavior
-vi.mock("@vercel/flags-core", () => ({
-  createClient: vi.fn(),
+vi.mock("@vendor/vercel-flags", () => ({
+  evaluateFlag: vi.fn(),
 }));
 
 describe("isConsoleFanOutEnabled", () => {
   beforeEach(() => {
     vi.resetModules();
-    vi.unstubAllEnvs();
+    vi.clearAllMocks();
   });
 
-  it("returns true when FLAGS env var is not set", async () => {
-    vi.stubEnv("FLAGS", undefined as unknown as string);
+  it("calls evaluateFlag with console-fan-out key and default true", async () => {
+    const { evaluateFlag } = await import("@vendor/vercel-flags");
+    vi.mocked(evaluateFlag).mockResolvedValue(true);
+
     const { isConsoleFanOutEnabled } = await import("../flags.js");
     const result = await isConsoleFanOutEnabled();
+
     expect(result).toBe(true);
+    expect(evaluateFlag).toHaveBeenCalledWith("console-fan-out", true, undefined);
   });
 
-  it("returns true when FLAGS is empty string", async () => {
-    vi.stubEnv("FLAGS", "");
-    const { isConsoleFanOutEnabled } = await import("../flags.js");
-    const result = await isConsoleFanOutEnabled();
-    expect(result).toBe(true);
-  });
+  it("passes webhook.provider context when provider is given", async () => {
+    const { evaluateFlag } = await import("@vendor/vercel-flags");
+    vi.mocked(evaluateFlag).mockResolvedValue(false);
 
-  it("returns true when FLAGS is not set, even with provider context", async () => {
-    vi.stubEnv("FLAGS", undefined as unknown as string);
-    const { isConsoleFanOutEnabled } = await import("../flags.js");
-    const result = await isConsoleFanOutEnabled("github");
-    expect(result).toBe(true);
-  });
-
-  it("calls evaluate with provider context when provider is passed and client exists", async () => {
-    const mockEvaluate = vi.fn().mockResolvedValue({ value: false });
-    const mockInitialize = vi.fn().mockResolvedValue(undefined);
-    const { createClient } = await import("@vercel/flags-core");
-    vi.mocked(createClient).mockReturnValue({
-      evaluate: mockEvaluate,
-      initialize: mockInitialize,
-    } as unknown as ReturnType<typeof createClient>);
-
-    vi.stubEnv("FLAGS", "vf_test_key");
     const { isConsoleFanOutEnabled } = await import("../flags.js");
     const result = await isConsoleFanOutEnabled("github");
 
     expect(result).toBe(false);
-    expect(mockEvaluate).toHaveBeenCalledWith("console-fan-out", true, { provider: "github" });
+    expect(evaluateFlag).toHaveBeenCalledWith("console-fan-out", true, {
+      webhook: { provider: "github" },
+    });
   });
 
-  it("calls evaluate without context when no provider is passed", async () => {
-    const mockEvaluate = vi.fn().mockResolvedValue({ value: true });
-    const mockInitialize = vi.fn().mockResolvedValue(undefined);
-    const { createClient } = await import("@vercel/flags-core");
-    vi.mocked(createClient).mockReturnValue({
-      evaluate: mockEvaluate,
-      initialize: mockInitialize,
-    } as unknown as ReturnType<typeof createClient>);
+  it("returns true when evaluateFlag returns true", async () => {
+    const { evaluateFlag } = await import("@vendor/vercel-flags");
+    vi.mocked(evaluateFlag).mockResolvedValue(true);
 
-    vi.stubEnv("FLAGS", "vf_test_key");
     const { isConsoleFanOutEnabled } = await import("../flags.js");
-    const result = await isConsoleFanOutEnabled();
+    const result = await isConsoleFanOutEnabled("linear");
 
     expect(result).toBe(true);
-    expect(mockEvaluate).toHaveBeenCalledWith("console-fan-out", true, undefined);
   });
 
-  it("returns true when evaluate returns undefined value", async () => {
-    const mockEvaluate = vi.fn().mockResolvedValue({ value: undefined });
-    const mockInitialize = vi.fn().mockResolvedValue(undefined);
-    const { createClient } = await import("@vercel/flags-core");
-    vi.mocked(createClient).mockReturnValue({
-      evaluate: mockEvaluate,
-      initialize: mockInitialize,
-    } as unknown as ReturnType<typeof createClient>);
+  it("returns false when evaluateFlag returns false", async () => {
+    const { evaluateFlag } = await import("@vendor/vercel-flags");
+    vi.mocked(evaluateFlag).mockResolvedValue(false);
 
-    vi.stubEnv("FLAGS", "vf_test_key");
     const { isConsoleFanOutEnabled } = await import("../flags.js");
-    const result = await isConsoleFanOutEnabled();
+    const result = await isConsoleFanOutEnabled("sentry");
 
-    // undefined falls back to true (default)
-    expect(result).toBe(true);
+    expect(result).toBe(false);
   });
 });
