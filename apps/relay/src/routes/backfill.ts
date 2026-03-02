@@ -61,12 +61,19 @@ backfill.post("/", apiKeyAuth, async (c) => {
  * Synchronous probe: forwards estimate request to the backfill service
  * and returns the structured scope estimate directly (no QStash).
  */
+const estimatePayload = backfillTriggerPayload.omit({ holdForReplay: true });
+
 backfill.post("/estimate", apiKeyAuth, async (c) => {
   let body: unknown;
   try {
     body = await c.req.json();
   } catch {
     return c.json({ error: "invalid_json" }, 400);
+  }
+
+  const parsed = estimatePayload.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: "validation_error", details: parsed.error.flatten() }, 400);
   }
 
   const { GATEWAY_API_KEY } = getEnv(c);
@@ -77,7 +84,7 @@ backfill.post("/estimate", apiKeyAuth, async (c) => {
       "Content-Type": "application/json",
       "X-API-Key": GATEWAY_API_KEY,
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(parsed.data),
     signal: AbortSignal.timeout(30_000),
   });
 

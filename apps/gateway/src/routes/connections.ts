@@ -1,6 +1,6 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwResources, gwBackfillRuns } from "@db/console/schema";
-import { backfillRunRecord } from "@repo/gateway-types";
+import { backfillRunRecord, BACKFILL_TERMINAL_STATUSES } from "@repo/gateway-types";
 import { nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
@@ -634,36 +634,31 @@ connections.post("/:id/backfill-runs", apiKeyAuth, async (c) => {
 
   const now = new Date().toISOString();
   const data = parsed.data;
+  const isTerminal = BACKFILL_TERMINAL_STATUSES.includes(data.status);
+
+  const sharedFields = {
+    since: data.since,
+    depth: data.depth,
+    status: data.status,
+    pagesProcessed: data.pagesProcessed,
+    eventsProduced: data.eventsProduced,
+    eventsDispatched: data.eventsDispatched,
+    error: data.error ?? null,
+    completedAt: isTerminal ? now : null,
+    updatedAt: now,
+  };
 
   await db
     .insert(gwBackfillRuns)
     .values({
       installationId,
       entityType: data.entityType,
-      since: data.since,
-      depth: data.depth,
-      status: data.status,
-      pagesProcessed: data.pagesProcessed,
-      eventsProduced: data.eventsProduced,
-      eventsDispatched: data.eventsDispatched,
-      error: data.error ?? null,
+      ...sharedFields,
       startedAt: data.status === "running" ? now : null,
-      completedAt: data.status === "completed" || data.status === "failed" ? now : null,
-      updatedAt: now,
     })
     .onConflictDoUpdate({
       target: [gwBackfillRuns.installationId, gwBackfillRuns.entityType],
-      set: {
-        since: data.since,
-        depth: data.depth,
-        status: data.status,
-        pagesProcessed: data.pagesProcessed,
-        eventsProduced: data.eventsProduced,
-        eventsDispatched: data.eventsDispatched,
-        error: data.error ?? null,
-        completedAt: data.status === "completed" || data.status === "failed" ? now : null,
-        updatedAt: now,
-      },
+      set: sharedFields,
     });
 
   return c.json({ status: "ok" });

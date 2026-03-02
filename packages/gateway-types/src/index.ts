@@ -22,10 +22,13 @@ export type { WebhookReceiptPayload, WebhookEnvelope } from "./webhooks";
 
 export {
   backfillDepthSchema,
+  backfillRunStatusSchema,
   backfillTriggerPayload,
   backfillRunRecord,
+  BACKFILL_RUN_STATUSES,
+  BACKFILL_TERMINAL_STATUSES,
 } from "./backfill";
-export type { BackfillDepth, BackfillTriggerPayload, BackfillRunRecord } from "./backfill";
+export type { BackfillDepth, BackfillRunStatus, BackfillTriggerPayload, BackfillRunRecord } from "./backfill";
 
 export type {
   BaseAccountInfo,
