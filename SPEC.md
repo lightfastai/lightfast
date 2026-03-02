@@ -1,113 +1,65 @@
 # Lightfast — Vision & Mission
 
-Last Updated: 2025-12-09
+Last Updated: 2026-03-02
 
-Lightfast is the memory layer for teams. Every decision across your tools — surfaced, cited, and ready for people and agents.
+An operating infrastructure between your agents and apps.
 
 ---
 
 ## Mission
 
-Be the memory layer for every team — so nothing gets lost and every answer cites its source.
+Be the operating layer for every team — so agents and people can observe, reason, and act across your entire tool stack through a single system.
 
 ## Vision
 
-Any engineer or agent can ask "what broke?", "who owns this?", "why was this decision made?" and get accurate, cited answers across your entire engineering ecosystem, in real time.
+Any agent or engineer can understand what's happening, why it happened, and what should happen next — across every tool, every team, every decision — without knowing which tools exist or how they work.
 
 ---
 
 ## Positioning
 
-- **Decisions, surfaced:** Every decision your team makes across your tools — searchable, cited, and ready.
-- **Explainable by design:** See who owns what, what depends on what, and why decisions were made.
-- **People and agents:** Four simple API routes. MCP tools for agents. Integrate in minutes.
+- **Operating infrastructure:** Not a feature — a layer. Agents and people operate through Lightfast the way programs operate through an OS.
+- **Tool-agnostic by design:** Express intent, not API calls. The system resolves what to do and where.
+- **Agents and people:** Same primitives for both. REST API, MCP tools, and webhooks. Integrate in minutes.
 
 ---
 
-## What We Remember
+## What We Do
 
-- **Code & Changes:** Pull requests, commits, code reviews, and discussions from source control (GitHub, GitLab, Bitbucket).
-- **Deployments & Infrastructure:** Deployment events, build logs, environment changes, and infrastructure state (Vercel, Railway, Pulumi, Terraform).
-- **Incidents & Errors:** Error events, incident timelines, resolutions, and post-mortems (Sentry, PagerDuty).
-- **Decisions & Context:** Capture why decisions were made, what was discussed, and who was involved.
-- **People & Ownership:** Track who owns what, who worked on what, and who has context on any topic.
-
-Memory is broad and evidence-backed. Context emerges from what actually happened, not narrow predefined categories.
+- **Observe:** Ingest every event across your tools — code changes, deployments, incidents, decisions, messages — automatically and continuously.
+- **Remember:** Build a living graph of what happened, who was involved, how things relate, and why decisions were made. Searchable by meaning, always citing sources.
+- **Reason:** Detect patterns, predict outcomes, compute truth across conflicting sources, and enforce invariants your team defines.
+- **Act:** Resolve intent to action across any connected tool. Agents express what they want — the system figures out where and how.
 
 ---
 
 ## Principles
 
-- **Search by meaning:** Understand intent, not just match keywords.
-- **Always cite sources:** Every answer shows where it came from.
-- **Privacy by default:** Your data stays yours. Complete tenant isolation.
-- **Continuously improve:** Measure quality, learn from usage, adapt over time.
-
----
-
-## How We Build
-
-- **Simple API:** Four routes do everything—search, contents, similar, answer. Same tools for REST and MCP.
-- **Smart retrieval:** Search understands meaning and context. Results are ranked by relevance and recency.
-- **Organized memory:** Consolidate related information. Surface what's important. Archive what's not.
-- **Quality first:** Measure every query. Learn from feedback. Improve accuracy over time.
-
----
-
-## API
-
-Four routes power everything:
-
-- **POST `/v1/search`** — Search and rank results. Optionally include rationale and highlights.
-- **POST `/v1/contents`** — Get full documents, metadata, and relationships.
-- **POST `/v1/similar`** — Find related content based on meaning.
-- **POST `/v1/answer`** — Get synthesized answers with citations. Supports streaming.
-
-Available via REST API and MCP tools for agent runtimes.
+- **Primitives over features:** Composable building blocks. Every capability is a configuration, not a new subsystem.
+- **Events are facts:** Immutable, causally ordered. Interpretations layer on top. History is never rewritten.
+- **Intent over API calls:** Agents express what they want. The system resolves how.
+- **Cite everything:** Every answer, every action, every decision traces back to source events.
+- **Privacy by default:** Complete tenant isolation. Your data stays yours.
 
 ---
 
 ## What We Measure
 
-- **Speed and quality:** How fast users get accurate answers with sources.
-- **Trust:** How often answers include rationale and verifiable evidence.
-- **Adoption:** How quickly developers integrate and how actively agents use the API.
-- **Coverage:** How much of your team's knowledge is searchable and connected.
+- **Coverage:** How much of your team's operations are observed and connected.
+- **Speed and accuracy:** How fast agents and people get correct, cited answers.
+- **Trust:** How often answers include verifiable evidence and causal rationale.
+- **Adoption:** How quickly teams integrate and how actively agents operate through the layer.
 
 ---
 
 ## What We Don't Do
 
-- **Complex graph queries:** We focus on 1-2 hop relationships (ownership, dependencies), not deep graph traversal.
-- **General analytics:** We're not a data warehouse or BI tool. We're built for memory and context.
-- **Black-box answers:** Every answer must cite its sources. No summarization without verification.
+- **Replace your tools:** We mediate between them. Your team keeps using what they use.
+- **General analytics:** We're an operating layer, not a data warehouse or BI tool.
+- **Black-box decisions:** Every action traces to source events. No summarization without verification.
 
 ---
 
 ## Technical
 
-**Architecture:**
-- Storage: PlanetScale (MySQL) for metadata, S3 for bodies, Redis for cache/queues
-- Indexing: Pinecone for vector search; namespaced per workspace and embedding version
-- Multi-view embeddings: title, snippet, body, summary embedded separately
-
-**Retrieval:**
-- Hybrid pipeline: dense + lexical + graph bias + recency + importance + profile similarity
-- Cross-encoder rerank on top-K for precision
-- Router modes: knowledge | neural | hybrid (internal; API stays simple)
-
-**Memory System:**
-- Chunks: durable document slices for high-recall retrieval
-- Observations: atomic moments (decisions, incidents, highlights) with multi-view embeddings
-- Summaries: clustered rollups by entity/topic/time
-- Profiles: per-entity centroids and descriptors for personalization
-
-**Graph:**
-- Explicit entities and typed relationships
-- Short-hop reasoning (1-2 hops) with bounded, explainable rationale
-- Graph influence tracked per query
-
-**Quality:**
-- Continuous evaluation: recall@k, rerank lift, snippet accuracy, rationale faithfulness
-- Per-workspace calibration: weights, thresholds, decay factors
-- Feedback loops tune ranking over time
+**Observe → Remember → Reason → Act** — a pipeline where events flow in from tools, get stored as a temporal graph with semantic embeddings, are reasoned over by processes and invariants, and result in actions resolved back to tools.

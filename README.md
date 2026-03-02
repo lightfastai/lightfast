@@ -6,87 +6,58 @@
 [![CI Status](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml/badge.svg)](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/stargazers)
 
-**Lightfast is the memory layer for teams. Every decision across your tools — surfaced, cited, and ready for people and agents.**
+**An operating infrastructure between your agents and apps.**
 
-> **Early Access** — Lightfast is currently in early access. [Request access →](https://lightfast.ai/early-access)
-
-[Website](https://lightfast.ai) · [Documentation](https://lightfast.ai/docs/get-started/overview) · [Chat Demo](https://chat.lightfast.ai) · [Discord](https://discord.gg/YqPDfcar2C)
+[Website](https://lightfast.ai) · [Documentation](https://lightfast.ai/docs/get-started/overview) · [Discord](https://discord.gg/YqPDfcar2C)
 
 ## Why Lightfast?
 
-Every team generates decisions across PRs, docs, incidents, and conversations — but that knowledge gets buried. Lightfast surfaces it all so engineers and AI agents can:
+Your team's work happens across dozens of tools. Your agents need to understand and act across all of them. Lightfast is the layer in between — it observes what's happening, remembers what happened, and gives agents and people a single system to operate through.
 
-- **Search by meaning** — not just keywords
-- **Get cited answers** — trace every decision back to its source
-- **Power agents** — production-ready retrieval for people and AI alike
+- **Observe** — Ingest every event across your tools, automatically and continuously
+- **Remember** — Search by meaning across everything that happened, always citing sources
+- **Act** — Agents express intent, the system resolves what to do and where
 
-## Supported Sources
+## Rollout
 
-**Available now:**
-- **GitHub** — Pull requests, issues, code, discussions
-- **Vercel** — Deployments, logs, project activity
+Lightfast ships in three phases. Each builds on the last.
+
+### Events — Available now
+
+A unified event system across your tools. Connect your sources, receive structured events in real time. No waitlist.
+
+**Supported sources:**
+- **GitHub** — Push, pull requests, issues, code reviews
+- **Vercel** — Deployments, project activity
+- **Sentry** — Errors, issues, alerts
+- **Linear** — Issues, comments, projects, cycles
 
 **Coming soon:**
-- Linear, Sentry, Slack, Notion, Confluence
-- PlanetScale, Pulumi, Terraform, Zendesk
+- Slack, Notion, Confluence, PagerDuty
 - [Request an integration →](https://github.com/lightfastai/lightfast/issues)
 
-## Use Cases
+### Memory — Coming soon
+
+Semantic search and cited answers across your entire tool stack. Everything from the event system gets indexed, connected, and made searchable by meaning. Powered by the same event pipeline — no additional setup.
 
 ```typescript
-// "Why did we choose Postgres over MongoDB?"
-await lightfast.search({ query: "database selection decision postgres mongodb" });
-
-// "How does our payment integration work?"
-await lightfast.search({ query: "stripe payment flow implementation" });
-
 // "What broke in last week's deployment?"
-await lightfast.search({ query: "production incident postmortem", filters: { dateRange: "7d" } });
+await lightfast.search({ query: "production incident deployment", filters: { dateRange: "7d" } });
 
-// "Find PRs similar to this refactor"
+// "Who has context on the auth system?"
+await lightfast.search({ query: "authentication ownership context" });
+
+// "Find things related to this PR"
 await lightfast.findSimilar({ url: "https://github.com/org/repo/pull/123" });
-
-// "What do we know about rate limiting?"
-await lightfast.search({ query: "rate limiting implementation patterns" });
 ```
 
-**Example response:**
+### Operating Layer — [Join the waitlist →](https://lightfast.ai/waitlist)
 
-```json
-{
-  "results": [
-    {
-      "id": "doc_abc123",
-      "type": "pull_request",
-      "title": "Add rate limiting to API endpoints",
-      "snippet": "Implemented token bucket algorithm with Redis...",
-      "score": 0.92,
-      "source": "github",
-      "url": "https://github.com/org/repo/pull/456",
-      "metadata": { "author": "jane", "mergedAt": "2024-12-01" }
-    }
-  ],
-  "meta": { "total": 24, "latency": { "total": 145 } }
-}
-```
-
-## Security
-
-- **Your code stays yours** — We index metadata and content for search, never train on your data
-- **Encrypted at rest and in transit** — Industry-standard security practices
-- **Role-based access** — Workspace permissions mirror your source permissions
-- **Self-hosted option** — Coming soon for enterprises with strict data residency requirements
-
-## Requirements
-
-- Node.js >= 18
-- A Lightfast API key ([request access](https://lightfast.ai/early-access))
+The full operating infrastructure. Agents express what they want in natural language — Lightfast resolves it to the right tool, enforces your team's rules, and tracks everything that happens. Processes that run for seconds or months. Invariants that span tools. Intent resolution that learns from your team.
 
 ## Integrate in 2 Ways
 
 ### 1. TypeScript SDK
-
-Install the `lightfast` package to add semantic search to any application:
 
 ```bash
 npm install lightfast
@@ -95,10 +66,9 @@ npm install lightfast
 ```typescript
 import { Lightfast } from "lightfast";
 
-// Pass API key directly or use LIGHTFAST_API_KEY environment variable
 const lightfast = new Lightfast({ apiKey: process.env.LIGHTFAST_API_KEY });
 
-// Search your workspace memory
+// Search your workspace
 const results = await lightfast.search({
   query: "how does authentication work",
   limit: 10,
@@ -118,7 +88,7 @@ const similar = await lightfast.findSimilar({
 
 ### 2. MCP Server (Claude, Cursor, Codex)
 
-Connect AI assistants directly to your workspace memory via [Model Context Protocol](https://modelcontextprotocol.io/).
+Connect AI assistants directly to your workspace via [Model Context Protocol](https://modelcontextprotocol.io/).
 
 <details>
 <summary><strong>Claude Desktop</strong></summary>
@@ -203,15 +173,21 @@ LIGHTFAST_API_KEY = "sk-lf-..."
 </details>
 
 **Available tools:**
-- `lightfast_search` — Search workspace memory
+- `lightfast_search` — Search your workspace
 - `lightfast_contents` — Fetch full document content
 - `lightfast_find_similar` — Find semantically similar documents
 
-## Get an API Key
+## Security
 
-1. [Request early access](https://lightfast.ai/early-access) to join the waitlist
-2. Create a workspace and connect your sources (GitHub, docs, etc.)
-3. Generate an API key from your workspace settings
+- **Your data stays yours** — We never train on your data. Complete tenant isolation.
+- **Encrypted at rest and in transit** — Industry-standard security practices
+- **Role-based access** — Workspace permissions mirror your source permissions
+- **Self-hosted option** — Coming soon for enterprises with strict data residency requirements
+
+## Requirements
+
+- Node.js >= 18
+- A Lightfast API key — [get started](https://lightfast.ai)
 
 ## Documentation
 
