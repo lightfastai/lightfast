@@ -27,11 +27,11 @@
     "@sentry/core": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@vendor/db": "workspace:*",
+    "@vendor/observability": "workspace:*",
     "@vendor/qstash": "workspace:*",
     "@vendor/related-projects": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
-    "@vendor/observability": "workspace:*",
     "@vendor/vercel-flags": "workspace:*",
     "hono": "catalog:",
     "zod": "catalog:zod3"
