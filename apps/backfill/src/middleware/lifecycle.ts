@@ -98,11 +98,12 @@ export const lifecycle = createMiddleware<{
     });
 
     // Flush logs — non-blocking on Edge via waitUntil, blocking fallback on Node.js
-    const flushPromise = log.flush();
+    // Swallow rejections so a flush failure never masks a thrown request error.
+    const safeFlush = log.flush().catch(() => {});
     try {
-      c.executionCtx.waitUntil(flushPromise);
+      c.executionCtx.waitUntil(safeFlush);
     } catch {
-      await flushPromise;
+      await safeFlush;
     }
   }
 });
