@@ -1,5 +1,5 @@
 import { createMiddleware } from "hono/factory";
-import * as Sentry from "@sentry/core";
+import { captureException, captureMessage, withScope } from "@vendor/observability/sentry";
 import type { RequestIdVariables } from "./request-id.js";
 
 /**
@@ -17,7 +17,7 @@ export const sentry = createMiddleware<{
   try {
     await next();
   } catch (err) {
-    Sentry.withScope((scope) => {
+    withScope((scope) => {
       scope.setTag("service", "relay");
       scope.setTag("http.method", c.req.method);
       scope.setTag("http.path", c.req.path);
@@ -31,14 +31,14 @@ export const sentry = createMiddleware<{
         requestId,
         correlationId,
       });
-      Sentry.captureException(err);
+      captureException(err);
     });
     throw err;
   }
 
   // Capture explicitly returned 5xx responses (not thrown as exceptions)
   if (c.res.status >= 500) {
-    Sentry.withScope((scope) => {
+    withScope((scope) => {
       scope.setTag("service", "relay");
       scope.setTag("http.method", c.req.method);
       scope.setTag("http.path", c.req.path);
@@ -53,7 +53,7 @@ export const sentry = createMiddleware<{
         requestId,
         correlationId,
       });
-      Sentry.captureMessage(
+      captureMessage(
         `HTTP ${c.res.status}: ${c.req.method} ${c.req.path}`,
         "error",
       );

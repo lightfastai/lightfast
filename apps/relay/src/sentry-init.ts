@@ -2,7 +2,7 @@ import {
 	ServerRuntimeClient,
 	createTransport,
 	initAndBind,
-} from "@sentry/core";
+} from "@vendor/observability/sentry";
 
 initAndBind(ServerRuntimeClient, {
 	dsn: process.env.SENTRY_DSN,

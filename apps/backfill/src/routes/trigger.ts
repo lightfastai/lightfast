@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getEnv } from "../env.js";
 import { inngest } from "../inngest/client.js";
+import { timingSafeStringEqual } from "../lib/crypto.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 const triggerSchema = z.object({
@@ -18,19 +19,8 @@ const cancelSchema = z.object({
 });
 
 function isValidApiKey(key: string | undefined, expected: string): boolean {
-  if (!key) {
-    return false;
-  }
-  const encoder = new TextEncoder();
-  const aBytes = encoder.encode(key);
-  const bBytes = encoder.encode(expected);
-
-  let result = aBytes.length ^ bBytes.length;
-  const maxLen = Math.max(aBytes.length, bBytes.length);
-  for (let i = 0; i < maxLen; i++) {
-    result |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
-  }
-  return result === 0;
+  if (!key) { return false; }
+  return timingSafeStringEqual(key, expected);
 }
 
 const trigger = new Hono<{ Variables: LifecycleVariables }>();

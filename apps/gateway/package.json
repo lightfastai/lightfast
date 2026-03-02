@@ -27,7 +27,6 @@
     "@repo/console-vercel": "workspace:*",
     "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
-    "@sentry/core": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@vendor/db": "workspace:*",
     "@vendor/observability": "workspace:*",

@@ -22,7 +22,6 @@
     "@repo/console-backfill": "workspace:*",
     "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
-    "@sentry/core": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "@vendor/inngest": "workspace:*",
     "@vendor/observability": "workspace:*",

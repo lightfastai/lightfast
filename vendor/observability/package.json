@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     "./sentry-env": "./src/env/sentry-env.ts",
+    "./sentry": "./src/sentry.ts",
     "./betterstack-env": "./src/env/betterstack-env.ts",
     "./log": {
       "types": "./dist/src/log.d.ts",
@@ -41,6 +42,7 @@
   "dependencies": {
     "@logtail/edge": "^0.5.0",
     "@logtail/next": "^0.2.0",
+    "@sentry/core": "catalog:",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",

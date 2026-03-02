@@ -660,9 +660,6 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
-      '@sentry/core':
-        specifier: 'catalog:'
-        version: 10.20.0
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
@@ -1435,9 +1432,6 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
-      '@sentry/core':
-        specifier: 'catalog:'
-        version: 10.20.0
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
@@ -1529,9 +1523,6 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
-      '@sentry/core':
-        specifier: 'catalog:'
-        version: 10.20.0
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
@@ -4723,6 +4714,9 @@ importers:
       '@logtail/next':
         specifier: ^0.2.0
         version: 0.2.1(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)
+      '@sentry/core':
+        specifier: 'catalog:'
+        version: 10.20.0
       '@sentry/nextjs':
         specifier: 'catalog:'
         version: 10.20.0(@opentelemetry/context-async-hooks@2.1.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)

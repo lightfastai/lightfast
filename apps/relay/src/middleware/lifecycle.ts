@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/core";
+import { addBreadcrumb } from "@vendor/observability/sentry";
 import { createMiddleware } from "hono/factory";
 import { env } from "../env.js";
 import { log } from "../logger.js";
@@ -93,7 +93,7 @@ export const lifecycle = createMiddleware<{
     log[level](`${c.req.method} ${c.req.path}`, entry);
 
     // Add breadcrumb for Sentry error correlation
-    Sentry.addBreadcrumb({
+    addBreadcrumb({
       category: "http",
       message: `${c.req.method} ${c.req.path} ${entry.status as number}`,
       level: error ? "error" : "info",

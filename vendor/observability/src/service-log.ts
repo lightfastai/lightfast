@@ -46,11 +46,15 @@ export function createServiceLogger(config: ServiceLoggerConfig): ServiceLogger 
     environment: config.environment,
   }));
 
+  const handleError = (err: unknown) => {
+    console.error("[service-log] failed to ship log to BetterStack", err);
+  };
+
   return {
-    debug: (msg, ctx) => { void logtail.debug(msg, ctx); },
-    info: (msg, ctx) => { void logtail.info(msg, ctx); },
-    warn: (msg, ctx) => { void logtail.warn(msg, ctx); },
-    error: (msg, ctx) => { void logtail.error(msg, ctx); },
+    debug: (msg, ctx) => { logtail.debug(msg, ctx).catch(handleError); },
+    info: (msg, ctx) => { logtail.info(msg, ctx).catch(handleError); },
+    warn: (msg, ctx) => { logtail.warn(msg, ctx).catch(handleError); },
+    error: (msg, ctx) => { logtail.error(msg, ctx).catch(handleError); },
     flush: () => logtail.flush(),
   };
 }
