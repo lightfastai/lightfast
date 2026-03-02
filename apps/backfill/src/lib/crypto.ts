@@ -5,18 +5,26 @@
 
 /**
  * Timing-safe comparison of two arbitrary strings.
- * Encodes both as UTF-8 and iterates to max length with XOR accumulator
- * to avoid timing-based length disclosure during comparison.
+ * Computes SHA-256 digests of both inputs and compares the fixed-length
+ * (32-byte) digests byte-by-byte with a constant-time XOR accumulator.
  */
-export function timingSafeStringEqual(a: string, b: string): boolean {
+export async function timingSafeStringEqual(
+  a: string,
+  b: string,
+): Promise<boolean> {
   const encoder = new TextEncoder();
-  const aBytes = encoder.encode(a);
-  const bBytes = encoder.encode(b);
+  const [digestA, digestB] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(a)),
+    crypto.subtle.digest("SHA-256", encoder.encode(b)),
+  ]);
 
-  let result = aBytes.length ^ bBytes.length;
-  const maxLen = Math.max(aBytes.length, bBytes.length);
-  for (let i = 0; i < maxLen; i++) {
-    result |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
+  const bytesA = new Uint8Array(digestA);
+  const bytesB = new Uint8Array(digestB);
+
+  // Digests are always 32 bytes — constant iteration count
+  let result = 0;
+  for (let i = 0; i < bytesA.length; i++) {
+    result |= bytesA[i]! ^ bytesB[i]!;
   }
   return result === 0;
 }

@@ -18,7 +18,7 @@ const cancelSchema = z.object({
   installationId: z.string().min(1),
 });
 
-function isValidApiKey(key: string | undefined, expected: string): boolean {
+async function isValidApiKey(key: string | undefined, expected: string): Promise<boolean> {
   if (!key) { return false; }
   return timingSafeStringEqual(key, expected);
 }
@@ -33,7 +33,7 @@ const trigger = new Hono<{ Variables: LifecycleVariables }>();
  */
 trigger.post("/", async (c) => {
   const { GATEWAY_API_KEY } = getEnv(c);
-  if (!isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY)) {
+  if (!(await isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
@@ -84,7 +84,7 @@ trigger.post("/", async (c) => {
  */
 trigger.post("/cancel", async (c) => {
   const { GATEWAY_API_KEY } = getEnv(c);
-  if (!isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY)) {
+  if (!(await isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
