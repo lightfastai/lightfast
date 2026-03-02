@@ -4,8 +4,8 @@
  * Verifies that POST /webhooks/:provider with X-API-Key header correctly
  * bypasses HMAC verification and processes backfill-sourced events.
  *
- * Infrastructure: in-memory Redis (dedup), QStash capture mock.
- * No PGlite needed — the service auth path does not use the DB.
+ * Infrastructure: in-memory Redis (dedup), QStash capture mock, DB mock (persistence).
+ * No PGlite needed — DB operations are mocked in-memory.
  */
 import {
   describe,
@@ -21,6 +21,7 @@ const {
   redisStore,
   qstashMessages,
   qstashMock,
+  dbOps,
 } = await vi.hoisted(async () => {
   const { makeRedisMock, makeQStashMock } = await import("./harness.js");
   const redisStore = new Map<string, unknown>();
@@ -30,6 +31,7 @@ const {
     redisStore,
     qstashMessages: messages,
     qstashMock: makeQStashMock(messages),
+    dbOps: [] as { op: "insert" | "update"; table?: unknown; values?: unknown; set?: unknown }[],
   };
 });
 
@@ -62,6 +64,37 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
 
 vi.mock("@vendor/upstash-workflow/hono", () => ({
   serve: vi.fn(() => () => new Response("ok")),
+}));
+
+vi.mock("@db/console/client", () => ({
+  db: {
+    insert: (...args: unknown[]) => {
+      const idx = dbOps.length;
+      dbOps.push({ op: "insert" as const, table: args[0] });
+      return {
+        values: (...valArgs: unknown[]) => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          dbOps[idx]!.values = valArgs[0];
+          return { onConflictDoNothing: () => Promise.resolve() };
+        },
+      };
+    },
+    update: (...args: unknown[]) => {
+      const idx = dbOps.length;
+      dbOps.push({ op: "update" as const, table: args[0] });
+      return {
+        set: (...setArgs: unknown[]) => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          dbOps[idx]!.set = setArgs[0];
+          return { where: () => Promise.resolve() };
+        },
+      };
+    },
+  },
+}));
+
+vi.mock("@db/console/schema", () => ({
+  gwWebhookDeliveries: {},
 }));
 
 // ── Import relay app after mocks ──
@@ -101,6 +134,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   qstashMessages.length = 0;
   redisStore.clear();
+  dbOps.length = 0;
 
   redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
     const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
