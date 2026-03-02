@@ -619,7 +619,12 @@ connections.get("/:id/backfill-runs", apiKeyAuth, async (c) => {
 
 connections.post("/:id/backfill-runs", apiKeyAuth, async (c) => {
   const installationId = c.req.param("id");
-  const body: unknown = await c.req.json();
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid_json" }, 400);
+  }
 
   const parsed = z.object({
     entityType: z.string().min(1),

@@ -137,7 +137,7 @@ describe("POST /api/backfill", () => {
         holdForReplay: undefined,
       },
       retries: 3,
-      deduplicationId: "backfill:github:inst-1:org-1:d=30:e=",
+      deduplicationId: "backfill:github:inst-1:org-1:d=30:e=:r=false",
     });
   });
 
@@ -186,6 +186,32 @@ describe("POST /api/backfill", () => {
         }),
       }),
     );
+  });
+
+  it("includes holdForReplay in deduplicationId", async () => {
+    await request("/api/backfill", {
+      body: {
+        installationId: "inst-1",
+        provider: "github",
+        orgId: "org-1",
+        holdForReplay: true,
+      },
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(mockPublishJSON).toHaveBeenCalledWith(
+      expect.objectContaining({
+        deduplicationId: expect.stringContaining(":r=true"),
+      }),
+    );
+  });
+
+  it("returns 400 when depth is not 7, 30, or 90", async () => {
+    const res = await request("/api/backfill", {
+      body: { installationId: "inst-1", provider: "github", orgId: "org-1", depth: 15 },
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: "validation_error" });
   });
 
   // ── Error ──

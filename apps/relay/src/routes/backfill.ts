@@ -12,7 +12,7 @@ const triggerSchema = z.object({
   installationId: z.string().min(1),
   provider: z.string().min(1),
   orgId: z.string().min(1),
-  depth: z.number().int().positive().default(30),
+  depth: z.union([z.literal(7), z.literal(30), z.literal(90)]).default(30),
   entityTypes: z.array(z.string()).optional(),
   holdForReplay: z.boolean().optional(),
 });
@@ -49,7 +49,7 @@ backfill.post("/", apiKeyAuth, async (c) => {
       },
       body: { installationId, provider, orgId, depth, entityTypes, holdForReplay },
       retries: 3,
-      deduplicationId: `backfill:${provider}:${installationId}:${orgId}:d=${depth}:e=${entityTypes ? [...entityTypes].sort().join(",") : ""}`,
+      deduplicationId: `backfill:${provider}:${installationId}:${orgId}:d=${depth}:e=${entityTypes ? [...entityTypes].sort().join(",") : ""}:r=${String(holdForReplay ?? false)}`,
     });
   } catch (err) {
     console.error("[relay] Failed to forward backfill trigger", {

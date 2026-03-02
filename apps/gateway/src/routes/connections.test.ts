@@ -1041,6 +1041,16 @@ describe("POST /connections/:id/backfill-runs", () => {
     expect(res.status).toBe(401);
   });
 
+  it("returns 400 for malformed JSON body", async () => {
+    const res = await request("/connections/inst-1/backfill-runs", {
+      method: "POST",
+      body: "not-json{",
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: "invalid_json" });
+  });
+
   it("returns 400 for invalid body", async () => {
     const res = await request("/connections/inst-1/backfill-runs", {
       method: "POST",

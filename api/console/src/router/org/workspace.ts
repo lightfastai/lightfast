@@ -1260,10 +1260,6 @@ export const workspaceRouter = {
             installationId: input.gwInstallationId,
             provider: "github",
             orgId: ctx.auth.orgId,
-            ...(integrations[0]?.sourceConfig.backfill && {
-              depth: integrations[0].sourceConfig.backfill.depth,
-              entityTypes: integrations[0].sourceConfig.backfill.entityTypes,
-            }),
           });
         }
 
@@ -1416,10 +1412,6 @@ export const workspaceRouter = {
             installationId: input.gwInstallationId,
             provider: "vercel",
             orgId: ctx.auth.orgId,
-            ...(integrations[0]?.sourceConfig.backfill && {
-              depth: integrations[0].sourceConfig.backfill.depth,
-              entityTypes: integrations[0].sourceConfig.backfill.entityTypes,
-            }),
           });
         }
 
@@ -1563,10 +1555,6 @@ export const workspaceRouter = {
             installationId: input.gwInstallationId,
             provider: "linear",
             orgId: ctx.auth.orgId,
-            ...(integrations[0]?.sourceConfig.backfill && {
-              depth: integrations[0].sourceConfig.backfill.depth,
-              entityTypes: integrations[0].sourceConfig.backfill.entityTypes,
-            }),
           });
         }
 
@@ -1711,10 +1699,6 @@ export const workspaceRouter = {
             installationId: input.gwInstallationId,
             provider: "sentry",
             orgId: ctx.auth.orgId,
-            ...(integrations[0]?.sourceConfig.backfill && {
-              depth: integrations[0].sourceConfig.backfill.depth,
-              entityTypes: integrations[0].sourceConfig.backfill.entityTypes,
-            }),
           });
         }
 
