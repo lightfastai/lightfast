@@ -166,6 +166,8 @@ export class Agent<
 	}: StreamOptions<TMessage, TRequestContext, TMemoryContext>): Parameters<
 		typeof streamText
 	>[0] {
+		// IMPORTANT: Do NOT refactor to `messages?.length === 0` — optional chaining
+		// returns undefined for null/undefined, which !== 0, bypassing this guard entirely.
 		if (!messages || messages.length === 0) {
 			throw new NoMessagesError();
 		}
