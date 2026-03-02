@@ -38,19 +38,6 @@ const eventsMap = {
     /** Cross-service correlation ID for distributed tracing */
     correlationId: z.string().optional(),
   }),
-  "apps-backfill/entity.completed": z.object({
-    installationId: z.string(),
-    provider: z.string(),
-    entityType: z.string(),
-    resourceId: z.string(),
-    success: z.boolean(),
-    eventsProduced: z.number(),
-    eventsDispatched: z.number(),
-    pagesProcessed: z.number(),
-    error: z.string().optional(),
-    /** Cross-service correlation ID for distributed tracing */
-    correlationId: z.string().optional(),
-  }),
 };
 
 export const inngest = new Inngest({

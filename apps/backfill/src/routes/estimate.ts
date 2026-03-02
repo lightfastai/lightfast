@@ -1,20 +1,21 @@
 import type { BackfillConfig } from "@repo/console-backfill";
 import { getConnector } from "@repo/console-backfill";
+import { backfillTriggerPayload } from "@repo/gateway-types";
 import { Hono } from "hono";
-import { z } from "zod";
 
 import { getEnv } from "../env.js";
+import { GITHUB_RATE_LIMIT_BUDGET } from "../lib/constants.js";
 import { timingSafeStringEqual } from "../lib/crypto.js";
-import { gatewayUrl } from "../lib/related-projects.js";
+import { createGatewayClient } from "../lib/gateway-client.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
-const estimateSchema = z.object({
-  installationId: z.string().min(1),
-  provider: z.string().min(1),
-  orgId: z.string().min(1),
-  depth: z.union([z.literal(7), z.literal(30), z.literal(90)]).default(30),
-  entityTypes: z.array(z.string()).optional(),
-});
+const estimateSchema = backfillTriggerPayload.omit({ holdForReplay: true });
+
+interface Sample {
+  resourceId: string;
+  returnedCount: number;
+  hasMore: boolean;
+}
 
 const estimate = new Hono<{ Variables: LifecycleVariables }>();
 
@@ -39,20 +40,18 @@ estimate.post("/", async (c) => {
 
   const { installationId, provider, depth, entityTypes } = parsed.data;
 
-  // Get connection from Gateway
-  const connResponse = await fetch(`${gatewayUrl}/gateway/${installationId}`, {
-    headers: { "X-API-Key": GATEWAY_API_KEY, "X-Request-Source": "backfill-estimate" },
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!connResponse.ok) {
+  const gw = createGatewayClient();
+
+  const connection = await gw.getConnection(installationId).catch(() => null);
+  if (!connection) {
     return c.json({ error: "connection_not_found" }, 404);
   }
-  const connection = (await connResponse.json()) as {
-    id: string;
-    provider: string;
-    status: string;
-    resources: { providerResourceId: string; resourceName: string | null }[];
-  };
+
+  const tokenResult = await gw.getToken(installationId).catch(() => null);
+  if (!tokenResult) {
+    return c.json({ error: "token_fetch_failed" }, 502);
+  }
+  const { accessToken } = tokenResult;
 
   // Resolve connector
   const connector = getConnector(provider as Parameters<typeof getConnector>[0]);
@@ -63,30 +62,11 @@ estimate.post("/", async (c) => {
   const resolvedEntityTypes =
     entityTypes && entityTypes.length > 0 ? entityTypes : connector.defaultEntityTypes;
 
-  // Get access token
-  const tokenResponse = await fetch(`${gatewayUrl}/gateway/${installationId}/token`, {
-    headers: { "X-API-Key": GATEWAY_API_KEY, "X-Request-Source": "backfill-estimate" },
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!tokenResponse.ok) {
-    return c.json({ error: "token_fetch_failed" }, 502);
-  }
-  const { accessToken } = (await tokenResponse.json()) as { accessToken: string };
-
   const since = new Date(Date.now() - depth * 24 * 60 * 60 * 1000).toISOString();
 
-  // Probe page 1 for each resource × entityType
-  const probes: Record<string, {
-    resources: number;
-    samples: { resourceId: string; returnedCount: number; hasMore: boolean }[];
-    estimatedItems: number;
-    estimatedPages: number;
-  }> = {};
-
-  for (const entityType of resolvedEntityTypes) {
-    const samples: typeof probes[string]["samples"] = [];
-
-    for (const resource of connection.resources) {
+  // Probe page 1 for each resource x entityType — all independent, run in parallel
+  const probeJobs = resolvedEntityTypes.flatMap((entityType) =>
+    connection.resources.map(async (resource): Promise<{ entityType: string; sample: Sample }> => {
       try {
         const config: BackfillConfig = {
           installationId,
@@ -100,34 +80,57 @@ estimate.post("/", async (c) => {
         };
 
         const page = await connector.fetchPage(config, entityType, null);
-        samples.push({
-          resourceId: resource.providerResourceId,
-          returnedCount: page.rawCount,
-          hasMore: page.nextCursor !== null,
-        });
+        return {
+          entityType,
+          sample: {
+            resourceId: resource.providerResourceId,
+            returnedCount: page.rawCount,
+            hasMore: page.nextCursor !== null,
+          },
+        };
       } catch {
-        samples.push({
-          resourceId: resource.providerResourceId,
-          returnedCount: -1,
-          hasMore: false,
-        });
+        return {
+          entityType,
+          sample: {
+            resourceId: resource.providerResourceId,
+            returnedCount: -1,
+            hasMore: false,
+          },
+        };
       }
+    }),
+  );
+
+  const probeResults = await Promise.allSettled(probeJobs);
+
+  // Group results by entityType
+  const probes: Record<string, {
+    resources: number;
+    samples: Sample[];
+    estimatedItems: number;
+    estimatedPages: number;
+  }> = {};
+
+  for (const result of probeResults) {
+    if (result.status !== "fulfilled") {
+      continue;
     }
+    const { entityType, sample } = result.value;
+    probes[entityType] ??= { resources: connection.resources.length, samples: [], estimatedItems: 0, estimatedPages: 0 };
+    probes[entityType].samples.push(sample);
+  }
 
-    const estimatedItems = samples.reduce((sum, s) => sum + Math.max(0, s.returnedCount), 0);
-    const pagesWithMore = samples.filter((s) => s.hasMore).length;
-
-    probes[entityType] = {
-      resources: connection.resources.length,
-      samples,
-      estimatedItems,
-      // Conservative: items from page 1 + assume 2 more pages per resource with hasMore
-      estimatedPages: samples.length + pagesWithMore * 2,
-    };
+  // Compute estimates per entity type
+  for (const probe of Object.values(probes)) {
+    probe.estimatedItems = probe.samples.reduce((sum, s) => sum + Math.max(0, s.returnedCount), 0);
+    const pagesWithMore = probe.samples.filter((s) => s.hasMore).length;
+    // Conservative: items from page 1 + assume 2 more pages per resource with hasMore
+    probe.estimatedPages = probe.samples.length + pagesWithMore * 2;
   }
 
   const totalEstimatedItems = Object.values(probes).reduce((sum, p) => sum + p.estimatedItems, 0);
   const totalEstimatedPages = Object.values(probes).reduce((sum, p) => sum + p.estimatedPages, 0);
+  const estimatedApiCalls = totalEstimatedPages * 2 + 2;
 
   return c.json({
     installationId,
@@ -139,8 +142,8 @@ estimate.post("/", async (c) => {
     totals: {
       estimatedItems: totalEstimatedItems,
       estimatedPages: totalEstimatedPages,
-      estimatedApiCalls: totalEstimatedPages * 2 + 2,
-      rateLimitUsage: `${((totalEstimatedPages * 2 + 2) / 4000 * 100).toFixed(1)}%`,
+      estimatedApiCalls,
+      rateLimitUsage: `${((estimatedApiCalls / GITHUB_RATE_LIMIT_BUDGET) * 100).toFixed(1)}%`,
     },
   });
 });

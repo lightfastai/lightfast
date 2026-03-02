@@ -1,9 +1,10 @@
 import { getConnector } from "@repo/console-backfill";
 import { NonRetriableError } from "@vendor/inngest";
 
-import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { gatewayUrl, relayUrl } from "../lib/related-projects.js";
+import { createGatewayClient } from "../lib/gateway-client.js";
+import { createRelayClient } from "../lib/relay-client.js";
+import { backfillEntityWorker } from "./entity-worker.js";
 
 export const backfillOrchestrator = inngest.createFunction(
   {
@@ -37,43 +38,11 @@ export const backfillOrchestrator = inngest.createFunction(
       );
     }
 
+    const gw = createGatewayClient({ correlationId });
+
     // ── Step 1: Fetch connection details from Gateway service ──
     const connection = await step.run("get-connection", async () => {
-      const response = await fetch(
-        `${gatewayUrl}/gateway/${installationId}`,
-        {
-          headers: {
-            "X-API-Key": env.GATEWAY_API_KEY,
-            "X-Request-Source": "backfill",
-            ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
-          },
-          signal: AbortSignal.timeout(10_000),
-        },
-      ).catch((err: unknown) => {
-        if (err instanceof DOMException && err.name === "TimeoutError") {
-          throw new Error(
-            `Gateway getConnection request timed out for ${installationId}`,
-          );
-        }
-        throw err;
-      });
-      if (!response.ok) {
-        throw new Error(
-          `Gateway getConnection failed: ${response.status} for ${installationId}`,
-        );
-      }
-      const conn = (await response.json()) as {
-        id: string;
-        provider: string;
-        externalId: string;
-        orgId: string;
-        status: string;
-        resources: {
-          id: string;
-          providerResourceId: string;
-          resourceName: string | null;
-        }[];
-      };
+      const conn = await gw.getConnection(installationId);
       if (conn.status !== "active") {
         throw new NonRetriableError(
           `Connection is not active: ${installationId} (status: ${conn.status})`,
@@ -83,26 +52,9 @@ export const backfillOrchestrator = inngest.createFunction(
     });
 
     // ── Step 1b: Fetch backfill history from Gateway ──
-    const backfillHistory = await step.run("get-backfill-history", async () => {
-      const response = await fetch(
-        `${gatewayUrl}/gateway/${installationId}/backfill-runs?status=completed`,
-        {
-          headers: {
-            "X-API-Key": env.GATEWAY_API_KEY,
-            "X-Request-Source": "backfill",
-            ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
-          },
-          signal: AbortSignal.timeout(10_000),
-        },
-      ).catch(() => null); // Best-effort — no history = full backfill
-
-      if (!response?.ok) {
-        return [];
-      }
-      return response.json() as Promise<
-        { entityType: string; since: string; depth: number; status: string; completedAt: string | null }[]
-      >;
-    });
+    const backfillHistory = await step.run("get-backfill-history", () =>
+      gw.getBackfillRuns(installationId, "completed"),
+    );
 
     // ── Step 2: Resolve entity types and validate connector ──
     const connector = getConnector(
@@ -163,55 +115,34 @@ export const backfillOrchestrator = inngest.createFunction(
       };
     }
 
-    // ── Step 4: Fan-out — dispatch all work units ──
-    await step.sendEvent(
-      "fan-out-entity-workers",
-      filteredWorkUnits.map((wu) => ({
-        name: "apps-backfill/entity.requested" as const,
-        data: {
-          installationId,
-          provider,
-          orgId,
-          entityType: wu.entityType,
-          resource: wu.resource,
-          since,
-          depth,
-          holdForReplay,
-          correlationId,
-        },
-      })),
-    );
-
-    // ── Step 5: Wait for all completion events ──
-    // Each waitForEvent is dispatched in parallel via Promise.all
-    // As each entity.completed event arrives, the matching wait resolves
-    // Escape single quotes for CEL string literals to prevent syntax errors
-    const celEscape = (v: string) =>
-      v
-        .replace(/\\/g, "\\\\")
-        .replace(/'/g, "\\'")
-        .replace(/\n/g, "\\n")
-        .replace(/\r/g, "\\r")
-        .replace(/\t/g, "\\t")
-        // eslint-disable-next-line no-control-regex
-        .replace(/[\x00-\x1f]/g, (ch) => {
-          const hex = ch.charCodeAt(0).toString(16).padStart(4, "0");
-          return `\\u${hex}`;
-        });
-
+    // ── Step 4: Invoke entity workers directly ──
     const completionResults = await Promise.all(
       filteredWorkUnits.map(async (wu) => {
-        const result = await step.waitForEvent(
-          `wait-${wu.workUnitId}`,
-          {
-            event: "apps-backfill/entity.completed",
-            if: `async.data.installationId == '${celEscape(installationId)}' && async.data.resourceId == '${celEscape(wu.resource.providerResourceId)}' && async.data.entityType == '${celEscape(wu.entityType)}'`,
+        try {
+          const result = await step.invoke(`invoke-${wu.workUnitId}`, {
+            function: backfillEntityWorker,
+            data: {
+              installationId,
+              provider,
+              orgId,
+              entityType: wu.entityType,
+              resource: wu.resource,
+              since,
+              depth,
+              holdForReplay,
+              correlationId,
+            },
             timeout: "4h",
-          },
-        );
-
-        if (!result) {
-          // waitForEvent returns null on timeout
+          });
+          return {
+            entityType: wu.entityType,
+            resourceId: wu.resource.providerResourceId,
+            success: true,
+            eventsProduced: result.eventsProduced,
+            eventsDispatched: result.eventsDispatched,
+            pagesProcessed: result.pagesProcessed,
+          };
+        } catch (err) {
           return {
             entityType: wu.entityType,
             resourceId: wu.resource.providerResourceId,
@@ -219,52 +150,72 @@ export const backfillOrchestrator = inngest.createFunction(
             eventsProduced: 0,
             eventsDispatched: 0,
             pagesProcessed: 0,
-            error: "timeout — entity worker did not complete within 4 hours",
+            error: err instanceof Error ? err.message : "entity worker failed",
           };
         }
-
-        return result.data;
       }),
     );
 
-    // ── Step 6: Aggregate results ──
+    // ── Step 5: Aggregate results ──
     const succeeded = completionResults.filter((r) => r.success);
     const failed = completionResults.filter((r) => !r.success);
+
+    // ── Step 6b: Persist consolidated run records ──
+    // One record per entityType, with stats summed across all resources.
+    // Only writes "completed" when ALL resources for that entityType succeeded.
+    if (completionResults.length > 0) {
+      await step.run("persist-run-records", async () => {
+        const byEntityType = new Map<string, typeof completionResults>();
+        for (const r of completionResults) {
+          const existing = byEntityType.get(r.entityType) ?? [];
+          existing.push(r);
+          byEntityType.set(r.entityType, existing);
+        }
+
+        for (const [entityType, results] of byEntityType) {
+          const allSucceeded = results.every((r) => r.success);
+          await gw.upsertBackfillRun(installationId, {
+            entityType,
+            since,
+            depth,
+            status: allSucceeded ? "completed" : "failed",
+            pagesProcessed: results.reduce((s, r) => s + r.pagesProcessed, 0),
+            eventsProduced: results.reduce((s, r) => s + r.eventsProduced, 0),
+            eventsDispatched: results.reduce((s, r) => s + r.eventsDispatched, 0),
+            error: allSucceeded ? undefined : results.find((r) => !r.success)?.error,
+          });
+        }
+      });
+    }
 
     // ── Step 7: Replay held webhooks (atomic delivery) ──
     // When holdForReplay is set, entity workers persist webhooks without delivery.
     // After all workers complete, drain them through the admin catchup endpoint
     // so Console receives historical events in chronological order as a single batch.
     if (holdForReplay && succeeded.length > 0) {
+      const relay = createRelayClient({ correlationId });
       await step.run("replay-held-webhooks", async () => {
         const BATCH_SIZE = 200;
+        const MAX_ITERATIONS = 500; // Safety cap: 500 * 200 = 100k webhooks max
         let remaining = 1;
+        let iterations = 0;
 
-        while (remaining > 0) {
-          const response = await fetch(`${relayUrl}/admin/replay/catchup`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-API-Key": env.GATEWAY_API_KEY,
-              ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
-            },
-            body: JSON.stringify({
-              installationId,
-              batchSize: BATCH_SIZE,
-            }),
-            signal: AbortSignal.timeout(60_000),
-          });
-
-          if (!response.ok) {
-            console.error("[backfill] replay-held-webhooks batch failed", {
-              installationId,
-              status: response.status,
-            });
+        while (remaining > 0 && iterations < MAX_ITERATIONS) {
+          iterations++;
+          try {
+            const result = await relay.replayCatchup(installationId, BATCH_SIZE);
+            remaining = result.remaining;
+          } catch {
             break;
           }
+        }
 
-          const result = (await response.json()) as { remaining: number };
-          remaining = result.remaining;
+        if (iterations >= MAX_ITERATIONS && remaining > 0) {
+          console.error("[backfill] replay-held-webhooks hit iteration cap", {
+            installationId,
+            iterations,
+            remaining,
+          });
         }
       });
     }

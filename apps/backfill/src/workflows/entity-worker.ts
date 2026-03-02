@@ -2,9 +2,10 @@ import type { BackfillConfig } from "@repo/console-backfill";
 import { getConnector } from "@repo/console-backfill";
 import { NonRetriableError } from "@vendor/inngest";
 
-import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { relayUrl, gatewayUrl } from "../lib/related-projects.js";
+import { GITHUB_RATE_LIMIT_BUDGET } from "../lib/constants.js";
+import { createGatewayClient } from "../lib/gateway-client.js";
+import { createRelayClient } from "../lib/relay-client.js";
 
 export const backfillEntityWorker = inngest.createFunction(
   {
@@ -19,10 +20,8 @@ export const backfillEntityWorker = inngest.createFunction(
       // (~20 concurrent steps for backfill, leaves ~80 for observation.capture + live webhooks)
       { limit: 10 },
     ],
-    // Conservative backstop: 4000 req/hr per installation token
-    // (GitHub limit is 5000 — leaves 1000 for webhook/realtime traffic)
     throttle: {
-      limit: 4000,
+      limit: GITHUB_RATE_LIMIT_BUDGET,
       period: "1h",
       key: "event.data.installationId",
     },
@@ -34,46 +33,6 @@ export const backfillEntityWorker = inngest.createFunction(
       },
     ],
     timeouts: { start: "5m", finish: "2h" },
-    // Emit failure completion so orchestrator's waitForEvent resolves immediately
-    // instead of waiting 4h for a timeout
-    onFailure: async ({ error, event, step }) => {
-      const originalData = event.data.event.data;
-
-      // Persist failed run record (best-effort)
-      await step.run("persist-failed-run", async () => {
-        await fetch(`${gatewayUrl}/gateway/${originalData.installationId}/backfill-runs`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": env.GATEWAY_API_KEY,
-            "X-Request-Source": "backfill",
-          },
-          body: JSON.stringify({
-            entityType: originalData.entityType,
-            since: originalData.since,
-            depth: originalData.depth,
-            status: "failed",
-            error: error.message,
-          }),
-          signal: AbortSignal.timeout(10_000),
-        }).catch(() => {}); // Best-effort
-      });
-
-      await step.sendEvent("notify-failure", {
-        name: "apps-backfill/entity.completed",
-        data: {
-          installationId: originalData.installationId,
-          provider: originalData.provider,
-          entityType: originalData.entityType,
-          resourceId: originalData.resource.providerResourceId,
-          success: false,
-          eventsProduced: 0,
-          eventsDispatched: 0,
-          pagesProcessed: 0,
-          error: error.message,
-        },
-      });
-    },
   },
   { event: "apps-backfill/entity.requested" },
   async ({ event, step }) => {
@@ -88,32 +47,11 @@ export const backfillEntityWorker = inngest.createFunction(
       correlationId,
     } = event.data;
 
+    const gw = createGatewayClient({ correlationId });
+
     // ── Step 1: Self-fetch token (not passed via event — security + expiration) ──
-    const { accessToken: initialToken } = await step.run(
-      "get-token",
-      async () => {
-        const response = await fetch(
-          `${gatewayUrl}/gateway/${installationId}/token`,
-          {
-            headers: {
-              "X-API-Key": env.GATEWAY_API_KEY,
-              "X-Request-Source": "backfill",
-              ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
-            },
-            signal: AbortSignal.timeout(30_000),
-          },
-        );
-        if (!response.ok) {
-          throw new Error(
-            `Gateway getToken failed: ${response.status} for ${installationId}`,
-          );
-        }
-        return response.json() as Promise<{
-          accessToken: string;
-          provider: string;
-          expiresIn: number | null;
-        }>;
-      },
+    const { accessToken: initialToken } = await step.run("get-token", () =>
+      gw.getToken(installationId),
     );
 
     // ── Resolve connector ──
@@ -137,6 +75,8 @@ export const backfillEntityWorker = inngest.createFunction(
         resourceName: resource.resourceName,
       },
     };
+
+    const relay = createRelayClient({ correlationId });
 
     // ── Pagination loop ──
     let cursor: unknown = null;
@@ -172,23 +112,7 @@ export const backfillEntityWorker = inngest.createFunction(
                 ? (err as { status: number }).status
                 : undefined;
             if (status === 401) {
-              const tokenResponse = await fetch(
-                `${gatewayUrl}/gateway/${installationId}/token`,
-                {
-                  headers: {
-                    "X-API-Key": env.GATEWAY_API_KEY,
-                    "X-Request-Source": "backfill",
-                    ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
-                  },
-                  signal: AbortSignal.timeout(30_000),
-                },
-              );
-              if (!tokenResponse.ok) {
-                throw err; // Can't refresh — rethrow original
-              }
-              const { accessToken: freshToken } =
-                (await tokenResponse.json()) as { accessToken: string };
-
+              const { accessToken: freshToken } = await gw.getToken(installationId);
               const refreshedConfig = { ...config, accessToken: freshToken };
               const page = await connector.fetchPage(
                 refreshedConfig,
@@ -221,7 +145,7 @@ export const backfillEntityWorker = inngest.createFunction(
 
       eventsProduced += fetchResult.rawCount;
 
-      // Dispatch each event to Relay service auth endpoint
+      // Dispatch each event to Relay service
       // Return count from step so it survives memoized replay (callbacks are skipped on retry)
       const dispatched = await step.run(`dispatch-${entityType}-p${pageNum}`, async () => {
         const BATCH_SIZE = 5;
@@ -231,32 +155,20 @@ export const backfillEntityWorker = inngest.createFunction(
         for (let i = 0; i < events.length; i += BATCH_SIZE) {
           const batch = events.slice(i, i + BATCH_SIZE);
           await Promise.all(
-            batch.map(async (webhookEvent) => {
-              const response = await fetch(`${relayUrl}/webhooks/${provider}`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "X-API-Key": env.GATEWAY_API_KEY,
-                  ...(holdForReplay ? { "X-Backfill-Hold": "true" } : {}),
-                  ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
-                },
-                body: JSON.stringify({
+            batch.map((webhookEvent) =>
+              relay.dispatchWebhook(
+                provider,
+                {
                   connectionId: installationId,
                   orgId,
                   deliveryId: webhookEvent.deliveryId,
                   eventType: webhookEvent.eventType,
                   payload: webhookEvent.payload,
                   receivedAt: Date.now(),
-                }),
-                signal: AbortSignal.timeout(30_000),
-              });
-              if (!response.ok) {
-                const text = await response.text().catch(() => "unknown");
-                throw new Error(
-                  `Relay ingestWebhook failed: ${response.status} — ${text}`,
-                );
-              }
-            }),
+                },
+                holdForReplay,
+              ),
+            ),
           );
           count += batch.length;
         }
@@ -285,47 +197,6 @@ export const backfillEntityWorker = inngest.createFunction(
       cursor = fetchResult.nextCursor;
       pageNum++;
     }
-
-    // ── Persist backfill run record ──
-    await step.run("persist-backfill-run", async () => {
-      await fetch(`${gatewayUrl}/gateway/${installationId}/backfill-runs`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": env.GATEWAY_API_KEY,
-          "X-Request-Source": "backfill",
-          ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
-        },
-        body: JSON.stringify({
-          entityType,
-          since,
-          depth: event.data.depth,
-          status: "completed",
-          pagesProcessed: pageNum,
-          eventsProduced,
-          eventsDispatched,
-        }),
-        signal: AbortSignal.timeout(10_000),
-      }).catch((err: unknown) => {
-        // Best-effort — don't fail the worker if persistence fails
-        console.error("[backfill] persist-backfill-run failed", { installationId, entityType, err });
-      });
-    });
-
-    // ── Emit completion event (always — orchestrator's waitForEvent depends on this) ──
-    await step.sendEvent("notify-completion", {
-      name: "apps-backfill/entity.completed",
-      data: {
-        installationId,
-        provider,
-        entityType,
-        resourceId: resource.providerResourceId,
-        success: true,
-        eventsProduced,
-        eventsDispatched,
-        pagesProcessed: pageNum,
-      },
-    });
 
     return {
       entityType,
