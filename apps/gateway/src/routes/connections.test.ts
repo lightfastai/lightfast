@@ -10,7 +10,9 @@ const {
   mockWorkflowTrigger,
   mockFindFirst,
   mockSelectLimit,
+  mockSelectWhere,
   mockInsertReturning,
+  mockInsertOnConflict,
   mockUpdateWhere,
   mockGetProvider,
   mockProvider,
@@ -45,9 +47,11 @@ const {
       .mockResolvedValue({ workflowRunId: "wf-1" }),
     mockFindFirst: vi.fn().mockResolvedValue(null),
     mockSelectLimit: vi.fn().mockResolvedValue([]),
+    mockSelectWhere: vi.fn().mockResolvedValue([]),
     mockInsertReturning: vi
       .fn()
       .mockResolvedValue([]),
+    mockInsertOnConflict: vi.fn().mockResolvedValue(undefined),
     mockUpdateWhere: vi.fn().mockResolvedValue(undefined),
     mockGetProvider: vi.fn().mockReturnValue(mockProvider),
     mockProvider,
@@ -105,6 +109,9 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
 // may silently pass with wrong data. Full query correctness is covered by
 // PGlite-backed integration tests. If stronger unit-test guarantees are needed,
 // replace with table/condition-aware stubs.
+//
+// The `where()` and `onConflictDoUpdate()` returns are thenable (for queries
+// that end without `.limit()` or `.returning()`) AND chain-extensible.
 vi.mock("@db/console/client", () => ({
   db: {
     query: {
@@ -112,18 +119,33 @@ vi.mock("@db/console/client", () => ({
         findFirst: (...args: unknown[]) => mockFindFirst(...args),
       },
     },
-    select: () => ({
+    select: (..._args: unknown[]) => ({
       from: () => ({
-        where: () => ({
-          limit: () => mockSelectLimit(),
-        }),
+        where: () => {
+          const val = mockSelectWhere();
+          return {
+            then: (res: (v: unknown) => void, rej: (e: unknown) => void) =>
+              Promise.resolve(val).then(res, rej),
+            catch: (rej: (e: unknown) => void) =>
+              Promise.resolve(val).catch(rej),
+            limit: () => mockSelectLimit(),
+          };
+        },
       }),
     }),
     insert: () => ({
       values: () => ({
-        onConflictDoUpdate: () => ({
-          returning: () => mockInsertReturning(),
-        }),
+        onConflictDoUpdate: () => {
+          const val = mockInsertOnConflict();
+          return {
+            then: (res: (v: unknown) => void, rej: (e: unknown) => void) =>
+              Promise.resolve(val).then(res, rej),
+            catch: (rej: (e: unknown) => void) =>
+              Promise.resolve(val).catch(rej),
+            returning: () => mockInsertReturning(),
+          };
+        },
+        onConflictDoNothing: () => mockInsertOnConflict(),
       }),
     }),
     update: () => ({
@@ -141,6 +163,17 @@ vi.mock("@db/console/schema", () => ({
     installationId: "installationId",
     providerResourceId: "providerResourceId",
     status: "status",
+  },
+  gwBackfillRuns: {
+    installationId: "installationId",
+    entityType: "entityType",
+    since: "since",
+    depth: "depth",
+    status: "status",
+    pagesProcessed: "pagesProcessed",
+    eventsProduced: "eventsProduced",
+    eventsDispatched: "eventsDispatched",
+    completedAt: "completedAt",
   },
 }));
 
@@ -945,5 +978,113 @@ describe("DELETE /connections/:id/resources/:resourceId", () => {
     expect(json.status).toBe("removed");
     expect(json.resourceId).toBe("res-1");
     expect(mockRedisDel).toHaveBeenCalled();
+  });
+});
+
+describe("GET /connections/:id/backfill-runs", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns 401 without API key", async () => {
+    const res = await request("/connections/inst-1/backfill-runs");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns empty array when no runs exist", async () => {
+    mockSelectWhere.mockResolvedValueOnce([]);
+    const res = await request("/connections/inst-1/backfill-runs", {
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual([]);
+  });
+
+  it("returns backfill runs for an installation", async () => {
+    const runs = [
+      {
+        entityType: "issue",
+        since: "2026-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+        pagesProcessed: 3,
+        eventsProduced: 50,
+        eventsDispatched: 50,
+        completedAt: "2026-01-02T00:00:00Z",
+      },
+    ];
+    mockSelectWhere.mockResolvedValueOnce(runs);
+    const res = await request("/connections/inst-1/backfill-runs", {
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual(runs);
+  });
+
+  it("supports status filter query param", async () => {
+    mockSelectWhere.mockResolvedValueOnce([]);
+    const res = await request("/connections/inst-1/backfill-runs?status=completed", {
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual([]);
+  });
+});
+
+describe("POST /connections/:id/backfill-runs", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns 401 without API key", async () => {
+    const res = await request("/connections/inst-1/backfill-runs", {
+      method: "POST",
+      body: { entityType: "issue", since: "2026-01-01T00:00:00Z", depth: 30, status: "completed" },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 400 for invalid body", async () => {
+    const res = await request("/connections/inst-1/backfill-runs", {
+      method: "POST",
+      body: { entityType: "" },
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: "invalid_body" });
+  });
+
+  it("upserts backfill run and returns ok", async () => {
+    mockInsertOnConflict.mockResolvedValueOnce(undefined);
+    const res = await request("/connections/inst-1/backfill-runs", {
+      method: "POST",
+      body: {
+        entityType: "issue",
+        since: "2026-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+        pagesProcessed: 3,
+        eventsProduced: 50,
+        eventsDispatched: 50,
+      },
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ status: "ok" });
+    expect(mockInsertOnConflict).toHaveBeenCalled();
+  });
+
+  it("upserts failed run with error message", async () => {
+    mockInsertOnConflict.mockResolvedValueOnce(undefined);
+    const res = await request("/connections/inst-1/backfill-runs", {
+      method: "POST",
+      body: {
+        entityType: "pull_request",
+        since: "2026-01-01T00:00:00Z",
+        depth: 7,
+        status: "failed",
+        error: "token_expired",
+      },
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ status: "ok" });
   });
 });

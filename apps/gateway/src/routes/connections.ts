@@ -1,11 +1,12 @@
 import { db } from "@db/console/client";
-import { gwInstallations, gwResources } from "@db/console/schema";
+import { gwInstallations, gwResources, gwBackfillRuns } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
 import { html, raw } from "hono/html";
+import { z } from "zod";
 import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
 import { gatewayBaseUrl, consoleUrl } from "../lib/urls.js";
 import { apiKeyAuth } from "../middleware/auth.js";
@@ -585,6 +586,91 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
   }
 
   return c.json({ status: "removed", resourceId });
+});
+
+// ── Backfill Run Tracking ──
+// INTERNAL-ONLY: Called by backfill orchestrator + entity workers
+
+connections.get("/:id/backfill-runs", apiKeyAuth, async (c) => {
+  const installationId = c.req.param("id");
+  const statusFilter = c.req.query("status");
+
+  const conditions = [eq(gwBackfillRuns.installationId, installationId)];
+  if (statusFilter) {
+    conditions.push(eq(gwBackfillRuns.status, statusFilter));
+  }
+
+  const runs = await db
+    .select({
+      entityType: gwBackfillRuns.entityType,
+      since: gwBackfillRuns.since,
+      depth: gwBackfillRuns.depth,
+      status: gwBackfillRuns.status,
+      pagesProcessed: gwBackfillRuns.pagesProcessed,
+      eventsProduced: gwBackfillRuns.eventsProduced,
+      eventsDispatched: gwBackfillRuns.eventsDispatched,
+      completedAt: gwBackfillRuns.completedAt,
+    })
+    .from(gwBackfillRuns)
+    .where(and(...conditions));
+
+  return c.json(runs);
+});
+
+connections.post("/:id/backfill-runs", apiKeyAuth, async (c) => {
+  const installationId = c.req.param("id");
+  const body: unknown = await c.req.json();
+
+  const parsed = z.object({
+    entityType: z.string().min(1),
+    since: z.string().min(1),
+    depth: z.number().int().positive(),
+    status: z.string().min(1),
+    pagesProcessed: z.number().int().nonnegative().default(0),
+    eventsProduced: z.number().int().nonnegative().default(0),
+    eventsDispatched: z.number().int().nonnegative().default(0),
+    error: z.string().optional(),
+  }).safeParse(body);
+
+  if (!parsed.success) {
+    return c.json({ error: "invalid_body", details: parsed.error.flatten() }, 400);
+  }
+
+  const now = new Date().toISOString();
+  const data = parsed.data;
+
+  await db
+    .insert(gwBackfillRuns)
+    .values({
+      installationId,
+      entityType: data.entityType,
+      since: data.since,
+      depth: data.depth,
+      status: data.status,
+      pagesProcessed: data.pagesProcessed,
+      eventsProduced: data.eventsProduced,
+      eventsDispatched: data.eventsDispatched,
+      error: data.error ?? null,
+      startedAt: data.status === "running" ? now : null,
+      completedAt: data.status === "completed" || data.status === "failed" ? now : null,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [gwBackfillRuns.installationId, gwBackfillRuns.entityType],
+      set: {
+        since: data.since,
+        depth: data.depth,
+        status: data.status,
+        pagesProcessed: data.pagesProcessed,
+        eventsProduced: data.eventsProduced,
+        eventsDispatched: data.eventsDispatched,
+        error: data.error ?? null,
+        completedAt: data.status === "completed" || data.status === "failed" ? now : null,
+        updatedAt: now,
+      },
+    });
+
+  return c.json({ status: "ok" });
 });
 
 export { connections };
