@@ -38,14 +38,19 @@
     "dist"
   ],
   "scripts": {
-    "clean": "rm -rf dist .cache .turbo node_modules",
     "build": "tsup",
+    "clean": "rm -rf dist .cache .turbo node_modules",
     "dev": "tsup --watch",
     "lint": "eslint . --fix",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "commander": "^13.1.0"
+    "@inquirer/select": "^4.0.0",
+    "commander": "^13.1.0",
+    "eventsource-parser": "^3.0.0",
+    "open": "^10.1.0",
+    "ora": "^8.1.1",
+    "picocolors": "^1.1.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -56,6 +61,6 @@
     "typescript": "catalog:"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }

@@ -14,6 +14,7 @@ import type { LifecycleVariables } from "../middleware/lifecycle.js";
 import { db } from "@db/console/client";
 import { gwWebhookDeliveries } from "@db/console/schema";
 import { isConsoleFanOutEnabled } from "../lib/flags.js";
+import { publishCLIEvent } from "../lib/cli-events.js";
 
 const webhooks = new Hono<{ Variables: LifecycleVariables }>();
 
@@ -51,6 +52,7 @@ webhooks.post("/:provider", async (c) => {
       orgId: string;
       deliveryId: string;
       eventType: string;
+      resourceId?: string | null;
       payload: unknown;
       receivedAt: number;
     };
@@ -75,6 +77,16 @@ webhooks.post("/:provider", async (c) => {
     } catch {
       return c.json({ error: "invalid_payload" }, 400);
     }
+
+    // Publish to CLI event stream (fire-and-forget)
+    void publishCLIEvent(body.orgId, {
+      provider: provider.name,
+      deliveryId: body.deliveryId,
+      eventType: body.eventType,
+      resourceId: body.resourceId ?? null,
+      receivedAt: body.receivedAt,
+      payload: parsedPayload,
+    });
 
     // Dedup — same Redis SET NX as the standard webhook path.
     // Prevents duplicates from backfill retries and re-runs.
@@ -184,6 +196,23 @@ webhooks.post("/:provider", async (c) => {
     resourceId = provider.extractResourceId(payload);
   } catch {
     return c.json({ error: "extraction_failed", provider: providerName }, 400);
+  }
+
+  // Resolve org for CLI streaming (non-blocking)
+  if (resourceId) {
+    const cached = await redis.hgetall<{ connectionId: string; orgId: string }>(
+      `gw:resource:${provider.name}:${resourceId}`
+    );
+    if (cached?.orgId) {
+      void publishCLIEvent(cached.orgId, {
+        provider: provider.name,
+        deliveryId,
+        eventType,
+        resourceId,
+        receivedAt: Date.now(),
+        payload,
+      });
+    }
   }
 
   // Trigger durable workflow — processing happens asynchronously with
