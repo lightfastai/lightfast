@@ -2,21 +2,23 @@
 
 /**
  * CLI binary entrypoint
- * 
+ *
  * Sets up commander and registers all commands.
  */
 
 import { Command } from "commander";
+import { loginCommand } from "./commands/login.js";
+import { logoutCommand } from "./commands/logout.js";
+import { listenCommand } from "./commands/listen.js";
 
 const program = new Command();
-
 program
   .name("lightfast")
-  .description("CLI for Lightfast configuration and testing")
+  .description("Lightfast CLI — connect to your webhook pipeline")
   .version("0.1.0");
 
-// Commands will be registered here in next phase
-// program.addCommand(validateCommand);
-// program.addCommand(testSearchCommand);
+program.addCommand(loginCommand);
+program.addCommand(logoutCommand);
+program.addCommand(listenCommand);
 
 program.parse();

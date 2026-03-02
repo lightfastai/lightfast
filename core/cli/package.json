@@ -22,12 +22,17 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@inquirer/select": "^4.0.0",
     "@repo/console-chunking": "workspace:*",
     "@repo/console-config": "workspace:*",
     "@repo/console-embed": "workspace:*",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
-    "ora": "^8.1.1"
+    "eventsource-parser": "^3.0.0",
+    "nanoid": "^5.0.0",
+    "open": "^10.1.0",
+    "ora": "^8.1.1",
+    "picocolors": "^1.1.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -38,6 +43,9 @@
     "prettier": "catalog:",
     "tsup": "^8.5.0",
     "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "prettier": "@repo/prettier-config"
 }

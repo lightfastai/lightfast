@@ -9,6 +9,7 @@ import { requestId } from "./middleware/request-id.js";
 import { sentry } from "./middleware/sentry.js";
 import { admin } from "./routes/admin.js";
 import { backfill } from "./routes/backfill.js";
+import { cliRouter } from "./routes/cli.js";
 import { webhooks } from "./routes/webhooks.js";
 import { workflows } from "./routes/workflows.js";
 
@@ -67,5 +68,6 @@ app.route("/api/webhooks", webhooks);
 app.route("/api/admin", admin);
 app.route("/api/backfill", backfill);
 app.route("/api/workflows", workflows);
+app.route("/api/cli", cliRouter);
 
 export default app;
