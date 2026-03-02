@@ -14,7 +14,7 @@ export const gwWebhookDeliveries = pgTable(
     eventType: varchar("event_type", { length: 191 }).notNull(),
     installationId: varchar("installation_id", { length: 191 }),
 
-    status: varchar("status", { length: 50 }).notNull(), // received|delivered|dlq
+    status: varchar("status", { length: 50 }).notNull(), // received|enqueued|delivered|dlq
 
     // For DLQ replay — store raw payload on failed deliveries
     payload: text("payload"),

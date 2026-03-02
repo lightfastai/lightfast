@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { and, eq } from "@vendor/db";
 import { getQStashClient } from "@vendor/qstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { relayBaseUrl, consoleUrl } from "../lib/urls.js";
@@ -10,6 +11,9 @@ import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/gateway-types";
 import { timingSafeStringEqual } from "../lib/crypto.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
+import { db } from "@db/console/client";
+import { gwWebhookDeliveries } from "@db/console/schema";
+import { isConsoleFanOutEnabled } from "../lib/flags.js";
 
 const webhooks = new Hono<{ Variables: LifecycleVariables }>();
 
@@ -83,6 +87,25 @@ webhooks.post("/:provider", async (c) => {
       return c.json({ status: "duplicate", deliveryId: body.deliveryId });
     }
 
+    // Persist for long-term replayability
+    await db
+      .insert(gwWebhookDeliveries)
+      .values({
+        provider: provider.name,
+        deliveryId: body.deliveryId,
+        eventType: body.eventType,
+        installationId: body.connectionId,
+        status: "received",
+        payload: JSON.stringify(parsedPayload),
+        receivedAt: new Date(body.receivedAt < 1e12 ? body.receivedAt * 1000 : body.receivedAt).toISOString(),
+      })
+      .onConflictDoNothing();
+
+    // Check feature flag — skip console delivery if disabled
+    if (!(await isConsoleFanOutEnabled(provider.name))) {
+      return c.json({ status: "accepted", deliveryId: body.deliveryId, fanOut: false });
+    }
+
     // Publish directly to Console ingress — skip connection resolution (pre-resolved in body)
     const correlationId = c.get("correlationId");
     await getQStashClient().publishJSON({
@@ -100,6 +123,26 @@ webhooks.post("/:provider", async (c) => {
       } satisfies WebhookEnvelope,
       retries: 5,
     });
+
+    // Update persisted status — QStash accepted, pending Console delivery
+    // Best-effort: don't fail the request if status update fails after QStash accepted
+    try {
+      await db
+        .update(gwWebhookDeliveries)
+        .set({ status: "enqueued" })
+        .where(
+          and(
+            eq(gwWebhookDeliveries.provider, provider.name),
+            eq(gwWebhookDeliveries.deliveryId, body.deliveryId),
+          ),
+        );
+    } catch (err) {
+      console.error("[webhooks] failed to update delivery status after enqueue", {
+        provider: provider.name,
+        deliveryId: body.deliveryId,
+        error: err,
+      });
+    }
 
     return c.json({ status: "accepted", deliveryId: body.deliveryId });
   }
