@@ -66,7 +66,7 @@ export const lifecycle = createMiddleware<{
       /^\/api\/webhooks\/(\w+)/.exec(c.req.path)?.[1] ?? undefined;
 
     const entry: Record<string, unknown> = {
-      service: "gateway",
+      service: "relay",
       requestId: c.get("requestId"),
       correlationId: c.get("correlationId"),
       method: c.req.method,

@@ -21,14 +21,14 @@ const isDevelopment =
   env.VERCEL_ENV !== "production" && env.VERCEL_ENV !== "preview";
 
 /**
- * Gateway base URL — used for webhook registration callbacks.
- * Linear webhook callbacks must point at the gateway, not the connections service.
+ * Relay base URL — used for webhook registration callbacks.
+ * Linear webhook callbacks must point at the relay, not the connections service.
  */
-export const gatewayBaseUrl = `${withRelatedProject({
-  projectName: "lightfast-gateway",
+export const relayBaseUrl = `${withRelatedProject({
+  projectName: "lightfast-relay",
   defaultHost: isDevelopment
     ? "http://localhost:4108"
-    : "https://gateway.lightfast.ai",
+    : "https://relay.lightfast.ai",
 })}/api`;
 
 // Get the console URL dynamically based on environment

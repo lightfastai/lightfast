@@ -51,7 +51,7 @@ backfill.post("/", apiKeyAuth, async (c) => {
       deduplicationId: `backfill:${provider}:${installationId}:${orgId}:d=${depth}:e=${entityTypes ? [...entityTypes].sort().join(",") : ""}`,
     });
   } catch (err) {
-    console.error("[gateway] Failed to forward backfill trigger", {
+    console.error("[relay] Failed to forward backfill trigger", {
       installationId,
       provider,
       backfillUrl,

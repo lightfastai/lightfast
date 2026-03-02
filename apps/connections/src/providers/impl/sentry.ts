@@ -219,7 +219,7 @@ export class SentryProvider implements ConnectionProvider {
     await writeTokenRecord(installation.id, oauthTokens);
 
     // Sentry webhook URL is configured in the Sentry dashboard, not via API.
-    // Verification uses env.SENTRY_CLIENT_SECRET in the gateway, so no
+    // Verification uses env.SENTRY_CLIENT_SECRET in the relay, so no
     // per-installation webhookSecret is needed.
 
     return {

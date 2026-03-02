@@ -5,7 +5,7 @@ import type {
   WebhookProvider,
   WebhookPayload,
 } from "../types.js";
-import type { GatewayEnv } from "../../env.js";
+import type { RelayEnv } from "../../env.js";
 
 const SIGNATURE_HEADER = "sentry-hook-signature";
 const RESOURCE_HEADER = "sentry-hook-resource";
@@ -14,7 +14,7 @@ const TIMESTAMP_HEADER = "sentry-hook-timestamp";
 export class SentryProvider implements WebhookProvider {
   readonly name = "sentry" as const;
 
-  getWebhookSecret(env: GatewayEnv): string {
+  getWebhookSecret(env: RelayEnv): string {
     return env.SENTRY_CLIENT_SECRET;
   }
 

@@ -31,7 +31,7 @@ vi.mock("../env", () => ({
 
 vi.mock("../lib/related-projects", () => ({
   connectionsUrl: "https://connections.test/services",
-  gatewayUrl: "https://gateway.test/api",
+  relayUrl: "https://relay.test/api",
 }));
 
 // Force module load to capture handler
@@ -137,7 +137,7 @@ describe("get-connection step", () => {
 
     await expect(
       capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Gateway getConnection failed: 404");
+    ).rejects.toThrow("Connections getConnection failed: 404");
   });
 
   it("returns early with zero counts when connection has no resources", async () => {

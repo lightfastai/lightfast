@@ -209,12 +209,12 @@ export function makeInngestMock(
  * to in-process Hono apps instead of making real network calls.
  *
  * Port mapping (matches related-projects defaults):
- *   localhost:4108 → gatewayApp
+ *   localhost:4108 → relayApp
  *   localhost:4109 → backfillApp
  *   localhost:4110 → connectionsApp
  *
  * Usage:
- *   const restore = installServiceRouter({ connectionsApp, gatewayApp, backfillApp });
+ *   const restore = installServiceRouter({ connectionsApp, relayApp, backfillApp });
  *   // ... run tests
  *   restore(); // restore original fetch
  */
@@ -224,14 +224,14 @@ type AnyHono = Hono<any>;
 export interface ServiceApps {
   connectionsApp?: AnyHono;
   backfillApp?: AnyHono;
-  gatewayApp?: AnyHono;
+  relayApp?: AnyHono;
 }
 
 export function installServiceRouter(apps: ServiceApps): () => void {
-  const { connectionsApp, backfillApp, gatewayApp } = apps;
+  const { connectionsApp, backfillApp, relayApp } = apps;
 
   const portToApp: Record<string, AnyHono | undefined> = {
-    "4108": gatewayApp,
+    "4108": relayApp,
     "4109": backfillApp,
     "4110": connectionsApp,
   };

@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm turbo run build --filter=@lightfast/gateway...",
+  "buildCommand": "pnpm turbo run build --filter=@lightfast/relay...",
   "installCommand": "pnpm install",
   "ignoreCommand": "npx turbo-ignore"
 }

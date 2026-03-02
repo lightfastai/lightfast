@@ -92,10 +92,10 @@ vi.mock("@vercel/related-projects", () => ({
 
 // Import full Hono apps via vitest path aliases (see vitest.config.ts)
 import connectionsApp from "@connections/app";
-import { webhookSeenKey, resourceKey as gatewayResourceKey } from "@gateway/cache";
+import { webhookSeenKey, resourceKey as relayResourceKey } from "@relay/cache";
 
-// Force gateway webhook-delivery module to load and capture its serve() handler
-await import("@gateway/webhook-delivery");
+// Force relay webhook-delivery module to load and capture its serve() handler
+await import("@relay/webhook-delivery");
 
 // ── Request helper ──
 
@@ -278,7 +278,7 @@ describe("Suite 1.4 — Key format parity between Connections and Gateway", () =
 
     for (const [provider, resourceId] of testCases) {
       const connKey = connectionsKey(provider as never, resourceId);
-      const gwKey = gatewayResourceKey(provider as never, resourceId);
+      const gwKey = relayResourceKey(provider as never, resourceId);
       expect(connKey).toBe(gwKey);
       expect(connKey).toBe(`gw:resource:${provider}:${resourceId}`);
     }

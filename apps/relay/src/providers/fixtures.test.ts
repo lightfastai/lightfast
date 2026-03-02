@@ -1,7 +1,7 @@
 /**
  * Fixture-based provider tests using real webhook payloads from @repo/console-test-data.
  *
- * Runs every webhook from every sandbox dataset through the gateway's provider
+ * Runs every webhook from every sandbox dataset through the relay's provider
  * pipeline: parsePayload → extractResourceId → extractEventType → extractDeliveryId.
  *
  * Catches regressions where a real provider payload shape breaks extraction

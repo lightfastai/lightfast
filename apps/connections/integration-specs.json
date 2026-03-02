@@ -22,7 +22,7 @@
     },
     "webhooks": {
       "active": true,
-      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/gateway/webhooks/github",
+      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/relay/webhooks/github",
       "events": [
         "installation",
         "installation_repositories",
@@ -73,7 +73,7 @@
       "configuration_url": "http://localhost:3024/settings/integrations/vercel"
     },
     "webhooks": {
-      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/gateway/webhooks/vercel",
+      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/relay/webhooks/vercel",
       "events": [
         "deployment.created",
         "deployment.succeeded",
@@ -119,7 +119,7 @@
     "client_credentials": "$comment: Copy CLIENT_ID and CLIENT_SECRET after creation (secret shown only once)",
     "webhooks": {
       "enabled": true,
-      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/gateway/webhooks/linear",
+      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/relay/webhooks/linear",
       "resource_types": [
         "Issue",
         "Comment",
@@ -150,7 +150,7 @@
       "authorized_javascript_origins": []
     },
     "webhooks": {
-      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/gateway/webhooks/sentry",
+      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/relay/webhooks/sentry",
       "resources": [
         "issue",
         "event_alert",

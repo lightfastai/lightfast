@@ -5,15 +5,15 @@ const isDevelopment =
   process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
   process.env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
 
-const gatewayUrl = withRelatedProject({
-  projectName: "lightfast-gateway",
+const relayUrl = withRelatedProject({
+  projectName: "lightfast-relay",
   defaultHost: isDevelopment
     ? "http://localhost:4108"
-    : "https://gateway.lightfast.ai",
+    : "https://relay.lightfast.ai",
 });
 
 /**
- * Notify the gateway to trigger a historical backfill for a connection.
+ * Notify the relay to trigger a historical backfill for a connection.
  * Best-effort — errors are logged but never thrown.
  */
 export async function notifyBackfill(params: {
@@ -24,7 +24,7 @@ export async function notifyBackfill(params: {
 }): Promise<void> {
   const correlationId = params.correlationId ?? crypto.randomUUID();
   try {
-    const res = await fetch(`${gatewayUrl}/api/backfill`, {
+    const res = await fetch(`${relayUrl}/api/backfill`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

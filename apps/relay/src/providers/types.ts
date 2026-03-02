@@ -10,7 +10,7 @@ import type { VercelProvider } from "./impl/vercel.js";
 import type { LinearProvider } from "./impl/linear.js";
 import type { SentryProvider } from "./impl/sentry.js";
 import type { ProviderName } from "@repo/gateway-types";
-import type { GatewayEnv } from "../env.js";
+import type { RelayEnv } from "../env.js";
 
 // Re-export schema types for consumer convenience
 export type {
@@ -30,7 +30,7 @@ export type {
   WebhookReceiptPayload,
 } from "@repo/gateway-types";
 
-// ── Gateway-Specific Type Maps ──
+// ── Relay-Specific Type Maps ──
 
 /** Type map: narrow webhook payload per provider name */
 export type WebhookPayloadFor<N extends ProviderName> = N extends "github"
@@ -56,10 +56,10 @@ export type ProviderFor<N extends ProviderName> = N extends "github"
 
 // ── WebhookProvider Interface ──
 
-/** Slim webhook-only interface for gateway providers. */
+/** Slim webhook-only interface for relay providers. */
 export interface WebhookProvider {
   readonly name: ProviderName;
-  getWebhookSecret(env: GatewayEnv): string;
+  getWebhookSecret(env: RelayEnv): string;
   verifyWebhook(
     payload: string,
     headers: Headers,

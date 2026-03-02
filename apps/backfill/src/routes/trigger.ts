@@ -35,7 +35,7 @@ const trigger = new Hono<{ Variables: LifecycleVariables }>();
 /**
  * POST /trigger
  *
- * Called by Gateway via QStash when a new connection is created.
+ * Called by Relay via QStash when a new connection is created.
  * Validates X-API-Key and sends an Inngest event to start the backfill.
  */
 trigger.post("/", async (c) => {
@@ -86,7 +86,7 @@ trigger.post("/", async (c) => {
 /**
  * POST /trigger/cancel
  *
- * Called by Gateway when a connection is deleted/revoked.
+ * Called by Connections service when a connection is deleted/revoked.
  * Cancels any running backfill for this installation.
  */
 trigger.post("/cancel", async (c) => {

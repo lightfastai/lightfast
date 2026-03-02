@@ -1,7 +1,7 @@
 /**
  * Redis key convention functions for the Connections service.
  *
- * All keys are namespaced under `gw:` to share the same namespace as the gateway.
+ * All keys are namespaced under `gw:` to share the same namespace as the relay service.
  */
 import type { ProviderName } from "@repo/gateway-types";
 

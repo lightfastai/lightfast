@@ -35,7 +35,7 @@ vi.mock("../env", () => ({
 
 vi.mock("../lib/related-projects", () => ({
   connectionsUrl: "https://connections.test/services",
-  gatewayUrl: "https://gateway.test/api",
+  relayUrl: "https://relay.test/api",
 }));
 
 // Force module load to capture handler
@@ -123,7 +123,7 @@ describe("get-token step", () => {
 
     await expect(
       capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Gateway getToken failed: 401");
+    ).rejects.toThrow("Connections getToken failed: 401");
   });
 });
 
@@ -162,7 +162,7 @@ describe("pagination loop — single page", () => {
     expect(result.pagesProcessed).toBe(1);
   });
 
-  it("dispatches to correct Gateway URL with correct body shape", async () => {
+  it("dispatches to correct Relay URL with correct body shape", async () => {
     mockTokenResponse();
     mockConnector.fetchPage.mockResolvedValueOnce({
       events: [
@@ -176,11 +176,11 @@ describe("pagination loop — single page", () => {
 
     await capturedHandler({ event: makeEvent(), step });
 
-    // Find the dispatch fetch call (POST to gateway — first call is token GET)
+    // Find the dispatch fetch call (POST to relay — first call is token GET)
     const dispatchCall = mockFetch.mock.calls.find(
       (call) =>
         (call[1] as RequestInit | undefined)?.method === "POST" &&
-        call[0] === "https://gateway.test/api/webhooks/github",
+        call[0] === "https://relay.test/api/webhooks/github",
     );
     expect(dispatchCall).toBeDefined();
     const init = dispatchCall![1] as RequestInit;
@@ -200,7 +200,7 @@ describe("pagination loop — single page", () => {
 });
 
 describe("dispatch error handling", () => {
-  it("throws when Gateway dispatch returns non-2xx response", async () => {
+  it("throws when Relay dispatch returns non-2xx response", async () => {
     mockTokenResponse();
     mockConnector.fetchPage.mockResolvedValueOnce({
       events: [
@@ -217,7 +217,7 @@ describe("dispatch error handling", () => {
 
     await expect(
       capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Gateway ingestWebhook failed: 500");
+    ).rejects.toThrow("Relay ingestWebhook failed: 500");
   });
 });
 

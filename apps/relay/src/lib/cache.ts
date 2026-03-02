@@ -1,5 +1,5 @@
 /**
- * Redis key convention functions for the Gateway service.
+ * Redis key convention functions for the Relay service.
  *
  * All keys are namespaced under `gw:` to avoid collisions.
  */

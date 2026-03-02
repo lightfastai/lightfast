@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { gwInstallations, gwResources } from "@db/console/schema";
 import { serve } from "@vendor/upstash-workflow/hono";
 import { getQStashClient } from "@vendor/qstash";
-import { gatewayBaseUrl, consoleUrl } from "../lib/urls.js";
+import { relayBaseUrl, consoleUrl } from "../lib/urls.js";
 import { db } from "@db/console/client";
 import { webhookSeenKey, resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache.js";
 import { redis } from "@vendor/upstash";
@@ -130,7 +130,7 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
         },
         retries: 5,
         deduplicationId: `${data.provider}:${data.deliveryId}`,
-        callback: `${gatewayBaseUrl}/admin/delivery-status`,
+        callback: `${relayBaseUrl}/admin/delivery-status`,
       });
     });
   },

@@ -9,8 +9,8 @@ export const runtime = "nodejs";
 /**
  * POST /api/webhooks/ingress
  *
- * Durable Console ingress endpoint for Gateway-delivered webhooks.
- * Receives QStash-signed payloads from the Gateway webhook-receipt workflow.
+ * Durable Console ingress endpoint for Relay-delivered webhooks.
+ * Receives QStash-signed payloads from the Relay webhook-delivery workflow.
  *
  * QStash signature verification is handled automatically by serve().
  *

@@ -140,7 +140,7 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 // ── Import all apps after mocks ──
 import connectionsApp from "@connections/app";
 import backfillApp from "@backfill/app";
-import gatewayApp from "@gateway/app";
+import relayApp from "@relay/app";
 
 // Force backfill workflows to load and register handlers
 await import("@backfill/orchestrator");
@@ -318,7 +318,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
 
   it("gateway service auth path accepts backfill-dispatched event and publishes envelope to QStash", async () => {
     // Simulate the dispatch step at the end of the entity worker loop
-    const restore = installServiceRouter({ gatewayApp });
+    const restore = installServiceRouter({ relayApp });
     try {
       const res = await fetch("http://localhost:4108/api/webhooks/github", {
         method: "POST",
@@ -424,7 +424,7 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     };
 
     // First dispatch — accepted
-    const first = await gatewayApp.request("/api/webhooks/github", {
+    const first = await relayApp.request("/api/webhooks/github", {
       method: "POST",
       headers: new Headers({ "Content-Type": "application/json", "X-API-Key": "0".repeat(64) }),
       body: JSON.stringify(body),
@@ -432,7 +432,7 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     expect((await first.json() as { status: string }).status).toBe("accepted");
 
     // Second dispatch (retry with same deliveryId) — deduplicated
-    const second = await gatewayApp.request("/api/webhooks/github", {
+    const second = await relayApp.request("/api/webhooks/github", {
       method: "POST",
       headers: new Headers({ "Content-Type": "application/json", "X-API-Key": "0".repeat(64) }),
       body: JSON.stringify({ ...body, receivedAt: Date.now() }),

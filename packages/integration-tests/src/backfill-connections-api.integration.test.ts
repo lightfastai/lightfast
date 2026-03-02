@@ -136,7 +136,7 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 
 // ── Import apps and orchestrator after mocks ──
 import connectionsApp from "@connections/app";
-import gatewayApp from "@gateway/app";
+import relayApp from "@relay/app";
 
 // Force backfill workflows to load and register their createFunction handlers
 await import("@backfill/orchestrator");
@@ -548,7 +548,7 @@ describe("Suite 3.4 — Entity worker token refresh on 401 mid-pagination", () =
 
     // Service router: connections (port 4110) → token endpoint
     //                 gateway (port 4108) → accepts dispatched event
-    const restore = installServiceRouter({ connectionsApp, gatewayApp });
+    const restore = installServiceRouter({ connectionsApp, relayApp });
     try {
       const result = await entityHandler({
         event: {

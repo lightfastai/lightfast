@@ -4,7 +4,7 @@ import { NonRetriableError } from "@vendor/inngest";
 
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { gatewayUrl, connectionsUrl } from "../lib/related-projects.js";
+import { relayUrl, connectionsUrl } from "../lib/related-projects.js";
 
 export const backfillEntityWorker = inngest.createFunction(
   {
@@ -83,7 +83,7 @@ export const backfillEntityWorker = inngest.createFunction(
         );
         if (!response.ok) {
           throw new Error(
-            `Gateway getToken failed: ${response.status} for ${installationId}`,
+            `Connections getToken failed: ${response.status} for ${installationId}`,
           );
         }
         return response.json() as Promise<{
@@ -199,7 +199,7 @@ export const backfillEntityWorker = inngest.createFunction(
 
       eventsProduced += fetchResult.rawCount;
 
-      // Dispatch each event to Gateway service auth endpoint
+      // Dispatch each event to Relay service auth endpoint
       // Return count from step so it survives memoized replay (callbacks are skipped on retry)
       const dispatched = await step.run(`dispatch-${entityType}-p${pageNum}`, async () => {
         const BATCH_SIZE = 5;
@@ -210,7 +210,7 @@ export const backfillEntityWorker = inngest.createFunction(
           const batch = events.slice(i, i + BATCH_SIZE);
           await Promise.all(
             batch.map(async (webhookEvent) => {
-              const response = await fetch(`${gatewayUrl}/webhooks/${provider}`, {
+              const response = await fetch(`${relayUrl}/webhooks/${provider}`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -230,7 +230,7 @@ export const backfillEntityWorker = inngest.createFunction(
               if (!response.ok) {
                 const text = await response.text().catch(() => "unknown");
                 throw new Error(
-                  `Gateway ingestWebhook failed: ${response.status} — ${text}`,
+                  `Relay ingestWebhook failed: ${response.status} — ${text}`,
                 );
               }
             }),

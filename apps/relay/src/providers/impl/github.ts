@@ -7,7 +7,7 @@ import type {
   WebhookProvider,
   WebhookPayload,
 } from "../types.js";
-import type { GatewayEnv } from "../../env.js";
+import type { RelayEnv } from "../../env.js";
 
 const SIGNATURE_HEADER = "x-hub-signature-256";
 const DELIVERY_HEADER = "x-github-delivery";
@@ -17,7 +17,7 @@ const SIGNATURE_PREFIX = "sha256=";
 export class GitHubProvider implements WebhookProvider {
   readonly name = "github" as const;
 
-  getWebhookSecret(env: GatewayEnv): string {
+  getWebhookSecret(env: RelayEnv): string {
     return env.GITHUB_WEBHOOK_SECRET;
   }
 

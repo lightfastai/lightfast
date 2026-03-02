@@ -48,7 +48,7 @@ app.onError((err, c) => {
     return err.getResponse();
   }
 
-  console.error("[gateway] unhandled error", {
+  console.error("[relay] unhandled error", {
     method: c.req.method,
     path: c.req.path,
     error: err.message,
@@ -59,7 +59,7 @@ app.onError((err, c) => {
 });
 
 // Health check
-app.get("/", (c) => c.json({ service: "gateway", status: "ok" }));
+app.get("/", (c) => c.json({ service: "relay", status: "ok" }));
 
 // API routes
 app.route("/api/webhooks", webhooks);

@@ -2,9 +2,9 @@ import { withRelatedProject } from "@vendor/related-projects";
 import { env } from "../env.js";
 
 /**
- * Gateway base URL derived from Vercel system environment variables.
+ * Relay base URL derived from Vercel system environment variables.
  */
-export const gatewayBaseUrl = (() => {
+export const relayBaseUrl = (() => {
   if (env.VERCEL_ENV === "preview") {
     return env.VERCEL_URL
       ? `https://${env.VERCEL_URL}/api`

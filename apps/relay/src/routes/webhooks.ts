@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { getQStashClient } from "@vendor/qstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
-import { gatewayBaseUrl, consoleUrl } from "../lib/urls.js";
+import { relayBaseUrl, consoleUrl } from "../lib/urls.js";
 import { getEnv } from "../env.js";
 import { getProvider } from "../providers/index.js";
 import type { WebhookProvider } from "../providers/index.js";
@@ -148,7 +148,7 @@ webhooks.post("/:provider", async (c) => {
   };
 
   await getWorkflowClient().trigger({
-    url: `${gatewayBaseUrl}/workflows/webhook-delivery`,
+    url: `${relayBaseUrl}/workflows/webhook-delivery`,
     body: workflowPayload,
   });
 

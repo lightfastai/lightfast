@@ -30,12 +30,12 @@ const _createEnv = (c: Context) =>
     emptyStringAsUndefined: true,
   });
 
-export type GatewayEnv = ReturnType<typeof _createEnv>;
+export type RelayEnv = ReturnType<typeof _createEnv>;
 
-const envCache = new WeakMap<object, GatewayEnv>();
+const envCache = new WeakMap<object, RelayEnv>();
 
 /** Validated env from the Hono request context — cached per request. */
-export const getEnv = (c: Context): GatewayEnv => {
+export const getEnv = (c: Context): RelayEnv => {
   const cached = envCache.get(c);
   if (cached) return cached;
   const validated = _createEnv(c);

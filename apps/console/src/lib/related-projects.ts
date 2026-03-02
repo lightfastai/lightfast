@@ -19,11 +19,11 @@ export const wwwUrl = withRelatedProject({
     : 'https://lightfast.ai',
 });
 
-// Get the gateway URL dynamically based on environment
-// Gateway is a standalone Hono service (not part of microfrontends)
-export const gatewayUrl = `${withRelatedProject({
-  projectName: 'lightfast-gateway',
+// Get the relay URL dynamically based on environment
+// Relay is a standalone Hono service (not part of microfrontends)
+export const relayUrl = `${withRelatedProject({
+  projectName: 'lightfast-relay',
   defaultHost: isDevelopment
     ? 'http://localhost:4108'
-    : 'https://gateway.lightfast.ai',
+    : 'https://relay.lightfast.ai',
 })}/api`;

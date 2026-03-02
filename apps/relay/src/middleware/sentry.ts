@@ -18,7 +18,7 @@ export const sentry = createMiddleware<{
     await next();
   } catch (err) {
     Sentry.withScope((scope) => {
-      scope.setTag("service", "gateway");
+      scope.setTag("service", "relay");
       scope.setTag("http.method", c.req.method);
       scope.setTag("http.path", c.req.path);
       const requestId = c.get("requestId");
@@ -31,7 +31,7 @@ export const sentry = createMiddleware<{
   // Capture explicitly returned 5xx responses (not thrown as exceptions)
   if (c.res.status >= 500) {
     Sentry.withScope((scope) => {
-      scope.setTag("service", "gateway");
+      scope.setTag("service", "relay");
       scope.setTag("http.method", c.req.method);
       scope.setTag("http.path", c.req.path);
       scope.setTag("http.status", String(c.res.status));

@@ -23,8 +23,8 @@ import type { ResolvedWorkspace } from "./resolve-workspace";
  *
  * Safety: `payload` is typed as `unknown` because `WebhookEnvelope.payload` is
  * a cross-service boundary type. The casts below are safe because:
- *  1. The gateway verifies HMAC signatures (webhook authenticity) before accepting payloads
- *  2. The gateway runs `provider.parsePayload()` (Zod) to validate structure — invalid
+ *  1. The relay verifies HMAC signatures (webhook authenticity) before accepting payloads
+ *  2. The relay runs `provider.parsePayload()` (Zod) to validate structure — invalid
  *     payloads are rejected with 400 and never forwarded to Console
  *  3. Each transformer validates its output via `validateSourceEvent()` (Zod safeParse)
  *
@@ -55,7 +55,7 @@ function transformGitHubEvent(
 
 /**
  * Route Linear webhook events to the appropriate transformer.
- * Gateway encodes eventType as "Type:action" (e.g., "Issue:create", "Comment:update").
+ * Relay encodes eventType as "Type:action" (e.g., "Issue:create", "Comment:update").
  * See transformGitHubEvent JSDoc for payload trust model.
  */
 function transformLinearEvent(
@@ -72,7 +72,7 @@ function transformLinearEvent(
 
 /**
  * Route Sentry webhook events to the appropriate transformer.
- * Gateway uses the sentry-hook-resource header as eventType ("issue", "error", etc.).
+ * Relay uses the sentry-hook-resource header as eventType ("issue", "error", etc.).
  * See transformGitHubEvent JSDoc for payload trust model.
  */
 function transformSentryEvent(
@@ -113,7 +113,7 @@ function transformVercelEvent(
 }
 
 /**
- * Dispatch a Gateway webhook envelope to Inngest.
+ * Dispatch a Relay webhook envelope to Inngest.
  *
  * Routes:
  * - All supported events → observation.capture (neural memory)

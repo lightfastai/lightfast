@@ -41,7 +41,7 @@ vi.mock("@db/console/schema", () => ({
 
 vi.mock("../lib/urls", () => ({
   connectionsBaseUrl: "https://connections.test/services",
-  gatewayBaseUrl: "https://gateway.test/api",
+  relayBaseUrl: "https://gateway.test/api",
 }));
 
 vi.mock("../lib/github-jwt", () => ({

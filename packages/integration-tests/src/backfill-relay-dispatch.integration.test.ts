@@ -64,8 +64,8 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
   serve: vi.fn(() => () => new Response("ok")),
 }));
 
-// ── Import gateway app after mocks ──
-import gatewayApp from "@gateway/app";
+// ── Import relay app after mocks ──
+import relayApp from "@relay/app";
 
 // ── Request helper ──
 const API_KEY = "0".repeat(64);
@@ -75,7 +75,7 @@ function webhookReq(
   body: Record<string, unknown>,
   headers: Record<string, string> = {},
 ) {
-  return gatewayApp.request(`/api/webhooks/${provider}`, {
+  return relayApp.request(`/api/webhooks/${provider}`, {
     method: "POST",
     headers: new Headers({
       "Content-Type": "application/json",

@@ -37,7 +37,7 @@ export const backfillOrchestrator = inngest.createFunction(
       );
     }
 
-    // ── Step 1: Fetch connection details from Gateway ──
+    // ── Step 1: Fetch connection details from Connections service ──
     const connection = await step.run("get-connection", async () => {
       const response = await fetch(
         `${connectionsUrl}/connections/${installationId}`,
@@ -52,14 +52,14 @@ export const backfillOrchestrator = inngest.createFunction(
       ).catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "TimeoutError") {
           throw new Error(
-            `Gateway getConnection request timed out for ${installationId}`,
+            `Connections getConnection request timed out for ${installationId}`,
           );
         }
         throw err;
       });
       if (!response.ok) {
         throw new Error(
-          `Gateway getConnection failed: ${response.status} for ${installationId}`,
+          `Connections getConnection failed: ${response.status} for ${installationId}`,
         );
       }
       const conn = (await response.json()) as {

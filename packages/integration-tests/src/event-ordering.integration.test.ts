@@ -138,7 +138,7 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 
 // ── Import all apps after mocks ──
 import backfillApp from "@backfill/app";
-import gatewayApp from "@gateway/app";
+import relayApp from "@relay/app";
 
 // Force backfill workflows to register handlers
 await import("@backfill/orchestrator");
@@ -336,7 +336,7 @@ describe("Suite 6.2 — Concurrent gateway dispatches are order-independent", ()
       effects: deliveryIds.map((deliveryId) => ({
         label: `webhook-${deliveryId}`,
         deliver: async () => {
-          const res = await gatewayApp.request("/api/webhooks/github", {
+          const res = await relayApp.request("/api/webhooks/github", {
             method: "POST",
             headers: new Headers({
               "Content-Type": "application/json",
@@ -421,7 +421,7 @@ describe("Suite 6.3 — Backfill notify + gateway dispatch are order-independent
         {
           label: "gateway-webhook-dispatch",
           deliver: async () => {
-            await gatewayApp.request("/api/webhooks/github", {
+            await relayApp.request("/api/webhooks/github", {
               method: "POST",
               headers: new Headers({
                 "Content-Type": "application/json",

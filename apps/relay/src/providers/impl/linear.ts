@@ -5,7 +5,7 @@ import type {
   WebhookProvider,
   WebhookPayload,
 } from "../types.js";
-import type { GatewayEnv } from "../../env.js";
+import type { RelayEnv } from "../../env.js";
 
 const SIGNATURE_HEADER = "linear-signature";
 const DELIVERY_HEADER = "linear-delivery";
@@ -13,7 +13,7 @@ const DELIVERY_HEADER = "linear-delivery";
 export class LinearProvider implements WebhookProvider {
   readonly name = "linear" as const;
 
-  getWebhookSecret(env: GatewayEnv): string {
+  getWebhookSecret(env: RelayEnv): string {
     return env.LINEAR_WEBHOOK_SIGNING_SECRET;
   }
 

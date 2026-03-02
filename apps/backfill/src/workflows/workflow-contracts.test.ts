@@ -44,7 +44,7 @@ vi.mock("../env", () => ({
 
 vi.mock("../lib/related-projects", () => ({
   connectionsUrl: "https://connections.test/services",
-  gatewayUrl: "https://gateway.test/api",
+  relayUrl: "https://relay.test/api",
 }));
 
 // Load both modules to capture handlers

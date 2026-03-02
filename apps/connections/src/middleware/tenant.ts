@@ -8,7 +8,7 @@ export interface TenantVariables {
  * Tenant middleware — extracts org_id from request headers or query params.
  *
  * Looks for org_id in:
- * 1. X-Org-Id header (for Console → Gateway API calls)
+ * 1. X-Org-Id header (for Console → Connections API calls)
  * 2. Query param ?org_id (for OAuth callbacks)
  */
 // 191-char limit: MySQL utf8mb4 uses 4 bytes/char → 767-byte index cap ÷ 4 = 191
