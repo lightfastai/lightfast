@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
+
+export const dynamic = "force-dynamic";
 import { WorkspaceHeader } from "./_components/workspace-header";
 import { OrganizationSelector } from "./_components/organization-selector";
 import { WorkspaceNameInput } from "./_components/workspace-name-input";

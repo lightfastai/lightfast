@@ -1,4 +1,6 @@
 import { Icons } from "@repo/ui/components/icons";
+
+export const dynamic = "force-dynamic";
 import { TeamFormProvider } from "./_components/team-form-provider";
 import { TeamNameInput } from "./_components/team-name-input";
 import { CreateTeamButton } from "./_components/create-team-button";
