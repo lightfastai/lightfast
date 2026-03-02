@@ -160,6 +160,7 @@ export {
   useFormCompat,
   useFormContext,
   useFormField,
+  useFormState,
   Form,
   FormItem,
   FormLabel,

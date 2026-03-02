@@ -32,14 +32,12 @@ export function TeamNameInput() {
   const { teamName: urlTeamName, setTeamName: setUrlTeamName } = useTeamSearchParams();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const teamName = form.watch("teamName");
-
   // Initialize from URL on mount
   useEffect(() => {
-    if (urlTeamName && !teamName) {
+    if (urlTeamName && !form.getValues("teamName")) {
       form.setValue("teamName", urlTeamName, { shouldValidate: true });
     }
-  }, [urlTeamName, teamName, form]);
+  }, [urlTeamName, form]);
 
   // Handle debounced URL update
   const syncToUrl = (value: string) => {
@@ -62,8 +60,9 @@ export function TeamNameInput() {
       debounceTimerRef.current = null;
     }
 
-    // Update URL immediately
-    void setUrlTeamName(teamName || null);
+    // Read current value imperatively to avoid stale closure from form.watch()
+    const currentTeamName = form.getValues("teamName");
+    void setUrlTeamName(currentTeamName || null);
   };
 
   // Cleanup timer on unmount
@@ -79,9 +78,9 @@ export function TeamNameInput() {
     <FormField
       control={form.control}
       name="teamName"
-      render={({ field }) => (
+      render={({ field, fieldState }) => (
         <FormItem>
-          <FormLabel>Your Team Name</FormLabel>
+          <FormLabel className="text-xs font-medium text-muted-foreground">Your Team Name</FormLabel>
           <FormControl>
             <Input
               {...field}
@@ -90,7 +89,7 @@ export function TeamNameInput() {
                 const normalized = e.target.value
                   .toLowerCase()
                   .replace(/[^a-z0-9-]/g, "")
-                  .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+                  .replace(/^-+/, ""); // Remove leading hyphens only (trailing handled by schema validation)
 
                 field.onChange(normalized);
                 syncToUrl(normalized);
@@ -100,13 +99,16 @@ export function TeamNameInput() {
                 handleBlur();
               }}
               placeholder="acme-inc"
-              className="h-12 text-base font-mono"
+              className="font-mono"
             />
           </FormControl>
-          <FormDescription>
-            Great team names are short and memorable
-          </FormDescription>
-          <FormMessage />
+          {fieldState.error ? (
+            <FormMessage />
+          ) : (
+            <FormDescription className="text-xs">
+              Great team names are short and memorable
+            </FormDescription>
+          )}
         </FormItem>
       )}
     />

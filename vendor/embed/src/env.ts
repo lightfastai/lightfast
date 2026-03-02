@@ -7,6 +7,8 @@ import { z } from "zod";
  * Validates API keys for embedding providers (Cohere, OpenAI, etc.)
  */
 export const embedEnv = createEnv({
+	clientPrefix: "" as const,
+	client: {},
 	server: {
 		COHERE_API_KEY: z.string().min(1),
 		OPENAI_API_KEY: z.string().min(1).optional(),

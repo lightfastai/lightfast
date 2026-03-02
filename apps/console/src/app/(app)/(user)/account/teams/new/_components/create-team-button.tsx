@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useFormContext } from "@repo/ui/components/ui/form";
+import { useFormContext, useFormState } from "@repo/ui/components/ui/form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { produce } from "immer";
 import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
+import { useOrganizationList } from "@clerk/nextjs";
 import type { TeamFormValues } from "@repo/console-validation/forms";
 import { showErrorToast } from "~/lib/trpc-errors";
 
@@ -19,19 +20,17 @@ import { showErrorToast } from "~/lib/trpc-errors";
  * - Form validation before submission
  * - tRPC mutation to create Clerk organization
  * - Optimistic updates with rollback on error
+ * - setActive() to activate new org in Clerk session before navigation
  * - Client-side navigation to workspace creation
  * - Toast notifications for success/error states
- *
- * Note: No setActive() call needed - user can select org from dropdown.
- * The middleware will activate the org when they navigate to /:slug routes.
  */
 export function CreateTeamButton() {
   const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { setActive } = useOrganizationList();
   const form = useFormContext<TeamFormValues>();
-
-  const teamName = form.watch("teamName");
+  const { isValid } = useFormState({ control: form.control });
 
   // Create organization mutation with optimistic updates
   const createOrgMutation = useMutation(
@@ -78,12 +77,15 @@ export function CreateTeamButton() {
 
         showErrorToast(err, "Failed to create team", "Failed to create team. Please try again.");
       },
-      onSuccess: (data) => {
-        toast.success(`Team created! Successfully created ${teamName}`);
+      onSuccess: async (data) => {
+        toast.success(`Team created! Successfully created ${data.slug}`);
 
-        // Navigate to workspace creation
-        // The org is already in the cache (optimistic update)
-        // and will be available via organization.listUserOrganizations on the /new page
+        // Activate the new org in Clerk's session before navigating
+        // This ensures the /new page's org-scoped prefetch has the correct org context
+        if (setActive) {
+          await setActive({ organization: data.organizationId });
+        }
+
         router.push(`/new?teamSlug=${data.slug}`);
       },
       onSettled: () => {
@@ -98,24 +100,26 @@ export function CreateTeamButton() {
 
   const handleCreateTeam = async () => {
     // Trigger form validation
-    const isValid = await form.trigger();
-    if (!isValid) {
+    const valid = await form.trigger();
+    if (!valid) {
       toast.error("Please fix the errors in the form before submitting.");
       return;
     }
 
-    // Call tRPC mutation
+    // Read current value imperatively — form.watch() subscriptions are
+    // broken by React Compiler's memoization, causing stale closures.
+    const currentTeamName = form.getValues("teamName");
     createOrgMutation.mutate({
-      slug: teamName,
+      slug: currentTeamName,
     });
   };
 
-  const isDisabled = !form.formState.isValid || createOrgMutation.isPending;
+  const isDisabled = !isValid || createOrgMutation.isPending;
 
   return (
     <Button
       onClick={handleCreateTeam}
-      className="h-12 w-full text-base font-medium"
+      className="w-full"
       disabled={isDisabled}
     >
       {createOrgMutation.isPending ? (

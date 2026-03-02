@@ -1,7 +1,7 @@
 {
   "extends": "@repo/typescript-config/internal-package.json",
   "compilerOptions": {
-    "tsBuildInfoFile": ".cache/tsbuildinfo.json"
+    "tsBuildInfoFile": "dist/.tsbuildinfo.json"
   },
   "include": ["env.ts", "src"],
   "exclude": ["node_modules", "dist"]

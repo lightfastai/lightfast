@@ -1,21 +1,17 @@
-import type { SourceEvent } from "@repo/console-types";
 import type { SourceType } from "@repo/console-validation";
 
-export interface BackfillConfig {
-  integrationId: string;
-  workspaceId: string;
-  clerkOrgId: string;
-  depth: 7 | 30 | 90;
-  /** ISO timestamp = now - depth days */
-  since: string;
-  entityTypes: string[];
-  sourceConfig: Record<string, unknown>;
-  /** Populated inside workflow only, never serialized in event data */
-  accessToken: string;
+/** A single webhook-shaped event ready for Relay ingestion */
+export interface BackfillWebhookEvent {
+  /** Unique per event: "backfill-{installationId}-{entityType}-{itemId}" */
+  deliveryId: string;
+  /** Provider-specific event type, e.g. "pull_request", "issues", "release", "deployment.succeeded" */
+  eventType: string;
+  /** Webhook-shaped payload from adapter (PullRequestEvent, IssuesEvent, ReleaseEvent, VercelWebhookPayload, etc.) */
+  payload: unknown;
 }
 
 export interface BackfillPage<TCursor = unknown> {
-  events: SourceEvent[];
+  events: BackfillWebhookEvent[];
   nextCursor: TCursor | null;
   rawCount: number;
   rateLimit?: {
@@ -25,13 +21,24 @@ export interface BackfillPage<TCursor = unknown> {
   };
 }
 
-export interface BackfillCheckpoint<TCursor = unknown> {
-  currentEntityType: string;
-  cursor: TCursor | null;
-  eventsProduced: number;
-  eventsDispatched: number;
-  errors: Array<{ entityType: string; message: string; timestamp: string }>;
-  updatedAt: string;
+export interface BackfillConfig {
+  /** Installation ID (gw_installations.id) */
+  installationId: string;
+  /** Provider name */
+  provider: SourceType;
+  /** ISO timestamp = now - depth days */
+  since: string;
+  /**
+   * Decrypted access token from Connections token vault.
+   * @internal SENSITIVE — never log or serialize BackfillConfig objects directly.
+   * Use only for Authorization headers within connectors.
+   */
+  accessToken: string;
+  /** Single resource for this work unit */
+  resource: {
+    providerResourceId: string;
+    resourceName: string | null;
+  };
 }
 
 export interface BackfillConnector<TCursor = unknown> {

@@ -12,7 +12,6 @@ import { z } from "zod";
  *
  * Canonical type for all external integrations and data sources.
  * Used across:
- * - user_sources table (OAuth connections)
  * - workspace_integrations table (workspace-level sources)
  * - workspace_knowledge_documents table (document origin)
  * - Event schemas and workflows

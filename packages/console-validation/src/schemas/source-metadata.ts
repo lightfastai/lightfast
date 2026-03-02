@@ -18,4 +18,4 @@ export type GitHubSourceMetadata = z.infer<typeof githubSourceMetadataSchema>;
 // Future source metadata schemas:
 // - Linear (teamId, teamName)
 // - Notion (workspaceId, workspaceName)
-// - Sentry (organizationSlug, projectSlug)
+// - Sentry (projectSlug, projectId)

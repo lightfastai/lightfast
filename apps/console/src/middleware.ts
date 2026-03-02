@@ -28,8 +28,6 @@ const securityHeaders = securityMiddleware(
 const isPublicRoute = createRouteMatcher([
   "/api/health(.*)",
   "/api/inngest(.*)",
-  "/api/github/webhooks", // GitHub webhook endpoint (CRITICAL: must be public)
-  "/api/vercel/webhooks", // Vercel webhook endpoint
   "/robots.txt",
   "/sitemap(.*)",
   "/llms.txt", // AI crawler guidance file
@@ -45,16 +43,16 @@ const isPublicRoute = createRouteMatcher([
 const isTeamCreationRoute = createRouteMatcher([
   "/account/teams/new", // Team/org creation flow
   "/new(.*)", // Workspace creation flow
-  "/api/github(.*)",
-  "/api/vercel/authorize", // Vercel OAuth initiation
-  "/api/vercel/callback", // Vercel OAuth callback
-  "/vercel/connected", // Vercel OAuth success page
+  "/provider/vercel/connected", // Vercel OAuth success page (used by connections service redirect)
+  "/provider/github/connected", // GitHub OAuth success page (used by connections service redirect)
+  "/provider/sentry/connected", // Sentry OAuth success page (used by connections service redirect)
   "/api/organizations(.*)",
 ]);
 
 // User-scoped tRPC endpoint - accessible to pending users
 const isUserScopedRoute = createRouteMatcher([
   "/api/trpc/user(.*)", // All procedures under /api/trpc/user/*
+  "/cli/auth", // CLI authentication page - captures Clerk JWT for CLI onboarding
 ]);
 
 // Org-scoped tRPC endpoint - requires active org
@@ -102,17 +100,6 @@ export default clerkMiddleware(
     const { userId, orgId } = await auth({ treatPendingAsSignedOut: false });
     const isPending = Boolean(userId && !orgId);
 
-    // Log middleware flow for GitHub routes
-    if (req.nextUrl.pathname.startsWith('/api/github')) {
-      console.log("[Middleware] GitHub route detected:", {
-        path: req.nextUrl.pathname,
-        userId,
-        orgId,
-        isPending,
-        isTeamCreationRoute: isTeamCreationRoute(req),
-      });
-    }
-
     // Helper to apply headers and return redirect
     const createRedirectResponse = async (url: URL) => {
       console.log("[Middleware] Creating redirect response to:", url.toString());
@@ -131,12 +118,12 @@ export default clerkMiddleware(
     if (isPublicRoute(req)) {
       // Allow through without any checks
     }
-    // Team creation routes - allow pending users
+    // Team creation routes - require authentication, allow pending users
     else if (isTeamCreationRoute(req)) {
-      // Allow both pending and active users
-      if (req.nextUrl.pathname.startsWith('/api/github')) {
-        console.log("[Middleware] Allowing GitHub route (team creation)");
+      if (!userId) {
+        await auth.protect();
       }
+      // Allow both pending and active users
     }
     // User-scoped tRPC routes: allow both pending and active users
     else if (isUserScopedRoute(req)) {

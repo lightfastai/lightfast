@@ -1,6 +1,7 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "extends": ["//"],
+  "tags": ["app"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -13,10 +14,28 @@
         "NEXT_PUBLIC_LOGTAIL_SOURCE_TOKEN",
         "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
         "NEXT_PUBLIC_POSTHOG_KEY",
-        "NEXT_PUBLIC_POSTHOG_HOST",
+        "NEXT_PUBLIC_POSTHOG_HOST"
+      ],
+      "passThroughEnv": [
+        "SENTRY_AUTH_TOKEN",
         "SENTRY_ORG",
         "SENTRY_PROJECT",
-        "SENTRY_AUTH_TOKEN"
+        "CLERK_SECRET_KEY",
+        "LOGTAIL_SOURCE_TOKEN",
+        "LOGTAIL_URL",
+        "RESEND_API_KEY",
+        "INNGEST_APP_NAME",
+        "INNGEST_EVENT_KEY",
+        "INNGEST_SIGNING_KEY",
+        "ARCJET_ENV",
+        "ARCJET_KEY",
+        "KV_REST_API_URL",
+        "KV_REST_API_TOKEN",
+        "BASEHUB_TOKEN",
+        "BASEHUB_ADMIN_TOKEN",
+        "BASEHUB_CHANGELOG_TOKEN",
+        "HEALTH_CHECK_AUTH_TOKEN",
+        "PORT"
       ],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "next-env.d.ts"]
     },

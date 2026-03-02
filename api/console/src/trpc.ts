@@ -21,7 +21,7 @@ import {
   resolveWorkspaceByName as resolveWorkspace,
 } from "@repo/console-auth-middleware";
 import { hashApiKey } from "@repo/console-api-key";
-import { userApiKeys } from "@db/console/schema";
+import { orgApiKeys } from "@db/console/schema";
 
 /**
  * Authentication Context - Discriminated Union
@@ -47,7 +47,7 @@ type AuthContext =
     }
   | {
       type: "apiKey";
-      workspaceId: string;
+      orgId: string;
       userId: string;
       apiKeyId: string;
     }
@@ -517,32 +517,15 @@ export const apiKeyProcedure = sentrifiedProcedure
 
     const apiKey = authHeader.replace("Bearer ", "");
 
-    // Extract workspace ID from header
-    const workspaceId = ctx.headers.get("x-workspace-id");
-    if (!workspaceId) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message:
-          "Workspace ID required. Provide 'X-Workspace-ID: <workspace-id>' header.",
-      });
-    }
-
-    // Verify API key and get workspace context
-    const {
-      workspaceId: verifiedWorkspaceId,
-      userId,
-      apiKeyId,
-    } = await verifyApiKey({
-      key: apiKey,
-      workspaceId,
-    });
+    // Verify API key and get org context
+    const { orgId, userId, apiKeyId } = await verifyApiKey(apiKey);
 
     return next({
       ctx: {
         ...ctx,
         auth: {
           type: "apiKey" as const,
-          workspaceId: verifiedWorkspaceId,
+          orgId,
           userId,
           apiKeyId,
         },
@@ -674,27 +657,26 @@ export async function verifyOrgMembership(params: {
  * @throws {TRPCError} UNAUTHORIZED if key is invalid, expired, or inactive
  * @throws {TRPCError} BAD_REQUEST if workspace ID header is missing
  */
-async function verifyApiKey(params: {
-  key: string;
-  workspaceId: string;
-}): Promise<{
-  workspaceId: string;
+async function verifyApiKey(key: string): Promise<{
+  orgId: string;
   userId: string;
   apiKeyId: string;
 }> {
   // Hash the provided key to compare with stored hash
-  const keyHash = await hashApiKey(params.key);
+  const keyHash = await hashApiKey(key);
 
-  // Find API key in database
+  // Find API key in database (org-scoped)
   const [apiKey] = await db
     .select({
-      id: userApiKeys.id,
-      userId: userApiKeys.userId,
-      isActive: userApiKeys.isActive,
-      expiresAt: userApiKeys.expiresAt,
+      id: orgApiKeys.publicId,
+      internalId: orgApiKeys.id,
+      clerkOrgId: orgApiKeys.clerkOrgId,
+      createdByUserId: orgApiKeys.createdByUserId,
+      isActive: orgApiKeys.isActive,
+      expiresAt: orgApiKeys.expiresAt,
     })
-    .from(userApiKeys)
-    .where(and(eq(userApiKeys.keyHash, keyHash), eq(userApiKeys.isActive, true)))
+    .from(orgApiKeys)
+    .where(and(eq(orgApiKeys.keyHash, keyHash), eq(orgApiKeys.isActive, true)))
     .limit(1);
 
   if (!apiKey) {
@@ -714,9 +696,9 @@ async function verifyApiKey(params: {
 
   // Update last used timestamp (non-blocking)
   void db
-    .update(userApiKeys)
+    .update(orgApiKeys)
     .set({ lastUsedAt: sql`CURRENT_TIMESTAMP` })
-    .where(eq(userApiKeys.id, apiKey.id))
+    .where(eq(orgApiKeys.id, apiKey.internalId))
     .catch((error: unknown) => {
       console.error("Failed to update API key lastUsedAt", {
         error,
@@ -725,8 +707,8 @@ async function verifyApiKey(params: {
     });
 
   return {
-    workspaceId: params.workspaceId,
-    userId: apiKey.userId,
+    orgId: apiKey.clerkOrgId,
+    userId: apiKey.createdByUserId,
     apiKeyId: apiKey.id,
   };
 }

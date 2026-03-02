@@ -14,20 +14,15 @@ import { createTRPCRouter } from "./trpc";
 import { organizationRouter } from "./router/user/organization";
 import { accountRouter } from "./router/user/account";
 import { workspaceAccessRouter } from "./router/user/workspace";
-import { userApiKeysRouter } from "./router/user/user-api-keys";
-import { userSourcesRouter } from "./router/user/user-sources";
-
 // Org-scoped routers (active org required)
 import { searchRouter } from "./router/org/search";
 import { contentsRouter } from "./router/org/contents";
 import { clerkRouter } from "./router/org/clerk";
 import { workspaceRouter } from "./router/org/workspace";
-import { integrationRouter } from "./router/org/integration";
+import { connectionsRouter } from "./router/org/connections";
 import { jobsRouter } from "./router/org/jobs";
-import { sourcesRouter } from "./router/org/sources";
 import { activitiesRouter } from "./router/org/activities";
 import { orgApiKeysRouter } from "./router/org/org-api-keys";
-import { backfillRouter } from "./router/org/backfill";
 
 // M2M routers (internal services only)
 import { jobsM2MRouter } from "./router/m2m/jobs";
@@ -42,15 +37,11 @@ import { workspaceM2MRouter } from "./router/m2m/workspace";
  * Procedures:
  * - organization.*: Create/list/update organizations
  * - account.*: User profile from Clerk
- * - userApiKeys.*: API key management (lightfast_user_api_keys table)
- * - userSources.*: OAuth integrations (lightfast_user_sources table)
  * - workspaceAccess.*: Workspace queries that verify access manually (listByClerkOrgSlug)
  */
 export const userRouter = createTRPCRouter({
   organization: organizationRouter,
   account: accountRouter,
-  userApiKeys: userApiKeysRouter,
-  userSources: userSourcesRouter,
   workspaceAccess: workspaceAccessRouter,
 });
 
@@ -61,13 +52,13 @@ export const userRouter = createTRPCRouter({
  *
  * Procedures:
  * - workspace.*: Workspace management (includes workspace.store.get for single store)
- * - integration.*: Integration connections (GitHub, etc.)
+ * - connections.*: OAuth connections (GitHub, Vercel, etc.) via gwInstallations
  * - jobs.*: Background job management
- * - sources.*: Source management
  * - clerk.*: Clerk organization utilities
  * - search.*: Semantic search
  * - contents.*: Document retrieval
  * - activities.*: Activity logging
+ * - orgApiKeys.*: Organization API key management
  */
 export const orgRouter = createTRPCRouter({
   // Phase 1.3: Docs search
@@ -77,12 +68,10 @@ export const orgRouter = createTRPCRouter({
   // Org-level routers
   clerk: clerkRouter,
   workspace: workspaceRouter,
-  integration: integrationRouter,
+  connections: connectionsRouter,
   jobs: jobsRouter,
-  sources: sourcesRouter,
   activities: activitiesRouter,
   orgApiKeys: orgApiKeysRouter,
-  backfill: backfillRouter,
 });
 
 /**

@@ -120,6 +120,12 @@ export function WorkspaceDashboard({
     ],
   });
 
+  const normalizedSources = sources.list.map((s) => ({
+    ...s,
+    type: s.type ?? "unknown",
+    displayName: s.displayName ?? s.type ?? "unknown",
+  }));
+
   return (
     <div className="space-y-6">
       {/* Header - Full Width */}
@@ -161,7 +167,7 @@ export function WorkspaceDashboard({
           <SystemHealthOverview
             health={health}
             store={store}
-            sources={sources.list}
+            sources={normalizedSources}
           />
 
           {/* Performance Metrics - Percentiles & Time Series Charts */}
@@ -179,7 +185,7 @@ export function WorkspaceDashboard({
       </div>
 
       {/* Bottom Section - Full Width */}
-      <ConnectedSourcesOverview sources={sources.list} />
+      <ConnectedSourcesOverview sources={normalizedSources} />
 
       {/* Store Overview - Single store per workspace (1:1 relationship) */}
       <StoreOverview store={store} />

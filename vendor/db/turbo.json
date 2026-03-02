@@ -1,0 +1,13 @@
+{
+  "extends": ["//"],
+  "tags": ["vendor"],
+  "tasks": {
+    "build": {
+      "passThroughEnv": [
+        "DATABASE_HOST",
+        "DATABASE_USERNAME",
+        "DATABASE_PASSWORD"
+      ]
+    }
+  }
+}

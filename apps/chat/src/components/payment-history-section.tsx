@@ -36,7 +36,7 @@ export function PaymentHistorySection() {
 				</CardHeader>
 				<CardContent className="text-center space-y-4">
 					<p className="text-muted-foreground">
-						{paymentsError.message || "Failed to load payment history"}
+						{paymentsError instanceof Error ? paymentsError.message : "Failed to load payment history"}
 					</p>
 				</CardContent>
 			</Card>

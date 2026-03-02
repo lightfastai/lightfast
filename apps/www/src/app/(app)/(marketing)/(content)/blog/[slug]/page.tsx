@@ -6,6 +6,7 @@ import { blog  } from "@vendor/cms";
 import type {Post} from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { JsonLdData } from "@vendor/seo/json-ld";
 import { SocialShare } from "~/components/blog-social-share";
@@ -368,7 +369,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   {/* Content */}
                   {post.body?.json?.content ? (
                     <div className="max-w-none mt-12">
-                      <Body content={post.body.json.content} />
+                      <Body content={post.body.json.content} codeBlockComponent={SSRCodeBlock} />
                     </div>
                   ) : null}
 

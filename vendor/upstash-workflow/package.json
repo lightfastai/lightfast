@@ -5,17 +5,33 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     },
-    "./env": "./env.ts",
-    "./client": "./src/client.ts",
-    "./nextjs": "./src/nextjs.ts",
-    "./types": "./src/types.ts"
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "default": "./dist/env.js"
+    },
+    "./client": {
+      "types": "./dist/src/client.d.ts",
+      "default": "./dist/src/client.js"
+    },
+    "./hono": {
+      "types": "./dist/src/hono.d.ts",
+      "default": "./dist/src/hono.js"
+    },
+    "./nextjs": {
+      "types": "./dist/src/nextjs.d.ts",
+      "default": "./dist/src/nextjs.js"
+    },
+    "./types": {
+      "types": "./dist/src/types.d.ts",
+      "default": "./dist/src/types.js"
+    }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "tsup && tsc --incremental false",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
@@ -25,6 +41,7 @@
   "dependencies": {
     "@t3-oss/env-nextjs": "catalog:",
     "@upstash/workflow": "^0.2.22",
+    "hono": "catalog:",
     "next": "catalog:next16",
     "zod": "catalog:zod3"
   },
@@ -35,6 +52,7 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "tsup": "^8.5.0",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

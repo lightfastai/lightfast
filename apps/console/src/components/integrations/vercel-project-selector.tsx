@@ -22,7 +22,7 @@ import { showErrorToast } from "~/lib/trpc-errors";
 interface VercelProjectSelectorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  userSourceId: string;
+  installationId: string;
   workspaceId: string;
   workspaceName: string;
   onSuccess?: () => void;
@@ -31,7 +31,7 @@ interface VercelProjectSelectorProps {
 export function VercelProjectSelector({
   open,
   onOpenChange,
-  userSourceId,
+  installationId,
   workspaceId,
   workspaceName,
   onSuccess,
@@ -46,8 +46,8 @@ export function VercelProjectSelector({
     error,
     refetch,
   } = useQuery({
-    ...trpc.userSources.vercel.listProjects.queryOptions({
-      userSourceId,
+    ...trpc.connections.vercel.listProjects.queryOptions({
+      installationId,
       workspaceId,
     }),
     enabled: open,
@@ -98,7 +98,7 @@ export function VercelProjectSelector({
 
     linkMutation.mutate({
       workspaceId,
-      userSourceId,
+      gwInstallationId: installationId,
       projects: selectedProjects,
     });
   };

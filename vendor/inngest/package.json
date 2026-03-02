@@ -5,11 +5,21 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"default": "./src/index.ts"
+			"types": "./dist/src/index.d.ts",
+			"default": "./dist/src/index.js"
 		},
-		"./server": "./src/server.ts",
-		"./env": "./env.ts"
+		"./server": {
+			"types": "./dist/src/server.d.ts",
+			"default": "./dist/src/server.js"
+		},
+		"./hono": {
+			"types": "./dist/src/hono.d.ts",
+			"default": "./dist/src/hono.js"
+		},
+		"./env": {
+			"types": "./dist/env.d.ts",
+			"default": "./dist/env.js"
+		}
 	},
 	"license": "MIT",
 	"scripts": {
@@ -24,7 +34,7 @@
 		"@repo/eslint-config": "workspace:*",
 		"@repo/prettier-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
-		"@t3-oss/env-nextjs": "catalog:",
+		"@t3-oss/env-core": "catalog:",
 		"concurrently": "^9.1.0",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
@@ -36,5 +46,13 @@
 		"@inngest/middleware-sentry": "catalog:",
 		"inngest": "catalog:",
 		"zod": "catalog:zod3"
+	},
+	"peerDependencies": {
+		"hono": "catalog:"
+	},
+	"peerDependenciesMeta": {
+		"hono": {
+			"optional": true
+		}
 	}
 }

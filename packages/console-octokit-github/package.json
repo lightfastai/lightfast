@@ -13,6 +13,10 @@
     "./env": {
       "types": "./dist/env.d.ts",
       "default": "./src/env.ts"
+    },
+    "./oauth-env": {
+      "types": "./dist/oauth-env.d.ts",
+      "default": "./src/oauth-env.ts"
     }
   },
   "scripts": {

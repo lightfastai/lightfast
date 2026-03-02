@@ -89,9 +89,15 @@ export function parseGitHubRateLimit(headers: Record<string, string>): {
 
   if (!remaining || !reset || !limit) return undefined;
 
+  const remainingNum = parseInt(remaining, 10);
+  const resetNum = parseInt(reset, 10);
+  const limitNum = parseInt(limit, 10);
+
+  if (isNaN(remainingNum) || isNaN(resetNum) || isNaN(limitNum)) return undefined;
+
   return {
-    remaining: parseInt(remaining, 10),
-    resetAt: new Date(parseInt(reset, 10) * 1000),
-    limit: parseInt(limit, 10),
+    remaining: remainingNum,
+    resetAt: new Date(resetNum * 1000),
+    limit: limitNum,
   };
 }

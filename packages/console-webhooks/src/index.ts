@@ -1,66 +1,105 @@
 /**
  * @repo/console-webhooks
  *
- * Webhook signature verification utilities for Console integrations
+ * Webhook event transformers, validation, and storage utilities for Console integrations.
  *
- * This package provides cryptographic verification utilities for:
- * - Verifying GitHub webhook signatures (HMAC SHA-256)
- * - Verifying Vercel webhook signatures
- * - Timing-attack resistant signature comparison
- * - Timestamp validation to prevent replay attacks
- * - Common webhook verification utilities
- *
- * ## Security Features
- *
- * - **Timing-attack resistance**: Uses `crypto.timingSafeEqual()` for signature comparison
- * - **Replay attack prevention**: Validates webhook timestamps
- * - **HMAC verification**: Industry-standard HMAC SHA-256 signatures
- * - **Type-safe results**: Structured verification results with error details
- *
- * @example
- * ```ts
- * // GitHub webhook verification
- * import { verifyGitHubWebhookFromHeaders } from "@repo/console-webhooks/github";
- *
- * const rawPayload = await request.text();
- * const result = await verifyGitHubWebhookFromHeaders(
- *   rawPayload,
- *   request.headers,
- *   env.GITHUB_WEBHOOK_SECRET
- * );
- *
- * if (result.verified) {
- *   // Process webhook event
- *   console.log("Repository:", result.event?.repository?.full_name);
- * } else {
- *   // Reject invalid webhook
- *   return new Response(result.error, { status: 401 });
- * }
- * ```
- *
- * @example
- * ```ts
- * // Using common utilities directly
- * import { computeHmacSignature, safeCompareSignatures } from "@repo/console-webhooks/common";
- *
- * const signature = await computeHmacSignature(payload, secret);
- * const isValid = safeCompareSignatures(receivedSig, signature);
- * ```
+ * Signature verification is handled by the Relay service (apps/relay/).
+ * This package provides:
+ * - Event transformers (GitHub, Vercel, Linear, Sentry) that produce SourceEvent shapes
+ * - Payload validation against Zod schemas
+ * - Sanitization utilities for webhook content
+ * - Storage helpers for ingestion payloads
+ * - Type re-exports for Linear and Sentry webhook shapes
  */
 
-// Re-export everything from submodules
-export * from "./types.js";
-export * from "./common.js";
-export * from "./github.js";
-export * from "./vercel.js";
-export * from "./linear.js";
-export * from "./sentry.js";
+// Type re-exports for Linear webhook shapes
+export type {
+  LinearWebhookBase,
+  LinearWebhookEventType,
+  LinearIssueWebhook,
+  LinearCommentWebhook,
+  LinearProjectWebhook,
+  LinearCycleWebhook,
+  LinearProjectUpdateWebhook,
+  LinearIssue,
+  LinearAttachment,
+  LinearComment,
+  LinearProject,
+  LinearCycle,
+  LinearProjectUpdate,
+  LinearUser,
+  LinearLabel,
+} from "./linear.js";
+
+// Type re-exports for Sentry webhook shapes
+export type {
+  SentryIssueWebhook,
+  SentryErrorWebhook,
+  SentryEventAlertWebhook,
+  SentryMetricAlertWebhook,
+  SentryIssue,
+  SentryErrorEvent,
+  SentryActor,
+  SentryWebhookEventType,
+} from "./sentry.js";
 
 // Validation utilities
-export * from "./validation.js";
+export { validateSourceEvent, type ValidationResult } from "./validation.js";
 
 // Sanitization utilities
-export * from "./sanitize.js";
+export {
+  MAX_BODY_LENGTH,
+  MAX_TITLE_LENGTH,
+  encodeHtmlEntities,
+  truncateWithEllipsis,
+  sanitizeContent,
+  sanitizeTitle,
+  sanitizeBody,
+} from "./sanitize.js";
+
+// Storage utilities
+export {
+  storeIngestionPayload,
+  extractWebhookHeaders,
+  type StoreIngestionPayloadParams,
+  type StoreWebhookPayloadParams,
+} from "./storage.js";
 
 // Transformers
-export * from "./transformers/index.js";
+export {
+  // GitHub
+  transformGitHubPush,
+  transformGitHubPullRequest,
+  transformGitHubIssue,
+  transformGitHubRelease,
+  transformGitHubDiscussion,
+  githubTransformers,
+  // Vercel
+  transformVercelDeployment,
+  vercelTransformers,
+  // Linear
+  transformLinearIssue,
+  transformLinearComment,
+  transformLinearProject,
+  transformLinearCycle,
+  transformLinearProjectUpdate,
+  linearTransformers,
+  // Sentry
+  transformSentryIssue,
+  transformSentryError,
+  transformSentryEventAlert,
+  transformSentryMetricAlert,
+  sentryTransformers,
+} from "./transformers/index.js";
+export type {
+  // GitHub
+  PushEvent,
+  PullRequestEvent,
+  IssuesEvent,
+  ReleaseEvent,
+  DiscussionEvent,
+  GitHubWebhookEventType,
+  // Vercel
+  VercelWebhookEventType,
+  VercelWebhookPayload,
+} from "./transformers/index.js";

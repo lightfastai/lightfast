@@ -166,7 +166,7 @@ export class Agent<
 	}: StreamOptions<TMessage, TRequestContext, TMemoryContext>): Parameters<
 		typeof streamText
 	>[0] {
-		if (messages?.length === 0) {
+		if (!messages || messages.length === 0) {
 			throw new NoMessagesError();
 		}
 

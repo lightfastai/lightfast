@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Github } from "lucide-react";
 import {
 	Dialog,
@@ -12,6 +12,22 @@ import {
 } from "@repo/ui/components/ui/dialog";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
+import { useTRPC } from "@repo/console-trpc/react";
+import { useQueryClient } from "@tanstack/react-query";
+
+interface GitHubConnectedMessage {
+	type: "github_connected";
+}
+
+function isGitHubConnectedMessage(
+	data: unknown,
+): data is GitHubConnectedMessage {
+	return (
+		typeof data === "object" &&
+		data !== null &&
+		(data as Record<string, unknown>).type === "github_connected"
+	);
+}
 
 interface GitHubConnectDialogProps {
 	children?: React.ReactNode;
@@ -32,47 +48,91 @@ export function GitHubConnectDialog({
 	onOpenChange,
 	onSuccess,
 }: GitHubConnectDialogProps) {
+	const trpc = useTRPC();
+	const queryClient = useQueryClient();
 	const [internalOpen, setInternalOpen] = useState(false);
 
 	const open = controlledOpen ?? internalOpen;
 	const setOpen = onOpenChange ?? setInternalOpen;
 
-	// Check for OAuth callback on mount
+	const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const successReceivedRef = useRef(false);
+
+	const cleanup = useCallback(() => {
+		if (pollTimerRef.current) {
+			clearInterval(pollTimerRef.current);
+			pollTimerRef.current = null;
+		}
+	}, []);
+
+	// Listen for postMessage from the OAuth callback page
 	useEffect(() => {
-		if (typeof window === "undefined") return;
-
-		const handleOAuthCallback = () => {
-			const urlParams = new URLSearchParams(window.location.search);
-			const githubAuth = urlParams.get("github_auth");
-			const githubError = urlParams.get("github_error");
-
-			if (githubAuth === "success") {
-				// OAuth successful
+		const handleMessage = (event: MessageEvent<unknown>) => {
+			if (event.origin !== window.location.origin) return;
+			if (isGitHubConnectedMessage(event.data)) {
+				successReceivedRef.current = true;
+				cleanup();
 				setOpen(false);
 				toast.success("GitHub connected", {
 					description: "Successfully connected to GitHub. You can now set up environments.",
 				});
-
-				// Clean up URL
-				window.history.replaceState({}, "", window.location.pathname);
-
-				// Trigger success callback
 				onSuccess?.();
-			} else if (githubError) {
-				toast.error("GitHub authorization failed", {
-					description: `Error: ${githubError}`,
-				});
-				// Clean up URL
-				window.history.replaceState({}, "", window.location.pathname);
 			}
 		};
 
-		handleOAuthCallback();
-	}, [onSuccess, setOpen, toast]);
+		window.addEventListener("message", handleMessage);
+		return () => {
+			window.removeEventListener("message", handleMessage);
+			cleanup();
+		};
+	}, [cleanup, setOpen, onSuccess]);
 
-	const handleGitHubAuth = () => {
-		// Redirect to GitHub App installation
-		window.location.href = "/api/github/install-app";
+	const handleGitHubAuth = async () => {
+		try {
+			// Clear any existing polling interval before starting a new auth flow
+			cleanup();
+
+			const data = await queryClient.fetchQuery(
+				trpc.connections.getAuthorizeUrl.queryOptions({ provider: "github" }),
+			);
+
+			const width = 600;
+			const height = 700;
+			const left = window.screenX + (window.outerWidth - width) / 2;
+			const top = window.screenY + (window.outerHeight - height) / 2;
+
+			successReceivedRef.current = false;
+
+			const popup = window.open(
+				data.url,
+				"github-install",
+				`width=${width},height=${height},left=${left},top=${top},popup=1`,
+			);
+
+			if (!popup) {
+				toast.error("Popup blocked", {
+					description: "Please allow popups for this site and try again.",
+				});
+				return;
+			}
+
+			// Poll for popup close as a fallback — success is signalled via postMessage
+			pollTimerRef.current = setInterval(() => {
+				if (popup.closed) {
+					cleanup();
+					if (!successReceivedRef.current) {
+						toast.error("GitHub connection was not completed", {
+							description: "The popup was closed before authorization finished. Please try again.",
+						});
+					}
+				}
+			}, 500);
+		} catch (e) {
+			console.error("GitHub connect failed:", e);
+			toast.error("Failed to connect GitHub", {
+				description: e instanceof Error ? e.message : String(e),
+			});
+		}
 	};
 
 	return (

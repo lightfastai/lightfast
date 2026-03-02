@@ -21,9 +21,8 @@ export function ScrollAreaWithBorder({ children, className }: ScrollAreaWithBord
 			setIsScrolled(scrollElement.scrollTop > 0);
 		};
 
-		const scrollOptions = { passive: true };
-		scrollElement.addEventListener('scroll', handleScroll, scrollOptions);
-		return () => scrollElement.removeEventListener('scroll', handleScroll, scrollOptions);
+		scrollElement.addEventListener('scroll', handleScroll, { passive: true });
+		return () => scrollElement.removeEventListener('scroll', handleScroll);
 	}, []);
 
 	return (
@@ -33,10 +32,12 @@ export function ScrollAreaWithBorder({ children, className }: ScrollAreaWithBord
 				"border-t transition-opacity duration-200",
 				isScrolled ? "border-border/50 opacity-100" : "border-transparent opacity-0"
 			)} />
-			
-			<ScrollArea ref={scrollAreaRef} className={className}>
-				{children}
-			</ScrollArea>
+
+			<div ref={scrollAreaRef}>
+				<ScrollArea className={className}>
+					{children}
+				</ScrollArea>
+			</div>
 		</>
 	);
 }

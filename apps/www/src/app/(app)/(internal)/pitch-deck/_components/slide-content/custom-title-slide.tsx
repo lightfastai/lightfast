@@ -63,18 +63,16 @@ export function CustomTitleSlide({
             {slide.title}
           </h1>
         </div>
-        {slide.subtitle && (
-          <p
-            className={cn(
-              "text-white font-medium text-center",
-              isFixed
-                ? "mt-6 text-xl max-w-[600px]"
-                : "mt-3 sm:mt-4 md:mt-5 text-xs sm:text-sm md:text-base lg:text-lg max-w-[80%] sm:max-w-[70%] md:max-w-[500px]",
-            )}
-          >
-            {slide.subtitle}
-          </p>
-        )}
+        <p
+          className={cn(
+            "text-white font-medium text-center",
+            isFixed
+              ? "mt-6 text-xl max-w-[600px]"
+              : "mt-3 sm:mt-4 md:mt-5 text-xs sm:text-sm md:text-base lg:text-lg max-w-[80%] sm:max-w-[70%] md:max-w-[500px]",
+          )}
+        >
+          {slide.subtitle}
+        </p>
       </div>
     </div>
   );

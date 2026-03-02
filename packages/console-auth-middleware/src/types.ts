@@ -17,10 +17,8 @@ export type DbClient = typeof db;
 
 /**
  * Supported resource types for ownership verification
- *
- * NOTE: "userSource" is the NEW 2-table system equivalent of "integration"
  */
-export type ResourceType = "integration" | "apiKey" | "repository" | "userSource";
+export type ResourceType = "integration" | "apiKey" | "repository";
 
 /**
  * tRPC error codes used in authorization failures

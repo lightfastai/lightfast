@@ -13,6 +13,14 @@ import { mergeNextConfig } from "@vendor/next/merge-config";
 const config: NextConfig = withSentry(
   withBetterStack(
     mergeNextConfig(vendorConfig, {
+      images: {
+        remotePatterns: [
+          {
+            protocol: "https",
+            hostname: "avatars.githubusercontent.com",
+          },
+        ],
+      },
       transpilePackages: [
         // @api packages
         "@api/console",
@@ -23,7 +31,6 @@ const config: NextConfig = withSentry(
         "@repo/console-auth-middleware",
         "@repo/console-backfill",
         "@repo/console-embed",
-        "@repo/console-oauth",
         "@repo/console-octokit-github",
         "@repo/console-pinecone",
         "@repo/console-trpc",
@@ -59,7 +66,6 @@ const config: NextConfig = withSentry(
           "@repo/console-auth-middleware",
           "@repo/console-clerk-cache",
           "@repo/console-embed",
-          "@repo/console-oauth",
           "@repo/console-octokit-github",
           "@repo/console-pinecone",
           "@repo/console-rerank",
@@ -151,6 +157,20 @@ const config: NextConfig = withSentry(
             ? "https://lightfast-docs.vercel.app"
             : "http://localhost:4105";
 
+        // Proxy connections API routes to the connections service
+        // Only in dev — production uses connections.lightfast.ai directly
+        const connectionsUrl =
+          vercelEnv === "production" || vercelEnv === "preview" || process.env.NODE_ENV === "production"
+            ? "https://connections.lightfast.ai"
+            : "http://localhost:4110";
+
+        // Proxy relay routes to the relay service
+        // Only in dev — production uses relay.lightfast.ai directly
+        const relayUrl =
+          vercelEnv === "production" || vercelEnv === "preview" || process.env.NODE_ENV === "production"
+            ? "https://relay.lightfast.ai"
+            : "http://localhost:4108";
+
         return [
           {
             source: "/docs",
@@ -159,6 +179,14 @@ const config: NextConfig = withSentry(
           {
             source: "/docs/:path*",
             destination: `${docsUrl}/docs/:path*`,
+          },
+          {
+            source: "/services/connections/:path*",
+            destination: `${connectionsUrl}/services/connections/:path*`,
+          },
+          {
+            source: "/services/relay/:path*",
+            destination: `${relayUrl}/api/:path*`,
           },
         ];
       },

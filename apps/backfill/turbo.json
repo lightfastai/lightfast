@@ -1,0 +1,22 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tags": ["app"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "passThroughEnv": [
+        "GATEWAY_API_KEY",
+        "INNGEST_APP_NAME",
+        "INNGEST_EVENT_KEY",
+        "INNGEST_SIGNING_KEY",
+        "SENTRY_DSN"
+      ],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "persistent": true,
+      "interruptible": true
+    }
+  }
+}

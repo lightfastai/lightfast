@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useFormContext } from "@repo/ui/components/ui/form";
+import { useFormContext, useFormState } from "@repo/ui/components/ui/form";
 import {
   useMutation,
   useQueryClient,
@@ -30,6 +30,7 @@ export function CreateWorkspaceButton() {
   const queryClient = useQueryClient();
   const { setActive } = useOrganizationList();
   const form = useFormContext<WorkspaceFormValues>();
+  const { isValid } = useFormState({ control: form.control });
 
   // Read cached organization list
   const { data: organizations } = useSuspenseQuery({
@@ -38,27 +39,24 @@ export function CreateWorkspaceButton() {
     refetchOnWindowFocus: false,
   });
 
-  // Get form values
-  const workspaceName = form.watch("workspaceName");
-  const selectedOrgId = form.watch("organizationId");
-
-  // Get GitHub-related state from context (now supports multiple repos)
-  const { selectedRepositories, userSourceId, selectedInstallation } =
+  // Get source selection state from context
+  const { selectedRepositories, gwInstallationId, selectedInstallation, selectedVercelInstallation, selectedProjects, sentryInstallationId, selectedSentryProjects, selectedLinearTeam } =
     useWorkspaceForm();
-
-  // Find the organization by ID from tRPC cache
-  const selectedOrg = organizations.find((org) => org.id === selectedOrgId);
 
   // Create workspace mutation with optimistic updates
   const createWorkspaceMutation = useMutation(
     trpc.workspaceAccess.create.mutationOptions({
       onMutate: async (variables) => {
+        // Read current org at call time to avoid stale closures
+        const currentOrgId = form.getValues("organizationId");
+        const currentOrg = organizations.find((org) => org.id === currentOrgId);
+
         // Only proceed with optimistic update if we have an org slug
-        if (!selectedOrg?.slug) {
+        if (!currentOrg?.slug) {
           return { previous: undefined };
         }
 
-        const orgSlug = selectedOrg.slug;
+        const orgSlug = currentOrg.slug;
 
         // Cancel outgoing queries to prevent race conditions
         await queryClient.cancelQueries({
@@ -120,7 +118,7 @@ export function CreateWorkspaceButton() {
     }),
   );
 
-  // Bulk link repositories mutation
+  // Bulk link GitHub repositories mutation
   const bulkLinkMutation = useMutation(
     trpc.workspace.integrations.bulkLinkGitHubRepositories.mutationOptions({
       onError: (error) => {
@@ -133,14 +131,53 @@ export function CreateWorkspaceButton() {
     }),
   );
 
+  // Bulk link Vercel projects mutation
+  const bulkLinkVercelMutation = useMutation(
+    trpc.workspace.integrations.bulkLinkVercelProjects.mutationOptions({
+      onError: (error) => {
+        console.error("Failed to link Vercel projects:", error);
+        toast.error("Vercel projects not linked", {
+          description: "Workspace created, but failed to connect Vercel projects. You can add them later.",
+        });
+      },
+    }),
+  );
+
+  // Bulk link Sentry projects mutation
+  const bulkLinkSentryMutation = useMutation(
+    trpc.workspace.integrations.bulkLinkSentryProjects.mutationOptions({
+      onError: (error) => {
+        console.error("Failed to link Sentry projects:", error);
+        toast.error("Sentry projects not linked", {
+          description: "Workspace created, but failed to connect Sentry projects. You can add them later.",
+        });
+      },
+    }),
+  );
+
+  // Bulk link Linear teams mutation
+  const bulkLinkLinearMutation = useMutation(
+    trpc.workspace.integrations.bulkLinkLinearTeams.mutationOptions({
+      onError: (error) => {
+        console.error("Failed to link Linear teams:", error);
+        toast.error("Linear teams not linked", {
+          description: "Workspace created, but failed to connect Linear teams. You can add them later.",
+        });
+      },
+    }),
+  );
+
   const handleCreateWorkspace = async () => {
-    const isValid = await form.trigger();
-    if (!isValid) {
+    const formValid = await form.trigger();
+    if (!formValid) {
       toast.error("Validation failed", {
         description: "Please fix the errors in the form before submitting.",
       });
       return;
     }
+
+    const selectedOrgId = form.getValues("organizationId");
+    const workspaceName = form.getValues("workspaceName");
 
     if (!selectedOrgId) {
       toast.error("Organization required", {
@@ -166,36 +203,84 @@ export function CreateWorkspaceButton() {
           await setActive({ organization: selectedOrgId });
         }
 
-        let repoCount = 0;
-        if (selectedRepositories.length > 0 && userSourceId && selectedInstallation) {
-          try {
-            const linked = await bulkLinkMutation.mutateAsync({
-              workspaceId: workspace.workspaceId,
-              userSourceId,
-              installationId: selectedInstallation.id,
-              repositories: selectedRepositories.map((repo) => ({
-                repoId: repo.id,
-                repoFullName: repo.fullName,
-              })),
-            });
-            repoCount = linked.created + linked.reactivated;
-          } catch {
-            // Error already handled by bulkLinkMutation onError — continue with navigation
-          }
-        }
+        // Bulk-link selected sources in parallel
+        const [githubResult, vercelResult, sentryResult, linearResult] = await Promise.allSettled([
+          selectedRepositories.length > 0 && gwInstallationId && selectedInstallation
+            ? bulkLinkMutation.mutateAsync({
+                workspaceId: workspace.workspaceId,
+                gwInstallationId,
+                installationId: selectedInstallation.id,
+                repositories: selectedRepositories.map((repo) => ({
+                  repoId: repo.id,
+                  repoFullName: repo.fullName,
+                })),
+              })
+            : Promise.resolve(null),
+          selectedProjects.length > 0 && selectedVercelInstallation
+            ? bulkLinkVercelMutation.mutateAsync({
+                workspaceId: workspace.workspaceId,
+                gwInstallationId: selectedVercelInstallation.id,
+                projects: selectedProjects.map((p) => ({
+                  projectId: p.id,
+                  projectName: p.name,
+                })),
+              })
+            : Promise.resolve(null),
+          selectedSentryProjects.length > 0 && sentryInstallationId
+            ? bulkLinkSentryMutation.mutateAsync({
+                workspaceId: workspace.workspaceId,
+                gwInstallationId: sentryInstallationId,
+                projects: selectedSentryProjects.map((p) => ({
+                  projectId: p.id,
+                  projectSlug: p.slug,
+                  projectName: p.name,
+                })),
+              })
+            : Promise.resolve(null),
+          selectedLinearTeam
+            ? bulkLinkLinearMutation.mutateAsync({
+                workspaceId: workspace.workspaceId,
+                gwInstallationId: selectedLinearTeam.installationId,
+                teams: [{
+                  teamId: selectedLinearTeam.id,
+                  teamKey: selectedLinearTeam.key,
+                  teamName: selectedLinearTeam.name,
+                }],
+              })
+            : Promise.resolve(null),
+        ]);
+
+        const repoCount =
+          githubResult.status === "fulfilled" && githubResult.value
+            ? githubResult.value.created + githubResult.value.reactivated
+            : 0;
+        const projectCount =
+          vercelResult.status === "fulfilled" && vercelResult.value
+            ? vercelResult.value.created + vercelResult.value.reactivated
+            : 0;
+        const sentryCount =
+          sentryResult.status === "fulfilled" && sentryResult.value
+            ? sentryResult.value.created + sentryResult.value.reactivated
+            : 0;
+        const linearCount =
+          linearResult.status === "fulfilled" && linearResult.value
+            ? linearResult.value.created + linearResult.value.reactivated
+            : 0;
+        const totalLinked = repoCount + projectCount + sentryCount + linearCount;
+
         toast.success("Workspace created!", {
-          description: repoCount > 0
-            ? `${workspaceName} has been created with ${repoCount} repositor${repoCount === 1 ? "y" : "ies"}.`
-            : `${workspaceName} workspace is ready. Add sources to get started.`,
+          description:
+            totalLinked > 0
+              ? `${workspace.workspaceName} has been created with ${totalLinked} source${totalLinked === 1 ? "" : "s"} linked.`
+              : `${workspace.workspaceName} workspace is ready. Add sources to get started.`,
         });
 
-        const orgSlug = selectedOrg?.slug;
-        if (!orgSlug) {
+        const selectedOrg = organizations.find((org) => org.id === selectedOrgId);
+        if (!selectedOrg?.slug) {
           router.push("/");
           return;
         }
-        const wsName = workspace.workspaceName;
-        router.push(`/${orgSlug}/${wsName}`);
+        router.push(`/${selectedOrg.slug}/${workspace.workspaceName}`);
       })
       .catch((error: unknown) => {
         console.error("Workspace creation failed:", error);
@@ -204,13 +289,13 @@ export function CreateWorkspaceButton() {
   };
 
   const isDisabled =
-    !form.formState.isValid || createWorkspaceMutation.isPending || bulkLinkMutation.isPending;
+    !isValid || createWorkspaceMutation.isPending || bulkLinkMutation.isPending || bulkLinkVercelMutation.isPending || bulkLinkSentryMutation.isPending || bulkLinkLinearMutation.isPending;
 
-  const isLoading = createWorkspaceMutation.isPending || bulkLinkMutation.isPending;
+  const isLoading = createWorkspaceMutation.isPending || bulkLinkMutation.isPending || bulkLinkVercelMutation.isPending || bulkLinkSentryMutation.isPending || bulkLinkLinearMutation.isPending;
 
   return (
     <div className="mt-8 flex justify-end">
-      <Button onClick={handleCreateWorkspace} disabled={isDisabled} size="lg">
+      <Button onClick={handleCreateWorkspace} disabled={isDisabled} size="sm">
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

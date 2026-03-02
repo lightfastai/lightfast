@@ -5,6 +5,7 @@ import { changelog  } from "@vendor/cms";
 import type {ChangelogEntriesQueryResponse} from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
 import { Button } from "@repo/ui/components/ui/button";
 
 export const metadata: Metadata = {
@@ -122,7 +123,7 @@ export default function ChangelogPage() {
                       )}
                       {item.body?.json?.content ? (
                         <div className="">
-                          <Body content={item.body.json.content} />
+                          <Body content={item.body.json.content} codeBlockComponent={SSRCodeBlock} />
                         </div>
                       ) : null}
                     </article>

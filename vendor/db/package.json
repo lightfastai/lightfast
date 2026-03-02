@@ -5,14 +5,17 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"default": "./src/index.ts"
+			"types": "./dist/src/index.d.ts",
+			"default": "./dist/src/index.js"
 		},
-		"./env": "./env.ts"
+		"./env": {
+			"types": "./dist/env.d.ts",
+			"default": "./dist/env.js"
+		}
 	},
 	"license": "MIT",
 	"scripts": {
-		"build": "tsc",
+		"build": "tsup && tsc --incremental false",
 		"clean": "git clean -xdf .cache .turbo dist node_modules",
 		"dev": "tsc",
 		"format": "prettier --check . --ignore-path ../../.gitignore",
@@ -22,9 +25,7 @@
 	},
 	"dependencies": {
 		"@planetscale/database": "^1.19.0",
-		"@repo/ai": "workspace:*",
-		"@repo/lib": "workspace:*",
-		"@t3-oss/env-nextjs": "catalog:",
+		"@t3-oss/env-core": "catalog:",
 		"ai": "catalog:",
 		"drizzle-orm": "catalog:",
 		"drizzle-zod": "catalog:",
@@ -39,6 +40,7 @@
 		"drizzle-kit": "^0.31.4",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
+		"tsup": "^8.5.0",
 		"typescript": "catalog:"
 	},
 	"prettier": "@repo/prettier-config"

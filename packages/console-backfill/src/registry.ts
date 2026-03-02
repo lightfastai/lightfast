@@ -14,3 +14,8 @@ export function getConnector(provider: SourceType): BackfillConnector | undefine
 export function hasConnector(provider: SourceType): boolean {
   return connectors.has(provider);
 }
+
+/** @internal Test-only — resets the registry. */
+export function clearRegistry(): void {
+  connectors.clear();
+}

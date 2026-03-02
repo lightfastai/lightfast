@@ -74,9 +74,7 @@ export function TRPCReactProvider({
             return (
               path.startsWith("organization.") ||
               path.startsWith("account.") ||
-              path.startsWith("workspaceAccess.") ||
-              path.startsWith("userSources.") ||
-              path.startsWith("userApiKeys.")
+              path.startsWith("workspaceAccess.")
             );
           },
           // True branch: user-scoped endpoint

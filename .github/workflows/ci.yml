@@ -12,44 +12,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Detect changes to only run CI when needed
-  changes:
-    name: Detect Changes
+  quality:
+    name: Quality
     runs-on: ubuntu-latest
-    outputs:
-      general: ${{ steps.changes.outputs.general }}
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Check for changes
-        uses: dorny/paths-filter@v3
-        id: changes
         with:
-          filters: |
-            general:
-              - 'apps/**'
-              - 'packages/**'
-              - 'vendor/**'
-              - 'api/**'
-              - 'internal/**'
-              - 'pnpm-lock.yaml'
-              - '.github/workflows/ci.yml'
-
-  # Lint all general packages
-  lint:
-    name: Lint
-    needs: changes
-    if: needs.changes.outputs.general == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -60,64 +36,32 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint packages
+      - name: Lint and type check affected packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: |
-          pnpm turbo lint \
-            --filter='./apps/*' \
-            --filter='./packages/*' \
-            --filter='./vendor/*' \
-            --filter='./api/*' \
-            --continue
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: pnpm turbo lint typecheck --affected --continue
 
-  # Type check all general packages
-  typecheck:
-    name: Type Check
-    needs: changes
-    if: needs.changes.outputs.general == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.5.2
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Type check packages
-        env:
-          SKIP_ENV_VALIDATION: "true"
-        run: |
-          pnpm turbo typecheck \
-            --filter='./apps/*' \
-            --filter='./packages/*' \
-            --filter='./vendor/*' \
-            --filter='./api/*' \
-            --continue
+      - name: Check boundaries
+        continue-on-error: true
+        run: pnpm turbo boundaries
 
   # Summary job (required status check)
   ci-success:
     name: CI Success
-    if: always() && needs.changes.outputs.general == 'true'
-    needs: [changes, lint, typecheck]
+    if: always()
+    needs: [quality]
     runs-on: ubuntu-latest
     steps:
-      - name: Check all jobs
+      - name: Evaluate results
         run: |
-          if [[ "${{ needs.lint.result }}" != "success" || \
-                "${{ needs.typecheck.result }}" != "success" ]]; then
-            echo "Some CI checks failed"
+          quality="${{ needs.quality.result }}"
+
+          echo "quality.result = $quality"
+
+          if [[ "$quality" != "success" ]]; then
+            echo "CI quality checks failed."
             exit 1
           fi
-          echo "All CI checks passed!"
+
+          echo "All CI checks passed."

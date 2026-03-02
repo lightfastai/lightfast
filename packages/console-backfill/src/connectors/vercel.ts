@@ -1,13 +1,11 @@
 /**
  * Vercel Backfill Connector
  *
- * Fetches historical deployments from the Vercel API,
- * adapts them into webhook-compatible shapes, and transforms them
- * using the existing battle-tested transformer.
+ * Fetches historical deployments from the Vercel API, adapts them into
+ * webhook-compatible shapes for direct ingestion through Relay's service
+ * auth endpoint. Produces raw webhook payloads (adapter output), not SourceEvents.
  */
-import { transformVercelDeployment } from "@repo/console-webhooks/transformers";
-import type { SourceEvent, TransformContext } from "@repo/console-types";
-import type { BackfillConnector, BackfillConfig, BackfillPage } from "../types.js";
+import type { BackfillConnector, BackfillConfig, BackfillPage, BackfillWebhookEvent } from "../types.js";
 import {
   adaptVercelDeploymentForTransformer,
   parseVercelRateLimit,
@@ -31,14 +29,10 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
   readonly defaultEntityTypes = ["deployment"];
 
   async validateScopes(config: BackfillConfig): Promise<void> {
-    const sourceConfig = config.sourceConfig;
-    const projectId = sourceConfig.projectId as string;
-    const teamId = sourceConfig.teamId as string | undefined;
-
+    const projectId = config.resource.providerResourceId;
     const url = new URL("https://api.vercel.com/v6/deployments");
     url.searchParams.set("projectId", projectId);
     url.searchParams.set("limit", "1");
-    if (teamId) url.searchParams.set("teamId", teamId);
 
     const response = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${config.accessToken}` },
@@ -67,16 +61,15 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
     config: BackfillConfig,
     cursor: VercelCursor | null,
   ): Promise<BackfillPage<VercelCursor>> {
-    const sourceConfig = config.sourceConfig;
-    const projectId = sourceConfig.projectId as string;
-    const projectName = sourceConfig.projectName as string;
-    const teamId = sourceConfig.teamId as string | undefined;
+    // providerResourceId is the Vercel project ID
+    const projectId = config.resource.providerResourceId;
+    // resourceName is the project name
+    const projectName = config.resource.resourceName ?? projectId;
 
     // Build request URL
     const url = new URL("https://api.vercel.com/v6/deployments");
     url.searchParams.set("projectId", projectId);
     url.searchParams.set("limit", "100");
-    if (teamId) url.searchParams.set("teamId", teamId);
     if (cursor) url.searchParams.set("until", cursor.toString());
 
     const response = await fetch(url.toString(), {
@@ -92,38 +85,25 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
     const data = (await response.json()) as VercelDeploymentsResponse;
     const sinceDate = new Date(config.since);
 
-    // Filter deployments within the time window
+    // Filter deployments within the time window and with a valid uid
     const filtered = data.deployments.filter((deployment) => {
       const created = deployment.created as number | undefined;
       return created ? new Date(created) >= sinceDate : false;
+    }).filter((deployment): deployment is Record<string, unknown> & { uid: string } =>
+      typeof deployment.uid === "string",
+    );
+
+    const events: BackfillWebhookEvent[] = filtered.map((deployment) => {
+      const { webhookPayload, eventType } = adaptVercelDeploymentForTransformer(
+        deployment,
+        projectName,
+      );
+      return {
+        deliveryId: `backfill-${config.installationId}-${config.resource.providerResourceId}-deploy-${deployment.uid}`,
+        eventType,
+        payload: webhookPayload,
+      };
     });
-
-    // Build transform context
-    const page = cursor ?? 0;
-    const context: TransformContext = {
-      deliveryId: `backfill-${config.integrationId}-deployment-t${page}`,
-      receivedAt: new Date(),
-    };
-
-    // Transform each deployment
-    const events: SourceEvent[] = [];
-    for (const deployment of filtered) {
-      try {
-        const { webhookPayload, eventType } =
-          adaptVercelDeploymentForTransformer(deployment, projectName);
-        const event = transformVercelDeployment(
-          webhookPayload,
-          eventType,
-          context,
-        );
-        events.push(event);
-      } catch (err) {
-        console.error(
-          `[VercelBackfill] Failed to transform deployment ${deployment.uid as string}:`,
-          err,
-        );
-      }
-    }
 
     const rateLimit = parseVercelRateLimit(response.headers);
 

@@ -15,12 +15,11 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc --watch",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@octokit/webhooks-types": "^7.6.1",
-    "@repo/console-octokit-github": "workspace:*",
-    "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@repo/console-webhooks": "workspace:*"
   },
@@ -31,7 +30,8 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "prettier": "@repo/prettier-config"
 }

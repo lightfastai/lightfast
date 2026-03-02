@@ -1,0 +1,24 @@
+{
+  "extends": ["//"],
+  "tags": ["core"],
+  "tasks": {
+    "build": {
+      "passThroughEnv": [
+        "AI_GATEWAY_API_KEY",
+        "AGENT_MAX_ITERATIONS",
+        "BRAINTRUST_API_KEY",
+        "BRAINTRUST_PROJECT_NAME",
+        "KV_REST_API_URL",
+        "KV_REST_API_TOKEN",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "OTEL_EXPORTER_OTLP_HEADERS",
+        "QSTASH_URL",
+        "QSTASH_TOKEN",
+        "QSTASH_CURRENT_SIGNING_KEY",
+        "QSTASH_NEXT_SIGNING_KEY",
+        "STREAM_TTL_SECONDS",
+        "TOOL_EXECUTION_TIMEOUT"
+      ]
+    }
+  }
+}

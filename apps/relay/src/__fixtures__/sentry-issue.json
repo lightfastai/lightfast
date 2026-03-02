@@ -1,0 +1,60 @@
+{
+  "action": "created",
+  "installation": {
+    "uuid": "a8e5d37a-696c-4c54-adb5-b3f28d64c7de"
+  },
+  "actor": {
+    "id": "sentry",
+    "name": "Sentry",
+    "type": "application"
+  },
+  "data": {
+    "issue": {
+      "id": "1170820242",
+      "shareId": null,
+      "shortId": "FRONT-END-9",
+      "title": "ReferenceError: blooopy is not defined",
+      "culprit": "?(runner)",
+      "permalink": null,
+      "logger": null,
+      "level": "error",
+      "status": "unresolved",
+      "statusDetails": {},
+      "substatus": "new",
+      "isPublic": false,
+      "platform": "javascript",
+      "project": {
+        "id": "1",
+        "name": "front-end",
+        "slug": "front-end",
+        "platform": "javascript"
+      },
+      "type": "error",
+      "metadata": {
+        "type": "ReferenceError",
+        "value": "blooopy is not defined",
+        "filename": "<anonymous>",
+        "sdk": {
+          "name": "sentry.javascript.browser",
+          "name_normalized": "sentry.javascript.browser"
+        }
+      },
+      "numComments": 0,
+      "assignedTo": null,
+      "isBookmarked": false,
+      "isSubscribed": false,
+      "subscriptionDetails": null,
+      "hasSeen": false,
+      "annotations": [],
+      "issueType": "error",
+      "issueCategory": "error",
+      "priority": "medium",
+      "priorityLockedAt": null,
+      "isUnhandled": true,
+      "count": "1",
+      "userCount": 1,
+      "firstSeen": "2019-08-19T20:58:37.391000Z",
+      "lastSeen": "2019-08-19T20:58:37.391000Z"
+    }
+  }
+}

@@ -2,6 +2,8 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const browserbaseEnv = createEnv({
+  clientPrefix: "" as const,
+  client: {},
   server: {
     BROWSERBASE_API_KEY: z.string().min(1).startsWith("bb_"),
     BROWSERBASE_PROJECT_ID: z.string().uuid(),

@@ -1,0 +1,47 @@
+{
+  "id": "evt_wHd9mFlQ1p3sWHN6pYFaWkFN",
+  "type": "deployment.created",
+  "createdAt": 1706107938000,
+  "region": "iad1",
+  "payload": {
+    "team": {
+      "id": "team_3ZspSRT4ljIEEmMHgoDwKWDei"
+    },
+    "user": {
+      "id": "user_nwt4ExHMZpJPMKDg8j5A1Bz7"
+    },
+    "alias": [
+      "my-project-git-main-acme.vercel.app",
+      "my-project.vercel.app"
+    ],
+    "deployment": {
+      "id": "dpl_5m8c9xYLNFp5WPqh5QjJiJqw9BN8",
+      "meta": {
+        "githubCommitAuthorName": "John Doe",
+        "githubCommitMessage": "feat: add user authentication",
+        "githubCommitOrg": "acme-org",
+        "githubCommitRef": "main",
+        "githubCommitRepo": "my-repo",
+        "githubCommitRepoId": "123456789",
+        "githubCommitSha": "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c",
+        "githubDeployment": "1",
+        "githubOrg": "acme-org",
+        "githubRepo": "my-repo",
+        "githubRepoId": "123456789",
+        "githubRepoOwnerType": "Organization"
+      },
+      "url": "my-project-abc123def456-acme.vercel.app",
+      "name": "my-project"
+    },
+    "links": {
+      "deployment": "https://vercel.com/acme-org/my-project/deployments/dpl_5m8c9xYLNFp5WPqh5QjJiJqw9BN8",
+      "project": "https://vercel.com/acme-org/my-project"
+    },
+    "target": "production",
+    "project": {
+      "id": "prj_D3t5xqxLyiMBm4LRKE7Z3sMwGvRb"
+    },
+    "plan": "pro",
+    "regions": ["iad1"]
+  }
+}

@@ -28,7 +28,7 @@
     "@repo/og": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",
-    "@sentry/nextjs": "^10.20.0",
+    "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",

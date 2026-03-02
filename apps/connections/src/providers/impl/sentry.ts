@@ -1,0 +1,269 @@
+import { db } from "@db/console/client";
+import { gwInstallations, gwTokens } from "@db/console/schema";
+import type { GwInstallation } from "@db/console/schema";
+import { decrypt } from "@repo/lib";
+import { eq } from "@vendor/db";
+import type { Context } from "hono";
+import { env } from "../../env.js";
+import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store.js";
+import { connectionsBaseUrl } from "../../lib/urls.js";
+import {
+  decodeSentryToken,
+  encodeSentryToken,
+  sentryOAuthResponseSchema,
+} from "../schemas.js";
+import type {
+  ConnectionProvider,
+  SentryAccountInfo,
+  TokenResult,
+  OAuthTokens,
+  CallbackResult,
+  CallbackStateData,
+} from "../types.js";
+
+export class SentryProvider implements ConnectionProvider {
+  readonly name = "sentry" as const;
+  readonly requiresWebhookRegistration = true as const;
+
+  getAuthorizationUrl(state: string): string {
+    const url = new URL(
+      `https://sentry.io/sentry-apps/${env.SENTRY_APP_SLUG}/external-install/`,
+    );
+    url.searchParams.set("state", state);
+    return url.toString();
+  }
+
+  async exchangeCode(code: string, _redirectUri: string): Promise<OAuthTokens> {
+    const { installationId, token: authCode } = decodeSentryToken(code);
+
+    const response = await fetch(
+      `https://sentry.io/api/0/sentry-app-installations/${installationId}/authorizations/`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${env.SENTRY_CLIENT_SECRET}`,
+        },
+        body: JSON.stringify({
+          grant_type: "authorization_code",
+          code: authCode,
+          client_id: env.SENTRY_CLIENT_ID,
+          client_secret: env.SENTRY_CLIENT_SECRET,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("[sentry] token exchange failed:", { status: response.status, body: errorBody });
+      throw new Error(`Sentry token exchange failed: ${response.status}`);
+    }
+
+    const rawData: unknown = await response.json();
+    const data = sentryOAuthResponseSchema.parse(rawData);
+
+    return {
+      accessToken: data.token,
+      refreshToken: data.refreshToken
+        ? encodeSentryToken({ installationId, token: data.refreshToken })
+        : undefined,
+      expiresIn: data.expiresAt
+        ? Math.floor(
+            (new Date(data.expiresAt).getTime() - Date.now()) / 1000,
+          )
+        : undefined,
+      raw: rawData as Record<string, unknown>,
+    };
+  }
+
+  async refreshToken(refreshToken: string): Promise<OAuthTokens> {
+    const { installationId, token } = decodeSentryToken(refreshToken);
+
+    const response = await fetch(
+      `https://sentry.io/api/0/sentry-app-installations/${installationId}/authorizations/`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${env.SENTRY_CLIENT_SECRET}`,
+        },
+        body: JSON.stringify({
+          grant_type: "refresh_token",
+          refresh_token: token,
+          client_id: env.SENTRY_CLIENT_ID,
+          client_secret: env.SENTRY_CLIENT_SECRET,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Sentry token refresh failed: ${response.status}`);
+    }
+
+    const rawData: unknown = await response.json();
+    const data = sentryOAuthResponseSchema.parse(rawData);
+
+    return {
+      accessToken: data.token,
+      refreshToken:
+        installationId && data.refreshToken
+          ? encodeSentryToken({ installationId, token: data.refreshToken })
+          : data.refreshToken,
+      expiresIn: data.expiresAt
+        ? Math.floor(
+            (new Date(data.expiresAt).getTime() - Date.now()) / 1000,
+          )
+        : undefined,
+      raw: rawData as Record<string, unknown>,
+    };
+  }
+
+  async revokeToken(accessToken: string): Promise<void> {
+    if (!accessToken.includes(":")) {return;}
+    const { installationId } = decodeSentryToken(accessToken);
+    if (!installationId) {return;}
+
+    const response = await fetch(
+      `https://sentry.io/api/0/sentry-app-installations/${installationId}/`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${env.SENTRY_CLIENT_SECRET}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Sentry token revocation failed: ${response.status}`);
+    }
+  }
+
+  registerWebhook(
+    _connectionId: string,
+    _callbackUrl: string,
+    _secret: string,
+  ): Promise<string> {
+    // Sentry webhook URL is registered during the SentryApp configuration
+    // in the Sentry developer settings, not via API.
+    return Promise.resolve("sentry-webhook-registered");
+  }
+
+  async deregisterWebhook(
+    _connectionId: string,
+    _webhookId: string,
+  ): Promise<void> {
+    // Sentry webhooks are deregistered by revoking the installation
+    // (handled by revokeToken). No separate deregistration needed.
+  }
+
+  // ── Strategy methods ──
+
+  async handleCallback(
+    c: Context,
+    stateData: CallbackStateData,
+  ): Promise<CallbackResult> {
+    const code = c.req.query("code");
+    const sentryInstallationId = c.req.query("installationId");
+    if (!code) {throw new Error("missing code");}
+    if (!sentryInstallationId) {throw new Error("missing installationId query param");}
+
+    // Encode installationId:authCode composite for exchangeCode
+    const compositeCode = encodeSentryToken({ installationId: sentryInstallationId, token: code });
+    const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
+    const oauthTokens = await this.exchangeCode(compositeCode, redirectUri);
+
+    // Use sentryInstallationId as externalId — it's the stable identifier
+    const externalId = sentryInstallationId;
+
+    const rawData: unknown = oauthTokens.raw;
+    const parsedData = sentryOAuthResponseSchema.parse(rawData);
+    const now = new Date().toISOString();
+
+    const accountInfo: SentryAccountInfo = {
+      version: 1,
+      sourceType: "sentry",
+      events: ["installation", "issue", "error", "comment"],
+      installedAt: now,
+      lastValidatedAt: now,
+      raw: {
+        expiresAt: parsedData.expiresAt,
+        scopes: parsedData.scopes,
+      },
+      installationId: sentryInstallationId,
+    };
+
+    const rows = await db
+      .insert(gwInstallations)
+      .values({
+        provider: this.name,
+        externalId,
+        connectedBy: stateData.connectedBy,
+        orgId: stateData.orgId,
+        status: "active",
+        providerAccountInfo: accountInfo,
+      })
+      .onConflictDoUpdate({
+        target: [gwInstallations.provider, gwInstallations.externalId],
+        set: {
+          status: "active",
+          connectedBy: stateData.connectedBy,
+          orgId: stateData.orgId,
+          providerAccountInfo: accountInfo,
+        },
+      })
+      .returning({ id: gwInstallations.id });
+
+    const installation = rows[0];
+    if (!installation) {throw new Error("upsert_failed");}
+
+    await writeTokenRecord(installation.id, oauthTokens);
+
+    // Sentry webhook URL is configured in the Sentry dashboard, not via API.
+    // Verification uses env.SENTRY_CLIENT_SECRET in the relay, so no
+    // per-installation webhookSecret is needed.
+
+    return {
+      status: "connected",
+      installationId: installation.id,
+      provider: this.name,
+    };
+  }
+
+  async resolveToken(installation: GwInstallation): Promise<TokenResult> {
+    const tokenRows = await db
+      .select()
+      .from(gwTokens)
+      .where(eq(gwTokens.installationId, installation.id))
+      .limit(1);
+
+    const tokenRow = tokenRows[0];
+    if (!tokenRow) {throw new Error("no_token_found");}
+
+    // Check expiry and refresh if needed (Sentry supports token refresh)
+    if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
+      if (!tokenRow.refreshToken) {
+        throw new Error("token_expired:no_refresh_token");
+      }
+
+      const decryptedRefresh = decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
+      const refreshed = await this.refreshToken(decryptedRefresh);
+
+      await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
+
+      return {
+        accessToken: refreshed.accessToken,
+        provider: this.name,
+        expiresIn: refreshed.expiresIn ?? null,
+      };
+    }
+
+    const decryptedToken = decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    return {
+      accessToken: decryptedToken,
+      provider: this.name,
+      expiresIn: tokenRow.expiresAt
+        ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
+        : null,
+    };
+  }
+}

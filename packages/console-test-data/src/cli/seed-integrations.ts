@@ -2,7 +2,7 @@
 /**
  * Integration Seeder
  *
- * Seeds user sources and workspace integrations (GitHub, Vercel, Sentry, Linear)
+ * Seeds workspace integrations (GitHub, Vercel, Sentry, Linear)
  * for demo / testing purposes. Idempotent — skips records that already exist.
  *
  * Usage:
@@ -10,43 +10,32 @@
  */
 
 import { db } from "@db/console";
-import { userSources, workspaceIntegrations } from "@db/console/schema";
+import { workspaceIntegrations } from "@db/console/schema";
+import type { InsertWorkspaceIntegration } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
-import { eq, and } from "drizzle-orm";
+import { eq, and } from "@vendor/db";
 
 interface SeedOptions {
   workspaceId: string;
   userId: string;
 }
 
+interface DemoSource {
+  sourceConfig: InsertWorkspaceIntegration["sourceConfig"];
+  providerResourceId: string;
+  documentCount: number;
+}
+
 /**
  * Demo source definitions for all 4 providers.
- * Each entry seeds a userSource + workspaceIntegration pair.
+ * Each entry seeds a workspaceIntegration.
  */
-const DEMO_SOURCES = [
+const DEMO_SOURCES: DemoSource[] = [
   {
-    sourceType: "github" as const,
-    accessToken: "demo_github_token",
-    providerMetadata: {
-      version: 1 as const,
-      sourceType: "github" as const,
-      installations: [
-        {
-          id: "12345678",
-          accountId: "901234567",
-          accountLogin: "lightfastai",
-          accountType: "Organization" as const,
-          avatarUrl: "https://github.com/lightfastai.png",
-          permissions: { contents: "read", metadata: "read", pull_requests: "read" },
-          installedAt: new Date().toISOString(),
-          lastValidatedAt: new Date().toISOString(),
-        },
-      ],
-    },
     sourceConfig: {
-      version: 1 as const,
-      sourceType: "github" as const,
-      type: "repository" as const,
+      version: 1,
+      sourceType: "github",
+      type: "repository",
       installationId: "12345678",
       repoId: "901234567",
       repoName: "lightfast",
@@ -65,20 +54,10 @@ const DEMO_SOURCES = [
     documentCount: 0,
   },
   {
-    sourceType: "vercel" as const,
-    accessToken: "demo_vercel_token",
-    providerMetadata: {
-      version: 1 as const,
-      sourceType: "vercel" as const,
-      teamId: "team_lightfastai",
-      teamSlug: "lightfastai",
-      userId: "vercel_user_001",
-      configurationId: "icfg_demo_001",
-    },
     sourceConfig: {
-      version: 1 as const,
-      sourceType: "vercel" as const,
-      type: "project" as const,
+      version: 1,
+      sourceType: "vercel",
+      type: "project",
       projectId: "prj_lightfast_console",
       projectName: "lightfast-console",
       teamId: "team_lightfastai",
@@ -93,17 +72,10 @@ const DEMO_SOURCES = [
     documentCount: 7,
   },
   {
-    sourceType: "sentry" as const,
-    accessToken: "demo_sentry_token",
-    providerMetadata: {
-      version: 1 as const,
-      sourceType: "sentry" as const,
-    },
     sourceConfig: {
-      version: 1 as const,
-      sourceType: "sentry" as const,
-      type: "project" as const,
-      organizationSlug: "lightfast",
+      version: 1,
+      sourceType: "sentry",
+      type: "project",
       projectSlug: "lightfast-console",
       projectId: "4508288486826115",
       sync: {
@@ -115,16 +87,10 @@ const DEMO_SOURCES = [
     documentCount: 5,
   },
   {
-    sourceType: "linear" as const,
-    accessToken: "demo_linear_token",
-    providerMetadata: {
-      version: 1 as const,
-      sourceType: "linear" as const,
-    },
     sourceConfig: {
-      version: 1 as const,
-      sourceType: "linear" as const,
-      type: "team" as const,
+      version: 1,
+      sourceType: "linear",
+      type: "team",
       teamId: "team_lightfast_eng",
       teamKey: "LIGHT",
       teamName: "Lightfast",
@@ -143,59 +109,34 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
   console.log(`  User: ${userId}\n`);
 
   for (const source of DEMO_SOURCES) {
-    // 1. Upsert userSource
-    const existingSource = await db
-      .select({ id: userSources.id })
-      .from(userSources)
-      .where(and(eq(userSources.userId, userId), eq(userSources.sourceType, source.sourceType)));
-
-    let userSourceId: string;
-
-    const [firstSource] = existingSource;
-    if (firstSource) {
-      userSourceId = firstSource.id;
-      console.log(`  [skip] ${source.sourceType} user source already exists (${userSourceId})`);
-    } else {
-      userSourceId = nanoid();
-      await db.insert(userSources).values({
-        id: userSourceId,
-        userId,
-        sourceType: source.sourceType,
-        accessToken: source.accessToken,
-        providerMetadata: source.providerMetadata as never,
-        isActive: true,
-      });
-      console.log(`  [created] ${source.sourceType} user source (${userSourceId})`);
-    }
-
-    // 2. Upsert workspaceIntegration
+    // Check if workspace integration already exists for this provider resource
     const existingIntegration = await db
       .select({ id: workspaceIntegrations.id })
       .from(workspaceIntegrations)
       .where(
         and(
           eq(workspaceIntegrations.workspaceId, workspaceId),
-          eq(workspaceIntegrations.userSourceId, userSourceId),
+          eq(workspaceIntegrations.providerResourceId, source.providerResourceId),
         ),
       );
 
     if (existingIntegration.length > 0) {
-      console.log(`  [skip] ${source.sourceType} workspace integration already exists`);
+      console.log(`  [skip] ${source.sourceConfig.sourceType} workspace integration already exists`);
       continue;
     }
 
     await db.insert(workspaceIntegrations).values({
-      id: `wi-${source.sourceType}-${nanoid(8)}`,
+      id: `wi-${source.sourceConfig.sourceType}-${nanoid(8)}`,
       workspaceId,
-      userSourceId,
       connectedBy: userId,
-      sourceConfig: source.sourceConfig as never,
+      provider: source.sourceConfig.sourceType,
+      sourceConfig: source.sourceConfig,
       providerResourceId: source.providerResourceId,
       isActive: true,
       lastSyncStatus: "success",
       documentCount: source.documentCount,
     });
-    console.log(`  [created] ${source.sourceType} workspace integration`);
+    console.log(`  [created] ${source.sourceConfig.sourceType} workspace integration`);
   }
 
   console.log("\nDone! All integrations seeded.");
@@ -219,7 +160,7 @@ function parseArgs(): SeedOptions {
       console.log(`
 Usage: seed-integrations -w <workspaceId> -u <clerkUserId>
 
-Seeds demo user sources and workspace integrations for GitHub, Vercel, Sentry,
+Seeds demo workspace integrations for GitHub, Vercel, Sentry,
 and Linear. Idempotent — existing records are skipped.
 
 Options:

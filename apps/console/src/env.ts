@@ -35,6 +35,15 @@ export const env = createEnv({
     // No ANTHROPIC_API_KEY needed - Vercel AI Gateway uses VERCEL_OIDC_TOKEN
 
     /**
+     * QStash signing keys for verifying webhook deliveries from Upstash Workflow.
+     * Optional at startup; required at runtime by the webhook ingress endpoint
+     * (POST /api/webhooks/ingress) where @upstash/workflow serve() verifies signatures.
+     */
+    QSTASH_TOKEN: z.string().min(1).optional(),
+    QSTASH_CURRENT_SIGNING_KEY: z.string().min(1).optional(),
+    QSTASH_NEXT_SIGNING_KEY: z.string().min(1).optional(),
+
+    /**
      * Encryption key for storing sensitive data (OAuth tokens, API keys, etc.)
      * Must be 32 bytes (64 hex characters or 44 base64 characters)
      *

@@ -10,7 +10,9 @@ import type { App } from "octokit";
  * and handles both primary and secondary rate limits.
  */
 
-const ThrottledOctokit = Octokit.plugin(throttling, retry);
+// Cast to typeof Octokit — the plugin additions are runtime-only behavior
+// (throttling/retry constructor options), not new instance methods.
+const ThrottledOctokit = Octokit.plugin(throttling, retry) as unknown as typeof Octokit;
 
 /**
  * Create a throttled Octokit instance with rate limit handling
@@ -18,7 +20,7 @@ const ThrottledOctokit = Octokit.plugin(throttling, retry);
  * @param auth - GitHub access token
  * @returns Octokit instance with throttling and retry plugins
  */
-export function createThrottledOctokit(auth: string) {
+export function createThrottledOctokit(auth: string): InstanceType<typeof Octokit> {
 	return new ThrottledOctokit({
 		auth,
 		throttle: {
@@ -72,7 +74,7 @@ export function createThrottledOctokit(auth: string) {
 export async function getThrottledInstallationOctokit(
 	app: App,
 	installationId: number
-) {
+): Promise<InstanceType<typeof Octokit>> {
 	const { token } = await app.octokit.auth({
 		type: "installation",
 		installationId,
@@ -87,7 +89,7 @@ export async function getThrottledInstallationOctokit(
  * @param octokit - Octokit instance (throttled or regular)
  * @returns Rate limit information
  */
-export async function checkRateLimit(octokit: InstanceType<typeof ThrottledOctokit>) {
+export async function checkRateLimit(octokit: InstanceType<typeof Octokit>) {
 	const { data } = await octokit.request("GET /rate_limit");
 	const { remaining, limit, reset } = data.rate;
 

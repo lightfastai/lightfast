@@ -142,17 +142,3 @@ export function isValidApiKeyFormat(key: string): boolean {
   return key.length === expectedLength;
 }
 
-/**
- * @deprecated Use OrgApiKeyResult instead
- */
-export type WorkspaceApiKeyResult = OrgApiKeyResult;
-
-/**
- * @deprecated Use generateOrgApiKey instead
- */
-export function generateWorkspaceApiKey(
-  _prefix: string = "sk_live_"
-): OrgApiKeyResult {
-  // Ignores the prefix parameter and uses the new unified format
-  return generateOrgApiKey();
-}

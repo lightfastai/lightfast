@@ -2,7 +2,7 @@ import { pgTable, varchar, timestamp, text, boolean, index, jsonb, integer } fro
 import { sql } from "drizzle-orm";
 import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
-import { userSources } from "./user-sources";
+import { gwInstallations } from "./gw-installations";
 import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-validation";
 
 /**
@@ -14,7 +14,7 @@ import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-va
  * Flow:
  * 1. User creates workspace
  * 2. User picks a repo/team/project to connect
- * 3. We create a workspaceSource linking the userSource to workspace
+ * 3. We create a workspaceIntegration linking the installation to workspace
  * 4. Background jobs sync data from this source
  *
  * Example: "acme/frontend repo syncing to Production workspace"
@@ -32,10 +32,16 @@ export const workspaceIntegrations = pgTable(
       .notNull()
       .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
-    // Which user connection to use for syncing
-    userSourceId: varchar("user_source_id", { length: 191 })
-      .notNull()
-      .references(() => userSources.id, { onDelete: "cascade" }),
+    // Gateway installation FK (org-scoped)
+    // TODO(NOT-NULL): Nullable during phased migration. Will become .notNull() with
+    // onDelete: "cascade" after existing rows are backfilled with gw_installations refs.
+    installationId: varchar("installation_id", { length: 191 })
+      .references(() => gwInstallations.id, { onDelete: "set null" }),
+
+    // Denormalized provider for fast filtering (replaces sourceConfig.sourceType join)
+    // TODO(NOT-NULL): Nullable during phased migration. Will become .notNull() after
+    // existing rows are backfilled with provider values from gw_installations.
+    provider: varchar("provider", { length: 50 }),
 
     // Who connected this source to the workspace
     connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
@@ -116,6 +122,29 @@ export const workspaceIntegrations = pgTable(
             autoSync: boolean;             // Track deployments automatically
           };
         }
+      | {
+          version: 1;
+          sourceType: "sentry";
+          type: "project";
+          projectSlug: string;
+          projectId: string;
+          sync: {
+            events?: string[];
+            autoSync: boolean;
+          };
+        }
+      | {
+          version: 1;
+          sourceType: "linear";
+          type: "team";
+          teamId: string;
+          teamKey: string;
+          teamName: string;
+          sync: {
+            events?: string[];
+            autoSync: boolean;
+          };
+        }
     >().notNull(),
 
     /**
@@ -146,7 +175,7 @@ export const workspaceIntegrations = pgTable(
   },
   (table) => ({
     workspaceIdIdx: index("workspace_source_workspace_id_idx").on(table.workspaceId),
-    userSourceIdIdx: index("workspace_source_user_source_id_idx").on(table.userSourceId),
+    installationIdIdx: index("workspace_source_installation_id_idx").on(table.installationId),
     connectedByIdx: index("workspace_source_connected_by_idx").on(table.connectedBy),
     isActiveIdx: index("workspace_source_is_active_idx").on(table.isActive),
     // Index for fast provider resource lookups (e.g., "find all sources for this repo")

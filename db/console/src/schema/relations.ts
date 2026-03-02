@@ -4,7 +4,6 @@ import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-docume
 import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
 import { workspaceUserActivities } from "./tables/workspace-user-activities";
 import { workspaceIntegrations } from "./tables/workspace-integrations";
-import { userSources } from "./tables/user-sources";
 import { orgWorkspaces } from "./tables/org-workspaces";
 import { workspaceNeuralObservations } from "./tables/workspace-neural-observations";
 import { workspaceObservationClusters } from "./tables/workspace-observation-clusters";
@@ -12,6 +11,9 @@ import { workspaceActorProfiles } from "./tables/workspace-actor-profiles";
 import { orgActorIdentities } from "./tables/org-actor-identities";
 import { workspaceTemporalStates } from "./tables/workspace-temporal-states";
 import { workspaceObservationRelationships } from "./tables/workspace-observation-relationships";
+import { gwInstallations } from "./tables/gw-installations";
+import { gwTokens } from "./tables/gw-tokens";
+import { gwResources } from "./tables/gw-resources";
 
 /**
  * Define relations between tables for Drizzle ORM queries
@@ -19,6 +21,27 @@ import { workspaceObservationRelationships } from "./tables/workspace-observatio
  * Note: Organizations are managed by Clerk, not in our database.
  * Tables reference Clerk org IDs via clerkOrgId fields (no FK constraints).
  */
+
+// Gateway relations
+export const gwInstallationsRelations = relations(gwInstallations, ({ many }) => ({
+  tokens: many(gwTokens),
+  resources: many(gwResources),
+  workspaceIntegrations: many(workspaceIntegrations),
+}));
+
+export const gwTokensRelations = relations(gwTokens, ({ one }) => ({
+  installation: one(gwInstallations, {
+    fields: [gwTokens.installationId],
+    references: [gwInstallations.id],
+  }),
+}));
+
+export const gwResourcesRelations = relations(gwResources, ({ one }) => ({
+  installation: one(gwInstallations, {
+    fields: [gwResources.installationId],
+    references: [gwInstallations.id],
+  }),
+}));
 
 export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
   documents: many(workspaceKnowledgeDocuments),
@@ -64,9 +87,9 @@ export const workspaceIntegrationsRelations = relations(workspaceIntegrations, (
     fields: [workspaceIntegrations.workspaceId],
     references: [orgWorkspaces.id],
   }),
-  userSource: one(userSources, {
-    fields: [workspaceIntegrations.userSourceId],
-    references: [userSources.id],
+  installation: one(gwInstallations, {
+    fields: [workspaceIntegrations.installationId],
+    references: [gwInstallations.id],
   }),
 }));
 

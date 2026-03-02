@@ -1,248 +1,259 @@
 import { RichText } from "basehub/react-rich-text";
 import type { ComponentProps, ReactNode } from "react";
-import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "../lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 
-type BodyProps = ComponentProps<typeof RichText>;
+type CodeBlockRenderer = (props: {
+  children: string;
+  language?: string;
+  className?: string;
+}) => ReactNode | Promise<ReactNode>;
 
-// Base components for rich text rendering
-const richTextBaseComponents = {
-  // Tighter list spacing
-  ul: ({ children }: { children?: ReactNode }) => (
-    <ul className="mb-3 ml-6 list-disc text-foreground [&>li:not(:first-child)]:mt-1">
-      {children}
-    </ul>
-  ),
-  ol: ({ children }: { children?: ReactNode }) => (
-    <ol className="mb-3 ml-6 list-decimal text-foreground [&>li:not(:first-child)]:mt-1">
-      {children}
-    </ol>
-  ),
-  li: ({ children }: { children?: ReactNode }) => (
-    <li className="text-foreground/90 leading-7 break-words">{children}</li>
-  ),
+type BodyProps = ComponentProps<typeof RichText> & {
+  className?: string;
+  codeBlockComponent?: CodeBlockRenderer;
+};
 
-  // Table elements with responsive wrapper
-  table: ({
-    children,
-    ...props
-  }: { children?: ReactNode } & React.HTMLAttributes<HTMLTableElement>) => (
-    <div className="my-6 overflow-x-auto rounded-xs overflow-hidden text-foreground">
-      <table className="min-w-full border-collapse" {...props}>
+// Base components factory — closes over the optional code block renderer
+function createRichTextComponents(codeBlockComponent?: CodeBlockRenderer) {
+  return {
+    // Tighter list spacing
+    ul: ({ children }: { children?: ReactNode }) => (
+      <ul className="mb-3 ml-6 list-disc text-foreground [&>li:not(:first-child)]:mt-1">
         {children}
-      </table>
-    </div>
-  ),
-  thead: ({
-    children,
-    ...props
-  }: {
-    children?: ReactNode;
-  } & React.HTMLAttributes<HTMLTableSectionElement>) => (
-    <thead className="bg-card/90" {...props}>
-      {children}
-    </thead>
-  ),
-  tbody: ({
-    children,
-    ...props
-  }: {
-    children?: ReactNode;
-  } & React.HTMLAttributes<HTMLTableSectionElement>) => (
-    <tbody
-      className="divide-y divide-border border-border/40 bg-card"
-      {...props}
-    >
-      {children}
-    </tbody>
-  ),
-  tr: ({ children }: { children?: ReactNode }) => (
-    <tr className="hover:bg-muted/50 transition-colors">{children}</tr>
-  ),
-  // BaseHub passes lowercase colspan/rowspan and colwidth - we ignore colwidth to prevent layout issues
-  th: ({
-    children,
-    colspan,
-    rowspan,
-  }: {
-    children?: ReactNode;
-    colspan?: number;
-    rowspan?: number;
-    colwidth?: number[] | null;
-  }) => (
-    <th
-      className="whitespace-nowrap px-4 py-2 text-left font-semibold text-sm"
-      colSpan={colspan}
-      rowSpan={rowspan}
-    >
-      {children}
-    </th>
-  ),
-  td: ({
-    children,
-    colspan,
-    rowspan,
-  }: {
-    children?: ReactNode;
-    colspan?: number;
-    rowspan?: number;
-    colwidth?: number[] | null;
-  }) => (
-    <td className="px-4 py-3 text-sm align-top" colSpan={colspan} rowSpan={rowspan}>
-      {children}
-    </td>
-  ),
+      </ul>
+    ),
+    ol: ({ children }: { children?: ReactNode }) => (
+      <ol className="mb-3 ml-6 list-decimal text-foreground [&>li:not(:first-child)]:mt-1">
+        {children}
+      </ol>
+    ),
+    li: ({ children }: { children?: ReactNode }) => (
+      <li className="text-foreground/90 leading-7 break-words">{children}</li>
+    ),
 
-  // Pre renders the code block wrapper with syntax highlighting
-  // BaseHub passes code and language props directly
-  pre: async ({
-    children,
-    code,
-    language,
-    className,
-  }: {
-    children?: ReactNode;
-    code?: string;
-    language?: string;
-    className?: string;
-  }) => {
-    // If we have code content, use SSR highlighting
-    if (code) {
-      return SSRCodeBlock({
-        children: code,
-        language,
-        className: cn("my-4", className),
-      });
-    }
-
-    // Fallback for content without code prop
-    return <pre className={cn("my-4", className)}>{children}</pre>;
-  },
-
-  // Code - inline gets styled, block just passes through (pre handles it)
-  code: ({
-    children,
-    isInline,
-    className,
-  }: {
-    children?: ReactNode;
-    isInline?: boolean;
-    className?: string;
-  }) => {
-    if (isInline) {
-      return (
-        <code
-          className={cn(
-            "bg-muted/50 rounded-md px-1 py-0.5 text-sm font-mono",
-            className,
-          )}
-        >
+    // Table elements with responsive wrapper
+    table: ({
+      children,
+      ...props
+    }: { children?: ReactNode } & React.HTMLAttributes<HTMLTableElement>) => (
+      <div className="my-6 overflow-x-auto rounded-xs overflow-hidden text-foreground">
+        <table className="min-w-full border-collapse" {...props}>
           {children}
-        </code>
-      );
-    }
-    // Block code - just pass through, pre wrapper handles styling
-    return <>{children}</>;
-  },
-
-  // Image using next/image for optimization - enforces 4:3 aspect ratio
-  img: ({
-    src,
-    alt,
-  }: {
-    src?: string;
-    alt?: string;
-    width?: number;
-    height?: number;
-  }) => {
-    if (!src) return null;
-    return (
-      <div className="relative aspect-[4/3] my-6 rounded-xs overflow-hidden bg-card">
-        <Image
-          src={src}
-          alt={alt ?? ""}
-          fill
-          priority
-          quality={85}
-          className="object-cover"
-        />
+        </table>
       </div>
-    );
-  },
-
-  // Link - always opens in new tab for CMS content
-  a: ({ children, href }: { children?: ReactNode; href?: string }) => {
-    if (!href) return <span>{children}</span>;
-    return (
-      <Link
-        href={href}
-        className="text-primary underline underline-offset-4 hover:text-primary/80"
-        target="_blank"
-        rel="noopener noreferrer"
+    ),
+    thead: ({
+      children,
+      ...props
+    }: {
+      children?: ReactNode;
+    } & React.HTMLAttributes<HTMLTableSectionElement>) => (
+      <thead className="bg-card/90" {...props}>
+        {children}
+      </thead>
+    ),
+    tbody: ({
+      children,
+      ...props
+    }: {
+      children?: ReactNode;
+    } & React.HTMLAttributes<HTMLTableSectionElement>) => (
+      <tbody
+        className="divide-y divide-border border-border/40 bg-card"
+        {...props}
       >
         {children}
-      </Link>
-    );
-  },
+      </tbody>
+    ),
+    tr: ({ children }: { children?: ReactNode }) => (
+      <tr className="hover:bg-muted/50 transition-colors">{children}</tr>
+    ),
+    // BaseHub passes lowercase colspan/rowspan and colwidth - we ignore colwidth to prevent layout issues
+    th: ({
+      children,
+      colspan,
+      rowspan,
+    }: {
+      children?: ReactNode;
+      colspan?: number;
+      rowspan?: number;
+      colwidth?: number[] | null;
+    }) => (
+      <th
+        className="whitespace-nowrap px-4 py-2 text-left font-semibold text-sm"
+        colSpan={colspan}
+        rowSpan={rowspan}
+      >
+        {children}
+      </th>
+    ),
+    td: ({
+      children,
+      colspan,
+      rowspan,
+    }: {
+      children?: ReactNode;
+      colspan?: number;
+      rowspan?: number;
+      colwidth?: number[] | null;
+    }) => (
+      <td className="px-4 py-3 text-sm align-top" colSpan={colspan} rowSpan={rowspan}>
+        {children}
+      </td>
+    ),
 
-  // Heading components with consistent styling
-  h1: ({ children }: { children?: ReactNode }) => (
-    <h1 className="scroll-m-20 text-2xl font-bold tracking-tight mb-4 mt-6">
-      {children}
-    </h1>
-  ),
-  h2: ({ children }: { children?: ReactNode }) => (
-    <h2 className="scroll-m-20 text-xl font-semibold tracking-tight mb-3 mt-6">
-      {children}
-    </h2>
-  ),
-  h3: ({ children }: { children?: ReactNode }) => (
-    <h3 className="scroll-m-20 text-lg font-semibold tracking-tight mb-2 mt-5">
-      {children}
-    </h3>
-  ),
-  h4: ({ children }: { children?: ReactNode }) => (
-    <h4 className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-4">
-      {children}
-    </h4>
-  ),
+    // Pre renders the code block wrapper with syntax highlighting
+    // BaseHub passes code and language props directly
+    pre: async ({
+      children,
+      code,
+      language,
+      className,
+    }: {
+      children?: ReactNode;
+      code?: string;
+      language?: string;
+      className?: string;
+    }) => {
+      // If we have code content and a code block renderer, use SSR highlighting
+      if (code && codeBlockComponent) {
+        return codeBlockComponent({
+          children: code,
+          language,
+          className: cn("my-4", className),
+        });
+      }
 
-  // Typography
-  strong: ({ children }: { children?: ReactNode }) => (
-    <strong className="font-semibold">{children}</strong>
-  ),
-  em: ({ children }: { children?: ReactNode }) => (
-    <em className="italic">{children}</em>
-  ),
+      // Fallback for content without code prop or no renderer
+      return <pre className={cn("my-4", className)}>{children}</pre>;
+    },
 
-  // Paragraph - no font size here, inherited from Body wrapper
-  p: ({ children }: { children?: ReactNode }) => (
-    <p className="leading-7 [&:not(:first-child)]:mt-3 break-words">{children}</p>
-  ),
+    // Code - inline gets styled, block just passes through (pre handles it)
+    code: ({
+      children,
+      isInline,
+      className,
+    }: {
+      children?: ReactNode;
+      isInline?: boolean;
+      className?: string;
+    }) => {
+      if (isInline) {
+        return (
+          <code
+            className={cn(
+              "bg-muted/50 rounded-md px-1 py-0.5 text-sm font-mono",
+              className,
+            )}
+          >
+            {children}
+          </code>
+        );
+      }
+      // Block code - just pass through, pre wrapper handles styling
+      return <>{children}</>;
+    },
 
-  // Blockquote for quotes
-  blockquote: ({ children }: { children?: ReactNode }) => (
-    <blockquote className="mt-6 border-l-2 border-border pl-6 italic text-foreground/80">
-      {children}
-    </blockquote>
-  ),
+    // Image using next/image for optimization - enforces 4:3 aspect ratio
+    img: ({
+      src,
+      alt,
+    }: {
+      src?: string;
+      alt?: string;
+      width?: number;
+      height?: number;
+    }) => {
+      if (!src) return null;
+      return (
+        <div className="relative aspect-[4/3] my-6 rounded-xs overflow-hidden bg-card">
+          <Image
+            src={src}
+            alt={alt ?? ""}
+            fill
+            priority
+            quality={85}
+            className="object-cover"
+          />
+        </div>
+      );
+    },
 
-  // Horizontal rule with reduced spacing
-  hr: () => <hr className="my-8 border-border/40" />,
-};
+    // Link - always opens in new tab for CMS content
+    a: ({ children, href }: { children?: ReactNode; href?: string }) => {
+      if (!href) return <span>{children}</span>;
+      return (
+        <Link
+          href={href}
+          className="text-primary underline underline-offset-4 hover:text-primary/80"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {children}
+        </Link>
+      );
+    },
+
+    // Heading components with consistent styling
+    h1: ({ children }: { children?: ReactNode }) => (
+      <h1 className="scroll-m-20 text-2xl font-bold tracking-tight mb-4 mt-6">
+        {children}
+      </h1>
+    ),
+    h2: ({ children }: { children?: ReactNode }) => (
+      <h2 className="scroll-m-20 text-xl font-semibold tracking-tight mb-3 mt-6">
+        {children}
+      </h2>
+    ),
+    h3: ({ children }: { children?: ReactNode }) => (
+      <h3 className="scroll-m-20 text-lg font-semibold tracking-tight mb-2 mt-5">
+        {children}
+      </h3>
+    ),
+    h4: ({ children }: { children?: ReactNode }) => (
+      <h4 className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-4">
+        {children}
+      </h4>
+    ),
+
+    // Typography
+    strong: ({ children }: { children?: ReactNode }) => (
+      <strong className="font-semibold">{children}</strong>
+    ),
+    em: ({ children }: { children?: ReactNode }) => (
+      <em className="italic">{children}</em>
+    ),
+
+    // Paragraph - no font size here, inherited from Body wrapper
+    p: ({ children }: { children?: ReactNode }) => (
+      <p className="leading-7 [&:not(:first-child)]:mt-3 break-words">{children}</p>
+    ),
+
+    // Blockquote for quotes
+    blockquote: ({ children }: { children?: ReactNode }) => (
+      <blockquote className="mt-6 border-l-2 border-border pl-6 italic text-foreground/80">
+        {children}
+      </blockquote>
+    ),
+
+    // Horizontal rule with reduced spacing
+    hr: () => <hr className="my-8 border-border/40" />,
+  };
+}
 
 export const Body = ({
   components,
   className,
+  codeBlockComponent,
   ...props
-}: BodyProps & { className?: string }) => (
+}: BodyProps) => (
   <div className={cn("text-md [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}>
     <RichText
       // @ts-expect-error BaseHub RichText components typing issue
       components={{
-        ...richTextBaseComponents,
+        ...createRichTextComponents(codeBlockComponent),
         // Allow consumer overrides
         ...components,
       }}

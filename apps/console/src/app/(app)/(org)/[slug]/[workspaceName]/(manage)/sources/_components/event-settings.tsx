@@ -98,7 +98,7 @@ export function EventSettings({
   const showPushWarning = provider === "github" && !selectedEvents.includes("push");
 
   return (
-    <div className="pt-3 pb-4 px-4 border-t border-border bg-muted/30">
+    <div className="pt-3 pb-4 px-4 border-t border-border/50 bg-card/40">
       <div className="text-sm font-medium text-foreground mb-3">Event Subscriptions</div>
 
       {showPushWarning && (

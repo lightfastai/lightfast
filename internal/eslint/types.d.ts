@@ -37,6 +37,13 @@ declare module "eslint-plugin-react-hooks" {
   export const rules: Record<string, Rule.RuleModule>;
 }
 
+declare module "@hono/eslint-config" {
+  import type { Linter } from "eslint";
+
+  const config: Linter.Config[];
+  export default config;
+}
+
 declare module "@next/eslint-plugin-next" {
   import type { Linter, Rule } from "eslint";
 

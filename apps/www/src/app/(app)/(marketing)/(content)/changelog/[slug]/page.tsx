@@ -7,6 +7,7 @@ import { changelog  } from "@vendor/cms";
 import type {ChangelogEntryQueryResponse} from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { JsonLdData } from "@vendor/seo/json-ld";
 import {
@@ -274,7 +275,7 @@ export default async function ChangelogEntryPage({
 
               {entry.body?.json?.content ? (
                 <div className="">
-                  <Body content={entry.body.json.content} />
+                  <Body content={entry.body.json.content} codeBlockComponent={SSRCodeBlock} />
                 </div>
               ) : null}
 

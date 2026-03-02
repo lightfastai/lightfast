@@ -5,15 +5,14 @@
   "type": "module",
   "scripts": {
     "build": "pnpm build:prod",
-    "build:dev": "pnpm with-env:dev next build --turbopack",
-    "build:prod": "pnpm with-env:prod next build --turbopack",
+    "build:dev": "pnpm with-env next build --turbopack",
+    "build:prod": "pnpm with-env next build --turbopack",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
-    "dev": "export VC_MICROFRONTENDS_CONFIG=../../apps/console/microfrontends.json && pnpm with-env:dev next dev --port $(microfrontends port) --turbo",
+    "dev": "export VC_MICROFRONTENDS_CONFIG=../../apps/console/microfrontends.json && pnpm with-env next dev --port $(microfrontends port) --turbo",
     "lint": "eslint",
-    "start": "pnpm with-env:prod next start -p ${NEXT_PUBLIC_AUTH_PORT:-4104}",
+    "start": "pnpm with-env next start -p ${NEXT_PUBLIC_AUTH_PORT:-4104}",
     "typecheck": "tsc --noEmit",
-    "with-env:dev": "dual run --",
-    "with-env:prod": "dotenv -e ./.vercel/.env.development.local --"
+    "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
     "@clerk/elements": "catalog:",
@@ -26,7 +25,7 @@
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",
     "@rescale/nemo": "^2.0.2",
-    "@sentry/nextjs": "^10.20.0",
+    "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/analytics": "workspace:*",
     "@vendor/clerk": "workspace:*",

@@ -7,28 +7,28 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+      "default": "./dist/index.js"
     },
     "./pretty-project-name": {
       "types": "./dist/pretty-project-name.d.ts",
-      "default": "./src/pretty-project-name.ts"
+      "default": "./dist/pretty-project-name.js"
     },
     "./datetime": {
       "types": "./dist/datetime/index.d.ts",
-      "default": "./src/datetime/index.ts"
+      "default": "./dist/datetime/index.js"
     },
     "./uuid": {
       "types": "./dist/uuid.d.ts",
-      "default": "./src/uuid.ts"
+      "default": "./dist/uuid.js"
     },
     "./nanoid": {
       "types": "./dist/nanoid.d.ts",
-      "default": "./src/nanoid.ts"
+      "default": "./dist/nanoid.js"
     }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "tsup && tsc --incremental false",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
@@ -47,6 +47,7 @@
     "@types/uuid": "^10.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "tsup": "^8.5.0",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

@@ -6,7 +6,7 @@ import {
   workspaceKnowledgeDocuments,
   workspaceWorkflowRuns,
   workspaceIntegrations,
-  userSources,
+  gwInstallations,
   workspaceActorProfiles,
 } from "@db/console/schema";
 import { eq, and, desc, count, sql, inArray, sum, avg, gte, like } from "drizzle-orm";
@@ -25,12 +25,10 @@ import {
 import { z } from "zod";
 import { clerkClient } from "@vendor/clerk/server";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
-import { inngest } from "@api/console/inngest";
-import { hasConnector, getConnector } from "@repo/console-backfill";
-
 import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
 import { ensureActorLinked } from "../../lib/actor-linking";
+import { notifyBackfill } from "../../lib/backfill";
 
 /**
  * Workspace router - internal procedures for API routes
@@ -110,29 +108,25 @@ export const workspaceRouter = {
   resolveFromGithubOrgSlug: publicProcedure
     .input(workspaceResolveFromGithubOrgSlugInputSchema)
     .query(async ({ input }) => {
-      // Find GitHub user source with matching installation
-      // GitHub installations are stored in providerMetadata.installations
-      const userSource = await db.query.userSources.findFirst({
+      // Find GitHub installation with matching account login
+      const installation = await db.query.gwInstallations.findFirst({
         where: and(
-          eq(userSources.sourceType, "github"),
-          eq(userSources.isActive, true),
-          sql`EXISTS (
-            SELECT 1 FROM jsonb_array_elements(${userSources.providerMetadata}->'installations') AS inst
-            WHERE inst->>'accountLogin' = ${input.githubOrgSlug}
-          )`
+          eq(gwInstallations.provider, "github"),
+          eq(gwInstallations.accountLogin, input.githubOrgSlug),
+          eq(gwInstallations.status, "active"),
         ),
       });
 
-      if (!userSource) {
+      if (!installation) {
         throw new Error(
           `No active GitHub installation found for organization: ${input.githubOrgSlug}`,
         );
       }
 
-      // Find workspace source connected to this user source
+      // Find workspace source connected to this installation
       const workspaceSource = await db.query.workspaceIntegrations.findFirst({
         where: and(
-          eq(workspaceIntegrations.userSourceId, userSource.id),
+          eq(workspaceIntegrations.installationId, installation.id),
           eq(workspaceIntegrations.isActive, true),
         ),
       });
@@ -286,6 +280,25 @@ export const workspaceRouter = {
             clerkOrgId: input.clerkOrgId,
           },
         });
+
+        // Trigger backfill for all active connections in this org (best-effort)
+        const activeInstallations = await db
+          .select({ id: gwInstallations.id, provider: gwInstallations.provider })
+          .from(gwInstallations)
+          .where(
+            and(
+              eq(gwInstallations.orgId, input.clerkOrgId),
+              eq(gwInstallations.status, "active"),
+            ),
+          );
+
+        for (const inst of activeInstallations) {
+          void notifyBackfill({
+            installationId: inst.id,
+            provider: inst.provider,
+            orgId: input.clerkOrgId,
+          });
+        }
 
         return {
           workspaceId,
@@ -572,11 +585,11 @@ export const workspaceRouter = {
           userId: ctx.auth.userId,
         });
 
-        // Get all workspace sources (new 2-table model)
+        // Get all workspace sources (read provider from denormalized column)
         const sources = await db
           .select({
             id: workspaceIntegrations.id,
-            sourceType: userSources.sourceType,
+            sourceType: workspaceIntegrations.provider,
             isActive: workspaceIntegrations.isActive,
             connectedAt: workspaceIntegrations.connectedAt,
             lastSyncedAt: workspaceIntegrations.lastSyncedAt,
@@ -585,10 +598,6 @@ export const workspaceRouter = {
             sourceConfig: workspaceIntegrations.sourceConfig,
           })
           .from(workspaceIntegrations)
-          .innerJoin(
-            userSources,
-            eq(workspaceIntegrations.userSourceId, userSources.id)
-          )
           .where(and(
             eq(workspaceIntegrations.workspaceId, workspaceId),
             eq(workspaceIntegrations.isActive, true),
@@ -601,7 +610,8 @@ export const workspaceRouter = {
           total: sources.length,
           byType: sources.reduce(
             (acc, s) => {
-              acc[s.sourceType] = (acc[s.sourceType] ?? 0) + 1;
+              const key = s.sourceType ?? "unknown";
+              acc[key] = (acc[key] ?? 0) + 1;
               return acc;
             },
             {} as Record<string, number>,
@@ -915,13 +925,13 @@ export const workspaceRouter = {
           workspaceId: z.string(),
           projectId: z.string(),
           projectName: z.string(),
-          userSourceId: z.string(),
+          installationId: z.string(),
         }),
       )
       .mutation(async ({ ctx, input }) => {
-        const { workspaceId, projectId, projectName, userSourceId } = input;
+        const { workspaceId, projectId, projectName, installationId } = input;
 
-        // Verify user owns the workspace
+        // Verify org owns the workspace
         const workspace = await ctx.db.query.orgWorkspaces.findFirst({
           where: and(
             eq(orgWorkspaces.id, workspaceId),
@@ -936,27 +946,27 @@ export const workspaceRouter = {
           });
         }
 
-        // Verify user owns the Vercel source
-        const userSource = await ctx.db.query.userSources.findFirst({
+        // Verify org owns the Vercel installation
+        const installation = await ctx.db.query.gwInstallations.findFirst({
           where: and(
-            eq(userSources.id, userSourceId),
-            eq(userSources.userId, ctx.auth.userId),
-            eq(userSources.sourceType, "vercel"),
+            eq(gwInstallations.id, installationId),
+            eq(gwInstallations.orgId, ctx.auth.orgId),
+            eq(gwInstallations.provider, "vercel"),
           ),
         });
 
-        if (!userSource) {
+        if (!installation) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Vercel connection not found",
           });
         }
 
-        const providerMetadata = userSource.providerMetadata;
-        if (providerMetadata.sourceType !== "vercel") {
+        const providerAccountInfo = installation.providerAccountInfo;
+        if (providerAccountInfo?.sourceType !== "vercel") {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Invalid provider metadata",
+            message: "Invalid provider account info",
           });
         }
 
@@ -986,7 +996,8 @@ export const workspaceRouter = {
           .insert(workspaceIntegrations)
           .values({
             workspaceId,
-            userSourceId,
+            installationId,
+            provider: "vercel",
             connectedBy: ctx.auth.userId,
             sourceConfig: {
               version: 1 as const,
@@ -994,9 +1005,9 @@ export const workspaceRouter = {
               type: "project" as const,
               projectId,
               projectName,
-              teamId: providerMetadata.teamId,
-              teamSlug: providerMetadata.teamSlug,
-              configurationId: providerMetadata.configurationId,
+              teamId: providerAccountInfo.raw.team_id ?? undefined,
+              teamSlug: undefined,
+              configurationId: providerAccountInfo.raw.installation_id,
               sync: {
                 events: [
                   "deployment.created",
@@ -1117,8 +1128,8 @@ export const workspaceRouter = {
       .input(
         z.object({
           workspaceId: z.string(),
-          userSourceId: z.string(),
-          installationId: z.string(),
+          gwInstallationId: z.string(),
+          installationId: z.string(), // GitHub App installation external ID
           repositories: z
             .array(
               z.object({
@@ -1146,35 +1157,24 @@ export const workspaceRouter = {
           });
         }
 
-        // 2. Verify user source ownership
-        const source = await ctx.db.query.userSources.findFirst({
+        // 2. Verify org owns the GitHub installation
+        const gwInstallation = await ctx.db.query.gwInstallations.findFirst({
           where: and(
-            eq(userSources.id, input.userSourceId),
-            eq(userSources.userId, ctx.auth.userId),
-            eq(userSources.sourceType, "github"),
+            eq(gwInstallations.id, input.gwInstallationId),
+            eq(gwInstallations.orgId, ctx.auth.orgId),
+            eq(gwInstallations.provider, "github"),
           ),
         });
 
-        if (!source) {
+        if (!gwInstallation) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "GitHub connection not found",
           });
         }
 
-        const providerMetadata = source.providerMetadata;
-        if (providerMetadata.sourceType !== "github") {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Invalid provider metadata",
-          });
-        }
-
-        // Verify installation exists
-        const installation = providerMetadata.installations?.find(
-          (i) => i.id === input.installationId,
-        );
-        if (!installation) {
+        // Verify the GitHub App installation is accessible via the table column
+        if (gwInstallation.externalId !== input.installationId) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Installation not found",
@@ -1185,7 +1185,7 @@ export const workspaceRouter = {
         const existing = await ctx.db.query.workspaceIntegrations.findMany({
           where: and(
             eq(workspaceIntegrations.workspaceId, input.workspaceId),
-            eq(workspaceIntegrations.userSourceId, input.userSourceId),
+            eq(workspaceIntegrations.installationId, input.gwInstallationId),
           ),
         });
 
@@ -1223,7 +1223,8 @@ export const workspaceRouter = {
         if (toCreate.length > 0) {
           const integrations = toCreate.map((repo) => ({
             workspaceId: input.workspaceId,
-            userSourceId: input.userSourceId,
+            installationId: input.gwInstallationId,
+            provider: "github" as const,
             connectedBy: ctx.auth.userId,
             providerResourceId: repo.repoId,
             sourceConfig: {
@@ -1248,35 +1249,17 @@ export const workspaceRouter = {
             connectedAt: now,
           }));
 
-          const created = await ctx.db
+          await ctx.db
             .insert(workspaceIntegrations)
             .values(integrations)
-            .returning({
-              id: workspaceIntegrations.id,
-              userSourceId: workspaceIntegrations.userSourceId,
-            });
+            .returning({ id: workspaceIntegrations.id });
 
-          // Auto-trigger backfill for newly connected integrations
-          if (hasConnector("github")) {
-            const connector = getConnector("github");
-            const defaultEntityTypes = connector?.defaultEntityTypes ?? [];
-
-            await inngest.send(
-              created.map((integration) => ({
-                name: "apps-console/backfill.requested" as const,
-                data: {
-                  integrationId: integration.id,
-                  workspaceId: input.workspaceId,
-                  clerkOrgId: ctx.auth.orgId,
-                  provider: "github" as const,
-                  userSourceId: integration.userSourceId,
-                  depth: 30,
-                  entityTypes: defaultEntityTypes,
-                  requestedBy: ctx.auth.userId,
-                },
-              })),
-            );
-          }
+          // Trigger backfill for newly linked repos (best-effort)
+          void notifyBackfill({
+            installationId: input.gwInstallationId,
+            provider: "github",
+            orgId: ctx.auth.orgId,
+          });
         }
 
         return {
@@ -1296,7 +1279,7 @@ export const workspaceRouter = {
       .input(
         z.object({
           workspaceId: z.string(),
-          userSourceId: z.string(),
+          gwInstallationId: z.string(),
           projects: z
             .array(
               z.object({
@@ -1324,27 +1307,27 @@ export const workspaceRouter = {
           });
         }
 
-        // 2. Verify user source ownership
-        const source = await ctx.db.query.userSources.findFirst({
+        // 2. Verify org owns the Vercel installation
+        const gwInstallation = await ctx.db.query.gwInstallations.findFirst({
           where: and(
-            eq(userSources.id, input.userSourceId),
-            eq(userSources.userId, ctx.auth.userId),
-            eq(userSources.sourceType, "vercel"),
+            eq(gwInstallations.id, input.gwInstallationId),
+            eq(gwInstallations.orgId, ctx.auth.orgId),
+            eq(gwInstallations.provider, "vercel"),
           ),
         });
 
-        if (!source) {
+        if (!gwInstallation) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Vercel connection not found",
           });
         }
 
-        const providerMetadata = source.providerMetadata;
-        if (providerMetadata.sourceType !== "vercel") {
+        const providerAccountInfo = gwInstallation.providerAccountInfo;
+        if (providerAccountInfo?.sourceType !== "vercel") {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Invalid provider metadata",
+            message: "Invalid provider account info",
           });
         }
 
@@ -1352,7 +1335,7 @@ export const workspaceRouter = {
         const existing = await ctx.db.query.workspaceIntegrations.findMany({
           where: and(
             eq(workspaceIntegrations.workspaceId, input.workspaceId),
-            eq(workspaceIntegrations.userSourceId, input.userSourceId),
+            eq(workspaceIntegrations.installationId, input.gwInstallationId),
           ),
         });
 
@@ -1390,7 +1373,8 @@ export const workspaceRouter = {
         if (toCreate.length > 0) {
           const integrations = toCreate.map((p) => ({
             workspaceId: input.workspaceId,
-            userSourceId: input.userSourceId,
+            installationId: input.gwInstallationId,
+            provider: "vercel" as const,
             connectedBy: ctx.auth.userId,
             providerResourceId: p.projectId,
             sourceConfig: {
@@ -1399,9 +1383,9 @@ export const workspaceRouter = {
               type: "project" as const,
               projectId: p.projectId,
               projectName: p.projectName,
-              teamId: providerMetadata.teamId,
-              teamSlug: providerMetadata.teamSlug,
-              configurationId: providerMetadata.configurationId,
+              teamId: providerAccountInfo.raw.team_id ?? undefined,
+              teamSlug: undefined,
+              configurationId: providerAccountInfo.raw.installation_id,
               sync: {
                 events: [
                   "deployment.created",
@@ -1417,35 +1401,304 @@ export const workspaceRouter = {
             connectedAt: now,
           }));
 
-          const created = await ctx.db
+          await ctx.db
             .insert(workspaceIntegrations)
             .values(integrations)
-            .returning({
-              id: workspaceIntegrations.id,
-              userSourceId: workspaceIntegrations.userSourceId,
-            });
+            .returning({ id: workspaceIntegrations.id });
 
-          // Auto-trigger backfill for newly connected integrations
-          if (hasConnector("vercel")) {
-            const connector = getConnector("vercel");
-            const defaultEntityTypes = connector?.defaultEntityTypes ?? ["deployment"];
+          // Trigger backfill for newly linked projects (best-effort)
+          void notifyBackfill({
+            installationId: input.gwInstallationId,
+            provider: "vercel",
+            orgId: ctx.auth.orgId,
+          });
+        }
 
-            await inngest.send(
-              created.map((integration) => ({
-                name: "apps-console/backfill.requested" as const,
-                data: {
-                  integrationId: integration.id,
-                  workspaceId: input.workspaceId,
-                  clerkOrgId: ctx.auth.orgId,
-                  provider: "vercel" as const,
-                  userSourceId: integration.userSourceId,
-                  depth: 30,
-                  entityTypes: defaultEntityTypes,
-                  requestedBy: ctx.auth.userId,
-                },
-              })),
-            );
+        return {
+          created: toCreate.length,
+          reactivated: toReactivate.length,
+          skipped: alreadyActive.length,
+        };
+      }),
+
+    /**
+     * Bulk link Linear teams to workspace
+     *
+     * Allows connecting Linear teams in a single operation.
+     * Handles idempotency by reactivating inactive integrations.
+     */
+    bulkLinkLinearTeams: orgScopedProcedure
+      .input(
+        z.object({
+          workspaceId: z.string(),
+          gwInstallationId: z.string(),
+          teams: z
+            .array(
+              z.object({
+                teamId: z.string(),
+                teamKey: z.string(),
+                teamName: z.string(),
+              }),
+            )
+            .min(1)
+            .max(50),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        // 1. Verify workspace access
+        const workspace = await ctx.db.query.orgWorkspaces.findFirst({
+          where: and(
+            eq(orgWorkspaces.id, input.workspaceId),
+            eq(orgWorkspaces.clerkOrgId, ctx.auth.orgId),
+          ),
+        });
+
+        if (!workspace) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Workspace not found",
+          });
+        }
+
+        // 2. Verify org owns the Linear installation
+        const gwInstallation = await ctx.db.query.gwInstallations.findFirst({
+          where: and(
+            eq(gwInstallations.id, input.gwInstallationId),
+            eq(gwInstallations.orgId, ctx.auth.orgId),
+            eq(gwInstallations.provider, "linear"),
+          ),
+        });
+
+        if (!gwInstallation) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Linear connection not found",
+          });
+        }
+
+        // 3. Get existing connections to avoid duplicates
+        const existing = await ctx.db.query.workspaceIntegrations.findMany({
+          where: and(
+            eq(workspaceIntegrations.workspaceId, input.workspaceId),
+            eq(workspaceIntegrations.installationId, input.gwInstallationId),
+          ),
+        });
+
+        const existingMap = new Map(
+          existing.map((e) => [e.providerResourceId, e]),
+        );
+
+        // 4. Categorize teams
+        const toCreate: typeof input.teams = [];
+        const toReactivate: string[] = [];
+        const alreadyActive: string[] = [];
+
+        for (const team of input.teams) {
+          const existingIntegration = existingMap.get(team.teamId);
+          if (!existingIntegration) {
+            toCreate.push(team);
+          } else if (!existingIntegration.isActive) {
+            toReactivate.push(existingIntegration.id);
+          } else {
+            alreadyActive.push(team.teamId);
           }
+        }
+
+        const now = new Date().toISOString();
+
+        // 5. Reactivate inactive integrations
+        if (toReactivate.length > 0) {
+          await ctx.db
+            .update(workspaceIntegrations)
+            .set({ isActive: true, updatedAt: now })
+            .where(inArray(workspaceIntegrations.id, toReactivate));
+        }
+
+        // 6. Create new integrations
+        if (toCreate.length > 0) {
+          const integrations = toCreate.map((t) => ({
+            workspaceId: input.workspaceId,
+            installationId: input.gwInstallationId,
+            provider: "linear" as const,
+            connectedBy: ctx.auth.userId,
+            providerResourceId: t.teamId,
+            sourceConfig: {
+              version: 1 as const,
+              sourceType: "linear" as const,
+              type: "team" as const,
+              teamId: t.teamId,
+              teamKey: t.teamKey,
+              teamName: t.teamName,
+              sync: {
+                events: [
+                  "Issue",
+                  "Comment",
+                  "IssueLabel",
+                  "Project",
+                  "Cycle",
+                ],
+                autoSync: true,
+              },
+            },
+            isActive: true,
+            connectedAt: now,
+          }));
+
+          await ctx.db
+            .insert(workspaceIntegrations)
+            .values(integrations)
+            .returning({ id: workspaceIntegrations.id });
+
+          // Trigger backfill for newly linked teams (best-effort)
+          void notifyBackfill({
+            installationId: input.gwInstallationId,
+            provider: "linear",
+            orgId: ctx.auth.orgId,
+          });
+        }
+
+        return {
+          created: toCreate.length,
+          reactivated: toReactivate.length,
+          skipped: alreadyActive.length,
+        };
+      }),
+
+    /**
+     * Bulk link Sentry projects to workspace
+     *
+     * Allows connecting Sentry projects in a single operation.
+     * Handles idempotency by reactivating inactive integrations.
+     */
+    bulkLinkSentryProjects: orgScopedProcedure
+      .input(
+        z.object({
+          workspaceId: z.string(),
+          gwInstallationId: z.string(),
+          projects: z
+            .array(
+              z.object({
+                projectId: z.string(),
+                projectSlug: z.string(),
+                projectName: z.string(),
+              }),
+            )
+            .min(1)
+            .max(50),
+        }),
+      )
+      .mutation(async ({ ctx, input }) => {
+        // 1. Verify workspace access
+        const workspace = await ctx.db.query.orgWorkspaces.findFirst({
+          where: and(
+            eq(orgWorkspaces.id, input.workspaceId),
+            eq(orgWorkspaces.clerkOrgId, ctx.auth.orgId),
+          ),
+        });
+
+        if (!workspace) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Workspace not found",
+          });
+        }
+
+        // 2. Verify org owns the Sentry installation
+        const gwInstallation = await ctx.db.query.gwInstallations.findFirst({
+          where: and(
+            eq(gwInstallations.id, input.gwInstallationId),
+            eq(gwInstallations.orgId, ctx.auth.orgId),
+            eq(gwInstallations.provider, "sentry"),
+          ),
+        });
+
+        if (!gwInstallation) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Sentry connection not found",
+          });
+        }
+
+        const providerAccountInfo = gwInstallation.providerAccountInfo;
+        if (providerAccountInfo?.sourceType !== "sentry") {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Invalid provider account info",
+          });
+        }
+
+        // 3. Get existing connections to avoid duplicates
+        const existing = await ctx.db.query.workspaceIntegrations.findMany({
+          where: and(
+            eq(workspaceIntegrations.workspaceId, input.workspaceId),
+            eq(workspaceIntegrations.installationId, input.gwInstallationId),
+          ),
+        });
+
+        const existingMap = new Map(
+          existing.map((e) => [e.providerResourceId, e]),
+        );
+
+        // 4. Categorize projects
+        const toCreate: typeof input.projects = [];
+        const toReactivate: string[] = [];
+        const alreadyActive: string[] = [];
+
+        for (const project of input.projects) {
+          const existingIntegration = existingMap.get(project.projectId);
+          if (!existingIntegration) {
+            toCreate.push(project);
+          } else if (!existingIntegration.isActive) {
+            toReactivate.push(existingIntegration.id);
+          } else {
+            alreadyActive.push(project.projectId);
+          }
+        }
+
+        const now = new Date().toISOString();
+
+        // 5. Reactivate inactive integrations
+        if (toReactivate.length > 0) {
+          await ctx.db
+            .update(workspaceIntegrations)
+            .set({ isActive: true, updatedAt: now })
+            .where(inArray(workspaceIntegrations.id, toReactivate));
+        }
+
+        // 6. Create new integrations
+        if (toCreate.length > 0) {
+          const integrations = toCreate.map((p) => ({
+            workspaceId: input.workspaceId,
+            installationId: input.gwInstallationId,
+            provider: "sentry" as const,
+            connectedBy: ctx.auth.userId,
+            providerResourceId: p.projectId,
+            sourceConfig: {
+              version: 1 as const,
+              sourceType: "sentry" as const,
+              type: "project" as const,
+              projectSlug: p.projectSlug,
+              projectId: p.projectId,
+              sync: {
+                events: ["issue", "error", "comment"],
+                autoSync: true,
+              },
+            },
+            isActive: true,
+            connectedAt: now,
+          }));
+
+          await ctx.db
+            .insert(workspaceIntegrations)
+            .values(integrations)
+            .returning({ id: workspaceIntegrations.id });
+
+          // Trigger backfill for newly linked projects (best-effort)
+          void notifyBackfill({
+            installationId: input.gwInstallationId,
+            provider: "sentry",
+            orgId: ctx.auth.orgId,
+          });
         }
 
         return {

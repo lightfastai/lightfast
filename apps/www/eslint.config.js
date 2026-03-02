@@ -12,6 +12,13 @@ export default [
   ...nextjsConfig,
   ...restrictEnvAccess,
   {
+    files: ["src/instrumentation-client.ts"],
+    rules: {
+      "no-restricted-properties": "off",
+      "no-restricted-imports": "off",
+    },
+  },
+  {
     // Server Actions require async even without await expressions
     files: [
       "src/components/announcement-badge.tsx",
