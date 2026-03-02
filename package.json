@@ -44,7 +44,7 @@
     "lint:fix": "SKIP_ENV_VALIDATION=true turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
     "lint:ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint:ws",
-    "test": "SKIP_ENV_VALIDATION=1 turbo run test",
+    "test": "SKIP_ENV_VALIDATION=true turbo run test",
     "typecheck": "SKIP_ENV_VALIDATION=true turbo run typecheck",
     "ui": "pnpm --filter @repo/ui ui",
     "vercel:link": "vercel link --repo",
