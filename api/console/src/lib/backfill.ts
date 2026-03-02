@@ -20,6 +20,9 @@ export async function notifyBackfill(params: {
   installationId: string;
   provider: string;
   orgId: string;
+  depth?: 7 | 30 | 90;
+  entityTypes?: string[];
+  holdForReplay?: boolean;
   correlationId?: string;
 }): Promise<void> {
   const correlationId = params.correlationId ?? crypto.randomUUID();

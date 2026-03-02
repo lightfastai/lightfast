@@ -57,6 +57,71 @@ describe("notifyBackfill", () => {
     );
   });
 
+  it("forwards depth and entityTypes when provided", async () => {
+    mockFetch.mockResolvedValue({ ok: true });
+
+    await notifyBackfill({
+      installationId: "inst-1",
+      provider: "github",
+      orgId: "org-1",
+      depth: 90,
+      entityTypes: ["pull_request", "issue"],
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/backfill") as string,
+      expect.objectContaining({
+        body: JSON.stringify({
+          installationId: "inst-1",
+          provider: "github",
+          orgId: "org-1",
+          depth: 90,
+          entityTypes: ["pull_request", "issue"],
+        }),
+      }) as RequestInit,
+    );
+  });
+
+  it("forwards holdForReplay when provided", async () => {
+    mockFetch.mockResolvedValue({ ok: true });
+
+    await notifyBackfill({
+      installationId: "inst-1",
+      provider: "github",
+      orgId: "org-1",
+      holdForReplay: true,
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/backfill") as string,
+      expect.objectContaining({
+        body: JSON.stringify({
+          installationId: "inst-1",
+          provider: "github",
+          orgId: "org-1",
+          holdForReplay: true,
+        }),
+      }) as RequestInit,
+    );
+  });
+
+  it("omits optional params when not provided", async () => {
+    mockFetch.mockResolvedValue({ ok: true });
+
+    await notifyBackfill({
+      installationId: "inst-1",
+      provider: "github",
+      orgId: "org-1",
+    });
+
+    const body = JSON.parse(
+      (mockFetch.mock.calls[0] as [string, RequestInit])[1].body as string,
+    ) as Record<string, unknown>;
+    expect(body).not.toHaveProperty("depth");
+    expect(body).not.toHaveProperty("entityTypes");
+    expect(body).not.toHaveProperty("holdForReplay");
+  });
+
   it("does not throw when fetch returns non-ok response", async () => {
     mockFetch.mockResolvedValue({ ok: false, status: 500 });
 

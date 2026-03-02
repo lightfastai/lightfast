@@ -14,6 +14,7 @@ const triggerSchema = z.object({
   orgId: z.string().min(1),
   depth: z.number().int().positive().default(30),
   entityTypes: z.array(z.string()).optional(),
+  holdForReplay: z.boolean().optional(),
 });
 
 /**
@@ -36,7 +37,7 @@ backfill.post("/", apiKeyAuth, async (c) => {
     return c.json({ error: "validation_error", details: parsed.error.flatten() }, 400);
   }
 
-  const { installationId, provider, orgId, depth, entityTypes } = parsed.data;
+  const { installationId, provider, orgId, depth, entityTypes, holdForReplay } = parsed.data;
   const { GATEWAY_API_KEY } = getEnv(c);
 
   try {
@@ -46,7 +47,7 @@ backfill.post("/", apiKeyAuth, async (c) => {
         "X-API-Key": GATEWAY_API_KEY,
         "X-Correlation-Id": c.get("correlationId"),
       },
-      body: { installationId, provider, orgId, depth, entityTypes },
+      body: { installationId, provider, orgId, depth, entityTypes, holdForReplay },
       retries: 3,
       deduplicationId: `backfill:${provider}:${installationId}:${orgId}:d=${depth}:e=${entityTypes ? [...entityTypes].sort().join(",") : ""}`,
     });

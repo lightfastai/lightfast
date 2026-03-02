@@ -134,6 +134,7 @@ describe("POST /api/backfill", () => {
         orgId: "org-1",
         depth: 30,
         entityTypes: undefined,
+        holdForReplay: undefined,
       },
       retries: 3,
       deduplicationId: "backfill:github:inst-1:org-1:d=30:e=",
@@ -155,13 +156,34 @@ describe("POST /api/backfill", () => {
     expect(res.status).toBe(200);
     expect(mockPublishJSON).toHaveBeenCalledWith(
       expect.objectContaining({
-        body: {
+        body: expect.objectContaining({
           installationId: "inst-2",
           provider: "linear",
           orgId: "org-2",
           depth: 30,
           entityTypes: ["Issue", "Comment"],
-        },
+        }),
+      }),
+    );
+  });
+
+  it("forwards holdForReplay to QStash when provided", async () => {
+    const res = await request("/api/backfill", {
+      body: {
+        installationId: "inst-3",
+        provider: "github",
+        orgId: "org-3",
+        holdForReplay: true,
+      },
+      headers: { "X-API-Key": "test-api-key" },
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockPublishJSON).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({
+          holdForReplay: true,
+        }),
       }),
     );
   });

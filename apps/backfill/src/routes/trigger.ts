@@ -12,6 +12,7 @@ const triggerSchema = z.object({
   orgId: z.string().min(1),
   depth: z.union([z.literal(7), z.literal(30), z.literal(90)]).optional(),
   entityTypes: z.array(z.string()).optional(),
+  holdForReplay: z.boolean().optional(),
 });
 
 const cancelSchema = z.object({
@@ -62,6 +63,7 @@ trigger.post("/", async (c) => {
         orgId: body.orgId,
         depth: body.depth ?? 30,
         entityTypes: body.entityTypes,
+        holdForReplay: body.holdForReplay,
         correlationId: c.get("correlationId"),
       },
     });
