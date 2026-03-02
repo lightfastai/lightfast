@@ -491,6 +491,58 @@ describe("persist-backfill-run step", () => {
   });
 });
 
+describe("holdForReplay header", () => {
+  it("passes X-Backfill-Hold: true header when holdForReplay is set", async () => {
+    mockTokenResponse();
+    mockConnector.fetchPage.mockResolvedValueOnce({
+      events: [
+        { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
+      ],
+      nextCursor: null,
+      rawCount: 1,
+    });
+    mockDispatchResponse();
+    mockPersistRunResponse();
+    const step = makeStep();
+
+    await capturedHandler({ event: makeEvent({ holdForReplay: true }), step });
+
+    const dispatchCall = mockFetch.mock.calls.find(
+      (call) =>
+        (call[1] as RequestInit | undefined)?.method === "POST" &&
+        call[0] === "https://relay.test/api/webhooks/github",
+    );
+    expect(dispatchCall).toBeDefined();
+    const headers = (dispatchCall![1] as RequestInit).headers as Record<string, string>;
+    expect(headers["X-Backfill-Hold"]).toBe("true");
+  });
+
+  it("omits X-Backfill-Hold header when holdForReplay is not set", async () => {
+    mockTokenResponse();
+    mockConnector.fetchPage.mockResolvedValueOnce({
+      events: [
+        { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
+      ],
+      nextCursor: null,
+      rawCount: 1,
+    });
+    mockDispatchResponse();
+    mockPersistRunResponse();
+    const step = makeStep();
+
+    await capturedHandler({ event: makeEvent(), step });
+
+    const dispatchCall = mockFetch.mock.calls.find(
+      (call) =>
+        (call[1] as RequestInit | undefined)?.method === "POST" &&
+        call[0] === "https://relay.test/api/webhooks/github",
+    );
+    expect(dispatchCall).toBeDefined();
+    const headers = (dispatchCall![1] as RequestInit).headers as Record<string, string>;
+    expect(headers["X-Backfill-Hold"]).toBeUndefined();
+  });
+});
+
 describe("persist-failed-run step", () => {
   it("POSTs failed run record to gateway in onFailure handler", async () => {
     expect(capturedOnFailure).toBeDefined();

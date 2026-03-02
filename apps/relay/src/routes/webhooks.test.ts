@@ -435,6 +435,65 @@ describe("POST /webhooks/:provider", () => {
     });
   });
 
+  describe("service auth with X-Backfill-Hold", () => {
+    it("persists webhook but skips delivery when X-Backfill-Hold is true", async () => {
+      const res = await request("/webhooks/github", {
+        body: {
+          connectionId: "conn-1",
+          orgId: "org-1",
+          deliveryId: "del-hold",
+          eventType: "push",
+          payload: { repository: { id: 42 } },
+          receivedAt: 1700000000,
+        },
+        headers: { "X-API-Key": "test-api-key", "X-Backfill-Hold": "true" },
+      });
+
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.status).toBe("accepted");
+      expect(json.held).toBe(true);
+      expect(json.deliveryId).toBe("del-hold");
+
+      // Webhook was persisted
+      expect(dbOps).toEqual([
+        {
+          op: "insert",
+          table: expect.anything(),
+          values: expect.objectContaining({
+            deliveryId: "del-hold",
+            status: "received",
+          }),
+        },
+      ]);
+
+      // QStash was NOT called — no delivery
+      expect(mockPublishJSON).not.toHaveBeenCalled();
+    });
+
+    it("delivers normally when X-Backfill-Hold is absent", async () => {
+      const res = await request("/webhooks/github", {
+        body: {
+          connectionId: "conn-1",
+          orgId: "org-1",
+          deliveryId: "del-no-hold",
+          eventType: "push",
+          payload: { repository: { id: 42 } },
+          receivedAt: 1700000000,
+        },
+        headers: { "X-API-Key": "test-api-key" },
+      });
+
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.status).toBe("accepted");
+      expect(json.held).toBeUndefined();
+
+      // QStash WAS called — normal delivery
+      expect(mockPublishJSON).toHaveBeenCalledOnce();
+    });
+  });
+
   describe("service auth with fan-out disabled", () => {
     it("persists webhook but skips QStash publish when flag is disabled", async () => {
       vi.mocked(isConsoleFanOutEnabled).mockResolvedValueOnce(false);

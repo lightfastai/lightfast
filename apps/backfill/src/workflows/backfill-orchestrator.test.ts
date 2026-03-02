@@ -501,3 +501,124 @@ describe("gap-aware filtering", () => {
     expect(step.sendEvent).not.toHaveBeenCalled();
   });
 });
+
+describe("holdForReplay", () => {
+  it("passes holdForReplay through fan-out events", async () => {
+    mockFetchConnection(
+      makeConnection({
+        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
+      }),
+    );
+    // Mock replay catchup response (triggered because holdForReplay + success)
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ remaining: 0 }), { status: 200 }),
+    );
+    const step = makeStep({
+      run: vi.fn((_name: string, fn: () => unknown) => fn()),
+      sendEvent: vi.fn().mockResolvedValue(undefined),
+      waitForEvent: vi.fn().mockResolvedValue({
+        data: { success: true, eventsProduced: 0, eventsDispatched: 0, pagesProcessed: 0 },
+      }),
+      sleep: vi.fn().mockResolvedValue(undefined),
+    });
+    const event = makeEvent({ entityTypes: ["pull_request"], holdForReplay: true });
+
+    await capturedHandler({ event, step });
+
+    const sendCall = step.sendEvent.mock.calls[0]!;
+    const events = sendCall[1] as Array<{ data: Record<string, unknown> }>;
+    expect(events[0]!.data.holdForReplay).toBe(true);
+  });
+
+  it("calls replay-held-webhooks step after successful completion when holdForReplay is true", async () => {
+    mockFetchConnection(
+      makeConnection({
+        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
+      }),
+    );
+    // Mock the replay catchup response (called inside the replay step)
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ remaining: 0 }), { status: 200 }),
+    );
+
+    const runCalls: string[] = [];
+    const step = makeStep({
+      run: vi.fn((name: string, fn: () => unknown) => {
+        runCalls.push(name);
+        return fn();
+      }),
+      sendEvent: vi.fn().mockResolvedValue(undefined),
+      waitForEvent: vi.fn().mockResolvedValue({
+        data: { success: true, eventsProduced: 5, eventsDispatched: 5, pagesProcessed: 1 },
+      }),
+      sleep: vi.fn().mockResolvedValue(undefined),
+    });
+    const event = makeEvent({ entityTypes: ["pull_request"], holdForReplay: true });
+
+    await capturedHandler({ event, step });
+
+    expect(runCalls).toContain("replay-held-webhooks");
+
+    // Verify the replay fetch was called with correct URL and installationId
+    const replayCall = mockFetch.mock.calls.find(
+      (call) =>
+        (call[0] as string).includes("/admin/replay/catchup"),
+    );
+    expect(replayCall).toBeDefined();
+    const body = JSON.parse((replayCall![1] as RequestInit).body as string);
+    expect(body).toEqual({
+      installationId: "inst-1",
+      batchSize: 200,
+    });
+  });
+
+  it("skips replay-held-webhooks when holdForReplay is not set", async () => {
+    mockFetchConnection(
+      makeConnection({
+        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
+      }),
+    );
+    const runCalls: string[] = [];
+    const step = makeStep({
+      run: vi.fn((name: string, fn: () => unknown) => {
+        runCalls.push(name);
+        return fn();
+      }),
+      sendEvent: vi.fn().mockResolvedValue(undefined),
+      waitForEvent: vi.fn().mockResolvedValue({
+        data: { success: true, eventsProduced: 5, eventsDispatched: 5, pagesProcessed: 1 },
+      }),
+      sleep: vi.fn().mockResolvedValue(undefined),
+    });
+    const event = makeEvent({ entityTypes: ["pull_request"] });
+
+    await capturedHandler({ event, step });
+
+    expect(runCalls).not.toContain("replay-held-webhooks");
+  });
+
+  it("skips replay when all workers failed", async () => {
+    mockFetchConnection(
+      makeConnection({
+        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
+      }),
+    );
+    const runCalls: string[] = [];
+    const step = makeStep({
+      run: vi.fn((name: string, fn: () => unknown) => {
+        runCalls.push(name);
+        return fn();
+      }),
+      sendEvent: vi.fn().mockResolvedValue(undefined),
+      waitForEvent: vi.fn().mockResolvedValue({
+        data: { success: false, eventsProduced: 0, eventsDispatched: 0, pagesProcessed: 0, error: "fail" },
+      }),
+      sleep: vi.fn().mockResolvedValue(undefined),
+    });
+    const event = makeEvent({ entityTypes: ["pull_request"], holdForReplay: true });
+
+    await capturedHandler({ event, step });
+
+    expect(runCalls).not.toContain("replay-held-webhooks");
+  });
+});

@@ -84,6 +84,7 @@ export const backfillEntityWorker = inngest.createFunction(
       entityType,
       resource,
       since,
+      holdForReplay,
       correlationId,
     } = event.data;
 
@@ -236,6 +237,7 @@ export const backfillEntityWorker = inngest.createFunction(
                 headers: {
                   "Content-Type": "application/json",
                   "X-API-Key": env.GATEWAY_API_KEY,
+                  ...(holdForReplay ? { "X-Backfill-Hold": "true" } : {}),
                   ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
                 },
                 body: JSON.stringify({

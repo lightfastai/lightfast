@@ -3,7 +3,7 @@ import { NonRetriableError } from "@vendor/inngest";
 
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { gatewayUrl } from "../lib/related-projects.js";
+import { gatewayUrl, relayUrl } from "../lib/related-projects.js";
 
 export const backfillOrchestrator = inngest.createFunction(
   {
@@ -29,7 +29,7 @@ export const backfillOrchestrator = inngest.createFunction(
   },
   { event: "apps-backfill/run.requested" },
   async ({ event, step }) => {
-    const { installationId, provider, orgId, depth, entityTypes, correlationId } = event.data;
+    const { installationId, provider, orgId, depth, entityTypes, holdForReplay, correlationId } = event.data;
 
     if (depth <= 0) {
       throw new NonRetriableError(
@@ -176,6 +176,7 @@ export const backfillOrchestrator = inngest.createFunction(
           resource: wu.resource,
           since,
           depth,
+          holdForReplay,
           correlationId,
         },
       })),
@@ -229,6 +230,44 @@ export const backfillOrchestrator = inngest.createFunction(
     // ── Step 6: Aggregate results ──
     const succeeded = completionResults.filter((r) => r.success);
     const failed = completionResults.filter((r) => !r.success);
+
+    // ── Step 7: Replay held webhooks (atomic delivery) ──
+    // When holdForReplay is set, entity workers persist webhooks without delivery.
+    // After all workers complete, drain them through the admin catchup endpoint
+    // so Console receives historical events in chronological order as a single batch.
+    if (holdForReplay && succeeded.length > 0) {
+      await step.run("replay-held-webhooks", async () => {
+        const BATCH_SIZE = 200;
+        let remaining = 1;
+
+        while (remaining > 0) {
+          const response = await fetch(`${relayUrl}/admin/replay/catchup`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-API-Key": env.GATEWAY_API_KEY,
+              ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
+            },
+            body: JSON.stringify({
+              installationId,
+              batchSize: BATCH_SIZE,
+            }),
+            signal: AbortSignal.timeout(60_000),
+          });
+
+          if (!response.ok) {
+            console.error("[backfill] replay-held-webhooks batch failed", {
+              installationId,
+              status: response.status,
+            });
+            break;
+          }
+
+          const result = (await response.json()) as { remaining: number };
+          remaining = result.remaining;
+        }
+      });
+    }
 
     return {
       success: failed.length === 0,

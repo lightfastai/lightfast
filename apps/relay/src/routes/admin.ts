@@ -176,6 +176,7 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
 admin.post("/replay/catchup", apiKeyAuth, async (c) => {
   let body: {
     provider?: string;
+    installationId?: string;
     batchSize?: number;
     since?: string;
     until?: string;
@@ -193,6 +194,9 @@ admin.post("/replay/catchup", apiKeyAuth, async (c) => {
 
   if (body.provider) {
     conditions.push(eq(gwWebhookDeliveries.provider, body.provider));
+  }
+  if (body.installationId) {
+    conditions.push(eq(gwWebhookDeliveries.installationId, body.installationId));
   }
   if (body.since) {
     conditions.push(gte(gwWebhookDeliveries.receivedAt, body.since));

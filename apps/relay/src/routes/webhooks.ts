@@ -101,6 +101,14 @@ webhooks.post("/:provider", async (c) => {
       })
       .onConflictDoNothing();
 
+    // Allow internal services to explicitly hold webhooks for batch replay.
+    // When held, the webhook is persisted above but NOT delivered to Console.
+    // It stays at status "received" — available for catchup replay later.
+    const holdForReplay = c.req.header("X-Backfill-Hold") === "true";
+    if (holdForReplay) {
+      return c.json({ status: "accepted", deliveryId: body.deliveryId, held: true });
+    }
+
     // Check feature flag — skip console delivery if disabled
     if (!(await isConsoleFanOutEnabled(provider.name))) {
       return c.json({ status: "accepted", deliveryId: body.deliveryId, fanOut: false });
