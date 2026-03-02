@@ -50,6 +50,7 @@ const mockDbUpdate = vi.fn();
 const mockOnConflictDoNothing = vi.fn().mockResolvedValue(undefined);
 const mockDbSet = vi.fn();
 const mockDbWhere = vi.fn().mockResolvedValue(undefined);
+const dbOps: { op: "insert" | "update"; values?: unknown; set?: unknown }[] = [];
 
 vi.mock("@db/console/client", () => ({
   db: {
@@ -64,11 +65,28 @@ vi.mock("@db/console/client", () => ({
     }),
     insert: (...args: unknown[]) => {
       mockDbInsert(...args);
-      return { values: () => ({ onConflictDoNothing: mockOnConflictDoNothing }) };
+      const idx = dbOps.length;
+      dbOps.push({ op: "insert" });
+      return {
+        values: (...valArgs: unknown[]) => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          dbOps[idx]!.values = valArgs[0];
+          return { onConflictDoNothing: mockOnConflictDoNothing };
+        },
+      };
     },
     update: (...args: unknown[]) => {
       mockDbUpdate(...args);
-      return { set: (...setArgs: unknown[]) => { mockDbSet(...setArgs); return { where: mockDbWhere }; } };
+      const idx = dbOps.length;
+      dbOps.push({ op: "update" });
+      return {
+        set: (...setArgs: unknown[]) => {
+          mockDbSet(...setArgs);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          dbOps[idx]!.set = setArgs[0];
+          return { where: mockDbWhere };
+        },
+      };
     },
   },
 }));
@@ -154,6 +172,7 @@ function makeRetryContext(
 describe("webhook-delivery workflow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dbOps.length = 0;
     mockRedisSet.mockResolvedValue("OK");
     mockRedisHgetall.mockResolvedValue(null);
     mockRedisHset.mockResolvedValue("OK");
@@ -188,7 +207,7 @@ describe("webhook-delivery workflow", () => {
     const ctx = makeContext(makePayload());
     await capturedHandler(ctx);
 
-    // 7 steps: dedup, persist-delivery, resolve-connection, update-connection, check-fan-out-flag, publish-to-console, update-status-delivered
+    // 7 steps: dedup, persist-delivery, resolve-connection, update-connection, check-fan-out-flag, publish-to-console, update-status-enqueued
     expect(ctx.run).toHaveBeenCalledTimes(7);
     expect(mockPublishJSON).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -205,6 +224,23 @@ describe("webhook-delivery workflow", () => {
         callback: "https://relay.test/api/admin/delivery-status",
       }),
     );
+
+    // Assert full DB write sequence: persist → set installationId → mark enqueued
+    expect(dbOps).toEqual([
+      {
+        op: "insert",
+        values: {
+          provider: "github",
+          deliveryId: "del-001",
+          eventType: "push",
+          status: "received",
+          payload: JSON.stringify({ repository: { id: 42 } }),
+          receivedAt: new Date(1700000000000).toISOString(),
+        },
+      },
+      { op: "update", set: { installationId: "conn-1" } },
+      { op: "update", set: { status: "enqueued" } },
+    ]);
   });
 
   it("falls through to DB when Redis cache misses, then populates cache", async () => {
@@ -245,6 +281,22 @@ describe("webhook-delivery workflow", () => {
       expect.objectContaining({ topic: "webhook-dlq" }),
     );
     expect(mockPublishJSON).not.toHaveBeenCalled();
+
+    // Assert DB writes: persist → mark as DLQ (no installationId update)
+    expect(dbOps).toEqual([
+      {
+        op: "insert",
+        values: {
+          provider: "github",
+          deliveryId: "del-001",
+          eventType: "push",
+          status: "received",
+          payload: JSON.stringify({ repository: { id: 42 } }),
+          receivedAt: new Date(1700000000000).toISOString(),
+        },
+      },
+      { op: "update", set: { status: "dlq" } },
+    ]);
   });
 
   it("routes to DLQ when resourceId is null", async () => {
@@ -318,6 +370,22 @@ describe("webhook-delivery workflow", () => {
     expect(mockPublishToTopic).not.toHaveBeenCalled();
     // Should have persisted the delivery (step 2 ran)
     expect(mockOnConflictDoNothing).toHaveBeenCalled();
+
+    // Persist + installationId update, but NO status advancement (workflow ends after flag check)
+    expect(dbOps).toEqual([
+      {
+        op: "insert",
+        values: {
+          provider: "github",
+          deliveryId: "del-001",
+          eventType: "push",
+          status: "received",
+          payload: JSON.stringify({ repository: { id: 42 } }),
+          receivedAt: new Date(1700000000000).toISOString(),
+        },
+      },
+      { op: "update", set: { installationId: "conn-1" } },
+    ]);
   });
 
   describe("external dependency failures", () => {
@@ -534,6 +602,88 @@ describe("webhook-delivery workflow", () => {
       eventType: "deployment.created",
       payload: { type: "deployment.created", payload: { project: { id: "prj_abc" } } },
       receivedAt: 1700000001,
+    });
+  });
+
+  /**
+   * Compute the effective final DB row state by replaying ops in order.
+   * insert sets initial state, each update merges on top.
+   */
+  function computeFinalDbState(ops: typeof dbOps): Record<string, unknown> {
+    let state: Record<string, unknown> = {};
+    for (const op of ops) {
+      if (op.op === "insert" && op.values) {
+        state = { ...state, ...(op.values as Record<string, unknown>) };
+      }
+      if (op.op === "update" && op.set) {
+        state = { ...state, ...(op.set as Record<string, unknown>) };
+      }
+    }
+    return state;
+  }
+
+  describe("path parity: workflow vs service auth final state", () => {
+    it("happy path produces equivalent final DB state to service auth path", async () => {
+      mockRedisSet.mockResolvedValue("OK");
+      mockRedisHgetall.mockResolvedValue({
+        connectionId: "conn-1",
+        orgId: "org-1",
+      });
+
+      const ctx = makeContext(makePayload());
+      await capturedHandler(ctx);
+
+      const finalState = computeFinalDbState(dbOps);
+
+      // Service auth path inserts {installationId, status:"received"} then updates {status:"enqueued"}.
+      // Workflow inserts {status:"received"}, updates {installationId}, then updates {status:"enqueued"}.
+      // Final state must match: installationId set, status is "enqueued".
+      expect(finalState).toEqual(
+        expect.objectContaining({
+          provider: "github",
+          deliveryId: "del-001",
+          eventType: "push",
+          status: "enqueued",
+          installationId: "conn-1",
+        }),
+      );
+    });
+
+    it("DLQ path: final state has status 'dlq' and no installationId", async () => {
+      mockRedisSet.mockResolvedValue("OK");
+      mockRedisHgetall.mockResolvedValue(null);
+      mockDbRows = [];
+
+      const ctx = makeContext(makePayload());
+      await capturedHandler(ctx);
+
+      const finalState = computeFinalDbState(dbOps);
+      expect(finalState).toEqual(
+        expect.objectContaining({
+          status: "dlq",
+        }),
+      );
+      expect(finalState).not.toHaveProperty("installationId");
+    });
+
+    it("fan-out disabled: final state has installationId but status remains 'received'", async () => {
+      vi.mocked(isConsoleFanOutEnabled).mockResolvedValueOnce(false);
+      mockRedisSet.mockResolvedValue("OK");
+      mockRedisHgetall.mockResolvedValue({
+        connectionId: "conn-1",
+        orgId: "org-1",
+      });
+
+      const ctx = makeContext(makePayload());
+      await capturedHandler(ctx);
+
+      const finalState = computeFinalDbState(dbOps);
+      expect(finalState).toEqual(
+        expect.objectContaining({
+          status: "received", // Never advanced — no "enqueued" update
+          installationId: "conn-1",
+        }),
+      );
     });
   });
 

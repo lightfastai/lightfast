@@ -3,7 +3,7 @@ import { computeHmacSha256, computeHmacSha1 } from "../lib/crypto.js";
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 
-const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv } =
+const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv, dbOps } =
   vi.hoisted(() => {
     const env = {
       GATEWAY_API_KEY: "test-api-key",
@@ -20,6 +20,7 @@ const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv } =
         .fn()
         .mockResolvedValue({ workflowRunId: "wf-1" }),
       mockEnv: env,
+      dbOps: [] as { op: "insert" | "update"; table?: unknown; values?: unknown; set?: unknown }[],
     };
   });
 
@@ -42,8 +43,28 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
 
 vi.mock("@db/console/client", () => ({
   db: {
-    insert: () => ({ values: () => ({ onConflictDoNothing: () => Promise.resolve() }) }),
-    update: () => ({ set: () => ({ where: () => Promise.resolve() }) }),
+    insert: (...args: unknown[]) => {
+      const idx = dbOps.length;
+      dbOps.push({ op: "insert" as const, table: args[0] });
+      return {
+        values: (...valArgs: unknown[]) => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          dbOps[idx]!.values = valArgs[0];
+          return { onConflictDoNothing: () => Promise.resolve() };
+        },
+      };
+    },
+    update: (...args: unknown[]) => {
+      const idx = dbOps.length;
+      dbOps.push({ op: "update" as const, table: args[0] });
+      return {
+        set: (...setArgs: unknown[]) => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          dbOps[idx]!.set = setArgs[0];
+          return { where: () => Promise.resolve() };
+        },
+      };
+    },
   },
 }));
 
@@ -82,6 +103,7 @@ function request(
 describe("POST /webhooks/:provider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dbOps.length = 0;
     mockRedisSet.mockResolvedValue("OK");
     mockPublishJSON.mockResolvedValue({ messageId: "msg-1" });
     mockWorkflowTrigger.mockResolvedValue({ workflowRunId: "wf-1" });
@@ -330,6 +352,28 @@ describe("POST /webhooks/:provider", () => {
         },
         retries: 5,
       });
+
+      // Assert persistence: insert with correct values, then status update after QStash publish
+      expect(dbOps).toEqual([
+        {
+          op: "insert",
+          table: expect.anything(),
+          values: {
+            provider: "github",
+            deliveryId: "del-100",
+            eventType: "push",
+            installationId: "conn-1",
+            status: "received",
+            payload: JSON.stringify({ repository: { id: 42 } }),
+            receivedAt: new Date(1700000000000).toISOString(),
+          },
+        },
+        {
+          op: "update",
+          table: expect.anything(),
+          set: { status: "enqueued" },
+        },
+      ]);
     });
 
     it("rejects when required fields missing", async () => {
@@ -412,6 +456,23 @@ describe("POST /webhooks/:provider", () => {
       expect(json.status).toBe("accepted");
       expect(json.fanOut).toBe(false);
       expect(mockPublishJSON).not.toHaveBeenCalled();
+
+      // Webhook was persisted even though fan-out is disabled — no status update to "enqueued"
+      expect(dbOps).toEqual([
+        {
+          op: "insert",
+          table: expect.anything(),
+          values: {
+            provider: "github",
+            deliveryId: "del-flag-off",
+            eventType: "push",
+            installationId: "conn-1",
+            status: "received",
+            payload: JSON.stringify({ repository: { id: 42 } }),
+            receivedAt: new Date(1700000000000).toISOString(),
+          },
+        },
+      ]);
     });
   });
 
@@ -491,6 +552,117 @@ describe("POST /webhooks/:provider", () => {
 
       expect(res.status).toBe(200);
       expect(mockWorkflowTrigger).toHaveBeenCalledOnce();
+    });
+  });
+
+  /**
+   * Compute the effective final DB row state by replaying ops in order.
+   * insert sets initial state, each update merges on top.
+   */
+  function computeFinalDbState(ops: typeof dbOps): Record<string, unknown> {
+    let state: Record<string, unknown> = {};
+    for (const op of ops) {
+      if (op.op === "insert" && op.values) {
+        state = { ...state, ...(op.values as Record<string, unknown>) };
+      }
+      if (op.op === "update" && op.set) {
+        state = { ...state, ...(op.set as Record<string, unknown>) };
+      }
+    }
+    return state;
+  }
+
+  describe("service auth final DB state parity", () => {
+    it("happy path final state matches workflow happy path", async () => {
+      const res = await request("/webhooks/github", {
+        body: {
+          connectionId: "conn-1",
+          orgId: "org-1",
+          deliveryId: "del-parity",
+          eventType: "push",
+          payload: { repository: { id: 42 } },
+          receivedAt: 1700000000,
+        },
+        headers: { "X-API-Key": "test-api-key" },
+      });
+
+      expect(res.status).toBe(200);
+
+      const finalState = computeFinalDbState(dbOps);
+
+      // Must match workflow happy path final state (see webhook-delivery.test.ts)
+      expect(finalState).toEqual(
+        expect.objectContaining({
+          provider: "github",
+          deliveryId: "del-parity",
+          eventType: "push",
+          status: "enqueued",
+          installationId: "conn-1",
+        }),
+      );
+    });
+
+    it("fan-out disabled: final state has installationId, status remains 'received'", async () => {
+      vi.mocked(isConsoleFanOutEnabled).mockResolvedValueOnce(false);
+
+      await request("/webhooks/github", {
+        body: {
+          connectionId: "conn-1",
+          orgId: "org-1",
+          deliveryId: "del-parity-off",
+          eventType: "push",
+          payload: { repository: { id: 42 } },
+          receivedAt: 1700000000,
+        },
+        headers: { "X-API-Key": "test-api-key" },
+      });
+
+      const finalState = computeFinalDbState(dbOps);
+      expect(finalState).toEqual(
+        expect.objectContaining({
+          status: "received", // Never advanced
+          installationId: "conn-1",
+        }),
+      );
+    });
+  });
+
+  describe("HMAC route → workflow payload contract", () => {
+    it("workflow trigger payload contains all fields the workflow depends on", async () => {
+      const body = JSON.stringify({
+        repository: { id: 42 },
+        installation: { id: 101 },
+      });
+      const sig = await computeHmacSha256(body, "gh-secret");
+
+      await request("/webhooks/github", {
+        body,
+        headers: {
+          "x-hub-signature-256": `sha256=${sig}`,
+          "x-github-delivery": "del-contract-check",
+          "x-github-event": "push",
+        },
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const triggerPayload = mockWorkflowTrigger.mock.calls[0]![0].body;
+
+      // The workflow reads these fields from context.requestPayload.
+      // If any are missing or renamed, the workflow silently breaks.
+      expect(triggerPayload).toEqual({
+        provider: "github",
+        deliveryId: "del-contract-check",
+        eventType: "push",
+        resourceId: expect.toBeOneOf([expect.any(String), null]),
+        payload: expect.any(Object),
+        receivedAt: expect.any(Number),
+      });
+
+      // correlationId is optional — undefined when no correlation middleware
+      expect(triggerPayload.correlationId).toBeUndefined();
+
+      // receivedAt must be epoch ms (not ISO string, not seconds)
+      expect(triggerPayload.receivedAt).toBeGreaterThan(1_000_000_000_000);
     });
   });
 
