@@ -1,0 +1,3 @@
+[submodule "sub/.github"]
+	path = sub/.github
+	url = git@github.com:lightfastai/.github.git
