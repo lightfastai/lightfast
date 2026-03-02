@@ -9,6 +9,7 @@ import {
   gwInstallations,
   workspaceActorProfiles,
 } from "@db/console/schema";
+import type { WorkspaceIntegration } from "@db/console/schema";
 import { eq, and, desc, count, sql, inArray, sum, avg, gte, like } from "drizzle-orm";
 import { getWorkspaceKey, createCustomWorkspace } from "@db/console/utils";
 import {
@@ -1244,7 +1245,7 @@ export const workspaceRouter = {
                 events: ["push", "pull_request", "issues", "release", "discussion"],
                 autoSync: true,
               },
-            },
+            } as WorkspaceIntegration["sourceConfig"],
             isActive: true,
             connectedAt: now,
           }));
@@ -1259,6 +1260,10 @@ export const workspaceRouter = {
             installationId: input.gwInstallationId,
             provider: "github",
             orgId: ctx.auth.orgId,
+            ...(integrations[0]?.sourceConfig.backfill && {
+              depth: integrations[0].sourceConfig.backfill.depth,
+              entityTypes: integrations[0].sourceConfig.backfill.entityTypes,
+            }),
           });
         }
 
@@ -1396,7 +1401,7 @@ export const workspaceRouter = {
                 ],
                 autoSync: true,
               },
-            },
+            } as WorkspaceIntegration["sourceConfig"],
             isActive: true,
             connectedAt: now,
           }));
@@ -1411,6 +1416,10 @@ export const workspaceRouter = {
             installationId: input.gwInstallationId,
             provider: "vercel",
             orgId: ctx.auth.orgId,
+            ...(integrations[0]?.sourceConfig.backfill && {
+              depth: integrations[0].sourceConfig.backfill.depth,
+              entityTypes: integrations[0].sourceConfig.backfill.entityTypes,
+            }),
           });
         }
 
@@ -1539,7 +1548,7 @@ export const workspaceRouter = {
                 ],
                 autoSync: true,
               },
-            },
+            } as WorkspaceIntegration["sourceConfig"],
             isActive: true,
             connectedAt: now,
           }));
@@ -1554,6 +1563,10 @@ export const workspaceRouter = {
             installationId: input.gwInstallationId,
             provider: "linear",
             orgId: ctx.auth.orgId,
+            ...(integrations[0]?.sourceConfig.backfill && {
+              depth: integrations[0].sourceConfig.backfill.depth,
+              entityTypes: integrations[0].sourceConfig.backfill.entityTypes,
+            }),
           });
         }
 
@@ -1683,7 +1696,7 @@ export const workspaceRouter = {
                 events: ["issue", "error", "comment"],
                 autoSync: true,
               },
-            },
+            } as WorkspaceIntegration["sourceConfig"],
             isActive: true,
             connectedAt: now,
           }));
@@ -1698,6 +1711,10 @@ export const workspaceRouter = {
             installationId: input.gwInstallationId,
             provider: "sentry",
             orgId: ctx.auth.orgId,
+            ...(integrations[0]?.sourceConfig.backfill && {
+              depth: integrations[0].sourceConfig.backfill.depth,
+              entityTypes: integrations[0].sourceConfig.backfill.entityTypes,
+            }),
           });
         }
 
