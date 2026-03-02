@@ -8,13 +8,13 @@ import { UseCaseGrid } from "~/components/use-case-grid";
 import { engineeringLeadersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast for Engineering Leaders – Team Health & Velocity Intelligence",
+  title: "Lightfast for Engineering Leaders – Observe Your Entire Team",
   description:
-    "From cognitive load estimation to sprint predictions, understand team health and optimize delivery. Predict hiring needs, balance on-call, and track culture health.",
+    "See what's happening across your engineering org in real time. Events from every tool, surfaced and searchable — so your team operates as one.",
   openGraph: {
     title: "Lightfast for Engineering Leaders",
     description:
-      "Team intelligence that optimizes velocity, predicts hiring needs, and maintains healthy engineering culture.",
+      "See what's happening across your engineering org in real time. Events from every tool, surfaced and searchable.",
     url: "https://lightfast.ai/use-cases/engineering-leaders",
     type: "website",
   },

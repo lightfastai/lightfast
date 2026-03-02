@@ -13,34 +13,34 @@ import type {GraphContext, BlogPosting} from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Lightfast Blog – Team Memory & Semantic Search",
+  title: "Lightfast Blog – Operating Infrastructure for Agents and Apps",
   description:
-    "The Lightfast blog covers team memory, semantic search, and answer-with-sources systems for engineering and platform teams. Find product updates, architecture deep dives, and guides on building reliable organizational memory.",
+    "The Lightfast blog covers operating infrastructure, event-driven architecture, agent tooling, and building the layer between your agents and apps. Product updates, architecture deep dives, and guides.",
   keywords: [
-    "AI team memory",
-    "organizational knowledge management",
+    "operating infrastructure",
+    "agent infrastructure",
+    "event-driven architecture",
+    "AI agents",
+    "MCP tools",
+    "tool integration",
+    "real-time events",
     "semantic search",
-    "AI search",
-    "knowledge graph",
-    "team collaboration",
-    "decision tracking",
-    "context preservation",
     "Lightfast blog",
     "answer engine optimization",
   ],
   openGraph: {
-    title: "Lightfast Blog – Team Memory & Semantic Search",
+    title: "Lightfast Blog – Operating Infrastructure for Agents and Apps",
     description:
-      "Articles on team memory, semantic search, and answer-with-sources systems for engineering and platform teams, plus product updates and architecture deep dives.",
+      "Articles on operating infrastructure, event-driven architecture, and agent tooling for engineering and platform teams, plus product updates and deep dives.",
     type: "website",
     url: "https://lightfast.ai/blog",
     siteName: "Lightfast",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lightfast Blog – Team Memory & Semantic Search",
+    title: "Lightfast Blog – Operating Infrastructure for Agents and Apps",
     description:
-      "Team memory, semantic search, and answer-with-sources content for engineering and platform teams.",
+      "Operating infrastructure, event-driven architecture, and agent tooling for engineering and platform teams.",
     creator: "@lightfastai",
   },
   alternates: {
@@ -97,7 +97,7 @@ export default async function BlogPage() {
         url: "https://lightfast.ai/blog",
         name: "Lightfast Blog",
         description:
-          "Insights on AI-powered team memory, semantic search, and organizational knowledge management",
+          "Insights on operating infrastructure, event-driven architecture, and agent tooling for engineering teams",
         publisher: {
           "@id": "https://lightfast.ai/#organization",
         },

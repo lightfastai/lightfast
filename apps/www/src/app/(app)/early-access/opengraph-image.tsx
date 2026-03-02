@@ -13,7 +13,7 @@ export default async function Image() {
 	return new ImageResponse(
 		<FeatureLayout
 			title="Early Access"
-			description="Join the waitlist for early access to Lightfast. Surface every decision across your tools."
+			description="Get early access to the operating layer between your agents and apps."
 		/>,
 		{ ...size, fonts },
 	);

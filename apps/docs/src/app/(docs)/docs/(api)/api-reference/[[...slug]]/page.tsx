@@ -59,7 +59,7 @@ export default async function Page({
         "https://github.com/lightfastai",
         "https://www.linkedin.com/company/lightfastai"
       ],
-      description: "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents."
+      description: "Lightfast is the operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack."
     };
 
     const websiteEntity: WebSite = {
@@ -160,7 +160,7 @@ export default async function Page({
       "https://github.com/lightfastai",
       "https://www.linkedin.com/company/lightfastai"
     ],
-    description: "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents."
+    description: "Lightfast is the operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack."
   };
 
   const websiteEntity: WebSite = {

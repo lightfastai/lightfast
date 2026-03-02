@@ -15,9 +15,9 @@ import { ApolloTracker } from "~/components/apollo-tracker";
 import { env } from "~/env";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast – Decisions Surfaced Across Your Tools",
+  title: "Lightfast – The Operating Layer for Agents and Apps",
   description:
-    "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+    "Lightfast is the operating layer between your agents and apps. Observe what's happening across your tools, remember what happened, and give agents and people a single system to reason and act through.",
   applicationName: "Lightfast",
   metadataBase: new URL("https://lightfast.ai"),
   authors: [
@@ -29,7 +29,7 @@ export const metadata: Metadata = createMetadata({
   creator: "Lightfast",
   publisher: "Lightfast",
   category: "Technology",
-  classification: "Decision Intelligence Platform",
+  classification: "Operating Infrastructure Platform",
   robots: {
     index: true,
     follow: true,
@@ -48,18 +48,18 @@ export const metadata: Metadata = createMetadata({
     type: "website",
     locale: "en_US",
     url: "https://lightfast.ai",
-    title: "Lightfast – Decisions Surfaced Across Your Tools",
+    title: "Lightfast – The Operating Layer for Agents and Apps",
     description:
-      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
     siteName: "Lightfast",
   },
   twitter: {
     card: "summary_large_image",
     site: "@lightfastai",
     creator: "@lightfastai",
-    title: "Lightfast – Decisions Surfaced Across Your Tools",
+    title: "Lightfast – The Operating Layer for Agents and Apps",
     description:
-      "Surfaces every decision your team makes — searchable, cited, and ready for people and agents.",
+      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
   },
   icons: {
     icon: "/favicon.ico",
@@ -127,7 +127,7 @@ export default function RootLayout({
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Lightfast – Decisions Surfaced Across Your Tools",
+    name: "Lightfast – The Operating Layer for Agents and Apps",
     url: "https://lightfast.ai",
     potentialAction: {
       "@type": "SearchAction",

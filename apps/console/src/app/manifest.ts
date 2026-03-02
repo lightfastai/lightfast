@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Lightfast – Decisions Surfaced Across Your Tools",
+    name: "Lightfast – The Operating Layer for Agents and Apps",
     short_name: "Lightfast",
     description:
-      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
     start_url: "/",
     display: "standalone",
     background_color: "#09090b",

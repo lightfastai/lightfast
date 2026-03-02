@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, RefreshCw, Users, Zap, Link2, Shield } from "lucide-react";
+import { Activity, Brain, Wand2, Blocks, Plug, Shield } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
 import { faqs, FAQSection } from "~/components/faq-section";
@@ -14,59 +14,59 @@ import type {GraphContext, Organization, WebSite, SoftwareApplication, FAQPage, 
 
 const benefits = [
   {
-    icon: Search,
-    title: "One search, all sources",
+    icon: Activity,
+    title: "Observe everything",
     description:
-      "Search across all your connected tools at once. No more switching between apps to find what you need.",
+      "Events from every connected tool — code changes, deployments, incidents, messages — ingested automatically in real time.",
   },
   {
-    icon: RefreshCw,
-    title: "Automatic sync",
+    icon: Brain,
+    title: "Memory with sources",
     description:
-      "Changes sync in real-time. New PRs, issues, and messages are indexed as they happen.",
+      "Search by meaning across everything that happened. Every answer traces back to the source event — no black-box responses.",
   },
   {
-    icon: Users,
-    title: "Identity correlation",
+    icon: Wand2,
+    title: "Intent, not API calls",
     description:
-      "Link the same person across platforms. john@company.com on GitHub is John Smith on Linear.",
+      "Agents express what they want. Lightfast resolves where and how — across any connected tool.",
   },
   {
-    icon: Zap,
-    title: "Instant answers",
+    icon: Blocks,
+    title: "Same primitives for all",
     description:
-      "Get answers from your connected tools without spending hours on research.",
+      "REST API, TypeScript SDK, MCP tools, and webhooks. Agents and people operate through the same system.",
   },
   {
-    icon: Link2,
-    title: "Track dependencies",
+    icon: Plug,
+    title: "Connect in minutes",
     description:
-      "See what depends on what. Understand relationships across your codebase and documentation.",
+      "GitHub, Vercel, Sentry, Linear today. Slack, Notion, PagerDuty coming soon. One integration, every event.",
   },
   {
     icon: Shield,
     title: "Privacy by default",
     description:
-      "Your data stays yours. Complete tenant isolation with enterprise-grade security.",
+      "Complete tenant isolation. Your data stays yours. We never train on your data.",
   },
 ];
 
 // SEO metadata for the landing page
 export const metadata: Metadata = {
-  title: "Decisions Surfaced Across Your Tools",
+  title: "The Operating Layer for Agents and Apps",
   description:
-    "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+    "Lightfast is the operating layer between your agents and apps. Observe what's happening across your tools, remember what happened, and give agents and people a single system to reason and act through.",
   keywords: [
-    "decision search",
-    "decisions across tools",
-    "semantic search",
-    "knowledge management",
-    "search by meaning",
-    "cited answers",
-    "team decisions",
-    "searchable decisions",
-    "decision tracking",
-    "context management",
+    "operating infrastructure",
+    "agent infrastructure",
+    "event-driven architecture",
+    "tool integration",
+    "MCP tools",
+    "AI agent platform",
+    "real-time events",
+    "operating layer",
+    "agents and apps",
+    "observe remember act",
   ],
   authors: [{ name: "Lightfast", url: "https://lightfast.ai" }],
   creator: "Lightfast",
@@ -86,9 +86,9 @@ export const metadata: Metadata = {
     canonical: "https://lightfast.ai",
   },
   openGraph: {
-    title: "Lightfast – Decisions Surfaced Across Your Tools",
+    title: "Lightfast – The Operating Layer for Agents and Apps",
     description:
-      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
     url: "https://lightfast.ai",
     siteName: "Lightfast",
     type: "website",
@@ -96,9 +96,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lightfast – Decisions Surfaced Across Your Tools",
+    title: "Lightfast – The Operating Layer for Agents and Apps",
     description:
-      "Surfaces every decision your team makes — searchable, cited, and ready for people and agents.",
+      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
     site: "@lightfastai",
     creator: "@lightfastai",
   },
@@ -122,7 +122,7 @@ export default function HomePage() {
       "https://www.linkedin.com/company/lightfastai",
     ],
     description:
-      "Lightfast surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+      "Lightfast is the operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
   };
 
   // Build website entity
@@ -131,7 +131,7 @@ export default function HomePage() {
     "@id": "https://lightfast.ai/#website",
     url: "https://lightfast.ai",
     name: "Lightfast",
-    description: "Decisions surfaced across your tools — searchable, cited, and ready",
+    description: "The operating layer for agents and apps — observe, remember, and act across every tool",
     publisher: {
       "@id": "https://lightfast.ai/#organization",
     },
@@ -151,15 +151,15 @@ export default function HomePage() {
       url: "https://lightfast.ai/early-access",
     },
     description:
-      "Surfaces every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack through a single system.",
     featureList: [
-      "Search by meaning, not keywords",
-      "Answers with sources",
-      "Document & code memory",
-      "Decision tracking",
-      "Context preservation",
-      "API access",
-      "MCP tools for agents",
+      "Real-time event ingestion from connected tools",
+      "Semantic search with cited sources",
+      "MCP tools for AI agents",
+      "REST API and TypeScript SDK",
+      "Intent-based action resolution",
+      "Complete tenant isolation",
+      "Webhook event delivery",
     ],
   };
 
@@ -259,10 +259,10 @@ export default function HomePage() {
             <div className="flex max-w-sm md:max-w-lg lg:max-w-sm flex-col justify-center w-full">
               <Icons.logoShort className="hidden md:block w-5 h-5 mb-4 text-muted-foreground" />
               <h1 className="text-4xl md:text-3xl lg:text-3xl font-pp font-medium mb-4">
-                <span className="text-muted-foreground">Every</span>{" "}
-                <span className="text-primary">decision</span>{" "}
+                <span className="text-muted-foreground">The</span>{" "}
+                <span className="text-primary">operating layer</span>{" "}
                 <span className="text-muted-foreground">
-                  your team makes, surfaced.
+                  for your agents and apps.
                 </span>
               </h1>
               <div>
@@ -307,9 +307,9 @@ export default function HomePage() {
               {/* Right: Content + Cards - spans 2 columns */}
               <div className="lg:col-span-2">
                 <p className="text-base md:text-md leading-relaxed text-foreground/80 max-w-xl mb-12">
-                  Pull in knowledge from where your team already works.
-                  GitHub, Linear, Notion, Slack, and more—all searchable in
-                  one place.
+                  Observe events from where your team already works.
+                  GitHub, Vercel, Sentry, Linear, and more — all flowing
+                  through one system.
                 </p>
 
                 {/* Benefits Grid - negative margin to align icon/title with text above */}

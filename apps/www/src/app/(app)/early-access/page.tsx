@@ -6,11 +6,11 @@ import { EarlyAccessForm } from "~/components/early-access-form";
 export const metadata: Metadata = createMetadata({
   title: "Early Access – Lightfast",
   description:
-    "Join the waitlist for early access to Lightfast. Be among the first to surface every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+    "Get early access to the operating layer between your agents and apps. Connect your tools, observe events in real time, and give agents a single system to operate through.",
   openGraph: {
     title: "Early Access – Lightfast",
     description:
-      "Sign up for early access to Lightfast. Surface every decision your team makes across your tools — searchable, cited, and ready for people and agents.",
+      "Get early access to the operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
     url: "https://lightfast.ai/early-access",
     type: "website",
   },
@@ -18,7 +18,7 @@ export const metadata: Metadata = createMetadata({
     card: "summary_large_image",
     title: "Early Access – Lightfast",
     description:
-      "Join the early access list for Lightfast. Decisions surfaced across your tools.",
+      "Get early access to the operating layer for agents and apps.",
   },
   alternates: {
     canonical: "https://lightfast.ai/early-access",

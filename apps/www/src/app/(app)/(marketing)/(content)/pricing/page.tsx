@@ -26,11 +26,11 @@ import { cn } from "@repo/ui/lib/utils";
 export const metadata: Metadata = createMetadata({
   title: "Lightfast Pricing – Scales With Your Team",
   description:
-    "Start free for up to 3 users. Scale Lightfast across your organization with simple per-user pricing and generous search allowances.",
+    "Start free for up to 3 users. Scale your operating layer as your team grows — connect more tools, ingest more events, give more agents access.",
   openGraph: {
     title: "Lightfast Pricing – Scales With Your Team",
     description:
-      "Pricing for Lightfast. Start free and scale with simple per-user pricing, generous search allowances, and decision surfacing included.",
+      "Pricing for Lightfast. Start free and scale with simple per-user pricing. Connect more tools, ingest more events, give more agents access.",
     url: "https://lightfast.ai/pricing",
     type: "website",
   },
@@ -38,7 +38,7 @@ export const metadata: Metadata = createMetadata({
     card: "summary_large_image",
     title: "Lightfast Pricing",
     description:
-      "For every size team. Start free, scale transparently. Decision surfacing, semantic search, and unlimited sources available.",
+      "For every size team. Start free, scale transparently. Events, semantic search, and unlimited sources available.",
   },
   alternates: {
     canonical: "https://lightfast.ai/pricing",
