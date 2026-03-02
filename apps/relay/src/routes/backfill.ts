@@ -1,21 +1,12 @@
 import { Hono } from "hono";
-import { z } from "zod";
 import { getQStashClient } from "@vendor/qstash";
+import { backfillTriggerPayload } from "@repo/gateway-types";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { backfillUrl } from "../lib/urls.js";
 import { getEnv } from "../env.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 const backfill = new Hono<{ Variables: LifecycleVariables }>();
-
-const triggerSchema = z.object({
-  installationId: z.string().min(1),
-  provider: z.string().min(1),
-  orgId: z.string().min(1),
-  depth: z.union([z.literal(7), z.literal(30), z.literal(90)]).default(30),
-  entityTypes: z.array(z.string()).optional(),
-  holdForReplay: z.boolean().optional(),
-});
 
 /**
  * POST /backfill
@@ -32,7 +23,7 @@ backfill.post("/", apiKeyAuth, async (c) => {
     return c.json({ error: "invalid_json" }, 400);
   }
 
-  const parsed = triggerSchema.safeParse(body);
+  const parsed = backfillTriggerPayload.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: "validation_error", details: parsed.error.flatten() }, 400);
   }

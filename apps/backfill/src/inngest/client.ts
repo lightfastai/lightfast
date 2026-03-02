@@ -1,22 +1,11 @@
+import { backfillTriggerPayload, backfillDepthSchema } from "@repo/gateway-types";
 import { EventSchemas, Inngest } from "@vendor/inngest";
 import { z } from "zod";
 
 import { env } from "../env.js";
 
 const eventsMap = {
-  "apps-backfill/run.requested": z.object({
-    /** Installation ID (gw_installations.id) */
-    installationId: z.string(),
-    /** Provider name */
-    provider: z.string(),
-    /** Clerk organization ID */
-    orgId: z.string(),
-    /** Number of days to backfill */
-    depth: z.union([z.literal(7), z.literal(30), z.literal(90)]).default(30),
-    /** Entity types to backfill (defaults to connector's defaultEntityTypes) */
-    entityTypes: z.array(z.string()).optional(),
-    /** When true, entity workers hold webhooks at relay; orchestrator replays after all complete */
-    holdForReplay: z.boolean().optional(),
+  "apps-backfill/run.requested": backfillTriggerPayload.extend({
     /** Cross-service correlation ID for distributed tracing */
     correlationId: z.string().optional(),
   }),
@@ -43,7 +32,7 @@ const eventsMap = {
     /** ISO timestamp — computed once by orchestrator */
     since: z.string().datetime(),
     /** Depth in days — for logging/context */
-    depth: z.union([z.literal(7), z.literal(30), z.literal(90)]),
+    depth: backfillDepthSchema,
     /** When true, dispatch webhooks with X-Backfill-Hold header (held for batch replay) */
     holdForReplay: z.boolean().optional(),
     /** Cross-service correlation ID for distributed tracing */

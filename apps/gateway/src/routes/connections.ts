@@ -1,12 +1,12 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwResources, gwBackfillRuns } from "@db/console/schema";
+import { backfillRunRecord } from "@repo/gateway-types";
 import { nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
 import { html, raw } from "hono/html";
-import { z } from "zod";
 import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
 import { gatewayBaseUrl, consoleUrl } from "../lib/urls.js";
 import { apiKeyAuth } from "../middleware/auth.js";
@@ -626,16 +626,7 @@ connections.post("/:id/backfill-runs", apiKeyAuth, async (c) => {
     return c.json({ error: "invalid_json" }, 400);
   }
 
-  const parsed = z.object({
-    entityType: z.string().min(1),
-    since: z.string().min(1),
-    depth: z.number().int().positive(),
-    status: z.string().min(1),
-    pagesProcessed: z.number().int().nonnegative().default(0),
-    eventsProduced: z.number().int().nonnegative().default(0),
-    eventsDispatched: z.number().int().nonnegative().default(0),
-    error: z.string().optional(),
-  }).safeParse(body);
+  const parsed = backfillRunRecord.safeParse(body);
 
   if (!parsed.success) {
     return c.json({ error: "invalid_body", details: parsed.error.flatten() }, 400);

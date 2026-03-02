@@ -1,3 +1,4 @@
+import { backfillTriggerPayload } from "@repo/gateway-types";
 import { Hono } from "hono";
 import { z } from "zod";
 
@@ -5,15 +6,6 @@ import { getEnv } from "../env.js";
 import { inngest } from "../inngest/client.js";
 import { timingSafeStringEqual } from "../lib/crypto.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
-
-const triggerSchema = z.object({
-  installationId: z.string().min(1),
-  provider: z.string().min(1),
-  orgId: z.string().min(1),
-  depth: z.union([z.literal(7), z.literal(30), z.literal(90)]).optional(),
-  entityTypes: z.array(z.string()).optional(),
-  holdForReplay: z.boolean().optional(),
-});
 
 const cancelSchema = z.object({
   installationId: z.string().min(1),
@@ -45,7 +37,7 @@ trigger.post("/", async (c) => {
     return c.json({ error: "invalid_json" }, 400);
   }
 
-  const parsed = triggerSchema.safeParse(raw);
+  const parsed = backfillTriggerPayload.safeParse(raw);
   if (!parsed.success) {
     return c.json(
       { error: "validation_error", details: parsed.error.flatten() },
@@ -61,7 +53,7 @@ trigger.post("/", async (c) => {
         installationId: body.installationId,
         provider: body.provider,
         orgId: body.orgId,
-        depth: body.depth ?? 30,
+        depth: body.depth,
         entityTypes: body.entityTypes,
         holdForReplay: body.holdForReplay,
         correlationId: c.get("correlationId"),

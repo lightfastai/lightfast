@@ -20,6 +20,13 @@ export type {
 
 export type { WebhookReceiptPayload, WebhookEnvelope } from "./webhooks";
 
+export {
+  backfillDepthSchema,
+  backfillTriggerPayload,
+  backfillRunRecord,
+} from "./backfill";
+export type { BackfillDepth, BackfillTriggerPayload, BackfillRunRecord } from "./backfill";
+
 export type {
   BaseAccountInfo,
   GitHubAccountInfo,
