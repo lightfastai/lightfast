@@ -51,7 +51,7 @@ await lightfast.search({ query: "authentication ownership context" });
 await lightfast.findSimilar({ url: "https://github.com/org/repo/pull/123" });
 ```
 
-### Operating Layer — [Join the waitlist →](https://lightfast.ai/waitlist)
+### Operating Layer — [Join the waitlist →](https://lightfast.ai/early-access)
 
 The full operating infrastructure. Agents express what they want in natural language — Lightfast resolves it to the right tool, enforces your team's rules, and tracks everything that happens. Processes that run for seconds or months. Invariants that span tools. Intent resolution that learns from your team.
 
