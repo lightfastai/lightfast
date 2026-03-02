@@ -47,7 +47,7 @@
     "lint": "eslint . --fix"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "lightfast": "workspace:*",
     "zod": "^3.25.76"
   },
