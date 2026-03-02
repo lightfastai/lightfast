@@ -547,7 +547,7 @@ describe("Suite 3.4 — Entity worker token refresh on 401 mid-pagination", () =
     mockGetConnector.mockReturnValue(mockConnector);
 
     // Service router: connections (port 4110) → token endpoint
-    //                 gateway (port 4108) → accepts dispatched event
+    //                 relay (port 4108) → accepts dispatched event
     const restore = installServiceRouter({ connectionsApp, relayApp });
     try {
       const result = await entityHandler({

@@ -2,10 +2,10 @@
  * Suite 5: Full Stack Connection Lifecycle
  *
  * End-to-end integration tests that wire all three services together:
- *   - Connections writes cache → Gateway reads it
+ *   - Connections writes cache → Relay reads it
  *   - Connections notifies Backfill via QStash
  *   - Backfill fetches from Connections HTTP API
- *   - Backfill dispatches events to Gateway
+ *   - Backfill dispatches events to Relay
  *
  * Uses the service mesh fetch router to route all inter-service HTTP calls
  * to in-process Hono apps, and captures Inngest/QStash side effects.
@@ -316,7 +316,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
     }
   });
 
-  it("gateway service auth path accepts backfill-dispatched event and publishes envelope to QStash", async () => {
+  it("relay service auth path accepts backfill-dispatched event and publishes envelope to QStash", async () => {
     // Simulate the dispatch step at the end of the entity worker loop
     const restore = installServiceRouter({ relayApp });
     try {
@@ -412,7 +412,7 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     expect(json.installationId).toBe(inst.id);
   });
 
-  it("dedup prevents duplicate gateway events during backfill retries", async () => {
+  it("dedup prevents duplicate relay events during backfill retries", async () => {
     const deliveryId = "del-dedup-lifecycle-1";
     const body = {
       connectionId: "conn-dedup-1",
@@ -513,7 +513,7 @@ describe("Suite 5.3 — Full teardown path", () => {
     redisStore.delete(cacheKey);
 
     // ── 6. Verify: resource cache is cleared ──
-    // With the cache gone, gateway resolve-connection would fall through to DB.
+    // With the cache gone, relay resolve-connection would fall through to DB.
     // DB resource status is still "active" here (soft-delete is workflow step 5),
     // but the cache miss proves the cleanup step ran correctly.
     const cachedAfterCleanup = await redisMock.hgetall(cacheKey);

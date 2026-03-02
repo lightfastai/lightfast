@@ -1,10 +1,10 @@
 /**
- * Suite 1: Connections ↔ Gateway Redis Cache Contract
+ * Suite 1: Connections ↔ Relay Redis Cache Contract
  *
  * Verifies that the shared `gw:resource:{provider}:{id}` Redis key namespace
  * is consistent between:
  *   - Connections (writes on POST /connections/:id/resources, deletes on DELETE)
- *   - Gateway (reads in webhook-delivery `resolve-connection` step)
+ *   - Relay (reads in webhook-delivery `resolve-connection` step)
  *
  * Infrastructure: PGlite (real DB), in-memory Redis Map, no Inngest/QStash needed.
  */
@@ -68,7 +68,7 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
   getWorkflowClient: () => ({ trigger: workflowTriggerMock }),
 }));
 
-// Capture webhook-delivery workflow handler (used by Gateway)
+// Capture webhook-delivery workflow handler (used by Relay)
 vi.mock("@vendor/upstash-workflow/hono", () => ({
   serve: (handler: (ctx: unknown) => Promise<void>) => {
     // Return captured handler so tests can invoke it directly
@@ -160,7 +160,7 @@ afterAll(async () => {
 
 // ── Tests ──
 
-describe("Suite 1.1 — Resource link populates gateway routing cache", () => {
+describe("Suite 1.1 — Resource link populates relay routing cache", () => {
   it("POST /services/connections/:id/resources writes gw:resource:{provider}:{id} to Redis", async () => {
     const inst = fixtures.installation({ provider: "github", orgId: "org-1", status: "active" });
     await db.insert(gwInstallations).values(inst);
@@ -182,20 +182,20 @@ describe("Suite 1.1 — Resource link populates gateway routing cache", () => {
       orgId: "org-1",
     });
 
-    // The key is now present in the in-memory store (simulating what Gateway would read)
+    // The key is now present in the in-memory store (simulating what Relay would read)
     const cached = redisStore.get(expectedKey) as Record<string, string>;
     expect(cached).toBeDefined();
     expect(cached.connectionId).toBe(inst.id);
     expect(cached.orgId).toBe("org-1");
   });
 
-  it("Gateway resolve-connection step reads the Connections-written Redis cache", async () => {
+  it("Relay resolve-connection step reads the Connections-written Redis cache", async () => {
     // Simulate what Connections writes after a resource link
     const connectionId = "conn-redis-1";
     const orgId = "org-redis-1";
     redisStore.set("gw:resource:github:cached-repo", { connectionId, orgId });
 
-    // Gateway's resolve-connection step reads via redis.hgetall
+    // Relay's resolve-connection step reads via redis.hgetall
     const cached = await redisMock.hgetall("gw:resource:github:cached-repo") as { connectionId: string; orgId: string } | null;
 
     expect(cached).not.toBeNull();
@@ -205,7 +205,7 @@ describe("Suite 1.1 — Resource link populates gateway routing cache", () => {
   });
 });
 
-describe("Suite 1.2 — Resource unlink removes gateway routing cache", () => {
+describe("Suite 1.2 — Resource unlink removes relay routing cache", () => {
   it("DELETE /services/connections/:id/resources/:rid removes the Redis key", async () => {
     const inst = fixtures.installation({ provider: "github", status: "active" });
     await db.insert(gwInstallations).values(inst);
@@ -230,11 +230,11 @@ describe("Suite 1.2 — Resource unlink removes gateway routing cache", () => {
 
     expect(res.status).toBe(200);
 
-    // Connections must delete the key so Gateway stops routing webhooks
+    // Connections must delete the key so Relay stops routing webhooks
     expect(redisMock.del).toHaveBeenCalledWith("gw:resource:github:owner/to-unlink");
     expect(redisStore.has("gw:resource:github:owner/to-unlink")).toBe(false);
 
-    // Gateway would now get a cache miss
+    // Relay would now get a cache miss
     const cached = await redisMock.hgetall("gw:resource:github:owner/to-unlink");
     expect(cached).toBeNull();
   });
@@ -262,8 +262,8 @@ describe("Suite 1.3 — Teardown clears all resource cache keys", () => {
   });
 });
 
-describe("Suite 1.4 — Key format parity between Connections and Gateway", () => {
-  it("connections.resourceKey() matches gateway.resourceKey() for the same inputs", async () => {
+describe("Suite 1.4 — Key format parity between Connections and Relay", () => {
+  it("connections.resourceKey() matches relay.resourceKey() for the same inputs", async () => {
     const { resourceKey: connectionsKey } = await import(
       "@connections/cache"
     );
@@ -294,7 +294,7 @@ describe("Suite 1.4 — Key format parity between Connections and Gateway", () =
   });
 });
 
-describe("Suite 1.5 — Gateway deduplication via webhookSeenKey", () => {
+describe("Suite 1.5 — Relay deduplication via webhookSeenKey", () => {
   it("first delivery succeeds (SET NX returns OK), second is duplicate (returns null)", async () => {
     const key = webhookSeenKey("github" as never, "del-dedup-test");
 

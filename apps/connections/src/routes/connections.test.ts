@@ -157,7 +157,7 @@ vi.mock("@repo/lib", () => ({
 vi.mock("../lib/urls", () => ({
   connectionsBaseUrl: "https://connections.test/services",
   consoleUrl: "https://console.test",
-  relayBaseUrl: "https://gateway.test/api",
+  relayBaseUrl: "https://relay.test/api",
   backfillUrl: "https://backfill.test/api",
   cancelBackfillService: vi.fn().mockResolvedValue(undefined),
 }));

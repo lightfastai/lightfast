@@ -324,7 +324,7 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
   });
 });
 
-describe("Suite 6.2 — Concurrent gateway dispatches are order-independent", () => {
+describe("Suite 6.2 — Concurrent relay dispatches are order-independent", () => {
   it("3 webhooks with different deliveryIds all accepted in every ordering", async () => {
     const deliveryIds = ["del-perm-a", "del-perm-b", "del-perm-c"];
 
@@ -384,7 +384,7 @@ describe("Suite 6.2 — Concurrent gateway dispatches are order-independent", ()
   });
 });
 
-describe("Suite 6.3 — Backfill notify + gateway dispatch are order-independent", () => {
+describe("Suite 6.3 — Backfill notify + relay dispatch are order-independent", () => {
   it("notify-backfill and webhook-dispatch produce same side-effects regardless of order", async () => {
     const inst = fixtures.installation({
       provider: "github",
@@ -419,7 +419,7 @@ describe("Suite 6.3 — Backfill notify + gateway dispatch are order-independent
           },
         },
         {
-          label: "gateway-webhook-dispatch",
+          label: "relay-webhook-dispatch",
           deliver: async () => {
             await relayApp.request("/api/webhooks/github", {
               method: "POST",
@@ -446,7 +446,7 @@ describe("Suite 6.3 — Backfill notify + gateway dispatch are order-independent
           inngestEventsSent.some((e) => e.name === "apps-backfill/run.requested"),
         ).toBe(true);
 
-        // Gateway webhook was published to QStash
+        // Relay webhook was published to QStash
         const webhookEnvelopes = qstashMessages.filter(
           (m) => (m.body as { deliveryId?: string }).deliveryId === "del-perm-mixed-1",
         );

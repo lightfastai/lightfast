@@ -1,5 +1,5 @@
 /**
- * Suite 4: Backfill → Gateway Dispatch (Service Auth Webhook Path)
+ * Suite 4: Backfill → Relay Dispatch (Service Auth Webhook Path)
  *
  * Verifies that POST /webhooks/:provider with X-API-Key header correctly
  * bypasses HMAC verification and processes backfill-sourced events.

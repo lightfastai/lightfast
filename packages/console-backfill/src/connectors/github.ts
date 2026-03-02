@@ -2,8 +2,8 @@
  * GitHub Backfill Connector
  *
  * Fetches historical PRs, issues, and releases from GitHub API using the
- * installation token from the Gateway token vault. Produces webhook-shaped
- * payloads (adapter output) ready for direct ingestion through Gateway's
+ * installation token from the Connections token vault. Produces webhook-shaped
+ * payloads (adapter output) ready for direct ingestion through Relay's
  * service auth endpoint.
  */
 import type { BackfillConnector, BackfillConfig, BackfillPage, BackfillWebhookEvent } from "../types.js";

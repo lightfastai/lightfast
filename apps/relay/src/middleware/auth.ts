@@ -4,7 +4,7 @@ import { timingSafeStringEqual } from "../lib/crypto.js";
 import { getEnv } from "../env.js";
 
 /**
- * X-API-Key authentication middleware for Console → Gateway calls.
+ * X-API-Key authentication middleware for Console → Relay calls.
  *
  * Validates the X-API-Key header against the GATEWAY_API_KEY env var.
  */

@@ -3,7 +3,7 @@
  *
  * Returns untransformed webhook payloads directly from JSON datasets.
  * No dependencies on console-webhooks or console-types — suitable for
- * lightweight consumers like gateway unit tests.
+ * lightweight consumers like relay unit tests.
  */
 
 import { readFileSync, existsSync, readdirSync } from "node:fs";

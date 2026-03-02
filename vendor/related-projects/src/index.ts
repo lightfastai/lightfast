@@ -10,8 +10,8 @@
  * ```typescript
  * import { withRelatedProject } from "@vendor/related-projects";
  *
- * const gatewayUrl = withRelatedProject({
- *   projectName: "lightfast-gateway",
+ * const relayUrl = withRelatedProject({
+ *   projectName: "lightfast-relay",
  *   defaultHost: "http://localhost:4108",
  * });
  * ```

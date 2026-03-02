@@ -1,7 +1,7 @@
 /**
  * Global @sentry/core stub for integration tests.
  *
- * All three apps (connections, gateway, backfill) import sentry-init.ts at the
+ * All three apps (connections, relay, backfill) import sentry-init.ts at the
  * top of their app.ts, calling initAndBind() at module load time. This stub
  * provides no-op implementations so tests can import apps without error.
  */

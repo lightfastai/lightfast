@@ -10,7 +10,7 @@
  * The 3 shapes under test:
  *   1. Connections GET /connections/:id → Backfill orchestrator response
  *   2. Connections GET /connections/:id/token → Backfill entity worker response
- *   3. Backfill → Gateway: POST /webhooks/:provider service-auth body
+ *   3. Backfill → Relay: POST /webhooks/:provider service-auth body
  *
  * Infrastructure: PGlite (shapes 1–2), QStash capture mock (shape 3).
  * No external network calls. Each test makes a single in-process HTTP call.
@@ -253,9 +253,9 @@ describe("0.1 — Boundary contract shapes", () => {
     expect(shapeOf(json)).toMatchSnapshot();
   });
 
-  it("Shape 3: Backfill → Gateway POST /webhooks/:provider body (entity worker dispatch)", () => {
+  it("Shape 3: Backfill → Relay POST /webhooks/:provider body (entity worker dispatch)", () => {
     // Representative object — matches what entity-worker.ts constructs and sends
-    // to the gateway service-auth endpoint (POST /api/webhooks/:provider, X-API-Key).
+    // to the relay service-auth endpoint (POST /api/webhooks/:provider, X-API-Key).
     // If entity-worker.ts changes the dispatch body shape, update this fixture.
     const dispatchBody = {
       connectionId: "inst-snap-4",

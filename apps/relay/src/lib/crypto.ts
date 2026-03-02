@@ -1,5 +1,5 @@
 /**
- * Web Crypto utilities for the Gateway service.
+ * Web Crypto utilities for the Relay service.
  *
  * HMAC-SHA256 and HMAC-SHA1 for webhook signature verification.
  * Pure Web Crypto API — no Node.js crypto.

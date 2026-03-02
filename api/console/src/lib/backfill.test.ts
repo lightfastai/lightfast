@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 describe("notifyBackfill", () => {
-  it("sends POST to gateway /api/backfill with correct headers and body", async () => {
+  it("sends POST to relay /api/backfill with correct headers and body", async () => {
     mockFetch.mockResolvedValue({ ok: true });
 
     await notifyBackfill({

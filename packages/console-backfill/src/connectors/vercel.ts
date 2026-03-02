@@ -2,7 +2,7 @@
  * Vercel Backfill Connector
  *
  * Fetches historical deployments from the Vercel API, adapts them into
- * webhook-compatible shapes for direct ingestion through Gateway's service
+ * webhook-compatible shapes for direct ingestion through Relay's service
  * auth endpoint. Produces raw webhook payloads (adapter output), not SourceEvents.
  */
 import type { BackfillConnector, BackfillConfig, BackfillPage, BackfillWebhookEvent } from "../types.js";

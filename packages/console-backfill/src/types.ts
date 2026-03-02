@@ -1,6 +1,6 @@
 import type { SourceType } from "@repo/console-validation";
 
-/** A single webhook-shaped event ready for Gateway ingestion */
+/** A single webhook-shaped event ready for Relay ingestion */
 export interface BackfillWebhookEvent {
   /** Unique per event: "backfill-{installationId}-{entityType}-{itemId}" */
   deliveryId: string;
@@ -22,14 +22,14 @@ export interface BackfillPage<TCursor = unknown> {
 }
 
 export interface BackfillConfig {
-  /** Gateway installation ID (gw_installations.id) */
+  /** Installation ID (gw_installations.id) */
   installationId: string;
   /** Provider name */
   provider: SourceType;
   /** ISO timestamp = now - depth days */
   since: string;
   /**
-   * Decrypted access token from Gateway token vault.
+   * Decrypted access token from Connections token vault.
    * @internal SENSITIVE — never log or serialize BackfillConfig objects directly.
    * Use only for Authorization headers within connectors.
    */

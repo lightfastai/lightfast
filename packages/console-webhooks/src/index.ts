@@ -3,7 +3,7 @@
  *
  * Webhook event transformers, validation, and storage utilities for Console integrations.
  *
- * Signature verification is handled by the Gateway service (apps/gateway/).
+ * Signature verification is handled by the Relay service (apps/relay/).
  * This package provides:
  * - Event transformers (GitHub, Vercel, Linear, Sentry) that produce SourceEvent shapes
  * - Payload validation against Zod schemas

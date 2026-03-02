@@ -142,7 +142,7 @@ export type RedisMock = ReturnType<typeof makeRedisMock>;
  * Captures QStash messages instead of publishing them.
  *
  * Records every `publishJSON` call in `messages` for assertion.
- * `publishToTopic` is a no-op stub (used by gateway DLQ path).
+ * `publishToTopic` is a no-op stub (used by relay DLQ path).
  */
 export interface QStashMessage {
   url: string;
@@ -205,7 +205,7 @@ export function makeInngestMock(
 /**
  * Service mesh fetch router.
  *
- * Stubs `globalThis.fetch` to route requests from backfill/connections/gateway
+ * Stubs `globalThis.fetch` to route requests from backfill/connections/relay
  * to in-process Hono apps instead of making real network calls.
  *
  * Port mapping (matches related-projects defaults):

@@ -5,7 +5,7 @@ import { env } from "../env.js";
 
 const eventsMap = {
   "apps-backfill/run.requested": z.object({
-    /** Gateway installation ID (gw_installations.id) */
+    /** Installation ID (gw_installations.id) */
     installationId: z.string(),
     /** Provider name */
     provider: z.string(),
@@ -19,7 +19,7 @@ const eventsMap = {
     correlationId: z.string().optional(),
   }),
   "apps-backfill/run.cancelled": z.object({
-    /** Gateway installation ID (matched by cancelOn) */
+    /** Installation ID (matched by cancelOn) */
     installationId: z.string(),
     /** Cross-service correlation ID for distributed tracing */
     correlationId: z.string().optional(),

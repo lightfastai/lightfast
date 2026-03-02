@@ -9,11 +9,11 @@
 // Suppress @t3-oss/env-core validation — we control values via process.env
 process.env.SKIP_ENV_VALIDATION = "true";
 
-// Run as production to skip dev-only artificial delays (gateway lifecycle middleware)
+// Run as production to skip dev-only artificial delays (relay lifecycle middleware)
 (process.env as Record<string, string>).NODE_ENV = "production";
 
 // Shared auth key used by all three services
-// Must be a valid hex string — gateway's timingSafeEqual uses hexToBytes()
+// Must be a valid hex string — relay's timingSafeEqual uses hexToBytes()
 process.env.GATEWAY_API_KEY = "0".repeat(64);
 
 // Connections app
@@ -22,7 +22,7 @@ process.env.ENCRYPTION_KEY = "a".repeat(64); // 64-char hex for token encryption
 // Backfill app
 process.env.INNGEST_APP_NAME = "lightfast-test";
 
-// Gateway app
+// Relay app
 process.env.GATEWAY_WEBHOOK_SECRET = "test-webhook-secret";
 process.env.GITHUB_WEBHOOK_SECRET = "gh-secret";
 process.env.VERCEL_CLIENT_INTEGRATION_SECRET = "vc-secret";
