@@ -2,10 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── Mock externals ──
 
-const { mockFetch } = vi.hoisted(() => ({
-  mockFetch: vi.fn(),
-}));
-
 vi.mock("../env", () => ({
   env: { GATEWAY_API_KEY: "test-key" },
   getEnv: () => ({ GATEWAY_API_KEY: "test-key" }),
@@ -26,11 +22,17 @@ vi.mock("@repo/console-backfill", () => ({
   },
 }));
 
+const mockGatewayClient = {
+  getConnection: vi.fn(),
+  getToken: vi.fn(),
+};
+vi.mock("../lib/gateway-client", () => ({
+  createGatewayClient: () => mockGatewayClient,
+}));
+
 vi.mock("../lib/related-projects", () => ({
   gatewayUrl: "https://gateway.test/services",
 }));
-
-vi.stubGlobal("fetch", mockFetch);
 
 // ── Import after mocks ──
 
@@ -60,29 +62,25 @@ const validBody = {
   depth: 30,
 };
 
+const defaultConnection = {
+  id: "inst-1",
+  provider: "github",
+  externalId: "12345",
+  orgId: "org-1",
+  status: "active",
+  resources: [
+    { id: "r1", providerResourceId: "repo-1", resourceName: "org/repo-1" },
+    { id: "r2", providerResourceId: "repo-2", resourceName: "org/repo-2" },
+  ],
+};
+
 function mockGatewayResponses() {
-  // Connection response
-  mockFetch.mockResolvedValueOnce(
-    new Response(
-      JSON.stringify({
-        id: "inst-1",
-        provider: "github",
-        status: "active",
-        resources: [
-          { providerResourceId: "repo-1", resourceName: "org/repo-1" },
-          { providerResourceId: "repo-2", resourceName: "org/repo-2" },
-        ],
-      }),
-      { status: 200 },
-    ),
-  );
-  // Token response
-  mockFetch.mockResolvedValueOnce(
-    new Response(
-      JSON.stringify({ accessToken: "ghs_token123", provider: "github", expiresIn: 3600 }),
-      { status: 200 },
-    ),
-  );
+  mockGatewayClient.getConnection.mockResolvedValueOnce(defaultConnection);
+  mockGatewayClient.getToken.mockResolvedValueOnce({
+    accessToken: "ghs_token123",
+    provider: "github",
+    expiresIn: 3600,
+  });
 }
 
 // ── Tests ──
@@ -125,7 +123,9 @@ describe("POST /api/estimate", () => {
   // ── Connection not found ──
 
   it("returns 404 when connection not found", async () => {
-    mockFetch.mockResolvedValueOnce(new Response("", { status: 404 }));
+    mockGatewayClient.getConnection.mockRejectedValueOnce(
+      new Error("Gateway getConnection failed: 404 for inst-1"),
+    );
 
     const res = await request(validBody, { "X-API-Key": "test-key" });
     expect(res.status).toBe(404);
@@ -135,17 +135,15 @@ describe("POST /api/estimate", () => {
   // ── No connector ──
 
   it("returns 400 when no connector for provider", async () => {
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          id: "inst-1",
-          provider: "unknown",
-          status: "active",
-          resources: [],
-        }),
-        { status: 200 },
-      ),
-    );
+    mockGatewayClient.getConnection.mockResolvedValueOnce({
+      ...defaultConnection,
+      resources: [],
+    });
+    mockGatewayClient.getToken.mockResolvedValueOnce({
+      accessToken: "ghs_token123",
+      provider: "unknown",
+      expiresIn: 3600,
+    });
 
     const res = await request(
       { ...validBody, provider: "unknown" },
@@ -158,20 +156,10 @@ describe("POST /api/estimate", () => {
   // ── Token fetch failed ──
 
   it("returns 502 when token fetch fails", async () => {
-    // Connection OK
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          id: "inst-1",
-          provider: "github",
-          status: "active",
-          resources: [{ providerResourceId: "repo-1", resourceName: "org/repo-1" }],
-        }),
-        { status: 200 },
-      ),
+    mockGatewayClient.getConnection.mockResolvedValueOnce(defaultConnection);
+    mockGatewayClient.getToken.mockRejectedValueOnce(
+      new Error("Gateway getToken failed: 500 for inst-1"),
     );
-    // Token fails
-    mockFetch.mockResolvedValueOnce(new Response("", { status: 500 }));
 
     const res = await request(validBody, { "X-API-Key": "test-key" });
     expect(res.status).toBe(502);

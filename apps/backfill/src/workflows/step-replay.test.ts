@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 type JournalEntry = {
   name: string;
-  type: "run" | "sendEvent" | "waitForEvent" | "sleep";
+  type: "run" | "sendEvent" | "invoke" | "sleep";
   returnValue: unknown;
 };
 
@@ -13,7 +13,7 @@ type JournalEntry = {
  * of (stepName, type, returnValue) entries. Used for the "first pass".
  */
 function createRecordingStep(
-  waitForEventResults: Record<string, unknown> = {},
+  invokeResults: Record<string, unknown> = {},
 ) {
   const journal: JournalEntry[] = [];
 
@@ -26,9 +26,9 @@ function createRecordingStep(
     sendEvent: vi.fn(async (name: string, _data: unknown) => {
       journal.push({ name, type: "sendEvent", returnValue: undefined });
     }),
-    waitForEvent: vi.fn(async (name: string, _opts: unknown) => {
-      const returnValue = waitForEventResults[name] ?? null;
-      journal.push({ name, type: "waitForEvent", returnValue });
+    invoke: vi.fn(async (name: string, _opts: unknown) => {
+      const returnValue = invokeResults[name] ?? null;
+      journal.push({ name, type: "invoke", returnValue });
       return returnValue;
     }),
     sleep: vi.fn(async (name: string) => {
@@ -66,8 +66,8 @@ function createReplayStep(journal: JournalEntry[]) {
     sendEvent: vi.fn(async (name: string, _data: unknown) => {
       consume(name, "sendEvent");
     }),
-    waitForEvent: vi.fn(async (name: string, _opts: unknown) =>
-      consume(name, "waitForEvent"),
+    invoke: vi.fn(async (name: string, _opts: unknown) =>
+      consume(name, "invoke"),
     ),
     sleep: vi.fn(async (name: string, _duration: unknown) => {
       consume(name, "sleep");
@@ -85,7 +85,7 @@ const handlers: Record<
 vi.mock("../inngest/client", () => ({
   inngest: {
     createFunction: (
-      config: { id: string; onFailure?: Function },
+      config: { id: string },
       _trigger: unknown,
       handler: (args: { event: any; step: any }) => Promise<unknown>,
     ) => {
@@ -95,8 +95,23 @@ vi.mock("../inngest/client", () => ({
   },
 }));
 
-const mockFetch = vi.fn();
-vi.stubGlobal("fetch", mockFetch);
+const mockGatewayClient = {
+  getConnection: vi.fn(),
+  getToken: vi.fn(),
+  getBackfillRuns: vi.fn().mockResolvedValue([]),
+  upsertBackfillRun: vi.fn().mockResolvedValue(undefined),
+};
+vi.mock("../lib/gateway-client", () => ({
+  createGatewayClient: () => mockGatewayClient,
+}));
+
+const mockRelayClient = {
+  dispatchWebhook: vi.fn().mockResolvedValue(undefined),
+  replayCatchup: vi.fn().mockResolvedValue({ remaining: 0 }),
+};
+vi.mock("../lib/relay-client", () => ({
+  createRelayClient: () => mockRelayClient,
+}));
 
 const mockGetConnector = vi.fn();
 vi.mock("@repo/console-backfill", () => ({
@@ -113,6 +128,7 @@ vi.mock("../lib/related-projects", () => ({
 }));
 
 // Force module load to capture handlers
+// Entity worker must be loaded first so orchestrator's import finds it in cache
 await import("./entity-worker.js");
 await import("./backfill-orchestrator.js");
 
@@ -129,6 +145,23 @@ const mockConnector = {
 beforeEach(() => {
   vi.resetAllMocks();
   mockGetConnector.mockReturnValue(mockConnector);
+  mockGatewayClient.getToken.mockResolvedValue({
+    accessToken: "tok-1",
+    provider: "github",
+    expiresIn: 3600,
+  });
+  mockGatewayClient.getConnection.mockResolvedValue({
+    id: "inst-1",
+    provider: "github",
+    externalId: "12345",
+    orgId: "org-1",
+    status: "active",
+    resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
+  });
+  mockGatewayClient.getBackfillRuns.mockResolvedValue([]);
+  mockGatewayClient.upsertBackfillRun.mockResolvedValue(undefined);
+  mockRelayClient.dispatchWebhook.mockResolvedValue(undefined);
+  mockRelayClient.replayCatchup.mockResolvedValue({ remaining: 0 });
 });
 
 // ── Entity Worker: Step Memoization Replay ──
@@ -148,17 +181,6 @@ describe("entity-worker step memoization replay", () => {
   }
 
   function setupRecordingMocks() {
-    // Token fetch
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          accessToken: "tok-1",
-          provider: "github",
-          expiresIn: 3600,
-        }),
-        { status: 200 },
-      ),
-    );
     // fetchPage: 3 events, single page
     mockConnector.fetchPage.mockResolvedValueOnce({
       events: [
@@ -169,12 +191,11 @@ describe("entity-worker step memoization replay", () => {
       nextCursor: null,
       rawCount: 3,
     });
-    // 3 dispatch responses
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
-    // Persist backfill run response
-    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ status: "ok" }), { status: 200 }));
+    // 3 dispatch responses (via relay client)
+    mockRelayClient.dispatchWebhook
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
   }
 
   it("replay produces identical result to recording (single page)", async () => {
@@ -208,17 +229,6 @@ describe("entity-worker step memoization replay", () => {
     const handler = handlers["apps-backfill/entity.worker"]!;
 
     // ── Recording pass ──
-    // Token fetch
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          accessToken: "tok-1",
-          provider: "github",
-          expiresIn: 3600,
-        }),
-        { status: 200 },
-      ),
-    );
     // Page 1: 2 events
     mockConnector.fetchPage.mockResolvedValueOnce({
       events: [
@@ -228,8 +238,9 @@ describe("entity-worker step memoization replay", () => {
       nextCursor: { page: 2 },
       rawCount: 2,
     });
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
+    mockRelayClient.dispatchWebhook
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
     // Page 2: 1 event
     mockConnector.fetchPage.mockResolvedValueOnce({
       events: [
@@ -238,9 +249,7 @@ describe("entity-worker step memoization replay", () => {
       nextCursor: null,
       rawCount: 1,
     });
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
-    // Persist backfill run response
-    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ status: "ok" }), { status: 200 }));
+    mockRelayClient.dispatchWebhook.mockResolvedValueOnce(undefined);
 
     const { step: recordingStep, journal } = createRecordingStep();
     const recordResult = await handler({
@@ -282,49 +291,19 @@ describe("orchestrator step memoization replay", () => {
   it("replay produces identical result to recording", async () => {
     const handler = handlers["apps-backfill/run.orchestrator"]!;
 
-    // ── Recording pass ──
-    // Mock: connection fetch + backfill history
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          id: "inst-1",
-          provider: "github",
-          externalId: "12345",
-          orgId: "org-1",
-          status: "active",
-          resources: [
-            {
-              id: "r1",
-              providerResourceId: "100",
-              resourceName: "owner/repo",
-            },
-          ],
-        }),
-        { status: 200 },
-      ),
-    );
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify([]), { status: 200 }),
-    );
-
-    // Configure waitForEvent to return a successful completion
-    const waitResults = {
-      "wait-100-pull_request": {
-        data: {
-          installationId: "inst-1",
-          provider: "github",
-          entityType: "pull_request",
-          resourceId: "100",
-          success: true,
-          eventsProduced: 10,
-          eventsDispatched: 10,
-          pagesProcessed: 1,
-        },
+    // Configure invoke to return a successful completion
+    const invokeResults = {
+      "invoke-100-pull_request": {
+        entityType: "pull_request",
+        resource: "100",
+        eventsProduced: 10,
+        eventsDispatched: 10,
+        pagesProcessed: 1,
       },
     };
 
     const { step: recordingStep, journal } =
-      createRecordingStep(waitResults);
+      createRecordingStep(invokeResults);
     const recordResult = await handler({
       event: makeOrchestratorEvent(),
       step: recordingStep,
@@ -350,66 +329,34 @@ describe("orchestrator step memoization replay", () => {
   it("replay produces identical result with mixed success/failure", async () => {
     const handler = handlers["apps-backfill/run.orchestrator"]!;
 
-    // ── Recording pass ──
-    // Mock: connection fetch + backfill history
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          id: "inst-1",
-          provider: "github",
-          externalId: "12345",
-          orgId: "org-1",
-          status: "active",
-          resources: [
-            {
-              id: "r1",
-              providerResourceId: "100",
-              resourceName: "owner/repo-a",
-            },
-            {
-              id: "r2",
-              providerResourceId: "200",
-              resourceName: "owner/repo-b",
-            },
-          ],
-        }),
-        { status: 200 },
-      ),
-    );
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify([]), { status: 200 }),
-    );
+    // 2 resources — need 2 invoke results
+    mockGatewayClient.getConnection.mockResolvedValue({
+      id: "inst-1",
+      provider: "github",
+      externalId: "12345",
+      orgId: "org-1",
+      status: "active",
+      resources: [
+        { id: "r1", providerResourceId: "100", resourceName: "owner/repo-a" },
+        { id: "r2", providerResourceId: "200", resourceName: "owner/repo-b" },
+      ],
+    });
 
-    const waitResults = {
-      "wait-100-pull_request": {
-        data: {
-          installationId: "inst-1",
-          provider: "github",
-          entityType: "pull_request",
-          resourceId: "100",
-          success: true,
-          eventsProduced: 5,
-          eventsDispatched: 5,
-          pagesProcessed: 1,
-        },
+    // First invoke succeeds, second throws (to simulate failure path)
+    // In recording, invoke-200-pull_request will throw → returns null from our mock
+    const invokeResults = {
+      "invoke-100-pull_request": {
+        entityType: "pull_request",
+        resource: "100",
+        eventsProduced: 5,
+        eventsDispatched: 5,
+        pagesProcessed: 1,
       },
-      "wait-200-pull_request": {
-        data: {
-          installationId: "inst-1",
-          provider: "github",
-          entityType: "pull_request",
-          resourceId: "200",
-          success: false,
-          eventsProduced: 0,
-          eventsDispatched: 0,
-          pagesProcessed: 0,
-          error: "rate limited",
-        },
-      },
+      // invoke-200-pull_request not in results → returns null → caught as failure
     };
 
     const { step: recordingStep, journal } =
-      createRecordingStep(waitResults);
+      createRecordingStep(invokeResults);
     const recordResult = await handler({
       event: makeOrchestratorEvent(),
       step: recordingStep,
@@ -418,6 +365,18 @@ describe("orchestrator step memoization replay", () => {
     // ── Replay pass ──
     vi.clearAllMocks();
     mockGetConnector.mockReturnValue(mockConnector);
+    // Reset connection mock for replay
+    mockGatewayClient.getConnection.mockResolvedValue({
+      id: "inst-1",
+      provider: "github",
+      externalId: "12345",
+      orgId: "org-1",
+      status: "active",
+      resources: [
+        { id: "r1", providerResourceId: "100", resourceName: "owner/repo-a" },
+        { id: "r2", providerResourceId: "200", resourceName: "owner/repo-b" },
+      ],
+    });
     const replayStep = createReplayStep(journal);
     const replayResult = await handler({
       event: makeOrchestratorEvent(),
