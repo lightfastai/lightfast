@@ -11,5 +11,9 @@ export async function isConsoleFanOutEnabled(
   provider?: ProviderName,
 ): Promise<boolean> {
   const context = provider ? { webhook: { provider } } : undefined;
-  return evaluateFlag("console-fan-out", true, context);
+  try {
+    return await evaluateFlag("console-fan-out", true, context);
+  } catch {
+    return true;
+  }
 }

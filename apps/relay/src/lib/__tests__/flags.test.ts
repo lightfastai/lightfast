@@ -54,11 +54,27 @@ describe("isConsoleFanOutEnabled", () => {
     expect(result).toBe(false);
   });
 
-  it("propagates error when evaluateFlag rejects", async () => {
+  it("returns true when evaluateFlag rejects (fail-open, no provider)", async () => {
     const { evaluateFlag } = await import("@vendor/vercel-flags");
     vi.mocked(evaluateFlag).mockRejectedValue(new Error("SDK initialization failed"));
 
     const { isConsoleFanOutEnabled } = await import("../flags.js");
-    await expect(isConsoleFanOutEnabled()).rejects.toThrow("SDK initialization failed");
+    const result = await isConsoleFanOutEnabled();
+
+    expect(result).toBe(true);
+    expect(evaluateFlag).toHaveBeenCalledWith("console-fan-out", true, undefined);
+  });
+
+  it("returns true when evaluateFlag rejects (fail-open, with provider)", async () => {
+    const { evaluateFlag } = await import("@vendor/vercel-flags");
+    vi.mocked(evaluateFlag).mockRejectedValue(new Error("SDK initialization failed"));
+
+    const { isConsoleFanOutEnabled } = await import("../flags.js");
+    const result = await isConsoleFanOutEnabled("github");
+
+    expect(result).toBe(true);
+    expect(evaluateFlag).toHaveBeenCalledWith("console-fan-out", true, {
+      webhook: { provider: "github" },
+    });
   });
 });
