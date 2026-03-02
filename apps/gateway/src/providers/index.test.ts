@@ -51,7 +51,7 @@ vi.mock("../lib/github-jwt", () => ({
 vi.mock("@repo/lib", () => ({
   nanoid: vi.fn().mockReturnValue("mock-id"),
   decrypt: vi.fn(),
-  encrypt: vi.fn().mockReturnValue("encrypted-value"),
+  encrypt: vi.fn().mockResolvedValue("encrypted-value"),
 }));
 
 vi.mock("../lib/token-store", () => ({

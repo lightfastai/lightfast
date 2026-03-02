@@ -45,7 +45,7 @@ webhooks.post("/:provider", async (c) => {
   // Service auth path — backfill or other internal service
   // Pre-resolved connectionId/orgId provided in body; skip HMAC/dedup/resolution.
   const apiKey = c.req.header("X-API-Key");
-  if (apiKey && timingSafeStringEqual(apiKey, env.GATEWAY_API_KEY)) {
+  if (apiKey && (await timingSafeStringEqual(apiKey, env.GATEWAY_API_KEY))) {
     let body: {
       connectionId: string;
       orgId: string;

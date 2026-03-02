@@ -1,16 +1,14 @@
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-
 /**
- * Encryption algorithm configuration
- * AES-256-GCM provides:
- * - Strong encryption (256-bit key)
- * - Authenticated encryption (prevents tampering)
- * - Galois/Counter Mode for performance
+ * AES-256-GCM encryption using Web Crypto API.
+ * Edge Runtime compatible — no Node.js crypto.
+ *
+ * Wire format: base64(IV[12] + authTag[16] + ciphertext)
+ * This format is backward-compatible with the previous Node.js implementation.
  */
-const ALGORITHM = "aes-256-gcm";
-const IV_LENGTH = 12; // 12 bytes for GCM (recommended)
-const AUTH_TAG_LENGTH = 16; // 16 bytes for GCM
-const KEY_LENGTH = 32; // 32 bytes for AES-256
+
+const IV_LENGTH = 12;
+const AUTH_TAG_LENGTH = 16;
+const KEY_LENGTH = 32;
 
 /**
  * Encryption error types
@@ -31,39 +29,57 @@ export class DecryptionError extends Error {
 	}
 }
 
-/**
- * Validates encryption key format and length
- *
- * @param key - Encryption key (hex string or base64)
- * @throws {EncryptionError} If key is invalid
- */
-function validateKey(key: string): Buffer {
+function hexToBytes(hex: string): Uint8Array {
+	if (hex.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(hex)) {
+		throw new Error("Invalid hex string");
+	}
+	const bytes = new Uint8Array(hex.length / 2);
+	for (let i = 0; i < hex.length; i += 2) {
+		bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
+	}
+	return bytes;
+}
+
+function base64ToBytes(b64: string): Uint8Array {
+	const binary = atob(b64);
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i++) {
+		bytes[i] = binary.charCodeAt(i);
+	}
+	return bytes;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+	let binary = "";
+	for (const byte of bytes) {
+		binary += String.fromCharCode(byte);
+	}
+	return btoa(binary);
+}
+
+function validateKey(key: string): Uint8Array {
 	if (!key || typeof key !== "string") {
 		throw new EncryptionError("Encryption key must be a non-empty string");
 	}
 
 	try {
-		// Try to decode as hex first (preferred format)
-		const keyBuffer = Buffer.from(key, "hex");
-		if (keyBuffer.length === KEY_LENGTH) {
-			return keyBuffer;
-		}
-
-		// Try base64 if hex didn't work
-		const keyBufferBase64 = Buffer.from(key, "base64");
-		if (keyBufferBase64.length === KEY_LENGTH) {
-			return keyBufferBase64;
-		}
-
-		throw new EncryptionError(
-			`Encryption key must be ${KEY_LENGTH} bytes (64 hex chars or 44 base64 chars). Got ${key.length} chars resulting in ${keyBuffer.length} bytes.`,
-		);
-	} catch (error) {
-		if (error instanceof EncryptionError) {
-			throw error;
-		}
-		throw new EncryptionError("Invalid encryption key format", error);
+		// Try hex first (preferred format: 64 hex chars = 32 bytes)
+		const hexBytes = hexToBytes(key);
+		if (hexBytes.length === KEY_LENGTH) return hexBytes;
+	} catch {
+		// Not valid hex, try base64
 	}
+
+	try {
+		const b64Bytes = base64ToBytes(key);
+		if (b64Bytes.length === KEY_LENGTH) return b64Bytes;
+	} catch {
+		// Not valid base64 either
+	}
+
+	throw new EncryptionError(
+		`Encryption key must be ${KEY_LENGTH} bytes (64 hex chars or 44 base64 chars).`,
+	);
 }
 
 /**
@@ -77,47 +93,46 @@ function validateKey(key: string): Buffer {
  * @param plaintext - The plaintext string to encrypt
  * @param key - Encryption key (32 bytes as hex or base64 string)
  * @returns Base64-encoded encrypted string (IV + Auth Tag + Ciphertext)
- * @throws {EncryptionError} If encryption fails or key is invalid
- *
- * @example
- * ```ts
- * const encrypted = encrypt("my-secret-token", process.env.ENCRYPTION_KEY);
- * // Returns: "AQIDBAUGBwgJCgsMDQ4P..." (base64)
- * ```
  */
-export function encrypt(plaintext: string, key: string): string {
+export async function encrypt(plaintext: string, key: string): Promise<string> {
 	if (!plaintext || typeof plaintext !== "string") {
 		throw new EncryptionError("Plaintext must be a non-empty string");
 	}
 
 	try {
-		// Validate and parse key
-		const keyBuffer = validateKey(key);
+		const keyBytes = validateKey(key);
+		const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
 
-		// Generate random IV for this encryption
-		const iv = randomBytes(IV_LENGTH);
+		const cryptoKey = await crypto.subtle.importKey(
+			"raw",
+			keyBytes as Uint8Array<ArrayBuffer>,
+			"AES-GCM",
+			false,
+			["encrypt"],
+		);
 
-		// Create cipher with key and IV
-		const cipher = createCipheriv(ALGORITHM, keyBuffer, iv);
+		const plaintextBytes = new TextEncoder().encode(plaintext);
+		const encrypted = new Uint8Array(
+			await crypto.subtle.encrypt(
+				{ name: "AES-GCM", iv: iv, tagLength: AUTH_TAG_LENGTH * 8 },
+				cryptoKey,
+				plaintextBytes,
+			),
+		);
 
-		// Encrypt the plaintext
-		const encrypted = Buffer.concat([
-			cipher.update(plaintext, "utf8"),
-			cipher.final(),
-		]);
+		// Web Crypto returns ciphertext || authTag
+		// Our wire format is IV || authTag || ciphertext
+		const ciphertext = encrypted.subarray(0, encrypted.length - AUTH_TAG_LENGTH);
+		const authTag = encrypted.subarray(encrypted.length - AUTH_TAG_LENGTH);
 
-		// Get authentication tag (prevents tampering)
-		const authTag = cipher.getAuthTag();
+		const result = new Uint8Array(IV_LENGTH + AUTH_TAG_LENGTH + ciphertext.length);
+		result.set(iv, 0);
+		result.set(authTag, IV_LENGTH);
+		result.set(ciphertext, IV_LENGTH + AUTH_TAG_LENGTH);
 
-		// Combine: IV + Auth Tag + Encrypted Data
-		const result = Buffer.concat([iv, authTag, encrypted]);
-
-		// Return as base64 for easy storage
-		return result.toString("base64");
+		return bytesToBase64(result);
 	} catch (error) {
-		if (error instanceof EncryptionError) {
-			throw error;
-		}
+		if (error instanceof EncryptionError) throw error;
 		throw new EncryptionError("Failed to encrypt data", error);
 	}
 }
@@ -128,68 +143,61 @@ export function encrypt(plaintext: string, key: string): string {
  * @param ciphertext - Base64-encoded encrypted string (from encrypt())
  * @param key - Encryption key (32 bytes as hex or base64 string)
  * @returns Decrypted plaintext string
- * @throws {DecryptionError} If decryption fails, data is corrupted, or key is wrong
- *
- * @example
- * ```ts
- * const decrypted = decrypt(encryptedToken, process.env.ENCRYPTION_KEY);
- * // Returns: "my-secret-token"
- * ```
  */
-export function decrypt(ciphertext: string, key: string): string {
+export async function decrypt(ciphertext: string, key: string): Promise<string> {
 	if (!ciphertext || typeof ciphertext !== "string") {
 		throw new DecryptionError("Ciphertext must be a non-empty string");
 	}
 
 	try {
-		// Validate and parse key
-		const keyBuffer = validateKey(key);
+		const keyBytes = validateKey(key);
+		const buffer = base64ToBytes(ciphertext);
 
-		// Decode from base64
-		const buffer = Buffer.from(ciphertext, "base64");
-
-		// Extract components: IV + Auth Tag + Encrypted Data
 		if (buffer.length < IV_LENGTH + AUTH_TAG_LENGTH) {
-			throw new DecryptionError(
-				"Ciphertext is too short - data may be corrupted",
-			);
+			throw new DecryptionError("Ciphertext is too short - data may be corrupted");
 		}
 
 		const iv = buffer.subarray(0, IV_LENGTH);
 		const authTag = buffer.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
 		const encrypted = buffer.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
 
-		// Create decipher with key and IV
-		const decipher = createDecipheriv(ALGORITHM, keyBuffer, iv);
+		// Web Crypto expects ciphertext || authTag
+		const combined = new Uint8Array(encrypted.length + AUTH_TAG_LENGTH);
+		combined.set(encrypted, 0);
+		combined.set(authTag, encrypted.length);
 
-		// Set authentication tag for verification
-		decipher.setAuthTag(authTag);
+		const cryptoKey = await crypto.subtle.importKey(
+			"raw",
+			keyBytes as Uint8Array<ArrayBuffer>,
+			"AES-GCM",
+			false,
+			["decrypt"],
+		);
 
-		// Decrypt the data
-		const decrypted = Buffer.concat([
-			decipher.update(encrypted),
-			decipher.final(), // This will throw if auth tag doesn't match (tampering detected)
-		]);
+		const decrypted = await crypto.subtle.decrypt(
+			{ name: "AES-GCM", iv: iv as Uint8Array<ArrayBuffer>, tagLength: AUTH_TAG_LENGTH * 8 },
+			cryptoKey,
+			combined,
+		);
 
-		return decrypted.toString("utf8");
+		return new TextDecoder().decode(decrypted);
 	} catch (error) {
-		if (error instanceof DecryptionError || error instanceof EncryptionError) {
-			throw error;
+		if (error instanceof DecryptionError) throw error;
+		if (error instanceof EncryptionError) {
+			throw new DecryptionError(error.message, error);
 		}
 
-		// Provide helpful error messages for common issues
-		const errorMessage = error instanceof Error ? error.message : String(error);
+		// Prefer structured DOMException check (Web Crypto standard for AES-GCM auth failures),
+		// fall back to message-based check for runtimes that surface it differently.
+		const isOperationError =
+			(error instanceof DOMException && error.name === "OperationError") ||
+			(error instanceof Error &&
+				(error.message.includes("OperationError") ||
+					error.message.includes("The operation failed")));
 
-		if (errorMessage.includes("Unsupported state or unable to authenticate")) {
+		if (isOperationError) {
 			throw new DecryptionError(
 				"Authentication failed - data may be corrupted or key is incorrect",
-				error,
-			);
-		}
-
-		if (errorMessage.includes("bad decrypt")) {
-			throw new DecryptionError(
-				"Decryption failed - incorrect key or corrupted data",
 				error,
 			);
 		}
@@ -202,13 +210,10 @@ export function decrypt(ciphertext: string, key: string): string {
  * Generates a new encryption key suitable for AES-256-GCM
  *
  * @returns 32-byte key as hex string (64 characters)
- *
- * @example
- * ```ts
- * const key = generateEncryptionKey();
- * // Returns: "a1b2c3d4..." (64 hex chars = 32 bytes)
- * ```
  */
 export function generateEncryptionKey(): string {
-	return randomBytes(KEY_LENGTH).toString("hex");
+	const bytes = crypto.getRandomValues(new Uint8Array(KEY_LENGTH));
+	return Array.from(bytes)
+		.map((b) => b.toString(16).padStart(2, "0"))
+		.join("");
 }

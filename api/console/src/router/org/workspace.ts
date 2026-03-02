@@ -901,7 +901,7 @@ export const workspaceRouter = {
           },
         });
 
-        if (!integration || integration.workspace.clerkOrgId !== ctx.auth.orgId) {
+        if (integration?.workspace.clerkOrgId !== ctx.auth.orgId) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Integration not found",
@@ -1052,7 +1052,7 @@ export const workspaceRouter = {
           },
         });
 
-        if (!integration || integration.workspace.clerkOrgId !== ctx.auth.orgId) {
+        if (integration?.workspace.clerkOrgId !== ctx.auth.orgId) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Integration not found",
@@ -1086,7 +1086,7 @@ export const workspaceRouter = {
           },
         });
 
-        if (!integration || integration.workspace.clerkOrgId !== ctx.auth.orgId) {
+        if (integration?.workspace.clerkOrgId !== ctx.auth.orgId) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Integration not found",

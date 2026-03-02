@@ -16,6 +16,7 @@ const server = {
   GATEWAY_API_KEY: z.string().min(1),
   ENCRYPTION_KEY: z.string().min(32),
   SENTRY_DSN: z.string().url().optional(),
+  LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
 };
 
 const _createEnv = (c: Context) =>
@@ -72,6 +73,7 @@ export const env = createEnv({
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     SENTRY_DSN: process.env.SENTRY_DSN,
+    LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

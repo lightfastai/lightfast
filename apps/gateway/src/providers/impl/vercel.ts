@@ -211,7 +211,7 @@ export class VercelProvider implements ConnectionProvider {
       throw new Error("token_expired");
     }
 
-    const decryptedToken = decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
     return {
       accessToken: decryptedToken,
       provider: this.name,

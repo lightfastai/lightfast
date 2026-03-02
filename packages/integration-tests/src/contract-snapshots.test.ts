@@ -239,7 +239,7 @@ describe("0.1 — Boundary contract shapes", () => {
     });
     await db.insert(gwInstallations).values(inst);
 
-    const encryptedToken = encrypt("snap-access-token-xyz", ENCRYPTION_KEY);
+    const encryptedToken = await encrypt("snap-access-token-xyz", ENCRYPTION_KEY);
     const token = fixtures.token({
       installationId: inst.id,
       accessToken: encryptedToken,

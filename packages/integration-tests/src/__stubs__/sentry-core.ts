@@ -13,8 +13,9 @@ export function initAndBind() {}
 export function createTransport() {
   return { send: () => Promise.resolve({}), flush: () => Promise.resolve(true) };
 }
-export function withScope(cb: (scope: { setTag: (...args: unknown[]) => void }) => void) {
-  cb({ setTag() {} });
+export function addBreadcrumb(_breadcrumb: unknown) {}
+export function withScope(cb: (scope: { setTag: (...args: unknown[]) => void; setContext: (...args: unknown[]) => void }) => void) {
+  cb({ setTag() {}, setContext() {} });
 }
 export function captureException(_err: unknown) {}
 export function captureMessage(_msg: string, _level?: string) {}

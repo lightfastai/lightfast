@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useSignIn } from "@vendor/clerk/client";
 import type { EmailCodeFactor } from "@vendor/clerk/types";
-import { useForm } from "react-hook-form";
+import { useForm } from "@vendor/forms";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@repo/ui/components/ui/button";

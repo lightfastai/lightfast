@@ -6,6 +6,7 @@
   "sideEffects": false,
   "exports": {
     "./sentry-env": "./src/env/sentry-env.ts",
+    "./sentry": "./src/sentry.ts",
     "./betterstack-env": "./src/env/betterstack-env.ts",
     "./log": {
       "types": "./dist/src/log.d.ts",
@@ -16,7 +17,8 @@
     "./error": "./src/error.ts",
     "./async-executor": "./src/async-executor.ts",
     "./error-formatter": "./src/error-formatter.ts",
-    "./use-logger": "./src/use-logger.ts"
+    "./use-logger": "./src/use-logger.ts",
+    "./service-log": "./src/service-log.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -38,7 +40,9 @@
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
+    "@logtail/edge": "^0.5.0",
     "@logtail/next": "^0.2.0",
+    "@sentry/core": "catalog:",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",

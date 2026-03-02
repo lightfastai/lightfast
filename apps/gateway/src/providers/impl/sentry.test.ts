@@ -34,8 +34,8 @@ vi.mock("@db/console/schema", () => ({
 }));
 
 vi.mock("@repo/lib", () => ({
-  decrypt: vi.fn().mockReturnValue("decrypted-token"),
-  encrypt: vi.fn().mockReturnValue("encrypted-value"),
+  decrypt: vi.fn().mockResolvedValue("decrypted-token"),
+  encrypt: vi.fn().mockResolvedValue("encrypted-value"),
 }));
 
 vi.mock("../../lib/token-store", () => ({
@@ -332,7 +332,7 @@ describe("SentryProvider", () => {
       ]);
 
       // decrypt returns the composite token for refresh
-      vi.mocked(decrypt).mockReturnValueOnce("inst-1:old-refresh-tok");
+      vi.mocked(decrypt).mockResolvedValueOnce("inst-1:old-refresh-tok");
 
       mockFetch.mockResolvedValueOnce({
         ok: true,

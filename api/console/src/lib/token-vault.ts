@@ -17,7 +17,7 @@ export async function getInstallationToken(installationId: string): Promise<stri
     throw new Error(`No token found for installation: ${installationId}`);
   }
 
-  return decrypt(token.accessToken, env.ENCRYPTION_KEY);
+  return await decrypt(token.accessToken, env.ENCRYPTION_KEY);
 }
 
 /**
@@ -42,6 +42,6 @@ export async function getInstallationTokenWithRefresh(
     throw new Error(`No token found for installation: ${installationId}`);
   }
 
-  const accessToken = decrypt(row.token.accessToken, env.ENCRYPTION_KEY);
+  const accessToken = await decrypt(row.token.accessToken, env.ENCRYPTION_KEY);
   return { accessToken, provider: row.provider };
 }

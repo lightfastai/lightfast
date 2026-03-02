@@ -30,6 +30,7 @@
     "@vendor/analytics": "workspace:*",
     "@vendor/clerk": "workspace:*",
     "@vendor/db": "workspace:*",
+    "@vendor/forms": "workspace:*",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:^",
@@ -42,7 +43,6 @@
     "next": "catalog:next16",
     "react": "19.2.1",
     "react-dom": "19.2.1",
-    "react-hook-form": "^7.61.1",
     "svix": "^1.62.0",
     "zod": "catalog:zod3"
   },

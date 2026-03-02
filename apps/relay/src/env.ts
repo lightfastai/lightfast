@@ -19,6 +19,7 @@ const server = {
   LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1),
   SENTRY_CLIENT_SECRET: z.string().min(1),
   SENTRY_DSN: z.string().url().optional(),
+  LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
 };
 
 const _createEnv = (c: Context) =>
@@ -64,6 +65,7 @@ export const env = createEnv({
     LINEAR_WEBHOOK_SIGNING_SECRET: process.env.LINEAR_WEBHOOK_SIGNING_SECRET,
     SENTRY_CLIENT_SECRET: process.env.SENTRY_CLIENT_SECRET,
     SENTRY_DSN: process.env.SENTRY_DSN,
+    LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||
