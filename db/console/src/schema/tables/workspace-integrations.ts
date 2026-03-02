@@ -5,12 +5,6 @@ import { orgWorkspaces } from "./org-workspaces";
 import { gwInstallations } from "./gw-installations";
 import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-validation";
 
-/** Backfill configuration shared across all provider sourceConfig variants. */
-type BackfillConfig = {
-  depth: 7 | 30 | 90;
-  entityTypes: string[];
-};
-
 /**
  * Workspace Sources
  *
@@ -113,7 +107,6 @@ export const workspaceIntegrations = pgTable(
             configPath?: string;
             lastConfigCheck?: string;
           };
-          backfill?: BackfillConfig;
         }
       | {
           version: 1;
@@ -128,7 +121,6 @@ export const workspaceIntegrations = pgTable(
             events?: string[];             // ["deployment.created", "deployment.ready", ...]
             autoSync: boolean;             // Track deployments automatically
           };
-          backfill?: BackfillConfig;
         }
       | {
           version: 1;
@@ -140,7 +132,6 @@ export const workspaceIntegrations = pgTable(
             events?: string[];
             autoSync: boolean;
           };
-          backfill?: BackfillConfig;
         }
       | {
           version: 1;
@@ -153,7 +144,6 @@ export const workspaceIntegrations = pgTable(
             events?: string[];
             autoSync: boolean;
           };
-          backfill?: BackfillConfig;
         }
     >().notNull(),
 

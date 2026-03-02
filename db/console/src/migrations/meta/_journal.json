@@ -239,6 +239,13 @@
       "when": 1772445514294,
       "tag": "0033_red_bug",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1772456816193,
+      "tag": "0034_elite_blob",
+      "breakpoints": true
     }
   ]
 }

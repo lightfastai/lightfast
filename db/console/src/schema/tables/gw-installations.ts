@@ -30,6 +30,12 @@ export const gwInstallations = pgTable(
     // if data isn't available, the provider must fetch it or use "".
     providerAccountInfo: jsonb("provider_account_info").$type<ProviderAccountInfo>(),
 
+    /** Optional backfill configuration for this installation. */
+    backfillConfig: jsonb("backfill_config").$type<{
+      depth: 7 | 30 | 90;
+      entityTypes: string[];
+    }>(),
+
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
       .notNull()
