@@ -22,6 +22,9 @@ export async function notifyBackfill(params: {
   orgId: string;
   correlationId?: string;
 }): Promise<void> {
+  // TODO: Remove when backfill is ready for production
+  return;
+
   const correlationId = params.correlationId ?? crypto.randomUUID();
   try {
     const res = await fetch(`${relayUrl}/api/backfill`, {
