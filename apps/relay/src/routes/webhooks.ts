@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@vendor/db";
 import { getQStashClient } from "@vendor/qstash";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { relayBaseUrl, consoleUrl } from "../lib/urls.js";
@@ -124,10 +124,10 @@ webhooks.post("/:provider", async (c) => {
       retries: 5,
     });
 
-    // Update persisted status — QStash accepted the message
+    // Update persisted status — QStash accepted, pending Console delivery
     await db
       .update(gwWebhookDeliveries)
-      .set({ status: "delivered" })
+      .set({ status: "enqueued" })
       .where(
         and(
           eq(gwWebhookDeliveries.provider, provider.name),

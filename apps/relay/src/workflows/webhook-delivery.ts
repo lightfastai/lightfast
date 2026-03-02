@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@vendor/db";
 import { gwInstallations, gwResources, gwWebhookDeliveries } from "@db/console/schema";
 import { serve } from "@vendor/upstash-workflow/hono";
 import { getQStashClient } from "@vendor/qstash";
@@ -189,11 +189,11 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       });
     });
 
-    // Step 4b-ii: Mark webhook as delivered in persistence store
-    await context.run("update-status-delivered", async () => {
+    // Step 4b-ii: Mark webhook as enqueued (QStash accepted, pending Console delivery)
+    await context.run("update-status-enqueued", async () => {
       await db
         .update(gwWebhookDeliveries)
-        .set({ status: "delivered" })
+        .set({ status: "enqueued" })
         .where(
           and(
             eq(gwWebhookDeliveries.provider, data.provider),

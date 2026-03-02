@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq } from "@vendor/db";
 import { db } from "@db/console/client";
 import { gwWebhookDeliveries } from "@db/console/schema";
 import { getWorkflowClient } from "@vendor/upstash-workflow/client";
@@ -69,18 +69,23 @@ export async function replayDeliveries(
         } satisfies WebhookReceiptPayload,
       });
 
-      // Reset status — workflow will advance to delivered or dlq
-      await db
-        .update(gwWebhookDeliveries)
-        .set({ status: "received" })
-        .where(
-          and(
-            eq(gwWebhookDeliveries.provider, delivery.provider),
-            eq(gwWebhookDeliveries.deliveryId, delivery.deliveryId),
-          ),
-        );
-
+      // Trigger succeeded — mark as replayed regardless of DB update outcome
       replayed.push(delivery.deliveryId);
+
+      // Reset status — workflow will advance to delivered or dlq
+      try {
+        await db
+          .update(gwWebhookDeliveries)
+          .set({ status: "received" })
+          .where(
+            and(
+              eq(gwWebhookDeliveries.provider, delivery.provider),
+              eq(gwWebhookDeliveries.deliveryId, delivery.deliveryId),
+            ),
+          );
+      } catch (err) {
+        console.error("[replay] DB status update failed for", delivery.deliveryId, err);
+      }
     } catch {
       failed.push(delivery.deliveryId);
     }

@@ -53,4 +53,12 @@ describe("isConsoleFanOutEnabled", () => {
 
     expect(result).toBe(false);
   });
+
+  it("propagates error when evaluateFlag rejects", async () => {
+    const { evaluateFlag } = await import("@vendor/vercel-flags");
+    vi.mocked(evaluateFlag).mockRejectedValue(new Error("SDK initialization failed"));
+
+    const { isConsoleFanOutEnabled } = await import("../flags.js");
+    await expect(isConsoleFanOutEnabled()).rejects.toThrow("SDK initialization failed");
+  });
 });

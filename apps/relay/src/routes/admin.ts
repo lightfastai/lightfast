@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, eq, gte, lte, notInArray, or, sql } from "@vendor/db";
 import { Hono } from "hono";
 import { db } from "@db/console/client";
 import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
@@ -123,9 +123,9 @@ admin.get("/dlq", apiKeyAuth, async (c) => {
  * Replay messages from the DLQ. Requires X-API-Key authentication.
  */
 admin.post("/dlq/replay", apiKeyAuth, async (c) => {
-  let body: { deliveryIds?: string[] };
+  let body: { deliveryIds?: { provider: string; deliveryId: string }[] };
   try {
-    body = await c.req.json<{ deliveryIds?: string[] }>();
+    body = await c.req.json<typeof body>();
   } catch {
     return c.json({ error: "invalid_json" }, 400);
   }
@@ -134,13 +134,21 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
     return c.json({ error: "missing_delivery_ids" }, 400);
   }
 
+  // Build compound (provider, deliveryId) filter — prevents cross-provider collisions
+  const pairConditions = body.deliveryIds.map((item) =>
+    and(
+      eq(gwWebhookDeliveries.provider, item.provider),
+      eq(gwWebhookDeliveries.deliveryId, item.deliveryId),
+    ),
+  );
+
   // Fetch only DLQ entries with stored payloads
   const deliveries = await db
     .select()
     .from(gwWebhookDeliveries)
     .where(
       and(
-        inArray(gwWebhookDeliveries.deliveryId, body.deliveryIds),
+        or(...pairConditions),
         eq(gwWebhookDeliveries.status, "dlq"),
       ),
     );
@@ -206,11 +214,12 @@ admin.post("/replay/catchup", apiKeyAuth, async (c) => {
 
   const result = await replayDeliveries(deliveries);
 
-  // Report remaining count so caller knows if more batches are needed
+  // Exclude just-replayed rows from remaining count
+  const replayedIds = deliveries.map((d) => d.id);
   const [remaining] = await db
     .select({ count: sql<number>`count(*)` })
     .from(gwWebhookDeliveries)
-    .where(and(...conditions));
+    .where(and(...conditions, notInArray(gwWebhookDeliveries.id, replayedIds)));
 
   return c.json({
     status: "replayed",
@@ -240,9 +249,18 @@ admin.post("/delivery-status", qstashAuth, async (c) => {
     return c.json({ error: "missing_required_fields", required: ["messageId", "state"] }, 400);
   }
 
-  // Log delivery status (QStash callback)
-  // Future: update webhook_deliveries table with delivery confirmation
   console.log("[delivery-status]", { messageId, state, deliveryId });
+
+  // Update webhook delivery status based on QStash callback
+  if (typeof deliveryId === "string") {
+    const newStatus = state === "delivered" ? "delivered" : state === "error" ? "dlq" : null;
+    if (newStatus) {
+      await db
+        .update(gwWebhookDeliveries)
+        .set({ status: newStatus })
+        .where(eq(gwWebhookDeliveries.deliveryId, deliveryId));
+    }
+  }
 
   return c.json({ status: "received" });
 });

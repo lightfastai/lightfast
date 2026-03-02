@@ -59,6 +59,7 @@ vi.mock("../lib/flags.js", () => ({
 
 import { Hono } from "hono";
 import { webhooks } from "./webhooks.js";
+import { isConsoleFanOutEnabled } from "../lib/flags.js";
 
 const app = new Hono();
 app.route("/webhooks", webhooks);
@@ -387,6 +388,30 @@ describe("POST /webhooks/:provider", () => {
 
       expect(res.status).toBe(400);
       expect(await res.json()).toEqual({ error: "invalid_json" });
+    });
+  });
+
+  describe("service auth with fan-out disabled", () => {
+    it("persists webhook but skips QStash publish when flag is disabled", async () => {
+      vi.mocked(isConsoleFanOutEnabled).mockResolvedValueOnce(false);
+
+      const res = await request("/webhooks/github", {
+        body: {
+          connectionId: "conn-1",
+          orgId: "org-1",
+          deliveryId: "del-flag-off",
+          eventType: "push",
+          payload: { repository: { id: 42 } },
+          receivedAt: 1700000000,
+        },
+        headers: { "X-API-Key": "test-api-key" },
+      });
+
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.status).toBe("accepted");
+      expect(json.fanOut).toBe(false);
+      expect(mockPublishJSON).not.toHaveBeenCalled();
     });
   });
 

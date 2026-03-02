@@ -94,6 +94,8 @@ let mockDbRows: { installationId: string; orgId: string }[] = [];
 // Force module load to trigger serve() and capture the handler
 await import("./webhook-delivery.js");
 
+import { isConsoleFanOutEnabled } from "../lib/flags.js";
+
 // ── Test helpers ──
 
 function makePayload(
@@ -294,6 +296,28 @@ describe("webhook-delivery workflow", () => {
         }),
       }),
     );
+  });
+
+  it("skips console delivery when fan-out is disabled but preserves webhook", async () => {
+    vi.mocked(isConsoleFanOutEnabled).mockResolvedValueOnce(false);
+
+    mockRedisSet.mockResolvedValue("OK");
+    mockRedisHgetall.mockResolvedValue({
+      connectionId: "conn-1",
+      orgId: "org-1",
+    });
+
+    const ctx = makeContext(makePayload());
+    await capturedHandler(ctx);
+
+    // 5 steps: dedup, persist-delivery, resolve-connection, update-connection, check-fan-out-flag
+    expect(ctx.run).toHaveBeenCalledTimes(5);
+    // Should NOT have published to Console
+    expect(mockPublishJSON).not.toHaveBeenCalled();
+    // Should NOT have published to DLQ
+    expect(mockPublishToTopic).not.toHaveBeenCalled();
+    // Should have persisted the delivery (step 2 ran)
+    expect(mockOnConflictDoNothing).toHaveBeenCalled();
   });
 
   describe("external dependency failures", () => {
