@@ -114,9 +114,9 @@ export async function encrypt(plaintext: string, key: string): Promise<string> {
 		const plaintextBytes = new TextEncoder().encode(plaintext);
 		const encrypted = new Uint8Array(
 			await crypto.subtle.encrypt(
-				{ name: "AES-GCM", iv: iv as Uint8Array<ArrayBuffer>, tagLength: AUTH_TAG_LENGTH * 8 },
+				{ name: "AES-GCM", iv: iv, tagLength: AUTH_TAG_LENGTH * 8 },
 				cryptoKey,
-				plaintextBytes as Uint8Array<ArrayBuffer>,
+				plaintextBytes,
 			),
 		);
 
@@ -175,15 +175,16 @@ export async function decrypt(ciphertext: string, key: string): Promise<string> 
 		);
 
 		const decrypted = await crypto.subtle.decrypt(
-			{ name: "AES-GCM", iv: iv as Uint8Array<ArrayBuffer>, tagLength: AUTH_TAG_LENGTH * 8 },
+			{ name: "AES-GCM", iv: iv, tagLength: AUTH_TAG_LENGTH * 8 },
 			cryptoKey,
-			combined as Uint8Array<ArrayBuffer>,
+			combined,
 		);
 
 		return new TextDecoder().decode(decrypted);
 	} catch (error) {
-		if (error instanceof DecryptionError || error instanceof EncryptionError) {
-			throw error;
+		if (error instanceof DecryptionError) throw error;
+		if (error instanceof EncryptionError) {
+			throw new DecryptionError(error.message, error);
 		}
 
 		const errorMessage = error instanceof Error ? error.message : String(error);
@@ -204,7 +205,7 @@ export async function decrypt(ciphertext: string, key: string): Promise<string> 
  *
  * @returns 32-byte key as hex string (64 characters)
  */
-export async function generateEncryptionKey(): Promise<string> {
+export function generateEncryptionKey(): string {
 	const bytes = crypto.getRandomValues(new Uint8Array(KEY_LENGTH));
 	return Array.from(bytes)
 		.map((b) => b.toString(16).padStart(2, "0"))
