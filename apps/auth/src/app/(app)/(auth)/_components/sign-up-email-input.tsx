@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useSignUp, useClerk } from "@clerk/nextjs";
-import { useForm } from "react-hook-form";
+import { useForm } from "@vendor/forms";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@repo/ui/components/ui/button";

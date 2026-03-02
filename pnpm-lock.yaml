@@ -545,7 +545,7 @@ importers:
         version: 4.101.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@hookform/resolvers':
         specifier: ^3.10.0
-        version: 3.10.0(react-hook-form@7.65.0(react@19.2.1))
+        version: 3.10.0(react-hook-form@7.71.1(react@19.2.1))
       '@repo/og':
         specifier: workspace:*
         version: link:../../packages/og
@@ -573,6 +573,9 @@ importers:
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
+      '@vendor/forms':
+        specifier: workspace:*
+        version: link:../../vendor/forms
       '@vendor/next':
         specifier: workspace:*
         version: link:../../vendor/next
@@ -609,9 +612,6 @@ importers:
       react-dom:
         specifier: ^19.2.1
         version: 19.2.1(react@19.2.1)
-      react-hook-form:
-        specifier: ^7.61.1
-        version: 7.65.0(react@19.2.1)
       svix:
         specifier: ^1.62.0
         version: 1.77.0
@@ -17241,12 +17241,6 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  react-hook-form@7.65.0:
-    resolution: {integrity: sha512-xtOzDz063WcXvGWaHgLNrNzlsdFgtUWcb32E6WFaGTd7kPZG3EeDusjdZfUsPwKCKVXy1ZlntifaHZ4l8pAsmw==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      react: ^19.2.1
-
   react-hook-form@7.71.1:
     resolution: {integrity: sha512-9SUJKCGKo8HUSsCO+y0CtqkqI5nNuaDqTxyqPsZPqIwudpj4rCrAz/jZV+jn57bx5gtZKOh3neQu94DXMc+w5w==}
     engines: {node: '>=18.0.0'}
@@ -21564,10 +21558,6 @@ snapshots:
   '@hono/node-server@1.19.9(hono@4.12.3)':
     dependencies:
       hono: 4.12.3
-
-  '@hookform/resolvers@3.10.0(react-hook-form@7.65.0(react@19.2.1))':
-    dependencies:
-      react-hook-form: 7.65.0(react@19.2.1)
 
   '@hookform/resolvers@3.10.0(react-hook-form@7.71.1(react@19.2.1))':
     dependencies:
@@ -33788,10 +33778,6 @@ snapshots:
       - sass
       - supports-color
       - utf-8-validate
-
-  react-hook-form@7.65.0(react@19.2.1):
-    dependencies:
-      react: 19.2.1
 
   react-hook-form@7.71.1(react@19.2.1):
     dependencies:
