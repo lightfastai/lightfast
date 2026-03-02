@@ -13,7 +13,7 @@
     "@api/console": "workspace:*",
     "@db/console": "workspace:*",
     "@lightfast/backfill": "workspace:*",
-    "@lightfast/connections": "workspace:*",
+    "@lightfast/gateway": "workspace:*",
     "@lightfast/relay": "workspace:*",
     "@repo/console-api-key": "workspace:*",
     "@repo/console-backfill": "workspace:*",

@@ -61,7 +61,7 @@ export async function getInstallationToken(
         headers: {
           Authorization: `Bearer ${jwt}`,
           Accept: "application/vnd.github+json",
-          "User-Agent": "lightfast-connections",
+          "User-Agent": "lightfast-gateway",
           "X-GitHub-Api-Version": "2022-11-28",
         },
       },
@@ -109,7 +109,7 @@ export async function getInstallationDetails(
         headers: {
           Authorization: `Bearer ${jwt}`,
           Accept: "application/vnd.github+json",
-          "User-Agent": "lightfast-connections",
+          "User-Agent": "lightfast-gateway",
           "X-GitHub-Api-Version": "2022-11-28",
         },
       },

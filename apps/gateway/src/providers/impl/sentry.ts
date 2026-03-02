@@ -6,7 +6,7 @@ import { eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
 import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store.js";
-import { connectionsBaseUrl } from "../../lib/urls.js";
+import { gatewayBaseUrl } from "../../lib/urls.js";
 import {
   decodeSentryToken,
   encodeSentryToken,
@@ -169,7 +169,7 @@ export class SentryProvider implements ConnectionProvider {
 
     // Encode installationId:authCode composite for exchangeCode
     const compositeCode = encodeSentryToken({ installationId: sentryInstallationId, token: code });
-    const redirectUri = `${connectionsBaseUrl}/connections/${this.name}/callback`;
+    const redirectUri = `${gatewayBaseUrl}/gateway/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(compositeCode, redirectUri);
 
     // Use sentryInstallationId as externalId — it's the stable identifier

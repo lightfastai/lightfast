@@ -13,11 +13,11 @@ export const env = createEnv({
   shared: {},
   server: {
     /**
-     * API key for authenticating service-to-service calls to the connections service.
-     * Shared secret between api/console (tRPC proxy) and apps/connections.
+     * API key for authenticating service-to-service calls to the gateway service.
+     * Shared secret between api/console (tRPC proxy) and apps/gateway.
      *
-     * This env var already exists in Vercel project settings for apps/connections,
-     * apps/gateway, and apps/backfill. It must also be linked to the api/console project.
+     * This env var already exists in Vercel project settings for apps/gateway,
+     * apps/relay, and apps/backfill. It must also be linked to the api/console project.
      */
     GATEWAY_API_KEY: z.string().min(1),
 

@@ -81,7 +81,7 @@ vi.mock("../providers", () => ({
 vi.mock("../providers/types", () => ({}));
 
 vi.mock("../lib/urls", () => ({
-  connectionsBaseUrl: "https://connections.test/services",
+  gatewayBaseUrl: "https://gateway.test/services",
   consoleUrl: "https://console.test",
   relayBaseUrl: "https://relay.test/api",
   backfillUrl: "https://backfill.test/api",

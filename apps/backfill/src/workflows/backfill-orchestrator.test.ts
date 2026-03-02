@@ -30,7 +30,7 @@ vi.mock("../env", () => ({
 }));
 
 vi.mock("../lib/related-projects", () => ({
-  connectionsUrl: "https://connections.test/services",
+  gatewayUrl: "https://gateway.test/services",
   relayUrl: "https://relay.test/api",
 }));
 
@@ -106,7 +106,7 @@ describe("get-connection step", () => {
     await capturedHandler({ event: makeEvent(), step });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://connections.test/services/connections/inst-1",
+      "https://gateway.test/services/gateway/inst-1",
       expect.objectContaining({
         headers: expect.objectContaining({ "X-API-Key": "test-key" }),
       }),
@@ -137,7 +137,7 @@ describe("get-connection step", () => {
 
     await expect(
       capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Connections getConnection failed: 404");
+    ).rejects.toThrow("Gateway getConnection failed: 404");
   });
 
   it("returns early with zero counts when connection has no resources", async () => {

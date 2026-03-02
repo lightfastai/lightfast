@@ -12,9 +12,9 @@ export const relayUrl = `${withRelatedProject({
     : "https://relay.lightfast.ai",
 })}/api`;
 
-export const connectionsUrl = `${withRelatedProject({
-  projectName: "lightfast-connections",
+export const gatewayUrl = `${withRelatedProject({
+  projectName: "lightfast-gateway",
   defaultHost: isDevelopment
     ? "http://localhost:4110"
-    : "https://connections.lightfast.ai",
+    : "https://gateway.lightfast.ai",
 })}/services`;

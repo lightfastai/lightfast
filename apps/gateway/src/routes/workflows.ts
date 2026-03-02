@@ -4,7 +4,7 @@ import { connectionTeardownWorkflow } from "../workflows/connection-teardown.js"
 const workflows = new Hono();
 
 /**
- * POST /services/connections/workflows/connection-teardown
+ * POST /services/gateway/workflows/connection-teardown
  *
  * Durable connection teardown. Triggered by DELETE /connections/:provider/:id.
  * Steps: revoke token, deregister webhook, clean cache, soft-delete DB records.

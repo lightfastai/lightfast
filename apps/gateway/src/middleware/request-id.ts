@@ -12,7 +12,7 @@ export interface RequestIdVariables {
  * and a cross-service correlation ID.
  *
  * - X-Request-Id: per-service request identifier (generated if absent)
- * - X-Correlation-Id: shared across relay → connections → backfill
+ * - X-Correlation-Id: shared across relay → gateway → backfill
  *   (defaults to requestId at the entry-point service)
  */
 export const requestId = createMiddleware<{

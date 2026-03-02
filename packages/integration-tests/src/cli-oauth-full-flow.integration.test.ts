@@ -1,7 +1,7 @@
 /**
  * Suite 9: Full CLI OAuth Flow E2E
  *
- * End-to-end CLI flow bridging tRPC caller → connections service → Redis polling.
+ * End-to-end CLI flow bridging tRPC caller → gateway service → Redis polling.
  * Exercises the full authorize-callback-poll chain as a CLI client would experience it.
  *
  * Because Redis is in-memory (shared Map), state written by the authorize handler
@@ -110,7 +110,7 @@ vi.mock("@vendor/clerk/server", () => ({
   clerkClient: () => ({}),
 }));
 
-vi.mock("@connections/providers", () => ({
+vi.mock("@gateway/providers", () => ({
   getProvider: (...args: unknown[]): unknown => mockGetProvider(...args),
 }));
 
@@ -118,10 +118,10 @@ vi.mock("@connections/providers", () => ({
 import { createTRPCRouter, createCallerFactory } from "@console/trpc";
 import type { createUserTRPCContext } from "@console/trpc";
 import { connectionsRouter } from "@console/router/org/connections";
-import connectionsApp from "@connections/app";
+import gatewayApp from "@gateway/app";
 import { makeApiKeyFixture, installServiceRouter, TEST_WORKSPACE_SETTINGS } from "./harness.js";
 import { orgWorkspaces } from "@db/console/schema";
-import { oauthResultKey } from "@connections/cache";
+import { oauthResultKey } from "@gateway/cache";
 
 // Use crypto.randomUUID() for unique IDs — avoids importing @repo/lib
 function uid() {
@@ -242,9 +242,9 @@ describe("Suite 9 — Full CLI OAuth Flow E2E", () => {
     });
     const { rawKey } = await makeApiKeyFixture(db, { userId: "user_e2e" });
 
-    const restore = installServiceRouter({ connectionsApp });
+    const restore = installServiceRouter({ gatewayApp });
     try {
-      // 2. Call tRPC cliAuthorize → connections service → { url, state }
+      // 2. Call tRPC cliAuthorize → gateway service → { url, state }
       const caller = apiKeyCaller(rawKey, wsId);
       const { state } = (await caller.cliAuthorize({
         provider: "github",
@@ -252,9 +252,9 @@ describe("Suite 9 — Full CLI OAuth Flow E2E", () => {
       expect(typeof state).toBe("string");
       expect(state.length).toBeGreaterThan(0);
 
-      // 3. Simulate browser callback: GET /services/connections/github/callback?code=abc&state=<state>
-      const callbackRes = await connectionsApp.request(
-        `/services/connections/github/callback?code=abc&state=${state}`,
+      // 3. Simulate browser callback: GET /services/gateway/github/callback?code=abc&state=<state>
+      const callbackRes = await gatewayApp.request(
+        `/services/gateway/github/callback?code=abc&state=${state}`,
       );
       expect(callbackRes.status).toBe(200); // inline HTML
 
@@ -267,9 +267,9 @@ describe("Suite 9 — Full CLI OAuth Flow E2E", () => {
       expect(result.status).toBe("completed");
       expect(result.provider).toBe("github");
 
-      // 5. Poll: GET /services/connections/oauth/status?state=<state>
-      const pollRes = await connectionsApp.request(
-        `/services/connections/oauth/status?state=${state}`,
+      // 5. Poll: GET /services/gateway/oauth/status?state=<state>
+      const pollRes = await gatewayApp.request(
+        `/services/gateway/oauth/status?state=${state}`,
       );
       expect(pollRes.status).toBe(200);
       const pollJson = (await pollRes.json()) as {
@@ -306,7 +306,7 @@ describe("Suite 9 — Full CLI OAuth Flow E2E", () => {
       reactivated: true,
     });
 
-    const restore = installServiceRouter({ connectionsApp });
+    const restore = installServiceRouter({ gatewayApp });
     try {
       // 2. Call tRPC cliAuthorize → { url, state }
       const caller = apiKeyCaller(rawKey, wsId);
@@ -315,8 +315,8 @@ describe("Suite 9 — Full CLI OAuth Flow E2E", () => {
       })) as { url: string; state: string };
 
       // 3. Simulate callback — reactivated connection
-      const callbackRes = await connectionsApp.request(
-        `/services/connections/github/callback?code=abc&state=${state}`,
+      const callbackRes = await gatewayApp.request(
+        `/services/gateway/github/callback?code=abc&state=${state}`,
       );
       expect(callbackRes.status).toBe(200); // inline HTML (reactivated, still inline)
 
@@ -329,8 +329,8 @@ describe("Suite 9 — Full CLI OAuth Flow E2E", () => {
       expect(result.reactivated).toBe("true");
 
       // 5. Poll → { status: "completed", reactivated: "true" }
-      const pollRes = await connectionsApp.request(
-        `/services/connections/oauth/status?state=${state}`,
+      const pollRes = await gatewayApp.request(
+        `/services/gateway/oauth/status?state=${state}`,
       );
       expect(pollRes.status).toBe(200);
       const pollJson = (await pollRes.json()) as {
