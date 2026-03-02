@@ -18,25 +18,28 @@ const DEFAULT_OPTIONS: FlagsClientOptions = {
 let client: FlagsClient | null = null;
 let initPromise: Promise<void> | null = null;
 
-function getClient(options?: FlagsClientOptions): FlagsClient | null {
+function getClient(): FlagsClient | null {
   if (client) return client;
   const sdkKey = flagsEnv.FLAGS;
   if (!sdkKey) return null;
-  const opts = options ?? DEFAULT_OPTIONS;
-  client = createClient(sdkKey, opts);
+  client = createClient(sdkKey, DEFAULT_OPTIONS);
   return client;
 }
 
-async function ensureInitialized(
-  options?: FlagsClientOptions,
-): Promise<FlagsClient | null> {
-  const c = getClient(options);
+async function ensureInitialized(): Promise<FlagsClient | null> {
+  const c = getClient();
   if (!c) return null;
   if (!initPromise) {
     const result = c.initialize();
     initPromise = result instanceof Promise ? result : Promise.resolve();
   }
-  await initPromise;
+  try {
+    await initPromise;
+  } catch {
+    // Reset so future calls can retry initialization
+    initPromise = null;
+    return null;
+  }
   return c;
 }
 
@@ -50,9 +53,8 @@ export async function evaluateFlag(
   key: string,
   defaultValue: boolean,
   context?: Record<string, unknown>,
-  options?: FlagsClientOptions,
 ): Promise<boolean> {
-  const c = await ensureInitialized(options);
+  const c = await ensureInitialized();
   if (!c) return defaultValue;
   const result = await c.evaluate<boolean>(key, defaultValue, context);
   return result.value ?? defaultValue;

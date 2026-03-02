@@ -17,4 +17,3 @@
  */
 
 export { evaluateFlag } from "./client";
-export type { FlagsClientOptions } from "./client";
