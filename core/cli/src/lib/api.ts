@@ -45,5 +45,5 @@ export async function setupOrg(
 }
 
 export function getStreamUrl(): string {
-  return `${getBaseUrl()}/services/relay/api/cli/stream`;
+  return `${getBaseUrl()}/api/events/stream`;
 }

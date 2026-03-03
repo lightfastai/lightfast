@@ -1,4 +1,3 @@
-import { inngest } from "@api/console/inngest";
 import type { WebhookEnvelope } from "@repo/gateway-types";
 import type { TransformContext, SourceEvent } from "@repo/console-types";
 import {
@@ -15,7 +14,6 @@ import type { VercelWebhookPayload, VercelWebhookEventType } from "@repo/console
 import type { LinearWebhookEventType } from "@repo/console-webhooks";
 import type { SentryWebhookEventType } from "@repo/console-webhooks";
 import type { PushEvent, PullRequestEvent, IssuesEvent, ReleaseEvent, DiscussionEvent } from "@repo/console-webhooks";
-import type { ResolvedWorkspace } from "./resolve-workspace";
 
 /**
  * Route GitHub webhook events to the appropriate transformer.
@@ -113,55 +111,29 @@ function transformVercelEvent(
 }
 
 /**
- * Dispatch a Relay webhook envelope to Inngest.
- *
- * Routes:
- * - All supported events → observation.capture (neural memory)
- *
- * Note: github.push dispatch (for code indexing) requires sourceId from
- * workspaceIntegrations which is wired in Phase 6 (Connection Sync).
+ * Transform a webhook envelope into a SourceEvent.
+ * Routes to the appropriate per-provider transformer.
+ * Returns null for unsupported event types.
  */
-export async function dispatchToInngest(
+export function transformEnvelope(
   envelope: WebhookEnvelope,
-  workspace: ResolvedWorkspace,
-): Promise<void> {
+): SourceEvent | null {
   const { provider, eventType, payload, deliveryId, receivedAt } = envelope;
   const context: TransformContext = {
     deliveryId,
     receivedAt: new Date(receivedAt),
   };
 
-  let sourceEvent: SourceEvent | null = null;
-
   switch (provider) {
     case "github":
-      sourceEvent = transformGitHubEvent(eventType, payload, context);
-      break;
+      return transformGitHubEvent(eventType, payload, context);
     case "vercel":
-      sourceEvent = transformVercelEvent(eventType, payload, context);
-      break;
+      return transformVercelEvent(eventType, payload, context);
     case "linear":
-      sourceEvent = transformLinearEvent(eventType, payload, context);
-      break;
+      return transformLinearEvent(eventType, payload, context);
     case "sentry":
-      sourceEvent = transformSentryEvent(eventType, payload, context);
-      break;
+      return transformSentryEvent(eventType, payload, context);
+    default:
+      return null;
   }
-
-  if (!sourceEvent) {
-    console.log(
-      `[ingress/dispatch] No transformer for ${envelope.provider}:${eventType}, skipping observation`,
-    );
-    return;
-  }
-
-  await inngest.send({
-    name: "apps-console/neural/observation.capture",
-    data: {
-      workspaceId: workspace.workspaceId,
-      clerkOrgId: workspace.clerkOrgId,
-      sourceEvent,
-      ingestionSource: "webhook",
-    },
-  });
 }

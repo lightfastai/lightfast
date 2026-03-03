@@ -4,13 +4,25 @@ import { getConfig } from "../lib/config.js";
 import { getStreamUrl } from "../lib/api.js";
 import { connectSSE } from "../lib/sse.js";
 
-interface WebhookEvent {
-  provider: string;
-  deliveryId: string;
+interface SourceEventNotification {
+  payloadId: number;
+  sourceEvent: {
+    source: string;
+    sourceType: string;
+    sourceId: string;
+    title: string;
+    actor?: { name: string };
+    occurredAt: string;
+  };
+}
+
+interface CatchUpEvent {
+  payloadId: number;
+  source: string;
   eventType: string;
-  resourceId: string | null;
+  deliveryId: string;
   receivedAt: number;
-  payload: unknown;
+  catchUp: true;
 }
 
 export const listenCommand = new Command("listen")
@@ -46,20 +58,37 @@ export const listenCommand = new Command("listen")
         console.log(pc.yellow(`  ${reason}`));
       },
       onEvent: (event) => {
-        if (event.event === "heartbeat") return;
-        if (event.event !== "webhook") return;
+        if (event.event === "connected") return;
 
-        const data = JSON.parse(event.data) as WebhookEvent;
+        if (event.event !== "event") return;
+
+        const data = JSON.parse(event.data) as SourceEventNotification | CatchUpEvent;
 
         if (opts.json) {
           console.log(JSON.stringify(data));
           return;
         }
 
-        const time = new Date(data.receivedAt).toLocaleTimeString();
-        const provider = colorProvider(data.provider);
+        // Catch-up events have lightweight shape
+        if ("catchUp" in data) {
+          const e = data;
+          const time = new Date(e.receivedAt).toLocaleTimeString();
+          const source = colorProvider(e.source);
+          console.log(
+            `  ${pc.dim(time)}  ${source}  ${pc.bold(e.eventType)}  ${pc.dim(`#${e.payloadId}`)}`
+          );
+          return;
+        }
+
+        // Real-time events have full SourceEvent
+        const e = data;
+        const time = new Date(e.sourceEvent.occurredAt).toLocaleTimeString();
+        const source = colorProvider(e.sourceEvent.source);
+        const actor = e.sourceEvent.actor?.name
+          ? pc.dim(` by ${e.sourceEvent.actor.name}`)
+          : "";
         console.log(
-          `  ${pc.dim(time)}  ${provider}  ${pc.bold(data.eventType)}  ${pc.dim(data.deliveryId.slice(0, 8))}`
+          `  ${pc.dim(time)}  ${source}  ${pc.bold(e.sourceEvent.sourceType)}  ${e.sourceEvent.title}${actor}`
         );
       },
     });
