@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 declare const __CLI_VERSION__: string;
 
 import { Command } from "commander";

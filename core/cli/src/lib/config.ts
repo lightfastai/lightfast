@@ -7,12 +7,12 @@ import {
 } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { env } from "../env.js";
 
 const CONFIG_DIR = join(homedir(), ".lightfast");
 const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
-export const getBaseUrl = () =>
-  process.env.LIGHTFAST_API_URL ?? "https://lightfast.ai";
+export const getBaseUrl = () => env.LIGHTFAST_API_URL;
 
 export interface LightfastConfig {
   orgId: string;
@@ -29,7 +29,7 @@ function ensureConfigDir(): void {
 
 export function getConfig(): LightfastConfig | null {
   // Env var override for CI/CD
-  const envKey = process.env.LIGHTFAST_API_KEY;
+  const envKey = env.LIGHTFAST_API_KEY;
   if (envKey) {
     return { orgId: "", orgSlug: "", orgName: "env", apiKey: envKey };
   }
