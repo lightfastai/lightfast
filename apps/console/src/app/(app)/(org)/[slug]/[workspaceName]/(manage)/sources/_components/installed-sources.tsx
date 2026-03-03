@@ -29,7 +29,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { Search, Circle, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
 import { ConfigTemplateDialog } from "~/components/config-template-dialog";
 import { useQueryStates, parseAsString, parseAsStringEnum } from "nuqs";
-import { EventSettings } from "./event-settings";
+import { SourceSettingsForm } from "./source-settings-form";
 
 interface InstalledSourcesProps {
 	clerkOrgSlug: string;
@@ -236,8 +236,6 @@ export function InstalledSources({
 												key={resource.id}
 												integration={resource}
 												provider={provider}
-												clerkOrgSlug={clerkOrgSlug}
-												workspaceName={workspaceName}
 											/>
 										))}
 									</div>
@@ -254,18 +252,15 @@ export function InstalledSources({
 function ResourceRow({
 	integration,
 	provider,
-	clerkOrgSlug,
-	workspaceName,
 }: {
 	integration: {
 		id: string;
 		type: string | null;
 		documentCount?: number | null;
 		metadata: unknown;
+		backfillConfig?: { depth: 7 | 30 | 90; entityTypes: string[] } | null;
 	};
 	provider: string;
-	clerkOrgSlug: string;
-	workspaceName: string;
 }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const metadata = integration.metadata as IntegrationMetadata | null | undefined;
@@ -357,12 +352,11 @@ function ResourceRow({
 						</div>
 					</div>
 				)}
-				<EventSettings
+				<SourceSettingsForm
 					integrationId={integration.id}
 					provider={provider as "github" | "vercel" | "linear" | "sentry"}
 					currentEvents={subscribedEvents}
-					clerkOrgSlug={clerkOrgSlug}
-					workspaceName={workspaceName}
+					backfillConfig={integration.backfillConfig ?? null}
 				/>
 			</CollapsibleContent>
 		</Collapsible>

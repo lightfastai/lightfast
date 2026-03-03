@@ -587,6 +587,7 @@ export const workspaceRouter = {
         });
 
         // Get all workspace sources (read provider from denormalized column)
+        // LEFT JOIN gwInstallations to include backfill config from the installation
         const sources = await db
           .select({
             id: workspaceIntegrations.id,
@@ -597,8 +598,13 @@ export const workspaceRouter = {
             lastSyncStatus: workspaceIntegrations.lastSyncStatus,
             documentCount: workspaceIntegrations.documentCount,
             sourceConfig: workspaceIntegrations.sourceConfig,
+            backfillConfig: gwInstallations.backfillConfig,
           })
           .from(workspaceIntegrations)
+          .leftJoin(
+            gwInstallations,
+            eq(workspaceIntegrations.installationId, gwInstallations.id),
+          )
           .where(and(
             eq(workspaceIntegrations.workspaceId, workspaceId),
             eq(workspaceIntegrations.isActive, true),
@@ -632,6 +638,7 @@ export const workspaceRouter = {
             lastSyncAt: s.lastSyncedAt, // Alias for UI compatibility
             lastSyncStatus: s.lastSyncStatus, // For UI compatibility
             metadata: s.sourceConfig,
+            backfillConfig: s.backfillConfig ?? null,
             resource: { // For backward compatibility
               id: s.id,
               resourceData: s.sourceConfig,
