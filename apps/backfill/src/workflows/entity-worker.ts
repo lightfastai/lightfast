@@ -1,11 +1,11 @@
 import type { BackfillConfig } from "@repo/console-backfill";
 import { getConnector } from "@repo/console-backfill";
+import { createGatewayClient, createRelayClient } from "@repo/gateway-service-clients";
 import { NonRetriableError } from "@vendor/inngest";
 
+import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
 import { GITHUB_RATE_LIMIT_BUDGET } from "../lib/constants.js";
-import { createGatewayClient } from "../lib/gateway-client.js";
-import { createRelayClient } from "../lib/relay-client.js";
 
 export const backfillEntityWorker = inngest.createFunction(
   {
@@ -47,7 +47,7 @@ export const backfillEntityWorker = inngest.createFunction(
       correlationId,
     } = event.data;
 
-    const gw = createGatewayClient({ correlationId });
+    const gw = createGatewayClient({ apiKey: env.GATEWAY_API_KEY, correlationId, requestSource: "backfill" });
 
     // ── Step 1: Self-fetch token (not passed via event — security + expiration) ──
     const { accessToken: initialToken } = await step.run("get-token", () =>
@@ -76,7 +76,7 @@ export const backfillEntityWorker = inngest.createFunction(
       },
     };
 
-    const relay = createRelayClient({ correlationId });
+    const relay = createRelayClient({ apiKey: env.GATEWAY_API_KEY, correlationId, requestSource: "backfill" });
 
     // ── Pagination loop ──
     let cursor: unknown = null;

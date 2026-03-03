@@ -1,9 +1,9 @@
 import { getConnector } from "@repo/console-backfill";
+import { createGatewayClient, createRelayClient } from "@repo/gateway-service-clients";
 import { NonRetriableError } from "@vendor/inngest";
 
+import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { createGatewayClient } from "../lib/gateway-client.js";
-import { createRelayClient } from "../lib/relay-client.js";
 import { backfillEntityWorker } from "./entity-worker.js";
 
 export const backfillOrchestrator = inngest.createFunction(
@@ -38,7 +38,7 @@ export const backfillOrchestrator = inngest.createFunction(
       );
     }
 
-    const gw = createGatewayClient({ correlationId });
+    const gw = createGatewayClient({ apiKey: env.GATEWAY_API_KEY, correlationId, requestSource: "backfill" });
 
     // ── Step 1: Fetch connection details from Gateway service ──
     const connection = await step.run("get-connection", async () => {
@@ -193,7 +193,7 @@ export const backfillOrchestrator = inngest.createFunction(
     // After all workers complete, drain them through the admin catchup endpoint
     // so Console receives historical events in chronological order as a single batch.
     if (holdForReplay && succeeded.length > 0) {
-      const relay = createRelayClient({ correlationId });
+      const relay = createRelayClient({ apiKey: env.GATEWAY_API_KEY, correlationId, requestSource: "backfill" });
       await step.run("replay-held-webhooks", async () => {
         const BATCH_SIZE = 200;
         const MAX_ITERATIONS = 500; // Safety cap: 500 * 200 = 100k webhooks max

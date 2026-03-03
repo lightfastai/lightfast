@@ -26,12 +26,8 @@ const mockGatewayClient = {
   getConnection: vi.fn(),
   getToken: vi.fn(),
 };
-vi.mock("../lib/gateway-client", () => ({
+vi.mock("@repo/gateway-service-clients", () => ({
   createGatewayClient: () => mockGatewayClient,
-}));
-
-vi.mock("../lib/related-projects", () => ({
-  gatewayUrl: "https://gateway.test/services",
 }));
 
 // ── Import after mocks ──

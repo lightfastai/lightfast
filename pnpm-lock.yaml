@@ -673,6 +673,9 @@ importers:
       '@repo/console-backfill':
         specifier: workspace:*
         version: link:../../packages/console-backfill
+      '@repo/gateway-service-clients':
+        specifier: workspace:*
+        version: link:../../packages/gateway-service-clients
       '@repo/gateway-types':
         specifier: workspace:*
         version: link:../../packages/gateway-types
@@ -1074,6 +1077,9 @@ importers:
       '@repo/console-workspace-cache':
         specifier: workspace:*
         version: link:../../packages/console-workspace-cache
+      '@repo/gateway-service-clients':
+        specifier: workspace:*
+        version: link:../../packages/gateway-service-clients
       '@repo/gateway-types':
         specifier: workspace:*
         version: link:../../packages/gateway-types
@@ -1445,6 +1451,9 @@ importers:
       '@repo/console-vercel':
         specifier: workspace:*
         version: link:../../packages/console-vercel
+      '@repo/gateway-service-clients':
+        specifier: workspace:*
+        version: link:../../packages/gateway-service-clients
       '@repo/gateway-types':
         specifier: workspace:*
         version: link:../../packages/gateway-types
@@ -3768,6 +3777,40 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
+
+  packages/gateway-service-clients:
+    dependencies:
+      '@repo/gateway-types':
+        specifier: workspace:*
+        version: link:../gateway-types
+      '@vendor/related-projects':
+        specifier: workspace:*
+        version: link:../../vendor/related-projects
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../internal/eslint
+      '@repo/prettier-config':
+        specifier: workspace:*
+        version: link:../../internal/prettier
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
+      eslint:
+        specifier: 'catalog:'
+        version: 9.38.0(jiti@2.6.1)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.6.2
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/gateway-types:
     dependencies:
@@ -27600,10 +27643,6 @@ snapshots:
     dependencies:
       acorn: 8.16.0
 
-  acorn-jsx@5.3.2(acorn@8.15.0):
-    dependencies:
-      acorn: 8.15.0
-
   acorn-jsx@5.3.2(acorn@8.16.0):
     dependencies:
       acorn: 8.16.0
@@ -29909,8 +29948,8 @@ snapshots:
 
   espree@10.4.0:
     dependencies:
-      acorn: 8.15.0
-      acorn-jsx: 5.3.2(acorn@8.15.0)
+      acorn: 8.16.0
+      acorn-jsx: 5.3.2(acorn@8.16.0)
       eslint-visitor-keys: 4.2.1
 
   esprima@4.0.1: {}

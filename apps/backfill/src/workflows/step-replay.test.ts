@@ -101,15 +101,13 @@ const mockGatewayClient = {
   getBackfillRuns: vi.fn().mockResolvedValue([]),
   upsertBackfillRun: vi.fn().mockResolvedValue(undefined),
 };
-vi.mock("../lib/gateway-client", () => ({
-  createGatewayClient: () => mockGatewayClient,
-}));
 
 const mockRelayClient = {
   dispatchWebhook: vi.fn().mockResolvedValue(undefined),
   replayCatchup: vi.fn().mockResolvedValue({ remaining: 0 }),
 };
-vi.mock("../lib/relay-client", () => ({
+vi.mock("@repo/gateway-service-clients", () => ({
+  createGatewayClient: () => mockGatewayClient,
   createRelayClient: () => mockRelayClient,
 }));
 
@@ -120,11 +118,6 @@ vi.mock("@repo/console-backfill", () => ({
 
 vi.mock("../env", () => ({
   env: { GATEWAY_API_KEY: "test-key" },
-}));
-
-vi.mock("../lib/related-projects", () => ({
-  gatewayUrl: "https://gateway.test/services",
-  relayUrl: "https://relay.test/api",
 }));
 
 // Force module load to capture handlers
