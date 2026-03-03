@@ -84,9 +84,8 @@ vi.mock("../lib/urls", () => ({
   gatewayBaseUrl: "https://gateway.test/services",
   consoleUrl: "https://console.test",
   relayBaseUrl: "https://relay.test/api",
-  backfillUrl: "https://backfill.test/api",
-  cancelBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
+
 
 // ── Import app after mocks ──
 

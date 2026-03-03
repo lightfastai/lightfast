@@ -5,9 +5,10 @@ import { and, eq } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { serve } from "@vendor/upstash-workflow/hono";
 import type { WorkflowContext } from "@vendor/upstash-workflow/types";
+import { backfillUrl } from "@repo/gateway-service-clients";
+import { getQStashClient } from "@vendor/qstash";
 import { env } from "../env.js";
 import { resourceKey } from "../lib/cache.js";
-import { cancelBackfillService } from "../lib/urls.js";
 import { getProvider } from "../providers/index.js";
 import type { ProviderName } from "../providers/types.js";
 
@@ -36,7 +37,16 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
     // Step 1: Cancel any running backfill (best-effort, before revoking token)
     await context.run("cancel-backfill", async () => {
       try {
-        await cancelBackfillService({ installationId });
+        const qstash = getQStashClient();
+        await qstash.publishJSON({
+          url: `${backfillUrl}/trigger/cancel`,
+          headers: {
+            "X-API-Key": env.GATEWAY_API_KEY,
+          },
+          body: { installationId },
+          retries: 3,
+          deduplicationId: `backfill-cancel:${installationId}`,
+        });
       } catch {
         // Best-effort — swallow errors so teardown proceeds
       }

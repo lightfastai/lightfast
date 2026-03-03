@@ -25,6 +25,7 @@
     "@repo/console-sentry": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@repo/console-vercel": "workspace:*",
+    "@repo/gateway-service-clients": "workspace:*",
     "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",

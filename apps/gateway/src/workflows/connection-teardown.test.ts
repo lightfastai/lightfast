@@ -17,7 +17,7 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 
 // ── Mock externals ──
 
-const mockCancelBackfill = vi.fn().mockResolvedValue(undefined);
+const mockPublishJSON = vi.fn().mockResolvedValue(undefined);
 const mockGetProvider = vi.fn();
 const mockDecrypt = vi.fn().mockResolvedValue("decrypted-token");
 const mockRedisDel = vi.fn().mockResolvedValue(1);
@@ -34,7 +34,7 @@ vi.mock("drizzle-orm", () => ({
 }));
 
 vi.mock("../env", () => ({
-  env: { ENCRYPTION_KEY: "a".repeat(64) },
+  env: { ENCRYPTION_KEY: "a".repeat(64), GATEWAY_API_KEY: "test-key" },
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -89,8 +89,12 @@ vi.mock("../lib/cache", () => ({
     `gw:resource:${provider}:${resourceId}`,
 }));
 
-vi.mock("../lib/urls", () => ({
-  cancelBackfillService: (...args: unknown[]) => mockCancelBackfill(...args),
+vi.mock("@repo/gateway-service-clients", () => ({
+  backfillUrl: "https://backfill.test/api",
+}));
+
+vi.mock("@vendor/qstash", () => ({
+  getQStashClient: () => ({ publishJSON: (...args: unknown[]) => mockPublishJSON(...args) }),
 }));
 
 vi.mock("../providers", () => ({
@@ -142,7 +146,7 @@ describe("connection-teardown workflow", () => {
     mockDbQuery.mockResolvedValue([]);
     mockDbUpdate.mockResolvedValue(undefined);
     mockTxSet.mockClear();
-    mockCancelBackfill.mockResolvedValue(undefined);
+    mockPublishJSON.mockResolvedValue(undefined);
     mockDecrypt.mockResolvedValue("decrypted-token");
     mockRedisDel.mockResolvedValue(1);
   });
@@ -174,9 +178,12 @@ describe("connection-teardown workflow", () => {
     await capturedHandler(ctx);
 
     expect(ctx.run).toHaveBeenCalledTimes(5);
-    expect(mockCancelBackfill).toHaveBeenCalledWith({
-      installationId: "inst-1",
-    });
+    expect(mockPublishJSON).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "https://backfill.test/api/trigger/cancel",
+        body: { installationId: "inst-1" },
+      }),
+    );
     expect(mockDecrypt).toHaveBeenCalled();
     expect(provider.revokeToken).toHaveBeenCalledWith("decrypted-token");
     expect(provider.deregisterWebhook).toHaveBeenCalledWith("inst-1", "wh-1");
@@ -188,7 +195,7 @@ describe("connection-teardown workflow", () => {
     expect(mockDbUpdate).toHaveBeenCalledTimes(2);
   });
 
-  it("calls cancelBackfillService in step 1", async () => {
+  it("publishes backfill cancel via QStash in step 1", async () => {
     mockGetProvider.mockReturnValue(makeProvider());
 
     const ctx = makeContext({
@@ -198,9 +205,14 @@ describe("connection-teardown workflow", () => {
     });
     await capturedHandler(ctx);
 
-    expect(mockCancelBackfill).toHaveBeenCalledWith({
-      installationId: "inst-1",
-    });
+    expect(mockPublishJSON).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "https://backfill.test/api/trigger/cancel",
+        body: { installationId: "inst-1" },
+        retries: 3,
+        deduplicationId: "backfill-cancel:inst-1",
+      }),
+    );
   });
 
   it("skips token revocation for github provider", async () => {

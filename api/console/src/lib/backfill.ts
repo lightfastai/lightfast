@@ -1,16 +1,7 @@
-import { withRelatedProject } from "@vendor/related-projects";
+import type { BackfillTriggerPayload } from "@repo/gateway-types";
+import { createRelayClient } from "@repo/gateway-service-clients";
+
 import { env } from "../env";
-
-const isDevelopment =
-  process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
-  process.env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
-
-const relayUrl = withRelatedProject({
-  projectName: "lightfast-relay",
-  defaultHost: isDevelopment
-    ? "http://localhost:4108"
-    : "https://relay.lightfast.ai",
-});
 
 /**
  * Notify the relay to trigger a historical backfill for a connection.
@@ -28,31 +19,10 @@ export async function notifyBackfill(params: {
   // TODO: Remove when backfill is ready for production
   return;
 
-  const correlationId = params.correlationId ?? crypto.randomUUID();
-  try {
-    const res = await fetch(`${relayUrl}/api/backfill`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": env.GATEWAY_API_KEY,
-        "X-Correlation-Id": correlationId,
-      },
-      body: JSON.stringify(params),
-      signal: AbortSignal.timeout(10_000),
-    });
+  const relay = createRelayClient({
+    apiKey: env.GATEWAY_API_KEY,
+    correlationId: params.correlationId ?? crypto.randomUUID(),
+  });
 
-    if (!res.ok) {
-      console.error("[api/console] backfill trigger failed", {
-        status: res.status,
-        installationId: params.installationId,
-        provider: params.provider,
-      });
-    }
-  } catch (err) {
-    console.error("[api/console] Failed to notify backfill", {
-      installationId: params.installationId,
-      provider: params.provider,
-      err,
-    });
-  }
+  await relay.triggerBackfill(params as BackfillTriggerPayload & { correlationId?: string });
 }

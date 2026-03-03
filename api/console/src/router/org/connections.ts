@@ -13,20 +13,7 @@ import { getInstallationToken } from "../../lib/token-vault";
 import { env } from "../../env";
 import yaml from "yaml";
 import type { VercelProjectsResponse } from "@repo/console-vercel/types";
-import { withRelatedProject } from "@vendor/related-projects";
-
-const isDevelopment =
-	process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
-	process.env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
-
-// NOTE: projectName "lightfast-gateway" must match the Vercel project name.
-// Ensure the Vercel project is renamed from "lightfast-connections" before rollout.
-const gatewayUrl = withRelatedProject({
-	projectName: "lightfast-gateway",
-	defaultHost: isDevelopment
-		? "http://localhost:4110"
-		: "https://gateway.lightfast.ai",
-});
+import { createGatewayClient } from "@repo/gateway-service-clients";
 
 /**
  * Connections Router
@@ -65,25 +52,15 @@ export const connectionsRouter = {
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			const res = await fetch(
-				`${gatewayUrl}/services/gateway/${input.provider}/authorize`,
-				{
-					headers: {
-						"X-Org-Id": ctx.auth.orgId,
-						"X-User-Id": ctx.auth.userId,
-						"X-API-Key": env.GATEWAY_API_KEY,
-						"X-Request-Source": "console-trpc",
-						"X-Correlation-Id": crypto.randomUUID(),
-					},
-				},
-			);
-			if (!res.ok) {
-				throw new TRPCError({
-					code: "BAD_REQUEST",
-					message: "Failed to get authorize URL",
-				});
-			}
-			return res.json() as Promise<{ url: string; state: string }>;
+			const gw = createGatewayClient({
+				apiKey: env.GATEWAY_API_KEY,
+				requestSource: "console-trpc",
+				correlationId: crypto.randomUUID(),
+			});
+			return gw.getAuthorizeUrl(input.provider, {
+				orgId: ctx.auth.orgId,
+				userId: ctx.auth.userId,
+			});
 		}),
 
 	/**
@@ -99,27 +76,16 @@ export const connectionsRouter = {
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			const res = await fetch(
-				`${gatewayUrl}/services/gateway/${input.provider}/authorize?redirect_to=inline`,
-				{
-					headers: {
-						"X-Org-Id": ctx.auth.orgId,
-						"X-User-Id": ctx.auth.userId,
-						"X-API-Key": env.GATEWAY_API_KEY,
-						"X-Request-Source": "console-trpc-cli",
-						"X-Correlation-Id": crypto.randomUUID(),
-					},
-				},
-			);
-
-			if (!res.ok) {
-				throw new TRPCError({
-					code: "BAD_REQUEST",
-					message: "Failed to get authorize URL",
-				});
-			}
-
-			return res.json() as Promise<{ url: string; state: string }>;
+			const gw = createGatewayClient({
+				apiKey: env.GATEWAY_API_KEY,
+				requestSource: "console-trpc-cli",
+				correlationId: crypto.randomUUID(),
+			});
+			return gw.getAuthorizeUrl(input.provider, {
+				orgId: ctx.auth.orgId,
+				userId: ctx.auth.userId,
+				redirectTo: "inline",
+			});
 		}),
 
 	/**
