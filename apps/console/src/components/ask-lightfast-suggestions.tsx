@@ -16,7 +16,7 @@ const categories: PromptCategory[] = [
   {
     id: "explore",
     label: "Explore",
-    icon: <Search className="w-4 h-4" />,
+    icon: <Search className="w-3 h-3" />,
     prompts: [
       "What are the main topics in this workspace?",
       "Summarize the most recent documents",
@@ -27,7 +27,7 @@ const categories: PromptCategory[] = [
   {
     id: "activity",
     label: "Activity",
-    icon: <Activity className="w-4 h-4" />,
+    icon: <Activity className="w-3 h-3" />,
     prompts: [
       "What changed in the last 24 hours?",
       "Show me recent pull requests and their status",
@@ -38,7 +38,7 @@ const categories: PromptCategory[] = [
   {
     id: "connections",
     label: "Connections",
-    icon: <GitBranch className="w-4 h-4" />,
+    icon: <GitBranch className="w-3 h-3" />,
     prompts: [
       "How are the recent changes connected?",
       "What dependencies exist between components?",
@@ -91,18 +91,18 @@ export function AskLightfastSuggestions({
               key={category.id}
               variant="outline"
               size="lg"
-              className="dark:bg-card dark:border-border/70 active:bg-transparent rounded-sm hover:bg-transparent dark:hover:bg-transparent hover:border-border/50"
+              className="dark:bg-card/40 dark:border-border/50 dark:backdrop-blur-md active:bg-transparent rounded-md hover:bg-transparent dark:hover:bg-transparent hover:border-border/50"
               onClick={() => handleCategoryClick(category.id)}
             >
               {category.icon}
-              <span>{category.label}</span>
+              <span className="text-sm">{category.label}</span>
             </Button>
           ))}
         </div>
       ) : (
-        <div className="border border-border/50 p-2 rounded-sm bg-background backdrop-blur-2xl shadow-sm">
+        <div className="border border-border/50 p-2 rounded-md bg-card/40 backdrop-blur-md shadow-sm">
           <div className="flex items-center justify-between px-2 pb-2">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground px-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground px-2">
               {selectedCategoryData?.icon}
               <span>{selectedCategoryData?.label}</span>
             </div>
@@ -135,7 +135,7 @@ export function AskLightfastSuggestions({
                   onClick={() => handlePromptClick(prompt)}
                   className="w-full text-left justify-start whitespace-normal hover:bg-transparent dark:hover:bg-muted/30"
                 >
-                  <span className="text-xs font-base">{prompt}</span>
+                  <span className="text-sm font-base">{prompt}</span>
                 </Button>
               </div>
             ))}
