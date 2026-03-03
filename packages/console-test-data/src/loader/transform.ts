@@ -4,8 +4,8 @@
  * Routes raw webhook payloads through production transformers.
  */
 
-import type { SourceEvent, TransformContext } from "@repo/console-types";
-import type { SourceType } from "@repo/console-validation";
+import type { PostTransformEvent, SourceType } from "@repo/console-validation";
+import type { TransformContext } from "@repo/console-webhooks";
 import {
   transformGitHubPush,
   transformGitHubPullRequest,
@@ -15,7 +15,7 @@ import {
   transformVercelDeployment,
   sentryTransformers,
   linearTransformers,
-} from "@repo/console-webhooks/transformers";
+} from "@repo/console-webhooks";
 import type {
   GitHubWebhookEventType,
   PushEvent,
@@ -34,8 +34,6 @@ import type {
   LinearProjectWebhook,
   LinearCycleWebhook,
   LinearProjectUpdateWebhook,
-} from "@repo/console-webhooks/transformers";
-import type {
   VercelWebhookPayload,
   VercelWebhookEventType,
 } from "@repo/console-webhooks";
@@ -78,12 +76,12 @@ const generateDeliveryId = (): string => {
 };
 
 /**
- * Transform a raw webhook payload to SourceEvent using production transformers
+ * Transform a raw webhook payload to PostTransformEvent using production transformers
  */
 export function transformWebhook(
   webhook: WebhookPayload,
   index: number
-): SourceEvent {
+): PostTransformEvent {
   const context: TransformContext = {
     deliveryId: generateDeliveryId(),
     receivedAt: new Date(),
@@ -121,8 +119,8 @@ function transformGitHubWebhook(
   webhook: GitHubWebhookPayload,
   context: TransformContext,
   index: number
-): SourceEvent {
-  let event: SourceEvent;
+): PostTransformEvent {
+  let event: PostTransformEvent;
 
   switch (webhook.eventType) {
     case "push":
@@ -166,7 +164,7 @@ function transformVercelWebhook(
   webhook: VercelWebhookPayloadWrapper,
   context: TransformContext,
   index: number
-): SourceEvent {
+): PostTransformEvent {
   const event = transformVercelDeployment(
     webhook.payload,
     webhook.eventType,
@@ -189,7 +187,7 @@ function transformSentryWebhookPayload(
   webhook: SentryWebhookPayload,
   context: TransformContext,
   index: number
-): SourceEvent {
+): PostTransformEvent {
   const transformer = sentryTransformers[webhook.eventType];
   const event = transformer(webhook.payload, context);
 
@@ -209,7 +207,7 @@ function transformLinearWebhookPayload(
   webhook: LinearWebhookPayload,
   context: TransformContext,
   index: number
-): SourceEvent {
+): PostTransformEvent {
   const transformer = linearTransformers[webhook.eventType];
   const event = transformer(webhook.payload, context);
 

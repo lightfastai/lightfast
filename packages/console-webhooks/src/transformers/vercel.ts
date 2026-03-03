@@ -1,10 +1,9 @@
 import type {
-  SourceEvent,
-  SourceReference,
-  TransformContext,
-} from "@repo/console-types";
-import { toExternalVercelEventType } from "@repo/console-types";
-import { validateSourceEvent } from "../validation.js";
+  PostTransformEvent,
+  PostTransformReference,
+} from "@repo/console-validation";
+import type { TransformContext } from "../transform-context.js";
+import { validatePostTransformEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 /**
  * Vercel deployment event types
@@ -64,13 +63,13 @@ export interface VercelWebhookPayload {
 }
 
 /**
- * Transform Vercel deployment event to SourceEvent
+ * Transform Vercel deployment event to PostTransformEvent
  */
 export function transformVercelDeployment(
   payload: VercelWebhookPayload,
   eventType: VercelWebhookEventType,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const deployment = payload.payload.deployment;
   const project = payload.payload.project;
   const team = payload.payload.team;
@@ -81,7 +80,7 @@ export function transformVercelDeployment(
 
   const gitMeta = deployment.meta;
 
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   // Add commit reference
   if (gitMeta?.githubCommitSha) {
@@ -161,11 +160,9 @@ export function transformVercelDeployment(
     .filter(Boolean)
     .join("\n");
 
-  const sourceType = toExternalVercelEventType(eventType);
-
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "vercel",
-    sourceType: sourceType ?? eventType,
+    sourceType: eventType,
     sourceId: `deployment:${deployment.id}`,
     title: sanitizeTitle(`[${actionTitle}] ${project.name} from ${branch}`),
     body: sanitizeBody(rawBody),
@@ -200,9 +197,9 @@ export function transformVercelDeployment(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
-    console.error("[Transformer:transformVercelDeployment] Invalid SourceEvent:", {
+    console.error("[Transformer:transformVercelDeployment] Invalid PostTransformEvent:", {
       sourceId: event.sourceId,
       sourceType: event.sourceType,
       errors: validation.errors,

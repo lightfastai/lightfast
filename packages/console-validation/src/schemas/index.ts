@@ -11,7 +11,7 @@ export * from "./store";
 export * from "./job";
 export * from "./sources";
 export * from "./source-metadata";
-export * from "./source-event";
+export * from "./post-transform-event";
 export * from "./workflow-io";
 export * from "./ingestion";
 export * from "./metrics";

@@ -2,7 +2,7 @@
  * Vercel API → webhook shape adapters
  *
  * Wrap Vercel deployment list API responses into webhook-compatible envelopes
- * so the existing transformer produces identical SourceEvent output.
+ * so the existing transformer produces identical PostTransformEvent output.
  */
 import type {
   VercelWebhookPayload,

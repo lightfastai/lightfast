@@ -1,4 +1,4 @@
-import type { SourceEvent } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-validation";
 import { getEventWeight } from "@repo/console-types";
 
 /**
@@ -75,13 +75,12 @@ const SIGNIFICANCE_SIGNALS: { pattern: RegExp; weight: number; factor: string }[
  * 4. Add bonus for substantial content
  * 5. Clamp to 0-100 range
  */
-export function scoreSignificance(sourceEvent: SourceEvent): SignificanceResult {
+export function scoreSignificance(sourceEvent: PostTransformEvent): SignificanceResult {
   const factors: string[] = [];
 
-  // 1. Event type base weight (from centralized INTERNAL_EVENT_TYPES)
-  const eventType = sourceEvent.sourceType;
-  let score = getEventWeight(eventType);
-  factors.push(`base:${eventType}`);
+  // 1. Event type base weight (from EVENT_REGISTRY)
+  let score = getEventWeight(sourceEvent.source, sourceEvent.sourceType);
+  factors.push(`base:${sourceEvent.source}:${sourceEvent.sourceType}`);
 
   // 2. Content signal matching
   const textToAnalyze = `${sourceEvent.title} ${sourceEvent.body}`.toLowerCase();

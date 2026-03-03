@@ -1,5 +1,6 @@
 import type { WebhookEnvelope } from "@repo/gateway-types";
-import type { TransformContext, SourceEvent } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-validation";
+import type { TransformContext } from "@repo/console-webhooks";
 import {
   transformGitHubPush,
   transformGitHubPullRequest,
@@ -24,7 +25,7 @@ import type { PushEvent, PullRequestEvent, IssuesEvent, ReleaseEvent, Discussion
  *  1. The relay verifies HMAC signatures (webhook authenticity) before accepting payloads
  *  2. The relay runs `provider.parsePayload()` (Zod) to validate structure — invalid
  *     payloads are rejected with 400 and never forwarded to Console
- *  3. Each transformer validates its output via `validateSourceEvent()` (Zod safeParse)
+ *  3. Each transformer validates its output via `validatePostTransformEvent()` (Zod safeParse)
  *
  * Full runtime validation of every provider event shape (PushEvent, PullRequestEvent, etc.)
  * is intentionally omitted — these types mirror upstream provider API contracts which are
@@ -34,7 +35,7 @@ function transformGitHubEvent(
   eventType: string,
   payload: unknown,
   context: TransformContext,
-): SourceEvent | null {
+): PostTransformEvent | null {
   switch (eventType) {
     case "push":
       return transformGitHubPush(payload as PushEvent, context);
@@ -60,7 +61,7 @@ function transformLinearEvent(
   eventType: string,
   payload: unknown,
   context: TransformContext,
-): SourceEvent | null {
+): PostTransformEvent | null {
   // Extract entity type from "Type:action" format
   const entityType = eventType.split(":")[0] ?? "";
   if (!(entityType in linearTransformers)) return null;
@@ -77,7 +78,7 @@ function transformSentryEvent(
   eventType: string,
   payload: unknown,
   context: TransformContext,
-): SourceEvent | null {
+): PostTransformEvent | null {
   // For issue events, the payload action determines the sub-type
   if (eventType === "issue") {
     const p = payload as { action?: string };
@@ -101,7 +102,7 @@ function transformVercelEvent(
   eventType: string,
   payload: unknown,
   context: TransformContext,
-): SourceEvent | null {
+): PostTransformEvent | null {
   if (!eventType.startsWith("deployment")) return null;
   return transformVercelDeployment(
     payload as VercelWebhookPayload,
@@ -111,13 +112,13 @@ function transformVercelEvent(
 }
 
 /**
- * Transform a webhook envelope into a SourceEvent.
+ * Transform a webhook envelope into a PostTransformEvent.
  * Routes to the appropriate per-provider transformer.
  * Returns null for unsupported event types.
  */
 export function transformEnvelope(
   envelope: WebhookEnvelope,
-): SourceEvent | null {
+): PostTransformEvent | null {
   const { provider, eventType, payload, deliveryId, receivedAt } = envelope;
   const context: TransformContext = {
     deliveryId,

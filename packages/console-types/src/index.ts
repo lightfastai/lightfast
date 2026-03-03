@@ -132,57 +132,23 @@ export type {
   WorkspaceSettings,
 } from "./workspace";
 
-// Neural memory types (direct to leaf modules)
-export type {
-  SourceEvent,
-  SourceActor,
-  SourceReference,
-  TransformContext,
-} from "./neural/source-event";
-
+// Entity types
 export type {
   ExtractedEntity,
   EntitySearchResult,
   LLMExtractedEntity,
   LLMEntityExtractionResponse,
-} from "./neural/entity";
+} from "./entity";
 
-// Integration types (direct to leaf module)
+// Provider registry
 export {
+  PROVIDER_REGISTRY,
   EVENT_CATEGORIES,
   EVENT_REGISTRY,
-  ALL_INTERNAL_EVENT_TYPES,
-  getEventConfig,
   getEventWeight,
-  isInternalEventType,
-  GITHUB_TO_INTERNAL,
-  VERCEL_TO_INTERNAL,
-  SENTRY_TO_INTERNAL,
-  LINEAR_TO_INTERNAL,
-  INTERNAL_TO_GITHUB,
-  toInternalGitHubEvent,
-  toInternalVercelEvent,
-  toInternalSentryEvent,
-  toInternalLinearEvent,
-  toExternalGitHubEvent,
-  toExternalGitHubEventType,
-  toExternalVercelEventType,
-  toExternalSentryEventType,
-  toExternalLinearEventType,
-  GITHUB_EVENTS,
-  VERCEL_EVENTS,
-  SENTRY_EVENTS,
-  LINEAR_EVENTS,
   ALL_GITHUB_EVENTS,
   ALL_VERCEL_EVENTS,
   ALL_SENTRY_EVENTS,
   ALL_LINEAR_EVENTS,
   WEBHOOK_EVENT_TYPES,
-} from "./integrations/event-types";
-export type {
-  InternalEventType,
-  GitHubEvent,
-  VercelEvent,
-  SentryEvent,
-  LinearEvent,
-} from "./integrations/event-types";
+} from "./provider";

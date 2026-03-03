@@ -17,7 +17,7 @@ import {
   ALL_VERCEL_EVENTS,
   ALL_SENTRY_EVENTS,
   ALL_LINEAR_EVENTS,
-} from "@repo/console-types/integrations/events";
+} from "@repo/console-types/provider";
 
 // Configuration from seed-integrations.ts
 // All sources use category-level keys with normalization in getBaseEventType()

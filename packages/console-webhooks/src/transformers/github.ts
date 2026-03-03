@@ -1,9 +1,8 @@
 import type {
-  SourceEvent,
-  SourceReference,
-  TransformContext,
-} from "@repo/console-types";
-import { toExternalGitHubEventType } from "@repo/console-types";
+  PostTransformEvent,
+  PostTransformReference,
+} from "@repo/console-validation";
+import type { TransformContext } from "../transform-context.js";
 import type {
   PushEvent,
   PullRequestEvent,
@@ -12,19 +11,19 @@ import type {
   DiscussionEvent,
 } from "@octokit/webhooks-types";
 export type { PushEvent, PullRequestEvent, IssuesEvent, ReleaseEvent, DiscussionEvent };
-import { validateSourceEvent } from "../validation.js";
+import { validatePostTransformEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
 /**
- * Log validation errors for SourceEvent
+ * Log validation errors for PostTransformEvent
  * Validation is for monitoring - events are still returned to avoid breaking existing flows
  */
 function logValidationErrors(
   transformerName: string,
-  event: SourceEvent,
+  event: PostTransformEvent,
   errors: string[]
 ): void {
-  console.error(`[Transformer:${transformerName}] Invalid SourceEvent:`, {
+  console.error(`[Transformer:${transformerName}] Invalid PostTransformEvent:`, {
     sourceId: event.sourceId,
     sourceType: event.sourceType,
     errors,
@@ -32,13 +31,13 @@ function logValidationErrors(
 }
 
 /**
- * Transform GitHub push event to SourceEvent
+ * Transform GitHub push event to PostTransformEvent
  */
 export function transformGitHubPush(
   payload: PushEvent,
   context: TransformContext
-): SourceEvent {
-  const refs: SourceReference[] = [];
+): PostTransformEvent {
+  const refs: PostTransformReference[] = [];
   const branch = payload.ref.replace("refs/heads/", "");
 
   // Add commit references
@@ -68,9 +67,9 @@ export function transformGitHubPush(
   // Structured fields stored in metadata
   const rawBody = payload.head_commit?.message || "";
 
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "github",
-    sourceType: toExternalGitHubEventType("push") ?? "push",
+    sourceType: "push",
     sourceId: `push:${payload.repository.full_name}:${payload.after}`,
     title: sanitizeTitle(`[Push] ${rawTitle}`),
     body: sanitizeBody(rawBody),
@@ -101,7 +100,7 @@ export function transformGitHubPush(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformGitHubPush", event, validation.errors);
   }
@@ -110,14 +109,14 @@ export function transformGitHubPush(
 }
 
 /**
- * Transform GitHub pull request event to SourceEvent
+ * Transform GitHub pull request event to PostTransformEvent
  */
 export function transformGitHubPullRequest(
   payload: PullRequestEvent,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const pr = payload.pull_request;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   refs.push({
     type: "pr",
@@ -205,11 +204,9 @@ export function transformGitHubPullRequest(
   // Determine effective action (merged is a special case of closed)
   const effectiveAction =
     payload.action === "closed" && pr.merged ? "merged" : payload.action;
-  const sourceType = toExternalGitHubEventType("pull_request", effectiveAction);
-
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "github",
-    sourceType: sourceType ?? `pull-request.${effectiveAction}`,
+    sourceType: `pull-request.${effectiveAction}`,
     sourceId: `pr:${payload.repository.full_name}#${pr.number}:${effectiveAction}`,
     title: sanitizeTitle(`[${actionTitle}] ${pr.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
@@ -243,7 +240,7 @@ export function transformGitHubPullRequest(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformGitHubPullRequest", event, validation.errors);
   }
@@ -252,14 +249,14 @@ export function transformGitHubPullRequest(
 }
 
 /**
- * Transform GitHub issues event to SourceEvent
+ * Transform GitHub issues event to PostTransformEvent
  */
 export function transformGitHubIssue(
   payload: IssuesEvent,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const issue = payload.issue;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   refs.push({
     type: "issue",
@@ -297,11 +294,9 @@ export function transformGitHubIssue(
   // SEMANTIC CONTENT ONLY (for embedding)
   const rawBody = [issue.title, issue.body || ""].join("\n");
 
-  const sourceType = toExternalGitHubEventType("issues", payload.action);
-
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "github",
-    sourceType: sourceType ?? `issue.${payload.action}`,
+    sourceType: `issue.${payload.action}`,
     sourceId: `issue:${payload.repository.full_name}#${issue.number}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${issue.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
@@ -327,7 +322,7 @@ export function transformGitHubIssue(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformGitHubIssue", event, validation.errors);
   }
@@ -336,14 +331,14 @@ export function transformGitHubIssue(
 }
 
 /**
- * Transform GitHub release event to SourceEvent
+ * Transform GitHub release event to PostTransformEvent
  */
 export function transformGitHubRelease(
   payload: ReleaseEvent,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const release = payload.release;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   refs.push({
     type: "branch",
@@ -362,11 +357,9 @@ export function transformGitHubRelease(
   // SEMANTIC CONTENT ONLY (for embedding)
   const rawBody = release.body || "";
 
-  const sourceType = toExternalGitHubEventType("release", payload.action);
-
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "github",
-    sourceType: sourceType ?? `release.${payload.action}`,
+    sourceType: `release.${payload.action}`,
     sourceId: `release:${payload.repository.full_name}:${release.tag_name}`,
     title: sanitizeTitle(`[${actionTitle}] ${release.name || release.tag_name}`),
     body: sanitizeBody(rawBody),
@@ -394,7 +387,7 @@ export function transformGitHubRelease(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformGitHubRelease", event, validation.errors);
   }
@@ -403,14 +396,14 @@ export function transformGitHubRelease(
 }
 
 /**
- * Transform GitHub discussion event to SourceEvent
+ * Transform GitHub discussion event to PostTransformEvent
  */
 export function transformGitHubDiscussion(
   payload: DiscussionEvent,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const discussion = payload.discussion;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   // Add category
   if (discussion.category) {
@@ -432,11 +425,9 @@ export function transformGitHubDiscussion(
   // SEMANTIC CONTENT ONLY (for embedding)
   const rawBody = [discussion.title, discussion.body || ""].join("\n");
 
-  const sourceType = toExternalGitHubEventType("discussion", payload.action);
-
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "github",
-    sourceType: sourceType ?? `discussion.${payload.action}`,
+    sourceType: `discussion.${payload.action}`,
     sourceId: `discussion:${payload.repository.full_name}#${discussion.number}`,
     title: sanitizeTitle(`[${actionTitle}] ${discussion.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
@@ -463,7 +454,7 @@ export function transformGitHubDiscussion(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformGitHubDiscussion", event, validation.errors);
   }

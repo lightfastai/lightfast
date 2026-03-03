@@ -1,5 +1,5 @@
 /**
- * Unified Event Registry — Single Source of Truth
+ * Provider Registry — Single Source of Truth
  *
  * HOW TO ADD A NEW WEBHOOK EVENT TYPE:
  *
@@ -12,7 +12,7 @@
  *      category: "categoryKey",
  *    }
  *
- * 2. If this is a new category, add it to EVENT_CATEGORIES[source]:
+ * 2. If this is a new category, add it to PROVIDER_REGISTRY[source].events:
  *    categoryKey: {
  *      label: "Category Name",
  *      description: "What this category captures",
@@ -21,7 +21,7 @@
  *
  * 3. Write the transformer in console-webhooks/src/transformers/{source}.ts
  *
- * That's it. Mapping tables, type unions, and UI exports are auto-derived.
+ * That's it. UI exports and webhook dispatch types are auto-derived.
  *
  * Internal format: {source}:{entity}.{action} with kebab-case
  * External formats vary by provider (see externalKeys on each entry).
@@ -58,119 +58,151 @@ interface CategoryDef {
   type: "observation" | "sync+observation";
 }
 
-// ─── Category Definitions (UI subscription metadata) ──────────────────────────
+interface ProviderDef {
+  name: string;
+  description: string;
+  events: Record<string, CategoryDef>;
+}
 
-export const EVENT_CATEGORIES = {
+// ─── Provider Registry ────────────────────────────────────────────────────────
+
+export const PROVIDER_REGISTRY = {
   github: {
-    push: {
-      label: "Push",
-      description: "Sync files and capture observations when code is pushed",
-      type: "sync+observation",
-    },
-    pull_request: {
-      label: "Pull Requests",
-      description: "Capture PR opens, merges, closes, and reopens",
-      type: "observation",
-    },
-    issues: {
-      label: "Issues",
-      description: "Capture issue opens, closes, and reopens",
-      type: "observation",
-    },
-    release: {
-      label: "Releases",
-      description: "Capture published releases",
-      type: "observation",
-    },
-    discussion: {
-      label: "Discussions",
-      description: "Capture discussion threads and answers",
-      type: "observation",
+    name: "GitHub",
+    description: "Connect your GitHub repositories",
+    events: {
+      push: {
+        label: "Push",
+        description: "Sync files and capture observations when code is pushed",
+        type: "sync+observation",
+      },
+      pull_request: {
+        label: "Pull Requests",
+        description: "Capture PR opens, merges, closes, and reopens",
+        type: "observation",
+      },
+      issues: {
+        label: "Issues",
+        description: "Capture issue opens, closes, and reopens",
+        type: "observation",
+      },
+      release: {
+        label: "Releases",
+        description: "Capture published releases",
+        type: "observation",
+      },
+      discussion: {
+        label: "Discussions",
+        description: "Capture discussion threads and answers",
+        type: "observation",
+      },
     },
   },
   vercel: {
-    "deployment.created": {
-      label: "Deployment Started",
-      description: "Capture when new deployments begin",
-      type: "observation",
-    },
-    "deployment.succeeded": {
-      label: "Deployment Succeeded",
-      description: "Capture successful deployment completions",
-      type: "observation",
-    },
-    "deployment.ready": {
-      label: "Deployment Ready",
-      description: "Capture when deployments are live",
-      type: "observation",
-    },
-    "deployment.error": {
-      label: "Deployment Failed",
-      description: "Capture deployment failures",
-      type: "observation",
-    },
-    "deployment.canceled": {
-      label: "Deployment Canceled",
-      description: "Capture canceled deployments",
-      type: "observation",
-    },
-    "deployment.check-rerequested": {
-      label: "Check Re-requested",
-      description: "Capture deployment check re-request events",
-      type: "observation",
+    name: "Vercel",
+    description: "Connect your Vercel projects",
+    events: {
+      "deployment.created": {
+        label: "Deployment Started",
+        description: "Capture when new deployments begin",
+        type: "observation",
+      },
+      "deployment.succeeded": {
+        label: "Deployment Succeeded",
+        description: "Capture successful deployment completions",
+        type: "observation",
+      },
+      "deployment.ready": {
+        label: "Deployment Ready",
+        description: "Capture when deployments are live",
+        type: "observation",
+      },
+      "deployment.error": {
+        label: "Deployment Failed",
+        description: "Capture deployment failures",
+        type: "observation",
+      },
+      "deployment.canceled": {
+        label: "Deployment Canceled",
+        description: "Capture canceled deployments",
+        type: "observation",
+      },
+      "deployment.check-rerequested": {
+        label: "Check Re-requested",
+        description: "Capture deployment check re-request events",
+        type: "observation",
+      },
     },
   },
   sentry: {
-    issue: {
-      label: "Issues",
-      description:
-        "Capture issue state changes (created, resolved, assigned, ignored)",
-      type: "observation",
-    },
-    error: {
-      label: "Errors",
-      description: "Capture individual error events",
-      type: "observation",
-    },
-    event_alert: {
-      label: "Event Alerts",
-      description: "Capture event alert rule triggers",
-      type: "observation",
-    },
-    metric_alert: {
-      label: "Metric Alerts",
-      description: "Capture metric alert triggers and resolutions",
-      type: "observation",
+    name: "Sentry",
+    description: "Connect your Sentry projects",
+    events: {
+      issue: {
+        label: "Issues",
+        description:
+          "Capture issue state changes (created, resolved, assigned, ignored)",
+        type: "observation",
+      },
+      error: {
+        label: "Errors",
+        description: "Capture individual error events",
+        type: "observation",
+      },
+      event_alert: {
+        label: "Event Alerts",
+        description: "Capture event alert rule triggers",
+        type: "observation",
+      },
+      metric_alert: {
+        label: "Metric Alerts",
+        description: "Capture metric alert triggers and resolutions",
+        type: "observation",
+      },
     },
   },
   linear: {
-    Issue: {
-      label: "Issues",
-      description: "Capture issue creates, updates, and deletes",
-      type: "observation",
-    },
-    Comment: {
-      label: "Comments",
-      description: "Capture comment activity on issues",
-      type: "observation",
-    },
-    Project: {
-      label: "Projects",
-      description: "Capture project lifecycle events",
-      type: "observation",
-    },
-    Cycle: {
-      label: "Cycles",
-      description: "Capture sprint/cycle lifecycle events",
-      type: "observation",
-    },
-    ProjectUpdate: {
-      label: "Project Updates",
-      description: "Capture project status updates",
-      type: "observation",
+    name: "Linear",
+    description: "Connect your Linear workspace",
+    events: {
+      Issue: {
+        label: "Issues",
+        description: "Capture issue creates, updates, and deletes",
+        type: "observation",
+      },
+      Comment: {
+        label: "Comments",
+        description: "Capture comment activity on issues",
+        type: "observation",
+      },
+      Project: {
+        label: "Projects",
+        description: "Capture project lifecycle events",
+        type: "observation",
+      },
+      Cycle: {
+        label: "Cycles",
+        description: "Capture sprint/cycle lifecycle events",
+        type: "observation",
+      },
+      ProjectUpdate: {
+        label: "Project Updates",
+        description: "Capture project status updates",
+        type: "observation",
+      },
     },
   },
-} as const satisfies Record<SourceType, Record<string, CategoryDef>>;
+} as const satisfies Record<SourceType, ProviderDef>;
+
+/** Backwards-compatible alias: per-provider event category definitions */
+export const EVENT_CATEGORIES: {
+  [K in SourceType]: (typeof PROVIDER_REGISTRY)[K]["events"];
+} = {
+  github: PROVIDER_REGISTRY.github.events,
+  vercel: PROVIDER_REGISTRY.vercel.events,
+  sentry: PROVIDER_REGISTRY.sentry.events,
+  linear: PROVIDER_REGISTRY.linear.events,
+};
 
 // ─── Event Registry ───────────────────────────────────────────────────────────
 
@@ -471,202 +503,45 @@ export const EVENT_REGISTRY = {
   },
 } as const satisfies Record<string, EventDef>;
 
-// ─── Derived Types ────────────────────────────────────────────────────────────
-
-/** Union of all internal event type keys */
-export type InternalEventType = keyof typeof EVENT_REGISTRY;
-
-/** All internal event types as array */
-export const ALL_INTERNAL_EVENT_TYPES = Object.keys(
-  EVENT_REGISTRY,
-) as InternalEventType[];
-
 // ─── Lookup Functions ─────────────────────────────────────────────────────────
 
-/** Get full event config by internal type */
-export function getEventConfig(
-  eventType: InternalEventType,
-): (typeof EVENT_REGISTRY)[InternalEventType] {
-  return EVENT_REGISTRY[eventType];
-}
-
-/** Get base weight for scoring. Returns 35 for unknown events. */
-export function getEventWeight(eventType: string): number {
-  if (!isInternalEventType(eventType)) return 35;
-  return EVENT_REGISTRY[eventType].weight;
-}
-
-/** Type guard: check if string is valid internal event type */
-export function isInternalEventType(
-  value: string,
-): value is InternalEventType {
-  return value in EVENT_REGISTRY;
-}
-
-// ─── Auto-Derived Mapping Tables ──────────────────────────────────────────────
-
-function buildExternalToInternalMap(
-  source: SourceType,
-): Record<string, InternalEventType> {
-  const map: Record<string, InternalEventType> = {};
-  for (const [internalKey, def] of Object.entries(EVENT_REGISTRY)) {
-    if (def.source === source) {
-      for (const extKey of def.externalKeys) {
-        map[extKey] = internalKey as InternalEventType;
-      }
-    }
-  }
-  return map;
-}
-
-export const GITHUB_TO_INTERNAL = buildExternalToInternalMap("github");
-export const VERCEL_TO_INTERNAL = buildExternalToInternalMap("vercel");
-export const SENTRY_TO_INTERNAL = buildExternalToInternalMap("sentry");
-export const LINEAR_TO_INTERNAL = buildExternalToInternalMap("linear");
-
-export const INTERNAL_TO_GITHUB: Record<string, string> = Object.fromEntries(
-  Object.entries(GITHUB_TO_INTERNAL).map(([ext, int]) => [int, ext]),
-);
-
-// ─── Auto-Derived Mapping Functions ───────────────────────────────────────────
-
 /**
- * GitHub: external event format -> internal event type.
- * @param event - GitHub event name (e.g., "pull_request")
- * @param action - GitHub action (e.g., "opened")
+ * Get base weight for scoring. Returns 35 for unknown events.
+ * Constructs internal key "{source}:{sourceType}" from PostTransformEvent fields.
  */
-export function toInternalGitHubEvent(
-  event: string,
-  action?: string,
-): InternalEventType | undefined {
-  const key = action ? `${event}_${action}` : event;
-  return GITHUB_TO_INTERNAL[key];
+export function getEventWeight(source: string, sourceType: string): number {
+  const key = `${source}:${sourceType}`;
+  if (!(key in EVENT_REGISTRY)) return 35;
+  return EVENT_REGISTRY[key as keyof typeof EVENT_REGISTRY].weight;
 }
 
-/** Vercel: event type string -> internal event type */
-export function toInternalVercelEvent(
-  eventType: string,
-): InternalEventType | undefined {
-  return VERCEL_TO_INTERNAL[eventType];
-}
+// ─── Derived UI Exports ───────────────────────────────────────────────────────
 
-/** Sentry: event type string -> internal event type */
-export function toInternalSentryEvent(
-  eventType: string,
-): InternalEventType | undefined {
-  return SENTRY_TO_INTERNAL[eventType];
-}
+type GitHubEventKey = keyof (typeof PROVIDER_REGISTRY)["github"]["events"];
+type VercelEventKey = keyof (typeof PROVIDER_REGISTRY)["vercel"]["events"];
+type SentryEventKey = keyof (typeof PROVIDER_REGISTRY)["sentry"]["events"];
+type LinearEventKey = keyof (typeof PROVIDER_REGISTRY)["linear"]["events"];
 
-/** Linear: webhook type + action -> internal event type */
-export function toInternalLinearEvent(
-  type: string,
-  action: string,
-): InternalEventType | undefined {
-  return LINEAR_TO_INTERNAL[`${type}:${action}`];
-}
-
-/** Reverse: internal event type -> external GitHub format */
-export function toExternalGitHubEvent(
-  internalType: InternalEventType,
-): string | undefined {
-  return INTERNAL_TO_GITHUB[internalType];
-}
-
-// ─── Helper Function ──────────────────────────────────────────────────────────
-
-/**
- * Strip source prefix from internal event type.
- * Converts "github:pull-request.opened" → "pull-request.opened"
- * @param internalType - Internal event type with source prefix
- */
-function stripSourcePrefix(internalType: string): string {
-  const colonIndex = internalType.indexOf(":");
-  return colonIndex > 0 ? internalType.slice(colonIndex + 1) : internalType;
-}
-
-// ─── External Format Functions (SourceEvent.sourceType) ──────────────────────
-
-/**
- * GitHub: external event format -> SourceEvent.sourceType (WITHOUT prefix).
- * Use this when creating SourceEvents in transformers.
- * @param event - GitHub event name (e.g., "pull_request")
- * @param action - GitHub action (e.g., "opened")
- */
-export function toExternalGitHubEventType(
-  event: string,
-  action?: string,
-): string | undefined {
-  const internal = toInternalGitHubEvent(event, action);
-  if (!internal) return undefined;
-  return stripSourcePrefix(internal);
-}
-
-/**
- * Vercel: event type string -> SourceEvent.sourceType (WITHOUT prefix).
- * Use this when creating SourceEvents in transformers.
- */
-export function toExternalVercelEventType(
-  eventType: string,
-): string | undefined {
-  const internal = toInternalVercelEvent(eventType);
-  if (!internal) return undefined;
-  return stripSourcePrefix(internal);
-}
-
-/**
- * Sentry: event type string -> SourceEvent.sourceType (WITHOUT prefix).
- * Use this when creating SourceEvents in transformers.
- */
-export function toExternalSentryEventType(
-  eventType: string,
-): string | undefined {
-  const internal = toInternalSentryEvent(eventType);
-  if (!internal) return undefined;
-  return stripSourcePrefix(internal);
-}
-
-/**
- * Linear: webhook type + action -> SourceEvent.sourceType (WITHOUT prefix).
- * Use this when creating SourceEvents in transformers.
- */
-export function toExternalLinearEventType(
-  type: string,
-  action: string,
-): string | undefined {
-  const internal = toInternalLinearEvent(type, action);
-  if (!internal) return undefined;
-  return stripSourcePrefix(internal);
-}
-
-// ─── Auto-Derived UI Display Events ───────────────────────────────────────────
-
-export const GITHUB_EVENTS = EVENT_CATEGORIES.github;
-export const VERCEL_EVENTS = EVENT_CATEGORIES.vercel;
-export const SENTRY_EVENTS = EVENT_CATEGORIES.sentry;
-export const LINEAR_EVENTS = EVENT_CATEGORIES.linear;
-
-export type GitHubEvent = keyof typeof GITHUB_EVENTS;
-export type VercelEvent = keyof typeof VERCEL_EVENTS;
-export type SentryEvent = keyof typeof SENTRY_EVENTS;
-export type LinearEvent = keyof typeof LINEAR_EVENTS;
-
-export const ALL_GITHUB_EVENTS = Object.keys(GITHUB_EVENTS) as GitHubEvent[];
-export const ALL_VERCEL_EVENTS = Object.keys(VERCEL_EVENTS) as VercelEvent[];
-export const ALL_SENTRY_EVENTS = Object.keys(SENTRY_EVENTS) as SentryEvent[];
-export const ALL_LINEAR_EVENTS = Object.keys(LINEAR_EVENTS) as LinearEvent[];
-
-// ─── Auto-Derived Webhook Dispatch Types ──────────────────────────────────────
+export const ALL_GITHUB_EVENTS = Object.keys(PROVIDER_REGISTRY.github.events) as GitHubEventKey[];
+export const ALL_VERCEL_EVENTS = Object.keys(PROVIDER_REGISTRY.vercel.events) as VercelEventKey[];
+export const ALL_SENTRY_EVENTS = Object.keys(PROVIDER_REGISTRY.sentry.events) as SentryEventKey[];
+export const ALL_LINEAR_EVENTS = Object.keys(PROVIDER_REGISTRY.linear.events) as LinearEventKey[];
 
 /**
  * Valid webhook eventType values per source for test data and schema generation.
  *
  * These are the dispatch-level identifiers that arrive on the wire:
  * - GitHub/Linear: category-level (action comes from payload body)
- * - Vercel/Sentry: specific event types
+ * - Vercel: specific event types (same as categories)
+ * - Sentry: specific event types from EVENT_REGISTRY externalKeys
  */
 export const WEBHOOK_EVENT_TYPES = {
   github: ALL_GITHUB_EVENTS as string[],
   vercel: ALL_VERCEL_EVENTS as string[],
-  sentry: Object.keys(SENTRY_TO_INTERNAL),
+  sentry: [...new Set(
+    Object.values(EVENT_REGISTRY)
+      .filter((e) => e.source === "sentry")
+      .flatMap((e) => [...e.externalKeys]),
+  )],
   linear: ALL_LINEAR_EVENTS as string[],
 };

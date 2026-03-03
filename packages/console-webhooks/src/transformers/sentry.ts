@@ -1,19 +1,18 @@
 /**
  * Sentry Transformer for Production Webhooks
  *
- * Transforms official Sentry webhook payloads to SourceEvent.
+ * Transforms official Sentry webhook payloads to PostTransformEvent.
  * Based on Sentry's webhook documentation and actual payload structures.
  *
  * @see https://docs.sentry.io/product/integrations/integration-platform/webhooks/
  */
 
 import type {
-  SourceEvent,
-  SourceReference,
-  TransformContext,
-} from "@repo/console-types";
-import { toExternalSentryEventType } from "@repo/console-types";
-import { validateSourceEvent } from "../validation.js";
+  PostTransformEvent,
+  PostTransformReference,
+} from "@repo/console-validation";
+import type { TransformContext } from "../transform-context.js";
+import { validatePostTransformEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
 // ============================================================================
@@ -227,10 +226,10 @@ export type SentryWebhookEventType = keyof typeof sentryTransformers;
 
 function logValidationErrors(
   transformerName: string,
-  event: SourceEvent,
+  event: PostTransformEvent,
   errors: string[]
 ): void {
-  console.error(`[Transformer:${transformerName}] Invalid SourceEvent:`, {
+  console.error(`[Transformer:${transformerName}] Invalid PostTransformEvent:`, {
     sourceId: event.sourceId,
     sourceType: event.sourceType,
     errors,
@@ -242,14 +241,14 @@ function logValidationErrors(
 // ============================================================================
 
 /**
- * Transform Sentry issue webhook to SourceEvent
+ * Transform Sentry issue webhook to PostTransformEvent
  */
 export function transformSentryIssue(
   payload: SentryIssueWebhook,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const { issue } = payload.data;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   // Add issue reference
   refs.push({
@@ -312,9 +311,9 @@ export function transformSentryIssue(
     `Users affected: ${issue.userCount}`,
   ].filter(Boolean);
 
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "sentry",
-    sourceType: toExternalSentryEventType(`issue.${payload.action}`) ?? `issue.${payload.action}`,
+    sourceType: `issue.${payload.action}`,
     sourceId: `sentry-issue:${issue.project.slug}:${issue.shortId}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${errorType}: ${errorValue.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -350,7 +349,7 @@ export function transformSentryIssue(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformSentryIssue", event, validation.errors);
   }
@@ -359,14 +358,14 @@ export function transformSentryIssue(
 }
 
 /**
- * Transform Sentry error event webhook to SourceEvent
+ * Transform Sentry error event webhook to PostTransformEvent
  */
 export function transformSentryError(
   payload: SentryErrorWebhook,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const { event } = payload.data;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   // Add project reference
   refs.push({
@@ -397,9 +396,9 @@ export function transformSentryError(
     `Platform: ${event.platform}`,
   ].filter(Boolean);
 
-  const event_out: SourceEvent = {
+  const event_out: PostTransformEvent = {
     source: "sentry",
-    sourceType: toExternalSentryEventType("error") ?? "error",
+    sourceType: "error",
     sourceId: `sentry-error:${event.project}:${event.event_id}`,
     title: sanitizeTitle(`[Error] ${errorType}: ${errorValue.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -432,7 +431,7 @@ export function transformSentryError(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event_out);
+  const validation = validatePostTransformEvent(event_out);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformSentryError", event_out, validation.errors);
   }
@@ -441,14 +440,14 @@ export function transformSentryError(
 }
 
 /**
- * Transform Sentry event alert webhook to SourceEvent
+ * Transform Sentry event alert webhook to PostTransformEvent
  */
 export function transformSentryEventAlert(
   payload: SentryEventAlertWebhook,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const { event, triggered_rule } = payload.data;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   refs.push({
     type: "project",
@@ -466,9 +465,9 @@ export function transformSentryEventAlert(
     `Platform: ${event.platform}`,
   ].filter(Boolean);
 
-  const event_out: SourceEvent = {
+  const event_out: PostTransformEvent = {
     source: "sentry",
-    sourceType: toExternalSentryEventType("event_alert") ?? "event-alert",
+    sourceType: "event-alert",
     sourceId: `sentry-alert:${event.project}:${event.event_id}:${triggered_rule.replace(/\s/g, "-")}`,
     title: sanitizeTitle(`[Alert Triggered] ${triggered_rule}: ${errorType}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -489,7 +488,7 @@ export function transformSentryEventAlert(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event_out);
+  const validation = validatePostTransformEvent(event_out);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformSentryEventAlert", event_out, validation.errors);
   }
@@ -498,15 +497,15 @@ export function transformSentryEventAlert(
 }
 
 /**
- * Transform Sentry metric alert webhook to SourceEvent
+ * Transform Sentry metric alert webhook to PostTransformEvent
  */
 export function transformSentryMetricAlert(
   payload: SentryMetricAlertWebhook,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const { metric_alert } = payload.data;
   const alertRule = metric_alert.alert_rule;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   const actionTitle =
     payload.action === "triggered" ? "Metric Alert Triggered" : "Metric Alert Resolved";
@@ -522,9 +521,9 @@ export function transformSentryMetricAlert(
     metric_alert.date_closed ? `Closed: ${metric_alert.date_closed}` : "",
   ].filter(Boolean);
 
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "sentry",
-    sourceType: toExternalSentryEventType("metric_alert") ?? "metric-alert",
+    sourceType: "metric-alert",
     sourceId: `sentry-metric-alert:${alertRule.organization_id}:${metric_alert.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${alertRule.name}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -551,7 +550,7 @@ export function transformSentryMetricAlert(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformSentryMetricAlert", event, validation.errors);
   }

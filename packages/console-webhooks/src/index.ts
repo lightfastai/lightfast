@@ -1,18 +1,69 @@
 /**
  * @repo/console-webhooks
  *
- * Webhook event transformers, validation, and storage utilities for Console integrations.
+ * Webhook event transformers, validation, and sanitization for Console integrations.
  *
  * Signature verification is handled by the Relay service (apps/relay/).
  * This package provides:
- * - Event transformers (GitHub, Vercel, Linear, Sentry) that produce SourceEvent shapes
+ * - Event transformers (GitHub, Vercel, Linear, Sentry) that produce PostTransformEvent shapes
  * - Payload validation against Zod schemas
  * - Sanitization utilities for webhook content
- * - Storage helpers for ingestion payloads
- * - Type re-exports for Linear and Sentry webhook shapes
  */
 
-// Type re-exports for Linear webhook shapes
+// Validation utilities
+export { validatePostTransformEvent, type ValidationResult } from "./validation.js";
+
+// Transform context
+export type { TransformContext } from "./transform-context.js";
+
+// Sanitization utilities
+export {
+  MAX_BODY_LENGTH,
+  MAX_TITLE_LENGTH,
+  encodeHtmlEntities,
+  truncateWithEllipsis,
+  sanitizeContent,
+  sanitizeTitle,
+  sanitizeBody,
+} from "./sanitize.js";
+
+// GitHub transformers and types
+export {
+  transformGitHubPush,
+  transformGitHubPullRequest,
+  transformGitHubIssue,
+  transformGitHubRelease,
+  transformGitHubDiscussion,
+  githubTransformers,
+} from "./transformers/github.js";
+export type {
+  PushEvent,
+  PullRequestEvent,
+  IssuesEvent,
+  ReleaseEvent,
+  DiscussionEvent,
+  GitHubWebhookEventType,
+} from "./transformers/github.js";
+
+// Vercel transformers and types
+export {
+  transformVercelDeployment,
+  vercelTransformers,
+} from "./transformers/vercel.js";
+export type {
+  VercelWebhookEventType,
+  VercelWebhookPayload,
+} from "./transformers/vercel.js";
+
+// Linear transformers and types
+export {
+  transformLinearIssue,
+  transformLinearComment,
+  transformLinearProject,
+  transformLinearCycle,
+  transformLinearProjectUpdate,
+  linearTransformers,
+} from "./transformers/linear.js";
 export type {
   LinearWebhookBase,
   LinearWebhookEventType,
@@ -29,9 +80,16 @@ export type {
   LinearProjectUpdate,
   LinearUser,
   LinearLabel,
-} from "./linear.js";
+} from "./transformers/linear.js";
 
-// Type re-exports for Sentry webhook shapes
+// Sentry transformers and types
+export {
+  transformSentryIssue,
+  transformSentryError,
+  transformSentryEventAlert,
+  transformSentryMetricAlert,
+  sentryTransformers,
+} from "./transformers/sentry.js";
 export type {
   SentryIssueWebhook,
   SentryErrorWebhook,
@@ -41,65 +99,4 @@ export type {
   SentryErrorEvent,
   SentryActor,
   SentryWebhookEventType,
-} from "./sentry.js";
-
-// Validation utilities
-export { validateSourceEvent, type ValidationResult } from "./validation.js";
-
-// Sanitization utilities
-export {
-  MAX_BODY_LENGTH,
-  MAX_TITLE_LENGTH,
-  encodeHtmlEntities,
-  truncateWithEllipsis,
-  sanitizeContent,
-  sanitizeTitle,
-  sanitizeBody,
-} from "./sanitize.js";
-
-// Storage utilities
-export {
-  storeIngestionPayload,
-  extractWebhookHeaders,
-  type StoreIngestionPayloadParams,
-  type StoreWebhookPayloadParams,
-} from "./storage.js";
-
-// Transformers
-export {
-  // GitHub
-  transformGitHubPush,
-  transformGitHubPullRequest,
-  transformGitHubIssue,
-  transformGitHubRelease,
-  transformGitHubDiscussion,
-  githubTransformers,
-  // Vercel
-  transformVercelDeployment,
-  vercelTransformers,
-  // Linear
-  transformLinearIssue,
-  transformLinearComment,
-  transformLinearProject,
-  transformLinearCycle,
-  transformLinearProjectUpdate,
-  linearTransformers,
-  // Sentry
-  transformSentryIssue,
-  transformSentryError,
-  transformSentryEventAlert,
-  transformSentryMetricAlert,
-  sentryTransformers,
-} from "./transformers/index.js";
-export type {
-  // GitHub
-  PushEvent,
-  PullRequestEvent,
-  IssuesEvent,
-  ReleaseEvent,
-  DiscussionEvent,
-  GitHubWebhookEventType,
-  // Vercel
-  VercelWebhookEventType,
-  VercelWebhookPayload,
-} from "./transformers/index.js";
+} from "./transformers/sentry.js";

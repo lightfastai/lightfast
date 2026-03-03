@@ -2,7 +2,7 @@
  * GitHub API → webhook shape adapters
  *
  * Wrap API list responses into webhook-compatible envelopes so existing
- * transformers produce identical SourceEvent output. This reuses battle-tested
+ * transformers produce identical PostTransformEvent output. This reuses battle-tested
  * transformer code and guarantees sourceId equivalence by construction.
  */
 import type {

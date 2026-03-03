@@ -59,7 +59,7 @@ export * from "./schemas/store";
 export * from "./schemas/job";
 export * from "./schemas/sources";
 export * from "./schemas/source-metadata";
-export * from "./schemas/source-event";
+export * from "./schemas/post-transform-event";
 export * from "./schemas/workflow-io";
 export * from "./schemas/ingestion";
 export * from "./schemas/metrics";

@@ -4,8 +4,8 @@
  * Runtime validation for transformed webhook events using Zod schemas.
  */
 
-import { sourceEventSchema } from "@repo/console-validation";
-import type { SourceEvent } from "@repo/console-types";
+import { postTransformEventSchema } from "@repo/console-validation";
+import type { PostTransformEvent } from "@repo/console-validation";
 
 export interface ValidationResult<T> {
   success: boolean;
@@ -14,24 +14,21 @@ export interface ValidationResult<T> {
 }
 
 /**
- * Validate SourceEvent against Zod schema
- * Returns structured result with error details
- *
- * @param event - The SourceEvent to validate
- * @returns Validation result with parsed data or errors
+ * Validate PostTransformEvent against Zod schema.
+ * Returns structured result with error details.
  */
-export function validateSourceEvent(
-  event: SourceEvent
-): ValidationResult<SourceEvent> {
-  const result = sourceEventSchema.safeParse(event);
+export function validatePostTransformEvent(
+  event: PostTransformEvent
+): ValidationResult<PostTransformEvent> {
+  const result = postTransformEventSchema.safeParse(event);
 
   if (result.success) {
-    return { success: true, data: result.data as SourceEvent };
+    return { success: true, data: result.data as PostTransformEvent };
   }
 
   return {
     success: false,
-    errors: result.error.errors.map(
+    errors: result.error.issues.map(
       (e) => `${e.path.join(".")}: ${e.message}`
     ),
   };

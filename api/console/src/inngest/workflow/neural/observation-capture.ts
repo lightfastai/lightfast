@@ -1,7 +1,7 @@
 /**
  * Neural observation capture workflow
  *
- * Processes SourceEvents from webhooks into observations with embeddings.
+ * Processes PostTransformEvents from webhooks into observations with embeddings.
  * This is the write path for the neural memory system.
  *
  * Workflow steps:
@@ -28,7 +28,7 @@ import { log } from "@vendor/observability/log";
 import { NonRetriableError } from "inngest";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
-import type { SourceEvent } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-validation";
 import { scoreSignificance, SIGNIFICANCE_THRESHOLD } from "./scoring";
 import {
   buildClassificationPrompt,
@@ -47,7 +47,7 @@ import { assignToCluster } from "./cluster-assignment";
 import { resolveActor } from "./actor-resolution";
 import { detectAndCreateRelationships } from "./relationship-detection";
 import { nanoid } from "nanoid";
-import type { SourceActor, SourceReference } from "@repo/console-types";
+import type { PostTransformActor, PostTransformReference } from "@repo/console-validation";
 import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../../lib/jobs";
 import { createNeuralOnFailureHandler } from "./on-failure-handler";
 import type {
@@ -101,7 +101,7 @@ interface MultiViewEmbeddingResult {
 /**
  * Map source event types to observation types
  */
-function deriveObservationType(sourceEvent: SourceEvent): string {
+function deriveObservationType(sourceEvent: PostTransformEvent): string {
   // For GitHub events, use sourceType directly
   // e.g., "push", "pull_request_merged", "issue_opened"
   if (sourceEvent.source === "github") {
@@ -121,7 +121,7 @@ function deriveObservationType(sourceEvent: SourceEvent): string {
  * Extract topics from source event
  * Simple keyword extraction for MVP
  */
-function extractTopics(sourceEvent: SourceEvent): string[] {
+function extractTopics(sourceEvent: PostTransformEvent): string[] {
   const topics: string[] = [];
 
   // Add source as topic
@@ -283,7 +283,7 @@ async function reconcileVercelActorsForCommit(
   workspaceId: string,
   commitSha: string,
   numericActorId: string,
-  sourceActor: SourceActor,
+  sourceActor: PostTransformActor,
 ): Promise<string[]> {
   if (!commitSha || !numericActorId) return [];
 
@@ -312,14 +312,14 @@ async function reconcileVercelActorsForCommit(
     const updatedIds: string[] = [];
 
     for (const obs of vercelObservations) {
-      const currentActor = obs.actor as SourceActor | null;
+      const currentActor = obs.actor as PostTransformActor | null;
 
       // Skip if no actor or already has numeric ID
       if (!currentActor?.id) continue;
       if (/^\d+$/.test(currentActor.id)) continue;
 
       // Update the actor with numeric ID and enriched profile data
-      const updatedActor: SourceActor = {
+      const updatedActor: PostTransformActor = {
         ...currentActor,
         id: numericActorId,
         // Preserve existing name, or use the GitHub actor's name (may be null at runtime despite type)
@@ -369,7 +369,7 @@ async function reconcileVercelActorsForCommit(
 /**
  * Neural observation capture workflow
  *
- * Processes SourceEvents from webhooks into observations with embeddings.
+ * Processes PostTransformEvents from webhooks into observations with embeddings.
  */
 export const observationCapture = inngest.createFunction(
   {
@@ -1069,7 +1069,7 @@ export const observationCapture = inngest.createFunction(
     if (sourceEvent.source === "github" && sourceEvent.sourceType === "push") {
       await step.run("reconcile-vercel-actors", async () => {
         // Extract commit SHAs from the push event references
-        const references = sourceEvent.references as SourceReference[];
+        const references = sourceEvent.references as PostTransformReference[];
         const commitRefs = references.filter((ref) => ref.type === "commit");
 
         if (commitRefs.length === 0 || !resolvedActor.sourceActor?.id) {

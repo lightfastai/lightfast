@@ -9,14 +9,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./transformers": {
-      "types": "./dist/transformers/index.d.ts",
-      "default": "./dist/transformers/index.js"
-    },
-    "./storage": {
-      "types": "./dist/storage.d.ts",
-      "default": "./dist/storage.js"
     }
   },
   "scripts": {

@@ -5,7 +5,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import type { SourceEvent } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-validation";
 import { inngest } from "@api/console/inngest/client";
 
 export interface TriggerOptions {
@@ -33,11 +33,11 @@ const chunk = <T>(arr: T[], size: number): T[][] => {
 };
 
 /**
- * Trigger observation capture events for a batch of SourceEvents
+ * Trigger observation capture events for a batch of PostTransformEvents
  * Uses Promise.all with batching for better performance
  */
 export const triggerObservationCapture = async (
-  events: SourceEvent[],
+  events: PostTransformEvent[],
   options: TriggerOptions
 ): Promise<TriggerResult> => {
   const startTime = Date.now();

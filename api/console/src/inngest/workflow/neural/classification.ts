@@ -7,13 +7,13 @@
  * Used by observation-capture.ts step.ai.wrap() for inline classification.
  */
 
-import type { SourceEvent } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-validation";
 
 
 /**
  * Build the classification prompt for Claude Haiku
  */
-export function buildClassificationPrompt(sourceEvent: SourceEvent): string {
+export function buildClassificationPrompt(sourceEvent: PostTransformEvent): string {
   return `Classify this engineering event into categories.
 
 EVENT DETAILS:
@@ -134,7 +134,7 @@ const CATEGORY_PATTERNS: { category: string; patterns: RegExp[] }[] = [
  * Fallback regex-based classification for when LLM is unavailable
  * or for low-priority events that don't warrant LLM cost.
  */
-export function classifyObservationFallback(sourceEvent: SourceEvent): {
+export function classifyObservationFallback(sourceEvent: PostTransformEvent): {
   primaryCategory: string;
   secondaryCategories: string[];
 } {

@@ -1,19 +1,18 @@
 /**
  * Linear Transformer for Production Webhooks
  *
- * Transforms official Linear webhook payloads to SourceEvent.
+ * Transforms official Linear webhook payloads to PostTransformEvent.
  * Based on Linear's webhook documentation and actual payload structures.
  *
  * @see https://developers.linear.app/docs/graphql/webhooks
  */
 
 import type {
-  SourceEvent,
-  SourceReference,
-  TransformContext,
-} from "@repo/console-types";
-import { toExternalLinearEventType } from "@repo/console-types";
-import { validateSourceEvent } from "../validation.js";
+  PostTransformEvent,
+  PostTransformReference,
+} from "@repo/console-validation";
+import type { TransformContext } from "../transform-context.js";
+import { validatePostTransformEvent } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
 // ============================================================================
@@ -326,10 +325,10 @@ export interface LinearLabel {
 
 function logValidationErrors(
   transformerName: string,
-  event: SourceEvent,
+  event: PostTransformEvent,
   errors: string[]
 ): void {
-  console.error(`[Transformer:${transformerName}] Invalid SourceEvent:`, {
+  console.error(`[Transformer:${transformerName}] Invalid PostTransformEvent:`, {
     sourceId: event.sourceId,
     sourceType: event.sourceType,
     errors,
@@ -341,14 +340,14 @@ function logValidationErrors(
 // ============================================================================
 
 /**
- * Transform Linear issue webhook to SourceEvent
+ * Transform Linear issue webhook to PostTransformEvent
  */
 export function transformLinearIssue(
   payload: LinearIssueWebhook,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const issue = payload.data;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   // Add issue reference
   refs.push({
@@ -450,9 +449,9 @@ export function transformLinearIssue(
     issue.dueDate ? `Due: ${issue.dueDate}` : "",
   ].filter(Boolean);
 
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "linear",
-    sourceType: toExternalLinearEventType("Issue", payload.action) ?? `issue.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: `issue.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-issue:${issue.team.key}:${issue.identifier}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${issue.identifier}: ${issue.title.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -500,7 +499,7 @@ export function transformLinearIssue(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformLinearIssue", event, validation.errors);
   }
@@ -509,14 +508,14 @@ export function transformLinearIssue(
 }
 
 /**
- * Transform Linear comment webhook to SourceEvent
+ * Transform Linear comment webhook to PostTransformEvent
  */
 export function transformLinearComment(
   payload: LinearCommentWebhook,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const comment = payload.data;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   // Add parent issue reference
   refs.push({
@@ -536,9 +535,9 @@ export function transformLinearComment(
     `On issue: ${comment.issue.identifier} - ${comment.issue.title}`,
   ];
 
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "linear",
-    sourceType: toExternalLinearEventType("Comment", payload.action) ?? `comment.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: `comment.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-comment:${comment.issue.identifier}:${comment.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${comment.issue.identifier}: ${comment.body.slice(0, 60)}...`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -567,7 +566,7 @@ export function transformLinearComment(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformLinearComment", event, validation.errors);
   }
@@ -576,14 +575,14 @@ export function transformLinearComment(
 }
 
 /**
- * Transform Linear project webhook to SourceEvent
+ * Transform Linear project webhook to PostTransformEvent
  */
 export function transformLinearProject(
   payload: LinearProjectWebhook,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const project = payload.data;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   refs.push({
     type: "project",
@@ -625,9 +624,9 @@ export function transformLinearProject(
     `Teams: ${project.teams.map((t) => t.name).join(", ")}`,
   ].filter(Boolean);
 
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "linear",
-    sourceType: toExternalLinearEventType("Project", payload.action) ?? `project.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: `project.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-project:${project.slugId}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] Project: ${project.name}`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -665,7 +664,7 @@ export function transformLinearProject(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformLinearProject", event, validation.errors);
   }
@@ -674,14 +673,14 @@ export function transformLinearProject(
 }
 
 /**
- * Transform Linear cycle webhook to SourceEvent
+ * Transform Linear cycle webhook to PostTransformEvent
  */
 export function transformLinearCycle(
   payload: LinearCycleWebhook,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const cycle = payload.data;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   refs.push({
     type: "cycle",
@@ -713,9 +712,9 @@ export function transformLinearCycle(
     `Scope: ${cycle.scope} points`,
   ].filter(Boolean);
 
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "linear",
-    sourceType: toExternalLinearEventType("Cycle", payload.action) ?? `cycle.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: `cycle.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-cycle:${cycle.team.key}:${cycle.number}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${cycleName} (${cycle.team.name})`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -742,7 +741,7 @@ export function transformLinearCycle(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformLinearCycle", event, validation.errors);
   }
@@ -751,14 +750,14 @@ export function transformLinearCycle(
 }
 
 /**
- * Transform Linear project update webhook to SourceEvent
+ * Transform Linear project update webhook to PostTransformEvent
  */
 export function transformLinearProjectUpdate(
   payload: LinearProjectUpdateWebhook,
   context: TransformContext
-): SourceEvent {
+): PostTransformEvent {
   const update = payload.data;
-  const refs: SourceReference[] = [];
+  const refs: PostTransformReference[] = [];
 
   refs.push({
     type: "project",
@@ -784,9 +783,9 @@ export function transformLinearProjectUpdate(
     `Health: ${healthEmoji[update.health] || ""} ${update.health}`,
   ];
 
-  const event: SourceEvent = {
+  const event: PostTransformEvent = {
     source: "linear",
-    sourceType: toExternalLinearEventType("ProjectUpdate", payload.action) ?? `project-update.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: `project-update.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-project-update:${update.project.id}:${update.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${update.project.name}: ${update.body.slice(0, 60)}...`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -814,7 +813,7 @@ export function transformLinearProjectUpdate(
   };
 
   // Validate before returning (logs errors but doesn't block)
-  const validation = validateSourceEvent(event);
+  const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformLinearProjectUpdate", event, validation.errors);
   }

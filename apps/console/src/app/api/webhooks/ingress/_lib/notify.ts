@@ -1,6 +1,7 @@
+import { realtime } from "~/lib/realtime";
+import type { EventNotification } from "~/lib/realtime";
+import type { PostTransformEvent } from "@repo/console-validation";
 import { inngest } from "@api/console/inngest";
-import { redis } from "@vendor/upstash";
-import type { SourceEvent } from "@repo/console-types";
 
 export interface ResolvedWorkspace {
   workspaceId: string;
@@ -8,16 +9,11 @@ export interface ResolvedWorkspace {
   clerkOrgId: string;
 }
 
-export interface EventNotification {
-  payloadId: number;
-  sourceEvent: SourceEvent;
-}
-
 /**
- * Publish a SourceEvent to Inngest for observation capture.
+ * Dispatch a PostTransformEvent to Inngest for observation capture.
  */
 export async function publishInngestNotification(
-  sourceEvent: SourceEvent,
+  sourceEvent: PostTransformEvent,
   workspace: ResolvedWorkspace,
 ): Promise<void> {
   await inngest.send({
@@ -32,24 +28,21 @@ export async function publishInngestNotification(
 }
 
 /**
- * Publish a transformed SourceEvent to Redis Pub/Sub.
+ * Publish a transformed PostTransformEvent to Upstash Realtime.
  * SSE consumers subscribe to the org's channel for real-time streaming.
  *
- * Note: publish() auto-serializes the object via @upstash/redis.
- * Do NOT JSON.stringify before publishing — it causes double-encoding.
+ * Uses Realtime's channel-scoped emit with exactly-once delivery
+ * (backed by Redis Streams). No manual JSON.stringify — Realtime
+ * handles serialization via the Zod schema.
  */
 export async function publishEventNotification(params: {
   orgId: string;
-  payloadId: number;
-  sourceEvent: SourceEvent;
+  eventId: number;
+  sourceEvent: PostTransformEvent;
 }): Promise<void> {
-  const notification: EventNotification = {
-    payloadId: params.payloadId,
+  const channel = realtime.channel(`org-${params.orgId}`);
+  await channel.emit("workspace.event", {
+    eventId: params.eventId,
     sourceEvent: params.sourceEvent,
-  };
-
-  await redis.publish(
-    `events:org:${params.orgId}`,
-    notification,
-  );
+  } satisfies EventNotification);
 }

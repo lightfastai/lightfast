@@ -2,7 +2,7 @@
  * Adapter → Transformer round-trip tests
  *
  * The backfill system's core invariant: adapter output passed through the
- * real transformer must produce a valid SourceEvent with a non-empty sourceId.
+ * real transformer must produce a valid PostTransformEvent with a non-empty sourceId.
  *
  * If a transformer starts accessing a field the list API doesn't provide
  * (e.g. pr.additions), these tests surface it immediately instead of
@@ -130,12 +130,12 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
     expect(() => transformGitHubPullRequest(adapted, context)).not.toThrow();
   });
 
-  it("produces a SourceEvent with non-empty sourceId", () => {
+  it("produces a PostTransformEvent with non-empty sourceId", () => {
     const event = transformGitHubPullRequest(adapted, context);
     expect(event.sourceId.length).toBeGreaterThan(0);
   });
 
-  it("produces a SourceEvent with non-empty title", () => {
+  it("produces a PostTransformEvent with non-empty title", () => {
     const event = transformGitHubPullRequest(adapted, context);
     expect(event.title).toBeTruthy();
   });
@@ -200,7 +200,7 @@ describe("GitHub Issue: adapter → transformer round-trip", () => {
     expect(() => transformGitHubIssue(adapted, context)).not.toThrow();
   });
 
-  it("produces a SourceEvent with non-empty sourceId", () => {
+  it("produces a PostTransformEvent with non-empty sourceId", () => {
     const event = transformGitHubIssue(adapted, context);
     expect(event.sourceId).toContain("10");
   });
@@ -236,7 +236,7 @@ describe("GitHub Release: adapter → transformer round-trip", () => {
     expect(() => transformGitHubRelease(adapted, context)).not.toThrow();
   });
 
-  it("produces a SourceEvent with non-empty sourceId containing tag", () => {
+  it("produces a PostTransformEvent with non-empty sourceId containing tag", () => {
     const event = transformGitHubRelease(adapted, context);
     expect(event.sourceId).toContain("v2.0.0");
   });
@@ -279,7 +279,7 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
     ).not.toThrow();
   });
 
-  it("produces a SourceEvent with non-empty sourceId", () => {
+  it("produces a PostTransformEvent with non-empty sourceId", () => {
     const event = transformVercelDeployment(webhookPayload, eventType, context);
     expect(event.sourceId).toContain("dpl-abc123xyz");
   });

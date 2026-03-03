@@ -7,13 +7,13 @@
  */
 
 /**
- * Maximum body length for SourceEvent (10KB)
+ * Maximum body length for PostTransformEvent (10KB)
  * Balances between useful content and storage/embedding costs
  */
 export const MAX_BODY_LENGTH = 10000;
 
 /**
- * Maximum title length for SourceEvent
+ * Maximum title length for PostTransformEvent
  */
 export const MAX_TITLE_LENGTH = 200;
 
@@ -54,7 +54,7 @@ export function truncateWithEllipsis(str: string, maxLength: number): string {
 }
 
 /**
- * Sanitize content for storage in SourceEvent
+ * Sanitize content for storage in PostTransformEvent
  * - Truncates to max length
  * - Trims whitespace
  *
@@ -74,7 +74,7 @@ export function sanitizeContent(
 }
 
 /**
- * Sanitize title for SourceEvent
+ * Sanitize title for PostTransformEvent
  *
  * @param title - Title to sanitize
  * @returns Sanitized title (max 200 chars)
@@ -84,7 +84,7 @@ export function sanitizeTitle(title: string): string {
 }
 
 /**
- * Sanitize body for SourceEvent
+ * Sanitize body for PostTransformEvent
  *
  * @param body - Body to sanitize
  * @returns Sanitized body (max 10,000 chars)

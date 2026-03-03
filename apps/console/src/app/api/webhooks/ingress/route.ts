@@ -1,9 +1,8 @@
 import { serve } from "@vendor/upstash-workflow/nextjs";
 import type { WebhookEnvelope } from "@repo/gateway-types";
-import { storeIngestionPayload } from "@repo/console-webhooks/storage";
 import { db } from "@db/console/client";
 import { eq } from "drizzle-orm";
-import { orgWorkspaces } from "@db/console/schema";
+import { orgWorkspaces, workspaceEvents } from "@db/console/schema";
 import { transformEnvelope } from "./_lib/transform";
 import { publishInngestNotification, publishEventNotification } from "./_lib/notify";
 
@@ -19,8 +18,8 @@ export const runtime = "nodejs";
  *
  * Steps:
  * 1. resolve-workspace — look up workspace from Clerk org ID (graceful skip if unknown)
- * 2. store-payload — persist raw payload to workspaceIngestionPayloads
- * 3. transform-and-fan-out — transform envelope into SourceEvent, fan out to Inngest + Redis Pub/Sub
+ * 2. transform-store-and-fan-out — transform envelope into PostTransformEvent, store in DB,
+ *    fan out to Inngest + Upstash Realtime. Unsupported event types are skipped entirely.
  */
 export const { POST } = serve<WebhookEnvelope>(async (context) => {
   const envelope = context.requestPayload;
@@ -49,37 +48,40 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
     return;
   }
 
-  // Step 2: Persist raw payload (capture payloadId for SSE cursor)
-  const payloadId = await context.run("store-payload", async () => {
-    return storeIngestionPayload({
-      workspaceId: workspace.workspaceId,
-      deliveryId: envelope.deliveryId,
-      source: envelope.provider,
-      eventType: envelope.eventType,
-      payload: JSON.stringify(envelope.payload),
-      headers: {},
-      receivedAt: new Date(envelope.receivedAt),
-      ingestionSource: "webhook",
-    });
-  });
-
-  // Step 3: Transform + fan out to all consumers
-  await context.run("transform-and-fan-out", async () => {
+  // Step 2: Transform, store, and fan out to all consumers
+  await context.run("transform-store-and-fan-out", async () => {
     const sourceEvent = transformEnvelope(envelope);
     if (!sourceEvent) {
       console.log(
-        `[ingress] No transformer for ${envelope.provider}:${envelope.eventType}, skipping fan-out`,
+        `[ingress] No transformer for ${envelope.provider}:${envelope.eventType}, skipping`,
       );
       return;
     }
 
+    // Store transformed event — returns monotonic cursor for SSE
+    const [record] = await db
+      .insert(workspaceEvents)
+      .values({
+        workspaceId: workspace.workspaceId,
+        deliveryId: envelope.deliveryId,
+        source: envelope.provider,
+        sourceType: sourceEvent.sourceType,
+        sourceEvent,
+        receivedAt: new Date(envelope.receivedAt).toISOString(),
+        ingestionSource: "webhook",
+      })
+      .returning({ id: workspaceEvents.id });
+
+    if (!record) {
+      throw new Error("Failed to insert workspace event record");
+    }
+
+    // Fan out to consumers in parallel
     await Promise.all([
-      // Consumer 1: Inngest observation pipeline
       publishInngestNotification(sourceEvent, workspace),
-      // Consumer 2: Redis Pub/Sub for real-time SSE subscribers
       publishEventNotification({
         orgId: envelope.orgId,
-        payloadId,
+        eventId: record.id,
         sourceEvent,
       }),
     ]);

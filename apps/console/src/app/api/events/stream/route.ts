@@ -1,10 +1,10 @@
 import type { NextRequest } from "next/server";
 import { withApiKeyAuth, createAuthErrorResponse } from "~/app/(api)/v1/lib/with-api-key-auth";
-import { redis } from "@vendor/upstash";
+import { realtime } from "~/lib/realtime";
+import type { EventNotification } from "~/lib/realtime";
 import { db } from "@db/console/client";
-import { orgWorkspaces, workspaceIngestionPayloads } from "@db/console/schema";
+import { orgWorkspaces, workspaceEvents } from "@db/console/schema";
 import { eq, and, gt } from "drizzle-orm";
-import type { EventNotification } from "~/app/api/webhooks/ingress/_lib/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export const maxDuration = 300; // Vercel streaming limit (5 min)
  *
  * SSE endpoint for real-time transformed event streaming.
  * Authenticates via org API key (Authorization: Bearer sk-lf-...).
- * Streams SourceEvent objects — not raw webhook payloads.
+ * Streams PostTransformEvent objects — not raw webhook payloads.
  * Supports Last-Event-ID for catch-up on reconnect.
  */
 export async function GET(request: NextRequest): Promise<Response> {
@@ -46,35 +46,33 @@ export async function GET(request: NextRequest): Promise<Response> {
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      // 3a. Subscribe to Redis Pub/Sub FIRST (before catch-up)
-      // This prevents a race where events published between the catch-up
-      // query completing and the subscription starting are silently lost.
-      const channel = `events:org:${orgId}`;
+      const channel = realtime.channel(`org-${orgId}`);
+
+      // 3a. Subscribe to Realtime FIRST (before catch-up)
+      // Realtime uses Redis Streams with exactly-once delivery.
+      // Subscribe first, buffer during catch-up, then flush — same pattern
+      // as before but with stronger delivery guarantees.
       const buffered: EventNotification[] = [];
       let catchUpComplete = false;
 
-      const subscription = redis.subscribe<EventNotification>(channel);
-
-      subscription.on("message", ({ message: notification }) => {
-        try {
-          if (!catchUpComplete) {
-            // Buffer real-time events until catch-up is done
-            buffered.push(notification);
-            return;
+      const unsubscribe = await channel.subscribe({
+        events: ["workspace.event"],
+        onData({ data }: { data: EventNotification }) {
+          try {
+            const notification = data;
+            if (!catchUpComplete) {
+              buffered.push(notification);
+              return;
+            }
+            controller.enqueue(
+              encoder.encode(
+                `id: ${notification.eventId}\nevent: event\ndata: ${JSON.stringify(notification)}\n\n`,
+              ),
+            );
+          } catch {
+            // Malformed message or closed stream — skip
           }
-          controller.enqueue(
-            encoder.encode(
-              `id: ${notification.payloadId}\nevent: event\ndata: ${JSON.stringify(notification)}\n\n`,
-            ),
-          );
-        } catch {
-          // Malformed message or closed stream — skip
-        }
-      });
-
-      subscription.on("error", (error) => {
-        console.error("[events/stream] Redis subscription error", { orgId, error });
-        controller.error(error);
+        },
       });
 
       // 3b. Catch-up from DB if Last-Event-ID is present
@@ -87,34 +85,27 @@ export async function GET(request: NextRequest): Promise<Response> {
           if (!Number.isNaN(lastId)) {
             const missed = await db
               .select({
-                id: workspaceIngestionPayloads.id,
-                deliveryId: workspaceIngestionPayloads.deliveryId,
-                source: workspaceIngestionPayloads.source,
-                eventType: workspaceIngestionPayloads.eventType,
-                receivedAt: workspaceIngestionPayloads.receivedAt,
+                id: workspaceEvents.id,
+                sourceEvent: workspaceEvents.sourceEvent,
               })
-              .from(workspaceIngestionPayloads)
+              .from(workspaceEvents)
               .where(
                 and(
-                  eq(workspaceIngestionPayloads.workspaceId, row.id),
-                  gt(workspaceIngestionPayloads.id, lastId),
+                  eq(workspaceEvents.workspaceId, row.id),
+                  gt(workspaceEvents.id, lastId),
                 ),
               )
-              .orderBy(workspaceIngestionPayloads.id)
+              .orderBy(workspaceEvents.id)
               .limit(1000);
 
-            for (const row of missed) {
-              lastCatchUpId = row.id;
-              const catchUpEvent = {
-                payloadId: row.id,
-                deliveryId: row.deliveryId,
-                source: row.source,
-                eventType: row.eventType,
-                receivedAt: new Date(row.receivedAt).getTime(),
-                catchUp: true,
+            for (const missed_row of missed) {
+              lastCatchUpId = missed_row.id;
+              const notification: EventNotification = {
+                eventId: missed_row.id,
+                sourceEvent: missed_row.sourceEvent,
               };
               controller.enqueue(
-                encoder.encode(`id: ${row.id}\nevent: event\ndata: ${JSON.stringify(catchUpEvent)}\n\n`),
+                encoder.encode(`id: ${missed_row.id}\nevent: event\ndata: ${JSON.stringify(notification)}\n\n`),
               );
             }
           }
@@ -128,10 +119,10 @@ export async function GET(request: NextRequest): Promise<Response> {
       // 3c. Flush buffered real-time events (dedup against catch-up)
       catchUpComplete = true;
       for (const notification of buffered) {
-        if (notification.payloadId > lastCatchUpId) {
+        if (notification.eventId > lastCatchUpId) {
           controller.enqueue(
             encoder.encode(
-              `id: ${notification.payloadId}\nevent: event\ndata: ${JSON.stringify(notification)}\n\n`,
+              `id: ${notification.eventId}\nevent: event\ndata: ${JSON.stringify(notification)}\n\n`,
             ),
           );
         }
@@ -154,7 +145,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       // 3f. Cleanup on disconnect
       request.signal.addEventListener("abort", () => {
         clearInterval(heartbeat);
-        void subscription.unsubscribe();
+        unsubscribe();
         try {
           controller.close();
         } catch {

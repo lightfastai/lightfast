@@ -80,7 +80,7 @@ export const listenCommand = new Command("listen")
           return;
         }
 
-        // Real-time events have full SourceEvent
+        // Real-time events have full PostTransformEvent
         const e = data;
         const time = new Date(e.sourceEvent.occurredAt).toLocaleTimeString();
         const source = colorProvider(e.sourceEvent.source);
