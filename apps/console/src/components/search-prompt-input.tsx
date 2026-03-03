@@ -188,8 +188,8 @@ export const SearchPromptInput = forwardRef<
       ref={ref}
       onSubmit={onSubmit}
       className={cn(
-        "w-full border dark:shadow-md border-border/50 rounded-sm overflow-hidden transition-all bg-input-bg dark:bg-input-bg",
-        "!divide-y-0 !shadow-sm",
+        "w-full border border-border/50 rounded-xl overflow-hidden transition-all bg-card/40 backdrop-blur-md shadow-sm",
+        "!divide-y-0",
         className,
       )}
     >
@@ -200,7 +200,7 @@ export const SearchPromptInput = forwardRef<
           onChange={(e) => onChange?.(e.target.value)}
           className={cn(
             "w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
-            "!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
+            "!bg-transparent focus:!bg-transparent hover:!bg-transparent disabled:!bg-transparent dark:!bg-transparent",
             "outline-none min-h-0 h-[56px]",
           )}
           style={{ lineHeight: "24px" }}
@@ -229,7 +229,7 @@ export const SearchPromptInput = forwardRef<
             title={submitDisabledReason}
             size="icon"
             variant="outline"
-            className="h-8 w-8 rounded-full dark:border-border/50 dark:shadow-sm"
+            className="h-8 w-8 !rounded-full dark:border-border/50 dark:shadow-sm"
           >
             <ArrowUp className="w-4 h-4" />
           </PromptInputSubmit>

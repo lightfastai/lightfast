@@ -110,7 +110,7 @@ export function SearchResultCard({
 
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggleExpand}>
-      <Card className="border-border/50 rounded-sm py-4 hover:border-border transition-colors">
+      <Card className="border-border/50 rounded-md bg-card/40 backdrop-blur-md py-4 hover:border-border transition-colors">
         <CardContent className="px-4">
           <div className="flex items-start gap-4">
             {/* Content */}
