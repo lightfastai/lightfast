@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { getQStashClient } from "@vendor/qstash";
-import { backfillEstimatePayload, backfillTriggerPayload } from "@repo/gateway-types";
+import { backfillTriggerPayload } from "@repo/gateway-types";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { backfillUrl } from "../lib/urls.js";
 import { getEnv } from "../env.js";
@@ -53,41 +53,6 @@ backfill.post("/", apiKeyAuth, async (c) => {
   }
 
   return c.json({ status: "queued", installationId, provider });
-});
-
-/**
- * POST /backfill/estimate
- *
- * Synchronous probe: forwards estimate request to the backfill service
- * and returns the structured scope estimate directly (no QStash).
- */
-backfill.post("/estimate", apiKeyAuth, async (c) => {
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: "invalid_json" }, 400);
-  }
-
-  const parsed = backfillEstimatePayload.safeParse(body);
-  if (!parsed.success) {
-    return c.json({ error: "validation_error", details: parsed.error.flatten() }, 400);
-  }
-
-  const { GATEWAY_API_KEY } = getEnv(c);
-
-  const response = await fetch(`${backfillUrl}/estimate`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-API-Key": GATEWAY_API_KEY,
-    },
-    body: JSON.stringify(parsed.data),
-    signal: AbortSignal.timeout(30_000),
-  });
-
-  const result = (await response.json()) as Record<string, unknown>;
-  return c.json(result, response.status as 200 | 400 | 404 | 502);
 });
 
 export { backfill };
