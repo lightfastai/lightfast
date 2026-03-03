@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { getQStashClient } from "@vendor/qstash";
-import { backfillTriggerPayload } from "@repo/gateway-types";
+import { backfillEstimatePayload, backfillTriggerPayload } from "@repo/gateway-types";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { backfillUrl } from "../lib/urls.js";
 import { getEnv } from "../env.js";
@@ -61,8 +61,6 @@ backfill.post("/", apiKeyAuth, async (c) => {
  * Synchronous probe: forwards estimate request to the backfill service
  * and returns the structured scope estimate directly (no QStash).
  */
-const estimatePayload = backfillTriggerPayload.omit({ holdForReplay: true });
-
 backfill.post("/estimate", apiKeyAuth, async (c) => {
   let body: unknown;
   try {
@@ -71,7 +69,7 @@ backfill.post("/estimate", apiKeyAuth, async (c) => {
     return c.json({ error: "invalid_json" }, 400);
   }
 
-  const parsed = estimatePayload.safeParse(body);
+  const parsed = backfillEstimatePayload.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: "validation_error", details: parsed.error.flatten() }, 400);
   }

@@ -24,11 +24,20 @@ export {
   backfillDepthSchema,
   backfillRunStatusSchema,
   backfillTriggerPayload,
+  backfillEstimatePayload,
   backfillRunRecord,
   BACKFILL_RUN_STATUSES,
   BACKFILL_TERMINAL_STATUSES,
 } from "./backfill";
-export type { BackfillDepth, BackfillRunStatus, BackfillTriggerPayload, BackfillRunRecord } from "./backfill";
+export type {
+  BackfillDepth,
+  BackfillRunStatus,
+  BackfillTriggerPayload,
+  BackfillEstimatePayload,
+  BackfillRunRecord,
+} from "./backfill";
+
+export type { GatewayConnection, GatewayTokenResult } from "./connections";
 
 export type {
   BaseAccountInfo,

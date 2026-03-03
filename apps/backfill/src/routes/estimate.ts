@@ -1,15 +1,15 @@
 import type { BackfillConfig } from "@repo/console-backfill";
 import { getConnector } from "@repo/console-backfill";
-import { backfillTriggerPayload } from "@repo/gateway-types";
+import { backfillEstimatePayload } from "@repo/gateway-types";
 import { Hono } from "hono";
 
 import { getEnv } from "../env.js";
 import { GITHUB_RATE_LIMIT_BUDGET } from "../lib/constants.js";
 import { timingSafeStringEqual } from "../lib/crypto.js";
-import { createGatewayClient } from "../lib/gateway-client.js";
+import { createGatewayClient } from "@repo/gateway-service-clients";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
-const estimateSchema = backfillTriggerPayload.omit({ holdForReplay: true });
+const estimateSchema = backfillEstimatePayload;
 
 interface Sample {
   resourceId: string;
@@ -40,7 +40,7 @@ estimate.post("/", async (c) => {
 
   const { installationId, provider, depth, entityTypes } = parsed.data;
 
-  const gw = createGatewayClient();
+  const gw = createGatewayClient({ apiKey: GATEWAY_API_KEY, requestSource: "backfill" });
 
   const connection = await gw.getConnection(installationId).catch(() => null);
   if (!connection) {

@@ -24,6 +24,11 @@ export const backfillTriggerPayload = z.object({
 });
 export type BackfillTriggerPayload = z.infer<typeof backfillTriggerPayload>;
 
+// ── Estimate payload (Console → Backfill, omits holdForReplay) ──
+
+export const backfillEstimatePayload = backfillTriggerPayload.omit({ holdForReplay: true });
+export type BackfillEstimatePayload = z.infer<typeof backfillEstimatePayload>;
+
 // ── Run record (Entity Worker → Gateway) ──
 
 export const backfillRunRecord = z.object({
