@@ -28,6 +28,7 @@ const securityHeaders = securityMiddleware(
 const isPublicRoute = createRouteMatcher([
   "/api/health(.*)",
   "/api/inngest(.*)",
+  "/api/gateway/ingress(.*)", // QStash-signed webhook delivery from Relay (auth via Upstash signature)
   "/robots.txt",
   "/sitemap(.*)",
   "/llms.txt", // AI crawler guidance file

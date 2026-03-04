@@ -20,6 +20,7 @@ export default async function EventsLayout({
         clerkOrgSlug: slug,
         workspaceName,
         source,
+        limit: 30,
       }),
     );
   }

@@ -1767,8 +1767,7 @@ export const workspaceRouter = {
    */
   events: {
     /**
-     * List recent events for a workspace
-     * Returns latest 50 events, optionally filtered by source provider
+     * List events for a workspace with cursor pagination, search, and date filtering.
      */
     list: orgScopedProcedure
       .input(
@@ -1776,6 +1775,10 @@ export const workspaceRouter = {
           clerkOrgSlug: z.string(),
           workspaceName: z.string(),
           source: z.enum(["github", "vercel", "linear", "sentry"]).optional(),
+          limit: z.number().min(1).max(100).default(30),
+          cursor: z.number().optional(),
+          search: z.string().max(200).optional(),
+          receivedAfter: z.string().datetime().optional(),
         }),
       )
       .query(async ({ ctx, input }) => {
@@ -1785,12 +1788,29 @@ export const workspaceRouter = {
           userId: ctx.auth.userId,
         });
 
+        const { limit, cursor, search, receivedAfter } = input;
+
         const conditions = [eq(workspaceEvents.workspaceId, workspaceId)];
+
         if (input.source) {
           conditions.push(eq(workspaceEvents.source, input.source));
         }
 
-        const events = await db
+        if (cursor) {
+          conditions.push(sql`${workspaceEvents.id} < ${cursor}`);
+        }
+
+        if (search) {
+          conditions.push(
+            sql`${workspaceEvents.sourceEvent}->>'title' ILIKE ${"%" + search + "%"}`,
+          );
+        }
+
+        if (receivedAfter) {
+          conditions.push(gte(workspaceEvents.receivedAt, receivedAfter));
+        }
+
+        const rows = await db
           .select({
             id: workspaceEvents.id,
             source: workspaceEvents.source,
@@ -1803,12 +1823,18 @@ export const workspaceRouter = {
           .from(workspaceEvents)
           .where(and(...conditions))
           .orderBy(desc(workspaceEvents.id))
-          .limit(50);
+          .limit(limit + 1);
+
+        const hasMore = rows.length > limit;
+        const events = hasMore ? rows.slice(0, limit) : rows;
+        const nextCursor = hasMore ? (events[events.length - 1]?.id ?? null) : null;
 
         return {
           workspaceId,
           clerkOrgId,
           events,
+          nextCursor,
+          hasMore,
         };
       }),
   },

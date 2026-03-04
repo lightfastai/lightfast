@@ -1,13 +1,10 @@
-import type { BackfillTriggerPayload } from "@repo/gateway-types";
-import { createRelayClient } from "@repo/gateway-service-clients";
-
-import { env } from "../env";
-
 /**
  * Notify the relay to trigger a historical backfill for a connection.
  * Best-effort — errors are logged but never thrown.
+ *
+ * TODO: Wire up when backfill service is ready for production.
  */
-export async function notifyBackfill(params: {
+export async function notifyBackfill(_params: {
   installationId: string;
   provider: string;
   orgId: string;
@@ -16,13 +13,5 @@ export async function notifyBackfill(params: {
   holdForReplay?: boolean;
   correlationId?: string;
 }): Promise<void> {
-  // TODO: Remove when backfill is ready for production
   return;
-
-  const relay = createRelayClient({
-    apiKey: env.GATEWAY_API_KEY,
-    correlationId: params.correlationId ?? crypto.randomUUID(),
-  });
-
-  await relay.triggerBackfill(params as BackfillTriggerPayload & { correlationId?: string });
 }

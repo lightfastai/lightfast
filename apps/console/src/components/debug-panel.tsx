@@ -101,20 +101,19 @@ export function DebugPanel({ slug, workspaceName }: { slug: string; workspaceNam
           ? "left 300ms cubic-bezier(0.4, 0, 0.2, 1), top 300ms cubic-bezier(0.4, 0, 0.2, 1)"
           : "none",
       }}
-      className="font-mono text-xs"
     >
       <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
-        <PopoverPrimitive.Trigger asChild>
+        <PopoverPrimitive.Anchor asChild>
           <Button
             {...bind()}
             variant="outline"
             size="icon"
-            className="rounded-full bg-black border-white/10 backdrop-blur-sm shadow-2xl hover:bg-black touch-none select-none cursor-grab active:cursor-grabbing"
+            className="rounded-full bg-black touch-none select-none cursor-grab active:cursor-grabbing"
             title="Open Debug Panel"
           >
             <Icons.logoShort className="size-3 text-white" />
           </Button>
-        </PopoverPrimitive.Trigger>
+        </PopoverPrimitive.Anchor>
         {/* No Portal — content renders inline within the fixed container */}
         <PopoverPrimitive.Content
           side={popoverSide}
@@ -123,12 +122,11 @@ export function DebugPanel({ slug, workspaceName }: { slug: string; workspaceNam
           avoidCollisions={false}
           sticky="always"
           onOpenAutoFocus={(e) => e.preventDefault()}
-          className="w-80 bg-black/85 border-white/10 backdrop-blur-sm shadow-2xl text-white p-0 font-mono text-xs data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 origin-(--radix-popover-content-transform-origin) rounded-md border shadow-md outline-hidden"
+          className="w-80 bg-black border-white/10 backdrop-blur-sm shadow-2xl text-white p-0 font-mono text-xs data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 origin-(--radix-popover-content-transform-origin) rounded-md border shadow-md outline-hidden"
         >
           <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
             <div className="flex items-center gap-1.5">
-              <Icons.logoShort className="size-3.5 text-white/70" />
-              <span className="font-semibold text-white/90">Debug</span>
+              <Icons.logoShort className="size-3 text-white" />
             </div>
             <Button
               variant="ghost"

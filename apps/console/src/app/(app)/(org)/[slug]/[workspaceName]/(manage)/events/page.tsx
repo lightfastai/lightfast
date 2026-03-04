@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { EventsFeed } from "./_components/events-feed";
+import { EventsTable } from "./_components/events-table";
 
 export default async function EventsPage({
   params,
@@ -28,7 +28,7 @@ export default async function EventsPage({
       </div>
 
       <Suspense fallback={<EventsFeedSkeleton />}>
-        <EventsFeed
+        <EventsTable
           orgSlug={slug}
           workspaceName={workspaceName}
           initialSource={initialSource}

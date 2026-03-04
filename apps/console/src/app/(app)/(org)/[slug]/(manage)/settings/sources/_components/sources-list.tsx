@@ -10,9 +10,9 @@ import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { showErrorToast } from "~/lib/trpc-errors";
 import { useOAuthPopup } from "~/hooks/use-oauth-popup";
+import { PROVIDER_CONFIG, PROVIDER_ORDER } from "~/lib/provider-config";
 import {
 	Accordion,
 	AccordionContent,
@@ -21,43 +21,12 @@ import {
 } from "@repo/ui/components/ui/accordion";
 import { formatDistanceToNow } from "date-fns";
 
-const providers = ["github", "vercel", "linear", "sentry"] as const;
-type Provider = (typeof providers)[number];
-
-const providerConfig: Record<
-	Provider,
-	{
-		name: string;
-		icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-		description: string;
-	}
-> = {
-	github: {
-		name: "GitHub",
-		icon: IntegrationLogoIcons.github,
-		description: "Connect your GitHub repositories",
-	},
-	vercel: {
-		name: "Vercel",
-		icon: IntegrationLogoIcons.vercel,
-		description: "Connect your Vercel projects",
-	},
-	linear: {
-		name: "Linear",
-		icon: IntegrationLogoIcons.linear,
-		description: "Connect your Linear workspace",
-	},
-	sentry: {
-		name: "Sentry",
-		icon: IntegrationLogoIcons.sentry,
-		description: "Connect your Sentry projects",
-	},
-};
+type Provider = (typeof PROVIDER_ORDER)[number];
 
 function SourceItem({ provider }: { provider: Provider }) {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
-	const config = providerConfig[provider];
+	const config = PROVIDER_CONFIG[provider];
 	const Icon = config.icon;
 
 	const { data: integrations } = useSuspenseQuery({
@@ -166,7 +135,7 @@ function SourceItem({ provider }: { provider: Provider }) {
 export function SourcesList() {
 	return (
 		<Accordion type="multiple" className="w-full rounded-lg border">
-			{providers.map((provider) => (
+			{PROVIDER_ORDER.map((provider) => (
 				<SourceItem key={provider} provider={provider} />
 			))}
 		</Accordion>
