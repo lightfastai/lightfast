@@ -503,6 +503,34 @@ export const EVENT_REGISTRY = {
   },
 } as const satisfies Record<string, EventDef>;
 
+// ─── Pipeline Type Re-exports ─────────────────────────────────────────────────
+
+// PreTransform types (wire payload shapes as received from providers)
+export type {
+  PreTransformGitHubPushEvent,
+  PreTransformGitHubPullRequestEvent,
+  PreTransformGitHubIssuesEvent,
+  PreTransformGitHubReleaseEvent,
+  PreTransformGitHubDiscussionEvent,
+  PreTransformVercelWebhookPayload,
+  PreTransformLinearIssueWebhook,
+  PreTransformLinearCommentWebhook,
+  PreTransformLinearProjectWebhook,
+  PreTransformLinearCycleWebhook,
+  PreTransformLinearProjectUpdateWebhook,
+  PreTransformSentryIssueWebhook,
+  PreTransformSentryErrorWebhook,
+  PreTransformSentryEventAlertWebhook,
+  PreTransformSentryMetricAlertWebhook,
+} from "@repo/console-webhooks";
+
+// PostTransform types (normalized event shapes after transformation)
+export type {
+  PostTransformEvent,
+  PostTransformActor,
+  PostTransformReference,
+} from "@repo/console-validation";
+
 // ─── Lookup Functions ─────────────────────────────────────────────────────────
 
 /**

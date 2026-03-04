@@ -18,23 +18,23 @@ import {
 } from "@repo/console-webhooks";
 import type {
   GitHubWebhookEventType,
-  PushEvent,
-  PullRequestEvent,
-  IssuesEvent,
-  ReleaseEvent,
-  DiscussionEvent,
+  PreTransformGitHubPushEvent,
+  PreTransformGitHubPullRequestEvent,
+  PreTransformGitHubIssuesEvent,
+  PreTransformGitHubReleaseEvent,
+  PreTransformGitHubDiscussionEvent,
   SentryWebhookEventType,
-  SentryIssueWebhook,
-  SentryErrorWebhook,
-  SentryEventAlertWebhook,
-  SentryMetricAlertWebhook,
+  PreTransformSentryIssueWebhook,
+  PreTransformSentryErrorWebhook,
+  PreTransformSentryEventAlertWebhook,
+  PreTransformSentryMetricAlertWebhook,
   LinearWebhookEventType,
-  LinearIssueWebhook,
-  LinearCommentWebhook,
-  LinearProjectWebhook,
-  LinearCycleWebhook,
-  LinearProjectUpdateWebhook,
-  VercelWebhookPayload,
+  PreTransformLinearIssueWebhook,
+  PreTransformLinearCommentWebhook,
+  PreTransformLinearProjectWebhook,
+  PreTransformLinearCycleWebhook,
+  PreTransformLinearProjectUpdateWebhook,
+  PreTransformVercelWebhookPayload,
   VercelWebhookEventType,
 } from "@repo/console-webhooks";
 
@@ -47,25 +47,25 @@ export interface WebhookPayload {
 interface GitHubWebhookPayload extends WebhookPayload {
   source: "github";
   eventType: GitHubWebhookEventType;
-  payload: PushEvent | PullRequestEvent | IssuesEvent | ReleaseEvent | DiscussionEvent;
+  payload: PreTransformGitHubPushEvent | PreTransformGitHubPullRequestEvent | PreTransformGitHubIssuesEvent | PreTransformGitHubReleaseEvent | PreTransformGitHubDiscussionEvent;
 }
 
 interface VercelWebhookPayloadWrapper extends WebhookPayload {
   source: "vercel";
   eventType: VercelWebhookEventType;
-  payload: VercelWebhookPayload;
+  payload: PreTransformVercelWebhookPayload;
 }
 
 export interface SentryWebhookPayload extends WebhookPayload {
   source: "sentry";
   eventType: SentryWebhookEventType;
-  payload: SentryIssueWebhook | SentryErrorWebhook | SentryEventAlertWebhook | SentryMetricAlertWebhook;
+  payload: PreTransformSentryIssueWebhook | PreTransformSentryErrorWebhook | PreTransformSentryEventAlertWebhook | PreTransformSentryMetricAlertWebhook;
 }
 
 export interface LinearWebhookPayload extends WebhookPayload {
   source: "linear";
   eventType: LinearWebhookEventType;
-  payload: LinearIssueWebhook | LinearCommentWebhook | LinearProjectWebhook | LinearCycleWebhook | LinearProjectUpdateWebhook;
+  payload: PreTransformLinearIssueWebhook | PreTransformLinearCommentWebhook | PreTransformLinearProjectWebhook | PreTransformLinearCycleWebhook | PreTransformLinearProjectUpdateWebhook;
 }
 
 /**
@@ -124,23 +124,23 @@ function transformGitHubWebhook(
 
   switch (webhook.eventType) {
     case "push":
-      event = transformGitHubPush(webhook.payload as PushEvent, context);
+      event = transformGitHubPush(webhook.payload as PreTransformGitHubPushEvent, context);
       break;
     case "pull_request":
       event = transformGitHubPullRequest(
-        webhook.payload as PullRequestEvent,
+        webhook.payload as PreTransformGitHubPullRequestEvent,
         context
       );
       break;
     case "issues":
-      event = transformGitHubIssue(webhook.payload as IssuesEvent, context);
+      event = transformGitHubIssue(webhook.payload as PreTransformGitHubIssuesEvent, context);
       break;
     case "release":
-      event = transformGitHubRelease(webhook.payload as ReleaseEvent, context);
+      event = transformGitHubRelease(webhook.payload as PreTransformGitHubReleaseEvent, context);
       break;
     case "discussion":
       event = transformGitHubDiscussion(
-        webhook.payload as DiscussionEvent,
+        webhook.payload as PreTransformGitHubDiscussionEvent,
         context
       );
       break;

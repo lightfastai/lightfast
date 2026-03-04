@@ -1,20 +1,20 @@
 /**
  * @repo/console-webhooks
  *
- * Webhook event transformers, validation, and sanitization for Console integrations.
+ * Webhook event pre-transformers, post-transform validation, and sanitization
+ * for Console integrations.
  *
- * Signature verification is handled by the Relay service (apps/relay/).
- * This package provides:
- * - Event transformers (GitHub, Vercel, Linear, Sentry) that produce PostTransformEvent shapes
- * - Payload validation against Zod schemas
- * - Sanitization utilities for webhook content
+ * Structure:
+ * - pre-transformers/  — PreTransform types + transform functions per provider
+ * - post-transformers/ — PostTransform validation
+ * - sanitize.ts        — Content sanitization utilities
  */
 
-// Validation utilities
-export { validatePostTransformEvent, type ValidationResult } from "./validation.js";
+// Post-transform validation
+export { validatePostTransformEvent, type ValidationResult } from "./post-transformers";
 
 // Transform context
-export type { TransformContext } from "./transform-context.js";
+export type { TransformContext } from "./transform-context";
 
 // Sanitization utilities
 export {
@@ -25,53 +25,54 @@ export {
   sanitizeContent,
   sanitizeTitle,
   sanitizeBody,
-} from "./sanitize.js";
+} from "./sanitize";
 
-// GitHub transformers and types
+// Pre-transformers (types + transform functions)
 export {
+  // GitHub
   transformGitHubPush,
   transformGitHubPullRequest,
   transformGitHubIssue,
   transformGitHubRelease,
   transformGitHubDiscussion,
   githubTransformers,
-} from "./transformers/github.js";
-export type {
-  PushEvent,
-  PullRequestEvent,
-  IssuesEvent,
-  ReleaseEvent,
-  DiscussionEvent,
-  GitHubWebhookEventType,
-} from "./transformers/github.js";
-
-// Vercel transformers and types
-export {
+  // Vercel
   transformVercelDeployment,
   vercelTransformers,
-} from "./transformers/vercel.js";
-export type {
-  VercelWebhookEventType,
-  VercelWebhookPayload,
-} from "./transformers/vercel.js";
-
-// Linear transformers and types
-export {
+  // Linear
   transformLinearIssue,
   transformLinearComment,
   transformLinearProject,
   transformLinearCycle,
   transformLinearProjectUpdate,
   linearTransformers,
-} from "./transformers/linear.js";
+  // Sentry
+  transformSentryIssue,
+  transformSentryError,
+  transformSentryEventAlert,
+  transformSentryMetricAlert,
+  sentryTransformers,
+} from "./pre-transformers";
+
 export type {
+  // GitHub (from @octokit/webhooks-types)
+  PreTransformGitHubPushEvent,
+  PreTransformGitHubPullRequestEvent,
+  PreTransformGitHubIssuesEvent,
+  PreTransformGitHubReleaseEvent,
+  PreTransformGitHubDiscussionEvent,
+  GitHubWebhookEventType,
+  // Vercel (self-defined)
+  VercelWebhookEventType,
+  PreTransformVercelWebhookPayload,
+  // Linear (self-defined)
   LinearWebhookBase,
   LinearWebhookEventType,
-  LinearIssueWebhook,
-  LinearCommentWebhook,
-  LinearProjectWebhook,
-  LinearCycleWebhook,
-  LinearProjectUpdateWebhook,
+  PreTransformLinearIssueWebhook,
+  PreTransformLinearCommentWebhook,
+  PreTransformLinearProjectWebhook,
+  PreTransformLinearCycleWebhook,
+  PreTransformLinearProjectUpdateWebhook,
   LinearIssue,
   LinearAttachment,
   LinearComment,
@@ -80,23 +81,13 @@ export type {
   LinearProjectUpdate,
   LinearUser,
   LinearLabel,
-} from "./transformers/linear.js";
-
-// Sentry transformers and types
-export {
-  transformSentryIssue,
-  transformSentryError,
-  transformSentryEventAlert,
-  transformSentryMetricAlert,
-  sentryTransformers,
-} from "./transformers/sentry.js";
-export type {
-  SentryIssueWebhook,
-  SentryErrorWebhook,
-  SentryEventAlertWebhook,
-  SentryMetricAlertWebhook,
+  // Sentry (self-defined)
+  PreTransformSentryIssueWebhook,
+  PreTransformSentryErrorWebhook,
+  PreTransformSentryEventAlertWebhook,
+  PreTransformSentryMetricAlertWebhook,
   SentryIssue,
   SentryErrorEvent,
   SentryActor,
   SentryWebhookEventType,
-} from "./transformers/sentry.js";
+} from "./pre-transformers";

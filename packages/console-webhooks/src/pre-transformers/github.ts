@@ -1,0 +1,530 @@
+/**
+ * GitHub Pre-Transform Types & Transformers
+ *
+ * PreTransform types: Re-exported from @octokit/webhooks-types (v7.6.1)
+ * Decision: Official package, maintained by GitHub/Octokit, generated from GitHub's OpenAPI spec.
+ * Zero-dependency, ~2.8M weekly downloads. No reason to self-define.
+ *
+ * Fixture verified: apps/relay/src/__fixtures__/github-push.json
+ * Last verified: 2026-03-04
+ */
+
+import type {
+  PostTransformEvent,
+  PostTransformReference,
+} from "@repo/console-validation";
+import type { TransformContext } from "../transform-context";
+import type {
+  PushEvent,
+  PullRequestEvent,
+  IssuesEvent,
+  ReleaseEvent,
+  DiscussionEvent,
+} from "@octokit/webhooks-types";
+// PreTransform type aliases — re-exported from @octokit/webhooks-types
+export type PreTransformGitHubPushEvent = PushEvent;
+export type PreTransformGitHubPullRequestEvent = PullRequestEvent;
+export type PreTransformGitHubIssuesEvent = IssuesEvent;
+export type PreTransformGitHubReleaseEvent = ReleaseEvent;
+export type PreTransformGitHubDiscussionEvent = DiscussionEvent;
+import { validatePostTransformEvent } from "../post-transformers/validation";
+import { sanitizeTitle, sanitizeBody } from "../sanitize";
+
+/**
+ * Log validation errors for PostTransformEvent
+ * Validation is for monitoring - events are still returned to avoid breaking existing flows
+ */
+function logValidationErrors(
+  transformerName: string,
+  event: PostTransformEvent,
+  errors: string[]
+): void {
+  console.error(`[Transformer:${transformerName}] Invalid PostTransformEvent:`, {
+    sourceId: event.sourceId,
+    sourceType: event.sourceType,
+    errors,
+  });
+}
+
+/**
+ * Transform GitHub push event to PostTransformEvent
+ */
+export function transformGitHubPush(
+  payload: PushEvent,
+  context: TransformContext
+): PostTransformEvent {
+  const refs: PostTransformReference[] = [];
+  const branch = payload.ref.replace("refs/heads/", "");
+
+  // Add commit references
+  refs.push({
+    type: "commit",
+    id: payload.after,
+    url: `${payload.repository.html_url}/commit/${payload.after}`,
+  });
+
+  refs.push({
+    type: "branch",
+    id: branch,
+    url: `${payload.repository.html_url}/tree/${branch}`,
+  });
+
+  // Add changed file count to title
+  const fileCount = payload.commits.reduce(
+    (sum, c) => sum + c.added.length + c.modified.length + c.removed.length,
+    0
+  );
+
+  const rawTitle =
+    payload.head_commit?.message?.split("\n")[0]?.slice(0, 100) ||
+    `Push to ${branch}`;
+
+  // SEMANTIC CONTENT ONLY (for embedding)
+  // Structured fields stored in metadata
+  const rawBody = payload.head_commit?.message || "";
+
+  const event: PostTransformEvent = {
+    source: "github",
+    sourceType: "push",
+    sourceId: `push:${payload.repository.full_name}:${payload.after}`,
+    title: sanitizeTitle(`[Push] ${rawTitle}`),
+    body: sanitizeBody(rawBody),
+    // Use sender (has numeric ID) instead of pusher (only has username)
+    // This ensures consistency with PR/Issue/Release/Discussion events
+    actor: payload.sender
+      ? {
+          id: String(payload.sender.id),
+          name: payload.sender.login,
+          email: payload.pusher?.email || undefined, // Get email from pusher
+          avatarUrl: payload.sender.avatar_url,
+        }
+      : undefined,
+    occurredAt: payload.head_commit?.timestamp || new Date().toISOString(),
+    references: refs,
+    metadata: {
+      // All structured fields moved to metadata
+      deliveryId: context.deliveryId,
+      repoFullName: payload.repository.full_name,
+      repoId: payload.repository.id,
+      branch,
+      beforeSha: payload.before,
+      afterSha: payload.after,
+      commitCount: payload.commits.length,
+      fileCount,
+      forced: payload.forced,
+    },
+  };
+
+  // Validate before returning (logs errors but doesn't block)
+  const validation = validatePostTransformEvent(event);
+  if (!validation.success && validation.errors) {
+    logValidationErrors("transformGitHubPush", event, validation.errors);
+  }
+
+  return event;
+}
+
+/**
+ * Transform GitHub pull request event to PostTransformEvent
+ */
+export function transformGitHubPullRequest(
+  payload: PullRequestEvent,
+  context: TransformContext
+): PostTransformEvent {
+  const pr = payload.pull_request;
+  const refs: PostTransformReference[] = [];
+
+  refs.push({
+    type: "pr",
+    id: `#${pr.number}`,
+    url: pr.html_url,
+  });
+
+  refs.push({
+    type: "branch",
+    id: pr.head.ref,
+    url: `${payload.repository.html_url}/tree/${pr.head.ref}`,
+  });
+
+  if (pr.head.sha) {
+    refs.push({
+      type: "commit",
+      id: pr.head.sha,
+      url: `${payload.repository.html_url}/commit/${pr.head.sha}`,
+    });
+  }
+
+  // Add merge commit SHA for cross-source linkage (Vercel deploy → PR)
+  if (pr.merge_commit_sha) {
+    refs.push({
+      type: "commit",
+      id: pr.merge_commit_sha,
+      url: `${payload.repository.html_url}/commit/${pr.merge_commit_sha}`,
+      label: "merge", // Distinguish from head commit
+    });
+  }
+
+  // Extract linked issues from body
+  const linkedIssues = extractLinkedIssues(pr.body || "");
+  for (const issue of linkedIssues) {
+    refs.push({
+      type: "issue",
+      id: issue.id,
+      url: issue.url,
+      label: issue.label, // "fixes", "closes", etc.
+    });
+  }
+
+  // Add reviewers
+  for (const reviewer of pr.requested_reviewers || []) {
+    if ("login" in reviewer) {
+      refs.push({
+        type: "reviewer",
+        id: reviewer.login,
+        url: `https://github.com/${reviewer.login}`,
+      });
+    }
+  }
+
+  // Add assignees
+  for (const assignee of pr.assignees || []) {
+    refs.push({
+      type: "assignee",
+      id: assignee.login,
+      url: `https://github.com/${assignee.login}`,
+    });
+  }
+
+  // Add labels
+  for (const label of pr.labels || []) {
+    refs.push({
+      type: "label",
+      id: typeof label === "string" ? label : label.name || "",
+    });
+  }
+
+  const actionMap: Record<string, string> = {
+    opened: "PR Opened",
+    closed: pr.merged ? "PR Merged" : "PR Closed",
+    reopened: "PR Reopened",
+    review_requested: "Review Requested",
+    ready_for_review: "Ready for Review",
+  };
+
+  const actionTitle = actionMap[payload.action] || `PR ${payload.action}`;
+
+  // SEMANTIC CONTENT ONLY (for embedding)
+  // Structured fields stored in metadata to avoid token waste on non-semantic labels
+  const rawBody = [pr.title, pr.body || ""].join("\n");
+
+  // Determine effective action (merged is a special case of closed)
+  const effectiveAction =
+    payload.action === "closed" && pr.merged ? "merged" : payload.action;
+  const event: PostTransformEvent = {
+    source: "github",
+    sourceType: `pull-request.${effectiveAction}`,
+    sourceId: `pr:${payload.repository.full_name}#${pr.number}:${effectiveAction}`,
+    title: sanitizeTitle(`[${actionTitle}] ${pr.title.slice(0, 100)}`),
+    body: sanitizeBody(rawBody),
+    actor: pr.user
+      ? {
+          id: String(pr.user.id),
+          name: pr.user.login,
+          avatarUrl: pr.user.avatar_url,
+        }
+      : undefined,
+    occurredAt: pr.updated_at || pr.created_at,
+    references: refs,
+    metadata: {
+      // All structured fields moved to metadata (not in body)
+      deliveryId: context.deliveryId,
+      repoFullName: payload.repository.full_name,
+      repoId: payload.repository.id,
+      prNumber: pr.number,
+      action: payload.action,
+      merged: pr.merged,
+      draft: pr.draft,
+      additions: pr.additions,
+      deletions: pr.deletions,
+      changedFiles: pr.changed_files,
+      headRef: pr.head.ref,
+      baseRef: pr.base.ref,
+      headSha: pr.head.sha,
+      authorLogin: pr.user?.login,
+      authorId: pr.user?.id,
+    },
+  };
+
+  // Validate before returning (logs errors but doesn't block)
+  const validation = validatePostTransformEvent(event);
+  if (!validation.success && validation.errors) {
+    logValidationErrors("transformGitHubPullRequest", event, validation.errors);
+  }
+
+  return event;
+}
+
+/**
+ * Transform GitHub issues event to PostTransformEvent
+ */
+export function transformGitHubIssue(
+  payload: IssuesEvent,
+  context: TransformContext
+): PostTransformEvent {
+  const issue = payload.issue;
+  const refs: PostTransformReference[] = [];
+
+  refs.push({
+    type: "issue",
+    id: `#${issue.number}`,
+    url: issue.html_url,
+  });
+
+  // Add assignees
+  for (const assignee of issue.assignees || []) {
+    refs.push({
+      type: "assignee",
+      id: assignee.login,
+      url: `https://github.com/${assignee.login}`,
+    });
+  }
+
+  // Add labels
+  for (const label of issue.labels || []) {
+    refs.push({
+      type: "label",
+      id: typeof label === "string" ? label : label.name || "",
+    });
+  }
+
+  const actionMap: Record<string, string> = {
+    opened: "Issue Opened",
+    closed: "Issue Closed",
+    reopened: "Issue Reopened",
+    assigned: "Issue Assigned",
+    labeled: "Issue Labeled",
+  };
+
+  const actionTitle = actionMap[payload.action] || `Issue ${payload.action}`;
+
+  // SEMANTIC CONTENT ONLY (for embedding)
+  const rawBody = [issue.title, issue.body || ""].join("\n");
+
+  const event: PostTransformEvent = {
+    source: "github",
+    sourceType: `issue.${payload.action}`,
+    sourceId: `issue:${payload.repository.full_name}#${issue.number}:${payload.action}`,
+    title: sanitizeTitle(`[${actionTitle}] ${issue.title.slice(0, 100)}`),
+    body: sanitizeBody(rawBody),
+    actor: issue.user
+      ? {
+          id: String(issue.user.id),
+          name: issue.user.login,
+          avatarUrl: issue.user.avatar_url,
+        }
+      : undefined,
+    occurredAt: issue.updated_at || issue.created_at,
+    references: refs,
+    metadata: {
+      deliveryId: context.deliveryId,
+      repoFullName: payload.repository.full_name,
+      repoId: payload.repository.id,
+      issueNumber: issue.number,
+      action: payload.action,
+      state: issue.state,
+      authorLogin: issue.user?.login,
+      authorId: issue.user?.id,
+    },
+  };
+
+  // Validate before returning (logs errors but doesn't block)
+  const validation = validatePostTransformEvent(event);
+  if (!validation.success && validation.errors) {
+    logValidationErrors("transformGitHubIssue", event, validation.errors);
+  }
+
+  return event;
+}
+
+/**
+ * Transform GitHub release event to PostTransformEvent
+ */
+export function transformGitHubRelease(
+  payload: ReleaseEvent,
+  context: TransformContext
+): PostTransformEvent {
+  const release = payload.release;
+  const refs: PostTransformReference[] = [];
+
+  refs.push({
+    type: "branch",
+    id: release.target_commitish,
+    url: `${payload.repository.html_url}/tree/${release.target_commitish}`,
+  });
+
+  const actionMap: Record<string, string> = {
+    published: "Release Published",
+    created: "Release Created",
+    released: "Release Released",
+  };
+
+  const actionTitle = actionMap[payload.action] || `Release ${payload.action}`;
+
+  // SEMANTIC CONTENT ONLY (for embedding)
+  const rawBody = release.body || "";
+
+  const event: PostTransformEvent = {
+    source: "github",
+    sourceType: `release.${payload.action}`,
+    sourceId: `release:${payload.repository.full_name}:${release.tag_name}`,
+    title: sanitizeTitle(`[${actionTitle}] ${release.name || release.tag_name}`),
+    body: sanitizeBody(rawBody),
+    actor: release.author
+      ? {
+          id: String(release.author.id),
+          name: release.author.login,
+          avatarUrl: release.author.avatar_url,
+        }
+      : undefined,
+    occurredAt: release.published_at || release.created_at || new Date().toISOString(),
+    references: refs,
+    metadata: {
+      deliveryId: context.deliveryId,
+      repoFullName: payload.repository.full_name,
+      repoId: payload.repository.id,
+      tagName: release.tag_name,
+      targetCommitish: release.target_commitish,
+      action: payload.action,
+      prerelease: release.prerelease,
+      draft: release.draft,
+      authorLogin: release.author?.login,
+      authorId: release.author?.id,
+    },
+  };
+
+  // Validate before returning (logs errors but doesn't block)
+  const validation = validatePostTransformEvent(event);
+  if (!validation.success && validation.errors) {
+    logValidationErrors("transformGitHubRelease", event, validation.errors);
+  }
+
+  return event;
+}
+
+/**
+ * Transform GitHub discussion event to PostTransformEvent
+ */
+export function transformGitHubDiscussion(
+  payload: DiscussionEvent,
+  context: TransformContext
+): PostTransformEvent {
+  const discussion = payload.discussion;
+  const refs: PostTransformReference[] = [];
+
+  // Add category
+  if (discussion.category) {
+    refs.push({
+      type: "label",
+      id: discussion.category.name,
+    });
+  }
+
+  const actionMap: Record<string, string> = {
+    created: "Discussion Created",
+    answered: "Discussion Answered",
+    closed: "Discussion Closed",
+  };
+
+  const actionTitle =
+    actionMap[payload.action] || `Discussion ${payload.action}`;
+
+  // SEMANTIC CONTENT ONLY (for embedding)
+  const rawBody = [discussion.title, discussion.body || ""].join("\n");
+
+  const event: PostTransformEvent = {
+    source: "github",
+    sourceType: `discussion.${payload.action}`,
+    sourceId: `discussion:${payload.repository.full_name}#${discussion.number}`,
+    title: sanitizeTitle(`[${actionTitle}] ${discussion.title.slice(0, 100)}`),
+    body: sanitizeBody(rawBody),
+    actor: discussion.user
+      ? {
+          id: String(discussion.user.id),
+          name: discussion.user.login,
+          avatarUrl: discussion.user.avatar_url,
+        }
+      : undefined,
+    occurredAt: discussion.updated_at || discussion.created_at,
+    references: refs,
+    metadata: {
+      deliveryId: context.deliveryId,
+      repoFullName: payload.repository.full_name,
+      repoId: payload.repository.id,
+      discussionNumber: discussion.number,
+      action: payload.action,
+      category: discussion.category?.name,
+      answered: discussion.answer_html_url !== null,
+      authorLogin: discussion.user?.login,
+      authorId: discussion.user?.id,
+    },
+  };
+
+  // Validate before returning (logs errors but doesn't block)
+  const validation = validatePostTransformEvent(event);
+  if (!validation.success && validation.errors) {
+    logValidationErrors("transformGitHubDiscussion", event, validation.errors);
+  }
+
+  return event;
+}
+
+/**
+ * Extract linked issues from PR/issue body
+ * Matches:
+ * - GitHub issues: fixes #123, closes #123, resolves #123
+ * - External issues: fixes LIN-892, fixes ENG-123, resolves Sentry CHECKOUT-123
+ */
+function extractLinkedIssues(
+  body: string
+): Array<{ id: string; url?: string; label: string }> {
+  const matches: Array<{ id: string; url?: string; label: string }> = [];
+
+  // Pattern 1: GitHub-style issue references (fixes #123)
+  const githubPattern = /(fix(?:es)?|close[sd]?|resolve[sd]?)\s+#(\d+)/gi;
+  let match;
+
+  while ((match = githubPattern.exec(body)) !== null) {
+    matches.push({
+      id: `#${match[2]}`,
+      label: match[1]?.toLowerCase().replace(/e?s$/, "") || "fixes",
+    });
+  }
+
+  // Pattern 2: External issue references (fixes LIN-892, resolves CHECKOUT-123)
+  // Matches: keyword + optional "Sentry " + PROJECT-123 format
+  const externalPattern =
+    /(fix(?:es)?|close[sd]?|resolve[sd]?)\s+(?:Sentry\s+)?([A-Z]+-\d+)/gi;
+
+  while ((match = externalPattern.exec(body)) !== null) {
+    matches.push({
+      id: match[2] ?? "",
+      label: match[1]?.toLowerCase().replace(/e?s$/, "") || "fixes",
+    });
+  }
+
+  return matches;
+}
+
+// Export all transformers
+export const githubTransformers = {
+  push: transformGitHubPush,
+  pull_request: transformGitHubPullRequest,
+  issues: transformGitHubIssue,
+  release: transformGitHubRelease,
+  discussion: transformGitHubDiscussion,
+};
+
+/**
+ * GitHub webhook event types supported by our transformers.
+ */
+export type GitHubWebhookEventType = keyof typeof githubTransformers;

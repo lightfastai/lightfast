@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@repo/console-validation": "workspace:*",
+    "@repo/console-webhooks": "workspace:*",
     "zod": "catalog:zod3"
   },
   "devDependencies": {

@@ -5,7 +5,7 @@
  * so the existing transformer produces identical PostTransformEvent output.
  */
 import type {
-  VercelWebhookPayload,
+  PreTransformVercelWebhookPayload,
   VercelWebhookEventType,
 } from "@repo/console-webhooks";
 
@@ -32,21 +32,21 @@ function mapReadyStateToEventType(readyState?: string): VercelWebhookEventType {
 }
 
 /**
- * Adapt a Vercel deployment from the list API into a VercelWebhookPayload shape.
+ * Adapt a Vercel deployment from the list API into a PreTransformVercelWebhookPayload shape.
  *
  * The transformer expects:
- *   transformVercelDeployment(payload: VercelWebhookPayload, eventType: VercelWebhookEventType, context)
+ *   transformVercelDeployment(payload: PreTransformVercelWebhookPayload, eventType: VercelWebhookEventType, context)
  *
  * Returns both the adapted payload and the event type string.
  */
 export function adaptVercelDeploymentForTransformer(
   deployment: Record<string, unknown>,
   projectName: string,
-): { webhookPayload: VercelWebhookPayload; eventType: VercelWebhookEventType } {
+): { webhookPayload: PreTransformVercelWebhookPayload; eventType: VercelWebhookEventType } {
   const eventType = mapReadyStateToEventType(deployment.readyState as string | undefined);
   const createdAt = (deployment.created as number | undefined) ?? Date.now();
 
-  const webhookPayload: VercelWebhookPayload = {
+  const webhookPayload: PreTransformVercelWebhookPayload = {
     id: `backfill-${deployment.uid as string}`,
     type: eventType,
     createdAt,
@@ -62,7 +62,7 @@ export function adaptVercelDeploymentForTransformer(
           | "QUEUED"
           | "CANCELED"
           | undefined,
-        meta: deployment.meta as VercelWebhookPayload["payload"]["deployment"] extends { meta?: infer M } ? M : never,
+        meta: deployment.meta as PreTransformVercelWebhookPayload["payload"]["deployment"] extends { meta?: infer M } ? M : never,
       },
       project: {
         id: (deployment.projectId as string | undefined) ?? "",

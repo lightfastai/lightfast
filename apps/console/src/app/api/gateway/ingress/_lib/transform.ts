@@ -11,10 +11,10 @@ import {
   sentryTransformers,
   transformVercelDeployment,
 } from "@repo/console-webhooks";
-import type { VercelWebhookPayload, VercelWebhookEventType } from "@repo/console-webhooks";
+import type { PreTransformVercelWebhookPayload, VercelWebhookEventType } from "@repo/console-webhooks";
 import type { LinearWebhookEventType } from "@repo/console-webhooks";
 import type { SentryWebhookEventType } from "@repo/console-webhooks";
-import type { PushEvent, PullRequestEvent, IssuesEvent, ReleaseEvent, DiscussionEvent } from "@repo/console-webhooks";
+import type { PreTransformGitHubPushEvent, PreTransformGitHubPullRequestEvent, PreTransformGitHubIssuesEvent, PreTransformGitHubReleaseEvent, PreTransformGitHubDiscussionEvent } from "@repo/console-webhooks";
 
 /**
  * Route GitHub webhook events to the appropriate transformer.
@@ -38,15 +38,15 @@ function transformGitHubEvent(
 ): PostTransformEvent | null {
   switch (eventType) {
     case "push":
-      return transformGitHubPush(payload as PushEvent, context);
+      return transformGitHubPush(payload as PreTransformGitHubPushEvent, context);
     case "pull_request":
-      return transformGitHubPullRequest(payload as PullRequestEvent, context);
+      return transformGitHubPullRequest(payload as PreTransformGitHubPullRequestEvent, context);
     case "issues":
-      return transformGitHubIssue(payload as IssuesEvent, context);
+      return transformGitHubIssue(payload as PreTransformGitHubIssuesEvent, context);
     case "release":
-      return transformGitHubRelease(payload as ReleaseEvent, context);
+      return transformGitHubRelease(payload as PreTransformGitHubReleaseEvent, context);
     case "discussion":
-      return transformGitHubDiscussion(payload as DiscussionEvent, context);
+      return transformGitHubDiscussion(payload as PreTransformGitHubDiscussionEvent, context);
     default:
       return null;
   }
@@ -105,7 +105,7 @@ function transformVercelEvent(
 ): PostTransformEvent | null {
   if (!eventType.startsWith("deployment")) return null;
   return transformVercelDeployment(
-    payload as VercelWebhookPayload,
+    payload as PreTransformVercelWebhookPayload,
     eventType as VercelWebhookEventType,
     context,
   );
