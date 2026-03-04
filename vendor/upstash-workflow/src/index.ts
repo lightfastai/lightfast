@@ -3,8 +3,8 @@
  *
  * Vendor abstraction for Upstash Workflow SDK
  *
- * Provides a standalone, independent wrapper around @upstash/workflow
- * for durable, reliable serverless workflow orchestration.
+ * Vendor abstraction for @upstash/workflow — re-exports SDK primitives
+ * with env wiring for durable, reliable serverless workflow orchestration.
  *
  * @example
  * ```typescript
@@ -36,8 +36,6 @@ export { serve } from "./nextjs";
 export type {
   WorkflowConfig,
   WorkflowContext,
-  WorkflowHandler,
-  WorkflowStep,
   WorkflowTriggerOptions,
   WorkflowTriggerResponse,
 } from "./types";

@@ -72,19 +72,3 @@ export interface WorkflowTriggerResponse {
   url: string;
 }
 
-/**
- * Workflow step function
- */
-export type WorkflowStep<TInput = unknown, TOutput = unknown> = (
-  input: TInput,
-) => Promise<TOutput>;
-
-/**
- * Workflow handler function
- *
- * Generic `TPayload` flows into `WorkflowContext<TPayload>`, giving
- * `context.requestPayload` the concrete type at every call site.
- */
-export type WorkflowHandler<TPayload = unknown> = (
-  context: WorkflowContext<TPayload>,
-) => Promise<void>;
