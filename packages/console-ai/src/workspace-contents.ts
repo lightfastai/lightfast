@@ -8,10 +8,10 @@ import type {
 import { V1ContentsResponseSchema } from "@repo/console-types";
 
 const inputSchema: z.ZodType<ContentsToolInput> = z.object({
-  ids: z.array(z.string()).describe("Array of observation IDs to fetch content for"),
+  ids: z.array(z.string()).meta({ description: "Array of observation IDs to fetch content for" }),
 });
 
-const outputSchema: z.ZodType<ContentsToolOutput> = V1ContentsResponseSchema;
+const outputSchema = V1ContentsResponseSchema as unknown as z.ZodType<ContentsToolOutput>;
 
 export function workspaceContentsTool() {
   return createTool<

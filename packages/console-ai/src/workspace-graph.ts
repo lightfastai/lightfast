@@ -8,24 +8,24 @@ import type {
 import { GraphResponseSchema } from "@repo/console-types";
 
 const inputSchema: z.ZodType<GraphToolInput> = z.object({
-  id: z.string().describe("The observation ID to traverse from"),
+  id: z.string().meta({ description: "The observation ID to traverse from" }),
   depth: z
     .number()
     .int()
     .min(1)
     .max(3)
     .default(1)
-    .describe("Relationship depth to traverse"),
+    .meta({ description: "Relationship depth to traverse" }),
   limit: z
     .number()
     .int()
     .min(1)
     .max(50)
     .default(20)
-    .describe("Max relationships to return"),
+    .meta({ description: "Max relationships to return" }),
 });
 
-const outputSchema: z.ZodType<GraphToolOutput> = GraphResponseSchema;
+const outputSchema = GraphResponseSchema as unknown as z.ZodType<GraphToolOutput>;
 
 export function workspaceGraphTool() {
   return createTool<

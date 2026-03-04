@@ -61,7 +61,7 @@ catalog:
   postgres: ^3.4.5
   drizzle-zod: ^0.7.1
   react-hook-form: ^7.61.1
-  '@hookform/resolvers': ^3.10.0
+  '@hookform/resolvers': ^5.2.2
   import-in-the-middle: ^1.8.1
   require-in-the-middle: ^7.1.1
   babel-plugin-react-compiler: ^1.0.0

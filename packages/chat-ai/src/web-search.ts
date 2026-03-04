@@ -225,43 +225,39 @@ function createExecuteWebSearch() {
  */
 const inputSchema: z.ZodType<WebSearchToolInput> = z
   .object({
-    query: z.string().describe("The search query"),
+    query: z.string().meta({ description: "The search query" }),
     useAutoprompt: z
       .boolean()
       .default(true)
-      .describe("Whether to enhance the query automatically"),
+      .meta({ description: "Whether to enhance the query automatically" }),
     numResults: z
       .number()
       .min(1)
       .max(10)
       .default(5)
-      .describe("Number of results to return"),
+      .meta({ description: "Number of results to return" }),
     contentType: z
       .enum(WEB_SEARCH_CONTENT_TYPES)
       .default("highlights")
-      .describe(
-        "Type of content to retrieve: highlights (excerpts), summary (AI-generated), or text (full)",
-      ),
+      .meta({ description: "Type of content to retrieve: highlights (excerpts), summary (AI-generated), or text (full)" }),
     maxCharacters: z
       .number()
       .min(100)
       .max(5000)
       .default(2000)
-      .describe("Maximum characters per result when using text content type"),
+      .meta({ description: "Maximum characters per result when using text content type" }),
     summaryQuery: z
       .string()
       .optional()
-      .describe(
-        "Custom query for generating summaries (only used with summary content type)",
-      ),
+      .meta({ description: "Custom query for generating summaries (only used with summary content type)" }),
     includeDomains: z
       .array(z.string())
       .optional()
-      .describe("Domains to include in search results"),
+      .meta({ description: "Domains to include in search results" }),
     excludeDomains: z
       .array(z.string())
       .optional()
-      .describe("Domains to exclude from search results"),
+      .meta({ description: "Domains to exclude from search results" }),
   })
   .strict();
 

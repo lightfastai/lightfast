@@ -13,8 +13,8 @@ import { uuidv4 as generateUUID } from "@repo/lib/uuid";
 const inputSchema: z.ZodType<CreateDocumentToolInput> = z.object({
   title: z
     .string()
-    .describe("The title of the document (2-4 words maximum, be concise)"),
-  kind: z.enum(ARTIFACT_KINDS).describe("The type of document to create"),
+    .meta({ description: "The title of the document (2-4 words maximum, be concise)" }),
+  kind: z.enum(ARTIFACT_KINDS).meta({ description: "The type of document to create" }),
 });
 
 const outputSchema: z.ZodType<CreateDocumentToolOutput> = z.object({

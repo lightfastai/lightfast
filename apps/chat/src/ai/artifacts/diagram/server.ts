@@ -44,7 +44,7 @@ export const diagramDocumentHandler = {
       system: mermaidPrompt,
       prompt: title,
       schema: z.object({
-        diagram: z.string().describe('The generated Mermaid diagram code'),
+        diagram: z.string().meta({ description: 'The generated Mermaid diagram code' }),
       }),
     });
 
@@ -77,7 +77,7 @@ export const diagramDocumentHandler = {
       system: updateDocumentPrompt(document.content, 'diagram'),
       prompt: description,
       schema: z.object({
-        diagram: z.string().describe('The updated Mermaid diagram code'),
+        diagram: z.string().meta({ description: 'The updated Mermaid diagram code' }),
       }),
     });
 

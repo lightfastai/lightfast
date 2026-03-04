@@ -20,7 +20,7 @@
     "@clerk/shared": "catalog:",
     "@clerk/themes": "catalog:",
     "@clerk/types": "catalog:",
-    "@hookform/resolvers": "^3.10.0",
+    "@hookform/resolvers": "catalog:",
     "@repo/og": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",

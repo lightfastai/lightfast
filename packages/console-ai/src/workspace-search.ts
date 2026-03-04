@@ -8,37 +8,37 @@ import type {
 import { V1SearchResponseSchema } from "@repo/console-types";
 
 const inputSchema: z.ZodType<SearchToolInput> = z.object({
-  query: z.string().describe("The search query text"),
+  query: z.string().meta({ description: "The search query text" }),
   mode: z
     .enum(["fast", "balanced", "thorough"])
     .default("balanced")
-    .describe("Search quality mode"),
+    .meta({ description: "Search quality mode" }),
   limit: z
     .number()
     .int()
     .min(1)
     .max(20)
     .default(10)
-    .describe("Max results"),
+    .meta({ description: "Max results" }),
   filters: z
     .object({
       sourceTypes: z
         .array(z.string())
         .optional()
-        .describe("Filter by source: github, linear, vercel, sentry"),
+        .meta({ description: "Filter by source: github, linear, vercel, sentry" }),
       observationTypes: z
         .array(z.string())
         .optional()
-        .describe("Filter by type: commit, pull_request, issue, deployment"),
+        .meta({ description: "Filter by type: commit, pull_request, issue, deployment" }),
       actorNames: z
         .array(z.string())
         .optional()
-        .describe("Filter by actor name"),
+        .meta({ description: "Filter by actor name" }),
     })
     .optional(),
 });
 
-const outputSchema: z.ZodType<SearchToolOutput> = V1SearchResponseSchema;
+const outputSchema = V1SearchResponseSchema as unknown as z.ZodType<SearchToolOutput>;
 
 export function workspaceSearchTool() {
   return createTool<

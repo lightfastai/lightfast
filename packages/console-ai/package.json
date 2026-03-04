@@ -34,7 +34,7 @@
     "@repo/console-ai-types": "workspace:*",
     "@repo/console-types": "workspace:*",
     "ai": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

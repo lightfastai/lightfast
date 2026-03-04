@@ -10,28 +10,28 @@ export const env = createEnv({
 	client: {},
 	server: {
 		// Redis Configuration (Required for streaming and state management)
-		KV_REST_API_URL: z.string().url().describe("Upstash Redis REST API URL"),
+		KV_REST_API_URL: z.url().meta({ description: "Upstash Redis REST API URL" }),
 		KV_REST_API_TOKEN: z
 			.string()
 			.min(1)
-			.describe("Upstash Redis REST API token"),
+			.meta({ description: "Upstash Redis REST API token" }),
 
 		// Qstash Event System (Required for event-driven architecture)
-		QSTASH_URL: z.string().url().describe("Qstash API URL"),
-		QSTASH_TOKEN: z.string().min(1).describe("Qstash authentication token"),
+		QSTASH_URL: z.url().meta({ description: "Qstash API URL" }),
+		QSTASH_TOKEN: z.string().min(1).meta({ description: "Qstash authentication token" }),
 
 		// QStash signing keys for signature verification
 		QSTASH_CURRENT_SIGNING_KEY: z
 			.string()
 			.min(1)
-			.describe("QStash current signing key for signature verification"),
+			.meta({ description: "QStash current signing key for signature verification" }),
 		QSTASH_NEXT_SIGNING_KEY: z
 			.string()
 			.min(1)
-			.describe("QStash next signing key for signature verification"),
+			.meta({ description: "QStash next signing key for signature verification" }),
 
 		// AI Gateway (Required for LLM calls)
-		AI_GATEWAY_API_KEY: z.string().min(1).describe("Vercel AI Gateway API key"),
+		AI_GATEWAY_API_KEY: z.string().min(1).meta({ description: "Vercel AI Gateway API key" }),
 
 		// Optional: Timeouts and limits
 		AGENT_MAX_ITERATIONS: z.coerce

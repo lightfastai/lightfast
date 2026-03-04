@@ -8,24 +8,23 @@ import type {
 import { V1FindSimilarResponseSchema } from "@repo/console-types";
 
 const inputSchema: z.ZodType<FindSimilarToolInput> = z.object({
-  id: z.string().describe("The observation ID to find similar items for"),
+  id: z.string().meta({ description: "The observation ID to find similar items for" }),
   limit: z
     .number()
     .int()
     .min(1)
     .max(20)
     .default(5)
-    .describe("Max similar items to return"),
+    .meta({ description: "Max similar items to return" }),
   threshold: z
     .number()
     .min(0)
     .max(1)
     .default(0.5)
-    .describe("Similarity threshold (0-1)"),
+    .meta({ description: "Similarity threshold (0-1)" }),
 });
 
-const outputSchema: z.ZodType<FindSimilarToolOutput> =
-  V1FindSimilarResponseSchema;
+const outputSchema = V1FindSimilarResponseSchema as unknown as z.ZodType<FindSimilarToolOutput>;
 
 export function workspaceFindSimilarTool() {
   return createTool<

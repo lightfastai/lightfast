@@ -94,7 +94,7 @@
     "shiki": "^3.9.2",
     "sonner": "^2.0.6",
     "superjson": "catalog:",
-    "zod": "catalog:zod3",
+    "zod": "catalog:zod4",
     "zustand": "catalog:"
   },
   "devDependencies": {

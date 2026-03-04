@@ -22,7 +22,7 @@ export interface AgentToolDefinition {
 	name: string;
 	description: string;
 	execute: (args: Record<string, any>) => Promise<any>;
-	schema?: z.ZodSchema<any>;
+	schema?: z.ZodType<any>;
 }
 
 // Extract core types from streamText
