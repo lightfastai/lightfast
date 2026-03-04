@@ -6,10 +6,10 @@
  * transformer code and guarantees sourceId equivalence by construction.
  */
 import type {
-  PullRequestEvent,
-  IssuesEvent,
-  ReleaseEvent,
-} from "@octokit/webhooks-types";
+  PreTransformGitHubPullRequestEvent,
+  PreTransformGitHubIssuesEvent,
+  PreTransformGitHubReleaseEvent,
+} from "@repo/console-webhooks";
 
 /**
  * Adapt a GitHub PR from list API into a PullRequestEvent shape.
@@ -24,7 +24,7 @@ import type {
 export function adaptGitHubPRForTransformer(
   pr: Record<string, unknown>,
   repo: Record<string, unknown>,
-): PullRequestEvent {
+): PreTransformGitHubPullRequestEvent {
   const state = pr.state as string;
   const action = state === "open" ? "opened" : "closed";
 
@@ -33,7 +33,7 @@ export function adaptGitHubPRForTransformer(
     pull_request: pr,
     repository: repo,
     sender: pr.user,
-  } as unknown as PullRequestEvent;
+  } as unknown as PreTransformGitHubPullRequestEvent;
 }
 
 /**
@@ -46,7 +46,7 @@ export function adaptGitHubPRForTransformer(
 export function adaptGitHubIssueForTransformer(
   issue: Record<string, unknown>,
   repo: Record<string, unknown>,
-): IssuesEvent {
+): PreTransformGitHubIssuesEvent {
   const state = issue.state as string;
   const action = state === "open" ? "opened" : "closed";
 
@@ -55,7 +55,7 @@ export function adaptGitHubIssueForTransformer(
     issue,
     repository: repo,
     sender: issue.user,
-  } as unknown as IssuesEvent;
+  } as unknown as PreTransformGitHubIssuesEvent;
 }
 
 /**
@@ -66,13 +66,13 @@ export function adaptGitHubIssueForTransformer(
 export function adaptGitHubReleaseForTransformer(
   release: Record<string, unknown>,
   repo: Record<string, unknown>,
-): ReleaseEvent {
+): PreTransformGitHubReleaseEvent {
   return {
     action: "published",
     release,
     repository: repo,
     sender: release.author,
-  } as unknown as ReleaseEvent;
+  } as unknown as PreTransformGitHubReleaseEvent;
 }
 
 /**

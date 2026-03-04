@@ -116,11 +116,4 @@ export const stressScenario = (count: number): PostTransformEvent[] => {
 };
 
 // Re-export transform types
-export type {
-  WebhookPayload,
-  SentryWebhookPayload,
-  LinearWebhookPayload,
-} from "./transform.js";
-
-// Re-export canonical event types from console-webhooks
-export type { GitHubWebhookEventType, SentryWebhookEventType, LinearWebhookEventType, VercelWebhookEventType } from "@repo/console-webhooks";
+export type { WebhookPayload } from "./transform.js";

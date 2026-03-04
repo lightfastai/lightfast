@@ -35,7 +35,8 @@ function mapReadyStateToEventType(readyState?: string): VercelWebhookEventType {
  * Adapt a Vercel deployment from the list API into a PreTransformVercelWebhookPayload shape.
  *
  * The transformer expects:
- *   transformVercelDeployment(payload: PreTransformVercelWebhookPayload, eventType: VercelWebhookEventType, context)
+ *   transformVercelDeployment(payload: PreTransformVercelWebhookPayload, context: TransformContext)
+ *   where context.eventType is the VercelWebhookEventType string.
  *
  * Returns both the adapted payload and the event type string.
  */

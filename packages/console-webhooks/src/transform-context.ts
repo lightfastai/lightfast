@@ -4,4 +4,5 @@
 export interface TransformContext {
   deliveryId: string;
   receivedAt: Date;
+  eventType: string;
 }

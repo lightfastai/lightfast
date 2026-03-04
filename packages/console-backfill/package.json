@@ -19,7 +19,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@octokit/webhooks-types": "^7.6.1",
     "@repo/console-validation": "workspace:*",
     "@repo/console-webhooks": "workspace:*"
   },

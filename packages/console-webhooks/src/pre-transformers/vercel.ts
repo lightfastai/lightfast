@@ -14,85 +14,19 @@ import type {
   PostTransformReference,
 } from "@repo/console-validation";
 import type { TransformContext } from "../transform-context";
-import { validatePostTransformEvent } from "../post-transformers/validation";
+import { validatePostTransformEvent, logValidationErrors } from "../post-transformers/validation";
 import { sanitizeTitle, sanitizeBody } from "../sanitize";
-
-/**
- * Vercel deployment event types
- */
-export type VercelWebhookEventType =
-  | "deployment.created"
-  | "deployment.succeeded"
-  | "deployment.ready"
-  | "deployment.error"
-  | "deployment.canceled"
-  | "deployment.check-rerequested";
-
-/**
- * Vercel webhook payload structure
- */
-export interface PreTransformVercelWebhookPayload {
-  id: string;
-  type: string;
-  createdAt: number;
-  region?: string;
-  payload: {
-    deployment?: {
-      id: string;
-      name: string;
-      url?: string;
-      readyState?: "READY" | "ERROR" | "BUILDING" | "QUEUED" | "CANCELED";
-      errorCode?: string;
-      meta?: {
-        githubCommitSha?: string;
-        githubCommitRef?: string;
-        githubCommitMessage?: string;
-        githubCommitAuthorName?: string;
-        githubCommitAuthorLogin?: string;
-        githubOrg?: string;
-        githubRepo?: string;
-        githubDeployment?: string;
-        githubCommitOrg?: string;
-        githubCommitRepo?: string;
-        githubCommitRepoId?: string;
-        githubPrId?: string;
-        // Fields present in real payloads but not previously typed:
-        githubRepoId?: string;
-        githubRepoOwnerType?: string;
-      };
-    };
-    project?: {
-      id: string;
-      name: string;
-    };
-    team?: {
-      id: string;
-      slug?: string;
-      name?: string;
-    };
-    user?: {
-      id: string;
-    };
-    // Fields present in real payloads but not previously typed:
-    alias?: string[];
-    links?: {
-      deployment?: string;
-      project?: string;
-    };
-    plan?: string;
-    regions?: string[];
-    [key: string]: unknown;
-  };
-}
+export type { VercelWebhookEventType, PreTransformVercelWebhookPayload } from "./schemas/vercel";
+import type { VercelWebhookEventType, PreTransformVercelWebhookPayload } from "./schemas/vercel";
 
 /**
  * Transform Vercel deployment event to PostTransformEvent
  */
 export function transformVercelDeployment(
   payload: PreTransformVercelWebhookPayload,
-  eventType: VercelWebhookEventType,
   context: TransformContext
 ): PostTransformEvent {
+  const eventType = context.eventType as VercelWebhookEventType;
   const deployment = payload.payload.deployment;
   const project = payload.payload.project;
   const team = payload.payload.team;
@@ -158,12 +92,15 @@ export function transformVercelDeployment(
     "deployment.canceled": "Deployment Canceled",
     "deployment.error": "Deployment Failed",
     "deployment.check-rerequested": "Deployment Check Re-requested",
+    "deployment.promoted": "Deployment Promoted",
+    "deployment.rollback": "Deployment Rollback",
+    "deployment.cleanup": "Deployment Cleanup",
   };
 
   const actionTitle = eventTitleMap[eventType] || "Deployment";
   const branch = gitMeta?.githubCommitRef || "unknown";
-  const isProduction =
-    deployment.url?.includes(project.name) && !deployment.url?.includes("-");
+  const target = payload.payload.target;
+  const isProduction = target === "production";
 
   const emoji =
     eventType === "deployment.succeeded" || eventType === "deployment.ready"
@@ -187,7 +124,7 @@ export function transformVercelDeployment(
     source: "vercel",
     sourceType: eventType,
     sourceId: `deployment:${deployment.id}`,
-    title: sanitizeTitle(`[${actionTitle}] ${project.name} from ${branch}`),
+    title: sanitizeTitle(`[${actionTitle}] ${project.name ?? project.id} from ${branch}`),
     body: sanitizeBody(rawBody),
     // Note: Vercel only provides username, not numeric GitHub ID
     // This creates username-based actor IDs (see Known Limitations in plan)
@@ -222,16 +159,9 @@ export function transformVercelDeployment(
   // Validate before returning (logs errors but doesn't block)
   const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
-    console.error("[Transformer:transformVercelDeployment] Invalid PostTransformEvent:", {
-      sourceId: event.sourceId,
-      sourceType: event.sourceType,
-      errors: validation.errors,
-    });
+    logValidationErrors("transformVercelDeployment", event, validation.errors);
   }
 
   return event;
 }
 
-export const vercelTransformers = {
-  deployment: transformVercelDeployment,
-};

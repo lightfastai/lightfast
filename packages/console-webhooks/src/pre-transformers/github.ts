@@ -1,9 +1,8 @@
 /**
  * GitHub Pre-Transform Types & Transformers
  *
- * PreTransform types: Re-exported from @octokit/webhooks-types (v7.6.1)
- * Decision: Official package, maintained by GitHub/Octokit, generated from GitHub's OpenAPI spec.
- * Zero-dependency, ~2.8M weekly downloads. No reason to self-define.
+ * PreTransform types: Zod schemas in ./schemas/github.ts (source of truth).
+ * Only the fields consumed by our transformers are defined.
  *
  * Fixture verified: apps/relay/src/__fixtures__/github-push.json
  * Last verified: 2026-03-04
@@ -14,43 +13,28 @@ import type {
   PostTransformReference,
 } from "@repo/console-validation";
 import type { TransformContext } from "../transform-context";
+export type {
+  PreTransformGitHubPushEvent,
+  PreTransformGitHubPullRequestEvent,
+  PreTransformGitHubIssuesEvent,
+  PreTransformGitHubReleaseEvent,
+  PreTransformGitHubDiscussionEvent,
+} from "./schemas/github";
 import type {
-  PushEvent,
-  PullRequestEvent,
-  IssuesEvent,
-  ReleaseEvent,
-  DiscussionEvent,
-} from "@octokit/webhooks-types";
-// PreTransform type aliases — re-exported from @octokit/webhooks-types
-export type PreTransformGitHubPushEvent = PushEvent;
-export type PreTransformGitHubPullRequestEvent = PullRequestEvent;
-export type PreTransformGitHubIssuesEvent = IssuesEvent;
-export type PreTransformGitHubReleaseEvent = ReleaseEvent;
-export type PreTransformGitHubDiscussionEvent = DiscussionEvent;
-import { validatePostTransformEvent } from "../post-transformers/validation";
+  PreTransformGitHubPushEvent,
+  PreTransformGitHubPullRequestEvent,
+  PreTransformGitHubIssuesEvent,
+  PreTransformGitHubReleaseEvent,
+  PreTransformGitHubDiscussionEvent,
+} from "./schemas/github";
+import { validatePostTransformEvent, logValidationErrors } from "../post-transformers/validation";
 import { sanitizeTitle, sanitizeBody } from "../sanitize";
-
-/**
- * Log validation errors for PostTransformEvent
- * Validation is for monitoring - events are still returned to avoid breaking existing flows
- */
-function logValidationErrors(
-  transformerName: string,
-  event: PostTransformEvent,
-  errors: string[]
-): void {
-  console.error(`[Transformer:${transformerName}] Invalid PostTransformEvent:`, {
-    sourceId: event.sourceId,
-    sourceType: event.sourceType,
-    errors,
-  });
-}
 
 /**
  * Transform GitHub push event to PostTransformEvent
  */
 export function transformGitHubPush(
-  payload: PushEvent,
+  payload: PreTransformGitHubPushEvent,
   context: TransformContext
 ): PostTransformEvent {
   const refs: PostTransformReference[] = [];
@@ -128,7 +112,7 @@ export function transformGitHubPush(
  * Transform GitHub pull request event to PostTransformEvent
  */
 export function transformGitHubPullRequest(
-  payload: PullRequestEvent,
+  payload: PreTransformGitHubPullRequestEvent,
   context: TransformContext
 ): PostTransformEvent {
   const pr = payload.pull_request;
@@ -268,7 +252,7 @@ export function transformGitHubPullRequest(
  * Transform GitHub issues event to PostTransformEvent
  */
 export function transformGitHubIssue(
-  payload: IssuesEvent,
+  payload: PreTransformGitHubIssuesEvent,
   context: TransformContext
 ): PostTransformEvent {
   const issue = payload.issue;
@@ -350,7 +334,7 @@ export function transformGitHubIssue(
  * Transform GitHub release event to PostTransformEvent
  */
 export function transformGitHubRelease(
-  payload: ReleaseEvent,
+  payload: PreTransformGitHubReleaseEvent,
   context: TransformContext
 ): PostTransformEvent {
   const release = payload.release;
@@ -415,7 +399,7 @@ export function transformGitHubRelease(
  * Transform GitHub discussion event to PostTransformEvent
  */
 export function transformGitHubDiscussion(
-  payload: DiscussionEvent,
+  payload: PreTransformGitHubDiscussionEvent,
   context: TransformContext
 ): PostTransformEvent {
   const discussion = payload.discussion;
@@ -515,16 +499,13 @@ function extractLinkedIssues(
   return matches;
 }
 
-// Export all transformers
-export const githubTransformers = {
-  push: transformGitHubPush,
-  pull_request: transformGitHubPullRequest,
-  issues: transformGitHubIssue,
-  release: transformGitHubRelease,
-  discussion: transformGitHubDiscussion,
-};
-
 /**
  * GitHub webhook event types supported by our transformers.
+ * Corresponds to PROVIDER_REGISTRY.github.events keys.
  */
-export type GitHubWebhookEventType = keyof typeof githubTransformers;
+export type GitHubWebhookEventType =
+  | "push"
+  | "pull_request"
+  | "issues"
+  | "release"
+  | "discussion";

@@ -4,6 +4,7 @@ import { db } from "@db/console/client";
 import { eq } from "drizzle-orm";
 import { orgWorkspaces, workspaceEvents } from "@db/console/schema";
 import { transformEnvelope } from "./_lib/transform";
+import { sanitizePostTransformEvent } from "@repo/console-webhooks";
 import { publishInngestNotification, publishEventNotification } from "./_lib/notify";
 
 export const runtime = "nodejs";
@@ -50,13 +51,16 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
 
   // Step 2: Transform, store, and fan out to all consumers
   await context.run("transform-store-and-fan-out", async () => {
-    const sourceEvent = transformEnvelope(envelope);
-    if (!sourceEvent) {
+    const rawEvent = transformEnvelope(envelope);
+    if (!rawEvent) {
       console.log(
         `[ingress] No transformer for ${envelope.provider}:${envelope.eventType}, skipping`,
       );
       return;
     }
+
+    // Strip any invalid URL fields (e.g. from AI-generated test payloads)
+    const sourceEvent = sanitizePostTransformEvent(rawEvent);
 
     // Store transformed event — returns monotonic cursor for SSE
     const [record] = await db

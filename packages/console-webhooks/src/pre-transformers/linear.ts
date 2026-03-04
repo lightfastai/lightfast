@@ -17,330 +17,47 @@ import type {
   PostTransformReference,
 } from "@repo/console-validation";
 import type { TransformContext } from "../transform-context";
-import { validatePostTransformEvent } from "../post-transformers/validation";
+import { validatePostTransformEvent, logValidationErrors } from "../post-transformers/validation";
 import { sanitizeTitle, sanitizeBody } from "../sanitize";
+export type {
+  LinearWebhookBase,
+  LinearWebhookEventType,
+  PreTransformLinearIssueWebhook,
+  PreTransformLinearCommentWebhook,
+  PreTransformLinearProjectWebhook,
+  PreTransformLinearCycleWebhook,
+  PreTransformLinearProjectUpdateWebhook,
+  LinearIssue,
+  LinearAttachment,
+  LinearComment,
+  LinearProject,
+  LinearCycle,
+  LinearProjectUpdate,
+  LinearUser,
+  LinearActor,
+  LinearLabel,
+} from "./schemas/linear";
+import type {
+  PreTransformLinearIssueWebhook,
+  PreTransformLinearCommentWebhook,
+  PreTransformLinearProjectWebhook,
+  PreTransformLinearCycleWebhook,
+  PreTransformLinearProjectUpdateWebhook,
+} from "./schemas/linear";
 
 // ============================================================================
-// Official Linear Webhook Payload Types
-// Based on Linear Webhook documentation
+// Shared Helpers
 // ============================================================================
 
-/**
- * Linear Webhook Base
- * All Linear webhooks follow this structure
- */
-export interface LinearWebhookBase {
-  action: "create" | "update" | "remove";
-  type: LinearWebhookEventType;
-  createdAt: string; // ISO timestamp
-  organizationId: string;
-  webhookId: string;
-  webhookTimestamp: number;
-  // Fields present in real payloads but not previously typed:
-  url?: string;              // URL to the affected resource
-  actor?: LinearUser;        // User or app that triggered the webhook
-}
+/** Map Linear wire action to past-tense sourceType suffix */
+const ACTION_SUFFIX: Record<string, string> = {
+  create: "created",
+  update: "updated",
+  remove: "deleted",
+};
 
-/**
- * Linear webhook event types supported by our transformers.
- * Derived from linearTransformers map — add new entity types there.
- */
-export type LinearWebhookEventType = keyof typeof linearTransformers;
-
-/**
- * Linear Issue Webhook
- * Sent when issues are created, updated, or deleted
- */
-export interface PreTransformLinearIssueWebhook extends LinearWebhookBase {
-  type: "Issue";
-  data: LinearIssue;
-  updatedFrom?: Partial<LinearIssue>;
-}
-
-/**
- * Linear Comment Webhook
- * Sent when comments are created, updated, or deleted
- */
-export interface PreTransformLinearCommentWebhook extends LinearWebhookBase {
-  type: "Comment";
-  data: LinearComment;
-  updatedFrom?: Partial<LinearComment>;
-}
-
-/**
- * Linear Project Webhook
- * Sent when projects are created, updated, or deleted
- */
-export interface PreTransformLinearProjectWebhook extends LinearWebhookBase {
-  type: "Project";
-  data: LinearProject;
-  updatedFrom?: Partial<LinearProject>;
-}
-
-/**
- * Linear Cycle Webhook
- * Sent when cycles (sprints) are created, updated, or deleted
- */
-export interface PreTransformLinearCycleWebhook extends LinearWebhookBase {
-  type: "Cycle";
-  data: LinearCycle;
-  updatedFrom?: Partial<LinearCycle>;
-}
-
-/**
- * Linear Project Update Webhook
- * Sent when project updates are created, updated, or deleted
- */
-export interface PreTransformLinearProjectUpdateWebhook extends LinearWebhookBase {
-  type: "ProjectUpdate";
-  data: LinearProjectUpdate;
-  updatedFrom?: Partial<LinearProjectUpdate>;
-}
-
-// ============================================================================
-// Linear Data Types (Official GraphQL Schema)
-// ============================================================================
-
-/**
- * Linear Issue
- * @see https://developers.linear.app/docs/graphql/types/issue
- */
-export interface LinearIssue {
-  id: string;
-  identifier: string; // e.g., "LIGHT-123"
-  title: string;
-  description?: string;
-  descriptionData?: string; // Prosemirror JSON
-  priority: number; // 0 = No priority, 1 = Urgent, 2 = High, 3 = Medium, 4 = Low
-  priorityLabel: string;
-  estimate?: number;
-  boardOrder: number;
-  sortOrder: number;
-  startedAt?: string;
-  completedAt?: string;
-  canceledAt?: string;
-  autoClosedAt?: string;
-  autoArchivedAt?: string;
-  dueDate?: string;
-  slaStartedAt?: string;
-  slaBreachesAt?: string;
-  trashed?: boolean;
-  snoozedUntilAt?: string;
-  createdAt: string;
-  updatedAt: string;
-  archivedAt?: string;
-  number: number;
-  url: string;
-  branchName: string;
-  customerTicketCount: number;
-  previousIdentifiers: string[];
-  subIssueSortOrder?: number;
-  team: {
-    id: string;
-    key: string;
-    name: string;
-  };
-  state: {
-    id: string;
-    name: string;
-    color: string;
-    type: "backlog" | "unstarted" | "started" | "completed" | "canceled";
-  };
-  creator?: LinearUser;
-  assignee?: LinearUser;
-  parent?: {
-    id: string;
-    identifier: string;
-    title: string;
-  };
-  project?: {
-    id: string;
-    name: string;
-    url: string;
-  };
-  cycle?: {
-    id: string;
-    name: string;
-    number: number;
-  };
-  labels: LinearLabel[];
-  subscriberIds: string[];
-  /** Attachments linked to this issue (GitHub PRs, Sentry issues, etc.) */
-  attachments?: {
-    nodes?: LinearAttachment[];
-  };
-}
-
-/**
- * Linear Attachment
- * External links attached to issues (GitHub PRs, Sentry issues, etc.)
- */
-export interface LinearAttachment {
-  id: string;
-  title: string;
-  url?: string;
-  source?: string;
-  sourceType?: string;
-  metadata?: {
-    state?: string;
-    number?: number;
-    shortId?: string;
-  };
-}
-
-/**
- * Linear Comment
- */
-export interface LinearComment {
-  id: string;
-  body: string;
-  bodyData?: string; // Prosemirror JSON
-  createdAt: string;
-  updatedAt: string;
-  archivedAt?: string;
-  editedAt?: string;
-  url: string;
-  reactionData: unknown[];
-  user: LinearUser;
-  issue: {
-    id: string;
-    identifier: string;
-    title: string;
-    url: string;
-  };
-  parent?: {
-    id: string;
-  };
-}
-
-/**
- * Linear Project
- */
-export interface LinearProject {
-  id: string;
-  name: string;
-  description?: string;
-  icon?: string;
-  color: string;
-  state: "backlog" | "planned" | "started" | "paused" | "completed" | "canceled";
-  createdAt: string;
-  updatedAt: string;
-  archivedAt?: string;
-  canceledAt?: string;
-  completedAt?: string;
-  autoArchivedAt?: string;
-  targetDate?: string;
-  startDate?: string;
-  startedAt?: string;
-  progress: number; // 0-1
-  scope: number;
-  url: string;
-  slugId: string;
-  sortOrder: number;
-  issueCountHistory: number[];
-  completedIssueCountHistory: number[];
-  scopeHistory: number[];
-  completedScopeHistory: number[];
-  inProgressScopeHistory: number[];
-  slackNewIssue: boolean;
-  slackIssueComments: boolean;
-  slackIssueStatuses: boolean;
-  lead?: LinearUser;
-  members: LinearUser[];
-  teams: Array<{
-    id: string;
-    key: string;
-    name: string;
-  }>;
-}
-
-/**
- * Linear Cycle (Sprint)
- */
-export interface LinearCycle {
-  id: string;
-  number: number;
-  name?: string;
-  description?: string;
-  startsAt: string;
-  endsAt: string;
-  completedAt?: string;
-  autoArchivedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-  archivedAt?: string;
-  progress: number;
-  scope: number;
-  url: string;
-  issueCountHistory: number[];
-  completedIssueCountHistory: number[];
-  scopeHistory: number[];
-  completedScopeHistory: number[];
-  inProgressScopeHistory: number[];
-  team: {
-    id: string;
-    key: string;
-    name: string;
-  };
-}
-
-/**
- * Linear Project Update
- */
-export interface LinearProjectUpdate {
-  id: string;
-  body: string;
-  bodyData?: string;
-  createdAt: string;
-  updatedAt: string;
-  editedAt?: string;
-  archivedAt?: string;
-  url: string;
-  health: "onTrack" | "atRisk" | "offTrack";
-  user: LinearUser;
-  project: {
-    id: string;
-    name: string;
-    url: string;
-  };
-}
-
-/**
- * Linear User
- */
-export interface LinearUser {
-  id: string;
-  name: string;
-  displayName: string;
-  email: string;
-  avatarUrl?: string;
-  isMe: boolean;
-  active: boolean;
-}
-
-/**
- * Linear Label
- */
-export interface LinearLabel {
-  id: string;
-  name: string;
-  color: string;
-}
-
-// ============================================================================
-// Log validation errors helper
-// ============================================================================
-
-function logValidationErrors(
-  transformerName: string,
-  event: PostTransformEvent,
-  errors: string[]
-): void {
-  console.error(`[Transformer:${transformerName}] Invalid PostTransformEvent:`, {
-    sourceId: event.sourceId,
-    sourceType: event.sourceType,
-    errors,
-  });
+function linearSourceType(entity: string, action: string): string {
+  return `${entity}.${ACTION_SUFFIX[action] ?? action}`;
 }
 
 // ============================================================================
@@ -449,7 +166,7 @@ export function transformLinearIssue(
     `Priority: ${issue.priorityLabel}`,
     issue.project ? `Project: ${issue.project.name}` : "",
     issue.cycle ? `Cycle: ${issue.cycle.name || `Cycle ${issue.cycle.number}`}` : "",
-    issue.assignee ? `Assignee: ${issue.assignee.displayName}` : "",
+    issue.assignee ? `Assignee: ${issue.assignee.displayName ?? issue.assignee.name}` : "",
     issue.labels.length > 0
       ? `Labels: ${issue.labels.map((l) => l.name).join(", ")}`
       : "",
@@ -459,14 +176,14 @@ export function transformLinearIssue(
 
   const event: PostTransformEvent = {
     source: "linear",
-    sourceType: `issue.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: linearSourceType("issue", payload.action),
     sourceId: `linear-issue:${issue.team.key}:${issue.identifier}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${issue.identifier}: ${issue.title.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: issue.creator
       ? {
           id: issue.creator.id,
-          name: issue.creator.displayName,
+          name: issue.creator.displayName ?? issue.creator.name,
           email: issue.creator.email,
           avatarUrl: issue.creator.avatarUrl,
         }
@@ -492,7 +209,7 @@ export function transformLinearIssue(
       cycleId: issue.cycle?.id,
       cycleName: issue.cycle?.name,
       assigneeId: issue.assignee?.id,
-      assigneeName: issue.assignee?.displayName,
+      assigneeName: issue.assignee?.displayName ?? issue.assignee?.name,
       labels: issue.labels.map((l) => l.name),
       branchName: issue.branchName,
       dueDate: issue.dueDate,
@@ -545,14 +262,14 @@ export function transformLinearComment(
 
   const event: PostTransformEvent = {
     source: "linear",
-    sourceType: `comment.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: linearSourceType("comment", payload.action),
     sourceId: `linear-comment:${comment.issue.identifier}:${comment.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${comment.issue.identifier}: ${comment.body.slice(0, 60)}...`),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: comment.user
       ? {
           id: comment.user.id,
-          name: comment.user.displayName,
+          name: comment.user.displayName ?? comment.user.name,
           email: comment.user.email,
           avatarUrl: comment.user.avatarUrl,
         }
@@ -628,20 +345,20 @@ export function transformLinearProject(
     `State: ${project.state}`,
     `Progress: ${Math.round(project.progress * 100)}%`,
     project.targetDate ? `Target: ${project.targetDate}` : "",
-    project.lead ? `Lead: ${project.lead.displayName}` : "",
+    project.lead ? `Lead: ${project.lead.displayName ?? project.lead.name}` : "",
     `Teams: ${project.teams.map((t) => t.name).join(", ")}`,
   ].filter(Boolean);
 
   const event: PostTransformEvent = {
     source: "linear",
-    sourceType: `project.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: linearSourceType("project", payload.action),
     sourceId: `linear-project:${project.slugId}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] Project: ${project.name}`),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: project.lead
       ? {
           id: project.lead.id,
-          name: project.lead.displayName,
+          name: project.lead.displayName ?? project.lead.name,
           email: project.lead.email,
           avatarUrl: project.lead.avatarUrl,
         }
@@ -662,7 +379,7 @@ export function transformLinearProject(
       completedAt: project.completedAt,
       canceledAt: project.canceledAt,
       leadId: project.lead?.id,
-      leadName: project.lead?.displayName,
+      leadName: project.lead?.displayName ?? project.lead?.name,
       teamIds: project.teams.map((t) => t.id),
       memberIds: project.members.map((m) => m.id),
       action: payload.action,
@@ -722,7 +439,7 @@ export function transformLinearCycle(
 
   const event: PostTransformEvent = {
     source: "linear",
-    sourceType: `cycle.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: linearSourceType("cycle", payload.action),
     sourceId: `linear-cycle:${cycle.team.key}:${cycle.number}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${cycleName} (${cycle.team.name})`),
     body: sanitizeBody(bodyParts.join("\n")),
@@ -793,14 +510,14 @@ export function transformLinearProjectUpdate(
 
   const event: PostTransformEvent = {
     source: "linear",
-    sourceType: `project-update.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType: linearSourceType("project-update", payload.action),
     sourceId: `linear-project-update:${update.project.id}:${update.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${update.project.name}: ${update.body.slice(0, 60)}...`),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: update.user
       ? {
           id: update.user.id,
-          name: update.user.displayName,
+          name: update.user.displayName ?? update.user.name,
           email: update.user.email,
           avatarUrl: update.user.avatarUrl,
         }
@@ -829,19 +546,3 @@ export function transformLinearProjectUpdate(
   return event;
 }
 
-// ============================================================================
-// Exported Transformer Map
-// ============================================================================
-
-export const linearTransformers = {
-  Issue: (payload: unknown, ctx: TransformContext) =>
-    transformLinearIssue(payload as PreTransformLinearIssueWebhook, ctx),
-  Comment: (payload: unknown, ctx: TransformContext) =>
-    transformLinearComment(payload as PreTransformLinearCommentWebhook, ctx),
-  Project: (payload: unknown, ctx: TransformContext) =>
-    transformLinearProject(payload as PreTransformLinearProjectWebhook, ctx),
-  Cycle: (payload: unknown, ctx: TransformContext) =>
-    transformLinearCycle(payload as PreTransformLinearCycleWebhook, ctx),
-  ProjectUpdate: (payload: unknown, ctx: TransformContext) =>
-    transformLinearProjectUpdate(payload as PreTransformLinearProjectUpdateWebhook, ctx),
-};

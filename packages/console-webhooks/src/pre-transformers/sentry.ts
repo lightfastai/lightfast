@@ -15,238 +15,24 @@ import type {
   PostTransformReference,
 } from "@repo/console-validation";
 import type { TransformContext } from "../transform-context";
-import { validatePostTransformEvent } from "../post-transformers/validation";
+import { validatePostTransformEvent, logValidationErrors } from "../post-transformers/validation";
 import { sanitizeTitle, sanitizeBody } from "../sanitize";
-
-// ============================================================================
-// Official Sentry Webhook Payload Types
-// Based on Sentry Integration Platform webhook documentation
-// ============================================================================
-
-/**
- * Sentry Issue Alert Webhook Payload
- * Sent when issue alerts are triggered (issue state changes)
- */
-export interface PreTransformSentryIssueWebhook {
-  action: "created" | "resolved" | "assigned" | "ignored";
-  data: {
-    issue: SentryIssue;
-  };
-  installation: {
-    uuid: string;
-  };
-  actor: SentryActor;
-}
-
-/**
- * Sentry Error Event Webhook Payload
- * Sent for individual error events (when configured)
- */
-export interface PreTransformSentryErrorWebhook {
-  action: "created";
-  data: {
-    event: SentryErrorEvent;
-  };
-  installation: {
-    uuid: string;
-  };
-}
-
-/**
- * Sentry Event Alert Webhook Payload
- * Sent when alert rules fire
- */
-export interface PreTransformSentryEventAlertWebhook {
-  action: "triggered";
-  data: {
-    event: SentryErrorEvent;
-    triggered_rule: string;
-  };
-  installation: {
-    uuid: string;
-  };
-}
-
-/**
- * Sentry Metric Alert Webhook Payload
- * Sent when metric-based alerts fire
- */
-export interface PreTransformSentryMetricAlertWebhook {
-  action: "triggered" | "resolved";
-  data: {
-    metric_alert: {
-      id: string;
-      alert_rule: {
-        id: number;
-        name: string;
-        organization_id: string;
-        status: number;
-        query: string;
-        threshold_type: number;
-        resolve_threshold: number;
-        time_window: number;
-        aggregate: string;
-      };
-      date_started: string;
-      date_detected: string;
-      date_closed: string | null;
-    };
-  };
-  installation: {
-    uuid: string;
-  };
-}
-
-/**
- * Sentry Issue (grouped errors)
- * Documentation: https://docs.sentry.io/api/issues/
- */
-export interface SentryIssue {
-  id: string;
-  shortId: string; // e.g., "LIGHTFAST-123"
-  title: string;
-  culprit: string; // File/function where error originated
-  status: "unresolved" | "resolved" | "ignored";
-  level: "fatal" | "error" | "warning" | "info" | "debug";
-  platform: string;
-  firstSeen: string; // ISO timestamp
-  lastSeen: string; // ISO timestamp
-  count: number; // Total event count
-  userCount: number;
-  permalink: string;
-  metadata: {
-    type: string; // Error type (e.g., "TypeError", "ReferenceError")
-    value: string; // Error message
-    filename?: string; // Source file
-    function?: string; // Function name
-  };
-  project: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  assignedTo?: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  /** Resolution status details - populated when issue is resolved */
-  statusDetails?: {
-    /** Commit that resolved this issue */
-    inCommit?: {
-      repository?: string;
-      commit?: string;
-    };
-    /** Release version that resolved this issue */
-    inRelease?: string;
-    /** Whether resolved in next release */
-    inNextRelease?: boolean;
-  };
-  logger?: string;
-  type: "error" | "default";
-  annotations: string[];
-  isPublic: boolean;
-  isBookmarked: boolean;
-  isSubscribed: boolean;
-  hasSeen: boolean;
-  numComments: number;
-  // Fields present in real payloads but not previously typed:
-  shareId?: string | null;
-  substatus?: string;
-  subscriptionDetails?: Record<string, unknown> | null;
-  issueType?: string;
-  issueCategory?: string;
-  priority?: string;
-  priorityLockedAt?: string | null;
-  isUnhandled?: boolean;
-}
-
-/**
- * Sentry Error Event (individual error occurrence)
- */
-export interface SentryErrorEvent {
-  event_id: string;
-  project: number;
-  timestamp: string;
-  received: string;
-  platform: string;
-  message?: string;
-  title: string;
-  location?: string;
-  culprit?: string;
-  type: "error" | "default";
-  metadata: {
-    type?: string;
-    value?: string;
-    filename?: string;
-    function?: string;
-  };
-  tags: Array<{ key: string; value: string }>;
-  contexts?: Record<string, Record<string, unknown>>;
-  user?: {
-    id?: string;
-    email?: string;
-    username?: string;
-    ip_address?: string;
-  };
-  sdk?: {
-    name: string;
-    version: string;
-  };
-  context?: Record<string, unknown>;
-  exception?: {
-    values: Array<{
-      type: string;
-      value: string;
-      stacktrace?: {
-        frames: Array<{
-          filename: string;
-          function: string;
-          lineno: number;
-          colno?: number;
-          context_line?: string;
-          pre_context?: string[];
-          post_context?: string[];
-        }>;
-      };
-    }>;
-  };
-  web_url?: string;
-  issue_url?: string;
-}
-
-/**
- * Sentry Actor (who performed the action)
- */
-export interface SentryActor {
-  type: "user" | "application";
-  id: string;
-  name: string;
-  email?: string;
-}
-
-// ============================================================================
-// Sentry Event Type (derived from transformer map)
-// ============================================================================
-
-// Forward declaration — resolved after sentryTransformers is defined below.
-export type SentryWebhookEventType = keyof typeof sentryTransformers;
-
-// ============================================================================
-// Log validation errors helper
-// ============================================================================
-
-function logValidationErrors(
-  transformerName: string,
-  event: PostTransformEvent,
-  errors: string[]
-): void {
-  console.error(`[Transformer:${transformerName}] Invalid PostTransformEvent:`, {
-    sourceId: event.sourceId,
-    sourceType: event.sourceType,
-    errors,
-  });
-}
+export type {
+  PreTransformSentryIssueWebhook,
+  PreTransformSentryErrorWebhook,
+  PreTransformSentryEventAlertWebhook,
+  PreTransformSentryMetricAlertWebhook,
+  SentryIssue,
+  SentryErrorEvent,
+  SentryActor,
+  SentryWebhookEventType,
+} from "./schemas/sentry";
+import type {
+  PreTransformSentryIssueWebhook,
+  PreTransformSentryErrorWebhook,
+  PreTransformSentryEventAlertWebhook,
+  PreTransformSentryMetricAlertWebhook,
+} from "./schemas/sentry";
 
 // ============================================================================
 // Transformer Functions
@@ -266,7 +52,7 @@ export function transformSentryIssue(
   refs.push({
     type: "issue",
     id: issue.shortId,
-    url: issue.permalink,
+    url: issue.permalink ?? undefined,
   });
 
   // Add project reference
@@ -301,6 +87,8 @@ export function transformSentryIssue(
     resolved: "Issue Resolved",
     assigned: "Issue Assigned",
     ignored: "Issue Ignored",
+    archived: "Issue Archived",
+    unresolved: "Issue Unresolved",
   };
 
   const errorType = issue.metadata.type || "Error";
@@ -330,7 +118,7 @@ export function transformSentryIssue(
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${errorType}: ${errorValue.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: {
-      id: payload.actor.id,
+      id: String(payload.actor.id),
       name: payload.actor.name,
       email: payload.actor.email,
     },
@@ -376,18 +164,18 @@ export function transformSentryError(
   payload: PreTransformSentryErrorWebhook,
   context: TransformContext
 ): PostTransformEvent {
-  const { event } = payload.data;
+  const { error: errorEvent } = payload.data;
   const refs: PostTransformReference[] = [];
 
   // Add project reference
   refs.push({
     type: "project",
-    id: String(event.project),
+    id: String(errorEvent.project),
   });
 
   // Extract stack trace info for body
   const stackInfo =
-    event.exception?.values
+    errorEvent.exception?.values
       ?.map((exc) => {
         const topFrame = exc.stacktrace?.frames?.slice(-1)[0];
         return topFrame
@@ -396,48 +184,48 @@ export function transformSentryError(
       })
       .join("\n") || "";
 
-  const errorType = event.metadata?.type || "Error";
-  const errorValue = event.metadata?.value || event.title;
+  const errorType = errorEvent.metadata?.type || "Error";
+  const errorValue = errorEvent.metadata?.value || errorEvent.title;
 
   const bodyParts = [
-    event.title,
-    event.message,
-    event.metadata?.value,
-    event.location ? `Location: ${event.location}` : "",
+    errorEvent.title,
+    errorEvent.message,
+    errorEvent.metadata?.value,
+    errorEvent.location ? `Location: ${errorEvent.location}` : "",
     stackInfo,
-    `Platform: ${event.platform}`,
+    `Platform: ${errorEvent.platform}`,
   ].filter(Boolean);
 
   const event_out: PostTransformEvent = {
     source: "sentry",
     sourceType: "error",
-    sourceId: `sentry-error:${event.project}:${event.event_id}`,
+    sourceId: `sentry-error:${errorEvent.project}:${errorEvent.event_id}`,
     title: sanitizeTitle(`[Error] ${errorType}: ${errorValue.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: event.user
+    actor: errorEvent.user
       ? {
-          id: event.user.id || event.user.email || "unknown",
-          name: event.user.username || event.user.email || "Unknown User",
-          email: event.user.email,
+          id: errorEvent.user.id || errorEvent.user.email || "unknown",
+          name: errorEvent.user.username || errorEvent.user.email || "Unknown User",
+          email: errorEvent.user.email,
         }
       : undefined,
-    occurredAt: event.timestamp,
+    occurredAt: String(errorEvent.timestamp),
     references: refs,
     metadata: {
       deliveryId: context.deliveryId,
-      eventId: event.event_id,
-      projectId: event.project,
-      platform: event.platform,
-      errorType: event.metadata?.type,
-      errorValue: event.metadata?.value,
-      filename: event.metadata?.filename,
-      function: event.metadata?.function,
-      location: event.location,
-      culprit: event.culprit,
-      tags: event.tags,
-      sdkName: event.sdk?.name,
-      sdkVersion: event.sdk?.version,
-      webUrl: event.web_url,
+      eventId: errorEvent.event_id,
+      projectId: errorEvent.project,
+      platform: errorEvent.platform,
+      errorType: errorEvent.metadata?.type,
+      errorValue: errorEvent.metadata?.value,
+      filename: errorEvent.metadata?.filename,
+      function: errorEvent.metadata?.function,
+      location: errorEvent.location,
+      culprit: errorEvent.culprit,
+      tags: errorEvent.tags,
+      sdkName: errorEvent.sdk?.name,
+      sdkVersion: errorEvent.sdk?.version,
+      webUrl: errorEvent.web_url,
       installationId: payload.installation.uuid,
     },
   };
@@ -484,7 +272,7 @@ export function transformSentryEventAlert(
     title: sanitizeTitle(`[Alert Triggered] ${triggered_rule}: ${errorType}`),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: undefined,
-    occurredAt: event.timestamp,
+    occurredAt: String(event.timestamp),
     references: refs,
     metadata: {
       deliveryId: context.deliveryId,
@@ -519,8 +307,12 @@ export function transformSentryMetricAlert(
   const alertRule = metric_alert.alert_rule;
   const refs: PostTransformReference[] = [];
 
-  const actionTitle =
-    payload.action === "triggered" ? "Metric Alert Triggered" : "Metric Alert Resolved";
+  const metricActionTitles: Record<string, string> = {
+    critical: "Metric Alert Critical",
+    warning: "Metric Alert Warning",
+    resolved: "Metric Alert Resolved",
+  };
+  const actionTitle = metricActionTitles[payload.action] ?? "Metric Alert";
 
   const bodyParts = [
     `Alert: ${alertRule.name}`,
@@ -570,23 +362,3 @@ export function transformSentryMetricAlert(
   return event;
 }
 
-// ============================================================================
-// Exported Transformer Map
-// ============================================================================
-
-export const sentryTransformers = {
-  "issue.created": (payload: unknown, ctx: TransformContext) =>
-    transformSentryIssue(payload as PreTransformSentryIssueWebhook, ctx),
-  "issue.resolved": (payload: unknown, ctx: TransformContext) =>
-    transformSentryIssue(payload as PreTransformSentryIssueWebhook, ctx),
-  "issue.assigned": (payload: unknown, ctx: TransformContext) =>
-    transformSentryIssue(payload as PreTransformSentryIssueWebhook, ctx),
-  "issue.ignored": (payload: unknown, ctx: TransformContext) =>
-    transformSentryIssue(payload as PreTransformSentryIssueWebhook, ctx),
-  error: (payload: unknown, ctx: TransformContext) =>
-    transformSentryError(payload as PreTransformSentryErrorWebhook, ctx),
-  event_alert: (payload: unknown, ctx: TransformContext) =>
-    transformSentryEventAlert(payload as PreTransformSentryEventAlertWebhook, ctx),
-  metric_alert: (payload: unknown, ctx: TransformContext) =>
-    transformSentryMetricAlert(payload as PreTransformSentryMetricAlertWebhook, ctx),
-};

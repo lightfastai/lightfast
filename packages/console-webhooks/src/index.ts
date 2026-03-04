@@ -10,8 +10,11 @@
  * - sanitize.ts        — Content sanitization utilities
  */
 
+// Central dispatch
+export { transformWebhookPayload } from "./dispatch";
+
 // Post-transform validation
-export { validatePostTransformEvent, type ValidationResult } from "./post-transformers";
+export { validatePostTransformEvent, sanitizePostTransformEvent, type ValidationResult } from "./post-transformers";
 
 // Transform context
 export type { TransformContext } from "./transform-context";
@@ -27,6 +30,9 @@ export {
   sanitizeBody,
 } from "./sanitize";
 
+// Pre-transformer Zod schemas (source of truth for payload shapes)
+export * from "./pre-transformers/schemas";
+
 // Pre-transformers (types + transform functions)
 export {
   // GitHub
@@ -35,27 +41,23 @@ export {
   transformGitHubIssue,
   transformGitHubRelease,
   transformGitHubDiscussion,
-  githubTransformers,
   // Vercel
   transformVercelDeployment,
-  vercelTransformers,
   // Linear
   transformLinearIssue,
   transformLinearComment,
   transformLinearProject,
   transformLinearCycle,
   transformLinearProjectUpdate,
-  linearTransformers,
   // Sentry
   transformSentryIssue,
   transformSentryError,
   transformSentryEventAlert,
   transformSentryMetricAlert,
-  sentryTransformers,
 } from "./pre-transformers";
 
 export type {
-  // GitHub (from @octokit/webhooks-types)
+  // GitHub
   PreTransformGitHubPushEvent,
   PreTransformGitHubPullRequestEvent,
   PreTransformGitHubIssuesEvent,
@@ -80,6 +82,7 @@ export type {
   LinearCycle,
   LinearProjectUpdate,
   LinearUser,
+  LinearActor,
   LinearLabel,
   // Sentry (self-defined)
   PreTransformSentryIssueWebhook,

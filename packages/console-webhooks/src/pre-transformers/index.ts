@@ -8,14 +8,13 @@
  * Type source decisions are documented at the top of each provider file.
  */
 
-// GitHub (types from @octokit/webhooks-types)
+// GitHub (Zod schemas in ./schemas/github.ts)
 export {
   transformGitHubPush,
   transformGitHubPullRequest,
   transformGitHubIssue,
   transformGitHubRelease,
   transformGitHubDiscussion,
-  githubTransformers,
 } from "./github";
 export type {
   PreTransformGitHubPushEvent,
@@ -29,7 +28,6 @@ export type {
 // Vercel (self-defined types)
 export {
   transformVercelDeployment,
-  vercelTransformers,
 } from "./vercel";
 export type {
   VercelWebhookEventType,
@@ -43,7 +41,6 @@ export {
   transformLinearProject,
   transformLinearCycle,
   transformLinearProjectUpdate,
-  linearTransformers,
 } from "./linear";
 export type {
   LinearWebhookBase,
@@ -60,6 +57,7 @@ export type {
   LinearCycle,
   LinearProjectUpdate,
   LinearUser,
+  LinearActor,
   LinearLabel,
 } from "./linear";
 
@@ -69,7 +67,6 @@ export {
   transformSentryError,
   transformSentryEventAlert,
   transformSentryMetricAlert,
-  sentryTransformers,
 } from "./sentry";
 export type {
   PreTransformSentryIssueWebhook,

@@ -29,8 +29,8 @@ import {
   transformVercelDeployment,
 } from "@repo/console-webhooks";
 
-// Minimal TransformContext — matches { deliveryId: string, receivedAt: Date }
-const context = { deliveryId: "backfill-roundtrip-test", receivedAt: new Date() };
+// Minimal TransformContext — matches { deliveryId: string, receivedAt: Date, eventType: string }
+const context = { deliveryId: "backfill-roundtrip-test", receivedAt: new Date(), eventType: "" };
 
 /**
  * Realistic GitHub list API PR response.
@@ -275,34 +275,34 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
 
   it("transformer does not throw", () => {
     expect(() =>
-      transformVercelDeployment(webhookPayload, eventType, context),
+      transformVercelDeployment(webhookPayload, { ...context, eventType }),
     ).not.toThrow();
   });
 
   it("produces a PostTransformEvent with non-empty sourceId", () => {
-    const event = transformVercelDeployment(webhookPayload, eventType, context);
+    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
     expect(event.sourceId).toContain("dpl-abc123xyz");
   });
 
   it("source is vercel", () => {
-    const event = transformVercelDeployment(webhookPayload, eventType, context);
+    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
     expect(event.source).toBe("vercel");
   });
 
   it("title is non-empty", () => {
-    const event = transformVercelDeployment(webhookPayload, eventType, context);
+    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
     expect(event.title).toBeTruthy();
   });
 
   it("references include deployment and project refs", () => {
-    const event = transformVercelDeployment(webhookPayload, eventType, context);
+    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
     const refTypes = event.references.map((r) => r.type);
     expect(refTypes).toContain("deployment");
     expect(refTypes).toContain("project");
   });
 
   it("git metadata flows through to commit/branch references", () => {
-    const event = transformVercelDeployment(webhookPayload, eventType, context);
+    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
     const commitRefs = event.references.filter((r) => r.type === "commit");
     const branchRefs = event.references.filter((r) => r.type === "branch");
     expect(commitRefs.length).toBeGreaterThan(0);
@@ -312,7 +312,7 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
   });
 
   it("READY deployment produces succeeded sourceType", () => {
-    const event = transformVercelDeployment(webhookPayload, eventType, context);
+    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
     expect(event.sourceType).toContain("succeeded");
   });
 
@@ -322,7 +322,7 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
         { ...vercelListDeployment, readyState: "ERROR" } as unknown as Record<string, unknown>,
         "my-app",
       );
-    const event = transformVercelDeployment(errPayload, errType, context);
+    const event = transformVercelDeployment(errPayload, { ...context, eventType: errType });
     expect(event.sourceType).toContain("error");
   });
 });
