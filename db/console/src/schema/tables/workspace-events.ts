@@ -108,6 +108,14 @@ export const workspaceEvents = pgTable(
       table.source,
       table.sourceType,
     ),
+
+    /**
+     * Date-range filtering: WHERE workspace_id = ? AND received_at >= ?
+     */
+    workspaceEventDateIdx: index("workspace_event_date_idx").on(
+      table.workspaceId,
+      table.receivedAt,
+    ),
   }),
 );
 

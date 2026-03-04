@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 import { gwInstallations } from "./gw-installations";
-import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-validation";
+import type { ClerkUserId, SyncStatus, SourceIdentifier, SourceType } from "@repo/console-validation";
 
 /**
  * Workspace Sources
@@ -39,9 +39,7 @@ export const workspaceIntegrations = pgTable(
       .references(() => gwInstallations.id, { onDelete: "set null" }),
 
     // Denormalized provider for fast filtering (replaces sourceConfig.sourceType join)
-    // TODO(NOT-NULL): Nullable during phased migration. Will become .notNull() after
-    // existing rows are backfilled with provider values from gw_installations.
-    provider: varchar("provider", { length: 50 }),
+    provider: varchar("provider", { length: 50 }).notNull().$type<SourceType>(),
 
     // Who connected this source to the workspace
     connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),

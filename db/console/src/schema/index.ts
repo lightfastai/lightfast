@@ -23,8 +23,8 @@ export {
   workspaceActorProfiles, type WorkspaceActorProfile, type InsertWorkspaceActorProfile,
   orgActorIdentities, type OrgActorIdentity, type InsertOrgActorIdentity,
   workspaceTemporalStates, type WorkspaceTemporalState, type InsertWorkspaceTemporalState,
-  // Ingestion payload storage tables
-  workspaceIngestionPayloads, workspaceWebhookPayloads, type WorkspaceIngestionPayload, type InsertWorkspaceIngestionPayload, type WorkspaceWebhookPayload, type InsertWorkspaceWebhookPayload,
+  // Workspace event storage
+  workspaceEvents, type WorkspaceEvent, type InsertWorkspaceEvent,
   // Relationship graph tables
   workspaceObservationRelationships, type WorkspaceObservationRelationship, type InsertWorkspaceObservationRelationship, type RelationshipType,
 } from "./tables";
