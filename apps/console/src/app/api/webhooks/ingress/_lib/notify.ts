@@ -37,12 +37,14 @@ export async function publishInngestNotification(
  */
 export async function publishEventNotification(params: {
   orgId: string;
+  workspaceId: string;
   eventId: number;
   sourceEvent: PostTransformEvent;
 }): Promise<void> {
   const channel = realtime.channel(`org-${params.orgId}`);
   await channel.emit("workspace.event", {
     eventId: params.eventId,
+    workspaceId: params.workspaceId,
     sourceEvent: params.sourceEvent,
   } satisfies EventNotification);
 }

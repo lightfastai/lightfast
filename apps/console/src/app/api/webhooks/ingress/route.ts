@@ -81,6 +81,7 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
       publishInngestNotification(sourceEvent, workspace),
       publishEventNotification({
         orgId: envelope.orgId,
+        workspaceId: workspace.workspaceId,
         eventId: record.id,
         sourceEvent,
       }),

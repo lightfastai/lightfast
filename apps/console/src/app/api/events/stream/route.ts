@@ -86,6 +86,7 @@ export async function GET(request: NextRequest): Promise<Response> {
             const missed = await db
               .select({
                 id: workspaceEvents.id,
+                workspaceId: workspaceEvents.workspaceId,
                 sourceEvent: workspaceEvents.sourceEvent,
               })
               .from(workspaceEvents)
@@ -102,6 +103,7 @@ export async function GET(request: NextRequest): Promise<Response> {
               lastCatchUpId = missed_row.id;
               const notification: EventNotification = {
                 eventId: missed_row.id,
+                workspaceId: missed_row.workspaceId,
                 sourceEvent: missed_row.sourceEvent,
               };
               controller.enqueue(

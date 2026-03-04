@@ -8,6 +8,7 @@ import {
   workspaceIntegrations,
   gwInstallations,
   workspaceActorProfiles,
+  workspaceEvents,
 } from "@db/console/schema";
 import type { WorkspaceIntegration } from "@db/console/schema";
 import { eq, and, desc, count, sql, inArray, sum, avg, gte, like } from "drizzle-orm";
@@ -617,8 +618,7 @@ export const workspaceRouter = {
           total: sources.length,
           byType: sources.reduce(
             (acc, s) => {
-              const key = s.sourceType ?? "unknown";
-              acc[key] = (acc[key] ?? 0) + 1;
+              acc[s.sourceType] = (acc[s.sourceType] ?? 0) + 1;
               return acc;
             },
             {} as Record<string, number>,
@@ -1760,4 +1760,56 @@ export const workspaceRouter = {
         observationCount: a.observationCount,
       }));
     }),
+
+  /**
+   * Events sub-router
+   * Queries the workspace_events table for transformed SourceEvent records
+   */
+  events: {
+    /**
+     * List recent events for a workspace
+     * Returns latest 50 events, optionally filtered by source provider
+     */
+    list: orgScopedProcedure
+      .input(
+        z.object({
+          clerkOrgSlug: z.string(),
+          workspaceName: z.string(),
+          source: z.enum(["github", "vercel", "linear", "sentry"]).optional(),
+        }),
+      )
+      .query(async ({ ctx, input }) => {
+        const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
+          clerkOrgSlug: input.clerkOrgSlug,
+          workspaceName: input.workspaceName,
+          userId: ctx.auth.userId,
+        });
+
+        const conditions = [eq(workspaceEvents.workspaceId, workspaceId)];
+        if (input.source) {
+          conditions.push(eq(workspaceEvents.source, input.source));
+        }
+
+        const events = await db
+          .select({
+            id: workspaceEvents.id,
+            source: workspaceEvents.source,
+            sourceType: workspaceEvents.sourceType,
+            sourceEvent: workspaceEvents.sourceEvent,
+            ingestionSource: workspaceEvents.ingestionSource,
+            receivedAt: workspaceEvents.receivedAt,
+            createdAt: workspaceEvents.createdAt,
+          })
+          .from(workspaceEvents)
+          .where(and(...conditions))
+          .orderBy(desc(workspaceEvents.id))
+          .limit(50);
+
+        return {
+          workspaceId,
+          clerkOrgId,
+          events,
+        };
+      }),
+  },
 } satisfies TRPCRouterRecord;

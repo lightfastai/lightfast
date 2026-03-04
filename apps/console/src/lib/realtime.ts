@@ -8,6 +8,7 @@ const schema = {
   workspace: {
     event: z.object({
       eventId: z.number(),
+      workspaceId: z.string(),
       sourceEvent: postTransformEventSchema,
     }),
   },
