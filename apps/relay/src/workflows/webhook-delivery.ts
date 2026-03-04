@@ -171,7 +171,7 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     // The delivery-status callback is called on final success or failure.
     await context.run("publish-to-console", async () => {
       await qstash.publishJSON({
-        url: `${consoleUrl}/api/webhooks/ingress`,
+        url: `${consoleUrl}/api/gateway/ingress`,
         headers: data.correlationId ? { "X-Correlation-Id": data.correlationId } : undefined,
         body: {
           deliveryId: data.deliveryId,

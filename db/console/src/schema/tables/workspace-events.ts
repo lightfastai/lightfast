@@ -17,7 +17,7 @@ import type { PostTransformEvent } from "@repo/console-validation";
  * are skipped). Raw payloads exist upstream in QStash and gwWebhookDeliveries.
  *
  * Primary consumers:
- * - SSE endpoint (/api/events/stream) — catch-up on reconnect via Last-Event-ID
+ * - SSE endpoint (/api/gateway/stream) — catch-up on reconnect via Last-Event-ID
  * - Future: dashboard real-time feed, agent VM notifications
  *
  * The BIGINT identity PK serves as a monotonic cursor for SSE Last-Event-ID.

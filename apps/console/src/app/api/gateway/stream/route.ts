@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300; // Vercel streaming limit (5 min)
 
 /**
- * GET /api/events/stream
+ * GET /api/gateway/stream
  *
  * SSE endpoint for real-time transformed event streaming.
  * Authenticates via org API key (Authorization: Bearer sk-lf-...).

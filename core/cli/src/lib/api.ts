@@ -45,5 +45,5 @@ export async function setupOrg(
 }
 
 export function getStreamUrl(): string {
-  return `${getBaseUrl()}/api/events/stream`;
+  return `${getBaseUrl()}/api/gateway/stream`;
 }

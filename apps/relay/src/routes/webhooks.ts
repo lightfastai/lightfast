@@ -118,7 +118,7 @@ webhooks.post("/:provider", async (c) => {
     // Publish directly to Console ingress — skip connection resolution (pre-resolved in body)
     const correlationId = c.get("correlationId");
     await getQStashClient().publishJSON({
-      url: `${consoleUrl}/api/webhooks/ingress`,
+      url: `${consoleUrl}/api/gateway/ingress`,
       headers: { "X-Correlation-Id": correlationId },
       body: {
         deliveryId: body.deliveryId,

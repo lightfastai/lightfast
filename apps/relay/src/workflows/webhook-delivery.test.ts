@@ -211,7 +211,7 @@ describe("webhook-delivery workflow", () => {
     expect(ctx.run).toHaveBeenCalledTimes(7);
     expect(mockPublishJSON).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: "https://console.test/api/webhooks/ingress",
+        url: "https://console.test/api/gateway/ingress",
         body: expect.objectContaining({
           deliveryId: "del-001",
           connectionId: "conn-1",

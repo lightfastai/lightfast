@@ -9,7 +9,7 @@ import { publishInngestNotification, publishEventNotification } from "./_lib/not
 export const runtime = "nodejs";
 
 /**
- * POST /api/webhooks/ingress
+ * POST /api/gateway/ingress
  *
  * Durable Console ingress endpoint for Relay-delivered webhooks.
  * Receives QStash-signed payloads from the Relay webhook-delivery workflow.
