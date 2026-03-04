@@ -19,7 +19,10 @@
  *      type: "observation",
  *    }
  *
- * 3. Write the transformer in console-webhooks/src/transformers/{source}.ts
+ * 3. If this is a new ENTITY (not just a new action on an existing entity),
+ *    add a payload pattern line to EventPreTransformMap.
+ *
+ * 4. Write the transformer in console-webhooks/src/pre-transformers/{source}.ts
  *
  * That's it. UI exports and webhook dispatch types are auto-derived.
  *
@@ -28,27 +31,34 @@
  */
 
 import type { SourceType } from "@repo/console-validation";
+import type {
+  PreTransformGitHubPushEvent,
+  PreTransformGitHubPullRequestEvent,
+  PreTransformGitHubIssuesEvent,
+  PreTransformGitHubReleaseEvent,
+  PreTransformGitHubDiscussionEvent,
+  PreTransformVercelWebhookPayload,
+  PreTransformLinearIssueWebhook,
+  PreTransformLinearCommentWebhook,
+  PreTransformLinearProjectWebhook,
+  PreTransformLinearCycleWebhook,
+  PreTransformLinearProjectUpdateWebhook,
+  PreTransformSentryIssueWebhook,
+  PreTransformSentryErrorWebhook,
+  PreTransformSentryEventAlertWebhook,
+  PreTransformSentryMetricAlertWebhook,
+  GitHubWebhookEventType,
+  LinearWebhookEventType,
+  SentryWebhookEventType,
+} from "@repo/console-webhooks";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 interface EventDef {
   source: SourceType;
-  /** Action-level label for activity feeds (e.g., "PR Opened") */
   label: string;
-  /** Base significance weight (0-100) for scoring */
   weight: number;
-  /**
-   * External webhook key(s) that map to this internal type.
-   * GitHub: "{event}_{action}" or "{event}" (e.g., "pull_request_opened", "push")
-   * Vercel: "{type}" (e.g., "deployment.created")
-   * Sentry: "{eventType}" (e.g., "issue.created", "metric_alert")
-   * Linear: "{Type}:{action}" (e.g., "Issue:create", "ProjectUpdate:remove")
-   */
   externalKeys: readonly string[];
-  /**
-   * UI subscription category key (external format).
-   * Multiple internal events share one category for coarse-grained UI toggles.
-   */
   category: string;
 }
 
@@ -63,6 +73,27 @@ interface ProviderDef {
   description: string;
   events: Record<string, CategoryDef>;
 }
+
+// ─── Type Utilities ──────────────────────────────────────────────────────────
+
+/** Extract the source prefix from an event key: "github:push" → "github" */
+type SourceFromKey<K extends string> = K extends `${infer S}:${string}` ? S : never;
+
+/**
+ * Strict event definition — source and category are derived from the key.
+ * Not used directly; strictness is enforced by _AssertSources and _AssertCategories
+ * type assertions at the bottom of this file.
+ */
+type _StrictEventDef<K extends string> =
+  K extends `${infer S extends SourceType}:${string}`
+    ? {
+        source: S;
+        label: string;
+        weight: number;
+        externalKeys: readonly string[];
+        category: string & keyof (typeof PROVIDER_REGISTRY)[S]["events"];
+      }
+    : EventDef;
 
 // ─── Provider Registry ────────────────────────────────────────────────────────
 
@@ -204,7 +235,7 @@ export const EVENT_CATEGORIES: {
   linear: PROVIDER_REGISTRY.linear.events,
 };
 
-// ─── Event Registry ───────────────────────────────────────────────────────────
+// ─── Event Registry (single source of truth for event keys) ──────────────────
 
 export const EVENT_REGISTRY = {
   // ── GitHub ────────────────────────────────────────────────────────────────
@@ -501,7 +532,50 @@ export const EVENT_REGISTRY = {
     externalKeys: ["ProjectUpdate:remove"],
     category: "ProjectUpdate",
   },
-} as const satisfies Record<string, EventDef>;
+} as const satisfies Record<`${SourceType}:${string}`, EventDef>;
+
+// ─── Derived Types ───────────────────────────────────────────────────────────
+
+/** All valid internal event keys — derived from EVENT_REGISTRY */
+export type EventKey = keyof typeof EVENT_REGISTRY;
+
+/** All event keys for a specific source */
+export type KeysForSource<S extends SourceType> = Extract<EventKey, `${S}:${string}`>;
+
+/** Extract the sub-type: "github:pull-request.opened" → "pull-request.opened" */
+export type EventSubType<K extends EventKey> = K extends `${string}:${infer Sub}` ? Sub : never;
+
+/**
+ * Maps event keys to their wire-level payload types via pattern matching.
+ *
+ * Adding a new ACTION on an existing entity (e.g., "github:pull-request.review-requested")
+ * automatically gets the correct payload type — no edit needed here.
+ *
+ * Adding a new ENTITY requires one new pattern line below.
+ */
+export type EventPreTransformMap =
+  // GitHub — 5 entity patterns
+  & Record<Extract<EventKey, "github:push">, PreTransformGitHubPushEvent>
+  & Record<Extract<EventKey, `github:pull-request.${string}`>, PreTransformGitHubPullRequestEvent>
+  & Record<Extract<EventKey, `github:issue.${string}`>, PreTransformGitHubIssuesEvent>
+  & Record<Extract<EventKey, `github:release.${string}`>, PreTransformGitHubReleaseEvent>
+  & Record<Extract<EventKey, `github:discussion.${string}`>, PreTransformGitHubDiscussionEvent>
+  // Vercel — single payload type for all deployment events
+  & Record<Extract<EventKey, `vercel:${string}`>, PreTransformVercelWebhookPayload>
+  // Sentry — 4 distinct payload types
+  & Record<Extract<EventKey, `sentry:issue.${string}`>, PreTransformSentryIssueWebhook>
+  & Record<Extract<EventKey, "sentry:error">, PreTransformSentryErrorWebhook>
+  & Record<Extract<EventKey, "sentry:event-alert">, PreTransformSentryEventAlertWebhook>
+  & Record<Extract<EventKey, "sentry:metric-alert">, PreTransformSentryMetricAlertWebhook>
+  // Linear — 5 entity patterns (project-update before project to match correctly)
+  & Record<Extract<EventKey, `linear:issue.${string}`>, PreTransformLinearIssueWebhook>
+  & Record<Extract<EventKey, `linear:comment.${string}`>, PreTransformLinearCommentWebhook>
+  & Record<Extract<EventKey, `linear:project-update.${string}`>, PreTransformLinearProjectUpdateWebhook>
+  & Record<Extract<EventKey, `linear:project.${string}`>, PreTransformLinearProjectWebhook>
+  & Record<Extract<EventKey, `linear:cycle.${string}`>, PreTransformLinearCycleWebhook>;
+
+/** Get the pre-transform payload type for an event key at compile time */
+export type PreTransformFor<K extends EventKey> = K extends keyof EventPreTransformMap ? EventPreTransformMap[K] : never;
 
 // ─── Pipeline Type Re-exports ─────────────────────────────────────────────────
 
@@ -537,10 +611,10 @@ export type {
  * Get base weight for scoring. Returns 35 for unknown events.
  * Constructs internal key "{source}:{sourceType}" from PostTransformEvent fields.
  */
-export function getEventWeight(source: string, sourceType: string): number {
+export function getEventWeight(source: SourceType, sourceType: string): number {
   const key = `${source}:${sourceType}`;
   if (!(key in EVENT_REGISTRY)) return 35;
-  return EVENT_REGISTRY[key as keyof typeof EVENT_REGISTRY].weight;
+  return EVENT_REGISTRY[key as EventKey].weight;
 }
 
 // ─── Derived UI Exports ───────────────────────────────────────────────────────
@@ -573,3 +647,40 @@ export const WEBHOOK_EVENT_TYPES = {
   )],
   linear: ALL_LINEAR_EVENTS as string[],
 };
+
+// ─── Compile-Time Assertions ──────────────────────────────────────────────────
+
+/** @internal Assert T is a subtype of U — compile error if not */
+type AssertExtends<T extends U, U> = T;
+
+// Every entry's `source` must match its key prefix (e.g., "github:push" → source: "github")
+type _AssertSources = AssertExtends<
+  { [K in EventKey]: (typeof EVENT_REGISTRY)[K]["source"] },
+  { [K in EventKey]: SourceFromKey<K> & SourceType }
+>;
+
+// Every entry's `category` must be a valid PROVIDER_REGISTRY category for its source
+type _AssertCategories = AssertExtends<
+  { [K in EventKey]: (typeof EVENT_REGISTRY)[K]["category"] },
+  { [K in EventKey]: string & keyof (typeof PROVIDER_REGISTRY)[SourceFromKey<K> & SourceType]["events"] }
+>;
+
+// Payload map must cover exactly the same keys as EVENT_REGISTRY
+type _AssertPayloadCoverage = AssertExtends<EventKey, keyof EventPreTransformMap>;
+type _AssertPayloadExact = AssertExtends<keyof EventPreTransformMap, EventKey>;
+
+// Transformer maps in @repo/console-webhooks must handle all dispatch categories
+type GitHubDispatchKey = (typeof EVENT_REGISTRY)[Extract<EventKey, `github:${string}`>]["category"];
+type LinearDispatchKey = (typeof EVENT_REGISTRY)[Extract<EventKey, `linear:${string}`>]["category"];
+type SentryDispatchKey = (typeof EVENT_REGISTRY)[Extract<EventKey, `sentry:${string}`>]["externalKeys"][number];
+
+type _AssertGitHubCoverage = AssertExtends<GitHubDispatchKey, GitHubWebhookEventType>;
+type _AssertGitHubExact = AssertExtends<GitHubWebhookEventType, GitHubDispatchKey>;
+
+type _AssertLinearCoverage = AssertExtends<LinearDispatchKey, LinearWebhookEventType>;
+type _AssertLinearExact = AssertExtends<LinearWebhookEventType, LinearDispatchKey>;
+
+type _AssertSentryCoverage = AssertExtends<SentryDispatchKey, SentryWebhookEventType>;
+type _AssertSentryExact = AssertExtends<SentryWebhookEventType, SentryDispatchKey>;
+
+// Vercel: single transformer handles all deployment events — no dispatch key assertion needed

@@ -152,3 +152,4 @@ export {
   ALL_LINEAR_EVENTS,
   WEBHOOK_EVENT_TYPES,
 } from "./provider";
+export type { EventPreTransformMap, EventKey, PreTransformFor, EventSubType, KeysForSource } from "./provider";
