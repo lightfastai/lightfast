@@ -8,7 +8,7 @@
  *      source: "source",
  *      label: "Human Label",
  *      weight: 50,  // 0-100 significance
- *      externalKeys: ["external_format_key"],
+ *      externalKeys: ["wire_event_type"],  // must match real provider wire format
  *      category: "categoryKey",
  *    }
  *
@@ -27,7 +27,9 @@
  * That's it. UI exports and webhook dispatch types are auto-derived.
  *
  * Internal format: {source}:{entity}.{action} with kebab-case
- * External formats vary by provider (see externalKeys on each entry).
+ * External format (externalKeys): must match the real provider wire format exactly.
+ * Multiple registry entries may share the same externalKey (e.g., all GitHub PR
+ * actions share "pull_request" because the action comes from the payload body).
  */
 
 import type { SourceType } from "@repo/console-validation";
@@ -78,22 +80,6 @@ interface ProviderDef {
 
 /** Extract the source prefix from an event key: "github:push" → "github" */
 type SourceFromKey<K extends string> = K extends `${infer S}:${string}` ? S : never;
-
-/**
- * Strict event definition — source and category are derived from the key.
- * Not used directly; strictness is enforced by _AssertSources and _AssertCategories
- * type assertions at the bottom of this file.
- */
-type _StrictEventDef<K extends string> =
-  K extends `${infer S extends SourceType}:${string}`
-    ? {
-        source: S;
-        label: string;
-        weight: number;
-        externalKeys: readonly string[];
-        category: string & keyof (typeof PROVIDER_REGISTRY)[S]["events"];
-      }
-    : EventDef;
 
 // ─── Provider Registry ────────────────────────────────────────────────────────
 
@@ -250,84 +236,84 @@ export const EVENT_REGISTRY = {
     source: "github",
     label: "PR Opened",
     weight: 50,
-    externalKeys: ["pull_request_opened"],
+    externalKeys: ["pull_request"],
     category: "pull_request",
   },
   "github:pull-request.closed": {
     source: "github",
     label: "PR Closed",
     weight: 45,
-    externalKeys: ["pull_request_closed"],
+    externalKeys: ["pull_request"],
     category: "pull_request",
   },
   "github:pull-request.merged": {
     source: "github",
     label: "PR Merged",
     weight: 60,
-    externalKeys: ["pull_request_merged"],
+    externalKeys: ["pull_request"],
     category: "pull_request",
   },
   "github:pull-request.reopened": {
     source: "github",
     label: "PR Reopened",
     weight: 40,
-    externalKeys: ["pull_request_reopened"],
+    externalKeys: ["pull_request"],
     category: "pull_request",
   },
   "github:pull-request.ready-for-review": {
     source: "github",
     label: "Ready for Review",
     weight: 45,
-    externalKeys: ["pull_request_ready_for_review"],
+    externalKeys: ["pull_request"],
     category: "pull_request",
   },
   "github:issue.opened": {
     source: "github",
     label: "Issue Opened",
     weight: 45,
-    externalKeys: ["issue_opened"],
+    externalKeys: ["issues"],
     category: "issues",
   },
   "github:issue.closed": {
     source: "github",
     label: "Issue Closed",
     weight: 40,
-    externalKeys: ["issue_closed"],
+    externalKeys: ["issues"],
     category: "issues",
   },
   "github:issue.reopened": {
     source: "github",
     label: "Issue Reopened",
     weight: 40,
-    externalKeys: ["issue_reopened"],
+    externalKeys: ["issues"],
     category: "issues",
   },
   "github:release.published": {
     source: "github",
     label: "Release Published",
     weight: 75,
-    externalKeys: ["release_published"],
+    externalKeys: ["release"],
     category: "release",
   },
   "github:release.created": {
     source: "github",
     label: "Release Created",
     weight: 70,
-    externalKeys: ["release_created"],
+    externalKeys: ["release"],
     category: "release",
   },
   "github:discussion.created": {
     source: "github",
     label: "Discussion Created",
     weight: 35,
-    externalKeys: ["discussion_created"],
+    externalKeys: ["discussion"],
     category: "discussion",
   },
   "github:discussion.answered": {
     source: "github",
     label: "Discussion Answered",
     weight: 40,
-    externalKeys: ["discussion_answered"],
+    externalKeys: ["discussion"],
     category: "discussion",
   },
 
@@ -380,28 +366,42 @@ export const EVENT_REGISTRY = {
     source: "sentry",
     label: "Issue Created",
     weight: 55,
-    externalKeys: ["issue.created"],
+    externalKeys: ["issue"],
     category: "issue",
   },
   "sentry:issue.resolved": {
     source: "sentry",
     label: "Issue Resolved",
     weight: 50,
-    externalKeys: ["issue.resolved"],
+    externalKeys: ["issue"],
     category: "issue",
   },
   "sentry:issue.assigned": {
     source: "sentry",
     label: "Issue Assigned",
     weight: 30,
-    externalKeys: ["issue.assigned"],
+    externalKeys: ["issue"],
     category: "issue",
   },
   "sentry:issue.ignored": {
     source: "sentry",
     label: "Issue Ignored",
     weight: 25,
-    externalKeys: ["issue.ignored"],
+    externalKeys: ["issue"],
+    category: "issue",
+  },
+  "sentry:issue.archived": {
+    source: "sentry",
+    label: "Issue Archived",
+    weight: 25,
+    externalKeys: ["issue"],
+    category: "issue",
+  },
+  "sentry:issue.unresolved": {
+    source: "sentry",
+    label: "Issue Unresolved",
+    weight: 45,
+    externalKeys: ["issue"],
     category: "issue",
   },
   "sentry:error": {
@@ -633,18 +633,16 @@ export const ALL_LINEAR_EVENTS = Object.keys(PROVIDER_REGISTRY.linear.events) as
  * Valid webhook eventType values per source for test data and schema generation.
  *
  * These are the dispatch-level identifiers that arrive on the wire:
- * - GitHub/Linear: category-level (action comes from payload body)
- * - Vercel: specific event types (same as categories)
- * - Sentry: specific event types from EVENT_REGISTRY externalKeys
+ * All providers use category-level keys that match the real wire format:
+ * - GitHub: X-GitHub-Event header ("push", "pull_request", "issues", etc.)
+ * - Vercel: payload.type ("deployment.created", "deployment.ready", etc.)
+ * - Sentry: sentry-hook-resource header ("issue", "error", "event_alert", "metric_alert")
+ * - Linear: payload.type ("Issue", "Comment", "Project", etc.)
  */
 export const WEBHOOK_EVENT_TYPES = {
   github: ALL_GITHUB_EVENTS as string[],
   vercel: ALL_VERCEL_EVENTS as string[],
-  sentry: [...new Set(
-    Object.values(EVENT_REGISTRY)
-      .filter((e) => e.source === "sentry")
-      .flatMap((e) => [...e.externalKeys]),
-  )],
+  sentry: ALL_SENTRY_EVENTS as string[],
   linear: ALL_LINEAR_EVENTS as string[],
 };
 
@@ -672,7 +670,7 @@ type _AssertPayloadExact = AssertExtends<keyof EventPreTransformMap, EventKey>;
 // Transformer maps in @repo/console-webhooks must handle all dispatch categories
 type GitHubDispatchKey = (typeof EVENT_REGISTRY)[Extract<EventKey, `github:${string}`>]["category"];
 type LinearDispatchKey = (typeof EVENT_REGISTRY)[Extract<EventKey, `linear:${string}`>]["category"];
-type SentryDispatchKey = (typeof EVENT_REGISTRY)[Extract<EventKey, `sentry:${string}`>]["externalKeys"][number];
+type SentryDispatchKey = (typeof EVENT_REGISTRY)[Extract<EventKey, `sentry:${string}`>]["category"];
 
 type _AssertGitHubCoverage = AssertExtends<GitHubDispatchKey, GitHubWebhookEventType>;
 type _AssertGitHubExact = AssertExtends<GitHubWebhookEventType, GitHubDispatchKey>;
