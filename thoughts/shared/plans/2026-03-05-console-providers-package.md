@@ -826,10 +826,10 @@ Keep test files — update them to test provider definitions from `@repo/console
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm lint` passes
+- [x] `pnpm typecheck` passes
+- [x] `pnpm lint` passes
 - [ ] `pnpm build:gateway` succeeds
-- [ ] Gateway tests pass: `pnpm --filter gateway test`
+- [x] Gateway tests pass: `pnpm --filter gateway test`
 
 #### Manual Verification:
 - [ ] `apps/gateway/src/providers/impl/` directory no longer exists
@@ -878,10 +878,10 @@ Keep test files — update them to test provider definitions from `@repo/console
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm lint` passes
+- [x] `pnpm typecheck` passes
+- [x] `pnpm lint` passes
 - [ ] `pnpm build:relay` succeeds
-- [ ] Relay tests pass: `pnpm --filter relay test`
+- [x] Relay tests pass: `pnpm --filter relay test`
 
 #### Manual Verification:
 - [ ] `apps/relay/src/providers/impl/` directory no longer exists

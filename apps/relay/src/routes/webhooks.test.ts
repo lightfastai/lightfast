@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { computeHmacSha256, computeHmacSha1 } from "../lib/crypto.js";
+import { computeHmac } from "@repo/console-providers";
+
+// Convenience wrappers matching the old relay crypto API used throughout this test
+const computeHmacSha256 = (msg: string, secret: string) => computeHmac(msg, secret, "SHA-256");
+const computeHmacSha1 = (msg: string, secret: string) => computeHmac(msg, secret, "SHA-1");
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 

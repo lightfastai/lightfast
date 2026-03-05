@@ -1,21 +1,20 @@
 import { describe, it, expect } from "vitest";
-import { computeHmacSha256 } from "../../lib/crypto.js";
-import { SentryProvider } from "./sentry.js";
+import { PROVIDERS, computeHmac } from "@repo/console-providers";
 
-const provider = new SentryProvider();
+const provider = PROVIDERS.sentry.webhook;
 const secret = "test-sentry-secret";
 
 function headers(map: Record<string, string>): Headers {
   return new Headers(map);
 }
 
-describe("SentryProvider", () => {
-  describe("verifyWebhook", () => {
+describe("sentry webhook provider", () => {
+  describe("verifySignature", () => {
     it("accepts a valid signature", async () => {
       const body = '{"installation":{"uuid":"inst-1"}}';
-      const sig = await computeHmacSha256(body, secret);
+      const sig = await computeHmac(body, secret, "SHA-256");
 
-      const result = await provider.verifyWebhook(
+      const result = await provider.verifySignature(
         body,
         headers({ "sentry-hook-signature": sig }),
         secret,
@@ -24,7 +23,7 @@ describe("SentryProvider", () => {
     });
 
     it("rejects an invalid signature", async () => {
-      const result = await provider.verifyWebhook(
+      const result = await provider.verifySignature(
         '{"installation":{"uuid":"inst-1"}}',
         headers({ "sentry-hook-signature": "badsig" }),
         secret,
@@ -33,7 +32,7 @@ describe("SentryProvider", () => {
     });
 
     it("rejects when signature header missing", async () => {
-      const result = await provider.verifyWebhook(
+      const result = await provider.verifySignature(
         '{"installation":{"uuid":"inst-1"}}',
         headers({}),
         secret,
@@ -45,8 +44,8 @@ describe("SentryProvider", () => {
   describe("parsePayload", () => {
     it("parses valid payload with installation", () => {
       const raw = { installation: { uuid: "inst-1" } };
-      const result = provider.parsePayload(raw);
-      expect(result.installation?.uuid).toBe("inst-1");
+      const result = provider.parsePayload(raw) as Record<string, unknown>;
+      expect((result.installation as Record<string, unknown>)?.uuid).toBe("inst-1");
     });
 
     it("throws on non-object input", () => {

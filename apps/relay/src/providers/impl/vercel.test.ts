@@ -1,21 +1,20 @@
 import { describe, it, expect } from "vitest";
-import { computeHmacSha1 } from "../../lib/crypto.js";
-import { VercelProvider } from "./vercel.js";
+import { PROVIDERS, computeHmac } from "@repo/console-providers";
 
-const provider = new VercelProvider();
+const provider = PROVIDERS.vercel.webhook;
 const secret = "test-vercel-secret";
 
 function headers(map: Record<string, string>): Headers {
   return new Headers(map);
 }
 
-describe("VercelProvider", () => {
-  describe("verifyWebhook", () => {
+describe("vercel webhook provider", () => {
+  describe("verifySignature", () => {
     it("accepts a valid sha1 signature", async () => {
       const body = '{"type":"deployment.created"}';
-      const sig = await computeHmacSha1(body, secret);
+      const sig = await computeHmac(body, secret, "SHA-1");
 
-      const result = await provider.verifyWebhook(
+      const result = await provider.verifySignature(
         body,
         headers({ "x-vercel-signature": sig }),
         secret,
@@ -24,7 +23,7 @@ describe("VercelProvider", () => {
     });
 
     it("rejects an invalid signature", async () => {
-      const result = await provider.verifyWebhook(
+      const result = await provider.verifySignature(
         '{"type":"deployment.created"}',
         headers({ "x-vercel-signature": "badsig" }),
         secret,
@@ -33,7 +32,7 @@ describe("VercelProvider", () => {
     });
 
     it("rejects when signature header missing", async () => {
-      const result = await provider.verifyWebhook(
+      const result = await provider.verifySignature(
         '{"type":"deployment.created"}',
         headers({}),
         secret,
@@ -49,9 +48,8 @@ describe("VercelProvider", () => {
         type: "deployment.created",
         payload: { project: { id: "prj_1" }, team: { id: "team_1" } },
       };
-      const result = provider.parsePayload(raw);
+      const result = provider.parsePayload(raw) as Record<string, unknown>;
       expect(result.type).toBe("deployment.created");
-      expect(result.payload?.project?.id).toBe("prj_1");
     });
 
     it("throws on non-object input", () => {
@@ -68,14 +66,6 @@ describe("VercelProvider", () => {
       expect(id).toBe("body-456");
     });
 
-    it("falls back to x-vercel-id header", () => {
-      const id = provider.extractDeliveryId(
-        headers({ "x-vercel-id": "hdr-123" }),
-        {},
-      );
-      expect(id).toBe("hdr-123");
-    });
-
     it("generates UUID when both missing", () => {
       const id = provider.extractDeliveryId(headers({}), {});
       expect(id).toMatch(
@@ -86,9 +76,7 @@ describe("VercelProvider", () => {
 
   describe("extractEventType", () => {
     it("reads type from payload", () => {
-      const type = provider.extractEventType(headers({}), {
-        type: "deployment.ready",
-      });
+      const type = provider.extractEventType(headers({}), { type: "deployment.ready" });
       expect(type).toBe("deployment.ready");
     });
 

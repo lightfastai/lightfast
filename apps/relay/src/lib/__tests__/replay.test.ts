@@ -20,7 +20,7 @@ const {
     mockDbUpdate: vi.fn(),
     mockDbSet: vi.fn(),
     mockDbWhere: vi.fn().mockResolvedValue(undefined),
-    mockGetProvider: vi.fn().mockReturnValue({ extractResourceId: mockExtractResourceId }),
+    mockGetProvider: vi.fn().mockReturnValue({ webhook: { extractResourceId: mockExtractResourceId } }),
     mockExtractResourceId,
   };
 });
@@ -50,7 +50,7 @@ vi.mock("../urls.js", () => ({
   relayBaseUrl: "https://relay.test/api",
 }));
 
-vi.mock("../../providers/index.js", () => ({
+vi.mock("@repo/console-providers", () => ({
   getProvider: mockGetProvider,
 }));
 

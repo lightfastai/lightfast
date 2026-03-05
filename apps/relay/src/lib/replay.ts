@@ -5,11 +5,10 @@ import { workflowClient } from "@vendor/upstash-workflow/client";
 import { redis } from "@vendor/upstash";
 import { webhookSeenKey } from "./cache.js";
 import { relayBaseUrl } from "./urls.js";
-import { getProvider } from "../providers/index.js";
+import { getProvider } from "@repo/console-providers";
 import type { WebhookReceiptPayload } from "@repo/console-types";
 import type { SourceType } from "@repo/console-validation";
 import type { GwWebhookDelivery } from "@db/console/schema";
-import type { WebhookPayload } from "../providers/types.js";
 
 interface ReplayResult {
   replayed: string[];
@@ -41,15 +40,15 @@ export async function replayDeliveries(
     }
 
     try {
-      const parsedPayload = JSON.parse(delivery.payload) as WebhookPayload;
+      const parsedPayload = JSON.parse(delivery.payload) as unknown;
 
       const providerName = delivery.provider as SourceType;
 
       // Re-extract resourceId from stored payload via provider
       let resourceId: string | null = null;
       try {
-        const providerInstance = getProvider(providerName);
-        resourceId = providerInstance.extractResourceId(parsedPayload);
+        const providerDef = getProvider(providerName);
+        resourceId = providerDef?.webhook.extractResourceId(parsedPayload) ?? null;
       } catch {
         // If extraction fails, proceed with null — workflow handles it
       }

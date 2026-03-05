@@ -5,7 +5,7 @@ import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
 import { redis } from "@vendor/upstash";
 import { resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache.js";
 import { replayDeliveries } from "../lib/replay.js";
-import type { SourceType } from "../providers/types.js";
+import type { SourceType } from "@repo/console-validation";
 import {
   gwInstallations,
   gwResources,

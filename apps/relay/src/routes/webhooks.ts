@@ -4,8 +4,8 @@ import { getQStashClient } from "@vendor/qstash";
 import { workflowClient } from "@vendor/upstash-workflow/client";
 import { relayBaseUrl, consoleUrl } from "../lib/urls.js";
 import { getEnv } from "../env.js";
-import { getProvider } from "../providers/index.js";
-import type { WebhookProvider } from "../providers/index.js";
+import { getProvider } from "@repo/console-providers";
+import type { ProviderName } from "@repo/console-providers";
 import { webhookSeenKey } from "../lib/cache.js";
 import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/console-types";
@@ -31,14 +31,14 @@ const webhooks = new Hono<{ Variables: LifecycleVariables }>();
  * and connection resolution — publishes directly to Console via QStash.
  */
 webhooks.post("/:provider", async (c) => {
-  const providerName = c.req.param("provider");
+  const rawProvider = c.req.param("provider");
+  const providerDef = getProvider(rawProvider); // returns ProviderDefinition | undefined
 
-  let provider: WebhookProvider;
-  try {
-    provider = getProvider(providerName);
-  } catch {
-    return c.json({ error: "unknown_provider", provider: providerName }, 400);
+  if (!providerDef) {
+    return c.json({ error: "unknown_provider", provider: rawProvider }, 400);
   }
+
+  const providerName: ProviderName = providerDef.name;
 
   const env = getEnv(c);
 
@@ -72,7 +72,7 @@ webhooks.post("/:provider", async (c) => {
     // Parse payload through provider schema (validates structure, applies .passthrough())
     let parsedPayload;
     try {
-      parsedPayload = provider.parsePayload(body.payload);
+      parsedPayload = providerDef.webhook.parsePayload(body.payload);
     } catch {
       return c.json({ error: "invalid_payload" }, 400);
     }
@@ -80,7 +80,7 @@ webhooks.post("/:provider", async (c) => {
     // Dedup — same Redis SET NX as the standard webhook path.
     // Prevents duplicates from backfill retries and re-runs.
     const dedupResult = await redis.set(
-      webhookSeenKey(provider.name, body.deliveryId),
+      webhookSeenKey(providerName, body.deliveryId),
       "1",
       { nx: true, ex: 86400 },
     );
@@ -92,7 +92,7 @@ webhooks.post("/:provider", async (c) => {
     await db
       .insert(gwWebhookDeliveries)
       .values({
-        provider: provider.name,
+        provider: providerName,
         deliveryId: body.deliveryId,
         eventType: body.eventType,
         installationId: body.connectionId,
@@ -111,7 +111,7 @@ webhooks.post("/:provider", async (c) => {
     }
 
     // Check feature flag — skip console delivery if disabled
-    if (!(await isConsoleFanOutEnabled(provider.name))) {
+    if (!(await isConsoleFanOutEnabled(providerName))) {
       return c.json({ status: "accepted", deliveryId: body.deliveryId, fanOut: false });
     }
 
@@ -124,7 +124,7 @@ webhooks.post("/:provider", async (c) => {
         deliveryId: body.deliveryId,
         connectionId: body.connectionId,
         orgId: body.orgId,
-        provider: provider.name,
+        provider: providerName,
         eventType: body.eventType,
         payload: parsedPayload,
         receivedAt: body.receivedAt,
@@ -141,13 +141,13 @@ webhooks.post("/:provider", async (c) => {
         .set({ status: "enqueued" })
         .where(
           and(
-            eq(gwWebhookDeliveries.provider, provider.name),
+            eq(gwWebhookDeliveries.provider, providerName),
             eq(gwWebhookDeliveries.deliveryId, body.deliveryId),
           ),
         );
     } catch (err) {
       console.error("[webhooks] failed to update delivery status after enqueue", {
-        provider: provider.name,
+        provider: providerName,
         deliveryId: body.deliveryId,
         error: err,
       });
@@ -160,10 +160,21 @@ webhooks.post("/:provider", async (c) => {
   const rawBody = await c.req.text();
   const headers = c.req.raw.headers;
 
+  // Map provider names to their webhook secrets from env
+  const webhookSecrets: Partial<Record<ProviderName, string>> = {
+    github: env.GITHUB_WEBHOOK_SECRET,
+    vercel: env.VERCEL_CLIENT_INTEGRATION_SECRET,
+    linear: env.LINEAR_WEBHOOK_SIGNING_SECRET,
+    sentry: env.SENTRY_CLIENT_SECRET,
+  };
+
   // Verify webhook signature — reject invalid webhooks immediately
   // No workflow is triggered for invalid requests.
-  const secret = provider.getWebhookSecret(env);
-  const valid = await provider.verifyWebhook(rawBody, headers, secret);
+  const secret = webhookSecrets[providerName];
+  if (!secret) {
+    return c.json({ error: "unknown_provider", provider: providerName }, 400);
+  }
+  const valid = await providerDef.webhook.verifySignature(rawBody, headers, secret);
   if (!valid) {
     return c.json({ error: "invalid_signature" }, 401);
   }
@@ -171,7 +182,7 @@ webhooks.post("/:provider", async (c) => {
   // Parse + validate payload with provider-specific Zod schema
   let payload;
   try {
-    payload = provider.parsePayload(JSON.parse(rawBody));
+    payload = providerDef.webhook.parsePayload(JSON.parse(rawBody));
   } catch {
     return c.json({ error: "invalid_payload" }, 400);
   }
@@ -180,9 +191,9 @@ webhooks.post("/:provider", async (c) => {
   let eventType: string;
   let resourceId: string | null;
   try {
-    deliveryId = provider.extractDeliveryId(headers, payload);
-    eventType = provider.extractEventType(headers, payload);
-    resourceId = provider.extractResourceId(payload);
+    deliveryId = providerDef.webhook.extractDeliveryId(headers, payload);
+    eventType = providerDef.webhook.extractEventType(headers, payload);
+    resourceId = providerDef.webhook.extractResourceId(payload);
   } catch {
     return c.json({ error: "extraction_failed", provider: providerName }, 400);
   }
@@ -190,7 +201,7 @@ webhooks.post("/:provider", async (c) => {
   // Trigger durable workflow — processing happens asynchronously with
   // step-level retry semantics. Provider gets fast 200 ACK.
   const workflowPayload: WebhookReceiptPayload = {
-    provider: provider.name,
+    provider: providerName,
     deliveryId,
     eventType,
     resourceId,
