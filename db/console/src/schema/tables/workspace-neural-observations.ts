@@ -30,8 +30,8 @@ export interface ObservationReference {
 export interface ObservationActor {
   id: string;
   name: string;
-  email?: string;
-  avatarUrl?: string;
+  email: string | null;
+  avatarUrl: string | null;
 }
 
 /**

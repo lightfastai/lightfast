@@ -21,12 +21,14 @@ export function transformGitHubPush(
     type: "commit",
     id: payload.after,
     url: `${payload.repository.html_url}/commit/${payload.after}`,
+    label: null,
   });
 
   refs.push({
     type: "branch",
     id: branch,
     url: `${payload.repository.html_url}/tree/${branch}`,
+    label: null,
   });
 
   const fileCount = payload.commits.reduce(
@@ -49,7 +51,7 @@ export function transformGitHubPush(
     actor: {
       id: String(payload.sender.id),
       name: payload.sender.login,
-      email: payload.pusher.email ?? undefined,
+      email: payload.pusher.email ?? null,
       avatarUrl: payload.sender.avatar_url,
     },
     occurredAt: payload.head_commit?.timestamp ?? new Date().toISOString(),
@@ -82,11 +84,12 @@ export function transformGitHubPullRequest(
   const pr = payload.pull_request;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "pr", id: `#${pr.number}`, url: pr.html_url });
+  refs.push({ type: "pr", id: `#${pr.number}`, url: pr.html_url, label: null });
   refs.push({
     type: "branch",
     id: pr.head.ref,
     url: `${payload.repository.html_url}/tree/${pr.head.ref}`,
+    label: null,
   });
 
   if (pr.head.sha) {
@@ -94,6 +97,7 @@ export function transformGitHubPullRequest(
       type: "commit",
       id: pr.head.sha,
       url: `${payload.repository.html_url}/commit/${pr.head.sha}`,
+      label: null,
     });
   }
 
@@ -113,16 +117,16 @@ export function transformGitHubPullRequest(
 
   for (const reviewer of pr.requested_reviewers ?? []) {
     if ("login" in reviewer) {
-      refs.push({ type: "reviewer", id: reviewer.login, url: `https://github.com/${reviewer.login}` });
+      refs.push({ type: "reviewer", id: reviewer.login, url: `https://github.com/${reviewer.login}`, label: null });
     }
   }
 
   for (const assignee of pr.assignees ?? []) {
-    refs.push({ type: "assignee", id: assignee.login, url: `https://github.com/${assignee.login}` });
+    refs.push({ type: "assignee", id: assignee.login, url: `https://github.com/${assignee.login}`, label: null });
   }
 
   for (const label of pr.labels ?? []) {
-    refs.push({ type: "label", id: typeof label === "string" ? label : label.name });
+    refs.push({ type: "label", id: typeof label === "string" ? label : label.name, url: null, label: null });
   }
 
   const actionMap: Record<string, string> = {
@@ -144,8 +148,8 @@ export function transformGitHubPullRequest(
     title: sanitizeTitle(`[${actionTitle}] ${pr.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
     actor: pr.user
-      ? { id: String(pr.user.id), name: pr.user.login, avatarUrl: pr.user.avatar_url }
-      : undefined,
+      ? { id: String(pr.user.id), name: pr.user.login, email: null, avatarUrl: pr.user.avatar_url }
+      : null,
     occurredAt: pr.updated_at,
     references: refs,
     metadata: {
@@ -182,14 +186,14 @@ export function transformGitHubIssue(
   const issue = payload.issue;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "issue", id: `#${issue.number}`, url: issue.html_url });
+  refs.push({ type: "issue", id: `#${issue.number}`, url: issue.html_url, label: null });
 
   for (const assignee of issue.assignees ?? []) {
-    refs.push({ type: "assignee", id: assignee.login, url: `https://github.com/${assignee.login}` });
+    refs.push({ type: "assignee", id: assignee.login, url: `https://github.com/${assignee.login}`, label: null });
   }
 
   for (const label of issue.labels ?? []) {
-    refs.push({ type: "label", id: typeof label === "string" ? label : label.name });
+    refs.push({ type: "label", id: typeof label === "string" ? label : label.name, url: null, label: null });
   }
 
   const actionMap: Record<string, string> = {
@@ -210,8 +214,8 @@ export function transformGitHubIssue(
     title: sanitizeTitle(`[${actionTitle}] ${issue.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
     actor: issue.user
-      ? { id: String(issue.user.id), name: issue.user.login, avatarUrl: issue.user.avatar_url }
-      : undefined,
+      ? { id: String(issue.user.id), name: issue.user.login, email: null, avatarUrl: issue.user.avatar_url }
+      : null,
     occurredAt: issue.updated_at,
     references: refs,
     metadata: {
@@ -245,6 +249,7 @@ export function transformGitHubRelease(
     type: "branch",
     id: release.target_commitish,
     url: `${payload.repository.html_url}/tree/${release.target_commitish}`,
+    label: null,
   });
 
   const actionMap: Record<string, string> = {
@@ -265,6 +270,7 @@ export function transformGitHubRelease(
     actor: {
       id: String(release.author.id),
       name: release.author.login,
+      email: null,
       avatarUrl: release.author.avatar_url,
     },
     occurredAt: release.published_at ?? release.created_at,
@@ -298,7 +304,7 @@ export function transformGitHubDiscussion(
   const discussion = payload.discussion;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "label", id: discussion.category.name });
+  refs.push({ type: "label", id: discussion.category.name, url: null, label: null });
 
   const actionMap: Record<string, string> = {
     created: "Discussion Created",
@@ -318,6 +324,7 @@ export function transformGitHubDiscussion(
     actor: {
       id: String(discussion.user.id),
       name: discussion.user.login,
+      email: null,
       avatarUrl: discussion.user.avatar_url,
     },
     occurredAt: discussion.updated_at,
@@ -345,8 +352,8 @@ export function transformGitHubDiscussion(
 
 function extractLinkedIssues(
   body: string,
-): { id: string; url?: string; label: string }[] {
-  const matches: { id: string; url?: string; label: string }[] = [];
+): { id: string; url: string | null; label: string }[] {
+  const matches: { id: string; url: string | null; label: string }[] = [];
 
   const githubPattern = /(fix(?:es)?|close[sd]?|resolve[sd]?)\s+#(\d+)/gi;
   let match;
@@ -354,6 +361,7 @@ function extractLinkedIssues(
   while ((match = githubPattern.exec(body)) !== null) {
     matches.push({
       id: `#${match[2]}`,
+      url: null,
       label: match[1]?.toLowerCase().replace(/e?s$/, "") ?? "fixes",
     });
   }
@@ -364,6 +372,7 @@ function extractLinkedIssues(
   while ((match = externalPattern.exec(body)) !== null) {
     matches.push({
       id: match[2] ?? "",
+      url: null,
       label: match[1]?.toLowerCase().replace(/e?s$/, "") ?? "fixes",
     });
   }

@@ -146,9 +146,9 @@ const eventsMap = {
       actor: z.object({
         id: z.string(),
         name: z.string(),
-        email: z.string().optional(),
-        avatarUrl: z.string().optional(),
-      }).optional(),
+        email: z.string().nullable(),
+        avatarUrl: z.string().nullable(),
+      }).nullable(),
       occurredAt: z.string(),
       references: z.array(z.object({
         type: z.enum([
@@ -156,8 +156,8 @@ const eventsMap = {
           "cycle", "assignee", "reviewer", "team", "label"
         ]),
         id: z.string(),
-        url: z.string().optional(),
-        label: z.string().optional(),
+        url: z.string().nullable(),
+        label: z.string().nullable(),
       })),
       metadata: z.record(z.string(), z.unknown()),
     }),
@@ -201,9 +201,9 @@ const eventsMap = {
     sourceActor: z.object({
       id: z.string(),
       name: z.string(),
-      email: z.string().optional(),
-      avatarUrl: z.string().optional(),
-    }).optional(),
+      email: z.string().nullable(),
+      avatarUrl: z.string().nullable(),
+    }).nullable(),
   }),
 
   "apps-console/neural/cluster.check-summary": z.object({

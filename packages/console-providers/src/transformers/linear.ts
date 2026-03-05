@@ -27,36 +27,36 @@ export function transformLinearIssue(
   const issue = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "issue", id: issue.identifier, url: issue.url });
-  refs.push({ type: "team", id: issue.team.key, label: issue.team.name });
+  refs.push({ type: "issue", id: issue.identifier, url: issue.url, label: null });
+  refs.push({ type: "team", id: issue.team.key, url: null, label: issue.team.name });
 
   if (issue.project) {
-    refs.push({ type: "project", id: issue.project.name, url: issue.project.url });
+    refs.push({ type: "project", id: issue.project.name, url: issue.project.url, label: null });
   }
 
   if (issue.cycle) {
-    refs.push({ type: "cycle", id: issue.cycle.name });
+    refs.push({ type: "cycle", id: issue.cycle.name, url: null, label: null });
   }
 
   if (issue.assignee) {
-    refs.push({ type: "assignee", id: issue.assignee.email ?? issue.assignee.name });
+    refs.push({ type: "assignee", id: issue.assignee.email ?? issue.assignee.name, url: null, label: null });
   }
 
   for (const label of issue.labels) {
-    refs.push({ type: "label", id: label.name });
+    refs.push({ type: "label", id: label.name, url: null, label: null });
   }
 
   if (issue.branchName) {
-    refs.push({ type: "branch", id: issue.branchName });
+    refs.push({ type: "branch", id: issue.branchName, url: null, label: null });
   }
 
   if (issue.attachments?.nodes) {
     for (const attachment of issue.attachments.nodes) {
       if (attachment.sourceType === "githubPr" && attachment.metadata?.number) {
-        refs.push({ type: "pr", id: `#${attachment.metadata.number}`, url: attachment.url, label: "tracked_in" });
+        refs.push({ type: "pr", id: `#${attachment.metadata.number}`, url: attachment.url ?? null, label: "tracked_in" });
       }
       if (attachment.sourceType === "sentryIssue" && attachment.metadata?.shortId) {
-        refs.push({ type: "issue", id: attachment.metadata.shortId, url: attachment.url, label: "linked" });
+        refs.push({ type: "issue", id: attachment.metadata.shortId, url: attachment.url ?? null, label: "linked" });
       }
     }
   }
@@ -91,10 +91,10 @@ export function transformLinearIssue(
       ? {
           id: issue.creator.id,
           name: issue.creator.displayName ?? issue.creator.name,
-          email: issue.creator.email,
-          avatarUrl: issue.creator.avatarUrl,
+          email: issue.creator.email ?? null,
+          avatarUrl: issue.creator.avatarUrl ?? null,
         }
-      : undefined,
+      : null,
     occurredAt: payload.createdAt,
     references: refs,
     metadata: {
@@ -145,7 +145,7 @@ export function transformLinearComment(
   const comment = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "issue", id: comment.issue.identifier, url: comment.issue.url });
+  refs.push({ type: "issue", id: comment.issue.identifier, url: comment.issue.url, label: null });
 
   const actionTitles: Record<string, string> = {
     create: "Comment Added",
@@ -167,8 +167,8 @@ export function transformLinearComment(
     actor: {
       id: comment.user.id,
       name: comment.user.displayName ?? comment.user.name,
-      email: comment.user.email,
-      avatarUrl: comment.user.avatarUrl,
+      email: comment.user.email ?? null,
+      avatarUrl: comment.user.avatarUrl ?? null,
     },
     occurredAt: payload.createdAt,
     references: refs,
@@ -201,14 +201,14 @@ export function transformLinearProject(
   const project = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "project", id: project.name, url: project.url });
+  refs.push({ type: "project", id: project.name, url: project.url, label: null });
 
   if (project.lead) {
-    refs.push({ type: "assignee", id: project.lead.email ?? project.lead.name, label: "lead" });
+    refs.push({ type: "assignee", id: project.lead.email ?? project.lead.name, url: null, label: "lead" });
   }
 
   for (const team of project.teams) {
-    refs.push({ type: "team", id: team.key, label: team.name });
+    refs.push({ type: "team", id: team.key, url: null, label: team.name });
   }
 
   const actionTitles: Record<string, string> = {
@@ -237,10 +237,10 @@ export function transformLinearProject(
       ? {
           id: project.lead.id,
           name: project.lead.displayName ?? project.lead.name,
-          email: project.lead.email,
-          avatarUrl: project.lead.avatarUrl,
+          email: project.lead.email ?? null,
+          avatarUrl: project.lead.avatarUrl ?? null,
         }
-      : undefined,
+      : null,
     occurredAt: payload.createdAt,
     references: refs,
     metadata: {
@@ -281,8 +281,8 @@ export function transformLinearCycle(
   const cycle = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "cycle", id: cycle.name ?? `Cycle ${cycle.number}`, url: cycle.url });
-  refs.push({ type: "team", id: cycle.team.key, label: cycle.team.name });
+  refs.push({ type: "cycle", id: cycle.name ?? `Cycle ${cycle.number}`, url: cycle.url, label: null });
+  refs.push({ type: "team", id: cycle.team.key, url: null, label: cycle.team.name });
 
   const actionTitles: Record<string, string> = {
     create: "Cycle Created",
@@ -308,7 +308,7 @@ export function transformLinearCycle(
     sourceId: `linear-cycle:${cycle.team.key}:${cycle.number}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitles[payload.action]}] ${cycleName} (${cycle.team.name})`),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: undefined,
+    actor: null,
     occurredAt: payload.createdAt,
     references: refs,
     metadata: {
@@ -345,7 +345,7 @@ export function transformLinearProjectUpdate(
   const update = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "project", id: update.project.name, url: update.project.url });
+  refs.push({ type: "project", id: update.project.name, url: update.project.url, label: null });
 
   const actionTitles: Record<string, string> = {
     create: "Project Update Posted",
@@ -374,8 +374,8 @@ export function transformLinearProjectUpdate(
     actor: {
       id: update.user.id,
       name: update.user.displayName ?? update.user.name,
-      email: update.user.email,
-      avatarUrl: update.user.avatarUrl,
+      email: update.user.email ?? null,
+      avatarUrl: update.user.avatarUrl ?? null,
     },
     occurredAt: payload.createdAt,
     references: refs,

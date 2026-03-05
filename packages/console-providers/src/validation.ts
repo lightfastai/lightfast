@@ -59,12 +59,12 @@ export function sanitizePostTransformEvent(
           avatarUrl:
             event.actor.avatarUrl && isValidUrl(event.actor.avatarUrl)
               ? event.actor.avatarUrl
-              : undefined,
+              : null,
         }
-      : undefined,
+      : null,
     references: event.references.map((ref) => ({
       ...ref,
-      url: ref.url && isValidUrl(ref.url) ? ref.url : undefined,
+      url: ref.url && isValidUrl(ref.url) ? ref.url : null,
     })),
   };
 }

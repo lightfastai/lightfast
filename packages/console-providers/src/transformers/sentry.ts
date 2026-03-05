@@ -16,15 +16,16 @@ export function transformSentryIssue(
   const { issue } = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "issue", id: issue.shortId, url: issue.permalink ?? undefined });
+  refs.push({ type: "issue", id: issue.shortId, url: issue.permalink ?? null, label: null });
   refs.push({
     type: "project",
     id: issue.project.slug,
     url: `https://sentry.io/organizations/_/projects/${issue.project.slug}/`,
+    label: null,
   });
 
   if (issue.assignedTo) {
-    refs.push({ type: "assignee", id: issue.assignedTo.email ?? issue.assignedTo.name });
+    refs.push({ type: "assignee", id: issue.assignedTo.email ?? issue.assignedTo.name, url: null, label: null });
   }
 
   if (issue.statusDetails?.inCommit?.commit) {
@@ -33,7 +34,7 @@ export function transformSentryIssue(
       id: issue.statusDetails.inCommit.commit,
       url: issue.statusDetails.inCommit.repository
         ? `https://github.com/${issue.statusDetails.inCommit.repository}/commit/${issue.statusDetails.inCommit.commit}`
-        : undefined,
+        : null,
       label: "resolved_by",
     });
   }
@@ -75,7 +76,8 @@ export function transformSentryIssue(
     actor: {
       id: String(payload.actor.id),
       name: payload.actor.name,
-      email: payload.actor.email,
+      email: payload.actor.email ?? null,
+      avatarUrl: null,
     },
     occurredAt: issue.lastSeen,
     references: refs,
@@ -118,7 +120,7 @@ export function transformSentryError(
   const { error: errorEvent } = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "project", id: String(errorEvent.project) });
+  refs.push({ type: "project", id: String(errorEvent.project), url: null, label: null });
 
   const stackInfo =
     errorEvent.exception?.values
@@ -152,9 +154,10 @@ export function transformSentryError(
       ? {
           id: errorEvent.user.id ?? errorEvent.user.email ?? "unknown",
           name: errorEvent.user.username ?? errorEvent.user.email ?? "Unknown User",
-          email: errorEvent.user.email,
+          email: errorEvent.user.email ?? null,
+          avatarUrl: null,
         }
-      : undefined,
+      : null,
     occurredAt: String(errorEvent.timestamp),
     references: refs,
     metadata: {
@@ -191,7 +194,7 @@ export function transformSentryEventAlert(
   const { event, triggered_rule } = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "project", id: String(event.project) });
+  refs.push({ type: "project", id: String(event.project), url: null, label: null });
 
   const errorType = event.metadata.type ?? "Alert";
   const errorValue = event.metadata.value ?? event.title;
@@ -210,7 +213,7 @@ export function transformSentryEventAlert(
     sourceId: `sentry-alert:${event.project}:${event.event_id}:${triggered_rule.replace(/\s/g, "-")}`,
     title: sanitizeTitle(`[Alert Triggered] ${triggered_rule}: ${errorType}`),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: undefined,
+    actor: null,
     occurredAt: String(event.timestamp),
     references: refs,
     metadata: {
@@ -266,7 +269,7 @@ export function transformSentryMetricAlert(
     sourceId: `sentry-metric-alert:${alertRule.organization_id}:${metric_alert.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${alertRule.name}`),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: undefined,
+    actor: null,
     occurredAt: metric_alert.date_detected,
     references: refs,
     metadata: {

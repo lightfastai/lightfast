@@ -11,8 +11,8 @@ import { z } from "zod";
 export const postTransformActorSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  email: z.string().email().optional(),
-  avatarUrl: z.string().url().optional(),
+  email: z.string().email().nullable(),
+  avatarUrl: z.string().url().nullable(),
 });
 
 export const postTransformReferenceSchema = z.object({
@@ -30,8 +30,8 @@ export const postTransformReferenceSchema = z.object({
     "label",
   ]),
   id: z.string().min(1),
-  url: z.string().url().optional(),
-  label: z.string().optional(),
+  url: z.string().url().nullable(),
+  label: z.string().nullable(),
 });
 
 /**
@@ -47,7 +47,7 @@ export const postTransformEventSchema = z.object({
   sourceId: z.string().min(1),
   title: z.string().min(1).max(200),
   body: z.string().max(50000),
-  actor: postTransformActorSchema.optional(),
+  actor: postTransformActorSchema.nullable(),
   occurredAt: z.iso.datetime(),
   references: z.array(postTransformReferenceSchema),
   metadata: z.record(z.string(), z.unknown()),

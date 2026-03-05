@@ -1123,7 +1123,7 @@ export const observationCapture = inngest.createFunction(
                 clerkOrgId, // Propagate for metrics tracking
                 actorId: resolvedActor.actorId,
                 observationId: observation.externalId, // Public nanoid
-                sourceActor: resolvedActor.sourceActor ?? undefined,
+                sourceActor: resolvedActor.sourceActor ?? null,
               },
             },
           ]

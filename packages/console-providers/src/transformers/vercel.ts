@@ -27,7 +27,8 @@ export function transformVercelDeployment(
       url:
         gitMeta.githubOrg && gitMeta.githubRepo
           ? `https://github.com/${gitMeta.githubOrg}/${gitMeta.githubRepo}/commit/${gitMeta.githubCommitSha}`
-          : undefined,
+          : null,
+      label: null,
     });
   }
 
@@ -38,7 +39,8 @@ export function transformVercelDeployment(
       url:
         gitMeta.githubOrg && gitMeta.githubRepo
           ? `https://github.com/${gitMeta.githubOrg}/${gitMeta.githubRepo}/tree/${gitMeta.githubCommitRef}`
-          : undefined,
+          : null,
+      label: null,
     });
   }
 
@@ -47,16 +49,18 @@ export function transformVercelDeployment(
       type: "pr",
       id: `#${gitMeta.githubPrId}`,
       url: `https://github.com/${gitMeta.githubOrg}/${gitMeta.githubRepo}/pull/${gitMeta.githubPrId}`,
+      label: null,
     });
   }
 
   refs.push({
     type: "deployment",
     id: deployment.id,
-    url: deployment.url ? `https://${deployment.url}` : undefined,
+    url: deployment.url ? `https://${deployment.url}` : null,
+    label: null,
   });
 
-  refs.push({ type: "project", id: project.id });
+  refs.push({ type: "project", id: project.id, url: null, label: null });
 
   const eventTitleMap: Record<VercelWebhookEventType, string> = {
     "deployment.created": "Deployment Started",
@@ -98,8 +102,8 @@ export function transformVercelDeployment(
     title: sanitizeTitle(`[${actionTitle}] ${project.name ?? project.id} from ${branch}`),
     body: sanitizeBody(rawBody),
     actor: gitMeta?.githubCommitAuthorName
-      ? { id: gitMeta.githubCommitAuthorName, name: gitMeta.githubCommitAuthorName }
-      : undefined,
+      ? { id: gitMeta.githubCommitAuthorName, name: gitMeta.githubCommitAuthorName, email: null, avatarUrl: null }
+      : null,
     occurredAt: new Date(payload.createdAt).toISOString(),
     references: refs,
     metadata: {
