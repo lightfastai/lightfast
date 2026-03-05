@@ -16,8 +16,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { orgWorkspaces } from "./org-workspaces";
+import type { SourceType } from "@repo/console-providers";
 import type {
-  SourceType,
   DocumentSlug,
   ContentHash,
 } from "@repo/console-validation";

@@ -1,6 +1,6 @@
 import type { ComponentType, SVGProps } from "react";
-import type { SourceType } from "@repo/console-validation";
-import { PROVIDER_REGISTRY } from "@repo/console-types";
+import type { SourceType } from "@repo/console-providers";
+import { PROVIDER_REGISTRY } from "@repo/console-providers";
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import type { Source } from "~/types";
 

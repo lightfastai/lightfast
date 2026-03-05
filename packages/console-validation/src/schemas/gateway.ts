@@ -6,7 +6,7 @@
  */
 
 import { z } from "zod";
-import { sourceTypeSchema } from "./sources";
+import { sourceTypeSchema } from "@repo/console-providers";
 
 // ── Installation Statuses ──
 

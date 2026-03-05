@@ -7,7 +7,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
-import type { PostTransformEvent } from "@repo/console-validation";
+import type { PostTransformEvent } from "@repo/console-providers";
 
 /**
  * Workspace Events table stores transformed PostTransformEvent objects

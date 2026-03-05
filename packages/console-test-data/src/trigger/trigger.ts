@@ -5,7 +5,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import type { PostTransformEvent } from "@repo/console-validation";
+import type { PostTransformEvent } from "@repo/console-providers";
 import { inngest } from "@api/console/inngest/client";
 
 export interface TriggerOptions {

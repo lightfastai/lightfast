@@ -16,8 +16,8 @@
  */
 
 import { loadDataset, listDatasets } from "../loader/index.js";
-import type { PostTransformEvent } from "@repo/console-validation";
-import { EVENT_REGISTRY } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-providers";
+import { EVENT_REGISTRY } from "@repo/console-providers";
 
 interface VerifyResult {
   dataset: string;

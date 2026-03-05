@@ -3,7 +3,8 @@ import { sql } from "drizzle-orm";
 import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 import { gwInstallations } from "./gw-installations";
-import type { ClerkUserId, SyncStatus, SourceIdentifier, SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
+import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-validation";
 
 /**
  * Workspace Sources

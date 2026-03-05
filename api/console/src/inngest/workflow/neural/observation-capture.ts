@@ -28,7 +28,7 @@ import { log } from "@vendor/observability/log";
 import { NonRetriableError } from "inngest";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
-import type { PostTransformEvent } from "@repo/console-validation";
+import type { PostTransformEvent } from "@repo/console-providers";
 import { scoreSignificance, SIGNIFICANCE_THRESHOLD } from "./scoring";
 import {
   buildClassificationPrompt,
@@ -47,7 +47,7 @@ import { assignToCluster } from "./cluster-assignment";
 import { resolveActor } from "./actor-resolution";
 import { detectAndCreateRelationships } from "./relationship-detection";
 import { nanoid } from "nanoid";
-import type { PostTransformActor, PostTransformReference } from "@repo/console-validation";
+import type { PostTransformActor, PostTransformReference } from "@repo/console-providers";
 import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../../lib/jobs";
 import { createNeuralOnFailureHandler } from "./on-failure-handler";
 import type {

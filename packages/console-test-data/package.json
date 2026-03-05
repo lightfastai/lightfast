@@ -37,9 +37,9 @@
     "@api/console": "workspace:*",
     "@db/console": "workspace:*",
     "@repo/console-pinecone": "workspace:*",
+    "@repo/console-providers": "workspace:*",
     "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
-    "@repo/console-webhooks": "workspace:*",
     "@repo/lib": "workspace:*",
     "@vendor/db": "workspace:*",
     "drizzle-orm": "catalog:"

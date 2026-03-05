@@ -1,6 +1,6 @@
 import { realtime } from "~/lib/realtime";
 import type { EventNotification } from "~/lib/realtime";
-import type { PostTransformEvent } from "@repo/console-validation";
+import type { PostTransformEvent } from "@repo/console-providers";
 import { inngest } from "@api/console/inngest";
 
 export interface ResolvedWorkspace {

@@ -7,7 +7,7 @@
 import type {
   PreTransformVercelWebhookPayload,
   VercelWebhookEventType,
-} from "@repo/console-webhooks";
+} from "@repo/console-providers";
 
 /**
  * Map Vercel deployment readyState to the corresponding webhook event type string.

@@ -8,8 +8,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@repo/ui/co
 import { TableRow, TableCell } from "@repo/ui/components/ui/table";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { PROVIDER_CONFIG } from "~/lib/provider-config";
-import { EVENT_REGISTRY } from "@repo/console-types";
-import type { PostTransformEvent } from "@repo/console-validation";
+import { EVENT_REGISTRY } from "@repo/console-providers";
+import type { PostTransformEvent } from "@repo/console-providers";
 import { EventDetail } from "./event-detail";
 
 interface EventRowProps {

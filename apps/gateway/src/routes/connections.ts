@@ -3,8 +3,8 @@ import { gwInstallations, gwResources, gwBackfillRuns, gwTokens } from "@db/cons
 import { getProvider, PROVIDERS } from "@repo/console-providers";
 import type { RuntimeConfig } from "@repo/console-providers";
 import type { ProviderAccountInfo } from "@repo/console-types";
+import type { SourceType } from "@repo/console-providers";
 import { backfillRunRecord, BACKFILL_TERMINAL_STATUSES } from "@repo/console-validation";
-import type { SourceType } from "@repo/console-validation";
 import { decrypt, nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";

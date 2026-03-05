@@ -5,7 +5,7 @@
  * Previously in @repo/gateway-types — consolidated here.
  */
 
-import type { SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
 
 // ── OAuth Tokens ──
 

@@ -34,7 +34,7 @@ import type {VectorMetadata} from "@repo/console-pinecone";
 import { log } from "@vendor/observability/log";
 import { createHash } from "node:crypto";
 import { inngest } from "../../client/client";
-import type { SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
 
 /**
  * Generic document processing event

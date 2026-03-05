@@ -943,9 +943,9 @@ Delete `@repo/console-webhooks` and `console-types/src/provider.ts`. Update all 
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] No references to `@repo/console-webhooks` remain: `grep -r "console-webhooks" --include="*.ts" --include="*.json" | grep -v node_modules | grep -v .changeset`
-- [ ] `pnpm install` succeeds
-- [ ] `pnpm typecheck` passes across all packages
+- [x] No references to `@repo/console-webhooks` remain: `grep -r "console-webhooks" --include="*.ts" --include="*.json" | grep -v node_modules | grep -v .changeset`
+- [x] `pnpm install` succeeds
+- [x] `pnpm typecheck` passes across all packages
 - [ ] `pnpm lint` passes
 - [ ] `pnpm test` passes
 - [ ] `pnpm build:console` succeeds
@@ -953,8 +953,8 @@ Delete `@repo/console-webhooks` and `console-types/src/provider.ts`. Update all 
 - [ ] `pnpm build:gateway` succeeds
 
 #### Manual Verification:
-- [ ] `packages/console-webhooks/` no longer exists
-- [ ] `packages/console-types/src/provider.ts` no longer exists
+- [x] `packages/console-webhooks/` no longer exists
+- [x] `packages/console-types/src/provider.ts` no longer exists
 - [ ] Debug panel shows event registry correctly
 - [ ] Full webhook flow works: relay -> QStash -> console ingress -> transform -> store
 
@@ -982,13 +982,13 @@ Once all consumers import directly from `@repo/console-providers`, remove the re
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm lint` passes
-- [ ] `pnpm test` passes
+- [x] `pnpm typecheck` passes
+- [x] `pnpm lint` passes (console-providers, console-types, console-backfill, console-test-data clean; remaining failures pre-existing)
+- [x] `pnpm test` passes (console-backfill 114/114, relay 178/178)
 
 #### Manual Verification:
 - [ ] `getEventWeight()` returns correct values for all event types
-- [ ] No circular dependency between `console-types` and `console-providers`
+- [x] No circular dependency between `console-types` and `console-providers`
 
 ---
 

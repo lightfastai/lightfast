@@ -12,7 +12,7 @@ import { z } from "zod";
 const server = {
   GATEWAY_API_KEY: z.string().min(1),
   ENCRYPTION_KEY: z.string().min(32),
-  SENTRY_DSN: z.string().url().optional(),
+  SENTRY_DSN: z.url().optional(),
   LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
 };
 

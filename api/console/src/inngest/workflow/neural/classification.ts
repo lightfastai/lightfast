@@ -7,7 +7,7 @@
  * Used by observation-capture.ts step.ai.wrap() for inline classification.
  */
 
-import type { PostTransformEvent } from "@repo/console-validation";
+import type { PostTransformEvent } from "@repo/console-providers";
 
 
 /**

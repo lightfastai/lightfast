@@ -27,7 +27,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { Search, Circle, ChevronDown, ChevronRight, AlertTriangle, Plus } from "lucide-react";
 import { ConfigTemplateDialog } from "~/components/config-template-dialog";
-import type { SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
 import { PROVIDER_CONFIG, PROVIDER_ORDER, getResourceLabel } from "~/lib/provider-config";
 import { useQueryStates, parseAsString, parseAsStringEnum } from "nuqs";
 import type { Source } from "~/types";

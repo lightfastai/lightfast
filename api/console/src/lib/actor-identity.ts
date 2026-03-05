@@ -1,6 +1,6 @@
 import { db } from "@db/console/client";
 import { orgActorIdentities } from "@db/console/schema";
-import type { PostTransformActor } from "@repo/console-validation";
+import type { PostTransformActor } from "@repo/console-providers";
 
 interface UpsertIdentityInput {
   clerkOrgId: string;

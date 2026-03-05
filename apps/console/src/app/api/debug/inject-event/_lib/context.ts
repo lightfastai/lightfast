@@ -1,6 +1,6 @@
 import type { WorkspaceIntegration } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
-import type { EventKey } from "@repo/console-types";
+import type { EventKey } from "@repo/console-providers";
 
 export function buildContext(
   integration: WorkspaceIntegration,

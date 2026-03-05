@@ -17,7 +17,7 @@ import type {
   InsertWorkspaceObservationRelationship,
   RelationshipType,
 } from "@db/console/schema";
-import type { PostTransformReference, PostTransformEvent } from "@repo/console-validation";
+import type { PostTransformReference, PostTransformEvent } from "@repo/console-providers";
 import { log } from "@vendor/observability/log";
 import { nanoid } from "nanoid";
 import { eq, and, or, sql } from "drizzle-orm";

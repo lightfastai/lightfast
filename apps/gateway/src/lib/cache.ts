@@ -3,7 +3,7 @@
  *
  * All keys are namespaced under `gw:` to share the same namespace as the relay service.
  */
-import type { SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
 
 /** Connection state keyed by connection ID */
 export const connectionKey = (id: string) => `gw:connection:${id}`;

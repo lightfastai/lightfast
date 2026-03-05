@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
-import type { PostTransformEvent } from "@repo/console-validation";
+import type { PostTransformEvent } from "@repo/console-providers";
 
 interface EventDetailProps {
   event: {

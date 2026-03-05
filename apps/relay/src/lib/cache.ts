@@ -3,7 +3,7 @@
  *
  * All keys are namespaced under `gw:` to avoid collisions.
  */
-import type { SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
 
 /** Resource → connection mapping (for webhook routing) */
 export const resourceKey = (provider: SourceType, resourceId: string) =>

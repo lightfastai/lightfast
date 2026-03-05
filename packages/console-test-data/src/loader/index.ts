@@ -7,7 +7,7 @@
 
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
-import type { PostTransformEvent } from "@repo/console-validation";
+import type { PostTransformEvent } from "@repo/console-providers";
 import type { WebhookPayload } from "./transform.js";
 import { transformWebhook } from "./transform.js";
 

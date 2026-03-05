@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import { EVENT_REGISTRY, PROVIDER_REGISTRY } from "@repo/console-types";
+import { EVENT_REGISTRY, PROVIDER_REGISTRY } from "@repo/console-providers";
 import { PROVIDER_CONFIG, getResourceLabel } from "~/lib/provider-config";
-import type { SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
 import { ChevronDown, ChevronRight, Loader2, Check, X } from "lucide-react";
 
 interface InjectionResult {

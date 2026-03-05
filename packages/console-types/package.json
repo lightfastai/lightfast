@@ -22,8 +22,7 @@
     "./error": "./src/error.ts",
     "./repository": "./src/repository.ts",
     "./workspace": "./src/workspace.ts",
-    "./entity": "./src/entity.ts",
-    "./provider": "./src/provider.ts"
+    "./entity": "./src/entity.ts"
   },
   "license": "FSL-1.1-Apache-2.0",
   "scripts": {
@@ -35,8 +34,8 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@repo/console-providers": "workspace:*",
     "@repo/console-validation": "workspace:*",
-    "@repo/console-webhooks": "workspace:*",
     "zod": "catalog:zod4"
   },
   "devDependencies": {

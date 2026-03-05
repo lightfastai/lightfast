@@ -6,7 +6,7 @@ import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@clerk/nextjs";
 import { useRealtime } from "~/lib/realtime-client";
 import type { EventNotification } from "~/lib/realtime";
-import type { PostTransformEvent } from "@repo/console-validation";
+import type { PostTransformEvent } from "@repo/console-providers";
 import { EventRow } from "./event-row";
 import { useEventFilters } from "./use-event-filters";
 import { AGE_PRESET_OPTIONS, dateRangeFromPreset } from "~/components/search-constants";

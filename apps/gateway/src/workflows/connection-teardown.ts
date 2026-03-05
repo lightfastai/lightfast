@@ -2,7 +2,7 @@ import { db } from "@db/console/client";
 import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 import { getProvider } from "@repo/console-providers";
 import type { RuntimeConfig } from "@repo/console-providers";
-import type { SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
 import { backfillUrl } from "@repo/gateway-service-clients";
 import { decrypt } from "@repo/lib";
 import { and, eq } from "@vendor/db";

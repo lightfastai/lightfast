@@ -9,7 +9,7 @@
 import { writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { WEBHOOK_EVENT_TYPES } from "@repo/console-types";
+import { WEBHOOK_EVENT_TYPES } from "@repo/console-providers";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outputPath = resolve(__dirname, "../../datasets/webhook-schema.json");

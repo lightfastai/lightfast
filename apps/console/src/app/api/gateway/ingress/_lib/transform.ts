@@ -1,10 +1,10 @@
 import type { WebhookEnvelope } from "@repo/console-types";
-import type { PostTransformEvent } from "@repo/console-validation";
-import { transformWebhookPayload } from "@repo/console-webhooks";
+import type { PostTransformEvent } from "@repo/console-providers";
+import { transformWebhookPayload } from "@repo/console-providers";
 
 /**
  * Transform a webhook envelope into a PostTransformEvent.
- * Delegates to the centralized dispatch in @repo/console-webhooks.
+ * Delegates to the centralized dispatch in @repo/console-providers.
  * Returns null for unsupported event types.
  */
 export function transformEnvelope(

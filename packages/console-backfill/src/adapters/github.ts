@@ -9,7 +9,7 @@ import type {
   PreTransformGitHubPullRequestEvent,
   PreTransformGitHubIssuesEvent,
   PreTransformGitHubReleaseEvent,
-} from "@repo/console-webhooks";
+} from "@repo/console-providers";
 
 /**
  * Adapt a GitHub PR from list API into a PullRequestEvent shape.

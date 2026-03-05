@@ -27,7 +27,7 @@ import {
   transformGitHubIssue,
   transformGitHubRelease,
   transformVercelDeployment,
-} from "@repo/console-webhooks";
+} from "@repo/console-providers";
 
 // Minimal TransformContext — matches { deliveryId: string, receivedAt: Date, eventType: string }
 const context = { deliveryId: "backfill-roundtrip-test", receivedAt: new Date(), eventType: "" };

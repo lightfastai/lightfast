@@ -4,10 +4,8 @@ import { sentryMiddleware } from "@inngest/middleware-sentry";
 import { z } from "zod";
 
 import { env } from "@vendor/inngest/env";
-import {
-  sourceTypeSchema,
-  ingestionSourceSchema,
-} from "@repo/console-validation";
+import { sourceTypeSchema } from "@repo/console-providers";
+import { ingestionSourceSchema } from "@repo/console-validation";
 
 /**
  * Inngest event schemas for console application

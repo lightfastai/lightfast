@@ -4,7 +4,7 @@ import { db } from "@db/console/client";
 import { eq } from "drizzle-orm";
 import { orgWorkspaces, workspaceEvents } from "@db/console/schema";
 import { transformEnvelope } from "./_lib/transform";
-import { sanitizePostTransformEvent } from "@repo/console-webhooks";
+import { sanitizePostTransformEvent } from "@repo/console-providers";
 import { publishInngestNotification, publishEventNotification } from "./_lib/notify";
 
 export const runtime = "nodejs";

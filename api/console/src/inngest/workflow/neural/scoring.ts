@@ -1,5 +1,5 @@
-import type { PostTransformEvent } from "@repo/console-validation";
-import { getEventWeight } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-providers";
+import { getEventWeight } from "@repo/console-providers";
 
 /**
  * Minimum significance score for observation capture.

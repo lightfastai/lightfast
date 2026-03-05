@@ -161,17 +161,3 @@ export type {
   SentryAccountInfo,
   ProviderAccountInfo,
 } from "./gateway";
-
-// Provider registry
-export {
-  PROVIDER_REGISTRY,
-  EVENT_CATEGORIES,
-  EVENT_REGISTRY,
-  getEventWeight,
-  ALL_GITHUB_EVENTS,
-  ALL_VERCEL_EVENTS,
-  ALL_SENTRY_EVENTS,
-  ALL_LINEAR_EVENTS,
-  WEBHOOK_EVENT_TYPES,
-} from "./provider";
-export type { EventPreTransformMap, EventKey, PreTransformFor, EventSubType, KeysForSource } from "./provider";

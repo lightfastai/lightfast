@@ -12,8 +12,8 @@ import {
 } from "@repo/ui/components/ui/select";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { EVENT_CATEGORIES } from "@repo/console-types";
-import type { SourceType } from "@repo/console-validation";
+import { EVENT_CATEGORIES } from "@repo/console-providers";
+import type { SourceType } from "@repo/console-providers";
 import type { Source } from "~/types";
 
 interface SourceSettingsFormProps {

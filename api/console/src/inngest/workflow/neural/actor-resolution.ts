@@ -1,4 +1,4 @@
-import type { PostTransformEvent, PostTransformActor } from "@repo/console-validation";
+import type { PostTransformEvent, PostTransformActor } from "@repo/console-providers";
 import { db } from "@db/console/client";
 import { workspaceNeuralObservations } from "@db/console/schema";
 import { eq, and, sql } from "drizzle-orm";

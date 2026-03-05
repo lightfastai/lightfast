@@ -1,5 +1,5 @@
 import { evaluateFlag } from "@vendor/vercel-flags";
-import type { SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
 
 /**
  * Whether webhooks should be fanned out to Console.

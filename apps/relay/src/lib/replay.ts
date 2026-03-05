@@ -7,7 +7,7 @@ import { webhookSeenKey } from "./cache.js";
 import { relayBaseUrl } from "./urls.js";
 import { getProvider } from "@repo/console-providers";
 import type { WebhookReceiptPayload } from "@repo/console-types";
-import type { SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
 import type { GwWebhookDelivery } from "@db/console/schema";
 
 interface ReplayResult {
