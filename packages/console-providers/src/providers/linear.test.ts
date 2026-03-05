@@ -202,16 +202,19 @@ describe("oauth.processCallback", () => {
     await expect(linear.oauth.processCallback(testConfig, {})).rejects.toThrow("missing code");
   });
 
-  it("returns CallbackResult with org externalId when organization present", async () => {
+  it("returns CallbackResult with connected status and org externalId", async () => {
     mockFetch
       .mockResolvedValueOnce({ ok: true, json: async () => tokenResponse })
       .mockResolvedValueOnce({ ok: true, json: async () => viewerWithOrgResponse });
 
     const result = await linear.oauth.processCallback(testConfig, { code: "lin-code-123" });
 
+    expect(result.status).toBe("connected");
     expect(result.externalId).toBe("org-id-xyz");
-    expect(result.accountInfo.sourceType).toBe("linear");
-    expect(result.accountInfo.version).toBe(1);
+    if (result.status === "connected") {
+      expect(result.accountInfo.sourceType).toBe("linear");
+      expect(result.accountInfo.version).toBe(1);
+    }
   });
 
   it("includes organization details in accountInfo when org present", async () => {
@@ -221,12 +224,14 @@ describe("oauth.processCallback", () => {
 
     const result = await linear.oauth.processCallback(testConfig, { code: "lin-code" });
 
-    const info = result.accountInfo as {
-      organization?: { id: string; name?: string; urlKey?: string };
-    };
-    expect(info.organization?.id).toBe("org-id-xyz");
-    expect(info.organization?.name).toBe("My Org");
-    expect(info.organization?.urlKey).toBe("my-org");
+    if (result.status === "connected") {
+      const info = result.accountInfo as {
+        organization?: { id: string; name?: string; urlKey?: string };
+      };
+      expect(info.organization?.id).toBe("org-id-xyz");
+      expect(info.organization?.name).toBe("My Org");
+      expect(info.organization?.urlKey).toBe("my-org");
+    }
   });
 
   it("returns viewer.id as externalId when no organization", async () => {
@@ -237,8 +242,10 @@ describe("oauth.processCallback", () => {
     const result = await linear.oauth.processCallback(testConfig, { code: "lin-code" });
 
     expect(result.externalId).toBe("viewer-id-abc");
-    const info = result.accountInfo as { organization?: unknown };
-    expect(info.organization).toBeUndefined();
+    if (result.status === "connected") {
+      const info = result.accountInfo as { organization?: unknown };
+      expect(info.organization).toBeUndefined();
+    }
   });
 
   it("throws when Linear API returns neither org nor viewer id", async () => {
@@ -257,7 +264,9 @@ describe("oauth.processCallback", () => {
       .mockResolvedValueOnce({ ok: true, json: async () => viewerWithOrgResponse });
 
     const result = await linear.oauth.processCallback(testConfig, { code: "lin-code" });
-    expect(result.tokens?.accessToken).toBe("lin_api_token123");
+    if (result.status === "connected") {
+      expect(result.tokens.accessToken).toBe("lin_api_token123");
+    }
   });
 
   it("throws when token exchange fails", async () => {

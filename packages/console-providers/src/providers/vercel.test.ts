@@ -232,8 +232,10 @@ describe("oauth.processCallback", () => {
       configurationId: "icfg-abc123",
     });
 
-    expect(result.accountInfo.sourceType).toBe("vercel");
-    expect(result.accountInfo.version).toBe(1);
+    if (result.status === "connected" || result.status === "connected-redirect") {
+      expect(result.accountInfo.sourceType).toBe("vercel");
+      expect(result.accountInfo.version).toBe(1);
+    }
   });
 
   it("accountInfo raw contains installation_id, user_id, team_id, token_type", async () => {
@@ -244,13 +246,15 @@ describe("oauth.processCallback", () => {
       configurationId: "icfg-abc123",
     });
 
-    const raw = result.accountInfo.raw as typeof tokenResponseTeam;
-    expect(raw.installation_id).toBe("icfg-abc123");
-    expect(raw.user_id).toBe("user-xyz");
-    expect(raw.team_id).toBe("team-456");
+    if (result.status === "connected" || result.status === "connected-redirect") {
+      const raw = result.accountInfo.raw as typeof tokenResponseTeam;
+      expect(raw.installation_id).toBe("icfg-abc123");
+      expect(raw.user_id).toBe("user-xyz");
+      expect(raw.team_id).toBe("team-456");
+    }
   });
 
-  it("propagates nextUrl when next query param is present", async () => {
+  it("returns connected-redirect with nextUrl when next query param is present", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseTeam });
 
     const result = await vercel.oauth.processCallback(testConfig, {
@@ -259,10 +263,13 @@ describe("oauth.processCallback", () => {
       next: "https://vercel.com/dashboard",
     });
 
-    expect(result.nextUrl).toBe("https://vercel.com/dashboard");
+    expect(result.status).toBe("connected-redirect");
+    if (result.status === "connected-redirect") {
+      expect(result.nextUrl).toBe("https://vercel.com/dashboard");
+    }
   });
 
-  it("does not include nextUrl when next query param is absent", async () => {
+  it("returns connected status when next query param is absent", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseTeam });
 
     const result = await vercel.oauth.processCallback(testConfig, {
@@ -270,7 +277,7 @@ describe("oauth.processCallback", () => {
       configurationId: "icfg-abc123",
     });
 
-    expect(result.nextUrl).toBeUndefined();
+    expect(result.status).toBe("connected");
   });
 
   it("includes tokens in returned CallbackResult", async () => {
@@ -281,7 +288,9 @@ describe("oauth.processCallback", () => {
       configurationId: "icfg-abc123",
     });
 
-    expect(result.tokens?.accessToken).toBe("vercel-access-token-abc");
+    if (result.status === "connected") {
+      expect(result.tokens.accessToken).toBe("vercel-access-token-abc");
+    }
   });
 
   it("accountInfo includes all deployment event types", async () => {
@@ -292,9 +301,11 @@ describe("oauth.processCallback", () => {
       configurationId: "icfg-abc123",
     });
 
-    expect(result.accountInfo.events).toContain("deployment.created");
-    expect(result.accountInfo.events).toContain("deployment.succeeded");
-    expect(result.accountInfo.events).toContain("deployment.error");
+    if (result.status === "connected" || result.status === "connected-redirect") {
+      expect(result.accountInfo.events).toContain("deployment.created");
+      expect(result.accountInfo.events).toContain("deployment.succeeded");
+      expect(result.accountInfo.events).toContain("deployment.error");
+    }
   });
 });
 

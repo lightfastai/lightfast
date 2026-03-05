@@ -1,7 +1,7 @@
 import { defineProvider, simpleEvent, actionEvent } from "../define.js";
 import { z } from "zod";
 import { sentryConfigSchema, encodeSentryToken, decodeSentryToken } from "../types.js";
-import type { SentryConfig, OAuthTokens, TypedCallbackResult, SentryAccountInfo } from "../types.js";
+import type { SentryConfig, OAuthTokens, CallbackResult, SentryAccountInfo } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import {
   preTransformSentryIssueWebhookSchema,
@@ -206,6 +206,7 @@ export const sentry = defineProvider({
       const now = new Date().toISOString();
 
       return {
+        status: "connected",
         externalId: sentryInstallationId,
         accountInfo: {
           version: 1 as const,
@@ -220,7 +221,7 @@ export const sentry = defineProvider({
           installationId: sentryInstallationId,
         },
         tokens: oauthTokens,
-      } satisfies TypedCallbackResult<SentryAccountInfo>;
+      } satisfies CallbackResult<SentryAccountInfo>;
     },
   },
 });

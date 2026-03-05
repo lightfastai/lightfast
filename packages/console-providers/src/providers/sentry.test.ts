@@ -301,7 +301,7 @@ describe("oauth.processCallback", () => {
     ).rejects.toThrow("missing installationId query param");
   });
 
-  it("returns valid CallbackResult on happy path", async () => {
+  it("returns valid CallbackResult with connected status on happy path", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => sentryTokenResponse,
@@ -312,9 +312,12 @@ describe("oauth.processCallback", () => {
       installationId,
     });
 
+    expect(result.status).toBe("connected");
     expect(result.externalId).toBe(installationId);
-    expect(result.accountInfo.sourceType).toBe("sentry");
-    expect(result.accountInfo.version).toBe(1);
+    if (result.status === "connected") {
+      expect(result.accountInfo.sourceType).toBe("sentry");
+      expect(result.accountInfo.version).toBe(1);
+    }
   });
 
   it("accountInfo contains installation events list", async () => {
@@ -325,8 +328,10 @@ describe("oauth.processCallback", () => {
       installationId,
     });
 
-    expect(result.accountInfo.events).toContain("issue");
-    expect(result.accountInfo.events).toContain("error");
+    if (result.status === "connected") {
+      expect(result.accountInfo.events).toContain("issue");
+      expect(result.accountInfo.events).toContain("error");
+    }
   });
 
   it("accountInfo has installationId field", async () => {
@@ -337,8 +342,10 @@ describe("oauth.processCallback", () => {
       installationId,
     });
 
-    const info = result.accountInfo as { installationId?: string };
-    expect(info.installationId).toBe(installationId);
+    if (result.status === "connected") {
+      const info = result.accountInfo as { installationId?: string };
+      expect(info.installationId).toBe(installationId);
+    }
   });
 
   it("includes tokens in returned CallbackResult", async () => {
@@ -349,7 +356,9 @@ describe("oauth.processCallback", () => {
       installationId,
     });
 
-    expect(result.tokens?.accessToken).toBe("sentry-access-token-123");
+    if (result.status === "connected") {
+      expect(result.tokens.accessToken).toBe("sentry-access-token-123");
+    }
   });
 });
 

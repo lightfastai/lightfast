@@ -19,22 +19,40 @@ export const oAuthTokensSchema = z.object({
 
 export type OAuthTokens = z.infer<typeof oAuthTokensSchema>;
 
-export const callbackResultSchema = z.object({
-  externalId: z.string(),
-  accountInfo: z.object({
-    version: z.literal(1),
-    sourceType: z.string(),
-    events: z.array(z.string()),
-    installedAt: z.string(),
-    lastValidatedAt: z.string(),
-    raw: z.unknown(),
-  }).passthrough(),
-  tokens: oAuthTokensSchema.optional(),
-  setupAction: z.string().optional(),
-  nextUrl: z.string().optional(),
-});
+const callbackAccountInfoSchema = z.object({
+  version: z.literal(1),
+  sourceType: z.string(),
+  events: z.array(z.string()),
+  installedAt: z.string(),
+  lastValidatedAt: z.string(),
+  raw: z.unknown(),
+}).passthrough();
 
-export type CallbackResult = z.infer<typeof callbackResultSchema>;
+export const callbackResultSchema = z.discriminatedUnion("status", [
+  z.object({
+    status: z.literal("connected"),
+    externalId: z.string(),
+    accountInfo: callbackAccountInfoSchema,
+    tokens: oAuthTokensSchema,
+  }),
+  z.object({
+    status: z.literal("connected-no-token"),
+    externalId: z.string(),
+    accountInfo: callbackAccountInfoSchema,
+  }),
+  z.object({
+    status: z.literal("connected-redirect"),
+    externalId: z.string(),
+    accountInfo: callbackAccountInfoSchema,
+    tokens: oAuthTokensSchema,
+    nextUrl: z.string(),
+  }),
+  z.object({
+    status: z.literal("pending-setup"),
+    externalId: z.string(),
+    setupAction: z.string(),
+  }),
+]);
 
 // ── Per-Provider Raw API Response Schemas ──
 
@@ -132,15 +150,14 @@ export const providerAccountInfoSchema = z.discriminatedUnion("sourceType", [
 
 export type ProviderAccountInfo = z.infer<typeof providerAccountInfoSchema>;
 
-// ── Generic TypedCallbackResult for compile-time narrowing ──
+// ── Generic CallbackResult for compile-time narrowing ──
 
-export type TypedCallbackResult<TAccountInfo extends ProviderAccountInfo = ProviderAccountInfo> = {
-  externalId: string;
-  accountInfo: TAccountInfo;
-  tokens?: OAuthTokens;
-  setupAction?: string;
-  nextUrl?: string;
-};
+export type CallbackResult<TAccountInfo extends ProviderAccountInfo = ProviderAccountInfo> =
+  | { status: "connected"; externalId: string; accountInfo: TAccountInfo; tokens: OAuthTokens }
+  | { status: "connected-no-token"; externalId: string; accountInfo: TAccountInfo }
+  | { status: "connected-redirect"; externalId: string; accountInfo: TAccountInfo; tokens: OAuthTokens; nextUrl: string }
+  | { status: "pending-setup"; externalId: string; setupAction: string };
+
 
 // ── Provider Config Schemas ──
 

@@ -1,7 +1,7 @@
 import { defineProvider, actionEvent } from "../define.js";
 import { z } from "zod";
 import { vercelConfigSchema } from "../types.js";
-import type { VercelConfig, OAuthTokens, TypedCallbackResult, VercelAccountInfo } from "../types.js";
+import type { VercelConfig, OAuthTokens, CallbackResult, VercelAccountInfo } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import {
   preTransformVercelWebhookPayloadSchema,
@@ -162,34 +162,46 @@ export const vercel = defineProvider({
       const externalId = parsed.team_id ?? parsed.user_id;
       const now = new Date().toISOString();
 
-      return {
-        externalId,
-        accountInfo: {
-          version: 1 as const,
-          sourceType: "vercel" as const,
-          events: [
-            "deployment.created",
-            "deployment.ready",
-            "deployment.succeeded",
-            "deployment.error",
-            "deployment.canceled",
-            "project.created",
-            "project.removed",
-            "integration-configuration.removed",
-            "integration-configuration.permission-updated",
-          ],
-          installedAt: now,
-          lastValidatedAt: now,
-          raw: {
-            token_type: parsed.token_type,
-            installation_id: parsed.installation_id,
-            user_id: parsed.user_id,
-            team_id: parsed.team_id,
-          },
+      const accountInfo = {
+        version: 1 as const,
+        sourceType: "vercel" as const,
+        events: [
+          "deployment.created",
+          "deployment.ready",
+          "deployment.succeeded",
+          "deployment.error",
+          "deployment.canceled",
+          "project.created",
+          "project.removed",
+          "integration-configuration.removed",
+          "integration-configuration.permission-updated",
+        ],
+        installedAt: now,
+        lastValidatedAt: now,
+        raw: {
+          token_type: parsed.token_type,
+          installation_id: parsed.installation_id,
+          user_id: parsed.user_id,
+          team_id: parsed.team_id,
         },
+      };
+
+      if (next) {
+        return {
+          status: "connected-redirect",
+          externalId,
+          accountInfo,
+          tokens: oauthTokens,
+          nextUrl: next,
+        } satisfies CallbackResult<VercelAccountInfo>;
+      }
+
+      return {
+        status: "connected",
+        externalId,
+        accountInfo,
         tokens: oauthTokens,
-        ...(next ? { nextUrl: next } : {}),
-      } satisfies TypedCallbackResult<VercelAccountInfo>;
+      } satisfies CallbackResult<VercelAccountInfo>;
     },
   },
 });

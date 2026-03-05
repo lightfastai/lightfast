@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import type { PostTransformEvent } from "./post-transform-event.js";
-import type { TransformContext, OAuthTokens, ProviderAccountInfo, TypedCallbackResult } from "./types.js";
+import type { TransformContext, OAuthTokens, ProviderAccountInfo, CallbackResult } from "./types.js";
 
 export interface CategoryDef {
   label: string;
@@ -76,7 +76,7 @@ export interface OAuthDef<TConfig, TAccountInfo extends ProviderAccountInfo = Pr
   refreshToken: (config: TConfig, refreshToken: string) => Promise<OAuthTokens>;
   revokeToken: (config: TConfig, accessToken: string) => Promise<void>;
   /** Extract params from callback query string, call provider APIs, return result. No DB, no Hono. */
-  processCallback: (config: TConfig, query: Record<string, string>) => Promise<TypedCallbackResult<TAccountInfo>>;
+  processCallback: (config: TConfig, query: Record<string, string>) => Promise<CallbackResult<TAccountInfo>>;
   /**
    * Get a usable bearer token for API calls.
    * Standard OAuth providers return storedAccessToken directly.

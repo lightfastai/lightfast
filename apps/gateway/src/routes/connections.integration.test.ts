@@ -75,7 +75,7 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
 }));
 
 vi.mock("@repo/console-providers", async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   const providers = {
     github: {
       name: "github",

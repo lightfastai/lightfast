@@ -200,7 +200,7 @@ vi.mock("@db/console/schema", () => ({
 }));
 
 vi.mock("@repo/console-providers", async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
     PROVIDERS: {

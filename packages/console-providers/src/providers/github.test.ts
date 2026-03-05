@@ -222,7 +222,7 @@ describe("oauth.processCallback", () => {
     ).rejects.toThrow("Invalid GitHub installation ID");
   });
 
-  it("returns valid CallbackResult on happy path (install)", async () => {
+  it("returns valid CallbackResult with connected-no-token status on happy path", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockInstallationResponse,
@@ -232,9 +232,12 @@ describe("oauth.processCallback", () => {
       installation_id: "12345",
     });
 
+    expect(result.status).toBe("connected-no-token");
     expect(result.externalId).toBe("12345");
-    expect(result.accountInfo.version).toBe(1);
-    expect(result.accountInfo.sourceType).toBe("github");
+    if (result.status === "connected-no-token") {
+      expect(result.accountInfo.version).toBe(1);
+      expect(result.accountInfo.sourceType).toBe("github");
+    }
   });
 
   it("accountInfo contains events from installation details", async () => {
@@ -244,11 +247,13 @@ describe("oauth.processCallback", () => {
     });
 
     const result = await github.oauth.processCallback(testConfig, { installation_id: "12345" });
-    const raw = result.accountInfo.raw as typeof mockInstallationResponse;
-    expect(raw.events).toContain("push");
+    if (result.status === "connected-no-token") {
+      const raw = result.accountInfo.raw as typeof mockInstallationResponse;
+      expect(raw.events).toContain("push");
+    }
   });
 
-  it("propagates setupAction=install as undefined (normal install)", async () => {
+  it("returns connected-no-token even with setup_action=install", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockInstallationResponse,
@@ -258,7 +263,7 @@ describe("oauth.processCallback", () => {
       installation_id: "12345",
       setup_action: "install",
     });
-    expect(result.setupAction).toBe("install");
+    expect(result.status).toBe("connected-no-token");
   });
 });
 

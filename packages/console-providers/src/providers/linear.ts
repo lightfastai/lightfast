@@ -1,7 +1,7 @@
 import { defineProvider, actionEvent } from "../define.js";
 import { z } from "zod";
 import { linearConfigSchema } from "../types.js";
-import type { LinearConfig, OAuthTokens, TypedCallbackResult, LinearAccountInfo } from "../types.js";
+import type { LinearConfig, OAuthTokens, CallbackResult, LinearAccountInfo } from "../types.js";
 import { linearOAuthRawSchema } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import {
@@ -297,6 +297,7 @@ export const linear = defineProvider({
       const raw = linearOAuthRawSchema.parse(oauthTokens.raw);
 
       return {
+        status: "connected",
         externalId,
         accountInfo: {
           version: 1 as const,
@@ -320,7 +321,7 @@ export const linear = defineProvider({
             : {}),
         },
         tokens: oauthTokens,
-      } satisfies TypedCallbackResult<LinearAccountInfo>;
+      } satisfies CallbackResult<LinearAccountInfo>;
     },
   },
 });

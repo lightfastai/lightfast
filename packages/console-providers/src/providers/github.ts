@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { defineProvider, simpleEvent, actionEvent } from "../define.js";
 import { githubConfigSchema } from "../types.js";
-import type { GitHubConfig, OAuthTokens, TypedCallbackResult, GitHubAccountInfo, GitHubInstallationRaw } from "../types.js";
+import type { GitHubConfig, OAuthTokens, CallbackResult, GitHubAccountInfo, GitHubInstallationRaw } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import { createRS256JWT } from "../jwt.js";
 import {
@@ -242,6 +242,7 @@ export const github = defineProvider({
 
       const details = await getInstallationDetails(config, installationId);
       return {
+        status: "connected-no-token",
         externalId: installationId,
         accountInfo: {
           version: 1 as const,
@@ -251,8 +252,7 @@ export const github = defineProvider({
           lastValidatedAt: new Date().toISOString(),
           raw: details,
         },
-        setupAction,
-      } satisfies TypedCallbackResult<GitHubAccountInfo>;
+      } satisfies CallbackResult<GitHubAccountInfo>;
     },
   },
 

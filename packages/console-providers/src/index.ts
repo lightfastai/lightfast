@@ -1,6 +1,6 @@
 // ── Core Types & Helpers ──────────────────────────────────────────────────────
-export type { CategoryDef, ActionDef, EventDefinition, WebhookDef, OAuthDef, ProviderDefinition, RuntimeConfig } from "./define.js";
-export { defineEvent, defineProvider } from "./define.js";
+export type { CategoryDef, ActionDef, EventDefinition, SimpleEventDef, ActionEventDef, WebhookDef, OAuthDef, ProviderDefinition, RuntimeConfig } from "./define.js";
+export { defineEvent, defineProvider, simpleEvent, actionEvent } from "./define.js";
 
 // ── Post-Transform Event (canonical source of truth) ─────────────────────────
 export {
@@ -164,7 +164,6 @@ export type {
   LinearAccountInfo,
   SentryAccountInfo,
   ProviderAccountInfo,
-  TypedCallbackResult,
 } from "./types.js";
 
 // ── Gateway Service Contracts ─────────────────────────────────────────────────
