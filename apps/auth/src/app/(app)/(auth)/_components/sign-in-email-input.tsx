@@ -5,7 +5,8 @@ import { useSignIn } from "@vendor/clerk/client";
 import type { EmailCodeFactor } from "@vendor/clerk/types";
 import { useForm } from "@vendor/forms";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { authEmailFormSchema } from "@repo/console-validation/forms";
+import type { AuthEmailFormValues } from "@repo/console-validation/forms";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import {
@@ -19,12 +20,6 @@ import { Icons } from "@repo/ui/components/icons";
 import { handleClerkError } from "~/app/lib/clerk/error-handler";
 import { useLogger } from "@vendor/observability/client-log";
 
-const emailSchema = z.object({
-	email: z.string().email("Please enter a valid email address"),
-});
-
-type EmailFormData = z.infer<typeof emailSchema>;
-
 interface SignInEmailInputProps {
 	onSuccess: (email: string) => void;
 	onError: (error: string, isSignUpRestricted?: boolean) => void;
@@ -34,14 +29,14 @@ export function SignInEmailInput({ onSuccess, onError }: SignInEmailInputProps) 
 	const { signIn, isLoaded } = useSignIn();
 	const log = useLogger();
 
-	const form = useForm<EmailFormData>({
-		resolver: zodResolver(emailSchema),
+	const form = useForm<AuthEmailFormValues>({
+		resolver: zodResolver(authEmailFormSchema),
 		defaultValues: {
 			email: "",
 		},
 	});
 
-	async function onSubmit(data: EmailFormData) {
+	async function onSubmit(data: AuthEmailFormValues) {
 		if (!signIn) return;
 
 		try {

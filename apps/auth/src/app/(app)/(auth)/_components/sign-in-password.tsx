@@ -4,7 +4,7 @@ import * as React from "react";
 import { useSignIn } from "@clerk/nextjs";
 import { useForm } from "@vendor/forms";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { z } from "zod/v3";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import {

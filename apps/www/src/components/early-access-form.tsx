@@ -41,14 +41,11 @@ import { captureException } from "@sentry/nextjs";
 import { ConfettiWrapper } from "./confetti-wrapper";
 import {
   joinEarlyAccessAction
-  
+
 } from "./early-access-actions";
 import type {EarlyAccessState} from "./early-access-actions";
-import {
-  earlyAccessFormSchema
-  
-} from "./early-access-form.schema";
-import type {EarlyAccessFormValues} from "./early-access-form.schema";
+import { earlyAccessFormSchema } from "@repo/console-validation/forms";
+import type { EarlyAccessFormValues } from "@repo/console-validation/forms";
 
 const COMPANY_SIZES = [
   { value: "1-10", label: "1-10 employees" },

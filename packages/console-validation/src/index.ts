@@ -71,6 +71,8 @@ export * from "./schemas/classification";
 // Forms (direct to leaf modules)
 export * from "./forms/workspace-form";
 export * from "./forms/team-form";
+export * from "./forms/auth-form";
+export * from "./forms/early-access-form";
 
 // Utils (direct to leaf module)
 export * from "./utils/workspace-names";

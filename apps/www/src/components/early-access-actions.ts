@@ -1,7 +1,7 @@
 "use server";
 
-import { z } from "zod";
 import { after } from "next/server";
+import { earlyAccessFormSchema } from "@repo/console-validation/forms";
 import { arcjet, shield, detectBot, fixedWindow, slidingWindow, validateEmail, request, ARCJET_KEY } from "@vendor/security";
 import { redis } from "@vendor/upstash";
 import { handleClerkError } from "~/lib/clerk-error-handler";
@@ -22,21 +22,6 @@ export type EarlyAccessState =
 			};
 			error: string;
 	  };
-
-const earlyAccessSchema = z.object({
-	email: z
-		.string()
-		.min(1, "Email is required")
-		.email("Please enter a valid email address")
-		.toLowerCase()
-		.trim(),
-	companySize: z
-		.string()
-		.min(1, "Company size is required"),
-	sources: z
-		.array(z.string())
-		.min(1, "Please select at least one data source"),
-});
 
 const EARLY_ACCESS_EMAILS_SET_KEY = "early-access:emails";
 
@@ -92,7 +77,7 @@ export async function joinEarlyAccessAction(
 ): Promise<EarlyAccessState> {
 	try {
 		// Parse and validate form data first
-		const validatedFields = earlyAccessSchema.safeParse({
+		const validatedFields = earlyAccessFormSchema.safeParse({
 			email: formData.get("email"),
 			companySize: formData.get("companySize"),
 			sources: ((formData.get("sources") as string | null) ?? "").split(",").filter(Boolean),
