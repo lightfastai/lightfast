@@ -187,6 +187,7 @@ export const sentry = defineProvider({
 
       if (!response.ok) throw new Error(`Sentry token revocation failed: ${response.status}`);
     },
+    usesStoredToken: true,
     getActiveToken: (_config, _storedExternalId, storedAccessToken) => {
       if (!storedAccessToken) return Promise.reject(new Error("sentry: no stored access token"));
       return Promise.resolve(storedAccessToken);

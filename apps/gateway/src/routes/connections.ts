@@ -1,8 +1,7 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwResources, gwBackfillRuns, gwTokens } from "@db/console/schema";
 import { getProvider, PROVIDERS } from "@repo/console-providers";
-import type { RuntimeConfig } from "@repo/console-providers";
-import type { SourceType } from "@repo/console-providers";
+import type { RuntimeConfig, SourceType } from "@repo/console-providers";
 import { backfillRunRecord, BACKFILL_TERMINAL_STATUSES } from "@repo/console-validation";
 import { decrypt, nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
@@ -207,16 +206,59 @@ connections.get("/:provider/callback", async (c) => {
     }
 
     // Pure provider logic — no DB, no Hono coupling
-    const callbackResult = await providerDef.oauth.processCallback(config, query);
+    const result = await providerDef.oauth.processCallback(config, query);
 
-    // Detect reactivation: check if an installation already exists for this externalId
+    // Handle pending-setup: provider needs additional configuration (e.g., GitHub App request flow).
+    // No installation to upsert — just store the setup action and redirect.
+    if (result.status === "pending-setup") {
+      await redis
+        .pipeline()
+        .hset(oauthResultKey(state), {
+          status: "completed",
+          provider: providerName,
+          setupAction: result.setupAction,
+        })
+        .expire(oauthResultKey(state), 300)
+        .exec();
+
+      const redirectTo = stateData.redirectTo;
+
+      if (redirectTo === "inline") {
+        return await c.html(
+          html`<!doctype html>
+            <html>
+              <head><title>Connected</title></head>
+              <body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#fafafa">
+                <div style="text-align:center">
+                  <div style="font-size:48px;margin-bottom:16px">&#10003;</div>
+                  <h1 style="margin:0 0 8px">Connected to ${providerName}!</h1>
+                  <p style="color:#666">You can close this tab and return to your terminal.</p>
+                </div>
+                ${raw("<script>setTimeout(()=>window.close(),2000)</script>")}
+              </body>
+            </html>`,
+        );
+      }
+
+      if (redirectTo) {
+        const redirectUrl = new URL(redirectTo);
+        redirectUrl.searchParams.set("setup_action", result.setupAction);
+        return c.redirect(redirectUrl.toString());
+      }
+
+      const setupUrl = new URL(`${consoleUrl}/provider/${providerName}/connected`);
+      setupUrl.searchParams.set("setup_action", result.setupAction);
+      return c.redirect(setupUrl.toString());
+    }
+
+    // For all connected statuses: detect reactivation and upsert installation
     const existingRows = await db
       .select({ id: gwInstallations.id })
       .from(gwInstallations)
       .where(
         and(
           eq(gwInstallations.provider, providerName),
-          eq(gwInstallations.externalId, callbackResult.externalId),
+          eq(gwInstallations.externalId, result.externalId),
         ),
       )
       .limit(1);
@@ -224,16 +266,15 @@ connections.get("/:provider/callback", async (c) => {
     const reactivated = existingRows.length > 0;
 
     // Upsert installation — idempotent on (provider, externalId)
-    const { accountInfo } = callbackResult;
     const rows = await db
       .insert(gwInstallations)
       .values({
         provider: providerName,
-        externalId: callbackResult.externalId,
+        externalId: result.externalId,
         connectedBy,
         orgId,
         status: "active",
-        providerAccountInfo: accountInfo,
+        providerAccountInfo: result.accountInfo,
       })
       .onConflictDoUpdate({
         target: [gwInstallations.provider, gwInstallations.externalId],
@@ -241,7 +282,7 @@ connections.get("/:provider/callback", async (c) => {
           status: "active",
           connectedBy,
           orgId,
-          providerAccountInfo: accountInfo,
+          providerAccountInfo: result.accountInfo,
           updatedAt: new Date().toISOString(),
         },
       })
@@ -250,9 +291,9 @@ connections.get("/:provider/callback", async (c) => {
     const installation = rows[0];
     if (!installation) {throw new Error("upsert_failed");}
 
-    // Persist OAuth tokens if provider returned them (non-GitHub providers)
-    if (callbackResult.tokens) {
-      await writeTokenRecord(installation.id, callbackResult.tokens);
+    // Persist OAuth tokens for statuses that include them
+    if (result.status === "connected" || result.status === "connected-redirect") {
+      await writeTokenRecord(installation.id, result.tokens);
     }
 
     // Store completion result in Redis for CLI polling (5-min TTL)
@@ -262,14 +303,13 @@ connections.get("/:provider/callback", async (c) => {
         status: "completed",
         provider: providerName,
         ...(reactivated ? { reactivated: "true" } : {}),
-        ...(callbackResult.setupAction ? { setupAction: callbackResult.setupAction } : {}),
       })
       .expire(oauthResultKey(state), 300)
       .exec();
 
     // Provider-specific redirect (e.g. Vercel "next" URL to complete installation lifecycle)
-    if (typeof callbackResult.nextUrl === "string") {
-      return c.redirect(callbackResult.nextUrl);
+    if (result.status === "connected-redirect") {
+      return c.redirect(result.nextUrl);
     }
 
     const redirectTo = stateData.redirectTo;
@@ -298,9 +338,6 @@ connections.get("/:provider/callback", async (c) => {
       if (reactivated) {
         redirectUrl.searchParams.set("reactivated", "true");
       }
-      if (callbackResult.setupAction) {
-        redirectUrl.searchParams.set("setup_action", callbackResult.setupAction);
-      }
       return c.redirect(redirectUrl.toString());
     }
 
@@ -308,9 +345,6 @@ connections.get("/:provider/callback", async (c) => {
     const redirectUrl = new URL(`${consoleUrl}/provider/${providerName}/connected`);
     if (reactivated) {
       redirectUrl.searchParams.set("reactivated", "true");
-    }
-    if (callbackResult.setupAction) {
-      redirectUrl.searchParams.set("setup_action", callbackResult.setupAction);
     }
     return c.redirect(redirectUrl.toString());
   } catch (err) {
@@ -408,9 +442,8 @@ connections.get("/:id", apiKeyAuth, async (c) => {
     orgId: installation.orgId,
     status: installation.status,
     hasToken:
-      installation.provider === "github"
-        ? true
-        : installation.tokens.length > 0,
+      !getProvider(installation.provider as SourceType)?.oauth.usesStoredToken
+        || installation.tokens.length > 0,
     tokenExpiresAt: installation.tokens[0]?.expiresAt ?? null,
     resources: installation.resources.map((r: (typeof installation.resources)[number]) => ({
       id: r.id,
@@ -458,17 +491,7 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
     const providerDef = getProvider(providerName);
     if (!providerDef) { throw new Error("provider_not_found"); }
 
-    // GitHub: no stored token — getActiveToken generates JWT on-demand
-    if (providerName === "github") {
-      const token = await providerDef.oauth.getActiveToken(config, installation.externalId, null);
-      return c.json({ accessToken: token, provider: providerName, expiresIn: 3600 });
-    }
-
-    // Non-GitHub: read stored token, refresh if expired
-    if (!config) {
-      throw new Error("no_token_found");
-    }
-
+    // Read stored token — may be absent (e.g., GitHub App generates tokens on-demand)
     const tokenRows = await db
       .select()
       .from(gwTokens)
@@ -476,16 +499,14 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
       .limit(1);
 
     const tokenRow = tokenRows[0];
-    if (!tokenRow) {throw new Error("no_token_found");}
 
-    if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
+    // Handle token refresh if stored token is expired
+    if (tokenRow?.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
       if (!tokenRow.refreshToken) {
         throw new Error("token_expired:no_refresh_token");
       }
 
       const decryptedRefresh = await decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
-      const providerDef = getProvider(providerName);
-      if (!providerDef) { throw new Error("provider_not_found"); }
       const refreshed = await providerDef.oauth.refreshToken(config, decryptedRefresh);
 
       await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
@@ -497,13 +518,20 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
       });
     }
 
-    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    // Decrypt stored token if present (null for providers that generate tokens on-demand)
+    const decryptedAccessToken = tokenRow
+      ? await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY)
+      : null;
+
+    // Provider handles token generation: GitHub creates JWT on-demand, others return stored token
+    const token = await providerDef.oauth.getActiveToken(config, installation.externalId, decryptedAccessToken);
+
     return c.json({
-      accessToken: decryptedToken,
+      accessToken: token,
       provider: providerName,
-      expiresIn: tokenRow.expiresAt
+      expiresIn: tokenRow?.expiresAt
         ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
-        : null,
+        : 3600,  // GitHub installation tokens expire in 1 hour
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";

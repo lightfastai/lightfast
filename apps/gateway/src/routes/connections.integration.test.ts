@@ -80,22 +80,22 @@ vi.mock("@repo/console-providers", async (importOriginal) => {
     github: {
       name: "github",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), getActiveToken: (...args: unknown[]) => mockGetInstallationToken(...args) },
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: false, getActiveToken: (...args: unknown[]) => mockGetInstallationToken(...args) },
     },
     vercel: {
       name: "vercel",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), getActiveToken: vi.fn() },
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: true, getActiveToken: vi.fn() },
     },
     linear: {
       name: "linear",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), getActiveToken: vi.fn() },
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: true, getActiveToken: vi.fn() },
     },
     sentry: {
       name: "sentry",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), getActiveToken: vi.fn() },
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: true, getActiveToken: vi.fn() },
     },
   };
   return {

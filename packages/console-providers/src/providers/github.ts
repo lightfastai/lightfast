@@ -229,6 +229,7 @@ export const github = defineProvider({
       });
       if (!response.ok) throw new Error(`GitHub token revocation failed: ${response.status}`);
     },
+    usesStoredToken: false,
     getActiveToken: async (config, storedExternalId, _storedAccessToken) => {
       return getInstallationToken(config, storedExternalId);
     },

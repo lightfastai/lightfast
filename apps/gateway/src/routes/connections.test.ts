@@ -25,6 +25,7 @@ const {
       .fn()
       .mockReturnValue("https://github.com/login/oauth/authorize?mock=1"),
     processCallback: vi.fn().mockResolvedValue({
+      status: "connected-no-token",
       externalId: "install-123",
       accountInfo: {
         version: 1,
@@ -35,6 +36,7 @@ const {
         raw: {},
       },
     }),
+    usesStoredToken: false,
     getActiveToken: vi.fn().mockResolvedValue("tok-123"),
   };
 
@@ -414,6 +416,7 @@ describe("GET /connections/:provider/callback", () => {
     vi.clearAllMocks();
     mockCreateConfig.mockImplementation((_env: unknown, _runtime: unknown) => ({}));
     mockOAuth.processCallback.mockResolvedValue({
+      status: "connected-no-token",
       externalId: "install-123",
       accountInfo: {
         version: 1,
@@ -508,8 +511,10 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
     });
     mockOAuth.processCallback.mockResolvedValueOnce({
+      status: "connected-redirect",
       externalId: "install-123",
       accountInfo: { version: 1, sourceType: "github", events: [], installedAt: "2026-01-01T00:00:00Z", lastValidatedAt: "2026-01-01T00:00:00Z", raw: {} },
+      tokens: { accessToken: "tok-abc", raw: {} },
       nextUrl: "https://vercel.com/integrations/test/complete",
     });
     mockInsertReturning.mockResolvedValueOnce([{ id: "inst-1" }]);
@@ -530,8 +535,10 @@ describe("GET /connections/:provider/callback", () => {
       redirectTo: "http://localhost:4200/callback",
     });
     mockOAuth.processCallback.mockResolvedValueOnce({
+      status: "connected-redirect",
       externalId: "install-123",
       accountInfo: { version: 1, sourceType: "github", events: [], installedAt: "2026-01-01T00:00:00Z", lastValidatedAt: "2026-01-01T00:00:00Z", raw: {} },
+      tokens: { accessToken: "tok-abc", raw: {} },
       nextUrl: "https://vercel.com/integrations/test/complete",
     });
     mockInsertReturning.mockResolvedValueOnce([{ id: "inst-1" }]);
@@ -567,11 +574,10 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
     });
     mockOAuth.processCallback.mockResolvedValueOnce({
+      status: "pending-setup",
       externalId: "install-123",
-      accountInfo: { version: 1, sourceType: "github", events: [], installedAt: "2026-01-01T00:00:00Z", lastValidatedAt: "2026-01-01T00:00:00Z", raw: {} },
       setupAction: "request",
     });
-    mockInsertReturning.mockResolvedValueOnce([{ id: "inst-1" }]);
     const res = await request(
       "/connections/github/callback?state=valid&installation_id=123",
     );

@@ -279,6 +279,7 @@ export const linear = defineProvider({
       });
       if (!response.ok) throw new Error(`Linear token revocation failed: ${response.status}`);
     },
+    usesStoredToken: true,
     getActiveToken: (_config, _storedExternalId, storedAccessToken) => {
       if (!storedAccessToken) return Promise.reject(new Error("linear: no stored access token"));
       return Promise.resolve(storedAccessToken);

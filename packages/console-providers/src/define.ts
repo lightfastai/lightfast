@@ -83,6 +83,8 @@ export interface OAuthDef<TConfig, TAccountInfo extends ProviderAccountInfo = Pr
    * GitHub App generates a JWT-based installation token on-demand.
    */
   getActiveToken: (config: TConfig, storedExternalId: string, storedAccessToken: string | null) => Promise<string>;
+  /** Whether the provider stores OAuth tokens in the DB. False for providers that generate tokens on-demand (e.g., GitHub App JWT). */
+  readonly usesStoredToken: boolean;
 }
 
 /** Runtime values not sourced from env (e.g. callbackBaseUrl) */

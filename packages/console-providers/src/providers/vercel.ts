@@ -136,6 +136,7 @@ export const vercel = defineProvider({
       });
       if (!response.ok) throw new Error(`Vercel token revocation failed: ${response.status}`);
     },
+    usesStoredToken: true,
     getActiveToken: (_config, _storedExternalId, storedAccessToken) => {
       if (!storedAccessToken) return Promise.reject(new Error("vercel: no stored access token"));
       return Promise.resolve(storedAccessToken);
