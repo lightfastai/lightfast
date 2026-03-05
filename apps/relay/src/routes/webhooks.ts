@@ -8,7 +8,7 @@ import { getProvider } from "@repo/console-providers";
 import type { ProviderName } from "@repo/console-providers";
 import { webhookSeenKey } from "../lib/cache.js";
 import { redis } from "@vendor/upstash";
-import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/console-types";
+import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/console-providers";
 import { timingSafeStringEqual } from "../lib/crypto.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 import { db } from "@db/console/client";

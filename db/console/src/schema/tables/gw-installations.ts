@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, varchar, timestamp, text, index, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
 import type { ClerkUserId } from "@repo/console-validation";
-import type { ProviderAccountInfo } from "@repo/console-types";
+import type { ProviderAccountInfo } from "@repo/console-providers";
 
 export const gwInstallations = pgTable(
   "lightfast_gw_installations",

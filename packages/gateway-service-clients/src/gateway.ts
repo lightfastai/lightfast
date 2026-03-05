@@ -1,5 +1,5 @@
 import type { BackfillRunRecord } from "@repo/console-validation";
-import type { GatewayConnection, GatewayTokenResult } from "@repo/console-types";
+import type { GatewayConnection, GatewayTokenResult } from "@repo/console-providers";
 
 import type { ServiceClientConfig } from "./headers.js";
 import { buildServiceHeaders } from "./headers.js";

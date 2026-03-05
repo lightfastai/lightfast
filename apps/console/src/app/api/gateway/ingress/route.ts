@@ -1,5 +1,5 @@
 import { serve } from "@vendor/upstash-workflow/nextjs";
-import type { WebhookEnvelope } from "@repo/console-types";
+import type { WebhookEnvelope } from "@repo/console-providers";
 import { db } from "@db/console/client";
 import { eq } from "drizzle-orm";
 import { orgWorkspaces, workspaceEvents } from "@db/console/schema";

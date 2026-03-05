@@ -6,7 +6,7 @@ import { relayBaseUrl, consoleUrl } from "../lib/urls.js";
 import { db } from "@db/console/client";
 import { webhookSeenKey, resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache.js";
 import { redis } from "@vendor/upstash";
-import type { WebhookReceiptPayload } from "@repo/console-types";
+import type { WebhookReceiptPayload } from "@repo/console-providers";
 import type { WorkflowContext } from "@vendor/upstash-workflow";
 import { isConsoleFanOutEnabled } from "../lib/flags.js";
 

@@ -17,6 +17,7 @@
     "@lightfast/relay": "workspace:*",
     "@repo/console-api-key": "workspace:*",
     "@repo/console-backfill": "workspace:*",
+    "@repo/console-providers": "workspace:*",
     "@repo/console-test-db": "workspace:*",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
