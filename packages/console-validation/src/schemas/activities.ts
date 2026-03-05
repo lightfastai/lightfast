@@ -155,7 +155,7 @@ export const integrationConnectedMetadataSchema = z
     repoFullName: z.string(),
     repoId: z.string(),
     isPrivate: z.boolean(),
-    syncConfig: z.record(z.unknown()),
+    syncConfig: z.record(z.string(), z.unknown()),
   })
   .passthrough();
 
@@ -211,7 +211,7 @@ export const integrationDeletedMetadataSchema = z
 export const integrationMetadataUpdatedMetadataSchema = z
   .object({
     provider: z.string(),
-    updates: z.record(z.unknown()),
+    updates: z.record(z.string(), z.unknown()),
     githubRepoId: z.string(),
   })
   .passthrough();
@@ -609,7 +609,7 @@ export const insertActivitySchema = z.object({
   actorType: actorTypeSchema,
   actorUserId: z.string().optional(),
   actorEmail: z.string().email().optional(),
-  actorIp: z.string().ip({ version: "v4" }).or(z.string().ip({ version: "v6" })).optional(),
+  actorIp: z.ipv4().or(z.ipv6()).optional(),
 
   // Activity classification
   category: activityCategorySchema,

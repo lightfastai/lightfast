@@ -3,7 +3,7 @@ import {
   OpenApiGeneratorV31,
   extendZodWithOpenApi,
 } from "@asteasolutions/zod-to-openapi";
-import { z } from "zod";
+import { z } from "zod/v3";
 import {
   V1SearchRequestSchema,
   V1SearchResponseSchema,

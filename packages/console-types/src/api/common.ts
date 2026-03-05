@@ -2,7 +2,7 @@
  * Common API types shared across endpoints
  */
 
-import { z } from "zod";
+import { z } from "zod/v3";
 
 /**
  * Common request ID for tracing

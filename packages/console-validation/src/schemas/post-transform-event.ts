@@ -8,7 +8,8 @@
  * Uses zod/v4 for compatibility with @upstash/realtime's type system.
  */
 
-import { z } from "zod/v4";
+import { z } from "zod";
+import { sourceTypeSchema } from "./sources";
 
 /**
  * Zod schema for PostTransformActor
@@ -52,7 +53,7 @@ export const postTransformReferenceSchema = z.object({
  * - occurredAt: ISO 8601 timestamp
  */
 export const postTransformEventSchema = z.object({
-  source: z.enum(["github", "vercel", "linear", "sentry"]),
+  source: sourceTypeSchema,
   sourceType: z.string().min(1), // Internal format: "pull-request.merged"
   sourceId: z.string().min(1),
   title: z.string().min(1).max(200),

@@ -5,7 +5,7 @@
 
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { z } from "zod";
+import { z } from "zod/v3";
 import { eq, and } from "drizzle-orm";
 import { protectedProcedure } from "../../trpc";
 import { db } from "@db/chat/client";

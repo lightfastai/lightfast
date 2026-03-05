@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { getQStashClient } from "@vendor/qstash";
-import { backfillTriggerPayload } from "@repo/gateway-types";
+import { backfillTriggerPayload } from "@repo/console-validation";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { backfillUrl } from "../lib/urls.js";
 import { getEnv } from "../env.js";

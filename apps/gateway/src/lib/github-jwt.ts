@@ -1,4 +1,4 @@
-import type { GitHubInstallationRaw } from "@repo/gateway-types";
+import type { GitHubInstallationRaw } from "@repo/console-types";
 import { env } from "../env.js";
 
 export type { GitHubInstallationRaw as GitHubInstallationDetails };

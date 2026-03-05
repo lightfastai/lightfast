@@ -9,7 +9,7 @@ import type { GitHubProvider } from "./impl/github.js";
 import type { VercelProvider } from "./impl/vercel.js";
 import type { LinearProvider } from "./impl/linear.js";
 import type { SentryProvider } from "./impl/sentry.js";
-import type { ProviderName } from "@repo/gateway-types";
+import type { SourceType } from "@repo/console-validation";
 import type { RelayEnv } from "../env.js";
 
 // Re-export schema types for consumer convenience
@@ -21,19 +21,18 @@ export type {
   WebhookPayload,
 } from "./schemas.js";
 
-// Re-export from @repo/gateway-types
-export {
-  PROVIDER_NAMES,
-} from "@repo/gateway-types";
+// Re-export from @repo/console-validation + @repo/console-types
 export type {
-  ProviderName,
+  SourceType,
+} from "@repo/console-validation";
+export type {
   WebhookReceiptPayload,
-} from "@repo/gateway-types";
+} from "@repo/console-types";
 
 // ── Relay-Specific Type Maps ──
 
 /** Type map: narrow webhook payload per provider name */
-export type WebhookPayloadFor<N extends ProviderName> = N extends "github"
+export type WebhookPayloadFor<N extends SourceType> = N extends "github"
   ? GH
   : N extends "vercel"
     ? VC
@@ -44,7 +43,7 @@ export type WebhookPayloadFor<N extends ProviderName> = N extends "github"
         : never;
 
 /** Type map: narrow provider class per provider name */
-export type ProviderFor<N extends ProviderName> = N extends "github"
+export type ProviderFor<N extends SourceType> = N extends "github"
   ? GitHubProvider
   : N extends "vercel"
     ? VercelProvider
@@ -58,7 +57,7 @@ export type ProviderFor<N extends ProviderName> = N extends "github"
 
 /** Slim webhook-only interface for relay providers. */
 export interface WebhookProvider {
-  readonly name: ProviderName;
+  readonly name: SourceType;
   getWebhookSecret(env: RelayEnv): string;
   verifyWebhook(
     payload: string,

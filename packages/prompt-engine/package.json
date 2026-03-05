@@ -19,7 +19,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

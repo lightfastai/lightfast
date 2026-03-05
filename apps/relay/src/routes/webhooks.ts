@@ -1,14 +1,14 @@
 import { Hono } from "hono";
 import { and, eq } from "@vendor/db";
 import { getQStashClient } from "@vendor/qstash";
-import { getWorkflowClient } from "@vendor/upstash-workflow/client";
+import { workflowClient } from "@vendor/upstash-workflow/client";
 import { relayBaseUrl, consoleUrl } from "../lib/urls.js";
 import { getEnv } from "../env.js";
 import { getProvider } from "../providers/index.js";
 import type { WebhookProvider } from "../providers/index.js";
 import { webhookSeenKey } from "../lib/cache.js";
 import { redis } from "@vendor/upstash";
-import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/gateway-types";
+import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/console-types";
 import { timingSafeStringEqual } from "../lib/crypto.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 import { db } from "@db/console/client";
@@ -199,9 +199,10 @@ webhooks.post("/:provider", async (c) => {
     correlationId: c.get("correlationId"),
   };
 
-  await getWorkflowClient().trigger({
+  await workflowClient.trigger({
     url: `${relayBaseUrl}/workflows/webhook-delivery`,
-    body: workflowPayload,
+    body: JSON.stringify(workflowPayload),
+    headers: { "Content-Type": "application/json" },
   });
 
   return c.json({ status: "accepted", deliveryId }, 200);

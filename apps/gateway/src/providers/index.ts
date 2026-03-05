@@ -6,12 +6,12 @@ import { VercelProvider } from "./impl/vercel.js";
 import type {
   ConnectionProvider,
   ProviderFor,
-  ProviderName,
+  SourceType,
 } from "./types.js";
 
 export type {
   ConnectionProvider,
-  ProviderName,
+  SourceType,
   OAuthTokens,
   ProviderOptions,
   AuthOptionsFor,
@@ -23,7 +23,7 @@ export type {
   CallbackResult,
 } from "./types.js";
 
-const providers = new Map<ProviderName, ConnectionProvider>([
+const providers = new Map<SourceType, ConnectionProvider>([
   ["github", new GitHubProvider()],
   ["vercel", new VercelProvider()],
 ]);
@@ -41,10 +41,10 @@ if (process.env.SENTRY_APP_SLUG && process.env.SENTRY_CLIENT_ID && process.env.S
 }
 
 /** Type-safe provider lookup. Literal names return specific provider types. */
-export function getProvider<N extends ProviderName>(name: N): ProviderFor<N>;
+export function getProvider<N extends SourceType>(name: N): ProviderFor<N>;
 export function getProvider(name: string): ConnectionProvider;
 export function getProvider(name: string): ConnectionProvider {
-  const provider = providers.get(name as ProviderName);
+  const provider = providers.get(name as SourceType);
   if (!provider) {
     throw new HTTPException(400, { message: `Unknown provider: ${name}` });
   }

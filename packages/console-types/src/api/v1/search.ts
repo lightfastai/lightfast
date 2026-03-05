@@ -4,7 +4,7 @@
  * Extended search schemas for the public v1 API with mode-based reranking.
  */
 
-import { z } from "zod";
+import { z } from "zod/v3";
 
 /**
  * Rerank mode for search quality

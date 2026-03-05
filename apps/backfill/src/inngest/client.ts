@@ -1,6 +1,6 @@
-import { backfillTriggerPayload, backfillDepthSchema } from "@repo/gateway-types";
+import { backfillTriggerPayload, backfillDepthSchema } from "@repo/console-validation";
 import { EventSchemas, Inngest } from "@vendor/inngest";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 import { env } from "../env.js";
 

@@ -1,6 +1,6 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 import { env as emailEnv } from "@vendor/email/env";
 import { env as inngestEnv } from "@vendor/inngest/env";

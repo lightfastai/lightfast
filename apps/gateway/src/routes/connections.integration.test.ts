@@ -71,7 +71,7 @@ vi.mock("@vendor/upstash", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({ trigger: mockWorkflowTrigger }),
+  workflowClient: { trigger: mockWorkflowTrigger },
 }));
 
 vi.mock("../providers", () => ({

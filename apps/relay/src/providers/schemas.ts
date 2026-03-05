@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 
 // ── Webhook Payload Schemas (.passthrough() for forward-compat) ──
 

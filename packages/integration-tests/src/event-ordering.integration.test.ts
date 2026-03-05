@@ -127,9 +127,9 @@ vi.mock("@vercel/related-projects", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({
+  workflowClient: {
     trigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-perm-1" }),
-  }),
+  },
 }));
 
 vi.mock("@vendor/upstash-workflow/hono", () => ({

@@ -9,7 +9,7 @@ import { join } from "node:path";
 import type { Result} from "neverthrow";
 import { ok, err } from "neverthrow";
 import { parse as parseYAML } from "yaml";
-import type { ZodError } from "zod";
+import type { ZodError } from "zod/v3";
 import { LightfastConfigSchema  } from "./schema";
 import type {LightfastConfig} from "./schema";
 

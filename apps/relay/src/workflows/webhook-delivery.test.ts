@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { WebhookReceiptPayload } from "@repo/gateway-types";
+import type { WebhookReceiptPayload } from "@repo/console-types";
 
 // ── Mock externals ──
 

@@ -1,7 +1,7 @@
 import { EventSchemas, Inngest  } from "inngest";
 import type {GetEvents} from "inngest";
 import { sentryMiddleware } from "@inngest/middleware-sentry";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 import { env } from "@vendor/inngest/env";
 

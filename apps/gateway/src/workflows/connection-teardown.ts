@@ -1,20 +1,20 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import { backfillUrl } from "@repo/gateway-service-clients";
 import { decrypt } from "@repo/lib";
 import { and, eq } from "@vendor/db";
-import { redis } from "@vendor/upstash";
-import { serve } from "@vendor/upstash-workflow/hono";
-import type { WorkflowContext } from "@vendor/upstash-workflow/types";
-import { backfillUrl } from "@repo/gateway-service-clients";
 import { getQStashClient } from "@vendor/qstash";
+import { redis } from "@vendor/upstash";
+import type { WorkflowContext } from "@vendor/upstash-workflow";
+import { serve } from "@vendor/upstash-workflow/hono";
 import { env } from "../env.js";
 import { resourceKey } from "../lib/cache.js";
 import { getProvider } from "../providers/index.js";
-import type { ProviderName } from "../providers/types.js";
+import type { SourceType } from "../providers/types.js";
 
 interface TeardownPayload {
   installationId: string;
-  provider: ProviderName;
+  provider: SourceType;
   orgId: string;
 }
 

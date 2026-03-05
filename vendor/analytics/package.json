@@ -52,6 +52,6 @@
 		"posthog-node": "^5.17.2",
 		"react": "catalog:react19",
 		"server-only": "^0.0.1",
-		"zod": "catalog:zod3"
+		"zod": "catalog:zod4"
 	}
 }

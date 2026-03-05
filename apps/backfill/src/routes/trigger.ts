@@ -1,6 +1,6 @@
-import { backfillTriggerPayload } from "@repo/gateway-types";
+import { backfillTriggerPayload } from "@repo/console-validation";
 import { Hono } from "hono";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 import { getEnv } from "../env.js";
 import { inngest } from "../inngest/client.js";

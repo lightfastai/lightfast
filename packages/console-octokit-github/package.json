@@ -32,7 +32,7 @@
     "@t3-oss/env-nextjs": "catalog:",
     "minimatch": "^10.2.3",
     "octokit": "^5.0.3",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

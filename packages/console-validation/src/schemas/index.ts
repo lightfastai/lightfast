@@ -10,6 +10,7 @@ export * from "./organization";
 export * from "./store";
 export * from "./job";
 export * from "./sources";
+export * from "./gateway";
 export * from "./source-metadata";
 export * from "./post-transform-event";
 export * from "./workflow-io";

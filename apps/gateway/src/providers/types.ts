@@ -1,29 +1,27 @@
 import type { GwInstallation } from "@db/console/schema";
 import type {
-  ProviderName,
   OAuthTokens,
   ProviderOptions,
   GitHubAuthOptions,
   LinearAuthOptions,
-} from "@repo/gateway-types";
+} from "@repo/console-types";
+import type { SourceType } from "@repo/console-validation";
 import type { Context } from "hono";
 import type { GitHubProvider } from "./impl/github.js";
 import type { LinearProvider } from "./impl/linear.js";
 import type { SentryProvider } from "./impl/sentry.js";
 import type { VercelProvider } from "./impl/vercel.js";
 
-// Re-export everything from @repo/gateway-types
-export {
-  PROVIDER_NAMES,
-  INSTALLATION_STATUSES,
-  RESOURCE_STATUSES,
-  DELIVERY_STATUSES,
-} from "@repo/gateway-types";
+// Re-export from @repo/console-validation
 export type {
-  ProviderName,
+  SourceType,
   InstallationStatus,
   ResourceStatus,
   DeliveryStatus,
+} from "@repo/console-validation";
+
+// Re-export from @repo/console-types
+export type {
   OAuthTokens,
   GitHubAuthOptions,
   LinearAuthOptions,
@@ -38,7 +36,7 @@ export type {
   SentryAccountInfo,
   SentryOAuthRaw,
   ProviderAccountInfo,
-} from "@repo/gateway-types";
+} from "@repo/console-types";
 
 // ── Callback State ──
 
@@ -51,7 +49,7 @@ export interface CallbackStateData {
 // ── Connection-Specific Type Maps ──
 
 /** Type map: narrow provider class per provider name */
-export type ProviderFor<N extends ProviderName> = N extends "github"
+export type ProviderFor<N extends SourceType> = N extends "github"
   ? GitHubProvider
   : N extends "vercel"
     ? VercelProvider
@@ -62,7 +60,7 @@ export type ProviderFor<N extends ProviderName> = N extends "github"
         : never;
 
 /** Type map: narrow auth options per provider name */
-export type AuthOptionsFor<N extends ProviderName> = N extends "github"
+export type AuthOptionsFor<N extends SourceType> = N extends "github"
   ? GitHubAuthOptions
   : N extends "linear"
     ? LinearAuthOptions
@@ -72,7 +70,7 @@ export type AuthOptionsFor<N extends ProviderName> = N extends "github"
 
 export interface TokenResult {
   accessToken: string;
-  provider: ProviderName;
+  provider: SourceType;
   expiresIn: number | null;
 }
 
@@ -83,7 +81,7 @@ export interface JwtTokenResult extends TokenResult {
 
 export interface CallbackResult {
   installationId: string;
-  provider: ProviderName;
+  provider: SourceType;
   status: string;
   reactivated?: boolean;
   setupAction?: string;
@@ -92,7 +90,7 @@ export interface CallbackResult {
 
 /** Connection provider interface — OAuth, token vault, lifecycle, and optional webhook registration (gated by `requiresWebhookRegistration`). */
 export interface ConnectionProvider {
-  readonly name: ProviderName;
+  readonly name: SourceType;
   readonly requiresWebhookRegistration: boolean;
 
   // OAuth

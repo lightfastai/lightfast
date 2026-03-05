@@ -52,7 +52,7 @@
     "open": "^10.1.0",
     "ora": "^8.1.1",
     "picocolors": "^1.1.0",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

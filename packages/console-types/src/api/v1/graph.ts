@@ -4,7 +4,7 @@
  * Schemas for relationship graph traversal and related events.
  */
 
-import { z } from "zod";
+import { z } from "zod/v3";
 
 /**
  * Graph API request

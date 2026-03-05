@@ -27,7 +27,7 @@
     "fast-glob": "^3.3.2",
     "neverthrow": "catalog:",
     "yaml": "^2.7.0",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

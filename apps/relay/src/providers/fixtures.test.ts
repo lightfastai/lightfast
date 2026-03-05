@@ -17,7 +17,7 @@
 import { describe, it, expect } from "vitest";
 import { loadAllRawWebhooks, type RawWebhook } from "@repo/console-test-data/raw";
 import { getProvider } from "./index.js";
-import type { ProviderName } from "./types.js";
+import type { SourceType } from "./types.js";
 
 // ── Load all sandbox datasets ──
 
@@ -26,7 +26,7 @@ const allWebhooks: RawWebhook[] = loadAllRawWebhooks();
 // ── Expected extraction rules per provider ──
 
 const extractionExpectations: Record<
-  ProviderName,
+  SourceType,
   {
     resourceIdField: string;
     expectResourceId: (payload: Record<string, unknown>) => string | null;

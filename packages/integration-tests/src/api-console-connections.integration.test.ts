@@ -79,9 +79,9 @@ vi.mock("@db/console/client", () => ({
 vi.mock("@vendor/upstash", () => ({ redis: redisMock }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({
+  workflowClient: {
     trigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
-  }),
+  },
 }));
 
 vi.mock("@vendor/qstash", () => ({
@@ -149,7 +149,7 @@ import { connectionsRouter } from "@console/router/org/connections";
 import gatewayApp from "@gateway/app";
 import { makeApiKeyFixture, installServiceRouter, TEST_WORKSPACE_SETTINGS } from "./harness.js";
 import { orgWorkspaces, gwInstallations } from "@db/console/schema";
-import type { GitHubAccountInfo } from "@repo/gateway-types";
+import type { GitHubAccountInfo } from "@repo/console-types";
 
 // Use crypto.randomUUID() for unique IDs — avoids importing @repo/lib
 function uid() {

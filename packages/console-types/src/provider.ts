@@ -567,7 +567,7 @@ export type EventPreTransformMap =
   & Record<Extract<EventKey, "sentry:error">, PreTransformSentryErrorWebhook>
   & Record<Extract<EventKey, "sentry:event-alert">, PreTransformSentryEventAlertWebhook>
   & Record<Extract<EventKey, "sentry:metric-alert">, PreTransformSentryMetricAlertWebhook>
-  // Linear — 5 entity patterns (project-update before project to match correctly)
+  // Linear — 5 entity patterns
   & Record<Extract<EventKey, `linear:issue.${string}`>, PreTransformLinearIssueWebhook>
   & Record<Extract<EventKey, `linear:comment.${string}`>, PreTransformLinearCommentWebhook>
   & Record<Extract<EventKey, `linear:project-update.${string}`>, PreTransformLinearProjectUpdateWebhook>
@@ -575,7 +575,7 @@ export type EventPreTransformMap =
   & Record<Extract<EventKey, `linear:cycle.${string}`>, PreTransformLinearCycleWebhook>;
 
 /** Get the pre-transform payload type for an event key at compile time */
-export type PreTransformFor<K extends EventKey> = K extends keyof EventPreTransformMap ? EventPreTransformMap[K] : never;
+export type PreTransformFor<K extends EventKey> = EventPreTransformMap[K];
 
 // ─── Pipeline Type Re-exports ─────────────────────────────────────────────────
 
@@ -682,3 +682,5 @@ type _AssertSentryCoverage = AssertExtends<SentryDispatchKey, SentryWebhookEvent
 type _AssertSentryExact = AssertExtends<SentryWebhookEventType, SentryDispatchKey>;
 
 // Vercel: single transformer handles all deployment events — no dispatch key assertion needed
+
+// SourceType is the single canonical type for provider names (previously ProviderName in gateway-types)

@@ -44,7 +44,7 @@
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "svix": "^1.62.0",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -3,7 +3,7 @@
  * These types can be imported by client-side components without causing build errors.
  */
 
-import { z } from "zod";
+import { z } from "zod/v3";
 
 // ============================================
 // TOOL INPUT SCHEMAS

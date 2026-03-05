@@ -2,7 +2,7 @@ import { createEnv } from "@t3-oss/env-core";
 import { vercel } from "@t3-oss/env-core/presets-zod";
 import type { Context } from "hono";
 import { env as honoEnv } from "hono/adapter";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 import { upstashEnv } from "@vendor/upstash/env";
 import { qstashEnv } from "@vendor/qstash/env";

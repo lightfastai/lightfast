@@ -23,10 +23,10 @@
     "@repo/console-linear": "workspace:*",
     "@repo/console-octokit-github": "workspace:*",
     "@repo/console-sentry": "workspace:*",
+    "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@repo/console-vercel": "workspace:*",
     "@repo/gateway-service-clients": "workspace:*",
-    "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@vendor/db": "workspace:*",
@@ -38,7 +38,7 @@
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
     "postgres": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/console-test-db": "workspace:*",

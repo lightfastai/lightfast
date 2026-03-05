@@ -1,6 +1,6 @@
 import { Realtime } from "@upstash/realtime";
 import type { InferRealtimeEvents } from "@upstash/realtime";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { redis } from "@vendor/upstash";
 import { postTransformEventSchema } from "@repo/console-validation";
 

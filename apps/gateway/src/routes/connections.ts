@@ -1,10 +1,10 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwResources, gwBackfillRuns } from "@db/console/schema";
-import { backfillRunRecord, BACKFILL_TERMINAL_STATUSES } from "@repo/gateway-types";
+import { backfillRunRecord, BACKFILL_TERMINAL_STATUSES } from "@repo/console-validation";
 import { nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
-import { getWorkflowClient } from "@vendor/upstash-workflow/client";
+import { workflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
 import { html, raw } from "hono/html";
 import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
@@ -13,9 +13,7 @@ import { apiKeyAuth } from "../middleware/auth.js";
 import type { TenantVariables } from "../middleware/tenant.js";
 import { tenantMiddleware } from "../middleware/tenant.js";
 import { getProvider } from "../providers/index.js";
-import type { CallbackStateData, ProviderName } from "../providers/types.js";
-
-const workflowClient = getWorkflowClient();
+import type { CallbackStateData, SourceType } from "../providers/types.js";
 
 const connections = new Hono<{ Variables: TenantVariables }>();
 
@@ -29,7 +27,7 @@ const connections = new Hono<{ Variables: TenantVariables }>();
  * Accepts optional `redirect_to` query param for CLI/non-browser clients.
  */
 connections.get("/:provider/authorize", apiKeyAuth, tenantMiddleware, async (c) => {
-  const providerName = c.req.param("provider") as ProviderName;
+  const providerName = c.req.param("provider") as SourceType;
   const orgId = c.get("orgId");
 
   let provider;
@@ -132,7 +130,7 @@ connections.get("/oauth/status", async (c) => {
  *   - undefined: default redirect to console (backwards compatible)
  */
 connections.get("/:provider/callback", async (c) => {
-  const providerName = c.req.param("provider") as ProviderName;
+  const providerName = c.req.param("provider") as SourceType;
   const state = c.req.query("state") ?? "";
 
   let provider;
@@ -388,7 +386,7 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
     );
   }
 
-  const provider = getProvider(installation.provider as ProviderName);
+  const provider = getProvider(installation.provider as SourceType);
 
   try {
     const result = await provider.resolveToken(installation);
@@ -413,7 +411,7 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
  * Callers: console tRPC (org/connections.disconnect)
  */
 connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
-  const providerName = c.req.param("provider") as ProviderName;
+  const providerName = c.req.param("provider") as SourceType;
   const id = c.req.param("id");
 
   const installationRows = await db
@@ -431,11 +429,12 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
   // Trigger durable teardown workflow
   await workflowClient.trigger({
     url: `${gatewayBaseUrl}/gateway/workflows/connection-teardown`,
-    body: {
+    body: JSON.stringify({
       installationId: id,
       provider: providerName,
       orgId: installation.orgId,
-    },
+    }),
+    headers: { "Content-Type": "application/json" },
   });
 
   return c.json({ status: "teardown_initiated", installationId: id });
@@ -526,7 +525,7 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
 
   // Populate Redis routing cache
   await redis.hset(
-    resourceKey(installation.provider as ProviderName, body.providerResourceId),
+    resourceKey(installation.provider as SourceType, body.providerResourceId),
     { connectionId: id, orgId: installation.orgId },
   );
 
@@ -581,7 +580,7 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
 
   if (installation) {
     await redis.del(
-      resourceKey(installation.provider as ProviderName, resource.providerResourceId),
+      resourceKey(installation.provider as SourceType, resource.providerResourceId),
     );
   }
 
@@ -634,7 +633,7 @@ connections.post("/:id/backfill-runs", apiKeyAuth, async (c) => {
 
   const now = new Date().toISOString();
   const data = parsed.data;
-  const isTerminal = BACKFILL_TERMINAL_STATUSES.includes(data.status);
+  const isTerminal = (BACKFILL_TERMINAL_STATUSES as readonly string[]).includes(data.status);
 
   const sharedFields = {
     since: data.since,

@@ -109,7 +109,7 @@
 		"tw-animate-css": "^1.3.7",
 		"use-stick-to-bottom": "1.1.1",
 		"vaul": "^1.1.2",
-		"zod": "catalog:zod3"
+		"zod": "catalog:zod4"
 	},
 	"prettier": "@repo/prettier-config"
 }

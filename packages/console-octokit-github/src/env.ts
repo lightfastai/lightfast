@@ -1,5 +1,5 @@
 import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 /**
  * Core GitHub App OAuth vars — used by both console and connections.

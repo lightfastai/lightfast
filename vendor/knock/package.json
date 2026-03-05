@@ -28,7 +28,7 @@
     "@knocklabs/react": "^0.8.11",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -4,7 +4,7 @@
  * @see docs/architecture/phase1/package-structure.md
  */
 
-import { z } from "zod";
+import { z } from "zod/v3";
 import { LatencySchema, RequestIdSchema } from "./common";
 
 /**

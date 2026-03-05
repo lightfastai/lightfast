@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-core";
 import type { Context } from "hono";
 import { env as honoEnv } from "hono/adapter";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 const server = {
   GATEWAY_API_KEY: z.string().min(1),

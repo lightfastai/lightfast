@@ -1,4 +1,4 @@
-import type { WebhookEnvelope } from "@repo/gateway-types";
+import type { WebhookEnvelope } from "@repo/console-types";
 import type { PostTransformEvent } from "@repo/console-validation";
 import { transformWebhookPayload } from "@repo/console-webhooks";
 

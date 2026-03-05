@@ -1,6 +1,6 @@
 import type { BackfillConfig } from "@repo/console-backfill";
 import { getConnector } from "@repo/console-backfill";
-import { backfillEstimatePayload } from "@repo/gateway-types";
+import { backfillEstimatePayload } from "@repo/console-validation";
 import { Hono } from "hono";
 
 import { getEnv } from "../env.js";

@@ -101,7 +101,7 @@ vi.mock("@vendor/upstash", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({ trigger: mockWorkflowTrigger }),
+  workflowClient: { trigger: mockWorkflowTrigger },
 }));
 
 // Chain-mock: ignores table/column/condition context so results are purely

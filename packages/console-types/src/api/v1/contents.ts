@@ -4,7 +4,7 @@
  * Fetch full content for documents and observations by ID.
  */
 
-import { z } from "zod";
+import { z } from "zod/v3";
 
 /**
  * V1 Contents request schema

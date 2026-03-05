@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 
 /** Priority determines ordering and trimming behavior */
 export const PromptSectionPriority = z.enum([

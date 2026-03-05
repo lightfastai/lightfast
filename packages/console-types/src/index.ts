@@ -140,6 +140,28 @@ export type {
   LLMEntityExtractionResponse,
 } from "./entity";
 
+// Gateway types (interfaces for relay, gateway, backfill services)
+export type {
+  OAuthTokens,
+  GitHubAuthOptions,
+  LinearAuthOptions,
+  ProviderOptions,
+  WebhookReceiptPayload,
+  WebhookEnvelope,
+  GatewayConnection,
+  GatewayTokenResult,
+  BaseAccountInfo,
+  GitHubInstallationRaw,
+  VercelOAuthRaw,
+  LinearOAuthRaw,
+  SentryOAuthRaw,
+  GitHubAccountInfo,
+  VercelAccountInfo,
+  LinearAccountInfo,
+  SentryAccountInfo,
+  ProviderAccountInfo,
+} from "./gateway";
+
 // Provider registry
 export {
   PROVIDER_REGISTRY,

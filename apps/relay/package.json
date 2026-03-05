@@ -22,8 +22,8 @@
     "@db/console": "workspace:*",
     "@neondatabase/serverless": "catalog:",
     "@repo/console-api-key": "workspace:*",
+    "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
-    "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@vendor/db": "workspace:*",
@@ -34,7 +34,7 @@
     "@vendor/upstash-workflow": "workspace:*",
     "@vendor/vercel-flags": "workspace:*",
     "hono": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/console-test-data": "workspace:*",

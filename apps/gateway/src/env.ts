@@ -9,7 +9,7 @@ import { qstashEnv } from "@vendor/qstash/env";
 import { upstashEnv } from "@vendor/upstash/env";
 import type { Context } from "hono";
 import { env as honoEnv } from "hono/adapter";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 
 const server = {

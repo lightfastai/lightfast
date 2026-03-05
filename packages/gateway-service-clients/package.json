@@ -20,7 +20,8 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@repo/gateway-types": "workspace:*",
+    "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
     "@vendor/related-projects": "workspace:*"
   },
   "devDependencies": {

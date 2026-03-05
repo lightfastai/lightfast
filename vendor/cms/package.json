@@ -30,7 +30,7 @@
     "clsx": "catalog:",
     "react": "19.2.1",
     "tailwind-merge": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

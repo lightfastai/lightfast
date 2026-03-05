@@ -1,22 +1,45 @@
-import { z } from "zod";
+/**
+ * Gateway Schemas
+ *
+ * Zod schemas and const arrays for gateway services (relay, gateway, backfill).
+ * Previously in @repo/gateway-types — consolidated here as the single source of truth.
+ */
 
-// ── Shared primitives ──
+import { z } from "zod";
+import { sourceTypeSchema } from "./sources";
+
+// ── Installation Statuses ──
+
+export const installationStatusSchema = z.enum(["pending", "active", "error", "revoked"]);
+export type InstallationStatus = z.infer<typeof installationStatusSchema>;
+
+// ── Resource Statuses ──
+
+export const resourceStatusSchema = z.enum(["active", "removed"]);
+export type ResourceStatus = z.infer<typeof resourceStatusSchema>;
+
+// ── Delivery Statuses ──
+
+export const deliveryStatusSchema = z.enum(["delivered", "dlq", "duplicate"]);
+export type DeliveryStatus = z.infer<typeof deliveryStatusSchema>;
+
+// ── Backfill Depth (internal) ──
 
 export const backfillDepthSchema = z.union([z.literal(7), z.literal(30), z.literal(90)]);
-export type BackfillDepth = z.infer<typeof backfillDepthSchema>;
 
-export const BACKFILL_RUN_STATUSES = ["pending", "running", "completed", "failed", "cancelled"] as const;
-export const backfillRunStatusSchema = z.enum(BACKFILL_RUN_STATUSES);
-export type BackfillRunStatus = z.infer<typeof backfillRunStatusSchema>;
+// ── Backfill Run Statuses (internal) ──
+
+const backfillRunStatusSchema = z.enum(["pending", "running", "completed", "failed", "cancelled"]);
 
 /** Terminal statuses that set `completedAt` */
-export const BACKFILL_TERMINAL_STATUSES: readonly BackfillRunStatus[] = ["completed", "failed", "cancelled"];
+export const backfillTerminalStatusSchema = z.enum(["completed", "failed", "cancelled"]);
+export const BACKFILL_TERMINAL_STATUSES = backfillTerminalStatusSchema.options;
 
 // ── Trigger payload (Console → Relay → Backfill) ──
 
 export const backfillTriggerPayload = z.object({
   installationId: z.string().min(1),
-  provider: z.string().min(1),
+  provider: sourceTypeSchema,
   orgId: z.string().min(1),
   depth: backfillDepthSchema.default(30),
   entityTypes: z.array(z.string()).optional(),

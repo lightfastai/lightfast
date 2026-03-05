@@ -45,7 +45,7 @@
 		"@inngest/agent-kit": "^0.7.3",
 		"@inngest/middleware-sentry": "catalog:",
 		"inngest": "catalog:",
-		"zod": "catalog:zod3"
+		"zod": "catalog:zod4"
 	},
 	"peerDependencies": {
 		"hono": "catalog:"

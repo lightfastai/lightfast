@@ -51,7 +51,6 @@
     "@repo/console-webhooks": "workspace:^",
     "@repo/console-workspace-cache": "workspace:*",
     "@repo/gateway-service-clients": "workspace:*",
-    "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
     "@repo/prompt-engine": "workspace:*",
     "@repo/ui": "workspace:*",

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v3";
 
 export const $Txt2ImgModel = z.enum(["flux/dev", "flux/schnell"]);
 

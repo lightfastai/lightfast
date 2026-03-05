@@ -1,12 +1,13 @@
 import { and, eq } from "@vendor/db";
 import { db } from "@db/console/client";
 import { gwWebhookDeliveries } from "@db/console/schema";
-import { getWorkflowClient } from "@vendor/upstash-workflow/client";
+import { workflowClient } from "@vendor/upstash-workflow/client";
 import { redis } from "@vendor/upstash";
 import { webhookSeenKey } from "./cache.js";
 import { relayBaseUrl } from "./urls.js";
 import { getProvider } from "../providers/index.js";
-import type { WebhookReceiptPayload, ProviderName } from "@repo/gateway-types";
+import type { WebhookReceiptPayload } from "@repo/console-types";
+import type { SourceType } from "@repo/console-validation";
 import type { GwWebhookDelivery } from "@db/console/schema";
 import type { WebhookPayload } from "../providers/types.js";
 
@@ -42,7 +43,7 @@ export async function replayDeliveries(
     try {
       const parsedPayload = JSON.parse(delivery.payload) as WebhookPayload;
 
-      const providerName = delivery.provider as ProviderName;
+      const providerName = delivery.provider as SourceType;
 
       // Re-extract resourceId from stored payload via provider
       let resourceId: string | null = null;
@@ -57,16 +58,17 @@ export async function replayDeliveries(
       await redis.del(webhookSeenKey(providerName, delivery.deliveryId));
 
       // Re-trigger the full workflow — it handles resolution, delivery, and status updates
-      await getWorkflowClient().trigger({
+      await workflowClient.trigger({
         url: `${relayBaseUrl}/workflows/webhook-delivery`,
-        body: {
+        body: JSON.stringify({
           provider: providerName,
           deliveryId: delivery.deliveryId,
           eventType: delivery.eventType,
           resourceId,
           payload: parsedPayload,
           receivedAt: new Date(delivery.receivedAt).getTime(),
-        } satisfies WebhookReceiptPayload,
+        } satisfies WebhookReceiptPayload),
+        headers: { "Content-Type": "application/json" },
       });
 
       // Trigger succeeded — mark as replayed regardless of DB update outcome

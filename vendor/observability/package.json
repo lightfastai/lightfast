@@ -46,6 +46,6 @@
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   }
 }

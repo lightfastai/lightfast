@@ -58,6 +58,7 @@ export * from "./schemas/organization";
 export * from "./schemas/store";
 export * from "./schemas/job";
 export * from "./schemas/sources";
+export * from "./schemas/gateway";
 export * from "./schemas/source-metadata";
 export * from "./schemas/post-transform-event";
 export * from "./schemas/workflow-io";

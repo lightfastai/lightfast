@@ -5,7 +5,7 @@ import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
 import { redis } from "@vendor/upstash";
 import { resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache.js";
 import { replayDeliveries } from "../lib/replay.js";
-import type { ProviderName } from "../providers/types.js";
+import type { SourceType } from "../providers/types.js";
 import {
   gwInstallations,
   gwResources,
@@ -81,7 +81,7 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
 
     const pipeline = redis.pipeline();
     for (const r of batch) {
-      const key = resourceKey(r.provider as ProviderName, r.providerResourceId);
+      const key = resourceKey(r.provider as SourceType, r.providerResourceId);
       pipeline.hset(key, { connectionId: r.installationId, orgId: r.orgId });
       pipeline.expire(key, RESOURCE_CACHE_TTL);
     }

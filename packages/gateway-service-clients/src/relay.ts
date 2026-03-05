@@ -1,4 +1,4 @@
-import type { BackfillTriggerPayload } from "@repo/gateway-types";
+import type { BackfillTriggerPayload } from "@repo/console-validation";
 
 import type { ServiceClientConfig } from "./headers.js";
 import { buildServiceHeaders } from "./headers.js";

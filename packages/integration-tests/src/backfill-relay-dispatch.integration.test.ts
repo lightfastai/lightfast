@@ -57,9 +57,9 @@ vi.mock("@vercel/related-projects", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({
+  workflowClient: {
     trigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-test" }),
-  }),
+  },
 }));
 
 vi.mock("@vendor/upstash-workflow/hono", () => ({
@@ -197,7 +197,7 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
       };
     };
 
-    // Verify the WebhookEnvelope shape matches @repo/gateway-types
+    // Verify the WebhookEnvelope shape matches @repo/console-types
     expect(call.body).toMatchObject({
       deliveryId: "del-dispatch-1",
       connectionId: "conn-dispatch-1",

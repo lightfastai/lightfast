@@ -6,12 +6,12 @@ import { VercelProvider } from "./impl/vercel.js";
 import type {
   WebhookProvider,
   ProviderFor,
-  ProviderName,
+  SourceType,
 } from "./types.js";
 
 export type {
   WebhookProvider,
-  ProviderName,
+  SourceType,
   WebhookPayload,
   GitHubWebhookPayload,
   VercelWebhookPayload,
@@ -21,7 +21,7 @@ export type {
   ProviderFor,
 } from "./types.js";
 
-const providers = new Map<ProviderName, WebhookProvider>([
+const providers = new Map<SourceType, WebhookProvider>([
   ["github", new GitHubProvider()],
   ["vercel", new VercelProvider()],
   ["linear", new LinearProvider()],
@@ -29,10 +29,10 @@ const providers = new Map<ProviderName, WebhookProvider>([
 ]);
 
 /** Type-safe provider lookup. Literal names return specific provider types. */
-export function getProvider<N extends ProviderName>(name: N): ProviderFor<N>;
+export function getProvider<N extends SourceType>(name: N): ProviderFor<N>;
 export function getProvider(name: string): WebhookProvider;
 export function getProvider(name: string): WebhookProvider {
-  const provider = providers.get(name as ProviderName);
+  const provider = providers.get(name as SourceType);
   if (!provider) {
     throw new HTTPException(400, { message: `Unknown provider: ${name}` });
   }

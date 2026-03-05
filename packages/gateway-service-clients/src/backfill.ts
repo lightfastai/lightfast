@@ -1,4 +1,4 @@
-import type { BackfillEstimatePayload } from "@repo/gateway-types";
+import type { BackfillEstimatePayload } from "@repo/console-validation";
 
 import type { ServiceClientConfig } from "./headers.js";
 import { buildServiceHeaders } from "./headers.js";

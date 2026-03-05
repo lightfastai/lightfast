@@ -93,7 +93,8 @@ export const workspaceAccessRouter = {
    */
   create: userScopedProcedure
     .input(
-      workspaceCreateInputSchema.extend({
+      z.object({
+        ...workspaceCreateInputSchema.shape,
         // Optional: Connect GitHub repository during workspace creation
         githubRepository: z.object({
           gwInstallationId: z.string(),

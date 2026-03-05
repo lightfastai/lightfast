@@ -39,7 +39,7 @@
     "@trpc/server": "catalog:",
     "@vendor/clerk": "workspace:*",
     "drizzle-orm": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

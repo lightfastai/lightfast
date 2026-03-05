@@ -31,7 +31,7 @@
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "svix": "^1.62.0",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@clerk/types": "catalog:",
