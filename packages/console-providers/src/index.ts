@@ -1,5 +1,5 @@
 // ── Core Types & Helpers ──────────────────────────────────────────────────────
-export type { CategoryDef, EventDefinition, WebhookDef, OAuthDef, ProviderDefinition } from "./define.js";
+export type { CategoryDef, EventDefinition, WebhookDef, OAuthDef, ProviderDefinition, RuntimeConfig } from "./define.js";
 export { defineEvent, defineProvider } from "./define.js";
 
 // ── Config Schemas & Types ────────────────────────────────────────────────────
@@ -49,6 +49,7 @@ export { transformWebhookPayload } from "./dispatch.js";
 export {
   PROVIDERS,
   PROVIDER_REGISTRY,
+  PROVIDER_ENV_SCHEMAS,
   EVENT_CATEGORIES,
   WEBHOOK_EVENT_TYPES,
   getProvider,

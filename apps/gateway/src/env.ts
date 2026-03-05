@@ -1,7 +1,4 @@
-import { linearEnv } from "@repo/console-linear/env";
-import { githubOAuthEnv } from "@repo/console-octokit-github/oauth-env";
-import { sentryIntegrationEnv } from "@repo/console-sentry/env";
-import { vercelOAuthEnv } from "@repo/console-vercel/oauth-env";
+import { PROVIDER_ENV_SCHEMAS } from "@repo/console-providers";
 import { createEnv } from "@t3-oss/env-core";
 import { vercel } from "@t3-oss/env-core/presets-zod";
 import { dbEnv } from "@vendor/db/env";
@@ -9,7 +6,7 @@ import { qstashEnv } from "@vendor/qstash/env";
 import { upstashEnv } from "@vendor/upstash/env";
 import type { Context } from "hono";
 import { env as honoEnv } from "hono/adapter";
-import { z } from "zod/v3";
+import { z } from "zod";
 
 
 const server = {
@@ -36,9 +33,8 @@ const envCache = new WeakMap<object, ConnectionsEnv>();
  * Validated env from the Hono request context — cached per request.
  *
  * Only validates app-specific server variables (GATEWAY_API_KEY, ENCRYPTION_KEY).
- * Preset groups (vercel, upstash, db, OAuth, etc.) are validated once at module
- * load via the module-level `env` export and should be accessed from there or
- * from their respective package imports.
+ * Preset groups (vercel, upstash, db, etc.) are validated once at module
+ * load via the module-level `env` export and should be accessed from there.
  */
 export const getEnv = (c: Context): ConnectionsEnv => {
   const cached = envCache.get(c);
@@ -57,18 +53,20 @@ export const env = createEnv({
     upstashEnv,
     qstashEnv,
     dbEnv,
-    githubOAuthEnv,
-    vercelOAuthEnv,
-    linearEnv,
-    sentryIntegrationEnv,
   ],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
   },
-  server,
+  server: {
+    ...PROVIDER_ENV_SCHEMAS,
+    ...server,
+  },
   runtimeEnv: {
+    ...Object.fromEntries(
+      Object.keys(PROVIDER_ENV_SCHEMAS).map((k) => [k, process.env[k]]),
+    ),
     NODE_ENV: process.env.NODE_ENV,
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,

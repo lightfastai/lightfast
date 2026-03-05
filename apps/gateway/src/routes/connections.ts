@@ -1,19 +1,33 @@
 import { db } from "@db/console/client";
-import { gwInstallations, gwResources, gwBackfillRuns } from "@db/console/schema";
+import { gwInstallations, gwResources, gwBackfillRuns, gwTokens } from "@db/console/schema";
+import { getProvider, PROVIDERS } from "@repo/console-providers";
+import type { RuntimeConfig } from "@repo/console-providers";
+import type { ProviderAccountInfo } from "@repo/console-types";
 import { backfillRunRecord, BACKFILL_TERMINAL_STATUSES } from "@repo/console-validation";
-import { nanoid } from "@repo/lib";
+import type { SourceType } from "@repo/console-validation";
+import { decrypt, nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { workflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
 import { html, raw } from "hono/html";
+import { env } from "../env.js";
 import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
+import { writeTokenRecord, updateTokenRecord } from "../lib/token-store.js";
 import { gatewayBaseUrl, consoleUrl } from "../lib/urls.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import type { TenantVariables } from "../middleware/tenant.js";
 import { tenantMiddleware } from "../middleware/tenant.js";
-import { getProvider } from "../providers/index.js";
-import type { CallbackStateData, SourceType } from "../providers/types.js";
+
+// ── Module-level provider configs ──
+// Built once at startup from validated env vars via provider.createConfig().
+
+const runtime: RuntimeConfig = { callbackBaseUrl: gatewayBaseUrl };
+
+/** Configs keyed by provider name */
+const providerConfigs: Record<string, unknown> = Object.fromEntries(
+  Object.entries(PROVIDERS).map(([name, p]) => [name, p.createConfig(env as unknown as Record<string, string>, runtime)]),
+);
 
 const connections = new Hono<{ Variables: TenantVariables }>();
 
@@ -30,10 +44,10 @@ connections.get("/:provider/authorize", apiKeyAuth, tenantMiddleware, async (c) 
   const providerName = c.req.param("provider") as SourceType;
   const orgId = c.get("orgId");
 
-  let provider;
-  try {
-    provider = getProvider(providerName);
-  } catch {
+  const providerDef = getProvider(providerName);
+  const config = providerConfigs[providerName];
+
+  if (!providerDef || !config) {
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
 
@@ -58,7 +72,7 @@ connections.get("/:provider/authorize", apiKeyAuth, tenantMiddleware, async (c) 
   await redis
     .pipeline()
     .hset(key, {
-      provider: provider.name,
+      provider: providerName,
       orgId,
       connectedBy,
       ...(redirectTo ? { redirectTo } : {}),
@@ -67,7 +81,7 @@ connections.get("/:provider/authorize", apiKeyAuth, tenantMiddleware, async (c) 
     .expire(key, 600)
     .exec();
 
-  const url = provider.getAuthorizationUrl(state);
+  const url = providerDef.oauth.buildAuthUrl(config, state);
 
   return c.json({ url, state });
 });
@@ -123,7 +137,8 @@ connections.get("/oauth/status", async (c) => {
 /**
  * GET /connections/:provider/callback
  *
- * OAuth callback. Validates state, dispatches to provider.
+ * OAuth callback. Validates state, calls processCallback (pure provider logic),
+ * then upserts the installation in DB.
  * Supports UI-agnostic completion via redirectTo from state:
  *   - "inline": renders HTML for CLI (browser can be closed)
  *   - URL string: redirects to explicit URL (validated at authorize time)
@@ -133,10 +148,10 @@ connections.get("/:provider/callback", async (c) => {
   const providerName = c.req.param("provider") as SourceType;
   const state = c.req.query("state") ?? "";
 
-  let provider;
-  try {
-    provider = getProvider(providerName);
-  } catch {
+  const providerDef = getProvider(providerName);
+  const config = providerConfigs[providerName];
+
+  if (!providerDef || !config) {
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
 
@@ -177,34 +192,86 @@ connections.get("/:provider/callback", async (c) => {
     return c.json({ error: "invalid_or_expired_state" }, 400);
   }
 
-  if (stateData.provider !== provider.name) {
+  if (stateData.provider !== providerName) {
     return c.json({ error: "invalid_or_expired_state" }, 400);
   }
 
+  const orgId = stateData.orgId ?? "";
+  const connectedBy = stateData.connectedBy ?? "unknown";
+
   try {
-    // Narrow to typed state — orgId guaranteed by resolveAndConsumeState (line 94)
-    // connectedBy guaranteed by authorize handler (defaults to "unknown")
-    const typedState: CallbackStateData = {
-      orgId: stateData.orgId ?? "", // orgId guaranteed non-empty by resolveAndConsumeState
-      connectedBy: stateData.connectedBy ?? "unknown",
-    };
-    const result = await provider.handleCallback(c, typedState);
+    // Build query dict from all URL search params
+    const query: Record<string, string> = {};
+    const url = new URL(c.req.url);
+    for (const [k, v] of url.searchParams) {
+      query[k] = v;
+    }
+
+    // Pure provider logic — no DB, no Hono coupling
+    const callbackResult = await providerDef.oauth.processCallback(config, query);
+
+    // Detect reactivation: check if an installation already exists for this externalId
+    const existingRows = await db
+      .select({ id: gwInstallations.id })
+      .from(gwInstallations)
+      .where(
+        and(
+          eq(gwInstallations.provider, providerName),
+          eq(gwInstallations.externalId, callbackResult.externalId),
+        ),
+      )
+      .limit(1);
+
+    const reactivated = existingRows.length > 0;
+
+    // Upsert installation — idempotent on (provider, externalId)
+    // Cast accountInfo: CallbackResult uses a passthrough schema, DB expects ProviderAccountInfo
+    const accountInfo = callbackResult.accountInfo as unknown as ProviderAccountInfo;
+    const rows = await db
+      .insert(gwInstallations)
+      .values({
+        provider: providerName,
+        externalId: callbackResult.externalId,
+        connectedBy,
+        orgId,
+        status: "active",
+        providerAccountInfo: accountInfo,
+      })
+      .onConflictDoUpdate({
+        target: [gwInstallations.provider, gwInstallations.externalId],
+        set: {
+          status: "active",
+          connectedBy,
+          orgId,
+          providerAccountInfo: accountInfo,
+          updatedAt: new Date().toISOString(),
+        },
+      })
+      .returning({ id: gwInstallations.id });
+
+    const installation = rows[0];
+    if (!installation) {throw new Error("upsert_failed");}
+
+    // Persist OAuth tokens if provider returned them (non-GitHub providers)
+    if (callbackResult.tokens) {
+      await writeTokenRecord(installation.id, callbackResult.tokens);
+    }
 
     // Store completion result in Redis for CLI polling (5-min TTL)
     await redis
       .pipeline()
       .hset(oauthResultKey(state), {
         status: "completed",
-        provider: provider.name,
-        ...(result.reactivated ? { reactivated: "true" } : {}),
-        ...(result.setupAction ? { setupAction: result.setupAction } : {}),
+        provider: providerName,
+        ...(reactivated ? { reactivated: "true" } : {}),
+        ...(callbackResult.setupAction ? { setupAction: callbackResult.setupAction } : {}),
       })
       .expire(oauthResultKey(state), 300)
       .exec();
 
     // Provider-specific redirect (e.g. Vercel "next" URL to complete installation lifecycle)
-    if (typeof result.nextUrl === "string") {
-      return c.redirect(result.nextUrl);
+    if (typeof callbackResult.nextUrl === "string") {
+      return c.redirect(callbackResult.nextUrl);
     }
 
     const redirectTo = stateData.redirectTo;
@@ -218,7 +285,7 @@ connections.get("/:provider/callback", async (c) => {
             <body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#fafafa">
               <div style="text-align:center">
                 <div style="font-size:48px;margin-bottom:16px">&#10003;</div>
-                <h1 style="margin:0 0 8px">Connected to ${provider.name}!</h1>
+                <h1 style="margin:0 0 8px">Connected to ${providerName}!</h1>
                 <p style="color:#666">You can close this tab and return to your terminal.</p>
               </div>
               ${raw("<script>setTimeout(()=>window.close(),2000)</script>")}
@@ -230,22 +297,22 @@ connections.get("/:provider/callback", async (c) => {
     if (redirectTo) {
       // Explicit redirect URL (validated during authorize)
       const redirectUrl = new URL(redirectTo);
-      if (result.reactivated) {
+      if (reactivated) {
         redirectUrl.searchParams.set("reactivated", "true");
       }
-      if (result.setupAction) {
-        redirectUrl.searchParams.set("setup_action", result.setupAction);
+      if (callbackResult.setupAction) {
+        redirectUrl.searchParams.set("setup_action", callbackResult.setupAction);
       }
       return c.redirect(redirectUrl.toString());
     }
 
     // Default: redirect to console (existing behavior, backwards compatible)
-    const redirectUrl = new URL(`${consoleUrl}/provider/${provider.name}/connected`);
-    if (result.reactivated) {
+    const redirectUrl = new URL(`${consoleUrl}/provider/${providerName}/connected`);
+    if (reactivated) {
       redirectUrl.searchParams.set("reactivated", "true");
     }
-    if (result.setupAction) {
-      redirectUrl.searchParams.set("setup_action", result.setupAction);
+    if (callbackResult.setupAction) {
+      redirectUrl.searchParams.set("setup_action", callbackResult.setupAction);
     }
     return c.redirect(redirectUrl.toString());
   } catch (err) {
@@ -289,7 +356,7 @@ connections.get("/:provider/callback", async (c) => {
     }
 
     return c.redirect(
-      `${consoleUrl}/provider/${provider.name}/connected?error=${encodeURIComponent(message)}`,
+      `${consoleUrl}/provider/${providerName}/connected?error=${encodeURIComponent(message)}`,
     );
   }
 });
@@ -386,11 +453,63 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
     );
   }
 
-  const provider = getProvider(installation.provider as SourceType);
+  const providerName = installation.provider as SourceType;
+  const config = providerConfigs[providerName];
 
   try {
-    const result = await provider.resolveToken(installation);
-    return c.json(result);
+    // GitHub: generate on-demand installation token via JWT
+    if (providerName === "github") {
+      const capabilities = PROVIDERS.github.capabilities;
+      if (!capabilities) { throw new Error("github_capabilities_not_configured"); }
+      const getInstallationToken = capabilities.getInstallationToken as (
+        config: unknown,
+        installationId: unknown,
+      ) => Promise<string>;
+      const token = await getInstallationToken(config, installation.externalId);
+      return c.json({ accessToken: token, provider: "github", expiresIn: 3600 });
+    }
+
+    // Non-GitHub: read stored token, refresh if expired
+    if (!config) {
+      throw new Error("no_token_found");
+    }
+
+    const tokenRows = await db
+      .select()
+      .from(gwTokens)
+      .where(eq(gwTokens.installationId, id))
+      .limit(1);
+
+    const tokenRow = tokenRows[0];
+    if (!tokenRow) {throw new Error("no_token_found");}
+
+    if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
+      if (!tokenRow.refreshToken) {
+        throw new Error("token_expired:no_refresh_token");
+      }
+
+      const decryptedRefresh = await decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
+      const providerDef = getProvider(providerName);
+      if (!providerDef) { throw new Error("provider_not_found"); }
+      const refreshed = await providerDef.oauth.refreshToken(config, decryptedRefresh);
+
+      await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
+
+      return c.json({
+        accessToken: refreshed.accessToken,
+        provider: providerName,
+        expiresIn: refreshed.expiresIn ?? null,
+      });
+    }
+
+    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    return c.json({
+      accessToken: decryptedToken,
+      provider: providerName,
+      expiresIn: tokenRow.expiresAt
+        ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
+        : null,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";
     if (message === "no_token_found") {
@@ -628,6 +747,7 @@ connections.post("/:id/backfill-runs", apiKeyAuth, async (c) => {
   const parsed = backfillRunRecord.safeParse(body);
 
   if (!parsed.success) {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     return c.json({ error: "invalid_body", details: parsed.error.flatten() }, 400);
   }
 

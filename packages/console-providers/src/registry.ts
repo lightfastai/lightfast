@@ -42,3 +42,8 @@ export function getEventWeight(source: SourceType, eventType: string): number {
   const eventDef = PROVIDERS[source].events[eventType];
   return eventDef?.weight ?? 35;
 }
+
+/** Merged env schemas from all providers — for gateway env.ts server block */
+export const PROVIDER_ENV_SCHEMAS = Object.fromEntries(
+  Object.values(PROVIDERS).flatMap((p) => Object.entries(p.envSchema)),
+);

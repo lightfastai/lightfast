@@ -42,6 +42,11 @@ export interface OAuthDef<TConfig> {
   processCallback: (config: TConfig, query: Record<string, string>) => Promise<CallbackResult>;
 }
 
+/** Runtime values not sourced from env (e.g. callbackBaseUrl) */
+export interface RuntimeConfig {
+  callbackBaseUrl: string;
+}
+
 export interface ProviderDefinition<TConfig = unknown> {
   readonly name: SourceType;
   readonly displayName: string;
@@ -55,6 +60,10 @@ export interface ProviderDefinition<TConfig = unknown> {
   readonly capabilities?: Record<string, (...args: unknown[]) => unknown>;
   /** Normalize wire eventType to dispatch category key. Default: identity. */
   readonly resolveCategory?: (eventType: string) => string;
+  /** Plain Zod schemas for required process.env vars — no @t3-oss wrapper */
+  readonly envSchema: Record<string, z.ZodType>;
+  /** Build runtime config from validated env + runtime values */
+  readonly createConfig: (env: Record<string, string>, runtime: RuntimeConfig) => TConfig;
 }
 
 /** Create a type-safe provider definition */

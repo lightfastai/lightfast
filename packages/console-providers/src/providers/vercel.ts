@@ -1,5 +1,6 @@
 import { defineProvider, defineEvent } from "../define.js";
 import type { ProviderDefinition } from "../define.js";
+import { z } from "zod";
 import { vercelConfigSchema } from "../types.js";
 import type { VercelConfig, OAuthTokens, CallbackResult } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
@@ -11,6 +12,17 @@ import {
 import { transformVercelDeployment } from "../transformers/vercel.js";
 
 export const vercel: ProviderDefinition<VercelConfig> = defineProvider<VercelConfig>({
+  envSchema: {
+    VERCEL_INTEGRATION_SLUG: z.string().min(1),
+    VERCEL_CLIENT_SECRET_ID: z.string().min(1),
+    VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
+  },
+  createConfig: (env, runtime) => vercelConfigSchema.parse({
+    integrationSlug: env.VERCEL_INTEGRATION_SLUG,
+    clientSecretId: env.VERCEL_CLIENT_SECRET_ID,
+    clientIntegrationSecret: env.VERCEL_CLIENT_INTEGRATION_SECRET,
+    callbackBaseUrl: runtime.callbackBaseUrl,
+  }),
   name: "vercel",
   displayName: "Vercel",
   description: "Connect your Vercel projects",

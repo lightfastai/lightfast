@@ -237,4 +237,21 @@ export const github = defineProvider<GitHubConfig>({
     getInstallationDetails: (config: unknown, installationId: unknown) =>
       getInstallationDetails(config as GitHubConfig, installationId as string),
   },
+
+  envSchema: {
+    GITHUB_APP_SLUG: z.string().min(1),
+    GITHUB_APP_ID: z.string().min(1),
+    GITHUB_APP_PRIVATE_KEY: z.string().min(1),
+    GITHUB_CLIENT_ID: z.string().min(1),
+    GITHUB_CLIENT_SECRET: z.string().min(1),
+    GITHUB_WEBHOOK_SECRET: z.string().default(""),
+  },
+  createConfig: (env, _runtime) => githubConfigSchema.parse({
+    appSlug: env.GITHUB_APP_SLUG,
+    appId: env.GITHUB_APP_ID,
+    privateKey: env.GITHUB_APP_PRIVATE_KEY,
+    clientId: env.GITHUB_CLIENT_ID,
+    clientSecret: env.GITHUB_CLIENT_SECRET,
+    webhookSecret: env.GITHUB_WEBHOOK_SECRET ?? "",
+  }),
 });

@@ -1,5 +1,6 @@
 import { defineProvider, defineEvent } from "../define.js";
 import type { ProviderDefinition } from "../define.js";
+import { z } from "zod";
 import { sentryConfigSchema, encodeSentryToken, decodeSentryToken } from "../types.js";
 import type { SentryConfig, OAuthTokens, CallbackResult } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
@@ -19,6 +20,16 @@ import {
 } from "../transformers/sentry.js";
 
 export const sentry: ProviderDefinition<SentryConfig> = defineProvider<SentryConfig>({
+  envSchema: {
+    SENTRY_APP_SLUG: z.string().min(1),
+    SENTRY_CLIENT_ID: z.string().min(1),
+    SENTRY_CLIENT_SECRET: z.string().min(1),
+  },
+  createConfig: (env, _runtime) => sentryConfigSchema.parse({
+    appSlug: env.SENTRY_APP_SLUG,
+    clientId: env.SENTRY_CLIENT_ID,
+    clientSecret: env.SENTRY_CLIENT_SECRET,
+  }),
   name: "sentry",
   displayName: "Sentry",
   description: "Connect your Sentry projects",

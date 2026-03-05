@@ -1,5 +1,6 @@
 import { defineProvider, defineEvent } from "../define.js";
 import type { ProviderDefinition } from "../define.js";
+import { z } from "zod";
 import { linearConfigSchema } from "../types.js";
 import type { LinearConfig, OAuthTokens, CallbackResult } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
@@ -104,6 +105,17 @@ function stableFingerprint(payload: unknown): string {
 // ── Provider Definition ──
 
 export const linear: ProviderDefinition<LinearConfig> = defineProvider<LinearConfig>({
+  envSchema: {
+    LINEAR_CLIENT_ID: z.string().min(1),
+    LINEAR_CLIENT_SECRET: z.string().min(1),
+    LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1),
+  },
+  createConfig: (env, runtime) => linearConfigSchema.parse({
+    clientId: env.LINEAR_CLIENT_ID,
+    clientSecret: env.LINEAR_CLIENT_SECRET,
+    webhookSigningSecret: env.LINEAR_WEBHOOK_SIGNING_SECRET,
+    callbackBaseUrl: runtime.callbackBaseUrl,
+  }),
   name: "linear",
   displayName: "Linear",
   description: "Connect your Linear workspace",

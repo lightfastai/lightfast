@@ -20,12 +20,9 @@
   },
   "dependencies": {
     "@db/console": "workspace:*",
-    "@repo/console-linear": "workspace:*",
-    "@repo/console-octokit-github": "workspace:*",
-    "@repo/console-sentry": "workspace:*",
+    "@repo/console-providers": "workspace:*",
     "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
-    "@repo/console-vercel": "workspace:*",
     "@repo/gateway-service-clients": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",
