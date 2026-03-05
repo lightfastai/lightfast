@@ -7,7 +7,7 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/"
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache src/"
   },
   "devDependencies": {
     "@api/console": "workspace:*",

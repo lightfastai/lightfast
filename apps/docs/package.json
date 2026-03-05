@@ -10,7 +10,7 @@
     "build:prod": "pnpm with-env next build --turbopack && pnpm with-env pnpm search:sync:ci",
     "prebuild": "pnpm --filter @repo/console-openapi generate:openapi && tsx scripts/validate-schema-docs.ts",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next .turbo dist .source tsconfig.tsbuildinfo",

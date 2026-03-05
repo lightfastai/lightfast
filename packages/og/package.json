@@ -12,7 +12,7 @@
 		"./types": "./src/types.ts"
 	},
 	"scripts": {
-		"lint": "eslint",
+		"lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
 		"typecheck": "tsc --noEmit",
 		"clean": "git clean -xdf .cache .turbo node_modules"
 	},

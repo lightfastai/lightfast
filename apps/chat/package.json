@@ -9,7 +9,7 @@
     "build:prod": "pnpm with-env next build --turbopack",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
     "dev": "pnpm with-env next dev --turbopack --port ${NEXT_PUBLIC_CHAT_PORT:-4106}",
-    "lint": "eslint",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_CHAT_PORT:-4106}",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.vercel/.env.development.local --",

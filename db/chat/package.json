@@ -22,7 +22,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "db:push": "pnpm with-env drizzle-kit push --config=./src/drizzle.config.ts",
     "db:generate": "pnpm with-env drizzle-kit generate --config=./src/drizzle.config.ts",
     "db:migrate": "pnpm with-env drizzle-kit migrate --config=./src/drizzle.config.ts",

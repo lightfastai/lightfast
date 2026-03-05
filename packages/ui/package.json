@@ -26,7 +26,7 @@
 	},
 	"scripts": {
 		"ui": "pnpm dlx shadcn@canary",
-		"lint": "eslint",
+		"lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
 		"generate:component": "turbo gen react-component",
 		"clean": "git clean -xdf .cache .turbo dist node_modules",
 		"typecheck": "tsc --noEmit",

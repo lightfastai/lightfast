@@ -46,6 +46,15 @@
     },
     "lint": {
       "dependsOn": ["^build", "transit"],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.js",
+        "src/**/*.jsx",
+        "eslint.config.*",
+        "tsconfig.json",
+        "package.json"
+      ],
       "outputs": [".cache/.eslintcache"],
       "env": []
     },
@@ -61,6 +70,13 @@
     },
     "typecheck": {
       "dependsOn": ["^build", "transit"],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "tsconfig.json",
+        "tsconfig.*.json",
+        "package.json"
+      ],
       "outputs": [".cache/tsbuildinfo.json"],
       "env": []
     },

@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/"
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache src/"
   },
   "dependencies": {
     "@db/console": "workspace:*",

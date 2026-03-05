@@ -24,7 +24,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache src/",
     "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --",
     "inject": "pnpm with-env tsx src/cli/inject.ts",
     "inject:prod": "dotenv -e ../../apps/console/.vercel/.env.production.local -- tsx src/cli/inject.ts",
