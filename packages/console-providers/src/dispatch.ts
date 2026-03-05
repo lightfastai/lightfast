@@ -1,13 +1,14 @@
-import type { PostTransformEvent, SourceType } from "@repo/console-validation";
+import type { PostTransformEvent } from "./post-transform-event.js";
+import type { EventDefinition } from "./define.js";
 import type { TransformContext } from "./types.js";
-import { PROVIDERS } from "./registry.js";
+import { PROVIDERS, type SourceType } from "./registry.js";
 
 /**
  * Central webhook payload transformer.
  * Routes (provider, eventType) to the appropriate transformer.
  * Returns null for unsupported event types.
  *
- * Zero `as` casts — the defineEvent() pattern ensures schema<->transform consistency.
+ * The defineEvent() pattern ensures schema<->transform consistency.
  * Each event's schema.parse() narrows the payload before the transform runs.
  */
 export function transformWebhookPayload(
@@ -19,7 +20,8 @@ export function transformWebhookPayload(
   const providerDef = PROVIDERS[provider];
 
   const category = providerDef.resolveCategory?.(eventType) ?? eventType;
-  const eventDef = providerDef.events[category];
+  const events = providerDef.events as Record<string, EventDefinition>;
+  const eventDef = events[category];
   if (!eventDef) return null;
 
   const parsed = eventDef.schema.parse(payload);

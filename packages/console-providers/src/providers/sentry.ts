@@ -1,5 +1,4 @@
 import { defineProvider, defineEvent } from "../define.js";
-import type { ProviderDefinition } from "../define.js";
 import { z } from "zod";
 import { sentryConfigSchema, encodeSentryToken, decodeSentryToken } from "../types.js";
 import type { SentryConfig, OAuthTokens, CallbackResult } from "../types.js";
@@ -19,7 +18,52 @@ import {
   transformSentryMetricAlert,
 } from "../transformers/sentry.js";
 
-export const sentry: ProviderDefinition<SentryConfig> = defineProvider<SentryConfig>({
+// ── Standalone OAuth helpers (avoids circular self-reference in processCallback) ──
+
+async function exchangeSentryCode(config: SentryConfig, code: string, _redirectUri: string): Promise<OAuthTokens> {
+  const { installationId, token: authCode } = decodeSentryToken(code);
+
+  const response = await fetch(
+    `https://sentry.io/api/0/sentry-app-installations/${installationId}/authorizations/`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.clientSecret}`,
+      },
+      body: JSON.stringify({
+        grant_type: "authorization_code",
+        code: authCode,
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("[sentry] token exchange failed:", { status: response.status, body: errorBody });
+    throw new Error(`Sentry token exchange failed: ${response.status}`);
+  }
+
+  const rawData: unknown = await response.json();
+  const data = sentryOAuthResponseSchema.parse(rawData);
+
+  return {
+    accessToken: data.token,
+    refreshToken: data.refreshToken
+      ? encodeSentryToken({ installationId, token: data.refreshToken })
+      : undefined,
+    expiresIn: data.expiresAt
+      ? Math.floor((new Date(data.expiresAt).getTime() - Date.now()) / 1000)
+      : undefined,
+    raw: rawData as Record<string, unknown>,
+  } satisfies OAuthTokens;
+}
+
+// ── Provider Definition ──
+
+export const sentry = defineProvider({
   envSchema: {
     SENTRY_APP_SLUG: z.string().min(1),
     SENTRY_CLIENT_ID: z.string().min(1),
@@ -43,7 +87,17 @@ export const sentry: ProviderDefinition<SentryConfig> = defineProvider<SentryCon
   },
 
   events: {
-    issue: defineEvent({ label: "Issues", weight: 55, schema: preTransformSentryIssueWebhookSchema, transform: transformSentryIssue }),
+    issue: defineEvent({
+      label: "Issues", weight: 55, schema: preTransformSentryIssueWebhookSchema, transform: transformSentryIssue,
+      actions: {
+        created: { label: "Issue Created", weight: 55 },
+        resolved: { label: "Issue Resolved", weight: 50 },
+        assigned: { label: "Issue Assigned", weight: 30 },
+        ignored: { label: "Issue Ignored", weight: 25 },
+        archived: { label: "Issue Archived", weight: 25 },
+        unresolved: { label: "Issue Unresolved", weight: 45 },
+      },
+    }),
     error: defineEvent({ label: "Errors", weight: 45, schema: preTransformSentryErrorWebhookSchema, transform: transformSentryError }),
     event_alert: defineEvent({ label: "Event Alerts", weight: 65, schema: preTransformSentryEventAlertWebhookSchema, transform: transformSentryEventAlert }),
     metric_alert: defineEvent({ label: "Metric Alerts", weight: 70, schema: preTransformSentryMetricAlertWebhookSchema, transform: transformSentryMetricAlert }),
@@ -77,46 +131,7 @@ export const sentry: ProviderDefinition<SentryConfig> = defineProvider<SentryCon
       url.searchParams.set("state", state);
       return url.toString();
     },
-    exchangeCode: async (config, code, _redirectUri) => {
-      const { installationId, token: authCode } = decodeSentryToken(code);
-
-      const response = await fetch(
-        `https://sentry.io/api/0/sentry-app-installations/${installationId}/authorizations/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${config.clientSecret}`,
-          },
-          body: JSON.stringify({
-            grant_type: "authorization_code",
-            code: authCode,
-            client_id: config.clientId,
-            client_secret: config.clientSecret,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error("[sentry] token exchange failed:", { status: response.status, body: errorBody });
-        throw new Error(`Sentry token exchange failed: ${response.status}`);
-      }
-
-      const rawData: unknown = await response.json();
-      const data = sentryOAuthResponseSchema.parse(rawData);
-
-      return {
-        accessToken: data.token,
-        refreshToken: data.refreshToken
-          ? encodeSentryToken({ installationId, token: data.refreshToken })
-          : undefined,
-        expiresIn: data.expiresAt
-          ? Math.floor((new Date(data.expiresAt).getTime() - Date.now()) / 1000)
-          : undefined,
-        raw: rawData as Record<string, unknown>,
-      } satisfies OAuthTokens;
-    },
+    exchangeCode: exchangeSentryCode,
     refreshToken: async (config, refreshToken) => {
       const { installationId, token } = decodeSentryToken(refreshToken);
 
@@ -177,7 +192,7 @@ export const sentry: ProviderDefinition<SentryConfig> = defineProvider<SentryCon
       if (!sentryInstallationId) throw new Error("missing installationId query param");
 
       const compositeCode = encodeSentryToken({ installationId: sentryInstallationId, token: code });
-      const oauthTokens = await sentry.oauth.exchangeCode(config, compositeCode, "");
+      const oauthTokens = await exchangeSentryCode(config, compositeCode, "");
 
       const rawData: unknown = oauthTokens.raw;
       const parsedData = sentryOAuthResponseSchema.parse(rawData);

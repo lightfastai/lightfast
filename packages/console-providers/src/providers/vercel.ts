@@ -1,5 +1,4 @@
 import { defineProvider, defineEvent } from "../define.js";
-import type { ProviderDefinition } from "../define.js";
 import { z } from "zod";
 import { vercelConfigSchema } from "../types.js";
 import type { VercelConfig, OAuthTokens, CallbackResult } from "../types.js";
@@ -11,7 +10,38 @@ import {
 } from "../schemas/vercel.js";
 import { transformVercelDeployment } from "../transformers/vercel.js";
 
-export const vercel: ProviderDefinition<VercelConfig> = defineProvider<VercelConfig>({
+// ── Standalone OAuth helpers (avoids circular self-reference in processCallback) ──
+
+async function exchangeVercelCode(config: VercelConfig, code: string, redirectUri: string): Promise<OAuthTokens> {
+  const body = new URLSearchParams({
+    client_id: config.clientSecretId,
+    client_secret: config.clientIntegrationSecret,
+    code,
+    redirect_uri: redirectUri,
+  });
+
+  const response = await fetch("https://api.vercel.com/v2/oauth/access_token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  if (!response.ok) throw new Error(`Vercel token exchange failed: ${response.status}`);
+
+  const rawData: unknown = await response.json();
+  const data = vercelOAuthResponseSchema.parse(rawData);
+
+  return {
+    accessToken: data.access_token,
+    tokenType: data.token_type,
+    raw: rawData as Record<string, unknown>,
+  } satisfies OAuthTokens;
+}
+
+// ── Provider Definition ──
+
+export const vercel = defineProvider({
   envSchema: {
     VERCEL_INTEGRATION_SLUG: z.string().min(1),
     VERCEL_CLIENT_SECRET_ID: z.string().min(1),
@@ -45,6 +75,14 @@ export const vercel: ProviderDefinition<VercelConfig> = defineProvider<VercelCon
       weight: 40,
       schema: preTransformVercelWebhookPayloadSchema,
       transform: transformVercelDeployment,
+      actions: {
+        created: { label: "Deployment Started", weight: 30 },
+        succeeded: { label: "Deployment Succeeded", weight: 40 },
+        ready: { label: "Deployment Ready", weight: 40 },
+        error: { label: "Deployment Failed", weight: 70 },
+        canceled: { label: "Deployment Canceled", weight: 65 },
+        "check-rerequested": { label: "Deployment Check Re-requested", weight: 25 },
+      },
     }),
   },
 
@@ -86,32 +124,7 @@ export const vercel: ProviderDefinition<VercelConfig> = defineProvider<VercelCon
       url.searchParams.set("state", state);
       return url.toString();
     },
-    exchangeCode: async (config, code, redirectUri) => {
-      const body = new URLSearchParams({
-        client_id: config.clientSecretId,
-        client_secret: config.clientIntegrationSecret,
-        code,
-        redirect_uri: redirectUri,
-      });
-
-      const response = await fetch("https://api.vercel.com/v2/oauth/access_token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: body.toString(),
-        signal: AbortSignal.timeout(15_000),
-      });
-
-      if (!response.ok) throw new Error(`Vercel token exchange failed: ${response.status}`);
-
-      const rawData: unknown = await response.json();
-      const data = vercelOAuthResponseSchema.parse(rawData);
-
-      return {
-        accessToken: data.access_token,
-        tokenType: data.token_type,
-        raw: rawData as Record<string, unknown>,
-      } satisfies OAuthTokens;
-    },
+    exchangeCode: exchangeVercelCode,
     refreshToken: (): Promise<OAuthTokens> => {
       return Promise.reject(new Error("Vercel tokens do not support refresh"));
     },
@@ -132,7 +145,7 @@ export const vercel: ProviderDefinition<VercelConfig> = defineProvider<VercelCon
       if (!configurationId) throw new Error("missing configurationId");
 
       const redirectUri = `${config.callbackBaseUrl}/gateway/vercel/callback`;
-      const oauthTokens = await vercel.oauth.exchangeCode(config, code, redirectUri);
+      const oauthTokens = await exchangeVercelCode(config, code, redirectUri);
 
       const parsed = vercelOAuthResponseSchema.parse(oauthTokens.raw);
 

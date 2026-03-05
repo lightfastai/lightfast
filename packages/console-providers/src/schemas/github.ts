@@ -166,3 +166,10 @@ export type PreTransformGitHubIssuesEvent = z.infer<typeof preTransformGitHubIss
 export type PreTransformGitHubReleaseEvent = z.infer<typeof preTransformGitHubReleaseEventSchema>;
 export type PreTransformGitHubDiscussionEvent = z.infer<typeof preTransformGitHubDiscussionEventSchema>;
 export type GitHubWebhookPayload = z.infer<typeof githubWebhookPayloadSchema>;
+
+export type GitHubWebhookEventType =
+  | "push"
+  | "pull_request"
+  | "issues"
+  | "release"
+  | "discussion";

@@ -119,7 +119,7 @@ async function getInstallationDetails(
 
 // ── Provider Definition ──
 
-export const github = defineProvider<GitHubConfig>({
+export const github = defineProvider({
   name: "github",
   displayName: "GitHub",
   description: "Connect your GitHub repositories",
@@ -135,10 +135,38 @@ export const github = defineProvider<GitHubConfig>({
 
   events: {
     push: defineEvent({ label: "Push", weight: 30, schema: preTransformGitHubPushEventSchema, transform: transformGitHubPush }),
-    pull_request: defineEvent({ label: "Pull Requests", weight: 50, schema: preTransformGitHubPullRequestEventSchema, transform: transformGitHubPullRequest }),
-    issues: defineEvent({ label: "Issues", weight: 45, schema: preTransformGitHubIssuesEventSchema, transform: transformGitHubIssue }),
-    release: defineEvent({ label: "Releases", weight: 75, schema: preTransformGitHubReleaseEventSchema, transform: transformGitHubRelease }),
-    discussion: defineEvent({ label: "Discussions", weight: 35, schema: preTransformGitHubDiscussionEventSchema, transform: transformGitHubDiscussion }),
+    pull_request: defineEvent({
+      label: "Pull Requests", weight: 50, schema: preTransformGitHubPullRequestEventSchema, transform: transformGitHubPullRequest,
+      actions: {
+        opened: { label: "PR Opened", weight: 50 },
+        closed: { label: "PR Closed", weight: 45 },
+        merged: { label: "PR Merged", weight: 60 },
+        reopened: { label: "PR Reopened", weight: 40 },
+        "ready-for-review": { label: "Ready for Review", weight: 45 },
+      },
+    }),
+    issues: defineEvent({
+      label: "Issues", weight: 45, schema: preTransformGitHubIssuesEventSchema, transform: transformGitHubIssue,
+      actions: {
+        opened: { label: "Issue Opened", weight: 45 },
+        closed: { label: "Issue Closed", weight: 40 },
+        reopened: { label: "Issue Reopened", weight: 40 },
+      },
+    }),
+    release: defineEvent({
+      label: "Releases", weight: 75, schema: preTransformGitHubReleaseEventSchema, transform: transformGitHubRelease,
+      actions: {
+        published: { label: "Release Published", weight: 75 },
+        created: { label: "Release Created", weight: 70 },
+      },
+    }),
+    discussion: defineEvent({
+      label: "Discussions", weight: 35, schema: preTransformGitHubDiscussionEventSchema, transform: transformGitHubDiscussion,
+      actions: {
+        created: { label: "Discussion Created", weight: 35 },
+        answered: { label: "Discussion Answered", weight: 40 },
+      },
+    }),
   },
 
   webhook: {

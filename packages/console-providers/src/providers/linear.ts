@@ -1,5 +1,4 @@
 import { defineProvider, defineEvent } from "../define.js";
-import type { ProviderDefinition } from "../define.js";
 import { z } from "zod";
 import { linearConfigSchema } from "../types.js";
 import type { LinearConfig, OAuthTokens, CallbackResult } from "../types.js";
@@ -102,9 +101,40 @@ function stableFingerprint(payload: unknown): string {
     .join("");
 }
 
+// ── Standalone OAuth helpers (avoids circular self-reference in processCallback) ──
+
+async function exchangeLinearCode(config: LinearConfig, code: string, redirectUri: string): Promise<OAuthTokens> {
+  const response = await fetch("https://api.linear.app/oauth/token", {
+    method: "POST",
+    signal: AbortSignal.timeout(15_000),
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+      redirect_uri: redirectUri,
+      code,
+      grant_type: "authorization_code",
+    }).toString(),
+  });
+
+  if (!response.ok) throw new Error(`Linear token exchange failed: ${response.status}`);
+
+  const rawData: unknown = await response.json();
+  const data = linearOAuthResponseSchema.parse(rawData);
+
+  return {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    tokenType: data.token_type,
+    scope: data.scope,
+    expiresIn: data.expires_in,
+    raw: rawData as Record<string, unknown>,
+  } satisfies OAuthTokens;
+}
+
 // ── Provider Definition ──
 
-export const linear: ProviderDefinition<LinearConfig> = defineProvider<LinearConfig>({
+export const linear = defineProvider({
   envSchema: {
     LINEAR_CLIENT_ID: z.string().min(1),
     LINEAR_CLIENT_SECRET: z.string().min(1),
@@ -130,11 +160,46 @@ export const linear: ProviderDefinition<LinearConfig> = defineProvider<LinearCon
   },
 
   events: {
-    Issue: defineEvent({ label: "Issues", weight: 50, schema: preTransformLinearIssueWebhookSchema, transform: transformLinearIssue }),
-    Comment: defineEvent({ label: "Comments", weight: 25, schema: preTransformLinearCommentWebhookSchema, transform: transformLinearComment }),
-    Project: defineEvent({ label: "Projects", weight: 45, schema: preTransformLinearProjectWebhookSchema, transform: transformLinearProject }),
-    Cycle: defineEvent({ label: "Cycles", weight: 40, schema: preTransformLinearCycleWebhookSchema, transform: transformLinearCycle }),
-    ProjectUpdate: defineEvent({ label: "Project Updates", weight: 45, schema: preTransformLinearProjectUpdateWebhookSchema, transform: transformLinearProjectUpdate }),
+    Issue: defineEvent({
+      label: "Issues", weight: 50, schema: preTransformLinearIssueWebhookSchema, transform: transformLinearIssue,
+      actions: {
+        created: { label: "Issue Created", weight: 50 },
+        updated: { label: "Issue Updated", weight: 35 },
+        deleted: { label: "Issue Deleted", weight: 40 },
+      },
+    }),
+    Comment: defineEvent({
+      label: "Comments", weight: 25, schema: preTransformLinearCommentWebhookSchema, transform: transformLinearComment,
+      actions: {
+        created: { label: "Comment Added", weight: 25 },
+        updated: { label: "Comment Updated", weight: 20 },
+        deleted: { label: "Comment Deleted", weight: 20 },
+      },
+    }),
+    Project: defineEvent({
+      label: "Projects", weight: 45, schema: preTransformLinearProjectWebhookSchema, transform: transformLinearProject,
+      actions: {
+        created: { label: "Project Created", weight: 45 },
+        updated: { label: "Project Updated", weight: 35 },
+        deleted: { label: "Project Deleted", weight: 40 },
+      },
+    }),
+    Cycle: defineEvent({
+      label: "Cycles", weight: 40, schema: preTransformLinearCycleWebhookSchema, transform: transformLinearCycle,
+      actions: {
+        created: { label: "Cycle Created", weight: 40 },
+        updated: { label: "Cycle Updated", weight: 30 },
+        deleted: { label: "Cycle Deleted", weight: 35 },
+      },
+    }),
+    ProjectUpdate: defineEvent({
+      label: "Project Updates", weight: 45, schema: preTransformLinearProjectUpdateWebhookSchema, transform: transformLinearProjectUpdate,
+      actions: {
+        created: { label: "Project Update Posted", weight: 45 },
+        updated: { label: "Project Update Edited", weight: 30 },
+        deleted: { label: "Project Update Deleted", weight: 25 },
+      },
+    }),
   },
 
   // Wire eventType "Issue:create" → dispatch category "Issue"
@@ -174,34 +239,7 @@ export const linear: ProviderDefinition<LinearConfig> = defineProvider<LinearCon
       url.searchParams.set("state", state);
       return url.toString();
     },
-    exchangeCode: async (config, code, redirectUri) => {
-      const response = await fetch("https://api.linear.app/oauth/token", {
-        method: "POST",
-        signal: AbortSignal.timeout(15_000),
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: config.clientId,
-          client_secret: config.clientSecret,
-          redirect_uri: redirectUri,
-          code,
-          grant_type: "authorization_code",
-        }).toString(),
-      });
-
-      if (!response.ok) throw new Error(`Linear token exchange failed: ${response.status}`);
-
-      const rawData: unknown = await response.json();
-      const data = linearOAuthResponseSchema.parse(rawData);
-
-      return {
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token,
-        tokenType: data.token_type,
-        scope: data.scope,
-        expiresIn: data.expires_in,
-        raw: rawData as Record<string, unknown>,
-      } satisfies OAuthTokens;
-    },
+    exchangeCode: exchangeLinearCode,
     refreshToken: async (config, refreshToken) => {
       const response = await fetch("https://api.linear.app/oauth/token", {
         method: "POST",
@@ -245,7 +283,7 @@ export const linear: ProviderDefinition<LinearConfig> = defineProvider<LinearCon
       if (!code) throw new Error("missing code");
 
       const redirectUri = `${config.callbackBaseUrl}/gateway/linear/callback`;
-      const oauthTokens = await linear.oauth.exchangeCode(config, code, redirectUri);
+      const oauthTokens = await exchangeLinearCode(config, code, redirectUri);
 
       const linearContext = await fetchLinearContext(oauthTokens.accessToken);
       const externalId = linearContext.externalId;

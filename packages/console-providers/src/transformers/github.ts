@@ -1,4 +1,4 @@
-import type { PostTransformEvent, PostTransformReference } from "@repo/console-validation";
+import type { PostTransformEvent, PostTransformReference } from "../post-transform-event.js";
 import type { TransformContext } from "../types.js";
 import { validatePostTransformEvent, logValidationErrors } from "../validation.js";
 import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
