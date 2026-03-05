@@ -1,5 +1,5 @@
-import type { PostTransformEvent, SourceType } from "@repo/console-providers";
-import { getEventWeight } from "@repo/console-providers";
+import type { PostTransformEvent, EventKey } from "@repo/console-providers";
+import { EVENT_REGISTRY } from "@repo/console-providers";
 
 /**
  * Minimum significance score for observation capture.
@@ -79,7 +79,8 @@ export function scoreSignificance(sourceEvent: PostTransformEvent): Significance
   const factors: string[] = [];
 
   // 1. Event type base weight (from EVENT_REGISTRY)
-  let score = getEventWeight(sourceEvent.source as SourceType, sourceEvent.sourceType);
+  const eventKey = `${sourceEvent.source}:${sourceEvent.sourceType}` as EventKey;
+  let score = EVENT_REGISTRY[eventKey]?.weight ?? 35; // Fallback for events pre-dating the current registry
   factors.push(`base:${sourceEvent.source}:${sourceEvent.sourceType}`);
 
   // 2. Content signal matching

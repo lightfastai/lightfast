@@ -1,8 +1,7 @@
 import { defineProvider, actionEvent } from "../define.js";
 import { z } from "zod";
-import { linearConfigSchema } from "../types.js";
+import { linearConfigSchema, linearAccountInfoSchema, linearOAuthRawSchema } from "../types.js";
 import type { LinearConfig, OAuthTokens, CallbackResult, LinearAccountInfo } from "../types.js";
-import { linearOAuthRawSchema } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import {
   preTransformLinearIssueWebhookSchema,
@@ -151,6 +150,7 @@ export const linear = defineProvider({
   displayName: "Linear",
   description: "Connect your Linear workspace",
   configSchema: linearConfigSchema,
+  accountInfoSchema: linearAccountInfoSchema,
 
   categories: {
     Issue: { label: "Issues", description: "Capture issue creates, updates, and deletes", type: "observation" },

@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import type { PostTransformEvent } from "./post-transform-event.js";
-import type { TransformContext, OAuthTokens, ProviderAccountInfo, CallbackResult } from "./types.js";
+import type { TransformContext, OAuthTokens, BaseProviderAccountInfo, CallbackResult } from "./types.js";
 
 export interface CategoryDef {
   label: string;
@@ -70,7 +70,7 @@ export interface WebhookDef<TConfig> {
 }
 
 /** OAuth functions — pure fetch, no env/DB/framework */
-export interface OAuthDef<TConfig, TAccountInfo extends ProviderAccountInfo = ProviderAccountInfo> {
+export interface OAuthDef<TConfig, TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo> {
   buildAuthUrl: (config: TConfig, state: string, options?: Record<string, unknown>) => string;
   exchangeCode: (config: TConfig, code: string, redirectUri: string) => Promise<OAuthTokens>;
   refreshToken: (config: TConfig, refreshToken: string) => Promise<OAuthTokens>;
@@ -94,7 +94,7 @@ export interface RuntimeConfig {
 
 export interface ProviderDefinition<
   TConfig = unknown,
-  TAccountInfo extends ProviderAccountInfo = ProviderAccountInfo,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
   TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
   TEvents extends Record<string, EventDefinition> = Record<string, EventDefinition>,
 > {
@@ -102,6 +102,7 @@ export interface ProviderDefinition<
   readonly displayName: string;
   readonly description: string;
   readonly configSchema: z.ZodType<TConfig>;
+  readonly accountInfoSchema: z.ZodObject;
   readonly categories: TCategories;
   readonly events: TEvents;
   readonly webhook: WebhookDef<TConfig>;
@@ -124,7 +125,7 @@ export interface ProviderDefinition<
  */
 export function defineProvider<
   TConfig,
-  TAccountInfo extends ProviderAccountInfo = ProviderAccountInfo,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
   const TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
   const TEvents extends Record<string, EventDefinition> = Record<string, EventDefinition>,
 >(

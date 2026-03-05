@@ -1,6 +1,6 @@
 import { defineProvider, actionEvent } from "../define.js";
 import { z } from "zod";
-import { vercelConfigSchema } from "../types.js";
+import { vercelConfigSchema, vercelAccountInfoSchema } from "../types.js";
 import type { VercelConfig, OAuthTokens, CallbackResult, VercelAccountInfo } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import {
@@ -57,6 +57,7 @@ export const vercel = defineProvider({
   displayName: "Vercel",
   description: "Connect your Vercel projects",
   configSchema: vercelConfigSchema,
+  accountInfoSchema: vercelAccountInfoSchema,
 
   // Fine-grained categories for UI/PROVIDER_REGISTRY compatibility
   categories: {

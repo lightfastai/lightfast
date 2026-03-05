@@ -1,6 +1,6 @@
 import { defineProvider, simpleEvent, actionEvent } from "../define.js";
 import { z } from "zod";
-import { sentryConfigSchema, encodeSentryToken, decodeSentryToken } from "../types.js";
+import { sentryConfigSchema, sentryAccountInfoSchema, encodeSentryToken, decodeSentryToken } from "../types.js";
 import type { SentryConfig, OAuthTokens, CallbackResult, SentryAccountInfo } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import {
@@ -78,6 +78,7 @@ export const sentry = defineProvider({
   displayName: "Sentry",
   description: "Connect your Sentry projects",
   configSchema: sentryConfigSchema,
+  accountInfoSchema: sentryAccountInfoSchema,
 
   categories: {
     issue: { label: "Issues", description: "Capture issue state changes (created, resolved, assigned, ignored)", type: "observation" },

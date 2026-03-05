@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { defineProvider, simpleEvent, actionEvent } from "../define.js";
 import { githubConfigSchema } from "../types.js";
+import { githubAccountInfoSchema } from "../types.js";
 import type { GitHubConfig, OAuthTokens, CallbackResult, GitHubAccountInfo, GitHubInstallationRaw } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import { createRS256JWT } from "../jwt.js";
@@ -119,6 +120,7 @@ export const github = defineProvider({
   displayName: "GitHub",
   description: "Connect your GitHub repositories",
   configSchema: githubConfigSchema,
+  accountInfoSchema: githubAccountInfoSchema,
 
   categories: {
     push: { label: "Push", description: "Sync files and capture observations when code is pushed", type: "sync+observation" },

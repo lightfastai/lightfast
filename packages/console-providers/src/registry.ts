@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ProviderDefinition, EventDefinition, ActionDef } from "./define.js";
+import type { ProviderDefinition, EventDefinition, ActionDef, ActionEventDef } from "./define.js";
 import { github } from "./providers/github.js";
 import { vercel } from "./providers/vercel.js";
 import { linear } from "./providers/linear.js";
@@ -26,12 +26,10 @@ export const sourceTypeSchema = z.enum(
 /**
  * Extract concrete action keys from an EventDefinition.
  * Returns the actions record if it has specific literal keys (not just `string`).
- * Returns `never` for events without actions (where keyof A is just `string`).
+ * Returns `never` for simple events without actions.
  */
-type ActionsOf<E> = E extends EventDefinition<infer _S, infer A>
-  ? A extends Record<string, ActionDef>
-    ? string extends keyof A ? never : A
-    : never
+type ActionsOf<E> = E extends ActionEventDef<infer _S, infer A>
+  ? string extends keyof A ? never : A
   : never;
 
 /** Derive event keys for a single provider from its events map */
@@ -61,7 +59,7 @@ function deriveEventRegistry(): Record<string, EventRegistryEntry> {
   for (const [source, provider] of Object.entries(PROVIDERS)) {
     for (const [eventKey, eventDef] of Object.entries(provider.events)) {
       const def = eventDef as EventDefinition;
-      if (def.actions) {
+      if (def.kind === "with-actions") {
         for (const [action, actionDef] of Object.entries(def.actions)) {
           registry[`${source}:${eventKey}.${action}`] = {
             source: source as SourceType,
@@ -126,10 +124,13 @@ export const WEBHOOK_EVENT_TYPES: Record<SourceType, string[]> = Object.fromEntr
   Object.entries(PROVIDERS).map(([key, p]) => [key, Object.keys(p.categories)]),
 ) as unknown as Record<SourceType, string[]>;
 
-export function getEventWeight(source: SourceType, eventType: string): number {
-  const events = PROVIDERS[source].events as Record<string, EventDefinition>;
-  return events[eventType]?.weight ?? 35;
-}
+/** Derived from PROVIDERS — automatically includes any new provider added to the registry */
+export const providerAccountInfoSchema = z.discriminatedUnion(
+  "sourceType",
+  Object.values(PROVIDERS).map((p) => p.accountInfoSchema) as [z.ZodObject, ...z.ZodObject[]],
+);
+
+export type ProviderAccountInfo = z.infer<typeof providerAccountInfoSchema>;
 
 /** Merged env schemas from all providers — for gateway env.ts server block */
 export const PROVIDER_ENV_SCHEMAS = Object.fromEntries(

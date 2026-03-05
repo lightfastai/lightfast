@@ -141,18 +141,20 @@ export const sentryAccountInfoSchema = baseAccountInfoSchema.extend({
 
 export type SentryAccountInfo = z.infer<typeof sentryAccountInfoSchema>;
 
-export const providerAccountInfoSchema = z.discriminatedUnion("sourceType", [
-  githubAccountInfoSchema,
-  vercelAccountInfoSchema,
-  linearAccountInfoSchema,
-  sentryAccountInfoSchema,
-]);
-
-export type ProviderAccountInfo = z.infer<typeof providerAccountInfoSchema>;
+/** Structural base type — used as a type constraint in define.ts.
+ * The concrete discriminated union is `ProviderAccountInfo` exported from registry.ts. */
+export interface BaseProviderAccountInfo {
+  version: 1;
+  sourceType: string;
+  events: string[];
+  installedAt: string;
+  lastValidatedAt: string;
+  raw: unknown;
+}
 
 // ── Generic CallbackResult for compile-time narrowing ──
 
-export type CallbackResult<TAccountInfo extends ProviderAccountInfo = ProviderAccountInfo> =
+export type CallbackResult<TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo> =
   | { status: "connected"; externalId: string; accountInfo: TAccountInfo; tokens: OAuthTokens }
   | { status: "connected-no-token"; externalId: string; accountInfo: TAccountInfo }
   | { status: "connected-redirect"; externalId: string; accountInfo: TAccountInfo; tokens: OAuthTokens; nextUrl: string }

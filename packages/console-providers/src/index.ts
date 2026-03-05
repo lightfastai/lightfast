@@ -152,7 +152,6 @@ export {
   vercelAccountInfoSchema,
   linearAccountInfoSchema,
   sentryAccountInfoSchema,
-  providerAccountInfoSchema,
 } from "./types.js";
 export type {
   GitHubInstallationRaw,
@@ -163,7 +162,6 @@ export type {
   VercelAccountInfo,
   LinearAccountInfo,
   SentryAccountInfo,
-  ProviderAccountInfo,
 } from "./types.js";
 
 // ── Gateway Service Contracts ─────────────────────────────────────────────────
@@ -214,9 +212,9 @@ export {
   ALL_SENTRY_EVENTS,
   ALL_LINEAR_EVENTS,
   getProvider,
-  getEventWeight,
+  providerAccountInfoSchema,
 } from "./registry.js";
-export type { ProviderName, SourceType, EventKey } from "./registry.js";
+export type { ProviderName, SourceType, EventKey, ProviderAccountInfo } from "./registry.js";
 export { sourceTypeSchema, PROVIDER_NAMES } from "./registry.js";
 
 // ── Provider Definitions ──────────────────────────────────────────────────────
