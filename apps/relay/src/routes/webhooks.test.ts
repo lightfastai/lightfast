@@ -17,7 +17,7 @@ const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv, dbOps } =
       mockPublishJSON: vi.fn().mockResolvedValue({ messageId: "msg-1" }),
       mockRedisSet: vi.fn().mockResolvedValue("OK"),
       mockWorkflowTrigger: vi
-        .fn()
+        .fn<(args: { url: string; body: string; headers?: Record<string, string> }) => Promise<{ workflowRunId: string }>>()
         .mockResolvedValue({ workflowRunId: "wf-1" }),
       mockEnv: env,
       dbOps: [] as { op: "insert" | "update"; table?: unknown; values?: unknown; set?: unknown }[],
@@ -38,29 +38,27 @@ vi.mock("@vendor/upstash", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({ trigger: mockWorkflowTrigger }),
+  workflowClient: { trigger: mockWorkflowTrigger },
 }));
 
 vi.mock("@db/console/client", () => ({
   db: {
     insert: (...args: unknown[]) => {
-      const idx = dbOps.length;
-      dbOps.push({ op: "insert" as const, table: args[0] });
+      const entry = { op: "insert" as const, table: args[0] } as (typeof dbOps)[number];
+      dbOps.push(entry);
       return {
         values: (...valArgs: unknown[]) => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          dbOps[idx]!.values = valArgs[0];
+          entry.values = valArgs[0];
           return { onConflictDoNothing: () => Promise.resolve() };
         },
       };
     },
     update: (...args: unknown[]) => {
-      const idx = dbOps.length;
-      dbOps.push({ op: "update" as const, table: args[0] });
+      const entry = { op: "update" as const, table: args[0] } as (typeof dbOps)[number];
+      dbOps.push(entry);
       return {
         set: (...setArgs: unknown[]) => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          dbOps[idx]!.set = setArgs[0];
+          entry.set = setArgs[0];
           return { where: () => Promise.resolve() };
         },
       };
@@ -96,6 +94,16 @@ function request(
   const body =
     typeof init.body === "object" ? JSON.stringify(init.body) : init.body;
   return app.request(path, { method: "POST", headers, body });
+}
+
+/** Extract and parse the JSON body from the Nth workflow trigger call. */
+function getTriggerBody<T = Record<string, unknown>>(
+  mock: typeof mockWorkflowTrigger,
+  callIndex = 0,
+): T {
+  const call = mock.mock.calls[callIndex];
+  if (!call) throw new Error(`No trigger call at index ${callIndex}`);
+  return JSON.parse(call[0].body) as T;
 }
 
 // ── Tests ──
@@ -198,12 +206,10 @@ describe("POST /webhooks/:provider", () => {
       expect(res.status).toBe(200);
 
       // Verify the workflow receives the complete payload including extra fields
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
-      const triggeredPayload = triggerCall.body.payload;
+      const triggeredPayload = getTriggerBody<{ payload: Record<string, unknown> }>(mockWorkflowTrigger).payload;
       expect(triggeredPayload.sender).toEqual({ login: "octocat", id: 1 });
       expect(triggeredPayload.ref).toBe("refs/heads/main");
-      expect(triggeredPayload.commits[0].message).toBe("feat: 新しい機能 🎉");
+      expect((triggeredPayload.commits as { message: string }[])[0]?.message).toBe("feat: 新しい機能 🎉");
     });
 
     it("handles unicode body with correct HMAC verification", async () => {
@@ -703,8 +709,7 @@ describe("POST /webhooks/:provider", () => {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const triggerPayload = mockWorkflowTrigger.mock.calls[0]![0].body;
+      const triggerPayload = getTriggerBody(mockWorkflowTrigger);
 
       // The workflow reads these fields from context.requestPayload.
       // If any are missing or renamed, the workflow silently breaks.
@@ -742,9 +747,7 @@ describe("POST /webhooks/:provider", () => {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
-      expect(triggerCall.body).toEqual({
+      expect(getTriggerBody(mockWorkflowTrigger)).toEqual({
         provider: "github",
         deliveryId: "del-contract",
         eventType: "push",
@@ -768,10 +771,9 @@ describe("POST /webhooks/:provider", () => {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
-      expect(triggerCall.body.resourceId).toBeNull();
-      expect(triggerCall.body.eventType).toBe("organization");
+      const parsedBody = getTriggerBody(mockWorkflowTrigger);
+      expect(parsedBody.resourceId).toBeNull();
+      expect(parsedBody.eventType).toBe("organization");
     });
 
     it("Vercel route produces correct workflow payload shape", async () => {
@@ -790,9 +792,7 @@ describe("POST /webhooks/:provider", () => {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
-      expect(triggerCall.body).toEqual({
+      expect(getTriggerBody(mockWorkflowTrigger)).toEqual({
         provider: "vercel",
         deliveryId: "evt-shape",
         eventType: "deployment.ready",

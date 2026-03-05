@@ -16,7 +16,7 @@ const {
   const mockExtractResourceId = vi.fn().mockReturnValue("res-123");
   return {
     mockRedisDel: vi.fn().mockResolvedValue(1),
-    mockWorkflowTrigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
+    mockWorkflowTrigger: vi.fn<(args: { url: string; body: string; headers?: Record<string, string> }) => Promise<{ workflowRunId: string }>>().mockResolvedValue({ workflowRunId: "wf-1" }),
     mockDbUpdate: vi.fn(),
     mockDbSet: vi.fn(),
     mockDbWhere: vi.fn().mockResolvedValue(undefined),
@@ -30,7 +30,7 @@ vi.mock("@vendor/upstash", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({ trigger: mockWorkflowTrigger }),
+  workflowClient: { trigger: mockWorkflowTrigger },
 }));
 
 vi.mock("@db/console/client", () => ({
@@ -55,6 +55,23 @@ vi.mock("../../providers/index.js", () => ({
 }));
 
 import { replayDeliveries } from "../replay.js";
+
+/** Extract and parse the JSON body from the Nth workflow trigger call. */
+function getTriggerBody<T = Record<string, unknown>>(
+  mock: typeof mockWorkflowTrigger,
+  callIndex = 0,
+): T {
+  const call = mock.mock.calls[callIndex];
+  if (!call) throw new Error(`No trigger call at index ${callIndex}`);
+  return JSON.parse(call[0].body) as T;
+}
+
+/** Get the raw trigger args from the Nth workflow trigger call. */
+function getTriggerArgs(mock: typeof mockWorkflowTrigger, callIndex = 0) {
+  const call = mock.mock.calls[callIndex];
+  if (!call) throw new Error(`No trigger call at index ${callIndex}`);
+  return call[0];
+}
 
 // ── Helpers ──
 
@@ -118,14 +135,13 @@ describe("replayDeliveries", () => {
     });
     await replayDeliveries([delivery]);
 
-    expect(mockWorkflowTrigger).toHaveBeenCalledWith(
+    const triggerCall = getTriggerArgs(mockWorkflowTrigger);
+    expect(triggerCall.url).toBe("https://relay.test/api/workflows/webhook-delivery");
+    expect(getTriggerBody(mockWorkflowTrigger)).toEqual(
       expect.objectContaining({
-        url: "https://relay.test/api/workflows/webhook-delivery",
-        body: expect.objectContaining({
-          provider: "github",
-          deliveryId: "del-trigger",
-          eventType: "push",
-        }),
+        provider: "github",
+        deliveryId: "del-trigger",
+        eventType: "push",
       }),
     );
   });
@@ -176,10 +192,8 @@ describe("replayDeliveries", () => {
 
     // Should still replay with null resourceId
     expect(result.replayed).toContain("delivery-001");
-    expect(mockWorkflowTrigger).toHaveBeenCalledWith(
-      expect.objectContaining({
-        body: expect.objectContaining({ resourceId: null }),
-      }),
+    expect(getTriggerBody(mockWorkflowTrigger)).toEqual(
+      expect.objectContaining({ resourceId: null }),
     );
   });
 });
