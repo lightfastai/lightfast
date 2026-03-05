@@ -1,7 +1,8 @@
-import { defineProvider, defineEvent } from "../define.js";
+import { defineProvider, actionEvent } from "../define.js";
 import { z } from "zod";
 import { linearConfigSchema } from "../types.js";
-import type { LinearConfig, OAuthTokens, CallbackResult } from "../types.js";
+import type { LinearConfig, OAuthTokens, TypedCallbackResult, LinearAccountInfo } from "../types.js";
+import { linearOAuthRawSchema } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import {
   preTransformLinearIssueWebhookSchema,
@@ -160,7 +161,7 @@ export const linear = defineProvider({
   },
 
   events: {
-    Issue: defineEvent({
+    Issue: actionEvent({
       label: "Issues", weight: 50, schema: preTransformLinearIssueWebhookSchema, transform: transformLinearIssue,
       actions: {
         created: { label: "Issue Created", weight: 50 },
@@ -168,7 +169,7 @@ export const linear = defineProvider({
         deleted: { label: "Issue Deleted", weight: 40 },
       },
     }),
-    Comment: defineEvent({
+    Comment: actionEvent({
       label: "Comments", weight: 25, schema: preTransformLinearCommentWebhookSchema, transform: transformLinearComment,
       actions: {
         created: { label: "Comment Added", weight: 25 },
@@ -176,7 +177,7 @@ export const linear = defineProvider({
         deleted: { label: "Comment Deleted", weight: 20 },
       },
     }),
-    Project: defineEvent({
+    Project: actionEvent({
       label: "Projects", weight: 45, schema: preTransformLinearProjectWebhookSchema, transform: transformLinearProject,
       actions: {
         created: { label: "Project Created", weight: 45 },
@@ -184,7 +185,7 @@ export const linear = defineProvider({
         deleted: { label: "Project Deleted", weight: 40 },
       },
     }),
-    Cycle: defineEvent({
+    Cycle: actionEvent({
       label: "Cycles", weight: 40, schema: preTransformLinearCycleWebhookSchema, transform: transformLinearCycle,
       actions: {
         created: { label: "Cycle Created", weight: 40 },
@@ -192,7 +193,7 @@ export const linear = defineProvider({
         deleted: { label: "Cycle Deleted", weight: 35 },
       },
     }),
-    ProjectUpdate: defineEvent({
+    ProjectUpdate: actionEvent({
       label: "Project Updates", weight: 45, schema: preTransformLinearProjectUpdateWebhookSchema, transform: transformLinearProjectUpdate,
       actions: {
         created: { label: "Project Update Posted", weight: 45 },
@@ -278,6 +279,10 @@ export const linear = defineProvider({
       });
       if (!response.ok) throw new Error(`Linear token revocation failed: ${response.status}`);
     },
+    getActiveToken: (_config, _storedExternalId, storedAccessToken) => {
+      if (!storedAccessToken) return Promise.reject(new Error("linear: no stored access token"));
+      return Promise.resolve(storedAccessToken);
+    },
     processCallback: async (config, query) => {
       const code = query.code;
       if (!code) throw new Error("missing code");
@@ -289,7 +294,7 @@ export const linear = defineProvider({
       const externalId = linearContext.externalId;
       const now = new Date().toISOString();
 
-      const raw = oauthTokens.raw as { token_type: string; scope: string; expires_in: number };
+      const raw = linearOAuthRawSchema.parse(oauthTokens.raw);
 
       return {
         externalId,
@@ -315,7 +320,7 @@ export const linear = defineProvider({
             : {}),
         },
         tokens: oauthTokens,
-      } satisfies CallbackResult;
+      } satisfies TypedCallbackResult<LinearAccountInfo>;
     },
   },
 });

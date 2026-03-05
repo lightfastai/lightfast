@@ -19,7 +19,7 @@ export function transformWebhookPayload(
 ): PostTransformEvent | null {
   const providerDef = PROVIDERS[provider];
 
-  const category = providerDef.resolveCategory?.(eventType) ?? eventType;
+  const category = providerDef.resolveCategory(eventType);
   const events = providerDef.events as Record<string, EventDefinition>;
   const eventDef = events[category];
   if (!eventDef) return null;

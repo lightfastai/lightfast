@@ -74,34 +74,32 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
   workflowClient: { trigger: mockWorkflowTrigger },
 }));
 
-vi.mock("@repo/console-providers", () => {
+vi.mock("@repo/console-providers", async (importOriginal) => {
+  const actual = await importOriginal();
   const providers = {
     github: {
       name: "github",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn() },
-      capabilities: { getInstallationToken: (...args: unknown[]) => mockGetInstallationToken(...args) },
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), getActiveToken: (...args: unknown[]) => mockGetInstallationToken(...args) },
     },
     vercel: {
       name: "vercel",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn() },
-      capabilities: {},
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), getActiveToken: vi.fn() },
     },
     linear: {
       name: "linear",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn() },
-      capabilities: {},
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), getActiveToken: vi.fn() },
     },
     sentry: {
       name: "sentry",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn() },
-      capabilities: {},
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), getActiveToken: vi.fn() },
     },
   };
   return {
+    ...actual,
     PROVIDERS: providers,
     PROVIDER_ENV_SCHEMAS: {},
     getProvider: (name: string) => providers[name as keyof typeof providers],
@@ -251,7 +249,7 @@ describe("GET /connections/:id/token (integration)", () => {
     expect(await res.json()).toMatchObject({ error: "installation_not_active" });
   });
 
-  it("calls capabilities.getInstallationToken for an active github installation", async () => {
+  it("calls oauth.getActiveToken for an active github installation", async () => {
     const inst = fixtures.installation({ provider: "github", status: "active" });
     await db.insert(gwInstallations).values(inst);
 

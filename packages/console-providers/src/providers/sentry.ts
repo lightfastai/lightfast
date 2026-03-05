@@ -1,7 +1,7 @@
-import { defineProvider, defineEvent } from "../define.js";
+import { defineProvider, simpleEvent, actionEvent } from "../define.js";
 import { z } from "zod";
 import { sentryConfigSchema, encodeSentryToken, decodeSentryToken } from "../types.js";
-import type { SentryConfig, OAuthTokens, CallbackResult } from "../types.js";
+import type { SentryConfig, OAuthTokens, TypedCallbackResult, SentryAccountInfo } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import {
   preTransformSentryIssueWebhookSchema,
@@ -87,7 +87,7 @@ export const sentry = defineProvider({
   },
 
   events: {
-    issue: defineEvent({
+    issue: actionEvent({
       label: "Issues", weight: 55, schema: preTransformSentryIssueWebhookSchema, transform: transformSentryIssue,
       actions: {
         created: { label: "Issue Created", weight: 55 },
@@ -98,10 +98,13 @@ export const sentry = defineProvider({
         unresolved: { label: "Issue Unresolved", weight: 45 },
       },
     }),
-    error: defineEvent({ label: "Errors", weight: 45, schema: preTransformSentryErrorWebhookSchema, transform: transformSentryError }),
-    event_alert: defineEvent({ label: "Event Alerts", weight: 65, schema: preTransformSentryEventAlertWebhookSchema, transform: transformSentryEventAlert }),
-    metric_alert: defineEvent({ label: "Metric Alerts", weight: 70, schema: preTransformSentryMetricAlertWebhookSchema, transform: transformSentryMetricAlert }),
+    error: simpleEvent({ label: "Errors", weight: 45, schema: preTransformSentryErrorWebhookSchema, transform: transformSentryError }),
+    event_alert: simpleEvent({ label: "Event Alerts", weight: 65, schema: preTransformSentryEventAlertWebhookSchema, transform: transformSentryEventAlert }),
+    metric_alert: simpleEvent({ label: "Metric Alerts", weight: 70, schema: preTransformSentryMetricAlertWebhookSchema, transform: transformSentryMetricAlert }),
   },
+
+  // Sentry wire eventType maps 1:1 to event key (e.g., "issue" → "issue")
+  resolveCategory: (eventType) => eventType,
 
   webhook: {
     extractSecret: (config) => config.clientSecret,
@@ -184,6 +187,10 @@ export const sentry = defineProvider({
 
       if (!response.ok) throw new Error(`Sentry token revocation failed: ${response.status}`);
     },
+    getActiveToken: (_config, _storedExternalId, storedAccessToken) => {
+      if (!storedAccessToken) return Promise.reject(new Error("sentry: no stored access token"));
+      return Promise.resolve(storedAccessToken);
+    },
     processCallback: async (config, query) => {
       const code = query.code;
       const sentryInstallationId = query.installationId;
@@ -213,7 +220,7 @@ export const sentry = defineProvider({
           installationId: sentryInstallationId,
         },
         tokens: oauthTokens,
-      } satisfies CallbackResult;
+      } satisfies TypedCallbackResult<SentryAccountInfo>;
     },
   },
 });

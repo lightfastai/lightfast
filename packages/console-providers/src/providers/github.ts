@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { defineProvider, defineEvent } from "../define.js";
+import { defineProvider, simpleEvent, actionEvent } from "../define.js";
 import { githubConfigSchema } from "../types.js";
-import type { GitHubConfig, OAuthTokens, CallbackResult } from "../types.js";
+import type { GitHubConfig, OAuthTokens, TypedCallbackResult, GitHubAccountInfo, GitHubInstallationRaw } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import { createRS256JWT } from "../jwt.js";
 import {
@@ -70,12 +70,7 @@ async function getInstallationToken(config: GitHubConfig, installationId: string
 async function getInstallationDetails(
   config: GitHubConfig,
   installationId: string,
-): Promise<{
-  account: { login: string; id: number; type: string; avatar_url: string };
-  permissions: Record<string, string>;
-  events: string[];
-  created_at: string;
-}> {
+): Promise<GitHubInstallationRaw> {
   if (!/^\d+$/.test(installationId)) {
     throw new Error("Invalid GitHub installation ID: must be numeric");
   }
@@ -134,8 +129,8 @@ export const github = defineProvider({
   },
 
   events: {
-    push: defineEvent({ label: "Push", weight: 30, schema: preTransformGitHubPushEventSchema, transform: transformGitHubPush }),
-    pull_request: defineEvent({
+    push: simpleEvent({ label: "Push", weight: 30, schema: preTransformGitHubPushEventSchema, transform: transformGitHubPush }),
+    pull_request: actionEvent({
       label: "Pull Requests", weight: 50, schema: preTransformGitHubPullRequestEventSchema, transform: transformGitHubPullRequest,
       actions: {
         opened: { label: "PR Opened", weight: 50 },
@@ -145,7 +140,7 @@ export const github = defineProvider({
         "ready-for-review": { label: "Ready for Review", weight: 45 },
       },
     }),
-    issues: defineEvent({
+    issues: actionEvent({
       label: "Issues", weight: 45, schema: preTransformGitHubIssuesEventSchema, transform: transformGitHubIssue,
       actions: {
         opened: { label: "Issue Opened", weight: 45 },
@@ -153,14 +148,14 @@ export const github = defineProvider({
         reopened: { label: "Issue Reopened", weight: 40 },
       },
     }),
-    release: defineEvent({
+    release: actionEvent({
       label: "Releases", weight: 75, schema: preTransformGitHubReleaseEventSchema, transform: transformGitHubRelease,
       actions: {
         published: { label: "Release Published", weight: 75 },
         created: { label: "Release Created", weight: 70 },
       },
     }),
-    discussion: defineEvent({
+    discussion: actionEvent({
       label: "Discussions", weight: 35, schema: preTransformGitHubDiscussionEventSchema, transform: transformGitHubDiscussion,
       actions: {
         created: { label: "Discussion Created", weight: 35 },
@@ -234,6 +229,9 @@ export const github = defineProvider({
       });
       if (!response.ok) throw new Error(`GitHub token revocation failed: ${response.status}`);
     },
+    getActiveToken: async (config, storedExternalId, _storedAccessToken) => {
+      return getInstallationToken(config, storedExternalId);
+    },
     processCallback: async (config, query) => {
       const installationId = query.installation_id;
       const setupAction = query.setup_action;
@@ -254,17 +252,12 @@ export const github = defineProvider({
           raw: details,
         },
         setupAction,
-      } satisfies CallbackResult;
+      } satisfies TypedCallbackResult<GitHubAccountInfo>;
     },
   },
 
-  capabilities: {
-    createAppJWT: (config: unknown) => createGitHubAppJWT(config as GitHubConfig),
-    getInstallationToken: (config: unknown, installationId: unknown) =>
-      getInstallationToken(config as GitHubConfig, installationId as string),
-    getInstallationDetails: (config: unknown, installationId: unknown) =>
-      getInstallationDetails(config as GitHubConfig, installationId as string),
-  },
+  // GitHub wire eventType maps 1:1 to event key (e.g., "push" → "push")
+  resolveCategory: (eventType) => eventType,
 
   envSchema: {
     GITHUB_APP_SLUG: z.string().min(1),

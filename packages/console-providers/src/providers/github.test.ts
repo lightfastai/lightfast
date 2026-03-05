@@ -1,5 +1,5 @@
 /**
- * Unit tests for the GitHub provider — OAuth, webhook, and capabilities.
+ * Unit tests for the GitHub provider — OAuth, webhook, and getActiveToken.
  *
  * fetch is stubbed globally for the file; each test configures
  * mockFetch as needed and the mock is reset after each test.
@@ -36,6 +36,7 @@ let testConfig: GitHubConfig;
 beforeAll(() => {
   const { privateKey } = generateKeyPairSync("rsa", {
     modulusLength: 2048,
+    publicKeyEncoding: { type: "spki", format: "pem" },
     privateKeyEncoding: { type: "pkcs8", format: "pem" },
   });
   testConfig = {
@@ -360,44 +361,12 @@ describe("webhook.extractResourceId", () => {
   });
 });
 
-// ── capabilities.createAppJWT ─────────────────────────────────────────────────
+// ── oauth.getActiveToken ──────────────────────────────────────────────────────
 
-describe("capabilities.createAppJWT", () => {
-  it("produces a 3-part JWT string", async () => {
-    const jwt = (await github.capabilities!.createAppJWT(testConfig)) as string;
-    expect(jwt.split(".")).toHaveLength(3);
-  });
-
-  it("JWT header declares RS256 algorithm", async () => {
-    const jwt = (await github.capabilities!.createAppJWT(testConfig)) as string;
-    const [headerB64] = jwt.split(".");
-    const header = JSON.parse(
-      atob(headerB64!.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(headerB64!.length / 4) * 4, "=")),
-    ) as { alg: string; typ: string };
-    expect(header.alg).toBe("RS256");
-    expect(header.typ).toBe("JWT");
-  });
-
-  it("JWT payload contains iss matching appId", async () => {
-    const jwt = (await github.capabilities!.createAppJWT(testConfig)) as string;
-    const parts = jwt.split(".");
-    const payloadB64 = parts[1]!;
-    const payload = JSON.parse(
-      atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(payloadB64.length / 4) * 4, "=")),
-    ) as { iss: string; iat: number; exp: number };
-    expect(payload.iss).toBe(testConfig.appId);
-    expect(typeof payload.iat).toBe("number");
-    expect(typeof payload.exp).toBe("number");
-    expect(payload.exp).toBeGreaterThan(payload.iat);
-  });
-});
-
-// ── capabilities.getInstallationToken ─────────────────────────────────────────
-
-describe("capabilities.getInstallationToken", () => {
+describe("oauth.getActiveToken", () => {
   it("throws for non-numeric installationId", async () => {
     await expect(
-      github.capabilities!.getInstallationToken(testConfig, "not-a-number"),
+      github.oauth.getActiveToken(testConfig, "not-a-number", null),
     ).rejects.toThrow("Invalid GitHub installation ID: must be numeric");
   });
 
@@ -407,7 +376,7 @@ describe("capabilities.getInstallationToken", () => {
       json: async () => ({ token: "ghs_installation_token_abc" }),
     });
 
-    const token = (await github.capabilities!.getInstallationToken(testConfig, "12345")) as string;
+    const token = await github.oauth.getActiveToken(testConfig, "12345", null);
     expect(token).toBe("ghs_installation_token_abc");
   });
 
@@ -415,7 +384,7 @@ describe("capabilities.getInstallationToken", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
 
     await expect(
-      github.capabilities!.getInstallationToken(testConfig, "12345"),
+      github.oauth.getActiveToken(testConfig, "12345", null),
     ).rejects.toThrow("GitHub installation token request failed: 404");
   });
 
@@ -426,7 +395,7 @@ describe("capabilities.getInstallationToken", () => {
     });
 
     await expect(
-      github.capabilities!.getInstallationToken(testConfig, "12345"),
+      github.oauth.getActiveToken(testConfig, "12345", null),
     ).rejects.toThrow("GitHub installation token response missing valid token");
   });
 
@@ -436,108 +405,10 @@ describe("capabilities.getInstallationToken", () => {
       json: async () => ({ token: "ghs_x" }),
     });
 
-    await github.capabilities!.getInstallationToken(testConfig, "99999");
+    await github.oauth.getActiveToken(testConfig, "99999", null);
 
     const [url] = mockFetch.mock.calls[0] as [string];
     expect(url).toContain("https://api.github.com/app/installations/99999/access_tokens");
-  });
-});
-
-// ── capabilities.getInstallationDetails ──────────────────────────────────────
-
-describe("capabilities.getInstallationDetails", () => {
-  it("throws for non-numeric installationId", async () => {
-    await expect(
-      github.capabilities!.getInstallationDetails(testConfig, "abc"),
-    ).rejects.toThrow("Invalid GitHub installation ID: must be numeric");
-  });
-
-  it("throws when response is missing account data", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ permissions: {}, events: [], created_at: "2024-01-01T00:00:00Z" }),
-    });
-
-    await expect(
-      github.capabilities!.getInstallationDetails(testConfig, "12345"),
-    ).rejects.toThrow("GitHub installation response missing account data");
-  });
-
-  it("throws when account.login is not a string", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        account: { id: 42, type: "Organization", avatar_url: "" },
-        permissions: {},
-        events: [],
-        created_at: "2024-01-01T00:00:00Z",
-      }),
-    });
-
-    await expect(
-      github.capabilities!.getInstallationDetails(testConfig, "12345"),
-    ).rejects.toThrow("GitHub installation response missing account data");
-  });
-
-  it("returns full installation details on success", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockInstallationResponse,
-    });
-
-    const details = (await github.capabilities!.getInstallationDetails(
-      testConfig,
-      "12345",
-    )) as typeof mockInstallationResponse;
-
-    expect(details.account.login).toBe("my-org");
-    expect(details.account.type).toBe("Organization");
-    expect(details.permissions).toEqual({ contents: "read", metadata: "read" });
-    expect(details.events).toContain("push");
-    expect(details.created_at).toBe("2024-01-01T00:00:00Z");
-  });
-
-  it("maps 'User' account type correctly", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        ...mockInstallationResponse,
-        account: { ...mockInstallationResponse.account, type: "User", login: "alice" },
-      }),
-    });
-
-    const details = (await github.capabilities!.getInstallationDetails(
-      testConfig,
-      "12345",
-    )) as typeof mockInstallationResponse;
-
-    expect(details.account.type).toBe("User");
-    expect(details.account.login).toBe("alice");
-  });
-
-  it("maps non-User type as 'Organization'", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        ...mockInstallationResponse,
-        account: { ...mockInstallationResponse.account, type: "Bot" },
-      }),
-    });
-
-    const details = (await github.capabilities!.getInstallationDetails(
-      testConfig,
-      "12345",
-    )) as typeof mockInstallationResponse;
-
-    expect(details.account.type).toBe("Organization");
-  });
-
-  it("throws on HTTP error", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 403 });
-
-    await expect(
-      github.capabilities!.getInstallationDetails(testConfig, "99999"),
-    ).rejects.toThrow("GitHub installation details fetch failed: 403");
   });
 });
 

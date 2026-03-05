@@ -17,7 +17,6 @@ const {
   mockWriteTokenRecord,
   mockUpdateTokenRecord,
   mockOAuth,
-  mockCapabilities,
   mockCreateConfig,
   mockProvider,
 } = vi.hoisted(() => {
@@ -36,10 +35,7 @@ const {
         raw: {},
       },
     }),
-  };
-
-  const mockCapabilities = {
-    getInstallationToken: vi.fn().mockResolvedValue("tok-123"),
+    getActiveToken: vi.fn().mockResolvedValue("tok-123"),
   };
 
   const mockCreateConfig = vi.fn().mockImplementation((_env: unknown, _runtime: unknown) => ({}));
@@ -48,7 +44,6 @@ const {
     name: "github" as const,
     createConfig: mockCreateConfig,
     oauth: mockOAuth,
-    capabilities: mockCapabilities,
   };
 
   return {
@@ -72,7 +67,6 @@ const {
     mockWriteTokenRecord: vi.fn().mockResolvedValue(undefined),
     mockUpdateTokenRecord: vi.fn().mockResolvedValue(undefined),
     mockOAuth,
-    mockCapabilities,
     mockCreateConfig,
     mockProvider,
   };
@@ -205,24 +199,28 @@ vi.mock("@db/console/schema", () => ({
   },
 }));
 
-vi.mock("@repo/console-providers", () => ({
-  PROVIDERS: {
-    github: mockProvider,
-    vercel: { ...mockProvider, name: "vercel" },
-    linear: { ...mockProvider, name: "linear" },
-    sentry: { ...mockProvider, name: "sentry" },
-  },
-  PROVIDER_ENV_SCHEMAS: {},
-  getProvider: (name: string) => {
-    const providers: Record<string, unknown> = {
+vi.mock("@repo/console-providers", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    PROVIDERS: {
       github: mockProvider,
       vercel: { ...mockProvider, name: "vercel" },
       linear: { ...mockProvider, name: "linear" },
       sentry: { ...mockProvider, name: "sentry" },
-    };
-    return providers[name];
-  },
-}));
+    },
+    PROVIDER_ENV_SCHEMAS: {},
+    getProvider: (name: string) => {
+      const providers: Record<string, unknown> = {
+        github: mockProvider,
+        vercel: { ...mockProvider, name: "vercel" },
+        linear: { ...mockProvider, name: "linear" },
+        sentry: { ...mockProvider, name: "sentry" },
+      };
+      return providers[name];
+    },
+  };
+});
 
 vi.mock("../lib/token-store", () => ({
   writeTokenRecord: (...args: unknown[]) => mockWriteTokenRecord(...args),
@@ -764,7 +762,7 @@ describe("GET /connections/:id", () => {
 describe("GET /connections/:id/token", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCapabilities.getInstallationToken.mockResolvedValue("tok-123");
+    mockOAuth.getActiveToken.mockResolvedValue("tok-123");
   });
 
   it("returns 401 without API key", async () => {
@@ -805,11 +803,11 @@ describe("GET /connections/:id/token", () => {
     expect(json.accessToken).toBe("tok-123");
   });
 
-  it("returns 404 when getInstallationToken throws no_token_found", async () => {
+  it("returns 404 when getActiveToken throws no_token_found", async () => {
     mockSelectLimit.mockResolvedValueOnce([
       { id: "conn-1", provider: "github", status: "active", externalId: "123" },
     ]);
-    mockCapabilities.getInstallationToken.mockRejectedValueOnce(
+    mockOAuth.getActiveToken.mockRejectedValueOnce(
       new Error("no_token_found"),
     );
     const res = await request("/connections/conn-1/token", {
@@ -822,7 +820,7 @@ describe("GET /connections/:id/token", () => {
     mockSelectLimit.mockResolvedValueOnce([
       { id: "conn-1", provider: "github", status: "active", externalId: "123" },
     ]);
-    mockCapabilities.getInstallationToken.mockRejectedValueOnce(
+    mockOAuth.getActiveToken.mockRejectedValueOnce(
       new Error("token_expired"),
     );
     const res = await request("/connections/conn-1/token", {

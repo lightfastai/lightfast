@@ -1,7 +1,7 @@
-import { defineProvider, defineEvent } from "../define.js";
+import { defineProvider, actionEvent } from "../define.js";
 import { z } from "zod";
 import { vercelConfigSchema } from "../types.js";
-import type { VercelConfig, OAuthTokens, CallbackResult } from "../types.js";
+import type { VercelConfig, OAuthTokens, TypedCallbackResult, VercelAccountInfo } from "../types.js";
 import { computeHmac, timingSafeEqual } from "../crypto.js";
 import {
   preTransformVercelWebhookPayloadSchema,
@@ -70,7 +70,7 @@ export const vercel = defineProvider({
 
   // Coarse-grained events for dispatch (resolveCategory strips dot-suffix)
   events: {
-    deployment: defineEvent({
+    deployment: actionEvent({
       label: "Deployment",
       weight: 40,
       schema: preTransformVercelWebhookPayloadSchema,
@@ -136,6 +136,10 @@ export const vercel = defineProvider({
       });
       if (!response.ok) throw new Error(`Vercel token revocation failed: ${response.status}`);
     },
+    getActiveToken: (_config, _storedExternalId, storedAccessToken) => {
+      if (!storedAccessToken) return Promise.reject(new Error("vercel: no stored access token"));
+      return Promise.resolve(storedAccessToken);
+    },
     processCallback: async (config, query) => {
       const code = query.code;
       const configurationId = query.configurationId;
@@ -185,7 +189,7 @@ export const vercel = defineProvider({
         },
         tokens: oauthTokens,
         ...(next ? { nextUrl: next } : {}),
-      } satisfies CallbackResult;
+      } satisfies TypedCallbackResult<VercelAccountInfo>;
     },
   },
 });

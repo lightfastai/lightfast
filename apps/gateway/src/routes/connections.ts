@@ -2,7 +2,6 @@ import { db } from "@db/console/client";
 import { gwInstallations, gwResources, gwBackfillRuns, gwTokens } from "@db/console/schema";
 import { getProvider, PROVIDERS } from "@repo/console-providers";
 import type { RuntimeConfig } from "@repo/console-providers";
-import type { ProviderAccountInfo } from "@repo/console-types";
 import type { SourceType } from "@repo/console-providers";
 import { backfillRunRecord, BACKFILL_TERMINAL_STATUSES } from "@repo/console-validation";
 import { decrypt, nanoid } from "@repo/lib";
@@ -225,8 +224,7 @@ connections.get("/:provider/callback", async (c) => {
     const reactivated = existingRows.length > 0;
 
     // Upsert installation — idempotent on (provider, externalId)
-    // Cast accountInfo: CallbackResult uses a passthrough schema, DB expects ProviderAccountInfo
-    const accountInfo = callbackResult.accountInfo as unknown as ProviderAccountInfo;
+    const { accountInfo } = callbackResult;
     const rows = await db
       .insert(gwInstallations)
       .values({
@@ -457,16 +455,13 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
   const config = providerConfigs[providerName];
 
   try {
-    // GitHub: generate on-demand installation token via JWT
+    const providerDef = getProvider(providerName);
+    if (!providerDef) { throw new Error("provider_not_found"); }
+
+    // GitHub: no stored token — getActiveToken generates JWT on-demand
     if (providerName === "github") {
-      const capabilities = PROVIDERS.github.capabilities;
-      if (!capabilities) { throw new Error("github_capabilities_not_configured"); }
-      const getInstallationToken = capabilities.getInstallationToken as (
-        config: unknown,
-        installationId: unknown,
-      ) => Promise<string>;
-      const token = await getInstallationToken(config, installation.externalId);
-      return c.json({ accessToken: token, provider: "github", expiresIn: 3600 });
+      const token = await providerDef.oauth.getActiveToken(config, installation.externalId, null);
+      return c.json({ accessToken: token, provider: providerName, expiresIn: 3600 });
     }
 
     // Non-GitHub: read stored token, refresh if expired
