@@ -142,6 +142,45 @@ export type {
   SentryInstallationToken,
 } from "./types.js";
 
+// ── Provider Account Info (strict, discriminated union) ───────────────────────
+export {
+  githubInstallationRawSchema,
+  vercelOAuthRawSchema,
+  linearOAuthRawSchema,
+  sentryOAuthRawSchema,
+  githubAccountInfoSchema,
+  vercelAccountInfoSchema,
+  linearAccountInfoSchema,
+  sentryAccountInfoSchema,
+  providerAccountInfoSchema,
+} from "./types.js";
+export type {
+  GitHubInstallationRaw,
+  VercelOAuthRaw,
+  LinearOAuthRaw,
+  SentryOAuthRaw,
+  GitHubAccountInfo,
+  VercelAccountInfo,
+  LinearAccountInfo,
+  SentryAccountInfo,
+  ProviderAccountInfo,
+  TypedCallbackResult,
+} from "./types.js";
+
+// ── Gateway Service Contracts ─────────────────────────────────────────────────
+export {
+  webhookReceiptPayloadSchema,
+  webhookEnvelopeSchema,
+  gatewayConnectionSchema,
+  gatewayTokenResultSchema,
+} from "./gateway.js";
+export type {
+  WebhookReceiptPayload,
+  WebhookEnvelope,
+  GatewayConnection,
+  GatewayTokenResult,
+} from "./gateway.js";
+
 // ── Crypto & JWT ──────────────────────────────────────────────────────────────
 export { computeHmac, timingSafeEqual } from "./crypto.js";
 export { createRS256JWT, importPKCS8Key } from "./jwt.js";
