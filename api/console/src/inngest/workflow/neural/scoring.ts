@@ -1,4 +1,4 @@
-import type { PostTransformEvent } from "@repo/console-providers";
+import type { PostTransformEvent, SourceType } from "@repo/console-providers";
 import { getEventWeight } from "@repo/console-providers";
 
 /**
@@ -79,7 +79,7 @@ export function scoreSignificance(sourceEvent: PostTransformEvent): Significance
   const factors: string[] = [];
 
   // 1. Event type base weight (from EVENT_REGISTRY)
-  let score = getEventWeight(sourceEvent.source, sourceEvent.sourceType);
+  let score = getEventWeight(sourceEvent.source as SourceType, sourceEvent.sourceType);
   factors.push(`base:${sourceEvent.source}:${sourceEvent.sourceType}`);
 
   // 2. Content signal matching

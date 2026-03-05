@@ -138,7 +138,7 @@ const eventsMap = {
     clerkOrgId: z.string().optional(),
     /** Standardized source event */
     sourceEvent: z.object({
-      source: sourceTypeSchema,
+      source: z.string(),
       sourceType: z.string(),
       sourceId: z.string(),
       title: z.string(),
