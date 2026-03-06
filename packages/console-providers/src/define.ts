@@ -61,6 +61,10 @@ export const defineEvent = simpleEvent;
 
 /** Webhook extraction functions — pure, no env/DB/framework */
 export interface WebhookDef<TConfig> {
+  /** Zod schema for required webhook headers — validated before body read.
+   *  Keys are lowercase header names. Used by relay middleware for early rejection.
+   *  Must be a z.object() with string-valued fields (required or optional). */
+  readonly headersSchema: z.ZodObject<Record<string, z.ZodType<string | undefined>>>;
   extractSecret: (config: TConfig) => string;
   verifySignature: (rawBody: string, headers: Headers, secret: string) => boolean;
   extractEventType: (headers: Headers, payload: unknown) => string;

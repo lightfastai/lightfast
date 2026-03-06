@@ -22,7 +22,7 @@ export {
   preTransformGitHubReleaseEventSchema,
   preTransformGitHubDiscussionEventSchema,
   githubWebhookPayloadSchema,
-} from "./schemas/github.js";
+} from "./providers/github/schemas.js";
 export type {
   PreTransformGitHubPushEvent,
   PreTransformGitHubPullRequestEvent,
@@ -31,18 +31,18 @@ export type {
   PreTransformGitHubDiscussionEvent,
   GitHubWebhookPayload,
   GitHubWebhookEventType,
-} from "./schemas/github.js";
+} from "./providers/github/schemas.js";
 
 export {
   preTransformVercelWebhookPayloadSchema,
   vercelWebhookEventTypeSchema,
   vercelWebhookPayloadSchema,
-} from "./schemas/vercel.js";
+} from "./providers/vercel/schemas.js";
 export type {
   PreTransformVercelWebhookPayload,
   VercelWebhookEventType,
   VercelWebhookPayload,
-} from "./schemas/vercel.js";
+} from "./providers/vercel/schemas.js";
 
 export {
   preTransformLinearIssueWebhookSchema,
@@ -51,7 +51,7 @@ export {
   preTransformLinearCycleWebhookSchema,
   preTransformLinearProjectUpdateWebhookSchema,
   linearWebhookPayloadSchema,
-} from "./schemas/linear.js";
+} from "./providers/linear/schemas.js";
 export type {
   LinearActor,
   LinearUser,
@@ -70,7 +70,7 @@ export type {
   PreTransformLinearCycleWebhook,
   PreTransformLinearProjectUpdateWebhook,
   LinearWebhookPayload,
-} from "./schemas/linear.js";
+} from "./providers/linear/schemas.js";
 
 export {
   preTransformSentryIssueWebhookSchema,
@@ -78,7 +78,7 @@ export {
   preTransformSentryEventAlertWebhookSchema,
   preTransformSentryMetricAlertWebhookSchema,
   sentryWebhookPayloadSchema,
-} from "./schemas/sentry.js";
+} from "./providers/sentry/schemas.js";
 export type {
   SentryActor,
   SentryIssue,
@@ -89,7 +89,7 @@ export type {
   PreTransformSentryEventAlertWebhook,
   PreTransformSentryMetricAlertWebhook,
   SentryWebhookPayload,
-} from "./schemas/sentry.js";
+} from "./providers/sentry/schemas.js";
 
 // ── Transformer Functions ─────────────────────────────────────────────────────
 export {
@@ -98,80 +98,104 @@ export {
   transformGitHubIssue,
   transformGitHubRelease,
   transformGitHubDiscussion,
-} from "./transformers/github.js";
+} from "./providers/github/transformers.js";
 export {
   transformVercelDeployment,
-} from "./transformers/vercel.js";
+} from "./providers/vercel/transformers.js";
 export {
   transformLinearIssue,
   transformLinearComment,
   transformLinearProject,
   transformLinearCycle,
   transformLinearProjectUpdate,
-} from "./transformers/linear.js";
+} from "./providers/linear/transformers.js";
 export {
   transformSentryIssue,
   transformSentryError,
   transformSentryEventAlert,
   transformSentryMetricAlert,
-} from "./transformers/sentry.js";
+} from "./providers/sentry/transformers.js";
 
 // ── Event Registry (derived from provider definitions) ───────────────────────
 // EVENT_REGISTRY, EventKey, and ALL_*_EVENTS are now derived from PROVIDERS
 // in registry.ts — no hand-maintained event-registry.ts needed.
 
-// ── Config Schemas & Types ────────────────────────────────────────────────────
+// ── Shared OAuth & Callback Contracts ─────────────────────────────────────────
 export {
-  githubConfigSchema,
-  vercelConfigSchema,
-  linearConfigSchema,
-  sentryConfigSchema,
   oAuthTokensSchema,
   callbackResultSchema,
-  encodeSentryToken,
-  decodeSentryToken,
 } from "./types.js";
 export type {
-  GitHubConfig,
-  VercelConfig,
-  LinearConfig,
-  SentryConfig,
   OAuthTokens,
   CallbackResult,
   TransformContext,
-  SentryInstallationToken,
 } from "./types.js";
 
-// ── Provider Account Info (strict, discriminated union) ───────────────────────
+// ── GitHub ────────────────────────────────────────────────────────────────────
 export {
+  githubConfigSchema,
   githubInstallationRawSchema,
-  vercelOAuthRawSchema,
-  linearOAuthRawSchema,
-  sentryOAuthRawSchema,
   githubAccountInfoSchema,
-  vercelAccountInfoSchema,
-  linearAccountInfoSchema,
-  sentryAccountInfoSchema,
-} from "./types.js";
+  githubOAuthResponseSchema,
+} from "./providers/github/auth.js";
 export type {
+  GitHubConfig,
   GitHubInstallationRaw,
-  VercelOAuthRaw,
-  LinearOAuthRaw,
-  SentryOAuthRaw,
   GitHubAccountInfo,
+} from "./providers/github/auth.js";
+
+// ── Vercel ────────────────────────────────────────────────────────────────────
+export {
+  vercelConfigSchema,
+  vercelOAuthRawSchema,
+  vercelAccountInfoSchema,
+  vercelOAuthResponseSchema,
+} from "./providers/vercel/auth.js";
+export type {
+  VercelConfig,
+  VercelOAuthRaw,
   VercelAccountInfo,
+} from "./providers/vercel/auth.js";
+
+// ── Linear ────────────────────────────────────────────────────────────────────
+export {
+  linearConfigSchema,
+  linearOAuthRawSchema,
+  linearAccountInfoSchema,
+  linearOAuthResponseSchema,
+} from "./providers/linear/auth.js";
+export type {
+  LinearConfig,
+  LinearOAuthRaw,
   LinearAccountInfo,
+} from "./providers/linear/auth.js";
+
+// ── Sentry ────────────────────────────────────────────────────────────────────
+export {
+  sentryConfigSchema,
+  sentryOAuthRawSchema,
+  sentryAccountInfoSchema,
+  sentryOAuthResponseSchema,
+  encodeSentryToken,
+  decodeSentryToken,
+} from "./providers/sentry/auth.js";
+export type {
+  SentryConfig,
+  SentryOAuthRaw,
   SentryAccountInfo,
-} from "./types.js";
+  SentryInstallationToken,
+} from "./providers/sentry/auth.js";
 
 // ── Gateway Service Contracts ─────────────────────────────────────────────────
 export {
+  serviceAuthWebhookBodySchema,
   webhookReceiptPayloadSchema,
   webhookEnvelopeSchema,
   gatewayConnectionSchema,
   gatewayTokenResultSchema,
 } from "./gateway.js";
 export type {
+  ServiceAuthWebhookBody,
   WebhookReceiptPayload,
   WebhookEnvelope,
   GatewayConnection,
@@ -217,7 +241,7 @@ export type {
 } from "./registry.js";
 
 // ── Provider Definitions ──────────────────────────────────────────────────────
-export { github } from "./providers/github.js";
-export { vercel } from "./providers/vercel.js";
-export { linear } from "./providers/linear.js";
-export { sentry } from "./providers/sentry.js";
+export { github } from "./providers/github/index.js";
+export { vercel } from "./providers/vercel/index.js";
+export { linear } from "./providers/linear/index.js";
+export { sentry } from "./providers/sentry/index.js";
