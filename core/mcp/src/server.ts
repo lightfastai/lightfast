@@ -16,10 +16,6 @@ export interface ServerConfig {
   baseUrl?: string;
 }
 
-// Extract the base object schema shape from FindSimilar (before .refine())
-// This is needed because .refine() wraps the schema in ZodEffects
-const V1FindSimilarBaseSchema = V1FindSimilarRequestSchema._def.schema;
-
 export async function createServer(config: ServerConfig): Promise<void> {
   const lightfast = new Lightfast({
     apiKey: config.apiKey,
@@ -58,17 +54,12 @@ export async function createServer(config: ServerConfig): Promise<void> {
   );
 
   // Register find similar tool
-  // Note: V1FindSimilarRequestSchema has .refine() for "id or url required" validation
-  // The .refine() validation happens at runtime in the Lightfast SDK
-  // We use the base schema shape (before .refine()) for the MCP tool schema
   server.tool(
     "lightfast_find_similar",
     "Find content semantically similar to a given document or URL. Either 'id' or 'url' must be provided. Returns similar items with similarity scores.",
-    V1FindSimilarBaseSchema.shape,
+    V1FindSimilarRequestSchema.shape,
     async (args) => {
-      // Validate with the full schema including refinement
-      const validated = V1FindSimilarRequestSchema.parse(args);
-      const results = await lightfast.findSimilar(validated);
+      const results = await lightfast.findSimilar(args);
       return {
         content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
       };

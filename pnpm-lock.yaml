@@ -681,6 +681,9 @@ importers:
       '@repo/console-providers':
         specifier: workspace:*
         version: link:../../packages/console-providers
+      '@repo/console-validation':
+        specifier: workspace:*
+        version: link:../../packages/console-validation
       '@repo/gateway-service-clients':
         specifier: workspace:*
         version: link:../../packages/gateway-service-clients
@@ -1986,13 +1989,13 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.27.1
-        version: 1.27.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)
+        version: 1.27.1(@cfworker/json-schema@4.1.1)(zod@4.3.6)
       lightfast:
         specifier: workspace:*
         version: link:../lightfast
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: catalog:zod4
+        version: 4.3.6
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
