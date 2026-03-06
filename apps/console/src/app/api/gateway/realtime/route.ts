@@ -1,6 +1,5 @@
-import { handle } from "@upstash/realtime";
+import { handle, realtime } from "@repo/console-upstash-realtime";
 import { auth } from "@vendor/clerk/server";
-import { realtime } from "~/lib/realtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

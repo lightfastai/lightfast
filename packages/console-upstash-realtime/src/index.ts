@@ -1,8 +1,10 @@
-import { Realtime } from "@upstash/realtime";
-import type { InferRealtimeEvents } from "@upstash/realtime";
+import { Realtime } from "@vendor/upstash-realtime";
+import type { InferRealtimeEvents } from "@vendor/upstash-realtime";
 import { z } from "zod";
 import { redis } from "@vendor/upstash";
 import { postTransformEventSchema } from "@repo/console-providers";
+
+export { handle } from "@vendor/upstash-realtime";
 
 const schema = {
   workspace: {

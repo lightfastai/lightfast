@@ -1,5 +1,5 @@
 import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
-import { RealtimeProviderWrapper } from "~/lib/realtime-provider";
+import { RealtimeProviderWrapper } from "@repo/console-upstash-realtime/client";
 
 interface EventsLayoutProps {
   children: React.ReactNode;

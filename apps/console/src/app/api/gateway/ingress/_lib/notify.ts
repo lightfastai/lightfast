@@ -1,5 +1,5 @@
-import { realtime } from "~/lib/realtime";
-import type { EventNotification } from "~/lib/realtime";
+import { realtime } from "@repo/console-upstash-realtime";
+import type { EventNotification } from "@repo/console-upstash-realtime";
 import type { PostTransformEvent } from "@repo/console-providers";
 import { inngest } from "@api/console/inngest";
 

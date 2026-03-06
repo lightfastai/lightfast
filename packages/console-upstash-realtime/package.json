@@ -1,0 +1,38 @@
+{
+  "name": "@repo/console-upstash-realtime",
+  "license": "FSL-1.1-Apache-2.0",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "default": "./src/client.tsx"
+    }
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache"
+  },
+  "dependencies": {
+    "@repo/console-providers": "workspace:*",
+    "@vendor/upstash": "workspace:*",
+    "@vendor/upstash-realtime": "workspace:*",
+    "zod": "catalog:zod4"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@repo/prettier-config"
+}

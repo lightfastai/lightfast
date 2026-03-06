@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { withApiKeyAuth, createAuthErrorResponse } from "~/app/(api)/v1/lib/with-api-key-auth";
-import { realtime } from "~/lib/realtime";
-import type { EventNotification } from "~/lib/realtime";
+import { realtime } from "@repo/console-upstash-realtime";
+import type { EventNotification } from "@repo/console-upstash-realtime";
 import { db } from "@db/console/client";
 import { orgWorkspaces, workspaceEvents } from "@db/console/schema";
 import { eq, and, gt } from "drizzle-orm";
