@@ -1,5 +1,6 @@
 import { z } from "zod";
-import type { ProviderDefinition, EventDefinition, ActionDef, ActionEventDef } from "./define.js";
+import type { ProviderDefinition, EventDefinition, ActionEventDef } from "./define.js";
+import type { GitHubConfig, VercelConfig, LinearConfig, SentryConfig } from "./types.js";
 import { github } from "./providers/github.js";
 import { vercel } from "./providers/vercel.js";
 import { linear } from "./providers/linear.js";
@@ -7,7 +8,20 @@ import { sentry } from "./providers/sentry.js";
 
 // ── The Registry ──────────────────────────────────────────────────────────────
 
-export const PROVIDERS = { github, vercel, linear, sentry } as const;
+// Maps each provider to its concrete config type — enables type-safe satisfies without `any`.
+// Adding a provider = add entry here + add to PROVIDERS below.
+interface ProviderConfigMap {
+  readonly github: GitHubConfig;
+  readonly vercel: VercelConfig;
+  readonly linear: LinearConfig;
+  readonly sentry: SentryConfig;
+}
+
+export const PROVIDERS = {
+  github, vercel, linear, sentry,
+} as const satisfies {
+  readonly [K in keyof ProviderConfigMap]: ProviderDefinition<ProviderConfigMap[K]>;
+};
 
 export type ProviderName = keyof typeof PROVIDERS;
 
@@ -45,7 +59,7 @@ export type EventKey = { [P in ProviderName]: DeriveProviderKeys<P> }[ProviderNa
 
 // ── Runtime Event Registry Derivation ────────────────────────────────────────
 
-interface EventRegistryEntry {
+export interface EventRegistryEntry {
   source: SourceType;
   label: string;
   weight: number;
@@ -53,9 +67,9 @@ interface EventRegistryEntry {
   category: string;
 }
 
-function deriveEventRegistry(): Record<string, EventRegistryEntry> {
+/** Derived event registry — single source of truth is the provider definitions */
+export const EVENT_REGISTRY: Record<EventKey, EventRegistryEntry> = (() => {
   const registry: Record<string, EventRegistryEntry> = {};
-
   for (const [source, provider] of Object.entries(PROVIDERS)) {
     for (const [eventKey, eventDef] of Object.entries(provider.events)) {
       const def = eventDef as EventDefinition;
@@ -80,57 +94,30 @@ function deriveEventRegistry(): Record<string, EventRegistryEntry> {
       }
     }
   }
+  return registry as Record<EventKey, EventRegistryEntry>;
+})();
 
-  return registry;
+// ── Provider Lookup ───────────────────────────────────────────────────────────
+
+export function getProvider<N extends ProviderName>(name: N): (typeof PROVIDERS)[N];
+export function getProvider(name: string): ProviderDefinition | undefined;
+export function getProvider(name: string) {
+  return (PROVIDERS as Record<string, ProviderDefinition>)[name];
 }
 
-/** Derived event registry — single source of truth is the provider definitions */
-export const EVENT_REGISTRY: Record<EventKey, EventRegistryEntry> =
-  deriveEventRegistry() as Record<EventKey, EventRegistryEntry>;
+// ── Account Info Schema ───────────────────────────────────────────────────────
 
-// ── Derived Per-Provider Event Lists ─────────────────────────────────────────
-
-type CategoryKeys<P extends ProviderName> = keyof (typeof PROVIDERS)[P]["categories"] & string;
-
-export const ALL_GITHUB_EVENTS = Object.keys(PROVIDERS.github.categories) as CategoryKeys<"github">[];
-export const ALL_VERCEL_EVENTS = Object.keys(PROVIDERS.vercel.categories) as CategoryKeys<"vercel">[];
-export const ALL_SENTRY_EVENTS = Object.keys(PROVIDERS.sentry.categories) as CategoryKeys<"sentry">[];
-export const ALL_LINEAR_EVENTS = Object.keys(PROVIDERS.linear.categories) as CategoryKeys<"linear">[];
-
-// ── Derived Exports ───────────────────────────────────────────────────────────
-
-export const PROVIDER_NAMES = Object.keys(PROVIDERS) as ProviderName[];
-
-export function getProvider(name: string): ProviderDefinition | undefined {
-  return PROVIDERS[name as ProviderName] as unknown as ProviderDefinition | undefined;
-}
-
-/** Backwards-compatible: provider metadata for UI */
-export const PROVIDER_REGISTRY = Object.fromEntries(
-  Object.entries(PROVIDERS).map(([key, p]) => [
-    key,
-    { name: p.displayName, description: p.description, events: p.categories },
-  ]),
-) as unknown as Record<
-  SourceType,
-  { name: string; description: string; events: Record<string, { label: string; description: string; type: string }> }
->;
-
-export const EVENT_CATEGORIES = Object.fromEntries(
-  Object.entries(PROVIDERS).map(([key, p]) => [key, p.categories]),
-) as unknown as Record<SourceType, Record<string, { label: string; description: string; type: string }>>;
-
-export const WEBHOOK_EVENT_TYPES: Record<SourceType, string[]> = Object.fromEntries(
-  Object.entries(PROVIDERS).map(([key, p]) => [key, Object.keys(p.categories)]),
-) as unknown as Record<SourceType, string[]>;
+type AccountInfoSchemas = (typeof PROVIDERS)[ProviderName]["accountInfoSchema"];
 
 /** Derived from PROVIDERS — automatically includes any new provider added to the registry */
 export const providerAccountInfoSchema = z.discriminatedUnion(
   "sourceType",
-  Object.values(PROVIDERS).map((p) => p.accountInfoSchema) as [z.ZodObject, ...z.ZodObject[]],
+  Object.values(PROVIDERS).map((p) => p.accountInfoSchema) as [AccountInfoSchemas, ...AccountInfoSchemas[]],
 );
 
 export type ProviderAccountInfo = z.infer<typeof providerAccountInfoSchema>;
+
+// ── Env Schemas ───────────────────────────────────────────────────────────────
 
 /** Merged env schemas from all providers — for gateway env.ts server block */
 export const PROVIDER_ENV_SCHEMAS = Object.fromEntries(
