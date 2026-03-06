@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { EventsTable } from "./_components/events-table";
+import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+import type { ProviderSlug } from "@repo/console-providers/display";
 
 export default async function EventsPage({
   params,
@@ -12,10 +14,10 @@ export default async function EventsPage({
   const { slug, workspaceName } = await params;
   const search = await searchParams;
 
-  const validSources = ["github", "vercel", "linear", "sentry"];
   const initialSource =
-    typeof search.source === "string" && validSources.includes(search.source)
-      ? (search.source as "github" | "vercel" | "linear" | "sentry")
+    typeof search.source === "string" &&
+    (PROVIDER_SLUGS as readonly string[]).includes(search.source)
+      ? (search.source as ProviderSlug)
       : undefined;
 
   return (

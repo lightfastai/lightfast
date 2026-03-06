@@ -8,9 +8,10 @@
 
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
+import type { SourceType } from "@repo/console-providers";
 
 export interface RawWebhook {
-  source: "github" | "vercel" | "linear" | "sentry";
+  source: SourceType;
   eventType: string;
   payload: Record<string, unknown>;
 }
