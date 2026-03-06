@@ -6,10 +6,10 @@
  * through the standard OAuthTokens interface.
  */
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from "vitest";
-import { sentry } from "./sentry";
-import { computeHmac } from "../crypto";
-import { encodeSentryToken, decodeSentryToken } from "../types";
-import type { SentryConfig } from "../types";
+import { sentry } from "./index";
+import { computeHmac } from "../../crypto";
+import { encodeSentryToken, decodeSentryToken } from "./auth";
+import type { SentryConfig } from "./auth";
 
 // ── Global fetch mock ──────────────────────────────────────────────────────────
 
@@ -119,7 +119,7 @@ describe("oauth.exchangeCode", () => {
   it("returns OAuthTokens with accessToken on success", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => sentryTokenResponse,
+      json: () => Promise.resolve(sentryTokenResponse),
     });
 
     const tokens = await sentry.oauth.exchangeCode(testConfig, compositeCode, "");
@@ -129,13 +129,14 @@ describe("oauth.exchangeCode", () => {
   it("encodes refreshToken as composite sentry token when present", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => sentryTokenResponse,
+      json: () => Promise.resolve(sentryTokenResponse),
     });
 
     const tokens = await sentry.oauth.exchangeCode(testConfig, compositeCode, "");
     // refreshToken should be composite: installationId:refreshToken
-    expect(tokens.refreshToken).toContain(":");
-    const decoded = decodeSentryToken(tokens.refreshToken!);
+    const refreshToken = tokens.refreshToken ?? "";
+    expect(refreshToken).toContain(":");
+    const decoded = decodeSentryToken(refreshToken);
     expect(decoded.installationId).toBe(installationId);
     expect(decoded.token).toBe("sentry-refresh-token-456");
   });
@@ -144,20 +145,21 @@ describe("oauth.exchangeCode", () => {
     const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ ...sentryTokenResponse, expiresAt }),
+      json: () => Promise.resolve({ ...sentryTokenResponse, expiresAt }),
     });
 
     const tokens = await sentry.oauth.exchangeCode(testConfig, compositeCode, "");
     // Should be roughly 3600 seconds — allow 10 second tolerance
-    expect(tokens.expiresIn).toBeDefined();
-    expect(tokens.expiresIn!).toBeGreaterThan(3590);
-    expect(tokens.expiresIn!).toBeLessThanOrEqual(3600);
+    const expiresIn = tokens.expiresIn ?? 0;
+    expect(expiresIn).toBeDefined();
+    expect(expiresIn).toBeGreaterThan(3590);
+    expect(expiresIn).toBeLessThanOrEqual(3600);
   });
 
   it("returns undefined expiresIn when expiresAt absent", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ token: "tok", refreshToken: undefined, expiresAt: undefined }),
+      json: () => Promise.resolve({ token: "tok", refreshToken: undefined, expiresAt: undefined }),
     });
 
     const tokens = await sentry.oauth.exchangeCode(testConfig, compositeCode, "");
@@ -165,7 +167,7 @@ describe("oauth.exchangeCode", () => {
   });
 
   it("uses installationId from composite code in API endpoint", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => sentryTokenResponse });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(sentryTokenResponse) });
 
     await sentry.oauth.exchangeCode(testConfig, compositeCode, "");
 
@@ -174,7 +176,7 @@ describe("oauth.exchangeCode", () => {
   });
 
   it("throws on HTTP error", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 401, text: async () => "Unauthorized" });
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 401, text: () => Promise.resolve("Unauthorized") });
 
     await expect(sentry.oauth.exchangeCode(testConfig, compositeCode, "")).rejects.toThrow(
       "Sentry token exchange failed: 401",
@@ -197,7 +199,7 @@ describe("oauth.refreshToken", () => {
       token: "new-sentry-token",
       refreshToken: "new-refresh-token",
     };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => newTokenResponse });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(newTokenResponse) });
 
     const refreshComposite = encodeSentryToken({ installationId, token: "old-refresh" });
     const tokens = await sentry.oauth.refreshToken(testConfig, refreshComposite);
@@ -205,7 +207,7 @@ describe("oauth.refreshToken", () => {
   });
 
   it("sends grant_type=refresh_token to the correct endpoint", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => sentryTokenResponse });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(sentryTokenResponse) });
 
     const refreshComposite = encodeSentryToken({ installationId, token: "old-refresh" });
     await sentry.oauth.refreshToken(testConfig, refreshComposite);
@@ -229,12 +231,14 @@ describe("oauth.refreshToken", () => {
   it("re-encodes refreshToken with installationId when returned", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ ...sentryTokenResponse, refreshToken: "new-refresh-raw" }),
+      json: () => Promise.resolve({ ...sentryTokenResponse, refreshToken: "new-refresh-raw" }),
     });
 
     const refreshComposite = encodeSentryToken({ installationId, token: "old-refresh" });
     const tokens = await sentry.oauth.refreshToken(testConfig, refreshComposite);
-    const decoded = decodeSentryToken(tokens.refreshToken!);
+    const refreshToken = tokens.refreshToken ?? "";
+    expect(refreshToken).toBeDefined();
+    const decoded = decodeSentryToken(refreshToken);
     expect(decoded.installationId).toBe(installationId);
     expect(decoded.token).toBe("new-refresh-raw");
   });
@@ -272,7 +276,7 @@ describe("oauth.revokeToken", () => {
     await sentry.oauth.revokeToken(testConfig, composite);
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const auth = (init.headers as Record<string, string>)["Authorization"];
+    const auth = (init.headers as Record<string, string>).Authorization;
     expect(auth).toBe(`Bearer ${testConfig.clientSecret}`);
   });
 
@@ -304,7 +308,7 @@ describe("oauth.processCallback", () => {
   it("returns valid CallbackResult with connected status on happy path", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => sentryTokenResponse,
+      json: () => Promise.resolve(sentryTokenResponse),
     });
 
     const result = await sentry.oauth.processCallback(testConfig, {
@@ -321,7 +325,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("accountInfo contains installation events list", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => sentryTokenResponse });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(sentryTokenResponse) });
 
     const result = await sentry.oauth.processCallback(testConfig, {
       code: authCode,
@@ -335,7 +339,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("accountInfo has installationId field", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => sentryTokenResponse });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(sentryTokenResponse) });
 
     const result = await sentry.oauth.processCallback(testConfig, {
       code: authCode,
@@ -349,7 +353,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("includes tokens in returned CallbackResult", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => sentryTokenResponse });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(sentryTokenResponse) });
 
     const result = await sentry.oauth.processCallback(testConfig, {
       code: authCode,
@@ -368,18 +372,18 @@ describe("webhook.verifySignature", () => {
   const secret = "sentry-hook-secret";
   const body = '{"action":"created","data":{"issue":{"id":"sentry-issue-1"}}}';
 
-  it("returns false when sentry-hook-signature header is absent", async () => {
+  it("returns false when sentry-hook-signature header is absent", () => {
     const result = sentry.webhook.verifySignature(body, new Headers(), secret);
     expect(result).toBe(false);
   });
 
-  it("returns false for incorrect signature", async () => {
+  it("returns false for incorrect signature", () => {
     const headers = new Headers({ "sentry-hook-signature": "wronghex" });
     const result = sentry.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(false);
   });
 
-  it("returns true for valid HMAC-SHA256 signature", async () => {
+  it("returns true for valid HMAC-SHA256 signature", () => {
     const expected = computeHmac(body, secret, "SHA-256");
     const headers = new Headers({ "sentry-hook-signature": expected });
     const result = sentry.webhook.verifySignature(body, headers, secret);

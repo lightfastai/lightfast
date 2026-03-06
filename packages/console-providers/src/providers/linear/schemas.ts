@@ -280,13 +280,3 @@ export type PreTransformLinearProjectWebhook = z.infer<typeof preTransformLinear
 export type PreTransformLinearCycleWebhook = z.infer<typeof preTransformLinearCycleWebhookSchema>;
 export type PreTransformLinearProjectUpdateWebhook = z.infer<typeof preTransformLinearProjectUpdateWebhookSchema>;
 export type LinearWebhookPayload = z.infer<typeof linearWebhookPayloadSchema>;
-
-// ── OAuth Response Schema ──
-
-export const linearOAuthResponseSchema = z.object({
-  access_token: z.string(),
-  token_type: z.string(),
-  scope: z.string(),
-  expires_in: z.number(),
-  refresh_token: z.string().optional(),
-});

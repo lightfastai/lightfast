@@ -98,13 +98,3 @@ export const vercelWebhookPayloadSchema = z
 export type PreTransformVercelWebhookPayload = z.infer<typeof preTransformVercelWebhookPayloadSchema>;
 export type VercelWebhookEventType = z.infer<typeof vercelWebhookEventTypeSchema>;
 export type VercelWebhookPayload = z.infer<typeof vercelWebhookPayloadSchema>;
-
-// ── OAuth Response Schema ──
-
-export const vercelOAuthResponseSchema = z.object({
-  access_token: z.string(),
-  token_type: z.string(),
-  installation_id: z.string(),
-  user_id: z.string(),
-  team_id: z.string().nullable(),
-});

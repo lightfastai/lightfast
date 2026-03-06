@@ -230,12 +230,3 @@ export type PreTransformSentryErrorWebhook = z.infer<typeof preTransformSentryEr
 export type PreTransformSentryEventAlertWebhook = z.infer<typeof preTransformSentryEventAlertWebhookSchema>;
 export type PreTransformSentryMetricAlertWebhook = z.infer<typeof preTransformSentryMetricAlertWebhookSchema>;
 export type SentryWebhookPayload = z.infer<typeof sentryWebhookPayloadSchema>;
-
-// ── OAuth Response Schema ──
-
-export const sentryOAuthResponseSchema = z.object({
-  token: z.string(),
-  refreshToken: z.string().optional(),
-  expiresAt: z.string().optional(),
-  scopes: z.array(z.string()).optional(),
-});

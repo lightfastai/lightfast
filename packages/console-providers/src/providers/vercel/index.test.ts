@@ -8,9 +8,9 @@
  * installation_id from the token exchange response.
  */
 import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from "vitest";
-import { vercel } from "./vercel";
-import { computeHmac } from "../crypto";
-import type { VercelConfig } from "../types";
+import { vercel } from "./index";
+import { computeHmac } from "../../crypto";
+import type { VercelConfig } from "./auth";
 
 // ── Global fetch mock ──────────────────────────────────────────────────────────
 
@@ -78,7 +78,7 @@ describe("oauth.exchangeCode", () => {
   it("returns OAuthTokens with accessToken and tokenType on success", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => tokenResponseTeam,
+      json: () => Promise.resolve(tokenResponseTeam),
     });
 
     const tokens = await vercel.oauth.exchangeCode(
@@ -93,7 +93,7 @@ describe("oauth.exchangeCode", () => {
   });
 
   it("sends POST to Vercel token endpoint with form-encoded body", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseTeam });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
 
     await vercel.oauth.exchangeCode(testConfig, "code", "https://redirect.example.com");
 
@@ -106,7 +106,7 @@ describe("oauth.exchangeCode", () => {
   });
 
   it("includes client_id, client_secret, code, and redirect_uri in body", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseTeam });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
 
     await vercel.oauth.exchangeCode(testConfig, "my-code", "https://redirect.example.com");
 
@@ -136,7 +136,7 @@ describe("oauth.refreshToken", () => {
   });
 
   it("does not call fetch", async () => {
-    await vercel.oauth.refreshToken(testConfig, "t").catch(() => {});
+    await vercel.oauth.refreshToken(testConfig, "t").catch(vi.fn());
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
@@ -159,7 +159,7 @@ describe("oauth.revokeToken", () => {
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://api.vercel.com/v2/oauth/tokens/revoke");
-    const auth = (init.headers as Record<string, string>)["Authorization"];
+    const auth = (init.headers as Record<string, string>).Authorization;
     expect(auth).toBe("Bearer vercel-access-token-abc");
     expect(init.method).toBe("POST");
   });
@@ -191,7 +191,7 @@ describe("oauth.processCallback", () => {
   it("throws when configurationId does not match token installation_id", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => tokenResponseTeam, // installation_id = "icfg-abc123"
+      json: () => Promise.resolve(tokenResponseTeam), // installation_id = "icfg-abc123"
     });
 
     await expect(
@@ -203,7 +203,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("returns externalId = team_id when team is present", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseTeam });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -214,7 +214,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("returns externalId = user_id when team_id is null", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseUser });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseUser) });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -225,7 +225,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("accountInfo has correct sourceType and version", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseTeam });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -239,7 +239,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("accountInfo raw contains installation_id, user_id, team_id, token_type", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseTeam });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -255,7 +255,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("returns connected-redirect with nextUrl when next query param is present", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseTeam });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -270,7 +270,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("returns connected status when next query param is absent", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseTeam });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -281,7 +281,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("includes tokens in returned CallbackResult", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseTeam });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -294,7 +294,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("accountInfo includes all deployment event types", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => tokenResponseTeam });
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -316,25 +316,25 @@ describe("webhook.verifySignature", () => {
   const secret = "vercel-integration-secret";
   const body = '{"type":"deployment.succeeded","id":"evt-abc"}';
 
-  it("returns false when x-vercel-signature header is absent", async () => {
+  it("returns false when x-vercel-signature header is absent", () => {
     const result = vercel.webhook.verifySignature(body, new Headers(), secret);
     expect(result).toBe(false);
   });
 
-  it("returns false for incorrect signature", async () => {
+  it("returns false for incorrect signature", () => {
     const headers = new Headers({ "x-vercel-signature": "wronghex" });
     const result = vercel.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(false);
   });
 
-  it("returns true for valid HMAC-SHA1 signature", async () => {
+  it("returns true for valid HMAC-SHA1 signature", () => {
     const expected = computeHmac(body, secret, "SHA-1");
     const headers = new Headers({ "x-vercel-signature": expected });
     const result = vercel.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(true);
   });
 
-  it("returns false for SHA-256 signature (wrong algorithm)", async () => {
+  it("returns false for SHA-256 signature (wrong algorithm)", () => {
     // Vercel uses SHA-1, not SHA-256; a SHA-256 sig should NOT match
     const sha256Sig = computeHmac(body, secret, "SHA-256");
     const headers = new Headers({ "x-vercel-signature": sha256Sig });
@@ -423,13 +423,13 @@ describe("webhook.extractResourceId", () => {
 
 describe("resolveCategory", () => {
   it("strips dot-suffix to produce dispatch category", () => {
-    expect(vercel.resolveCategory!("deployment.created")).toBe("deployment");
-    expect(vercel.resolveCategory!("deployment.succeeded")).toBe("deployment");
-    expect(vercel.resolveCategory!("deployment.error")).toBe("deployment");
+    expect(vercel.resolveCategory("deployment.created")).toBe("deployment");
+    expect(vercel.resolveCategory("deployment.succeeded")).toBe("deployment");
+    expect(vercel.resolveCategory("deployment.error")).toBe("deployment");
   });
 
   it("returns eventType unchanged when no dot", () => {
-    expect(vercel.resolveCategory!("deployment")).toBe("deployment");
+    expect(vercel.resolveCategory("deployment")).toBe("deployment");
   });
 });
 

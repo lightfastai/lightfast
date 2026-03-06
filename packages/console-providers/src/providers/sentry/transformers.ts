@@ -1,13 +1,13 @@
-import type { PostTransformEvent, PostTransformReference } from "../post-transform-event.js";
-import type { TransformContext } from "../types.js";
-import { validatePostTransformEvent, logValidationErrors } from "../validation.js";
-import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
+import type { PostTransformEvent, PostTransformReference } from "../../post-transform-event.js";
+import type { TransformContext } from "../../types.js";
+import { validatePostTransformEvent, logValidationErrors } from "../../validation.js";
+import { sanitizeTitle, sanitizeBody } from "../../sanitize.js";
 import type {
   PreTransformSentryIssueWebhook,
   PreTransformSentryErrorWebhook,
   PreTransformSentryEventAlertWebhook,
   PreTransformSentryMetricAlertWebhook,
-} from "../schemas/sentry.js";
+} from "./schemas.js";
 
 export function transformSentryIssue(
   payload: PreTransformSentryIssueWebhook,

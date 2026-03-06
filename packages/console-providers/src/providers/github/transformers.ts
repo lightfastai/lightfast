@@ -1,14 +1,14 @@
-import type { PostTransformEvent, PostTransformReference } from "../post-transform-event.js";
-import type { TransformContext } from "../types.js";
-import { validatePostTransformEvent, logValidationErrors } from "../validation.js";
-import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
+import type { PostTransformEvent, PostTransformReference } from "../../post-transform-event.js";
+import type { TransformContext } from "../../types.js";
+import { validatePostTransformEvent, logValidationErrors } from "../../validation.js";
+import { sanitizeTitle, sanitizeBody } from "../../sanitize.js";
 import type {
   PreTransformGitHubPushEvent,
   PreTransformGitHubPullRequestEvent,
   PreTransformGitHubIssuesEvent,
   PreTransformGitHubReleaseEvent,
   PreTransformGitHubDiscussionEvent,
-} from "../schemas/github.js";
+} from "./schemas.js";
 
 export function transformGitHubPush(
   payload: PreTransformGitHubPushEvent,
