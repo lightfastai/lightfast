@@ -22,6 +22,7 @@
     "@clerk/types": "catalog:",
     "@hookform/resolvers": "catalog:",
     "@repo/og": "workspace:*",
+    "@repo/console-validation": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/url-utils": "workspace:*",
     "@rescale/nemo": "^2.0.2",
