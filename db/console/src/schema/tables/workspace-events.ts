@@ -7,7 +7,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
-import type { PostTransformEvent } from "@repo/console-providers";
+import type { PostTransformEvent, SourceType } from "@repo/console-providers";
 
 /**
  * Workspace Events table stores transformed PostTransformEvent objects
@@ -48,7 +48,7 @@ export const workspaceEvents = pgTable(
      * Source integration: "github" | "vercel" | "linear" | "sentry".
      * Denormalized from sourceEvent for efficient btree filtering.
      */
-    source: varchar("source", { length: 50 }).notNull(),
+    source: varchar("source", { length: 50 }).notNull().$type<SourceType>(),
 
     /**
      * Internal event type in kebab-case entity.action format.

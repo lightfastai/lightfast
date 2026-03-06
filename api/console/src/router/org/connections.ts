@@ -14,6 +14,7 @@ import { env } from "../../env";
 import yaml from "yaml";
 import type { VercelProjectsResponse } from "@repo/console-vercel/types";
 import { createGatewayClient } from "@repo/gateway-service-clients";
+import { sourceTypeSchema } from "@repo/console-providers";
 
 /**
  * Connections Router
@@ -48,7 +49,7 @@ export const connectionsRouter = {
 	getAuthorizeUrl: orgScopedProcedure
 		.input(
 			z.object({
-				provider: z.enum(["github", "vercel", "linear", "sentry"]),
+				provider: sourceTypeSchema,
 			}),
 		)
 		.query(async ({ ctx, input }) => {
@@ -72,7 +73,7 @@ export const connectionsRouter = {
 	cliAuthorize: apiKeyProcedure
 		.input(
 			z.object({
-				provider: z.enum(["github", "vercel", "linear", "sentry"]),
+				provider: sourceTypeSchema,
 			}),
 		)
 		.query(async ({ ctx, input }) => {

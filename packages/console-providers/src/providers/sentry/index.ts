@@ -104,6 +104,8 @@ export const sentry = defineProvider({
     metric_alert: simpleEvent({ label: "Metric Alerts", weight: 70, schema: preTransformSentryMetricAlertWebhookSchema, transform: transformSentryMetricAlert }),
   },
 
+  defaultSyncEvents: ["issue", "error", "comment"],
+
   // Sentry wire eventType maps 1:1 to event key (e.g., "issue" → "issue")
   resolveCategory: (eventType) => eventType,
 

@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, varchar, timestamp, text, index, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
 import type { ClerkUserId } from "@repo/console-validation";
-import type { ProviderAccountInfo } from "@repo/console-providers";
+import type { ProviderAccountInfo, SourceType } from "@repo/console-providers";
 
 export const gwInstallations = pgTable(
   "lightfast_gw_installations",
@@ -12,7 +12,7 @@ export const gwInstallations = pgTable(
       .primaryKey()
       .$defaultFn(() => nanoid()),
 
-    provider: varchar("provider", { length: 50 }).notNull(),
+    provider: varchar("provider", { length: 50 }).notNull().$type<SourceType>(),
     externalId: varchar("external_id", { length: 191 }).notNull(),
     accountLogin: varchar("account_login", { length: 191 }),
     connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),

@@ -1,9 +1,13 @@
 import { z } from "zod";
 import type { ProviderDefinition, EventDefinition, ActionEventDef } from "./define.js";
 import type { GitHubConfig } from "./providers/github/auth.js";
+import { githubAccountInfoSchema } from "./providers/github/auth.js";
 import type { VercelConfig } from "./providers/vercel/auth.js";
+import { vercelAccountInfoSchema } from "./providers/vercel/auth.js";
 import type { LinearConfig } from "./providers/linear/auth.js";
+import { linearAccountInfoSchema } from "./providers/linear/auth.js";
 import type { SentryConfig } from "./providers/sentry/auth.js";
+import { sentryAccountInfoSchema } from "./providers/sentry/auth.js";
 import { github } from "./providers/github/index.js";
 import { vercel } from "./providers/vercel/index.js";
 import { linear } from "./providers/linear/index.js";
@@ -110,15 +114,20 @@ export function getProvider(name: string) {
 
 // ── Account Info Schema ───────────────────────────────────────────────────────
 
-type AccountInfoSchemas = (typeof PROVIDERS)[ProviderName]["accountInfoSchema"];
-
-/** Derived from PROVIDERS — automatically includes any new provider added to the registry */
-export const providerAccountInfoSchema = z.discriminatedUnion(
-  "sourceType",
-  Object.values(PROVIDERS).map((p) => p.accountInfoSchema) as [AccountInfoSchemas, ...AccountInfoSchemas[]],
-);
+// Adding a provider = add entry to ProviderConfigMap above + PROVIDERS + this tuple.
+export const providerAccountInfoSchema = z.discriminatedUnion("sourceType", [
+  githubAccountInfoSchema,
+  vercelAccountInfoSchema,
+  linearAccountInfoSchema,
+  sentryAccountInfoSchema,
+]);
 
 export type ProviderAccountInfo = z.infer<typeof providerAccountInfoSchema>;
+
+/** Get the default sync events for a provider. */
+export function getDefaultSyncEvents(provider: ProviderName): readonly string[] {
+  return PROVIDERS[provider].defaultSyncEvents;
+}
 
 // ── Env Schemas ───────────────────────────────────────────────────────────────
 

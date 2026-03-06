@@ -20,8 +20,8 @@ export interface ObservationReference {
   type: 'commit' | 'branch' | 'pr' | 'issue' | 'deployment' | 'project' |
         'cycle' | 'assignee' | 'reviewer' | 'team' | 'label';
   id: string;
-  url?: string;
-  label?: string;
+  url: string | null;
+  label: string | null;
 }
 
 /**

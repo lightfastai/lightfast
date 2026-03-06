@@ -31,6 +31,7 @@ import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../
 import { recordActivity } from "../../lib/activity";
 import { ensureActorLinked } from "../../lib/actor-linking";
 import { notifyBackfill } from "../../lib/backfill";
+import { getDefaultSyncEvents } from "@repo/console-providers";
 
 /**
  * Workspace router - internal procedures for API routes
@@ -1017,13 +1018,7 @@ export const workspaceRouter = {
               teamSlug: undefined,
               configurationId: providerAccountInfo.raw.installation_id,
               sync: {
-                events: [
-                  "deployment.created",
-                  "deployment.succeeded",
-                  "deployment.ready",
-                  "deployment.error",
-                  "deployment.canceled",
-                ],
+                events: [...getDefaultSyncEvents("vercel")],
                 autoSync: true,
               },
             },
@@ -1249,7 +1244,7 @@ export const workspaceRouter = {
               sync: {
                 branches: ["main"],
                 paths: ["**/*"],
-                events: ["push", "pull_request", "issues", "release", "discussion"],
+                events: [...getDefaultSyncEvents("github")],
                 autoSync: true,
               },
             } as WorkspaceIntegration["sourceConfig"],
@@ -1395,13 +1390,7 @@ export const workspaceRouter = {
               teamSlug: undefined,
               configurationId: providerAccountInfo.raw.installation_id,
               sync: {
-                events: [
-                  "deployment.created",
-                  "deployment.succeeded",
-                  "deployment.ready",
-                  "deployment.error",
-                  "deployment.canceled",
-                ],
+                events: [...getDefaultSyncEvents("vercel")],
                 autoSync: true,
               },
             } as WorkspaceIntegration["sourceConfig"],
@@ -1538,13 +1527,7 @@ export const workspaceRouter = {
               teamKey: t.teamKey,
               teamName: t.teamName,
               sync: {
-                events: [
-                  "Issue",
-                  "Comment",
-                  "IssueLabel",
-                  "Project",
-                  "Cycle",
-                ],
+                events: [...getDefaultSyncEvents("linear")],
                 autoSync: true,
               },
             } as WorkspaceIntegration["sourceConfig"],
@@ -1688,7 +1671,7 @@ export const workspaceRouter = {
               projectSlug: p.projectSlug,
               projectId: p.projectId,
               sync: {
-                events: ["issue", "error", "comment"],
+                events: [...getDefaultSyncEvents("sentry")],
                 autoSync: true,
               },
             } as WorkspaceIntegration["sourceConfig"],

@@ -87,6 +87,14 @@ export const vercel = defineProvider({
     }),
   },
 
+  defaultSyncEvents: [
+    "deployment.created",
+    "deployment.succeeded",
+    "deployment.ready",
+    "deployment.error",
+    "deployment.canceled",
+  ],
+
   // Wire eventType "deployment.created" → dispatch category "deployment"
   resolveCategory: (eventType) => eventType.split(".")[0] ?? eventType,
 

@@ -109,6 +109,8 @@ export interface ProviderDefinition<
   readonly accountInfoSchema: z.ZodObject;
   readonly categories: TCategories;
   readonly events: TEvents;
+  /** Default sync event keys enabled when linking a new resource. */
+  readonly defaultSyncEvents: readonly string[];
   readonly webhook: WebhookDef<TConfig>;
   readonly oauth: OAuthDef<TConfig, TAccountInfo>;
   /** Normalize wire eventType to dispatch category key. Use identity `(et) => et` if 1:1. */

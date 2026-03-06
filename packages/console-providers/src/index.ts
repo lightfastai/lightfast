@@ -220,6 +220,9 @@ export {
   logValidationErrors,
 } from "./validation.js";
 
+// ── Event Normalization ───────────────────────────────────────────────────────
+export { getBaseEventType, deriveObservationType } from "./event-normalization.js";
+
 // ── Dispatch ──────────────────────────────────────────────────────────────────
 export { transformWebhookPayload } from "./dispatch.js";
 
@@ -229,6 +232,7 @@ export {
   PROVIDER_ENV_SCHEMAS,
   EVENT_REGISTRY,
   getProvider,
+  getDefaultSyncEvents,
   providerAccountInfoSchema,
   sourceTypeSchema,
 } from "./registry.js";

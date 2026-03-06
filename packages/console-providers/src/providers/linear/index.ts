@@ -203,6 +203,8 @@ export const linear = defineProvider({
     }),
   },
 
+  defaultSyncEvents: ["Issue", "Comment", "IssueLabel", "Project", "Cycle"],
+
   // Wire eventType "Issue:create" → dispatch category "Issue"
   resolveCategory: (eventType) => eventType.split(":")[0] ?? eventType,
 

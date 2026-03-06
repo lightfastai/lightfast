@@ -257,6 +257,8 @@ export const github = defineProvider({
     },
   },
 
+  defaultSyncEvents: ["push", "pull_request", "issues", "release", "discussion"],
+
   // GitHub wire eventType maps 1:1 to event key (e.g., "push" → "push")
   resolveCategory: (eventType) => eventType,
 

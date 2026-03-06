@@ -48,6 +48,7 @@ import { resolveActor } from "./actor-resolution";
 import { detectAndCreateRelationships } from "./relationship-detection";
 import { nanoid } from "nanoid";
 import type { PostTransformActor, PostTransformReference } from "@repo/console-providers";
+import { getBaseEventType, deriveObservationType } from "@repo/console-providers";
 import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../../lib/jobs";
 import { createNeuralOnFailureHandler } from "./on-failure-handler";
 import type {
@@ -99,25 +100,6 @@ interface MultiViewEmbeddingResult {
 }
 
 /**
- * Map source event types to observation types
- */
-function deriveObservationType(sourceEvent: PostTransformEvent): string {
-  // For GitHub events, use sourceType directly
-  // e.g., "push", "pull_request_merged", "issue_opened"
-  if (sourceEvent.source === "github") {
-    return sourceEvent.sourceType;
-  }
-
-  // For Vercel events, simplify the type
-  // e.g., "deployment.succeeded" → "deployment_succeeded"
-  if (sourceEvent.source === "vercel") {
-    return sourceEvent.sourceType.replace(".", "_");
-  }
-
-  return sourceEvent.sourceType;
-}
-
-/**
  * Extract topics from source event
  * Simple keyword extraction for MVP
  */
@@ -128,7 +110,7 @@ function extractTopics(sourceEvent: PostTransformEvent): string[] {
   topics.push(sourceEvent.source);
 
   // Add observation type
-  topics.push(deriveObservationType(sourceEvent));
+  topics.push(deriveObservationType(sourceEvent.source, sourceEvent.sourceType));
 
   // Extract from labels
   for (const ref of sourceEvent.references) {
@@ -147,78 +129,6 @@ function extractTopics(sourceEvent: PostTransformEvent): string[] {
   }
 
   return [...new Set(topics)]; // Deduplicate
-}
-
-/**
- * Map detailed sourceType to base event type for config comparison.
- *
- * Internal format uses dot notation: "pull-request.opened", "issue.closed"
- * Config format uses underscores: "pull_request", "issues"
- *
- * @example
- * getBaseEventType("github", "pull-request.opened") // "pull_request"
- * getBaseEventType("github", "issue.closed") // "issues"
- * getBaseEventType("github", "push") // "push"
- * getBaseEventType("vercel", "deployment.created") // "deployment.created"
- */
-function getBaseEventType(source: string, sourceType: string): string {
-  // Defensive: Strip source prefix if present (transformers should not include it)
-  const prefix = `${source}:`;
-  const cleanType = sourceType.startsWith(prefix)
-    ? sourceType.slice(prefix.length)
-    : sourceType;
-
-  if (source === "github") {
-    // Internal format uses dot notation: "pull-request.opened"
-    const dotIndex = cleanType.indexOf(".");
-    if (dotIndex > 0) {
-      const base = cleanType.substring(0, dotIndex);
-      // Convert hyphens to underscores for config format
-      const configBase = base.replace(/-/g, "_");
-      // Special case: issue → issues (config uses plural)
-      return configBase === "issue" ? "issues" : configBase;
-    }
-    // Handle simple events like "push"
-    return cleanType;
-  }
-
-  if (source === "vercel") {
-    // Vercel events are already in category format (e.g., "deployment.created")
-    return cleanType;
-  }
-
-  if (source === "sentry") {
-    // Normalize Sentry events to category level
-    // issue.created, issue.resolved, issue.assigned, issue.ignored → issue
-    // error → error (already category level)
-    // event-alert → event_alert (convert hyphens to underscores for config)
-    // metric-alert → metric_alert (convert hyphens to underscores for config)
-    if (cleanType.startsWith("issue.")) {
-      return "issue";
-    }
-    // Convert hyphens to underscores to match config format
-    return cleanType.replace(/-/g, "_"); // event-alert → event_alert
-  }
-
-  if (source === "linear") {
-    // Normalize Linear events to category level
-    // After transformer update, format is: issue.created, comment.created, etc.
-    // Need to extract before dot and capitalize: issue.created → Issue
-    // Config format: Issue, Comment, Project, Cycle, ProjectUpdate
-    const dotIndex = cleanType.indexOf(".");
-    if (dotIndex > 0) {
-      const base = cleanType.substring(0, dotIndex);
-      // Capitalize first letter and handle camelCase (project-update → ProjectUpdate)
-      return base
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join("");
-    }
-    // Fallback for category-level events already (shouldn't happen with new format)
-    return cleanType;
-  }
-
-  return cleanType;
 }
 
 /**
@@ -899,7 +809,7 @@ export const observationCapture = inngest.createFunction(
       // Base metadata shared across all views
       const baseMetadata = {
         layer: "observations",
-        observationType: deriveObservationType(sourceEvent),
+        observationType: deriveObservationType(sourceEvent.source, sourceEvent.sourceType),
         source: sourceEvent.source,
         sourceType: sourceEvent.sourceType,
         sourceId: sourceEvent.sourceId,
@@ -964,7 +874,7 @@ export const observationCapture = inngest.createFunction(
     // Step 7: Store observation + entities (transactional)
     // Note: Topics come from Step 5 (classify), significance from Step 3
     const { observation, entitiesStored } = await step.run("store-observation", async () => {
-      const observationType = deriveObservationType(sourceEvent);
+      const observationType = deriveObservationType(sourceEvent.source, sourceEvent.sourceType);
 
       // neon-http doesn't support transactions — insert observation first,
       // then batch entity upserts (Inngest step provides retry guarantees)
