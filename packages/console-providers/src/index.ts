@@ -179,8 +179,8 @@ export type {
 } from "./gateway.js";
 
 // ── Crypto & JWT ──────────────────────────────────────────────────────────────
-export { computeHmac, timingSafeEqual } from "./crypto.js";
-export { createRS256JWT, importPKCS8Key } from "./jwt.js";
+export { computeHmac, timingSafeEqual, timingSafeStringEqual, sha256Hex } from "./crypto.js";
+export { createRS256JWT } from "./jwt.js";
 
 // ── Content Utilities ─────────────────────────────────────────────────────────
 export {
@@ -202,20 +202,19 @@ export { transformWebhookPayload } from "./dispatch.js";
 // ── Registry ─────────────────────────────────────────────────────────────────
 export {
   PROVIDERS,
-  PROVIDER_REGISTRY,
   PROVIDER_ENV_SCHEMAS,
-  EVENT_CATEGORIES,
-  WEBHOOK_EVENT_TYPES,
   EVENT_REGISTRY,
-  ALL_GITHUB_EVENTS,
-  ALL_VERCEL_EVENTS,
-  ALL_SENTRY_EVENTS,
-  ALL_LINEAR_EVENTS,
   getProvider,
   providerAccountInfoSchema,
+  sourceTypeSchema,
 } from "./registry.js";
-export type { ProviderName, SourceType, EventKey, ProviderAccountInfo } from "./registry.js";
-export { sourceTypeSchema, PROVIDER_NAMES } from "./registry.js";
+export type {
+  ProviderName,
+  SourceType,
+  EventKey,
+  EventRegistryEntry,
+  ProviderAccountInfo,
+} from "./registry.js";
 
 // ── Provider Definitions ──────────────────────────────────────────────────────
 export { github } from "./providers/github.js";

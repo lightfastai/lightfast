@@ -21,7 +21,6 @@
   "dependencies": {
     "@db/console": "workspace:*",
     "@repo/console-providers": "workspace:*",
-    "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@repo/gateway-service-clients": "workspace:*",
     "@repo/lib": "workspace:*",

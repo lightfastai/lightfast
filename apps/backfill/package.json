@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@repo/console-backfill": "workspace:*",
+    "@repo/console-providers": "workspace:*",
     "@repo/gateway-service-clients": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",

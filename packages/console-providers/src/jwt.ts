@@ -1,7 +1,8 @@
 /**
  * RS256 JWT utilities for GitHub App authentication.
- * Uses Web Crypto RSASSA-PKCS1-v1_5 — edge-compatible, no Node.js crypto.
+ * Uses jose — edge-compatible, no Node.js crypto.
  */
+import { SignJWT, importPKCS8 } from "jose";
 
 /**
  * Create a signed RS256 JWT.
@@ -13,39 +14,26 @@ export async function createRS256JWT(
   payload: Record<string, unknown>,
   privateKeyPem: string,
 ): Promise<string> {
-  const header = { alg: "RS256", typ: "JWT" };
+  const pem = normalizePem(privateKeyPem);
+  const key = await importPKCS8(pem, "RS256");
 
-  const encodedHeader = base64UrlEncode(JSON.stringify(header));
-  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
-  const signingInput = `${encodedHeader}.${encodedPayload}`;
-
-  const key = await importPKCS8Key(privateKeyPem);
-  const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    key,
-    new TextEncoder().encode(signingInput),
-  );
-
-  const encodedSignature = base64UrlEncodeBytes(new Uint8Array(signature));
-  return `${signingInput}.${encodedSignature}`;
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: "RS256", typ: "JWT" })
+    .sign(key);
 }
 
 /**
- * Import a PKCS#8 PEM private key via Web Crypto.
- *
- * Handles common env var formats:
- *  - Raw PEM with literal `\n` characters (Vercel convention)
- *  - Raw PEM with actual newlines
- *  - Quoted PEM strings
- *  - Base64-encoded PEM (legacy: entire PEM wrapped in one more base64 layer)
+ * Normalize PEM key from common env var formats:
+ *  - Quoted strings → strip quotes
+ *  - Literal \n → real newlines (Vercel convention)
+ *  - Base64-encoded PEM (legacy) → decode
+ *  - PKCS#1 (BEGIN RSA PRIVATE KEY) → reject with guidance
  */
-export async function importPKCS8Key(rawKey: string): Promise<CryptoKey> {
-  // Normalize: strip quotes, replace literal \n with actual newlines
+function normalizePem(rawKey: string): string {
   let pem = rawKey
     .replace(/^["']|["']$/g, "")
     .replace(/\\n/g, "\n");
 
-  // If it doesn't look like PEM, try base64-decoding (legacy format)
   if (!pem.includes("-----BEGIN")) {
     try {
       pem = atob(pem);
@@ -56,8 +44,6 @@ export async function importPKCS8Key(rawKey: string): Promise<CryptoKey> {
     }
   }
 
-  // GitHub issues PKCS#1 keys (BEGIN RSA PRIVATE KEY) but Web Crypto
-  // only supports PKCS#8 (BEGIN PRIVATE KEY). Detect and reject early.
   if (pem.includes("-----BEGIN RSA PRIVATE KEY-----")) {
     throw new Error(
       "Private key is in PKCS#1 format (RSA PRIVATE KEY). " +
@@ -66,39 +52,5 @@ export async function importPKCS8Key(rawKey: string): Promise<CryptoKey> {
     );
   }
 
-  // Strip PEM headers and decode inner base64
-  const pemContents = pem
-    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
-    .replace(/-----END PRIVATE KEY-----/g, "")
-    .replace(/\s/g, "");
-
-  const binaryDer = atob(pemContents);
-  const keyBytes = new Uint8Array(binaryDer.length);
-  for (let i = 0; i < binaryDer.length; i++) {
-    keyBytes[i] = binaryDer.charCodeAt(i);
-  }
-
-  return crypto.subtle.importKey(
-    "pkcs8",
-    keyBytes.buffer,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-}
-
-function base64UrlEncode(str: string): string {
-  return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-function base64UrlEncodeBytes(bytes: Uint8Array): string {
-  const CHUNK_SIZE = 0x8000;
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK_SIZE));
-  }
-  return btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  return pem;
 }

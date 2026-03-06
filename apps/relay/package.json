@@ -23,7 +23,6 @@
     "@neondatabase/serverless": "catalog:",
     "@repo/console-api-key": "workspace:*",
     "@repo/console-providers": "workspace:*",
-    "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",
