@@ -21,9 +21,9 @@
     "generate:openapi": "tsx scripts/generate.ts"
   },
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^7.3.4",
-    "@repo/console-types": "workspace:*",
-    "zod": "catalog:zod4"
+    "@repo/console-validation": "workspace:*",
+    "zod": "catalog:zod4",
+    "zod-openapi": "^5.4.6"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
