@@ -21,7 +21,7 @@ interface SeedOptions {
 }
 
 interface DemoSource {
-  sourceConfig: InsertWorkspaceIntegration["sourceConfig"];
+  providerConfig: InsertWorkspaceIntegration["providerConfig"];
   providerResourceId: string;
   documentCount: number;
 }
@@ -32,7 +32,7 @@ interface DemoSource {
  */
 const DEMO_SOURCES: DemoSource[] = [
   {
-    sourceConfig: {
+    providerConfig: {
       version: 1,
       sourceType: "github",
       type: "repository",
@@ -54,7 +54,7 @@ const DEMO_SOURCES: DemoSource[] = [
     documentCount: 0,
   },
   {
-    sourceConfig: {
+    providerConfig: {
       version: 1,
       sourceType: "vercel",
       type: "project",
@@ -72,7 +72,7 @@ const DEMO_SOURCES: DemoSource[] = [
     documentCount: 7,
   },
   {
-    sourceConfig: {
+    providerConfig: {
       version: 1,
       sourceType: "sentry",
       type: "project",
@@ -87,7 +87,7 @@ const DEMO_SOURCES: DemoSource[] = [
     documentCount: 5,
   },
   {
-    sourceConfig: {
+    providerConfig: {
       version: 1,
       sourceType: "linear",
       type: "team",
@@ -121,22 +121,22 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       );
 
     if (existingIntegration.length > 0) {
-      console.log(`  [skip] ${source.sourceConfig.sourceType} workspace integration already exists`);
+      console.log(`  [skip] ${source.providerConfig.sourceType} workspace integration already exists`);
       continue;
     }
 
     await db.insert(workspaceIntegrations).values({
-      id: `wi-${source.sourceConfig.sourceType}-${nanoid(8)}`,
+      id: `wi-${source.providerConfig.sourceType}-${nanoid(8)}`,
       workspaceId,
       connectedBy: userId,
-      provider: source.sourceConfig.sourceType,
-      sourceConfig: source.sourceConfig,
+      provider: source.providerConfig.sourceType,
+      providerConfig: source.providerConfig,
       providerResourceId: source.providerResourceId,
       isActive: true,
       lastSyncStatus: "success",
       documentCount: source.documentCount,
     });
-    console.log(`  [created] ${source.sourceConfig.sourceType} workspace integration`);
+    console.log(`  [created] ${source.providerConfig.sourceType} workspace integration`);
   }
 
   console.log("\nDone! All integrations seeded.");

@@ -31,25 +31,22 @@ import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../
 import { recordActivity } from "../../lib/activity";
 import { ensureActorLinked } from "../../lib/actor-linking";
 import { notifyBackfill } from "../../lib/backfill";
-import { getDefaultSyncEvents, sourceTypeSchema } from "@repo/console-providers";
-import type { ProviderName } from "@repo/console-providers";
+import { getDefaultSyncEvents, sourceTypeSchema, PROVIDER_RESOURCE_META } from "@repo/console-providers";
+import type { ProviderName, ProviderResourceMeta } from "@repo/console-providers";
+import type { GwInstallation } from "@db/console/schema";
 
-/** Per-provider resource metadata — sent by the client alongside each resource */
-interface ResourceMetadata {
-  [key: string]: string | undefined;
-}
+type BuilderParams<P extends ProviderName> = {
+  resourceId: string;
+  resourceName: string;
+  metadata: ProviderResourceMeta[P];
+  gwInstallation: GwInstallation;
+  defaultSyncEvents: readonly string[];
+};
 
-/** Per-provider sourceConfig factory */
-const SOURCE_CONFIG_BUILDERS: Record<
-  ProviderName,
-  (params: {
-    resourceId: string;
-    resourceName: string;
-    metadata: ResourceMetadata;
-    gwInstallation: typeof gwInstallations.$inferSelect;
-    defaultSyncEvents: readonly string[];
-  }) => WorkspaceIntegration["sourceConfig"]
-> = {
+/** Per-provider providerConfig factory — metadata is strictly typed per provider */
+const PROVIDER_CONFIG: {
+  [K in ProviderName]: (params: BuilderParams<K>) => WorkspaceIntegration["providerConfig"];
+} = {
   github: ({ resourceId, resourceName, metadata, gwInstallation, defaultSyncEvents }) => ({
     version: 1,
     sourceType: "github",
@@ -70,16 +67,19 @@ const SOURCE_CONFIG_BUILDERS: Record<
   }),
 
   vercel: ({ resourceId, resourceName, gwInstallation, defaultSyncEvents }) => {
-    const accountInfo = gwInstallation.providerAccountInfo as Record<string, unknown> & { raw?: Record<string, unknown> };
+    const info = gwInstallation.providerAccountInfo;
+    if (!info || info.sourceType !== "vercel") {
+      throw new Error("Invalid provider account info for vercel");
+    }
     return {
       version: 1,
       sourceType: "vercel",
       type: "project",
       projectId: resourceId,
       projectName: resourceName,
-      teamId: (accountInfo?.raw?.team_id as string | undefined) ?? undefined,
+      teamId: info.raw.team_id ?? undefined,
       teamSlug: undefined,
-      configurationId: (accountInfo?.raw?.installation_id as string | undefined) ?? "",
+      configurationId: info.raw.installation_id,
       sync: {
         events: [...defaultSyncEvents],
         autoSync: true,
@@ -112,6 +112,15 @@ const SOURCE_CONFIG_BUILDERS: Record<
     },
   }),
 };
+
+/** Build providerConfig for a given provider — correlates metadata schema + builder */
+function buildProviderConfig<P extends ProviderName>(
+  provider: P,
+  params: Omit<BuilderParams<P>, "metadata"> & { rawMetadata: Record<string, string> },
+): WorkspaceIntegration["providerConfig"] {
+  const metadata = PROVIDER_RESOURCE_META[provider].parse(params.rawMetadata) as ProviderResourceMeta[P];
+  return PROVIDER_CONFIG[provider]({ ...params, metadata });
+}
 
 /**
  * Workspace router - internal procedures for API routes
@@ -679,7 +688,7 @@ export const workspaceRouter = {
             lastSyncedAt: workspaceIntegrations.lastSyncedAt,
             lastSyncStatus: workspaceIntegrations.lastSyncStatus,
             documentCount: workspaceIntegrations.documentCount,
-            sourceConfig: workspaceIntegrations.sourceConfig,
+            providerConfig: workspaceIntegrations.providerConfig,
             backfillConfig: gwInstallations.backfillConfig,
           })
           .from(workspaceIntegrations)
@@ -708,8 +717,8 @@ export const workspaceRouter = {
             id: s.id,
             type: s.sourceType,
             sourceType: s.sourceType, // Canonical name
-            displayName: s.sourceConfig.sourceType === "github"
-              ? s.sourceConfig.repoFullName
+            displayName: s.providerConfig.sourceType === "github"
+              ? s.providerConfig.repoFullName
               : s.sourceType,
             documentCount: s.documentCount,
             isActive: s.isActive, // For UI compatibility
@@ -718,11 +727,11 @@ export const workspaceRouter = {
             lastIngestedAt: s.lastSyncedAt,
             lastSyncAt: s.lastSyncedAt, // Alias for UI compatibility
             lastSyncStatus: s.lastSyncStatus, // For UI compatibility
-            metadata: s.sourceConfig,
+            metadata: s.providerConfig,
             backfillConfig: s.backfillConfig ?? null,
             resource: { // For backward compatibility
               id: s.id,
-              resourceData: s.sourceConfig,
+              resourceData: s.providerConfig,
             },
           })),
         };
@@ -1088,7 +1097,7 @@ export const workspaceRouter = {
             installationId,
             provider: "vercel",
             connectedBy: ctx.auth.userId,
-            sourceConfig: {
+            providerConfig: {
               version: 1 as const,
               sourceType: "vercel" as const,
               type: "project" as const,
@@ -1176,9 +1185,9 @@ export const workspaceRouter = {
           });
         }
 
-        // Update source_config.sync.events using JSON merge
-        // The sourceConfig is a discriminated union type, so we need to preserve it properly
-        const currentConfig = integration.sourceConfig;
+        // Update provider_config.sync.events using JSON merge
+        // The providerConfig is a discriminated union type, so we need to preserve it properly
+        const currentConfig = integration.providerConfig;
 
         // Build the updated config preserving all existing fields
         // We cast through unknown to satisfy TypeScript while preserving the data structure
@@ -1193,7 +1202,7 @@ export const workspaceRouter = {
         await ctx.db
           .update(workspaceIntegrations)
           .set({
-            sourceConfig: updatedConfig,
+            providerConfig: updatedConfig,
             updatedAt: new Date().toISOString(),
           })
           .where(eq(workspaceIntegrations.id, input.integrationId));
@@ -1205,7 +1214,7 @@ export const workspaceRouter = {
      * Bulk link resources (repositories, projects, teams) to a workspace.
      *
      * Generic mutation replacing provider-specific bulkLink* mutations.
-     * Per-provider sourceConfig construction is handled by SOURCE_CONFIG_BUILDERS.
+     * Per-provider providerConfig construction is handled by PROVIDER_CONFIG.
      */
     bulkLinkResources: orgScopedProcedure
       .input(
@@ -1285,8 +1294,8 @@ export const workspaceRouter = {
         }
 
         const now = new Date().toISOString();
-        const defaultSyncEvents = getDefaultSyncEvents(provider as ProviderName);
-        const buildSourceConfig = SOURCE_CONFIG_BUILDERS[provider as ProviderName];
+        const typedProvider = provider as ProviderName;
+        const defaultSyncEvents = getDefaultSyncEvents(typedProvider);
 
         // 5. Reactivate inactive integrations
         if (toReactivate.length > 0) {
@@ -1304,10 +1313,10 @@ export const workspaceRouter = {
             provider,
             connectedBy: ctx.auth.userId,
             providerResourceId: resource.resourceId,
-            sourceConfig: buildSourceConfig({
+            providerConfig: buildProviderConfig(typedProvider, {
               resourceId: resource.resourceId,
               resourceName: resource.resourceName,
-              metadata: resource.metadata ?? {},
+              rawMetadata: resource.metadata ?? {},
               gwInstallation,
               defaultSyncEvents,
             }),

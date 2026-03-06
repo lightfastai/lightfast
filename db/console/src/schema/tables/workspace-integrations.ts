@@ -39,14 +39,14 @@ export const workspaceIntegrations = pgTable(
     installationId: varchar("installation_id", { length: 191 })
       .references(() => gwInstallations.id, { onDelete: "set null" }),
 
-    // Denormalized provider for fast filtering (replaces sourceConfig.sourceType join)
+    // Denormalized provider for fast filtering (replaces providerConfig.sourceType join)
     provider: varchar("provider", { length: 50 }).notNull().$type<SourceType>(),
 
     // Who connected this source to the workspace
     connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
 
     /**
-     * Unified source configuration containing all source-specific data and sync settings.
+     * Unified provider configuration containing all provider-specific data and sync settings.
      * This replaces the previous separate resourceData + syncConfig fields.
      *
      * Examples:
@@ -83,7 +83,7 @@ export const workspaceIntegrations = pgTable(
      *   }
      * }
      */
-    sourceConfig: jsonb("source_config").$type<
+    providerConfig: jsonb("provider_config").$type<
       | {
           version: 1;
           sourceType: "github";

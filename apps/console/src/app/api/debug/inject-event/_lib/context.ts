@@ -9,7 +9,7 @@ export function buildContext(
   context?: string,
 ): string {
   const provider = integration.provider;
-  const cfg = integration.sourceConfig;
+  const cfg = integration.providerConfig;
   const contextLine = context ? `\nUser context: ${context}` : "";
   const afterColon = eventKey.split(":")[1] ?? "";
   const dotIdx = afterColon.indexOf(".");

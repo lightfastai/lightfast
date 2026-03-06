@@ -132,13 +132,13 @@ function extractTopics(sourceEvent: PostTransformEvent): string[] {
 }
 
 /**
- * Check if an event type is allowed for a source based on sourceConfig.sync.events
+ * Check if an event type is allowed for a source based on providerConfig.sync.events
  */
 function isEventAllowed(
-  sourceConfig: { sync?: { events?: string[] } } | null | undefined,
+  providerConfig: { sync?: { events?: string[] } } | null | undefined,
   baseEventType: string,
 ): boolean {
-  const events = sourceConfig?.sync?.events;
+  const events = providerConfig?.sync?.events;
   if (!events || events.length === 0) {
     return false;
   }
@@ -480,16 +480,16 @@ export const observationCapture = inngest.createFunction(
 
       // Check if event is allowed
       const baseEventType = getBaseEventType(sourceEvent.source, sourceEvent.sourceType);
-      const sourceConfig = integration.sourceConfig as { sync?: { events?: string[] } };
-      const allowed = isEventAllowed(sourceConfig, baseEventType);
+      const providerConfig = integration.providerConfig as { sync?: { events?: string[] } };
+      const allowed = isEventAllowed(providerConfig, baseEventType);
 
       if (!allowed) {
-        log.info("Event filtered by source config", {
+        log.info("Event filtered by provider config", {
           workspaceId,
           resourceId,
           sourceType: sourceEvent.sourceType,
           baseEventType,
-          configuredEvents: sourceConfig.sync?.events,
+          configuredEvents: providerConfig.sync?.events,
         });
       }
 

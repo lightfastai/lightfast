@@ -80,7 +80,7 @@ export const sourcesM2MRouter = {
       const source = result[0];
 
       // Verify it's actually a GitHub repository
-      if (source && source.sourceConfig.sourceType !== "github") {
+      if (source && source.providerConfig.sourceType !== "github") {
         return null;
       }
 
@@ -118,7 +118,7 @@ export const sourcesM2MRouter = {
           where: eq(workspaceIntegrations.id, source.id),
         });
 
-        if (fullSource?.sourceConfig.sourceType !== "github") {
+        if (fullSource?.providerConfig.sourceType !== "github") {
           return null;
         }
       }
@@ -203,8 +203,8 @@ export const sourcesM2MRouter = {
       // Filter to GitHub sources with matching installationId
       const installationSources = sources.filter(
         (source) =>
-          source.sourceConfig.sourceType === "github" &&
-          source.sourceConfig.installationId === input.githubInstallationId
+          source.providerConfig.sourceType === "github" &&
+          source.providerConfig.installationId === input.githubInstallationId
       );
 
       if (installationSources.length === 0) {
@@ -280,7 +280,7 @@ export const sourcesM2MRouter = {
       // Filter to GitHub sources and update
       const now = new Date().toISOString();
       const githubSources = sources.filter(
-        (source) => source.sourceConfig.sourceType === "github"
+        (source) => source.providerConfig.sourceType === "github"
       );
 
       if (githubSources.length === 0) {
@@ -289,7 +289,7 @@ export const sourcesM2MRouter = {
 
       const updateQueries = githubSources.map((source) => {
         const updatedConfig = {
-          ...source.sourceConfig,
+          ...source.providerConfig,
           isArchived: true,
         };
 
@@ -297,7 +297,7 @@ export const sourcesM2MRouter = {
           .update(workspaceIntegrations)
           .set({
             isActive: false,
-            sourceConfig: updatedConfig,
+            providerConfig: updatedConfig,
             lastSyncedAt: now,
             lastSyncStatus: "failed",
             lastSyncError: "Repository deleted on GitHub",
@@ -359,7 +359,7 @@ export const sourcesM2MRouter = {
       // Filter to GitHub sources and update metadata
       const now = new Date().toISOString();
       const githubSources = sources.filter(
-        (source) => source.sourceConfig.sourceType === "github"
+        (source) => source.providerConfig.sourceType === "github"
       );
 
       if (githubSources.length === 0) {
@@ -368,12 +368,12 @@ export const sourcesM2MRouter = {
 
       const updateQueries = githubSources.map((source) => {
         // Safe to cast: pre-filtered to github sourceType above
-        const sourceConfig = source.sourceConfig as Extract<typeof source.sourceConfig, { sourceType: "github" }>;
+        const providerConfig = source.providerConfig as Extract<typeof source.providerConfig, { sourceType: "github" }>;
         const updatedConfig = {
-          ...sourceConfig,
+          ...providerConfig,
           ...(input.metadata.repoFullName && {
             repoFullName: input.metadata.repoFullName,
-            repoName: input.metadata.repoFullName.split("/")[1] ?? sourceConfig.repoName,
+            repoName: input.metadata.repoFullName.split("/")[1] ?? providerConfig.repoName,
           }),
           ...(input.metadata.defaultBranch && {
             defaultBranch: input.metadata.defaultBranch,
@@ -389,7 +389,7 @@ export const sourcesM2MRouter = {
         return db
           .update(workspaceIntegrations)
           .set({
-            sourceConfig: updatedConfig,
+            providerConfig: updatedConfig,
             updatedAt: now,
           })
           .where(eq(workspaceIntegrations.id, source.id));
