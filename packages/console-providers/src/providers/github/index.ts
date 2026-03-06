@@ -262,6 +262,18 @@ export const github = defineProvider({
   // GitHub wire eventType maps 1:1 to event key (e.g., "push" → "push")
   resolveCategory: (eventType) => eventType,
 
+  getBaseEventType: (sourceType) => {
+    const dotIndex = sourceType.indexOf(".");
+    if (dotIndex > 0) {
+      const base = sourceType.substring(0, dotIndex);
+      const configBase = base.replace(/-/g, "_");
+      return configBase === "issue" ? "issues" : configBase;
+    }
+    return sourceType;
+  },
+
+  deriveObservationType: (sourceType) => sourceType,
+
   envSchema: {
     GITHUB_APP_SLUG: z.string().min(1),
     GITHUB_APP_ID: z.string().min(1),

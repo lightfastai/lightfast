@@ -101,20 +101,25 @@ export interface ProviderDefinition<
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
   TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
   TEvents extends Record<string, EventDefinition> = Record<string, EventDefinition>,
+  TAccountInfoSchema extends z.ZodObject = z.ZodObject,
 > {
   readonly name: string;
   readonly displayName: string;
   readonly description: string;
   readonly configSchema: z.ZodType<TConfig>;
-  readonly accountInfoSchema: z.ZodObject;
+  readonly accountInfoSchema: TAccountInfoSchema;
   readonly categories: TCategories;
   readonly events: TEvents;
-  /** Default sync event keys enabled when linking a new resource. */
+  /** Default sync event keys enabled when linking a new resource. Must be a subset of category keys. */
   readonly defaultSyncEvents: readonly string[];
   readonly webhook: WebhookDef<TConfig>;
   readonly oauth: OAuthDef<TConfig, TAccountInfo>;
   /** Normalize wire eventType to dispatch category key. Use identity `(et) => et` if 1:1. */
   readonly resolveCategory: (eventType: string) => string;
+  /** Map detailed internal sourceType to base config sync event key for filtering. */
+  readonly getBaseEventType: (sourceType: string) => string;
+  /** Map sourceType to observation type string for storage. */
+  readonly deriveObservationType: (sourceType: string) => string;
   /** Plain Zod schemas for required process.env vars — no @t3-oss wrapper */
   readonly envSchema: Record<string, z.ZodType>;
   /** Build runtime config from validated env + runtime values */
@@ -134,10 +139,12 @@ export function defineProvider<
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
   const TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
   const TEvents extends Record<string, EventDefinition> = Record<string, EventDefinition>,
+  TAccountInfoSchema extends z.ZodObject = z.ZodObject,
 >(
-  def: ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents>,
-): ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents> {
-  return Object.freeze(def) as ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents>;
+  def: ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema>
+    & { readonly defaultSyncEvents: readonly (keyof TCategories & string)[] },
+): ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema> {
+  return Object.freeze(def) as ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema>;
 }
 
 // ── Display-Layer Types ──────────────────────────────────────────────────────

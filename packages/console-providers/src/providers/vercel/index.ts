@@ -98,6 +98,10 @@ export const vercel = defineProvider({
   // Wire eventType "deployment.created" → dispatch category "deployment"
   resolveCategory: (eventType) => eventType.split(".")[0] ?? eventType,
 
+  getBaseEventType: (sourceType) => sourceType,
+
+  deriveObservationType: (sourceType) => sourceType.replace(".", "_"),
+
   webhook: {
     headersSchema: z.object({
       "x-vercel-signature": z.string(),

@@ -155,6 +155,7 @@ export const linear = defineProvider({
   categories: {
     Issue: { label: "Issues", description: "Capture issue creates, updates, and deletes", type: "observation" },
     Comment: { label: "Comments", description: "Capture comment activity on issues", type: "observation" },
+    IssueLabel: { label: "Issue Labels", description: "Capture issue label changes", type: "observation" },
     Project: { label: "Projects", description: "Capture project lifecycle events", type: "observation" },
     Cycle: { label: "Cycles", description: "Capture sprint/cycle lifecycle events", type: "observation" },
     ProjectUpdate: { label: "Project Updates", description: "Capture project status updates", type: "observation" },
@@ -207,6 +208,20 @@ export const linear = defineProvider({
 
   // Wire eventType "Issue:create" → dispatch category "Issue"
   resolveCategory: (eventType) => eventType.split(":")[0] ?? eventType,
+
+  getBaseEventType: (sourceType) => {
+    const dotIndex = sourceType.indexOf(".");
+    if (dotIndex > 0) {
+      const base = sourceType.substring(0, dotIndex);
+      return base
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join("");
+    }
+    return sourceType;
+  },
+
+  deriveObservationType: (sourceType) => sourceType,
 
   webhook: {
     headersSchema: z.object({

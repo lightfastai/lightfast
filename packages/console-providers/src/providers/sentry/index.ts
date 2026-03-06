@@ -83,6 +83,7 @@ export const sentry = defineProvider({
   categories: {
     issue: { label: "Issues", description: "Capture issue state changes (created, resolved, assigned, ignored)", type: "observation" },
     error: { label: "Errors", description: "Capture individual error events", type: "observation" },
+    comment: { label: "Comments", description: "Capture issue comment activity", type: "observation" },
     event_alert: { label: "Event Alerts", description: "Capture event alert rule triggers", type: "observation" },
     metric_alert: { label: "Metric Alerts", description: "Capture metric alert triggers and resolutions", type: "observation" },
   },
@@ -108,6 +109,13 @@ export const sentry = defineProvider({
 
   // Sentry wire eventType maps 1:1 to event key (e.g., "issue" → "issue")
   resolveCategory: (eventType) => eventType,
+
+  getBaseEventType: (sourceType) => {
+    if (sourceType.startsWith("issue.")) return "issue";
+    return sourceType.replace(/-/g, "_");
+  },
+
+  deriveObservationType: (sourceType) => sourceType,
 
   webhook: {
     headersSchema: z.object({
