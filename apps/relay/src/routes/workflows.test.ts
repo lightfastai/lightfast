@@ -97,10 +97,6 @@ vi.mock("@db/console/schema", () => ({
   gwResources: {},
 }));
 
-vi.mock("../lib/flags.js", () => ({
-  isConsoleFanOutEnabled: vi.fn().mockResolvedValue(true),
-}));
-
 vi.mock("../lib/urls", () => ({
   relayBaseUrl: "https://relay.test/api",
   consoleUrl: "https://console.test",
@@ -111,8 +107,6 @@ let mockDbRows: { installationId: string; orgId: string }[] = [];
 
 // Force module load to trigger serve() and capture the handler
 await import("./workflows.js");
-
-import { isConsoleFanOutEnabled } from "../lib/flags.js";
 
 // ── Test helpers ──
 
@@ -207,8 +201,8 @@ describe("webhook-delivery workflow", () => {
     const ctx = makeContext(makePayload());
     await capturedHandler(ctx);
 
-    // 7 steps: dedup, persist-delivery, resolve-connection, update-connection, check-fan-out-flag, publish-to-console, update-status-enqueued
-    expect(ctx.run).toHaveBeenCalledTimes(7);
+    // 6 steps: dedup, persist-delivery, resolve-connection, update-connection, publish-to-console, update-status-enqueued
+    expect(ctx.run).toHaveBeenCalledTimes(6);
     expect(mockPublishJSON).toHaveBeenCalledWith(
       expect.objectContaining({
         url: "https://console.test/api/gateway/ingress",
@@ -350,43 +344,6 @@ describe("webhook-delivery workflow", () => {
     );
   });
 
-  it("skips console delivery when fan-out is disabled but preserves webhook", async () => {
-    vi.mocked(isConsoleFanOutEnabled).mockResolvedValueOnce(false);
-
-    mockRedisSet.mockResolvedValue("OK");
-    mockRedisHgetall.mockResolvedValue({
-      connectionId: "conn-1",
-      orgId: "org-1",
-    });
-
-    const ctx = makeContext(makePayload());
-    await capturedHandler(ctx);
-
-    // 5 steps: dedup, persist-delivery, resolve-connection, update-connection, check-fan-out-flag
-    expect(ctx.run).toHaveBeenCalledTimes(5);
-    // Should NOT have published to Console
-    expect(mockPublishJSON).not.toHaveBeenCalled();
-    // Should NOT have published to DLQ
-    expect(mockPublishToTopic).not.toHaveBeenCalled();
-    // Should have persisted the delivery (step 2 ran)
-    expect(mockOnConflictDoNothing).toHaveBeenCalled();
-
-    // Persist + installationId update, but NO status advancement (workflow ends after flag check)
-    expect(dbOps).toEqual([
-      {
-        op: "insert",
-        values: {
-          provider: "github",
-          deliveryId: "del-001",
-          eventType: "push",
-          status: "received",
-          payload: JSON.stringify({ repository: { id: 42 } }),
-          receivedAt: new Date(1700000000000).toISOString(),
-        },
-      },
-      { op: "update", set: { installationId: "conn-1" } },
-    ]);
-  });
 
   describe("external dependency failures", () => {
     it("Redis dedup (SET NX) throws → error propagates, webhook is retried by Upstash", async () => {
@@ -666,25 +623,6 @@ describe("webhook-delivery workflow", () => {
       expect(finalState).not.toHaveProperty("installationId");
     });
 
-    it("fan-out disabled: final state has installationId but status remains 'received'", async () => {
-      vi.mocked(isConsoleFanOutEnabled).mockResolvedValueOnce(false);
-      mockRedisSet.mockResolvedValue("OK");
-      mockRedisHgetall.mockResolvedValue({
-        connectionId: "conn-1",
-        orgId: "org-1",
-      });
-
-      const ctx = makeContext(makePayload());
-      await capturedHandler(ctx);
-
-      const finalState = computeFinalDbState(dbOps);
-      expect(finalState).toEqual(
-        expect.objectContaining({
-          status: "received", // Never advanced — no "enqueued" update
-          installationId: "conn-1",
-        }),
-      );
-    });
   });
 
   it("DLQ envelope contains all diagnostic fields", async () => {

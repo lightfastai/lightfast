@@ -8,7 +8,6 @@ import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/console-providers";
 import { db } from "@db/console/client";
 import { gwWebhookDeliveries } from "@db/console/schema";
-import { isConsoleFanOutEnabled } from "../lib/flags.js";
 import type { WebhookVariables } from "../middleware/webhook.js";
 import {
   providerGuard,
@@ -90,11 +89,6 @@ webhooks.post(
       const holdForReplay = c.req.header("X-Backfill-Hold") === "true";
       if (holdForReplay) {
         return c.json({ status: "accepted", deliveryId, held: true });
-      }
-
-      // Check feature flag — skip console delivery if disabled
-      if (!(await isConsoleFanOutEnabled(providerName))) {
-        return c.json({ status: "accepted", deliveryId, fanOut: false });
       }
 
       // Publish directly to Console ingress — skip connection resolution (pre-resolved in body)

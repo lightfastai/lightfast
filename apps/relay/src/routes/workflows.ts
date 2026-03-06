@@ -9,8 +9,6 @@ import { webhookSeenKey, resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache.js
 import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload } from "@repo/console-providers";
 import type { WorkflowContext } from "@vendor/upstash-workflow";
-import { isConsoleFanOutEnabled } from "../lib/flags.js";
-
 const qstash = getQStashClient();
 
 interface ConnectionInfo {
@@ -156,18 +154,7 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       return;
     }
 
-    // Step 4: Connection found — check feature flag before console delivery
-    const fanOutEnabled = await context.run("check-fan-out-flag", async () => {
-      return isConsoleFanOutEnabled(data.provider);
-    });
-
-    if (!fanOutEnabled) {
-      // Fan-out disabled — webhook is already persisted (step 2).
-      // Skip console delivery. Data is available for future replay.
-      return;
-    }
-
-    // Step 4b: Publish to Console ingress via QStash
+    // Step 4: Publish to Console ingress via QStash
     // QStash guarantees at-least-once delivery with 5 retries.
     // The delivery-status callback is called on final success or failure.
     await context.run("publish-to-console", async () => {

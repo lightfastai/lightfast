@@ -32,7 +32,6 @@
     "@vendor/related-projects": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
-    "@vendor/vercel-flags": "workspace:*",
     "hono": "catalog:",
     "zod": "catalog:zod4"
   },

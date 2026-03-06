@@ -74,15 +74,10 @@ vi.mock("@db/console/schema", () => ({
   gwWebhookDeliveries: {},
 }));
 
-vi.mock("../lib/flags.js", () => ({
-  isConsoleFanOutEnabled: vi.fn().mockResolvedValue(true),
-}));
-
 // ── Import app after mocks ──
 
 import { Hono } from "hono";
 import { webhooks } from "./webhooks.js";
-import { isConsoleFanOutEnabled } from "../lib/flags.js";
 
 const app = new Hono();
 app.route("/webhooks", webhooks);
@@ -506,47 +501,6 @@ describe("POST /webhooks/:provider", () => {
     });
   });
 
-  describe("service auth with fan-out disabled", () => {
-    it("persists webhook but skips QStash publish when flag is disabled", async () => {
-      vi.mocked(isConsoleFanOutEnabled).mockResolvedValueOnce(false);
-
-      const res = await request("/webhooks/github", {
-        body: {
-          connectionId: "conn-1",
-          orgId: "org-1",
-          deliveryId: "del-flag-off",
-          eventType: "push",
-          payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
-        },
-        headers: { "X-API-Key": "test-api-key" },
-      });
-
-      expect(res.status).toBe(200);
-      const json = await res.json();
-      expect(json.status).toBe("accepted");
-      expect(json.fanOut).toBe(false);
-      expect(mockPublishJSON).not.toHaveBeenCalled();
-
-      // Webhook was persisted even though fan-out is disabled — no status update to "enqueued"
-      expect(dbOps).toEqual([
-        {
-          op: "insert",
-          table: expect.anything(),
-          values: {
-            provider: "github",
-            deliveryId: "del-flag-off",
-            eventType: "push",
-            installationId: "conn-1",
-            status: "received",
-            payload: JSON.stringify({ repository: { id: 42 } }),
-            receivedAt: new Date(1700000000000).toISOString(),
-          },
-        },
-      ]);
-    });
-  });
-
   describe("per-provider secret mapping", () => {
     it("Vercel webhook uses correct secret and SHA1 algorithm through full route", async () => {
       // This verifies the secret lookup object on line 100-105 maps
@@ -673,29 +627,6 @@ describe("POST /webhooks/:provider", () => {
       );
     });
 
-    it("fan-out disabled: final state has installationId, status remains 'received'", async () => {
-      vi.mocked(isConsoleFanOutEnabled).mockResolvedValueOnce(false);
-
-      await request("/webhooks/github", {
-        body: {
-          connectionId: "conn-1",
-          orgId: "org-1",
-          deliveryId: "del-parity-off",
-          eventType: "push",
-          payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
-        },
-        headers: { "X-API-Key": "test-api-key" },
-      });
-
-      const finalState = computeFinalDbState(dbOps);
-      expect(finalState).toEqual(
-        expect.objectContaining({
-          status: "received", // Never advanced
-          installationId: "conn-1",
-        }),
-      );
-    });
   });
 
   describe("HMAC route → workflow payload contract", () => {
