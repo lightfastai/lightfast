@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { Zap, Scale, Brain } from "lucide-react";
-import { SOURCE_TYPE_OPTIONS } from "~/lib/provider-config";
+import { SOURCE_TYPE_OPTIONS } from "@repo/console-providers/display";
 
 export { SOURCE_TYPE_OPTIONS };
 

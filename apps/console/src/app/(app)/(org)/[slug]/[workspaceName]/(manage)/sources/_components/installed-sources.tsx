@@ -28,7 +28,9 @@ import { cn } from "@repo/ui/lib/utils";
 import { Search, Circle, ChevronDown, ChevronRight, AlertTriangle, Plus } from "lucide-react";
 import { ConfigTemplateDialog } from "~/components/config-template-dialog";
 import type { SourceType } from "@repo/console-providers";
-import { PROVIDER_CONFIG, PROVIDER_ORDER, getResourceLabel } from "~/lib/provider-config";
+import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers/display";
+import { ProviderIcon } from "~/lib/provider-icon";
+import { getResourceLabel } from "~/lib/resource-label";
 import { useQueryStates, parseAsString, parseAsStringEnum } from "nuqs";
 import type { Source } from "~/types";
 import { SourceSettingsForm } from "./source-settings-form";
@@ -74,7 +76,7 @@ export function InstalledSources({
 	const searchLower = filters.search.toLowerCase();
 	const filteredIntegrations = integrations.filter((integration) => {
 		const { metadata } = integration;
-		const providerLabel = PROVIDER_CONFIG[metadata.sourceType].name;
+		const providerLabel = PROVIDER_DISPLAY[metadata.sourceType].displayName;
 		const resourceLabel = getResourceLabel(metadata);
 		const searchTarget = `${providerLabel}/${resourceLabel}`.toLowerCase();
 
@@ -93,9 +95,9 @@ export function InstalledSources({
 		grouped.set(type, list);
 	}
 
-	const sortedGroups = PROVIDER_ORDER
+	const sortedGroups = PROVIDER_SLUGS
 		.filter((p) => grouped.has(p))
-		.map((p) => ({ provider: p, resources: grouped.get(p)! }));
+		.map((p) => ({ provider: p, resources: grouped.get(p) ?? [] }));
 
 	return (
 		<div className="space-y-4">
@@ -155,14 +157,14 @@ export function InstalledSources({
 			) : (
 				<Accordion type="multiple" className="w-full rounded-lg border">
 					{sortedGroups.map(({ provider, resources }) => {
-						const { icon: Icon, name } = PROVIDER_CONFIG[provider];
+						const display = PROVIDER_DISPLAY[provider];
 
 						return (
 							<AccordionItem key={provider} value={provider}>
 								<AccordionTrigger className="px-4 hover:no-underline">
 									<div className="flex items-center gap-3 flex-1">
-										<Icon className="h-5 w-5 shrink-0" />
-										<span className="font-medium">{name}</span>
+										<ProviderIcon icon={display.icon} className="h-5 w-5 shrink-0" />
+										<span className="font-medium">{display.displayName}</span>
 										<Badge variant="secondary" className="text-xs">
 											{resources.length} connected
 										</Badge>

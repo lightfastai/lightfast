@@ -1,5 +1,5 @@
 // ── Core Types & Helpers ──────────────────────────────────────────────────────
-export type { CategoryDef, ActionDef, EventDefinition, SimpleEventDef, ActionEventDef, WebhookDef, OAuthDef, ProviderDefinition, RuntimeConfig } from "./define.js";
+export type { CategoryDef, ActionDef, EventDefinition, SimpleEventDef, ActionEventDef, WebhookDef, OAuthDef, ProviderDefinition, RuntimeConfig, IconDef } from "./define.js";
 export { defineEvent, defineProvider, simpleEvent, actionEvent } from "./define.js";
 
 // ── Post-Transform Event (canonical source of truth) ─────────────────────────
@@ -245,3 +245,11 @@ export { github } from "./providers/github/index.js";
 export { vercel } from "./providers/vercel/index.js";
 export { linear } from "./providers/linear/index.js";
 export { sentry } from "./providers/sentry/index.js";
+
+// ── Display Metadata (re-exported for server consumers) ─────────────────────
+export {
+  PROVIDER_DISPLAY,
+  PROVIDER_SLUGS,
+  SOURCE_TYPE_OPTIONS,
+} from "./display.js";
+export type { ProviderSlug } from "./display.js";

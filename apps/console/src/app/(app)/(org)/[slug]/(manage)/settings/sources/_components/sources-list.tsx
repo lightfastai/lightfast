@@ -12,7 +12,8 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { showErrorToast } from "~/lib/trpc-errors";
 import { useOAuthPopup } from "~/hooks/use-oauth-popup";
-import { PROVIDER_CONFIG, PROVIDER_ORDER } from "~/lib/provider-config";
+import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers/display";
+import { ProviderIcon } from "~/lib/provider-icon";
 import {
 	Accordion,
 	AccordionContent,
@@ -21,13 +22,12 @@ import {
 } from "@repo/ui/components/ui/accordion";
 import { formatDistanceToNow } from "date-fns";
 
-type Provider = (typeof PROVIDER_ORDER)[number];
+type Provider = (typeof PROVIDER_SLUGS)[number];
 
 function SourceItem({ provider }: { provider: Provider }) {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
-	const config = PROVIDER_CONFIG[provider];
-	const Icon = config.icon;
+	const display = PROVIDER_DISPLAY[provider];
 
 	const { data: integrations } = useSuspenseQuery({
 		...trpc.connections.list.queryOptions(),
@@ -48,13 +48,13 @@ function SourceItem({ provider }: { provider: Provider }) {
 	const disconnectMutation = useMutation(
 		trpc.connections.disconnect.mutationOptions({
 			onSuccess: () => {
-				toast.success(`${config.name} disconnected`);
+				toast.success(`${display.displayName} disconnected`);
 				void queryClient.invalidateQueries({
 					queryKey: trpc.connections.list.queryOptions().queryKey,
 				});
 			},
 			onError: (error) => {
-				showErrorToast(error, `Failed to disconnect ${config.name}`);
+				showErrorToast(error, `Failed to disconnect ${display.displayName}`);
 			},
 		}),
 	);
@@ -63,7 +63,7 @@ function SourceItem({ provider }: { provider: Provider }) {
 		if (
 			connection &&
 			window.confirm(
-				`Disconnect ${config.name}? This will remove access to all resources connected through this integration.`,
+				`Disconnect ${display.displayName}? This will remove access to all resources connected through this integration.`,
 			)
 		) {
 			disconnectMutation.mutate({ integrationId: connection.id });
@@ -74,8 +74,8 @@ function SourceItem({ provider }: { provider: Provider }) {
 		<AccordionItem value={provider}>
 			<AccordionTrigger className="px-4 hover:no-underline">
 				<div className="flex items-center gap-3 flex-1">
-					<Icon className="h-5 w-5 shrink-0" />
-					<span className="font-medium">{config.name}</span>
+					<ProviderIcon icon={display.icon} className="h-5 w-5 shrink-0" />
+					<span className="font-medium">{display.displayName}</span>
 					{connection ? (
 						<Badge variant="secondary" className="text-xs">
 							Connected
@@ -119,11 +119,11 @@ function SourceItem({ provider }: { provider: Provider }) {
 				) : (
 					<div className="flex flex-col items-center py-6 text-center gap-4">
 						<p className="text-sm text-muted-foreground">
-							{config.description}
+							{display.description}
 						</p>
 						<Button onClick={handleConnect} variant="outline">
-							<Icon className="h-4 w-4 mr-2" />
-							Connect {config.name}
+							<ProviderIcon icon={display.icon} className="h-4 w-4 mr-2" />
+							Connect {display.displayName}
 						</Button>
 					</div>
 				)}
@@ -135,7 +135,7 @@ function SourceItem({ provider }: { provider: Provider }) {
 export function SourcesList() {
 	return (
 		<Accordion type="multiple" className="w-full rounded-lg border">
-			{PROVIDER_ORDER.map((provider) => (
+			{PROVIDER_SLUGS.map((provider) => (
 				<SourceItem key={provider} provider={provider} />
 			))}
 		</Accordion>

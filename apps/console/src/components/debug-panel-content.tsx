@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { EVENT_REGISTRY, PROVIDERS } from "@repo/console-providers";
-import { PROVIDER_CONFIG, getResourceLabel } from "~/lib/provider-config";
+import { PROVIDER_DISPLAY } from "@repo/console-providers/display";
+import { ProviderIcon } from "~/lib/provider-icon";
+import { getResourceLabel } from "~/lib/resource-label";
 import type { SourceType } from "@repo/console-providers";
 import { ChevronDown, ChevronRight, Loader2, Check, X } from "lucide-react";
 
@@ -136,8 +138,7 @@ export function DebugPanelContent({
       <div className="divide-y divide-white/5">
         {(Object.keys(byProvider) as SourceType[]).map((providerKey) => {
           const providerIntegrations = byProvider[providerKey] ?? [];
-          const config = PROVIDER_CONFIG[providerKey];
-          const Icon = config.icon;
+          const display = PROVIDER_DISPLAY[providerKey];
           const isExpanded = expandedProvider === providerKey;
 
           return (
@@ -155,8 +156,8 @@ export function DebugPanelContent({
                 ) : (
                   <ChevronRight className="w-3 h-3 text-white/40 shrink-0" />
                 )}
-                <Icon className="w-3.5 h-3.5 text-white/70 shrink-0" />
-                <span className="text-white/80 flex-1 text-left">{config.name}</span>
+                <ProviderIcon icon={display.icon} className="w-3.5 h-3.5 text-white/70 shrink-0" />
+                <span className="text-white/80 flex-1 text-left">{display.displayName}</span>
                 <span className="text-white/30">{providerIntegrations.length}</span>
               </button>
 

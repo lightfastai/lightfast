@@ -137,3 +137,11 @@ export function defineProvider<
 ): ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents> {
   return Object.freeze(def) as ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents>;
 }
+
+// ── Display-Layer Types ──────────────────────────────────────────────────────
+
+/** Framework-agnostic SVG icon data — renderable by any UI layer */
+export interface IconDef {
+  readonly viewBox: string;
+  readonly d: string;
+}

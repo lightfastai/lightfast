@@ -27,7 +27,7 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
 import { Search, Radio } from "lucide-react";
-import { SOURCE_TYPE_OPTIONS } from "~/lib/provider-config";
+import { SOURCE_TYPE_OPTIONS } from "@repo/console-providers/display";
 
 const SOURCE_OPTIONS = [
   { value: "all" as const, label: "All sources" },

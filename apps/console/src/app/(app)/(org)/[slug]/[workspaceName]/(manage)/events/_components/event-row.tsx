@@ -7,7 +7,8 @@ import { cn } from "@repo/ui/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@repo/ui/components/ui/collapsible";
 import { TableRow, TableCell } from "@repo/ui/components/ui/table";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { PROVIDER_CONFIG } from "~/lib/provider-config";
+import { PROVIDER_DISPLAY } from "@repo/console-providers/display";
+import { ProviderIcon } from "~/lib/provider-icon";
 import { EVENT_REGISTRY } from "@repo/console-providers";
 import type { PostTransformEvent } from "@repo/console-providers";
 import { EventDetail } from "./event-detail";
@@ -27,8 +28,7 @@ interface EventRowProps {
 export function EventRow({ event }: EventRowProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const config = (PROVIDER_CONFIG as Record<string, (typeof PROVIDER_CONFIG)[keyof typeof PROVIDER_CONFIG] | undefined>)[event.source];
-  const Icon = config?.icon;
+  const display = (PROVIDER_DISPLAY as Record<string, (typeof PROVIDER_DISPLAY)[keyof typeof PROVIDER_DISPLAY] | undefined>)[event.source];
   const registryKey = `${event.source}:${event.sourceType}`;
   const eventLabel =
     (EVENT_REGISTRY as Record<string, { label: string } | undefined>)[registryKey]?.label ??
@@ -51,8 +51,8 @@ export function EventRow({ event }: EventRowProps) {
               />
             </TableCell>
             <TableCell className="w-8 py-3">
-              {Icon ? (
-                <Icon className="h-4 w-4 text-muted-foreground" />
+              {display ? (
+                <ProviderIcon icon={display.icon} className="h-4 w-4 text-muted-foreground" />
               ) : (
                 <div className="h-4 w-4 rounded bg-muted" />
               )}

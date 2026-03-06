@@ -2,9 +2,9 @@
 
 import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 import { AGE_PRESET_OPTIONS } from "~/components/search-constants";
-import { PROVIDER_ORDER } from "~/lib/provider-config";
+import { PROVIDER_SLUGS } from "@repo/console-providers/display";
 
-const SOURCE_OPTIONS = ["all", ...PROVIDER_ORDER] as const;
+const SOURCE_OPTIONS = ["all", ...PROVIDER_SLUGS] as const;
 const AGE_OPTIONS = AGE_PRESET_OPTIONS.map((o) => o.value);
 
 export type EventSource = (typeof SOURCE_OPTIONS)[number];
