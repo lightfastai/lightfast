@@ -27,6 +27,7 @@ import {
   transformGitHubIssue,
   transformGitHubRelease,
   transformVercelDeployment,
+  type PostTransformReference,
 } from "@repo/console-providers";
 
 // Minimal TransformContext — matches { deliveryId: string, receivedAt: Date, eventType: string }
@@ -165,7 +166,7 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
 
   it("references include PR, branch, and commit refs", () => {
     const event = transformGitHubPullRequest(adapted, context);
-    const refTypes = event.references.map((r) => r.type);
+    const refTypes = event.references.map((r: PostTransformReference) => r.type);
     expect(refTypes).toContain("pr");
     expect(refTypes).toContain("branch");
     expect(refTypes).toContain("commit");
@@ -254,7 +255,7 @@ describe("GitHub Release: adapter → transformer round-trip", () => {
 
   it("references include branch ref (target_commitish)", () => {
     const event = transformGitHubRelease(adapted, context);
-    const branchRefs = event.references.filter((r) => r.type === "branch");
+    const branchRefs = event.references.filter((r: PostTransformReference) => r.type === "branch");
     expect(branchRefs.length).toBeGreaterThan(0);
     expect(branchRefs[0]!.id).toBe("main");
   });
@@ -296,15 +297,15 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
 
   it("references include deployment and project refs", () => {
     const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
-    const refTypes = event.references.map((r) => r.type);
+    const refTypes = event.references.map((r: PostTransformReference) => r.type);
     expect(refTypes).toContain("deployment");
     expect(refTypes).toContain("project");
   });
 
   it("git metadata flows through to commit/branch references", () => {
     const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
-    const commitRefs = event.references.filter((r) => r.type === "commit");
-    const branchRefs = event.references.filter((r) => r.type === "branch");
+    const commitRefs = event.references.filter((r: PostTransformReference) => r.type === "commit");
+    const branchRefs = event.references.filter((r: PostTransformReference) => r.type === "branch");
     expect(commitRefs.length).toBeGreaterThan(0);
     expect(commitRefs[0]!.id).toBe("abc123def456");
     expect(branchRefs.length).toBeGreaterThan(0);
