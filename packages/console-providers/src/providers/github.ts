@@ -168,11 +168,11 @@ export const github = defineProvider({
 
   webhook: {
     extractSecret: (config) => config.webhookSecret,
-    verifySignature: async (rawBody, headers, secret) => {
+    verifySignature: (rawBody, headers, secret) => {
       const sig = headers.get("x-hub-signature-256");
       if (!sig) return false;
       const received = sig.startsWith("sha256=") ? sig.slice(7) : sig;
-      const expected = await computeHmac(rawBody, secret, "SHA-256");
+      const expected = computeHmac(rawBody, secret, "SHA-256");
       return timingSafeEqual(received, expected);
     },
     extractEventType: (headers) => headers.get("x-github-event") ?? "unknown",

@@ -109,10 +109,10 @@ export const sentry = defineProvider({
 
   webhook: {
     extractSecret: (config) => config.clientSecret,
-    verifySignature: async (rawBody, headers, secret) => {
+    verifySignature: (rawBody, headers, secret) => {
       const signature = headers.get("sentry-hook-signature");
       if (!signature) return false;
-      const expected = await computeHmac(rawBody, secret, "SHA-256");
+      const expected = computeHmac(rawBody, secret, "SHA-256");
       return timingSafeEqual(signature, expected);
     },
     extractEventType: (headers) => headers.get("sentry-hook-resource") ?? "unknown",

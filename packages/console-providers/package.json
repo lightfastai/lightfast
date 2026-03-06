@@ -20,6 +20,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@noble/hashes": "catalog:",
+    "jose": "catalog:",
     "zod": "catalog:zod4"
   },
   "devDependencies": {

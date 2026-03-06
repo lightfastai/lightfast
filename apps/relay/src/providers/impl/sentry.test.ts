@@ -12,9 +12,9 @@ describe("sentry webhook provider", () => {
   describe("verifySignature", () => {
     it("accepts a valid signature", async () => {
       const body = '{"installation":{"uuid":"inst-1"}}';
-      const sig = await computeHmac(body, secret, "SHA-256");
+      const sig = computeHmac(body, secret, "SHA-256");
 
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         body,
         headers({ "sentry-hook-signature": sig }),
         secret,
@@ -23,7 +23,7 @@ describe("sentry webhook provider", () => {
     });
 
     it("rejects an invalid signature", async () => {
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         '{"installation":{"uuid":"inst-1"}}',
         headers({ "sentry-hook-signature": "badsig" }),
         secret,
@@ -32,7 +32,7 @@ describe("sentry webhook provider", () => {
     });
 
     it("rejects when signature header missing", async () => {
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         '{"installation":{"uuid":"inst-1"}}',
         headers({}),
         secret,

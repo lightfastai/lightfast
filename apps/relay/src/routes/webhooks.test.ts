@@ -135,7 +135,7 @@ describe("POST /webhooks/:provider", () => {
   describe("standard HMAC path", () => {
     it("accepts a valid GitHub webhook", async () => {
       const body = JSON.stringify({ repository: { id: 123 } });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -170,7 +170,7 @@ describe("POST /webhooks/:provider", () => {
 
     it("rejects invalid payload with 400", async () => {
       const body = '"just a string"';
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -196,7 +196,7 @@ describe("POST /webhooks/:provider", () => {
         head_commit: { id: "abc123" },
       };
       const body = JSON.stringify(fullPayload);
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -221,7 +221,7 @@ describe("POST /webhooks/:provider", () => {
         repository: { id: 1 },
         head_commit: { message: "fix: 修正 バグ 🐛" },
       });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -252,7 +252,7 @@ describe("POST /webhooks/:provider", () => {
 
     it("wrong API key with valid HMAC signature still succeeds via HMAC path", async () => {
       const body = '{"repository":{"id":123}}';
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -311,7 +311,7 @@ describe("POST /webhooks/:provider", () => {
     it("returns 500 when workflow trigger fails on HMAC path", async () => {
       mockWorkflowTrigger.mockRejectedValue(new Error("QStash unavailable"));
       const body = JSON.stringify({ repository: { id: 123 } });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -555,7 +555,7 @@ describe("POST /webhooks/:provider", () => {
         type: "deployment.created",
         payload: { project: { id: "prj_1" } },
       });
-      const sig = await computeHmacSha1(body, "vc-secret");
+      const sig = computeHmacSha1(body, "vc-secret");
 
       const res = await request("/webhooks/vercel", {
         body,
@@ -576,7 +576,7 @@ describe("POST /webhooks/:provider", () => {
     it("Vercel webhook with wrong secret is rejected", async () => {
       // If the mapping used github's secret for vercel, this would fail differently
       const body = JSON.stringify({ type: "deployment.created" });
-      const sig = await computeHmacSha1(body, "wrong-secret");
+      const sig = computeHmacSha1(body, "wrong-secret");
 
       const res = await request("/webhooks/vercel", {
         body,
@@ -592,7 +592,7 @@ describe("POST /webhooks/:provider", () => {
         action: "create",
         organizationId: "lin-org-1",
       });
-      const sig = await computeHmacSha256(body, "ln-secret");
+      const sig = computeHmacSha256(body, "ln-secret");
 
       const res = await request("/webhooks/linear", {
         body,
@@ -608,7 +608,7 @@ describe("POST /webhooks/:provider", () => {
 
     it("Sentry webhook uses correct secret through full route", async () => {
       const body = JSON.stringify({ installation: { uuid: "sn-inst-1" } });
-      const sig = await computeHmacSha256(body, "sn-secret");
+      const sig = computeHmacSha256(body, "sn-secret");
 
       const res = await request("/webhooks/sentry", {
         body,
@@ -702,7 +702,7 @@ describe("POST /webhooks/:provider", () => {
         repository: { id: 42 },
         installation: { id: 101 },
       });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       await request("/webhooks/github", {
         body,
@@ -740,7 +740,7 @@ describe("POST /webhooks/:provider", () => {
         repository: { id: 789 },
         installation: { id: 101 },
       });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       await request("/webhooks/github", {
         body,
@@ -764,7 +764,7 @@ describe("POST /webhooks/:provider", () => {
     it("passes resourceId as null when payload has no identifiable resource", async () => {
       // GitHub webhook with no repository or installation (e.g. org-level event)
       const body = JSON.stringify({ action: "member_added" });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       await request("/webhooks/github", {
         body,
@@ -786,7 +786,7 @@ describe("POST /webhooks/:provider", () => {
         type: "deployment.ready",
         payload: { project: { id: "prj_shape" }, team: { id: "team_shape" } },
       });
-      const sig = await computeHmacSha1(body, "vc-secret");
+      const sig = computeHmacSha1(body, "vc-secret");
 
       await request("/webhooks/vercel", {
         body,

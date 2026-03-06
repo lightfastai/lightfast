@@ -317,28 +317,28 @@ describe("webhook.verifySignature", () => {
   const body = '{"type":"deployment.succeeded","id":"evt-abc"}';
 
   it("returns false when x-vercel-signature header is absent", async () => {
-    const result = await vercel.webhook.verifySignature(body, new Headers(), secret);
+    const result = vercel.webhook.verifySignature(body, new Headers(), secret);
     expect(result).toBe(false);
   });
 
   it("returns false for incorrect signature", async () => {
     const headers = new Headers({ "x-vercel-signature": "wronghex" });
-    const result = await vercel.webhook.verifySignature(body, headers, secret);
+    const result = vercel.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(false);
   });
 
   it("returns true for valid HMAC-SHA1 signature", async () => {
-    const expected = await computeHmac(body, secret, "SHA-1");
+    const expected = computeHmac(body, secret, "SHA-1");
     const headers = new Headers({ "x-vercel-signature": expected });
-    const result = await vercel.webhook.verifySignature(body, headers, secret);
+    const result = vercel.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(true);
   });
 
   it("returns false for SHA-256 signature (wrong algorithm)", async () => {
     // Vercel uses SHA-1, not SHA-256; a SHA-256 sig should NOT match
-    const sha256Sig = await computeHmac(body, secret, "SHA-256");
+    const sha256Sig = computeHmac(body, secret, "SHA-256");
     const headers = new Headers({ "x-vercel-signature": sha256Sig });
-    const result = await vercel.webhook.verifySignature(body, headers, secret);
+    const result = vercel.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(false);
   });
 

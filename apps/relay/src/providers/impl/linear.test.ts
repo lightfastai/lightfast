@@ -12,9 +12,9 @@ describe("linear webhook provider", () => {
   describe("verifySignature", () => {
     it("accepts a valid signature", async () => {
       const body = '{"type":"Issue","action":"create"}';
-      const sig = await computeHmac(body, secret, "SHA-256");
+      const sig = computeHmac(body, secret, "SHA-256");
 
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         body,
         headers({ "linear-signature": sig }),
         secret,
@@ -23,7 +23,7 @@ describe("linear webhook provider", () => {
     });
 
     it("rejects an invalid signature", async () => {
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         '{"type":"Issue","action":"create"}',
         headers({ "linear-signature": "badsig" }),
         secret,
@@ -32,7 +32,7 @@ describe("linear webhook provider", () => {
     });
 
     it("rejects when signature header missing", async () => {
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         '{"type":"Issue"}',
         headers({}),
         secret,

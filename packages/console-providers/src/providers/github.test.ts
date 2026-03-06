@@ -274,34 +274,34 @@ describe("webhook.verifySignature", () => {
   const body = '{"action":"push","ref":"refs/heads/main"}';
 
   it("returns false when x-hub-signature-256 header is absent", async () => {
-    const result = await github.webhook.verifySignature(body, new Headers(), secret);
+    const result = github.webhook.verifySignature(body, new Headers(), secret);
     expect(result).toBe(false);
   });
 
   it("returns false for an incorrect signature", async () => {
     const headers = new Headers({ "x-hub-signature-256": "sha256=000000" });
-    const result = await github.webhook.verifySignature(body, headers, secret);
+    const result = github.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(false);
   });
 
   it("returns true for a valid signature with sha256= prefix", async () => {
-    const expected = await computeHmac(body, secret, "SHA-256");
+    const expected = computeHmac(body, secret, "SHA-256");
     const headers = new Headers({ "x-hub-signature-256": `sha256=${expected}` });
-    const result = await github.webhook.verifySignature(body, headers, secret);
+    const result = github.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(true);
   });
 
   it("returns true for a valid signature without sha256= prefix", async () => {
-    const expected = await computeHmac(body, secret, "SHA-256");
+    const expected = computeHmac(body, secret, "SHA-256");
     const headers = new Headers({ "x-hub-signature-256": expected });
-    const result = await github.webhook.verifySignature(body, headers, secret);
+    const result = github.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(true);
   });
 
   it("returns false for signature computed with wrong secret", async () => {
-    const wrongSig = await computeHmac(body, "wrong-secret", "SHA-256");
+    const wrongSig = computeHmac(body, "wrong-secret", "SHA-256");
     const headers = new Headers({ "x-hub-signature-256": `sha256=${wrongSig}` });
-    const result = await github.webhook.verifySignature(body, headers, secret);
+    const result = github.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(false);
   });
 });

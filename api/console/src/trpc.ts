@@ -663,7 +663,7 @@ async function verifyApiKey(key: string): Promise<{
   apiKeyId: string;
 }> {
   // Hash the provided key to compare with stored hash
-  const keyHash = await hashApiKey(key);
+  const keyHash = hashApiKey(key);
 
   // Find API key in database (org-scoped)
   const [apiKey] = await db

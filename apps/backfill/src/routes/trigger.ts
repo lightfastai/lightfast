@@ -4,14 +4,14 @@ import { z } from "zod/v3";
 
 import { getEnv } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { timingSafeStringEqual } from "../lib/crypto.js";
+import { timingSafeStringEqual } from "@repo/console-providers";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 const cancelSchema = z.object({
   installationId: z.string().min(1),
 });
 
-async function isValidApiKey(key: string | undefined, expected: string): Promise<boolean> {
+function isValidApiKey(key: string | undefined, expected: string): boolean {
   if (!key) { return false; }
   return timingSafeStringEqual(key, expected);
 }
@@ -26,7 +26,7 @@ const trigger = new Hono<{ Variables: LifecycleVariables }>();
  */
 trigger.post("/", async (c) => {
   const { GATEWAY_API_KEY } = getEnv(c);
-  if (!(await isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
+  if (!(isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
@@ -78,7 +78,7 @@ trigger.post("/", async (c) => {
  */
 trigger.post("/cancel", async (c) => {
   const { GATEWAY_API_KEY } = getEnv(c);
-  if (!(await isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
+  if (!(isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
     return c.json({ error: "unauthorized" }, 401);
   }
 

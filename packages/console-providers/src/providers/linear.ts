@@ -208,10 +208,10 @@ export const linear = defineProvider({
 
   webhook: {
     extractSecret: (config) => config.webhookSigningSecret,
-    verifySignature: async (rawBody, headers, secret) => {
+    verifySignature: (rawBody, headers, secret) => {
       const signature = headers.get("linear-signature");
       if (!signature) return false;
-      const expected = await computeHmac(rawBody, secret, "SHA-256");
+      const expected = computeHmac(rawBody, secret, "SHA-256");
       return timingSafeEqual(signature, expected);
     },
     extractEventType: (_headers, payload) => {

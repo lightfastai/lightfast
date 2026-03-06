@@ -12,9 +12,9 @@ describe("github webhook provider", () => {
   describe("verifySignature", () => {
     it("accepts a valid sha256 signature", async () => {
       const body = '{"action":"opened"}';
-      const sig = await computeHmac(body, secret, "SHA-256");
+      const sig = computeHmac(body, secret, "SHA-256");
 
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         body,
         headers({ "x-hub-signature-256": `sha256=${sig}` }),
         secret,
@@ -23,7 +23,7 @@ describe("github webhook provider", () => {
     });
 
     it("rejects an invalid signature", async () => {
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         '{"action":"opened"}',
         headers({ "x-hub-signature-256": "sha256=deadbeef" }),
         secret,
@@ -32,7 +32,7 @@ describe("github webhook provider", () => {
     });
 
     it("rejects when signature header is missing", async () => {
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         '{"action":"opened"}',
         headers({}),
         secret,
@@ -42,9 +42,9 @@ describe("github webhook provider", () => {
 
     it("accepts raw hex signature without sha256= prefix", async () => {
       const body = '{"action":"opened"}';
-      const sig = await computeHmac(body, secret, "SHA-256");
+      const sig = computeHmac(body, secret, "SHA-256");
 
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         body,
         headers({ "x-hub-signature-256": sig }),
         secret,

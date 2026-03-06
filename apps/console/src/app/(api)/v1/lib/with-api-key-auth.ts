@@ -81,7 +81,7 @@ export async function withApiKeyAuth(
 
   // 3. Hash and verify API key
   try {
-    const keyHash = await hashApiKey(apiKey);
+    const keyHash = hashApiKey(apiKey);
 
     const [foundKey] = await db
       .select({

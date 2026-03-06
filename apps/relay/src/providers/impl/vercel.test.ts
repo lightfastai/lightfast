@@ -12,9 +12,9 @@ describe("vercel webhook provider", () => {
   describe("verifySignature", () => {
     it("accepts a valid sha1 signature", async () => {
       const body = '{"type":"deployment.created"}';
-      const sig = await computeHmac(body, secret, "SHA-1");
+      const sig = computeHmac(body, secret, "SHA-1");
 
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         body,
         headers({ "x-vercel-signature": sig }),
         secret,
@@ -23,7 +23,7 @@ describe("vercel webhook provider", () => {
     });
 
     it("rejects an invalid signature", async () => {
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         '{"type":"deployment.created"}',
         headers({ "x-vercel-signature": "badsig" }),
         secret,
@@ -32,7 +32,7 @@ describe("vercel webhook provider", () => {
     });
 
     it("rejects when signature header missing", async () => {
-      const result = await provider.verifySignature(
+      const result = provider.verifySignature(
         '{"type":"deployment.created"}',
         headers({}),
         secret,

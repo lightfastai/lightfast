@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
   // Generate org API key
   const { key, prefix, suffix } = generateOrgApiKey();
-  const keyHash = await hashApiKey(key);
+  const keyHash = hashApiKey(key);
 
   await db.insert(orgApiKeys).values({
     clerkOrgId: orgId,

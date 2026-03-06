@@ -93,10 +93,10 @@ export const vercel = defineProvider({
   webhook: {
     // Vercel webhooks use HMAC-SHA1 (imposed by Vercel's webhook infrastructure)
     extractSecret: (config) => config.clientIntegrationSecret,
-    verifySignature: async (rawBody, headers, secret) => {
+    verifySignature: (rawBody, headers, secret) => {
       const signature = headers.get("x-vercel-signature");
       if (!signature) return false;
-      const expected = await computeHmac(rawBody, secret, "SHA-1");
+      const expected = computeHmac(rawBody, secret, "SHA-1");
       return timingSafeEqual(signature, expected);
     },
     extractEventType: (_headers, payload) => {

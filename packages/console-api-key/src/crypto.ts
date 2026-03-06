@@ -8,6 +8,7 @@
  */
 
 import { nanoid } from "@repo/lib";
+import { sha256Hex } from "@repo/console-providers";
 
 /**
  * Unified API key prefix for all Lightfast keys
@@ -101,16 +102,12 @@ export function generateOrgApiKey(): OrgApiKeyResult {
  *
  * @example
  * ```ts
- * const hash = await hashApiKey("sk-lf-abc123...");
+ * const hash = hashApiKey("sk-lf-abc123...");
  * // Returns: "abc123...def456" (64 character hex string)
  * ```
  */
-export async function hashApiKey(key: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(key);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+export function hashApiKey(key: string): string {
+  return sha256Hex(key);
 }
 
 /**

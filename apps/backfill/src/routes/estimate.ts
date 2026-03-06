@@ -5,7 +5,7 @@ import { Hono } from "hono";
 
 import { getEnv } from "../env.js";
 import { GITHUB_RATE_LIMIT_BUDGET } from "../lib/constants.js";
-import { timingSafeStringEqual } from "../lib/crypto.js";
+import { timingSafeStringEqual } from "@repo/console-providers";
 import { createGatewayClient } from "@repo/gateway-service-clients";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
@@ -22,7 +22,7 @@ const estimate = new Hono<{ Variables: LifecycleVariables }>();
 estimate.post("/", async (c) => {
   const { GATEWAY_API_KEY } = getEnv(c);
   const apiKey = c.req.header("X-API-Key");
-  if (!apiKey || !(await timingSafeStringEqual(apiKey, GATEWAY_API_KEY))) {
+  if (!apiKey || !timingSafeStringEqual(apiKey, GATEWAY_API_KEY)) {
     return c.json({ error: "unauthorized" }, 401);
   }
 

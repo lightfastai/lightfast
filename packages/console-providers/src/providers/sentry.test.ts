@@ -369,20 +369,20 @@ describe("webhook.verifySignature", () => {
   const body = '{"action":"created","data":{"issue":{"id":"sentry-issue-1"}}}';
 
   it("returns false when sentry-hook-signature header is absent", async () => {
-    const result = await sentry.webhook.verifySignature(body, new Headers(), secret);
+    const result = sentry.webhook.verifySignature(body, new Headers(), secret);
     expect(result).toBe(false);
   });
 
   it("returns false for incorrect signature", async () => {
     const headers = new Headers({ "sentry-hook-signature": "wronghex" });
-    const result = await sentry.webhook.verifySignature(body, headers, secret);
+    const result = sentry.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(false);
   });
 
   it("returns true for valid HMAC-SHA256 signature", async () => {
-    const expected = await computeHmac(body, secret, "SHA-256");
+    const expected = computeHmac(body, secret, "SHA-256");
     const headers = new Headers({ "sentry-hook-signature": expected });
-    const result = await sentry.webhook.verifySignature(body, headers, secret);
+    const result = sentry.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(true);
   });
 

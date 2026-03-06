@@ -9,7 +9,7 @@ import type { ProviderName } from "@repo/console-providers";
 import { webhookSeenKey } from "../lib/cache.js";
 import { redis } from "@vendor/upstash";
 import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/console-providers";
-import { timingSafeStringEqual } from "../lib/crypto.js";
+import { timingSafeStringEqual } from "@repo/console-providers";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 import { db } from "@db/console/client";
 import { gwWebhookDeliveries } from "@db/console/schema";
@@ -45,7 +45,7 @@ webhooks.post("/:provider", async (c) => {
   // Service auth path — backfill or other internal service
   // Pre-resolved connectionId/orgId provided in body; skip HMAC/dedup/resolution.
   const apiKey = c.req.header("X-API-Key");
-  if (apiKey && (await timingSafeStringEqual(apiKey, env.GATEWAY_API_KEY))) {
+  if (apiKey && timingSafeStringEqual(apiKey, env.GATEWAY_API_KEY)) {
     let body: {
       connectionId: string;
       orgId: string;
@@ -174,7 +174,7 @@ webhooks.post("/:provider", async (c) => {
   if (!secret) {
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
-  const valid = await providerDef.webhook.verifySignature(rawBody, headers, secret);
+  const valid = providerDef.webhook.verifySignature(rawBody, headers, secret);
   if (!valid) {
     return c.json({ error: "invalid_signature" }, 401);
   }

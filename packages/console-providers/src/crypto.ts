@@ -1,30 +1,23 @@
 /**
- * Web Crypto utilities for webhook signature verification.
- * Pure Web Crypto API — no Node.js crypto.
+ * Crypto utilities for webhook signature verification.
+ * Uses @noble/hashes — audited, edge-compatible, no Node.js crypto.
  */
+import { hmac } from "@noble/hashes/hmac.js";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { sha1 } from "@noble/hashes/legacy.js";
+import { bytesToHex, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
 
 /**
  * Compute HMAC signature of a message using the given algorithm.
  * Returns hex-encoded signature.
  */
-export async function computeHmac(
+export function computeHmac(
   message: string,
   secret: string,
   algorithm: "SHA-256" | "SHA-1",
-): Promise<string> {
-  const secretBytes = new TextEncoder().encode(secret);
-  const key = await crypto.subtle.importKey(
-    "raw",
-    secretBytes,
-    { name: "HMAC", hash: algorithm },
-    false,
-    ["sign"],
-  );
-
-  const messageBytes = new TextEncoder().encode(message);
-  const signature = await crypto.subtle.sign("HMAC", key, messageBytes);
-
-  return bytesToHex(new Uint8Array(signature));
+): string {
+  const hashFn = algorithm === "SHA-256" ? sha256 : sha1;
+  return bytesToHex(hmac(hashFn, utf8ToBytes(secret), utf8ToBytes(message)));
 }
 
 /**
@@ -41,29 +34,38 @@ export function timingSafeEqual(a: string, b: string): boolean {
     return false;
   }
 
-  let result = aBytes.length ^ bBytes.length;
-  const maxLen = Math.max(aBytes.length, bBytes.length);
-  for (let i = 0; i < maxLen; i++) {
-    result |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
+  if (aBytes.length !== bBytes.length) {
+    return false;
+  }
+
+  return constantTimeEqual(aBytes, bBytes);
+}
+
+/**
+ * Compute SHA-256 hash of a string. Returns hex-encoded hash.
+ */
+export function sha256Hex(value: string): string {
+  return bytesToHex(sha256(utf8ToBytes(value)));
+}
+
+/**
+ * Timing-safe comparison of two arbitrary strings.
+ * Computes SHA-256 digests of both inputs and compares the fixed-length
+ * (32-byte) digests with a constant-time XOR accumulator.
+ */
+export function timingSafeStringEqual(a: string, b: string): boolean {
+  const aDigest = sha256(utf8ToBytes(a));
+  const bDigest = sha256(utf8ToBytes(b));
+  return constantTimeEqual(aDigest, bDigest);
+}
+
+// ── Helpers ──
+
+/** Constant-time byte-array comparison (same length assumed). */
+function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= (a[i] ?? 0) ^ (b[i] ?? 0);
   }
   return result === 0;
-}
-
-// Helpers
-
-function hexToBytes(hex: string): Uint8Array {
-  if (hex.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(hex)) {
-    throw new Error("hexToBytes: invalid hex string");
-  }
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
-  }
-  return bytes;
-}
-
-function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
 }

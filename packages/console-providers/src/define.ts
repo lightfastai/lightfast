@@ -62,7 +62,7 @@ export const defineEvent = simpleEvent;
 /** Webhook extraction functions — pure, no env/DB/framework */
 export interface WebhookDef<TConfig> {
   extractSecret: (config: TConfig) => string;
-  verifySignature: (rawBody: string, headers: Headers, secret: string) => Promise<boolean>;
+  verifySignature: (rawBody: string, headers: Headers, secret: string) => boolean;
   extractEventType: (headers: Headers, payload: unknown) => string;
   extractDeliveryId: (headers: Headers, payload: unknown) => string;
   extractResourceId: (payload: unknown) => string | null;

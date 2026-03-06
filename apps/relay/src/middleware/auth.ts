@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 import { Receiver } from "@vendor/qstash";
-import { timingSafeStringEqual } from "../lib/crypto.js";
+import { timingSafeStringEqual } from "@repo/console-providers";
 import { getEnv } from "../env.js";
 
 /**
@@ -12,7 +12,7 @@ export const apiKeyAuth: MiddlewareHandler = async (c, next) => {
   const apiKey = c.req.header("X-API-Key");
   const { GATEWAY_API_KEY } = getEnv(c);
 
-  if (!apiKey || !(await timingSafeStringEqual(apiKey, GATEWAY_API_KEY))) {
+  if (!apiKey || !timingSafeStringEqual(apiKey, GATEWAY_API_KEY)) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
