@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, asc, eq } from "drizzle-orm";
-import { z } from "zod/v3";
+import { z } from "zod";
 
 import { db } from "@db/chat/client";
 import {

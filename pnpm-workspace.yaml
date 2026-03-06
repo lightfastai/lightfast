@@ -59,7 +59,7 @@ catalog:
   '@neondatabase/serverless': ^1.0.2
   hono: ^4.12.2
   postgres: ^3.4.5
-  drizzle-zod: ^0.7.1
+  drizzle-zod: ^0.8.3
   react-hook-form: ^7.61.1
   '@hookform/resolvers': ^5.2.2
   import-in-the-middle: ^1.8.1

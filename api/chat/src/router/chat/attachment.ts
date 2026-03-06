@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { z } from "zod/v3";
+import { z } from "zod";
 import { protectedProcedure } from "../../trpc";
 import { db } from "@db/chat/client";
 import { LightfastChatAttachment } from "@db/chat";

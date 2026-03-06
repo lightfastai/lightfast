@@ -10,7 +10,7 @@
 import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
-import { ZodError } from "zod/v3";
+import { ZodError } from "zod";
 
 import { auth } from "@vendor/clerk/server";
 import { db } from "@db/chat/client";
