@@ -2,7 +2,7 @@ import { eq, and, inArray, desc } from "drizzle-orm";
 import { db } from "@db/console/client";
 import { workspaceNeuralEntities, workspaceNeuralObservations } from "@db/console/schema";
 import type { EntityCategory } from "@repo/console-validation";
-import type { EntitySearchResult } from "@repo/console-types";
+import type { EntitySearchResult } from "@repo/console-validation";
 
 /**
  * Patterns to extract entity references from search queries

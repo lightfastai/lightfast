@@ -11,8 +11,8 @@ import {
 	SearchRequestSchema,
 	SearchResponseSchema
 	
-} from "@repo/console-types/api";
-import type {SearchResponse} from "@repo/console-types/api";
+} from "@repo/console-validation/api";
+import type {SearchResponse} from "@repo/console-validation/api";
 import { pineconeClient } from "@repo/console-pinecone";
 import type { VectorMetadata } from "@repo/console-pinecone";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";

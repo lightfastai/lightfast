@@ -3,7 +3,7 @@
 import { log } from "@vendor/observability/log";
 import { createRerankProvider } from "@repo/console-rerank";
 import type { RerankCandidate } from "@repo/console-rerank";
-import type { V1SearchResponse, V1SearchResult } from "@repo/console-types";
+import type { V1SearchResponse, V1SearchResult } from "@repo/console-validation";
 import { recordSystemActivity } from "@api/console/lib/activity";
 
 import {

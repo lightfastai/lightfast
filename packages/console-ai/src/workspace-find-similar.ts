@@ -5,7 +5,7 @@ import type {
   FindSimilarToolOutput,
   LightfastAnswerRuntimeContext,
 } from "@repo/console-ai-types";
-import { V1FindSimilarResponseSchema } from "@repo/console-types";
+import { V1FindSimilarResponseSchema } from "@repo/console-validation";
 
 const inputSchema: z.ZodType<FindSimilarToolInput> = z.object({
   id: z.string().meta({ description: "The observation ID to find similar items for" }),

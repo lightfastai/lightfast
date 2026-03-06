@@ -32,7 +32,7 @@
   "dependencies": {
     "@lightfastai/ai-sdk": "workspace:*",
     "@repo/console-ai-types": "workspace:*",
-    "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
     "ai": "catalog:",
     "zod": "catalog:zod4"
   },

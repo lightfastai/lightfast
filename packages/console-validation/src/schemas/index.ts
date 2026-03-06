@@ -20,3 +20,4 @@ export * from "./activities";
 export * from "./entities";
 export * from "./org-api-key";
 export * from "./classification";
+export * from "./workspace-settings";

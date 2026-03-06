@@ -22,7 +22,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/console-types": "workspace:*",
     "gray-matter": "^4.0.3",
     "js-tiktoken": "^1.0.15"
   },

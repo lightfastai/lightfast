@@ -2,7 +2,7 @@
 
 import { Badge } from "@repo/ui/components/ui/badge";
 import { FileText } from "lucide-react";
-import type { V1SearchResponse } from "@repo/console-types";
+import type { V1SearchResponse } from "@repo/console-validation";
 import { SearchResultCard } from "./search-result-card";
 
 interface SearchResultsListProps {

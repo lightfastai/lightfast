@@ -4,7 +4,7 @@
  * @see docs/architecture/phase1/package-structure.md
  */
 
-import { z } from "zod/v3";
+import { z } from "zod";
 import { LatencySchema, RequestIdSchema } from "./common";
 
 /**
@@ -43,7 +43,7 @@ export const SearchResultSchema = z.object({
   /** Relevance score */
   score: z.number(),
   /** Additional metadata */
-  metadata: z.record(z.unknown()),
+  metadata: z.record(z.string(), z.unknown()),
 });
 
 export type SearchResult = z.infer<typeof SearchResultSchema>;

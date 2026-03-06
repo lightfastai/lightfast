@@ -4,7 +4,7 @@
  * Fetch full content for documents and observations by ID.
  */
 
-import { z } from "zod/v3";
+import { z } from "zod";
 
 /**
  * V1 Contents request schema
@@ -41,7 +41,7 @@ export const V1ContentItemSchema = z.object({
   /** When the content was created/occurred */
   occurredAt: z.string().datetime().optional(),
   /** Additional metadata */
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type V1ContentItem = z.infer<typeof V1ContentItemSchema>;

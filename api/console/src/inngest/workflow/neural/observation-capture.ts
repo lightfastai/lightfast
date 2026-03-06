@@ -42,7 +42,7 @@ import {
   generateObject,
   buildNeuralTelemetry,
 } from "./ai-helpers";
-import type { ExtractedEntity } from "@repo/console-types";
+import type { ExtractedEntity } from "@repo/console-validation";
 import { assignToCluster } from "./cluster-assignment";
 import { resolveActor } from "./actor-resolution";
 import { detectAndCreateRelationships } from "./relationship-detection";

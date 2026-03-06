@@ -46,7 +46,6 @@
     "@repo/console-providers": "workspace:*",
     "@repo/console-rerank": "workspace:*",
     "@repo/console-trpc": "workspace:^",
-    "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:^",
     "@repo/console-vercel": "workspace:^",
     "@repo/console-workspace-cache": "workspace:*",

@@ -4,7 +4,7 @@
  * @see docs/architecture/phase1/package-structure.md
  */
 
-import { z } from "zod/v3";
+import { z } from "zod";
 import { RequestIdSchema } from "./common";
 
 /**
@@ -32,7 +32,7 @@ export const DocumentContentSchema = z.object({
   /** Full document content */
   content: z.string(),
   /** Additional metadata */
-  metadata: z.record(z.unknown()),
+  metadata: z.record(z.string(), z.unknown()),
   /** When the document was committed (ISO 8601) */
   committedAt: z.string().datetime(),
 });

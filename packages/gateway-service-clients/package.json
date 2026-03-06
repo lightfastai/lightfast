@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "@repo/console-providers": "workspace:*",
-    "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@vendor/related-projects": "workspace:*"
   },

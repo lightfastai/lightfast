@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import { EVENT_REGISTRY, PROVIDER_REGISTRY } from "@repo/console-providers";
+import { EVENT_REGISTRY, PROVIDERS } from "@repo/console-providers";
 import { PROVIDER_CONFIG, getResourceLabel } from "~/lib/provider-config";
 import type { SourceType } from "@repo/console-providers";
 import { ChevronDown, ChevronRight, Loader2, Check, X } from "lucide-react";
@@ -24,7 +24,7 @@ function getEventsForSource(sourceType: SourceType): {
   categories: Record<string, { label: string }>;
   eventsByCategory: Record<string, EventItem[]>;
 } {
-  const categories = PROVIDER_REGISTRY[sourceType].events as Record<string, { label: string }>;
+  const categories = PROVIDERS[sourceType].categories as Record<string, { label: string }>;
   const eventsByCategory: Record<string, EventItem[]> = {};
 
   for (const [eventKey, eventDef] of Object.entries(EVENT_REGISTRY)) {

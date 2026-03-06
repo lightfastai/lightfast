@@ -1,6 +1,6 @@
 import type { ComponentType, SVGProps } from "react";
 import type { SourceType } from "@repo/console-providers";
-import { PROVIDER_REGISTRY } from "@repo/console-providers";
+import { PROVIDERS } from "@repo/console-providers";
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import type { Source } from "~/types";
 
@@ -20,15 +20,15 @@ const PROVIDER_ICONS: Record<SourceType, ComponentType<SVGProps<SVGSVGElement>>>
 
 /**
  * Provider display metadata for the console app.
- * Derives name/description from PROVIDER_REGISTRY, adds icon from React components.
+ * Derives name/description from PROVIDERS, adds icon from React components.
  */
 export const PROVIDER_CONFIG: Record<SourceType, ProviderMeta> = Object.fromEntries(
-	(Object.keys(PROVIDER_REGISTRY) as SourceType[]).map((key) => [
+	(Object.keys(PROVIDERS) as SourceType[]).map((key) => [
 		key,
 		{
-			name: PROVIDER_REGISTRY[key].name,
+			name: PROVIDERS[key].displayName,
 			icon: PROVIDER_ICONS[key],
-			description: PROVIDER_REGISTRY[key].description,
+			description: PROVIDERS[key].description,
 		},
 	]),
 ) as Record<SourceType, ProviderMeta>;

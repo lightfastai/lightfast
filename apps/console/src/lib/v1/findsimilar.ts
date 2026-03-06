@@ -7,7 +7,7 @@ import { log } from "@vendor/observability/log";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import { createEmbeddingProvider } from "@repo/console-embed";
 import { getCachedWorkspaceConfig } from "@repo/console-workspace-cache";
-import type { V1FindSimilarResponse, V1FindSimilarResult } from "@repo/console-types";
+import type { V1FindSimilarResponse, V1FindSimilarResult } from "@repo/console-validation";
 import { recordSystemActivity } from "@api/console/lib/activity";
 
 import { resolveByUrl } from "~/lib/neural/url-resolver";

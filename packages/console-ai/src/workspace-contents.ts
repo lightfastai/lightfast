@@ -5,7 +5,7 @@ import type {
   ContentsToolOutput,
   LightfastAnswerRuntimeContext,
 } from "@repo/console-ai-types";
-import { V1ContentsResponseSchema } from "@repo/console-types";
+import { V1ContentsResponseSchema } from "@repo/console-validation";
 
 const inputSchema: z.ZodType<ContentsToolInput> = z.object({
   ids: z.array(z.string()).meta({ description: "Array of observation IDs to fetch content for" }),

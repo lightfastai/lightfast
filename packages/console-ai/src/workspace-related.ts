@@ -5,7 +5,7 @@ import type {
   RelatedToolOutput,
   LightfastAnswerRuntimeContext,
 } from "@repo/console-ai-types";
-import { RelatedResponseSchema } from "@repo/console-types";
+import { RelatedResponseSchema } from "@repo/console-validation";
 
 const inputSchema: z.ZodType<RelatedToolInput> = z.object({
   id: z.string().meta({ description: "The observation ID to find related events for" }),

@@ -12,7 +12,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 import { log } from "@vendor/observability/log";
-import { V1RelatedRequestSchema } from "@repo/console-types";
+import { V1RelatedRequestSchema } from "@repo/console-validation";
 import {
   withDualAuth,
   createDualAuthErrorResponse,

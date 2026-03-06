@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@db/console": "workspace:*",
+    "@repo/console-providers": "workspace:*",
     "@repo/lib": "workspace:*",
     "@trpc/server": "catalog:",
     "zod": "catalog:zod4"

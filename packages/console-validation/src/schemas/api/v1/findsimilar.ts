@@ -4,7 +4,7 @@
  * Find content similar to a given document or observation.
  */
 
-import { z } from "zod/v3";
+import { z } from "zod";
 import { V1SearchFiltersSchema } from "./search";
 
 /**

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import type { V1SearchResponse, RerankMode } from "@repo/console-types";
+import type { V1SearchResponse, RerankMode } from "@repo/console-validation";
 import { useWorkspaceSearchParams } from "./use-workspace-search-params";
 import { SearchPromptInput } from "./search-prompt-input";
 import { dateRangeFromPreset } from "./search-constants";

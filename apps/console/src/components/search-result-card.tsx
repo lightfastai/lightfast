@@ -22,7 +22,7 @@ import type {
   V1SearchResult,
   V1ContentsResponse,
   V1FindSimilarResponse,
-} from "@repo/console-types";
+} from "@repo/console-validation";
 
 // Search result card component with expandable content
 export function SearchResultCard({

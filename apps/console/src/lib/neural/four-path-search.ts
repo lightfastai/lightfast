@@ -22,7 +22,7 @@ import type { FilterCandidate } from "./llm-filter";
 import { searchByEntities } from "./entity-search";
 import { searchClusters } from "./cluster-search";
 import { searchActorProfiles } from "./actor-search";
-import type { EntitySearchResult } from "@repo/console-types";
+import type { EntitySearchResult } from "@repo/console-validation";
 
 // ============================================================================
 // EMPTY RESULT CONSTANTS

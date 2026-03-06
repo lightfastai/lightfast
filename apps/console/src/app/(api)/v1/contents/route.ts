@@ -16,7 +16,7 @@ import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 
 import { log } from "@vendor/observability/log";
-import { V1ContentsRequestSchema } from "@repo/console-types";
+import { V1ContentsRequestSchema } from "@repo/console-validation";
 
 import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
 import { contentsLogic } from "~/lib/v1/contents";

@@ -1,4 +1,4 @@
-import { z } from "zod/v3";
+import { z } from "zod";
 
 /**
  * Embedding configuration within workspace settings
@@ -27,7 +27,7 @@ const workspaceSettingsV1Schema = z.object({
   version: z.literal(1),
   embedding: workspaceEmbeddingConfigSchema,
   repositories: z
-    .record(z.object({ enabled: z.boolean() }))
+    .record(z.string(), z.object({ enabled: z.boolean() }))
     .optional(),
   defaults: z
     .object({

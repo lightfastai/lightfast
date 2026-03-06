@@ -34,7 +34,6 @@ const config: NextConfig = withSentry(
         "@repo/console-octokit-github",
         "@repo/console-pinecone",
         "@repo/console-trpc",
-        "@repo/console-types",
         "@repo/console-validation",
         "@repo/console-vercel",
         "@repo/console-providers",

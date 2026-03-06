@@ -29,6 +29,10 @@
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "default": "./dist/utils/index.js"
+    },
+    "./api": {
+      "types": "./dist/schemas/api/index.d.ts",
+      "default": "./dist/schemas/api/index.js"
     }
   },
   "scripts": {

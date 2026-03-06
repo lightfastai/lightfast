@@ -5,7 +5,7 @@ import type {
   SearchToolOutput,
   LightfastAnswerRuntimeContext,
 } from "@repo/console-ai-types";
-import { V1SearchResponseSchema } from "@repo/console-types";
+import { V1SearchResponseSchema } from "@repo/console-validation";
 
 const inputSchema: z.ZodType<SearchToolInput> = z.object({
   query: z.string().meta({ description: "The search query text" }),

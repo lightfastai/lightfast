@@ -6,7 +6,7 @@ import type {
   V1FindSimilarResponse,
   GraphResponse,
   RelatedResponse,
-} from "@repo/console-types";
+} from "@repo/console-validation";
 
 // ─── Tool Input Types ────────────────────────────────────────────
 

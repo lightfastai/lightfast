@@ -5,7 +5,7 @@ import type {
   GraphToolOutput,
   LightfastAnswerRuntimeContext,
 } from "@repo/console-ai-types";
-import { GraphResponseSchema } from "@repo/console-types";
+import { GraphResponseSchema } from "@repo/console-validation";
 
 const inputSchema: z.ZodType<GraphToolInput> = z.object({
   id: z.string().meta({ description: "The observation ID to traverse from" }),

@@ -12,7 +12,7 @@ import {
 } from "@repo/ui/components/ui/select";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { EVENT_CATEGORIES } from "@repo/console-providers";
+import { PROVIDERS } from "@repo/console-providers";
 import type { SourceType } from "@repo/console-providers";
 import type { Source } from "~/types";
 
@@ -29,7 +29,7 @@ export function SourceSettingsForm({
 	currentEvents,
 	backfillConfig,
 }: SourceSettingsFormProps) {
-	const eventConfig = EVENT_CATEGORIES[provider];
+	const eventConfig = PROVIDERS[provider].categories;
 	const allEventKeys = Object.keys(eventConfig);
 
 	// Backwards compat: empty array = all events
