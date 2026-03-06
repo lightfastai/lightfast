@@ -3,10 +3,11 @@ import {
 	createTransport,
 	initAndBind,
 } from "@vendor/observability/sentry";
+import { env } from "./env.js";
 
 initAndBind(ServerRuntimeClient, {
-	dsn: process.env.SENTRY_DSN,
-	environment: process.env.VERCEL_ENV ?? "development",
+	dsn: env.SENTRY_DSN,
+	environment: env.VERCEL_ENV ?? "development",
 	tracesSampleRate: 0,
 	debug: false,
 	integrations: [],
