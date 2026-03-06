@@ -238,16 +238,16 @@ describe("POST /webhooks/:provider", () => {
   });
 
   describe("wrong API key fallthrough", () => {
-    it("wrong API key falls through to HMAC path, rejected without signature", async () => {
-      // Misconfigured backfill sends wrong key. No HMAC headers → 401.
-      // This is a real misconfiguration scenario.
+    it("wrong API key falls through to HMAC path, rejected without required headers", async () => {
+      // Misconfigured backfill sends wrong key. No HMAC headers → 400.
+      // webhookHeaderGuard rejects before reading body or verifying signature.
       const res = await request("/webhooks/github", {
         body: '{"repository":{"id":123}}',
         headers: { "X-API-Key": "wrong-key" },
       });
 
-      expect(res.status).toBe(401);
-      expect(await res.json()).toEqual({ error: "invalid_signature" });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "missing_required_headers" });
     });
 
     it("wrong API key with valid HMAC signature still succeeds via HMAC path", async () => {
@@ -393,7 +393,9 @@ describe("POST /webhooks/:provider", () => {
       });
 
       expect(res.status).toBe(400);
-      expect(await res.json()).toEqual({ error: "missing_required_fields" });
+      const json = await res.json();
+      expect(json.error).toBe("invalid_body");
+      expect(json.details).toBeDefined();
     });
 
     it("rejects when payload fails provider parse", async () => {
