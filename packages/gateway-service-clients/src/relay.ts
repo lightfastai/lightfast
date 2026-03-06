@@ -1,5 +1,3 @@
-import type { BackfillTriggerPayload } from "@repo/console-validation";
-
 import type { ServiceClientConfig } from "./headers.js";
 import { buildServiceHeaders } from "./headers.js";
 import { relayUrl } from "./urls.js";
@@ -59,35 +57,6 @@ export function createRelayClient(config: ServiceClientConfig) {
         throw new Error(`Relay replayCatchup failed: ${response.status}`);
       }
       return response.json() as Promise<{ remaining: number }>;
-    },
-
-    /**
-     * Trigger a historical backfill via relay's QStash dispatch.
-     * Best-effort — errors are logged but not thrown.
-     */
-    async triggerBackfill(params: BackfillTriggerPayload & { correlationId?: string }): Promise<void> {
-      const { correlationId: _cid, ...payload } = params;
-      try {
-        const response = await fetch(`${relayUrl}/backfill`, {
-          method: "POST",
-          headers: { ...h, "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(10_000),
-        });
-        if (!response.ok) {
-          console.error("[service-clients] backfill trigger failed", {
-            status: response.status,
-            installationId: params.installationId,
-            provider: params.provider,
-          });
-        }
-      } catch (err) {
-        console.error("[service-clients] Failed to trigger backfill", {
-          installationId: params.installationId,
-          provider: params.provider,
-          err,
-        });
-      }
     },
   };
 }

@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 describe("notifyBackfill", () => {
-  it("sends POST to relay /api/backfill with correct headers and body", async () => {
+  it("sends POST to backfill /api/trigger with correct headers and body", async () => {
     mockFetch.mockResolvedValue({ ok: true });
 
     await notifyBackfill({
@@ -41,7 +41,7 @@ describe("notifyBackfill", () => {
     });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/backfill") as string,
+      expect.stringContaining("/api/trigger") as string,
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
@@ -69,7 +69,7 @@ describe("notifyBackfill", () => {
     });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/backfill") as string,
+      expect.stringContaining("/api/trigger") as string,
       expect.objectContaining({
         body: JSON.stringify({
           installationId: "inst-1",
@@ -93,7 +93,7 @@ describe("notifyBackfill", () => {
     });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/backfill") as string,
+      expect.stringContaining("/api/trigger") as string,
       expect.objectContaining({
         body: JSON.stringify({
           installationId: "inst-1",
@@ -123,7 +123,7 @@ describe("notifyBackfill", () => {
   });
 
   it("does not throw when fetch returns non-ok response", async () => {
-    mockFetch.mockResolvedValue({ ok: false, status: 500 });
+    mockFetch.mockResolvedValue({ ok: false, status: 500, text: () => Promise.resolve("error") });
 
     await expect(
       notifyBackfill({
