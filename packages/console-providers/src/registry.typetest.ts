@@ -1,6 +1,6 @@
 import { describe, it, expectTypeOf } from "vitest";
 import { EVENT_REGISTRY, getProvider } from "./registry.js";
-import type { PROVIDERS, ProviderName, EventKey, EventRegistryEntry, ProviderAccountInfo, ProviderConfig, ProviderResourceMeta } from "./registry.js";
+import type { PROVIDERS, ProviderName, EventKey, EventRegistryEntry, ProviderAccountInfo, ProviderConfig } from "./registry.js";
 import type { ProviderDefinition } from "./define.js";
 import type { GitHubConfig } from "./providers/github/auth.js";
 import type { VercelConfig } from "./providers/vercel/auth.js";
@@ -140,26 +140,6 @@ describe("EVENT_REGISTRY", () => {
 
   it("entries are indexable by known event keys", () => {
     expectTypeOf(EVENT_REGISTRY["github:push"]).toEqualTypeOf<EventRegistryEntry>();
-  });
-});
-
-// ── Category 6: ProviderResourceMeta Narrowing ──────────────────────────
-
-describe("ProviderResourceMeta", () => {
-  it("github has fullName only", () => {
-    expectTypeOf<ProviderResourceMeta["github"]>().toEqualTypeOf<{ fullName?: string }>();
-  });
-
-  it("vercel has no extra fields", () => {
-    expectTypeOf<ProviderResourceMeta["vercel"]>().toEqualTypeOf<Record<string, never>>();
-  });
-
-  it("linear has key only", () => {
-    expectTypeOf<ProviderResourceMeta["linear"]>().toEqualTypeOf<{ key?: string }>();
-  });
-
-  it("sentry has slug only", () => {
-    expectTypeOf<ProviderResourceMeta["sentry"]>().toEqualTypeOf<{ slug?: string }>();
   });
 });
 

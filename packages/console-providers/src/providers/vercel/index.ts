@@ -59,7 +59,6 @@ export const vercel = defineProvider({
   configSchema: vercelConfigSchema,
   accountInfoSchema: vercelAccountInfoSchema,
   providerConfigSchema: vercelProviderConfigSchema,
-  resourceMetaSchema: z.object({}),
 
   // Fine-grained categories for UI/PROVIDER_REGISTRY compatibility
   categories: {

@@ -80,7 +80,6 @@ export const sentry = defineProvider({
   configSchema: sentryConfigSchema,
   accountInfoSchema: sentryAccountInfoSchema,
   providerConfigSchema: sentryProviderConfigSchema,
-  resourceMetaSchema: z.object({ slug: z.string().optional() }),
 
   categories: {
     issue: { label: "Issues", description: "Capture issue state changes (created, resolved, assigned, ignored)", type: "observation" },

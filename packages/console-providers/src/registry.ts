@@ -137,25 +137,6 @@ export function getDefaultSyncEvents(provider: ProviderName): readonly string[] 
   return PROVIDERS[provider].defaultSyncEvents;
 }
 
-// ── Resource Metadata ─────────────────────────────────────────────────────────
-
-/**
- * Per-provider Zod schemas for resource metadata sent during bulk-link.
- * Derived from each provider's `resourceMetaSchema` field — not hand-maintained.
- *
- * Adding a provider = add `resourceMetaSchema` to the defineProvider() call.
- */
-export const PROVIDER_RESOURCE_META = {
-  github: PROVIDERS.github.resourceMetaSchema,
-  vercel: PROVIDERS.vercel.resourceMetaSchema,
-  linear: PROVIDERS.linear.resourceMetaSchema,
-  sentry: PROVIDERS.sentry.resourceMetaSchema,
-} as const satisfies Record<ProviderName, z.ZodObject>;
-
-export type ProviderResourceMeta = {
-  [K in ProviderName]: z.infer<(typeof PROVIDERS)[K]["resourceMetaSchema"]>;
-};
-
 // ── Env Schemas ───────────────────────────────────────────────────────────────
 
 /** Merged env schemas from all providers — for gateway env.ts server block */

@@ -152,7 +152,6 @@ export const linear = defineProvider({
   configSchema: linearConfigSchema,
   accountInfoSchema: linearAccountInfoSchema,
   providerConfigSchema: linearProviderConfigSchema,
-  resourceMetaSchema: z.object({ key: z.string().optional() }),
 
   categories: {
     Issue: { label: "Issues", description: "Capture issue creates, updates, and deletes", type: "observation" },

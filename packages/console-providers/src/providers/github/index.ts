@@ -115,7 +115,6 @@ export const github = defineProvider({
   configSchema: githubConfigSchema,
   accountInfoSchema: githubAccountInfoSchema,
   providerConfigSchema: githubProviderConfigSchema,
-  resourceMetaSchema: z.object({ fullName: z.string().optional() }),
 
   categories: {
     push: { label: "Push", description: "Sync files and capture observations when code is pushed", type: "sync+observation" },
