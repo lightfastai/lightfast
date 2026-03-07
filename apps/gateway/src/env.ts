@@ -28,10 +28,12 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    PORT: z.coerce.number().default(4110),
   },
   server,
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     SENTRY_DSN: process.env.SENTRY_DSN,

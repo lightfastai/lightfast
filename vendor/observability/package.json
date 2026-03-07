@@ -18,7 +18,8 @@
     "./async-executor": "./src/async-executor.ts",
     "./error-formatter": "./src/error-formatter.ts",
     "./use-logger": "./src/use-logger.ts",
-    "./service-log": "./src/service-log.ts"
+    "./service-log": "./src/service-log.ts",
+    "./print-routes": "./src/print-routes.ts"
   },
   "license": "MIT",
   "scripts": {

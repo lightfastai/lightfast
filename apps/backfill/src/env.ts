@@ -20,10 +20,12 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    PORT: z.coerce.number().default(4109),
   },
   server,
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
     SENTRY_DSN: process.env.SENTRY_DSN,
     INNGEST_APP_NAME: process.env.INNGEST_APP_NAME,

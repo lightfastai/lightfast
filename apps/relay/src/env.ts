@@ -29,10 +29,12 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    PORT: z.coerce.number().default(4108),
   },
   server,
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
     GATEWAY_WEBHOOK_SECRET: process.env.GATEWAY_WEBHOOK_SECRET,
     GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
