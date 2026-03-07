@@ -1,6 +1,6 @@
 {
 	"name": "@repo/og",
-  "license": "MIT",
+	"license": "MIT",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
@@ -22,7 +22,7 @@
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
-		"@types/react": "19.2.2",
+		"@types/react": "^19.2.14",
 		"eslint": "catalog:",
 		"typescript": "catalog:"
 	}

@@ -6,7 +6,10 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": { "types": "./dist/src/index.d.ts", "default": "./src/index.ts" },
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./src/index.ts"
+    },
     "./renderer": {
       "types": "./dist/src/renderer.d.ts",
       "default": "./src/renderer.ts"
@@ -25,8 +28,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@remotion/bundler": "^4.0.242",
-    "@remotion/renderer": "^4.0.242",
+    "@remotion/bundler": "^4.0.434",
+    "@remotion/renderer": "^4.0.434",
     "remotion": "^4.0.242"
   },
   "devDependencies": {

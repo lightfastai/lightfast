@@ -33,14 +33,14 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/react": "catalog:",
+    "@types/react": "^19.2.14",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
-    "@logtail/edge": "^0.5.0",
+    "@logtail/edge": "^0.5.8",
     "@logtail/next": "^0.2.0",
     "@sentry/core": "catalog:",
     "@sentry/nextjs": "catalog:",

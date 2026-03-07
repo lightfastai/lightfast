@@ -5,7 +5,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./src/index.ts" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    }
   },
   "scripts": {
     "build": "tsc",
@@ -20,10 +23,10 @@
     "render:lissajous": "npx tsx src/render-lissajous.ts"
   },
   "dependencies": {
-    "@remotion/bundler": "^4.0.242",
-    "@remotion/cli": "^4.0.242",
-    "@remotion/fonts": "^4.0.242",
-    "@remotion/renderer": "^4.0.242",
+    "@remotion/bundler": "^4.0.434",
+    "@remotion/cli": "^4.0.434",
+    "@remotion/fonts": "^4.0.434",
+    "@remotion/renderer": "^4.0.434",
     "@vendor/remotion": "workspace:*",
     "clsx": "catalog:",
     "react": "19.2.1",
@@ -38,8 +41,8 @@
     "@repo/ui": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@types/node": "catalog:",
-    "@types/react": "catalog:",
-    "css-loader": "^7.1.2",
+    "@types/react": "^19.2.14",
+    "css-loader": "^7.1.4",
     "eslint": "catalog:",
     "postcss": "catalog:tailwind4",
     "postcss-loader": "^8.1.1",

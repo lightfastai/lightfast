@@ -30,7 +30,7 @@
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "@types/react": "catalog:react19",
+    "@types/react": "^19.2.14",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "tsup": "^8.5.0",

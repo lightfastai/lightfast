@@ -23,7 +23,7 @@
   "dependencies": {
     "@repo/ai": "workspace:*",
     "@vendor/cms": "workspace:*",
-    "basehub": "^9.5.2",
+    "basehub": "^9.5.3",
     "gray-matter": "^4.0.3",
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
