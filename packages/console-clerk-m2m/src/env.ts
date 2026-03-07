@@ -1,5 +1,5 @@
 import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod/v3";
+import { z } from "zod";
 
 /**
  * Console-specific M2M (Machine-to-Machine) environment variables

@@ -106,7 +106,7 @@ function verifyEventFiltering() {
 
       const allowedForSource =
         ALLOWED_EVENTS[source as keyof typeof ALLOWED_EVENTS];
-      if (!(allowedForSource as string[]).includes(normalizedEventType)) {
+      if (!(allowedForSource).includes(normalizedEventType)) {
         issues.push(
           `  ❌ ${dataset.name}: Event "${eventType}" (normalized: "${normalizedEventType}") not in ${source} allowed events: [${allowedForSource.join(", ")}]`,
         );

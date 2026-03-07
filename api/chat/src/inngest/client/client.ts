@@ -1,26 +1,24 @@
 import { EventSchemas, Inngest  } from "inngest";
 import type {GetEvents} from "inngest";
 import { sentryMiddleware } from "@inngest/middleware-sentry";
-import { z } from "zod/v3";
+import { z } from "zod";
 
 import { env } from "@vendor/inngest/env";
 
 // Define event schemas using Zod for type safety
 const eventsMap = {
-	"apps-chat/generate-title": {
-		data: z.object({
-			sessionId: z.string(),
-			userId: z.string(),
-			firstMessage: z.string(),
-		}),
-	},
+	"apps-chat/generate-title": z.object({
+		sessionId: z.string(),
+		userId: z.string(),
+		firstMessage: z.string(),
+	}),
 };
 
 const inngest = new Inngest({
 	id: env.INNGEST_APP_NAME,
 	eventKey: env.INNGEST_EVENT_KEY,
 	signingKey: env.INNGEST_SIGNING_KEY,
-	schemas: new EventSchemas().fromZod(eventsMap),
+	schemas: new EventSchemas().fromSchema(eventsMap),
 	middleware: [sentryMiddleware()],
 });
 

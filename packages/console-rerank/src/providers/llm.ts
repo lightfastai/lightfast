@@ -9,7 +9,7 @@
 
 import { generateObject } from "ai";
 import { gateway } from "@ai-sdk/gateway";
-import { z } from "zod/v3";
+import { z } from "zod";
 import { log } from "@vendor/observability/log";
 import type {
   RerankProvider,

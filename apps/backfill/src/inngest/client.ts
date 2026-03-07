@@ -1,6 +1,6 @@
 import { backfillTriggerPayload, backfillDepthSchema } from "@repo/console-validation";
 import { EventSchemas, Inngest } from "@vendor/inngest";
-import { z } from "zod/v3";
+import { z } from "zod";
 
 import { env } from "../env.js";
 
@@ -30,7 +30,7 @@ const eventsMap = {
       resourceName: z.string().nullable(),
     }),
     /** ISO timestamp — computed once by orchestrator */
-    since: z.string().datetime(),
+    since: z.iso.datetime(),
     /** Depth in days — for logging/context */
     depth: backfillDepthSchema,
     /** When true, dispatch webhooks with X-Backfill-Hold header (held for batch replay) */

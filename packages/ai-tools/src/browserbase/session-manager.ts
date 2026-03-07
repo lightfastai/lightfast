@@ -1,6 +1,6 @@
 import { Stagehand } from "@browserbasehq/stagehand";
 import type { V3Options } from "@browserbasehq/stagehand";
-import type { z } from "zod/v3";
+import type { z } from "zod";
 
 type BrowserSettings = NonNullable<NonNullable<V3Options['browserbaseSessionCreateParams']>['browserSettings']>;
 

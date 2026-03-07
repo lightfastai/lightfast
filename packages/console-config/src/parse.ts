@@ -9,7 +9,7 @@ import { join } from "node:path";
 import type { Result} from "neverthrow";
 import { ok, err } from "neverthrow";
 import { parse as parseYAML } from "yaml";
-import type { ZodError } from "zod/v3";
+import type { ZodError } from "zod";
 import { LightfastConfigSchema  } from "./schema";
 import type {LightfastConfig} from "./schema";
 
@@ -115,7 +115,7 @@ export function validateConfig(
 
   if (!parseResult.success) {
     const zodError = parseResult.error as ZodError;
-    const errorMessages = zodError.errors
+    const errorMessages = zodError.issues
       .map((e) => `${e.path.join(".")}: ${e.message}`)
       .join("; ");
 

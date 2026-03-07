@@ -4,7 +4,7 @@
  * @see docs/architecture/phase1/dx-configuration.md
  */
 
-import { z } from "zod/v3";
+import { z } from "zod";
 
 /**
  * Zod schema for lightfast.yml configuration
