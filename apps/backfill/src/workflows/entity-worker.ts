@@ -49,10 +49,10 @@ export const backfillEntityWorker = inngest.createFunction(
 
     const gw = createGatewayClient({ apiKey: env.GATEWAY_API_KEY, correlationId, requestSource: "backfill" });
 
-    // ── Step 1: Self-fetch token (not passed via event — security + expiration) ──
-    const { accessToken: initialToken } = await step.run("get-token", () =>
-      gw.getToken(installationId),
-    );
+    // ── Fetch token outside step boundary ──
+    // Tokens must NOT be persisted in Inngest state (step return values are memoized).
+    // Fetching outside step.run() means this re-executes on replay (always fresh).
+    const { accessToken: initialToken } = await gw.getToken(installationId);
 
     // ── Resolve connector ──
     const connector = getConnector(
@@ -95,7 +95,7 @@ export const backfillEntityWorker = inngest.createFunction(
               events: page.events,
               nextCursor: page.nextCursor,
               rawCount: page.rawCount,
-              refreshedToken: null as string | null,
+              tokenRefreshed: false,
               rateLimit: page.rateLimit
                 ? {
                     remaining: page.rateLimit.remaining,
@@ -123,7 +123,7 @@ export const backfillEntityWorker = inngest.createFunction(
                 events: page.events,
                 nextCursor: page.nextCursor,
                 rawCount: page.rawCount,
-                refreshedToken: freshToken,
+                tokenRefreshed: true,
                 rateLimit: page.rateLimit
                   ? {
                       remaining: page.rateLimit.remaining,
@@ -138,9 +138,11 @@ export const backfillEntityWorker = inngest.createFunction(
         },
       );
 
-      // Apply refreshed token outside step boundary so it survives memoized replay
-      if (fetchResult.refreshedToken) {
-        config.accessToken = fetchResult.refreshedToken;
+      // If token was refreshed inside the step, re-fetch outside step boundary
+      // so the fresh token is NOT persisted in Inngest state
+      if (fetchResult.tokenRefreshed) {
+        const { accessToken: freshToken } = await gw.getToken(installationId);
+        config.accessToken = freshToken;
       }
 
       eventsProduced += fetchResult.rawCount;
