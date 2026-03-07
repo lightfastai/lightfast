@@ -1,12 +1,12 @@
 import type { BackfillConfig } from "@repo/console-backfill";
 import { getConnector } from "@repo/console-backfill";
+import { timingSafeStringEqual } from "@repo/console-providers";
 import { backfillEstimatePayload } from "@repo/console-validation";
+import { createGatewayClient } from "@repo/gateway-service-clients";
 import { Hono } from "hono";
 
-import { getEnv } from "../env.js";
+import { env } from "../env.js";
 import { GITHUB_RATE_LIMIT_BUDGET } from "../lib/constants.js";
-import { timingSafeStringEqual } from "@repo/console-providers";
-import { createGatewayClient } from "@repo/gateway-service-clients";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 const estimateSchema = backfillEstimatePayload;
@@ -20,7 +20,7 @@ interface Sample {
 const estimate = new Hono<{ Variables: LifecycleVariables }>();
 
 estimate.post("/", async (c) => {
-  const { GATEWAY_API_KEY } = getEnv(c);
+  const { GATEWAY_API_KEY } = env;
   const apiKey = c.req.header("X-API-Key");
   if (!apiKey || !timingSafeStringEqual(apiKey, GATEWAY_API_KEY)) {
     return c.json({ error: "unauthorized" }, 401);
@@ -35,7 +35,7 @@ estimate.post("/", async (c) => {
 
   const parsed = estimateSchema.safeParse(body);
   if (!parsed.success) {
-    return c.json({ error: "invalid_body", details: parsed.error.flatten() }, 400);
+    return c.json({ error: "invalid_body", details: parsed.error.issues }, 400);
   }
 
   const { installationId, provider, depth, entityTypes } = parsed.data;
@@ -54,7 +54,7 @@ estimate.post("/", async (c) => {
   const { accessToken } = tokenResult;
 
   // Resolve connector
-  const connector = getConnector(provider as Parameters<typeof getConnector>[0]);
+  const connector = getConnector(provider);
   if (!connector) {
     return c.json({ error: "no_connector", provider }, 400);
   }
@@ -70,7 +70,7 @@ estimate.post("/", async (c) => {
       try {
         const config: BackfillConfig = {
           installationId,
-          provider: provider as BackfillConfig["provider"],
+          provider,
           since,
           accessToken,
           resource: {

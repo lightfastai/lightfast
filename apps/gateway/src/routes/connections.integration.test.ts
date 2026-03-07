@@ -58,7 +58,6 @@ vi.mock("../env", () => ({
     GATEWAY_API_KEY: "test-api-key",
     ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
   },
-  getEnv: () => ({ GATEWAY_API_KEY: "test-api-key" }),
 }));
 
 vi.mock("@vendor/upstash", () => ({

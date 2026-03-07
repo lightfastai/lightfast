@@ -1,7 +1,5 @@
 import { createEnv } from "@t3-oss/env-core";
 import { vercel } from "@t3-oss/env-core/presets-zod";
-import type { Context } from "hono";
-import { env as honoEnv } from "hono/adapter";
 import { z } from "zod/v3";
 
 import { upstashEnv } from "@vendor/upstash/env";
@@ -22,29 +20,7 @@ const server = {
   LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
 };
 
-const _createEnv = (c: Context) =>
-  createEnv({
-    clientPrefix: "" as const,
-    client: {},
-    server,
-    runtimeEnv: honoEnv<Record<keyof typeof server, string | undefined>>(c),
-    emptyStringAsUndefined: true,
-  });
-
-export type RelayEnv = ReturnType<typeof _createEnv>;
-
-const envCache = new WeakMap<object, RelayEnv>();
-
-/** Validated env from the Hono request context — cached per request. */
-export const getEnv = (c: Context): RelayEnv => {
-  const cached = envCache.get(c);
-  if (cached) return cached;
-  const validated = _createEnv(c);
-  envCache.set(c, validated);
-  return validated;
-};
-
-/** Module-level validated env for non-Hono contexts (workflows, utilities, module-level init). */
+/** Module-level validated env — single source of truth for all relay env vars. */
 export const env = createEnv({
   clientPrefix: "" as const,
   client: {},

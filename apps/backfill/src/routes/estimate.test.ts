@@ -4,7 +4,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../env", () => ({
   env: { GATEWAY_API_KEY: "test-key" },
-  getEnv: () => ({ GATEWAY_API_KEY: "test-key" }),
 }));
 
 const mockFetchPage = vi.fn();

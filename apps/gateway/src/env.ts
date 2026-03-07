@@ -4,10 +4,7 @@ import { vercel } from "@t3-oss/env-core/presets-zod";
 import { dbEnv } from "@vendor/db/env";
 import { qstashEnv } from "@vendor/qstash/env";
 import { upstashEnv } from "@vendor/upstash/env";
-import type { Context } from "hono";
-import { env as honoEnv } from "hono/adapter";
 import { z } from "zod";
-
 
 const server = {
   GATEWAY_API_KEY: z.string().min(1),
@@ -16,35 +13,7 @@ const server = {
   LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
 };
 
-const _createEnv = (c: Context) =>
-  createEnv({
-    clientPrefix: "" as const,
-    client: {},
-    server,
-    runtimeEnv: honoEnv<Record<keyof typeof server, string | undefined>>(c),
-    emptyStringAsUndefined: true,
-  });
-
-export type ConnectionsEnv = ReturnType<typeof _createEnv>;
-
-const envCache = new WeakMap<object, ConnectionsEnv>();
-
-/**
- * Validated env from the Hono request context — cached per request.
- *
- * Only validates app-specific server variables (GATEWAY_API_KEY, ENCRYPTION_KEY).
- * Preset groups (vercel, upstash, db, etc.) are validated once at module
- * load via the module-level `env` export and should be accessed from there.
- */
-export const getEnv = (c: Context): ConnectionsEnv => {
-  const cached = envCache.get(c);
-  if (cached) {return cached;}
-  const validated = _createEnv(c);
-  envCache.set(c, validated);
-  return validated;
-};
-
-/** Module-level validated env for non-Hono contexts (workflows, utilities, module-level init). */
+/** Module-level validated env — single source of truth for all gateway env vars. */
 export const env = createEnv({
   clientPrefix: "" as const,
   client: {},

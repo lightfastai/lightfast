@@ -9,8 +9,7 @@ import type {
   ProviderName,
   ServiceAuthWebhookBody,
 } from "@repo/console-providers";
-import { getEnv } from "../env.js";
-import type { RelayEnv } from "../env.js";
+import { env } from "../env.js";
 import type { LifecycleVariables } from "./lifecycle.js";
 
 // ── Context Variables ────────────────────────────────────────────────────────
@@ -62,7 +61,7 @@ export type WebhookContext = {
 // ── Map provider names to their webhook secret env vars ──────────────────────
 
 const webhookSecretEnvKey: Record<ProviderName, keyof Pick<
-  RelayEnv,
+  typeof env,
   "GITHUB_WEBHOOK_SECRET" | "VERCEL_CLIENT_INTEGRATION_SECRET" | "LINEAR_WEBHOOK_SIGNING_SECRET" | "SENTRY_CLIENT_SECRET"
 >> = {
   github: "GITHUB_WEBHOOK_SECRET",
@@ -99,7 +98,6 @@ export const serviceAuthDetect = createMiddleware<{
   Variables: WebhookVariables;
 }>(async (c, next) => {
   const apiKey = c.req.header("X-API-Key");
-  const env = getEnv(c);
 
   if (apiKey && timingSafeStringEqual(apiKey, env.GATEWAY_API_KEY)) {
     c.set("isServiceAuth", true);
@@ -199,7 +197,6 @@ export const signatureVerify = createMiddleware<{
   if (!rawBody) {
     return c.json({ error: "missing_body" }, 400);
   }
-  const env = getEnv(c);
 
   const secret = env[webhookSecretEnvKey[providerName]];
   if (!secret) {

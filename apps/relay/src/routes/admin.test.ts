@@ -61,7 +61,6 @@ const { mockEnv, mockReplayDeliveries, mockDbSelect } = vi.hoisted(() => {
 
 vi.mock("../env", () => ({
   env: mockEnv,
-  getEnv: () => mockEnv,
 }));
 
 vi.mock("@vendor/upstash", () => ({

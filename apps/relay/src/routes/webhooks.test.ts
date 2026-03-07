@@ -30,7 +30,6 @@ const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv, dbOps } =
 
 vi.mock("../env", () => ({
   env: mockEnv,
-  getEnv: () => mockEnv,
 }));
 
 vi.mock("@vendor/qstash", () => ({

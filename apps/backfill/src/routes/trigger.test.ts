@@ -6,7 +6,6 @@ const { mockInngestSend } = vi.hoisted(() => ({
 
 vi.mock("../env", () => ({
   env: { GATEWAY_API_KEY: "test-key" },
-  getEnv: () => ({ GATEWAY_API_KEY: "test-key" }),
 }));
 
 vi.mock("../inngest/client", () => ({
