@@ -4,9 +4,9 @@
   "private": true,
   "engines": {
     "node": ">=22.0.0",
-    "pnpm": "10.5.2"
+    "pnpm": ">=10.0.0"
   },
-  "packageManager": "pnpm@10.5.2",
+  "packageManager": "pnpm@10.30.3",
   "scripts": {
     "build": "turbo run build",
     "build:www": "turbo run build -F @lightfast/www",
@@ -42,6 +42,7 @@
     "format:fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
     "lint": "SKIP_ENV_VALIDATION=true turbo run lint --no-daemon --concurrency=4 --continue",
     "lint:fix": "SKIP_ENV_VALIDATION=true turbo run lint --no-daemon --concurrency=4 --continue -- --fix",
+    "knip": "knip",
     "lint:ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint:ws",
     "test": "SKIP_ENV_VALIDATION=true turbo run test --no-daemon --concurrency=4",
@@ -62,9 +63,10 @@
     "@repo/prettier-config": "workspace:*",
     "envmcp": "^0.2.1",
     "keytar": "^7.9.0",
+    "knip": "^5.85.0",
     "prettier": "catalog:",
-    "turbo": "^2.8.11",
-    "turbo-ignore": "^2.8.11",
+    "turbo": "^2.8.14",
+    "turbo-ignore": "^2.8.14",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.46.1",
     "vercel": "^50.25.4",
