@@ -57,9 +57,7 @@ export const backfillOrchestrator = inngest.createFunction(
     );
 
     // ── Step 2: Resolve entity types and validate connector ──
-    const connector = getConnector(
-      provider as Parameters<typeof getConnector>[0],
-    );
+    const connector = getConnector(provider);
     if (!connector) {
       throw new NonRetriableError(
         `No backfill connector for provider: ${provider}`,

@@ -80,7 +80,7 @@ export function scoreSignificance(sourceEvent: PostTransformEvent): Significance
 
   // 1. Event type base weight (from EVENT_REGISTRY)
   const eventKey = `${sourceEvent.source}:${sourceEvent.sourceType}` as EventKey;
-  let score = EVENT_REGISTRY[eventKey]?.weight ?? 35; // Fallback for events pre-dating the current registry
+  let score = EVENT_REGISTRY[eventKey].weight;
   factors.push(`base:${sourceEvent.source}:${sourceEvent.sourceType}`);
 
   // 2. Content signal matching

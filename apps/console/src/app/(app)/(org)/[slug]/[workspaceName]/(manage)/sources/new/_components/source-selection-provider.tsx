@@ -1,193 +1,111 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, useContext, useState } from "react";
-import type { RouterOutputs } from "@repo/console-trpc/types";
+import { createContext, useCallback, useContext, useState } from "react";
+import type { ProviderName } from "@repo/console-providers";
+import type { NormalizedInstallation, NormalizedResource } from "./adapters";
 
-/**
- * Types derived from tRPC RouterOutputs — never define manual interfaces.
- */
-type GitHubListResult = NonNullable<
-	RouterOutputs["connections"]["github"]["list"]
->;
-export type GitHubInstallation = GitHubListResult["installations"][number];
-export type Repository =
-	RouterOutputs["connections"]["github"]["repositories"][number];
-
-export type VercelInstallation =
-	RouterOutputs["connections"]["vercel"]["list"]["installations"][number];
-export type VercelProject =
-	RouterOutputs["connections"]["vercel"]["listProjects"]["projects"][number];
-
-type LinearConnection =
-	RouterOutputs["connections"]["linear"]["get"][number];
-export type LinearTeam =
-	RouterOutputs["connections"]["linear"]["listTeams"]["teams"][number] & {
-		installationId: string;
-	};
-
-type SentryConnection = NonNullable<
-	RouterOutputs["connections"]["sentry"]["get"]
->;
-export type SentryProject =
-	RouterOutputs["connections"]["sentry"]["listProjects"]["projects"][number];
-
-interface SourceSelectionState {
-	// GitHub state
-	selectedRepositories: Repository[];
-	setSelectedRepositories: (repos: Repository[]) => void;
-	toggleRepository: (repo: Repository) => void;
-	gwInstallationId: string | null;
-	setGwInstallationId: (id: string | null) => void;
-	installations: GitHubInstallation[];
-	setInstallations: (installations: GitHubInstallation[]) => void;
-	selectedInstallation: GitHubInstallation | null;
-	setSelectedInstallation: (installation: GitHubInstallation | null) => void;
-
-	// Vercel state
-	vercelInstallationId: string | null;
-	setVercelInstallationId: (id: string | null) => void;
-	vercelInstallations: VercelInstallation[];
-	setVercelInstallations: (installations: VercelInstallation[]) => void;
-	selectedVercelInstallation: VercelInstallation | null;
-	setSelectedVercelInstallation: (
-		installation: VercelInstallation | null,
-	) => void;
-	selectedProjects: VercelProject[];
-	setSelectedProjects: (projects: VercelProject[]) => void;
-	toggleProject: (project: VercelProject) => void;
-
-	// Sentry state
-	sentryConnection: SentryConnection | null;
-	setSentryConnection: (connection: SentryConnection | null) => void;
-	sentryInstallationId: string | null;
-	setSentryInstallationId: (id: string | null) => void;
-	selectedSentryProjects: SentryProject[];
-	setSelectedSentryProjects: (projects: SentryProject[]) => void;
-	toggleSentryProject: (project: SentryProject) => void;
-
-	// Linear state
-	linearConnections: LinearConnection[];
-	setLinearConnections: (connections: LinearConnection[]) => void;
-	selectedLinearTeam: LinearTeam | null;
-	setSelectedLinearTeam: (team: LinearTeam | null) => void;
+export interface ProviderSelectionState {
+  installations: NormalizedInstallation[];
+  selectedInstallation: NormalizedInstallation | null;
+  selectedResources: NormalizedResource[];
+  /** Raw (un-normalized) resources — passed to buildLinkResources for provider-specific fields */
+  rawSelectedResources: unknown[];
 }
 
-const SourceSelectionContext = createContext<SourceSelectionState | null>(null);
+const EMPTY_STATE: ProviderSelectionState = {
+  installations: [],
+  selectedInstallation: null,
+  selectedResources: [],
+  rawSelectedResources: [],
+};
+
+interface SourceSelectionContextValue {
+  getState: (provider: ProviderName) => ProviderSelectionState;
+  setInstallations: (provider: ProviderName, installations: NormalizedInstallation[]) => void;
+  setSelectedInstallation: (provider: ProviderName, installation: NormalizedInstallation | null) => void;
+  setSelectedResources: (provider: ProviderName, resources: NormalizedResource[], rawResources: unknown[]) => void;
+  toggleResource: (provider: ProviderName, resource: NormalizedResource, rawResource: unknown) => void;
+  hasAnySelection: () => boolean;
+}
+
+const SourceSelectionContext = createContext<SourceSelectionContextValue | null>(null);
 
 export function SourceSelectionProvider({ children }: { children: ReactNode }) {
-	// GitHub state
-	const [selectedRepositories, setSelectedRepositories] = useState<
-		Repository[]
-	>([]);
-	const [gwInstallationId, setGwInstallationId] = useState<string | null>(
-		null,
-	);
-	const [installations, setInstallations] = useState<GitHubInstallation[]>(
-		[],
-	);
-	const [selectedInstallation, setSelectedInstallation] =
-		useState<GitHubInstallation | null>(null);
+  const [stateMap, setStateMap] = useState<Map<ProviderName, ProviderSelectionState>>(new Map());
 
-	const toggleRepository = (repo: Repository) => {
-		setSelectedRepositories((prev) => {
-			const exists = prev.find((r) => r.id === repo.id);
-			if (exists) return [];
-			return [repo];
-		});
-	};
+  const getState = useCallback(
+    (provider: ProviderName): ProviderSelectionState =>
+      stateMap.get(provider) ?? EMPTY_STATE,
+    [stateMap],
+  );
 
-	// Vercel state
-	const [vercelInstallationId, setVercelInstallationId] = useState<
-		string | null
-	>(null);
-	const [vercelInstallations, setVercelInstallations] = useState<
-		VercelInstallation[]
-	>([]);
-	const [selectedVercelInstallation, setSelectedVercelInstallation] =
-		useState<VercelInstallation | null>(null);
-	const [selectedProjects, setSelectedProjects] = useState<VercelProject[]>(
-		[],
-	);
+  const updateProvider = useCallback(
+    (provider: ProviderName, updater: (prev: ProviderSelectionState) => ProviderSelectionState) => {
+      setStateMap((prev) => {
+        const next = new Map(prev);
+        next.set(provider, updater(prev.get(provider) ?? EMPTY_STATE));
+        return next;
+      });
+    },
+    [],
+  );
 
-	const toggleProject = (project: VercelProject) => {
-		setSelectedProjects((prev) => {
-			const exists = prev.find((p) => p.id === project.id);
-			if (exists) return [];
-			return [project];
-		});
-	};
+  const setInstallations = useCallback(
+    (provider: ProviderName, installations: NormalizedInstallation[]) =>
+      updateProvider(provider, (s) => ({ ...s, installations })),
+    [updateProvider],
+  );
 
-	// Sentry state
-	const [sentryConnection, setSentryConnection] =
-		useState<SentryConnection | null>(null);
-	const [sentryInstallationId, setSentryInstallationId] = useState<
-		string | null
-	>(null);
-	const [selectedSentryProjects, setSelectedSentryProjects] = useState<
-		SentryProject[]
-	>([]);
+  const setSelectedInstallation = useCallback(
+    (provider: ProviderName, installation: NormalizedInstallation | null) =>
+      updateProvider(provider, (s) => ({
+        ...s,
+        selectedInstallation: installation,
+        selectedResources: [],
+        rawSelectedResources: [],
+      })),
+    [updateProvider],
+  );
 
-	const toggleSentryProject = (project: SentryProject) => {
-		setSelectedSentryProjects((prev) => {
-			const exists = prev.find((p) => p.id === project.id);
-			if (exists) return [];
-			return [project];
-		});
-	};
+  const setSelectedResources = useCallback(
+    (provider: ProviderName, resources: NormalizedResource[], rawResources: unknown[]) =>
+      updateProvider(provider, (s) => ({
+        ...s,
+        selectedResources: resources,
+        rawSelectedResources: rawResources,
+      })),
+    [updateProvider],
+  );
 
-	// Linear state
-	const [linearConnections, setLinearConnections] = useState<
-		LinearConnection[]
-	>([]);
-	const [selectedLinearTeam, setSelectedLinearTeam] =
-		useState<LinearTeam | null>(null);
+  const toggleResource = useCallback(
+    (provider: ProviderName, resource: NormalizedResource, rawResource: unknown) =>
+      updateProvider(provider, (s) => {
+        const exists = s.selectedResources.some((r) => r.id === resource.id);
+        if (exists) return { ...s, selectedResources: [], rawSelectedResources: [] };
+        return { ...s, selectedResources: [resource], rawSelectedResources: [rawResource] };
+      }),
+    [updateProvider],
+  );
 
-	return (
-		<SourceSelectionContext.Provider
-			value={{
-				selectedRepositories,
-				setSelectedRepositories,
-				toggleRepository,
-				gwInstallationId,
-				setGwInstallationId,
-				installations,
-				setInstallations,
-				selectedInstallation,
-				setSelectedInstallation,
-				vercelInstallationId,
-				setVercelInstallationId,
-				vercelInstallations,
-				setVercelInstallations,
-				selectedVercelInstallation,
-				setSelectedVercelInstallation,
-				selectedProjects,
-				setSelectedProjects,
-				toggleProject,
-				sentryConnection,
-				setSentryConnection,
-				sentryInstallationId,
-				setSentryInstallationId,
-				selectedSentryProjects,
-				setSelectedSentryProjects,
-				toggleSentryProject,
-				linearConnections,
-				setLinearConnections,
-				selectedLinearTeam,
-				setSelectedLinearTeam,
-			}}
-		>
-			{children}
-		</SourceSelectionContext.Provider>
-	);
+  const hasAnySelection = useCallback(
+    () => Array.from(stateMap.values()).some((s) => s.selectedResources.length > 0),
+    [stateMap],
+  );
+
+  return (
+    <SourceSelectionContext.Provider
+      value={{ getState, setInstallations, setSelectedInstallation, setSelectedResources, toggleResource, hasAnySelection }}
+    >
+      {children}
+    </SourceSelectionContext.Provider>
+  );
 }
 
 export function useSourceSelection() {
-	const context = useContext(SourceSelectionContext);
-	if (!context) {
-		throw new Error(
-			"useSourceSelection must be used within SourceSelectionProvider",
-		);
-	}
-	return context;
+  const context = useContext(SourceSelectionContext);
+  if (!context) {
+    throw new Error("useSourceSelection must be used within SourceSelectionProvider");
+  }
+  return context;
 }

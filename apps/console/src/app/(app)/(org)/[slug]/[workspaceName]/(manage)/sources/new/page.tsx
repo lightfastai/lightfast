@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { prefetch, HydrateClient, orgTrpc } from "@repo/console-trpc/server";
+import { ORDERED_ADAPTERS } from "./_components/adapters";
 import { SourceSelectionProvider } from "./_components/source-selection-provider";
 import { SourcesSection } from "./_components/sources-section";
 import { SourcesSectionLoading } from "./_components/sources-section-loading";
@@ -12,13 +13,12 @@ export default async function AddSourcesPage({
 }) {
 	const { slug, workspaceName } = await params;
 
-	// Prefetch connection status for all 4 providers
-	prefetch(orgTrpc.connections.github.list.queryOptions());
-	prefetch(orgTrpc.connections.vercel.list.queryOptions());
-	prefetch(orgTrpc.connections.linear.get.queryOptions());
-	prefetch(orgTrpc.connections.sentry.get.queryOptions());
+	// Prefetch connection status for all providers
+	for (const adapter of ORDERED_ADAPTERS) {
+		prefetch(adapter.getConnectionQueryOptions(orgTrpc));
+	}
 
-	// Prefetch workspace sources (gives us workspaceId + existing sources)
+	// Prefetch workspace sources
 	prefetch(
 		orgTrpc.workspace.sources.list.queryOptions({
 			clerkOrgSlug: slug,
@@ -37,12 +37,10 @@ export default async function AddSourcesPage({
 						Select sources to connect to this workspace
 					</p>
 				</div>
-
 				<SourceSelectionProvider>
 					<Suspense fallback={<SourcesSectionLoading />}>
 						<SourcesSection />
 					</Suspense>
-
 					<Suspense>
 						<LinkSourcesButton
 							clerkOrgSlug={slug}

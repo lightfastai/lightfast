@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import { prefetch, HydrateClient, orgTrpc } from "@repo/console-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { Button } from "@repo/ui/components/ui/button";

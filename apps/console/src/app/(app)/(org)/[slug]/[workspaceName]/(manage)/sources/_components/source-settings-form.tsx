@@ -1,8 +1,12 @@
 "use client";
 
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTRPC } from "@repo/console-trpc/react";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Label } from "@repo/ui/components/ui/label";
+import { Button } from "@repo/ui/components/ui/button";
 import {
 	Select,
 	SelectContent,
@@ -12,11 +16,14 @@ import {
 } from "@repo/ui/components/ui/select";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { cn } from "@repo/ui/lib/utils";
 import { PROVIDERS } from "@repo/console-providers";
-import type { SourceType } from "@repo/console-providers";
+import type { CategoryDef, SourceType } from "@repo/console-providers";
+import { BACKFILL_DEPTH_OPTIONS } from "@repo/console-validation";
 import type { Source } from "~/types";
 
 interface SourceSettingsFormProps {
+	installationId: string;
 	integrationId: string;
 	provider: SourceType;
 	currentEvents: string[];
@@ -24,17 +31,61 @@ interface SourceSettingsFormProps {
 }
 
 export function SourceSettingsForm({
+	installationId,
 	integrationId,
 	provider,
 	currentEvents,
 	backfillConfig,
 }: SourceSettingsFormProps) {
+	const trpc = useTRPC();
+	const queryClient = useQueryClient();
+
 	const eventConfig = PROVIDERS[provider].categories;
 	const allEventKeys = Object.keys(eventConfig);
 
 	// Backwards compat: empty array = all events
 	const activeEvents = currentEvents.length === 0 ? allEventKeys : currentEvents;
 	const showPushWarning = provider === "github" && !activeEvents.includes("push");
+
+	// Available entity types come from provider categories
+	const availableEntityTypes = allEventKeys;
+
+	// Backfill config state — initialize from stored config or select all as default
+	type BackfillDepth = (typeof BACKFILL_DEPTH_OPTIONS)[number];
+	const [depth, setDepth] = useState<BackfillDepth>(backfillConfig?.depth ?? 30);
+	const [entityTypes, setEntityTypes] = useState<string[]>(
+		backfillConfig?.entityTypes ?? availableEntityTypes,
+	);
+
+	const initialDepth = backfillConfig?.depth ?? 30;
+	const initialEntityTypes = backfillConfig?.entityTypes ?? availableEntityTypes;
+	const isDirty =
+		depth !== initialDepth ||
+		JSON.stringify([...entityTypes].sort()) !== JSON.stringify([...initialEntityTypes].sort());
+
+	const updateMutation = useMutation(
+		trpc.connections.updateBackfillConfig.mutationOptions({
+			onSuccess: () => {
+				void queryClient.invalidateQueries({
+					queryKey: [["workspace", "sources", "list"]],
+				});
+			},
+		}),
+	);
+
+	function toggleEntityType(type: string) {
+		setEntityTypes((prev) =>
+			prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+		);
+	}
+
+	function handleSave() {
+		if (entityTypes.length === 0) return;
+		updateMutation.mutate({
+			installationId,
+			backfillConfig: { depth, entityTypes },
+		});
+	}
 
 	return (
 		<div className="pt-3 pb-4 px-4 border-t border-border/50 bg-card/40">
@@ -54,7 +105,7 @@ export function SourceSettingsForm({
 
 			{/* 2-column event grid */}
 			<div className="grid grid-cols-2 gap-x-6 gap-y-2">
-				{Object.entries(eventConfig).map(([event, config]) => (
+				{(Object.entries(eventConfig) as [string, CategoryDef][]).map(([event, config]) => (
 					<div key={event} className="flex items-start gap-3">
 						<Checkbox
 							id={`${integrationId}-${event}`}
@@ -87,44 +138,82 @@ export function SourceSettingsForm({
 					Backfill Configuration
 				</div>
 
-				{backfillConfig ? (
-					<div className="space-y-3">
-						<div>
-							<p className="text-xs text-muted-foreground mb-1">Depth</p>
-							<Select value={backfillConfig.depth.toString()} disabled>
-								<SelectTrigger className="w-[200px] bg-muted/50">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="7">7 days</SelectItem>
-									<SelectItem value="30">30 days</SelectItem>
-									<SelectItem value="90">90 days</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
+				<div className="space-y-3">
+					<div>
+						<p className="text-xs text-muted-foreground mb-1">Depth</p>
+						<Select
+							value={depth.toString()}
+							onValueChange={(v) => {
+							const parsed = Number(v);
+							const valid = BACKFILL_DEPTH_OPTIONS.find((d) => d === parsed);
+							if (valid) setDepth(valid);
+						}}
+						>
+							<SelectTrigger className="w-[200px]">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{BACKFILL_DEPTH_OPTIONS.map((d) => (
+									<SelectItem key={d} value={d.toString()}>
+										{d} days
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
 
+					{availableEntityTypes.length > 0 && (
 						<div>
 							<p className="text-xs text-muted-foreground mb-1.5">
 								Entity Types
 							</p>
 							<div className="flex flex-wrap gap-1.5">
-								{backfillConfig.entityTypes.map((type) => (
-									<Badge
-										key={type}
-										variant="secondary"
-										className="text-xs"
-									>
-										{type}
-									</Badge>
-								))}
+								{availableEntityTypes.map((type) => {
+									const active = entityTypes.includes(type);
+									return (
+										<Badge
+											key={type}
+											variant={active ? "secondary" : "outline"}
+											className={cn(
+												"text-xs cursor-pointer select-none",
+												!active && "opacity-50",
+											)}
+											onClick={() => toggleEntityType(type)}
+										>
+											{type}
+										</Badge>
+									);
+								})}
 							</div>
+							{entityTypes.length === 0 && (
+								<p className="text-xs text-destructive mt-1">
+									At least one entity type must be selected.
+								</p>
+							)}
 						</div>
+					)}
+
+					<div className="flex items-center gap-2 pt-1">
+						<Button
+							size="sm"
+							variant="outline"
+							disabled={
+								!isDirty ||
+								entityTypes.length === 0 ||
+								updateMutation.isPending
+							}
+							onClick={handleSave}
+						>
+							{updateMutation.isPending ? "Saving..." : "Save"}
+						</Button>
+						{updateMutation.isSuccess && !isDirty && (
+							<span className="text-xs text-muted-foreground">Saved</span>
+						)}
+						{updateMutation.isError && (
+							<span className="text-xs text-destructive">Failed to save</span>
+						)}
 					</div>
-				) : (
-					<p className="text-xs text-muted-foreground">
-						No backfill configured for this installation.
-					</p>
-				)}
+				</div>
 			</div>
 		</div>
 	);
