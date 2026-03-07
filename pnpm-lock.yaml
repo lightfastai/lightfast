@@ -1638,6 +1638,9 @@ importers:
       '@repo/console-billing':
         specifier: workspace:*
         version: link:../../packages/console-billing
+      '@repo/console-validation':
+        specifier: workspace:*
+        version: link:../../packages/console-validation
       '@repo/email':
         specifier: workspace:*
         version: link:../../packages/email

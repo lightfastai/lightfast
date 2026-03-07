@@ -25,6 +25,7 @@
     "@paper-design/shaders-react": "0.0.71",
     "@radix-ui/react-dialog": "^1.1.14",
     "@repo/console-billing": "workspace:*",
+    "@repo/console-validation": "workspace:*",
     "@repo/email": "workspace:*",
     "@repo/lib": "workspace:*",
     "@repo/og": "workspace:*",
