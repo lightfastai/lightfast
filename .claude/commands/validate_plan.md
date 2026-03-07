@@ -25,6 +25,8 @@ When invoked:
 
    # Run comprehensive checks
    cd $(git rev-parse --show-toplevel) && pnpm lint && pnpm typecheck && pnpm test
+   # Also run builds for affected apps (check plan for which apps)
+   pnpm build:console  # or build:relay, build:gateway, build:backfill, etc.
    ```
 
 ## Validation Process
