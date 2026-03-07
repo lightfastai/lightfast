@@ -45,7 +45,7 @@ connections.get("/:provider/authorize", apiKeyAuth, tenantMiddleware, async (c) 
   const providerDef = getProvider(providerName);
   const config = providerConfigs[providerName];
 
-  if (!providerDef || !config) {
+  if (!config) {
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
 
@@ -79,7 +79,8 @@ connections.get("/:provider/authorize", apiKeyAuth, tenantMiddleware, async (c) 
     .expire(key, 600)
     .exec();
 
-  const url = providerDef.oauth.buildAuthUrl(config, state);
+  // config is typed as unknown from providerConfigs — cast as never since runtime consistency is guaranteed
+  const url = providerDef.oauth.buildAuthUrl(config as never, state);
 
   return c.json({ url, state });
 });
@@ -149,7 +150,7 @@ connections.get("/:provider/callback", async (c) => {
   const providerDef = getProvider(providerName);
   const config = providerConfigs[providerName];
 
-  if (!providerDef || !config) {
+  if (!config) {
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
 
@@ -206,7 +207,7 @@ connections.get("/:provider/callback", async (c) => {
     }
 
     // Pure provider logic — no DB, no Hono coupling
-    const result = await providerDef.oauth.processCallback(config, query);
+    const result = await providerDef.oauth.processCallback(config as never, query);
 
     // Handle pending-setup: provider needs additional configuration (e.g., GitHub App request flow).
     // No installation to upsert — just store the setup action and redirect.
@@ -438,11 +439,10 @@ connections.get("/:id", apiKeyAuth, async (c) => {
     id: installation.id,
     provider: installation.provider,
     externalId: installation.externalId,
-    accountLogin: installation.accountLogin,
     orgId: installation.orgId,
     status: installation.status,
     hasToken:
-      !getProvider(installation.provider as SourceType)?.oauth.usesStoredToken
+      !getProvider(installation.provider).oauth.usesStoredToken
         || installation.tokens.length > 0,
     tokenExpiresAt: installation.tokens[0]?.expiresAt ?? null,
     resources: installation.resources.map((r: (typeof installation.resources)[number]) => ({
@@ -484,12 +484,11 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
     );
   }
 
-  const providerName = installation.provider as SourceType;
+  const providerName = installation.provider;
   const config = providerConfigs[providerName];
 
   try {
     const providerDef = getProvider(providerName);
-    if (!providerDef) { throw new Error("provider_not_found"); }
 
     // Read stored token — may be absent (e.g., GitHub App generates tokens on-demand)
     const tokenRows = await db
@@ -507,7 +506,7 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
       }
 
       const decryptedRefresh = await decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
-      const refreshed = await providerDef.oauth.refreshToken(config, decryptedRefresh);
+      const refreshed = await providerDef.oauth.refreshToken(config as never, decryptedRefresh);
 
       await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
 
@@ -524,7 +523,7 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
       : null;
 
     // Provider handles token generation: GitHub creates JWT on-demand, others return stored token
-    const token = await providerDef.oauth.getActiveToken(config, installation.externalId, decryptedAccessToken);
+    const token = await providerDef.oauth.getActiveToken(config as never, installation.externalId, decryptedAccessToken);
 
     return c.json({
       accessToken: token,
@@ -667,7 +666,7 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
 
   // Populate Redis routing cache
   await redis.hset(
-    resourceKey(installation.provider as SourceType, body.providerResourceId),
+    resourceKey(installation.provider, body.providerResourceId),
     { connectionId: id, orgId: installation.orgId },
   );
 
@@ -722,7 +721,7 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
 
   if (installation) {
     await redis.del(
-      resourceKey(installation.provider as SourceType, resource.providerResourceId),
+      resourceKey(installation.provider, resource.providerResourceId),
     );
   }
 

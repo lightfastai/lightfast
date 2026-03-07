@@ -1,8 +1,7 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 import { getProvider } from "@repo/console-providers";
-import type { RuntimeConfig } from "@repo/console-providers";
-import type { SourceType } from "@repo/console-providers";
+import type { RuntimeConfig, SourceType  } from "@repo/console-providers";
 import { backfillUrl } from "@repo/gateway-service-clients";
 import { decrypt } from "@repo/lib";
 import { and, eq } from "@vendor/db";
@@ -58,7 +57,6 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       if (providerName === "github") {return;} // GitHub uses on-demand JWTs, no stored token
 
       const providerDef = getProvider(providerName);
-      if (!providerDef) {return;} // Unknown provider — nothing to revoke
 
       const teardownRuntime: RuntimeConfig = { callbackBaseUrl: gatewayBaseUrl };
       const config = providerDef.createConfig(env as unknown as Record<string, string>, teardownRuntime);
@@ -74,7 +72,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
 
       try {
         const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
-        await providerDef.oauth.revokeToken(config, decryptedToken);
+        await providerDef.oauth.revokeToken(config as never, decryptedToken);
       } catch {
         // Best-effort — swallow errors
       }
