@@ -143,3 +143,9 @@ export function getDefaultSyncEvents(provider: ProviderName): readonly string[] 
 export const PROVIDER_ENV_SCHEMAS = Object.fromEntries(
   Object.values(PROVIDERS).flatMap((p) => Object.entries(p.envSchema)),
 );
+
+/** Returns pre-built env presets for all providers — spread into @t3-oss/env-core `extends` arrays.
+ *  Called at consumer's createEnv() time, so validation only runs with provider env vars present. */
+export function PROVIDER_ENVS(): Record<string, string>[] {
+  return Object.values(PROVIDERS).map((p) => p.env);
+}

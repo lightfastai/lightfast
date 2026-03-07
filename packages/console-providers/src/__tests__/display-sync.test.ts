@@ -12,7 +12,7 @@ describe("display.ts ↔ registry.ts sync", () => {
   it("display strings match provider definitions", () => {
     for (const slug of PROVIDER_SLUGS) {
       const display = PROVIDER_DISPLAY[slug];
-      const provider = (PROVIDERS as Record<string, { name: string; displayName: string; description: string }>)[slug]!;
+      const provider = PROVIDERS[slug];
       expect(display.name).toBe(provider.name);
       expect(display.displayName).toBe(provider.displayName);
       expect(display.description).toBe(provider.description);

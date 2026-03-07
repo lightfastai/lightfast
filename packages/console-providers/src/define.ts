@@ -1,3 +1,4 @@
+import { createEnv } from "@t3-oss/env-core";
 import type { z } from "zod";
 import type { PostTransformEvent } from "./post-transform-event.js";
 import type { TransformContext, OAuthTokens, BaseProviderAccountInfo, CallbackResult } from "./types.js";
@@ -125,6 +126,9 @@ export interface ProviderDefinition<
   readonly deriveObservationType: (sourceType: string) => string;
   /** Plain Zod schemas for required process.env vars — no @t3-oss wrapper */
   readonly envSchema: Record<string, z.ZodType>;
+  /** Pre-built createEnv() preset — for use in @t3-oss/env-core `extends` arrays.
+   *  Lazy: only validates on first access. */
+  readonly env: Record<string, string>;
   /** Build runtime config from validated env + runtime values */
   readonly createConfig: (env: Record<string, string>, runtime: RuntimeConfig) => TConfig;
   /** Build the providerConfig JSONB blob for a new workspace integration record. */
@@ -153,10 +157,29 @@ export function defineProvider<
   TAccountInfoSchema extends z.ZodObject = z.ZodObject,
   TProviderConfigSchema extends z.ZodObject = z.ZodObject,
 >(
-  def: ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TProviderConfigSchema>
+  def: Omit<ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TProviderConfigSchema>, "env">
     & { readonly defaultSyncEvents: readonly (keyof TCategories & string)[] },
 ): ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TProviderConfigSchema> {
-  return Object.freeze(def) as ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TProviderConfigSchema>;
+  let _env: Record<string, string> | undefined;
+  const result = {
+    ...def,
+    get env(): Record<string, string> {
+      _env ??= createEnv({
+        clientPrefix: "" as const,
+        client: {},
+        server: def.envSchema as Record<string, z.ZodType<string>>,
+        runtimeEnv: Object.fromEntries(
+          Object.keys(def.envSchema).map((k) => [k, process.env[k]]),
+        ),
+        skipValidation:
+          !!process.env.SKIP_ENV_VALIDATION ||
+          process.env.npm_lifecycle_event === "lint",
+        emptyStringAsUndefined: true,
+      });
+      return _env;
+    },
+  };
+  return Object.freeze(result) as ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TProviderConfigSchema>;
 }
 
 // ── Display-Layer Types ──────────────────────────────────────────────────────

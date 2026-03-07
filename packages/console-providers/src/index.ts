@@ -230,6 +230,7 @@ export { transformWebhookPayload } from "./dispatch.js";
 export {
   PROVIDERS,
   PROVIDER_ENV_SCHEMAS,
+  PROVIDER_ENVS,
   EVENT_REGISTRY,
   getProvider,
   getDefaultSyncEvents,
