@@ -132,7 +132,7 @@ vi.mock("@repo/console-providers", () => ({
       oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
     },
   },
-  PROVIDER_ENV_SCHEMAS: {},
+  PROVIDER_ENVS: () => [],
   getProvider: (name: string) => {
     const known = ["github", "vercel", "linear", "sentry"];
     if (!known.includes(name)) { return undefined; }

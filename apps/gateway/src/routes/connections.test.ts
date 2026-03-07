@@ -211,7 +211,7 @@ vi.mock("@repo/console-providers", async (importOriginal) => {
       linear: { ...mockProvider, name: "linear" },
       sentry: { ...mockProvider, name: "sentry" },
     },
-    PROVIDER_ENV_SCHEMAS: {},
+    PROVIDER_ENVS: () => [],
     getProvider: (name: string) => {
       const providers: Record<string, unknown> = {
         github: mockProvider,
@@ -742,7 +742,6 @@ describe("GET /connections/:id", () => {
       id: "conn-1",
       provider: "github",
       externalId: "12345",
-      accountLogin: "my-org",
       orgId: "org-1",
       status: "active",
       tokens: [],

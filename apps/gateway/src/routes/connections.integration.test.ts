@@ -101,7 +101,7 @@ vi.mock("@repo/console-providers", async (importOriginal) => {
   return {
     ...actual,
     PROVIDERS: providers,
-    PROVIDER_ENV_SCHEMAS: {},
+    PROVIDER_ENVS: () => [],
     getProvider: (name: string) => providers[name as keyof typeof providers],
   };
 });

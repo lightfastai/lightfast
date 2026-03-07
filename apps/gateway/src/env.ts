@@ -1,4 +1,4 @@
-import { PROVIDER_ENV_SCHEMAS } from "@repo/console-providers";
+import { PROVIDER_ENVS } from "@repo/console-providers";
 import { createEnv } from "@t3-oss/env-core";
 import { vercel } from "@t3-oss/env-core/presets-zod";
 import { dbEnv } from "@vendor/db/env";
@@ -53,20 +53,15 @@ export const env = createEnv({
     upstashEnv,
     qstashEnv,
     dbEnv,
+    ...PROVIDER_ENVS(),
   ],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
   },
-  server: {
-    ...PROVIDER_ENV_SCHEMAS,
-    ...server,
-  },
+  server,
   runtimeEnv: {
-    ...Object.fromEntries(
-      Object.keys(PROVIDER_ENV_SCHEMAS).map((k) => [k, process.env[k]]),
-    ),
     NODE_ENV: process.env.NODE_ENV,
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
