@@ -19,11 +19,12 @@ const register = () => {
     init({
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
       environment: env.NEXT_PUBLIC_VERCEL_ENV,
-      tracesSampleRate: 1,
+      sendDefaultPii: true,
+      tracesSampleRate:
+        env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.2 : 1.0,
       debug: false,
-      _experiments: {
-        enableLogs: true,
-      },
+      enableLogs: true,
+      includeLocalVariables: true,
       integrations: [
         ...sharedIntegrations(),
         ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
@@ -38,11 +39,11 @@ const register = () => {
     init({
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
       environment: env.NEXT_PUBLIC_VERCEL_ENV,
-      tracesSampleRate: 1,
+      sendDefaultPii: true,
+      tracesSampleRate:
+        env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.2 : 1.0,
       debug: false,
-      _experiments: {
-        enableLogs: true,
-      },
+      enableLogs: true,
       integrations: sharedIntegrations(),
     });
   }

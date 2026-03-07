@@ -11,9 +11,7 @@ initSentry({
   environment: env.NEXT_PUBLIC_VERCEL_ENV,
   tracesSampleRate: env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
   debug: false,
-  _experiments: {
-    enableLogs: true,
-  },
+  enableLogs: true,
   integrations: [
     ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
       ? [spotlightBrowserIntegration()]
