@@ -106,32 +106,17 @@ export class SourcesService extends DeusApiM2MService {
   }
 
   /**
-   * Update repository metadata (for webhooks)
+   * Touch repository integration timestamps (for webhooks).
+   * Display metadata is no longer stored — will be resolved from cache.
    */
-  async updateMetadata(
-    githubRepoId: string,
-    metadata: {
-      fullName?: string;
-      defaultBranch?: string;
-      isPrivate?: boolean;
-      isArchived?: boolean;
-    }
-  ) {
+  async updateMetadata(githubRepoId: string) {
     return await this.call(
       "m2m.sources.updateGithubMetadata",
       (caller) =>
-        caller.sources.updateGithubMetadata({
-          githubRepoId,
-          metadata: {
-            repoFullName: metadata.fullName,
-            defaultBranch: metadata.defaultBranch,
-            isPrivate: metadata.isPrivate,
-            isArchived: metadata.isArchived,
-          },
-        }),
+        caller.sources.updateGithubMetadata({ githubRepoId }),
       {
         fallbackMessage: "Failed to update repository metadata",
-        details: { githubRepoId, metadata },
+        details: { githubRepoId },
       },
     );
   }

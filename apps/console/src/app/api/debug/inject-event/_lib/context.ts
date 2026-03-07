@@ -19,28 +19,28 @@ export function buildContext(
     case "github": {
       const c = cfg.sourceType === "github" ? cfg : null;
       return `Generate a realistic GitHub webhook payload.
-Repo: ${c?.repoFullName ?? "acme/example"}, default branch: ${c?.defaultBranch ?? "main"}
+Repo ID: ${c?.repoId ?? "567890123"}
 Account: ${installation.accountLogin ?? "acme"}
 ${action ? `Action: ${action}` : ""}${contextLine}`;
     }
     case "vercel": {
       const c = cfg.sourceType === "vercel" ? cfg : null;
       return `Generate a realistic Vercel deployment webhook payload.
-Project: ${c?.projectName ?? "my-app"} (${c?.projectId ?? "prj_example"})
-Team: ${c?.teamId ?? "team_example"}
+Project ID: ${c?.projectId ?? "prj_example"}
+Team ID: ${c?.teamId ?? "team_example"}
 Event type: ${afterColon}${contextLine}`;
     }
     case "linear": {
       const c = cfg.sourceType === "linear" ? cfg : null;
       return `Generate a realistic Linear webhook payload.
-Team: ${c?.teamName ?? "Engineering"} (${c?.teamKey ?? "ENG"})
+Team ID: ${c?.teamId ?? "team_example"}
 Organization: ${installation.externalId}
 ${action ? `Action: ${action}` : ""}${contextLine}`;
     }
     case "sentry": {
       const c = cfg.sourceType === "sentry" ? cfg : null;
       return `Generate a realistic Sentry webhook payload.
-Project: ${c?.projectSlug ?? "my-project"} (${c?.projectId ?? "123456"})
+Project ID: ${c?.projectId ?? "123456"}
 Installation: ${installation.externalId}
 ${action ? `Action: ${action}` : ""}${contextLine}`;
     }

@@ -29,12 +29,6 @@ const markGithubDeletedSchema = z.object({
 
 const updateGithubMetadataSchema = z.object({
   githubRepoId: z.string(),
-  metadata: z.object({
-    repoFullName: z.string().optional(),
-    defaultBranch: z.string().optional(),
-    isPrivate: z.boolean().optional(),
-    isArchived: z.boolean().optional(),
-  }),
 });
 
 const getSourceIdByGithubRepoIdSchema = z.object({
@@ -332,18 +326,15 @@ export const sourcesM2MRouter = {
     }),
 
   /**
-   * Update GitHub repository metadata
+   * Touch GitHub repository integration timestamps.
    *
-   * Used by GitHub webhooks when repository metadata changes:
-   * - Repository renamed (full_name changed)
-   * - Default branch changed
-   * - Privacy settings changed
-   * - Archive status changed
+   * Called by GitHub webhooks when repository events occur.
+   * Display metadata (names, branches, privacy) is no longer stored in providerConfig —
+   * it will be resolved from a cache layer in a future iteration.
    */
   updateGithubMetadata: webhookM2MProcedure
     .input(updateGithubMetadataSchema)
     .mutation(async ({ input }) => {
-      // Find the source first
       const sources = await db
         .select()
         .from(workspaceIntegrations)
@@ -356,7 +347,6 @@ export const sourcesM2MRouter = {
         });
       }
 
-      // Filter to GitHub sources and update metadata
       const now = new Date().toISOString();
       const githubSources = sources.filter(
         (source) => source.providerConfig.sourceType === "github"
@@ -366,35 +356,12 @@ export const sourcesM2MRouter = {
         return { success: true, updated: 0 };
       }
 
-      const updateQueries = githubSources.map((source) => {
-        // Safe to cast: pre-filtered to github sourceType above
-        const providerConfig = source.providerConfig as Extract<typeof source.providerConfig, { sourceType: "github" }>;
-        const updatedConfig = {
-          ...providerConfig,
-          ...(input.metadata.repoFullName && {
-            repoFullName: input.metadata.repoFullName,
-            repoName: input.metadata.repoFullName.split("/")[1] ?? providerConfig.repoName,
-          }),
-          ...(input.metadata.defaultBranch && {
-            defaultBranch: input.metadata.defaultBranch,
-          }),
-          ...(input.metadata.isPrivate !== undefined && {
-            isPrivate: input.metadata.isPrivate,
-          }),
-          ...(input.metadata.isArchived !== undefined && {
-            isArchived: input.metadata.isArchived,
-          }),
-        };
-
-        return db
+      const updateQueries = githubSources.map((source) =>
+        db
           .update(workspaceIntegrations)
-          .set({
-            providerConfig: updatedConfig,
-            updatedAt: now,
-          })
-          .where(eq(workspaceIntegrations.id, source.id));
-      });
-      // Batch: update metadata atomically (neon-http doesn't support transactions)
+          .set({ updatedAt: now })
+          .where(eq(workspaceIntegrations.id, source.id))
+      );
       const updates = await db.batch(updateQueries as [typeof updateQueries[0], ...typeof updateQueries]);
 
       // Record activity for each metadata update (Tier 3: Fire-and-forget)
@@ -408,7 +375,6 @@ export const sourcesM2MRouter = {
           entityId: source.id,
           metadata: {
             provider: "github",
-            updates: input.metadata,
             githubRepoId: input.githubRepoId,
           },
         });

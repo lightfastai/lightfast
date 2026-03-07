@@ -38,11 +38,6 @@ const DEMO_SOURCES: DemoSource[] = [
       type: "repository",
       installationId: "12345678",
       repoId: "901234567",
-      repoName: "lightfast",
-      repoFullName: "lightfastai/lightfast",
-      defaultBranch: "main",
-      isPrivate: true,
-      isArchived: false,
       sync: {
         branches: ["main"],
         paths: ["**/*"],
@@ -59,9 +54,7 @@ const DEMO_SOURCES: DemoSource[] = [
       sourceType: "vercel",
       type: "project",
       projectId: "prj_lightfast_console",
-      projectName: "lightfast-console",
       teamId: "team_lightfastai",
-      teamSlug: "lightfastai",
       configurationId: "icfg_demo_001",
       sync: {
         events: ["deployment.created", "deployment.succeeded", "deployment.ready", "deployment.error", "deployment.canceled", "deployment.check-rerequested"],
@@ -76,7 +69,6 @@ const DEMO_SOURCES: DemoSource[] = [
       version: 1,
       sourceType: "sentry",
       type: "project",
-      projectSlug: "lightfast-console",
       projectId: "4508288486826115",
       sync: {
         events: ["issue", "error", "event_alert", "metric_alert"],
@@ -92,8 +84,6 @@ const DEMO_SOURCES: DemoSource[] = [
       sourceType: "linear",
       type: "team",
       teamId: "team_lightfast_eng",
-      teamKey: "LIGHT",
-      teamName: "Lightfast",
       sync: {
         events: ["Issue", "Comment", "Project", "Cycle", "ProjectUpdate"],
         autoSync: true,
