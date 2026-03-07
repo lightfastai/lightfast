@@ -18,5 +18,5 @@ export const apiKeyAuth: MiddlewareHandler = async (c: Context, next) => {
     return c.json({ error: "unauthorized" }, 401);
   }
 
-  await next();
+  return await next();
 };

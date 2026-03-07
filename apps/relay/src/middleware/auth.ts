@@ -16,7 +16,7 @@ export const apiKeyAuth: MiddlewareHandler = async (c, next) => {
     return c.json({ error: "unauthorized" }, 401);
   }
 
-  await next();
+  return await next();
 };
 
 const receiver = new Receiver();
@@ -42,5 +42,5 @@ export const qstashAuth: MiddlewareHandler = async (c, next) => {
     return c.json({ error: "invalid_signature" }, 401);
   }
 
-  await next();
+  return await next();
 };

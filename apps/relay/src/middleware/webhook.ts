@@ -88,7 +88,7 @@ export const providerGuard = createMiddleware<{
   // uses config-independent methods (verifySignature, parsePayload, etc.) so this is safe.
   c.set("providerDef", providerDef as ProviderDefinition);
   c.set("providerName", providerDef.name as ProviderName);
-  await next();
+  return await next();
 });
 
 // ── 2. Service Auth Detection ────────────────────────────────────────────────
@@ -116,8 +116,7 @@ export const serviceAuthBodyValidator = createMiddleware<{
   Variables: WebhookVariables;
 }>(async (c, next) => {
   if (!c.get("isServiceAuth")) {
-    await next();
-    return;
+    return await next();
   }
 
   let raw: unknown;
@@ -133,7 +132,7 @@ export const serviceAuthBodyValidator = createMiddleware<{
   }
 
   c.set("serviceAuthBody", result.data);
-  await next();
+  return await next();
 });
 
 // ── 4. Webhook Header Guard ─────────────────────────────────────────────────
@@ -144,8 +143,7 @@ export const webhookHeaderGuard = createMiddleware<{
   Variables: WebhookVariables;
 }>(async (c, next) => {
   if (c.get("isServiceAuth")) {
-    await next();
-    return;
+    return await next();
   }
 
   const providerDef = c.get("providerDef");
@@ -159,7 +157,7 @@ export const webhookHeaderGuard = createMiddleware<{
     return c.json({ error: "missing_required_headers" }, 400);
   }
 
-  await next();
+  return await next();
 });
 
 // ── 5. Raw Body Capture ─────────────────────────────────────────────────────
@@ -170,13 +168,12 @@ export const rawBodyCapture = createMiddleware<{
   Variables: WebhookVariables;
 }>(async (c, next) => {
   if (c.get("isServiceAuth")) {
-    await next();
-    return;
+    return await next();
   }
 
   const rawBody = await c.req.text();
   c.set("rawBody", rawBody);
-  await next();
+  return await next();
 });
 
 // ── 6. Signature Verification ───────────────────────────────────────────────
@@ -187,8 +184,7 @@ export const signatureVerify = createMiddleware<{
   Variables: WebhookVariables;
 }>(async (c, next) => {
   if (c.get("isServiceAuth")) {
-    await next();
-    return;
+    return await next();
   }
 
   const providerDef = c.get("providerDef");
@@ -208,7 +204,7 @@ export const signatureVerify = createMiddleware<{
     return c.json({ error: "invalid_signature" }, 401);
   }
 
-  await next();
+  return await next();
 });
 
 // ── 7. Payload Parse + Extract ──────────────────────────────────────────────
@@ -268,5 +264,5 @@ export const payloadParseAndExtract = createMiddleware<{
   c.set("eventType", eventType);
   c.set("resourceId", resourceId);
 
-  await next();
+  return await next();
 });
