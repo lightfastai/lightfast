@@ -1,11 +1,11 @@
 import { describe, it, expectTypeOf } from "vitest";
-import { EVENT_REGISTRY, getProvider } from "./registry.js";
-import type { PROVIDERS, ProviderName, EventKey, EventRegistryEntry, ProviderAccountInfo, ProviderConfig } from "./registry.js";
-import type { ProviderDefinition } from "./define.js";
-import type { GitHubConfig } from "./providers/github/auth.js";
-import type { VercelConfig } from "./providers/vercel/auth.js";
-import type { LinearConfig } from "./providers/linear/auth.js";
-import type { SentryConfig } from "./providers/sentry/auth.js";
+import { EVENT_REGISTRY, getProvider } from "./registry";
+import type { PROVIDERS, ProviderName, EventKey, EventRegistryEntry, ProviderAccountInfo, ProviderConfig } from "./registry";
+import type { ProviderDefinition } from "./define";
+import type { GitHubConfig } from "./providers/github/auth";
+import type { VercelConfig } from "./providers/vercel/auth";
+import type { LinearConfig } from "./providers/linear/auth";
+import type { SentryConfig } from "./providers/sentry/auth";
 
 // ── Category 1: ProviderName ────────────────────────────────────────────────
 

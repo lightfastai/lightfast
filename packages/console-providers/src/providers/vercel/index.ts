@@ -1,14 +1,14 @@
-import { defineProvider, actionEvent } from "../../define.js";
+import { defineProvider, actionEvent } from "../../define";
 import { z } from "zod";
-import { vercelConfigSchema, vercelAccountInfoSchema, vercelOAuthResponseSchema, vercelProviderConfigSchema } from "./auth.js";
-import type { VercelConfig, VercelAccountInfo, VercelOAuthRaw } from "./auth.js";
-import type { OAuthTokens, CallbackResult } from "../../types.js";
-import { computeHmac, timingSafeEqual } from "../../crypto.js";
+import { vercelConfigSchema, vercelAccountInfoSchema, vercelOAuthResponseSchema, vercelProviderConfigSchema } from "./auth";
+import type { VercelConfig, VercelAccountInfo, VercelOAuthRaw } from "./auth";
+import type { OAuthTokens, CallbackResult } from "../../types";
+import { computeHmac, timingSafeEqual } from "../../crypto";
 import {
   preTransformVercelWebhookPayloadSchema,
   vercelWebhookPayloadSchema,
-} from "./schemas.js";
-import { transformVercelDeployment } from "./transformers.js";
+} from "./schemas";
+import { transformVercelDeployment } from "./transformers";
 
 // ── Standalone OAuth helpers (avoids circular self-reference in processCallback) ──
 

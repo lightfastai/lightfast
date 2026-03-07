@@ -6,7 +6,7 @@
  */
 
 import { z } from "zod";
-import { sourceTypeSchema } from "./registry.js";
+import { sourceTypeSchema } from "./registry";
 
 /**
  * Service auth webhook body — sent by internal services (backfill) with X-API-Key.

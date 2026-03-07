@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { syncSchema } from "../../sync.js";
+import { syncSchema } from "../../sync";
 
 // ── Raw OAuth Response Shape ──
 

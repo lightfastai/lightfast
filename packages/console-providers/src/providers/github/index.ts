@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { defineProvider, simpleEvent, actionEvent } from "../../define.js";
-import { githubConfigSchema, githubAccountInfoSchema, githubOAuthResponseSchema, githubProviderConfigSchema } from "./auth.js";
-import type { GitHubConfig, GitHubAccountInfo } from "./auth.js";
-import type { OAuthTokens, CallbackResult } from "../../types.js";
-import { computeHmac, timingSafeEqual } from "../../crypto.js";
-import { createRS256JWT } from "../../jwt.js";
+import { defineProvider, simpleEvent, actionEvent } from "../../define";
+import { githubConfigSchema, githubAccountInfoSchema, githubOAuthResponseSchema, githubProviderConfigSchema } from "./auth";
+import type { GitHubConfig, GitHubAccountInfo } from "./auth";
+import type { OAuthTokens, CallbackResult } from "../../types";
+import { computeHmac, timingSafeEqual } from "../../crypto";
+import { createRS256JWT } from "../../jwt";
 import {
   preTransformGitHubPushEventSchema,
   preTransformGitHubPullRequestEventSchema,
@@ -12,14 +12,14 @@ import {
   preTransformGitHubReleaseEventSchema,
   preTransformGitHubDiscussionEventSchema,
   githubWebhookPayloadSchema,
-} from "./schemas.js";
+} from "./schemas";
 import {
   transformGitHubPush,
   transformGitHubPullRequest,
   transformGitHubIssue,
   transformGitHubRelease,
   transformGitHubDiscussion,
-} from "./transformers.js";
+} from "./transformers";
 
 // ── GitHub-Specific Capabilities ──
 

@@ -1,9 +1,9 @@
-import { defineProvider, actionEvent } from "../../define.js";
+import { defineProvider, actionEvent } from "../../define";
 import { z } from "zod";
-import { linearConfigSchema, linearAccountInfoSchema, linearOAuthRawSchema, linearOAuthResponseSchema, linearProviderConfigSchema } from "./auth.js";
-import type { LinearConfig, LinearAccountInfo } from "./auth.js";
-import type { OAuthTokens, CallbackResult } from "../../types.js";
-import { computeHmac, timingSafeEqual } from "../../crypto.js";
+import { linearConfigSchema, linearAccountInfoSchema, linearOAuthRawSchema, linearOAuthResponseSchema, linearProviderConfigSchema } from "./auth";
+import type { LinearConfig, LinearAccountInfo } from "./auth";
+import type { OAuthTokens, CallbackResult } from "../../types";
+import { computeHmac, timingSafeEqual } from "../../crypto";
 import {
   preTransformLinearIssueWebhookSchema,
   preTransformLinearCommentWebhookSchema,
@@ -11,14 +11,14 @@ import {
   preTransformLinearCycleWebhookSchema,
   preTransformLinearProjectUpdateWebhookSchema,
   linearWebhookPayloadSchema,
-} from "./schemas.js";
+} from "./schemas";
 import {
   transformLinearIssue,
   transformLinearComment,
   transformLinearProject,
   transformLinearCycle,
   transformLinearProjectUpdate,
-} from "./transformers.js";
+} from "./transformers";
 
 // ── Linear-specific helpers ──
 

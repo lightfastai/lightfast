@@ -1,8 +1,8 @@
-import type { PostTransformEvent, PostTransformReference } from "../../post-transform-event.js";
-import type { TransformContext } from "../../types.js";
-import { validatePostTransformEvent, logValidationErrors } from "../../validation.js";
-import { sanitizeTitle, sanitizeBody } from "../../sanitize.js";
-import type { PreTransformVercelWebhookPayload, VercelWebhookEventType } from "./schemas.js";
+import type { PostTransformEvent, PostTransformReference } from "../../post-transform-event";
+import type { TransformContext } from "../../types";
+import { validatePostTransformEvent, logValidationErrors } from "../../validation";
+import { sanitizeTitle, sanitizeBody } from "../../sanitize";
+import type { PreTransformVercelWebhookPayload, VercelWebhookEventType } from "./schemas";
 
 export function transformVercelDeployment(
   payload: PreTransformVercelWebhookPayload,

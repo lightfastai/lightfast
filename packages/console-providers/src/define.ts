@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-core";
 import type { z } from "zod";
-import type { PostTransformEvent } from "./post-transform-event.js";
-import type { TransformContext, OAuthTokens, BaseProviderAccountInfo, CallbackResult } from "./types.js";
+import type { PostTransformEvent } from "./post-transform-event";
+import type { TransformContext, OAuthTokens, BaseProviderAccountInfo, CallbackResult } from "./types";
 
 export interface CategoryDef {
   label: string;

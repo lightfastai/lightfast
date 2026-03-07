@@ -1,13 +1,13 @@
 import { z } from "zod";
-import type { ProviderDefinition, EventDefinition, ActionEventDef } from "./define.js";
-import type { GitHubConfig } from "./providers/github/auth.js";
-import type { VercelConfig } from "./providers/vercel/auth.js";
-import type { LinearConfig } from "./providers/linear/auth.js";
-import type { SentryConfig } from "./providers/sentry/auth.js";
-import { github } from "./providers/github/index.js";
-import { vercel } from "./providers/vercel/index.js";
-import { linear } from "./providers/linear/index.js";
-import { sentry } from "./providers/sentry/index.js";
+import type { ProviderDefinition, EventDefinition, ActionEventDef } from "./define";
+import type { GitHubConfig } from "./providers/github/auth";
+import type { VercelConfig } from "./providers/vercel/auth";
+import type { LinearConfig } from "./providers/linear/auth";
+import type { SentryConfig } from "./providers/sentry/auth";
+import { github } from "./providers/github/index";
+import { vercel } from "./providers/vercel/index";
+import { linear } from "./providers/linear/index";
+import { sentry } from "./providers/sentry/index";
 
 // ── The Registry ──────────────────────────────────────────────────────────────
 

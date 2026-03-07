@@ -1,22 +1,22 @@
-import { defineProvider, simpleEvent, actionEvent } from "../../define.js";
+import { defineProvider, simpleEvent, actionEvent } from "../../define";
 import { z } from "zod";
-import { sentryConfigSchema, sentryAccountInfoSchema, encodeSentryToken, decodeSentryToken, sentryOAuthResponseSchema, sentryProviderConfigSchema } from "./auth.js";
-import type { SentryConfig, SentryAccountInfo } from "./auth.js";
-import type { OAuthTokens, CallbackResult } from "../../types.js";
-import { computeHmac, timingSafeEqual } from "../../crypto.js";
+import { sentryConfigSchema, sentryAccountInfoSchema, encodeSentryToken, decodeSentryToken, sentryOAuthResponseSchema, sentryProviderConfigSchema } from "./auth";
+import type { SentryConfig, SentryAccountInfo } from "./auth";
+import type { OAuthTokens, CallbackResult } from "../../types";
+import { computeHmac, timingSafeEqual } from "../../crypto";
 import {
   preTransformSentryIssueWebhookSchema,
   preTransformSentryErrorWebhookSchema,
   preTransformSentryEventAlertWebhookSchema,
   preTransformSentryMetricAlertWebhookSchema,
   sentryWebhookPayloadSchema,
-} from "./schemas.js";
+} from "./schemas";
 import {
   transformSentryIssue,
   transformSentryError,
   transformSentryEventAlert,
   transformSentryMetricAlert,
-} from "./transformers.js";
+} from "./transformers";
 
 // ── Standalone OAuth helpers (avoids circular self-reference in processCallback) ──
 

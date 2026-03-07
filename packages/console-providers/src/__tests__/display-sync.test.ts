@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "../display.js";
-import { PROVIDERS } from "../registry.js";
+import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "../display";
+import { PROVIDERS } from "../registry";
 
 describe("display.ts ↔ registry.ts sync", () => {
   it("PROVIDER_DISPLAY keys match PROVIDERS keys", () => {

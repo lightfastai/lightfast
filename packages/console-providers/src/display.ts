@@ -1,5 +1,5 @@
-import type { IconDef } from "./define.js";
-export type { IconDef } from "./define.js";
+import type { IconDef } from "./define";
+export type { IconDef } from "./define";
 
 // ── Provider Display Data ────────────────────────────────────────────────────
 // Single source of truth for client-safe provider display metadata.

@@ -1,5 +1,5 @@
-import { postTransformEventSchema } from "./post-transform-event.js";
-import type { PostTransformEvent } from "./post-transform-event.js";
+import { postTransformEventSchema } from "./post-transform-event";
+import type { PostTransformEvent } from "./post-transform-event";
 
 export interface ValidationResult<T> {
   success: boolean;

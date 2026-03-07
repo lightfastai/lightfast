@@ -5,7 +5,7 @@
  * Each provider defines its own getBaseEventType and deriveObservationType.
  */
 
-import { getProvider } from "./registry.js";
+import { getProvider } from "./registry";
 
 /**
  * Map detailed sourceType to base event type for config comparison.

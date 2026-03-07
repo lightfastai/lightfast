@@ -1,14 +1,14 @@
-import type { PostTransformEvent, PostTransformReference } from "../../post-transform-event.js";
-import type { TransformContext } from "../../types.js";
-import { validatePostTransformEvent, logValidationErrors } from "../../validation.js";
-import { sanitizeTitle, sanitizeBody } from "../../sanitize.js";
+import type { PostTransformEvent, PostTransformReference } from "../../post-transform-event";
+import type { TransformContext } from "../../types";
+import { validatePostTransformEvent, logValidationErrors } from "../../validation";
+import { sanitizeTitle, sanitizeBody } from "../../sanitize";
 import type {
   PreTransformLinearIssueWebhook,
   PreTransformLinearCommentWebhook,
   PreTransformLinearProjectWebhook,
   PreTransformLinearCycleWebhook,
   PreTransformLinearProjectUpdateWebhook,
-} from "./schemas.js";
+} from "./schemas";
 
 const ACTION_SUFFIX: Record<string, string> = {
   create: "created",

@@ -1,8 +1,8 @@
-import type { PostTransformEvent } from "./post-transform-event.js";
-import type { EventDefinition } from "./define.js";
-import type { TransformContext } from "./types.js";
-import { PROVIDERS  } from "./registry.js";
-import type {SourceType} from "./registry.js";
+import type { PostTransformEvent } from "./post-transform-event";
+import type { EventDefinition } from "./define";
+import type { TransformContext } from "./types";
+import { PROVIDERS  } from "./registry";
+import type {SourceType} from "./registry";
 
 /**
  * Central webhook payload transformer.
