@@ -10,7 +10,6 @@ import {
   workspaceActorProfiles,
   workspaceEvents,
 } from "@db/console/schema";
-import type { WorkspaceIntegration } from "@db/console/schema";
 import { eq, and, desc, count, sql, inArray, sum, avg, gte, like } from "drizzle-orm";
 import { getWorkspaceKey, createCustomWorkspace } from "@db/console/utils";
 import {
@@ -18,7 +17,6 @@ import {
   workspaceCreateInputSchema,
   workspaceStatisticsInputSchema,
   workspaceUpdateNameInputSchema,
-  workspaceResolveFromGithubOrgSlugInputSchema,
   workspaceJobPercentilesInputSchema,
   workspacePerformanceTimeSeriesInputSchema,
   workspaceSystemHealthInputSchema,
@@ -27,12 +25,14 @@ import {
 import { z } from "zod";
 import { clerkClient } from "@vendor/clerk/server";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
-import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
+import { orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
 import { ensureActorLinked } from "../../lib/actor-linking";
-import { notifyBackfill } from "../../lib/backfill";
+import type { BackfillTriggerPayload } from "@repo/console-validation";
+import { createBackfillClient } from "@repo/gateway-service-clients";
+import { env } from "../../env";
 import { getDefaultSyncEvents, sourceTypeSchema, PROVIDERS } from "@repo/console-providers";
-import type { ProviderName } from "@repo/console-providers";
+import type { ProviderName, SourceType } from "@repo/console-providers";
 
 /**
  * Workspace router - internal procedures for API routes
@@ -97,70 +97,6 @@ export const workspaceRouter = {
         slug: workspace.slug,
         createdAt: workspace.createdAt,
       }));
-    }),
-
-  /**
-   * Resolve workspace ID and key from GitHub organization slug
-   * Used by webhooks to map GitHub events to workspaces
-   *
-   * Returns:
-   * - workspaceId: Database UUID for internal operations
-   * - workspaceKey: External naming key (ws-<slug>) for Pinecone, etc.
-   * - workspaceSlug: Internal slug identifier
-   * - clerkOrgId: Clerk organization ID for metrics tracking
-   */
-  resolveFromGithubOrgSlug: publicProcedure
-    .input(workspaceResolveFromGithubOrgSlugInputSchema)
-    .query(async ({ input }) => {
-      // Find GitHub installation with matching account login
-      const installation = await db.query.gwInstallations.findFirst({
-        where: and(
-          eq(gwInstallations.provider, "github"),
-          eq(gwInstallations.accountLogin, input.githubOrgSlug),
-          eq(gwInstallations.status, "active"),
-        ),
-      });
-
-      if (!installation) {
-        throw new Error(
-          `No active GitHub installation found for organization: ${input.githubOrgSlug}`,
-        );
-      }
-
-      // Find workspace source connected to this installation
-      const workspaceSource = await db.query.workspaceIntegrations.findFirst({
-        where: and(
-          eq(workspaceIntegrations.installationId, installation.id),
-          eq(workspaceIntegrations.isActive, true),
-        ),
-      });
-
-      if (!workspaceSource) {
-        throw new Error(
-          `No workspace connected to GitHub organization: ${input.githubOrgSlug}`,
-        );
-      }
-
-      // Fetch workspace details
-      const workspace = await db.query.orgWorkspaces.findFirst({
-        where: eq(orgWorkspaces.id, workspaceSource.workspaceId),
-      });
-
-      if (!workspace) {
-        throw new Error(
-          `Workspace not found for ID: ${workspaceSource.workspaceId}`,
-        );
-      }
-
-      // Compute workspace key from slug
-      const workspaceKey = getWorkspaceKey(workspace.slug);
-
-      return {
-        workspaceId: workspace.id,
-        workspaceKey,
-        workspaceSlug: workspace.slug,
-        clerkOrgId: workspace.clerkOrgId,
-      };
     }),
 
   /**
@@ -594,6 +530,7 @@ export const workspaceRouter = {
         const sources = await db
           .select({
             id: workspaceIntegrations.id,
+            installationId: workspaceIntegrations.installationId,
             sourceType: workspaceIntegrations.provider,
             isActive: workspaceIntegrations.isActive,
             connectedAt: workspaceIntegrations.connectedAt,
@@ -605,7 +542,7 @@ export const workspaceRouter = {
             backfillConfig: gwInstallations.backfillConfig,
           })
           .from(workspaceIntegrations)
-          .leftJoin(
+          .innerJoin(
             gwInstallations,
             eq(workspaceIntegrations.installationId, gwInstallations.id),
           )
@@ -628,6 +565,7 @@ export const workspaceRouter = {
           ),
           list: sources.map((s) => ({
             id: s.id,
+            installationId: s.installationId,
             type: s.sourceType,
             sourceType: s.sourceType, // Canonical name
             displayName: s.providerResourceId,
@@ -639,7 +577,7 @@ export const workspaceRouter = {
             lastSyncAt: s.lastSyncedAt, // Alias for UI compatibility
             lastSyncStatus: s.lastSyncStatus, // For UI compatibility
             metadata: s.providerConfig,
-            backfillConfig: s.backfillConfig ?? null,
+            backfillConfig: s.backfillConfig,
             resource: { // For backward compatibility
               id: s.id,
               resourceData: s.providerConfig,
@@ -1136,7 +1074,6 @@ export const workspaceRouter = {
               z.object({
                 resourceId: z.string(),
                 resourceName: z.string(),
-                metadata: z.record(z.string(), z.string()).optional().default({}),
               }),
             )
             .min(1)
@@ -1225,7 +1162,6 @@ export const workspaceRouter = {
             providerConfig: PROVIDERS[typedProvider].buildProviderConfig({
               resourceId: resource.resourceId,
               resourceName: resource.resourceName,
-              metadata: resource.metadata,
               installationExternalId: gwInstallation.externalId,
               providerAccountInfo: gwInstallation.providerAccountInfo,
               defaultSyncEvents,
@@ -1377,3 +1313,61 @@ export const workspaceRouter = {
       }),
   },
 } satisfies TRPCRouterRecord;
+
+/**
+ * Notify the backfill service to trigger a historical backfill for a connection.
+ * Best-effort — errors are logged but never thrown.
+ *
+ * If depth or entityTypes are omitted, they are loaded from gwInstallations.backfillConfig.
+ */
+export async function notifyBackfill(params: {
+  installationId: string;
+  provider: SourceType;
+  orgId: string;
+  depth?: 7 | 30 | 90;
+  entityTypes?: string[];
+  holdForReplay?: boolean;
+  correlationId?: string;
+}): Promise<void> {
+  let resolvedDepth = params.depth;
+  let resolvedEntityTypes = params.entityTypes;
+
+  // Load stored defaults when caller omits depth or entityTypes
+  if (resolvedDepth === undefined || resolvedEntityTypes === undefined) {
+    try {
+      const installation = await db.query.gwInstallations.findFirst({
+        where: eq(gwInstallations.id, params.installationId),
+        columns: { backfillConfig: true },
+      });
+      if (installation?.backfillConfig) {
+        resolvedDepth ??= installation.backfillConfig.depth;
+        resolvedEntityTypes ??= installation.backfillConfig.entityTypes;
+      }
+    } catch (err) {
+      console.error("[console] Failed to load backfill config defaults", {
+        installationId: params.installationId,
+        err,
+      });
+    }
+  }
+
+  const payload: BackfillTriggerPayload = {
+    installationId: params.installationId,
+    provider: params.provider,
+    orgId: params.orgId,
+    depth: resolvedDepth ?? 30,
+    entityTypes: resolvedEntityTypes,
+    holdForReplay: params.holdForReplay,
+  };
+
+  try {
+    const client = createBackfillClient({ apiKey: env.GATEWAY_API_KEY });
+    await client.trigger(payload);
+  } catch (err) {
+    console.error("[console] Failed to trigger backfill", {
+      installationId: params.installationId,
+      provider: params.provider,
+      err,
+    });
+  }
+}
