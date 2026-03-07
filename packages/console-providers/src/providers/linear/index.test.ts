@@ -217,7 +217,7 @@ describe("oauth.processCallback", () => {
     }
   });
 
-  it("includes organization details in accountInfo when org present", async () => {
+  it("does not include organization in accountInfo (display data resolved live)", async () => {
     mockFetch
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponse) })
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(viewerWithOrgResponse) });
@@ -225,12 +225,10 @@ describe("oauth.processCallback", () => {
     const result = await linear.oauth.processCallback(testConfig, { code: "lin-code" });
 
     if (result.status === "connected") {
-      const info = result.accountInfo as {
-        organization?: { id: string; name?: string; urlKey?: string };
-      };
-      expect(info.organization?.id).toBe("org-id-xyz");
-      expect(info.organization?.name).toBe("My Org");
-      expect(info.organization?.urlKey).toBe("my-org");
+      // organization field is removed — display data is resolved live in connections.linear.get
+      expect(result.accountInfo).not.toHaveProperty("organization");
+      // raw contains only OAuth metadata
+      expect(result.accountInfo.raw).toMatchObject({ token_type: "Bearer", scope: "read,write" });
     }
   });
 

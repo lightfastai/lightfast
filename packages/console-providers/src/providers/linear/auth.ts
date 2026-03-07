@@ -14,6 +14,11 @@ export type LinearOAuthRaw = z.infer<typeof linearOAuthRawSchema>;
 
 // ── Account Info Schema ──
 
+/**
+ * Convention: raw = non-secret fields from the token exchange response.
+ * Display data (organization name, urlKey) is resolved live in
+ * connections.linear.get via POST /graphql viewer query.
+ */
 export const linearAccountInfoSchema = z.object({
   version: z.literal(1),
   events: z.array(z.string()),
@@ -21,11 +26,6 @@ export const linearAccountInfoSchema = z.object({
   lastValidatedAt: z.string(),
   sourceType: z.literal("linear"),
   raw: linearOAuthRawSchema,
-  organization: z.object({
-    id: z.string(),
-    name: z.string().optional(),
-    urlKey: z.string().optional(),
-  }).optional(),
 });
 
 export type LinearAccountInfo = z.infer<typeof linearAccountInfoSchema>;

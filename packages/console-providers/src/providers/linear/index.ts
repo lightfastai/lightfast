@@ -22,11 +22,12 @@ import {
 
 // ── Linear-specific helpers ──
 
-async function fetchLinearContext(accessToken: string): Promise<{
-  externalId: string;
-  organizationName?: string;
-  organizationUrlKey?: string;
-}> {
+/**
+ * Minimal viewer query — returns org ID (preferred) or viewer ID (fallback).
+ * Used only by processCallback for the externalId field.
+ * Display data resolved live in connections.linear.get.
+ */
+async function fetchLinearExternalId(accessToken: string): Promise<string> {
   const response = await fetch("https://api.linear.app/graphql", {
     method: "POST",
     signal: AbortSignal.timeout(15_000),
@@ -35,7 +36,7 @@ async function fetchLinearContext(accessToken: string): Promise<{
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
-      query: `{ viewer { id organization { id name urlKey } } }`,
+      query: `{ viewer { id organization { id } } }`,
     }),
   });
 
@@ -44,21 +45,14 @@ async function fetchLinearContext(accessToken: string): Promise<{
   }
 
   const result = (await response.json()) as {
-    data?: {
-      viewer?: {
-        id: string;
-        organization?: { id: string; name?: string; urlKey?: string };
-      };
-    };
+    data?: { viewer?: { id: string; organization?: { id: string } } };
   };
 
-  const org = result.data?.viewer?.organization;
-  if (org?.id) {
-    return { externalId: org.id, organizationName: org.name, organizationUrlKey: org.urlKey };
-  }
+  const orgId = result.data?.viewer?.organization?.id;
+  if (orgId) return orgId;
 
   const viewerId = result.data?.viewer?.id;
-  if (viewerId) return { externalId: viewerId };
+  if (viewerId) return viewerId;
 
   throw new Error("Linear API did not return a viewer or organization ID");
 }
@@ -324,8 +318,9 @@ export const linear = defineProvider({
       const redirectUri = `${config.callbackBaseUrl}/gateway/linear/callback`;
       const oauthTokens = await exchangeLinearCode(config, code, redirectUri);
 
-      const linearContext = await fetchLinearContext(oauthTokens.accessToken);
-      const externalId = linearContext.externalId;
+      // Minimal viewer query for externalId only (org ID or viewer ID).
+      // Display data (org name, urlKey) resolved live in connections.linear.get.
+      const externalId = await fetchLinearExternalId(oauthTokens.accessToken);
       const now = new Date().toISOString();
 
       const raw = linearOAuthRawSchema.parse(oauthTokens.raw);
@@ -339,20 +334,7 @@ export const linear = defineProvider({
           events: ["Issue", "Comment", "IssueLabel", "Project", "Cycle"],
           installedAt: now,
           lastValidatedAt: now,
-          raw: {
-            token_type: raw.token_type,
-            scope: raw.scope,
-            expires_in: raw.expires_in,
-          },
-          ...(linearContext.organizationName || linearContext.organizationUrlKey
-            ? {
-                organization: {
-                  id: linearContext.externalId,
-                  name: linearContext.organizationName,
-                  urlKey: linearContext.organizationUrlKey,
-                },
-              }
-            : {}),
+          raw: { token_type: raw.token_type, scope: raw.scope, expires_in: raw.expires_in },
         },
         tokens: oauthTokens,
       } satisfies CallbackResult<LinearAccountInfo>;

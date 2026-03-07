@@ -1,20 +1,17 @@
 import { z } from "zod";
 import { syncSchema } from "../../sync.js";
 
-// ── Raw API Response Shape ──
+// ── Raw OAuth Response Shape ──
 
-/** Raw shape from GitHub GET /app/installations/{id} */
-export const githubInstallationRawSchema = z.object({
-  account: z.object({
-    login: z.string(),
-    id: z.number(),
-    type: z.enum(["User", "Organization"]),
-    avatar_url: z.string(),
-  }),
-  permissions: z.record(z.string(), z.string()),
-  events: z.array(z.string()),
-  created_at: z.string(),
-});
+/**
+ * Raw shape stored in providerAccountInfo.raw for GitHub.
+ *
+ * Convention: raw = non-secret fields from the token exchange / OAuth response.
+ * GitHub App flow has no token exchange response, so raw is empty.
+ * Display data (account login, avatar, type) is resolved live in
+ * connections.github.list via GET /app/installations/{id}.
+ */
+export const githubInstallationRawSchema = z.object({});
 
 export type GitHubInstallationRaw = z.infer<typeof githubInstallationRawSchema>;
 

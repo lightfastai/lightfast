@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { defineProvider, simpleEvent, actionEvent } from "../../define.js";
 import { githubConfigSchema, githubAccountInfoSchema, githubOAuthResponseSchema, githubProviderConfigSchema } from "./auth.js";
-import type { GitHubConfig, GitHubAccountInfo, GitHubInstallationRaw } from "./auth.js";
+import type { GitHubConfig, GitHubAccountInfo } from "./auth.js";
 import type { OAuthTokens, CallbackResult } from "../../types.js";
 import { computeHmac, timingSafeEqual } from "../../crypto.js";
 import { createRS256JWT } from "../../jwt.js";
@@ -59,51 +59,6 @@ async function getInstallationToken(config: GitHubConfig, installationId: string
     throw new Error("GitHub installation token response missing valid token");
   }
   return data.token;
-}
-
-async function getInstallationDetails(
-  config: GitHubConfig,
-  installationId: string,
-): Promise<GitHubInstallationRaw> {
-  if (!/^\d+$/.test(installationId)) {
-    throw new Error("Invalid GitHub installation ID: must be numeric");
-  }
-
-  const jwt = await createGitHubAppJWT(config);
-  const response = await fetch(
-    `https://api.github.com/app/installations/${installationId}`,
-    {
-      method: "GET",
-      signal: AbortSignal.timeout(10_000),
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-        Accept: "application/vnd.github+json",
-        "User-Agent": "lightfast-gateway",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    },
-  );
-  if (!response.ok) {
-    throw new Error(`GitHub installation details fetch failed: ${response.status}`);
-  }
-
-  const data = (await response.json()) as Record<string, unknown>;
-  const account = data.account as Record<string, unknown> | null;
-  if (!account || typeof account.login !== "string") {
-    throw new Error("GitHub installation response missing account data");
-  }
-
-  return {
-    account: {
-      login: account.login,
-      id: account.id as number,
-      type: account.type === "User" ? "User" : "Organization",
-      avatar_url: (account.avatar_url as string | undefined) ?? "",
-    },
-    permissions: (data.permissions as Record<string, string> | undefined) ?? {},
-    events: (data.events as string[] | undefined) ?? [],
-    created_at: (data.created_at as string | undefined) ?? new Date().toISOString(),
-  };
 }
 
 // ── Provider Definition ──
@@ -234,27 +189,27 @@ export const github = defineProvider({
     getActiveToken: async (config, storedExternalId, _storedAccessToken) => {
       return getInstallationToken(config, storedExternalId);
     },
-    processCallback: async (config, query) => {
+    processCallback: (_config, query) => {
       const installationId = query.installation_id;
       const setupAction = query.setup_action;
 
-      if (setupAction === "request") throw new Error("setup_action=request is not yet implemented");
-      if (setupAction === "update") throw new Error("setup_action=update is not yet implemented");
-      if (!installationId) throw new Error("missing installation_id");
+      if (setupAction === "request") return Promise.reject(new Error("setup_action=request is not yet implemented"));
+      if (setupAction === "update") return Promise.reject(new Error("setup_action=update is not yet implemented"));
+      if (!installationId) return Promise.reject(new Error("missing installation_id"));
 
-      const details = await getInstallationDetails(config, installationId);
-      return {
+      const now = new Date().toISOString();
+      return Promise.resolve({
         status: "connected-no-token",
         externalId: installationId,
         accountInfo: {
           version: 1 as const,
           sourceType: "github" as const,
-          events: details.events,
-          installedAt: details.created_at,
-          lastValidatedAt: new Date().toISOString(),
-          raw: details,
+          events: ["push", "pull_request", "issues", "release", "discussion"],
+          installedAt: now,
+          lastValidatedAt: now,
+          raw: {},
         },
-      } satisfies CallbackResult<GitHubAccountInfo>;
+      } satisfies CallbackResult<GitHubAccountInfo>);
     },
   },
 

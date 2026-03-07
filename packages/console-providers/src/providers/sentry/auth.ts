@@ -3,7 +3,11 @@ import { syncSchema } from "../../sync.js";
 
 // ── Raw OAuth Response Shape ──
 
-/** Raw shape from Sentry authorization response (minus token/refreshToken secrets) */
+/**
+ * Convention: raw = non-secret fields from the token exchange response.
+ * Display data (organization name, slug) is resolved live in
+ * connections.sentry.get via GET /api/0/organizations/.
+ */
 export const sentryOAuthRawSchema = z.object({
   expiresAt: z.string().optional(),
   scopes: z.array(z.string()).optional(),

@@ -304,7 +304,12 @@ This leverages the unique index on `(provider, externalId)` at `gw-installations
 
 ---
 
-## Phase 4: Vercel OAuth Display Caching
+## Phase 4: ~~Vercel OAuth Display Caching~~ — SUPERSEDED
+
+> **Superseded by**: `thoughts/shared/plans/2026-03-07-live-display-data-standardize-raw.md`
+> Display data is now resolved via live API calls in `connections.*.list/get` endpoints,
+> not cached in `providerAccountInfo`. The Vercel pattern (live calls) became the standard
+> for all providers.
 
 ### Overview
 Eliminate live Vercel API calls in `connections.vercel.list` by caching `team_slug` and `username` in `providerAccountInfo` during the OAuth callback.
@@ -406,7 +411,11 @@ Remove the `getInstallationToken` call, the `fetch` calls to Vercel API, and the
 
 ---
 
-## Phase 5: Linear Organization Backfill + Make Required
+## Phase 5: ~~Linear Organization Backfill + Make Required~~ — SUPERSEDED
+
+> **Superseded by**: `thoughts/shared/plans/2026-03-07-live-display-data-standardize-raw.md`
+> Linear `organization` field removed from `providerAccountInfo`. Display data resolved
+> live via GraphQL in `connections.linear.get`. No backfill needed.
 
 ### Overview
 Backfill `organization` data for existing Linear installations, then make the field required in the schema. Export `fetchLinearContext` for the backfill script.

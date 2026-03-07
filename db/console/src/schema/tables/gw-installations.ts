@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { pgTable, varchar, timestamp, text, index, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
-import type { ClerkUserId } from "@repo/console-validation";
+import type { ClerkUserId, GwInstallationBackfillConfig } from "@repo/console-validation";
 import type { ProviderAccountInfo, SourceType } from "@repo/console-providers";
 
 export const gwInstallations = pgTable(
@@ -14,7 +14,6 @@ export const gwInstallations = pgTable(
 
     provider: varchar("provider", { length: 50 }).notNull().$type<SourceType>(),
     externalId: varchar("external_id", { length: 191 }).notNull(),
-    accountLogin: varchar("account_login", { length: 191 }),
     connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
     orgId: varchar("org_id", { length: 191 }).notNull(),
 
@@ -24,14 +23,15 @@ export const gwInstallations = pgTable(
     metadata: jsonb("metadata"),
 
     /**
-     * OAuth installation-level metadata (JSONB) — discriminated union by sourceType.
+     * Provider-specific installation metadata (JSONB) — discriminated union by sourceType.
      *
      * Schema: providerAccountInfoSchema from @repo/console-providers
      *
-     * Contains ONLY data needed for:
-     *   1. OAuth token retrieval / refresh (raw token data)
-     *   2. Webhook scoping (which events the installation is subscribed to)
-     *   3. Account identity for UI (name, avatar — stored in `raw` as cache)
+     * DESIGN INVARIANT:
+     * - `raw` = non-secret fields from the token exchange / OAuth response only
+     * - NEVER store display names (account login, org name, avatar, slug) here
+     * - Display data is resolved live via provider APIs in connections.*.list/get
+     * - This column stores identity + operational data, not presentation data
      *
      * NEVER add resource-specific data (repos[], projects[], teams[]) — those
      * belong in providerConfig on workspace_integrations, one row per resource.
@@ -39,10 +39,7 @@ export const gwInstallations = pgTable(
     providerAccountInfo: jsonb("provider_account_info").$type<ProviderAccountInfo>(),
 
     /** Optional backfill configuration for this installation. */
-    backfillConfig: jsonb("backfill_config").$type<{
-      depth: 7 | 30 | 90;
-      entityTypes: string[];
-    }>(),
+    backfillConfig: jsonb("backfill_config").$type<GwInstallationBackfillConfig>(),
 
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })

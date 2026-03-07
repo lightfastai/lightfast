@@ -51,18 +51,6 @@ beforeAll(() => {
 
 // ── Fixtures ───────────────────────────────────────────────────────────────────
 
-const mockInstallationResponse = {
-  account: {
-    login: "my-org",
-    id: 42,
-    type: "Organization",
-    avatar_url: "https://avatars.githubusercontent.com/u/42",
-  },
-  permissions: { contents: "read", metadata: "read" },
-  events: ["push", "pull_request"],
-  created_at: "2024-01-01T00:00:00Z",
-};
-
 // ── oauth.buildAuthUrl ─────────────────────────────────────────────────────────
 
 describe("oauth.buildAuthUrl", () => {
@@ -216,18 +204,7 @@ describe("oauth.processCallback", () => {
     );
   });
 
-  it("throws when installation_id is non-numeric", async () => {
-    await expect(
-      github.oauth.processCallback(testConfig, { installation_id: "not-a-number" }),
-    ).rejects.toThrow("Invalid GitHub installation ID");
-  });
-
   it("returns valid CallbackResult with connected-no-token status on happy path", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockInstallationResponse),
-    });
-
     const result = await github.oauth.processCallback(testConfig, {
       installation_id: "12345",
     });
@@ -240,25 +217,17 @@ describe("oauth.processCallback", () => {
     }
   });
 
-  it("accountInfo contains events from installation details", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockInstallationResponse),
-    });
-
+  it("accountInfo has hardcoded events and empty raw (display data resolved live)", async () => {
     const result = await github.oauth.processCallback(testConfig, { installation_id: "12345" });
     if (result.status === "connected-no-token") {
-      const raw = result.accountInfo.raw as typeof mockInstallationResponse;
-      expect(raw.events).toContain("push");
+      expect(result.accountInfo.events).toContain("push");
+      expect(result.accountInfo.events).toContain("pull_request");
+      // raw is empty — display data (account login, avatar) is resolved live
+      expect(result.accountInfo.raw).toEqual({});
     }
   });
 
   it("returns connected-no-token even with setup_action=install", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve(mockInstallationResponse),
-    });
-
     const result = await github.oauth.processCallback(testConfig, {
       installation_id: "12345",
       setup_action: "install",

@@ -3,7 +3,11 @@ import { syncSchema } from "../../sync.js";
 
 // ── Raw OAuth Response Shape ──
 
-/** Raw shape from Vercel POST /v2/oauth/access_token (minus access_token secret) */
+/**
+ * Convention: raw = non-secret fields from the token exchange response.
+ * Display data (team slug, username) is resolved live in
+ * connections.vercel.list via GET /v2/teams/{id} or GET /v2/user.
+ */
 export const vercelOAuthRawSchema = z.object({
   token_type: z.string(),
   installation_id: z.string(),
