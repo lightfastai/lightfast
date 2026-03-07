@@ -137,12 +137,7 @@ export function getDefaultSyncEvents(provider: ProviderName): readonly string[] 
   return PROVIDERS[provider].defaultSyncEvents;
 }
 
-// ── Env Schemas ───────────────────────────────────────────────────────────────
-
-/** Merged env schemas from all providers — for gateway env.ts server block */
-export const PROVIDER_ENV_SCHEMAS = Object.fromEntries(
-  Object.values(PROVIDERS).flatMap((p) => Object.entries(p.envSchema)),
-);
+// ── Env Presets ───────────────────────────────────────────────────────────────
 
 /** Returns pre-built env presets for all providers — spread into @t3-oss/env-core `extends` arrays.
  *  Called at consumer's createEnv() time, so validation only runs with provider env vars present. */

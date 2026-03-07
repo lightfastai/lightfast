@@ -229,7 +229,6 @@ export { transformWebhookPayload } from "./dispatch.js";
 // ── Registry ─────────────────────────────────────────────────────────────────
 export {
   PROVIDERS,
-  PROVIDER_ENV_SCHEMAS,
   PROVIDER_ENVS,
   EVENT_REGISTRY,
   getProvider,
