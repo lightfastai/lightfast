@@ -150,3 +150,6 @@ worktrees/
 
 # MCP
 .env.mcp
+
+# Claude Code
+.claude/settings.local.json
