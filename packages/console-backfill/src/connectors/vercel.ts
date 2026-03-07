@@ -3,7 +3,7 @@
  *
  * Fetches historical deployments from the Vercel API, adapts them into
  * webhook-compatible shapes for direct ingestion through Relay's service
- * auth endpoint. Produces raw webhook payloads (adapter output), not SourceEvents.
+ * auth endpoint. Produces raw webhook payloads (adapter output), not PostTransformEvents.
  */
 import type { BackfillConnector, BackfillConfig, BackfillPage, BackfillWebhookEvent } from "../types.js";
 import {

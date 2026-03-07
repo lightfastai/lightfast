@@ -7,6 +7,7 @@ import type { LifecycleVariables } from "./middleware/lifecycle.js";
 import { lifecycle } from "./middleware/lifecycle.js";
 import { requestId } from "./middleware/request-id.js";
 import { sentry } from "./middleware/sentry.js";
+import { estimate } from "./routes/estimate.js";
 import { inngestRoute } from "./routes/inngest.js";
 import { trigger } from "./routes/trigger.js";
 
@@ -46,6 +47,7 @@ app.get("/", (c) => c.json({ service: "backfill", status: "ok" }));
 
 // API routes
 app.route("/api/trigger", trigger);
+app.route("/api/estimate", estimate);
 app.route("/api/inngest", inngestRoute);
 
 export default app;

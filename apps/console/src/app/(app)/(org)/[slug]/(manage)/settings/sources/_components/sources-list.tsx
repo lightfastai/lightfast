@@ -10,9 +10,10 @@ import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { showErrorToast } from "~/lib/trpc-errors";
 import { useOAuthPopup } from "~/hooks/use-oauth-popup";
+import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers/display";
+import { ProviderIcon } from "~/lib/provider-icon";
 import {
 	Accordion,
 	AccordionContent,
@@ -21,44 +22,12 @@ import {
 } from "@repo/ui/components/ui/accordion";
 import { formatDistanceToNow } from "date-fns";
 
-const providers = ["github", "vercel", "linear", "sentry"] as const;
-type Provider = (typeof providers)[number];
-
-const providerConfig: Record<
-	Provider,
-	{
-		name: string;
-		icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-		description: string;
-	}
-> = {
-	github: {
-		name: "GitHub",
-		icon: IntegrationLogoIcons.github,
-		description: "Connect your GitHub repositories",
-	},
-	vercel: {
-		name: "Vercel",
-		icon: IntegrationLogoIcons.vercel,
-		description: "Connect your Vercel projects",
-	},
-	linear: {
-		name: "Linear",
-		icon: IntegrationLogoIcons.linear,
-		description: "Connect your Linear workspace",
-	},
-	sentry: {
-		name: "Sentry",
-		icon: IntegrationLogoIcons.sentry,
-		description: "Connect your Sentry projects",
-	},
-};
+type Provider = (typeof PROVIDER_SLUGS)[number];
 
 function SourceItem({ provider }: { provider: Provider }) {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
-	const config = providerConfig[provider];
-	const Icon = config.icon;
+	const display = PROVIDER_DISPLAY[provider];
 
 	const { data: integrations } = useSuspenseQuery({
 		...trpc.connections.list.queryOptions(),
@@ -79,13 +48,13 @@ function SourceItem({ provider }: { provider: Provider }) {
 	const disconnectMutation = useMutation(
 		trpc.connections.disconnect.mutationOptions({
 			onSuccess: () => {
-				toast.success(`${config.name} disconnected`);
+				toast.success(`${display.displayName} disconnected`);
 				void queryClient.invalidateQueries({
 					queryKey: trpc.connections.list.queryOptions().queryKey,
 				});
 			},
 			onError: (error) => {
-				showErrorToast(error, `Failed to disconnect ${config.name}`);
+				showErrorToast(error, `Failed to disconnect ${display.displayName}`);
 			},
 		}),
 	);
@@ -94,7 +63,7 @@ function SourceItem({ provider }: { provider: Provider }) {
 		if (
 			connection &&
 			window.confirm(
-				`Disconnect ${config.name}? This will remove access to all resources connected through this integration.`,
+				`Disconnect ${display.displayName}? This will remove access to all resources connected through this integration.`,
 			)
 		) {
 			disconnectMutation.mutate({ integrationId: connection.id });
@@ -105,8 +74,8 @@ function SourceItem({ provider }: { provider: Provider }) {
 		<AccordionItem value={provider}>
 			<AccordionTrigger className="px-4 hover:no-underline">
 				<div className="flex items-center gap-3 flex-1">
-					<Icon className="h-5 w-5 shrink-0" />
-					<span className="font-medium">{config.name}</span>
+					<ProviderIcon icon={display.icon} className="h-5 w-5 shrink-0" />
+					<span className="font-medium">{display.displayName}</span>
 					{connection ? (
 						<Badge variant="secondary" className="text-xs">
 							Connected
@@ -150,11 +119,11 @@ function SourceItem({ provider }: { provider: Provider }) {
 				) : (
 					<div className="flex flex-col items-center py-6 text-center gap-4">
 						<p className="text-sm text-muted-foreground">
-							{config.description}
+							{display.description}
 						</p>
 						<Button onClick={handleConnect} variant="outline">
-							<Icon className="h-4 w-4 mr-2" />
-							Connect {config.name}
+							<ProviderIcon icon={display.icon} className="h-4 w-4 mr-2" />
+							Connect {display.displayName}
 						</Button>
 					</div>
 				)}
@@ -166,7 +135,7 @@ function SourceItem({ provider }: { provider: Provider }) {
 export function SourcesList() {
 	return (
 		<Accordion type="multiple" className="w-full rounded-lg border">
-			{providers.map((provider) => (
+			{PROVIDER_SLUGS.map((provider) => (
 				<SourceItem key={provider} provider={provider} />
 			))}
 		</Accordion>

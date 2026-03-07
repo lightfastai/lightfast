@@ -10,7 +10,7 @@
  */
 
 import { db } from "@db/console";
-import { workspaceIntegrations } from "@db/console/schema";
+import { workspaceIntegrations, gwInstallations, orgWorkspaces } from "@db/console/schema";
 import type { InsertWorkspaceIntegration } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
 import { eq, and } from "@vendor/db";
@@ -21,28 +21,24 @@ interface SeedOptions {
 }
 
 interface DemoSource {
-  sourceConfig: InsertWorkspaceIntegration["sourceConfig"];
+  providerConfig: InsertWorkspaceIntegration["providerConfig"];
   providerResourceId: string;
   documentCount: number;
+  /** Stable externalId used to find/create the gwInstallation for this provider */
+  gwExternalId: string;
 }
 
 /**
  * Demo source definitions for all 4 providers.
- * Each entry seeds a workspaceIntegration.
+ * Each entry seeds a gwInstallation + workspaceIntegration.
  */
 const DEMO_SOURCES: DemoSource[] = [
   {
-    sourceConfig: {
+    providerConfig: {
       version: 1,
       sourceType: "github",
       type: "repository",
-      installationId: "12345678",
       repoId: "901234567",
-      repoName: "lightfast",
-      repoFullName: "lightfastai/lightfast",
-      defaultBranch: "main",
-      isPrivate: true,
-      isArchived: false,
       sync: {
         branches: ["main"],
         paths: ["**/*"],
@@ -52,16 +48,15 @@ const DEMO_SOURCES: DemoSource[] = [
     },
     providerResourceId: "901234567",
     documentCount: 0,
+    gwExternalId: "12345678",
   },
   {
-    sourceConfig: {
+    providerConfig: {
       version: 1,
       sourceType: "vercel",
       type: "project",
       projectId: "prj_lightfast_console",
-      projectName: "lightfast-console",
       teamId: "team_lightfastai",
-      teamSlug: "lightfastai",
       configurationId: "icfg_demo_001",
       sync: {
         events: ["deployment.created", "deployment.succeeded", "deployment.ready", "deployment.error", "deployment.canceled", "deployment.check-rerequested"],
@@ -70,13 +65,13 @@ const DEMO_SOURCES: DemoSource[] = [
     },
     providerResourceId: "prj_lightfast_console",
     documentCount: 7,
+    gwExternalId: "demo-vercel-icfg-001",
   },
   {
-    sourceConfig: {
+    providerConfig: {
       version: 1,
       sourceType: "sentry",
       type: "project",
-      projectSlug: "lightfast-console",
       projectId: "4508288486826115",
       sync: {
         events: ["issue", "error", "event_alert", "metric_alert"],
@@ -85,15 +80,14 @@ const DEMO_SOURCES: DemoSource[] = [
     },
     providerResourceId: "4508288486826115",
     documentCount: 5,
+    gwExternalId: "demo-sentry-001",
   },
   {
-    sourceConfig: {
+    providerConfig: {
       version: 1,
       sourceType: "linear",
       type: "team",
       teamId: "team_lightfast_eng",
-      teamKey: "LIGHT",
-      teamName: "Lightfast",
       sync: {
         events: ["Issue", "Comment", "Project", "Cycle", "ProjectUpdate"],
         autoSync: true,
@@ -101,6 +95,7 @@ const DEMO_SOURCES: DemoSource[] = [
     },
     providerResourceId: "team_lightfast_eng",
     documentCount: 13,
+    gwExternalId: "demo-linear-001",
   },
 ];
 
@@ -108,7 +103,55 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
   console.log(`\nSeeding integrations for workspace: ${workspaceId}`);
   console.log(`  User: ${userId}\n`);
 
+  // Look up the workspace to get clerkOrgId (needed for gwInstallations.orgId)
+  const workspace = await db.query.orgWorkspaces.findFirst({
+    where: eq(orgWorkspaces.id, workspaceId),
+    columns: { clerkOrgId: true },
+  });
+
+  if (!workspace) {
+    console.error(`Error: Workspace not found: ${workspaceId}`);
+    process.exit(1);
+  }
+
+  const orgId = workspace.clerkOrgId;
+
   for (const source of DEMO_SOURCES) {
+    const provider = source.providerConfig.sourceType;
+
+    // Find or create gwInstallation for this provider
+    let installation = await db.query.gwInstallations.findFirst({
+      where: and(
+        eq(gwInstallations.provider, provider),
+        eq(gwInstallations.externalId, source.gwExternalId),
+        eq(gwInstallations.orgId, orgId),
+      ),
+      columns: { id: true },
+    });
+
+    if (!installation) {
+      const [created] = await db
+        .insert(gwInstallations)
+        .values({
+          id: `gw-${provider}-${nanoid(8)}`,
+          provider,
+          externalId: source.gwExternalId,
+          connectedBy: userId,
+          orgId,
+          status: "active",
+        })
+        .returning({ id: gwInstallations.id });
+      installation = created;
+      console.log(`  [created] ${provider} gwInstallation`);
+    } else {
+      console.log(`  [skip] ${provider} gwInstallation already exists`);
+    }
+
+    if (!installation) {
+      console.error(`  [err] Failed to create gwInstallation for ${provider}`);
+      continue;
+    }
+
     // Check if workspace integration already exists for this provider resource
     const existingIntegration = await db
       .select({ id: workspaceIntegrations.id })
@@ -121,22 +164,23 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       );
 
     if (existingIntegration.length > 0) {
-      console.log(`  [skip] ${source.sourceConfig.sourceType} workspace integration already exists`);
+      console.log(`  [skip] ${provider} workspace integration already exists`);
       continue;
     }
 
     await db.insert(workspaceIntegrations).values({
-      id: `wi-${source.sourceConfig.sourceType}-${nanoid(8)}`,
+      id: `wi-${provider}-${nanoid(8)}`,
       workspaceId,
+      installationId: installation.id,
       connectedBy: userId,
-      provider: source.sourceConfig.sourceType,
-      sourceConfig: source.sourceConfig,
+      provider,
+      providerConfig: source.providerConfig,
       providerResourceId: source.providerResourceId,
       isActive: true,
       lastSyncStatus: "success",
       documentCount: source.documentCount,
     });
-    console.log(`  [created] ${source.sourceConfig.sourceType} workspace integration`);
+    console.log(`  [created] ${provider} workspace integration`);
   }
 
   console.log("\nDone! All integrations seeded.");

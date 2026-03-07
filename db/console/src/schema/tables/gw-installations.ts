@@ -1,8 +1,8 @@
 import { sql } from "drizzle-orm";
 import { pgTable, varchar, timestamp, text, index, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
-import type { ClerkUserId } from "@repo/console-validation";
-import type { ProviderAccountInfo } from "@repo/gateway-types";
+import type { ClerkUserId, GwInstallationBackfillConfig } from "@repo/console-validation";
+import type { ProviderAccountInfo, SourceType } from "@repo/console-providers";
 
 export const gwInstallations = pgTable(
   "lightfast_gw_installations",
@@ -12,9 +12,8 @@ export const gwInstallations = pgTable(
       .primaryKey()
       .$defaultFn(() => nanoid()),
 
-    provider: varchar("provider", { length: 50 }).notNull(),
+    provider: varchar("provider", { length: 50 }).notNull().$type<SourceType>(),
     externalId: varchar("external_id", { length: 191 }).notNull(),
-    accountLogin: varchar("account_login", { length: 191 }),
     connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
     orgId: varchar("org_id", { length: 191 }).notNull(),
 
@@ -23,12 +22,24 @@ export const gwInstallations = pgTable(
     webhookSecret: text("webhook_secret"),
     metadata: jsonb("metadata"),
 
-    // Strongly-typed provider account info (discriminated union by sourceType)
-    //
-    // Every field is required unless there is a genuine reason it may not exist
-    // (e.g. Vercel personal accounts have no team). No "unknown" defaults —
-    // if data isn't available, the provider must fetch it or use "".
+    /**
+     * Provider-specific installation metadata (JSONB) — discriminated union by sourceType.
+     *
+     * Schema: providerAccountInfoSchema from @repo/console-providers
+     *
+     * DESIGN INVARIANT:
+     * - `raw` = non-secret fields from the token exchange / OAuth response only
+     * - NEVER store display names (account login, org name, avatar, slug) here
+     * - Display data is resolved live via provider APIs in connections.*.list/get
+     * - This column stores identity + operational data, not presentation data
+     *
+     * NEVER add resource-specific data (repos[], projects[], teams[]) — those
+     * belong in providerConfig on workspace_integrations, one row per resource.
+     */
     providerAccountInfo: jsonb("provider_account_info").$type<ProviderAccountInfo>(),
+
+    /** Optional backfill configuration for this installation. */
+    backfillConfig: jsonb("backfill_config").$type<GwInstallationBackfillConfig>(),
 
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })

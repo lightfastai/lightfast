@@ -19,7 +19,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
@@ -36,6 +36,6 @@
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
     "@upstash/qstash": "^2.8.1",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   }
 }

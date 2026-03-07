@@ -58,8 +58,8 @@ export * from "./schemas/organization";
 export * from "./schemas/store";
 export * from "./schemas/job";
 export * from "./schemas/sources";
+export * from "./schemas/gateway";
 export * from "./schemas/source-metadata";
-export * from "./schemas/source-event";
 export * from "./schemas/workflow-io";
 export * from "./schemas/ingestion";
 export * from "./schemas/metrics";
@@ -68,9 +68,67 @@ export * from "./schemas/entities";
 export * from "./schemas/org-api-key";
 export * from "./schemas/classification";
 
+// API schemas (re-exported from api submodule for root import convenience)
+export {
+  V1SearchRequestSchema,
+  V1SearchResponseSchema,
+} from "./schemas/api/v1/search";
+export type {
+  RerankMode,
+  V1SearchFilters,
+  V1SearchRequest,
+  V1SearchResult,
+  V1SearchContext,
+  V1SearchLatency,
+  V1SearchMeta,
+  V1SearchResponse,
+} from "./schemas/api/v1/search";
+
+export {
+  V1ContentsRequestSchema,
+  V1ContentsResponseSchema,
+} from "./schemas/api/v1/contents";
+export type {
+  V1ContentsRequest,
+  V1ContentItem,
+  V1ContentsResponse,
+} from "./schemas/api/v1/contents";
+
+export {
+  V1FindSimilarRequestSchema,
+  V1FindSimilarResponseSchema,
+} from "./schemas/api/v1/findsimilar";
+export type {
+  V1FindSimilarRequest,
+  V1FindSimilarResult,
+  V1FindSimilarSource,
+  V1FindSimilarResponse,
+} from "./schemas/api/v1/findsimilar";
+
+export {
+  V1GraphRequestSchema,
+  V1RelatedRequestSchema,
+  GraphResponseSchema,
+  RelatedResponseSchema,
+} from "./schemas/api/v1/graph";
+export type {
+  V1GraphRequest,
+  V1RelatedRequest,
+  GraphNode,
+  GraphEdge,
+  GraphResponse,
+  RelatedEvent,
+  RelatedResponse,
+} from "./schemas/api/v1/graph";
+
+// Workspace settings (JSON column schema — distinct from CRUD workspace schemas above)
+export * from "./schemas/workspace-settings";
+
 // Forms (direct to leaf modules)
 export * from "./forms/workspace-form";
 export * from "./forms/team-form";
+export * from "./forms/auth-form";
+export * from "./forms/early-access-form";
 
 // Utils (direct to leaf module)
 export * from "./utils/workspace-names";

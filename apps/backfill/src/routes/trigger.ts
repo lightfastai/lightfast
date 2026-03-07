@@ -1,24 +1,17 @@
+import { timingSafeStringEqual } from "@repo/console-providers";
+import { backfillTriggerPayload } from "@repo/console-validation";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { getEnv } from "../env.js";
+import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { timingSafeStringEqual } from "../lib/crypto.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
-
-const triggerSchema = z.object({
-  installationId: z.string().min(1),
-  provider: z.string().min(1),
-  orgId: z.string().min(1),
-  depth: z.union([z.literal(7), z.literal(30), z.literal(90)]).optional(),
-  entityTypes: z.array(z.string()).optional(),
-});
 
 const cancelSchema = z.object({
   installationId: z.string().min(1),
 });
 
-async function isValidApiKey(key: string | undefined, expected: string): Promise<boolean> {
+function isValidApiKey(key: string | undefined, expected: string): boolean {
   if (!key) { return false; }
   return timingSafeStringEqual(key, expected);
 }
@@ -32,8 +25,8 @@ const trigger = new Hono<{ Variables: LifecycleVariables }>();
  * Validates X-API-Key and sends an Inngest event to start the backfill.
  */
 trigger.post("/", async (c) => {
-  const { GATEWAY_API_KEY } = getEnv(c);
-  if (!(await isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
+  const { GATEWAY_API_KEY } = env;
+  if (!(isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
@@ -44,10 +37,10 @@ trigger.post("/", async (c) => {
     return c.json({ error: "invalid_json" }, 400);
   }
 
-  const parsed = triggerSchema.safeParse(raw);
+  const parsed = backfillTriggerPayload.safeParse(raw);
   if (!parsed.success) {
     return c.json(
-      { error: "validation_error", details: parsed.error.flatten() },
+      { error: "validation_error", details: parsed.error.issues },
       400,
     );
   }
@@ -60,8 +53,9 @@ trigger.post("/", async (c) => {
         installationId: body.installationId,
         provider: body.provider,
         orgId: body.orgId,
-        depth: body.depth ?? 30,
+        depth: body.depth,
         entityTypes: body.entityTypes,
+        holdForReplay: body.holdForReplay,
         correlationId: c.get("correlationId"),
       },
     });
@@ -83,8 +77,8 @@ trigger.post("/", async (c) => {
  * Cancels any running backfill for this installation.
  */
 trigger.post("/cancel", async (c) => {
-  const { GATEWAY_API_KEY } = getEnv(c);
-  if (!(await isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
+  const { GATEWAY_API_KEY } = env;
+  if (!(isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
@@ -98,7 +92,7 @@ trigger.post("/cancel", async (c) => {
   const parsed = cancelSchema.safeParse(raw);
   if (!parsed.success) {
     return c.json(
-      { error: "validation_error", details: parsed.error.flatten() },
+      { error: "validation_error", details: parsed.error.issues },
       400,
     );
   }

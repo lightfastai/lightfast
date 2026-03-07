@@ -11,25 +11,22 @@ export const braintrustEnv = createEnv({
 		BRAINTRUST_API_KEY: z
 			.string()
 			.min(1)
-			.describe("Braintrust API key for authentication"),
+			.meta({ description: "Braintrust API key for authentication" }),
 		BRAINTRUST_PROJECT_NAME: z
 			.string()
 			.min(1)
-			.describe("Braintrust project name for organizing experiments"),
+			.meta({ description: "Braintrust project name for organizing experiments" }),
 
 		// OpenTelemetry Configuration
 		OTEL_EXPORTER_OTLP_ENDPOINT: z
-			.string()
 			.url()
 			.default("https://api.braintrust.dev/otel")
-			.describe("OpenTelemetry endpoint for exporting traces"),
+			.meta({ description: "OpenTelemetry endpoint for exporting traces" }),
 		OTEL_EXPORTER_OTLP_HEADERS: z
 			.string()
 			.min(1)
 			.optional()
-			.describe(
-				"Optional headers for OTLP exporter (e.g., authentication headers)",
-			),
+			.meta({ description: "Optional headers for OTLP exporter (e.g., authentication headers)" }),
 	},
 
 	runtimeEnv: {

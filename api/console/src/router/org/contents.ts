@@ -11,8 +11,8 @@ import {
 	ContentsRequestSchema,
 	ContentsResponseSchema
 	
-} from "@repo/console-types/api";
-import type {ContentsResponse} from "@repo/console-types/api";
+} from "@repo/console-validation/api";
+import type {ContentsResponse} from "@repo/console-validation/api";
 import { db } from "@db/console/client";
 import { workspaceKnowledgeDocuments, orgWorkspaces } from "@db/console/schema";
 import { inArray, eq, and } from "drizzle-orm";

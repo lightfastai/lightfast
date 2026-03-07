@@ -1,24 +1,58 @@
 import { describe, it, expect } from "vitest";
-import { getProvider, GitHubProvider, VercelProvider, LinearProvider, SentryProvider } from "./index.js";
+import { PROVIDERS, getProvider } from "@repo/console-providers";
+
+describe("PROVIDERS registry", () => {
+  it("has github provider", () => {
+    expect(PROVIDERS.github).toBeDefined();
+    expect(PROVIDERS.github.name).toBe("github");
+  });
+
+  it("has vercel provider", () => {
+    expect(PROVIDERS.vercel).toBeDefined();
+    expect(PROVIDERS.vercel.name).toBe("vercel");
+  });
+
+  it("has linear provider", () => {
+    expect(PROVIDERS.linear).toBeDefined();
+    expect(PROVIDERS.linear.name).toBe("linear");
+  });
+
+  it("has sentry provider", () => {
+    expect(PROVIDERS.sentry).toBeDefined();
+    expect(PROVIDERS.sentry.name).toBe("sentry");
+  });
+
+  it("each provider has a webhook definition", () => {
+    for (const [, provider] of Object.entries(PROVIDERS)) {
+      expect(provider.webhook).toBeDefined();
+      expect(typeof provider.webhook.verifySignature).toBe("function");
+      expect(typeof provider.webhook.parsePayload).toBe("function");
+      expect(typeof provider.webhook.extractDeliveryId).toBe("function");
+      expect(typeof provider.webhook.extractEventType).toBe("function");
+      expect(typeof provider.webhook.extractResourceId).toBe("function");
+      expect(typeof provider.webhook.extractSecret).toBe("function");
+    }
+  });
+});
 
 describe("getProvider", () => {
-  it("returns GitHubProvider for 'github'", () => {
-    expect(getProvider("github")).toBeInstanceOf(GitHubProvider);
+  it("returns github provider", () => {
+    expect(getProvider("github")).toBe(PROVIDERS.github);
   });
 
-  it("returns VercelProvider for 'vercel'", () => {
-    expect(getProvider("vercel")).toBeInstanceOf(VercelProvider);
+  it("returns vercel provider", () => {
+    expect(getProvider("vercel")).toBe(PROVIDERS.vercel);
   });
 
-  it("returns LinearProvider for 'linear'", () => {
-    expect(getProvider("linear")).toBeInstanceOf(LinearProvider);
+  it("returns linear provider", () => {
+    expect(getProvider("linear")).toBe(PROVIDERS.linear);
   });
 
-  it("returns SentryProvider for 'sentry'", () => {
-    expect(getProvider("sentry")).toBeInstanceOf(SentryProvider);
+  it("returns sentry provider", () => {
+    expect(getProvider("sentry")).toBe(PROVIDERS.sentry);
   });
 
-  it("throws for unknown provider", () => {
-    expect(() => getProvider("unknown")).toThrow("Unknown provider: unknown");
+  it("returns undefined for unknown provider", () => {
+    expect(getProvider("unknown")).toBeUndefined();
   });
 });

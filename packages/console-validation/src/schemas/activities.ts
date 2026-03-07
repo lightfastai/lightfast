@@ -155,7 +155,7 @@ export const integrationConnectedMetadataSchema = z
     repoFullName: z.string(),
     repoId: z.string(),
     isPrivate: z.boolean(),
-    syncConfig: z.record(z.unknown()),
+    syncConfig: z.record(z.string(), z.unknown()),
   })
   .passthrough();
 
@@ -185,12 +185,16 @@ export const integrationConfigUpdatedMetadataSchema = z
 
 /**
  * Metadata for integration.disconnected action
+ *
+ * Disconnection can happen at repo level (githubRepoId) or
+ * installation level (githubInstallationId), so both are optional.
  */
 export const integrationDisconnectedMetadataSchema = z
   .object({
     provider: z.string(),
     reason: z.string(),
-    githubInstallationId: z.string(),
+    githubRepoId: z.string().optional(),
+    githubInstallationId: z.string().optional(),
   })
   .passthrough();
 
@@ -207,11 +211,13 @@ export const integrationDeletedMetadataSchema = z
 
 /**
  * Metadata for integration.metadata_updated action
+ *
+ * After stripping mutable display fields from providerConfig,
+ * this action only records that a touch/timestamp update occurred.
  */
 export const integrationMetadataUpdatedMetadataSchema = z
   .object({
     provider: z.string(),
-    updates: z.record(z.unknown()),
     githubRepoId: z.string(),
   })
   .passthrough();
@@ -609,7 +615,7 @@ export const insertActivitySchema = z.object({
   actorType: actorTypeSchema,
   actorUserId: z.string().optional(),
   actorEmail: z.string().email().optional(),
-  actorIp: z.string().ip({ version: "v4" }).or(z.string().ip({ version: "v6" })).optional(),
+  actorIp: z.ipv4().or(z.ipv6()).optional(),
 
   // Activity classification
   category: activityCategorySchema,

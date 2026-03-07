@@ -296,6 +296,7 @@ export function ChatInterface({
 				img.src = "";
 			};
 		}
+		return undefined;
 	}, [isAuthenticated, remainingMessages]);
 
 	// Model selection with persistence

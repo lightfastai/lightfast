@@ -1,6 +1,6 @@
+import { timingSafeStringEqual } from "@repo/console-providers";
 import type { Context, MiddlewareHandler } from "hono";
-import { getEnv } from "../env.js";
-import { sha256Hex, timingSafeHexEqual } from "../lib/crypto.js";
+import { env } from "../env.js";
 
 /**
  * X-API-Key authentication middleware for service-to-service calls.
@@ -12,13 +12,11 @@ export const apiKeyAuth: MiddlewareHandler = async (c: Context, next) => {
     return c.json({ error: "unauthorized" }, 401);
   }
 
-  const { GATEWAY_API_KEY } = getEnv(c);
+  const { GATEWAY_API_KEY } = env;
 
-  const expectedHash = await sha256Hex(GATEWAY_API_KEY);
-  const actualHash = await sha256Hex(apiKey);
-  if (!timingSafeHexEqual(expectedHash, actualHash)) {
+  if (!timingSafeStringEqual(apiKey, GATEWAY_API_KEY)) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
-  await next();
+  return await next();
 };

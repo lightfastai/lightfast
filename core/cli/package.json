@@ -1,43 +1,68 @@
 {
   "name": "@lightfastai/cli",
   "version": "0.1.0",
-  "private": true,
+  "description": "Lightfast CLI - command-line tools for the Lightfast platform",
+  "publishConfig": {
+    "tag": "latest",
+    "access": "public"
+  },
+  "keywords": [
+    "lightfast",
+    "cli",
+    "ai",
+    "memory",
+    "developer-tools"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lightfastai/lightfast.git",
+    "directory": "core/cli"
+  },
+  "homepage": "https://lightfast.ai",
+  "bugs": "https://github.com/lightfastai/lightfast/issues",
+  "license": "MIT",
+  "author": "Lightfast <hello@lightfast.ai>",
   "type": "module",
   "bin": {
-    "lightfast": "./dist/bin.js"
+    "lightfast": "./dist/bin.mjs"
   },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": "./dist/index.mjs"
     }
   },
-  "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsup src/index.ts src/bin.ts --format esm --dts",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsup src/index.ts src/bin.ts --format esm --watch",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
+    "build": "tsup",
+    "clean": "rm -rf dist .cache .turbo node_modules",
+    "dev": "tsup --watch",
+    "lint": "eslint . --fix",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/console-chunking": "workspace:*",
-    "@repo/console-config": "workspace:*",
-    "@repo/console-embed": "workspace:*",
-    "chalk": "^5.4.1",
+    "@inquirer/select": "^4.0.0",
+    "@t3-oss/env-core": "catalog:",
     "commander": "^13.1.0",
-    "ora": "^8.1.1"
+    "eventsource-parser": "^3.0.0",
+    "open": "^10.1.0",
+    "ora": "^8.1.1",
+    "picocolors": "^1.1.0",
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
-    "prettier": "catalog:",
     "tsup": "^8.5.0",
     "typescript": "catalog:"
   },
-  "prettier": "@repo/prettier-config"
+  "engines": {
+    "node": ">=22"
+  }
 }

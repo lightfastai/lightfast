@@ -19,7 +19,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
@@ -28,7 +28,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "catalog:",
-    "@types/react": "19.2.2",
+    "@types/react": "^19.2.14",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "tsup": "^8.5.0",
@@ -37,7 +37,8 @@
   "prettier": "@repo/prettier-config",
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
+    "@upstash/realtime": "^1.0.2",
     "@upstash/redis": "^1.35.1",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   }
 }

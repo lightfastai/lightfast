@@ -16,7 +16,7 @@
 		"detect": "tsx src/cli.ts",
 		"dev": "tsup --watch",
 		"format": "prettier --check . --ignore-path ../../.gitignore",
-		"lint": "eslint",
+		"lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",

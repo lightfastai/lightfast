@@ -3,41 +3,22 @@
  *
  * Vendor abstraction for Upstash Workflow SDK
  *
- * Provides a standalone, independent wrapper around @upstash/workflow
- * for durable, reliable serverless workflow orchestration.
+ * Re-exports SDK primitives with env wiring for durable,
+ * reliable serverless workflow orchestration.
  *
  * @example
  * ```typescript
- * // Trigger a workflow
- * import { WorkflowClient } from "@vendor/upstash-workflow";
+ * import { workflowClient } from "@vendor/upstash-workflow";
  *
- * const client = new WorkflowClient();
- * const result = await client.trigger({
+ * await workflowClient.trigger({
  *   url: "https://example.com/api/workflow",
- *   body: { foo: "bar" }
- * });
- * ```
- *
- * @example
- * ```typescript
- * // Create a workflow endpoint
- * import { serve } from "@vendor/upstash-workflow/nextjs";
- *
- * export const { POST } = serve(async (context) => {
- *   const result = await context.run("step-1", async () => {
- *     return processData();
- *   });
+ *   body: JSON.stringify({ foo: "bar" }),
+ *   headers: { "Content-Type": "application/json" },
  * });
  * ```
  */
 
-export { WorkflowClient, getWorkflowClient } from "./client";
+export { workflowClient } from "./client";
 export { serve } from "./nextjs";
-export type {
-  WorkflowConfig,
-  WorkflowContext,
-  WorkflowHandler,
-  WorkflowStep,
-  WorkflowTriggerOptions,
-  WorkflowTriggerResponse,
-} from "./types";
+export type { Client } from "@upstash/workflow";
+export type { WorkflowContext } from "@upstash/workflow";

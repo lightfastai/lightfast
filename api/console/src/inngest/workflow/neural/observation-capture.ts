@@ -1,7 +1,7 @@
 /**
  * Neural observation capture workflow
  *
- * Processes SourceEvents from webhooks into observations with embeddings.
+ * Processes PostTransformEvents from webhooks into observations with embeddings.
  * This is the write path for the neural memory system.
  *
  * Workflow steps:
@@ -28,7 +28,7 @@ import { log } from "@vendor/observability/log";
 import { NonRetriableError } from "inngest";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
-import type { SourceEvent } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-providers";
 import { scoreSignificance, SIGNIFICANCE_THRESHOLD } from "./scoring";
 import {
   buildClassificationPrompt,
@@ -42,12 +42,13 @@ import {
   generateObject,
   buildNeuralTelemetry,
 } from "./ai-helpers";
-import type { ExtractedEntity } from "@repo/console-types";
+import type { ExtractedEntity } from "@repo/console-validation";
 import { assignToCluster } from "./cluster-assignment";
 import { resolveActor } from "./actor-resolution";
 import { detectAndCreateRelationships } from "./relationship-detection";
 import { nanoid } from "nanoid";
-import type { SourceActor, SourceReference } from "@repo/console-types";
+import type { PostTransformActor, PostTransformReference } from "@repo/console-providers";
+import { getBaseEventType, deriveObservationType } from "@repo/console-providers";
 import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../../lib/jobs";
 import { createNeuralOnFailureHandler } from "./on-failure-handler";
 import type {
@@ -99,36 +100,17 @@ interface MultiViewEmbeddingResult {
 }
 
 /**
- * Map source event types to observation types
- */
-function deriveObservationType(sourceEvent: SourceEvent): string {
-  // For GitHub events, use sourceType directly
-  // e.g., "push", "pull_request_merged", "issue_opened"
-  if (sourceEvent.source === "github") {
-    return sourceEvent.sourceType;
-  }
-
-  // For Vercel events, simplify the type
-  // e.g., "deployment.succeeded" → "deployment_succeeded"
-  if (sourceEvent.source === "vercel") {
-    return sourceEvent.sourceType.replace(".", "_");
-  }
-
-  return sourceEvent.sourceType;
-}
-
-/**
  * Extract topics from source event
  * Simple keyword extraction for MVP
  */
-function extractTopics(sourceEvent: SourceEvent): string[] {
+function extractTopics(sourceEvent: PostTransformEvent): string[] {
   const topics: string[] = [];
 
   // Add source as topic
   topics.push(sourceEvent.source);
 
   // Add observation type
-  topics.push(deriveObservationType(sourceEvent));
+  topics.push(deriveObservationType(sourceEvent.source, sourceEvent.sourceType));
 
   // Extract from labels
   for (const ref of sourceEvent.references) {
@@ -150,85 +132,13 @@ function extractTopics(sourceEvent: SourceEvent): string[] {
 }
 
 /**
- * Map detailed sourceType to base event type for config comparison.
- *
- * Internal format uses dot notation: "pull-request.opened", "issue.closed"
- * Config format uses underscores: "pull_request", "issues"
- *
- * @example
- * getBaseEventType("github", "pull-request.opened") // "pull_request"
- * getBaseEventType("github", "issue.closed") // "issues"
- * getBaseEventType("github", "push") // "push"
- * getBaseEventType("vercel", "deployment.created") // "deployment.created"
- */
-function getBaseEventType(source: string, sourceType: string): string {
-  // Defensive: Strip source prefix if present (transformers should not include it)
-  const prefix = `${source}:`;
-  const cleanType = sourceType.startsWith(prefix)
-    ? sourceType.slice(prefix.length)
-    : sourceType;
-
-  if (source === "github") {
-    // Internal format uses dot notation: "pull-request.opened"
-    const dotIndex = cleanType.indexOf(".");
-    if (dotIndex > 0) {
-      const base = cleanType.substring(0, dotIndex);
-      // Convert hyphens to underscores for config format
-      const configBase = base.replace(/-/g, "_");
-      // Special case: issue → issues (config uses plural)
-      return configBase === "issue" ? "issues" : configBase;
-    }
-    // Handle simple events like "push"
-    return cleanType;
-  }
-
-  if (source === "vercel") {
-    // Vercel events are already in category format (e.g., "deployment.created")
-    return cleanType;
-  }
-
-  if (source === "sentry") {
-    // Normalize Sentry events to category level
-    // issue.created, issue.resolved, issue.assigned, issue.ignored → issue
-    // error → error (already category level)
-    // event-alert → event_alert (convert hyphens to underscores for config)
-    // metric-alert → metric_alert (convert hyphens to underscores for config)
-    if (cleanType.startsWith("issue.")) {
-      return "issue";
-    }
-    // Convert hyphens to underscores to match config format
-    return cleanType.replace(/-/g, "_"); // event-alert → event_alert
-  }
-
-  if (source === "linear") {
-    // Normalize Linear events to category level
-    // After transformer update, format is: issue.created, comment.created, etc.
-    // Need to extract before dot and capitalize: issue.created → Issue
-    // Config format: Issue, Comment, Project, Cycle, ProjectUpdate
-    const dotIndex = cleanType.indexOf(".");
-    if (dotIndex > 0) {
-      const base = cleanType.substring(0, dotIndex);
-      // Capitalize first letter and handle camelCase (project-update → ProjectUpdate)
-      return base
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join("");
-    }
-    // Fallback for category-level events already (shouldn't happen with new format)
-    return cleanType;
-  }
-
-  return cleanType;
-}
-
-/**
- * Check if an event type is allowed for a source based on sourceConfig.sync.events
+ * Check if an event type is allowed for a source based on providerConfig.sync.events
  */
 function isEventAllowed(
-  sourceConfig: { sync?: { events?: string[] } } | null | undefined,
+  providerConfig: { sync?: { events?: string[] } } | null | undefined,
   baseEventType: string,
 ): boolean {
-  const events = sourceConfig?.sync?.events;
+  const events = providerConfig?.sync?.events;
   if (!events || events.length === 0) {
     return false;
   }
@@ -283,7 +193,7 @@ async function reconcileVercelActorsForCommit(
   workspaceId: string,
   commitSha: string,
   numericActorId: string,
-  sourceActor: SourceActor,
+  sourceActor: PostTransformActor,
 ): Promise<string[]> {
   if (!commitSha || !numericActorId) return [];
 
@@ -312,14 +222,14 @@ async function reconcileVercelActorsForCommit(
     const updatedIds: string[] = [];
 
     for (const obs of vercelObservations) {
-      const currentActor = obs.actor as SourceActor | null;
+      const currentActor = obs.actor as PostTransformActor | null;
 
       // Skip if no actor or already has numeric ID
       if (!currentActor?.id) continue;
       if (/^\d+$/.test(currentActor.id)) continue;
 
       // Update the actor with numeric ID and enriched profile data
-      const updatedActor: SourceActor = {
+      const updatedActor: PostTransformActor = {
         ...currentActor,
         id: numericActorId,
         // Preserve existing name, or use the GitHub actor's name (may be null at runtime despite type)
@@ -369,7 +279,7 @@ async function reconcileVercelActorsForCommit(
 /**
  * Neural observation capture workflow
  *
- * Processes SourceEvents from webhooks into observations with embeddings.
+ * Processes PostTransformEvents from webhooks into observations with embeddings.
  */
 export const observationCapture = inngest.createFunction(
   {
@@ -570,16 +480,16 @@ export const observationCapture = inngest.createFunction(
 
       // Check if event is allowed
       const baseEventType = getBaseEventType(sourceEvent.source, sourceEvent.sourceType);
-      const sourceConfig = integration.sourceConfig as { sync?: { events?: string[] } };
-      const allowed = isEventAllowed(sourceConfig, baseEventType);
+      const providerConfig = integration.providerConfig as { sync?: { events?: string[] } };
+      const allowed = isEventAllowed(providerConfig, baseEventType);
 
       if (!allowed) {
-        log.info("Event filtered by source config", {
+        log.info("Event filtered by provider config", {
           workspaceId,
           resourceId,
           sourceType: sourceEvent.sourceType,
           baseEventType,
-          configuredEvents: sourceConfig.sync?.events,
+          configuredEvents: providerConfig.sync?.events,
         });
       }
 
@@ -899,7 +809,7 @@ export const observationCapture = inngest.createFunction(
       // Base metadata shared across all views
       const baseMetadata = {
         layer: "observations",
-        observationType: deriveObservationType(sourceEvent),
+        observationType: deriveObservationType(sourceEvent.source, sourceEvent.sourceType),
         source: sourceEvent.source,
         sourceType: sourceEvent.sourceType,
         sourceId: sourceEvent.sourceId,
@@ -964,7 +874,7 @@ export const observationCapture = inngest.createFunction(
     // Step 7: Store observation + entities (transactional)
     // Note: Topics come from Step 5 (classify), significance from Step 3
     const { observation, entitiesStored } = await step.run("store-observation", async () => {
-      const observationType = deriveObservationType(sourceEvent);
+      const observationType = deriveObservationType(sourceEvent.source, sourceEvent.sourceType);
 
       // neon-http doesn't support transactions — insert observation first,
       // then batch entity upserts (Inngest step provides retry guarantees)
@@ -1069,7 +979,7 @@ export const observationCapture = inngest.createFunction(
     if (sourceEvent.source === "github" && sourceEvent.sourceType === "push") {
       await step.run("reconcile-vercel-actors", async () => {
         // Extract commit SHAs from the push event references
-        const references = sourceEvent.references as SourceReference[];
+        const references = sourceEvent.references as PostTransformReference[];
         const commitRefs = references.filter((ref) => ref.type === "commit");
 
         if (commitRefs.length === 0 || !resolvedActor.sourceActor?.id) {
@@ -1123,7 +1033,7 @@ export const observationCapture = inngest.createFunction(
                 clerkOrgId, // Propagate for metrics tracking
                 actorId: resolvedActor.actorId,
                 observationId: observation.externalId, // Public nanoid
-                sourceActor: resolvedActor.sourceActor ?? undefined,
+                sourceActor: resolvedActor.sourceActor ?? null,
               },
             },
           ]

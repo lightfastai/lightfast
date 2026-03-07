@@ -13,20 +13,9 @@ import { getInstallationToken } from "../../lib/token-vault";
 import { env } from "../../env";
 import yaml from "yaml";
 import type { VercelProjectsResponse } from "@repo/console-vercel/types";
-import { withRelatedProject } from "@vendor/related-projects";
-
-const isDevelopment =
-	process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
-	process.env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
-
-// NOTE: projectName "lightfast-gateway" must match the Vercel project name.
-// Ensure the Vercel project is renamed from "lightfast-connections" before rollout.
-const gatewayUrl = withRelatedProject({
-	projectName: "lightfast-gateway",
-	defaultHost: isDevelopment
-		? "http://localhost:4110"
-		: "https://gateway.lightfast.ai",
-});
+import { createGatewayClient } from "@repo/gateway-service-clients";
+import { sourceTypeSchema } from "@repo/console-providers";
+import { gwInstallationBackfillConfigSchema } from "@repo/console-validation";
 
 /**
  * Connections Router
@@ -61,29 +50,19 @@ export const connectionsRouter = {
 	getAuthorizeUrl: orgScopedProcedure
 		.input(
 			z.object({
-				provider: z.enum(["github", "vercel", "linear", "sentry"]),
+				provider: sourceTypeSchema,
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			const res = await fetch(
-				`${gatewayUrl}/services/gateway/${input.provider}/authorize`,
-				{
-					headers: {
-						"X-Org-Id": ctx.auth.orgId,
-						"X-User-Id": ctx.auth.userId,
-						"X-API-Key": env.GATEWAY_API_KEY,
-						"X-Request-Source": "console-trpc",
-						"X-Correlation-Id": crypto.randomUUID(),
-					},
-				},
-			);
-			if (!res.ok) {
-				throw new TRPCError({
-					code: "BAD_REQUEST",
-					message: "Failed to get authorize URL",
-				});
-			}
-			return res.json() as Promise<{ url: string; state: string }>;
+			const gw = createGatewayClient({
+				apiKey: env.GATEWAY_API_KEY,
+				requestSource: "console-trpc",
+				correlationId: crypto.randomUUID(),
+			});
+			return gw.getAuthorizeUrl(input.provider, {
+				orgId: ctx.auth.orgId,
+				userId: ctx.auth.userId,
+			});
 		}),
 
 	/**
@@ -95,31 +74,20 @@ export const connectionsRouter = {
 	cliAuthorize: apiKeyProcedure
 		.input(
 			z.object({
-				provider: z.enum(["github", "vercel", "linear", "sentry"]),
+				provider: sourceTypeSchema,
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			const res = await fetch(
-				`${gatewayUrl}/services/gateway/${input.provider}/authorize?redirect_to=inline`,
-				{
-					headers: {
-						"X-Org-Id": ctx.auth.orgId,
-						"X-User-Id": ctx.auth.userId,
-						"X-API-Key": env.GATEWAY_API_KEY,
-						"X-Request-Source": "console-trpc-cli",
-						"X-Correlation-Id": crypto.randomUUID(),
-					},
-				},
-			);
-
-			if (!res.ok) {
-				throw new TRPCError({
-					code: "BAD_REQUEST",
-					message: "Failed to get authorize URL",
-				});
-			}
-
-			return res.json() as Promise<{ url: string; state: string }>;
+			const gw = createGatewayClient({
+				apiKey: env.GATEWAY_API_KEY,
+				requestSource: "console-trpc-cli",
+				correlationId: crypto.randomUUID(),
+			});
+			return gw.getAuthorizeUrl(input.provider, {
+				orgId: ctx.auth.orgId,
+				userId: ctx.auth.userId,
+				redirectTo: "inline",
+			});
 		}),
 
 	/**
@@ -189,6 +157,41 @@ export const connectionsRouter = {
 		}),
 
 	/**
+	 * Update backfill configuration for a gateway installation.
+	 *
+	 * Stores depth + entityTypes on gwInstallations.backfillConfig.
+	 * Used by SourceSettingsForm and as defaults for notifyBackfill().
+	 */
+	updateBackfillConfig: orgScopedProcedure
+		.input(
+			z.object({
+				installationId: z.string().min(1),
+				backfillConfig: gwInstallationBackfillConfigSchema,
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const result = await ctx.db
+				.update(gwInstallations)
+				.set({ backfillConfig: input.backfillConfig })
+				.where(
+					and(
+						eq(gwInstallations.id, input.installationId),
+						eq(gwInstallations.orgId, ctx.auth.orgId),
+					),
+				)
+				.returning({ id: gwInstallations.id });
+
+			if (!result[0]) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Installation not found or access denied",
+				});
+			}
+
+			return { success: true };
+		}),
+
+	/**
 	 * GitHub-specific operations
 	 */
 	github: {
@@ -214,22 +217,41 @@ export const connectionsRouter = {
 				return null;
 			}
 
-			// Read account info from cached providerAccountInfo (populated during
-			// OAuth callback and refreshed by github.validate). No live API calls —
-			// keeps .list fast and resilient to stale/deleted installations.
-			const allInstallations = results
-				.filter((row) => row.providerAccountInfo?.sourceType === "github")
-				.map((row) => {
-					const info = row.providerAccountInfo as Extract<typeof row.providerAccountInfo, { sourceType: "github" }>;
-					const account = info.raw.account;
-					return {
-						id: row.externalId,
-						accountLogin: account.login || row.externalId,
-						accountType: account.type === "User" ? "User" as const : "Organization" as const,
-						avatarUrl: account.avatar_url || "",
-						gwInstallationId: row.id,
-					};
-				});
+			// Resolve display data from GitHub API for each installation.
+			// Uses GitHub App JWT (no stored token needed).
+			// Falls back to externalId on API error.
+			const app = getGitHubApp();
+			const allInstallations = await Promise.all(
+				results
+					.filter((row) => row.providerAccountInfo?.sourceType === "github")
+					.map(async (row) => {
+						let accountLogin = row.externalId;
+						let accountType: "User" | "Organization" = "Organization";
+						let avatarUrl = "";
+
+						try {
+							const installationIdNumber = Number.parseInt(row.externalId, 10);
+							const details = await getAppInstallation(app, installationIdNumber);
+							const account = details.account;
+
+							if (account && "login" in account) {
+								accountLogin = account.login || row.externalId;
+								accountType = "type" in account && account.type === "User" ? "User" : "Organization";
+								avatarUrl = "avatar_url" in account ? (account.avatar_url as string) : "";
+							}
+						} catch (error) {
+							console.warn("[connections.github.list] Failed to fetch installation details, using fallback:", error);
+						}
+
+						return {
+							id: row.externalId,
+							accountLogin,
+							accountType,
+							avatarUrl,
+							gwInstallationId: row.id,
+						};
+					}),
+			);
 
 			const first = results[0];
 			if (!first) return null;
@@ -285,45 +307,21 @@ export const connectionsRouter = {
 				const app = getGitHubApp();
 				const installationIdNumber = Number.parseInt(installation.externalId, 10);
 
-				// Fetch fresh installation details using App JWT
-				const githubInstallation = await getAppInstallation(app, installationIdNumber);
+				// Validate that the installation still exists on GitHub (App JWT auth)
+				await getAppInstallation(app, installationIdNumber);
 
-				const account = githubInstallation.account;
-				if (!account || !("login" in account)) {
-					throw new Error("Installation response missing account data");
-				}
-
+				// Update only lastValidatedAt — display data is resolved live, not cached
+				const existingInfo = installation.providerAccountInfo;
 				const now = new Date().toISOString();
-				const accountType: "User" | "Organization" =
-					"type" in account && account.type === "User" ? "User" : "Organization";
-
-				const refreshedAccountInfo = {
-					version: 1 as const,
-					sourceType: "github" as const,
-					events: githubInstallation.events,
-					installedAt: githubInstallation.created_at,
-					lastValidatedAt: now,
-					raw: {
-						account: {
-							login: "login" in account ? account.login : "",
-							id: account.id,
-							type: accountType,
-							avatar_url: "avatar_url" in account ? account.avatar_url : "",
-						},
-						permissions: githubInstallation.permissions,
-						events: githubInstallation.events,
-						created_at: githubInstallation.created_at,
-					},
-				};
-
-				// Update providerAccountInfo with refreshed data
-				await ctx.db
-					.update(gwInstallations)
-					.set({
-						providerAccountInfo: refreshedAccountInfo,
-						updatedAt: now,
-					})
-					.where(eq(gwInstallations.id, installation.id));
+				if (existingInfo?.sourceType === "github") {
+					await ctx.db
+						.update(gwInstallations)
+						.set({
+							providerAccountInfo: { ...existingInfo, lastValidatedAt: now },
+							updatedAt: now,
+						})
+						.where(eq(gwInstallations.id, installation.id));
+				}
 
 				return { added: 0, removed: 0, total: 1 };
 			} catch (error: unknown) {
@@ -596,11 +594,8 @@ export const connectionsRouter = {
 					),
 				);
 
-			// Fetch live account info from Vercel API for each installation.
-			// Wrapped in try/catch so a single failed token/network call doesn't
-			// crash the entire list — falls back to cached IDs from providerAccountInfo.
-			// TODO: Store team_slug/username in VercelOAuthRaw during callback so
-			// this can become fully cached like github.list (no live API calls).
+			// Resolve display data from Vercel API for each installation.
+			// Uses stored OAuth token. Falls back to raw IDs on error.
 			const installations = await Promise.all(
 				results
 					.filter((inst) => inst.providerAccountInfo?.sourceType === "vercel")
@@ -817,27 +812,54 @@ export const connectionsRouter = {
 					),
 				);
 
-			return result.map((installation) => {
-				const info = installation.providerAccountInfo;
-				const orgName =
-					info?.sourceType === "linear"
-						? info.organization?.name
-						: undefined;
-				const orgUrlKey =
-					info?.sourceType === "linear"
-						? info.organization?.urlKey
-						: undefined;
+			// Resolve display data from Linear GraphQL API for each installation.
+			// Uses stored OAuth token. Falls back to null on API error.
+			return Promise.all(
+				result.map(async (installation) => {
+					let organizationName: string | null = null;
+					let organizationUrlKey: string | null = null;
 
-				return {
-					id: installation.id,
-					orgId: installation.orgId,
-					provider: installation.provider,
-					connectedAt: installation.createdAt,
-					status: installation.status,
-					organizationName: orgName ?? null,
-					organizationUrlKey: orgUrlKey ?? null,
-				};
-			});
+					try {
+						const accessToken = await getInstallationToken(installation.id);
+						const response = await fetch("https://api.linear.app/graphql", {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+								Authorization: `Bearer ${accessToken}`,
+							},
+							body: JSON.stringify({
+								query: `{ viewer { organization { name urlKey } } }`,
+							}),
+							signal: AbortSignal.timeout(10_000),
+						});
+
+						if (response.status === 401) {
+							await ctx.db
+								.update(gwInstallations)
+								.set({ status: "error" })
+								.where(eq(gwInstallations.id, installation.id));
+						} else if (response.ok) {
+							const data = (await response.json()) as {
+								data?: { viewer?: { organization?: { name?: string; urlKey?: string } } };
+							};
+							organizationName = data.data?.viewer?.organization?.name ?? null;
+							organizationUrlKey = data.data?.viewer?.organization?.urlKey ?? null;
+						}
+					} catch (error) {
+						console.warn("[connections.linear.get] Failed to fetch org info, using fallback:", error);
+					}
+
+					return {
+						id: installation.id,
+						orgId: installation.orgId,
+						provider: installation.provider,
+						connectedAt: installation.createdAt,
+						status: installation.status,
+						organizationName,
+						organizationUrlKey,
+					};
+				}),
+			);
 		}),
 
 		/**
@@ -972,12 +994,44 @@ export const connectionsRouter = {
 				return null;
 			}
 
+			// Resolve display data from Sentry API.
+			// Uses stored OAuth token. Falls back to null on error.
+			let organizationName: string | null = null;
+			let organizationSlug: string | null = null;
+
+			try {
+				const accessToken = await getInstallationToken(installation.id);
+				const response = await fetch("https://sentry.io/api/0/organizations/", {
+					headers: { Authorization: `Bearer ${accessToken}` },
+					signal: AbortSignal.timeout(10_000),
+				});
+
+				if (response.status === 401) {
+					await ctx.db
+						.update(gwInstallations)
+						.set({ status: "error" })
+						.where(eq(gwInstallations.id, installation.id));
+				} else if (response.ok) {
+					const orgs = (await response.json()) as Array<{ name?: string; slug?: string }>;
+					// Sentry App installations are scoped to one org — take the first result
+					const org = orgs[0];
+					if (org) {
+						organizationName = org.name ?? null;
+						organizationSlug = org.slug ?? null;
+					}
+				}
+			} catch (error) {
+				console.warn("[connections.sentry.get] Failed to fetch org info, using fallback:", error);
+			}
+
 			return {
 				id: installation.id,
 				orgId: installation.orgId,
 				provider: installation.provider,
 				connectedAt: installation.createdAt,
 				status: installation.status,
+				organizationName,
+				organizationSlug,
 			};
 		}),
 

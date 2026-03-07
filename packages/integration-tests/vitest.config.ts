@@ -51,7 +51,6 @@ export default mergeConfig(
         "@console/env": resolve(root, "api/console/src/env.ts"),
         "@console/router/org/connections": resolve(root, "api/console/src/router/org/connections.ts"),
         "@repo/console-octokit-github/env": resolve(root, "packages/console-octokit-github/src/env.ts"),
-        "@repo/console-octokit-github/oauth-env": resolve(root, "packages/console-octokit-github/src/oauth-env.ts"),
         "@repo/console-octokit-github": resolve(root, "packages/console-octokit-github/src/index.ts"),
       },
     },

@@ -65,7 +65,7 @@ vi.mock("@vendor/qstash", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({ trigger: workflowTriggerMock }),
+  workflowClient: { trigger: workflowTriggerMock },
 }));
 
 // Capture webhook-delivery workflow handler (used by Relay)

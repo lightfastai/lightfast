@@ -6,7 +6,7 @@ interface SearchEmptyStateProps {
 
 export function SearchEmptyState({ message }: SearchEmptyStateProps) {
   return (
-    <div className="flex items-center justify-center h-full border rounded-sm bg-card border-border/50">
+    <div className="flex items-center justify-center h-full border rounded-md bg-card/40 backdrop-blur-md border-border/50">
       <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );

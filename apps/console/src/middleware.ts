@@ -28,6 +28,7 @@ const securityHeaders = securityMiddleware(
 const isPublicRoute = createRouteMatcher([
   "/api/health(.*)",
   "/api/inngest(.*)",
+  "/api/gateway/ingress(.*)", // QStash-signed webhook delivery from Relay (auth via Upstash signature)
   "/robots.txt",
   "/sitemap(.*)",
   "/llms.txt", // AI crawler guidance file
@@ -67,7 +68,7 @@ const isOrgPageRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
 
 // v1 API routes - auth handled at route level (API key or session)
 // Must bypass Clerk middleware to allow API key authentication
-const isV1ApiRoute = createRouteMatcher(["/v1/(.*)"]);
+const isV1ApiRoute = createRouteMatcher(["/v1/(.*)", "/api/cli/(.*)", "/api/events/(.*)"]);
 
 /**
  * Compose middleware with NEMO

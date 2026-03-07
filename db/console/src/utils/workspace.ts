@@ -2,7 +2,7 @@ import { db } from "../client";
 import { orgWorkspaces } from "../schema";
 import { generateRandomSlug } from "./workspace-names";
 import { EMBEDDING_DEFAULTS } from "@repo/console-validation/constants";
-import type { WorkspaceSettings } from "@repo/console-types";
+import type { WorkspaceSettings } from "@repo/console-validation";
 
 /**
  * Compute workspace key from slug

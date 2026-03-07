@@ -43,7 +43,7 @@ export const codeDocumentHandler = {
       system: codePrompt,
       prompt: title,
       schema: z.object({
-        code: z.string().describe('The generated code'),
+        code: z.string().meta({ description: 'The generated code' }),
       }),
     });
 
@@ -76,7 +76,7 @@ export const codeDocumentHandler = {
       system: updateDocumentPrompt(document.content, 'code'),
       prompt: description,
       schema: z.object({
-        code: z.string().describe('The updated code'),
+        code: z.string().meta({ description: 'The updated code' }),
       }),
     });
 

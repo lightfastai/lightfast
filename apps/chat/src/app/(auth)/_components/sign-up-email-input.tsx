@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useSignUp } from "@clerk/nextjs";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { z } from "zod";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -37,7 +37,7 @@ export function SignUpEmailInput({
 	const log = useLogger();
 
 	const form = useForm<EmailFormData>({
-		resolver: zodResolver(emailSchema),
+		resolver: standardSchemaResolver(emailSchema),
 		defaultValues: {
 			email: "",
 		},

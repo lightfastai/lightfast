@@ -20,7 +20,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -31,7 +31,7 @@
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "svix": "^1.62.0",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@clerk/types": "catalog:",

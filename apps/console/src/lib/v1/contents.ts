@@ -4,7 +4,7 @@ import { db } from "@db/console/client";
 import { workspaceKnowledgeDocuments } from "@db/console/schema";
 import { and, eq, inArray } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
-import type { V1ContentsResponse, V1ContentItem } from "@repo/console-types";
+import type { V1ContentsResponse, V1ContentItem } from "@repo/console-validation";
 import { recordSystemActivity } from "@api/console/lib/activity";
 
 import { buildSourceUrl } from "~/lib/neural/url-builder";

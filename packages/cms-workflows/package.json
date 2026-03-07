@@ -14,7 +14,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../apps/www/.vercel/.env.development.local --",
     "publish:blog": "pnpm with-env tsx scripts/publish-blog.ts",
@@ -23,12 +23,12 @@
   "dependencies": {
     "@repo/ai": "workspace:*",
     "@vendor/cms": "workspace:*",
-    "basehub": "^9.5.2",
+    "basehub": "^9.5.3",
     "gray-matter": "^4.0.3",
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
     "unified": "^11.0.0",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

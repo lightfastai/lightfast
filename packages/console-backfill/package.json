@@ -19,9 +19,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@octokit/webhooks-types": "^7.6.1",
-    "@repo/console-validation": "workspace:*",
-    "@repo/console-webhooks": "workspace:*"
+    "@repo/console-providers": "workspace:*",
+    "@repo/console-validation": "workspace:*"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -21,12 +21,9 @@ const vercelEnv = process.env.NEXT_PUBLIC_VERCEL_ENV as
 initSentry({
   dsn,
   environment: vercelEnv,
-  tracesSampleRate: 1.0,
-  profilesSampleRate: 0,
+  tracesSampleRate: vercelEnv === "production" ? 0.1 : 1.0,
   debug: false,
-  _experiments: {
-    enableLogs: true,
-  },
+  enableLogs: true,
   replaysSessionSampleRate: vercelEnv === "production" ? 0.05 : 1.0,
   replaysOnErrorSampleRate: 1.0,
   integrations: [

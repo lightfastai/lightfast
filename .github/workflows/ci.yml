@@ -43,8 +43,11 @@ jobs:
         run: pnpm turbo lint typecheck --affected --continue
 
       - name: Check boundaries
-        continue-on-error: true
         run: pnpm turbo boundaries
+
+      - name: Check dead code and unused dependencies
+        continue-on-error: true # Remove after initial cleanup sprint
+        run: pnpm knip
 
   # Summary job (required status check)
   ci-success:

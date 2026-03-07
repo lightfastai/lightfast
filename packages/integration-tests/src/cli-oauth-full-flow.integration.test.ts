@@ -69,9 +69,9 @@ vi.mock("@db/console/client", () => ({
 vi.mock("@vendor/upstash", () => ({ redis: redisMock }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({
+  workflowClient: {
     trigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
-  }),
+  },
 }));
 
 vi.mock("@vendor/qstash", () => ({

@@ -299,19 +299,5 @@ export async function getOrganizationMembership(
 // Export throttled utilities
 export { createThrottledOctokit, getThrottledInstallationOctokit } from "./throttled";
 
-// Export webhook types
-export type {
-  PushEvent,
-  InstallationEvent,
-  InstallationRepositoriesEvent,
-  RepositoryEvent,
-  WebhookEvent,
-  // Neural observation event types
-  PullRequestEvent,
-  IssuesEvent,
-  ReleaseEvent,
-  DiscussionEvent,
-} from "./webhook-types";
-
 // Export GitHub environment configuration
 export { githubEnv } from "./env";

@@ -27,16 +27,12 @@ const {
   mockRedisExpire,
   mockRedisDel,
   mockWorkflowTrigger,
-  mockGetProvider,
-  mockProvider,
+  mockGetInstallationToken,
+  mockWriteTokenRecord,
+  mockCreateConfig,
 } = vi.hoisted(() => {
-  const mockProvider = {
-    name: "github" as const,
-    requiresWebhookRegistration: false,
-    getAuthorizationUrl: vi.fn().mockReturnValue("https://github.com/login/oauth/authorize?mock=1"),
-    handleCallback: vi.fn().mockResolvedValue({ status: "connected" }),
-    resolveToken: vi.fn().mockResolvedValue({ accessToken: "tok-123", provider: "github", expiresIn: 3600 }),
-  };
+  const mockGetInstallationToken = vi.fn().mockResolvedValue("tok-123");
+  const mockCreateConfig = vi.fn().mockImplementation((_env: unknown, _runtime: unknown) => ({}));
 
   return {
     mockRedisHset: vi.fn().mockResolvedValue("OK"),
@@ -44,8 +40,9 @@ const {
     mockRedisExpire: vi.fn().mockResolvedValue(1),
     mockRedisDel: vi.fn().mockResolvedValue(1),
     mockWorkflowTrigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
-    mockGetProvider: vi.fn().mockReturnValue(mockProvider),
-    mockProvider,
+    mockGetInstallationToken,
+    mockWriteTokenRecord: vi.fn().mockResolvedValue(undefined),
+    mockCreateConfig,
   };
 });
 
@@ -57,8 +54,10 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("../env", () => ({
-  env: { GATEWAY_API_KEY: "test-api-key" },
-  getEnv: () => ({ GATEWAY_API_KEY: "test-api-key" }),
+  env: {
+    GATEWAY_API_KEY: "test-api-key",
+    ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
+  },
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -71,22 +70,52 @@ vi.mock("@vendor/upstash", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({ trigger: mockWorkflowTrigger }),
+  workflowClient: { trigger: mockWorkflowTrigger },
 }));
 
-vi.mock("../providers", () => ({
-  getProvider: (...args: unknown[]) => mockGetProvider(...args),
-}));
+vi.mock("@repo/console-providers", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  const providers = {
+    github: {
+      name: "github",
+      createConfig: (...args: unknown[]) => mockCreateConfig(...args),
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: false, getActiveToken: (...args: unknown[]) => mockGetInstallationToken(...args) },
+    },
+    vercel: {
+      name: "vercel",
+      createConfig: (...args: unknown[]) => mockCreateConfig(...args),
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: true, getActiveToken: vi.fn() },
+    },
+    linear: {
+      name: "linear",
+      createConfig: (...args: unknown[]) => mockCreateConfig(...args),
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: true, getActiveToken: vi.fn() },
+    },
+    sentry: {
+      name: "sentry",
+      createConfig: (...args: unknown[]) => mockCreateConfig(...args),
+      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: true, getActiveToken: vi.fn() },
+    },
+  };
+  return {
+    ...actual,
+    PROVIDERS: providers,
+    PROVIDER_ENVS: () => [],
+    getProvider: (name: string) => providers[name as keyof typeof providers],
+  };
+});
 
-vi.mock("../providers/types", () => ({}));
+vi.mock("../lib/token-store", () => ({
+  writeTokenRecord: (...args: unknown[]) => mockWriteTokenRecord(...args),
+  updateTokenRecord: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("../lib/urls", () => ({
   gatewayBaseUrl: "https://gateway.test/services",
   consoleUrl: "https://console.test",
   relayBaseUrl: "https://relay.test/api",
-  backfillUrl: "https://backfill.test/api",
-  cancelBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
+
 
 // ── Import app after mocks ──
 
@@ -122,7 +151,8 @@ beforeAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockGetProvider.mockReturnValue(mockProvider);
+  mockCreateConfig.mockImplementation((_env: unknown, _runtime: unknown) => ({}));
+  mockGetInstallationToken.mockResolvedValue("tok-123");
 });
 
 afterEach(async () => {
@@ -218,14 +248,14 @@ describe("GET /connections/:id/token (integration)", () => {
     expect(await res.json()).toMatchObject({ error: "installation_not_active" });
   });
 
-  it("calls provider.resolveToken for an active installation", async () => {
+  it("calls oauth.getActiveToken for an active github installation", async () => {
     const inst = fixtures.installation({ provider: "github", status: "active" });
     await db.insert(gwInstallations).values(inst);
 
     const res = await request(`/connections/${inst.id}/token`, { headers: API });
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ accessToken: "tok-123" });
-    expect(mockProvider.resolveToken).toHaveBeenCalledOnce();
+    expect(mockGetInstallationToken).toHaveBeenCalledOnce();
   });
 });
 

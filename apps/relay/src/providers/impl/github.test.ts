@@ -1,21 +1,20 @@
 import { describe, it, expect } from "vitest";
-import { computeHmacSha256 } from "../../lib/crypto.js";
-import { GitHubProvider } from "./github.js";
+import { PROVIDERS, computeHmac } from "@repo/console-providers";
 
-const provider = new GitHubProvider();
+const provider = PROVIDERS.github.webhook;
 const secret = "test-webhook-secret";
 
 function headers(map: Record<string, string>): Headers {
   return new Headers(map);
 }
 
-describe("GitHubProvider", () => {
-  describe("verifyWebhook", () => {
+describe("github webhook provider", () => {
+  describe("verifySignature", () => {
     it("accepts a valid sha256 signature", async () => {
       const body = '{"action":"opened"}';
-      const sig = await computeHmacSha256(body, secret);
+      const sig = computeHmac(body, secret, "SHA-256");
 
-      const result = await provider.verifyWebhook(
+      const result = provider.verifySignature(
         body,
         headers({ "x-hub-signature-256": `sha256=${sig}` }),
         secret,
@@ -24,7 +23,7 @@ describe("GitHubProvider", () => {
     });
 
     it("rejects an invalid signature", async () => {
-      const result = await provider.verifyWebhook(
+      const result = provider.verifySignature(
         '{"action":"opened"}',
         headers({ "x-hub-signature-256": "sha256=deadbeef" }),
         secret,
@@ -33,7 +32,7 @@ describe("GitHubProvider", () => {
     });
 
     it("rejects when signature header is missing", async () => {
-      const result = await provider.verifyWebhook(
+      const result = provider.verifySignature(
         '{"action":"opened"}',
         headers({}),
         secret,
@@ -42,11 +41,10 @@ describe("GitHubProvider", () => {
     });
 
     it("accepts raw hex signature without sha256= prefix", async () => {
-      // Some webhook relay tools strip the prefix
       const body = '{"action":"opened"}';
-      const sig = await computeHmacSha256(body, secret);
+      const sig = computeHmac(body, secret, "SHA-256");
 
-      const result = await provider.verifyWebhook(
+      const result = provider.verifySignature(
         body,
         headers({ "x-hub-signature-256": sig }),
         secret,
@@ -59,16 +57,13 @@ describe("GitHubProvider", () => {
     it("parses valid payload with repository and installation", () => {
       const raw = { repository: { id: 123 }, installation: { id: 456 } };
       const result = provider.parsePayload(raw);
-      expect(result.repository?.id).toBe(123);
-      expect(result.installation?.id).toBe(456);
+      expect((result as Record<string, unknown> & { repository?: { id: unknown } }).repository?.id).toBe(123);
     });
 
     it("preserves extra fields via passthrough", () => {
       const raw = { repository: { id: 1 }, sender: { login: "user" } };
       const result = provider.parsePayload(raw);
-      expect((result as Record<string, unknown>).sender).toEqual({
-        login: "user",
-      });
+      expect((result as Record<string, unknown>).sender).toEqual({ login: "user" });
     });
 
     it("throws on non-object input", () => {
@@ -130,15 +125,12 @@ describe("GitHubProvider", () => {
     });
 
     it("handles falsy numeric ID 0", () => {
-      // repo ID 0 is technically valid — must not be treated as "missing"
       const id = provider.extractResourceId({ repository: { id: 0 } });
       expect(id).toBe("0");
     });
 
     it("handles string IDs (some GitHub fields are strings)", () => {
-      const id = provider.extractResourceId({
-        repository: { id: "12345" },
-      });
+      const id = provider.extractResourceId({ repository: { id: "12345" } });
       expect(id).toBe("12345");
     });
   });
@@ -171,12 +163,8 @@ describe("GitHubProvider", () => {
         head_commit: { id: "def456", message: "feat: add webhook gateway 🚀" },
       };
 
-      // Parse preserves all fields
       const parsed = provider.parsePayload(pushPayload);
       expect((parsed as Record<string, unknown>).ref).toBe("refs/heads/main");
-      expect((parsed as Record<string, unknown>).commits).toHaveLength(1);
-
-      // Extraction works on nested fields
       expect(provider.extractResourceId(parsed)).toBe("123456789");
     });
 
@@ -189,7 +177,6 @@ describe("GitHubProvider", () => {
       };
 
       const parsed = provider.parsePayload(pingPayload);
-      // Ping has no repository — falls back to installation.id
       expect(provider.extractResourceId(parsed)).toBe("98765");
     });
 

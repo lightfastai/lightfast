@@ -136,7 +136,7 @@ export async function recordCriticalActivity(
       });
       return {
         success: false,
-        error: `Invalid activity data: ${validation.error.errors.map(e => e.message).join(", ")}`,
+        error: `Invalid activity data: ${validation.error.issues.map((e: { message: string }) => e.message).join(", ")}`,
       };
     }
 
@@ -232,7 +232,7 @@ export async function recordActivity(
       });
       return {
         success: false,
-        error: `Invalid activity data: ${validation.error.errors.map(e => e.message).join(", ")}`,
+        error: `Invalid activity data: ${validation.error.issues.map((e: { message: string }) => e.message).join(", ")}`,
       };
     }
 

@@ -1,21 +1,20 @@
 import { describe, it, expect } from "vitest";
-import { computeHmacSha256 } from "../../lib/crypto.js";
-import { LinearProvider } from "./linear.js";
+import { PROVIDERS, computeHmac } from "@repo/console-providers";
 
-const provider = new LinearProvider();
+const provider = PROVIDERS.linear.webhook;
 const secret = "test-linear-secret";
 
 function headers(map: Record<string, string>): Headers {
   return new Headers(map);
 }
 
-describe("LinearProvider", () => {
-  describe("verifyWebhook", () => {
+describe("linear webhook provider", () => {
+  describe("verifySignature", () => {
     it("accepts a valid signature", async () => {
       const body = '{"type":"Issue","action":"create"}';
-      const sig = await computeHmacSha256(body, secret);
+      const sig = computeHmac(body, secret, "SHA-256");
 
-      const result = await provider.verifyWebhook(
+      const result = provider.verifySignature(
         body,
         headers({ "linear-signature": sig }),
         secret,
@@ -24,7 +23,7 @@ describe("LinearProvider", () => {
     });
 
     it("rejects an invalid signature", async () => {
-      const result = await provider.verifyWebhook(
+      const result = provider.verifySignature(
         '{"type":"Issue","action":"create"}',
         headers({ "linear-signature": "badsig" }),
         secret,
@@ -33,7 +32,7 @@ describe("LinearProvider", () => {
     });
 
     it("rejects when signature header missing", async () => {
-      const result = await provider.verifyWebhook(
+      const result = provider.verifySignature(
         '{"type":"Issue"}',
         headers({}),
         secret,
@@ -49,7 +48,7 @@ describe("LinearProvider", () => {
         action: "create",
         organizationId: "org-123",
       };
-      const result = provider.parsePayload(raw);
+      const result = provider.parsePayload(raw) as Record<string, unknown>;
       expect(result.type).toBe("Issue");
       expect(result.action).toBe("create");
       expect(result.organizationId).toBe("org-123");

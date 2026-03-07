@@ -19,7 +19,7 @@ import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 
 import { log } from "@vendor/observability/log";
-import { V1FindSimilarRequestSchema } from "@repo/console-types";
+import { V1FindSimilarRequestSchema } from "@repo/console-validation";
 
 import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
 import { findsimilarLogic } from "~/lib/v1/findsimilar";

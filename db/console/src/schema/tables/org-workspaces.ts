@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
 import type { ClerkOrgId } from "@repo/console-validation";
-import type { WorkspaceSettings } from "@repo/console-types";
+import type { WorkspaceSettings } from "@repo/console-validation";
 
 /**
  * Organization Workspaces table represents isolated knowledge bases within an organization.

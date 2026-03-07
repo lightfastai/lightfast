@@ -8,7 +8,7 @@ import {
   parseAsBoolean,
   useQueryStates,
 } from "nuqs";
-import type { RerankMode } from "@repo/console-types";
+import type { RerankMode } from "@repo/console-validation";
 
 const rerankModes = ["fast", "balanced", "thorough"] as const;
 const agePresets = ["1h", "6h", "24h", "72h", "7d", "30d", "none"] as const;

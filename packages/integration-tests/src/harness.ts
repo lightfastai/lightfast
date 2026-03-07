@@ -393,7 +393,7 @@ export async function makeApiKeyFixture(
   const uid = () => crypto.randomUUID().replace(/-/g, "").slice(0, 21);
 
   const rawKey = generateApiKey();
-  const keyHash = await hashApiKey(rawKey);
+  const keyHash = hashApiKey(rawKey);
   const expiresAtRaw = overrides.expiresAt;
   const expiresAt =
     expiresAtRaw instanceof Date

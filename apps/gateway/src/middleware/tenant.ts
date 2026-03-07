@@ -28,5 +28,5 @@ export const tenantMiddleware = createMiddleware<{
   }
 
   c.set("orgId", orgId);
-  await next();
+  return await next();
 });

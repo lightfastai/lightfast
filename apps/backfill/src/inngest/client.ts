@@ -1,20 +1,11 @@
+import { backfillTriggerPayload, backfillDepthSchema } from "@repo/console-validation";
 import { EventSchemas, Inngest } from "@vendor/inngest";
 import { z } from "zod";
 
 import { env } from "../env.js";
 
 const eventsMap = {
-  "apps-backfill/run.requested": z.object({
-    /** Installation ID (gw_installations.id) */
-    installationId: z.string(),
-    /** Provider name */
-    provider: z.string(),
-    /** Clerk organization ID */
-    orgId: z.string(),
-    /** Number of days to backfill */
-    depth: z.union([z.literal(7), z.literal(30), z.literal(90)]).default(30),
-    /** Entity types to backfill (defaults to connector's defaultEntityTypes) */
-    entityTypes: z.array(z.string()).optional(),
+  "apps-backfill/run.requested": backfillTriggerPayload.extend({
     /** Cross-service correlation ID for distributed tracing */
     correlationId: z.string().optional(),
   }),
@@ -39,22 +30,11 @@ const eventsMap = {
       resourceName: z.string().nullable(),
     }),
     /** ISO timestamp — computed once by orchestrator */
-    since: z.string().datetime(),
+    since: z.iso.datetime(),
     /** Depth in days — for logging/context */
-    depth: z.union([z.literal(7), z.literal(30), z.literal(90)]),
-    /** Cross-service correlation ID for distributed tracing */
-    correlationId: z.string().optional(),
-  }),
-  "apps-backfill/entity.completed": z.object({
-    installationId: z.string(),
-    provider: z.string(),
-    entityType: z.string(),
-    resourceId: z.string(),
-    success: z.boolean(),
-    eventsProduced: z.number(),
-    eventsDispatched: z.number(),
-    pagesProcessed: z.number(),
-    error: z.string().optional(),
+    depth: backfillDepthSchema,
+    /** When true, dispatch webhooks with X-Backfill-Hold header (held for batch replay) */
+    holdForReplay: z.boolean().optional(),
     /** Cross-service correlation ID for distributed tracing */
     correlationId: z.string().optional(),
   }),

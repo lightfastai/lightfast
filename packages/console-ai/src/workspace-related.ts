@@ -5,20 +5,20 @@ import type {
   RelatedToolOutput,
   LightfastAnswerRuntimeContext,
 } from "@repo/console-ai-types";
-import { RelatedResponseSchema } from "@repo/console-types";
+import { RelatedResponseSchema } from "@repo/console-validation";
 
 const inputSchema: z.ZodType<RelatedToolInput> = z.object({
-  id: z.string().describe("The observation ID to find related events for"),
+  id: z.string().meta({ description: "The observation ID to find related events for" }),
   limit: z
     .number()
     .int()
     .min(1)
     .max(50)
     .default(20)
-    .describe("Max related items to return"),
+    .meta({ description: "Max related items to return" }),
 });
 
-const outputSchema: z.ZodType<RelatedToolOutput> = RelatedResponseSchema;
+const outputSchema = RelatedResponseSchema as unknown as z.ZodType<RelatedToolOutput>;
 
 export function workspaceRelatedTool() {
   return createTool<

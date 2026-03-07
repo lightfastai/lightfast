@@ -1,7 +1,7 @@
 /**
  * Fixture-based provider tests using real webhook payloads from @repo/console-test-data.
  *
- * Runs every webhook from every sandbox dataset through the relay's provider
+ * Runs every webhook from every sandbox dataset through the provider's webhook
  * pipeline: parsePayload → extractResourceId → extractEventType → extractDeliveryId.
  *
  * Catches regressions where a real provider payload shape breaks extraction
@@ -16,8 +16,8 @@
  */
 import { describe, it, expect } from "vitest";
 import { loadAllRawWebhooks, type RawWebhook } from "@repo/console-test-data/raw";
-import { getProvider } from "./index.js";
-import type { ProviderName } from "./types.js";
+import { PROVIDERS } from "@repo/console-providers";
+import type { ProviderName } from "@repo/console-providers";
 
 // ── Load all sandbox datasets ──
 
@@ -73,7 +73,7 @@ describe("fixture-based provider extraction (real webhook payloads)", () => {
     );
 
     describe(providerName, () => {
-      const provider = getProvider(providerName);
+      const provider = PROVIDERS[providerName].webhook;
 
       it("has fixture data (guard against vacuous passes)", () => {
         expect(providerWebhooks.length).toBeGreaterThan(0);
@@ -100,19 +100,19 @@ describe("fixture-based provider extraction (real webhook payloads)", () => {
       // exercised; header-driven providers (GitHub, Sentry) hit fallback paths
       // only. See file-level NOTE for details.
       it("extractEventType returns non-empty string for all payloads", () => {
-        const headers = new Headers();
+        const hdrs = new Headers();
         for (const wh of providerWebhooks) {
           const parsed = provider.parsePayload(wh.payload);
-          const eventType = provider.extractEventType(headers, parsed);
+          const eventType = provider.extractEventType(hdrs, parsed);
           expect(eventType).toBeTruthy();
         }
       });
 
       it("extractDeliveryId returns a string for all payloads", () => {
-        const headers = new Headers();
+        const hdrs = new Headers();
         for (const wh of providerWebhooks) {
           const parsed = provider.parsePayload(wh.payload);
-          const deliveryId = provider.extractDeliveryId(headers, parsed);
+          const deliveryId = provider.extractDeliveryId(hdrs, parsed);
           expect(typeof deliveryId).toBe("string");
           expect(deliveryId.length).toBeGreaterThan(0);
         }

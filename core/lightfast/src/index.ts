@@ -67,4 +67,4 @@ export {
   V1FindSimilarRequestSchema,
   V1GraphRequestSchema,
   V1RelatedRequestSchema,
-} from "@repo/console-types/api";
+} from "@repo/console-validation/api";

@@ -6,7 +6,7 @@ import type {
   V1SearchResponse,
   V1ContentsResponse,
   V1FindSimilarResponse,
-} from "@repo/console-types";
+} from "@repo/console-validation";
 import {
   Accordion,
   AccordionContent,

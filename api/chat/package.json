@@ -23,7 +23,7 @@
 		"clean": "git clean -xdf .cache .turbo dist node_modules",
 		"dev": "tsc",
 		"format": "prettier --check . --ignore-path ../../.gitignore",
-		"lint": "eslint",
+		"lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
 		"typecheck": "tsc --noEmit --emitDeclarationOnly false"
 	},
 	"dependencies": {
@@ -53,7 +53,7 @@
 		"nanoid": "catalog:",
 		"react": "catalog:react19",
 		"superjson": "catalog:",
-		"zod": "catalog:zod3"
+		"zod": "catalog:zod4"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",

@@ -1,6 +1,6 @@
 {
 	"name": "@repo/og",
-  "license": "MIT",
+	"license": "MIT",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
@@ -12,7 +12,7 @@
 		"./types": "./src/types.ts"
 	},
 	"scripts": {
-		"lint": "eslint",
+		"lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
 		"typecheck": "tsc --noEmit",
 		"clean": "git clean -xdf .cache .turbo node_modules"
 	},
@@ -22,7 +22,7 @@
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
-		"@types/react": "19.2.2",
+		"@types/react": "^19.2.14",
 		"eslint": "catalog:",
 		"typescript": "catalog:"
 	}

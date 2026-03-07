@@ -1,6 +1,6 @@
 "use client";
 
-import type { V1SearchResponse } from "@repo/console-types";
+import type { V1SearchResponse } from "@repo/console-validation";
 import {
   CodeBlock,
   CodeBlockContent,
@@ -78,7 +78,7 @@ export function SearchResultsPanel({
       >
         <SearchTabContent>
           {searchResults ? (
-            <CodeBlock className="h-full overflow-auto border rounded-sm scrollbar-thin">
+            <CodeBlock className="h-full overflow-auto border border-border/50 rounded-md bg-card/40 backdrop-blur-md scrollbar-thin">
               <CodeBlockContent
                 code={JSON.stringify(searchResults, null, 2)}
                 language="json"

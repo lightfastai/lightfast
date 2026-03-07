@@ -16,12 +16,11 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsup --watch",
     "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@repo/console-config": "workspace:*",
-    "@repo/console-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@vendor/embed": "workspace:*"
   },

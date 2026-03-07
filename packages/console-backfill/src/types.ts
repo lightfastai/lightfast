@@ -1,4 +1,4 @@
-import type { SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
 
 /** A single webhook-shaped event ready for Relay ingestion */
 export interface BackfillWebhookEvent {

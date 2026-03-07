@@ -22,9 +22,10 @@
   },
   "dependencies": {
     "@db/console": "workspace:*",
+    "@repo/console-providers": "workspace:*",
     "@repo/lib": "workspace:*",
     "@trpc/server": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

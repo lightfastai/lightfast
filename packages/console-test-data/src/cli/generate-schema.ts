@@ -9,7 +9,8 @@
 import { writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { WEBHOOK_EVENT_TYPES } from "@repo/console-types";
+import { PROVIDERS } from "@repo/console-providers";
+import type { ProviderName } from "@repo/console-providers";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outputPath = resolve(__dirname, "../../datasets/webhook-schema.json");
@@ -51,32 +52,17 @@ const schema = {
       properties: {
         source: {
           type: "string",
-          enum: Object.keys(WEBHOOK_EVENT_TYPES),
+          enum: Object.keys(PROVIDERS),
           description: "Webhook source platform",
         },
         eventType: {
           type: "string",
           description:
             "Event type identifier (auto-derived from EVENT_REGISTRY)",
-          oneOf: [
-            {
-              enum: WEBHOOK_EVENT_TYPES.github,
-              description:
-                "GitHub event types (X-GitHub-Event header values)",
-            },
-            {
-              enum: WEBHOOK_EVENT_TYPES.vercel,
-              description: "Vercel event types",
-            },
-            {
-              enum: WEBHOOK_EVENT_TYPES.sentry,
-              description: "Sentry event types",
-            },
-            {
-              enum: WEBHOOK_EVENT_TYPES.linear,
-              description: "Linear event types (entity types)",
-            },
-          ],
+          oneOf: (Object.keys(PROVIDERS) as ProviderName[]).map((key) => ({
+            enum: Object.keys(PROVIDERS[key].categories),
+            description: `${PROVIDERS[key].displayName} event types`,
+          })),
         },
         payload: {
           type: "object",

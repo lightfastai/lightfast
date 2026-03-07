@@ -20,8 +20,8 @@ export interface ObservationReference {
   type: 'commit' | 'branch' | 'pr' | 'issue' | 'deployment' | 'project' |
         'cycle' | 'assignee' | 'reviewer' | 'team' | 'label';
   id: string;
-  url?: string;
-  label?: string;
+  url: string | null;
+  label: string | null;
 }
 
 /**
@@ -30,8 +30,8 @@ export interface ObservationReference {
 export interface ObservationActor {
   id: string;
   name: string;
-  email?: string;
-  avatarUrl?: string;
+  email: string | null;
+  avatarUrl: string | null;
 }
 
 /**

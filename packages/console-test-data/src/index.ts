@@ -9,12 +9,6 @@ export {
 export type {
   Dataset,
   WebhookPayload,
-  SentryWebhookPayload,
-  LinearWebhookPayload,
-  GitHubWebhookEventType,
-  SentryWebhookEventType,
-  LinearWebhookEventType,
-  VercelWebhookEventType,
 } from "./loader";
 export { triggerObservationCapture } from "./trigger";
 export type { TriggerOptions, TriggerResult } from "./trigger";

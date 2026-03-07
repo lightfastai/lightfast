@@ -79,9 +79,9 @@ vi.mock("@db/console/client", () => ({
 vi.mock("@vendor/upstash", () => ({ redis: redisMock }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({
+  workflowClient: {
     trigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
-  }),
+  },
 }));
 
 vi.mock("@vendor/qstash", () => ({
@@ -149,7 +149,7 @@ import { connectionsRouter } from "@console/router/org/connections";
 import gatewayApp from "@gateway/app";
 import { makeApiKeyFixture, installServiceRouter, TEST_WORKSPACE_SETTINGS } from "./harness.js";
 import { orgWorkspaces, gwInstallations } from "@db/console/schema";
-import type { GitHubAccountInfo } from "@repo/gateway-types";
+import type { GitHubAccountInfo } from "@repo/console-providers";
 
 // Use crypto.randomUUID() for unique IDs — avoids importing @repo/lib
 function uid() {
@@ -158,28 +158,16 @@ function uid() {
 
 /**
  * Builds a valid GitHub providerAccountInfo JSONB blob for seeding test rows.
+ * raw is empty — display data is resolved live via connections.github.list.
  */
-function makeGitHubAccountInfo(overrides?: Partial<{
-  accountLogin: string;
-  accountType: "User" | "Organization";
-}>): GitHubAccountInfo {
+function makeGitHubAccountInfo(): GitHubAccountInfo {
   return {
     version: 1,
     sourceType: "github",
     events: ["push", "pull_request"],
     installedAt: "2026-01-01T00:00:00Z",
     lastValidatedAt: "2026-01-01T00:00:00Z",
-    raw: {
-      account: {
-        login: overrides?.accountLogin ?? "test-org",
-        id: 67890,
-        type: overrides?.accountType ?? "Organization",
-        avatar_url: "https://avatars.githubusercontent.com/u/67890",
-      },
-      permissions: { contents: "read", metadata: "read" },
-      events: ["push", "pull_request"],
-      created_at: "2026-01-01T00:00:00Z",
-    },
+    raw: {},
   };
 }
 
@@ -587,6 +575,14 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         providerAccountInfo: makeGitHubAccountInfo(),
       });
 
+      // github.list makes a live API call per installation — mock the response
+      mockGetAppInstallation.mockResolvedValueOnce({
+        account: { id: 67890, login: "test-org", type: "Organization", avatar_url: "" },
+        permissions: {},
+        events: [],
+        created_at: "2026-01-01T00:00:00Z",
+      });
+
       const caller = clerkActiveCaller("user_1", orgId);
       const result = await caller.github.list();
 
@@ -606,7 +602,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
           connectedBy: "user_1",
           orgId,
           status: "active",
-          providerAccountInfo: makeGitHubAccountInfo({ accountLogin: "org-a" }),
+          providerAccountInfo: makeGitHubAccountInfo(),
         },
         {
           provider: "github",
@@ -614,9 +610,24 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
           connectedBy: "user_1",
           orgId,
           status: "active",
-          providerAccountInfo: makeGitHubAccountInfo({ accountLogin: "org-b" }),
+          providerAccountInfo: makeGitHubAccountInfo(),
         },
       ]);
+
+      // github.list makes a live API call per installation — mock both responses
+      mockGetAppInstallation
+        .mockResolvedValueOnce({
+          account: { id: 11111, login: "org-a", type: "Organization", avatar_url: "" },
+          permissions: {},
+          events: [],
+          created_at: "2026-01-01T00:00:00Z",
+        })
+        .mockResolvedValueOnce({
+          account: { id: 22222, login: "org-b", type: "Organization", avatar_url: "" },
+          permissions: {},
+          events: [],
+          created_at: "2026-01-01T00:00:00Z",
+        });
 
       const caller = clerkActiveCaller("user_1", orgId);
       const result = await caller.github.list();
@@ -638,7 +649,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
           connectedBy: "user_1",
           orgId,
           status: "active",
-          providerAccountInfo: makeGitHubAccountInfo({ accountLogin: "active-org" }),
+          providerAccountInfo: makeGitHubAccountInfo(),
         },
         {
           provider: "github",
@@ -646,9 +657,17 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
           connectedBy: "user_1",
           orgId,
           status: "revoked",
-          providerAccountInfo: makeGitHubAccountInfo({ accountLogin: "revoked-org" }),
+          providerAccountInfo: makeGitHubAccountInfo(),
         },
       ]);
+
+      // Only the active installation triggers a live API call
+      mockGetAppInstallation.mockResolvedValueOnce({
+        account: { id: 33333, login: "active-org", type: "Organization", avatar_url: "" },
+        permissions: {},
+        events: [],
+        created_at: "2026-01-01T00:00:00Z",
+      });
 
       const caller = clerkActiveCaller("user_1", orgId);
       const result = await caller.github.list();
@@ -697,7 +716,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       });
     });
 
-    it("Refreshes providerAccountInfo with GitHub API data", async () => {
+    it("Updates lastValidatedAt after GitHub API validation", async () => {
       const orgId = `org_${uid()}`;
       const rowId = uid();
       await db.insert(gwInstallations).values({
@@ -707,34 +726,33 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         connectedBy: "user_1",
         orgId,
         status: "active",
-        providerAccountInfo: makeGitHubAccountInfo({ accountLogin: "old-org" }),
+        providerAccountInfo: makeGitHubAccountInfo(),
       });
 
-      // Mock returns updated avatar URL
+      // Mock returns a valid installation (validate confirms it exists)
       mockGetAppInstallation.mockResolvedValueOnce({
         account: {
           id: 67890,
-          login: "new-org",
+          login: "test-org",
           type: "Organization",
-          avatar_url: "https://avatars.githubusercontent.com/u/99999",
+          avatar_url: "https://avatars.githubusercontent.com/u/67890",
         },
         permissions: { contents: "read", metadata: "read" },
         events: ["push"],
         created_at: "2026-01-01T00:00:00Z",
       });
 
+      const before = new Date().toISOString();
       const caller = clerkActiveCaller("user_1", orgId);
       await caller.github.validate();
 
-      // Verify DB was updated — query all rows and find the one we seeded
+      // Verify DB was updated — lastValidatedAt is refreshed, raw stays empty
       const allRows = await db.select().from(gwInstallations);
       const updated = allRows.find((r) => r.id === rowId);
       expect(updated?.providerAccountInfo?.sourceType).toBe("github");
       if (updated?.providerAccountInfo?.sourceType === "github") {
-        expect(updated.providerAccountInfo.raw.account.avatar_url).toBe(
-          "https://avatars.githubusercontent.com/u/99999",
-        );
-        expect(updated.providerAccountInfo.raw.account.login).toBe("new-org");
+        expect(updated.providerAccountInfo.lastValidatedAt >= before).toBe(true);
+        expect(updated.providerAccountInfo.raw).toEqual({});
       }
     });
 

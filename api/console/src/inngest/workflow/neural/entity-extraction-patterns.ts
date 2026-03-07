@@ -1,5 +1,5 @@
 import type { EntityCategory } from "@repo/console-validation";
-import type { ExtractedEntity } from "@repo/console-types";
+import type { ExtractedEntity } from "@repo/console-validation";
 
 /**
  * Entity extraction pattern definition

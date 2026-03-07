@@ -22,7 +22,7 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "db:push": "pnpm with-env drizzle-kit push --config=./src/drizzle.config.ts",
     "db:generate": "pnpm with-env drizzle-kit generate --config=./src/drizzle.config.ts",
     "db:migrate": "pnpm with-env drizzle-kit migrate --config=./src/drizzle.config.ts",
@@ -40,7 +40,7 @@
     "ai": "catalog:",
     "drizzle-orm": "catalog:",
     "drizzle-zod": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -48,7 +48,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "dotenv-cli": "^8.0.0",
-    "drizzle-kit": "^0.31.4",
+    "drizzle-kit": "^0.31.9",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"

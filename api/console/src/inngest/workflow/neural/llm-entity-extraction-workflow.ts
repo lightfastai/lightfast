@@ -15,7 +15,7 @@ import {
 import { log } from "@vendor/observability/log";
 import { llmEntityExtractionResponseSchema } from "@repo/console-validation";
 import type { LLMEntityExtractionResponse } from "@repo/console-validation";
-import type { ExtractedEntity } from "@repo/console-types";
+import type { ExtractedEntity } from "@repo/console-validation";
 import { LLM_ENTITY_EXTRACTION_CONFIG } from "@repo/console-config";
 
 import { inngest } from "../../client/client";

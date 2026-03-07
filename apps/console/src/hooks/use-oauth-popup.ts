@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
+import type { ProviderSlug } from "@repo/console-providers/display";
 
 interface UseOAuthPopupOptions {
-  provider: "github" | "vercel" | "linear" | "sentry";
+  provider: ProviderSlug;
   messageType?: string;
   queryKeysToInvalidate: readonly (readonly unknown[])[];
   popupWindowName?: string;

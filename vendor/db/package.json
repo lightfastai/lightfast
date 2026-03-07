@@ -19,7 +19,7 @@
 		"clean": "git clean -xdf .cache .turbo dist node_modules",
 		"dev": "tsc",
 		"format": "prettier --check . --ignore-path ../../.gitignore",
-		"lint": "eslint",
+		"lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
 		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
 		"with-env": "dotenv -e ../../.env --"
 	},
@@ -29,7 +29,7 @@
 		"ai": "catalog:",
 		"drizzle-orm": "catalog:",
 		"drizzle-zod": "catalog:",
-		"zod": "catalog:zod3"
+		"zod": "catalog:zod4"
 	},
 	"devDependencies": {
 		"@repo/eslint-config": "workspace:*",
@@ -37,7 +37,7 @@
 		"@repo/typescript-config": "workspace:*",
 		"@types/node": "catalog:",
 		"dotenv-cli": "^8.0.0",
-		"drizzle-kit": "^0.31.4",
+		"drizzle-kit": "^0.31.9",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
 		"tsup": "^8.5.0",

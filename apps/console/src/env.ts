@@ -37,7 +37,7 @@ export const env = createEnv({
     /**
      * QStash signing keys for verifying webhook deliveries from Upstash Workflow.
      * Optional at startup; required at runtime by the webhook ingress endpoint
-     * (POST /api/webhooks/ingress) where @upstash/workflow serve() verifies signatures.
+     * (POST /api/gateway/ingress) where @upstash/workflow serve() verifies signatures.
      */
     QSTASH_TOKEN: z.string().min(1).optional(),
     QSTASH_CURRENT_SIGNING_KEY: z.string().min(1).optional(),

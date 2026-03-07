@@ -2,7 +2,6 @@
 
 exports[`0.1 — Boundary contract shapes > Shape 1: GET /services/gateway/:id response (Backfill orchestrator reads this) 1`] = `
 {
-  "accountLogin": "null",
   "createdAt": "string",
   "externalId": "string",
   "hasToken": "boolean",

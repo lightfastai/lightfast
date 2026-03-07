@@ -1,4 +1,4 @@
-import type { SourceType } from "@repo/console-validation";
+import type { SourceType } from "@repo/console-providers";
 import type { BackfillConnector } from "./types.js";
 
 const connectors = new Map<SourceType, BackfillConnector>();

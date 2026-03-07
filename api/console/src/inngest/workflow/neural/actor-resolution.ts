@@ -1,4 +1,4 @@
-import type { SourceEvent, SourceActor } from "@repo/console-types";
+import type { PostTransformEvent, PostTransformActor } from "@repo/console-providers";
 import { db } from "@db/console/client";
 import { workspaceNeuralObservations } from "@db/console/schema";
 import { eq, and, sql } from "drizzle-orm";
@@ -20,7 +20,7 @@ import { log } from "@vendor/observability/log";
 
 interface ResolvedActor {
   /** Original actor from source event */
-  sourceActor: SourceActor | null;
+  sourceActor: PostTransformActor | null;
   /** Canonical actor ID for this workspace (source:id format) */
   actorId: string | null;
 }
@@ -85,7 +85,7 @@ async function resolveVercelActorViaCommitSha(
  */
 export async function resolveActor(
   workspaceId: string,
-  sourceEvent: SourceEvent,
+  sourceEvent: PostTransformEvent,
 ): Promise<ResolvedActor> {
   let sourceActor = sourceEvent.actor ?? null;
 

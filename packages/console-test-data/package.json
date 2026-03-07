@@ -24,7 +24,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache src/",
     "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --",
     "inject": "pnpm with-env tsx src/cli/inject.ts",
     "inject:prod": "dotenv -e ../../apps/console/.vercel/.env.production.local -- tsx src/cli/inject.ts",
@@ -36,11 +36,9 @@
   "dependencies": {
     "@api/console": "workspace:*",
     "@db/console": "workspace:*",
-    "@octokit/webhooks-types": "^7.6.1",
     "@repo/console-pinecone": "workspace:*",
-    "@repo/console-types": "workspace:*",
+    "@repo/console-providers": "workspace:*",
     "@repo/console-validation": "workspace:*",
-    "@repo/console-webhooks": "workspace:*",
     "@repo/lib": "workspace:*",
     "@vendor/db": "workspace:*",
     "drizzle-orm": "catalog:"

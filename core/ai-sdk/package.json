@@ -115,7 +115,7 @@
     "@ai-sdk/anthropic": "2.0.4",
     "@ai-sdk/gateway": "^1.0.15",
     "@ai-sdk/provider": "2.0.0",
-    "@t3-oss/env-core": "^0.12.0",
+    "@t3-oss/env-core": "^0.13.0",
     "@upstash/qstash": "^2.8.1",
     "@upstash/redis": "^1.35.1",
     "ai": "5.0.52",
@@ -123,14 +123,14 @@
     "pino": "^9.7.0",
     "resumable-stream": "^2.0.0",
     "uuid": "^11.1.0",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@rollup/rollup-darwin-arm64": "^4.46.2",
     "@types/node": "^24.3.0",
-    "@types/react": "19.2.2",
+    "@types/react": "^19.2.14",
     "@types/uuid": "^10.0.0",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",

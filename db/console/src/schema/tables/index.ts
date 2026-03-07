@@ -3,6 +3,7 @@ export { gwInstallations, type GwInstallation, type InsertGwInstallation } from 
 export { gwTokens, type GwToken, type InsertGwToken } from "./gw-tokens";
 export { gwResources, type GwResource, type InsertGwResource } from "./gw-resources";
 export { gwWebhookDeliveries, type GwWebhookDelivery, type InsertGwWebhookDelivery } from "./gw-webhook-deliveries";
+export { gwBackfillRuns, type GwBackfillRun, type InsertGwBackfillRun } from "./gw-backfill-runs";
 
 // Org-scoped tables
 export { orgWorkspaces, type OrgWorkspace, type InsertOrgWorkspace } from "./org-workspaces";
@@ -30,8 +31,8 @@ export { orgActorIdentities, type OrgActorIdentity, type InsertOrgActorIdentity 
 export { workspaceTemporalStates, type WorkspaceTemporalState, type InsertWorkspaceTemporalState } from "./workspace-temporal-states";
 export type { TemporalEntityType, TemporalStateType } from "./workspace-temporal-states";
 
-// Ingestion payload storage tables
-export { workspaceIngestionPayloads, workspaceWebhookPayloads, type WorkspaceIngestionPayload, type InsertWorkspaceIngestionPayload, type WorkspaceWebhookPayload, type InsertWorkspaceWebhookPayload } from "./workspace-webhook-payloads";
+// Workspace event storage
+export { workspaceEvents, type WorkspaceEvent, type InsertWorkspaceEvent } from "./workspace-events";
 
 // Relationship graph tables
 export { workspaceObservationRelationships, type WorkspaceObservationRelationship, type InsertWorkspaceObservationRelationship, type RelationshipType } from "./workspace-observation-relationships";

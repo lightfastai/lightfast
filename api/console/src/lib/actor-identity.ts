@@ -1,13 +1,13 @@
 import { db } from "@db/console/client";
 import { orgActorIdentities } from "@db/console/schema";
-import type { SourceActor } from "@repo/console-types";
+import type { PostTransformActor } from "@repo/console-providers";
 
 interface UpsertIdentityInput {
   clerkOrgId: string;
   canonicalActorId: string;
   source: string;
   sourceId: string;
-  sourceActor: SourceActor | null;
+  sourceActor: PostTransformActor | null;
   mappingMethod: string;
   confidenceScore: number;
 }

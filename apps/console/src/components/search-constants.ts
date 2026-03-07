@@ -1,12 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 import { Zap, Scale, Brain } from "lucide-react";
+import { SOURCE_TYPE_OPTIONS } from "@repo/console-providers/display";
 
-export const SOURCE_TYPE_OPTIONS = [
-  { value: "github", label: "GitHub" },
-  { value: "vercel", label: "Vercel" },
-  { value: "sentry", label: "Sentry" },
-  { value: "linear", label: "Linear" },
-] as const;
+export { SOURCE_TYPE_OPTIONS };
 
 export const OBSERVATION_TYPE_OPTIONS = [
   // GitHub

@@ -17,7 +17,7 @@ import type {
   InsertWorkspaceObservationRelationship,
   RelationshipType,
 } from "@db/console/schema";
-import type { SourceReference, SourceEvent } from "@repo/console-types";
+import type { PostTransformReference, PostTransformEvent } from "@repo/console-providers";
 import { log } from "@vendor/observability/log";
 import { nanoid } from "nanoid";
 import { eq, and, or, sql } from "drizzle-orm";
@@ -45,7 +45,7 @@ interface DetectedRelationship {
 export async function detectAndCreateRelationships(
   workspaceId: string,
   observationId: number,
-  sourceEvent: SourceEvent
+  sourceEvent: PostTransformEvent
 ): Promise<number> {
   const references = sourceEvent.references;
   if (references.length === 0) return 0;
@@ -319,7 +319,7 @@ async function findObservationsByReference(
 
   // Extract matching linking keys
   return results.map((r) => {
-    const refs = (r.sourceReferences ?? []) as SourceReference[];
+    const refs = (r.sourceReferences ?? []) as PostTransformReference[];
     const matchingRef = refs.find(
       (ref) => ref.type === refType && refIds.includes(ref.id)
     );
@@ -377,7 +377,7 @@ async function findObservationsByIssueId(
 
   return results.map((r) => {
     // Check JSONB references first (higher quality match)
-    const refs = (r.sourceReferences ?? []) as SourceReference[];
+    const refs = (r.sourceReferences ?? []) as PostTransformReference[];
     const jsonbMatch = refs.find(
       (ref) => ref.type === "issue" && issueIds.includes(ref.id)
     );
@@ -448,7 +448,7 @@ async function findObservationsByPrId(
 function determineCommitRelationType(
   newSource: string,
   matchSource: string,
-  commitRef: SourceReference | undefined
+  commitRef: PostTransformReference | undefined
 ): RelationshipType {
   // Explicit Sentry → commit resolution (statusDetails.inCommit)
   // Only when the new observation is Sentry AND the commit ref has "resolved_by" label

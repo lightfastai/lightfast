@@ -1,14 +1,16 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
-import { vercelOAuthEnv } from "./oauth-env";
-
-export { vercelOAuthEnv } from "./oauth-env";
 
 /**
- * Full Vercel env with client vars — used by console.
+ * Full Vercel env with all vars — used by console.
  */
 export const vercelEnv = createEnv({
-	extends: [vercelOAuthEnv],
+	server: {
+		VERCEL_INTEGRATION_SLUG: z.string().min(1),
+		VERCEL_CLIENT_SECRET_ID: z.string().min(1),
+		VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
+		VERCEL_REDIRECT_URI: z.string().url().optional(),
+	},
 	client: {
 		NEXT_PUBLIC_VERCEL_INTEGRATION_SLUG: z.string().min(1),
 	},

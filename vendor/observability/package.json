@@ -18,7 +18,8 @@
     "./async-executor": "./src/async-executor.ts",
     "./error-formatter": "./src/error-formatter.ts",
     "./use-logger": "./src/use-logger.ts",
-    "./service-log": "./src/service-log.ts"
+    "./service-log": "./src/service-log.ts",
+    "./print-routes": "./src/print-routes.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -26,26 +27,26 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
+    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/react": "catalog:",
+    "@types/react": "^19.2.14",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
-    "@logtail/edge": "^0.5.0",
+    "@logtail/edge": "^0.5.8",
     "@logtail/next": "^0.2.0",
     "@sentry/core": "catalog:",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
-    "zod": "catalog:zod3"
+    "zod": "catalog:zod4"
   }
 }

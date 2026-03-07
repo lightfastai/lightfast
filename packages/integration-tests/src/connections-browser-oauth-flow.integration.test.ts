@@ -80,9 +80,9 @@ vi.mock("@gateway/providers", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({
+  workflowClient: {
     trigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
-  }),
+  },
 }));
 
 vi.mock("@vendor/qstash", () => ({

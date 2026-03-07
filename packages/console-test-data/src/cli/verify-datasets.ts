@@ -16,8 +16,8 @@
  */
 
 import { loadDataset, listDatasets } from "../loader/index.js";
-import type { SourceEvent } from "@repo/console-types";
-import { EVENT_REGISTRY } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-providers";
+import { EVENT_REGISTRY } from "@repo/console-providers";
 
 interface VerifyResult {
   dataset: string;
@@ -54,7 +54,7 @@ function verifyDataset(name: string): VerifyResult {
     const prefix = `event[${i}]`;
 
     // Cast to partial to validate fields that the type claims are required
-    const raw = e as Partial<SourceEvent>;
+    const raw = e as Partial<PostTransformEvent>;
     if (!raw.source) result.errors.push(`${prefix}: missing source`);
     if (!raw.sourceType) result.errors.push(`${prefix}: missing sourceType`);
     if (!raw.sourceId) result.errors.push(`${prefix}: missing sourceId`);
@@ -135,7 +135,7 @@ function verifyDataset(name: string): VerifyResult {
  * Extract identifiers mentioned across all events and verify consistency
  */
 function verifyCrossReferences(
-  events: SourceEvent[],
+  events: PostTransformEvent[],
   result: VerifyResult
 ): void {
   // Collect all identifiers mentioned in titles, bodies, and references

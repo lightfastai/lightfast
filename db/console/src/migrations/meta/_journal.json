@@ -232,6 +232,55 @@
       "when": 1772374535005,
       "tag": "0032_brainy_ted_forrester",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1772445514294,
+      "tag": "0033_red_bug",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1772456816193,
+      "tag": "0034_elite_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1772527347093,
+      "tag": "0035_worthless_deadpool",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1772529205093,
+      "tag": "0036_wakeful_quentin_quire",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1772594098319,
+      "tag": "0037_sharp_bill_hollister",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1772796381785,
+      "tag": "0038_big_boomer",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1772848981239,
+      "tag": "0039_luxuriant_imperial_guard",
+      "breakpoints": true
     }
   ]
 }

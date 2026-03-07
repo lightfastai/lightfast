@@ -28,7 +28,7 @@ export type {
   V1RelatedRequest,
   RelatedResponse,
   RelatedEvent,
-} from "@repo/console-types";
+} from "@repo/console-validation";
 
 import type {
   V1SearchRequest,
@@ -36,7 +36,7 @@ import type {
   V1FindSimilarRequest,
   V1GraphRequest,
   V1RelatedRequest,
-} from "@repo/console-types";
+} from "@repo/console-validation";
 
 /**
  * SDK Input Type Pattern

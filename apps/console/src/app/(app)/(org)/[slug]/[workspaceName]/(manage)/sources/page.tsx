@@ -1,6 +1,8 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { prefetch, HydrateClient, orgTrpc } from "@repo/console-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { Button } from "@repo/ui/components/ui/button";
 import { InstalledSources } from "./_components/installed-sources";
 import { LatestIntegrations } from "./_components/latest-integrations";
 
@@ -27,11 +29,18 @@ export default async function SourcesPage({
     <HydrateClient>
       <div className="pb-6">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Sources</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage integrations connected to this workspace
-          </p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Sources</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Manage integrations connected to this workspace
+            </p>
+          </div>
+          <Button asChild size="sm">
+            <Link href={`/${slug}/${workspaceName}/sources/new`}>
+              Add New Source
+            </Link>
+          </Button>
         </div>
 
         {/* 12-column grid: 9 cols sources + 3 cols integrations */}

@@ -75,7 +75,7 @@ export const ModelConfigSchema = z.object({
 	streamingDelay: z
 		.number()
 		.optional()
-		.describe("Streaming delay in milliseconds for optimal readability"),
+		.meta({ description: "Streaming delay in milliseconds for optimal readability" }),
 });
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;
 
