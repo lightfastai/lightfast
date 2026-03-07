@@ -46,11 +46,18 @@ export const workspaceIntegrations = pgTable(
     connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
 
     /**
-     * Provider-specific IDs and sync settings (JSONB).
-     * Only stable identifiers — no mutable display data (names, slugs, branches).
-     * Display metadata will be resolved from a cache layer.
+     * Provider-specific stable IDs and sync settings (JSONB).
      *
      * Schema: providerConfigSchema from @repo/console-providers
+     *
+     * RULES:
+     * - Only stable provider-issued IDs (never display names that can change)
+     * - repoId OK  |  repoName NO (fetch from cache keyed on repoId)
+     * - projectId OK  |  projectName NO
+     * - teamId OK  |  teamName NO
+     *
+     * Adding a new field? Ask: "Can this value change without our involvement?"
+     * If yes -> it belongs in cache, not here.
      */
     providerConfig: jsonb("provider_config").$type<ProviderConfig>().notNull(),
 

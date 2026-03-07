@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { syncSchema } from "../../sync.js";
 
 // ── Raw OAuth Response Shape ──
 
@@ -49,3 +50,16 @@ export const linearOAuthResponseSchema = z.object({
   expires_in: z.number(),
   refresh_token: z.string().optional(),
 });
+
+// ── Provider Config Schema ──
+
+/** @see githubProviderConfigSchema for design invariants */
+export const linearProviderConfigSchema = z.object({
+  version: z.literal(1),
+  sourceType: z.literal("linear"),
+  type: z.literal("team"),
+  teamId: z.string(),
+  sync: syncSchema.omit({ branches: true, paths: true }),
+});
+
+export type LinearProviderConfig = z.infer<typeof linearProviderConfigSchema>;

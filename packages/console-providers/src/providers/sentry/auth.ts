@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { syncSchema } from "../../sync.js";
 
 // ── Raw OAuth Response Shape ──
 
@@ -64,3 +65,16 @@ export function decodeSentryToken(raw: string): SentryInstallationToken {
   }
   return { installationId: raw.slice(0, idx), token: raw.slice(idx + 1) };
 }
+
+// ── Provider Config Schema ──
+
+/** @see githubProviderConfigSchema for design invariants */
+export const sentryProviderConfigSchema = z.object({
+  version: z.literal(1),
+  sourceType: z.literal("sentry"),
+  type: z.literal("project"),
+  projectId: z.string(),
+  sync: syncSchema.omit({ branches: true, paths: true }),
+});
+
+export type SentryProviderConfig = z.infer<typeof sentryProviderConfigSchema>;

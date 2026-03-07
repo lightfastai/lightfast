@@ -23,11 +23,19 @@ export const gwInstallations = pgTable(
     webhookSecret: text("webhook_secret"),
     metadata: jsonb("metadata"),
 
-    // Strongly-typed provider account info (discriminated union by sourceType)
-    //
-    // Every field is required unless there is a genuine reason it may not exist
-    // (e.g. Vercel personal accounts have no team). No "unknown" defaults —
-    // if data isn't available, the provider must fetch it or use "".
+    /**
+     * OAuth installation-level metadata (JSONB) — discriminated union by sourceType.
+     *
+     * Schema: providerAccountInfoSchema from @repo/console-providers
+     *
+     * Contains ONLY data needed for:
+     *   1. OAuth token retrieval / refresh (raw token data)
+     *   2. Webhook scoping (which events the installation is subscribed to)
+     *   3. Account identity for UI (name, avatar — stored in `raw` as cache)
+     *
+     * NEVER add resource-specific data (repos[], projects[], teams[]) — those
+     * belong in providerConfig on workspace_integrations, one row per resource.
+     */
     providerAccountInfo: jsonb("provider_account_info").$type<ProviderAccountInfo>(),
 
     /** Optional backfill configuration for this installation. */

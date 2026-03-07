@@ -1,7 +1,6 @@
 import type { z } from "zod";
 import type { PostTransformEvent } from "./post-transform-event.js";
 import type { TransformContext, OAuthTokens, BaseProviderAccountInfo, CallbackResult } from "./types.js";
-import type { ProviderConfig } from "./provider-config.js";
 
 export interface CategoryDef {
   label: string;
@@ -104,12 +103,15 @@ export interface ProviderDefinition<
   TEvents extends Record<string, EventDefinition> = Record<string, EventDefinition>,
   TAccountInfoSchema extends z.ZodObject = z.ZodObject,
   TResourceMetaSchema extends z.ZodObject = z.ZodObject,
+  TProviderConfigSchema extends z.ZodObject = z.ZodObject,
 > {
   readonly name: string;
   readonly displayName: string;
   readonly description: string;
   readonly configSchema: z.ZodType<TConfig>;
   readonly accountInfoSchema: TAccountInfoSchema;
+  /** Zod schema for the provider_config JSONB blob stored in workspace_integrations. */
+  readonly providerConfigSchema: TProviderConfigSchema;
   /** Zod schema for extra resource fields sent during bulk-link (beyond resourceId + resourceName). */
   readonly resourceMetaSchema: TResourceMetaSchema;
   readonly categories: TCategories;
@@ -137,7 +139,7 @@ export interface ProviderDefinition<
     installationExternalId: string;
     providerAccountInfo: BaseProviderAccountInfo | null;
     defaultSyncEvents: readonly string[];
-  }) => ProviderConfig;
+  }) => z.infer<TProviderConfigSchema>;
 }
 
 /**
@@ -155,11 +157,12 @@ export function defineProvider<
   const TEvents extends Record<string, EventDefinition> = Record<string, EventDefinition>,
   TAccountInfoSchema extends z.ZodObject = z.ZodObject,
   TResourceMetaSchema extends z.ZodObject = z.ZodObject,
+  TProviderConfigSchema extends z.ZodObject = z.ZodObject,
 >(
-  def: ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TResourceMetaSchema>
+  def: ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TResourceMetaSchema, TProviderConfigSchema>
     & { readonly defaultSyncEvents: readonly (keyof TCategories & string)[] },
-): ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TResourceMetaSchema> {
-  return Object.freeze(def) as ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TResourceMetaSchema>;
+): ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TResourceMetaSchema, TProviderConfigSchema> {
+  return Object.freeze(def) as ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TResourceMetaSchema, TProviderConfigSchema>;
 }
 
 // ── Display-Layer Types ──────────────────────────────────────────────────────

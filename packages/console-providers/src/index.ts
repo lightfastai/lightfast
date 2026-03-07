@@ -255,18 +255,34 @@ export { sentry } from "./providers/sentry/index.js";
 // ── Provider Config (JSONB shapes for workspace_integrations.provider_config) ─
 export {
   providerConfigSchema,
-  githubProviderConfigSchema,
-  vercelProviderConfigSchema,
-  sentryProviderConfigSchema,
-  linearProviderConfigSchema,
-} from "./provider-config.js";
+} from "./registry.js";
 export type {
   ProviderConfig,
+} from "./registry.js";
+export {
+  githubProviderConfigSchema,
+} from "./providers/github/auth.js";
+export type {
   GithubProviderConfig,
+} from "./providers/github/auth.js";
+export {
+  vercelProviderConfigSchema,
+} from "./providers/vercel/auth.js";
+export type {
   VercelProviderConfig,
+} from "./providers/vercel/auth.js";
+export {
+  sentryProviderConfigSchema,
+} from "./providers/sentry/auth.js";
+export type {
   SentryProviderConfig,
+} from "./providers/sentry/auth.js";
+export {
+  linearProviderConfigSchema,
+} from "./providers/linear/auth.js";
+export type {
   LinearProviderConfig,
-} from "./provider-config.js";
+} from "./providers/linear/auth.js";
 
 // ── Display Metadata (re-exported for server consumers) ─────────────────────
 export {

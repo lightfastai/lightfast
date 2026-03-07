@@ -120,10 +120,41 @@ export const providerAccountInfoSchema = z.discriminatedUnion("sourceType", [
 
 export type ProviderAccountInfo = z.infer<typeof providerAccountInfoSchema>;
 
+// ── Provider Config Schema ────────────────────────────────────────────────────
+
+// Adding a provider = add entry to ProviderConfigMap above + PROVIDERS + this tuple.
+export const providerConfigSchema = z.discriminatedUnion("sourceType", [
+  PROVIDERS.github.providerConfigSchema,
+  PROVIDERS.vercel.providerConfigSchema,
+  PROVIDERS.linear.providerConfigSchema,
+  PROVIDERS.sentry.providerConfigSchema,
+]);
+
+export type ProviderConfig = z.infer<typeof providerConfigSchema>;
+
 /** Get the default sync events for a provider. */
 export function getDefaultSyncEvents(provider: ProviderName): readonly string[] {
   return PROVIDERS[provider].defaultSyncEvents;
 }
+
+// ── Resource Metadata ─────────────────────────────────────────────────────────
+
+/**
+ * Per-provider Zod schemas for resource metadata sent during bulk-link.
+ * Derived from each provider's `resourceMetaSchema` field — not hand-maintained.
+ *
+ * Adding a provider = add `resourceMetaSchema` to the defineProvider() call.
+ */
+export const PROVIDER_RESOURCE_META = {
+  github: PROVIDERS.github.resourceMetaSchema,
+  vercel: PROVIDERS.vercel.resourceMetaSchema,
+  linear: PROVIDERS.linear.resourceMetaSchema,
+  sentry: PROVIDERS.sentry.resourceMetaSchema,
+} as const satisfies Record<ProviderName, z.ZodObject>;
+
+export type ProviderResourceMeta = {
+  [K in ProviderName]: z.infer<(typeof PROVIDERS)[K]["resourceMetaSchema"]>;
+};
 
 // ── Env Schemas ───────────────────────────────────────────────────────────────
 

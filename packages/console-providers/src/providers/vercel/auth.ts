@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { syncSchema } from "../../sync.js";
 
 // ── Raw OAuth Response Shape ──
 
@@ -45,3 +46,18 @@ export const vercelOAuthResponseSchema = z.object({
   user_id: z.string(),
   team_id: z.string().nullable(),
 });
+
+// ── Provider Config Schema ──
+
+/** @see githubProviderConfigSchema for design invariants */
+export const vercelProviderConfigSchema = z.object({
+  version: z.literal(1),
+  sourceType: z.literal("vercel"),
+  type: z.literal("project"),
+  projectId: z.string(),
+  teamId: z.string().optional(),
+  configurationId: z.string(),
+  sync: syncSchema.omit({ branches: true, paths: true }),
+});
+
+export type VercelProviderConfig = z.infer<typeof vercelProviderConfigSchema>;

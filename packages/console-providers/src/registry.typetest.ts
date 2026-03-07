@@ -1,6 +1,6 @@
 import { describe, it, expectTypeOf } from "vitest";
 import { EVENT_REGISTRY, getProvider } from "./registry.js";
-import type { PROVIDERS, ProviderName, EventKey, EventRegistryEntry, ProviderAccountInfo } from "./registry.js";
+import type { PROVIDERS, ProviderName, EventKey, EventRegistryEntry, ProviderAccountInfo, ProviderConfig, ProviderResourceMeta } from "./registry.js";
 import type { ProviderDefinition } from "./define.js";
 import type { GitHubConfig } from "./providers/github/auth.js";
 import type { VercelConfig } from "./providers/vercel/auth.js";
@@ -107,7 +107,31 @@ describe("ProviderAccountInfo", () => {
   });
 });
 
-// ── Category 5: EVENT_REGISTRY Completeness ─────────────────────────────────
+// ── Category 5: ProviderConfig ────────────────────────────────────────────────
+
+describe("ProviderConfig", () => {
+  it("is a usable type (not never)", () => {
+    expectTypeOf<ProviderConfig>().not.toBeNever();
+  });
+});
+
+// ── Category 5b: ProviderDefinition providerConfigSchema field ───────────────
+
+describe("ProviderDefinition providerConfigSchema", () => {
+  it("each provider has a providerConfigSchema field", () => {
+    type GitHubPCS = typeof PROVIDERS.github.providerConfigSchema;
+    type VercelPCS = typeof PROVIDERS.vercel.providerConfigSchema;
+    type LinearPCS = typeof PROVIDERS.linear.providerConfigSchema;
+    type SentryPCS = typeof PROVIDERS.sentry.providerConfigSchema;
+
+    expectTypeOf<GitHubPCS>().not.toBeNever();
+    expectTypeOf<VercelPCS>().not.toBeNever();
+    expectTypeOf<LinearPCS>().not.toBeNever();
+    expectTypeOf<SentryPCS>().not.toBeNever();
+  });
+});
+
+// ── Category 6: EVENT_REGISTRY Completeness ─────────────────────────────────
 
 describe("EVENT_REGISTRY", () => {
   it("is typed as Record<EventKey, EventRegistryEntry>", () => {
@@ -119,7 +143,27 @@ describe("EVENT_REGISTRY", () => {
   });
 });
 
-// ── Category 6: ProviderDefinition Structural Contract ──────────────────────
+// ── Category 6: ProviderResourceMeta Narrowing ──────────────────────────
+
+describe("ProviderResourceMeta", () => {
+  it("github has fullName only", () => {
+    expectTypeOf<ProviderResourceMeta["github"]>().toEqualTypeOf<{ fullName?: string }>();
+  });
+
+  it("vercel has no extra fields", () => {
+    expectTypeOf<ProviderResourceMeta["vercel"]>().toEqualTypeOf<Record<string, never>>();
+  });
+
+  it("linear has key only", () => {
+    expectTypeOf<ProviderResourceMeta["linear"]>().toEqualTypeOf<{ key?: string }>();
+  });
+
+  it("sentry has slug only", () => {
+    expectTypeOf<ProviderResourceMeta["sentry"]>().toEqualTypeOf<{ slug?: string }>();
+  });
+});
+
+// ── Category 7: ProviderDefinition Structural Contract ──────────────────────
 
 describe("ProviderDefinition contract", () => {
   it("each provider has all required webhook methods", () => {

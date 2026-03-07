@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { defineProvider, simpleEvent, actionEvent } from "../../define.js";
-import { githubConfigSchema, githubAccountInfoSchema, githubOAuthResponseSchema } from "./auth.js";
+import { githubConfigSchema, githubAccountInfoSchema, githubOAuthResponseSchema, githubProviderConfigSchema } from "./auth.js";
 import type { GitHubConfig, GitHubAccountInfo, GitHubInstallationRaw } from "./auth.js";
 import type { OAuthTokens, CallbackResult } from "../../types.js";
 import { computeHmac, timingSafeEqual } from "../../crypto.js";
@@ -114,6 +114,7 @@ export const github = defineProvider({
   description: "Connect your GitHub repositories",
   configSchema: githubConfigSchema,
   accountInfoSchema: githubAccountInfoSchema,
+  providerConfigSchema: githubProviderConfigSchema,
   resourceMetaSchema: z.object({ fullName: z.string().optional() }),
 
   categories: {

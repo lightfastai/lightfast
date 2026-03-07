@@ -1,6 +1,6 @@
 import { defineProvider, actionEvent } from "../../define.js";
 import { z } from "zod";
-import { linearConfigSchema, linearAccountInfoSchema, linearOAuthRawSchema, linearOAuthResponseSchema } from "./auth.js";
+import { linearConfigSchema, linearAccountInfoSchema, linearOAuthRawSchema, linearOAuthResponseSchema, linearProviderConfigSchema } from "./auth.js";
 import type { LinearConfig, LinearAccountInfo } from "./auth.js";
 import type { OAuthTokens, CallbackResult } from "../../types.js";
 import { computeHmac, timingSafeEqual } from "../../crypto.js";
@@ -151,6 +151,7 @@ export const linear = defineProvider({
   description: "Connect your Linear workspace",
   configSchema: linearConfigSchema,
   accountInfoSchema: linearAccountInfoSchema,
+  providerConfigSchema: linearProviderConfigSchema,
   resourceMetaSchema: z.object({ key: z.string().optional() }),
 
   categories: {
