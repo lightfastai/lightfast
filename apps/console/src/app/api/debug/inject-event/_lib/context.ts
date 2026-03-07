@@ -20,7 +20,7 @@ export function buildContext(
       const c = cfg.sourceType === "github" ? cfg : null;
       return `Generate a realistic GitHub webhook payload.
 Repo ID: ${c?.repoId ?? "567890123"}
-Account: ${installation.accountLogin ?? "acme"}
+Account: ${installation.externalId ?? "acme"}
 ${action ? `Action: ${action}` : ""}${contextLine}`;
     }
     case "vercel": {

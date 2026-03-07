@@ -21,6 +21,7 @@ export const GET = handle({
       return new Response("Forbidden", { status: 403 });
     }
 
-    // Return void to allow the connection
+    // Return undefined to allow the connection
+    return undefined;
   },
 });

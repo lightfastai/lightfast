@@ -194,7 +194,6 @@ function ResourceRow({ integration }: { integration: Source }) {
 	const { metadata } = integration;
 
 	const isAwaitingConfig = metadata.sourceType === "github" && metadata.status?.configStatus === "awaiting_config";
-	const isPrivate = metadata.sourceType === "github" && metadata.isPrivate;
 	const subscribedEvents = metadata.sync.events ?? [];
 	const eventLabel = subscribedEvents.length === 0 ? "All events" : `${subscribedEvents.length} events`;
 	const resourceName = getResourceLabel(metadata);
@@ -214,16 +213,6 @@ function ResourceRow({ integration }: { integration: Source }) {
 							)}
 						/>
 						<span className="text-sm font-medium truncate">{resourceName}</span>
-						{isPrivate && (
-							<span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
-								Private
-							</span>
-						)}
-						{metadata.sourceType === "linear" && (
-							<span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
-								{metadata.teamKey}
-							</span>
-						)}
 					</div>
 					<div className="flex items-center gap-3 shrink-0 ml-3">
 						{integration.documentCount > 0 && (
@@ -265,6 +254,7 @@ function ResourceRow({ integration }: { integration: Source }) {
 					</div>
 				)}
 				<SourceSettingsForm
+					installationId={integration.installationId}
 					integrationId={integration.id}
 					provider={metadata.sourceType}
 					currentEvents={subscribedEvents}
