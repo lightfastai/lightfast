@@ -274,6 +274,13 @@
       "when": 1772796381785,
       "tag": "0038_big_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1772848981239,
+      "tag": "0039_luxuriant_imperial_guard",
+      "breakpoints": true
     }
   ]
 }
