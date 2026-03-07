@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { workspaceIntegrations } from "@db/console/schema";
+import { workspaceIntegrations, gwInstallations } from "@db/console/schema";
 import { eq, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -188,18 +188,28 @@ export const sourcesM2MRouter = {
   markGithubInstallationInactive: webhookM2MProcedure
     .input(markGithubInstallationInactiveSchema)
     .mutation(async ({ input }) => {
-      // Find all sources for this installation
-      const sources = await db
-        .select()
+      // Find all active sources for this GitHub installation via FK path.
+      // Leverages the unique index on (provider, externalId) for an efficient
+      // lookup instead of scanning the entire table and filtering in memory.
+      const installationSources = await db
+        .select({
+          id: workspaceIntegrations.id,
+          workspaceId: workspaceIntegrations.workspaceId,
+          providerConfig: workspaceIntegrations.providerConfig,
+          providerResourceId: workspaceIntegrations.providerResourceId,
+        })
         .from(workspaceIntegrations)
-        .where(eq(workspaceIntegrations.isActive, true));
-
-      // Filter to GitHub sources with matching installationId
-      const installationSources = sources.filter(
-        (source) =>
-          source.providerConfig.sourceType === "github" &&
-          source.providerConfig.installationId === input.githubInstallationId
-      );
+        .innerJoin(
+          gwInstallations,
+          eq(workspaceIntegrations.installationId, gwInstallations.id),
+        )
+        .where(
+          and(
+            eq(gwInstallations.provider, "github"),
+            eq(gwInstallations.externalId, input.githubInstallationId),
+            eq(workspaceIntegrations.isActive, true),
+          ),
+        );
 
       if (installationSources.length === 0) {
         return {

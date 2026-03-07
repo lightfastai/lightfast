@@ -98,7 +98,6 @@ export const workspaceAccessRouter = {
         // Optional: Connect GitHub repository during workspace creation
         githubRepository: z.object({
           gwInstallationId: z.string(),
-          installationId: z.string(), // GitHub App installation external ID
           repoId: z.string(),
           repoName: z.string(),
           repoFullName: z.string(),
@@ -246,7 +245,6 @@ export const workspaceAccessRouter = {
                 version: 1 as const,
                 sourceType: "github" as const,
                 type: "repository" as const,
-                installationId: repo.installationId,
                 repoId: repo.repoId,
                 sync: repo.syncConfig,
               },

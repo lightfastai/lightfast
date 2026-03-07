@@ -66,7 +66,6 @@ export const githubProviderConfigSchema = z.object({
   version: z.literal(1),
   sourceType: z.literal("github"),
   type: z.literal("repository"),
-  installationId: z.string(),
   repoId: z.string(),
   sync: syncSchema,
   status: z
