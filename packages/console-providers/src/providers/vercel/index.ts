@@ -1,7 +1,7 @@
 import { defineProvider, actionEvent } from "../../define.js";
 import { z } from "zod";
 import { vercelConfigSchema, vercelAccountInfoSchema, vercelOAuthResponseSchema } from "./auth.js";
-import type { VercelConfig, VercelAccountInfo } from "./auth.js";
+import type { VercelConfig, VercelAccountInfo, VercelOAuthRaw } from "./auth.js";
 import type { OAuthTokens, CallbackResult } from "../../types.js";
 import { computeHmac, timingSafeEqual } from "../../crypto.js";
 import {
@@ -58,6 +58,7 @@ export const vercel = defineProvider({
   description: "Connect your Vercel projects",
   configSchema: vercelConfigSchema,
   accountInfoSchema: vercelAccountInfoSchema,
+  resourceMetaSchema: z.object({}),
 
   // Fine-grained categories for UI/PROVIDER_REGISTRY compatibility
   categories: {
@@ -94,6 +95,25 @@ export const vercel = defineProvider({
     "deployment.error",
     "deployment.canceled",
   ],
+
+  buildProviderConfig: ({ resourceId, providerAccountInfo, defaultSyncEvents }) => {
+    if (providerAccountInfo?.sourceType !== "vercel") {
+      throw new Error("Invalid provider account info for vercel");
+    }
+    const raw = providerAccountInfo.raw as VercelOAuthRaw;
+    return {
+      version: 1 as const,
+      sourceType: "vercel" as const,
+      type: "project" as const,
+      projectId: resourceId,
+      teamId: raw.team_id ?? undefined,
+      configurationId: raw.installation_id,
+      sync: {
+        events: [...defaultSyncEvents],
+        autoSync: true,
+      },
+    };
+  },
 
   // Wire eventType "deployment.created" → dispatch category "deployment"
   resolveCategory: (eventType) => eventType.split(".")[0] ?? eventType,

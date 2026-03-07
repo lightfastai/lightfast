@@ -79,6 +79,7 @@ export const sentry = defineProvider({
   description: "Connect your Sentry projects",
   configSchema: sentryConfigSchema,
   accountInfoSchema: sentryAccountInfoSchema,
+  resourceMetaSchema: z.object({ slug: z.string().optional() }),
 
   categories: {
     issue: { label: "Issues", description: "Capture issue state changes (created, resolved, assigned, ignored)", type: "observation" },
@@ -106,6 +107,17 @@ export const sentry = defineProvider({
   },
 
   defaultSyncEvents: ["issue", "error", "comment"],
+
+  buildProviderConfig: ({ resourceId, defaultSyncEvents }) => ({
+    version: 1 as const,
+    sourceType: "sentry" as const,
+    type: "project" as const,
+    projectId: resourceId,
+    sync: {
+      events: [...defaultSyncEvents],
+      autoSync: true,
+    },
+  }),
 
   // Sentry wire eventType maps 1:1 to event key (e.g., "issue" → "issue")
   resolveCategory: (eventType) => eventType,

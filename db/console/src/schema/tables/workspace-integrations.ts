@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 import { gwInstallations } from "./gw-installations";
-import type { SourceType } from "@repo/console-providers";
+import type { SourceType, ProviderConfig } from "@repo/console-providers";
 import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-validation";
 
 /**
@@ -46,105 +46,13 @@ export const workspaceIntegrations = pgTable(
     connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
 
     /**
-     * Unified provider configuration containing all provider-specific data and sync settings.
-     * This replaces the previous separate resourceData + syncConfig fields.
+     * Provider-specific IDs and sync settings (JSONB).
+     * Only stable identifiers — no mutable display data (names, slugs, branches).
+     * Display metadata will be resolved from a cache layer.
      *
-     * Examples:
-     *
-     * GitHub Repository:
-     * {
-     *   sourceType: "github",
-     *   type: "repository",
-     *   installationId: "12345678",
-     *   repoId: "567890123",
-     *   repoName: "frontend",
-     *   repoFullName: "acme/frontend",
-     *   defaultBranch: "main",
-     *   isPrivate: true,
-     *   isArchived: false,
-     *   sync: {
-     *     branches: ["main", "develop"],
-     *     paths: ["**\/*"],
-     *     events: ["push", "pull_request"],
-     *     autoSync: true
-     *   }
-     * }
-     *
-     * Vercel Project:
-     * {
-     *   sourceType: "vercel",
-     *   type: "project",
-     *   projectId: "prj_123456",
-     *   projectName: "my-nextjs-app",
-     *   configurationId: "icfg_789",
-     *   sync: {
-     *     events: ["deployment.created", "deployment.ready"],
-     *     autoSync: true
-     *   }
-     * }
+     * Schema: providerConfigSchema from @repo/console-providers
      */
-    providerConfig: jsonb("provider_config").$type<
-      | {
-          version: 1;
-          sourceType: "github";
-          type: "repository";
-          installationId: string;        // GitHub App installation ID
-          repoId: string;                // GitHub repo ID
-          repoName: string;              // "frontend"
-          repoFullName: string;          // "acme/frontend"
-          defaultBranch: string;         // "main"
-          isPrivate: boolean;
-          isArchived: boolean;
-          sync: {
-            branches?: string[];         // ["main", "develop"]
-            paths?: string[];            // ["**/*"]
-            events?: string[];           // ["push", "pull_request"]
-            autoSync: boolean;           // Auto-sync on changes
-          };
-          status?: {                     // NEW: Optional status tracking
-            configStatus?: "configured" | "awaiting_config";
-            configPath?: string;
-            lastConfigCheck?: string;
-          };
-        }
-      | {
-          version: 1;
-          sourceType: "vercel";
-          type: "project";
-          projectId: string;               // Vercel project ID
-          projectName: string;             // "my-nextjs-app"
-          teamId?: string;                 // Vercel team ID (null for personal accounts)
-          teamSlug?: string;               // Team slug for display
-          configurationId: string;         // Integration configuration ID (from OAuth)
-          sync: {
-            events?: string[];             // ["deployment.created", "deployment.ready", ...]
-            autoSync: boolean;             // Track deployments automatically
-          };
-        }
-      | {
-          version: 1;
-          sourceType: "sentry";
-          type: "project";
-          projectSlug: string;
-          projectId: string;
-          sync: {
-            events?: string[];
-            autoSync: boolean;
-          };
-        }
-      | {
-          version: 1;
-          sourceType: "linear";
-          type: "team";
-          teamId: string;
-          teamKey: string;
-          teamName: string;
-          sync: {
-            events?: string[];
-            autoSync: boolean;
-          };
-        }
-    >().notNull(),
+    providerConfig: jsonb("provider_config").$type<ProviderConfig>().notNull(),
 
     /**
      * Fast lookup field for provider-specific resource IDs.

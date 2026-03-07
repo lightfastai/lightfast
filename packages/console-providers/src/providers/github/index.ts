@@ -114,6 +114,7 @@ export const github = defineProvider({
   description: "Connect your GitHub repositories",
   configSchema: githubConfigSchema,
   accountInfoSchema: githubAccountInfoSchema,
+  resourceMetaSchema: z.object({ fullName: z.string().optional() }),
 
   categories: {
     push: { label: "Push", description: "Sync files and capture observations when code is pushed", type: "sync+observation" },
@@ -258,6 +259,20 @@ export const github = defineProvider({
   },
 
   defaultSyncEvents: ["push", "pull_request", "issues", "release", "discussion"],
+
+  buildProviderConfig: ({ resourceId, installationExternalId, defaultSyncEvents }) => ({
+    version: 1 as const,
+    sourceType: "github" as const,
+    type: "repository" as const,
+    installationId: installationExternalId,
+    repoId: resourceId,
+    sync: {
+      branches: ["main"],
+      paths: ["**/*"],
+      events: [...defaultSyncEvents],
+      autoSync: true,
+    },
+  }),
 
   // GitHub wire eventType maps 1:1 to event key (e.g., "push" → "push")
   resolveCategory: (eventType) => eventType,

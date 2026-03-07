@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import type { PostTransformEvent } from "./post-transform-event.js";
 import type { TransformContext, OAuthTokens, BaseProviderAccountInfo, CallbackResult } from "./types.js";
+import type { ProviderConfig } from "./provider-config.js";
 
 export interface CategoryDef {
   label: string;
@@ -102,12 +103,15 @@ export interface ProviderDefinition<
   TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
   TEvents extends Record<string, EventDefinition> = Record<string, EventDefinition>,
   TAccountInfoSchema extends z.ZodObject = z.ZodObject,
+  TResourceMetaSchema extends z.ZodObject = z.ZodObject,
 > {
   readonly name: string;
   readonly displayName: string;
   readonly description: string;
   readonly configSchema: z.ZodType<TConfig>;
   readonly accountInfoSchema: TAccountInfoSchema;
+  /** Zod schema for extra resource fields sent during bulk-link (beyond resourceId + resourceName). */
+  readonly resourceMetaSchema: TResourceMetaSchema;
   readonly categories: TCategories;
   readonly events: TEvents;
   /** Default sync event keys enabled when linking a new resource. Must be a subset of category keys. */
@@ -124,6 +128,16 @@ export interface ProviderDefinition<
   readonly envSchema: Record<string, z.ZodType>;
   /** Build runtime config from validated env + runtime values */
   readonly createConfig: (env: Record<string, string>, runtime: RuntimeConfig) => TConfig;
+  /** Build the providerConfig JSONB blob for a new workspace integration record. */
+  readonly buildProviderConfig: (params: {
+    resourceId: string;
+    resourceName: string;
+    /** Raw metadata from the API request (provider-specific optional fields). */
+    metadata: Record<string, unknown>;
+    installationExternalId: string;
+    providerAccountInfo: BaseProviderAccountInfo | null;
+    defaultSyncEvents: readonly string[];
+  }) => ProviderConfig;
 }
 
 /**
@@ -140,11 +154,12 @@ export function defineProvider<
   const TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
   const TEvents extends Record<string, EventDefinition> = Record<string, EventDefinition>,
   TAccountInfoSchema extends z.ZodObject = z.ZodObject,
+  TResourceMetaSchema extends z.ZodObject = z.ZodObject,
 >(
-  def: ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema>
+  def: ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TResourceMetaSchema>
     & { readonly defaultSyncEvents: readonly (keyof TCategories & string)[] },
-): ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema> {
-  return Object.freeze(def) as ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema>;
+): ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TResourceMetaSchema> {
+  return Object.freeze(def) as ProviderDefinition<TConfig, TAccountInfo, TCategories, TEvents, TAccountInfoSchema, TResourceMetaSchema>;
 }
 
 // ── Display-Layer Types ──────────────────────────────────────────────────────

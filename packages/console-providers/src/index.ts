@@ -230,6 +230,7 @@ export { transformWebhookPayload } from "./dispatch.js";
 export {
   PROVIDERS,
   PROVIDER_ENV_SCHEMAS,
+  PROVIDER_RESOURCE_META,
   EVENT_REGISTRY,
   getProvider,
   getDefaultSyncEvents,
@@ -239,6 +240,7 @@ export {
 export type {
   ProviderName,
   SourceType,
+  ProviderResourceMeta,
   EventKey,
   EventRegistryEntry,
   ProviderAccountInfo,
@@ -249,6 +251,22 @@ export { github } from "./providers/github/index.js";
 export { vercel } from "./providers/vercel/index.js";
 export { linear } from "./providers/linear/index.js";
 export { sentry } from "./providers/sentry/index.js";
+
+// ── Provider Config (JSONB shapes for workspace_integrations.provider_config) ─
+export {
+  providerConfigSchema,
+  githubProviderConfigSchema,
+  vercelProviderConfigSchema,
+  sentryProviderConfigSchema,
+  linearProviderConfigSchema,
+} from "./provider-config.js";
+export type {
+  ProviderConfig,
+  GithubProviderConfig,
+  VercelProviderConfig,
+  SentryProviderConfig,
+  LinearProviderConfig,
+} from "./provider-config.js";
 
 // ── Display Metadata (re-exported for server consumers) ─────────────────────
 export {

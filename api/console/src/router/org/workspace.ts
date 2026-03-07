@@ -31,96 +31,8 @@ import { publicProcedure, orgScopedProcedure, resolveWorkspaceByName } from "../
 import { recordActivity } from "../../lib/activity";
 import { ensureActorLinked } from "../../lib/actor-linking";
 import { notifyBackfill } from "../../lib/backfill";
-import { getDefaultSyncEvents, sourceTypeSchema, PROVIDER_RESOURCE_META } from "@repo/console-providers";
-import type { ProviderName, ProviderResourceMeta } from "@repo/console-providers";
-import type { GwInstallation } from "@db/console/schema";
-
-type BuilderParams<P extends ProviderName> = {
-  resourceId: string;
-  resourceName: string;
-  metadata: ProviderResourceMeta[P];
-  gwInstallation: GwInstallation;
-  defaultSyncEvents: readonly string[];
-};
-
-/** Per-provider providerConfig factory — metadata is strictly typed per provider */
-const PROVIDER_CONFIG: {
-  [K in ProviderName]: (params: BuilderParams<K>) => WorkspaceIntegration["providerConfig"];
-} = {
-  github: ({ resourceId, resourceName, metadata, gwInstallation, defaultSyncEvents }) => ({
-    version: 1,
-    sourceType: "github",
-    type: "repository",
-    installationId: gwInstallation.externalId,
-    repoId: resourceId,
-    repoFullName: metadata.fullName ?? resourceName,
-    repoName: (metadata.fullName ?? resourceName).split("/")[1] ?? resourceName,
-    defaultBranch: "main",
-    isPrivate: false,
-    isArchived: false,
-    sync: {
-      branches: ["main"],
-      paths: ["**/*"],
-      events: [...defaultSyncEvents],
-      autoSync: true,
-    },
-  }),
-
-  vercel: ({ resourceId, resourceName, gwInstallation, defaultSyncEvents }) => {
-    const info = gwInstallation.providerAccountInfo;
-    if (!info || info.sourceType !== "vercel") {
-      throw new Error("Invalid provider account info for vercel");
-    }
-    return {
-      version: 1,
-      sourceType: "vercel",
-      type: "project",
-      projectId: resourceId,
-      projectName: resourceName,
-      teamId: info.raw.team_id ?? undefined,
-      teamSlug: undefined,
-      configurationId: info.raw.installation_id,
-      sync: {
-        events: [...defaultSyncEvents],
-        autoSync: true,
-      },
-    };
-  },
-
-  linear: ({ resourceId, resourceName, metadata, defaultSyncEvents }) => ({
-    version: 1,
-    sourceType: "linear",
-    type: "team",
-    teamId: resourceId,
-    teamKey: metadata.key ?? "",
-    teamName: resourceName,
-    sync: {
-      events: [...defaultSyncEvents],
-      autoSync: true,
-    },
-  }),
-
-  sentry: ({ resourceId, metadata, defaultSyncEvents }) => ({
-    version: 1,
-    sourceType: "sentry",
-    type: "project",
-    projectSlug: metadata.slug ?? "",
-    projectId: resourceId,
-    sync: {
-      events: [...defaultSyncEvents],
-      autoSync: true,
-    },
-  }),
-};
-
-/** Build providerConfig for a given provider — correlates metadata schema + builder */
-function buildProviderConfig<P extends ProviderName>(
-  provider: P,
-  params: Omit<BuilderParams<P>, "metadata"> & { rawMetadata: Record<string, string> },
-): WorkspaceIntegration["providerConfig"] {
-  const metadata = PROVIDER_RESOURCE_META[provider].parse(params.rawMetadata) as ProviderResourceMeta[P];
-  return PROVIDER_CONFIG[provider]({ ...params, metadata });
-}
+import { getDefaultSyncEvents, sourceTypeSchema, PROVIDERS } from "@repo/console-providers";
+import type { ProviderName } from "@repo/console-providers";
 
 /**
  * Workspace router - internal procedures for API routes
@@ -688,6 +600,7 @@ export const workspaceRouter = {
             lastSyncedAt: workspaceIntegrations.lastSyncedAt,
             lastSyncStatus: workspaceIntegrations.lastSyncStatus,
             documentCount: workspaceIntegrations.documentCount,
+            providerResourceId: workspaceIntegrations.providerResourceId,
             providerConfig: workspaceIntegrations.providerConfig,
             backfillConfig: gwInstallations.backfillConfig,
           })
@@ -717,9 +630,7 @@ export const workspaceRouter = {
             id: s.id,
             type: s.sourceType,
             sourceType: s.sourceType, // Canonical name
-            displayName: s.providerConfig.sourceType === "github"
-              ? s.providerConfig.repoFullName
-              : s.sourceType,
+            displayName: s.providerResourceId,
             documentCount: s.documentCount,
             isActive: s.isActive, // For UI compatibility
             connectedAt: s.connectedAt, // For UI compatibility
@@ -1102,9 +1013,7 @@ export const workspaceRouter = {
               sourceType: "vercel" as const,
               type: "project" as const,
               projectId,
-              projectName,
               teamId: providerAccountInfo.raw.team_id ?? undefined,
-              teamSlug: undefined,
               configurationId: providerAccountInfo.raw.installation_id,
               sync: {
                 events: [...getDefaultSyncEvents("vercel")],
@@ -1214,7 +1123,7 @@ export const workspaceRouter = {
      * Bulk link resources (repositories, projects, teams) to a workspace.
      *
      * Generic mutation replacing provider-specific bulkLink* mutations.
-     * Per-provider providerConfig construction is handled by PROVIDER_CONFIG.
+     * Per-provider providerConfig construction is handled by PROVIDERS[provider].buildProviderConfig.
      */
     bulkLinkResources: orgScopedProcedure
       .input(
@@ -1313,11 +1222,12 @@ export const workspaceRouter = {
             provider,
             connectedBy: ctx.auth.userId,
             providerResourceId: resource.resourceId,
-            providerConfig: buildProviderConfig(typedProvider, {
+            providerConfig: PROVIDERS[typedProvider].buildProviderConfig({
               resourceId: resource.resourceId,
               resourceName: resource.resourceName,
-              rawMetadata: resource.metadata ?? {},
-              gwInstallation,
+              metadata: resource.metadata,
+              installationExternalId: gwInstallation.externalId,
+              providerAccountInfo: gwInstallation.providerAccountInfo,
               defaultSyncEvents,
             }),
             isActive: true,

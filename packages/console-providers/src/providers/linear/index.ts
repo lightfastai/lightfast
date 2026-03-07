@@ -151,6 +151,7 @@ export const linear = defineProvider({
   description: "Connect your Linear workspace",
   configSchema: linearConfigSchema,
   accountInfoSchema: linearAccountInfoSchema,
+  resourceMetaSchema: z.object({ key: z.string().optional() }),
 
   categories: {
     Issue: { label: "Issues", description: "Capture issue creates, updates, and deletes", type: "observation" },
@@ -205,6 +206,17 @@ export const linear = defineProvider({
   },
 
   defaultSyncEvents: ["Issue", "Comment", "IssueLabel", "Project", "Cycle"],
+
+  buildProviderConfig: ({ resourceId, defaultSyncEvents }) => ({
+    version: 1 as const,
+    sourceType: "linear" as const,
+    type: "team" as const,
+    teamId: resourceId,
+    sync: {
+      events: [...defaultSyncEvents],
+      autoSync: true,
+    },
+  }),
 
   // Wire eventType "Issue:create" → dispatch category "Issue"
   resolveCategory: (eventType) => eventType.split(":")[0] ?? eventType,
