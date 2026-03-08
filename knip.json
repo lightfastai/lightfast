@@ -27,7 +27,8 @@
     },
     "apps/gateway": {
       "entry": ["src/index.ts"],
-      "project": ["src/**/*.ts"]
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": ["drizzle-orm"]
     },
     "apps/backfill": {
       "entry": ["src/index.ts"],
@@ -49,10 +50,31 @@
       "entry": ["src/index.ts"],
       "project": ["src/**/*.{ts,tsx}"]
     },
+    "packages/og": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["react"]
+    },
     "vendor/*": {
       "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"],
       "drizzle": false
+    },
+    "vendor/cms": {
+      "entry": ["src/index.ts", "lib/**/*.ts", "components/**/*.tsx"],
+      "project": ["src/**/*.ts", "lib/**/*.ts", "components/**/*.tsx"],
+      "drizzle": false
+    },
+    "vendor/inngest": {
+      "entry": ["src/index.ts", "env.ts"],
+      "project": ["src/**/*.ts", "env.ts"],
+      "drizzle": false
+    },
+    "vendor/upstash-workflow": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "drizzle": false,
+      "ignoreDependencies": ["next"]
     },
     "internal/eslint": {
       "entry": ["base.js", "nextjs.js", "react.js", "hono.js"]
@@ -83,6 +105,17 @@
     "@repo/prettier-config",
     "@repo/eslint-config",
     "@repo/console-remotion",
-    "@repo/tech-stack-detector"
+    "@repo/tech-stack-detector",
+    "tailwindcss",
+    "@tailwindcss/postcss",
+    "@tailwindcss/typography",
+    "postcss",
+    "autoprefixer",
+    "import-in-the-middle",
+    "require-in-the-middle",
+    "srvx",
+    "tsx",
+    "prettier",
+    "eslint"
   ]
 }

@@ -97,7 +97,6 @@
     "eslint-plugin-react-compiler": "19.1.0-rc.2",
     "happy-dom": "^20.7.0",
     "import-in-the-middle": "catalog:",
-    "nosecone": "1.0.0-beta.15",
     "postcss": "catalog:tailwind4",
     "require-in-the-middle": "catalog:",
     "tailwindcss": "catalog:tailwind4",

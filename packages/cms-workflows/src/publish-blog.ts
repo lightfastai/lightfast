@@ -19,8 +19,8 @@ import { resolve } from "node:path";
 import matter from "gray-matter";
 import {
   createBlogPostFromAI,
-} from "../src/mutations/blog.js";
-import type { AIGeneratedPost, ContentType } from "../src/mutations/blog.js";
+} from "./mutations/blog.js";
+import type { AIGeneratedPost, ContentType } from "./mutations/blog.js";
 import { basehub } from "basehub";
 import { basehubEnv } from "@vendor/cms/env";
 import { blog } from "@vendor/cms";
