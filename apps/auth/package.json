@@ -17,7 +17,6 @@
   "dependencies": {
     "@clerk/nextjs": "catalog:",
     "@clerk/shared": "catalog:",
-    "@clerk/types": "catalog:",
     "@hookform/resolvers": "^3.10.0",
     "@repo/ui": "workspace:*",
     "@rescale/nemo": "^2.1.1",
