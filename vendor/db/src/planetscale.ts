@@ -3,17 +3,17 @@
  * Provides a thin wrapper around drizzle-orm and @planetscale/database
  */
 
-import { drizzle  } from "drizzle-orm/planetscale-serverless";
-import type {PlanetScaleDatabase} from "drizzle-orm/planetscale-serverless";
-import { Client  } from "@planetscale/database";
+import { Client } from "@planetscale/database";
+import type { PlanetScaleDatabase } from "drizzle-orm/planetscale-serverless";
+import { drizzle } from "drizzle-orm/planetscale-serverless";
 
 /**
  * Configuration for creating a PlanetScale database connection
  */
 export interface DatabaseConfig {
   host: string;
-  username: string;
   password: string;
+  username: string;
 }
 
 /**
@@ -32,18 +32,17 @@ export function createPlanetScaleClient(config: DatabaseConfig): Client {
  * @param config - Database configuration
  * @param schema - Optional schema object for type safety
  */
-export function createDatabase<TSchema extends Record<string, unknown> = Record<string, never>>(
-  config: DatabaseConfig,
-  schema?: TSchema
-): PlanetScaleDatabase<TSchema> {
+export function createDatabase<
+  TSchema extends Record<string, unknown> = Record<string, never>,
+>(config: DatabaseConfig, schema?: TSchema): PlanetScaleDatabase<TSchema> {
   const client = createPlanetScaleClient(config);
   return drizzle(client, { schema }) as PlanetScaleDatabase<TSchema>;
 }
 
+export type { Config as PlanetScaleConfig } from "@planetscale/database";
+export { Client } from "@planetscale/database";
+export type { PlanetScaleDatabase } from "drizzle-orm/planetscale-serverless";
 /**
  * Re-export commonly used types and utilities
  */
 export { drizzle } from "drizzle-orm/planetscale-serverless";
-export type { PlanetScaleDatabase } from "drizzle-orm/planetscale-serverless";
-export { Client } from "@planetscale/database";
-export type { Config as PlanetScaleConfig } from "@planetscale/database";

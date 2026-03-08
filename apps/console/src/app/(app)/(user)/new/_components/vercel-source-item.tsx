@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
-import { Search, Loader2 } from "lucide-react";
+import { useTRPC } from "@repo/console-trpc/react";
+import {
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@repo/ui/components/ui/accordion";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -13,20 +16,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@repo/ui/components/ui/accordion";
-import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { FrameworkIcons } from "@repo/ui/framework-icons";
-import { useTRPC } from "@repo/console-trpc/react";
-import { useWorkspaceForm } from "./workspace-form-provider";
+import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { Loader2, Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useOAuthPopup } from "~/hooks/use-oauth-popup";
+import { useWorkspaceForm } from "./workspace-form-provider";
 
-function FrameworkIcon({ framework, className }: { framework: string | null; className?: string }) {
+function FrameworkIcon({
+  framework,
+  className,
+}: {
+  framework: string | null;
+  className?: string;
+}) {
   const icon = framework ? FrameworkIcons[framework] : null;
-  if (icon) return icon({ className });
+  if (icon) {
+    return icon({ className });
+  }
   return <IntegrationLogoIcons.vercel className={className} />;
 }
 
@@ -68,7 +76,7 @@ export function VercelSourceItem() {
 
   const handleConnect = () => {
     installationIdsBeforeRef.current = new Set(
-      connectionInstallations.map((i) => i.id),
+      connectionInstallations.map((i) => i.id)
     );
     void connectOAuth();
   };
@@ -96,7 +104,9 @@ export function VercelSourceItem() {
   // Auto-select installation (prefer newest after OAuth)
   useEffect(() => {
     if (connectionInstallations.length === 0) {
-      if (selectedVercelInstallation !== null) setSelectedVercelInstallation(null);
+      if (selectedVercelInstallation !== null) {
+        setSelectedVercelInstallation(null);
+      }
       return;
     }
     // After OAuth: prefer the newly added installation
@@ -104,7 +114,7 @@ export function VercelSourceItem() {
       preferNewestRef.current = false;
       const beforeIds = installationIdsBeforeRef.current;
       const newInst = connectionInstallations.find(
-        (inst) => !beforeIds.has(inst.id),
+        (inst) => !beforeIds.has(inst.id)
       );
       if (newInst) {
         setSelectedVercelInstallation(newInst);
@@ -114,7 +124,9 @@ export function VercelSourceItem() {
     }
     // Default: select first if current selection no longer exists
     const stillExists = selectedVercelInstallation
-      ? connectionInstallations.some((inst) => inst.id === selectedVercelInstallation.id)
+      ? connectionInstallations.some(
+          (inst) => inst.id === selectedVercelInstallation.id
+        )
       : false;
     if (!stillExists) {
       const first = connectionInstallations[0];
@@ -122,7 +134,12 @@ export function VercelSourceItem() {
         setSelectedVercelInstallation(first);
       }
     }
-  }, [connectionInstallations, selectedVercelInstallation, setSelectedVercelInstallation, setSelectedProjects]);
+  }, [
+    connectionInstallations,
+    selectedVercelInstallation,
+    setSelectedVercelInstallation,
+    setSelectedProjects,
+  ]);
 
   // Sync vercelInstallationId from the selected installation
   useEffect(() => {
@@ -130,7 +147,11 @@ export function VercelSourceItem() {
   }, [selectedVercelInstallation?.id, setVercelInstallationId]);
 
   // Fetch Vercel projects (no workspaceId — workspace doesn't exist yet)
-  const { data: projectsData, isLoading: isLoadingProjects, error: projectsError } = useQuery({
+  const {
+    data: projectsData,
+    isLoading: isLoadingProjects,
+    error: projectsError,
+  } = useQuery({
     ...trpc.connections.vercel.listProjects.queryOptions({
       installationId: vercelInstallationId ?? "",
     }),
@@ -142,74 +163,78 @@ export function VercelSourceItem() {
 
   const projects = projectsData?.projects ?? [];
   const filteredProjects = projects.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const selectedProject = selectedProjects[0] ?? null;
 
   /** Display label for a Vercel installation */
-  const getInstallationLabel = (inst: (typeof connectionInstallations)[number]) =>
-    inst.accountLogin;
+  const getInstallationLabel = (
+    inst: (typeof connectionInstallations)[number]
+  ) => inst.accountLogin;
 
   return (
     <AccordionItem value="vercel">
       <AccordionTrigger className="px-4 hover:no-underline">
-        <div className="flex items-center gap-3 flex-1">
+        <div className="flex flex-1 items-center gap-3">
           <IntegrationLogoIcons.vercel className="h-5 w-5 shrink-0" />
           <span className="font-medium">Vercel</span>
           {hasConnection ? (
-            <Badge variant="secondary" className="text-xs">Connected</Badge>
+            <Badge className="text-xs" variant="secondary">
+              Connected
+            </Badge>
           ) : (
-            <Badge variant="outline" className="text-xs text-muted-foreground">Not connected</Badge>
+            <Badge className="text-muted-foreground text-xs" variant="outline">
+              Not connected
+            </Badge>
           )}
           {selectedProject && (
-            <Badge variant="default" className="text-xs ml-auto mr-2">
+            <Badge className="mr-2 ml-auto text-xs" variant="default">
               1 selected
             </Badge>
           )}
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4">
-        {!hasConnection ? (
-          <div className="flex flex-col items-center py-6 text-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              Connect Vercel to select projects
-            </p>
-            <Button onClick={handleConnect} variant="outline">
-              <IntegrationLogoIcons.vercel className="h-4 w-4 mr-2" />
-              Connect Vercel
-            </Button>
-          </div>
-        ) : (
+        {hasConnection ? (
           <div className="space-y-4 pt-2">
             {selectedProject && !showPicker ? (
               /* Selected card view */
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                    <FrameworkIcon framework={selectedProject.framework} className="h-4 w-4" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                    <FrameworkIcon
+                      className="h-4 w-4"
+                      framework={selectedProject.framework}
+                    />
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">{selectedProject.name}</span>
+                      <span className="truncate font-medium">
+                        {selectedProject.name}
+                      </span>
                       {selectedProject.framework && (
-                        <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                        <span className="shrink-0 rounded border px-2 py-0.5 text-muted-foreground text-xs">
                           {selectedProject.framework}
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button variant="outline" size="sm" onClick={() => setShowPicker(true)}>
+                  <div className="flex shrink-0 gap-2">
+                    <Button
+                      onClick={() => setShowPicker(true)}
+                      size="sm"
+                      variant="outline"
+                    >
                       Change
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
                       onClick={() => {
                         setSelectedProjects([]);
                         setShowPicker(true);
                       }}
+                      size="sm"
+                      variant="ghost"
                     >
                       Clear
                     </Button>
@@ -221,14 +246,16 @@ export function VercelSourceItem() {
                 {/* Team Selector & Search */}
                 <div className="flex gap-4">
                   <Select
-                    value={selectedVercelInstallation?.id}
                     onValueChange={(id) => {
-                      const inst = connectionInstallations.find((i) => i.id === id);
+                      const inst = connectionInstallations.find(
+                        (i) => i.id === id
+                      );
                       if (inst) {
                         setSelectedVercelInstallation(inst);
                         setSelectedProjects([]);
                       }
                     }}
+                    value={selectedVercelInstallation?.id}
                   >
                     <SelectTrigger className="w-[220px]">
                       <SelectValue />
@@ -245,58 +272,72 @@ export function VercelSourceItem() {
                     </SelectContent>
                   </Select>
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
+                      className="pl-10"
+                      onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search projects..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
                     />
                   </div>
                 </div>
 
                 {/* Project List */}
-                <div className="rounded-lg border bg-card max-h-[260px] overflow-y-auto">
+                <div className="max-h-[260px] overflow-y-auto rounded-lg border bg-card">
                   {projectsError ? (
-                    <div className="flex flex-col items-center py-6 text-center gap-3">
-                      <p className="text-sm text-destructive">
-                        Failed to load projects. The connection may need to be refreshed.
+                    <div className="flex flex-col items-center gap-3 py-6 text-center">
+                      <p className="text-destructive text-sm">
+                        Failed to load projects. The connection may need to be
+                        refreshed.
                       </p>
-                      <Button onClick={handleConnect} variant="outline" size="sm">
+                      <Button
+                        onClick={handleConnect}
+                        size="sm"
+                        variant="outline"
+                      >
                         Reconnect Vercel
                       </Button>
                     </div>
                   ) : isLoadingProjects ? (
                     <div className="p-8 text-center text-muted-foreground">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                      <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
                       Loading projects...
                     </div>
                   ) : filteredProjects.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">
-                      {searchQuery ? "No projects match your search" : "No projects found"}
+                      {searchQuery
+                        ? "No projects match your search"
+                        : "No projects found"}
                     </div>
                   ) : (
                     <div className="divide-y">
                       {filteredProjects.map((project) => (
                         <button
-                          key={project.id}
-                          type="button"
-                          className={`flex items-center gap-3 p-4 w-full text-left hover:bg-accent transition-colors cursor-pointer ${
-                            selectedProject?.id === project.id ? "bg-accent/50" : ""
+                          className={`flex w-full cursor-pointer items-center gap-3 p-4 text-left transition-colors hover:bg-accent ${
+                            selectedProject?.id === project.id
+                              ? "bg-accent/50"
+                              : ""
                           }`}
+                          key={project.id}
                           onClick={() => {
                             toggleProject(project);
                             setShowPicker(false);
                           }}
+                          type="button"
                         >
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
-                            <FrameworkIcon framework={project.framework} className="h-4 w-4" />
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                            <FrameworkIcon
+                              className="h-4 w-4"
+                              framework={project.framework}
+                            />
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium truncate">{project.name}</span>
+                              <span className="truncate font-medium">
+                                {project.name}
+                              </span>
                               {project.framework && (
-                                <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                                <span className="shrink-0 rounded border px-2 py-0.5 text-muted-foreground text-xs">
                                   {project.framework}
                                 </span>
                               )}
@@ -309,17 +350,27 @@ export function VercelSourceItem() {
                 </div>
 
                 {/* Missing project link */}
-                <div className="text-center text-sm text-muted-foreground">
+                <div className="text-center text-muted-foreground text-sm">
                   Missing a project?{" "}
                   <button
+                    className="text-blue-500 underline-offset-4 transition-colors hover:text-blue-600 hover:underline"
                     onClick={handleConnect}
-                    className="text-blue-500 hover:text-blue-600 underline-offset-4 hover:underline transition-colors"
                   >
                     Reconnect Vercel →
                   </button>
                 </div>
               </>
             )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4 py-6 text-center">
+            <p className="text-muted-foreground text-sm">
+              Connect Vercel to select projects
+            </p>
+            <Button onClick={handleConnect} variant="outline">
+              <IntegrationLogoIcons.vercel className="mr-2 h-4 w-4" />
+              Connect Vercel
+            </Button>
           </div>
         )}
       </AccordionContent>

@@ -1,12 +1,8 @@
-import type React from "react";
-import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { cn } from "@repo/ui/lib/utils";
+import type React from "react";
+import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { IsometricCard } from "../shared/isometric-card";
-import {
-  SPRING_CONFIGS,
-  MOTION_DURATION,
-  BEAM_TIMING,
-} from "../shared/timing";
+import { BEAM_TIMING, MOTION_DURATION, SPRING_CONFIGS } from "../shared/timing";
 
 // ── Pre-populated items — visible from the start so the list looks full ──
 const INITIAL_ITEMS = [
@@ -100,10 +96,10 @@ const RowContent: React.FC<{
   item: { title: string; domain: string; timestamp: string };
 }> = ({ item }) => (
   <>
-    <div className="truncate text-xs font-medium leading-4 text-foreground">
+    <div className="truncate font-medium text-foreground text-xs leading-4">
       {item.title}
     </div>
-    <div className="mt-1 flex items-center gap-2 text-xs leading-4 text-muted-foreground">
+    <div className="mt-1 flex items-center gap-2 text-muted-foreground text-xs leading-4">
       <span>{item.domain}</span>
       <span className="text-muted-foreground/40">|</span>
       <span>{item.timestamp}</span>
@@ -121,7 +117,7 @@ export const IngestedData: React.FC = () => {
   const typingFrame = Math.max(0, frame - TYPEWRITER_START);
   const charsToShow = Math.min(
     Math.floor(typingFrame * CHARS_PER_FRAME),
-    QUERY_TEXT.length,
+    QUERY_TEXT.length
   );
   const isTypingComplete = charsToShow >= QUERY_TEXT.length;
   const typingEndFrame =
@@ -182,10 +178,10 @@ export const IngestedData: React.FC = () => {
 
   return (
     <IsometricCard
-      entranceFrame={0}
       animate={false}
-      width={854}
+      entranceFrame={0}
       height={512}
+      width={854}
       x={341}
       y={1072}
     >
@@ -195,17 +191,17 @@ export const IngestedData: React.FC = () => {
       >
         {/* ── Sidebar ── */}
         <div
-          className="flex shrink-0 flex-col border-r border-border"
+          className="flex shrink-0 flex-col border-border border-r"
           style={{ width: SIDEBAR_WIDTH }}
         >
           {/* App name */}
-          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+          <div className="flex items-center gap-2 border-border border-b px-4 py-3">
             <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white">
-              <span className="text-xs font-semibold leading-none text-black">
+              <span className="font-semibold text-black text-xs leading-none">
                 AC
               </span>
             </div>
-            <span className="text-sm font-medium tracking-tight text-primary">
+            <span className="font-medium text-primary text-sm tracking-tight">
               Acme
             </span>
           </div>
@@ -214,13 +210,13 @@ export const IngestedData: React.FC = () => {
           <div className="px-2 py-2">
             {PRIMARY_NAV.map((item) => (
               <div
-                key={item.label}
                 className={cn(
                   "mb-1 rounded-lg px-2 py-2 text-xs",
                   item.active
                     ? "bg-accent font-medium text-foreground"
-                    : "font-normal text-muted-foreground",
+                    : "font-normal text-muted-foreground"
                 )}
+                key={item.label}
               >
                 {item.label}
               </div>
@@ -229,18 +225,18 @@ export const IngestedData: React.FC = () => {
 
           {/* Manage section */}
           <div className="px-2 py-1">
-            <div className="px-2 py-1 text-xs font-medium tracking-wide text-muted-foreground/70">
+            <div className="px-2 py-1 font-medium text-muted-foreground/70 text-xs tracking-wide">
               Manage
             </div>
             {MANAGE_NAV.map((item) => (
               <div
-                key={item.label}
                 className={cn(
                   "mb-1 rounded-lg px-2 py-2 text-xs",
                   item.active
                     ? "bg-accent font-medium text-foreground"
-                    : "font-normal text-muted-foreground",
+                    : "font-normal text-muted-foreground"
                 )}
+                key={item.label}
               >
                 {item.label}
               </div>
@@ -251,10 +247,10 @@ export const IngestedData: React.FC = () => {
           <div className="flex-1" />
 
           {/* Bottom section */}
-          <div className="border-t border-border px-4 py-3">
+          <div className="border-border border-t px-4 py-3">
             <div className="flex items-center gap-2">
               <div className="size-5 rounded-full border border-border bg-accent" />
-              <span className="text-xs text-muted-foreground">Acme Inc</span>
+              <span className="text-muted-foreground text-xs">Acme Inc</span>
             </div>
           </div>
         </div>
@@ -265,14 +261,14 @@ export const IngestedData: React.FC = () => {
           style={{ transformStyle: "preserve-3d" }}
         >
           {/* Search query section */}
-          <div className="flex min-h-18 flex-col justify-center border-b border-border px-4 py-3">
+          <div className="flex min-h-18 flex-col justify-center border-border border-b px-4 py-3">
             <div className="text-xs leading-normal">
               <span className="font-medium text-primary">lightfast</span>
               <span className="text-muted-foreground">.</span>
               <span className="text-foreground">search</span>
               <span className="text-muted-foreground">(</span>
             </div>
-            <div className="pl-4 text-xs leading-normal text-foreground">
+            <div className="pl-4 text-foreground text-xs leading-normal">
               {QUERY_TEXT.slice(0, charsToShow)}
               <span
                 className="font-light text-primary"
@@ -299,18 +295,20 @@ export const IngestedData: React.FC = () => {
               {INITIAL_ITEMS.map((item, j) => {
                 const slot = j + totalShift;
                 const y = slot * ROW_HEIGHT;
-                if (y >= RESULTS_HEIGHT) return null;
+                if (y >= RESULTS_HEIGHT) {
+                  return null;
+                }
 
                 return (
                   <div
+                    className="absolute right-0 left-0"
                     key={`initial-${j}`}
-                    className="absolute left-0 right-0"
                     style={{
                       height: ROW_HEIGHT,
                       transform: `translateY(${y}px)`,
                     }}
                   >
-                    <div className="flex h-full flex-col justify-center border-b border-border px-4 py-2">
+                    <div className="flex h-full flex-col justify-center border-border border-b px-4 py-2">
                       <RowContent item={item} />
                     </div>
                   </div>
@@ -322,7 +320,9 @@ export const IngestedData: React.FC = () => {
             {NEW_SEARCH_RESULTS.map((result, resultIndex) => {
               const drop = dropValues[resultIndex] ?? 0;
               // Only render once the drop phase begins
-              if (drop <= 0) return null;
+              if (drop <= 0) {
+                return null;
+              }
 
               // Slot = sum of shift springs that fired AFTER this one.
               // suffixShift[resultIndex+1] is the precomputed suffix sum.
@@ -339,7 +339,7 @@ export const IngestedData: React.FC = () => {
                 drop,
                 [0.0, 0.7, 1.0],
                 [0.8, 0.8, 0],
-                { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+                { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
               );
 
               // Ghost: faint content preview at landing zone
@@ -347,15 +347,15 @@ export const IngestedData: React.FC = () => {
                 drop,
                 [0, 0.8, 1.0],
                 [0.35, 0.35, 0],
-                { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+                { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
               );
 
               const landed = wireframeOpacity < 0.01;
 
               return (
                 <div
+                  className="absolute right-0 left-0"
                   key={result.title}
-                  className="absolute left-0 right-0"
                   style={{
                     height: ROW_HEIGHT,
                     transform: `translateY(${y}px)`,
@@ -388,8 +388,8 @@ export const IngestedData: React.FC = () => {
                     wireframeOpacity > 0 &&
                     [0, 1].map((side) => (
                       <div
-                        key={`tracer-${side}`}
                         className="pointer-events-none absolute top-0"
+                        key={`tracer-${side}`}
                         style={{
                           left: side === 0 ? 0 : undefined,
                           right: side === 1 ? 0 : undefined,
@@ -414,14 +414,14 @@ export const IngestedData: React.FC = () => {
                     <div
                       className={cn(
                         "absolute inset-0 flex flex-col justify-center bg-background px-4 py-2",
-                        landed && "border-b border-border",
+                        landed && "border-border border-b"
                       )}
                       style={
-                        !landed
-                          ? {
+                        landed
+                          ? undefined
+                          : {
                               border: `1px dashed rgba(128, 128, 128, ${wireframeOpacity})`,
                             }
-                          : undefined
                       }
                     >
                       <RowContent item={result} />

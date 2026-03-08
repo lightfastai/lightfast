@@ -1,15 +1,21 @@
+import { consoleM2MEnv } from "@repo/console-clerk-m2m/env";
+import { githubEnv } from "@repo/console-octokit-github/env";
+import { vercelEnv } from "@repo/console-vercel/env";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
-import { z } from "zod";
-
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
-import { githubEnv } from "@repo/console-octokit-github/env";
-import { consoleM2MEnv } from "@repo/console-clerk-m2m/env";
-import { vercelEnv } from "@repo/console-vercel/env";
+import { z } from "zod";
 
 export const env = createEnv({
-  extends: [vercel(), clerkEnvBase, sentryEnv, githubEnv, consoleM2MEnv, vercelEnv],
+  extends: [
+    vercel(),
+    clerkEnvBase,
+    sentryEnv,
+    githubEnv,
+    consoleM2MEnv,
+    vercelEnv,
+  ],
   shared: {},
   server: {
     /**
@@ -42,7 +48,7 @@ export const env = createEnv({
         {
           message:
             "ENCRYPTION_KEY must be 32 bytes (64 hex chars or 44 base64 chars)",
-        },
+        }
       )
       .refine(
         (key) => {
@@ -51,7 +57,7 @@ export const env = createEnv({
             "0000000000000000000000000000000000000000000000000000000000000000";
           if (key === weakKey) {
             throw new Error(
-              'Default ENCRYPTION_KEY is not allowed. Generate a secure key with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
+              "Default ENCRYPTION_KEY is not allowed. Generate a secure key with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
             );
           }
           return true;
@@ -59,12 +65,13 @@ export const env = createEnv({
         {
           message:
             "ENCRYPTION_KEY must be a cryptographically secure random value",
-        },
+        }
       ),
   },
   client: {},
   experimental__runtimeEnv: {},
   skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
+    !!process.env.SKIP_ENV_VALIDATION ||
+    process.env.npm_lifecycle_event === "lint",
   emptyStringAsUndefined: true,
 });

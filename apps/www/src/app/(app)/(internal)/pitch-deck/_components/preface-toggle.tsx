@@ -1,8 +1,8 @@
 "use client";
 
-import { PanelLeft } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
+import { PanelLeft } from "lucide-react";
 import { usePitchDeck } from "./pitch-deck-context";
 
 export function PrefaceToggle({ className }: { className?: string }) {
@@ -10,17 +10,17 @@ export function PrefaceToggle({ className }: { className?: string }) {
 
   return (
     <Button
-      variant="ghost"
-      onClick={togglePreface}
-      className={cn(className)}
       aria-label={
         prefaceExpanded ? "Collapse founder note" : "Expand founder note"
       }
+      className={cn(className)}
+      onClick={togglePreface}
+      variant="ghost"
     >
       <PanelLeft
         className={cn(
           "size-4 transition-transform",
-          !prefaceExpanded && "rotate-180",
+          !prefaceExpanded && "rotate-180"
         )}
       />
     </Button>

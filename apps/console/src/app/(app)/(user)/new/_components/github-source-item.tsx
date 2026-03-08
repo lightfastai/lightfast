@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
-import { Search, Loader2 } from "lucide-react";
-import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
+import { githubEnv } from "@repo/console-octokit-github/env";
+import { useTRPC } from "@repo/console-trpc/react";
+import {
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@repo/ui/components/ui/accordion";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -15,15 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@repo/ui/components/ui/accordion";
-import { useTRPC } from "@repo/console-trpc/react";
-import { githubEnv } from "@repo/console-octokit-github/env";
-import { useWorkspaceForm } from "./workspace-form-provider";
+import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { Loader2, Search } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { useOAuthPopup } from "~/hooks/use-oauth-popup";
+import { useWorkspaceForm } from "./workspace-form-provider";
 
 /**
  * GitHub accordion item for the Sources section.
@@ -62,19 +62,15 @@ export function GitHubSourceItem() {
   });
 
   const handleConnect = () => {
-    installationIdsBeforeRef.current = new Set(
-      installations.map((i) => i.id),
-    );
+    installationIdsBeforeRef.current = new Set(installations.map((i) => i.id));
     void connectOAuth();
   };
 
   const handleAdjustPermissions = () => {
-    installationIdsBeforeRef.current = new Set(
-      installations.map((i) => i.id),
-    );
+    installationIdsBeforeRef.current = new Set(installations.map((i) => i.id));
     void openCustomUrl(
       (data) =>
-        `https://github.com/apps/${githubEnv.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target?state=${data.state}`,
+        `https://github.com/apps/${githubEnv.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target?state=${data.state}`
     );
   };
 
@@ -86,7 +82,9 @@ export function GitHubSourceItem() {
   });
 
   const connectionInstallations = connection?.installations ?? [];
-  const hasConnection = Boolean(connection && connectionInstallations.length > 0);
+  const hasConnection = Boolean(
+    connection && connectionInstallations.length > 0
+  );
 
   // Sync gwInstallationId from the selected installation (each GitHub org
   // lives in its own gwInstallations row with a distinct id).
@@ -107,7 +105,9 @@ export function GitHubSourceItem() {
   // Auto-select installation (prefer newest after OAuth)
   useEffect(() => {
     if (connectionInstallations.length === 0) {
-      if (selectedInstallation !== null) setSelectedInstallation(null);
+      if (selectedInstallation !== null) {
+        setSelectedInstallation(null);
+      }
       return;
     }
     // After OAuth: prefer the newly added installation
@@ -115,7 +115,7 @@ export function GitHubSourceItem() {
       preferNewestRef.current = false;
       const beforeIds = installationIdsBeforeRef.current;
       const newInst = connectionInstallations.find(
-        (inst) => !beforeIds.has(inst.id),
+        (inst) => !beforeIds.has(inst.id)
       );
       if (newInst) {
         setSelectedInstallation(newInst);
@@ -125,7 +125,9 @@ export function GitHubSourceItem() {
     }
     // Default: select first if current selection no longer exists
     const stillExists = selectedInstallation
-      ? connectionInstallations.some((inst) => inst.id === selectedInstallation.id)
+      ? connectionInstallations.some(
+          (inst) => inst.id === selectedInstallation.id
+        )
       : false;
     if (!stillExists) {
       const first = connectionInstallations[0];
@@ -133,7 +135,12 @@ export function GitHubSourceItem() {
         setSelectedInstallation(first);
       }
     }
-  }, [connectionInstallations, selectedInstallation, setSelectedInstallation, setSelectedRepositories]);
+  }, [
+    connectionInstallations,
+    selectedInstallation,
+    setSelectedInstallation,
+    setSelectedRepositories,
+  ]);
 
   // Fetch repos for selected installation
   const { data: repositoriesData, isLoading: isLoadingRepos } = useQuery({
@@ -148,7 +155,7 @@ export function GitHubSourceItem() {
 
   const repositories = repositoriesData ?? [];
   const filteredRepositories = repositories.filter((repo) =>
-    repo.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    repo.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const selectedRepo = selectedRepositories[0] ?? null;
@@ -156,67 +163,67 @@ export function GitHubSourceItem() {
   return (
     <AccordionItem value="github">
       <AccordionTrigger className="px-4 hover:no-underline">
-        <div className="flex items-center gap-3 flex-1">
+        <div className="flex flex-1 items-center gap-3">
           <IntegrationLogoIcons.github className="h-5 w-5 shrink-0" />
           <span className="font-medium">GitHub</span>
           {hasConnection ? (
-            <Badge variant="secondary" className="text-xs">Connected</Badge>
+            <Badge className="text-xs" variant="secondary">
+              Connected
+            </Badge>
           ) : (
-            <Badge variant="outline" className="text-xs text-muted-foreground">Not connected</Badge>
+            <Badge className="text-muted-foreground text-xs" variant="outline">
+              Not connected
+            </Badge>
           )}
           {selectedRepo && (
-            <Badge variant="default" className="text-xs ml-auto mr-2">
+            <Badge className="mr-2 ml-auto text-xs" variant="default">
               1 selected
             </Badge>
           )}
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4">
-        {!hasConnection ? (
-          <div className="flex flex-col items-center py-6 text-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              Connect GitHub to select repositories
-            </p>
-            <Button onClick={handleConnect} variant="outline">
-              <IntegrationLogoIcons.github className="h-4 w-4 mr-2" />
-              Connect GitHub
-            </Button>
-          </div>
-        ) : (
+        {hasConnection ? (
           <div className="space-y-4 pt-2">
             {selectedRepo && !showPicker ? (
               /* Selected card view */
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
                     <IntegrationLogoIcons.github className="h-3 w-3" />
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">{selectedRepo.name}</span>
+                      <span className="truncate font-medium">
+                        {selectedRepo.name}
+                      </span>
                       {selectedRepo.isPrivate && (
-                        <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                        <span className="shrink-0 rounded border px-2 py-0.5 text-muted-foreground text-xs">
                           Private
                         </span>
                       )}
                     </div>
                     {selectedRepo.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-1">
+                      <p className="line-clamp-1 text-muted-foreground text-sm">
                         {selectedRepo.description}
                       </p>
                     )}
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button variant="outline" size="sm" onClick={() => setShowPicker(true)}>
+                  <div className="flex shrink-0 gap-2">
+                    <Button
+                      onClick={() => setShowPicker(true)}
+                      size="sm"
+                      variant="outline"
+                    >
                       Change
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
                       onClick={() => {
                         setSelectedRepositories([]);
                         setShowPicker(true);
                       }}
+                      size="sm"
+                      variant="ghost"
                     >
                       Clear
                     </Button>
@@ -228,14 +235,16 @@ export function GitHubSourceItem() {
                 {/* Installation Selector & Search */}
                 <div className="flex gap-4">
                   <Select
-                    value={selectedInstallation?.accountLogin}
                     onValueChange={(login) => {
-                      const inst = installations.find((i) => i.accountLogin === login);
+                      const inst = installations.find(
+                        (i) => i.accountLogin === login
+                      );
                       if (inst) {
                         setSelectedInstallation(inst);
                         setSelectedRepositories([]);
                       }
                     }}
+                    value={selectedInstallation?.accountLogin}
                   >
                     <SelectTrigger className="w-[220px]">
                       <SelectValue />
@@ -246,11 +255,11 @@ export function GitHubSourceItem() {
                           <div className="flex items-center gap-2">
                             {inst.avatarUrl ? (
                               <Image
-                                src={inst.avatarUrl}
                                 alt=""
-                                width={16}
-                                height={16}
                                 className="rounded-full"
+                                height={16}
+                                src={inst.avatarUrl}
+                                width={16}
                               />
                             ) : (
                               <IntegrationLogoIcons.github className="h-4 w-4" />
@@ -263,55 +272,61 @@ export function GitHubSourceItem() {
                   </Select>
 
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
+                      className="pl-10"
+                      onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search repositories..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
                     />
                   </div>
                 </div>
 
                 {/* Repository List */}
-                <div className="rounded-lg border bg-card max-h-[260px] overflow-y-auto">
+                <div className="max-h-[260px] overflow-y-auto rounded-lg border bg-card">
                   {isLoadingRepos ? (
                     <div className="p-8 text-center text-muted-foreground">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                      <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
                       Loading repositories...
                     </div>
                   ) : filteredRepositories.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">
-                      {searchQuery ? "No repositories match your search" : "No repositories found"}
+                      {searchQuery
+                        ? "No repositories match your search"
+                        : "No repositories found"}
                     </div>
                   ) : (
                     <div className="divide-y">
                       {filteredRepositories.map((repo) => (
                         <button
-                          key={repo.id}
-                          type="button"
-                          className={`flex items-center gap-3 p-4 w-full text-left hover:bg-accent transition-colors cursor-pointer ${
+                          className={`flex w-full cursor-pointer items-center gap-3 p-4 text-left transition-colors hover:bg-accent ${
                             selectedRepo?.id === repo.id ? "bg-accent/50" : ""
                           }`}
+                          key={repo.id}
                           onClick={() => {
                             toggleRepository(repo);
                             setShowPicker(false);
                           }}
+                          type="button"
                         >
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
                             <IntegrationLogoIcons.github className="h-3 w-3" />
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium truncate">{repo.name}</span>
+                              <span className="truncate font-medium">
+                                {repo.name}
+                              </span>
                               {repo.isPrivate && (
-                                <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                                <span className="shrink-0 rounded border px-2 py-0.5 text-muted-foreground text-xs">
                                   Private
                                 </span>
                               )}
                             </div>
                             {repo.description && (
-                              <p className="text-sm text-muted-foreground line-clamp-1">{repo.description}</p>
+                              <p className="line-clamp-1 text-muted-foreground text-sm">
+                                {repo.description}
+                              </p>
                             )}
                           </div>
                         </button>
@@ -321,17 +336,27 @@ export function GitHubSourceItem() {
                 </div>
 
                 {/* Missing repository link */}
-                <div className="text-center text-sm text-muted-foreground">
+                <div className="text-center text-muted-foreground text-sm">
                   Missing a repository?{" "}
                   <button
+                    className="text-blue-500 underline-offset-4 transition-colors hover:text-blue-600 hover:underline"
                     onClick={handleAdjustPermissions}
-                    className="text-blue-500 hover:text-blue-600 underline-offset-4 hover:underline transition-colors"
                   >
                     Adjust GitHub App permissions →
                   </button>
                 </div>
               </>
             )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4 py-6 text-center">
+            <p className="text-muted-foreground text-sm">
+              Connect GitHub to select repositories
+            </p>
+            <Button onClick={handleConnect} variant="outline">
+              <IntegrationLogoIcons.github className="mr-2 h-4 w-4" />
+              Connect GitHub
+            </Button>
           </div>
         )}
       </AccordionContent>

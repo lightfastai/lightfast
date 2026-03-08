@@ -6,9 +6,13 @@
  */
 
 import { z } from "zod";
-import { nanoidSchema, inngestRunIdSchema, inngestFunctionIdSchema } from "../primitives/ids";
-import { workspaceNameSchema, clerkOrgSlugSchema } from "../primitives/slugs";
+import {
+  inngestFunctionIdSchema,
+  inngestRunIdSchema,
+  nanoidSchema,
+} from "../primitives/ids";
 import { jobNameSchema } from "../primitives/names";
+import { clerkOrgSlugSchema, workspaceNameSchema } from "../primitives/slugs";
 
 /**
  * Job Status Enum

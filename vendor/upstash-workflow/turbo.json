@@ -3,10 +3,7 @@
   "tags": ["vendor"],
   "tasks": {
     "build": {
-      "passThroughEnv": [
-        "QSTASH_TOKEN",
-        "QSTASH_URL"
-      ]
+      "passThroughEnv": ["QSTASH_TOKEN", "QSTASH_URL"]
     }
   }
 }

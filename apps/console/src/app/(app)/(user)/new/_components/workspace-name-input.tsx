@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormContext } from "@repo/ui/components/ui/form";
+import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 import {
   FormControl,
   FormDescription,
@@ -9,10 +8,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  useFormContext,
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
+import { useEffect, useRef } from "react";
 import { useWorkspaceSearchParams } from "./use-workspace-search-params";
-import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 
 /**
  * Workspace Name Input
@@ -28,14 +28,19 @@ import type { WorkspaceFormValues } from "@repo/console-validation/forms";
  */
 export function WorkspaceNameInput() {
   const form = useFormContext<WorkspaceFormValues>();
-  const { workspaceName: urlWorkspaceName, setWorkspaceName: setUrlWorkspaceName } = useWorkspaceSearchParams();
+  const {
+    workspaceName: urlWorkspaceName,
+    setWorkspaceName: setUrlWorkspaceName,
+  } = useWorkspaceSearchParams();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize from URL on mount
   useEffect(() => {
     const currentName = form.getValues("workspaceName");
     if (urlWorkspaceName && !currentName) {
-      form.setValue("workspaceName", urlWorkspaceName, { shouldValidate: true });
+      form.setValue("workspaceName", urlWorkspaceName, {
+        shouldValidate: true,
+      });
     }
   }, [urlWorkspaceName, form]);
 
@@ -83,13 +88,13 @@ export function WorkspaceNameInput() {
           <FormControl>
             <Input
               {...field}
-              onChange={(e) => {
-                field.onChange(e);
-                syncToUrl(e.target.value);
-              }}
               onBlur={() => {
                 field.onBlur();
                 handleBlur();
+              }}
+              onChange={(e) => {
+                field.onChange(e);
+                syncToUrl(e.target.value);
               }}
               placeholder="My-Awesome-Workspace"
             />

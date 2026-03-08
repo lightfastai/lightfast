@@ -32,11 +32,11 @@ import type { SourceType } from "@repo/console-validation";
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 interface EventDef {
-  source: SourceType;
-  /** Action-level label for activity feeds (e.g., "PR Opened") */
-  label: string;
-  /** Base significance weight (0-100) for scoring */
-  weight: number;
+  /**
+   * UI subscription category key (external format).
+   * Multiple internal events share one category for coarse-grained UI toggles.
+   */
+  category: string;
   /**
    * External webhook key(s) that map to this internal type.
    * GitHub: "{event}_{action}" or "{event}" (e.g., "pull_request_opened", "push")
@@ -45,16 +45,16 @@ interface EventDef {
    * Linear: "{Type}:{action}" (e.g., "Issue:create", "ProjectUpdate:remove")
    */
   externalKeys: readonly string[];
-  /**
-   * UI subscription category key (external format).
-   * Multiple internal events share one category for coarse-grained UI toggles.
-   */
-  category: string;
+  /** Action-level label for activity feeds (e.g., "PR Opened") */
+  label: string;
+  source: SourceType;
+  /** Base significance weight (0-100) for scoring */
+  weight: number;
 }
 
 interface CategoryDef {
-  label: string;
   description: string;
+  label: string;
   type: "observation" | "sync+observation";
 }
 
@@ -478,35 +478,35 @@ export type InternalEventType = keyof typeof EVENT_REGISTRY;
 
 /** All internal event types as array */
 export const ALL_INTERNAL_EVENT_TYPES = Object.keys(
-  EVENT_REGISTRY,
+  EVENT_REGISTRY
 ) as InternalEventType[];
 
 // ─── Lookup Functions ─────────────────────────────────────────────────────────
 
 /** Get full event config by internal type */
 export function getEventConfig(
-  eventType: InternalEventType,
+  eventType: InternalEventType
 ): (typeof EVENT_REGISTRY)[InternalEventType] {
   return EVENT_REGISTRY[eventType];
 }
 
 /** Get base weight for scoring. Returns 35 for unknown events. */
 export function getEventWeight(eventType: string): number {
-  if (!isInternalEventType(eventType)) return 35;
+  if (!isInternalEventType(eventType)) {
+    return 35;
+  }
   return EVENT_REGISTRY[eventType].weight;
 }
 
 /** Type guard: check if string is valid internal event type */
-export function isInternalEventType(
-  value: string,
-): value is InternalEventType {
+export function isInternalEventType(value: string): value is InternalEventType {
   return value in EVENT_REGISTRY;
 }
 
 // ─── Auto-Derived Mapping Tables ──────────────────────────────────────────────
 
 function buildExternalToInternalMap(
-  source: SourceType,
+  source: SourceType
 ): Record<string, InternalEventType> {
   const map: Record<string, InternalEventType> = {};
   for (const [internalKey, def] of Object.entries(EVENT_REGISTRY)) {
@@ -525,7 +525,7 @@ export const SENTRY_TO_INTERNAL = buildExternalToInternalMap("sentry");
 export const LINEAR_TO_INTERNAL = buildExternalToInternalMap("linear");
 
 export const INTERNAL_TO_GITHUB: Record<string, string> = Object.fromEntries(
-  Object.entries(GITHUB_TO_INTERNAL).map(([ext, int]) => [int, ext]),
+  Object.entries(GITHUB_TO_INTERNAL).map(([ext, int]) => [int, ext])
 );
 
 // ─── Auto-Derived Mapping Functions ───────────────────────────────────────────
@@ -537,7 +537,7 @@ export const INTERNAL_TO_GITHUB: Record<string, string> = Object.fromEntries(
  */
 export function toInternalGitHubEvent(
   event: string,
-  action?: string,
+  action?: string
 ): InternalEventType | undefined {
   const key = action ? `${event}_${action}` : event;
   return GITHUB_TO_INTERNAL[key];
@@ -545,14 +545,14 @@ export function toInternalGitHubEvent(
 
 /** Vercel: event type string -> internal event type */
 export function toInternalVercelEvent(
-  eventType: string,
+  eventType: string
 ): InternalEventType | undefined {
   return VERCEL_TO_INTERNAL[eventType];
 }
 
 /** Sentry: event type string -> internal event type */
 export function toInternalSentryEvent(
-  eventType: string,
+  eventType: string
 ): InternalEventType | undefined {
   return SENTRY_TO_INTERNAL[eventType];
 }
@@ -560,14 +560,14 @@ export function toInternalSentryEvent(
 /** Linear: webhook type + action -> internal event type */
 export function toInternalLinearEvent(
   type: string,
-  action: string,
+  action: string
 ): InternalEventType | undefined {
   return LINEAR_TO_INTERNAL[`${type}:${action}`];
 }
 
 /** Reverse: internal event type -> external GitHub format */
 export function toExternalGitHubEvent(
-  internalType: InternalEventType,
+  internalType: InternalEventType
 ): string | undefined {
   return INTERNAL_TO_GITHUB[internalType];
 }
@@ -594,10 +594,12 @@ function stripSourcePrefix(internalType: string): string {
  */
 export function toExternalGitHubEventType(
   event: string,
-  action?: string,
+  action?: string
 ): string | undefined {
   const internal = toInternalGitHubEvent(event, action);
-  if (!internal) return undefined;
+  if (!internal) {
+    return undefined;
+  }
   return stripSourcePrefix(internal);
 }
 
@@ -606,10 +608,12 @@ export function toExternalGitHubEventType(
  * Use this when creating SourceEvents in transformers.
  */
 export function toExternalVercelEventType(
-  eventType: string,
+  eventType: string
 ): string | undefined {
   const internal = toInternalVercelEvent(eventType);
-  if (!internal) return undefined;
+  if (!internal) {
+    return undefined;
+  }
   return stripSourcePrefix(internal);
 }
 
@@ -618,10 +622,12 @@ export function toExternalVercelEventType(
  * Use this when creating SourceEvents in transformers.
  */
 export function toExternalSentryEventType(
-  eventType: string,
+  eventType: string
 ): string | undefined {
   const internal = toInternalSentryEvent(eventType);
-  if (!internal) return undefined;
+  if (!internal) {
+    return undefined;
+  }
   return stripSourcePrefix(internal);
 }
 
@@ -631,10 +637,12 @@ export function toExternalSentryEventType(
  */
 export function toExternalLinearEventType(
   type: string,
-  action: string,
+  action: string
 ): string | undefined {
   const internal = toInternalLinearEvent(type, action);
-  if (!internal) return undefined;
+  if (!internal) {
+    return undefined;
+  }
   return stripSourcePrefix(internal);
 }
 

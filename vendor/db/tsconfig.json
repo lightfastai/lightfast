@@ -2,20 +2,11 @@
   "extends": "@repo/typescript-config/internal-package.json",
   "compilerOptions": {
     "paths": {
-      "~/*": [
-        "src/*"
-      ]
+      "~/*": ["src/*"]
     },
     "rootDir": ".",
     "baseUrl": "."
   },
-  "include": [
-    "src",
-    "drizzle.config.ts",
-    "env.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src", "drizzle.config.ts", "env.ts"],
+  "exclude": ["node_modules", "dist"]
 }

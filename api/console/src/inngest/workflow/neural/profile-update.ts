@@ -7,24 +7,29 @@
  * Debounce: 5 minutes per actor (via concurrency + debounce)
  */
 
-import { inngest } from "../../client/client";
 import { db } from "@db/console/client";
 import {
+  orgWorkspaces,
   workspaceActorProfiles,
   workspaceNeuralObservations,
-  orgWorkspaces,
 } from "@db/console/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
-import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
-import { log } from "@vendor/observability/log";
-import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../../lib/jobs";
-import { createNeuralOnFailureHandler } from "./on-failure-handler";
-import { upsertOrgActorIdentity } from "../../../lib/actor-identity";
 import type {
   NeuralProfileUpdateInput,
-  NeuralProfileUpdateOutputSuccess,
   NeuralProfileUpdateOutputFailure,
+  NeuralProfileUpdateOutputSuccess,
 } from "@repo/console-validation";
+import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
+import { log } from "@vendor/observability/log";
+import { and, desc, eq, sql } from "drizzle-orm";
+import { upsertOrgActorIdentity } from "../../../lib/actor-identity";
+import {
+  completeJob,
+  createJob,
+  recordJobMetric,
+  updateJobStatus,
+} from "../../../lib/jobs";
+import { inngest } from "../../client/client";
+import { createNeuralOnFailureHandler } from "./on-failure-handler";
 
 export const profileUpdate = inngest.createFunction(
   {
@@ -56,30 +61,42 @@ export const profileUpdate = inngest.createFunction(
       {
         logMessage: "Neural profile update failed",
         logContext: ({ workspaceId, actorId }) => ({ workspaceId, actorId }),
-        buildOutput: ({ data: { actorId }, error }) => ({
-          inngestFunctionId: "neural.profile.update",
-          status: "failure",
-          actorId,
-          error,
-        } satisfies NeuralProfileUpdateOutputFailure),
-      },
+        buildOutput: ({ data: { actorId }, error }) =>
+          ({
+            inngestFunctionId: "neural.profile.update",
+            status: "failure",
+            actorId,
+            error,
+          }) satisfies NeuralProfileUpdateOutputFailure,
+      }
     ),
   },
   { event: "apps-console/neural/profile.update" },
   async ({ event, step }) => {
-    const { workspaceId, clerkOrgId: eventClerkOrgId, actorId, observationId, sourceActor } = event.data;
+    const {
+      workspaceId,
+      clerkOrgId: eventClerkOrgId,
+      actorId,
+      observationId,
+      sourceActor,
+    } = event.data;
 
     // Resolve clerkOrgId (prefer event, fallback to DB)
     // New events receive clerkOrgId from parent workflow (observation-capture)
-    const clerkOrgId = eventClerkOrgId ?? await (async () => {
-      // Track fallback usage to monitor migration progress
-      log.warn("clerkOrgId fallback to DB lookup", { workspaceId, reason: "event_missing_clerkOrgId" });
-      const workspace = await db.query.orgWorkspaces.findFirst({
-        where: eq(orgWorkspaces.id, workspaceId),
-        columns: { clerkOrgId: true },
-      });
-      return workspace?.clerkOrgId ?? "";
-    })();
+    const clerkOrgId =
+      eventClerkOrgId ??
+      (await (async () => {
+        // Track fallback usage to monitor migration progress
+        log.warn("clerkOrgId fallback to DB lookup", {
+          workspaceId,
+          reason: "event_missing_clerkOrgId",
+        });
+        const workspace = await db.query.orgWorkspaces.findFirst({
+          where: eq(orgWorkspaces.id, workspaceId),
+          columns: { clerkOrgId: true },
+        });
+        return workspace?.clerkOrgId ?? "";
+      })());
 
     // Create job record for tracking
     const inngestRunId = event.id ?? `neural-profile-${actorId}-${Date.now()}`;
@@ -108,16 +125,16 @@ export const profileUpdate = inngest.createFunction(
     // TODO: Phase 5 will enable this when actor_profiles are migrated to BIGINT
     // Currently, observations.actorId is BIGINT but we receive varchar actorId from events
     // Since all observations have actorId = null until Phase 5, this query returns nothing
-    const actorIdNum = parseInt(actorId, 10);
+    const actorIdNum = Number.parseInt(actorId, 10);
     const recentActivity = await step.run("gather-activity", async () => {
       // Skip if actorId is not a valid number (varchar actor IDs from Phase 3)
-      if (isNaN(actorIdNum)) {
+      if (Number.isNaN(actorIdNum)) {
         return { count: 0, lastActiveAt: null };
       }
       const observations = await db.query.workspaceNeuralObservations.findMany({
         where: and(
           eq(workspaceNeuralObservations.workspaceId, workspaceId),
-          eq(workspaceNeuralObservations.actorId, actorIdNum),
+          eq(workspaceNeuralObservations.actorId, actorIdNum)
         ),
         orderBy: desc(workspaceNeuralObservations.occurredAt),
         limit: 100,
@@ -130,21 +147,27 @@ export const profileUpdate = inngest.createFunction(
     });
 
     // Step 2: Check if profile exists (for cache invalidation)
-    const existingProfile = await step.run("check-existing-profile", async () => {
-      const profile = await db.query.workspaceActorProfiles.findFirst({
-        where: and(
-          eq(workspaceActorProfiles.workspaceId, workspaceId),
-          eq(workspaceActorProfiles.actorId, actorId)
-        ),
-        columns: { id: true },
-      });
-      return { exists: !!profile };
-    });
+    const existingProfile = await step.run(
+      "check-existing-profile",
+      async () => {
+        const profile = await db.query.workspaceActorProfiles.findFirst({
+          where: and(
+            eq(workspaceActorProfiles.workspaceId, workspaceId),
+            eq(workspaceActorProfiles.actorId, actorId)
+          ),
+          columns: { id: true },
+        });
+        return { exists: !!profile };
+      }
+    );
 
     // Step 3: Upsert org-level identity (new - org-scoped identity mapping)
     await step.run("upsert-identity", async () => {
       if (!clerkOrgId) {
-        log.warn("Skipping identity upsert - no clerkOrgId", { workspaceId, actorId });
+        log.warn("Skipping identity upsert - no clerkOrgId", {
+          workspaceId,
+          actorId,
+        });
         return;
       }
 
@@ -203,10 +226,13 @@ export const profileUpdate = inngest.createFunction(
       // This ensures hasActors flag updates for the workspace
       if (!existingProfile.exists) {
         await invalidateWorkspaceConfig(workspaceId);
-        log.info("New actor profile created, workspace config cache invalidated", {
-          workspaceId,
-          actorId,
-        });
+        log.info(
+          "New actor profile created, workspace config cache invalidated",
+          {
+            workspaceId,
+            actorId,
+          }
+        );
       }
 
       log.info("Updated actor profile", {
@@ -248,5 +274,5 @@ export const profileUpdate = inngest.createFunction(
     }
 
     return { actorId, observationCount: recentActivity.count };
-  },
+  }
 );

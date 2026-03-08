@@ -1,21 +1,22 @@
 import { db } from "@db/console/client";
-import { gwInstallations } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
+import { gwInstallations } from "@db/console/schema";
 import { and, eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
-import { getInstallationToken, getInstallationDetails } from "../../lib/github-jwt.js";
 import {
-  githubOAuthResponseSchema,
-} from "../schemas.js";
+  getInstallationDetails,
+  getInstallationToken,
+} from "../../lib/github-jwt.js";
+import { githubOAuthResponseSchema } from "../schemas.js";
 import type {
+  CallbackResult,
+  CallbackStateData,
   ConnectionProvider,
   GitHubAccountInfo,
   GitHubAuthOptions,
   JwtTokenResult,
   OAuthTokens,
-  CallbackResult,
-  CallbackStateData,
 } from "../types.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
@@ -33,10 +34,12 @@ export class GitHubProvider implements ConnectionProvider {
   /** Build GitHub App installation URL (GitHub-specific, not on interface) */
   getInstallationUrl(state: string, targetId?: string): string {
     const url = new URL(
-      `https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`,
+      `https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`
     );
     url.searchParams.set("state", state);
-    if (targetId) {url.searchParams.set("target_id", targetId);}
+    if (targetId) {
+      url.searchParams.set("target_id", targetId);
+    }
     return url.toString();
   }
 
@@ -56,7 +59,7 @@ export class GitHubProvider implements ConnectionProvider {
           code,
           redirect_uri: redirectUri,
         }),
-      },
+      }
     );
 
     if (!response.ok) {
@@ -70,7 +73,11 @@ export class GitHubProvider implements ConnectionProvider {
       throw new Error(`GitHub OAuth error: ${errorData.error_description}`);
     }
 
-    const successData = data as { access_token: string; token_type: string; scope: string };
+    const successData = data as {
+      access_token: string;
+      token_type: string;
+      scope: string;
+    };
 
     return {
       accessToken: successData.access_token,
@@ -82,13 +89,13 @@ export class GitHubProvider implements ConnectionProvider {
 
   refreshToken(_refreshToken: string): Promise<OAuthTokens> {
     return Promise.reject(
-      new Error("GitHub user tokens do not support refresh"),
+      new Error("GitHub user tokens do not support refresh")
     );
   }
 
   async revokeToken(accessToken: string): Promise<void> {
     const credentials = btoa(
-      `${env.GITHUB_CLIENT_ID}:${env.GITHUB_CLIENT_SECRET}`,
+      `${env.GITHUB_CLIENT_ID}:${env.GITHUB_CLIENT_SECRET}`
     );
 
     const response = await fetch(
@@ -102,7 +109,7 @@ export class GitHubProvider implements ConnectionProvider {
           Accept: "application/vnd.github.v3+json",
         },
         body: JSON.stringify({ access_token: accessToken }),
-      },
+      }
     );
 
     if (!response.ok) {
@@ -114,7 +121,7 @@ export class GitHubProvider implements ConnectionProvider {
 
   async handleCallback(
     c: Context,
-    stateData: CallbackStateData,
+    stateData: CallbackStateData
   ): Promise<CallbackResult> {
     const installationId = c.req.query("installation_id");
     const setupAction = c.req.query("setup_action");
@@ -158,8 +165,8 @@ export class GitHubProvider implements ConnectionProvider {
       .where(
         and(
           eq(gwInstallations.provider, "github"),
-          eq(gwInstallations.externalId, installationId),
-        ),
+          eq(gwInstallations.externalId, installationId)
+        )
       )
       .limit(1);
 
@@ -190,7 +197,9 @@ export class GitHubProvider implements ConnectionProvider {
       });
 
     const row = rows[0];
-    if (!row) {throw new Error("upsert_failed");}
+    if (!row) {
+      throw new Error("upsert_failed");
+    }
 
     return {
       status: "connected",

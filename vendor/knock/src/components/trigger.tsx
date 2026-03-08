@@ -5,7 +5,7 @@ import {
   NotificationIconButton,
 } from "@knocklabs/react";
 import type { RefObject } from "react";
-import { useRef, useState, Suspense } from "react";
+import { Suspense, useRef, useState } from "react";
 import { env } from "../env";
 
 import "@knocklabs/react/dist/index.css";

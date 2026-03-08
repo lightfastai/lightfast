@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { computeHmacSha256 } from "../../lib/crypto.js";
 import { SentryProvider } from "./sentry.js";
 
@@ -18,7 +18,7 @@ describe("SentryProvider", () => {
       const result = await provider.verifyWebhook(
         body,
         headers({ "sentry-hook-signature": sig }),
-        secret,
+        secret
       );
       expect(result).toBe(true);
     });
@@ -27,7 +27,7 @@ describe("SentryProvider", () => {
       const result = await provider.verifyWebhook(
         '{"installation":{"uuid":"inst-1"}}',
         headers({ "sentry-hook-signature": "badsig" }),
-        secret,
+        secret
       );
       expect(result).toBe(false);
     });
@@ -36,7 +36,7 @@ describe("SentryProvider", () => {
       const result = await provider.verifyWebhook(
         '{"installation":{"uuid":"inst-1"}}',
         headers({}),
-        secret,
+        secret
       );
       expect(result).toBe(false);
     });
@@ -61,7 +61,7 @@ describe("SentryProvider", () => {
           "sentry-hook-resource": "issue",
           "sentry-hook-timestamp": "1700000000",
         }),
-        {},
+        {}
       );
       expect(id).toBe("issue:1700000000");
     });
@@ -69,27 +69,27 @@ describe("SentryProvider", () => {
     it("generates UUID when headers missing", () => {
       const id = provider.extractDeliveryId(headers({}), {});
       expect(id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
       );
     });
 
     it("generates UUID when only resource header present", () => {
       const id = provider.extractDeliveryId(
         headers({ "sentry-hook-resource": "issue" }),
-        {},
+        {}
       );
       expect(id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
       );
     });
 
     it("generates UUID when only timestamp header present", () => {
       const id = provider.extractDeliveryId(
         headers({ "sentry-hook-timestamp": "1700000000" }),
-        {},
+        {}
       );
       expect(id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
       );
     });
   });
@@ -98,7 +98,7 @@ describe("SentryProvider", () => {
     it("reads sentry-hook-resource header", () => {
       const type = provider.extractEventType(
         headers({ "sentry-hook-resource": "issue" }),
-        {},
+        {}
       );
       expect(type).toBe("issue");
     });

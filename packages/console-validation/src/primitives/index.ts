@@ -6,5 +6,5 @@
  */
 
 export * from "./ids";
-export * from "./slugs";
 export * from "./names";
+export * from "./slugs";

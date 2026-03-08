@@ -1,16 +1,16 @@
 "use client";
 
 interface SearchResult {
-  documentId: string;
+  author: string;
   chunkId: string;
+  documentId: string;
+  highlight: string;
+  occurredAt: string;
   score: number;
+  sectionLabel?: string;
+  source: string;
   title: string;
   type: string;
-  source: string;
-  occurredAt: string;
-  author: string;
-  sectionLabel?: string;
-  highlight: string;
   url: string;
 }
 
@@ -24,37 +24,37 @@ export function SearchResults({ results }: SearchResultsProps) {
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto mt-12 space-y-4">
-      <h2 className="text-xs text-muted-foreground mb-6">
+    <div className="mx-auto mt-12 w-full max-w-3xl space-y-4">
+      <h2 className="mb-6 text-muted-foreground text-xs">
         Related search results
       </h2>
 
       <div className="space-y-12">
         {results.map((result) => (
           <a
-            key={result.chunkId}
+            className="group block"
             href={result.url}
-            target="_blank"
+            key={result.chunkId}
             rel="noopener noreferrer"
-            className="block group"
+            target="_blank"
           >
-            <div className="flex items-center h-full py-2 gap-8">
+            <div className="flex h-full items-center gap-8 py-2">
               {/* Placeholder thumbnail */}
-              <div className="flex-shrink-0 w-24 h-24 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded" />
+              <div className="h-24 w-24 flex-shrink-0 rounded bg-gradient-to-br from-blue-500/20 to-purple-500/20" />
 
               {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="text-muted-foreground text-xs uppercase tracking-wider">
                     {result.source}
                   </span>
                 </div>
 
-                <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors mb-2">
+                <h3 className="mb-2 font-medium text-foreground text-sm transition-colors group-hover:text-primary">
                   {result.title}
                 </h3>
 
-                <p className="text-xs text-foreground line-clamp-2 mb-2">
+                <p className="mb-2 line-clamp-2 text-foreground text-xs">
                   {result.highlight}
                 </p>
               </div>

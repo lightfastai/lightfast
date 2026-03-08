@@ -6,12 +6,12 @@
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { Result} from "neverthrow";
-import { ok, err } from "neverthrow";
+import type { Result } from "neverthrow";
+import { err, ok } from "neverthrow";
 import { parse as parseYAML } from "yaml";
 import type { ZodError } from "zod";
-import { LightfastConfigSchema  } from "./schema";
-import type {LightfastConfig} from "./schema";
+import type { LightfastConfig } from "./schema";
+import { LightfastConfigSchema } from "./schema";
 
 /**
  * Error types for configuration loading and parsing
@@ -24,7 +24,7 @@ export class ConfigError extends Error {
       | "INVALID_YAML"
       | "VALIDATION_ERROR"
       | "READ_ERROR",
-    public readonly cause?: unknown,
+    public readonly cause?: unknown
   ) {
     super(message);
     this.name = "ConfigError";
@@ -47,7 +47,7 @@ export class ConfigError extends Error {
  * ```
  */
 export async function loadConfig(
-  repoPath: string,
+  repoPath: string
 ): Promise<Result<LightfastConfig, ConfigError>> {
   const configPath = join(repoPath, "lightfast.yml");
 
@@ -66,16 +66,16 @@ export async function loadConfig(
         new ConfigError(
           `Configuration file not found: ${configPath}`,
           "FILE_NOT_FOUND",
-          error,
-        ),
+          error
+        )
       );
     }
     return err(
       new ConfigError(
         `Failed to read configuration file: ${configPath}`,
         "READ_ERROR",
-        error,
-      ),
+        error
+      )
     );
   }
 
@@ -88,8 +88,8 @@ export async function loadConfig(
       new ConfigError(
         `Invalid YAML syntax in ${configPath}: ${error instanceof Error ? error.message : String(error)}`,
         "INVALID_YAML",
-        error,
-      ),
+        error
+      )
     );
   }
 
@@ -109,7 +109,7 @@ export async function loadConfig(
  * ```
  */
 export function validateConfig(
-  config: unknown,
+  config: unknown
 ): Result<LightfastConfig, ConfigError> {
   const parseResult = LightfastConfigSchema.safeParse(config);
 
@@ -123,8 +123,8 @@ export function validateConfig(
       new ConfigError(
         `Configuration validation failed: ${errorMessages}`,
         "VALIDATION_ERROR",
-        zodError,
-      ),
+        zodError
+      )
     );
   }
 

@@ -58,8 +58,7 @@ export const engineeringLeadersUseCases: UseCaseItem[] = [
   },
   {
     title: "Code review bottleneck resolution",
-    description:
-      "Identify and suggest fixes for review queue bottlenecks",
+    description: "Identify and suggest fixes for review queue bottlenecks",
   },
   {
     title: "Documentation generation priority",

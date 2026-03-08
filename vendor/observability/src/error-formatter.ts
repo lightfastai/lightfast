@@ -8,7 +8,7 @@ export interface ErrorContext {
 export class ErrorFormatter {
   constructor(
     private readonly level: string,
-    private readonly context: Record<string, unknown> = {},
+    private readonly context: Record<string, unknown> = {}
   ) {}
 
   format(error: unknown) {
@@ -36,7 +36,7 @@ export class TypedErrorFormatter<T extends Error> extends ErrorFormatter {
   constructor(
     private readonly errorType: new (...args: unknown[]) => T,
     level: string,
-    context: Record<string, unknown> = {},
+    context: Record<string, unknown> = {}
   ) {
     super(level, context);
   }

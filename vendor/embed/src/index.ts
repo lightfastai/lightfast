@@ -7,26 +7,23 @@
  * @packageDocumentation
  */
 
-// Export types
-export type { EmbedRequest, EmbedResponse, EmbeddingProvider } from "./types";
+// Export batch processing utilities
+export { embedBatch } from "./batch";
 
 // Export embedding providers
 export {
-	CharHashEmbedding,
-	createCharHashEmbedding,
+  CharHashEmbedding,
+  createCharHashEmbedding,
 } from "./provider/char-hash";
-
 export {
-	OpenAIEmbedding,
-	createOpenAIEmbedding,
-} from "./provider/openai";
-
-export {
-	CohereEmbedding,
-	createCohereEmbedding,
-	type CohereInputType,
-	type CohereEmbeddingConfig,
+  CohereEmbedding,
+  type CohereEmbeddingConfig,
+  type CohereInputType,
+  createCohereEmbedding,
 } from "./provider/cohere";
-
-// Export batch processing utilities
-export { embedBatch } from "./batch";
+export {
+  createOpenAIEmbedding,
+  OpenAIEmbedding,
+} from "./provider/openai";
+// Export types
+export type { EmbeddingProvider, EmbedRequest, EmbedResponse } from "./types";

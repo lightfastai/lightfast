@@ -15,41 +15,41 @@ import { userScopedProcedure } from "../../trpc";
  */
 
 export const accountRouter = {
-	/**
-	 * Get user profile information from Clerk
-	 *
-	 * Returns user data including:
-	 * - Full name
-	 * - Email addresses
-	 * - Username
-	 * - Profile image
-	 */
-	get: userScopedProcedure.query(async ({ ctx }) => {
-		try {
-			const clerk = await clerkClient();
-			const user = await clerk.users.getUser(ctx.auth.userId);
+  /**
+   * Get user profile information from Clerk
+   *
+   * Returns user data including:
+   * - Full name
+   * - Email addresses
+   * - Username
+   * - Profile image
+   */
+  get: userScopedProcedure.query(async ({ ctx }) => {
+    try {
+      const clerk = await clerkClient();
+      const user = await clerk.users.getUser(ctx.auth.userId);
 
-			return {
-				id: user.id,
-				firstName: user.firstName,
-				lastName: user.lastName,
-				fullName:
-					user.firstName && user.lastName
-						? `${user.firstName} ${user.lastName}`
-						: user.firstName ?? user.lastName ?? null,
-				username: user.username,
-				primaryEmailAddress: user.primaryEmailAddress?.emailAddress ?? null,
-				imageUrl: user.imageUrl,
-				createdAt: new Date(user.createdAt).toISOString(),
-			};
-		} catch (error: unknown) {
-			console.error("[tRPC] Failed to fetch user profile:", error);
+      return {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName:
+          user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : (user.firstName ?? user.lastName ?? null),
+        username: user.username,
+        primaryEmailAddress: user.primaryEmailAddress?.emailAddress ?? null,
+        imageUrl: user.imageUrl,
+        createdAt: new Date(user.createdAt).toISOString(),
+      };
+    } catch (error: unknown) {
+      console.error("[tRPC] Failed to fetch user profile:", error);
 
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: "Failed to fetch user profile",
-				cause: error,
-			});
-		}
-	}),
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch user profile",
+        cause: error,
+      });
+    }
+  }),
 } satisfies TRPCRouterRecord;

@@ -5,21 +5,21 @@
  * using production transformers.
  */
 
-import { readFileSync, existsSync, readdirSync } from "node:fs";
-import { resolve, join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import type { SourceEvent } from "@repo/console-types";
 import type { WebhookPayload } from "./transform.js";
 import { transformWebhook } from "./transform.js";
 
 export interface Dataset {
-  name: string;
   description?: string;
   events: SourceEvent[];
+  name: string;
 }
 
 interface RawDataset {
-  name: string;
   description?: string;
+  name: string;
   webhooks: WebhookPayload[];
 }
 
@@ -44,9 +44,11 @@ export const loadDataset = (nameOrPath: string): Dataset => {
 
   const raw = JSON.parse(readFileSync(filePath, "utf-8")) as RawDataset;
 
-  if (!raw.name) throw new Error(`Dataset missing: name`);
+  if (!raw.name) {
+    throw new Error("Dataset missing: name");
+  }
   if (!Array.isArray(raw.webhooks) || raw.webhooks.length === 0) {
-    throw new Error(`Dataset must have at least one webhook`);
+    throw new Error("Dataset must have at least one webhook");
   }
 
   // Transform webhooks to SourceEvents using production transformers
@@ -66,7 +68,9 @@ export const loadDataset = (nameOrPath: string): Dataset => {
  */
 export const listDatasets = (): string[] => {
   const datasetsDir = getDatasetsDir();
-  if (!existsSync(datasetsDir)) return [];
+  if (!existsSync(datasetsDir)) {
+    return [];
+  }
 
   return readdirSync(datasetsDir)
     .filter((f) => f.endsWith(".json") && !f.includes("schema"))
@@ -104,7 +108,9 @@ export const stressScenario = (count: number): SourceEvent[] => {
 
   while (events.length < count) {
     for (const event of base) {
-      if (events.length >= count) break;
+      if (events.length >= count) {
+        break;
+      }
       events.push({
         ...event,
         sourceId: `${event.sourceId}:stress:${stressIndex++}`,
@@ -115,13 +121,17 @@ export const stressScenario = (count: number): SourceEvent[] => {
   return events;
 };
 
-// Re-export transform types
-export type {
-  WebhookPayload,
-  SentryWebhookPayload,
-  LinearWebhookPayload,
-} from "./transform.js";
+export type { VercelWebhookEventType } from "@repo/console-webhooks";
 
 // Re-export canonical event types from console-webhooks
-export type { GitHubWebhookEventType, SentryWebhookEventType, LinearWebhookEventType } from "@repo/console-webhooks/transformers";
-export type { VercelWebhookEventType } from "@repo/console-webhooks";
+export type {
+  GitHubWebhookEventType,
+  LinearWebhookEventType,
+  SentryWebhookEventType,
+} from "@repo/console-webhooks/transformers";
+// Re-export transform types
+export type {
+  LinearWebhookPayload,
+  SentryWebhookPayload,
+  WebhookPayload,
+} from "./transform.js";

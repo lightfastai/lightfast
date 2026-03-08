@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Zap, Scale, Brain } from "lucide-react";
+import { Brain, Scale, Zap } from "lucide-react";
 
 export const SOURCE_TYPE_OPTIONS = [
   { value: "github", label: "GitHub" },
@@ -69,7 +69,9 @@ export const AGE_PRESET_OPTIONS = [
 export function dateRangeFromPreset(preset: string): {
   dateRange?: { start: string };
 } {
-  if (preset === "none") return {};
+  if (preset === "none") {
+    return {};
+  }
   const hoursMap: Record<string, number> = {
     "1h": 1,
     "6h": 6,
@@ -79,7 +81,9 @@ export function dateRangeFromPreset(preset: string): {
     "30d": 720,
   };
   const hours = hoursMap[preset];
-  if (!hours) return {};
+  if (!hours) {
+    return {};
+  }
   const start = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
   return { dateRange: { start } };
 }

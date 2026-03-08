@@ -57,7 +57,7 @@ export async function embedBatch(
      * @param totalBatches - Total number of batches
      */
     onProgress?: (currentBatch: number, totalBatches: number) => void;
-  } = {},
+  } = {}
 ): Promise<number[][]> {
   const batchSize = options.batchSize ?? 100;
   const delayMs = options.delayMs ?? 0;

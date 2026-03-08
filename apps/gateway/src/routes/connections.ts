@@ -7,7 +7,7 @@ import { getWorkflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
 import { html, raw } from "hono/html";
 import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
-import { gatewayBaseUrl, consoleUrl } from "../lib/urls.js";
+import { consoleUrl, gatewayBaseUrl } from "../lib/urls.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import type { TenantVariables } from "../middleware/tenant.js";
 import { tenantMiddleware } from "../middleware/tenant.js";
@@ -27,61 +27,71 @@ const connections = new Hono<{ Variables: TenantVariables }>();
  * Generates state token, stores in Redis, returns authorization URL for the provider.
  * Accepts optional `redirect_to` query param for CLI/non-browser clients.
  */
-connections.get("/:provider/authorize", apiKeyAuth, tenantMiddleware, async (c) => {
-  const providerName = c.req.param("provider") as ProviderName;
-  const orgId = c.get("orgId");
+connections.get(
+  "/:provider/authorize",
+  apiKeyAuth,
+  tenantMiddleware,
+  async (c) => {
+    const providerName = c.req.param("provider") as ProviderName;
+    const orgId = c.get("orgId");
 
-  let provider;
-  try {
-    provider = getProvider(providerName);
-  } catch {
-    return c.json({ error: "unknown_provider", provider: providerName }, 400);
-  }
-
-  // Validate redirect_to — allowlist: "inline", localhost, or consoleUrl
-  const redirectTo = c.req.query("redirect_to");
-  if (redirectTo && redirectTo !== "inline") {
+    let provider;
     try {
-      const url = new URL(redirectTo);
-      if (url.hostname !== "localhost" && !redirectTo.startsWith(consoleUrl)) {
+      provider = getProvider(providerName);
+    } catch {
+      return c.json({ error: "unknown_provider", provider: providerName }, 400);
+    }
+
+    // Validate redirect_to — allowlist: "inline", localhost, or consoleUrl
+    const redirectTo = c.req.query("redirect_to");
+    if (redirectTo && redirectTo !== "inline") {
+      try {
+        const url = new URL(redirectTo);
+        if (
+          url.hostname !== "localhost" &&
+          !redirectTo.startsWith(consoleUrl)
+        ) {
+          return c.json({ error: "invalid_redirect_to" }, 400);
+        }
+      } catch {
         return c.json({ error: "invalid_redirect_to" }, 400);
       }
-    } catch {
-      return c.json({ error: "invalid_redirect_to" }, 400);
     }
+
+    const state = nanoid();
+    const connectedBy = c.req.header("X-User-Id") ?? "unknown";
+
+    // Store OAuth state in Redis (10-minute TTL) — atomic pipeline
+    const key = oauthStateKey(state);
+    await redis
+      .pipeline()
+      .hset(key, {
+        provider: provider.name,
+        orgId,
+        connectedBy,
+        ...(redirectTo ? { redirectTo } : {}),
+        createdAt: Date.now().toString(),
+      })
+      .expire(key, 600)
+      .exec();
+
+    const url = provider.getAuthorizationUrl(state);
+
+    return c.json({ url, state });
   }
-
-  const state = nanoid();
-  const connectedBy = c.req.header("X-User-Id") ?? "unknown";
-
-  // Store OAuth state in Redis (10-minute TTL) — atomic pipeline
-  const key = oauthStateKey(state);
-  await redis
-    .pipeline()
-    .hset(key, {
-      provider: provider.name,
-      orgId,
-      connectedBy,
-      ...(redirectTo ? { redirectTo } : {}),
-      createdAt: Date.now().toString(),
-    })
-    .expire(key, 600)
-    .exec();
-
-  const url = provider.getAuthorizationUrl(state);
-
-  return c.json({ url, state });
-});
+);
 
 /**
  * Validate and consume OAuth state from Redis.
  * Returns stateData if valid, null if missing or expired.
  */
-async function resolveAndConsumeState(
-  c: { req: { query(key: string): string | undefined } },
-): Promise<Record<string, string> | null> {
+async function resolveAndConsumeState(c: {
+  req: { query(key: string): string | undefined };
+}): Promise<Record<string, string> | null> {
   const state = c.req.query("state");
-  if (!state) {return null;}
+  if (!state) {
+    return null;
+  }
 
   // Atomic read-and-delete to prevent state replay via concurrent requests
   const key = oauthStateKey(state);
@@ -91,7 +101,9 @@ async function resolveAndConsumeState(
     .del(key)
     .exec<[Record<string, string> | null, number]>();
 
-  if (!stateData?.orgId) {return null;}
+  if (!stateData?.orgId) {
+    return null;
+  }
 
   return stateData;
 }
@@ -112,7 +124,9 @@ connections.get("/oauth/status", async (c) => {
     return c.json({ error: "missing_state" }, 400);
   }
 
-  const result = await redis.hgetall<Record<string, string>>(oauthResultKey(state));
+  const result = await redis.hgetall<Record<string, string>>(
+    oauthResultKey(state)
+  );
 
   if (!result) {
     return c.json({ status: "pending" });
@@ -158,8 +172,8 @@ connections.get("/:provider/callback", async (c) => {
         .where(
           and(
             eq(gwInstallations.provider, "github"),
-            eq(gwInstallations.externalId, installationId),
-          ),
+            eq(gwInstallations.externalId, installationId)
+          )
         )
         .limit(1);
 
@@ -224,7 +238,7 @@ connections.get("/:provider/callback", async (c) => {
               </div>
               ${raw("<script>setTimeout(()=>window.close(),2000)</script>")}
             </body>
-          </html>`,
+          </html>`
       );
     }
 
@@ -241,7 +255,9 @@ connections.get("/:provider/callback", async (c) => {
     }
 
     // Default: redirect to console (existing behavior, backwards compatible)
-    const redirectUrl = new URL(`${consoleUrl}/provider/${provider.name}/connected`);
+    const redirectUrl = new URL(
+      `${consoleUrl}/provider/${provider.name}/connected`
+    );
     if (result.reactivated) {
       redirectUrl.searchParams.set("reactivated", "true");
     }
@@ -279,18 +295,16 @@ connections.get("/:provider/callback", async (c) => {
               </div>
             </body>
           </html>`,
-        400,
+        400
       );
     }
 
     if (redirectTo) {
-      return c.redirect(
-        `${redirectTo}?error=${encodeURIComponent(message)}`,
-      );
+      return c.redirect(`${redirectTo}?error=${encodeURIComponent(message)}`);
     }
 
     return c.redirect(
-      `${consoleUrl}/provider/${provider.name}/connected?error=${encodeURIComponent(message)}`,
+      `${consoleUrl}/provider/${provider.name}/connected?error=${encodeURIComponent(message)}`
     );
   }
 });
@@ -348,11 +362,13 @@ connections.get("/:id", apiKeyAuth, async (c) => {
         ? true
         : installation.tokens.length > 0,
     tokenExpiresAt: installation.tokens[0]?.expiresAt ?? null,
-    resources: installation.resources.map((r: (typeof installation.resources)[number]) => ({
-      id: r.id,
-      providerResourceId: r.providerResourceId,
-      resourceName: r.resourceName,
-    })),
+    resources: installation.resources.map(
+      (r: (typeof installation.resources)[number]) => ({
+        id: r.id,
+        providerResourceId: r.providerResourceId,
+        resourceName: r.resourceName,
+      })
+    ),
     createdAt: installation.createdAt,
     updatedAt: installation.updatedAt,
   });
@@ -383,7 +399,7 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
   if (installation.status !== "active") {
     return c.json(
       { error: "installation_not_active", status: installation.status },
-      400,
+      400
     );
   }
 
@@ -397,7 +413,10 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
     if (message === "no_token_found") {
       return c.json({ error: "no_token_found" }, 404);
     }
-    if (message === "token_expired" || message === "token_expired:no_refresh_token") {
+    if (
+      message === "token_expired" ||
+      message === "token_expired:no_refresh_token"
+    ) {
       return c.json({ error: "token_expired", message }, 401);
     }
     return c.json({ error: "token_generation_failed", message }, 502);
@@ -418,7 +437,12 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
   const installationRows = await db
     .select()
     .from(gwInstallations)
-    .where(and(eq(gwInstallations.id, id), eq(gwInstallations.provider, providerName)))
+    .where(
+      and(
+        eq(gwInstallations.id, id),
+        eq(gwInstallations.provider, providerName)
+      )
+    )
     .limit(1);
 
   const installation = installationRows[0];
@@ -466,7 +490,7 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
   if (installation.status !== "active") {
     return c.json(
       { error: "installation_not_active", status: installation.status },
-      400,
+      400
     );
   }
 
@@ -488,8 +512,8 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
       and(
         eq(gwResources.installationId, id),
         eq(gwResources.providerResourceId, body.providerResourceId),
-        eq(gwResources.status, "active"),
-      ),
+        eq(gwResources.status, "active")
+      )
     )
     .limit(1);
 
@@ -498,7 +522,7 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
   if (existing) {
     return c.json(
       { error: "resource_already_linked", resourceId: existing.id },
-      409,
+      409
     );
   }
 
@@ -521,12 +545,14 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
     .returning();
 
   const resource = resourceRows[0];
-  if (!resource) {return c.json({ error: "insert_failed" }, 500);}
+  if (!resource) {
+    return c.json({ error: "insert_failed" }, 500);
+  }
 
   // Populate Redis routing cache
   await redis.hset(
     resourceKey(installation.provider as ProviderName, body.providerResourceId),
-    { connectionId: id, orgId: installation.orgId },
+    { connectionId: id, orgId: installation.orgId }
   );
 
   return c.json({
@@ -552,7 +578,9 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
   const resourceRows = await db
     .select()
     .from(gwResources)
-    .where(and(eq(gwResources.id, resourceId), eq(gwResources.installationId, id)))
+    .where(
+      and(eq(gwResources.id, resourceId), eq(gwResources.installationId, id))
+    )
     .limit(1);
 
   const resource = resourceRows[0];
@@ -580,7 +608,10 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
 
   if (installation) {
     await redis.del(
-      resourceKey(installation.provider as ProviderName, resource.providerResourceId),
+      resourceKey(
+        installation.provider as ProviderName,
+        resource.providerResourceId
+      )
     );
   }
 

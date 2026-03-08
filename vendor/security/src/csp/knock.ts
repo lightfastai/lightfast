@@ -20,14 +20,9 @@ import type { PartialCspDirectives } from "./types";
 export function createKnockCspDirectives(): PartialCspDirectives {
   return {
     // Connections: Knock API and WebSocket for real-time notifications
-    connectSrc: [
-      "https://api.knock.app",
-      "wss://api.knock.app",
-    ],
+    connectSrc: ["https://api.knock.app", "wss://api.knock.app"],
 
     // Scripts: Knock components (if needed)
-    scriptSrc: [
-      "https://cdn.knock.app",
-    ],
+    scriptSrc: ["https://cdn.knock.app"],
   };
 }

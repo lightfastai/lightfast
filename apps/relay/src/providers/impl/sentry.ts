@@ -1,11 +1,8 @@
-import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto.js";
-import { sentryWebhookPayloadSchema } from "../schemas.js";
-import type { SentryWebhookPayload } from "../schemas.js";
-import type {
-  WebhookProvider,
-  WebhookPayload,
-} from "../types.js";
 import type { RelayEnv } from "../../env.js";
+import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto.js";
+import type { SentryWebhookPayload } from "../schemas.js";
+import { sentryWebhookPayloadSchema } from "../schemas.js";
+import type { WebhookPayload, WebhookProvider } from "../types.js";
 
 const SIGNATURE_HEADER = "sentry-hook-signature";
 const RESOURCE_HEADER = "sentry-hook-resource";
@@ -21,10 +18,12 @@ export class SentryProvider implements WebhookProvider {
   async verifyWebhook(
     payload: string,
     headers: Headers,
-    secret: string,
+    secret: string
   ): Promise<boolean> {
     const signature = headers.get(SIGNATURE_HEADER);
-    if (!signature) return false;
+    if (!signature) {
+      return false;
+    }
 
     const expectedSig = await computeHmacSha256(payload, secret);
     return timingSafeEqual(signature, expectedSig);
@@ -37,7 +36,9 @@ export class SentryProvider implements WebhookProvider {
   extractDeliveryId(headers: Headers, _payload: WebhookPayload): string {
     const resource = headers.get(RESOURCE_HEADER);
     const timestamp = headers.get(TIMESTAMP_HEADER);
-    if (resource && timestamp) return `${resource}:${timestamp}`;
+    if (resource && timestamp) {
+      return `${resource}:${timestamp}`;
+    }
     return crypto.randomUUID();
   }
 

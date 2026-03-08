@@ -1,3 +1,16 @@
+import type {
+  ActorResolutionTags,
+  ClusterAffinityTags,
+  ClusterTags,
+  DocumentsIndexedTags,
+  EntityExtractionTags,
+  ErrorTags,
+  JobDurationTags,
+  NeuralObservationTags,
+  OperationMetricType,
+  OperationMetricUnit,
+  ProfileUpdateTags,
+} from "@repo/console-validation";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -9,19 +22,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
-import type {
-  OperationMetricType,
-  OperationMetricUnit,
-  JobDurationTags,
-  DocumentsIndexedTags,
-  ErrorTags,
-  NeuralObservationTags,
-  EntityExtractionTags,
-  ClusterTags,
-  ProfileUpdateTags,
-  ActorResolutionTags,
-  ClusterAffinityTags,
-} from "@repo/console-validation";
 
 /**
  * Operations Metrics Table - Internal System Health
@@ -132,38 +132,40 @@ export const workspaceOperationsMetrics = pgTable(
     workspaceIdIdx: index("ops_metric_workspace_id_idx").on(table.workspaceId),
 
     // Index for finding metrics by repository
-    repositoryIdIdx: index("ops_metric_repository_id_idx").on(table.repositoryId),
+    repositoryIdIdx: index("ops_metric_repository_id_idx").on(
+      table.repositoryId
+    ),
 
     // Index for finding metrics by type
     typeIdx: index("ops_metric_type_idx").on(table.type),
 
     // Composite index for time-series queries by workspace
-    workspaceTypeTimestampIdx: index("ops_metric_workspace_type_timestamp_idx").on(
-      table.workspaceId,
-      table.type,
-      table.timestamp,
-    ),
+    workspaceTypeTimestampIdx: index(
+      "ops_metric_workspace_type_timestamp_idx"
+    ).on(table.workspaceId, table.type, table.timestamp),
 
     // Index for recent metrics (for dashboard)
     timestampIdx: index("ops_metric_timestamp_idx").on(table.timestamp),
-  }),
+  })
 );
 
 // Type exports
-export type WorkspaceOperationMetric = typeof workspaceOperationsMetrics.$inferSelect;
-export type InsertWorkspaceOperationMetric = typeof workspaceOperationsMetrics.$inferInsert;
+export type WorkspaceOperationMetric =
+  typeof workspaceOperationsMetrics.$inferSelect;
+export type InsertWorkspaceOperationMetric =
+  typeof workspaceOperationsMetrics.$inferInsert;
 
 // Type re-exports from validation schemas
 export type {
-  JobDurationTags,
-  DocumentsIndexedTags,
-  ErrorTags,
-  NeuralObservationTags,
-  EntityExtractionTags,
-  ClusterTags,
-  ProfileUpdateTags,
   ActorResolutionTags,
   ClusterAffinityTags,
+  ClusterTags,
+  DocumentsIndexedTags,
+  EntityExtractionTags,
+  ErrorTags,
+  JobDurationTags,
+  NeuralObservationTags,
+  ProfileUpdateTags,
 } from "@repo/console-validation";
 
 /**

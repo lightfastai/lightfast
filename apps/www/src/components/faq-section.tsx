@@ -1,12 +1,12 @@
+import { ArrowRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 
 // Dynamically imported so the Radix accordion JS ships in a separate lazy chunk.
 // The FAQ is below the fold — no need to block the critical path with
 // @radix-ui/react-accordion + its shared primitives on initial load.
-const FaqAccordion = dynamic(
-  () => import("./faq-accordion").then((m) => ({ default: m.FaqAccordion })),
+const FaqAccordion = dynamic(() =>
+  import("./faq-accordion").then((m) => ({ default: m.FaqAccordion }))
 );
 
 export const faqs = [
@@ -60,10 +60,10 @@ export const faqs = [
 export function FAQSection() {
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-16">
         {/* Left: Badge */}
         <div>
-          <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+          <span className="inline-flex h-7 items-center rounded-md border border-border px-3 text-muted-foreground text-xs">
             FAQ
           </span>
         </div>
@@ -71,20 +71,20 @@ export function FAQSection() {
         {/* Right: FAQ content - spans 2 columns */}
         <div className="lg:col-span-2">
           {/* Header with CTA */}
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8 pb-8 border-b border-border">
+          <div className="mb-8 flex flex-col border-border border-b pb-8 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-1">
-              <p className="text-base md:text-lg leading-relaxed text-muted-foreground">
+              <p className="text-base text-muted-foreground leading-relaxed md:text-lg">
                 Learn how the operating layer works.
               </p>
             </div>
 
             <div className="mt-6 lg:mt-0 lg:text-right">
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="mb-2 text-muted-foreground text-sm">
                 Ready to get started?
               </p>
               <Link
+                className="group inline-flex items-center gap-2 font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
                 href="/early-access"
-                className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors group"
               >
                 Join early access
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

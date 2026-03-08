@@ -4,10 +4,10 @@ import type { ModelMessage } from "ai";
  * Result of running a cache strategy
  */
 export interface CacheStrategyResult {
-	/**
-	 * Array of message indices that should be cached
-	 */
-	messageIndicesToCache: number[];
+  /**
+   * Array of message indices that should be cached
+   */
+  messageIndicesToCache: number[];
 }
 
 /**
@@ -15,8 +15,8 @@ export interface CacheStrategyResult {
  * Each strategy implements its own distinct caching logic
  */
 export interface CacheStrategy {
-	/**
-	 * Run the caching strategy and return which messages should be cached
-	 */
-	run(messages: ModelMessage[]): CacheStrategyResult;
+  /**
+   * Run the caching strategy and return which messages should be cached
+   */
+  run(messages: ModelMessage[]): CacheStrategyResult;
 }

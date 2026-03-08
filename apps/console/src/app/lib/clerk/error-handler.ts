@@ -1,24 +1,24 @@
 import { captureException } from "@sentry/nextjs";
 import {
+  formatLockoutTime,
   getErrorMessage,
-  isRateLimitError,
   isAccountLockedError,
-  formatLockoutTime
+  isRateLimitError,
 } from "~/app/lib/clerk/error-handling";
 
 export interface ClerkErrorContext {
-  component: string;
   action: string;
+  component: string;
   email?: string;
   [key: string]: unknown;
 }
 
 export interface ClerkErrorResult {
-  message: string;
-  userMessage: string;
-  isRateLimit: boolean;
   isAccountLocked: boolean;
+  isRateLimit: boolean;
+  message: string;
   retryAfterSeconds?: number;
+  userMessage: string;
 }
 
 /**
@@ -49,19 +49,25 @@ export function handleClerkError(
     userMessage = lockoutInfo.expiresInSeconds
       ? `Account locked. Please try again in ${formatLockoutTime(lockoutInfo.expiresInSeconds)}.`
       : "Account locked. Please try again later.";
-  } else if (message.toLowerCase().includes('incorrect') || message.toLowerCase().includes('invalid')) {
-    userMessage = "The entered code is incorrect. Please try again and check for typos.";
+  } else if (
+    message.toLowerCase().includes("incorrect") ||
+    message.toLowerCase().includes("invalid")
+  ) {
+    userMessage =
+      "The entered code is incorrect. Please try again and check for typos.";
   }
 
   // Create a descriptive error for Sentry with proper message
-  const sentryError = new Error(`[${context.component}] ${context.action}: ${message}`);
+  const sentryError = new Error(
+    `[${context.component}] ${context.action}: ${message}`
+  );
   // Preserve original error as cause for full stack trace
   // Using Object.defineProperty to avoid ESLint warnings
-  Object.defineProperty(sentryError, 'cause', {
+  Object.defineProperty(sentryError, "cause", {
     value: error,
     enumerable: false,
     writable: true,
-    configurable: true
+    configurable: true,
   });
 
   // Capture to Sentry with comprehensive context
@@ -70,10 +76,10 @@ export function handleClerkError(
       component: context.component,
       action: context.action,
       error_type: rateLimitInfo.rateLimited
-        ? 'rate_limit'
+        ? "rate_limit"
         : lockoutInfo.locked
-          ? 'account_locked'
-          : 'validation',
+          ? "account_locked"
+          : "validation",
     },
     extra: {
       ...context,
@@ -112,7 +118,7 @@ export function handleUnexpectedStatus(
       component: context.component,
       action: context.action,
       status,
-      error_type: 'unexpected_status',
+      error_type: "unexpected_status",
     },
     extra: {
       ...context,

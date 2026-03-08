@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import { SearchNavbar } from "~/components/search-navbar";
-import { SearchInterface } from "~/components/search-interface";
 import { createMetadata } from "@vendor/seo/metadata";
+import type { Metadata } from "next";
+import { SearchInterface } from "~/components/search-interface";
+import { SearchNavbar } from "~/components/search-navbar";
 
 export const metadata: Metadata = createMetadata({
   title: "Search – Lightfast",
@@ -28,7 +28,7 @@ export const metadata: Metadata = createMetadata({
 
 export default function SearchPage() {
   return (
-    <div className="h-full w-full flex flex-col">
+    <div className="flex h-full w-full flex-col">
       {/* Navbar with Menu */}
       <SearchNavbar />
 

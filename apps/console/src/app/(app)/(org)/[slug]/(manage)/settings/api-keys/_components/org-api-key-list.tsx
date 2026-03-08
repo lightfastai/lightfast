@@ -1,16 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import {
-  useSuspenseQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { Input } from "@repo/ui/components/ui/input";
-import { Label } from "@repo/ui/components/ui/label";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -20,9 +12,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { Key, Copy, Trash2, Plus, RotateCcw } from "lucide-react";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { Copy, Key, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { showErrorToast } from "~/lib/trpc-errors";
 
 /**
@@ -166,17 +166,17 @@ export function OrgApiKeyList() {
       {/* Header with Create Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">
+          <h2 className="font-semibold text-2xl text-foreground">
             Organization API Keys
           </h2>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="mt-2 text-muted-foreground text-sm">
             Manage API keys for programmatic access to your organization.
           </p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <Dialog onOpenChange={setIsCreateDialogOpen} open={isCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Create API Key
             </Button>
           </DialogTrigger>
@@ -194,21 +194,21 @@ export function OrgApiKeyList() {
 
             {createdKey ? (
               <div className="space-y-4">
-                <div className="p-4 bg-muted rounded-lg border border-border">
+                <div className="rounded-lg border border-border bg-muted p-4">
                   <div className="flex items-center justify-between gap-2">
-                    <code className="text-sm font-mono break-all">
+                    <code className="break-all font-mono text-sm">
                       {createdKey}
                     </code>
                     <Button
-                      variant="ghost"
-                      size="sm"
                       onClick={() => handleCopyKey(createdKey)}
+                      size="sm"
+                      variant="ghost"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Make sure to copy your API key now. You won't be able to see
                   it again!
                 </p>
@@ -218,11 +218,11 @@ export function OrgApiKeyList() {
                 <div className="space-y-2">
                   <Label htmlFor="key-name">Name</Label>
                   <Input
+                    disabled={createMutation.isPending}
                     id="key-name"
+                    onChange={(e) => setNewKeyName(e.target.value)}
                     placeholder="e.g., Production API, Development, CI/CD"
                     value={newKeyName}
-                    onChange={(e) => setNewKeyName(e.target.value)}
-                    disabled={createMutation.isPending}
                   />
                 </div>
               </div>
@@ -234,14 +234,14 @@ export function OrgApiKeyList() {
               ) : (
                 <>
                   <Button
-                    variant="outline"
                     onClick={() => setIsCreateDialogOpen(false)}
+                    variant="outline"
                   >
                     Cancel
                   </Button>
                   <Button
-                    onClick={handleCreateKey}
                     disabled={createMutation.isPending}
+                    onClick={handleCreateKey}
                   >
                     {createMutation.isPending ? "Creating..." : "Create"}
                   </Button>
@@ -257,27 +257,27 @@ export function OrgApiKeyList() {
         <div className="space-y-3">
           {apiKeys.map((key) => (
             <div
+              className="flex items-center justify-between rounded-lg border border-border bg-card p-4"
               key={key.id}
-              className="flex items-center justify-between p-4 border border-border rounded-lg bg-card"
             >
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
                   <Key className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-foreground">{key.name}</p>
                     {key.isActive ? (
-                      <Badge variant="default" className="text-xs">
+                      <Badge className="text-xs" variant="default">
                         Active
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge className="text-xs" variant="secondary">
                         Revoked
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
                     <code className="text-xs">{key.keyPreview}</code>
                     <span>-</span>
                     <span>
@@ -315,29 +315,29 @@ export function OrgApiKeyList() {
                 {key.isActive && (
                   <>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRotate(key.id, key.name)}
                       disabled={rotateMutation.isPending}
+                      onClick={() => handleRotate(key.id, key.name)}
+                      size="sm"
                       title="Rotate key"
+                      variant="outline"
                     >
                       <RotateCcw className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRevoke(key.id, key.name)}
                       disabled={revokeMutation.isPending}
+                      onClick={() => handleRevoke(key.id, key.name)}
+                      size="sm"
+                      variant="outline"
                     >
                       Revoke
                     </Button>
                   </>
                 )}
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(key.id, key.name)}
                   disabled={deleteMutation.isPending}
+                  onClick={() => handleDelete(key.id, key.name)}
+                  size="sm"
+                  variant="ghost"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
@@ -346,9 +346,9 @@ export function OrgApiKeyList() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 border border-dashed border-border rounded-lg">
+        <div className="rounded-lg border border-border border-dashed py-12 text-center">
           <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-muted">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
               <Key className="h-6 w-6 text-muted-foreground" />
             </div>
             <p className="text-muted-foreground">

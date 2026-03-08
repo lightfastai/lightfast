@@ -3,16 +3,21 @@ import type { Metadata, Viewport } from "next";
 import "~/styles/globals.css";
 
 import { cn } from "@repo/ui/lib/utils";
-import { geistSans, geistMono, exposurePlus, ppNeueMontreal, ppSupplySans } from "~/lib/fonts";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
+import type { Organization, WithContext } from "@vendor/seo/json-ld";
+import { JsonLd } from "@vendor/seo/json-ld";
 import { createMetadata } from "@vendor/seo/metadata";
 import { PrefetchCrossZoneLinks } from "@vercel/microfrontends/next/client";
-import { StablePrefetchCrossZoneLinksProvider } from "~/components/stable-prefetch-provider";
-
-import { JsonLd } from "@vendor/seo/json-ld";
-import type { Organization, WithContext } from "@vendor/seo/json-ld";
 import { ApolloTracker } from "~/components/apollo-tracker";
+import { StablePrefetchCrossZoneLinksProvider } from "~/components/stable-prefetch-provider";
 import { env } from "~/env";
+import {
+  exposurePlus,
+  geistMono,
+  geistSans,
+  ppNeueMontreal,
+  ppSupplySans,
+} from "~/lib/fonts";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast – The Operating Layer for Agents and Apps",
@@ -147,7 +152,7 @@ export default function RootLayout({
         ppNeueMontreal.variable,
         exposurePlus.variable,
         ppSupplySans.variable,
-        "touch-manipulation font-sans antialiased dark scrollbar-thin",
+        "dark scrollbar-thin touch-manipulation font-sans antialiased"
       )}
       lang="en"
       suppressHydrationWarning
@@ -156,7 +161,7 @@ export default function RootLayout({
         <JsonLd code={organizationSchema} />
         <JsonLd code={websiteSchema} />
       </head>
-      <body className={cn("min-h-screen font-sans bg-background")}>
+      <body className={cn("min-h-screen bg-background font-sans")}>
         <StablePrefetchCrossZoneLinksProvider>
           {children}
           {env.NEXT_PUBLIC_VERCEL_ENV === "production" && <ApolloTracker />}

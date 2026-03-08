@@ -54,4 +54,6 @@ export const classificationResponseSchema = z.object({
     .describe("Brief explanation for the classification"),
 });
 
-export type ClassificationResponse = z.infer<typeof classificationResponseSchema>;
+export type ClassificationResponse = z.infer<
+  typeof classificationResponseSchema
+>;

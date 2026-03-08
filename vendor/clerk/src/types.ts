@@ -4,12 +4,12 @@ export enum SessionType {
 }
 
 export interface AuthSession {
+  type: SessionType.User;
   user: {
     id: string;
     accessToken: string;
     refreshToken: string;
   };
-  type: SessionType.User;
 }
 
 export interface ServerSession {
@@ -18,4 +18,8 @@ export interface ServerSession {
 
 export type Session = AuthSession | ServerSession;
 
-export type { ClerkAPIError, EmailCodeFactor, OAuthStrategy } from "@clerk/shared/types";
+export type {
+  ClerkAPIError,
+  EmailCodeFactor,
+  OAuthStrategy,
+} from "@clerk/shared/types";

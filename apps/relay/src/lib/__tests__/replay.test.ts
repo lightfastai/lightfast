@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { GwWebhookDelivery } from "@db/console/schema";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Mock externals ──
 // vi.mock factories are hoisted to top of file, so use vi.hoisted for shared references
@@ -20,7 +20,9 @@ const {
     mockDbUpdate: vi.fn(),
     mockDbSet: vi.fn(),
     mockDbWhere: vi.fn().mockResolvedValue(undefined),
-    mockGetProvider: vi.fn().mockReturnValue({ extractResourceId: mockExtractResourceId }),
+    mockGetProvider: vi
+      .fn()
+      .mockReturnValue({ extractResourceId: mockExtractResourceId }),
     mockExtractResourceId,
   };
 });
@@ -37,7 +39,12 @@ vi.mock("@db/console/client", () => ({
   db: {
     update: (...args: unknown[]) => {
       mockDbUpdate(...args);
-      return { set: (...setArgs: unknown[]) => { mockDbSet(...setArgs); return { where: mockDbWhere }; } };
+      return {
+        set: (...setArgs: unknown[]) => {
+          mockDbSet(...setArgs);
+          return { where: mockDbWhere };
+        },
+      };
     },
   },
 }));
@@ -58,7 +65,9 @@ import { replayDeliveries } from "../replay.js";
 
 // ── Helpers ──
 
-function makeDelivery(overrides: Partial<GwWebhookDelivery> = {}): GwWebhookDelivery {
+function makeDelivery(
+  overrides: Partial<GwWebhookDelivery> = {}
+): GwWebhookDelivery {
   return {
     id: "del-id-001",
     provider: "github",
@@ -81,7 +90,9 @@ describe("replayDeliveries", () => {
     mockWorkflowTrigger.mockResolvedValue({ workflowRunId: "wf-1" });
     mockDbWhere.mockResolvedValue(undefined);
     mockExtractResourceId.mockReturnValue("res-123");
-    mockGetProvider.mockReturnValue({ extractResourceId: mockExtractResourceId });
+    mockGetProvider.mockReturnValue({
+      extractResourceId: mockExtractResourceId,
+    });
   });
 
   it("skips entries with null payload and adds to skipped list", async () => {
@@ -99,7 +110,9 @@ describe("replayDeliveries", () => {
     const delivery = makeDelivery();
     await replayDeliveries([delivery]);
 
-    expect(mockRedisDel).toHaveBeenCalledWith("gw:webhook:seen:github:delivery-001");
+    expect(mockRedisDel).toHaveBeenCalledWith(
+      "gw:webhook:seen:github:delivery-001"
+    );
   });
 
   it("resets status to received after triggering workflow", async () => {
@@ -126,7 +139,7 @@ describe("replayDeliveries", () => {
           deliveryId: "del-trigger",
           eventType: "push",
         }),
-      }),
+      })
     );
   });
 
@@ -179,7 +192,7 @@ describe("replayDeliveries", () => {
     expect(mockWorkflowTrigger).toHaveBeenCalledWith(
       expect.objectContaining({
         body: expect.objectContaining({ resourceId: null }),
-      }),
+      })
     );
   });
 });

@@ -1,8 +1,8 @@
 "use client";
 
-import { useFormContext } from "@repo/ui/components/ui/form";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
+import type { WorkspaceFormValues } from "@repo/console-validation/forms";
+import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import {
   FormControl,
   FormDescription,
@@ -10,6 +10,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  useFormContext,
 } from "@repo/ui/components/ui/form";
 import {
   Select,
@@ -18,9 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useWorkspaceSearchParams } from "./use-workspace-search-params";
-import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 
 /**
  * Organization Selector
@@ -68,11 +68,11 @@ export function OrganizationSelector() {
         <FormItem>
           <FormLabel>Organization</FormLabel>
           <Select
-            value={field.value}
             onValueChange={(value) => {
               field.onChange(value);
               handleOrgChange(value);
             }}
+            value={field.value}
           >
             <FormControl>
               <SelectTrigger className="w-full">
@@ -84,7 +84,7 @@ export function OrganizationSelector() {
                 <SelectItem key={org.id} value={org.id}>
                   <div className="flex items-center gap-2">
                     <Avatar className="size-5">
-                      <AvatarFallback className="text-[10px] bg-foreground text-background">
+                      <AvatarFallback className="bg-foreground text-[10px] text-background">
                         {getInitials(org.name)}
                       </AvatarFallback>
                     </Avatar>

@@ -1,13 +1,13 @@
 "use client";
 
+import type { TOCItemType } from "fumadocs-core/toc";
 import {
   AnchorProvider,
   ScrollProvider,
   TOCItem,
   useActiveAnchor,
 } from "fumadocs-core/toc";
-import type { TOCItemType } from "fumadocs-core/toc";
-import { useRef, useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 interface TOCProps {
   items: TOCItemType[];
@@ -20,19 +20,21 @@ function TOCContent({ items }: TOCProps) {
   // Build anchor→index Map once when items change (O(1) lookup vs O(n) findIndex)
   const anchorIndexMap = useMemo(
     () => new Map(items.map((item, i) => [item.url.split("#")[1] ?? "", i])),
-    [items],
+    [items]
   );
 
   const activeIndex = useMemo(() => {
-    if (!activeAnchor) return 0;
+    if (!activeAnchor) {
+      return 0;
+    }
     return Math.max(0, anchorIndexMap.get(activeAnchor) ?? 0);
   }, [activeAnchor, anchorIndexMap]);
 
   return (
     <ScrollProvider containerRef={containerRef}>
-      <div ref={containerRef} className="relative space-y-0">
+      <div className="relative space-y-0" ref={containerRef}>
         {/* Background strip behind all items */}
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-muted/20" />
+        <div className="absolute top-0 bottom-0 left-0 w-1 bg-muted/20" />
 
         {/* Single sliding highlight */}
         <div
@@ -45,9 +47,9 @@ function TOCContent({ items }: TOCProps) {
 
         {items.map((item, _index) => (
           <TOCItem
-            key={item.url}
+            className="relative z-10 block flex h-7 items-center truncate py-1 pr-4 pl-6 text-muted-foreground text-sm leading-relaxed transition-colors hover:text-foreground data-[active=true]:text-foreground"
             href={item.url}
-            className="relative block text-sm text-muted-foreground hover:text-foreground transition-colors leading-relaxed py-1 pl-6 pr-4 data-[active=true]:text-foreground z-10 h-7 flex items-center truncate"
+            key={item.url}
             style={{
               paddingLeft: `${24 + Math.max(0, item.depth - 2) * 12}px`,
             }}
@@ -67,7 +69,7 @@ export function TOC({ items }: TOCProps) {
 
   return (
     <div className="py-2">
-      <h4 className="text-xs font-semibold text-foreground mb-4 pl-6">
+      <h4 className="mb-4 pl-6 font-semibold text-foreground text-xs">
         On this page
       </h4>
       <AnchorProvider toc={items}>

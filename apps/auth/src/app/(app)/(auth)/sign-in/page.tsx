@@ -1,7 +1,6 @@
-import type { Metadata } from "next";
-
-import { SignInForm } from "../_components/sign-in-form";
 import { createMetadata } from "@vendor/seo/metadata";
+import type { Metadata } from "next";
+import { SignInForm } from "../_components/sign-in-form";
 
 export const metadata: Metadata = createMetadata({
   title: "Sign In - Lightfast Auth",
@@ -28,9 +27,5 @@ export const metadata: Metadata = createMetadata({
 });
 
 export default function SignInPage() {
-  return (
-    <>
-      <SignInForm />
-    </>
-  );
+  return <SignInForm />;
 }

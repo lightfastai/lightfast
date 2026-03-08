@@ -1,17 +1,17 @@
 "use client";
 
-import * as React from "react";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { useSignIn } from "@vendor/clerk/client";
 import type { EmailCodeFactor } from "@vendor/clerk/types";
-import { toast } from "@repo/ui/components/ui/sonner";
 import { useLogger } from "@vendor/observability/client-log";
+import * as React from "react";
 import { useCodeVerification } from "~/app/hooks/use-code-verification";
-import { CodeVerificationUI } from "./shared/code-verification-ui";
 import {
   handleClerkError,
   handleUnexpectedStatus,
 } from "~/app/lib/clerk/error-handler";
 import { consoleUrl } from "~/lib/related-projects";
+import { CodeVerificationUI } from "./shared/code-verification-ui";
 
 interface SignInCodeVerificationProps {
   email: string;
@@ -39,7 +39,9 @@ export function SignInCodeVerification({
 
   const handleComplete = React.useCallback(
     async (value: string) => {
-      if (!isLoaded) return;
+      if (!isLoaded) {
+        return;
+      }
 
       setIsVerifying(true);
       setCustomError(null);
@@ -70,7 +72,7 @@ export function SignInCodeVerification({
             component: "SignInCodeVerification",
             action: "verify_code",
             email,
-            result: result,
+            result,
           });
 
           setCustomError("Unexpected response. Please try again.");
@@ -101,11 +103,13 @@ export function SignInCodeVerification({
       setIsRedirecting,
       log,
       email,
-    ],
+    ]
   );
 
   async function handleResendCode() {
-    if (!signIn) return;
+    if (!signIn) {
+      return;
+    }
 
     setIsResending(true);
     setCustomError(null);
@@ -115,7 +119,8 @@ export function SignInCodeVerification({
       let emailAddressId: string | undefined;
       if (factors) {
         const found = factors.find(
-          (factor): factor is EmailCodeFactor => factor.strategy === "email_code",
+          (factor): factor is EmailCodeFactor =>
+            factor.strategy === "email_code"
         );
         if (found) {
           emailAddressId = found.emailAddressId;
@@ -167,13 +172,13 @@ export function SignInCodeVerification({
 
   return (
     <CodeVerificationUI
-      email={email}
       code={code}
-      onCodeChange={setCode}
-      isVerifying={isVerifying}
+      email={email}
+      inlineError={inlineError}
       isRedirecting={isRedirecting}
       isResending={isResending}
-      inlineError={inlineError}
+      isVerifying={isVerifying}
+      onCodeChange={setCode}
       onResend={handleResendCode}
       onReset={onReset}
     />

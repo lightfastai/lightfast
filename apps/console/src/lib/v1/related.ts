@@ -3,8 +3,8 @@ import {
   workspaceNeuralObservations,
   workspaceObservationRelationships,
 } from "@db/console/schema";
-import { and, eq, or, inArray, desc } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
+import { and, desc, eq, inArray, or } from "drizzle-orm";
 import type { V1AuthContext } from "./types";
 
 export interface RelatedLogicInput {
@@ -13,14 +13,14 @@ export interface RelatedLogicInput {
 }
 
 interface RelatedItem {
-  id: string;
-  title: string;
-  source: string;
-  type: string;
-  occurredAt: string | null;
-  url: string | null;
-  relationshipType: string;
   direction: "outgoing" | "incoming";
+  id: string;
+  occurredAt: string | null;
+  relationshipType: string;
+  source: string;
+  title: string;
+  type: string;
+  url: string | null;
 }
 
 export interface RelatedLogicOutput {
@@ -42,11 +42,14 @@ export interface RelatedLogicOutput {
 
 export async function relatedLogic(
   auth: V1AuthContext,
-  input: RelatedLogicInput,
+  input: RelatedLogicInput
 ): Promise<RelatedLogicOutput> {
   const startTime = Date.now();
 
-  log.debug("v1/related logic executing", { requestId: input.requestId, observationId: input.observationId });
+  log.debug("v1/related logic executing", {
+    requestId: input.requestId,
+    observationId: input.observationId,
+  });
 
   // Step 1: Get the source observation
   const sourceObs = await db.query.workspaceNeuralObservations.findFirst({
@@ -74,15 +77,24 @@ export async function relatedLogic(
       and(
         eq(workspaceObservationRelationships.workspaceId, auth.workspaceId),
         or(
-          eq(workspaceObservationRelationships.sourceObservationId, sourceObs.id),
-          eq(workspaceObservationRelationships.targetObservationId, sourceObs.id)
+          eq(
+            workspaceObservationRelationships.sourceObservationId,
+            sourceObs.id
+          ),
+          eq(
+            workspaceObservationRelationships.targetObservationId,
+            sourceObs.id
+          )
         )
       )
     );
 
   // Step 3: Collect related observation IDs
   const relatedIds = new Set<number>();
-  const relMap = new Map<number, { type: string; direction: "outgoing" | "incoming" }>();
+  const relMap = new Map<
+    number,
+    { type: string; direction: "outgoing" | "incoming" }
+  >();
 
   for (const rel of relationships) {
     if (rel.sourceObservationId === sourceObs.id) {
@@ -101,26 +113,27 @@ export async function relatedLogic(
   }
 
   // Step 4: Fetch related observations
-  const relatedObs = relatedIds.size > 0
-    ? await db
-        .select({
-          id: workspaceNeuralObservations.id,
-          externalId: workspaceNeuralObservations.externalId,
-          title: workspaceNeuralObservations.title,
-          source: workspaceNeuralObservations.source,
-          observationType: workspaceNeuralObservations.observationType,
-          occurredAt: workspaceNeuralObservations.occurredAt,
-          metadata: workspaceNeuralObservations.metadata,
-        })
-        .from(workspaceNeuralObservations)
-        .where(
-          and(
-            eq(workspaceNeuralObservations.workspaceId, auth.workspaceId),
-            inArray(workspaceNeuralObservations.id, Array.from(relatedIds))
+  const relatedObs =
+    relatedIds.size > 0
+      ? await db
+          .select({
+            id: workspaceNeuralObservations.id,
+            externalId: workspaceNeuralObservations.externalId,
+            title: workspaceNeuralObservations.title,
+            source: workspaceNeuralObservations.source,
+            observationType: workspaceNeuralObservations.observationType,
+            occurredAt: workspaceNeuralObservations.occurredAt,
+            metadata: workspaceNeuralObservations.metadata,
+          })
+          .from(workspaceNeuralObservations)
+          .where(
+            and(
+              eq(workspaceNeuralObservations.workspaceId, auth.workspaceId),
+              inArray(workspaceNeuralObservations.id, Array.from(relatedIds))
+            )
           )
-        )
-        .orderBy(desc(workspaceNeuralObservations.occurredAt))
-    : [];
+          .orderBy(desc(workspaceNeuralObservations.occurredAt))
+      : [];
 
   // Step 5: Format response
   const related: RelatedItem[] = relatedObs.map((obs) => {

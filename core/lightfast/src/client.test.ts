@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { LightfastMemory, createLightfastMemory } from "./client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createLightfastMemory, LightfastMemory } from "./client";
 import {
   AuthenticationError,
   NetworkError,
@@ -22,7 +22,9 @@ describe("LightfastMemory", () => {
 
   describe("constructor", () => {
     it("should throw if apiKey is missing", () => {
-      expect(() => new LightfastMemory({ apiKey: "" })).toThrow("API key is required");
+      expect(() => new LightfastMemory({ apiKey: "" })).toThrow(
+        "API key is required"
+      );
     });
 
     it("should throw if apiKey has invalid format", () => {
@@ -54,7 +56,14 @@ describe("LightfastMemory", () => {
     it("should call /v1/search with correct parameters", async () => {
       const mockResponse = {
         data: [],
-        meta: { total: 0, limit: 10, offset: 0, took: 100, mode: "balanced", paths: {} },
+        meta: {
+          total: 0,
+          limit: 10,
+          offset: 0,
+          took: 100,
+          mode: "balanced",
+          paths: {},
+        },
         latency: { total: 100 },
         requestId: "req_123",
       };
@@ -136,7 +145,11 @@ describe("LightfastMemory", () => {
       const mockResponse = {
         source: { id: "doc_123", title: "Test", type: "document" },
         similar: [],
-        meta: { total: 0, took: 100, inputEmbedding: { found: true, generated: false } },
+        meta: {
+          total: 0,
+          took: 100,
+          inputEmbedding: { found: true, generated: false },
+        },
         requestId: "req_123",
       };
 
@@ -161,7 +174,12 @@ describe("LightfastMemory", () => {
     it("should call /v1/graph with correct parameters", async () => {
       const mockResponse = {
         data: {
-          root: { id: "obs_123", title: "Test", source: "github", type: "issue" },
+          root: {
+            id: "obs_123",
+            title: "Test",
+            source: "github",
+            type: "issue",
+          },
           nodes: [],
           edges: [],
         },
@@ -191,7 +209,8 @@ describe("LightfastMemory", () => {
     it("should apply default depth", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ data: { root: {}, nodes: [], edges: [] } }),
+        json: () =>
+          Promise.resolve({ data: { root: {}, nodes: [], edges: [] } }),
       });
 
       const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
@@ -204,11 +223,16 @@ describe("LightfastMemory", () => {
     it("should pass custom depth and types", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ data: { root: {}, nodes: [], edges: [] } }),
+        json: () =>
+          Promise.resolve({ data: { root: {}, nodes: [], edges: [] } }),
       });
 
       const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
-      await memory.graph({ id: "obs_123", depth: 3, types: ["fixes", "deploys"] });
+      await memory.graph({
+        id: "obs_123",
+        depth: 3,
+        types: ["fixes", "deploys"],
+      });
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
       expect(body).toEqual({
@@ -260,7 +284,9 @@ describe("LightfastMemory", () => {
       });
 
       const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
-      await expect(memory.search({ query: "test" })).rejects.toThrow(AuthenticationError);
+      await expect(memory.search({ query: "test" })).rejects.toThrow(
+        AuthenticationError
+      );
     });
 
     it("should throw ValidationError on 400", async () => {
@@ -271,7 +297,9 @@ describe("LightfastMemory", () => {
       });
 
       const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
-      await expect(memory.search({ query: "test" })).rejects.toThrow(ValidationError);
+      await expect(memory.search({ query: "test" })).rejects.toThrow(
+        ValidationError
+      );
     });
 
     it("should throw RateLimitError on 429", async () => {
@@ -282,7 +310,9 @@ describe("LightfastMemory", () => {
       });
 
       const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
-      await expect(memory.search({ query: "test" })).rejects.toThrow(RateLimitError);
+      await expect(memory.search({ query: "test" })).rejects.toThrow(
+        RateLimitError
+      );
     });
 
     it("should throw ServerError on 500", async () => {
@@ -293,14 +323,18 @@ describe("LightfastMemory", () => {
       });
 
       const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
-      await expect(memory.search({ query: "test" })).rejects.toThrow(ServerError);
+      await expect(memory.search({ query: "test" })).rejects.toThrow(
+        ServerError
+      );
     });
 
     it("should throw NetworkError on fetch failure", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network failure"));
 
       const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
-      await expect(memory.search({ query: "test" })).rejects.toThrow(NetworkError);
+      await expect(memory.search({ query: "test" })).rejects.toThrow(
+        NetworkError
+      );
     });
   });
 

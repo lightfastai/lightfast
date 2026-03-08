@@ -5,14 +5,14 @@
  * All slugs are URL-safe and follow specific naming conventions.
  */
 
+import { organization, workspace } from "@repo/console-reserved-names";
 import { z } from "zod";
 import {
   CLERK_ORG_SLUG,
-  WORKSPACE_NAME,
-  STORE_NAME,
   NAMING_ERRORS,
+  STORE_NAME,
+  WORKSPACE_NAME,
 } from "../constants/naming";
-import { workspace, organization } from "@repo/console-reserved-names";
 
 /**
  * Clerk Organization Slug Schema
@@ -43,14 +43,12 @@ export const clerkOrgSlugSchema = z
   .regex(CLERK_ORG_SLUG.PATTERN, NAMING_ERRORS.ORG_PATTERN)
   .regex(CLERK_ORG_SLUG.START_PATTERN, NAMING_ERRORS.ORG_START)
   .regex(CLERK_ORG_SLUG.END_PATTERN, NAMING_ERRORS.ORG_END)
-  .refine(
-    (val) => !CLERK_ORG_SLUG.NO_CONSECUTIVE_HYPHENS.test(val),
-    { message: NAMING_ERRORS.ORG_CONSECUTIVE }
-  )
-  .refine(
-    (slug) => !organization.check(slug),
-    { message: NAMING_ERRORS.ORG_RESERVED }
-  );
+  .refine((val) => !CLERK_ORG_SLUG.NO_CONSECUTIVE_HYPHENS.test(val), {
+    message: NAMING_ERRORS.ORG_CONSECUTIVE,
+  })
+  .refine((slug) => !organization.check(slug), {
+    message: NAMING_ERRORS.ORG_RESERVED,
+  });
 
 /**
  * Workspace Name Schema (User-Facing)
@@ -79,10 +77,9 @@ export const workspaceNameSchema = z
   .min(WORKSPACE_NAME.MIN_LENGTH, NAMING_ERRORS.WORKSPACE_MIN_LENGTH)
   .max(WORKSPACE_NAME.MAX_LENGTH, NAMING_ERRORS.WORKSPACE_MAX_LENGTH)
   .regex(WORKSPACE_NAME.PATTERN, NAMING_ERRORS.WORKSPACE_PATTERN)
-  .refine(
-    (name) => !workspace.check(name),
-    { message: NAMING_ERRORS.WORKSPACE_RESERVED }
-  );
+  .refine((name) => !workspace.check(name), {
+    message: NAMING_ERRORS.WORKSPACE_RESERVED,
+  });
 
 /**
  * Workspace Slug Schema (Internal, Pinecone)
@@ -144,10 +141,9 @@ export const storeNameSchema = z
   .regex(STORE_NAME.PATTERN, NAMING_ERRORS.STORE_PATTERN)
   .regex(STORE_NAME.START_PATTERN, NAMING_ERRORS.STORE_START)
   .regex(STORE_NAME.END_PATTERN, NAMING_ERRORS.STORE_END)
-  .refine(
-    (val) => !STORE_NAME.NO_CONSECUTIVE_HYPHENS.test(val),
-    { message: NAMING_ERRORS.STORE_CONSECUTIVE }
-  );
+  .refine((val) => !STORE_NAME.NO_CONSECUTIVE_HYPHENS.test(val), {
+    message: NAMING_ERRORS.STORE_CONSECUTIVE,
+  });
 
 /**
  * Repository Full Name Schema

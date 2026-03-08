@@ -1,14 +1,14 @@
+import { createNEMO } from "@rescale/nemo";
 import {
   composeCspOptions,
-  createClerkCspDirectives,
   createAnalyticsCspDirectives,
-  createSentryCspDirectives,
+  createClerkCspDirectives,
   createNextjsCspDirectives,
+  createSentryCspDirectives,
 } from "@vendor/security/csp";
 import { securityMiddleware } from "@vendor/security/middleware";
-import { createNEMO } from "@rescale/nemo";
-import { NextResponse } from "next/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 // =============================================================================
 // Security Headers
@@ -38,12 +38,12 @@ const securityHeaders = securityMiddleware(
         "wss://ws-mt1.pusher.com",
         "https://sockjs-mt1.pusher.com",
       ],
-    },
-  ),
+    }
+  )
 );
 
 async function withSecurityHeaders(
-  response: NextResponse,
+  response: NextResponse
 ): Promise<NextResponse> {
   const headers = await securityHeaders();
   for (const [key, value] of headers.headers.entries()) {
@@ -70,7 +70,7 @@ const composedMiddleware = createNEMO(
   {},
   {
     before: [wwwMiddleware],
-  },
+  }
 );
 
 // =============================================================================
@@ -79,14 +79,14 @@ const composedMiddleware = createNEMO(
 
 export default async function middleware(
   req: NextRequest,
-  event: NextFetchEvent,
+  event: NextFetchEvent
 ) {
   // Run NEMO middleware chain (sets x-pathname, etc.)
   const nemoResponse = await composedMiddleware(req, event);
 
   // Return with security headers
   return withSecurityHeaders(
-    (nemoResponse as NextResponse | null) ?? NextResponse.next(),
+    (nemoResponse as NextResponse | null) ?? NextResponse.next()
   );
 }
 

@@ -7,8 +7,6 @@
  * are intentionally excluded to avoid duplication.
  */
 export interface BaseAccountInfo {
-  version: 1;
-
   /**
    * Webhook events this installation is subscribed to.
    *
@@ -24,6 +22,7 @@ export interface BaseAccountInfo {
 
   /** When we last validated this installation against the provider API. */
   lastValidatedAt: string;
+  version: 1;
 }
 
 // ── Provider Raw API Response Types ──
@@ -36,9 +35,9 @@ export interface GitHubInstallationRaw {
     type: "User" | "Organization";
     avatar_url: string;
   };
-  permissions: Record<string, string>;
-  events: string[];
   created_at: string;
+  events: string[];
+  permissions: Record<string, string>;
 }
 
 /**
@@ -49,17 +48,17 @@ export interface GitHubInstallationRaw {
  * live API calls (same pattern as github.list).
  */
 export interface VercelOAuthRaw {
-  token_type: string;
   installation_id: string;
-  user_id: string;
   team_id: string | null;
+  token_type: string;
+  user_id: string;
 }
 
 /** Raw shape from Linear POST /oauth/token (minus access_token secret) */
 export interface LinearOAuthRaw {
-  token_type: string;
-  scope: string;
   expires_in: number;
+  scope: string;
+  token_type: string;
 }
 
 /** Raw shape from Sentry POST /api/0/sentry-app-installations/:id/authorizations/ (minus token/refreshToken secrets) */
@@ -71,31 +70,31 @@ export interface SentryOAuthRaw {
 // ── Provider Account Info Types ──
 
 export interface GitHubAccountInfo extends BaseAccountInfo {
-  sourceType: "github";
   raw: GitHubInstallationRaw;
+  sourceType: "github";
 }
 
 export interface VercelAccountInfo extends BaseAccountInfo {
-  sourceType: "vercel";
   raw: VercelOAuthRaw;
+  sourceType: "vercel";
 }
 
 export interface LinearAccountInfo extends BaseAccountInfo {
-  sourceType: "linear";
-  raw: LinearOAuthRaw;
   /** From GraphQL viewer query — not part of OAuth response */
   organization?: {
     id: string;
     name?: string;
     urlKey?: string;
   };
+  raw: LinearOAuthRaw;
+  sourceType: "linear";
 }
 
 export interface SentryAccountInfo extends BaseAccountInfo {
-  sourceType: "sentry";
-  raw: SentryOAuthRaw;
   /** Sentry installation ID extracted from composite code param */
   installationId: string;
+  raw: SentryOAuthRaw;
+  sourceType: "sentry";
 }
 
 export type ProviderAccountInfo =

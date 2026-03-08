@@ -34,9 +34,7 @@ export const relayBaseUrl = `${withRelatedProject({
 // Get the console URL dynamically based on environment
 export const consoleUrl = withRelatedProject({
   projectName: "lightfast-console",
-  defaultHost: isDevelopment
-    ? "http://localhost:3024"
-    : "https://lightfast.ai",
+  defaultHost: isDevelopment ? "http://localhost:3024" : "https://lightfast.ai",
 });
 
 // Get the backfill service URL dynamically based on environment
@@ -66,7 +64,9 @@ export async function cancelBackfillService(params: {
       url: `${backfillUrl}/trigger/cancel`,
       headers: {
         "X-API-Key": env.GATEWAY_API_KEY,
-        ...(params.correlationId ? { "X-Correlation-Id": params.correlationId } : {}),
+        ...(params.correlationId
+          ? { "X-Correlation-Id": params.correlationId }
+          : {}),
       },
       body: params,
       retries: 3,

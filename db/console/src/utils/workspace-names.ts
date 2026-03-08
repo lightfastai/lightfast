@@ -5,7 +5,7 @@ import { friendlyWords } from "@repo/lib/friendly-words";
  * Full validation constants are in @repo/console-validation
  */
 const WORKSPACE_SLUG_MAX_LENGTH = 20; // Pinecone constraint
-const STORE_SLUG_MAX_LENGTH = 20;     // Pinecone constraint
+const STORE_SLUG_MAX_LENGTH = 20; // Pinecone constraint
 
 /**
  * Generate a friendly workspace name
@@ -63,7 +63,7 @@ export function validateWorkspaceSlug(slug: string): boolean {
   }
 
   // No leading/trailing/consecutive hyphens
-  if (slug.includes('--') || /^-|-$/.test(slug)) {
+  if (slug.includes("--") || /^-|-$/.test(slug)) {
     return false;
   }
 
@@ -78,9 +78,9 @@ export function generateStoreSlug(name: string): string {
   const storeSlug = name
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-") // Only alphanumeric + hyphens
-    .replace(/^-+/, "")            // No leading hyphens
-    .replace(/-+$/, "")            // No trailing hyphens
-    .replace(/-{2,}/g, "-");       // No consecutive hyphens
+    .replace(/^-+/, "") // No leading hyphens
+    .replace(/-+$/, "") // No trailing hyphens
+    .replace(/-{2,}/g, "-"); // No consecutive hyphens
 
   if (storeSlug.length === 0) {
     throw new Error("Store slug cannot be empty after sanitization");
@@ -109,7 +109,7 @@ export function validateStoreSlug(slug: string): boolean {
   }
 
   // No leading/trailing/consecutive hyphens
-  if (slug.includes('--') || /^-|-$/.test(slug)) {
+  if (slug.includes("--") || /^-|-$/.test(slug)) {
     return false;
   }
 

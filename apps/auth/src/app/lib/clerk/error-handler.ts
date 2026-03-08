@@ -1,26 +1,26 @@
 import { captureException } from "@sentry/nextjs";
 import {
+  formatLockoutTime,
   getErrorMessage,
-  isRateLimitError,
   isAccountLockedError,
+  isRateLimitError,
   isSignUpRestricted,
-  formatLockoutTime
 } from "./error-handling";
 
 interface ClerkErrorContext {
-  component: string;
   action: string;
+  component: string;
   email?: string;
   [key: string]: unknown;
 }
 
 interface ClerkErrorResult {
-  message: string;
-  userMessage: string;
-  isRateLimit: boolean;
   isAccountLocked: boolean;
+  isRateLimit: boolean;
   isSignUpRestricted: boolean;
+  message: string;
   retryAfterSeconds?: number;
+  userMessage: string;
 }
 
 /**
@@ -53,22 +53,29 @@ export function handleClerkError(
       ? `Account locked. Please try again in ${formatLockoutTime(lockoutInfo.expiresInSeconds)}.`
       : "Account locked. Please try again later.";
   } else if (signUpRestricted) {
-    userMessage = "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.";
-  } else if (message.toLowerCase().includes('incorrect') || message.toLowerCase().includes('invalid')) {
-    userMessage = "The entered code is incorrect. Please try again and check for typos.";
+    userMessage =
+      "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.";
+  } else if (
+    message.toLowerCase().includes("incorrect") ||
+    message.toLowerCase().includes("invalid")
+  ) {
+    userMessage =
+      "The entered code is incorrect. Please try again and check for typos.";
   }
-  
+
   // Create a descriptive error for Sentry with proper message
-  const sentryError = new Error(`[${context.component}] ${context.action}: ${message}`);
+  const sentryError = new Error(
+    `[${context.component}] ${context.action}: ${message}`
+  );
   // Preserve original error as cause for full stack trace
   // Using Object.defineProperty to avoid ESLint warnings
-  Object.defineProperty(sentryError, 'cause', {
+  Object.defineProperty(sentryError, "cause", {
     value: error,
     enumerable: false,
     writable: true,
-    configurable: true
+    configurable: true,
   });
-  
+
   // Destructure email out of context to avoid sending PII to Sentry
   const { email: _email, ...safeContext } = context;
 
@@ -78,12 +85,12 @@ export function handleClerkError(
       component: context.component,
       action: context.action,
       error_type: rateLimitInfo.rateLimited
-        ? 'rate_limit'
+        ? "rate_limit"
         : lockoutInfo.locked
-          ? 'account_locked'
+          ? "account_locked"
           : signUpRestricted
-            ? 'sign_up_restricted'
-            : 'validation',
+            ? "sign_up_restricted"
+            : "validation",
     },
     extra: {
       ...safeContext,
@@ -97,7 +104,7 @@ export function handleClerkError(
       isSignUpRestricted: signUpRestricted,
     },
   });
-  
+
   return {
     message,
     userMessage,
@@ -118,7 +125,7 @@ export function handleUnexpectedStatus(
   const error = new Error(
     `[${context.component}] Unexpected status: ${status} for ${context.action}`
   );
-  
+
   // Destructure email and result out of context to avoid sending PII to Sentry
   const { email: _email, result: _result, ...safeContext } = context;
 
@@ -127,7 +134,7 @@ export function handleUnexpectedStatus(
       component: context.component,
       action: context.action,
       status,
-      error_type: 'unexpected_status',
+      error_type: "unexpected_status",
     },
     extra: {
       ...safeContext,

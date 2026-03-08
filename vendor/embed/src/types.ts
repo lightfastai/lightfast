@@ -7,16 +7,15 @@
  */
 export interface EmbedRequest {
   /**
-   * Array of texts to embed
-   */
-  texts: string[];
-
-  /**
    * Model to use for embedding
    * - "char-hash-1536": Deterministic character-based embeddings (Phase 1)
    * - "openai-text-embedding-3-small": OpenAI embeddings (Phase 2)
    */
   model?: "char-hash-1536" | "openai-text-embedding-3-small";
+  /**
+   * Array of texts to embed
+   */
+  texts: string[];
 }
 
 /**

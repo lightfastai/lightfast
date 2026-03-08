@@ -1,24 +1,24 @@
-import type { DeepPartial, UIMessage } from "ai";
 import type { RuntimeContext } from "@lightfastai/ai-sdk/server/adapters/types";
 import type {
-  V1SearchResponse,
-  V1ContentsResponse,
-  V1FindSimilarResponse,
   GraphResponse,
   RelatedResponse,
+  V1ContentsResponse,
+  V1FindSimilarResponse,
+  V1SearchResponse,
 } from "@repo/console-types";
+import type { DeepPartial, UIMessage } from "ai";
 
 // ─── Tool Input Types ────────────────────────────────────────────
 
 export interface SearchToolInput {
-  query: string;
-  mode?: "fast" | "balanced" | "thorough";
-  limit?: number;
   filters?: {
     sourceTypes?: string[];
     observationTypes?: string[];
     actorNames?: string[];
   };
+  limit?: number;
+  mode?: "fast" | "balanced" | "thorough";
+  query: string;
 }
 
 export interface ContentsToolInput {
@@ -32,8 +32,8 @@ export interface FindSimilarToolInput {
 }
 
 export interface GraphToolInput {
-  id: string;
   depth?: number;
+  id: string;
   limit?: number;
 }
 
@@ -54,10 +54,6 @@ export type RelatedToolOutput = RelatedResponse;
 // ─── Tool Set Definition ─────────────────────────────────────────
 
 export interface AnswerToolSet {
-  workspaceSearch: {
-    input: SearchToolInput;
-    output: SearchToolOutput;
-  };
   workspaceContents: {
     input: ContentsToolInput;
     output: ContentsToolOutput;
@@ -74,6 +70,10 @@ export interface AnswerToolSet {
     input: RelatedToolInput;
     output: RelatedToolOutput;
   };
+  workspaceSearch: {
+    input: SearchToolInput;
+    output: SearchToolOutput;
+  };
 }
 
 export type AnswerToolName = keyof AnswerToolSet;
@@ -85,11 +85,7 @@ export type AnswerToolOutput<T extends AnswerToolName> =
 
 // ─── Tool UI Part State ──────────────────────────────────────────
 
-type ToolUIPartState<
-  TName extends string,
-  TInput,
-  TOutput,
-> =
+type ToolUIPartState<TName extends string, TInput, TOutput> =
   | {
       type: `tool-${TName}`;
       toolCallId: string;
@@ -153,38 +149,47 @@ export type AnswerToolUIPart =
 // ─── Message Types ───────────────────────────────────────────────
 
 export interface LightfastAnswerUIMessageMetadata {
-  sessionId?: string;
   resourceId?: string;
+  sessionId?: string;
 }
 
-export type LightfastAnswerUIMessage = UIMessage<
-  LightfastAnswerUIMessageMetadata
->;
+export type LightfastAnswerUIMessage =
+  UIMessage<LightfastAnswerUIMessageMetadata>;
 
 // ─── Runtime Context ─────────────────────────────────────────────
 
 /** Handler signature for logic functions injected at runtime */
-export type SearchToolHandler = (input: SearchToolInput) => Promise<SearchToolOutput>;
-export type ContentsToolHandler = (input: ContentsToolInput) => Promise<ContentsToolOutput>;
-export type FindSimilarToolHandler = (input: FindSimilarToolInput) => Promise<FindSimilarToolOutput>;
-export type GraphToolHandler = (input: GraphToolInput) => Promise<GraphToolOutput>;
-export type RelatedToolHandler = (input: RelatedToolInput) => Promise<RelatedToolOutput>;
+export type SearchToolHandler = (
+  input: SearchToolInput
+) => Promise<SearchToolOutput>;
+export type ContentsToolHandler = (
+  input: ContentsToolInput
+) => Promise<ContentsToolOutput>;
+export type FindSimilarToolHandler = (
+  input: FindSimilarToolInput
+) => Promise<FindSimilarToolOutput>;
+export type GraphToolHandler = (
+  input: GraphToolInput
+) => Promise<GraphToolOutput>;
+export type RelatedToolHandler = (
+  input: RelatedToolInput
+) => Promise<RelatedToolOutput>;
 
 /** Runtime configuration for tool handlers, injected per-request */
 export interface AnswerToolRuntimeConfig {
-  workspaceSearch?: { handler: SearchToolHandler };
   workspaceContents?: { handler: ContentsToolHandler };
   workspaceFindSimilar?: { handler: FindSimilarToolHandler };
   workspaceGraph?: { handler: GraphToolHandler };
   workspaceRelated?: { handler: RelatedToolHandler };
+  workspaceSearch?: { handler: SearchToolHandler };
 }
 
 /** Application runtime context for the answer agent */
 export interface AnswerAppRuntimeContext {
-  userId?: string;
-  workspaceId: string;
   authToken?: string;
   tools?: AnswerToolRuntimeConfig;
+  userId?: string;
+  workspaceId: string;
 }
 
 /** Full runtime context (SystemContext & RequestContext & AnswerAppRuntimeContext) */
@@ -193,15 +198,15 @@ export type LightfastAnswerRuntimeContext =
 
 // ─── Type Guards ─────────────────────────────────────────────────
 
-export function isTextPart(
-  part: { type: string },
-): part is { type: "text"; text: string } {
+export function isTextPart(part: {
+  type: string;
+}): part is { type: "text"; text: string } {
   return part.type === "text";
 }
 
-export function isReasoningPart(
-  part: { type: string },
-): part is { type: "reasoning"; reasoning: string } {
+export function isReasoningPart(part: {
+  type: string;
+}): part is { type: "reasoning"; reasoning: string } {
   return part.type === "reasoning";
 }
 

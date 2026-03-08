@@ -13,8 +13,6 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../apps/www/.vercel/.env.development.local --",
     "publish:blog": "pnpm with-env tsx src/publish-blog.ts",
@@ -29,16 +27,11 @@
     "unified": "^11.0.0"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/mdast": "^4.0.0",
     "@types/node": "catalog:",
     "dotenv-cli": "^8.0.0",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "tsx": "^4.21.0",
     "typescript": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

@@ -6,25 +6,21 @@
 
 import { serve } from "inngest/next";
 import { inngest } from "./client/client";
-
-// Generic document processing workflows
-import { processDocuments } from "./workflow/processing/process-documents";
-import { deleteDocuments } from "./workflow/processing/delete-documents";
-
 // Infrastructure workflows
 // Note: ensureStore removed - workspace now has embedding config directly
 import { recordActivity } from "./workflow/infrastructure/record-activity";
-
 // Neural memory workflows
 import {
-  observationCapture,
-  profileUpdate,
   clusterSummaryCheck,
   llmEntityExtractionWorkflow,
+  observationCapture,
+  profileUpdate,
 } from "./workflow/neural";
-
 // Notification workflows
 import { notificationDispatch } from "./workflow/notifications";
+import { deleteDocuments } from "./workflow/processing/delete-documents";
+// Generic document processing workflows
+import { processDocuments } from "./workflow/processing/process-documents";
 
 // Export Inngest client
 export { inngest };
@@ -36,7 +32,12 @@ export { processDocuments, deleteDocuments };
 export { recordActivity };
 
 // Export neural memory workflows
-export { observationCapture, profileUpdate, clusterSummaryCheck, llmEntityExtractionWorkflow };
+export {
+  observationCapture,
+  profileUpdate,
+  clusterSummaryCheck,
+  llmEntityExtractionWorkflow,
+};
 
 // Export notification workflows
 export { notificationDispatch };

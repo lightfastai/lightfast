@@ -1,14 +1,16 @@
 import { db } from "@db/console/client";
-import { gwTokens, gwInstallations } from "@db/console/schema";
-import { eq } from "drizzle-orm";
+import { gwInstallations, gwTokens } from "@db/console/schema";
 import { decrypt } from "@repo/lib";
+import { eq } from "drizzle-orm";
 import { env } from "../env";
 
 /**
  * Get a decrypted access token for an installation.
  * Reads directly from gw_tokens in PlanetScale (no HTTP call).
  */
-export async function getInstallationToken(installationId: string): Promise<string> {
+export async function getInstallationToken(
+  installationId: string
+): Promise<string> {
   const token = await db.query.gwTokens.findFirst({
     where: eq(gwTokens.installationId, installationId),
   });
@@ -25,7 +27,7 @@ export async function getInstallationToken(installationId: string): Promise<stri
  * Reads and decrypts the stored token and returns the provider.
  */
 export async function getInstallationTokenWithRefresh(
-  installationId: string,
+  installationId: string
 ): Promise<{ accessToken: string; provider: string }> {
   const results = await db
     .select({

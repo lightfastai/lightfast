@@ -1,6 +1,6 @@
-import { redis } from "@vendor/upstash";
 import { clerkClient } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log";
+import { redis } from "@vendor/upstash";
 import { getUserOrgsCacheKey } from "./keys";
 import type { CachedUserOrgMembership, GetMembershipsResult } from "./types";
 
@@ -41,7 +41,8 @@ export async function getCachedUserOrgMemberships(
     // Cache read failed - log and continue to Clerk API
     log.warn("Clerk membership cache read failed", {
       userId,
-      error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+      error:
+        cacheError instanceof Error ? cacheError.message : String(cacheError),
     });
   }
 
@@ -52,7 +53,8 @@ export async function getCachedUserOrgMemberships(
   cacheUserOrgMemberships(userId, memberships).catch((cacheError) => {
     log.warn("Clerk membership cache write failed", {
       userId,
-      error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+      error:
+        cacheError instanceof Error ? cacheError.message : String(cacheError),
     });
   });
 
@@ -99,7 +101,9 @@ async function cacheUserOrgMemberships(
  *
  * TODO: Integrate with Clerk webhook handler when implemented
  */
-export async function invalidateUserOrgMemberships(userId: string): Promise<void> {
+export async function invalidateUserOrgMemberships(
+  userId: string
+): Promise<void> {
   const cacheKey = getUserOrgsCacheKey(userId);
   await redis.del(cacheKey);
   log.info("Clerk membership cache invalidated", { userId });

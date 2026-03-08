@@ -11,7 +11,6 @@ import type { Context } from "hono";
 import { env as honoEnv } from "hono/adapter";
 import { z } from "zod";
 
-
 const server = {
   GATEWAY_API_KEY: z.string().min(1),
   ENCRYPTION_KEY: z.string().min(32),
@@ -42,7 +41,9 @@ const envCache = new WeakMap<object, ConnectionsEnv>();
  */
 export const getEnv = (c: Context): ConnectionsEnv => {
   const cached = envCache.get(c);
-  if (cached) {return cached;}
+  if (cached) {
+    return cached;
+  }
   const validated = _createEnv(c);
   envCache.set(c, validated);
   return validated;

@@ -22,8 +22,8 @@ import type {
  * ```
  */
 export class WorkflowClient {
-  private client: UpstashWorkflowClient;
-  private verbose: boolean;
+  private readonly client: UpstashWorkflowClient;
+  private readonly verbose: boolean;
 
   constructor(config?: WorkflowConfig) {
     const token = config?.token ?? env.QSTASH_TOKEN;
@@ -44,7 +44,7 @@ export class WorkflowClient {
    * @returns Workflow run ID and status URL
    */
   async trigger<TPayload = unknown>(
-    options: WorkflowTriggerOptions<TPayload>,
+    options: WorkflowTriggerOptions<TPayload>
   ): Promise<WorkflowTriggerResponse> {
     const { url, body, headers, delay, workflowRunId } = options;
 
@@ -69,7 +69,7 @@ export class WorkflowClient {
     });
 
     if (this.verbose) {
-      console.log(`[Workflow] Triggered successfully:`, result);
+      console.log("[Workflow] Triggered successfully:", result);
     }
 
     return {
@@ -91,7 +91,7 @@ export class WorkflowClient {
     await this.client.cancel({ ids: workflowRunId });
 
     if (this.verbose) {
-      console.log(`[Workflow] Cancelled successfully`);
+      console.log("[Workflow] Cancelled successfully");
     }
   }
 }

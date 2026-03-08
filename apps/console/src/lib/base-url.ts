@@ -14,7 +14,7 @@ const urlSuffixSchema = z
   .regex(/^(?!https?:\/\/).*$/, "Suffix cannot contain protocol")
   .regex(
     /^[/a-zA-Z0-9-_]*$/,
-    "Suffix can only contain alphanumeric characters, slashes, hyphens, and underscores",
+    "Suffix can only contain alphanumeric characters, slashes, hyphens, and underscores"
   )
   .or(z.literal(""))
   .transform((suffix) => suffix.replace(/\/+/g, "/")); // normalize multiple slashes

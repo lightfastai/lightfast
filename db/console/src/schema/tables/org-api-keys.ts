@@ -1,14 +1,14 @@
+import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   index,
   pgTable,
   text,
   timestamp,
   varchar,
-  bigint,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
 
 /**
  * Organization API Keys table for org-scoped API authentication

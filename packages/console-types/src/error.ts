@@ -20,10 +20,10 @@ export enum ErrorCode {
 export interface APIError {
   /** Error code for programmatic handling */
   code: ErrorCode;
-  /** Human-readable error message */
-  message: string;
   /** Additional error context */
   details?: Record<string, unknown>;
+  /** Human-readable error message */
+  message: string;
   /** Request ID for debugging */
   requestId: string;
 }

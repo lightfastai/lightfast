@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockInngestSend } = vi.hoisted(() => ({
   mockInngestSend: vi.fn().mockResolvedValue({ ids: ["evt-1"] }),
@@ -25,10 +25,12 @@ function request(
     method?: string;
     body?: Record<string, unknown>;
     headers?: Record<string, string>;
-  } = {},
+  } = {}
 ) {
   const headers = new Headers(init.headers);
-  if (init.body) headers.set("content-type", "application/json");
+  if (init.body) {
+    headers.set("content-type", "application/json");
+  }
   return app.request(path, {
     method: init.method ?? "POST",
     headers,
@@ -53,7 +55,10 @@ describe("POST /trigger/", () => {
       headers: { "X-API-Key": "test-key" },
     });
     expect(res.status).toBe(200);
-    const json = (await res.json()) as { status: string; installationId: string };
+    const json = (await res.json()) as {
+      status: string;
+      installationId: string;
+    };
     expect(json.status).toBe("accepted");
     expect(json.installationId).toBe("inst-1");
   });
@@ -154,7 +159,10 @@ describe("POST /trigger/cancel", () => {
       headers: { "X-API-Key": "test-key" },
     });
     expect(res.status).toBe(200);
-    const json = (await res.json()) as { status: string; installationId: string };
+    const json = (await res.json()) as {
+      status: string;
+      installationId: string;
+    };
     expect(json.status).toBe("cancelled");
     expect(json.installationId).toBe("inst-1");
   });

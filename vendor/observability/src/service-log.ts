@@ -7,12 +7,12 @@ export interface ServiceLogger extends Logger {
 }
 
 export interface ServiceLoggerConfig {
-  /** BetterStack source token. If undefined, falls back to console. */
-  token: string | undefined;
-  /** Service name injected into every log entry. */
-  service: string;
   /** Vercel environment. Logs ship to BetterStack only in "production" | "preview". */
   environment: string | undefined;
+  /** Service name injected into every log entry. */
+  service: string;
+  /** BetterStack source token. If undefined, falls back to console. */
+  token: string | undefined;
 }
 
 /**
@@ -21,7 +21,9 @@ export interface ServiceLoggerConfig {
  * - production/preview with token → BetterStack (Logtail)
  * - development or missing token → console
  */
-export function createServiceLogger(config: ServiceLoggerConfig): ServiceLogger {
+export function createServiceLogger(
+  config: ServiceLoggerConfig
+): ServiceLogger {
   const shouldShip =
     config.token &&
     (config.environment === "production" || config.environment === "preview");
@@ -40,21 +42,31 @@ export function createServiceLogger(config: ServiceLoggerConfig): ServiceLogger 
   const logtail = new Logtail(config.token!);
 
   // Enrich every log with service name and environment
-  logtail.use((log) => Promise.resolve({
-    ...log,
-    service: config.service,
-    environment: config.environment,
-  }));
+  logtail.use((log) =>
+    Promise.resolve({
+      ...log,
+      service: config.service,
+      environment: config.environment,
+    })
+  );
 
   const handleError = (err: unknown) => {
     console.error("[service-log] failed to ship log to BetterStack", err);
   };
 
   return {
-    debug: (msg, ctx) => { logtail.debug(msg, ctx).catch(handleError); },
-    info: (msg, ctx) => { logtail.info(msg, ctx).catch(handleError); },
-    warn: (msg, ctx) => { logtail.warn(msg, ctx).catch(handleError); },
-    error: (msg, ctx) => { logtail.error(msg, ctx).catch(handleError); },
+    debug: (msg, ctx) => {
+      logtail.debug(msg, ctx).catch(handleError);
+    },
+    info: (msg, ctx) => {
+      logtail.info(msg, ctx).catch(handleError);
+    },
+    warn: (msg, ctx) => {
+      logtail.warn(msg, ctx).catch(handleError);
+    },
+    error: (msg, ctx) => {
+      logtail.error(msg, ctx).catch(handleError);
+    },
     flush: () => logtail.flush(),
   };
 }

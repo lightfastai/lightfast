@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  useClerk,
-  useUser,
-} from "@vendor/clerk/client";
+import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -12,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
+import { useClerk, useUser } from "@vendor/clerk/client";
 import { Settings } from "lucide-react";
 import Link from "next/link";
 
@@ -85,7 +82,9 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
   };
 
   if (!isLoaded) {
-    return <div className="size-6 rounded-full bg-white border border-border/50" />;
+    return (
+      <div className="size-6 rounded-full border border-border/50 bg-white" />
+    );
   }
 
   if (!user) {
@@ -93,46 +92,40 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
   }
 
   return (
-    <>
-      <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className={`p-0 rounded-full size-8 ${className}`}
-            >
-              <Avatar className="size-6">
-                <AvatarFallback className="text-[10px] bg-foreground text-background">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            <div className="px-2 py-1.5">
-              <p className="text-sm text-muted-foreground">
-                {emailAddress || "User"}
-              </p>
-            </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link
-                href={settingsHref}
-                prefetch={true}
-                className="cursor-pointer"
-              >
-                <Settings className="mr-2 h-3 w-3" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleSignOut}
-              className="cursor-pointer text-sm"
-            >
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-    </>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          className={`size-8 rounded-full p-0 ${className}`}
+          variant="ghost"
+        >
+          <Avatar className="size-6">
+            <AvatarFallback className="bg-foreground text-[10px] text-background">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <div className="px-2 py-1.5">
+          <p className="text-muted-foreground text-sm">
+            {emailAddress || "User"}
+          </p>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link className="cursor-pointer" href={settingsHref} prefetch={true}>
+            <Settings className="mr-2 h-3 w-3" />
+            Settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer text-sm"
+          onClick={handleSignOut}
+        >
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

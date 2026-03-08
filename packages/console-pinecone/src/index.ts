@@ -9,25 +9,23 @@
 
 // Re-export types from vendor/pinecone
 export type {
+  FetchedRecord,
+  FetchResponse,
+  QueryMatch,
   QueryRequest,
   QueryResponse,
-  QueryMatch,
+  UpdateRequest,
   UpsertRequest,
   UpsertResponse,
-  FetchResponse,
-  FetchedRecord,
-  UpdateRequest,
 } from "@vendor/pinecone/types";
-
 // Export console-specific client with injected config
+// Alias for backwards compatibility
 export {
   ConsolePineconeClient,
-  createConsolePineconeClient,
   consolePineconeClient,
+  consolePineconeClient as pineconeClient,
+  createConsolePineconeClient,
 } from "./client";
-
-// Alias for backwards compatibility
-export { consolePineconeClient as pineconeClient } from "./client";
 
 // Export console-specific types
 export type { VectorMetadata } from "./types";

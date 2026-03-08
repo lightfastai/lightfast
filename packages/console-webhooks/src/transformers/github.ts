@@ -1,19 +1,26 @@
 import type {
+  DiscussionEvent,
+  IssuesEvent,
+  PullRequestEvent,
+  PushEvent,
+  ReleaseEvent,
+} from "@octokit/webhooks-types";
+import type {
   SourceEvent,
   SourceReference,
   TransformContext,
 } from "@repo/console-types";
 import { toExternalGitHubEventType } from "@repo/console-types";
-import type {
+export type {
   PushEvent,
   PullRequestEvent,
   IssuesEvent,
   ReleaseEvent,
   DiscussionEvent,
-} from "@octokit/webhooks-types";
-export type { PushEvent, PullRequestEvent, IssuesEvent, ReleaseEvent, DiscussionEvent };
+};
+
+import { sanitizeBody, sanitizeTitle } from "../sanitize.js";
 import { validateSourceEvent } from "../validation.js";
-import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
 /**
  * Log validation errors for SourceEvent
@@ -368,7 +375,9 @@ export function transformGitHubRelease(
     source: "github",
     sourceType: sourceType ?? `release.${payload.action}`,
     sourceId: `release:${payload.repository.full_name}:${release.tag_name}`,
-    title: sanitizeTitle(`[${actionTitle}] ${release.name || release.tag_name}`),
+    title: sanitizeTitle(
+      `[${actionTitle}] ${release.name || release.tag_name}`
+    ),
     body: sanitizeBody(rawBody),
     actor: release.author
       ? {
@@ -377,7 +386,8 @@ export function transformGitHubRelease(
           avatarUrl: release.author.avatar_url,
         }
       : undefined,
-    occurredAt: release.published_at || release.created_at || new Date().toISOString(),
+    occurredAt:
+      release.published_at || release.created_at || new Date().toISOString(),
     references: refs,
     metadata: {
       deliveryId: context.deliveryId,

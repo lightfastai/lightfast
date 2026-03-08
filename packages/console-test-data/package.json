@@ -24,7 +24,6 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/",
     "with-env": "dotenv -e ../../apps/console/.vercel/.env.development.local --",
     "inject": "pnpm with-env tsx src/cli/inject.ts",
     "inject:prod": "dotenv -e ../../apps/console/.vercel/.env.production.local -- tsx src/cli/inject.ts",
@@ -45,11 +44,9 @@
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "dotenv-cli": "^8.0.0",
-    "eslint": "catalog:",
     "tsx": "^4.21.0",
     "typescript": "catalog:"
   }

@@ -18,8 +18,8 @@
  */
 
 import type { TestDb } from "@repo/console-test-db";
-import { vi } from "vitest";
 import type { Hono } from "hono";
+import { vi } from "vitest";
 
 export type { TestDb };
 
@@ -44,20 +44,24 @@ export function makeRedisMock(store: Map<string, unknown>) {
       store.set(key, { ...existing, ...fields });
       return Promise.resolve(1);
     }),
-    hgetall: vi.fn(<T = Record<string, string>>(key: string): Promise<T | null> => {
-      const val = store.get(key);
-      return Promise.resolve((val ?? null) as T | null);
-    }),
+    hgetall: vi.fn(
+      <T = Record<string, string>>(key: string): Promise<T | null> => {
+        const val = store.get(key);
+        return Promise.resolve((val ?? null) as T | null);
+      }
+    ),
     set: vi.fn(
       (
         key: string,
         value: unknown,
-        opts?: { nx?: boolean; ex?: number },
+        opts?: { nx?: boolean; ex?: number }
       ): Promise<"OK" | null> => {
-        if (opts?.nx && store.has(key)) return Promise.resolve(null);
+        if (opts?.nx && store.has(key)) {
+          return Promise.resolve(null);
+        }
         store.set(key, value);
         return Promise.resolve("OK");
-      },
+      }
     ),
     get: vi.fn(<T = unknown>(key: string): Promise<T | null> => {
       return Promise.resolve((store.get(key) as T) ?? null);
@@ -67,7 +71,9 @@ export function makeRedisMock(store: Map<string, unknown>) {
       const allKeys = keys.flat();
       let count = 0;
       for (const k of allKeys) {
-        if (store.delete(k)) count++;
+        if (store.delete(k)) {
+          count++;
+        }
       }
       return Promise.resolve(count);
     }),
@@ -108,7 +114,9 @@ export function makeRedisMock(store: Map<string, unknown>) {
             const allKeys = keys.flat();
             let count = 0;
             for (const k of allKeys) {
-              if (store.delete(k)) count++;
+              if (store.delete(k)) {
+                count++;
+              }
             }
             return count;
           });
@@ -145,21 +153,31 @@ export type RedisMock = ReturnType<typeof makeRedisMock>;
  * `publishToTopic` is a no-op stub (used by relay DLQ path).
  */
 export interface QStashMessage {
-  url: string;
   body: unknown;
   headers?: Record<string, string>;
+  url: string;
 }
 
 export function makeQStashMock(messages: QStashMessage[]) {
   return {
     publishJSON: vi.fn(
-      (opts: { url: string; body: unknown; headers?: Record<string, string> }) => {
-        messages.push({ url: opts.url, body: opts.body, headers: opts.headers });
-        return Promise.resolve({ messageId: `msg-${Date.now()}-${Math.random()}` });
-      },
+      (opts: {
+        url: string;
+        body: unknown;
+        headers?: Record<string, string>;
+      }) => {
+        messages.push({
+          url: opts.url,
+          body: opts.body,
+          headers: opts.headers,
+        });
+        return Promise.resolve({
+          messageId: `msg-${Date.now()}-${Math.random()}`,
+        });
+      }
     ),
     publishToTopic: vi.fn(() =>
-      Promise.resolve([{ messageId: `dlq-${Date.now()}` }]),
+      Promise.resolve([{ messageId: `dlq-${Date.now()}` }])
     ),
     publish: vi.fn(() => Promise.resolve({ messageId: `pub-${Date.now()}` })),
   };
@@ -176,11 +194,17 @@ export type QStashMock = ReturnType<typeof makeQStashMock>;
  *
  * The `capturedHandlers` map is keyed by function ID from createFunction config.
  */
-export interface InngestEvent { name: string; data: unknown }
+export interface InngestEvent {
+  data: unknown;
+  name: string;
+}
 
 export function makeInngestMock(
   events: InngestEvent[],
-  capturedHandlers: Map<string, (args: { event: unknown; step: unknown }) => Promise<unknown>>,
+  capturedHandlers: Map<
+    string,
+    (args: { event: unknown; step: unknown }) => Promise<unknown>
+  >
 ) {
   const inngestInstance = {
     send: vi.fn((event: InngestEvent | InngestEvent[]) => {
@@ -192,11 +216,11 @@ export function makeInngestMock(
       (
         config: { id: string },
         _trigger: unknown,
-        handler: (args: { event: unknown; step: unknown }) => Promise<unknown>,
+        handler: (args: { event: unknown; step: unknown }) => Promise<unknown>
       ) => {
         capturedHandlers.set(config.id, handler);
         return { id: config.id };
-      },
+      }
     ),
   };
   return inngestInstance;
@@ -222,8 +246,8 @@ export function makeInngestMock(
 type AnyHono = Hono<any>;
 
 export interface ServiceApps {
-  gatewayApp?: AnyHono;
   backfillApp?: AnyHono;
+  gatewayApp?: AnyHono;
   relayApp?: AnyHono;
 }
 
@@ -239,13 +263,15 @@ export function installServiceRouter(apps: ServiceApps): () => void {
   const originalFetch = globalThis.fetch;
 
   globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = new URL(input instanceof Request ? input.url : input.toString());
+    const url = new URL(
+      input instanceof Request ? input.url : input.toString()
+    );
     const port = url.port;
     const app = portToApp[port];
 
     if (!app) {
       throw new Error(
-        `[serviceRouter] No app registered for port ${port}. URL: ${url.toString()}`,
+        `[serviceRouter] No app registered for port ${port}. URL: ${url.toString()}`
       );
     }
 
@@ -256,7 +282,7 @@ export function installServiceRouter(apps: ServiceApps): () => void {
     // /services/ (e.g. from the backfill orchestrator) are forwarded unchanged.
     let appPath = url.pathname + url.search;
     if (app === gatewayApp && !appPath.startsWith("/services/")) {
-      appPath = "/services" + appPath;
+      appPath = `/services${appPath}`;
     }
 
     // Forward to Hono's in-process request handler
@@ -282,7 +308,7 @@ export function makeStep(
     sendEvent: ReturnType<typeof vi.fn>;
     waitForEvent: ReturnType<typeof vi.fn>;
     sleep: ReturnType<typeof vi.fn>;
-  }> = {},
+  }> = {}
 ) {
   return {
     run: vi.fn((_name: string, fn: () => unknown) => fn()),
@@ -314,11 +340,13 @@ export function makeStep(
  */
 export function withTimeFaults(
   step: ReturnType<typeof makeStep>,
-  faults: { afterStep: string; advanceMs: number }[],
+  faults: { afterStep: string; advanceMs: number }[]
 ): ReturnType<typeof makeStep> {
   const originalRun = step.run;
   const wrappedRun = vi.fn(async (name: string, fn: () => unknown) => {
-    const result: unknown = await (originalRun as (name: string, fn: () => unknown) => unknown)(name, fn);
+    const result: unknown = await (
+      originalRun as (name: string, fn: () => unknown) => unknown
+    )(name, fn);
     const fault = faults.find((f) => f.afterStep === name);
     if (fault) {
       vi.advanceTimersByTime(fault.advanceMs);
@@ -364,17 +392,17 @@ export const TEST_WORKSPACE_SETTINGS = {
  *   headers: { Authorization: `Bearer ${rawKey}` }
  */
 export interface ApiKeyFixture {
-  rawKey: string;       // "sk-lf-<nanoid>" — use in Authorization header
-  id: string;           // alias for publicId
-  publicId: string;
   clerkOrgId: string;
-  userId: string;       // alias for createdByUserId
   createdByUserId: string;
+  expiresAt: string | null;
+  id: string; // alias for publicId
+  isActive: boolean;
   keyHash: string;
   keyPrefix: string;
   keySuffix: string;
-  isActive: boolean;
-  expiresAt: string | null;
+  publicId: string;
+  rawKey: string; // "sk-lf-<nanoid>" — use in Authorization header
+  userId: string; // alias for createdByUserId
 }
 
 export async function makeApiKeyFixture(
@@ -384,7 +412,7 @@ export async function makeApiKeyFixture(
     clerkOrgId?: string;
     isActive?: boolean;
     expiresAt?: Date | null;
-  },
+  }
 ): Promise<ApiKeyFixture> {
   const { generateApiKey, hashApiKey } = await import("@repo/console-api-key");
   const { orgApiKeys } = await import("@db/console/schema");
@@ -396,9 +424,7 @@ export async function makeApiKeyFixture(
   const keyHash = await hashApiKey(rawKey);
   const expiresAtRaw = overrides.expiresAt;
   const expiresAt =
-    expiresAtRaw instanceof Date
-      ? expiresAtRaw.toISOString()
-      : null;
+    expiresAtRaw instanceof Date ? expiresAtRaw.toISOString() : null;
 
   const publicId = uid();
   const clerkOrgId = overrides.clerkOrgId ?? `org_test_${uid()}`;
@@ -457,30 +483,30 @@ export async function makeApiKeyFixture(
  */
 
 export interface LabeledEffect {
-  label: string;
   deliver: () => void | Promise<void>;
+  label: string;
 }
 
 export interface PermutationResult {
-  permutationsRun: number;
-  passed: number;
   failures: {
     ordering: string[];
     error: Error;
   }[];
+  passed: number;
+  permutationsRun: number;
 }
 
 export interface PermutationConfig {
-  /** Re-seed DB / Redis / mock state before each permutation */
-  setup: () => void | Promise<void>;
   /** Concurrent effects whose delivery order will be permuted */
   effects: LabeledEffect[];
   /** Assert final-state correctness — called after all effects delivered */
   invariant: () => void | Promise<void>;
-  /** Tear down state between permutations (TRUNCATE, store.clear, etc.) */
-  reset: () => void | Promise<void>;
   /** Max permutations to run.  Default 120 (= 5!).  Random sample if N! exceeds this. */
   maxRuns?: number;
+  /** Tear down state between permutations (TRUNCATE, store.clear, etc.) */
+  reset: () => void | Promise<void>;
+  /** Re-seed DB / Redis / mock state before each permutation */
+  setup: () => void | Promise<void>;
 }
 
 function* generatePermutations<T>(arr: T[]): Generator<T[]> {
@@ -490,7 +516,9 @@ function* generatePermutations<T>(arr: T[]): Generator<T[]> {
   }
   for (let i = 0; i < arr.length; i++) {
     const item = arr[i];
-    if (item === undefined) continue;
+    if (item === undefined) {
+      continue;
+    }
     const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
     for (const perm of generatePermutations(rest)) {
       yield [item, ...perm];
@@ -499,7 +527,7 @@ function* generatePermutations<T>(arr: T[]): Generator<T[]> {
 }
 
 export async function withEventPermutations(
-  config: PermutationConfig,
+  config: PermutationConfig
 ): Promise<PermutationResult> {
   const { setup, effects, invariant, reset, maxRuns = 120 } = config;
 

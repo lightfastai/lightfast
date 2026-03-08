@@ -4,8 +4,8 @@ export default function LegalLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="legal-content-wrapper flex bg-background flex-col min-h-full">
-      <div className="flex-1 max-w-7xl mx-auto px-4 w-full">{children}</div>
+    <div className="legal-content-wrapper flex min-h-full flex-col bg-background">
+      <div className="mx-auto w-full max-w-7xl flex-1 px-4">{children}</div>
     </div>
   );
 }

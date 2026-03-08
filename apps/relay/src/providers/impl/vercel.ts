@@ -1,11 +1,8 @@
-import { computeHmacSha1, timingSafeEqual } from "../../lib/crypto.js";
-import { vercelWebhookPayloadSchema } from "../schemas.js";
-import type { VercelWebhookPayload } from "../schemas.js";
-import type {
-  WebhookProvider,
-  WebhookPayload,
-} from "../types.js";
 import type { RelayEnv } from "../../env.js";
+import { computeHmacSha1, timingSafeEqual } from "../../lib/crypto.js";
+import type { VercelWebhookPayload } from "../schemas.js";
+import { vercelWebhookPayloadSchema } from "../schemas.js";
+import type { WebhookPayload, WebhookProvider } from "../types.js";
 
 // Vercel webhooks use HMAC-SHA1 (not SHA-256). This is imposed by Vercel's
 // webhook infrastructure — see https://vercel.com/docs/webhooks/webhooks-api
@@ -22,10 +19,12 @@ export class VercelProvider implements WebhookProvider {
   async verifyWebhook(
     payload: string,
     headers: Headers,
-    secret: string,
+    secret: string
   ): Promise<boolean> {
     const signature = headers.get(SIGNATURE_HEADER);
-    if (!signature) return false;
+    if (!signature) {
+      return false;
+    }
 
     const expectedSig = await computeHmacSha1(payload, secret);
     return timingSafeEqual(signature, expectedSig);
@@ -39,10 +38,14 @@ export class VercelProvider implements WebhookProvider {
     // Prefer payload id — it is stable across retries of the same event.
     // x-vercel-id is a per-request tracing header and changes on each retry.
     const p = payload as VercelWebhookPayload;
-    if (p.id) return p.id;
+    if (p.id) {
+      return p.id;
+    }
 
     const headerId = headers.get(DELIVERY_HEADER);
-    if (headerId) return headerId;
+    if (headerId) {
+      return headerId;
+    }
 
     return crypto.randomUUID();
   }
@@ -55,10 +58,14 @@ export class VercelProvider implements WebhookProvider {
   extractResourceId(payload: WebhookPayload): string | null {
     const p = payload as VercelWebhookPayload;
     const projectId = p.payload?.project?.id;
-    if (projectId != null) return String(projectId);
+    if (projectId != null) {
+      return String(projectId);
+    }
 
     const teamId = p.payload?.team?.id;
-    if (teamId != null) return String(teamId);
+    if (teamId != null) {
+      return String(teamId);
+    }
 
     return null;
   }

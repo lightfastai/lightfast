@@ -5,19 +5,19 @@
  * URL pattern: /{orgSlug}/{workspaceName}
  */
 
-import workspaceNames from '../data/workspace-names.json' with { type: 'json' };
+import workspaceNames from "../data/workspace-names.json" with { type: "json" };
 
 /**
  * All reserved workspace names (sorted alphabetically)
  * Total: 400+ names including HTTP status codes, routes, resources, etc.
  */
-export const all: ReadonlyArray<string> = workspaceNames;
+export const all: readonly string[] = workspaceNames;
 
 /**
  * Set of reserved workspace names for O(1) lookup performance
  * @internal
  */
-const reservedSet = new Set(workspaceNames.map(name => name.toLowerCase()));
+const reservedSet = new Set(workspaceNames.map((name) => name.toLowerCase()));
 
 /**
  * Check if a workspace name is reserved (case-insensitive)
@@ -36,7 +36,9 @@ const reservedSet = new Set(workspaceNames.map(name => name.toLowerCase()));
  * ```
  */
 export function check(name: string): boolean {
-  if (!name) return false;
+  if (!name) {
+    return false;
+  }
   return reservedSet.has(name.toLowerCase());
 }
 

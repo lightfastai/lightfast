@@ -1,4 +1,4 @@
-import { resolve } from "path";
+import { resolve } from "node:path";
 import { defineConfig, mergeConfig } from "vitest/config";
 import sharedConfig from "../../vitest.shared";
 
@@ -24,8 +24,8 @@ export default mergeConfig(
     },
     resolve: {
       alias: {
-        "~": resolve(__dirname, "./src"),
+        "~": resolve(import.meta.dirname, "./src"),
       },
     },
-  }),
+  })
 );

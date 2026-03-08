@@ -4,10 +4,10 @@
  * Creates rerank providers based on quality mode selection.
  */
 
-import type { RerankProvider, RerankMode } from "./types";
-import { PassthroughRerankProvider } from "./providers/passthrough";
 import { CohereRerankProvider } from "./providers/cohere";
 import { LLMRerankProvider } from "./providers/llm";
+import { PassthroughRerankProvider } from "./providers/passthrough";
+import type { RerankMode, RerankProvider } from "./types";
 
 /**
  * Create a rerank provider based on mode

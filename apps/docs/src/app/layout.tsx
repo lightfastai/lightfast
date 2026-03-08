@@ -2,17 +2,26 @@ import "fumadocs-ui/style.css";
 import "@/src/styles/globals.css";
 import { fonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
-import { neueMontreal, exposurePlus, ppSupplySans } from "@/src/lib/fonts";
+import { createMetadata } from "@vendor/seo/metadata";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { createMetadata } from "@vendor/seo/metadata";
+import { exposurePlus, neueMontreal, ppSupplySans } from "@/src/lib/fonts";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <html className={cn(fonts, neueMontreal.variable, exposurePlus.variable, ppSupplySans.variable)} lang="en" suppressHydrationWarning>
+    <html
+      className={cn(
+        fonts,
+        neueMontreal.variable,
+        exposurePlus.variable,
+        ppSupplySans.variable
+      )}
+      lang="en"
+      suppressHydrationWarning
+    >
       <head />
-      <body className={cn("bg-background min-h-screen dark")}>
+      <body className={cn("dark min-h-screen bg-background")}>
         <RootProvider
           search={{
             enabled: false, // Disable fumadocs search
@@ -28,7 +37,8 @@ export default function Layout({ children }: { children: ReactNode }) {
 // Comprehensive metadata following www app pattern with createMetadata
 export const metadata: Metadata = createMetadata({
   title: "Lightfast Docs – The Operating Layer for Agents and Apps",
-  description: "Documentation for Lightfast — Learn how to observe events, build memory, and act across your entire tool stack via a simple REST API and MCP tools.",
+  description:
+    "Documentation for Lightfast — Learn how to observe events, build memory, and act across your entire tool stack via a simple REST API and MCP tools.",
   metadataBase: new URL("https://lightfast.ai/docs"),
   keywords: [
     "Lightfast documentation",
@@ -68,7 +78,8 @@ export const metadata: Metadata = createMetadata({
   },
   openGraph: {
     title: "Lightfast Docs – The Operating Layer for Agents and Apps",
-    description: "Documentation for Lightfast — Learn how to observe events, build memory, and act across your entire tool stack via a simple REST API and MCP tools.",
+    description:
+      "Documentation for Lightfast — Learn how to observe events, build memory, and act across your entire tool stack via a simple REST API and MCP tools.",
     url: "https://lightfast.ai/docs",
     siteName: "Lightfast Docs",
     type: "website",
@@ -77,7 +88,8 @@ export const metadata: Metadata = createMetadata({
   twitter: {
     card: "summary_large_image",
     title: "Lightfast Docs – The Operating Layer for Agents and Apps",
-    description: "Documentation for Lightfast — Learn how to observe events, build memory, and act across your entire tool stack via a simple REST API and MCP tools.",
+    description:
+      "Documentation for Lightfast — Learn how to observe events, build memory, and act across your entire tool stack via a simple REST API and MCP tools.",
     site: "@lightfastai",
     creator: "@lightfastai",
   },

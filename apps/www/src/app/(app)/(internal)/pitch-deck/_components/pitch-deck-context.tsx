@@ -1,23 +1,24 @@
 "use client";
 
-import * as React from "react";
 import { useIsMobile } from "@repo/ui/hooks/use-mobile";
+import * as React from "react";
 
 const PREFACE_COOKIE_NAME = "pitch_deck_preface";
 const PREFACE_COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 const PREFACE_KEYBOARD_SHORTCUT = "b";
 
 interface PitchDeckContextProps {
+  // Mobile detection - undefined during hydration
+  isMobile: boolean | undefined;
   // Preface visibility state
   prefaceExpanded: boolean;
   setPrefaceExpanded: (expanded: boolean) => void;
   togglePreface: () => void;
-
-  // Mobile detection - undefined during hydration
-  isMobile: boolean | undefined;
 }
 
-const PitchDeckContext = React.createContext<PitchDeckContextProps | null>(null);
+const PitchDeckContext = React.createContext<PitchDeckContextProps | null>(
+  null
+);
 
 export function usePitchDeck() {
   const context = React.useContext(PitchDeckContext);

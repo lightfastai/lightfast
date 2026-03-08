@@ -20,15 +20,10 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "eslint": "catalog:",
     "next": "catalog:next16",
     "typescript": "catalog:",
     "webpack": "^5.105.4"
@@ -41,6 +36,5 @@
     "@vendor/observability": "workspace:*",
     "@vercel/toolbar": "^0.2.2",
     "next-secure-headers": "^2.2.0"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

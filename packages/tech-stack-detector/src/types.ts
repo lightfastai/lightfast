@@ -1,111 +1,111 @@
 export type Category =
-	| "engineering"
-	| "customer"
-	| "revenue"
-	| "growth"
-	| "communication";
+  | "engineering"
+  | "customer"
+  | "revenue"
+  | "growth"
+  | "communication";
 
 export type DetectionVector =
-	| "header"
-	| "cookie"
-	| "script_src"
-	| "meta_tag"
-	| "inline_script"
-	| "html_link"
-	| "data_attr"
-	| "dns_cname"
-	| "dns_txt"
-	| "dns_a"
-	| "robots_txt"
-	| "network_request"
-	| "js_global"
-	| "browser_cookie";
+  | "header"
+  | "cookie"
+  | "script_src"
+  | "meta_tag"
+  | "inline_script"
+  | "html_link"
+  | "data_attr"
+  | "dns_cname"
+  | "dns_txt"
+  | "dns_a"
+  | "robots_txt"
+  | "network_request"
+  | "js_global"
+  | "browser_cookie";
 
 export type Tier = 1 | 2 | 3;
 
 export interface DetectionRule {
-	vector: DetectionVector;
-	tier: Tier;
-	confidence: number;
-	/** For header/cookie checks — receives the value map */
-	check?: (data: Record<string, string>) => boolean;
-	/** For DNS/script_src/network_request pattern matching */
-	pattern?: RegExp;
-	/** For script_src/network_request domain matching */
-	domains?: string[];
-	/** For js_global checks — the global path to test (e.g. "window.Intercom") */
-	global?: string;
+  /** For header/cookie checks — receives the value map */
+  check?: (data: Record<string, string>) => boolean;
+  confidence: number;
+  /** For script_src/network_request domain matching */
+  domains?: string[];
+  /** For js_global checks — the global path to test (e.g. "window.Intercom") */
+  global?: string;
+  /** For DNS/script_src/network_request pattern matching */
+  pattern?: RegExp;
+  tier: Tier;
+  vector: DetectionVector;
 }
 
 export interface ToolSignature {
-	id: string;
-	name: string;
-	category: Category;
-	rules: DetectionRule[];
+  category: Category;
+  id: string;
+  name: string;
+  rules: DetectionRule[];
 }
 
 export interface RuleMatch {
-	toolId: string;
-	vector: DetectionVector;
-	tier: Tier;
-	confidence: number;
-	evidence: string;
+  confidence: number;
+  evidence: string;
+  tier: Tier;
+  toolId: string;
+  vector: DetectionVector;
 }
 
 export type ConfidenceLevel = "detected" | "likely" | "possible";
 
 export interface DetectedTool {
-	id: string;
-	name: string;
-	category: Category;
-	confidence: number;
-	level: ConfidenceLevel;
-	signals: RuleMatch[];
+  category: Category;
+  confidence: number;
+  id: string;
+  level: ConfidenceLevel;
+  name: string;
+  signals: RuleMatch[];
 }
 
 export interface DetectionResult {
-	url: string;
-	domain: string;
-	detected: DetectedTool[];
-	totalChecked: number;
-	tiersUsed: Tier[];
-	durationMs: number;
-	unmatchedDomains?: string[];
+  detected: DetectedTool[];
+  domain: string;
+  durationMs: number;
+  tiersUsed: Tier[];
+  totalChecked: number;
+  unmatchedDomains?: string[];
+  url: string;
 }
 
 export interface DetectOptions {
-	skipBrowser?: boolean;
-	timeout?: number;
+  skipBrowser?: boolean;
+  timeout?: number;
 }
 
 // ━━━ Discovery Types ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export type DiscoverySource =
-	| "link_extraction"
-	| "ct_log"
-	| "common_prefix"
-	| "network_request"
-	| "path_detection";
+  | "link_extraction"
+  | "ct_log"
+  | "common_prefix"
+  | "network_request"
+  | "path_detection";
 
 export interface DiscoveredUrl {
-	url: string;
-	source: DiscoverySource[];
-	kind: "subdomain" | "path";
-	httpStatus?: number;
-	scanned: boolean;
+  httpStatus?: number;
+  kind: "subdomain" | "path";
+  scanned: boolean;
+  source: DiscoverySource[];
+  url: string;
 }
 
 export interface DeepDetectOptions extends DetectOptions {
-	deep?: boolean;
-	maxDeepScans?: number;
-	discoveryTimeout?: number;
+  deep?: boolean;
+  discoveryTimeout?: number;
+  maxDeepScans?: number;
 }
 
 export interface DeepDetectionResult {
-	primary: DetectionResult;
-	discovered: DiscoveredUrl[];
-	subResults: DetectionResult[];
-	allDetected: DetectedTool[];
-	totalDurationMs: number;
-	unmatchedDomains?: string[];
+  allDetected: DetectedTool[];
+  discovered: DiscoveredUrl[];
+  primary: DetectionResult;
+  subResults: DetectionResult[];
+  totalDurationMs: number;
+  unmatchedDomains?: string[];
 }

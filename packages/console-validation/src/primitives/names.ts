@@ -145,7 +145,7 @@ export const documentSlugSchema = z
   .min(1, "Document slug must not be empty")
   .max(256, "Document slug must be 256 characters or less")
   .regex(
-    /^[a-zA-Z0-9_.\/-]+$/,
+    /^[a-zA-Z0-9_./-]+$/,
     "Document slug can only contain alphanumeric, hyphens, underscores, periods, and slashes"
   )
   .trim();

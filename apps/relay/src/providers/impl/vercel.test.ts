@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { computeHmacSha1 } from "../../lib/crypto.js";
 import { VercelProvider } from "./vercel.js";
 
@@ -18,7 +18,7 @@ describe("VercelProvider", () => {
       const result = await provider.verifyWebhook(
         body,
         headers({ "x-vercel-signature": sig }),
-        secret,
+        secret
       );
       expect(result).toBe(true);
     });
@@ -27,7 +27,7 @@ describe("VercelProvider", () => {
       const result = await provider.verifyWebhook(
         '{"type":"deployment.created"}',
         headers({ "x-vercel-signature": "badsig" }),
-        secret,
+        secret
       );
       expect(result).toBe(false);
     });
@@ -36,7 +36,7 @@ describe("VercelProvider", () => {
       const result = await provider.verifyWebhook(
         '{"type":"deployment.created"}',
         headers({}),
-        secret,
+        secret
       );
       expect(result).toBe(false);
     });
@@ -63,7 +63,7 @@ describe("VercelProvider", () => {
     it("prefers payload.id over header", () => {
       const id = provider.extractDeliveryId(
         headers({ "x-vercel-id": "hdr-123" }),
-        { id: "body-456" },
+        { id: "body-456" }
       );
       expect(id).toBe("body-456");
     });
@@ -71,7 +71,7 @@ describe("VercelProvider", () => {
     it("falls back to x-vercel-id header", () => {
       const id = provider.extractDeliveryId(
         headers({ "x-vercel-id": "hdr-123" }),
-        {},
+        {}
       );
       expect(id).toBe("hdr-123");
     });
@@ -79,7 +79,7 @@ describe("VercelProvider", () => {
     it("generates UUID when both missing", () => {
       const id = provider.extractDeliveryId(headers({}), {});
       expect(id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
       );
     });
   });

@@ -8,51 +8,46 @@
  *
  * Infrastructure: PGlite (real DB), in-memory Redis Map, no Inngest/QStash needed.
  */
+
+import { gwInstallations, gwResources } from "@db/console/schema";
+import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
+import { fixtures } from "@repo/console-test-db/fixtures";
 import {
-  describe,
-  it,
-  expect,
-  vi,
+  afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
-  afterAll,
+  describe,
+  expect,
+  it,
+  vi,
 } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
-import type { TestDb } from "@repo/console-test-db";
-import { fixtures } from "@repo/console-test-db/fixtures";
-import { gwInstallations, gwResources } from "@db/console/schema";
 
 // ── Shared state (assigned in beforeAll, accessed via lazy getter in vi.mock) ──
 let db: TestDb;
 
 // ── Create all mock state in vi.hoisted (runs before vi.mock factories) ──
-const {
-  redisMock,
-  redisStore,
-  qstashMock,
-  workflowTriggerMock,
-} = await vi.hoisted(async () => {
-  const { makeRedisMock, makeQStashMock } = await import("./harness.js");
-  const redisStore = new Map<string, unknown>();
-  const qstashMessages: { url: string; body: unknown }[] = [];
-  return {
-    redisMock: makeRedisMock(redisStore),
-    redisStore,
-    qstashMock: makeQStashMock(qstashMessages),
-    workflowTriggerMock: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
-  };
-});
+const { redisMock, redisStore, qstashMock, workflowTriggerMock } =
+  await vi.hoisted(async () => {
+    const { makeRedisMock, makeQStashMock } = await import("./harness.js");
+    const redisStore = new Map<string, unknown>();
+    const qstashMessages: { url: string; body: unknown }[] = [];
+    return {
+      redisMock: makeRedisMock(redisStore),
+      redisStore,
+      qstashMock: makeQStashMock(qstashMessages),
+      workflowTriggerMock: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
+    };
+  });
 
 // ── vi.mock declarations (hoisted above imports by vitest transform) ──
 
 vi.mock("@db/console/client", () => ({
   // lazy getter — db is null until beforeAll assigns it
-  get db() { return db; },
+  get db() {
+    return db;
+  },
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -61,7 +56,11 @@ vi.mock("@vendor/upstash", () => ({
 
 vi.mock("@vendor/qstash", () => ({
   getQStashClient: () => qstashMock,
-  Receiver: class { verify() { return Promise.resolve(true); } },
+  Receiver: class {
+    verify() {
+      return Promise.resolve(true);
+    }
+  },
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
@@ -79,20 +78,28 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 
 // Return localhost URLs so service router can intercept
 vi.mock("@vendor/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vercel/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 // ── Import apps after mocks are registered ──
 
 // Import full Hono apps via vitest path aliases (see vitest.config.ts)
 import gatewayApp from "@gateway/app";
-import { webhookSeenKey, resourceKey as relayResourceKey } from "@relay/cache";
+import { resourceKey as relayResourceKey, webhookSeenKey } from "@relay/cache";
 
 // Force relay webhook-delivery module to load and capture its serve() handler
 await import("@relay/webhook-delivery");
@@ -103,7 +110,11 @@ const API_HEADERS = { "X-API-Key": "0".repeat(64) };
 
 function req(
   path: string,
-  init: { method?: string; body?: Record<string, unknown>; headers?: Record<string, string> } = {},
+  init: {
+    method?: string;
+    body?: Record<string, unknown>;
+    headers?: Record<string, string>;
+  } = {}
 ) {
   const headers = new Headers(init.headers);
   if (!headers.has("content-type") && init.body) {
@@ -125,27 +136,39 @@ beforeAll(async () => {
 beforeEach(() => {
   vi.clearAllMocks();
   // Restore mock implementations that clearAllMocks resets
-  redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
-    redisStore.set(key, { ...existing, ...fields });
-    return Promise.resolve(1);
-  });
-  redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
+  redisMock.hset.mockImplementation(
+    (key: string, fields: Record<string, unknown>) => {
+      const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+      redisStore.set(key, { ...existing, ...fields });
+      return Promise.resolve(1);
+    }
   );
-  redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean }) => {
-    if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
-    redisStore.set(key, value);
-    return Promise.resolve("OK");
-  });
+  redisMock.hgetall.mockImplementation((key: string) =>
+    Promise.resolve(
+      (redisStore.get(key) ?? null) as Record<string, string> | null
+    )
+  );
+  redisMock.set.mockImplementation(
+    (key: string, value: unknown, opts?: { nx?: boolean }) => {
+      if (opts?.nx && redisStore.has(key)) {
+        return Promise.resolve(null);
+      }
+      redisStore.set(key, value);
+      return Promise.resolve("OK");
+    }
+  );
   redisMock.del.mockImplementation((...keys: string[]) => {
     const allKeys = keys.flat();
     let count = 0;
-    for (const k of allKeys) { if (redisStore.delete(k)) count++; }
+    for (const k of allKeys) {
+      if (redisStore.delete(k)) {
+        count++;
+      }
+    }
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation((key: string) =>
-    Promise.resolve(redisStore.get(key) ?? null),
+    Promise.resolve(redisStore.get(key) ?? null)
   );
 });
 
@@ -162,7 +185,11 @@ afterAll(async () => {
 
 describe("Suite 1.1 — Resource link populates relay routing cache", () => {
   it("POST /services/gateway/:id/resources writes gw:resource:{provider}:{id} to Redis", async () => {
-    const inst = fixtures.installation({ provider: "github", orgId: "org-1", status: "active" });
+    const inst = fixtures.installation({
+      provider: "github",
+      orgId: "org-1",
+      status: "active",
+    });
     await db.insert(gwInstallations).values(inst);
 
     const res = await req(`/services/gateway/${inst.id}/resources`, {
@@ -172,11 +199,11 @@ describe("Suite 1.1 — Resource link populates relay routing cache", () => {
     });
 
     expect(res.status).toBe(200);
-    const json = await res.json() as { status: string };
+    const json = (await res.json()) as { status: string };
     expect(json.status).toBe("linked");
 
     // Redis key must use the shared format
-    const expectedKey = `gw:resource:github:owner/my-repo`;
+    const expectedKey = "gw:resource:github:owner/my-repo";
     expect(redisMock.hset).toHaveBeenCalledWith(expectedKey, {
       connectionId: inst.id,
       orgId: "org-1",
@@ -196,10 +223,14 @@ describe("Suite 1.1 — Resource link populates relay routing cache", () => {
     redisStore.set("gw:resource:github:cached-repo", { connectionId, orgId });
 
     // Relay's resolve-connection step reads via redis.hgetall
-    const cached = await redisMock.hgetall("gw:resource:github:cached-repo") as { connectionId: string; orgId: string } | null;
+    const cached = (await redisMock.hgetall(
+      "gw:resource:github:cached-repo"
+    )) as { connectionId: string; orgId: string } | null;
 
     expect(cached).not.toBeNull();
-    if (!cached) throw new Error("cached should not be null");
+    if (!cached) {
+      throw new Error("cached should not be null");
+    }
     expect(cached.connectionId).toBe(connectionId);
     expect(cached.orgId).toBe(orgId);
   });
@@ -207,7 +238,10 @@ describe("Suite 1.1 — Resource link populates relay routing cache", () => {
 
 describe("Suite 1.2 — Resource unlink removes relay routing cache", () => {
   it("DELETE /services/gateway/:id/resources/:rid removes the Redis key", async () => {
-    const inst = fixtures.installation({ provider: "github", status: "active" });
+    const inst = fixtures.installation({
+      provider: "github",
+      status: "active",
+    });
     await db.insert(gwInstallations).values(inst);
 
     const resource = fixtures.resource({
@@ -225,17 +259,21 @@ describe("Suite 1.2 — Resource unlink removes relay routing cache", () => {
 
     const res = await req(
       `/services/gateway/${inst.id}/resources/${resource.id}`,
-      { method: "DELETE", headers: API_HEADERS },
+      { method: "DELETE", headers: API_HEADERS }
     );
 
     expect(res.status).toBe(200);
 
     // Connections must delete the key so Relay stops routing webhooks
-    expect(redisMock.del).toHaveBeenCalledWith("gw:resource:github:owner/to-unlink");
+    expect(redisMock.del).toHaveBeenCalledWith(
+      "gw:resource:github:owner/to-unlink"
+    );
     expect(redisStore.has("gw:resource:github:owner/to-unlink")).toBe(false);
 
     // Relay would now get a cache miss
-    const cached = await redisMock.hgetall("gw:resource:github:owner/to-unlink");
+    const cached = await redisMock.hgetall(
+      "gw:resource:github:owner/to-unlink"
+    );
     expect(cached).toBeNull();
   });
 });
@@ -247,7 +285,10 @@ describe("Suite 1.3 — Teardown clears all resource cache keys", () => {
 
     // Seed three resource keys
     for (const id of ids) {
-      redisStore.set(`gw:resource:${provider}:${id}`, { connectionId: "conn-1", orgId: "org-1" });
+      redisStore.set(`gw:resource:${provider}:${id}`, {
+        connectionId: "conn-1",
+        orgId: "org-1",
+      });
     }
 
     // Teardown cleanup-cache step calls del with all keys at once
@@ -264,9 +305,7 @@ describe("Suite 1.3 — Teardown clears all resource cache keys", () => {
 
 describe("Suite 1.4 — Key format parity between Connections and Relay", () => {
   it("connections.resourceKey() matches relay.resourceKey() for the same inputs", async () => {
-    const { resourceKey: connectionsKey } = await import(
-      "@gateway/cache"
-    );
+    const { resourceKey: connectionsKey } = await import("@gateway/cache");
 
     const testCases: [string, string][] = [
       ["github", "owner/repo"],
@@ -286,10 +325,10 @@ describe("Suite 1.4 — Key format parity between Connections and Relay", () => 
 
   it("webhookSeenKey uses gw:webhook:seen:{provider}:{deliveryId} format", () => {
     expect(webhookSeenKey("github" as never, "del-abc123")).toBe(
-      "gw:webhook:seen:github:del-abc123",
+      "gw:webhook:seen:github:del-abc123"
     );
     expect(webhookSeenKey("vercel" as never, "del-vc-001")).toBe(
-      "gw:webhook:seen:vercel:del-vc-001",
+      "gw:webhook:seen:vercel:del-vc-001"
     );
   });
 });

@@ -28,9 +28,18 @@ export interface ChunkOptions {
  */
 export interface Chunk {
   /**
+   * Byte offset where this chunk ends in the original text
+   */
+  endOffset: number;
+  /**
    * 0-based chunk index
    */
   index: number;
+
+  /**
+   * Byte offset where this chunk starts in the original text
+   */
+  startOffset: number;
 
   /**
    * Chunk text content
@@ -41,16 +50,6 @@ export interface Chunk {
    * Token count for this chunk
    */
   tokens: number;
-
-  /**
-   * Byte offset where this chunk starts in the original text
-   */
-  startOffset: number;
-
-  /**
-   * Byte offset where this chunk ends in the original text
-   */
-  endOffset: number;
 }
 
 /**
@@ -58,19 +57,19 @@ export interface Chunk {
  */
 export interface MDXMetadata {
   /**
-   * Frontmatter key-value pairs (null if no frontmatter exists)
+   * SHA-256 hash of the content (excluding frontmatter)
+   * Used for idempotency and change detection
    */
-  frontmatter: Record<string, unknown> | null;
-
-  /**
-   * Document title (from frontmatter or first h1)
-   */
-  title?: string;
+  contentHash: string;
 
   /**
    * Document description (from frontmatter)
    */
   description?: string;
+  /**
+   * Frontmatter key-value pairs (null if no frontmatter exists)
+   */
+  frontmatter: Record<string, unknown> | null;
 
   /**
    * URL slug derived from file path
@@ -78,8 +77,7 @@ export interface MDXMetadata {
   slug: string;
 
   /**
-   * SHA-256 hash of the content (excluding frontmatter)
-   * Used for idempotency and change detection
+   * Document title (from frontmatter or first h1)
    */
-  contentHash: string;
+  title?: string;
 }

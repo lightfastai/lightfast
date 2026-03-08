@@ -5,5 +5,3 @@ export interface NavItem extends BaseNavItem {
   // When true, render links using @vercel/microfrontends Link
   microfrontend?: boolean;
 }
-
-

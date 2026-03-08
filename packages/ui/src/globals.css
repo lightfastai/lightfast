@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@plugin '@tailwindcss/typography';
+@plugin "@tailwindcss/typography";
 
 /* Include sources for class scanning across monorepo */
 @source "../**/*.{ts,tsx}";
@@ -186,7 +186,9 @@
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.329 0 0);
   --input: oklch(0.3092 0 0);
-  --input-bg: oklch(0.24 0 0); /* Very subtle, slightly lighter than background */
+  --input-bg: oklch(
+    0.24 0 0
+  ); /* Very subtle, slightly lighter than background */
   --ring: oklch(0.7058 0 0);
   --chart-1: oklch(0.7058 0 0);
   --chart-2: oklch(0.6714 0.0339 206.3482);
@@ -247,11 +249,11 @@
   }
   body,
   .font-sans {
-    @apply bg-background text-foreground;
     font-family:
       var(--font-geist-sans), var(--font-sans), ui-sans-serif, system-ui,
       sans-serif;
     letter-spacing: -0.03em; /* Geist-specific letter spacing */
+    @apply bg-background text-foreground; /* Geist-specific letter spacing */
   }
   code,
   pre,
@@ -310,8 +312,8 @@
 
   /* Scrollbar utilities - apply to both vertical and horizontal */
   .scrollbar-default {
-    scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
+    scrollbar-width: thin;
   }
   .scrollbar-default::-webkit-scrollbar {
     width: var(--scrollbar-size);
@@ -326,8 +328,8 @@
   }
 
   .scrollbar-thin {
-    scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
+    scrollbar-width: thin;
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: var(--scrollbar-size-thin);

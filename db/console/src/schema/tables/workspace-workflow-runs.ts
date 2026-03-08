@@ -1,7 +1,19 @@
+import type {
+  JobStatus,
+  JobTrigger,
+  WorkflowInput,
+  WorkflowOutput,
+} from "@repo/console-validation";
 import { sql } from "drizzle-orm";
-import { bigint, index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  index,
+  jsonb,
+  pgTable,
+  timestamp,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
-import type { JobStatus, JobTrigger, WorkflowInput, WorkflowOutput } from "@repo/console-validation";
 
 /**
  * Jobs table tracks Inngest workflow executions
@@ -170,16 +182,16 @@ export const workspaceWorkflowRuns = pgTable(
     // Composite index for recent jobs by workspace
     workspaceCreatedAtIdx: index("job_workspace_created_at_idx").on(
       table.workspaceId,
-      table.createdAt,
+      table.createdAt
     ),
-  }),
+  })
 );
 
 // Type re-exports from validation schemas
 export type {
+  GitHubSourceMetadata,
   WorkflowInput,
   WorkflowOutput,
-  GitHubSourceMetadata,
 } from "@repo/console-validation";
 
 // Type exports

@@ -19,16 +19,16 @@ export function CustomTeamSlide({
       <div
         className={cn(
           "flex w-full",
-          isFixed ? "gap-10 h-[85%]" : "gap-3 sm:gap-5 md:gap-8 h-[80%] sm:h-[85%]"
+          isFixed
+            ? "h-[85%] gap-10"
+            : "h-[80%] gap-3 sm:h-[85%] sm:gap-5 md:gap-8"
         )}
       >
         {/* Founder identity block */}
         <div
           className={cn(
             "flex flex-col justify-end rounded-2xl bg-[var(--pitch-deck-red)] text-white",
-            isFixed
-              ? "w-[38%] p-10"
-              : "w-[35%] sm:w-[38%] p-3 sm:p-5 md:p-8"
+            isFixed ? "w-[38%] p-10" : "w-[35%] p-3 sm:w-[38%] sm:p-5 md:p-8"
           )}
         >
           <div className="mt-auto">
@@ -42,7 +42,7 @@ export function CustomTeamSlide({
             </p>
             <p
               className={cn(
-                "text-white/80 mt-1",
+                "mt-1 text-white/80",
                 isFixed ? "text-lg" : "text-[10px] sm:text-xs md:text-sm"
               )}
             >
@@ -51,7 +51,9 @@ export function CustomTeamSlide({
             <p
               className={cn(
                 "text-white/60",
-                isFixed ? "text-sm mt-1" : "text-[9px] sm:text-[10px] md:text-xs mt-0.5"
+                isFixed
+                  ? "mt-1 text-sm"
+                  : "mt-0.5 text-[9px] sm:text-[10px] md:text-xs"
               )}
             >
               {slide.founder.location}
@@ -60,8 +62,8 @@ export function CustomTeamSlide({
               className={cn(
                 "text-white/90 leading-snug",
                 isFixed
-                  ? "text-base mt-6 border-t border-white/20 pt-6"
-                  : "text-[10px] sm:text-xs md:text-sm mt-3 sm:mt-4 border-t border-white/20 pt-3 sm:pt-4"
+                  ? "mt-6 border-white/20 border-t pt-6 text-base"
+                  : "mt-3 border-white/20 border-t pt-3 text-[10px] sm:mt-4 sm:pt-4 sm:text-xs md:text-sm"
               )}
             >
               {slide.founder.tagline}
@@ -80,10 +82,10 @@ export function CustomTeamSlide({
             <div key={track.header}>
               <p
                 className={cn(
-                  "uppercase tracking-wider font-medium text-[var(--pitch-deck-red)]",
+                  "font-medium text-[var(--pitch-deck-red)] uppercase tracking-wider",
                   isFixed
-                    ? "text-sm mb-3"
-                    : "text-[9px] sm:text-[10px] md:text-xs mb-1 sm:mb-2"
+                    ? "mb-3 text-sm"
+                    : "mb-1 text-[9px] sm:mb-2 sm:text-[10px] md:text-xs"
                 )}
               >
                 {track.header}
@@ -96,13 +98,13 @@ export function CustomTeamSlide({
               >
                 {track.items.map((item, idx) => (
                   <p
-                    key={`${track.header}-${idx}`}
                     className={cn(
-                      "border-b border-neutral-300 text-neutral-700",
+                      "border-neutral-300 border-b text-neutral-700",
                       isFixed
-                        ? "text-base pb-2 leading-snug"
-                        : "text-[10px] sm:text-xs md:text-sm pb-1 sm:pb-1.5 leading-snug"
+                        ? "pb-2 text-base leading-snug"
+                        : "pb-1 text-[10px] leading-snug sm:pb-1.5 sm:text-xs md:text-sm"
                     )}
+                    key={`${track.header}-${idx}`}
                   >
                     {item}
                   </p>

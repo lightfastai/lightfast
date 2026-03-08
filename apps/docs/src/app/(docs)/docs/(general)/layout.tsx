@@ -1,17 +1,14 @@
-import type { ReactNode } from "react";
-import Link from "next/link";
-import { DocsSidebar } from "@/src/components/docs-sidebar";
 import { Button } from "@repo/ui/components/ui/button";
-import {
-  SidebarProvider,
-  SidebarInset,
-} from "@repo/ui/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
+import { cn } from "@repo/ui/lib/utils";
+import Link from "next/link";
+import type { ReactNode } from "react";
 import { DocsMobileNav } from "@/src/components/docs-mobile-nav";
+import { DocsSidebar } from "@/src/components/docs-sidebar";
 import { Search } from "@/src/components/search";
+import { buildApiPageTree } from "@/src/lib/build-api-tree";
 import { authUrl } from "@/src/lib/related-projects";
 import { pageTree } from "@/src/lib/source";
-import { buildApiPageTree } from "@/src/lib/build-api-tree";
-import { cn } from "@repo/ui/lib/utils";
 
 export default function GeneralDocsLayout({
   children,
@@ -23,49 +20,49 @@ export default function GeneralDocsLayout({
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="dark flex w-full bg-background h-screen overflow-hidden">
+      <div className="dark flex h-screen w-full overflow-hidden bg-background">
         {/* Docs Sidebar */}
         <DocsSidebar tree={pageTree} />
 
         {/* Search - Fixed position, centered on viewport */}
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+        <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 transform">
           <Search />
         </div>
 
         {/* Main Content Area */}
-        <SidebarInset className="flex flex-col flex-1 overflow-hidden">
+        <SidebarInset className="flex flex-1 flex-col overflow-hidden">
           {/* Header with actions */}
-          <header className="shrink-0 py-4 page-gutter bg-transparent">
-            <div className="flex items-center h-9">
+          <header className="page-gutter shrink-0 bg-transparent py-4">
+            <div className="flex h-9 items-center">
               {/* Left - Mobile Nav (hamburger + sheet drawer) */}
               <DocsMobileNav
-                docsTree={pageTree}
-                apiTree={apiTree}
-                signInUrl={signInUrl}
                 activePath="docs"
+                apiTree={apiTree}
+                docsTree={pageTree}
+                signInUrl={signInUrl}
               />
 
               {/* Right side - Navigation and Sign In Button */}
-              <div className="flex items-center gap-6 ml-auto">
+              <div className="ml-auto flex items-center gap-6">
                 {/* Navigation */}
                 <nav className="flex items-center gap-6">
                   <Button
-                    variant="link"
-                    className={cn(
-                      "text-sm font-medium transition-colors hover:text-foreground p-0 h-auto",
-                      "text-foreground", // Always active in general docs
-                    )}
                     asChild
+                    className={cn(
+                      "h-auto p-0 font-medium text-sm transition-colors hover:text-foreground",
+                      "text-foreground" // Always active in general docs
+                    )}
+                    variant="link"
                   >
                     <Link href="/docs/get-started/overview">Docs</Link>
                   </Button>
                   <Button
-                    variant="link"
-                    className={cn(
-                      "text-sm font-medium transition-colors hover:text-foreground p-0 h-auto",
-                      "text-muted-foreground", // Never active in general docs
-                    )}
                     asChild
+                    className={cn(
+                      "h-auto p-0 font-medium text-sm transition-colors hover:text-foreground",
+                      "text-muted-foreground" // Never active in general docs
+                    )}
+                    variant="link"
                   >
                     <Link href="/docs/api-reference/getting-started/overview">
                       API
@@ -75,13 +72,13 @@ export default function GeneralDocsLayout({
 
                 {/* Sign In Button */}
                 <Button
-                  variant="secondary"
-                  size="lg"
-                  className="rounded-full"
                   asChild
+                  className="rounded-full"
+                  size="lg"
+                  variant="secondary"
                 >
                   <Link href={signInUrl}>
-                    <span className="text-sm text-secondary-foreground font-medium">
+                    <span className="font-medium text-secondary-foreground text-sm">
                       Log In
                     </span>
                   </Link>

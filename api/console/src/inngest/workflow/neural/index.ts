@@ -8,7 +8,7 @@
  * 4. llmEntityExtractionWorkflow - LLM entity extraction (async, fire-and-forget)
  */
 
-export { observationCapture } from "./observation-capture";
-export { profileUpdate } from "./profile-update";
 export { clusterSummaryCheck } from "./cluster-summary";
 export { llmEntityExtractionWorkflow } from "./llm-entity-extraction-workflow";
+export { observationCapture } from "./observation-capture";
+export { profileUpdate } from "./profile-update";

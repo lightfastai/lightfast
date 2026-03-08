@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { AuthenticateWithRedirectCallback } from "@vendor/clerk/client"
+import { AuthenticateWithRedirectCallback } from "@vendor/clerk/client";
 
 export default function Page() {
   // Handle the redirect flow by calling the Clerk.handleRedirectCallback() method
@@ -17,5 +17,5 @@ export default function Page() {
       signInFallbackRedirectUrl="/account/teams/new"
       signUpFallbackRedirectUrl="/account/teams/new"
     />
-  )
+  );
 }

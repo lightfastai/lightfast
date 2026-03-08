@@ -37,17 +37,12 @@
     "superjson": "catalog:"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "19.2.14",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "eslintConfig": {
     "extends": "@repo/eslint-config/base"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

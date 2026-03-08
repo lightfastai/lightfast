@@ -1,16 +1,23 @@
+import { Icons } from "@repo/ui/components/icons";
+import { Button } from "@repo/ui/components/ui/button";
+import type {
+  FAQPage,
+  GraphContext,
+  Organization,
+  Question,
+  SoftwareApplication,
+  WebSite,
+} from "@vendor/seo/json-ld";
+import { JsonLd } from "@vendor/seo/json-ld";
+import { Activity, Blocks, Brain, Plug, Shield, Wand2 } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Activity, Brain, Wand2, Blocks, Plug, Shield } from "lucide-react";
-import { Button } from "@repo/ui/components/ui/button";
-import { Icons } from "@repo/ui/components/icons";
-import { faqs, FAQSection } from "~/components/faq-section";
-import { IntegrationShowcase } from "~/components/integration-showcase";
 import { ChangelogPreview } from "~/components/changelog-preview";
+import { FAQSection, faqs } from "~/components/faq-section";
 import { HeroChangelogBadge } from "~/components/hero-changelog-badge";
+import { IntegrationShowcase } from "~/components/integration-showcase";
 import { WaitlistCTA } from "~/components/waitlist-cta";
-import { JsonLd } from "@vendor/seo/json-ld";
-import type {GraphContext, Organization, WebSite, SoftwareApplication, FAQPage, Question} from "@vendor/seo/json-ld";
 
 const benefits = [
   {
@@ -131,7 +138,8 @@ export default function HomePage() {
     "@id": "https://lightfast.ai/#website",
     url: "https://lightfast.ai",
     name: "Lightfast",
-    description: "The operating layer for agents and apps — observe, remember, and act across every tool",
+    description:
+      "The operating layer for agents and apps — observe, remember, and act across every tool",
     publisher: {
       "@id": "https://lightfast.ai/#organization",
     },
@@ -198,67 +206,67 @@ export default function HomePage() {
           video element is painted, fixing desktop LCP.
           React 19 / Next.js 15 hoist <link> elements from Server Components to <head>. */}
       <link
-        rel="preload"
         as="image"
-        href="/images/landing-hero-poster.webp"
         fetchPriority="high"
+        href="/images/landing-hero-poster.webp"
         media="(min-width: 768px)"
+        rel="preload"
       />
 
       {/* Grid-based landing page */}
       <div className="min-h-screen bg-background">
         {/* Hero Section */}
-        <section className="relative min-h-screen w-full bg-background overflow-hidden">
+        <section className="relative min-h-screen w-full overflow-hidden bg-background">
           {/* Mobile hero: static image only — no video download on mobile */}
-          <div className="md:hidden pointer-events-none absolute inset-0 z-0 overflow-hidden">
-            <div className="absolute w-[150%] h-[90%] top-[22%] -right-[42%]">
+          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden md:hidden">
+            <div className="absolute top-[22%] -right-[42%] h-[90%] w-[150%]">
               <Image
-                src="/images/landing-hero-poster.webp"
                 alt="Data flows through the Lightfast engine"
-                fill
-                priority
+                className="object-contain object-[65%_25%]"
                 // fetchPriority explicit because Next.js <Image priority> with fill
                 // does not reliably inject fetchpriority="high" on the <img> tag —
                 // Lighthouse flags this as missing on the LCP element.
                 fetchPriority="high"
+                fill
+                priority
                 // Scope to mobile only — on desktop (hidden) this would preload
                 // a 2160px+ image for a display:none element. The desktop poster
                 // is covered by the <link rel="preload"> above.
                 sizes="(max-width: 767px) 150vw, 1px"
-                className="object-contain object-[65%_25%]"
+                src="/images/landing-hero-poster.webp"
               />
             </div>
           </div>
 
           {/* Desktop hero: animated WebM video */}
-          <div className="hidden md:block pointer-events-none absolute inset-0 z-0 overflow-hidden">
-            <div
-              className="absolute
-                w-[100%] h-[85%] top-[25%] -right-[10%]
-                lg:w-[80%] lg:h-[95%] lg:top-[5%] lg:-right-[12.5%]"
-            >
+          <div className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden md:block">
+            <div className="absolute top-[25%] -right-[10%] h-[85%] w-[100%] lg:top-[5%] lg:-right-[12.5%] lg:h-[95%] lg:w-[80%]">
               <video
                 autoPlay
+                className="h-full w-full object-contain object-right-top"
                 loop
                 muted
                 playsInline
-                preload="none"
                 poster="/images/landing-hero-poster.webp"
-                className="w-full h-full object-contain object-right-top"
+                preload="none"
               >
                 {/* media query prevents the browser loading the video source on
                     mobile — autoPlay overrides preload="none" for display:none
                     elements, causing the full webm to download on mobile. */}
-                <source src="/images/landing-hero.webm" type="video/webm" media="(min-width: 768px)" />
+                <source
+                  media="(min-width: 768px)"
+                  src="/images/landing-hero.webm"
+                  type="video/webm"
+                />
               </video>
             </div>
           </div>
 
           {/* Hero text - positioned on the left */}
-          <div className="relative z-20 mx-auto flex w-full max-w-[1400px] items-start pt-[18vh] md:pt-[15vh] lg:items-center lg:pt-0 min-h-screen px-8 pb-24 md:px-16 md:pb-32 lg:px-24 lg:pb-40">
-            <div className="flex max-w-sm md:max-w-lg lg:max-w-sm flex-col justify-center w-full">
-              <Icons.logoShort className="hidden md:block w-5 h-5 mb-4 text-muted-foreground" />
-              <h1 className="text-4xl md:text-3xl lg:text-3xl font-pp font-medium mb-4">
+          <div className="relative z-20 mx-auto flex min-h-screen w-full max-w-[1400px] items-start px-8 pt-[18vh] pb-24 md:px-16 md:pt-[15vh] md:pb-32 lg:items-center lg:px-24 lg:pt-0 lg:pb-40">
+            <div className="flex w-full max-w-sm flex-col justify-center md:max-w-lg lg:max-w-sm">
+              <Icons.logoShort className="mb-4 hidden h-5 w-5 text-muted-foreground md:block" />
+              <h1 className="mb-4 font-medium font-pp text-4xl md:text-3xl lg:text-3xl">
                 <span className="text-muted-foreground">The</span>{" "}
                 <span className="text-primary">operating layer</span>{" "}
                 <span className="text-muted-foreground">
@@ -277,7 +285,7 @@ export default function HomePage() {
           </div>
 
           {/* Changelog badge - pinned to bottom of initial viewport */}
-          <div className="absolute inset-x-0 top-0 z-30 h-screen pointer-events-none flex items-end pb-8">
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex h-screen items-end pb-8">
             <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
               <div className="pointer-events-auto">
                 <HeroChangelogBadge />
@@ -296,38 +304,38 @@ export default function HomePage() {
         {/* Connect Your Tools Section */}
         <section className="w-full bg-background py-24 md:py-32">
           <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-16">
               {/* Left: Badge */}
               <div>
-                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                <span className="inline-flex h-7 items-center rounded-md border border-border px-3 text-muted-foreground text-xs">
                   Connect Your Tools
                 </span>
               </div>
 
               {/* Right: Content + Cards - spans 2 columns */}
               <div className="lg:col-span-2">
-                <p className="text-base md:text-md leading-relaxed text-foreground/80 max-w-xl mb-12">
-                  Observe events from where your team already works.
-                  GitHub, Vercel, Sentry, Linear, and more — all flowing
-                  through one system.
+                <p className="mb-12 max-w-xl text-base text-foreground/80 leading-relaxed md:text-md">
+                  Observe events from where your team already works. GitHub,
+                  Vercel, Sentry, Linear, and more — all flowing through one
+                  system.
                 </p>
 
                 {/* Benefits Grid - negative margin to align icon/title with text above */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   {benefits.map((benefit) => {
                     const Icon = benefit.icon;
                     return (
                       <div
+                        className="rounded-md border border-border p-8"
                         key={benefit.title}
-                        className="border border-border rounded-md p-8"
                       >
                         <div className="mb-12">
-                          <Icon className="w-5 h-5 text-muted-foreground" />
+                          <Icon className="h-5 w-5 text-muted-foreground" />
                         </div>
-                        <h3 className="mb-2 text-base font-medium">
+                        <h3 className="mb-2 font-medium text-base">
                           {benefit.title}
                         </h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
+                        <p className="text-muted-foreground text-sm leading-relaxed">
                           {benefit.description}
                         </p>
                       </div>

@@ -14,8 +14,8 @@
 @layer utilities {
   .font-pp {
     font-family: var(--font-pp-neue-montreal);
-    letter-spacing: var(--font-pp-letter-spacing);
     line-height: var(--font-pp-line-height);
+    letter-spacing: var(--font-pp-letter-spacing);
   }
 
   .font-exposure {

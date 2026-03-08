@@ -1,10 +1,13 @@
+// biome-ignore lint/correctness/noUnusedImports: used when backfill is enabled
 import { withRelatedProject } from "@vendor/related-projects";
+// biome-ignore lint/correctness/noUnusedImports: used when backfill is enabled
 import { env } from "../env";
 
 const isDevelopment =
   process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
   process.env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
 
+// biome-ignore lint/correctness/noUnusedVariables: used when backfill is enabled
 const relayUrl = withRelatedProject({
   projectName: "lightfast-relay",
   defaultHost: isDevelopment
@@ -16,6 +19,7 @@ const relayUrl = withRelatedProject({
  * Notify the relay to trigger a historical backfill for a connection.
  * Best-effort — errors are logged but never thrown.
  */
+// biome-ignore lint/correctness/noUnusedFunctionParameters: used when backfill is enabled
 export async function notifyBackfill(params: {
   installationId: string;
   provider: string;
@@ -24,7 +28,7 @@ export async function notifyBackfill(params: {
 }): Promise<void> {
   // TODO: Remove when backfill is ready for production
   return;
-
+  /* TODO: Uncomment when backfill is ready for production
   const correlationId = params.correlationId ?? crypto.randomUUID();
   try {
     const res = await fetch(`${relayUrl}/api/backfill`, {
@@ -52,4 +56,5 @@ export async function notifyBackfill(params: {
       err,
     });
   }
+  */
 }

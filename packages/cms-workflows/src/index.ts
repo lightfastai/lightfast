@@ -1,13 +1,19 @@
 export type {
-  ContentType,
+  AIGeneratedPost,
   BusinessGoal,
+  ContentType,
   CTAType,
-  PostStatus,
   DistributionInput,
   EngagementInput,
-  AIGeneratedPost,
+  PostStatus,
 } from "./mutations/blog";
 export { createBlogPostFromAI, updatePostStatus } from "./mutations/blog";
 
-export type { ChangelogSeoInput, ChangelogEntryInput } from "./mutations/changelog";
-export { createChangelogEntry, updateChangelogEntry } from "./mutations/changelog";
+export type {
+  ChangelogEntryInput,
+  ChangelogSeoInput,
+} from "./mutations/changelog";
+export {
+  createChangelogEntry,
+  updateChangelogEntry,
+} from "./mutations/changelog";

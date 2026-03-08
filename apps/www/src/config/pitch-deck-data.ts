@@ -169,11 +169,7 @@ export const PITCH_SLIDES = [
     columns: [
       {
         header: "FREE",
-        items: [
-          "Up to 3 users",
-          "2 integrations",
-          "Core search",
-        ],
+        items: ["Up to 3 users", "2 integrations", "Core search"],
       },
       {
         header: "TEAM — $20/USER/MONTH",
@@ -185,11 +181,7 @@ export const PITCH_SLIDES = [
       },
       {
         header: "ENTERPRISE",
-        items: [
-          "Custom deployment",
-          "SSO/SAML + SLA",
-          "Dedicated support",
-        ],
+        items: ["Custom deployment", "SSO/SAML + SLA", "Dedicated support"],
       },
     ],
     bgColor: "bg-[#F5F5F0]",
@@ -248,7 +240,7 @@ export const PITCH_SLIDES = [
         label: "RUNWAY",
         value: "12-18 Months (equity + R&D Tax Incentive)",
       },
-{
+      {
         label: "MILESTONE",
         value:
           "Alpha now. Public beta by Month 3. 5,000 teams on waitlist by Month 6.",

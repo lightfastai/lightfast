@@ -53,12 +53,14 @@ export function ColumnsSlideContent({
         )}
       >
         {slide.columns.map((column, colIdx) => (
-          <div key={`col-${colIdx}`} className="flex flex-col">
+          <div className="flex flex-col" key={`col-${colIdx}`}>
             {/* Column header with underline */}
             <h3
               className={cn(
-                "border-b border-neutral-300 font-medium uppercase tracking-wider text-neutral-500",
-                isFixed ? "mb-4 pb-2 text-sm" : "mb-2 pb-1.5 text-[9px] sm:mb-3 sm:pb-2 sm:text-[10px] md:text-xs"
+                "border-neutral-300 border-b font-medium text-neutral-500 uppercase tracking-wider",
+                isFixed
+                  ? "mb-4 pb-2 text-sm"
+                  : "mb-2 pb-1.5 text-[9px] sm:mb-3 sm:pb-2 sm:text-[10px] md:text-xs"
               )}
             >
               {column.header}
@@ -68,7 +70,9 @@ export function ColumnsSlideContent({
             <ul
               className={cn(
                 "flex flex-col text-neutral-700",
-                isFixed ? "gap-2 text-lg" : "gap-1 text-[10px] sm:gap-1.5 sm:text-xs md:gap-2 md:text-sm"
+                isFixed
+                  ? "gap-2 text-lg"
+                  : "gap-1 text-[10px] sm:gap-1.5 sm:text-xs md:gap-2 md:text-sm"
               )}
             >
               {column.items.map((item, itemIdx) => (

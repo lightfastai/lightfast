@@ -1,22 +1,22 @@
 {
-	"extends": "@repo/typescript-config/nextjs",
-	"compilerOptions": {
-		"baseUrl": ".",
-		"paths": {
-			"~/*": ["./src/*"],
-			"@/*": ["./*"],
-			"fumadocs-mdx:collections/*": [".source/*"]
-		},
-		"noUncheckedIndexedAccess": false,
-		"skipLibCheck": true,
-		"types": ["node", "react", "react-dom"]
-	},
-	"include": [
-		"next-env.d.ts",
-		"**/*.ts",
-		"**/*.tsx",
-		".next/types/**/*.ts",
-		".source/**/*"
-	],
-	"exclude": ["node_modules", "tmp_repo"]
+  "extends": "@repo/typescript-config/nextjs",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./src/*"],
+      "@/*": ["./*"],
+      "fumadocs-mdx:collections/*": [".source/*"]
+    },
+    "noUncheckedIndexedAccess": false,
+    "skipLibCheck": true,
+    "types": ["node", "react", "react-dom"]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".source/**/*"
+  ],
+  "exclude": ["node_modules", "tmp_repo"]
 }

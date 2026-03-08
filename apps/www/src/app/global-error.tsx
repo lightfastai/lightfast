@@ -1,15 +1,17 @@
 "use client";
 
-import type NextError from "next/error";
-import { useEffect } from "react";
+import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
+import {
+  ErrorCode,
+  LightfastErrorPage,
+} from "@repo/ui/components/lightfast-error-page";
+import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
 import { captureException } from "@sentry/nextjs";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
-
-import { Button } from "@repo/ui/components/ui/button";
-import { cn } from "@repo/ui/lib/utils";
-import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
-import { LightfastErrorPage, ErrorCode } from "@repo/ui/components/lightfast-error-page";
+import type NextError from "next/error";
+import { useEffect } from "react";
 
 interface GlobalErrorProperties {
   readonly error: NextError & { digest?: string };
@@ -28,14 +30,14 @@ const GlobalError = ({ error, reset }: GlobalErrorProperties) => {
         className={cn(
           "dark bg-background font-sans antialiased",
           GeistSans.variable,
-          GeistMono.variable,
+          GeistMono.variable
         )}
       >
         <LightfastCustomGridBackground.Root
-          marginVertical="25vh"
           marginHorizontal="25vw"
-          marginVerticalMobile="25vh"
           marginHorizontalMobile="10vw"
+          marginVertical="25vh"
+          marginVerticalMobile="25vh"
         >
           <LightfastCustomGridBackground.Container>
             <LightfastErrorPage
@@ -44,9 +46,9 @@ const GlobalError = ({ error, reset }: GlobalErrorProperties) => {
               errorId={error.digest}
             >
               <Button onClick={() => reset()}>Try again</Button>
-              <Button 
-                variant="outline" 
-                onClick={() => window.location.href = '/'}
+              <Button
+                onClick={() => (window.location.href = "/")}
+                variant="outline"
               >
                 Return Home
               </Button>

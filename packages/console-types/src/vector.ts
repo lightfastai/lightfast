@@ -16,10 +16,10 @@ export interface EmbeddingProvider {
  * Embedding request
  */
 export interface EmbedRequest {
-  /** Texts to embed */
-  texts: string[];
   /** Model to use (optional, provider-specific) */
   model?: string;
+  /** Texts to embed */
+  texts: string[];
 }
 
 /**

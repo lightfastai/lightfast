@@ -1,7 +1,7 @@
 export {
-  InngestMiddleware,
+  EventSchemas,
   Inngest,
+  InngestMiddleware,
   NonRetriableError,
   RetryAfterError,
-  EventSchemas,
 } from "inngest";

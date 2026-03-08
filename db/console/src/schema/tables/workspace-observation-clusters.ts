@@ -1,3 +1,4 @@
+import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -10,7 +11,6 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
@@ -138,17 +138,19 @@ export const workspaceObservationClusters = pgTable(
     // Index for finding open clusters in workspace
     workspaceStatusIdx: index("cluster_workspace_status_idx").on(
       table.workspaceId,
-      table.status,
+      table.status
     ),
 
     // Index for finding recently active clusters
     lastObservationIdx: index("cluster_last_observation_idx").on(
       table.workspaceId,
-      table.lastObservationAt,
+      table.lastObservationAt
     ),
-  }),
+  })
 );
 
 // Type exports
-export type WorkspaceObservationCluster = typeof workspaceObservationClusters.$inferSelect;
-export type InsertWorkspaceObservationCluster = typeof workspaceObservationClusters.$inferInsert;
+export type WorkspaceObservationCluster =
+  typeof workspaceObservationClusters.$inferSelect;
+export type InsertWorkspaceObservationCluster =
+  typeof workspaceObservationClusters.$inferInsert;

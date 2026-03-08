@@ -1,59 +1,52 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-	entry: {
-		// Main entry point
-		index: "./src/core/index.ts",
-		
-		// Client API
-		"client/index": "./src/core/client/index.ts",
-		
-		// Core primitives
-		agent: "./src/core/primitives/agent.ts",
-		tool: "./src/core/primitives/tool.ts",
+  entry: {
+    // Main entry point
+    index: "./src/core/index.ts",
 
-		// Server adapters
-		"server/adapters/fetch": "./src/core/server/adapters/fetch.ts",
-		"server/adapters/types": "./src/core/server/adapters/types.ts",
+    // Client API
+    "client/index": "./src/core/client/index.ts",
 
-		// Memory (single export per unique file)
-		memory: "./src/core/memory/index.ts",
-		"memory/adapters/in-memory": "./src/core/memory/adapters/in-memory.ts",
-		"memory/adapters/redis": "./src/core/memory/adapters/redis.ts",
+    // Core primitives
+    agent: "./src/core/primitives/agent.ts",
+    tool: "./src/core/primitives/tool.ts",
 
-		// Cache
-		cache: "./src/core/primitives/cache/index.ts",
+    // Server adapters
+    "server/adapters/fetch": "./src/core/server/adapters/fetch.ts",
+    "server/adapters/types": "./src/core/server/adapters/types.ts",
 
-	},
+    // Memory (single export per unique file)
+    memory: "./src/core/memory/index.ts",
+    "memory/adapters/in-memory": "./src/core/memory/adapters/in-memory.ts",
+    "memory/adapters/redis": "./src/core/memory/adapters/redis.ts",
 
-	format: ["esm"],
-	dts: true,
-	splitting: false,
-	sourcemap: true,
-	clean: true,
+    // Cache
+    cache: "./src/core/primitives/cache/index.ts",
+  },
 
-	// External dependencies - don't bundle
-	external: [
-		"@upstash/redis",
-		"ai",
-		"resumable-stream",
-		"uuid",
-		"zod",
-	],
+  format: ["esm"],
+  dts: true,
+  splitting: false,
+  sourcemap: true,
+  clean: true,
 
-	// Target Node.js 18+
-	target: "node18",
+  // External dependencies - don't bundle
+  external: ["@upstash/redis", "ai", "resumable-stream", "uuid", "zod"],
 
-	// Bundle for npm publishing
-	bundle: true,
+  // Target Node.js 18+
+  target: "node18",
 
-	// Keep tsup quiet during build
-	silent: false,
+  // Bundle for npm publishing
+  bundle: true,
 
-	// Output file naming
-	outExtension() {
-		return {
-			js: ".mjs",
-		};
-	},
+  // Keep tsup quiet during build
+  silent: false,
+
+  // Output file naming
+  outExtension() {
+    return {
+      js: ".mjs",
+    };
+  },
 });

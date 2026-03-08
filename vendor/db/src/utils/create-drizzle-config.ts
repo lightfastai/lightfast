@@ -9,15 +9,16 @@ export const createDrizzleConfig = (opts: {
   out: string;
 }): Config => {
   // Construct DATABASE_URL for PlanetScale
-  const database = (opts.database?.trim() !== "" ? opts.database : undefined) ?? "lightfast";
+  const database =
+    (opts.database?.trim() !== "" ? opts.database : undefined) ?? "lightfast";
   // Remove any quotes from all values if they exist
-  const cleanHost = opts.host.replace(/^["']|["']$/g, '');
-  const cleanUsername = opts.username.replace(/^["']|["']$/g, '');
-  const cleanPassword = opts.password.replace(/^["']|["']$/g, '');
-  
+  const cleanHost = opts.host.replace(/^["']|["']$/g, "");
+  const cleanUsername = opts.username.replace(/^["']|["']$/g, "");
+  const cleanPassword = opts.password.replace(/^["']|["']$/g, "");
+
   // Use URL format for PlanetScale compatibility
   const url = `mysql://${cleanUsername}:${cleanPassword}@${cleanHost}/${database}?sslaccept=strict`;
-  
+
   return {
     schema: opts.schema,
     out: opts.out,

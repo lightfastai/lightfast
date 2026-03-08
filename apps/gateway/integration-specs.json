@@ -112,21 +112,13 @@
     "developer_name": "Lightfast AI",
     "developer_url": "https://lightfast.ai",
     "description": "Lightfast connects your Linear workspace for AI-powered project intelligence.",
-    "callback_urls": [
-      "http://localhost:3024/services/gateway/linear/callback"
-    ],
+    "callback_urls": ["http://localhost:3024/services/gateway/linear/callback"],
     "public": true,
     "client_credentials": "$comment: Copy CLIENT_ID and CLIENT_SECRET after creation (secret shown only once)",
     "webhooks": {
       "enabled": true,
       "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/relay/webhooks/linear",
-      "resource_types": [
-        "Issue",
-        "Comment",
-        "IssueLabel",
-        "Project",
-        "Cycle"
-      ]
+      "resource_types": ["Issue", "Comment", "IssueLabel", "Project", "Cycle"]
     },
     "env_keys": [
       "LINEAR_CLIENT_ID",
@@ -151,12 +143,7 @@
     },
     "webhooks": {
       "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/relay/webhooks/sentry",
-      "resources": [
-        "issue",
-        "event_alert",
-        "seer",
-        "comment"
-      ]
+      "resources": ["issue", "event_alert", "seer", "comment"]
     },
     "permissions": {
       "project": "read",
@@ -168,10 +155,6 @@
       "member": "no-access",
       "alerts": "read"
     },
-    "env_keys": [
-      "SENTRY_APP_SLUG",
-      "SENTRY_CLIENT_ID",
-      "SENTRY_CLIENT_SECRET"
-    ]
+    "env_keys": ["SENTRY_APP_SLUG", "SENTRY_CLIENT_ID", "SENTRY_CLIENT_SECRET"]
   }
 }

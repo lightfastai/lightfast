@@ -15,9 +15,9 @@ export function GET(_request: NextRequest) {
     service: "docs",
     environment: env.NODE_ENV,
   });
-  
+
   response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
-  
+
   return response;
 }
 
@@ -28,7 +28,7 @@ export function OPTIONS() {
   return new Response(null, {
     status: 204,
     headers: {
-      "Allow": "GET, OPTIONS",
+      Allow: "GET, OPTIONS",
       "Cache-Control": "no-store",
     },
   });

@@ -7,7 +7,9 @@ export function registerConnector(connector: BackfillConnector): void {
   connectors.set(connector.provider, connector);
 }
 
-export function getConnector(provider: SourceType): BackfillConnector | undefined {
+export function getConnector(
+  provider: SourceType
+): BackfillConnector | undefined {
   return connectors.get(provider);
 }
 

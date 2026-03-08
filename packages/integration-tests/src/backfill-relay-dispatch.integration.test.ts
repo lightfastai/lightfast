@@ -7,33 +7,31 @@
  * Infrastructure: in-memory Redis (dedup), QStash capture mock, DB mock (persistence).
  * No PGlite needed — DB operations are mocked in-memory.
  */
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-} from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Create all mock state in vi.hoisted ──
-const {
-  redisMock,
-  redisStore,
-  qstashMessages,
-  qstashMock,
-  dbOps,
-} = await vi.hoisted(async () => {
-  const { makeRedisMock, makeQStashMock } = await import("./harness.js");
-  const redisStore = new Map<string, unknown>();
-  const messages: { url: string; body: unknown; headers?: Record<string, string> }[] = [];
-  return {
-    redisMock: makeRedisMock(redisStore),
-    redisStore,
-    qstashMessages: messages,
-    qstashMock: makeQStashMock(messages),
-    dbOps: [] as { op: "insert" | "update"; table?: unknown; values?: unknown; set?: unknown }[],
-  };
-});
+const { redisMock, redisStore, qstashMessages, qstashMock, dbOps } =
+  await vi.hoisted(async () => {
+    const { makeRedisMock, makeQStashMock } = await import("./harness.js");
+    const redisStore = new Map<string, unknown>();
+    const messages: {
+      url: string;
+      body: unknown;
+      headers?: Record<string, string>;
+    }[] = [];
+    return {
+      redisMock: makeRedisMock(redisStore),
+      redisStore,
+      qstashMessages: messages,
+      qstashMock: makeQStashMock(messages),
+      dbOps: [] as {
+        op: "insert" | "update";
+        table?: unknown;
+        values?: unknown;
+        set?: unknown;
+      }[],
+    };
+  });
 
 // ── vi.mock declarations ──
 
@@ -43,17 +41,29 @@ vi.mock("@vendor/upstash", () => ({
 
 vi.mock("@vendor/qstash", () => ({
   getQStashClient: () => qstashMock,
-  Receiver: class { verify() { return Promise.resolve(true); } },
+  Receiver: class {
+    verify() {
+      return Promise.resolve(true);
+    }
+  },
 }));
 
 vi.mock("@vendor/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vercel/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
@@ -106,7 +116,7 @@ const API_KEY = "0".repeat(64);
 function webhookReq(
   provider: string,
   body: Record<string, unknown>,
-  headers: Record<string, string> = {},
+  headers: Record<string, string> = {}
 ) {
   return relayApp.request(`/api/webhooks/${provider}`, {
     method: "POST",
@@ -124,7 +134,7 @@ const VALID_GITHUB_BODY = {
   orgId: "org-dispatch-1",
   deliveryId: "del-dispatch-1",
   eventType: "push",
-  payload: { repository: { id: 12345 }, ref: "refs/heads/main" },
+  payload: { repository: { id: 12_345 }, ref: "refs/heads/main" },
   receivedAt: Date.now(),
 };
 
@@ -136,27 +146,39 @@ beforeEach(() => {
   redisStore.clear();
   dbOps.length = 0;
 
-  redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
-    redisStore.set(key, { ...existing, ...fields });
-    return Promise.resolve(1);
-  });
-  redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
+  redisMock.hset.mockImplementation(
+    (key: string, fields: Record<string, unknown>) => {
+      const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+      redisStore.set(key, { ...existing, ...fields });
+      return Promise.resolve(1);
+    }
   );
-  redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean; ex?: number }) => {
-    if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
-    redisStore.set(key, value);
-    return Promise.resolve("OK");
-  });
+  redisMock.hgetall.mockImplementation((key: string) =>
+    Promise.resolve(
+      (redisStore.get(key) ?? null) as Record<string, string> | null
+    )
+  );
+  redisMock.set.mockImplementation(
+    (key: string, value: unknown, opts?: { nx?: boolean; ex?: number }) => {
+      if (opts?.nx && redisStore.has(key)) {
+        return Promise.resolve(null);
+      }
+      redisStore.set(key, value);
+      return Promise.resolve("OK");
+    }
+  );
   redisMock.del.mockImplementation((...keys: string[]) => {
     const allKeys = keys.flat();
     let count = 0;
-    for (const k of allKeys) { if (redisStore.delete(k)) count++; }
+    for (const k of allKeys) {
+      if (redisStore.delete(k)) {
+        count++;
+      }
+    }
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation((key: string) =>
-    Promise.resolve(redisStore.get(key) ?? null),
+    Promise.resolve(redisStore.get(key) ?? null)
   );
 });
 
@@ -170,7 +192,7 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
 
     expect(res.status).toBe(200);
 
-    const json = await res.json() as { status: string; deliveryId: string };
+    const json = (await res.json()) as { status: string; deliveryId: string };
     expect(json.status).toBe("accepted");
     expect(json.deliveryId).toBe("del-dispatch-1");
   });
@@ -180,10 +202,13 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
 
     expect(qstashMock.publishJSON).toHaveBeenCalledOnce();
 
-    const calls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
+    const calls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock
+      .calls;
     const firstCall = calls[0] as unknown[] | undefined;
     expect(firstCall).toBeDefined();
-    if (!firstCall) return;
+    if (!firstCall) {
+      return;
+    }
     const call = firstCall[0] as {
       url: string;
       body: {
@@ -213,15 +238,26 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
     // Verify each required field is present in the QStash envelope
     await webhookReq("github", VALID_GITHUB_BODY, { "X-API-Key": API_KEY });
 
-    const envelopeCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
+    const envelopeCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>)
+      .mock.calls;
     const envelopeFirstCall = envelopeCalls[0] as unknown[] | undefined;
     expect(envelopeFirstCall).toBeDefined();
-    if (!envelopeFirstCall) return;
+    if (!envelopeFirstCall) {
+      return;
+    }
     const envelope = envelopeFirstCall[0] as {
       body: Record<string, unknown>;
     };
 
-    const requiredFields = ["deliveryId", "connectionId", "orgId", "provider", "eventType", "payload", "receivedAt"];
+    const requiredFields = [
+      "deliveryId",
+      "connectionId",
+      "orgId",
+      "provider",
+      "eventType",
+      "payload",
+      "receivedAt",
+    ];
     for (const field of requiredFields) {
       expect(envelope.body).toHaveProperty(field);
     }
@@ -230,9 +266,11 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
 
 describe("Suite 4.2 — Deduplication via webhookSeenKey", () => {
   it("first delivery with same deliveryId returns accepted", async () => {
-    const res = await webhookReq("github", VALID_GITHUB_BODY, { "X-API-Key": API_KEY });
+    const res = await webhookReq("github", VALID_GITHUB_BODY, {
+      "X-API-Key": API_KEY,
+    });
     expect(res.status).toBe(200);
-    const json = await res.json() as { status: string };
+    const json = (await res.json()) as { status: string };
     expect(json.status).toBe("accepted");
     expect(qstashMock.publishJSON).toHaveBeenCalledOnce();
   });
@@ -245,11 +283,11 @@ describe("Suite 4.2 — Deduplication via webhookSeenKey", () => {
     const res = await webhookReq(
       "github",
       { ...VALID_GITHUB_BODY, receivedAt: Date.now() },
-      { "X-API-Key": API_KEY },
+      { "X-API-Key": API_KEY }
     );
 
     expect(res.status).toBe(200);
-    const json = await res.json() as { status: string; deliveryId: string };
+    const json = (await res.json()) as { status: string; deliveryId: string };
     expect(json.status).toBe("duplicate");
     expect(json.deliveryId).toBe("del-dispatch-1");
 
@@ -261,16 +299,20 @@ describe("Suite 4.2 — Deduplication via webhookSeenKey", () => {
     const first = await webhookReq(
       "github",
       { ...VALID_GITHUB_BODY, deliveryId: "del-unique-1" },
-      { "X-API-Key": API_KEY },
+      { "X-API-Key": API_KEY }
     );
     const second = await webhookReq(
       "github",
       { ...VALID_GITHUB_BODY, deliveryId: "del-unique-2" },
-      { "X-API-Key": API_KEY },
+      { "X-API-Key": API_KEY }
     );
 
-    expect((await first.json() as { status: string }).status).toBe("accepted");
-    expect((await second.json() as { status: string }).status).toBe("accepted");
+    expect(((await first.json()) as { status: string }).status).toBe(
+      "accepted"
+    );
+    expect(((await second.json()) as { status: string }).status).toBe(
+      "accepted"
+    );
     expect(qstashMock.publishJSON).toHaveBeenCalledTimes(2);
   });
 });
@@ -284,10 +326,13 @@ describe("Suite 4.3 — Missing or invalid fields", () => {
   });
 
   it("returns 400 when required fields are missing (connectionId)", async () => {
-    const { connectionId: _removed, ...bodyWithoutConnectionId } = VALID_GITHUB_BODY;
-    const res = await webhookReq("github", bodyWithoutConnectionId, { "X-API-Key": API_KEY });
+    const { connectionId: _removed, ...bodyWithoutConnectionId } =
+      VALID_GITHUB_BODY;
+    const res = await webhookReq("github", bodyWithoutConnectionId, {
+      "X-API-Key": API_KEY,
+    });
     expect(res.status).toBe(400);
-    const json = await res.json() as { error: string };
+    const json = (await res.json()) as { error: string };
     expect(json.error).toBe("missing_required_fields");
   });
 
@@ -295,7 +340,7 @@ describe("Suite 4.3 — Missing or invalid fields", () => {
     const res = await webhookReq(
       "github",
       { ...VALID_GITHUB_BODY, receivedAt: "not-a-number" },
-      { "X-API-Key": API_KEY },
+      { "X-API-Key": API_KEY }
     );
     expect(res.status).toBe(400);
   });
@@ -304,15 +349,17 @@ describe("Suite 4.3 — Missing or invalid fields", () => {
     const res = await webhookReq(
       "github",
       { ...VALID_GITHUB_BODY, payload: "not-an-object" },
-      { "X-API-Key": API_KEY },
+      { "X-API-Key": API_KEY }
     );
     expect(res.status).toBe(400);
-    const json = await res.json() as { error: string };
+    const json = (await res.json()) as { error: string };
     expect(json.error).toBe("invalid_payload");
   });
 
   it("returns 400 for unknown provider", async () => {
-    const res = await webhookReq("unknownprovider", VALID_GITHUB_BODY, { "X-API-Key": API_KEY });
+    const res = await webhookReq("unknownprovider", VALID_GITHUB_BODY, {
+      "X-API-Key": API_KEY,
+    });
     expect(res.status).toBe(400);
   });
 });

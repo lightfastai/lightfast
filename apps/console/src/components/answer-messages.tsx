@@ -1,13 +1,6 @@
 "use client";
 
-import React, { Fragment, useState } from "react";
-import type {
-  ChatStatus,
-  UIMessage,
-  TextUIPart,
-  ReasoningUIPart,
-  ToolUIPart,
-} from "ai";
+import { Action, Actions } from "@repo/ui/components/ai-elements/actions";
 import {
   Conversation,
   ConversationContent,
@@ -17,15 +10,22 @@ import {
   Message,
   MessageContent,
 } from "@repo/ui/components/ai-elements/message";
-import { Response } from "@repo/ui/components/ai-elements/response";
 import {
   Reasoning,
   ReasoningContent,
   ReasoningTrigger,
 } from "@repo/ui/components/ai-elements/reasoning";
-import { Actions, Action } from "@repo/ui/components/ai-elements/actions";
-import { Copy, Check } from "lucide-react";
+import { Response } from "@repo/ui/components/ai-elements/response";
 import { cn } from "@repo/ui/lib/utils";
+import type {
+  ChatStatus,
+  ReasoningUIPart,
+  TextUIPart,
+  ToolUIPart,
+  UIMessage,
+} from "ai";
+import { Check, Copy } from "lucide-react";
+import { Fragment, useState } from "react";
 import { ToolCallRenderer } from "./answer-tool-call-renderer";
 
 function isTextPart(part: UIMessage["parts"][number]): part is TextUIPart {
@@ -33,7 +33,7 @@ function isTextPart(part: UIMessage["parts"][number]): part is TextUIPart {
 }
 
 function isReasoningPart(
-  part: UIMessage["parts"][number],
+  part: UIMessage["parts"][number]
 ): part is ReasoningUIPart {
   return part.type === "reasoning";
 }
@@ -68,17 +68,13 @@ function getTextContent(message: UIMessage): string {
 }
 
 // User message - display text content
-function UserMessage({
-  message,
-}: {
-  message: UIMessage;
-}) {
+function UserMessage({ message }: { message: UIMessage }) {
   const textContent = getTextContent(message);
 
   return (
     <div className="py-1">
       <div className="mx-auto max-w-3xl px-4 lg:px-14 xl:px-20">
-        <Message from="user" className="justify-end">
+        <Message className="justify-end" from="user">
           <MessageContent variant="chat">
             {textContent.trim().length > 0 && (
               <p className="whitespace-pre-wrap text-sm">{textContent}</p>
@@ -105,9 +101,15 @@ function AssistantMessage({
   };
 
   const hasMeaningful = message.parts.some((part) => {
-    if (isTextPart(part) && part.text.trim().length > 1) return true;
-    if (isToolPart(part)) return true;
-    if (isReasoningPart(part) && part.text.trim().length > 1) return true;
+    if (isTextPart(part) && part.text.trim().length > 1) {
+      return true;
+    }
+    if (isToolPart(part)) {
+      return true;
+    }
+    if (isReasoningPart(part) && part.text.trim().length > 1) {
+      return true;
+    }
     return false;
   });
 
@@ -117,33 +119,33 @@ function AssistantMessage({
     <div className="py-1">
       <div className="mx-auto max-w-3xl px-4 lg:px-14 xl:px-20">
         <Message
-          from="assistant"
           className="flex-col items-start [&>div]:max-w-full"
+          from="assistant"
         >
           <div className="relative w-full">
             {/* Loading indicator */}
             {showLoading && (
               <div className="flex items-center gap-1 py-2">
-                <div className="h-2 w-2 rounded-full bg-foreground/50 animate-bounce" />
-                <div className="h-2 w-2 rounded-full bg-foreground/50 animate-bounce [animation-delay:100ms]" />
-                <div className="h-2 w-2 rounded-full bg-foreground/50 animate-bounce [animation-delay:200ms]" />
+                <div className="h-2 w-2 animate-bounce rounded-full bg-foreground/50" />
+                <div className="h-2 w-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:100ms]" />
+                <div className="h-2 w-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:200ms]" />
               </div>
             )}
 
             {/* Parts rendering */}
             <div
               className={cn(
-                "space-y-1 w-full",
-                showLoading && "opacity-0 pointer-events-none",
+                "w-full space-y-1",
+                showLoading && "pointer-events-none opacity-0"
               )}
             >
               {message.parts.map((part, index) => {
                 if (isTextPart(part)) {
                   return (
                     <MessageContent
+                      className="w-full py-0"
                       key={`${message.id}-text-${index}`}
                       variant="chat"
-                      className="w-full py-0"
                     >
                       <Response>{part.text}</Response>
                     </MessageContent>
@@ -156,8 +158,8 @@ function AssistantMessage({
                     isCurrentlyStreaming && index === message.parts.length - 1;
                   return (
                     <div
-                      key={`${message.id}-reasoning-${index}`}
                       className="w-full"
+                      key={`${message.id}-reasoning-${index}`}
                     >
                       <Reasoning
                         className="w-full"
@@ -174,12 +176,12 @@ function AssistantMessage({
                   const toolName = part.type.replace("tool-", "");
                   return (
                     <div
-                      key={`${message.id}-tool-${index}`}
                       className="w-full py-2"
+                      key={`${message.id}-tool-${index}`}
                     >
                       <ToolCallRenderer
-                        toolPart={part as ToolUIPart}
                         toolName={toolName}
+                        toolPart={part as ToolUIPart}
                       />
                     </div>
                   );
@@ -192,14 +194,14 @@ function AssistantMessage({
 
           {/* Actions */}
           {hasMeaningful && !isCurrentlyStreaming && (
-            <div className="w-full mt-2">
-              <div className="flex items-center justify-end min-h-[2rem]">
+            <div className="mt-2 w-full">
+              <div className="flex min-h-[2rem] items-center justify-end">
                 <Actions>
-                  <Action tooltip="Copy message" onClick={handleCopy}>
+                  <Action onClick={handleCopy} tooltip="Copy message">
                     {isCopied ? (
-                      <Check className="w-4 h-4" />
+                      <Check className="h-4 w-4" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className="h-4 w-4" />
                     )}
                   </Action>
                 </Actions>
@@ -214,10 +216,10 @@ function AssistantMessage({
 
 // Build turns from messages: pair user messages with assistant responses
 interface Turn {
-  kind: "answer" | "pending";
-  user: UIMessage;
   assistant?: UIMessage;
   isStreaming: boolean;
+  kind: "answer" | "pending";
+  user: UIMessage;
 }
 
 function buildTurns(messages: UIMessage[], status: ChatStatus): Turn[] {
@@ -239,18 +241,14 @@ function buildTurns(messages: UIMessage[], status: ChatStatus): Turn[] {
       continue;
     }
 
-    if (message.role === "assistant") {
-      if (pendingUser) {
-        turns.push({
-          kind: "answer",
-          user: pendingUser,
-          assistant: message,
-          isStreaming:
-            isStreamingStatus && message === messages[messages.length - 1],
-        });
-        pendingUser = null;
-      }
-      continue;
+    if (message.role === "assistant" && pendingUser) {
+      turns.push({
+        kind: "answer",
+        user: pendingUser,
+        assistant: message,
+        isStreaming: isStreamingStatus && message === messages.at(-1),
+      });
+      pendingUser = null;
     }
   }
 
@@ -270,8 +268,8 @@ export function AnswerMessages({ messages, status }: AnswerMessagesProps) {
   const turns = buildTurns(messages, status);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
-      <Conversation className="flex-1 scrollbar-thin" resize="smooth">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <Conversation className="scrollbar-thin flex-1" resize="smooth">
         <ConversationContent className="flex flex-col p-0 last:pb-12">
           {messages.length === 0 && status === "ready" && (
             <div className="py-8">
@@ -289,8 +287,8 @@ export function AnswerMessages({ messages, status }: AnswerMessagesProps) {
                 <Fragment key={turn.user.id}>
                   <UserMessage message={turn.user} />
                   <AssistantMessage
-                    message={turn.assistant}
                     isCurrentlyStreaming={turn.isStreaming}
+                    message={turn.assistant}
                   />
                 </Fragment>
               );
@@ -304,13 +302,13 @@ export function AnswerMessages({ messages, status }: AnswerMessagesProps) {
                   <div className="py-1">
                     <div className="mx-auto max-w-3xl px-4 lg:px-14 xl:px-20">
                       <Message
-                        from="assistant"
                         className="flex-col items-start"
+                        from="assistant"
                       >
                         <div className="flex items-center gap-1 py-2">
-                          <div className="h-2 w-2 rounded-full bg-foreground/50 animate-bounce" />
-                          <div className="h-2 w-2 rounded-full bg-foreground/50 animate-bounce [animation-delay:100ms]" />
-                          <div className="h-2 w-2 rounded-full bg-foreground/50 animate-bounce [animation-delay:200ms]" />
+                          <div className="h-2 w-2 animate-bounce rounded-full bg-foreground/50" />
+                          <div className="h-2 w-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:100ms]" />
+                          <div className="h-2 w-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:200ms]" />
                         </div>
                       </Message>
                     </div>
@@ -322,9 +320,9 @@ export function AnswerMessages({ messages, status }: AnswerMessagesProps) {
         </ConversationContent>
         {messages.length > 0 && (
           <ConversationScrollButton
-            className="absolute bottom-4 z-20 right-4 rounded-full shadow-lg"
-            variant="secondary"
+            className="absolute right-4 bottom-4 z-20 rounded-full shadow-lg"
             size="icon"
+            variant="secondary"
           />
         )}
       </Conversation>

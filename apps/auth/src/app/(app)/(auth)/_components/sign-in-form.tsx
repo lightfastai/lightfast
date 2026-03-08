@@ -1,19 +1,19 @@
 "use client";
-import * as React from "react";
-import { useSignIn } from "@vendor/clerk/client";
-import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
-import { SignInEmailInput } from "./sign-in-email-input";
-import { SignInCodeVerification } from "./sign-in-code-verification";
-import { SignInPassword } from "./sign-in-password";
-import { OAuthSignIn } from "./oauth-sign-in";
-import { consoleUrl } from "~/lib/related-projects";
+import { useSignIn } from "@vendor/clerk/client";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
+import * as React from "react";
 import { env } from "~/env";
+import { consoleUrl } from "~/lib/related-projects";
+import { OAuthSignIn } from "./oauth-sign-in";
+import { SignInCodeVerification } from "./sign-in-code-verification";
+import { SignInEmailInput } from "./sign-in-email-input";
+import { SignInPassword } from "./sign-in-password";
 
 interface SignInFormProps {
-  verificationStep?: "email" | "code" | "password";
   onVerificationStepChange?: (step: "email" | "code" | "password") => void;
+  verificationStep?: "email" | "code" | "password";
 }
 
 export function SignInForm({
@@ -40,7 +40,7 @@ export function SignInForm({
     if (verificationError?.code === "sign_up_restricted_waitlist") {
       setError(
         verificationError.longMessage ??
-          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.",
+          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available."
       );
       setIsWaitlistRestricted(true);
     }
@@ -75,7 +75,7 @@ export function SignInForm({
       {/* Header - only show on email and password steps */}
       {(verificationStep === "email" || verificationStep === "password") && (
         <div className="text-center">
-          <h1 className="text-3xl font-pp font-medium text-foreground">
+          <h1 className="font-medium font-pp text-3xl text-foreground">
             Log in to Lightfast
           </h1>
         </div>
@@ -84,14 +84,14 @@ export function SignInForm({
       <div className="space-y-4">
         {error && !isWaitlistRestricted && (
           <>
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+              <p className="text-red-800 text-sm">{error}</p>
             </div>
             <Button
+              className="w-full"
               onClick={handleReset}
               size="lg"
               variant="outline"
-              className="w-full"
             >
               Try again
             </Button>
@@ -100,19 +100,19 @@ export function SignInForm({
 
         {error && isWaitlistRestricted && (
           <>
-            <div className="rounded-lg bg-destructive/30 border border-border p-3">
-              <p className="text-sm text-foreground">{error}</p>
+            <div className="rounded-lg border border-border bg-destructive/30 p-3">
+              <p className="text-foreground text-sm">{error}</p>
             </div>
-            <Button asChild size="lg" className="w-full">
+            <Button asChild className="w-full" size="lg">
               <MicrofrontendLink href="/early-access">
                 Join the Waitlist
               </MicrofrontendLink>
             </Button>
             <Button
+              className="w-full"
               onClick={handleReset}
               size="lg"
               variant="outline"
-              className="w-full"
             >
               Back to Sign In
             </Button>
@@ -123,8 +123,8 @@ export function SignInForm({
           <>
             {/* Email Sign In */}
             <SignInEmailInput
-              onSuccess={handleEmailSuccess}
               onError={handleError}
+              onSuccess={handleEmailSuccess}
             />
 
             {showPasswordSignIn && (
@@ -143,10 +143,10 @@ export function SignInForm({
 
                 {/* Password Sign In Option */}
                 <Button
-                  variant="outline"
-                  onClick={() => setVerificationStep("password")}
                   className="w-full"
+                  onClick={() => setVerificationStep("password")}
                   size="lg"
+                  variant="outline"
                 >
                   Sign in with Password
                 </Button>
@@ -173,15 +173,15 @@ export function SignInForm({
         {!error && verificationStep === "password" && (
           <>
             <SignInPassword
-              onSuccess={handlePasswordSuccess}
               onError={handleError}
+              onSuccess={handlePasswordSuccess}
             />
 
             <Button
-              variant="ghost"
+              className="w-full text-muted-foreground hover:text-foreground"
               onClick={handleReset}
               size="lg"
-              className="w-full text-muted-foreground hover:text-foreground"
+              variant="ghost"
             >
               ← Back to other options
             </Button>
@@ -189,10 +189,7 @@ export function SignInForm({
         )}
 
         {!error && verificationStep === "code" && (
-          <SignInCodeVerification
-            email={emailAddress}
-            onReset={handleReset}
-          />
+          <SignInCodeVerification email={emailAddress} onReset={handleReset} />
         )}
       </div>
     </div>

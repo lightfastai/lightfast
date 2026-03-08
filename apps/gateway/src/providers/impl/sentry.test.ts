@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Context } from "hono";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../env", () => ({
   env: {
@@ -43,10 +43,10 @@ vi.mock("../../lib/token-store", () => ({
   updateTokenRecord: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { SentryProvider } from "./sentry.js";
 import { db } from "@db/console/client";
 import { decrypt } from "@repo/lib";
 import { updateTokenRecord } from "../../lib/token-store.js";
+import { SentryProvider } from "./sentry.js";
 
 const provider = new SentryProvider();
 
@@ -64,8 +64,12 @@ describe("SentryProvider", () => {
     vi.clearAllMocks();
     // Reset Drizzle INSERT chain
     dbMocks.insert.mockReturnValue({ values: dbMocks.values });
-    dbMocks.values.mockReturnValue({ onConflictDoUpdate: dbMocks.onConflictDoUpdate });
-    dbMocks.onConflictDoUpdate.mockReturnValue({ returning: dbMocks.returning });
+    dbMocks.values.mockReturnValue({
+      onConflictDoUpdate: dbMocks.onConflictDoUpdate,
+    });
+    dbMocks.onConflictDoUpdate.mockReturnValue({
+      returning: dbMocks.returning,
+    });
   });
 
   it("has correct provider name and webhook flag", () => {
@@ -79,7 +83,7 @@ describe("SentryProvider", () => {
       const parsed = new URL(url);
       expect(parsed.origin).toBe("https://sentry.io");
       expect(parsed.pathname).toBe(
-        "/sentry-apps/test-sn-app-slug/external-install/",
+        "/sentry-apps/test-sn-app-slug/external-install/"
       );
       expect(parsed.searchParams.get("state")).toBe("test-state");
     });
@@ -93,13 +97,13 @@ describe("SentryProvider", () => {
           Promise.resolve({
             token: "access-tok",
             refreshToken: "refresh-tok",
-            expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+            expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
           }),
       });
 
       const result = await provider.exchangeCode(
         "inst-123:auth-code-456",
-        "https://redirect.test",
+        "https://redirect.test"
       );
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -112,7 +116,7 @@ describe("SentryProvider", () => {
             client_id: "test-sn-client-id",
             client_secret: "test-sn-secret",
           }),
-        }),
+        })
       );
       expect(result.accessToken).toBe("access-tok");
       // refreshToken must be encoded as installationId:token for the refresh flow
@@ -144,7 +148,7 @@ describe("SentryProvider", () => {
 
       const exchanged = await provider.exchangeCode(
         "inst-42:auth-code",
-        "https://redirect.test",
+        "https://redirect.test"
       );
 
       // Step 2: The encoded refresh token should be decodable by refreshToken()
@@ -169,7 +173,7 @@ describe("SentryProvider", () => {
             client_id: "test-sn-client-id",
             client_secret: "test-sn-secret",
           }),
-        }),
+        })
       );
       expect(refreshed.accessToken).toBe("new-access");
       // The new refresh token should also be encoded
@@ -187,11 +191,15 @@ describe("SentryProvider", () => {
     });
 
     it("throws on non-ok response", async () => {
-      mockFetch.mockResolvedValueOnce({ ok: false, status: 401, text: () => Promise.resolve("Unauthorized") });
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        text: () => Promise.resolve("Unauthorized"),
+      });
 
-      await expect(
-        provider.exchangeCode("inst-1:code", "uri"),
-      ).rejects.toThrow("Sentry token exchange failed: 401");
+      await expect(provider.exchangeCode("inst-1:code", "uri")).rejects.toThrow(
+        "Sentry token exchange failed: 401"
+      );
     });
   });
 
@@ -203,7 +211,7 @@ describe("SentryProvider", () => {
           Promise.resolve({
             token: "new-access",
             refreshToken: "new-refresh",
-            expiresAt: new Date(Date.now() + 7200_000).toISOString(),
+            expiresAt: new Date(Date.now() + 7_200_000).toISOString(),
           }),
       });
 
@@ -219,7 +227,7 @@ describe("SentryProvider", () => {
             client_id: "test-sn-client-id",
             client_secret: "test-sn-secret",
           }),
-        }),
+        })
       );
       expect(result.accessToken).toBe("new-access");
       // installationId should be re-encoded into the refresh token
@@ -229,9 +237,9 @@ describe("SentryProvider", () => {
     it("throws on non-ok response", async () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 403 });
 
-      await expect(
-        provider.refreshToken("inst-1:old-tok"),
-      ).rejects.toThrow("Sentry token refresh failed: 403");
+      await expect(provider.refreshToken("inst-1:old-tok")).rejects.toThrow(
+        "Sentry token refresh failed: 403"
+      );
     });
   });
 
@@ -246,7 +254,7 @@ describe("SentryProvider", () => {
         expect.objectContaining({
           method: "DELETE",
           headers: { Authorization: "Bearer test-sn-secret" },
-        }),
+        })
       );
     });
 
@@ -258,9 +266,9 @@ describe("SentryProvider", () => {
     it("throws on failed revocation (non-204, non-ok)", async () => {
       mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
-      await expect(
-        provider.revokeToken("inst-1:tok"),
-      ).rejects.toThrow("Sentry token revocation failed: 500");
+      await expect(provider.revokeToken("inst-1:tok")).rejects.toThrow(
+        "Sentry token revocation failed: 500"
+      );
     });
   });
 
@@ -286,7 +294,7 @@ describe("SentryProvider", () => {
           installationId: "inst-1",
           accessToken: "encrypted-access",
           refreshToken: "encrypted-refresh",
-          expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+          expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
         },
       ]);
 
@@ -294,10 +302,7 @@ describe("SentryProvider", () => {
         id: "inst-1",
       } as any);
 
-      expect(decrypt).toHaveBeenCalledWith(
-        "encrypted-access",
-        "a".repeat(64),
-      );
+      expect(decrypt).toHaveBeenCalledWith("encrypted-access", "a".repeat(64));
       expect(result.accessToken).toBe("decrypted-token");
       expect(result.provider).toBe("sentry");
     });
@@ -347,15 +352,12 @@ describe("SentryProvider", () => {
         id: "inst-1",
       } as any);
 
-      expect(decrypt).toHaveBeenCalledWith(
-        "encrypted-refresh",
-        "a".repeat(64),
-      );
+      expect(decrypt).toHaveBeenCalledWith("encrypted-refresh", "a".repeat(64));
       expect(updateTokenRecord).toHaveBeenCalledWith(
         "tok-1",
         expect.objectContaining({ accessToken: "refreshed-access" }),
         "encrypted-refresh",
-        expect.any(String), // existingExpiresAt
+        expect.any(String) // existingExpiresAt
       );
       expect(result.accessToken).toBe("refreshed-access");
     });
@@ -372,7 +374,7 @@ describe("SentryProvider", () => {
       ]);
 
       await expect(
-        provider.resolveToken({ id: "inst-1" } as any),
+        provider.resolveToken({ id: "inst-1" } as any)
       ).rejects.toThrow("token_expired:no_refresh_token");
     });
 
@@ -380,7 +382,7 @@ describe("SentryProvider", () => {
       mockLimit.mockResolvedValueOnce([]);
 
       await expect(
-        provider.resolveToken({ id: "inst-1" } as any),
+        provider.resolveToken({ id: "inst-1" } as any)
       ).rejects.toThrow("no_token_found");
     });
   });
@@ -389,7 +391,7 @@ describe("SentryProvider", () => {
     const exchangeCodeResponse = {
       token: "access-tok",
       refreshToken: "refresh-tok",
-      expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
     };
 
     it("connects and fires backfill for new installation using sentryInstallationId as externalId", async () => {
@@ -417,7 +419,7 @@ describe("SentryProvider", () => {
             installationId: "inst-123",
             raw: expect.objectContaining({}),
           }),
-        }),
+        })
       );
       expect(dbMocks.onConflictDoUpdate).toHaveBeenCalled();
       expect(result).toMatchObject({
@@ -451,14 +453,14 @@ describe("SentryProvider", () => {
     it("throws when code is missing", async () => {
       const c = mockContext({});
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("missing code");
     });
 
     it("throws when installationId query param is missing", async () => {
       const c = mockContext({ code: "some-code" });
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("missing installationId query param");
     });
   });
@@ -473,7 +475,7 @@ describe("SentryProvider", () => {
   describe("deregisterWebhook", () => {
     it("is a no-op (handled by token revocation)", async () => {
       await expect(
-        provider.deregisterWebhook("conn-1", "wh-1"),
+        provider.deregisterWebhook("conn-1", "wh-1")
       ).resolves.toBeUndefined();
     });
   });

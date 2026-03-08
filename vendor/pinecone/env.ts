@@ -8,5 +8,7 @@ export const env = createEnv({
   runtimeEnv: {
     PINECONE_API_KEY: process.env.PINECONE_API_KEY,
   },
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
+  skipValidation:
+    !!process.env.SKIP_ENV_VALIDATION ||
+    process.env.npm_lifecycle_event === "lint",
 });

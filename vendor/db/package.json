@@ -1,46 +1,39 @@
 {
-	"name": "@vendor/db",
-	"version": "0.1.0",
-	"private": true,
-	"type": "module",
-	"exports": {
-		".": {
-			"types": "./dist/src/index.d.ts",
-			"default": "./dist/src/index.js"
-		},
-		"./env": {
-			"types": "./dist/env.d.ts",
-			"default": "./dist/env.js"
-		}
-	},
-	"license": "MIT",
-	"scripts": {
-		"build": "tsup && tsc --incremental false",
-		"clean": "git clean -xdf .cache .turbo dist node_modules",
-		"dev": "tsc",
-		"format": "prettier --check . --ignore-path ../../.gitignore",
-		"lint": "eslint",
-		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
-		"with-env": "dotenv -e ../../.env --"
-	},
-	"dependencies": {
-		"@planetscale/database": "^1.19.0",
-		"@t3-oss/env-core": "catalog:",
-		"drizzle-orm": "catalog:",
-		"drizzle-zod": "catalog:",
-		"zod": "catalog:zod3"
-	},
-	"devDependencies": {
-		"@repo/eslint-config": "workspace:*",
-		"@repo/prettier-config": "workspace:*",
-		"@repo/typescript-config": "workspace:*",
-		"@types/node": "catalog:",
-		"dotenv-cli": "^8.0.0",
-		"drizzle-kit": "^0.31.9",
-		"eslint": "catalog:",
-		"prettier": "catalog:",
-		"tsup": "^8.5.1",
-		"typescript": "catalog:"
-	},
-	"prettier": "@repo/prettier-config"
+  "name": "@vendor/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "default": "./dist/env.js"
+    }
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsup && tsc --incremental false",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "with-env": "dotenv -e ../../.env --"
+  },
+  "dependencies": {
+    "@planetscale/database": "^1.19.0",
+    "@t3-oss/env-core": "catalog:",
+    "drizzle-orm": "catalog:",
+    "drizzle-zod": "catalog:",
+    "zod": "catalog:zod3"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "dotenv-cli": "^8.0.0",
+    "drizzle-kit": "^0.31.9",
+    "tsup": "^8.5.1",
+    "typescript": "catalog:"
+  }
 }

@@ -1,15 +1,15 @@
+import { createNEMO } from "@rescale/nemo";
 import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
 import {
   composeCspOptions,
-  createClerkCspDirectives,
   createAnalyticsCspDirectives,
-  createSentryCspDirectives,
+  createClerkCspDirectives,
   createNextjsCspDirectives,
+  createSentryCspDirectives,
 } from "@vendor/security/csp";
 import { securityMiddleware } from "@vendor/security/middleware";
-import { createNEMO } from "@rescale/nemo";
-import { NextResponse } from "next/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { consoleUrl } from "~/lib/related-projects";
 
 // =============================================================================
@@ -21,12 +21,12 @@ const securityHeaders = securityMiddleware(
     createNextjsCspDirectives(),
     createClerkCspDirectives(),
     createAnalyticsCspDirectives(),
-    createSentryCspDirectives(),
-  ),
+    createSentryCspDirectives()
+  )
 );
 
 async function withSecurityHeaders(
-  response: NextResponse,
+  response: NextResponse
 ): Promise<NextResponse> {
   const headers = await securityHeaders();
   for (const [key, value] of headers.headers.entries()) {
@@ -68,7 +68,7 @@ const composedMiddleware = createNEMO(
       // - Custom analytics for auth events
       // - Fraud detection
     ],
-  },
+  }
 );
 
 // =============================================================================
@@ -126,9 +126,9 @@ export default clerkMiddleware(
     // 5. Return with security headers
     // -------------------------------------------------------------------------
     return withSecurityHeaders(
-      (nemoResponse as NextResponse | null) ?? NextResponse.next(),
+      (nemoResponse as NextResponse | null) ?? NextResponse.next()
     );
-  },
+  }
 );
 
 export const config = {

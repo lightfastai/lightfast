@@ -5,91 +5,91 @@ import type { Memory } from "../";
  * In-memory implementation of Memory interface (for testing)
  */
 export class InMemoryMemory<
-	TMessage extends UIMessage = UIMessage,
-	TContext = Record<string, unknown>,
+  TMessage extends UIMessage = UIMessage,
+  TContext = Record<string, unknown>,
 > implements Memory<TMessage, TContext>
 {
-	private sessions = new Map<string, { resourceId: string }>();
-	private messages = new Map<string, TMessage[]>();
-	private streams = new Map<string, string[]>(); // Legacy stream lists
-	private activeStreams = new Map<string, string>(); // Active stream IDs
+  private readonly sessions = new Map<string, { resourceId: string }>();
+  private readonly messages = new Map<string, TMessage[]>();
+  private readonly streams = new Map<string, string[]>(); // Legacy stream lists
+  private readonly activeStreams = new Map<string, string>(); // Active stream IDs
 
-	appendMessage({
-		sessionId,
-		message,
-		context: _context,
-	}: {
-		sessionId: string;
-		message: TMessage;
-		context?: TContext;
-	}): Promise<void> {
-		const existing = this.messages.get(sessionId) ?? [];
-		this.messages.set(sessionId, [...existing, message]);
-		return Promise.resolve();
-	}
+  appendMessage({
+    sessionId,
+    message,
+    context: _context,
+  }: {
+    sessionId: string;
+    message: TMessage;
+    context?: TContext;
+  }): Promise<void> {
+    const existing = this.messages.get(sessionId) ?? [];
+    this.messages.set(sessionId, [...existing, message]);
+    return Promise.resolve();
+  }
 
-	getMessages(sessionId: string): Promise<TMessage[]> {
-		return Promise.resolve(this.messages.get(sessionId) ?? []);
-	}
+  getMessages(sessionId: string): Promise<TMessage[]> {
+    return Promise.resolve(this.messages.get(sessionId) ?? []);
+  }
 
-	createSession({
-		sessionId,
-		resourceId,
-		context: _context,
-	}: {
-		sessionId: string;
-		resourceId: string;
-		context?: TContext;
-	}): Promise<void> {
-		if (!this.sessions.has(sessionId)) {
-			this.sessions.set(sessionId, { resourceId });
-		}
-		return Promise.resolve();
-	}
+  createSession({
+    sessionId,
+    resourceId,
+    context: _context,
+  }: {
+    sessionId: string;
+    resourceId: string;
+    context?: TContext;
+  }): Promise<void> {
+    if (!this.sessions.has(sessionId)) {
+      this.sessions.set(sessionId, { resourceId });
+    }
+    return Promise.resolve();
+  }
 
-	getSession(sessionId: string): Promise<{ resourceId: string } | null> {
-		const session = this.sessions.get(sessionId);
-		return Promise.resolve(session ? { resourceId: session.resourceId } : null);
-	}
+  getSession(sessionId: string): Promise<{ resourceId: string } | null> {
+    const session = this.sessions.get(sessionId);
+    return Promise.resolve(session ? { resourceId: session.resourceId } : null);
+  }
 
-	createStream({
-		sessionId,
-		streamId,
-		context: _context,
-	}: {
-		sessionId: string;
-		streamId: string;
-		context?: TContext;
-	}): Promise<void> {
-		// Set as active stream (new pattern)
-		this.activeStreams.set(sessionId, streamId);
-		
-		// Legacy: Also maintain stream list for backward compatibility
-		const existing = this.streams.get(sessionId) ?? [];
-		this.streams.set(sessionId, [streamId, ...existing].slice(0, 100));
-		return Promise.resolve();
-	}
+  createStream({
+    sessionId,
+    streamId,
+    context: _context,
+  }: {
+    sessionId: string;
+    streamId: string;
+    context?: TContext;
+  }): Promise<void> {
+    // Set as active stream (new pattern)
+    this.activeStreams.set(sessionId, streamId);
 
-	getSessionStreams(sessionId: string): Promise<string[]> {
-		// Legacy method - prefer getActiveStream() for new code.
-		// Keep returning the cached stream list for backward compatibility.
-		const legacyStreams = this.streams.get(sessionId);
-		if (legacyStreams && legacyStreams.length > 0) {
-			return Promise.resolve([...legacyStreams]);
-		}
+    // Legacy: Also maintain stream list for backward compatibility
+    const existing = this.streams.get(sessionId) ?? [];
+    this.streams.set(sessionId, [streamId, ...existing].slice(0, 100));
+    return Promise.resolve();
+  }
 
-		// Fallback for adapters that only track the active stream.
-		const activeStreamId = this.activeStreams.get(sessionId);
-		return Promise.resolve(activeStreamId ? [activeStreamId] : []);
-	}
+  getSessionStreams(sessionId: string): Promise<string[]> {
+    // Legacy method - prefer getActiveStream() for new code.
+    // Keep returning the cached stream list for backward compatibility.
+    const legacyStreams = this.streams.get(sessionId);
+    if (legacyStreams && legacyStreams.length > 0) {
+      return Promise.resolve([...legacyStreams]);
+    }
 
-	getActiveStream(sessionId: string): Promise<string | null> {
-		const streamId = this.activeStreams.get(sessionId);
-		return Promise.resolve(streamId || null);
-	}
+    // Fallback for adapters that only track the active stream.
+    const activeStreamId = this.activeStreams.get(sessionId);
+    return Promise.resolve(activeStreamId ? [activeStreamId] : []);
+  }
 
-	clearActiveStream(sessionId: string): Promise<void> {
-		this.activeStreams.delete(sessionId);
-		return Promise.resolve();
-	}
+  getActiveStream(sessionId: string): Promise<string | null> {
+    const streamId = this.activeStreams.get(sessionId);
+    return Promise.resolve(streamId || null);
+  }
+
+  clearActiveStream(sessionId: string): Promise<void> {
+    this.activeStreams.delete(sessionId);
+    return Promise.resolve();
+  }
 }

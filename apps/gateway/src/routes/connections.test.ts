@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 
@@ -35,19 +35,13 @@ const {
 
   return {
     mockRedisHset: vi.fn().mockResolvedValue("OK"),
-    mockRedisHgetall: vi
-      .fn()
-      .mockResolvedValue(null),
+    mockRedisHgetall: vi.fn().mockResolvedValue(null),
     mockRedisExpire: vi.fn().mockResolvedValue(1),
     mockRedisDel: vi.fn().mockResolvedValue(1),
-    mockWorkflowTrigger: vi
-      .fn()
-      .mockResolvedValue({ workflowRunId: "wf-1" }),
+    mockWorkflowTrigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
     mockFindFirst: vi.fn().mockResolvedValue(null),
     mockSelectLimit: vi.fn().mockResolvedValue([]),
-    mockInsertReturning: vi
-      .fn()
-      .mockResolvedValue([]),
+    mockInsertReturning: vi.fn().mockResolvedValue([]),
     mockUpdateWhere: vi.fn().mockResolvedValue(undefined),
     mockGetProvider: vi.fn().mockReturnValue(mockProvider),
     mockProvider,
@@ -75,8 +69,14 @@ vi.mock("@vendor/upstash", () => ({
     del: (...args: unknown[]) => mockRedisDel(...args),
     pipeline: () => {
       const chain = {
-        hset: (...args: unknown[]) => { mockRedisHset(...args); return chain; },
-        expire: (...args: unknown[]) => { mockRedisExpire(...args); return chain; },
+        hset: (...args: unknown[]) => {
+          mockRedisHset(...args);
+          return chain;
+        },
+        expire: (...args: unknown[]) => {
+          mockRedisExpire(...args);
+          return chain;
+        },
         exec: () => Promise.resolve([]),
       };
       return chain;
@@ -84,8 +84,14 @@ vi.mock("@vendor/upstash", () => ({
     multi: () => {
       let hgetallResult: unknown = null;
       const chain = {
-        hgetall: (...args: unknown[]) => { hgetallResult = mockRedisHgetall(...args); return chain; },
-        del: (...args: unknown[]) => { mockRedisDel(...args); return chain; },
+        hgetall: (...args: unknown[]) => {
+          hgetallResult = mockRedisHgetall(...args);
+          return chain;
+        },
+        del: (...args: unknown[]) => {
+          mockRedisDel(...args);
+          return chain;
+        },
         exec: async () => {
           const resolved = await hgetallResult;
           return [resolved, 1];
@@ -176,7 +182,7 @@ function request(
     method?: string;
     body?: string | Record<string, unknown>;
     headers?: Record<string, string>;
-  } = {},
+  } = {}
 ) {
   const headers = new Headers(init.headers);
   if (!headers.has("content-type") && init.body) {
@@ -205,14 +211,22 @@ describe("GET /connections/:provider/authorize", () => {
 
   it("returns 401 with wrong X-API-Key", async () => {
     const res = await request("/connections/github/authorize", {
-      headers: { "X-Org-Id": "org-1", "X-User-Id": "user-1", "X-API-Key": "wrong-key" },
+      headers: {
+        "X-Org-Id": "org-1",
+        "X-User-Id": "user-1",
+        "X-API-Key": "wrong-key",
+      },
     });
     expect(res.status).toBe(401);
   });
 
   it("returns authorization URL for github", async () => {
     const res = await request("/connections/github/authorize", {
-      headers: { "X-Org-Id": "org-1", "X-User-Id": "user-1", "X-API-Key": "test-api-key" },
+      headers: {
+        "X-Org-Id": "org-1",
+        "X-User-Id": "user-1",
+        "X-API-Key": "test-api-key",
+      },
     });
     expect(res.status).toBe(200);
     const json = (await res.json()) as { url: string; state: string };
@@ -246,7 +260,7 @@ describe("GET /connections/:provider/authorize", () => {
       "/connections/github/authorize?redirect_to=https%3A%2F%2Fevil.com",
       {
         headers: { "X-Org-Id": "org-1", "X-API-Key": "test-api-key" },
-      },
+      }
     );
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({ error: "invalid_redirect_to" });
@@ -257,7 +271,7 @@ describe("GET /connections/:provider/authorize", () => {
       "/connections/github/authorize?redirect_to=not-a-url",
       {
         headers: { "X-Org-Id": "org-1", "X-API-Key": "test-api-key" },
-      },
+      }
     );
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({ error: "invalid_redirect_to" });
@@ -267,14 +281,18 @@ describe("GET /connections/:provider/authorize", () => {
     const res = await request(
       "/connections/github/authorize?redirect_to=inline",
       {
-        headers: { "X-Org-Id": "org-1", "X-User-Id": "user-1", "X-API-Key": "test-api-key" },
-      },
+        headers: {
+          "X-Org-Id": "org-1",
+          "X-User-Id": "user-1",
+          "X-API-Key": "test-api-key",
+        },
+      }
     );
     expect(res.status).toBe(200);
     // Check that hset was called with redirectTo
     expect(mockRedisHset).toHaveBeenCalledWith(
       expect.stringContaining("gw:oauth:state:"),
-      expect.objectContaining({ redirectTo: "inline" }),
+      expect.objectContaining({ redirectTo: "inline" })
     );
   });
 
@@ -282,13 +300,17 @@ describe("GET /connections/:provider/authorize", () => {
     const res = await request(
       "/connections/github/authorize?redirect_to=http%3A%2F%2Flocalhost%3A4200%2Fcallback",
       {
-        headers: { "X-Org-Id": "org-1", "X-User-Id": "user-1", "X-API-Key": "test-api-key" },
-      },
+        headers: {
+          "X-Org-Id": "org-1",
+          "X-User-Id": "user-1",
+          "X-API-Key": "test-api-key",
+        },
+      }
     );
     expect(res.status).toBe(200);
     expect(mockRedisHset).toHaveBeenCalledWith(
       expect.stringContaining("gw:oauth:state:"),
-      expect.objectContaining({ redirectTo: "http://localhost:4200/callback" }),
+      expect.objectContaining({ redirectTo: "http://localhost:4200/callback" })
     );
   });
 });
@@ -373,9 +395,7 @@ describe("GET /connections/:provider/callback", () => {
       orgId: "org-1",
       connectedBy: "user-1",
     });
-    const res = await request(
-      "/connections/vercel/callback?state=mismatched",
-    );
+    const res = await request("/connections/vercel/callback?state=mismatched");
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({
       error: "invalid_or_expired_state",
@@ -389,11 +409,11 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
     });
     const res = await request(
-      "/connections/github/callback?state=valid&installation_id=123",
+      "/connections/github/callback?state=valid&installation_id=123"
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("location")).toBe(
-      "https://console.test/provider/github/connected",
+      "https://console.test/provider/github/connected"
     );
     expect(mockProvider.handleCallback).toHaveBeenCalled();
   });
@@ -411,7 +431,7 @@ describe("GET /connections/:provider/callback", () => {
       reactivated: true,
     });
     const res = await request(
-      "/connections/github/callback?state=valid&installation_id=123",
+      "/connections/github/callback?state=valid&installation_id=123"
     );
     expect(res.status).toBe(302);
     const location = res.headers.get("location")!;
@@ -431,11 +451,11 @@ describe("GET /connections/:provider/callback", () => {
       nextUrl: "https://vercel.com/integrations/test/complete",
     });
     const res = await request(
-      "/connections/github/callback?state=valid&installation_id=123",
+      "/connections/github/callback?state=valid&installation_id=123"
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("location")).toBe(
-      "https://vercel.com/integrations/test/complete",
+      "https://vercel.com/integrations/test/complete"
     );
   });
 
@@ -453,11 +473,11 @@ describe("GET /connections/:provider/callback", () => {
       nextUrl: "https://vercel.com/integrations/test/complete",
     });
     const res = await request(
-      "/connections/github/callback?state=valid&installation_id=123",
+      "/connections/github/callback?state=valid&installation_id=123"
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("location")).toBe(
-      "https://vercel.com/integrations/test/complete",
+      "https://vercel.com/integrations/test/complete"
     );
   });
 
@@ -473,11 +493,11 @@ describe("GET /connections/:provider/callback", () => {
       provider: "github",
     });
     const res = await request(
-      "/connections/github/callback?state=valid&installation_id=123",
+      "/connections/github/callback?state=valid&installation_id=123"
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("location")).toBe(
-      "https://console.test/provider/github/connected",
+      "https://console.test/provider/github/connected"
     );
   });
 
@@ -494,7 +514,7 @@ describe("GET /connections/:provider/callback", () => {
       setupAction: "request",
     });
     const res = await request(
-      "/connections/github/callback?state=valid&installation_id=123",
+      "/connections/github/callback?state=valid&installation_id=123"
     );
     expect(res.status).toBe(302);
     const location = res.headers.get("location")!;
@@ -509,7 +529,7 @@ describe("GET /connections/:provider/callback", () => {
       redirectTo: "inline",
     });
     const res = await request(
-      "/connections/github/callback?state=valid&installation_id=123",
+      "/connections/github/callback?state=valid&installation_id=123"
     );
     expect(res.status).toBe(200);
     const body = await res.text();
@@ -525,7 +545,7 @@ describe("GET /connections/:provider/callback", () => {
       redirectTo: "http://localhost:4200/callback",
     });
     const res = await request(
-      "/connections/github/callback?state=valid&installation_id=123",
+      "/connections/github/callback?state=valid&installation_id=123"
     );
     expect(res.status).toBe(302);
     const location = res.headers.get("location")!;
@@ -539,12 +559,12 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
     });
     await request(
-      "/connections/github/callback?state=poll-state&installation_id=123",
+      "/connections/github/callback?state=poll-state&installation_id=123"
     );
     // Pipeline hset should be called with the result key
     expect(mockRedisHset).toHaveBeenCalledWith(
       expect.stringContaining("gw:oauth:result:"),
-      expect.objectContaining({ status: "completed" }),
+      expect.objectContaining({ status: "completed" })
     );
   });
 
@@ -555,12 +575,14 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
     });
     mockProvider.handleCallback.mockRejectedValueOnce(
-      new Error("missing installation_id"),
+      new Error("missing installation_id")
     );
     const res = await request("/connections/github/callback?state=valid");
     expect(res.status).toBe(302);
     const location = res.headers.get("location")!;
-    expect(location).toContain("https://console.test/provider/github/connected");
+    expect(location).toContain(
+      "https://console.test/provider/github/connected"
+    );
     expect(location).toContain("error=missing%20installation_id");
   });
 
@@ -571,9 +593,7 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
       redirectTo: "inline",
     });
-    mockProvider.handleCallback.mockRejectedValueOnce(
-      new Error("auth_failed"),
-    );
+    mockProvider.handleCallback.mockRejectedValueOnce(new Error("auth_failed"));
     const res = await request("/connections/github/callback?state=valid");
     expect(res.status).toBe(400);
     const body = await res.text();
@@ -588,12 +608,12 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
     });
     mockProvider.handleCallback.mockRejectedValueOnce(
-      new Error("network_error"),
+      new Error("network_error")
     );
     await request("/connections/github/callback?state=poll-state");
     expect(mockRedisHset).toHaveBeenCalledWith(
       expect.stringContaining("gw:oauth:result:"),
-      expect.objectContaining({ status: "failed", error: "network_error" }),
+      expect.objectContaining({ status: "failed", error: "network_error" })
     );
   });
 
@@ -604,7 +624,7 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
     });
     mockProvider.handleCallback.mockRejectedValueOnce(
-      new Error("insert_failed"),
+      new Error("insert_failed")
     );
     const res = await request("/connections/github/callback?state=valid");
     expect(res.status).toBe(302);
@@ -619,7 +639,7 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
     });
     mockProvider.handleCallback.mockRejectedValueOnce(
-      new Error("network_error"),
+      new Error("network_error")
     );
     const res = await request("/connections/github/callback?state=valid");
     expect(res.status).toBe(302);
@@ -728,7 +748,7 @@ describe("GET /connections/:id/token", () => {
       { id: "conn-1", provider: "github", status: "active" },
     ]);
     mockProvider.resolveToken.mockRejectedValueOnce(
-      new Error("no_token_found"),
+      new Error("no_token_found")
     );
     const res = await request("/connections/conn-1/token", {
       headers: { "X-API-Key": "test-api-key" },
@@ -740,9 +760,7 @@ describe("GET /connections/:id/token", () => {
     mockSelectLimit.mockResolvedValueOnce([
       { id: "conn-1", provider: "github", status: "active" },
     ]);
-    mockProvider.resolveToken.mockRejectedValueOnce(
-      new Error("token_expired"),
-    );
+    mockProvider.resolveToken.mockRejectedValueOnce(new Error("token_expired"));
     const res = await request("/connections/conn-1/token", {
       headers: { "X-API-Key": "test-api-key" },
     });

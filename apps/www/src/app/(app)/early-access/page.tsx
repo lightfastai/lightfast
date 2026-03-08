@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
-import { createMetadata } from "@vendor/seo/metadata";
 import { Icons } from "@repo/ui/components/icons";
+import { createMetadata } from "@vendor/seo/metadata";
+import type { Metadata } from "next";
 import { EarlyAccessForm } from "~/components/early-access-form";
 
 export const metadata: Metadata = createMetadata({
@@ -17,8 +17,7 @@ export const metadata: Metadata = createMetadata({
   twitter: {
     card: "summary_large_image",
     title: "Early Access – Lightfast",
-    description:
-      "Get early access to the operating layer for agents and apps.",
+    description: "Get early access to the operating layer for agents and apps.",
   },
   alternates: {
     canonical: "https://lightfast.ai/early-access",
@@ -40,30 +39,30 @@ export default async function EarlyAccessPage({
   const initialCompanySize = params.companySize ?? "";
   const initialSources = params.sources ? params.sources.split(",") : [];
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       {/* Main Content - Centered */}
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex flex-1 items-center justify-center p-4">
         <div className="w-full max-w-md space-y-4">
           {/* Logo Card */}
-          <div className="rounded-sm bg-card p-3 w-fit">
+          <div className="w-fit rounded-sm bg-card p-3">
             <Icons.logoShort className="h-5 w-5 text-foreground" />
           </div>
 
           {/* Heading */}
-          <h1 className="text-2xl pb-4 font-pp font-medium text-foreground">
+          <h1 className="pb-4 font-medium font-pp text-2xl text-foreground">
             Join the Early Access waitlist
           </h1>
 
           {/* Form */}
           <EarlyAccessForm
-            initialEmail={initialEmail}
             initialCompanySize={initialCompanySize}
+            initialEmail={initialEmail}
             initialSources={initialSources}
           />
         </div>
       </main>
 
-      <div aria-hidden className="shrink-0 h-16 md:h-20" />
+      <div aria-hidden className="h-16 shrink-0 md:h-20" />
     </div>
   );
 }

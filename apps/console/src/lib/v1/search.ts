@@ -1,25 +1,27 @@
- 
-
-import { log } from "@vendor/observability/log";
-import { createRerankProvider } from "@repo/console-rerank";
-import type { RerankCandidate } from "@repo/console-rerank";
-import type { V1SearchResponse, V1SearchResult } from "@repo/console-types";
 import { recordSystemActivity } from "@api/console/lib/activity";
+import type { RerankCandidate } from "@repo/console-rerank";
+import { createRerankProvider } from "@repo/console-rerank";
+import type { V1SearchResponse, V1SearchResult } from "@repo/console-types";
+import { log } from "@vendor/observability/log";
 
 import {
-  fourPathParallelSearch,
   enrichSearchResults,
+  fourPathParallelSearch,
 } from "~/lib/neural/four-path-search";
 import type { V1AuthContext } from "./types";
 
 export interface SearchLogicInput {
-  query: string;
-  limit: number;
-  offset: number;
-  mode: "fast" | "balanced" | "thorough";
-  filters?: { sourceTypes?: string[]; observationTypes?: string[]; actorNames?: string[] };
+  filters?: {
+    sourceTypes?: string[];
+    observationTypes?: string[];
+    actorNames?: string[];
+  };
   includeContext: boolean;
   includeHighlights: boolean;
+  limit: number;
+  mode: "fast" | "balanced" | "thorough";
+  offset: number;
+  query: string;
   requestId: string;
 }
 
@@ -27,7 +29,7 @@ export type SearchLogicOutput = V1SearchResponse;
 
 export async function searchLogic(
   auth: V1AuthContext,
-  input: SearchLogicInput,
+  input: SearchLogicInput
 ): Promise<SearchLogicOutput> {
   const startTime = Date.now();
 
@@ -55,14 +57,16 @@ export async function searchLogic(
       title: c.title,
       content: c.snippet,
       score: c.score,
-    }),
+    })
   );
 
   const rerankResponse = await reranker.rerank(input.query, rerankCandidates, {
     topK: input.limit + input.offset, // Get enough for pagination
     threshold: input.mode === "thorough" ? 0.4 : undefined,
     minResults:
-      input.mode === "balanced" ? Math.max(3, Math.ceil(input.limit / 2)) : undefined,
+      input.mode === "balanced"
+        ? Math.max(3, Math.ceil(input.limit / 2))
+        : undefined,
   });
 
   const rerankLatency = Date.now() - rerankStart;
@@ -79,7 +83,7 @@ export async function searchLogic(
   // 3. Apply pagination
   const paginatedResults = rerankResponse.results.slice(
     input.offset,
-    input.offset + input.limit,
+    input.offset + input.limit
   );
 
   // 4. Enrich results with full metadata from database
@@ -87,7 +91,7 @@ export async function searchLogic(
   const enrichedResults = await enrichSearchResults(
     paginatedResults,
     searchResult.candidates,
-    auth.workspaceId,
+    auth.workspaceId
   );
   const enrichLatency = Date.now() - enrichStart;
 
@@ -128,7 +132,7 @@ export async function searchLogic(
     searchResult.latency.vector,
     searchResult.latency.entity,
     searchResult.latency.cluster,
-    searchResult.latency.actor,
+    searchResult.latency.actor
   );
 
   // 8. Build response

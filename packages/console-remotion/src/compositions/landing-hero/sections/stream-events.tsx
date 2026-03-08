@@ -1,17 +1,21 @@
-import type React from "react";
-import { useCurrentFrame, interpolate, Easing } from "remotion";
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
+import type React from "react";
+import { Easing, interpolate, useCurrentFrame } from "remotion";
 
 interface FeedEvent {
-  source: "Vercel" | "GitHub" | "Sentry" | "Linear";
-  label: string;
   detail: string;
   extra?: string[];
+  label: string;
+  source: "Vercel" | "GitHub" | "Sentry" | "Linear";
 }
 
 const FEED_EVENTS: FeedEvent[] = [
   { source: "Vercel", label: "Deployment Started", detail: "web@main" },
-  { source: "GitHub", label: "PR Opened", detail: "#842 search index batching" },
+  {
+    source: "GitHub",
+    label: "PR Opened",
+    detail: "#842 search index batching",
+  },
   {
     source: "Sentry",
     label: "Issue Created",
@@ -21,17 +25,32 @@ const FEED_EVENTS: FeedEvent[] = [
       "at SearchWorker.process (worker.ts:142)",
     ],
   },
-  { source: "Linear", label: "Issue Updated", detail: "MEM-302 ranking threshold" },
+  {
+    source: "Linear",
+    label: "Issue Updated",
+    detail: "MEM-302 ranking threshold",
+  },
   { source: "Vercel", label: "Deployment Ready", detail: "api@prod-us-east-1" },
   { source: "GitHub", label: "PR Merged", detail: "#839 edge cache warmup" },
   {
     source: "Sentry",
     label: "Metric Alert",
     detail: "p95 latency crossed 240ms",
-    extra: ["Current: 312ms · Threshold: 240ms", "Region: us-east-1 · Window: 5m"],
+    extra: [
+      "Current: 312ms · Threshold: 240ms",
+      "Region: us-east-1 · Window: 5m",
+    ],
   },
-  { source: "Linear", label: "Comment Added", detail: "MEM-271 rollout checklist" },
-  { source: "GitHub", label: "Issue Closed", detail: "#311 stale query regression" },
+  {
+    source: "Linear",
+    label: "Comment Added",
+    detail: "MEM-271 rollout checklist",
+  },
+  {
+    source: "GitHub",
+    label: "Issue Closed",
+    detail: "#311 stale query regression",
+  },
   {
     source: "Vercel",
     label: "Deployment Succeeded",
@@ -47,7 +66,10 @@ const SOURCE_COLORS: Record<FeedEvent["source"], string> = {
   Linear: "#7aa2ff",
 };
 
-const SOURCE_ICON_KEY: Record<FeedEvent["source"], keyof typeof IntegrationLogoIcons> = {
+const SOURCE_ICON_KEY: Record<
+  FeedEvent["source"],
+  keyof typeof IntegrationLogoIcons
+> = {
   Vercel: "vercel",
   GitHub: "github",
   Sentry: "sentry",
@@ -77,8 +99,10 @@ const N = FEED_EVENTS.length;
 // Per-event heights and pitches
 const eventHeights = FEED_EVENTS.map((e) =>
   e.extra
-    ? COMPACT_ROW_HEIGHT + EXTRA_SECTION_OVERHEAD + e.extra.length * EXTRA_LINE_HEIGHT
-    : COMPACT_ROW_HEIGHT,
+    ? COMPACT_ROW_HEIGHT +
+      EXTRA_SECTION_OVERHEAD +
+      e.extra.length * EXTRA_LINE_HEIGHT
+    : COMPACT_ROW_HEIGHT
 );
 const eventPitches = eventHeights.map((h) => h + ROW_GAP);
 
@@ -97,7 +121,9 @@ function getCumPosition(vi: number): number {
 }
 
 const ROWS_TO_RENDER =
-  Math.ceil((FEED_HEIGHT - FEED_PADDING_Y * 2) / (COMPACT_ROW_HEIGHT + ROW_GAP)) +
+  Math.ceil(
+    (FEED_HEIGHT - FEED_PADDING_Y * 2) / (COMPACT_ROW_HEIGHT + ROW_GAP)
+  ) +
   N * 2 +
   2;
 const START_INDEX = -N;
@@ -128,7 +154,8 @@ export const StreamEvents: React.FC = () => {
     easing: STEP_EASING,
   });
   const scrollOffset =
-    getCumPosition(stepIndex) + stepProgress * (eventPitches[stepIndex % N] ?? 0);
+    getCumPosition(stepIndex) +
+    stepProgress * (eventPitches[stepIndex % N] ?? 0);
 
   return (
     <div
@@ -141,13 +168,15 @@ export const StreamEvents: React.FC = () => {
       }}
     >
       {ROW_DATA.map(({ index: rowIndex, event, baseCumPosition }) => {
-        if (!event) return null;
+        if (!event) {
+          return null;
+        }
         const rowTop = FEED_PADDING_Y + baseCumPosition + scrollOffset;
 
         return (
           <div
-            key={rowIndex}
             className="absolute flex flex-col gap-2 rounded-md border border-border px-3 py-3 font-sans"
+            key={rowIndex}
             style={{
               left: FEED_PADDING_X,
               top: rowTop,
@@ -156,7 +185,8 @@ export const StreamEvents: React.FC = () => {
           >
             <div className="flex items-center gap-2">
               {(() => {
-                const Icon = IntegrationLogoIcons[SOURCE_ICON_KEY[event.source]];
+                const Icon =
+                  IntegrationLogoIcons[SOURCE_ICON_KEY[event.source]];
                 return (
                   <Icon
                     className="size-4 shrink-0"
@@ -164,21 +194,23 @@ export const StreamEvents: React.FC = () => {
                   />
                 );
               })()}
-              <span className="font-mono text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <span className="font-medium font-mono text-muted-foreground text-xs uppercase tracking-wide">
                 {event.source}
               </span>
             </div>
             <div className="flex items-center gap-2 overflow-hidden text-sm">
               <span className="shrink-0 text-foreground">{event.label}</span>
               <span className="shrink-0 text-muted-foreground/40">•</span>
-              <span className="truncate text-muted-foreground">{event.detail}</span>
+              <span className="truncate text-muted-foreground">
+                {event.detail}
+              </span>
             </div>
             {event.extra && (
-              <div className="mt-1 flex flex-col gap-1 border-t border-border/50 pt-2">
+              <div className="mt-1 flex flex-col gap-1 border-border/50 border-t pt-2">
                 {event.extra.map((line, lineIndex) => (
                   <span
+                    className="truncate font-mono text-muted-foreground/50 text-xs leading-tight"
                     key={`${lineIndex}-${line}`}
-                    className="truncate font-mono text-xs leading-tight text-muted-foreground/50"
                   >
                     {line}
                   </span>

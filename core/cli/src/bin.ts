@@ -2,7 +2,7 @@
 
 /**
  * CLI binary entrypoint
- * 
+ *
  * Sets up commander and registers all commands.
  */
 

@@ -1,55 +1,48 @@
 {
-	"name": "@vendor/analytics",
-	"private": true,
-	"version": "0.1.0",
-	"type": "module",
+  "name": "@vendor/analytics",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
   "sideEffects": false,
-	"license": "MIT",
-	"exports": {
-		"./posthog-server": {
-			"types": "./src/providers/posthog/server.ts",
-			"default": "./src/providers/posthog/server.ts"
-		},
-		"./posthog-client": "./src/providers/posthog/client.tsx",
-		"./posthog-instrumentation-client": "./src/providers/posthog/instrumentation-client.ts",
-		"./posthog": {
-			"types": "./src/providers/posthog/index.ts",
-			"default": "./src/providers/posthog/index.ts"
-		},
-		"./vercel": {
-			"types": "./src/providers/vercel/index.ts",
-			"default": "./src/providers/vercel/index.ts"
-		},
-		"./env": "./env.ts"
-	},
-	"scripts": {
-		"clean": "git clean -xdf .cache .turbo dist node_modules",
-		"format": "prettier --check . --ignore-path ../../.gitignore",
-		"lint": "eslint",
-		"typecheck": "tsc --noEmit --emitDeclarationOnly false",
-		"build": "tsc"
-	},
-	"devDependencies": {
-		"@repo/eslint-config": "workspace:*",
-		"@repo/prettier-config": "workspace:*",
-		"@repo/typescript-config": "workspace:*",
-		"@types/node": "catalog:",
-		"@types/react": "19.2.14",
-		"@types/react-dom": "19.2.3",
-		"eslint": "catalog:",
-		"prettier": "catalog:",
-		"typescript": "catalog:"
-	},
-	"prettier": "@repo/prettier-config",
-	"dependencies": {
-"@t3-oss/env-nextjs": "catalog:",
-		"@vercel/analytics": "^1.6.1",
-		"@vercel/speed-insights": "^1.3.1",
-		"next": "catalog:next16",
-		"posthog-js": "^1.359.1",
-		"posthog-node": "^5.28.0",
-		"react": "catalog:react19",
-		"server-only": "^0.0.1",
-		"zod": "catalog:zod3"
-	}
+  "license": "MIT",
+  "exports": {
+    "./posthog-server": {
+      "types": "./src/providers/posthog/server.ts",
+      "default": "./src/providers/posthog/server.ts"
+    },
+    "./posthog-client": "./src/providers/posthog/client.tsx",
+    "./posthog-instrumentation-client": "./src/providers/posthog/instrumentation-client.ts",
+    "./posthog": {
+      "types": "./src/providers/posthog/index.ts",
+      "default": "./src/providers/posthog/index.ts"
+    },
+    "./vercel": {
+      "types": "./src/providers/vercel/index.ts",
+      "default": "./src/providers/vercel/index.ts"
+    },
+    "./env": "./env.ts"
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "@t3-oss/env-nextjs": "catalog:",
+    "@vercel/analytics": "^1.6.1",
+    "@vercel/speed-insights": "^1.3.1",
+    "next": "catalog:next16",
+    "posthog-js": "^1.359.1",
+    "posthog-node": "^5.28.0",
+    "react": "catalog:react19",
+    "server-only": "^0.0.1",
+    "zod": "catalog:zod3"
+  }
 }

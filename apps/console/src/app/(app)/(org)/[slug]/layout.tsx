@@ -1,11 +1,11 @@
-import { Suspense } from "react";
-import { prefetch, HydrateClient, userTrpc } from "@repo/console-trpc/server";
-import { SidebarProvider, SidebarInset } from "@repo/ui/components/ui/sidebar";
-import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
-import { AppSidebar } from "~/components/app-sidebar";
-import { AppHeader } from "~/components/app-header";
+import { HydrateClient, prefetch, userTrpc } from "@repo/console-trpc/server";
+import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { AppHeader } from "~/components/app-header";
+import { AppSidebar } from "~/components/app-sidebar";
+import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
 
 interface OrgLayoutProps {
@@ -35,13 +35,13 @@ function AnswerPageLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarInset>
       {/* Floating header absolutely positioned over content */}
-      <div className="absolute top-0 left-0 right-0 h-14 flex items-center px-4 z-40">
+      <div className="absolute top-0 right-0 left-0 z-40 flex h-14 items-center px-4">
         <AppHeader />
       </div>
 
       {/* Content spans full height with floating header, scrollbar at viewport edge */}
-      <div className="flex flex-col flex-1 h-full min-h-0 overflow-hidden pt-14">
-        <div className="flex flex-col flex-1 h-full min-h-0 w-full overflow-hidden">
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden pt-14">
+        <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
           <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
         </div>
       </div>
@@ -68,7 +68,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   prefetch(
     userTrpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
       clerkOrgSlug: slug,
-    }),
+    })
   );
 
   return (
@@ -86,7 +86,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
 
 function PageLoadingSkeleton() {
   return (
-    <div className="flex items-center justify-center h-full min-h-0 w-full">
+    <div className="flex h-full min-h-0 w-full items-center justify-center">
       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
     </div>
   );

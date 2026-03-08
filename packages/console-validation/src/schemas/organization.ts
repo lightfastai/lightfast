@@ -6,10 +6,7 @@
  */
 
 import { z } from "zod";
-import {
-  clerkOrgIdSchema,
-  clerkUserIdSchema,
-} from "../primitives/ids";
+import { clerkOrgIdSchema, clerkUserIdSchema } from "../primitives/ids";
 import { clerkOrgSlugSchema } from "../primitives/slugs";
 
 /**

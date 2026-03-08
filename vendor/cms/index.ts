@@ -1,6 +1,6 @@
 import { basehub as basehubClient, fragmentOn } from "basehub";
 import type { RichTextNode, RichTextTocNode } from "basehub/api-transaction";
-// ensures types are passed through to apps that use this package
+// biome-ignore lint/correctness/noUnusedImports: ensures types are passed through to apps that use this package
 import type * as _types from "./basehub-types.d.ts";
 import { basehubEnv } from "./env";
 import "./basehub.config";
@@ -114,11 +114,10 @@ const postFragment = fragmentOn("PostItem_1", {
 // Relaxed runtime-facing types to avoid tight coupling to BaseHub's d.ts during app typecheck
 export interface PostMeta {
   _slug?: string | null;
-  _title?: string | null;
-  slug?: string | null;
   _sys?: {
     lastModifiedAt?: string | null;
   } | null;
+  _title?: string | null;
   authors?: {
     _title?: string | null;
     avatar?: {
@@ -131,7 +130,6 @@ export interface PostMeta {
     xUrl?: string | null;
   }[];
   categories?: { _title?: string | null }[];
-  publishedAt?: string | null;
   description?: string | null;
   featuredImage?: {
     url?: string | null;
@@ -140,6 +138,8 @@ export interface PostMeta {
     alt?: string | null;
     blurDataURL?: string | null;
   } | null;
+  publishedAt?: string | null;
+  slug?: string | null;
 }
 
 export type Post = PostMeta & {
@@ -295,12 +295,12 @@ const legalPostFragment = fragmentOn("TemplateLegalComponent", {
 
 export interface LegalPostMeta {
   _slug?: string | null;
-  _title?: string | null;
-  description?: string | null;
   _sys?: {
     createdAt?: string | null;
     lastModifiedAt?: string | null;
   } | null;
+  _title?: string | null;
+  description?: string | null;
 }
 
 export type LegalPost = LegalPostMeta & {
@@ -429,13 +429,13 @@ const changelogEntryFragment = fragmentOn("PostItem", {
 
 export interface ChangelogEntryMeta {
   _slug?: string | null;
-  _title?: string | null;
-  slug?: string | null;
-  prefix?: string | null;
   _sys?: {
     createdAt?: string | null;
     lastModifiedAt?: string | null;
   } | null;
+  _title?: string | null;
+  prefix?: string | null;
+  slug?: string | null;
 }
 
 export type ChangelogEntry = ChangelogEntryMeta & {
@@ -492,8 +492,8 @@ export interface ChangelogEntriesQueryResponse {
 }
 
 export interface ChangelogAdjacentEntries {
-  previous?: ChangelogEntryMeta | null;
   next?: ChangelogEntryMeta | null;
+  previous?: ChangelogEntryMeta | null;
 }
 
 export const changelog = {
@@ -597,14 +597,14 @@ export const changelog = {
   },
 
   getAdjacentEntries: async (
-    currentSlug: string,
+    currentSlug: string
   ): Promise<ChangelogAdjacentEntries> => {
     try {
       const data = await basehub.query(changelog.entriesMetaQuery);
       const entries = data.changelog.post.items;
 
       const currentIndex = entries.findIndex(
-        (entry) => entry.slug === currentSlug,
+        (entry) => entry.slug === currentSlug
       );
 
       if (currentIndex === -1) {

@@ -73,7 +73,10 @@ export const workspaceIngestionPayloads = pgTable(
     /**
      * When the payload was received by our server
      */
-    receivedAt: timestamp("received_at", { mode: "string", withTimezone: true }).notNull(),
+    receivedAt: timestamp("received_at", {
+      mode: "string",
+      withTimezone: true,
+    }).notNull(),
 
     /**
      * How this payload was ingested: webhook, backfill, manual, or api
@@ -96,16 +99,14 @@ export const workspaceIngestionPayloads = pgTable(
      */
     workspaceReceivedIdx: index("webhook_payload_workspace_received_idx").on(
       table.workspaceId,
-      table.receivedAt,
+      table.receivedAt
     ),
 
     /**
      * Find specific delivery for debugging/linking to observations
      * Used to connect raw payloads to processed observations via deliveryId
      */
-    deliveryIdx: index("webhook_payload_delivery_idx").on(
-      table.deliveryId,
-    ),
+    deliveryIdx: index("webhook_payload_delivery_idx").on(table.deliveryId),
 
     /**
      * Filter by source/type within workspace
@@ -114,17 +115,19 @@ export const workspaceIngestionPayloads = pgTable(
     workspaceSourceIdx: index("webhook_payload_workspace_source_idx").on(
       table.workspaceId,
       table.source,
-      table.eventType,
+      table.eventType
     ),
-  }),
+  })
 );
 
 /** @deprecated Use workspaceIngestionPayloads instead */
 export const workspaceWebhookPayloads = workspaceIngestionPayloads;
 
 // Type exports
-export type WorkspaceIngestionPayload = typeof workspaceIngestionPayloads.$inferSelect;
-export type InsertWorkspaceIngestionPayload = typeof workspaceIngestionPayloads.$inferInsert;
+export type WorkspaceIngestionPayload =
+  typeof workspaceIngestionPayloads.$inferSelect;
+export type InsertWorkspaceIngestionPayload =
+  typeof workspaceIngestionPayloads.$inferInsert;
 
 /** @deprecated Use WorkspaceIngestionPayload instead */
 export type WorkspaceWebhookPayload = WorkspaceIngestionPayload;

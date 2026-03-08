@@ -1,8 +1,8 @@
-import { ImageResponse } from "next/og";
 import { ContentLayout } from "@repo/og";
-import { loadOGFonts } from "~/lib/og-fonts";
-import { OG_WIDTH, OG_HEIGHT } from "@repo/og/brand";
+import { OG_HEIGHT, OG_WIDTH } from "@repo/og/brand";
 import { blog } from "@vendor/cms";
+import { ImageResponse } from "next/og";
+import { loadOGFonts } from "~/lib/og-fonts";
 
 export const runtime = "nodejs";
 export const alt = "Lightfast Blog Post";
@@ -10,46 +10,46 @@ export const size = { width: OG_WIDTH, height: OG_HEIGHT };
 export const contentType = "image/png";
 
 export default async function Image({
-	params,
+  params,
 }: {
-	params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-	const { slug } = await params;
-	const fonts = await loadOGFonts();
+  const { slug } = await params;
+  const fonts = await loadOGFonts();
 
-	let title = "Blog";
-	let description: string | undefined;
-	let category: string | undefined;
-	let date: string | undefined;
-	let author: string | undefined;
+  let title = "Blog";
+  let description: string | undefined;
+  let category: string | undefined;
+  let date: string | undefined;
+  let author: string | undefined;
 
-	try {
-		const post = await blog.getPost(slug);
-		if (post) {
-			title = post._title ?? "Blog";
-			description = post.description ?? undefined;
-			category = post.categories?.[0]?._title ?? undefined;
-			date = post.publishedAt
-				? new Date(post.publishedAt).toLocaleDateString("en-US", {
-						year: "numeric",
-						month: "long",
-						day: "numeric",
-					})
-				: undefined;
-			author = post.authors?.[0]?._title ?? undefined;
-		}
-	} catch {
-		// Fall back to defaults
-	}
+  try {
+    const post = await blog.getPost(slug);
+    if (post) {
+      title = post._title ?? "Blog";
+      description = post.description ?? undefined;
+      category = post.categories?.[0]?._title ?? undefined;
+      date = post.publishedAt
+        ? new Date(post.publishedAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : undefined;
+      author = post.authors?.[0]?._title ?? undefined;
+    }
+  } catch {
+    // Fall back to defaults
+  }
 
-	return new ImageResponse(
-		<ContentLayout
-			title={title}
-			description={description}
-			category={category}
-			date={date}
-			author={author}
-		/>,
-		{ ...size, fonts },
-	);
+  return new ImageResponse(
+    <ContentLayout
+      author={author}
+      category={category}
+      date={date}
+      description={description}
+      title={title}
+    />,
+    { ...size, fonts }
+  );
 }

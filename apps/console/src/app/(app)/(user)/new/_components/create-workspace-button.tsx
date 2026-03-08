@@ -1,21 +1,21 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useTRPC } from "@repo/console-trpc/react";
+import type { WorkspaceFormValues } from "@repo/console-validation/forms";
+import { Button } from "@repo/ui/components/ui/button";
 import { useFormContext, useFormState } from "@repo/ui/components/ui/form";
+import { toast } from "@repo/ui/components/ui/sonner";
 import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
+import { useOrganizationList } from "@vendor/clerk/client";
 import { produce } from "immer";
 import { Loader2 } from "lucide-react";
-import { Button } from "@repo/ui/components/ui/button";
-import { toast } from "@repo/ui/components/ui/sonner";
-import { useTRPC } from "@repo/console-trpc/react";
+import { useRouter } from "next/navigation";
 import { showErrorToast } from "~/lib/trpc-errors";
-import { useOrganizationList } from "@vendor/clerk/client";
 import { useWorkspaceForm } from "./workspace-form-provider";
-import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 
 /**
  * Create Workspace Button
@@ -40,8 +40,16 @@ export function CreateWorkspaceButton() {
   });
 
   // Get source selection state from context
-  const { selectedRepositories, gwInstallationId, selectedInstallation, selectedVercelInstallation, selectedProjects, sentryInstallationId, selectedSentryProjects, selectedLinearTeam } =
-    useWorkspaceForm();
+  const {
+    selectedRepositories,
+    gwInstallationId,
+    selectedInstallation,
+    selectedVercelInstallation,
+    selectedProjects,
+    sentryInstallationId,
+    selectedSentryProjects,
+    selectedLinearTeam,
+  } = useWorkspaceForm();
 
   // Create workspace mutation with optimistic updates
   const createWorkspaceMutation = useMutation(
@@ -69,7 +77,7 @@ export function CreateWorkspaceButton() {
         const previous = queryClient.getQueryData(
           trpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
             clerkOrgSlug: orgSlug,
-          }).queryKey,
+          }).queryKey
         );
 
         // Optimistically add new workspace to the list
@@ -81,31 +89,31 @@ export function CreateWorkspaceButton() {
             produce(previous, (draft) => {
               // Add optimistic workspace (will be replaced by server data)
               draft.push({
-                id: "temp-" + Date.now(),
+                id: `temp-${Date.now()}`,
                 name: variables.workspaceName,
                 slug: variables.workspaceName
                   .toLowerCase()
                   .replace(/\s+/g, "-"),
                 createdAt: new Date().toISOString(),
               });
-            }),
+            })
           );
         }
 
         return { previous, orgSlug };
       },
-      onError: (err, variables, context) => {
+      onError: (_err, _variables, context) => {
         // Rollback on error
         if (context?.previous && context.orgSlug) {
           queryClient.setQueryData(
             trpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
               clerkOrgSlug: context.orgSlug,
             }).queryKey,
-            context.previous,
+            context.previous
           );
         }
       },
-      onSettled: (data, error, variables, context) => {
+      onSettled: (_data, _error, _variables, context) => {
         // Always invalidate to ensure consistency with server
         if (context?.orgSlug) {
           void queryClient.invalidateQueries({
@@ -115,7 +123,7 @@ export function CreateWorkspaceButton() {
           });
         }
       },
-    }),
+    })
   );
 
   // Bulk link GitHub repositories mutation
@@ -125,10 +133,11 @@ export function CreateWorkspaceButton() {
         console.error("Failed to link repositories:", error);
         // Note: Workspace is already created, just show warning
         toast.error("Repositories not linked", {
-          description: "Workspace created, but failed to connect repositories. You can add them later.",
+          description:
+            "Workspace created, but failed to connect repositories. You can add them later.",
         });
       },
-    }),
+    })
   );
 
   // Bulk link Vercel projects mutation
@@ -137,10 +146,11 @@ export function CreateWorkspaceButton() {
       onError: (error) => {
         console.error("Failed to link Vercel projects:", error);
         toast.error("Vercel projects not linked", {
-          description: "Workspace created, but failed to connect Vercel projects. You can add them later.",
+          description:
+            "Workspace created, but failed to connect Vercel projects. You can add them later.",
         });
       },
-    }),
+    })
   );
 
   // Bulk link Sentry projects mutation
@@ -149,10 +159,11 @@ export function CreateWorkspaceButton() {
       onError: (error) => {
         console.error("Failed to link Sentry projects:", error);
         toast.error("Sentry projects not linked", {
-          description: "Workspace created, but failed to connect Sentry projects. You can add them later.",
+          description:
+            "Workspace created, but failed to connect Sentry projects. You can add them later.",
         });
       },
-    }),
+    })
   );
 
   // Bulk link Linear teams mutation
@@ -161,10 +172,11 @@ export function CreateWorkspaceButton() {
       onError: (error) => {
         console.error("Failed to link Linear teams:", error);
         toast.error("Linear teams not linked", {
-          description: "Workspace created, but failed to connect Linear teams. You can add them later.",
+          description:
+            "Workspace created, but failed to connect Linear teams. You can add them later.",
         });
       },
-    }),
+    })
   );
 
   const handleCreateWorkspace = async () => {
@@ -204,51 +216,56 @@ export function CreateWorkspaceButton() {
         }
 
         // Bulk-link selected sources in parallel
-        const [githubResult, vercelResult, sentryResult, linearResult] = await Promise.allSettled([
-          selectedRepositories.length > 0 && gwInstallationId && selectedInstallation
-            ? bulkLinkMutation.mutateAsync({
-                workspaceId: workspace.workspaceId,
-                gwInstallationId,
-                installationId: selectedInstallation.id,
-                repositories: selectedRepositories.map((repo) => ({
-                  repoId: repo.id,
-                  repoFullName: repo.fullName,
-                })),
-              })
-            : Promise.resolve(null),
-          selectedProjects.length > 0 && selectedVercelInstallation
-            ? bulkLinkVercelMutation.mutateAsync({
-                workspaceId: workspace.workspaceId,
-                gwInstallationId: selectedVercelInstallation.id,
-                projects: selectedProjects.map((p) => ({
-                  projectId: p.id,
-                  projectName: p.name,
-                })),
-              })
-            : Promise.resolve(null),
-          selectedSentryProjects.length > 0 && sentryInstallationId
-            ? bulkLinkSentryMutation.mutateAsync({
-                workspaceId: workspace.workspaceId,
-                gwInstallationId: sentryInstallationId,
-                projects: selectedSentryProjects.map((p) => ({
-                  projectId: p.id,
-                  projectSlug: p.slug,
-                  projectName: p.name,
-                })),
-              })
-            : Promise.resolve(null),
-          selectedLinearTeam
-            ? bulkLinkLinearMutation.mutateAsync({
-                workspaceId: workspace.workspaceId,
-                gwInstallationId: selectedLinearTeam.installationId,
-                teams: [{
-                  teamId: selectedLinearTeam.id,
-                  teamKey: selectedLinearTeam.key,
-                  teamName: selectedLinearTeam.name,
-                }],
-              })
-            : Promise.resolve(null),
-        ]);
+        const [githubResult, vercelResult, sentryResult, linearResult] =
+          await Promise.allSettled([
+            selectedRepositories.length > 0 &&
+            gwInstallationId &&
+            selectedInstallation
+              ? bulkLinkMutation.mutateAsync({
+                  workspaceId: workspace.workspaceId,
+                  gwInstallationId,
+                  installationId: selectedInstallation.id,
+                  repositories: selectedRepositories.map((repo) => ({
+                    repoId: repo.id,
+                    repoFullName: repo.fullName,
+                  })),
+                })
+              : Promise.resolve(null),
+            selectedProjects.length > 0 && selectedVercelInstallation
+              ? bulkLinkVercelMutation.mutateAsync({
+                  workspaceId: workspace.workspaceId,
+                  gwInstallationId: selectedVercelInstallation.id,
+                  projects: selectedProjects.map((p) => ({
+                    projectId: p.id,
+                    projectName: p.name,
+                  })),
+                })
+              : Promise.resolve(null),
+            selectedSentryProjects.length > 0 && sentryInstallationId
+              ? bulkLinkSentryMutation.mutateAsync({
+                  workspaceId: workspace.workspaceId,
+                  gwInstallationId: sentryInstallationId,
+                  projects: selectedSentryProjects.map((p) => ({
+                    projectId: p.id,
+                    projectSlug: p.slug,
+                    projectName: p.name,
+                  })),
+                })
+              : Promise.resolve(null),
+            selectedLinearTeam
+              ? bulkLinkLinearMutation.mutateAsync({
+                  workspaceId: workspace.workspaceId,
+                  gwInstallationId: selectedLinearTeam.installationId,
+                  teams: [
+                    {
+                      teamId: selectedLinearTeam.id,
+                      teamKey: selectedLinearTeam.key,
+                      teamName: selectedLinearTeam.name,
+                    },
+                  ],
+                })
+              : Promise.resolve(null),
+          ]);
 
         const repoCount =
           githubResult.status === "fulfilled" && githubResult.value
@@ -266,7 +283,8 @@ export function CreateWorkspaceButton() {
           linearResult.status === "fulfilled" && linearResult.value
             ? linearResult.value.created + linearResult.value.reactivated
             : 0;
-        const totalLinked = repoCount + projectCount + sentryCount + linearCount;
+        const totalLinked =
+          repoCount + projectCount + sentryCount + linearCount;
 
         toast.success("Workspace created!", {
           description:
@@ -275,7 +293,9 @@ export function CreateWorkspaceButton() {
               : `${workspace.workspaceName} workspace is ready. Add sources to get started.`,
         });
 
-        const selectedOrg = organizations.find((org) => org.id === selectedOrgId);
+        const selectedOrg = organizations.find(
+          (org) => org.id === selectedOrgId
+        );
         if (!selectedOrg?.slug) {
           router.push("/");
           return;
@@ -284,18 +304,32 @@ export function CreateWorkspaceButton() {
       })
       .catch((error: unknown) => {
         console.error("Workspace creation failed:", error);
-        showErrorToast(error, "Creation failed", "Failed to create workspace. Please try again.");
+        showErrorToast(
+          error,
+          "Creation failed",
+          "Failed to create workspace. Please try again."
+        );
       });
   };
 
   const isDisabled =
-    !isValid || createWorkspaceMutation.isPending || bulkLinkMutation.isPending || bulkLinkVercelMutation.isPending || bulkLinkSentryMutation.isPending || bulkLinkLinearMutation.isPending;
+    !isValid ||
+    createWorkspaceMutation.isPending ||
+    bulkLinkMutation.isPending ||
+    bulkLinkVercelMutation.isPending ||
+    bulkLinkSentryMutation.isPending ||
+    bulkLinkLinearMutation.isPending;
 
-  const isLoading = createWorkspaceMutation.isPending || bulkLinkMutation.isPending || bulkLinkVercelMutation.isPending || bulkLinkSentryMutation.isPending || bulkLinkLinearMutation.isPending;
+  const isLoading =
+    createWorkspaceMutation.isPending ||
+    bulkLinkMutation.isPending ||
+    bulkLinkVercelMutation.isPending ||
+    bulkLinkSentryMutation.isPending ||
+    bulkLinkLinearMutation.isPending;
 
   return (
     <div className="mt-8 flex justify-end">
-      <Button onClick={handleCreateWorkspace} disabled={isDisabled} size="sm">
+      <Button disabled={isDisabled} onClick={handleCreateWorkspace} size="sm">
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

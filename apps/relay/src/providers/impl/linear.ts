@@ -1,11 +1,8 @@
-import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto.js";
-import { linearWebhookPayloadSchema } from "../schemas.js";
-import type { LinearWebhookPayload } from "../schemas.js";
-import type {
-  WebhookProvider,
-  WebhookPayload,
-} from "../types.js";
 import type { RelayEnv } from "../../env.js";
+import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto.js";
+import type { LinearWebhookPayload } from "../schemas.js";
+import { linearWebhookPayloadSchema } from "../schemas.js";
+import type { WebhookPayload, WebhookProvider } from "../types.js";
 
 const SIGNATURE_HEADER = "linear-signature";
 const DELIVERY_HEADER = "linear-delivery";
@@ -20,10 +17,12 @@ export class LinearProvider implements WebhookProvider {
   async verifyWebhook(
     payload: string,
     headers: Headers,
-    secret: string,
+    secret: string
   ): Promise<boolean> {
     const signature = headers.get(SIGNATURE_HEADER);
-    if (!signature) return false;
+    if (!signature) {
+      return false;
+    }
 
     const expectedSig = await computeHmacSha256(payload, secret);
     return timingSafeEqual(signature, expectedSig);
@@ -39,7 +38,9 @@ export class LinearProvider implements WebhookProvider {
 
   extractEventType(_headers: Headers, payload: WebhookPayload): string {
     const p = payload as LinearWebhookPayload;
-    if (p.type && p.action) return `${p.type}:${p.action}`;
+    if (p.type && p.action) {
+      return `${p.type}:${p.action}`;
+    }
     return p.type ?? "unknown";
   }
 
@@ -55,7 +56,7 @@ function stableStringify(value: unknown): string {
     return JSON.stringify(value);
   }
   if (Array.isArray(value)) {
-    return "[" + value.map(stableStringify).join(",") + "]";
+    return `[${value.map(stableStringify).join(",")}]`;
   }
   const sorted = Object.keys(value as Record<string, unknown>)
     .sort()
@@ -63,9 +64,9 @@ function stableStringify(value: unknown): string {
       (k) =>
         JSON.stringify(k) +
         ":" +
-        stableStringify((value as Record<string, unknown>)[k]),
+        stableStringify((value as Record<string, unknown>)[k])
     );
-  return "{" + sorted.join(",") + "}";
+  return `{${sorted.join(",")}}`;
 }
 
 /**
@@ -74,16 +75,16 @@ function stableStringify(value: unknown): string {
  */
 function stableFingerprint(payload: WebhookPayload): string {
   const str = stableStringify(payload);
-  let h1 = 0x811c9dc5;
-  let h2 = 0x050c5d1f;
-  let h3 = 0x1a47e90b;
-  let h4 = 0x7fee3cb1;
+  let h1 = 0x81_1c_9d_c5;
+  let h2 = 0x05_0c_5d_1f;
+  let h3 = 0x1a_47_e9_0b;
+  let h4 = 0x7f_ee_3c_b1;
   for (let i = 0; i < str.length; i++) {
     const c = str.charCodeAt(i);
-    h1 = Math.imul(h1 ^ c, 0x01000193);
-    h2 = Math.imul(h2 ^ c, 0x01000193);
-    h3 = Math.imul(h3 ^ c, 0x01000193);
-    h4 = Math.imul(h4 ^ c, 0x01000193);
+    h1 = Math.imul(h1 ^ c, 0x01_00_01_93);
+    h2 = Math.imul(h2 ^ c, 0x01_00_01_93);
+    h3 = Math.imul(h3 ^ c, 0x01_00_01_93);
+    h4 = Math.imul(h4 ^ c, 0x01_00_01_93);
   }
   return [h1, h2, h3, h4]
     .map((h) => (h >>> 0).toString(16).padStart(8, "0"))

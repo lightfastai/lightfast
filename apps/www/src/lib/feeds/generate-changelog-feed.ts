@@ -59,9 +59,7 @@ export async function generateChangelogFeed(): Promise<Feed> {
         link: url,
         description,
         date: publishedDate,
-        ...(entry.featuredImage?.url
-          ? { image: entry.featuredImage.url }
-          : {}),
+        ...(entry.featuredImage?.url ? { image: entry.featuredImage.url } : {}),
       });
     });
   } catch {

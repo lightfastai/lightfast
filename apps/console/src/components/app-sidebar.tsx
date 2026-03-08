@@ -1,9 +1,11 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { HelpCircle, Mail, BookOpen } from "lucide-react";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
 import {
   Sidebar,
   SidebarContent,
@@ -12,23 +14,20 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
-import { Button } from "@repo/ui/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/components/ui/popover";
+import { BookOpen, HelpCircle, Mail } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { TeamSwitcher } from "./team-switcher";
 
 /**
  * Navigation item types
  */
 interface NavItem {
-  title: string;
   href: string;
+  title: string;
 }
 
 /**
@@ -36,7 +35,7 @@ interface NavItem {
  */
 function getWorkspacePrimaryItems(
   orgSlug: string,
-  workspaceName: string,
+  workspaceName: string
 ): NavItem[] {
   return [
     {
@@ -55,7 +54,7 @@ function getWorkspacePrimaryItems(
  */
 function getWorkspaceManageItems(
   orgSlug: string,
-  workspaceName: string,
+  workspaceName: string
 ): NavItem[] {
   return [
     {
@@ -127,7 +126,7 @@ export function AppSidebar() {
   // Determine the current context
   const isInOrgSettings = pathname.startsWith(`/${orgSlug}/settings`);
   const _isInWorkspaceSettings = pathname.startsWith(
-    `/${orgSlug}/${workspaceName}/settings`,
+    `/${orgSlug}/${workspaceName}/settings`
   );
   const isInWorkspace =
     workspaceName && workspaceName !== "settings" && !isInOrgSettings;
@@ -140,13 +139,13 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      variant="inset"
+      className="group/sidebar border-border/50 border-r"
       collapsible="none"
-      className="border-r border-border/50 group/sidebar"
+      variant="inset"
     >
       {/* Org component header - only show if in org context */}
       {orgSlug && (
-        <div className="h-14 flex items-center px-4">
+        <div className="flex h-14 items-center px-4">
           <TeamSwitcher mode={mode} />
         </div>
       )}
@@ -193,27 +192,37 @@ export function AppSidebar() {
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
-              size="icon"
               className="rounded-full bg-muted p-1"
+              size="icon"
               title="Help"
+              variant="outline"
             >
               <HelpCircle className="h-3 w-3" />
             </Button>
           </PopoverTrigger>
           <PopoverContent align="center" className="w-48 p-1">
             <div className="flex flex-col gap-1">
-              <Button variant="ghost" size="sm" asChild className="justify-start text-sm gap-2">
+              <Button
+                asChild
+                className="justify-start gap-2 text-sm"
+                size="sm"
+                variant="ghost"
+              >
                 <a href="mailto:support@lightfast.ai">
                   <Mail className="size-3" />
                   Contact Support
                 </a>
               </Button>
-              <Button variant="ghost" size="sm" asChild className="justify-start text-sm gap-2">
+              <Button
+                asChild
+                className="justify-start gap-2 text-sm"
+                size="sm"
+                variant="ghost"
+              >
                 <Link
                   href="https://lightfast.ai/docs"
-                  target="_blank"
                   rel="noopener noreferrer"
+                  target="_blank"
                 >
                   <BookOpen className="size-3" />
                   Help Docs

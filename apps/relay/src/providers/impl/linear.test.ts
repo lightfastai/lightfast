@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { computeHmacSha256 } from "../../lib/crypto.js";
 import { LinearProvider } from "./linear.js";
 
@@ -18,7 +18,7 @@ describe("LinearProvider", () => {
       const result = await provider.verifyWebhook(
         body,
         headers({ "linear-signature": sig }),
-        secret,
+        secret
       );
       expect(result).toBe(true);
     });
@@ -27,7 +27,7 @@ describe("LinearProvider", () => {
       const result = await provider.verifyWebhook(
         '{"type":"Issue","action":"create"}',
         headers({ "linear-signature": "badsig" }),
-        secret,
+        secret
       );
       expect(result).toBe(false);
     });
@@ -36,7 +36,7 @@ describe("LinearProvider", () => {
       const result = await provider.verifyWebhook(
         '{"type":"Issue"}',
         headers({}),
-        secret,
+        secret
       );
       expect(result).toBe(false);
     });
@@ -64,13 +64,17 @@ describe("LinearProvider", () => {
     it("reads linear-delivery header", () => {
       const id = provider.extractDeliveryId(
         headers({ "linear-delivery": "del-789" }),
-        {},
+        {}
       );
       expect(id).toBe("del-789");
     });
 
     it("generates deterministic fallback when header missing", () => {
-      const payload = { type: "Issue", action: "create", organizationId: "org-1" };
+      const payload = {
+        type: "Issue",
+        action: "create",
+        organizationId: "org-1",
+      };
       const id1 = provider.extractDeliveryId(headers({}), payload);
       const id2 = provider.extractDeliveryId(headers({}), payload);
       expect(id1).toBe(id2);
@@ -78,8 +82,14 @@ describe("LinearProvider", () => {
     });
 
     it("produces different IDs for different payloads", () => {
-      const id1 = provider.extractDeliveryId(headers({}), { type: "Issue", action: "create" });
-      const id2 = provider.extractDeliveryId(headers({}), { type: "Issue", action: "update" });
+      const id1 = provider.extractDeliveryId(headers({}), {
+        type: "Issue",
+        action: "create",
+      });
+      const id2 = provider.extractDeliveryId(headers({}), {
+        type: "Issue",
+        action: "update",
+      });
       expect(id1).not.toBe(id2);
     });
   });

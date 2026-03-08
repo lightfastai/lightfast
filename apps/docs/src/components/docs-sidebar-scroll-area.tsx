@@ -26,9 +26,11 @@ export function DocsSidebarScrollArea({
 
   useEffect(() => {
     const scrollElement = scrollAreaRef.current?.querySelector(
-      "[data-radix-scroll-area-viewport]",
+      "[data-radix-scroll-area-viewport]"
     );
-    if (!scrollElement) return;
+    if (!scrollElement) {
+      return;
+    }
 
     const handleScroll = () => {
       setIsScrolled(scrollElement.scrollTop > 0);
@@ -46,10 +48,10 @@ export function DocsSidebarScrollArea({
           "border-t transition-opacity duration-200",
           isScrolled
             ? "border-border opacity-100"
-            : "border-transparent opacity-0",
+            : "border-transparent opacity-0"
         )}
       />
-      <ScrollArea ref={scrollAreaRef} className={className}>
+      <ScrollArea className={className} ref={scrollAreaRef}>
         {children}
       </ScrollArea>
     </>

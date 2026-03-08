@@ -1,13 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  getSlideYKeyframes,
-  getSlideScaleKeyframes,
-  getSlideOpacityKeyframes,
-  getSlideZIndexKeyframes,
   getIndicatorOpacityKeyframes,
   getIndicatorWidthKeyframes,
-  getSlideIndexFromProgress,
   getScrollTargetForSlide,
+  getSlideIndexFromProgress,
+  getSlideOpacityKeyframes,
+  getSlideScaleKeyframes,
+  getSlideYKeyframes,
+  getSlideZIndexKeyframes,
 } from "./animation-utils";
 
 const TOTAL = 10;
@@ -56,7 +56,7 @@ describe("getSlideOpacityKeyframes", () => {
   it("fades from 1 to 0", () => {
     const kf = getSlideOpacityKeyframes(2, TOTAL);
     expect(kf.output[0]).toBe(1);
-    expect(kf.output[kf.output.length - 1]).toBe(0);
+    expect(kf.output.at(-1)).toBe(0);
   });
 });
 
@@ -103,13 +103,13 @@ describe("getSlideIndexFromProgress", () => {
 
 describe("getScrollTargetForSlide", () => {
   it("divides by (totalSlides + 1)", () => {
-    const scrollHeight = 11000; // (10 + 1) * 1000
+    const scrollHeight = 11_000; // (10 + 1) * 1000
     const target = getScrollTargetForSlide(3, TOTAL, scrollHeight);
     expect(target).toBe(3 * (scrollHeight / (TOTAL + 1)));
     expect(target).toBe(3000);
   });
 
   it("returns 0 for index 0", () => {
-    expect(getScrollTargetForSlide(0, TOTAL, 11000)).toBe(0);
+    expect(getScrollTargetForSlide(0, TOTAL, 11_000)).toBe(0);
   });
 });

@@ -1,11 +1,11 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
-import { z } from "zod";
 import type {
+  LightfastAnswerRuntimeContext,
   SearchToolInput,
   SearchToolOutput,
-  LightfastAnswerRuntimeContext,
 } from "@repo/console-ai-types";
 import { V1SearchResponseSchema } from "@repo/console-types";
+import { z } from "zod";
 
 const inputSchema: z.ZodType<SearchToolInput> = z.object({
   query: z.string().describe("The search query text"),
@@ -13,13 +13,7 @@ const inputSchema: z.ZodType<SearchToolInput> = z.object({
     .enum(["fast", "balanced", "thorough"])
     .default("balanced")
     .describe("Search quality mode"),
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(20)
-    .default(10)
-    .describe("Max results"),
+  limit: z.number().int().min(1).max(20).default(10).describe("Max results"),
   filters: z
     .object({
       sourceTypes: z
@@ -54,7 +48,7 @@ export function workspaceSearchTool() {
       const handler = context.tools?.workspaceSearch?.handler;
       if (!handler) {
         throw new Error(
-          "Workspace search handler not configured in runtime context.",
+          "Workspace search handler not configured in runtime context."
         );
       }
       return handler(input);

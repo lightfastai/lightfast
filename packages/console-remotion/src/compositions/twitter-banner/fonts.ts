@@ -4,7 +4,9 @@ import { staticFile } from "remotion";
 let fontsLoaded = false;
 
 export const ensureFontsLoaded = async () => {
-  if (fontsLoaded) return;
+  if (fontsLoaded) {
+    return;
+  }
 
   await Promise.all([
     loadFont({

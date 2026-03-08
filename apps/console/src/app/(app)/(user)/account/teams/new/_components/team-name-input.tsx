@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useFormContext } from "@repo/ui/components/ui/form";
+import type { TeamFormValues } from "@repo/console-validation/forms";
 import {
   FormControl,
   FormDescription,
@@ -9,10 +8,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  useFormContext,
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
+import { useEffect, useRef } from "react";
 import { useTeamSearchParams } from "./use-team-search-params";
-import type { TeamFormValues } from "@repo/console-validation/forms";
 
 /**
  * Team Name Input
@@ -29,7 +29,8 @@ import type { TeamFormValues } from "@repo/console-validation/forms";
  */
 export function TeamNameInput() {
   const form = useFormContext<TeamFormValues>();
-  const { teamName: urlTeamName, setTeamName: setUrlTeamName } = useTeamSearchParams();
+  const { teamName: urlTeamName, setTeamName: setUrlTeamName } =
+    useTeamSearchParams();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize from URL on mount
@@ -80,10 +81,17 @@ export function TeamNameInput() {
       name="teamName"
       render={({ field, fieldState }) => (
         <FormItem>
-          <FormLabel className="text-xs font-medium text-muted-foreground">Your Team Name</FormLabel>
+          <FormLabel className="font-medium text-muted-foreground text-xs">
+            Your Team Name
+          </FormLabel>
           <FormControl>
             <Input
               {...field}
+              className="font-mono"
+              onBlur={() => {
+                field.onBlur();
+                handleBlur();
+              }}
               onChange={(e) => {
                 // Normalize slug: lowercase, alphanumeric + hyphens only
                 const normalized = e.target.value
@@ -94,12 +102,7 @@ export function TeamNameInput() {
                 field.onChange(normalized);
                 syncToUrl(normalized);
               }}
-              onBlur={() => {
-                field.onBlur();
-                handleBlur();
-              }}
               placeholder="acme-inc"
-              className="font-mono"
             />
           </FormControl>
           {fieldState.error ? (

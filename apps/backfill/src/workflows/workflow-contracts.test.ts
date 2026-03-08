@@ -7,13 +7,15 @@
  * These catch the class of bug where a field is renamed on one side
  * but not the other — unit tests pass, production silently times out.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Capture handlers from both workflows ──
 
 let orchestratorHandler!: (args: { event: any; step: any }) => Promise<unknown>;
 let entityWorkerHandler!: (args: { event: any; step: any }) => Promise<unknown>;
-let entityWorkerOnFailure: ((args: { error: any; event: any; step: any }) => Promise<unknown>) | undefined;
+let entityWorkerOnFailure:
+  | ((args: { error: any; event: any; step: any }) => Promise<unknown>)
+  | undefined;
 
 // Track createFunction calls in order: orchestrator loads first, then entity worker
 const capturedFunctions: Array<{ config: any; handler: any }> = [];
@@ -62,12 +64,12 @@ for (const fn of capturedFunctions) {
 
 if (!orchestratorHandler) {
   throw new Error(
-    `Missing handler for "apps-backfill/run.orchestrator" — captured IDs: ${capturedFunctions.map((f) => f.config.id).join(", ")}`,
+    `Missing handler for "apps-backfill/run.orchestrator" — captured IDs: ${capturedFunctions.map((f) => f.config.id).join(", ")}`
   );
 }
 if (!entityWorkerHandler) {
   throw new Error(
-    `Missing handler for "apps-backfill/entity.worker" — captured IDs: ${capturedFunctions.map((f) => f.config.id).join(", ")}`,
+    `Missing handler for "apps-backfill/entity.worker" — captured IDs: ${capturedFunctions.map((f) => f.config.id).join(", ")}`
   );
 }
 
@@ -112,8 +114,8 @@ describe("orchestrator ↔ entity worker event contract", () => {
             { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
           ],
         }),
-        { status: 200 },
-      ),
+        { status: 200 }
+      )
     );
 
     const waitForEventCalls: Array<{ stepName: string; opts: any }> = [];
@@ -123,7 +125,12 @@ describe("orchestrator ↔ entity worker event contract", () => {
       waitForEvent: vi.fn((stepName: string, opts: any) => {
         waitForEventCalls.push({ stepName, opts });
         return Promise.resolve({
-          data: { success: true, eventsProduced: 0, eventsDispatched: 0, pagesProcessed: 0 },
+          data: {
+            success: true,
+            eventsProduced: 0,
+            eventsDispatched: 0,
+            pagesProcessed: 0,
+          },
         });
       }),
       sleep: vi.fn().mockResolvedValue(undefined),
@@ -148,9 +155,13 @@ describe("orchestrator ↔ entity worker event contract", () => {
     // Token fetch
     mockFetch.mockResolvedValueOnce(
       new Response(
-        JSON.stringify({ accessToken: "tok-1", provider: "github", expiresIn: 3600 }),
-        { status: 200 },
-      ),
+        JSON.stringify({
+          accessToken: "tok-1",
+          provider: "github",
+          expiresIn: 3600,
+        }),
+        { status: 200 }
+      )
     );
     mockConnector.fetchPage.mockResolvedValueOnce({
       events: [{ deliveryId: "d1", eventType: "pull_request", payload: {} }],
@@ -160,7 +171,7 @@ describe("orchestrator ↔ entity worker event contract", () => {
     // Dispatch response
     mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
 
-    const workerSendEventCalls: Array<[string, any]> = [];
+    const workerSendEventCalls: [string, any][] = [];
     const workerStep = {
       run: vi.fn((_name: string, fn: () => unknown) => fn()),
       sendEvent: vi.fn((name: string, payload: any) => {
@@ -188,7 +199,7 @@ describe("orchestrator ↔ entity worker event contract", () => {
 
     // Find the completion event
     const completionCall = workerSendEventCalls.find(
-      ([name]) => name === "notify-completion",
+      ([name]) => name === "notify-completion"
     );
     expect(completionCall).toBeDefined();
     const completionData = completionCall![1].data;
@@ -201,7 +212,7 @@ describe("orchestrator ↔ entity worker event contract", () => {
       for (const field of filterFields) {
         expect(
           completionData,
-          `orchestrator waitForEvent references "async.data.${field}" but entity worker completion event is missing it`,
+          `orchestrator waitForEvent references "async.data.${field}" but entity worker completion event is missing it`
         ).toHaveProperty(field);
       }
     }
@@ -221,8 +232,8 @@ describe("orchestrator ↔ entity worker event contract", () => {
             { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
           ],
         }),
-        { status: 200 },
-      ),
+        { status: 200 }
+      )
     );
 
     const waitForEventCalls: Array<{ stepName: string; opts: any }> = [];
@@ -232,7 +243,13 @@ describe("orchestrator ↔ entity worker event contract", () => {
       waitForEvent: vi.fn((stepName: string, opts: any) => {
         waitForEventCalls.push({ stepName, opts });
         return Promise.resolve({
-          data: { success: false, eventsProduced: 0, eventsDispatched: 0, pagesProcessed: 0, error: "fail" },
+          data: {
+            success: false,
+            eventsProduced: 0,
+            eventsDispatched: 0,
+            pagesProcessed: 0,
+            error: "fail",
+          },
         });
       }),
       sleep: vi.fn().mockResolvedValue(undefined),
@@ -252,7 +269,7 @@ describe("orchestrator ↔ entity worker event contract", () => {
     });
 
     // ── Run onFailure to capture the failure completion event ──
-    const failureSendCalls: Array<[string, any]> = [];
+    const failureSendCalls: [string, any][] = [];
     const failureStep = {
       run: vi.fn((_name: string, fn: () => unknown) => fn()),
       sendEvent: vi.fn((name: string, payload: any) => {
@@ -262,7 +279,10 @@ describe("orchestrator ↔ entity worker event contract", () => {
       sleep: vi.fn().mockResolvedValue(undefined),
     };
 
-    expect(entityWorkerOnFailure, "entity worker did not register onFailure handler").toBeDefined();
+    expect(
+      entityWorkerOnFailure,
+      "entity worker did not register onFailure handler"
+    ).toBeDefined();
     await entityWorkerOnFailure!({
       error: new Error("something broke"),
       event: {
@@ -281,7 +301,7 @@ describe("orchestrator ↔ entity worker event contract", () => {
     });
 
     const failureCompletion = failureSendCalls.find(
-      ([name]) => name === "notify-failure",
+      ([name]) => name === "notify-failure"
     );
     expect(failureCompletion).toBeDefined();
     const failureData = failureCompletion![1].data;
@@ -292,7 +312,7 @@ describe("orchestrator ↔ entity worker event contract", () => {
       for (const field of filterFields) {
         expect(
           failureData,
-          `orchestrator waitForEvent references "async.data.${field}" but onFailure completion event is missing it`,
+          `orchestrator waitForEvent references "async.data.${field}" but onFailure completion event is missing it`
         ).toHaveProperty(field);
       }
     }
@@ -312,8 +332,8 @@ describe("orchestrator ↔ entity worker event contract", () => {
             { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
           ],
         }),
-        { status: 200 },
-      ),
+        { status: 200 }
+      )
     );
 
     let capturedEventName: string | undefined;
@@ -323,7 +343,12 @@ describe("orchestrator ↔ entity worker event contract", () => {
       waitForEvent: vi.fn((_stepName: string, opts: any) => {
         capturedEventName = opts.event;
         return Promise.resolve({
-          data: { success: true, eventsProduced: 0, eventsDispatched: 0, pagesProcessed: 0 },
+          data: {
+            success: true,
+            eventsProduced: 0,
+            eventsDispatched: 0,
+            pagesProcessed: 0,
+          },
         });
       }),
       sleep: vi.fn().mockResolvedValue(undefined),
@@ -345,9 +370,13 @@ describe("orchestrator ↔ entity worker event contract", () => {
     // ── Entity worker side ──
     mockFetch.mockResolvedValueOnce(
       new Response(
-        JSON.stringify({ accessToken: "tok-1", provider: "github", expiresIn: 3600 }),
-        { status: 200 },
-      ),
+        JSON.stringify({
+          accessToken: "tok-1",
+          provider: "github",
+          expiresIn: 3600,
+        }),
+        { status: 200 }
+      )
     );
     mockConnector.fetchPage.mockResolvedValueOnce({
       events: [],
@@ -359,7 +388,9 @@ describe("orchestrator ↔ entity worker event contract", () => {
     const workerStep = {
       run: vi.fn((_name: string, fn: () => unknown) => fn()),
       sendEvent: vi.fn((_name: string, payload: any) => {
-        if (payload.name) workerCompletionEventName = payload.name;
+        if (payload.name) {
+          workerCompletionEventName = payload.name;
+        }
         return Promise.resolve(undefined);
       }),
       sleep: vi.fn().mockResolvedValue(undefined),
@@ -398,8 +429,8 @@ describe("orchestrator ↔ entity worker event contract", () => {
             { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
           ],
         }),
-        { status: 200 },
-      ),
+        { status: 200 }
+      )
     );
 
     let fanOutEvents: any[] = [];
@@ -410,7 +441,12 @@ describe("orchestrator ↔ entity worker event contract", () => {
         return Promise.resolve(undefined);
       }),
       waitForEvent: vi.fn().mockResolvedValue({
-        data: { success: true, eventsProduced: 0, eventsDispatched: 0, pagesProcessed: 0 },
+        data: {
+          success: true,
+          eventsProduced: 0,
+          eventsDispatched: 0,
+          pagesProcessed: 0,
+        },
       }),
       sleep: vi.fn().mockResolvedValue(undefined),
     };
@@ -445,7 +481,7 @@ describe("orchestrator ↔ entity worker event contract", () => {
       for (const field of requiredFields) {
         expect(
           evt.data,
-          `fan-out event missing field "${field}" that entity worker expects`,
+          `fan-out event missing field "${field}" that entity worker expects`
         ).toHaveProperty(field);
       }
       // resource must have the shape the worker uses

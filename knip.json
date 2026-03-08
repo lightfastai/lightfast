@@ -6,15 +6,27 @@
       "ignoreDependencies": ["turbo-ignore"]
     },
     "apps/console": {
-      "entry": ["src/app/**/*.{ts,tsx}", "next.config.ts", "sentry.*.config.ts"],
+      "entry": [
+        "src/app/**/*.{ts,tsx}",
+        "next.config.ts",
+        "sentry.*.config.ts"
+      ],
       "project": ["src/**/*.{ts,tsx}"]
     },
     "apps/www": {
-      "entry": ["src/app/**/*.{ts,tsx}", "next.config.ts", "sentry.*.config.ts"],
+      "entry": [
+        "src/app/**/*.{ts,tsx}",
+        "next.config.ts",
+        "sentry.*.config.ts"
+      ],
       "project": ["src/**/*.{ts,tsx}"]
     },
     "apps/auth": {
-      "entry": ["src/app/**/*.{ts,tsx}", "next.config.ts", "sentry.*.config.ts"],
+      "entry": [
+        "src/app/**/*.{ts,tsx}",
+        "next.config.ts",
+        "sentry.*.config.ts"
+      ],
       "project": ["src/**/*.{ts,tsx}"]
     },
     "apps/docs": {
@@ -51,7 +63,11 @@
       "project": ["src/**/*.{ts,tsx}"]
     },
     "packages/cms-workflows": {
-      "entry": ["src/index.ts", "src/publish-blog.ts", "src/publish-changelog.ts"],
+      "entry": [
+        "src/index.ts",
+        "src/publish-blog.ts",
+        "src/publish-changelog.ts"
+      ],
       "project": ["src/**/*.ts"]
     },
     "packages/console-test-data": {

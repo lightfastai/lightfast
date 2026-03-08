@@ -1,17 +1,17 @@
 "use client";
 
-import { createElement } from "react";
-import { createRoot } from "react-dom/client";
-import { flushSync } from "react-dom";
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
+import { createElement } from "react";
+import { flushSync } from "react-dom";
+import { createRoot } from "react-dom/client";
 import { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import { CaptureSlide } from "../_components/capture-slide";
 
 export interface ExportOptions {
-  width?: number;
-  height?: number;
   filename?: string;
+  height?: number;
+  width?: number;
 }
 
 /** PDF page dimensions (high-res 16:9) */
@@ -34,7 +34,7 @@ const DEFAULT_OPTIONS: Required<ExportOptions> = {
  * Uses ReactDOM to render slides off-screen for consistent styling.
  */
 export async function exportSlidesToPdf(
-  options: ExportOptions = {},
+  options: ExportOptions = {}
 ): Promise<void> {
   const { width, height, filename } = { ...DEFAULT_OPTIONS, ...options };
 
@@ -89,7 +89,7 @@ export async function exportSlidesToPdf(
             width,
             height,
             fontFamily: resolvedFontFamily,
-          }),
+          })
         );
       });
 
@@ -108,10 +108,17 @@ export async function exportSlidesToPdf(
         imageTimeout: 0,
         onclone: (clonedDoc) => {
           // Ensure the cloned document has font CSS variable classes and resolved font-family
-          clonedDoc.documentElement.className = document.documentElement.className;
+          clonedDoc.documentElement.className =
+            document.documentElement.className;
           clonedDoc.body.style.fontFamily = resolvedFontFamily;
-          clonedDoc.body.style.setProperty("-webkit-font-smoothing", "antialiased");
-          clonedDoc.body.style.setProperty("text-rendering", "optimizeLegibility");
+          clonedDoc.body.style.setProperty(
+            "-webkit-font-smoothing",
+            "antialiased"
+          );
+          clonedDoc.body.style.setProperty(
+            "text-rendering",
+            "optimizeLegibility"
+          );
         },
       });
 

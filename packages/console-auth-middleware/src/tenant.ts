@@ -119,9 +119,7 @@ export function isValidTenantId(clerkOrgId: string): boolean {
  * const filter = createTenantFilter(clerkOrgId);
  * ```
  */
-export function extractTenantId(workspace: {
-  clerkOrgId: string;
-}): string {
+export function extractTenantId(workspace: { clerkOrgId: string }): string {
   return workspace.clerkOrgId;
 }
 
@@ -274,8 +272,6 @@ export function filterResourcesByTenant<T extends { clerkOrgId: string }>(
  *   .where(inArray(workspaces.clerkOrgId, orgIds));
  * ```
  */
-export function createMultiTenantFilter(
-  clerkOrgIds: string[]
-): TenantFilter[] {
+export function createMultiTenantFilter(clerkOrgIds: string[]): TenantFilter[] {
   return clerkOrgIds.map((clerkOrgId) => createTenantFilter(clerkOrgId));
 }

@@ -28,7 +28,7 @@ export async function createGitHubAppJWT(): Promise<string> {
   const signature = await crypto.subtle.sign(
     "RSASSA-PKCS1-v1_5",
     key,
-    new TextEncoder().encode(signingInput),
+    new TextEncoder().encode(signingInput)
   );
 
   const encodedSignature = base64UrlEncodeBytes(new Uint8Array(signature));
@@ -40,7 +40,7 @@ export async function createGitHubAppJWT(): Promise<string> {
  * Token expires in 1 hour. Never stored — generated on demand.
  */
 export async function getInstallationToken(
-  installationId: string,
+  installationId: string
 ): Promise<string> {
   if (!/^\d+$/.test(installationId)) {
     throw new Error("Invalid GitHub installation ID: must be numeric");
@@ -49,7 +49,9 @@ export async function getInstallationToken(
   const jwt = await createGitHubAppJWT();
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => { controller.abort(); }, 10_000);
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 10_000);
 
   let response: Response;
   try {
@@ -64,7 +66,7 @@ export async function getInstallationToken(
           "User-Agent": "lightfast-gateway",
           "X-GitHub-Api-Version": "2022-11-28",
         },
-      },
+      }
     );
   } finally {
     clearTimeout(timeout);
@@ -72,7 +74,7 @@ export async function getInstallationToken(
 
   if (!response.ok) {
     throw new Error(
-      `GitHub installation token request failed: ${response.status}`,
+      `GitHub installation token request failed: ${response.status}`
     );
   }
 
@@ -88,7 +90,7 @@ export async function getInstallationToken(
  * Returns account info, permissions, and subscribed webhook events.
  */
 export async function getInstallationDetails(
-  installationId: string,
+  installationId: string
 ): Promise<GitHubInstallationRaw> {
   if (!/^\d+$/.test(installationId)) {
     throw new Error("Invalid GitHub installation ID: must be numeric");
@@ -97,7 +99,9 @@ export async function getInstallationDetails(
   const jwt = await createGitHubAppJWT();
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => { controller.abort(); }, 10_000);
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 10_000);
 
   let response: Response;
   try {
@@ -112,7 +116,7 @@ export async function getInstallationDetails(
           "User-Agent": "lightfast-gateway",
           "X-GitHub-Api-Version": "2022-11-28",
         },
-      },
+      }
     );
   } finally {
     clearTimeout(timeout);
@@ -120,7 +124,7 @@ export async function getInstallationDetails(
 
   if (!response.ok) {
     throw new Error(
-      `GitHub installation details fetch failed: ${response.status}`,
+      `GitHub installation details fetch failed: ${response.status}`
     );
   }
 
@@ -140,7 +144,8 @@ export async function getInstallationDetails(
     },
     permissions: (data.permissions as Record<string, string> | undefined) ?? {},
     events: (data.events as string[] | undefined) ?? [],
-    created_at: (data.created_at as string | undefined) ?? new Date().toISOString(),
+    created_at:
+      (data.created_at as string | undefined) ?? new Date().toISOString(),
   };
 }
 
@@ -155,9 +160,7 @@ export async function getInstallationDetails(
  */
 async function importPrivateKey(rawKey: string): Promise<CryptoKey> {
   // Normalize: strip quotes, replace literal \n with actual newlines
-  let pem = rawKey
-    .replace(/^["']|["']$/g, "")
-    .replace(/\\n/g, "\n");
+  let pem = rawKey.replace(/^["']|["']$/g, "").replace(/\\n/g, "\n");
 
   // If it doesn't look like PEM, try base64-decoding (legacy format)
   if (!pem.includes("-----BEGIN")) {
@@ -165,7 +168,7 @@ async function importPrivateKey(rawKey: string): Promise<CryptoKey> {
       pem = atob(pem);
     } catch {
       throw new Error(
-        "GITHUB_APP_PRIVATE_KEY is not a valid PEM key or base64-encoded PEM",
+        "GITHUB_APP_PRIVATE_KEY is not a valid PEM key or base64-encoded PEM"
       );
     }
   }
@@ -176,7 +179,7 @@ async function importPrivateKey(rawKey: string): Promise<CryptoKey> {
     throw new Error(
       "GITHUB_APP_PRIVATE_KEY is in PKCS#1 format (RSA PRIVATE KEY). " +
         "Web Crypto requires PKCS#8. Convert with: " +
-        "openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem",
+        "openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem"
     );
   }
 
@@ -197,7 +200,7 @@ async function importPrivateKey(rawKey: string): Promise<CryptoKey> {
     keyBytes.buffer,
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
     false,
-    ["sign"],
+    ["sign"]
   );
 }
 
@@ -206,7 +209,7 @@ function base64UrlEncode(str: string): string {
 }
 
 function base64UrlEncodeBytes(bytes: Uint8Array): string {
-  const CHUNK_SIZE = 0x8000;
+  const CHUNK_SIZE = 0x80_00;
   let binary = "";
   for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
     binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK_SIZE));
