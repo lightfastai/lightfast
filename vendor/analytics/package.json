@@ -42,8 +42,7 @@
 	},
 	"prettier": "@repo/prettier-config",
 	"dependencies": {
-		"@next/third-parties": "^15.3.0",
-		"@t3-oss/env-nextjs": "catalog:",
+"@t3-oss/env-nextjs": "catalog:",
 		"@vercel/analytics": "^1.5.0",
 		"@vercel/speed-insights": "^1.2.0",
 		"next": "catalog:next16",
