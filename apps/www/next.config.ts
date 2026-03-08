@@ -39,23 +39,15 @@ const wwwConfig: NextConfig = {
 		"@vendor/next",
 		"@vendor/upstash",
 		"@vendor/cms",
-		"@repo/email",
-		"@repo/lib",
-		"@paper-design/shaders-react",
-		"@paper-design/shaders",
 	],
 
 	// Add automatic static optimization where possible
 	experimental: {
 		optimizePackageImports: [
-			"jotai",
 			"react-confetti",
 			"framer-motion",
 			"date-fns",
 			"class-variance-authority",
-			"clsx",
-			"tailwind-merge",
-			"@paper-design/shaders-react",
 			// lucide-react ships hundreds of icons — optimizePackageImports
 			// makes the compiler only bundle the specific icons imported rather
 			// than the full barrel, eliminating dead icon code from every chunk.
