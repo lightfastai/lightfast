@@ -1,0 +1,76 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    "group:monorepos",
+    "group:recommended",
+    "schedule:weekly"
+  ],
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "ignorePaths": ["tmp/**", "worktrees/**"],
+  "packageRules": [
+    {
+      "description": "Group TypeScript tooling updates",
+      "groupName": "typescript-tooling",
+      "matchPackagePatterns": ["^typescript", "^@typescript-eslint/"]
+    },
+    {
+      "description": "Group ESLint ecosystem updates",
+      "groupName": "eslint",
+      "matchPackagePatterns": ["^eslint", "^@eslint/"]
+    },
+    {
+      "description": "Group Drizzle ecosystem updates",
+      "groupName": "drizzle",
+      "matchPackagePatterns": ["^drizzle-"]
+    },
+    {
+      "description": "Group AI SDK updates",
+      "groupName": "ai-sdk",
+      "matchPackagePatterns": ["^@ai-sdk/", "^ai$"]
+    },
+    {
+      "description": "Group Clerk updates",
+      "groupName": "clerk",
+      "matchPackagePatterns": ["^@clerk/"]
+    },
+    {
+      "description": "Group Sentry updates",
+      "groupName": "sentry",
+      "matchPackagePatterns": ["^@sentry/"]
+    },
+    {
+      "description": "Group tRPC updates",
+      "groupName": "trpc",
+      "matchPackagePatterns": ["^@trpc/"]
+    },
+    {
+      "description": "Group Tailwind updates",
+      "groupName": "tailwind",
+      "matchPackagePatterns": ["^tailwind", "^@tailwindcss/"]
+    },
+    {
+      "description": "Group Vitest updates",
+      "groupName": "vitest",
+      "matchPackagePatterns": ["^vitest", "^@vitest/"]
+    },
+    {
+      "description": "Group Turborepo updates",
+      "groupName": "turborepo",
+      "matchPackagePatterns": ["^turbo"]
+    },
+    {
+      "description": "Group Vercel SDK updates",
+      "groupName": "vercel",
+      "matchPackagePatterns": ["^@vercel/"]
+    },
+    {
+      "description": "Auto-merge patch updates for dev dependencies",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    }
+  ]
+}
