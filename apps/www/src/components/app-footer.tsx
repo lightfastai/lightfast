@@ -1,6 +1,6 @@
 import { Icons } from "@repo/ui/components/icons";
+import { LISSAJOUS_PATHS } from "@repo/ui/lib/lissajous-paths";
 import NextLink from "next/link";
-import { LISSAJOUS_PATHS } from "~/lib/generated/lissajous-paths";
 
 export function AppFooter() {
   return (

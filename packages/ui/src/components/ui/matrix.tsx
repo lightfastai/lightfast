@@ -1,143 +1,138 @@
-"use client";
+"use client"
 
-import { cn } from "@repo/ui/lib/utils";
-import * as React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import * as React from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
-export type Frame = number[][];
-type MatrixMode = "default" | "vu";
+import { cn } from "@repo/ui/lib/utils"
+
+export type Frame = number[][]
+type MatrixMode = "default" | "vu"
 
 interface CellPosition {
-  x: number;
-  y: number;
+  x: number
+  y: number
 }
 
 interface MatrixProps extends React.HTMLAttributes<HTMLDivElement> {
-  ariaLabel?: string;
-  autoplay?: boolean;
-  brightness?: number;
-  cols: number;
-  fps?: number;
-  frames?: Frame[];
-  gap?: number;
-  levels?: number[];
-  loop?: boolean;
-  mode?: MatrixMode;
-  onFrame?: (index: number) => void;
+  rows: number
+  cols: number
+  pattern?: Frame
+  frames?: Frame[]
+  fps?: number
+  autoplay?: boolean
+  loop?: boolean
+  size?: number
+  gap?: number
   palette?: {
-    on: string;
-    off: string;
-  };
-  pattern?: Frame;
-  rows: number;
-  size?: number;
+    on: string
+    off: string
+  }
+  brightness?: number
+  ariaLabel?: string
+  onFrame?: (index: number) => void
+  mode?: MatrixMode
+  levels?: number[]
 }
 
 function clamp(value: number): number {
-  return Math.max(0, Math.min(1, value));
+  return Math.max(0, Math.min(1, value))
 }
 
 function ensureFrameSize(frame: Frame, rows: number, cols: number): Frame {
-  const result: Frame = [];
+  const result: Frame = []
   for (let r = 0; r < rows; r++) {
-    const row = frame[r] ?? [];
-    const resultRow: number[] = [];
-    result.push(resultRow);
+    const row = frame[r] ?? []
+    const resultRow: number[] = []
+    result.push(resultRow)
     for (let c = 0; c < cols; c++) {
-      resultRow[c] = row[c] ?? 0;
+      resultRow[c] = row[c] ?? 0
     }
   }
-  return result;
+  return result
 }
 
 function useAnimation(
   frames: Frame[] | undefined,
   options: {
-    fps: number;
-    autoplay: boolean;
-    loop: boolean;
-    onFrame?: (index: number) => void;
+    fps: number
+    autoplay: boolean
+    loop: boolean
+    onFrame?: (index: number) => void
   }
 ): { frameIndex: number; isPlaying: boolean } {
-  const { fps, autoplay, loop, onFrame } = options;
-  const [frameIndex, setFrameIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(autoplay);
-  const frameIdRef = useRef<number | undefined>(undefined);
-  const lastTimeRef = useRef<number>(0);
-  const accumulatorRef = useRef<number>(0);
+  const { fps, autoplay, loop, onFrame } = options
+  const [frameIndex, setFrameIndex] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(autoplay)
+  const frameIdRef = useRef<number | undefined>(undefined)
+  const lastTimeRef = useRef<number>(0)
+  const accumulatorRef = useRef<number>(0)
 
   useEffect(() => {
     if (!frames || frames.length === 0 || !isPlaying) {
-      return;
+      return
     }
 
-    const frameInterval = 1000 / fps;
+    const frameInterval = 1000 / fps
 
     const animate = (currentTime: number) => {
       if (lastTimeRef.current === 0) {
-        lastTimeRef.current = currentTime;
+        lastTimeRef.current = currentTime
       }
 
-      const deltaTime = currentTime - lastTimeRef.current;
-      lastTimeRef.current = currentTime;
-      accumulatorRef.current += deltaTime;
+      const deltaTime = currentTime - lastTimeRef.current
+      lastTimeRef.current = currentTime
+      accumulatorRef.current += deltaTime
 
       if (accumulatorRef.current >= frameInterval) {
-        accumulatorRef.current -= frameInterval;
+        accumulatorRef.current -= frameInterval
 
         setFrameIndex((prev) => {
-          const next = prev + 1;
+          const next = prev + 1
           if (next >= frames.length) {
             if (loop) {
-              onFrame?.(0);
-              return 0;
+              onFrame?.(0)
+              return 0
+            } else {
+              setIsPlaying(false)
+              return prev
             }
-            setIsPlaying(false);
-            return prev;
           }
-          onFrame?.(next);
-          return next;
-        });
+          onFrame?.(next)
+          return next
+        })
       }
 
-      frameIdRef.current = requestAnimationFrame(animate);
-    };
+      frameIdRef.current = requestAnimationFrame(animate)
+    }
 
-    frameIdRef.current = requestAnimationFrame(animate);
+    frameIdRef.current = requestAnimationFrame(animate)
 
     return () => {
       if (frameIdRef.current) {
-        cancelAnimationFrame(frameIdRef.current);
+        cancelAnimationFrame(frameIdRef.current)
       }
-    };
-  }, [frames, isPlaying, fps, loop, onFrame]);
+    }
+  }, [frames, isPlaying, fps, loop, onFrame])
 
   useEffect(() => {
     const id = requestAnimationFrame(() => {
-      setFrameIndex(0);
-      setIsPlaying(autoplay);
-    });
-    lastTimeRef.current = 0;
-    accumulatorRef.current = 0;
-    return () => cancelAnimationFrame(id);
-  }, [autoplay]);
+      setFrameIndex(0)
+      setIsPlaying(autoplay)
+    })
+    lastTimeRef.current = 0
+    accumulatorRef.current = 0
+    return () => cancelAnimationFrame(id)
+  }, [frames, autoplay])
 
-  return { frameIndex, isPlaying };
+  return { frameIndex, isPlaying }
 }
 
 function emptyFrame(rows: number, cols: number): Frame {
-  return Array.from({ length: rows }, () =>
-    Array.from<number>({ length: cols }).fill(0)
-  );
+  return Array.from({ length: rows }, () => Array.from<number>({ length: cols }).fill(0))
 }
 
 function setPixel(frame: Frame, row: number, col: number, value: number): void {
-  if (
-    row >= 0 &&
-    row < frame.length &&
-    col >= 0 &&
-    col < (frame[0]?.length ?? 0)
-  ) {
+  if (row >= 0 && row < frame.length && col >= 0 && col < (frame[0]?.length ?? 0)) {
     const rowArr = frame[row];
     if (rowArr) {
       rowArr[col] = value;
@@ -236,7 +231,7 @@ export const digits: Frame[] = [
     [0, 0, 0, 0, 1],
     [0, 1, 1, 1, 0],
   ],
-];
+]
 
 export const chevronLeft: Frame = [
   [0, 0, 0, 1, 0],
@@ -244,7 +239,7 @@ export const chevronLeft: Frame = [
   [0, 1, 0, 0, 0],
   [0, 0, 1, 0, 0],
   [0, 0, 0, 1, 0],
-];
+]
 
 export const chevronRight: Frame = [
   [0, 1, 0, 0, 0],
@@ -252,75 +247,75 @@ export const chevronRight: Frame = [
   [0, 0, 0, 1, 0],
   [0, 0, 1, 0, 0],
   [0, 1, 0, 0, 0],
-];
+]
 
 export const loader: Frame[] = (() => {
-  const frames: Frame[] = [];
-  const size = 7;
-  const center = 3;
-  const radius = 2.5;
+  const frames: Frame[] = []
+  const size = 7
+  const center = 3
+  const radius = 2.5
 
   for (let frame = 0; frame < 12; frame++) {
-    const f = emptyFrame(size, size);
+    const f = emptyFrame(size, size)
     for (let i = 0; i < 8; i++) {
-      const angle = (frame / 12) * Math.PI * 2 + (i / 8) * Math.PI * 2;
-      const x = Math.round(center + Math.cos(angle) * radius);
-      const y = Math.round(center + Math.sin(angle) * radius);
-      const brightness = 1 - i / 10;
-      setPixel(f, y, x, Math.max(0.2, brightness));
+      const angle = (frame / 12) * Math.PI * 2 + (i / 8) * Math.PI * 2
+      const x = Math.round(center + Math.cos(angle) * radius)
+      const y = Math.round(center + Math.sin(angle) * radius)
+      const brightness = 1 - i / 10
+      setPixel(f, y, x, Math.max(0.2, brightness))
     }
-    frames.push(f);
+    frames.push(f)
   }
 
-  return frames;
-})();
+  return frames
+})()
 
 export const pulse: Frame[] = (() => {
-  const frames: Frame[] = [];
-  const size = 7;
-  const center = 3;
+  const frames: Frame[] = []
+  const size = 7
+  const center = 3
 
   for (let frame = 0; frame < 16; frame++) {
-    const f = emptyFrame(size, size);
-    const phase = (frame / 16) * Math.PI * 2;
-    const intensity = (Math.sin(phase) + 1) / 2;
+    const f = emptyFrame(size, size)
+    const phase = (frame / 16) * Math.PI * 2
+    const intensity = (Math.sin(phase) + 1) / 2
 
-    setPixel(f, center, center, 1);
+    setPixel(f, center, center, 1)
 
-    const radius = Math.floor((1 - intensity) * 3) + 1;
+    const radius = Math.floor((1 - intensity) * 3) + 1
     for (let dy = -radius; dy <= radius; dy++) {
       for (let dx = -radius; dx <= radius; dx++) {
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Math.sqrt(dx * dx + dy * dy)
         if (Math.abs(dist - radius) < 0.7) {
-          setPixel(f, center + dy, center + dx, intensity * 0.6);
+          setPixel(f, center + dy, center + dx, intensity * 0.6)
         }
       }
     }
 
-    frames.push(f);
+    frames.push(f)
   }
 
-  return frames;
-})();
+  return frames
+})()
 
 export function vu(columns: number, levels: number[]): Frame {
-  const rows = 7;
-  const frame = emptyFrame(rows, columns);
+  const rows = 7
+  const frame = emptyFrame(rows, columns)
 
   for (let col = 0; col < Math.min(columns, levels.length); col++) {
-    const level = Math.max(0, Math.min(1, levels[col] ?? 0));
-    const height = Math.floor(level * rows);
+    const level = Math.max(0, Math.min(1, levels[col] ?? 0))
+    const height = Math.floor(level * rows)
 
     for (let row = 0; row < rows; row++) {
-      const rowFromBottom = rows - 1 - row;
+      const rowFromBottom = rows - 1 - row
       if (rowFromBottom < height) {
-        let brightness = 1;
+        let brightness = 1
         if (row < rows * 0.3) {
-          brightness = 1;
+          brightness = 1
         } else if (row < rows * 0.6) {
-          brightness = 0.8;
+          brightness = 0.8
         } else {
-          brightness = 0.6;
+          brightness = 0.6
         }
         const rowArray = frame[row];
         if (rowArray) {
@@ -330,59 +325,55 @@ export function vu(columns: number, levels: number[]): Frame {
     }
   }
 
-  return frame;
+  return frame
 }
 
 export const wave: Frame[] = (() => {
-  const frames: Frame[] = [];
-  const rows = 7;
-  const cols = 7;
+  const frames: Frame[] = []
+  const rows = 7
+  const cols = 7
 
   for (let frame = 0; frame < 24; frame++) {
-    const f = emptyFrame(rows, cols);
-    const phase = (frame / 24) * Math.PI * 2;
+    const f = emptyFrame(rows, cols)
+    const phase = (frame / 24) * Math.PI * 2
 
     for (let col = 0; col < cols; col++) {
-      const colPhase = (col / cols) * Math.PI * 2;
-      const height = Math.sin(phase + colPhase) * 2.5 + 3.5;
-      const row = Math.floor(height);
+      const colPhase = (col / cols) * Math.PI * 2
+      const height = Math.sin(phase + colPhase) * 2.5 + 3.5
+      const row = Math.floor(height)
 
       if (row >= 0 && row < rows) {
-        setPixel(f, row, col, 1);
-        const frac = height - row;
-        if (row > 0) {
-          setPixel(f, row - 1, col, 1 - frac);
-        }
-        if (row < rows - 1) {
-          setPixel(f, row + 1, col, frac);
-        }
+        setPixel(f, row, col, 1)
+        const frac = height - row
+        if (row > 0) setPixel(f, row - 1, col, 1 - frac)
+        if (row < rows - 1) setPixel(f, row + 1, col, frac)
       }
     }
 
-    frames.push(f);
+    frames.push(f)
   }
 
-  return frames;
-})();
+  return frames
+})()
 
 export const snake: Frame[] = (() => {
-  const frames: Frame[] = [];
-  const rows = 7;
-  const cols = 7;
-  const path: [number, number][] = [];
+  const frames: Frame[] = []
+  const rows = 7
+  const cols = 7
+  const path: [number, number][] = []
 
-  let x = 0;
-  let y = 0;
-  let dx = 1;
-  let dy = 0;
+  let x = 0
+  let y = 0
+  let dx = 1
+  let dy = 0
 
-  const visited = new Set<string>();
+  const visited = new Set<string>()
   while (path.length < rows * cols) {
-    path.push([y, x]);
-    visited.add(`${y},${x}`);
+    path.push([y, x])
+    visited.add(`${y},${x}`)
 
-    const nextX = x + dx;
-    const nextY = y + dy;
+    const nextX = x + dx
+    const nextY = y + dy
 
     if (
       nextX >= 0 &&
@@ -391,16 +382,16 @@ export const snake: Frame[] = (() => {
       nextY < rows &&
       !visited.has(`${nextY},${nextX}`)
     ) {
-      x = nextX;
-      y = nextY;
+      x = nextX
+      y = nextY
     } else {
-      const newDx = -dy;
-      const newDy = dx;
-      dx = newDx;
-      dy = newDy;
+      const newDx = -dy
+      const newDy = dx
+      dx = newDx
+      dy = newDy
 
-      const nextX = x + dx;
-      const nextY = y + dy;
+      const nextX = x + dx
+      const nextY = y + dy
 
       if (
         nextX >= 0 &&
@@ -409,20 +400,20 @@ export const snake: Frame[] = (() => {
         nextY < rows &&
         !visited.has(`${nextY},${nextX}`)
       ) {
-        x = nextX;
-        y = nextY;
+        x = nextX
+        y = nextY
       } else {
-        break;
+        break
       }
     }
   }
 
-  const snakeLength = 5;
+  const snakeLength = 5
   for (let frame = 0; frame < path.length; frame++) {
-    const f = emptyFrame(rows, cols);
+    const f = emptyFrame(rows, cols)
 
     for (let i = 0; i < snakeLength; i++) {
-      const idx = frame - i;
+      const idx = frame - i
       if (idx >= 0 && idx < path.length) {
         const point = path[idx];
         if (point) {
@@ -433,11 +424,11 @@ export const snake: Frame[] = (() => {
       }
     }
 
-    frames.push(f);
+    frames.push(f)
   }
 
-  return frames;
-})();
+  return frames
+})()
 
 export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
   (
@@ -462,73 +453,66 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
     },
     ref
   ) => {
-    const palette = paletteInput ?? {
-      on: "currentColor",
-      off: "var(--muted-foreground)",
-    };
+    const palette = paletteInput ?? { on: "currentColor", off: "var(--muted-foreground)" }
     const { frameIndex } = useAnimation(frames, {
       fps,
       autoplay: autoplay && !pattern,
       loop,
       onFrame,
-    });
+    })
 
     const currentFrame = useMemo(() => {
       if (mode === "vu" && levels && levels.length > 0) {
-        return ensureFrameSize(vu(cols, levels), rows, cols);
+        return ensureFrameSize(vu(cols, levels), rows, cols)
       }
 
       if (pattern) {
-        return ensureFrameSize(pattern, rows, cols);
+        return ensureFrameSize(pattern, rows, cols)
       }
 
       if (frames && frames.length > 0) {
         const firstFrame = frames[0];
-        return ensureFrameSize(
-          frames[frameIndex] ?? firstFrame ?? [],
-          rows,
-          cols
-        );
+        return ensureFrameSize(frames[frameIndex] ?? (firstFrame ?? []), rows, cols)
       }
 
-      return ensureFrameSize([], rows, cols);
-    }, [pattern, frames, frameIndex, rows, cols, mode, levels]);
+      return ensureFrameSize([], rows, cols)
+    }, [pattern, frames, frameIndex, rows, cols, mode, levels])
 
     const cellPositions = useMemo(() => {
-      const positions: CellPosition[][] = [];
+      const positions: CellPosition[][] = []
 
       for (let row = 0; row < rows; row++) {
-        positions[row] = [];
+        positions[row] = []
         const rowPositions = positions[row];
         if (rowPositions) {
           for (let col = 0; col < cols; col++) {
             rowPositions[col] = {
               x: col * (size + gap),
               y: row * (size + gap),
-            };
+            }
           }
         }
       }
 
-      return positions;
-    }, [rows, cols, size, gap]);
+      return positions
+    }, [rows, cols, size, gap])
 
     const svgDimensions = useMemo(() => {
       return {
         width: cols * (size + gap) - gap,
         height: rows * (size + gap) - gap,
-      };
-    }, [rows, cols, size, gap]);
+      }
+    }, [rows, cols, size, gap])
 
-    const isAnimating = !pattern && frames && frames.length > 0;
+    const isAnimating = !pattern && frames && frames.length > 0
 
     return (
       <div
+        ref={ref}
+        role="img"
         aria-label={ariaLabel ?? "matrix display"}
         aria-live={isAnimating ? "polite" : undefined}
         className={cn("relative inline-block", className)}
-        ref={ref}
-        role="img"
         style={
           {
             "--matrix-on": palette.on,
@@ -540,21 +524,21 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
         {...props}
       >
         <svg
-          className="block"
-          height={svgDimensions.height}
-          style={{ overflow: "visible" }}
-          viewBox={`0 0 ${svgDimensions.width} ${svgDimensions.height}`}
           width={svgDimensions.width}
+          height={svgDimensions.height}
+          viewBox={`0 0 ${svgDimensions.width} ${svgDimensions.height}`}
           xmlns="http://www.w3.org/2000/svg"
+          className="block"
+          style={{ overflow: "visible" }}
         >
           <defs>
-            <radialGradient cx="50%" cy="50%" id="matrix-pixel-on" r="50%">
+            <radialGradient id="matrix-pixel-on" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="currentColor" stopOpacity="1" />
               <stop offset="70%" stopColor="currentColor" stopOpacity="0.85" />
               <stop offset="100%" stopColor="currentColor" stopOpacity="0.6" />
             </radialGradient>
 
-            <radialGradient cx="50%" cy="50%" id="matrix-pixel-off" r="50%">
+            <radialGradient id="matrix-pixel-off" cx="50%" cy="50%" r="50%">
               <stop
                 offset="0%"
                 stopColor="var(--muted-foreground)"
@@ -568,13 +552,13 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
             </radialGradient>
 
             <filter
-              height="200%"
               id="matrix-glow"
-              width="200%"
               x="-50%"
               y="-50%"
+              width="200%"
+              height="200%"
             >
-              <feGaussianBlur result="blur" stdDeviation="2" />
+              <feGaussianBlur stdDeviation="2" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
@@ -594,23 +578,22 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
 
           {currentFrame.map((row, rowIndex) =>
             row.map((value, colIndex) => {
-              const pos = cellPositions[rowIndex]?.[colIndex];
-              if (!pos) {
-                return null;
-              }
+              const pos = cellPositions[rowIndex]?.[colIndex]
+              if (!pos) return null
 
-              const opacity = clamp(brightness * value);
-              const isActive = opacity > 0.5;
-              const isOn = opacity > 0.05;
+              const opacity = clamp(brightness * value)
+              const isActive = opacity > 0.5
+              const isOn = opacity > 0.05
               const fill = isOn
                 ? "url(#matrix-pixel-on)"
-                : "url(#matrix-pixel-off)";
+                : "url(#matrix-pixel-off)"
 
-              const scale = isActive ? 1.1 : 1;
-              const radius = (size / 2) * 0.9;
+              const scale = isActive ? 1.1 : 1
+              const radius = (size / 2) * 0.9
 
               return (
                 <circle
+                  key={`${rowIndex}-${colIndex}`}
                   className={cn(
                     "matrix-pixel",
                     isActive && "matrix-pixel-active",
@@ -618,21 +601,20 @@ export const Matrix = React.forwardRef<HTMLDivElement, MatrixProps>(
                   )}
                   cx={pos.x + size / 2}
                   cy={pos.y + size / 2}
-                  fill={fill}
-                  key={`${rowIndex}-${colIndex}`}
-                  opacity={isOn ? opacity : 0.1}
                   r={radius}
+                  fill={fill}
+                  opacity={isOn ? opacity : 0.1}
                   style={{
                     transform: `scale(${scale})`,
                   }}
                 />
-              );
+              )
             })
           )}
         </svg>
       </div>
-    );
+    )
   }
-);
+)
 
-Matrix.displayName = "Matrix";
+Matrix.displayName = "Matrix"

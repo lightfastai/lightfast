@@ -1,8 +1,9 @@
-"use client";
+"use client"
 
-import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
-import { cn } from "@repo/ui/lib/utils";
-import type * as React from "react";
+import * as React from "react"
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
+
+import { cn } from "@repo/ui/lib/utils"
 
 function ScrollArea({
   className,
@@ -11,20 +12,20 @@ function ScrollArea({
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
   return (
     <ScrollAreaPrimitive.Root
-      className={cn("scrollbar-default relative", className)}
       data-slot="scroll-area"
+      className={cn("relative scrollbar-default", className)}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
-        className="size-full rounded-[inherit] outline-none transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring-[3px] focus-visible:ring-ring/50"
         data-slot="scroll-area-viewport"
+        className="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1"
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
       <ScrollBar />
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
-  );
+  )
 }
 
 function ScrollBar({
@@ -34,24 +35,24 @@ function ScrollBar({
 }: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) {
   return (
     <ScrollAreaPrimitive.ScrollAreaScrollbar
+      data-slot="scroll-area-scrollbar"
+      orientation={orientation}
       className={cn(
-        "flex touch-none select-none transition-colors",
+        "flex touch-none transition-colors select-none",
         orientation === "vertical" &&
           "h-full w-1 border-l border-l-transparent",
         orientation === "horizontal" &&
           "h-1 flex-col border-t border-t-transparent",
         className
       )}
-      data-slot="scroll-area-scrollbar"
-      orientation={orientation}
       {...props}
     >
       <ScrollAreaPrimitive.ScrollAreaThumb
-        className="scroll-area-thumb relative flex-1 rounded-full transition-colors"
         data-slot="scroll-area-thumb"
+        className="scroll-area-thumb relative flex-1 rounded-full transition-colors"
       />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
-  );
+  )
 }
 
-export { ScrollArea, ScrollBar, ScrollAreaPrimitive };
+export { ScrollArea, ScrollBar, ScrollAreaPrimitive }
