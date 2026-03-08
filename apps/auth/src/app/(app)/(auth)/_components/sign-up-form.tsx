@@ -2,7 +2,7 @@
 import * as React from "react";
 import NextLink from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useSignUp } from "@clerk/nextjs/legacy";
+import { useSignUp } from "@vendor/clerk/client";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";

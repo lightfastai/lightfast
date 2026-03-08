@@ -1,6 +1,6 @@
 'use client'
 
-import { AuthenticateWithRedirectCallback } from '@clerk/nextjs'
+import { AuthenticateWithRedirectCallback } from "@vendor/clerk/client"
 
 export default function Page() {
   // Handle the redirect flow by calling the Clerk.handleRedirectCallback() method

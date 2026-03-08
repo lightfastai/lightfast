@@ -2,7 +2,7 @@ import React from "react";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
-import { Show, RedirectToTasks } from "@clerk/nextjs";
+import { Show, RedirectToTasks } from "@vendor/clerk/client";
 
 export default function AuthLayout({
   children,

@@ -33,7 +33,7 @@
  * @see https://clerk.com/docs/machine-auth/m2m-tokens
  */
 
-import { createClerkClient } from "@clerk/backend";
+import { createClerkClient } from "@vendor/clerk/backend";
 import { consoleM2MEnv } from "./env";
 
 /**

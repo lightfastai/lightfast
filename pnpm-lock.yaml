@@ -1810,12 +1810,12 @@ importers:
 
   packages/console-clerk-m2m:
     dependencies:
-      '@clerk/backend':
-        specifier: 'catalog:'
-        version: 3.0.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+      '@vendor/clerk':
+        specifier: workspace:*
+        version: link:../../vendor/clerk
       zod:
         specifier: catalog:zod3
         version: 3.25.76
@@ -3034,6 +3034,9 @@ importers:
 
   vendor/clerk:
     dependencies:
+      '@clerk/backend':
+        specifier: 'catalog:'
+        version: 3.0.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@clerk/nextjs':
         specifier: 'catalog:'
         version: 7.0.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

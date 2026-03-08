@@ -1,7 +1,6 @@
 "use client";
 import * as React from "react";
-import { useClerk } from "@clerk/nextjs";
-import { useSignUp } from "@clerk/nextjs/legacy";
+import { useClerk, useSignUp } from "@vendor/clerk/client";
 import { useForm } from "@vendor/forms";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";

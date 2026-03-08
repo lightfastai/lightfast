@@ -12,7 +12,8 @@
     "./server": "./src/server.ts",
     "./types": "./src/types.ts",
     "./webhooks": "./src/webhooks.ts",
-    "./client": "./src/client/index.ts"
+    "./client": "./src/client/index.ts",
+    "./backend": "./src/backend.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -24,6 +25,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/backend": "catalog:",
     "@clerk/nextjs": "catalog:",
     "@clerk/shared": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",

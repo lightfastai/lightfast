@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 
 import "~/styles/globals.css";
 
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider } from "@vendor/clerk/client";
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { fonts as geistFonts } from "@repo/ui/lib/fonts";
