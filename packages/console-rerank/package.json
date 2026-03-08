@@ -20,8 +20,6 @@
   },
   "dependencies": {
     "@ai-sdk/gateway": "catalog:",
-    "@repo/console-config": "workspace:*",
-    "@vendor/embed": "workspace:*",
     "@vendor/observability": "workspace:*",
     "ai": "catalog:",
     "cohere-ai": "^7.19.0",

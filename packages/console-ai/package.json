@@ -33,7 +33,6 @@
     "@lightfastai/ai-sdk": "workspace:*",
     "@repo/console-ai-types": "workspace:*",
     "@repo/console-types": "workspace:*",
-    "ai": "catalog:",
     "zod": "catalog:zod3"
   },
   "devDependencies": {
