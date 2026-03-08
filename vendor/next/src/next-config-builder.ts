@@ -162,4 +162,5 @@ export const withAnalyzer = (sourceConfig: NextConfig): NextConfig =>
  */
 export const withBetterStack: (sourceConfig: NextConfig) => NextConfig = (
   sourceConfig: NextConfig,
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- withBetterStackNext types are loosely typed
 ) => withBetterStackNext(sourceConfig);
