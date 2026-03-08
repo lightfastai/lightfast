@@ -49,7 +49,6 @@
     "@repo/console-validation": "workspace:*",
     "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
-    "@t3-oss/env-nextjs": "catalog:",
     "@vendor/db": "workspace:*",
     "drizzle-orm": "catalog:",
     "friendlier-words": "^1.1.3",
