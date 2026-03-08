@@ -1,12 +1,12 @@
 import type { SectionProvider } from "@repo/prompt-engine";
-import { answerIdentitySection } from "./sections/identity";
+import { answerCitationSection } from "./sections/citation";
 import { answerCoreBehaviorSection } from "./sections/core-behavior";
+import { answerIdentitySection } from "./sections/identity";
 import { answerSecuritySection } from "./sections/security";
+import { answerStyleSection } from "./sections/style";
+import { answerTemporalContextSection } from "./sections/temporal-context";
 import { answerToolGuidanceSection } from "./sections/tool-guidance";
 import { answerWorkspaceContextSection } from "./sections/workspace-context";
-import { answerTemporalContextSection } from "./sections/temporal-context";
-import { answerStyleSection } from "./sections/style";
-import { answerCitationSection } from "./sections/citation";
 
 /**
  * Answer agent provider set.

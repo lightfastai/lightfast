@@ -24,7 +24,7 @@
 export { consoleM2MEnv } from "./env";
 export {
   createM2MToken,
-  verifyM2MToken,
   isM2MConfigured,
   type M2MService,
+  verifyM2MToken,
 } from "./m2m";

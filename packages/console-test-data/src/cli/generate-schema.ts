@@ -7,7 +7,7 @@
  */
 
 import { writeFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { WEBHOOK_EVENT_TYPES } from "@repo/console-types";
 
@@ -61,8 +61,7 @@ const schema = {
           oneOf: [
             {
               enum: WEBHOOK_EVENT_TYPES.github,
-              description:
-                "GitHub event types (X-GitHub-Event header values)",
+              description: "GitHub event types (X-GitHub-Event header values)",
             },
             {
               enum: WEBHOOK_EVENT_TYPES.vercel,
@@ -88,5 +87,5 @@ const schema = {
   },
 };
 
-writeFileSync(outputPath, JSON.stringify(schema, null, 2) + "\n");
+writeFileSync(outputPath, `${JSON.stringify(schema, null, 2)}\n`);
 console.log(`Generated: ${outputPath}`);

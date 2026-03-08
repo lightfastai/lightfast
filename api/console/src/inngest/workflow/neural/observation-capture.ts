@@ -15,65 +15,76 @@
  * 8. Emit completion event
  */
 
-import { inngest } from "../../client/client";
 import { db } from "@db/console/client";
 import {
-  workspaceNeuralObservations,
-  workspaceNeuralEntities,
   orgWorkspaces,
   workspaceIntegrations,
+  workspaceNeuralEntities,
+  workspaceNeuralObservations,
 } from "@db/console/schema";
-import { eq, and, sql } from "drizzle-orm";
-import { log } from "@vendor/observability/log";
-import { NonRetriableError } from "inngest";
-import { consolePineconeClient } from "@repo/console-pinecone";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
-import type { SourceEvent } from "@repo/console-types";
-import { scoreSignificance, SIGNIFICANCE_THRESHOLD } from "./scoring";
+import { consolePineconeClient } from "@repo/console-pinecone";
+import type {
+  ExtractedEntity,
+  SourceActor,
+  SourceEvent,
+  SourceReference,
+} from "@repo/console-types";
+import type {
+  ClassificationResponse,
+  NeuralObservationCaptureInput,
+  NeuralObservationCaptureOutputFailure,
+  NeuralObservationCaptureOutputFiltered,
+  NeuralObservationCaptureOutputSuccess,
+} from "@repo/console-validation";
+import { classificationResponseSchema } from "@repo/console-validation";
+import { log } from "@vendor/observability/log";
+import { and, eq, sql } from "drizzle-orm";
+import { NonRetriableError } from "inngest";
+import { nanoid } from "nanoid";
+import {
+  completeJob,
+  createJob,
+  recordJobMetric,
+  updateJobStatus,
+} from "../../../lib/jobs";
+import { inngest } from "../../client/client";
+import { resolveActor } from "./actor-resolution";
+import {
+  buildNeuralTelemetry,
+  createTracedModel,
+  generateObject,
+} from "./ai-helpers";
 import {
   buildClassificationPrompt,
   classifyObservationFallback,
 } from "./classification";
-import { classificationResponseSchema } from "@repo/console-validation";
-import type { ClassificationResponse } from "@repo/console-validation";
-import { extractEntities, extractFromReferences } from "./entity-extraction-patterns";
-import {
-  createTracedModel,
-  generateObject,
-  buildNeuralTelemetry,
-} from "./ai-helpers";
-import type { ExtractedEntity } from "@repo/console-types";
 import { assignToCluster } from "./cluster-assignment";
-import { resolveActor } from "./actor-resolution";
-import { detectAndCreateRelationships } from "./relationship-detection";
-import { nanoid } from "nanoid";
-import type { SourceActor, SourceReference } from "@repo/console-types";
-import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../../lib/jobs";
+import {
+  extractEntities,
+  extractFromReferences,
+} from "./entity-extraction-patterns";
 import { createNeuralOnFailureHandler } from "./on-failure-handler";
-import type {
-  NeuralObservationCaptureInput,
-  NeuralObservationCaptureOutputSuccess,
-  NeuralObservationCaptureOutputFiltered,
-  NeuralObservationCaptureOutputFailure,
-} from "@repo/console-validation";
+import { detectAndCreateRelationships } from "./relationship-detection";
+import { SIGNIFICANCE_THRESHOLD, scoreSignificance } from "./scoring";
 
 /**
  * Observation vector metadata stored in Pinecone
  * All values must be string, number, boolean, or string[] per Pinecone constraints
  */
 interface ObservationVectorMetadata {
-  layer: string;
-  view: "title" | "content" | "summary"; // Identifies embedding view for multi-view retrieval
-  observationType: string;
-  source: string;
-  sourceType: string;
-  sourceId: string;
-  title: string;
-  snippet: string;
-  occurredAt: string;
   actorName: string;
+  layer: string;
   /** Pre-generated database ID for direct lookup (Phase 3 optimization) */
   observationId: string;
+  observationType: string;
+  occurredAt: string;
+  snippet: string;
+  source: string;
+  sourceId: string;
+  sourceType: string;
+  title: string;
+  view: "title" | "content" | "summary"; // Identifies embedding view for multi-view retrieval
   // HACK: Index signature required to satisfy Pinecone's RecordMetadata constraint.
   // TODO: Re-export RecordMetadata from @repo/console-pinecone and extend it properly.
   [key: string]: string | number | boolean | string[];
@@ -83,19 +94,19 @@ interface ObservationVectorMetadata {
  * Result of multi-view embedding generation
  */
 interface MultiViewEmbeddingResult {
-  title: {
-    vectorId: string;
-    vector: number[];
-  };
   content: {
     vectorId: string;
     vector: number[];
   };
+  legacyVectorId: string;
   summary: {
     vectorId: string;
     vector: number[];
   };
-  legacyVectorId: string;
+  title: {
+    vectorId: string;
+    vector: number[];
+  };
 }
 
 /**
@@ -138,7 +149,16 @@ function extractTopics(sourceEvent: SourceEvent): string[] {
   }
 
   // Extract common keywords from title
-  const keywords = ["fix", "feat", "refactor", "test", "docs", "chore", "ci", "perf"];
+  const keywords = [
+    "fix",
+    "feat",
+    "refactor",
+    "test",
+    "docs",
+    "chore",
+    "ci",
+    "perf",
+  ];
   const titleLower = sourceEvent.title.toLowerCase();
   for (const keyword of keywords) {
     if (titleLower.includes(keyword)) {
@@ -226,7 +246,7 @@ function getBaseEventType(source: string, sourceType: string): string {
  */
 function isEventAllowed(
   sourceConfig: { sync?: { events?: string[] } } | null | undefined,
-  baseEventType: string,
+  baseEventType: string
 ): boolean {
   const events = sourceConfig?.sync?.events;
   if (!events || events.length === 0) {
@@ -245,7 +265,7 @@ function isEventAllowed(
  */
 async function resolveClerkOrgId(
   eventClerkOrgId: string | undefined,
-  workspaceId: string,
+  workspaceId: string
 ): Promise<string> {
   // Prefer event data (new flow)
   if (eventClerkOrgId) {
@@ -283,31 +303,38 @@ async function reconcileVercelActorsForCommit(
   workspaceId: string,
   commitSha: string,
   numericActorId: string,
-  sourceActor: SourceActor,
+  sourceActor: SourceActor
 ): Promise<string[]> {
-  if (!commitSha || !numericActorId) return [];
+  if (!(commitSha && numericActorId)) {
+    return [];
+  }
 
   // Only reconcile if the actor ID is actually numeric
-  if (!/^\d+$/.test(numericActorId)) return [];
+  if (!/^\d+$/.test(numericActorId)) {
+    return [];
+  }
 
   try {
     // Find Vercel observations with this commit SHA that have non-numeric actor IDs
     // Using PostgreSQL JSONB containment to search within the sourceReferences array
-    const vercelObservations = await db.query.workspaceNeuralObservations.findMany({
-      where: and(
-        eq(workspaceNeuralObservations.workspaceId, workspaceId),
-        eq(workspaceNeuralObservations.source, "vercel"),
-        // Check if sourceReferences contains a commit with this SHA
-        sql`${workspaceNeuralObservations.sourceReferences}::jsonb @> ${JSON.stringify([{ type: "commit", id: commitSha }])}::jsonb`,
-      ),
-      columns: {
-        id: true,
-        externalId: true,
-        actor: true,
-      },
-    });
+    const vercelObservations =
+      await db.query.workspaceNeuralObservations.findMany({
+        where: and(
+          eq(workspaceNeuralObservations.workspaceId, workspaceId),
+          eq(workspaceNeuralObservations.source, "vercel"),
+          // Check if sourceReferences contains a commit with this SHA
+          sql`${workspaceNeuralObservations.sourceReferences}::jsonb @> ${JSON.stringify([{ type: "commit", id: commitSha }])}::jsonb`
+        ),
+        columns: {
+          id: true,
+          externalId: true,
+          actor: true,
+        },
+      });
 
-    if (vercelObservations.length === 0) return [];
+    if (vercelObservations.length === 0) {
+      return [];
+    }
 
     const updatedIds: string[] = [];
 
@@ -315,15 +342,20 @@ async function reconcileVercelActorsForCommit(
       const currentActor = obs.actor as SourceActor | null;
 
       // Skip if no actor or already has numeric ID
-      if (!currentActor?.id) continue;
-      if (/^\d+$/.test(currentActor.id)) continue;
+      if (!currentActor?.id) {
+        continue;
+      }
+      if (/^\d+$/.test(currentActor.id)) {
+        continue;
+      }
 
       // Update the actor with numeric ID and enriched profile data
       const updatedActor: SourceActor = {
         ...currentActor,
         id: numericActorId,
         // Preserve existing name, or use the GitHub actor's name (may be null at runtime despite type)
-        name: (currentActor.name as string | null | undefined) ?? sourceActor.name,
+        name:
+          (currentActor.name as string | null | undefined) ?? sourceActor.name,
         // Add email/avatar from GitHub if not present
         email: currentActor.email ?? sourceActor.email,
         avatarUrl: currentActor.avatarUrl ?? sourceActor.avatarUrl,
@@ -379,7 +411,8 @@ export const observationCapture = inngest.createFunction(
     retries: 3,
 
     // Idempotency by workspace + source ID to prevent duplicate observations per workspace
-    idempotency: "event.data.workspaceId + '-' + event.data.sourceEvent.sourceId",
+    idempotency:
+      "event.data.workspaceId + '-' + event.data.sourceEvent.sourceId",
 
     // Concurrency limit per workspace
     concurrency: {
@@ -401,26 +434,34 @@ export const observationCapture = inngest.createFunction(
           workspaceId,
           sourceId: sourceEvent.sourceId,
         }),
-        buildOutput: ({ data: { sourceEvent }, error }) => ({
-          inngestFunctionId: "neural.observation.capture",
-          status: "failure",
-          sourceId: sourceEvent.sourceId,
-          error,
-        } satisfies NeuralObservationCaptureOutputFailure),
-      },
+        buildOutput: ({ data: { sourceEvent }, error }) =>
+          ({
+            inngestFunctionId: "neural.observation.capture",
+            status: "failure",
+            sourceId: sourceEvent.sourceId,
+            error,
+          }) satisfies NeuralObservationCaptureOutputFailure,
+      }
     ),
   },
   { event: "apps-console/neural/observation.capture" },
   async ({ event, step }) => {
-    const { workspaceId, clerkOrgId: eventClerkOrgId, sourceEvent } = event.data;
+    const {
+      workspaceId,
+      clerkOrgId: eventClerkOrgId,
+      sourceEvent,
+    } = event.data;
 
     // Generate replay-safe values inside steps so they're memoized across retries.
     // Without this, Inngest re-executes the function body on retry, generating new
     // values while completed steps return their memoized results — causing mismatches.
-    const { externalId, startTime } = await step.run("generate-replay-safe-ids", () => ({
-      externalId: nanoid(),
-      startTime: Date.now(),
-    }));
+    const { externalId, startTime } = await step.run(
+      "generate-replay-safe-ids",
+      () => ({
+        externalId: nanoid(),
+        startTime: Date.now(),
+      })
+    );
 
     // Resolve clerkOrgId EARLY (before any metrics or processing)
     // This ensures all metrics have valid clerkOrgId
@@ -439,7 +480,8 @@ export const observationCapture = inngest.createFunction(
 
     // Step 0: Create job record for tracking
     // Generate a run ID if event.id is not available (shouldn't happen in production)
-    const inngestRunId = event.id ?? `neural-obs-${sourceEvent.sourceId}-${startTime}`;
+    const inngestRunId =
+      event.id ?? `neural-obs-${sourceEvent.sourceId}-${startTime}`;
     const jobId = await step.run("create-job", async () => {
       return createJob({
         clerkOrgId,
@@ -468,7 +510,7 @@ export const observationCapture = inngest.createFunction(
       const obs = await db.query.workspaceNeuralObservations.findFirst({
         where: and(
           eq(workspaceNeuralObservations.workspaceId, workspaceId),
-          eq(workspaceNeuralObservations.sourceId, sourceEvent.sourceId),
+          eq(workspaceNeuralObservations.sourceId, sourceEvent.sourceId)
         ),
       });
 
@@ -554,7 +596,7 @@ export const observationCapture = inngest.createFunction(
       const integration = await db.query.workspaceIntegrations.findFirst({
         where: and(
           eq(workspaceIntegrations.workspaceId, workspaceId),
-          eq(workspaceIntegrations.providerResourceId, resourceId),
+          eq(workspaceIntegrations.providerResourceId, resourceId)
         ),
       });
 
@@ -569,8 +611,13 @@ export const observationCapture = inngest.createFunction(
       }
 
       // Check if event is allowed
-      const baseEventType = getBaseEventType(sourceEvent.source, sourceEvent.sourceType);
-      const sourceConfig = integration.sourceConfig as { sync?: { events?: string[] } };
+      const baseEventType = getBaseEventType(
+        sourceEvent.source,
+        sourceEvent.sourceType
+      );
+      const sourceConfig = integration.sourceConfig as {
+        sync?: { events?: string[] };
+      };
       const allowed = isEventAllowed(sourceConfig, baseEventType);
 
       if (!allowed) {
@@ -687,7 +734,9 @@ export const observationCapture = inngest.createFunction(
 
       // Settings is always populated (NOT NULL with version check)
       if ((ws.settings.version as number) !== 1) {
-        throw new NonRetriableError(`Workspace ${workspaceId} has invalid settings version`);
+        throw new NonRetriableError(
+          `Workspace ${workspaceId} has invalid settings version`
+        );
       }
 
       return ws;
@@ -704,11 +753,14 @@ export const observationCapture = inngest.createFunction(
             schema: classificationResponseSchema,
             prompt: buildClassificationPrompt(sourceEvent),
             temperature: 0.2,
-            experimental_telemetry: buildNeuralTelemetry("neural-classification", {
-              workspaceId,
-              sourceType: sourceEvent.sourceType,
-              source: sourceEvent.source,
-            }),
+            experimental_telemetry: buildNeuralTelemetry(
+              "neural-classification",
+              {
+                workspaceId,
+                sourceType: sourceEvent.sourceType,
+                source: sourceEvent.source,
+              }
+            ),
           } as Parameters<typeof generateObject>[0]
         )) as { object: ClassificationResponse };
 
@@ -752,89 +804,120 @@ export const observationCapture = inngest.createFunction(
     })();
 
     // Step 5b: PARALLEL processing (no interdependencies)
-    const [embeddingResult, extractedEntities, resolvedActor] = await Promise.all([
-      // Multi-view embedding generation (title, content, summary)
-      step.run("generate-multi-view-embeddings", async (): Promise<MultiViewEmbeddingResult> => {
-        const embeddingProvider = createEmbeddingProviderForWorkspace(
-          {
-            id: workspace.id,
-            embeddingModel: workspace.settings.embedding.embeddingModel,
-            embeddingDim: workspace.settings.embedding.embeddingDim,
-          },
-          { inputType: "search_document" }
-        );
+    const [embeddingResult, extractedEntities, resolvedActor] =
+      await Promise.all([
+        // Multi-view embedding generation (title, content, summary)
+        step.run(
+          "generate-multi-view-embeddings",
+          async (): Promise<MultiViewEmbeddingResult> => {
+            const embeddingProvider = createEmbeddingProviderForWorkspace(
+              {
+                id: workspace.id,
+                embeddingModel: workspace.settings.embedding.embeddingModel,
+                embeddingDim: workspace.settings.embedding.embeddingDim,
+              },
+              { inputType: "search_document" }
+            );
 
-        // Prepare texts for each view
-        const titleText = sourceEvent.title;
-        const contentText = sourceEvent.body;
-        const summaryText = `${sourceEvent.title}\n\n${sourceEvent.body.slice(0, 1000)}`;
+            // Prepare texts for each view
+            const titleText = sourceEvent.title;
+            const contentText = sourceEvent.body;
+            const summaryText = `${sourceEvent.title}\n\n${sourceEvent.body.slice(0, 1000)}`;
 
-        // Generate all 3 embeddings in parallel (single batch call)
-        const result = await embeddingProvider.embed([titleText, contentText, summaryText]);
+            // Generate all 3 embeddings in parallel (single batch call)
+            const result = await embeddingProvider.embed([
+              titleText,
+              contentText,
+              summaryText,
+            ]);
 
-        if (!result.embeddings[0] || !result.embeddings[1] || !result.embeddings[2]) {
-          throw new Error("Failed to generate all multi-view embeddings");
-        }
+            if (
+              !(
+                result.embeddings[0] &&
+                result.embeddings[1] &&
+                result.embeddings[2]
+              )
+            ) {
+              throw new Error("Failed to generate all multi-view embeddings");
+            }
 
-        // Generate view-specific vector IDs
-        const baseId = sourceEvent.sourceId.replace(/[^a-zA-Z0-9]/g, "_");
+            // Generate view-specific vector IDs
+            const baseId = sourceEvent.sourceId.replace(/[^a-zA-Z0-9]/g, "_");
 
-        return {
-          title: {
-            vectorId: `obs_title_${baseId}`,
-            vector: result.embeddings[0],
-          },
-          content: {
-            vectorId: `obs_content_${baseId}`,
-            vector: result.embeddings[1],
-          },
-          summary: {
-            vectorId: `obs_summary_${baseId}`,
-            vector: result.embeddings[2],
-          },
-          // Keep legacy ID for backwards compatibility during migration
-          legacyVectorId: `obs_${baseId}`,
-        };
-      }),
-
-      // Entity extraction (inline, not fire-and-forget)
-      step.run("extract-entities", () => {
-        const textEntities = extractEntities(sourceEvent.title, sourceEvent.body);
-        const references = sourceEvent.references as { type: string; id: string; label?: string }[];
-        const refEntities = extractFromReferences(references);
-
-        // Combine and deduplicate
-        const allEntities = [...textEntities, ...refEntities];
-        const entityMap = new Map<string, ExtractedEntity>();
-
-        for (const entity of allEntities) {
-          const key = `${entity.category}:${entity.key.toLowerCase()}`;
-          const existing = entityMap.get(key);
-          if (!existing || existing.confidence < entity.confidence) {
-            entityMap.set(key, entity);
+            return {
+              title: {
+                vectorId: `obs_title_${baseId}`,
+                vector: result.embeddings[0],
+              },
+              content: {
+                vectorId: `obs_content_${baseId}`,
+                vector: result.embeddings[1],
+              },
+              summary: {
+                vectorId: `obs_summary_${baseId}`,
+                vector: result.embeddings[2],
+              },
+              // Keep legacy ID for backwards compatibility during migration
+              legacyVectorId: `obs_${baseId}`,
+            };
           }
-        }
+        ),
 
-        // Limit to prevent runaway extraction
-        const deduplicated = Array.from(entityMap.values());
-        return deduplicated.slice(0, 50); // MAX_ENTITIES_PER_OBSERVATION
-      }),
+        // Entity extraction (inline, not fire-and-forget)
+        step.run("extract-entities", () => {
+          const textEntities = extractEntities(
+            sourceEvent.title,
+            sourceEvent.body
+          );
+          const references = sourceEvent.references as {
+            type: string;
+            id: string;
+            label?: string;
+          }[];
+          const refEntities = extractFromReferences(references);
 
-      // Actor resolution (Tier 2: email matching)
-      step.run("resolve-actor", async () => {
-        return resolveActor(workspaceId, sourceEvent);
-      }),
-    ]);
+          // Combine and deduplicate
+          const allEntities = [...textEntities, ...refEntities];
+          const entityMap = new Map<string, ExtractedEntity>();
+
+          for (const entity of allEntities) {
+            const key = `${entity.category}:${entity.key.toLowerCase()}`;
+            const existing = entityMap.get(key);
+            if (!existing || existing.confidence < entity.confidence) {
+              entityMap.set(key, entity);
+            }
+          }
+
+          // Limit to prevent runaway extraction
+          const deduplicated = Array.from(entityMap.values());
+          return deduplicated.slice(0, 50); // MAX_ENTITIES_PER_OBSERVATION
+        }),
+
+        // Actor resolution (Tier 2: email matching)
+        step.run("resolve-actor", async () => {
+          return resolveActor(workspaceId, sourceEvent);
+        }),
+      ]);
 
     // Record actor_resolution analytics metric (non-blocking)
     // Determines resolution method based on source and actor ID format
-    const getActorResolutionMethod = (): "github_id" | "commit_sha" | "username" | "none" => {
-      if (!resolvedActor.actorId) return "none";
-      if (sourceEvent.source === "github") return "github_id";
+    const getActorResolutionMethod = ():
+      | "github_id"
+      | "commit_sha"
+      | "username"
+      | "none" => {
+      if (!resolvedActor.actorId) {
+        return "none";
+      }
+      if (sourceEvent.source === "github") {
+        return "github_id";
+      }
       // For Vercel: check if we got a numeric ID (resolved via commit SHA) or username
       if (sourceEvent.source === "vercel") {
         const actorIdPart = resolvedActor.actorId.split(":")[1];
-        return actorIdPart && /^\d+$/.test(actorIdPart) ? "commit_sha" : "username";
+        return actorIdPart && /^\d+$/.test(actorIdPart)
+          ? "commit_sha"
+          : "username";
       }
       return "github_id";
     };
@@ -858,9 +941,7 @@ export const observationCapture = inngest.createFunction(
     // Step 5.5: Assign to cluster (use content embedding for best semantic matching)
     const clusterResult = await step.run("assign-cluster", async () => {
       // Extract entity IDs from extracted entities
-      const entityIds = extractedEntities.map(
-        (e) => `${e.category}:${e.key}`
-      );
+      const entityIds = extractedEntities.map((e) => `${e.category}:${e.key}`);
 
       return assignToCluster({
         workspaceId,
@@ -963,87 +1044,95 @@ export const observationCapture = inngest.createFunction(
 
     // Step 7: Store observation + entities (transactional)
     // Note: Topics come from Step 5 (classify), significance from Step 3
-    const { observation, entitiesStored } = await step.run("store-observation", async () => {
-      const observationType = deriveObservationType(sourceEvent);
+    const { observation, entitiesStored } = await step.run(
+      "store-observation",
+      async () => {
+        const observationType = deriveObservationType(sourceEvent);
 
-      // neon-http doesn't support transactions — insert observation first,
-      // then batch entity upserts (Inngest step provides retry guarantees)
+        // neon-http doesn't support transactions — insert observation first,
+        // then batch entity upserts (Inngest step provides retry guarantees)
 
-      // 1. Insert observation (need auto-generated BIGINT id for entity FK)
-      const [obs] = await db
-        .insert(workspaceNeuralObservations)
-        .values({
-          // id: auto-generated BIGINT
-          externalId, // Pre-generated nanoid for API/Pinecone lookups
-          workspaceId,
-          occurredAt: sourceEvent.occurredAt,
-          actor: sourceEvent.actor ?? null,
-          // actorId: null until Phase 5 (actor_profiles still uses varchar)
-          // clusterId: null until Phase 5 (clusters still uses varchar)
+        // 1. Insert observation (need auto-generated BIGINT id for entity FK)
+        const [obs] = await db
+          .insert(workspaceNeuralObservations)
+          .values({
+            // id: auto-generated BIGINT
+            externalId, // Pre-generated nanoid for API/Pinecone lookups
+            workspaceId,
+            occurredAt: sourceEvent.occurredAt,
+            actor: sourceEvent.actor ?? null,
+            // actorId: null until Phase 5 (actor_profiles still uses varchar)
+            // clusterId: null until Phase 5 (clusters still uses varchar)
+            observationType,
+            title: sourceEvent.title,
+            content: sourceEvent.body,
+            topics,
+            significanceScore: significance.score,
+            source: sourceEvent.source,
+            sourceType: sourceEvent.sourceType,
+            sourceId: sourceEvent.sourceId,
+            sourceReferences: sourceEvent.references,
+            metadata: sourceEvent.metadata,
+            embeddingVectorId: embeddingResult.legacyVectorId, // Keep for backwards compat
+            embeddingTitleId: embeddingResult.title.vectorId,
+            embeddingContentId: embeddingResult.content.vectorId,
+            embeddingSummaryId: embeddingResult.summary.vectorId,
+            ingestionSource: event.data.ingestionSource ?? "webhook",
+          })
+          .returning();
+
+        if (!obs) {
+          throw new Error("Failed to insert observation");
+        }
+
+        // 2. Batch upsert entities (all reference obs.id as FK)
+        let entitiesStored = 0;
+        if (extractedEntities.length > 0) {
+          const entityQueries = extractedEntities.map((entity) =>
+            db
+              .insert(workspaceNeuralEntities)
+              .values({
+                workspaceId,
+                category: entity.category,
+                key: entity.key,
+                value: entity.value,
+                sourceObservationId: obs.id, // Use internal BIGINT id (Phase 5 complete)
+                evidenceSnippet: entity.evidence,
+                confidence: entity.confidence,
+              })
+              .onConflictDoUpdate({
+                target: [
+                  workspaceNeuralEntities.workspaceId,
+                  workspaceNeuralEntities.category,
+                  workspaceNeuralEntities.key,
+                ],
+                set: {
+                  lastSeenAt: new Date().toISOString(),
+                  occurrenceCount: sql`${workspaceNeuralEntities.occurrenceCount} + 1`,
+                  updatedAt: new Date().toISOString(),
+                },
+              })
+          );
+          await db.batch(
+            entityQueries as [
+              (typeof entityQueries)[0],
+              ...typeof entityQueries,
+            ]
+          );
+          entitiesStored = extractedEntities.length;
+        }
+
+        log.info("Observation and entities stored", {
+          observationId: obs.id, // Internal BIGINT
+          externalId: obs.externalId, // Public nanoid
           observationType,
-          title: sourceEvent.title,
-          content: sourceEvent.body,
-          topics,
-          significanceScore: significance.score,
-          source: sourceEvent.source,
-          sourceType: sourceEvent.sourceType,
-          sourceId: sourceEvent.sourceId,
-          sourceReferences: sourceEvent.references,
-          metadata: sourceEvent.metadata,
-          embeddingVectorId: embeddingResult.legacyVectorId, // Keep for backwards compat
-          embeddingTitleId: embeddingResult.title.vectorId,
-          embeddingContentId: embeddingResult.content.vectorId,
-          embeddingSummaryId: embeddingResult.summary.vectorId,
-          ingestionSource: event.data.ingestionSource ?? "webhook",
-        })
-        .returning();
+          entitiesExtracted: extractedEntities.length,
+          entitiesStored,
+        });
 
-      if (!obs) {
-        throw new Error("Failed to insert observation");
+        return { observation: obs, entitiesStored };
       }
-
-      // 2. Batch upsert entities (all reference obs.id as FK)
-      let entitiesStored = 0;
-      if (extractedEntities.length > 0) {
-        const entityQueries = extractedEntities.map((entity) =>
-          db
-            .insert(workspaceNeuralEntities)
-            .values({
-              workspaceId,
-              category: entity.category,
-              key: entity.key,
-              value: entity.value,
-              sourceObservationId: obs.id, // Use internal BIGINT id (Phase 5 complete)
-              evidenceSnippet: entity.evidence,
-              confidence: entity.confidence,
-            })
-            .onConflictDoUpdate({
-              target: [
-                workspaceNeuralEntities.workspaceId,
-                workspaceNeuralEntities.category,
-                workspaceNeuralEntities.key,
-              ],
-              set: {
-                lastSeenAt: new Date().toISOString(),
-                occurrenceCount: sql`${workspaceNeuralEntities.occurrenceCount} + 1`,
-                updatedAt: new Date().toISOString(),
-              },
-            })
-        );
-        await db.batch(entityQueries as [typeof entityQueries[0], ...typeof entityQueries]);
-        entitiesStored = extractedEntities.length;
-      }
-
-      log.info("Observation and entities stored", {
-        observationId: obs.id, // Internal BIGINT
-        externalId: obs.externalId, // Public nanoid
-        observationType,
-        entitiesExtracted: extractedEntities.length,
-        entitiesStored,
-      });
-
-      return { observation: obs, entitiesStored };
-    });
+    );
 
     // Step 7.5: Detect and create relationships
     // Links this observation to others via shared commit SHAs, branch names, issue IDs
@@ -1084,7 +1173,7 @@ export const observationCapture = inngest.createFunction(
             workspaceId,
             commitRef.id,
             resolvedActor.sourceActor.id,
-            resolvedActor.sourceActor,
+            resolvedActor.sourceActor
           );
           totalReconciled += reconciledIds.length;
         }

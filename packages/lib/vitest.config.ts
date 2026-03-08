@@ -8,5 +8,5 @@ export default mergeConfig(
       globals: true,
       environment: "node",
     },
-  }),
+  })
 );

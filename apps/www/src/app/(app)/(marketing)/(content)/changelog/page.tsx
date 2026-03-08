@@ -1,12 +1,12 @@
-import Link from "next/link";
-import Image from "next/image";
-import type { Metadata } from "next";
-import { changelog  } from "@vendor/cms";
-import type {ChangelogEntriesQueryResponse} from "@vendor/cms";
-import { Body } from "@vendor/cms/components/body";
-import { Feed, isDraft } from "@vendor/cms/components/feed";
 import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
 import { Button } from "@repo/ui/components/ui/button";
+import type { ChangelogEntriesQueryResponse } from "@vendor/cms";
+import { changelog } from "@vendor/cms";
+import { Body } from "@vendor/cms/components/body";
+import { Feed, isDraft } from "@vendor/cms/components/feed";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Lightfast Changelog",
@@ -52,10 +52,10 @@ export default function ChangelogPage() {
         const entries = response.changelog?.post?.items ?? [];
 
         return (
-          <div className="text-foreground space-y-12">
+          <div className="space-y-12 text-foreground">
             {entries.length === 0 ? (
               <div className="py-16">
-                <h2 className="text-2xl font-semibold mb-4">Stay tuned</h2>
+                <h2 className="mb-4 font-semibold text-2xl">Stay tuned</h2>
                 <p className="text-foreground/80 leading-relaxed">
                   We're shipping fast. Changelog entries will appear here after
                   our next release.
@@ -76,19 +76,19 @@ export default function ChangelogPage() {
                   : "";
 
                 return (
-                  <div key={item._slug ?? item._title} className="relative">
+                  <div className="relative" key={item._slug ?? item._title}>
                     <article className="space-y-3">
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         Changelog
                         {item.prefix ? <> / {item.prefix}</> : null}
                       </p>
 
-                      <h2 className="text-2xl font-pp font-medium pb-4">
+                      <h2 className="pb-4 font-medium font-pp text-2xl">
                         {item.slug ? (
                           <Button
-                            variant="link"
-                            className="h-auto p-0 text-2xl font-pp font-medium"
                             asChild
+                            className="h-auto p-0 font-medium font-pp text-2xl"
+                            variant="link"
                           >
                             <Link href={`/changelog/${item.slug}`}>
                               {item._title}
@@ -100,30 +100,33 @@ export default function ChangelogPage() {
                       </h2>
 
                       {item.featuredImage?.url && (
-                        <div className="relative w-full bg-card aspect-video rounded-lg overflow-hidden">
+                        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-card">
                           <Image
-                            src={item.featuredImage.url}
                             alt={item.featuredImage.alt ?? item._title ?? ""}
-                            width={item.featuredImage.width ?? 900}
+                            className="h-full w-full object-cover"
                             height={item.featuredImage.height ?? 506}
-                            className="w-full h-full object-cover"
+                            src={item.featuredImage.url}
+                            width={item.featuredImage.width ?? 900}
                           />
                         </div>
                       )}
 
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {/* @todo add author into basehub Changelog component */}
                         Jeevan Pillay · {dateStr}
                       </p>
 
                       {item.excerpt && (
-                        <p className="pt-4 text-sm text-muted-foreground leading-relaxed">
+                        <p className="pt-4 text-muted-foreground text-sm leading-relaxed">
                           {item.excerpt}
                         </p>
                       )}
                       {item.body?.json?.content ? (
                         <div className="">
-                          <Body content={item.body.json.content} codeBlockComponent={SSRCodeBlock} />
+                          <Body
+                            codeBlockComponent={SSRCodeBlock}
+                            content={item.body.json.content}
+                          />
                         </div>
                       ) : null}
                     </article>

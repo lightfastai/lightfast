@@ -1,6 +1,12 @@
-import { sql } from "drizzle-orm";
-import { pgTable, varchar, timestamp, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
+import { sql } from "drizzle-orm";
+import {
+  index,
+  pgTable,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { gwInstallations } from "./gw-installations";
 
 export const gwResources = pgTable(
@@ -15,24 +21,30 @@ export const gwResources = pgTable(
       .notNull()
       .references(() => gwInstallations.id, { onDelete: "cascade" }),
 
-    providerResourceId: varchar("provider_resource_id", { length: 191 }).notNull(),
+    providerResourceId: varchar("provider_resource_id", {
+      length: 191,
+    }).notNull(),
     resourceName: varchar("resource_name", { length: 500 }),
 
     status: varchar("status", { length: 50 }).notNull(), // active|removed
 
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
       .notNull()
       .defaultNow()
       .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
-    installationIdIdx: index("gw_res_installation_id_idx").on(table.installationId),
+    installationIdIdx: index("gw_res_installation_id_idx").on(
+      table.installationId
+    ),
     providerResourceIdx: uniqueIndex("gw_res_provider_resource_idx").on(
       table.installationId,
-      table.providerResourceId,
+      table.providerResourceId
     ),
-  }),
+  })
 );
 
 export type GwResource = typeof gwResources.$inferSelect;

@@ -1,10 +1,10 @@
-import Link from "next/link";
-import {  categories as categoriesAPI } from "@vendor/cms";
-import type {Post} from "@vendor/cms";
-import { notFound } from "next/navigation";
+import type { Post } from "@vendor/cms";
+import { categories as categoriesAPI } from "@vendor/cms";
+import type { GraphContext } from "@vendor/seo/json-ld";
+import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
-import { JsonLd  } from "@vendor/seo/json-ld";
-import type {GraphContext} from "@vendor/seo/json-ld";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
 const categorySEO: Record<
   string,
@@ -82,13 +82,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const allCategories = await categoriesAPI.getCategories();
     currentCategory = allCategories.find(
-      (cat) => cat._slug?.toLowerCase() === category.toLowerCase(),
+      (cat) => cat._slug?.toLowerCase() === category.toLowerCase()
     );
   } catch {
     return { title: seo?.metaTitle ?? "Blog" };
   }
 
-  if (!seo || !currentCategory) {
+  if (!(seo && currentCategory)) {
     return {
       title: "Category Not Found",
     };
@@ -132,29 +132,27 @@ export default async function CategoryPage({ params }: Props) {
   } catch {
     // CMS unavailable — show empty state with category slug as display name
     return (
-      <>
-        <div className="space-y-2">
-          <div className="bg-card/40 border border-transparent rounded-xs p-4">
-            <h2 className="text-sm font-semibold mb-4">
-              Temporarily unavailable
-            </h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              We&apos;re having trouble loading posts right now. Please try again
-              shortly or{" "}
-              <Link href="/blog" className="underline">
-                view all posts
-              </Link>
-              .
-            </p>
-          </div>
+      <div className="space-y-2">
+        <div className="rounded-xs border border-transparent bg-card/40 p-4">
+          <h2 className="mb-4 font-semibold text-sm">
+            Temporarily unavailable
+          </h2>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            We&apos;re having trouble loading posts right now. Please try again
+            shortly or{" "}
+            <Link className="underline" href="/blog">
+              view all posts
+            </Link>
+            .
+          </p>
         </div>
-      </>
+      </div>
     );
   }
 
   // Find the current category
   const currentCategory = allCategories.find(
-    (cat) => cat._slug?.toLowerCase() === category.toLowerCase(),
+    (cat) => cat._slug?.toLowerCase() === category.toLowerCase()
   );
 
   // Validate category exists
@@ -171,8 +169,8 @@ export default async function CategoryPage({ params }: Props) {
   const posts = allPosts.filter((post) =>
     post.categories?.some(
       (cat) =>
-        cat._title?.toLowerCase() === currentCategory._title?.toLowerCase(),
-    ),
+        cat._title?.toLowerCase() === currentCategory._title?.toLowerCase()
+    )
   );
 
   // Structured data for category page
@@ -209,14 +207,14 @@ export default async function CategoryPage({ params }: Props) {
       {/* Posts List */}
       <div className="space-y-2">
         {posts.length === 0 ? (
-          <div className="bg-card/40 border border-transparent rounded-xs p-4">
-            <h2 className="text-sm font-semibold mb-4">
+          <div className="rounded-xs border border-transparent bg-card/40 p-4">
+            <h2 className="mb-4 font-semibold text-sm">
               No {displayName} posts yet
             </h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
               We haven't published any {displayName.toLowerCase()} posts yet.
               Check back soon or{" "}
-              <Link href="/blog" className="underline">
+              <Link className="underline" href="/blog">
                 view all posts
               </Link>
               .
@@ -240,25 +238,25 @@ export default async function CategoryPage({ params }: Props) {
 
             return (
               <article
+                className="rounded-xs border border-transparent bg-card p-4 transition-colors hover:border-border/40"
                 key={post._slug ?? post._title}
-                className="bg-card border border-transparent rounded-xs p-4 hover:border-border/40 transition-colors"
               >
                 <Link
+                  className="group block"
                   href={`/blog/${post.slug ?? post._slug}`}
-                  className="block group"
                 >
-                  <h2 className="text-md font-base mb-1 group-hover:text-foreground/80 transition-colors">
+                  <h2 className="mb-1 font-base text-md transition-colors group-hover:text-foreground/80">
                     {post._title}
                   </h2>
 
                   {post.description && (
-                    <p className="text-muted-foreground text-md leading-relaxed mb-4">
+                    <p className="mb-4 text-md text-muted-foreground leading-relaxed">
                       {post.description}
                     </p>
                   )}
 
                   {/* Metadata */}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
                     {primaryCategory && (
                       <>
                         <span>{primaryCategory}</span>
@@ -276,4 +274,3 @@ export default async function CategoryPage({ params }: Props) {
     </>
   );
 }
-

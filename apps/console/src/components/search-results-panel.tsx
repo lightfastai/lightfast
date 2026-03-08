@@ -7,21 +7,21 @@ import {
 } from "@repo/ui/components/ai-elements/code-block";
 import {
   Tabs,
+  TabsContent,
   TabsList,
   TabsTrigger,
-  TabsContent,
 } from "@repo/ui/components/ui/tabs";
-import { SearchResultsList } from "./search-results-list";
 import { SearchEmptyState } from "./search-empty-state";
+import { SearchResultsList } from "./search-results-list";
 import { SearchTabContent } from "./search-tab-content";
 
 interface SearchResultsPanelProps {
-  searchResults: V1SearchResponse | null;
   activeTab: string;
-  onActiveTabChange: (tab: string) => void;
   expandedId: string;
-  onExpandedIdChange: (id: string) => void;
   offset: number;
+  onActiveTabChange: (tab: string) => void;
+  onExpandedIdChange: (id: string) => void;
+  searchResults: V1SearchResponse | null;
   storeId: string;
 }
 
@@ -36,16 +36,16 @@ export function SearchResultsPanel({
 }: SearchResultsPanelProps) {
   return (
     <Tabs
-      value={activeTab}
+      className="flex min-h-0 flex-1 flex-col overflow-hidden pt-2"
       onValueChange={(value) => onActiveTabChange(value as "list" | "json")}
-      className="flex flex-col flex-1 overflow-hidden min-h-0 pt-2"
+      value={activeTab}
     >
       <div className="px-4">
         <TabsList>
-          <TabsTrigger value="list" className="text-xs">
+          <TabsTrigger className="text-xs" value="list">
             List
           </TabsTrigger>
-          <TabsTrigger value="json" className="text-xs">
+          <TabsTrigger className="text-xs" value="json">
             JSON
           </TabsTrigger>
         </TabsList>
@@ -53,16 +53,16 @@ export function SearchResultsPanel({
 
       {/* List Tab */}
       <TabsContent
+        className="m-0 flex min-h-0 flex-1 flex-col overflow-hidden"
         value="list"
-        className="m-0 flex flex-col flex-1 overflow-hidden min-h-0"
       >
         <SearchTabContent>
           {searchResults ? (
             <SearchResultsList
-              searchResults={searchResults}
               expandedId={expandedId}
-              onExpandedIdChange={onExpandedIdChange}
               offset={offset}
+              onExpandedIdChange={onExpandedIdChange}
+              searchResults={searchResults}
               storeId={storeId}
             />
           ) : (
@@ -73,16 +73,16 @@ export function SearchResultsPanel({
 
       {/* JSON Tab */}
       <TabsContent
+        className="m-0 flex min-h-0 flex-1 flex-col overflow-hidden"
         value="json"
-        className="m-0 flex flex-col flex-1 overflow-hidden min-h-0"
       >
         <SearchTabContent>
           {searchResults ? (
-            <CodeBlock className="h-full overflow-auto border rounded-sm scrollbar-thin">
+            <CodeBlock className="scrollbar-thin h-full overflow-auto rounded-sm border">
               <CodeBlockContent
+                className="p-3"
                 code={JSON.stringify(searchResults, null, 2)}
                 language="json"
-                className="p-3"
               />
             </CodeBlock>
           ) : (

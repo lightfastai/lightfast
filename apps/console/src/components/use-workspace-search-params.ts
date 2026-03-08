@@ -1,14 +1,14 @@
 "use client";
 
+import type { RerankMode } from "@repo/console-types";
 import {
+  parseAsArrayOf,
+  parseAsBoolean,
+  parseAsInteger,
   parseAsString,
   parseAsStringLiteral,
-  parseAsArrayOf,
-  parseAsInteger,
-  parseAsBoolean,
   useQueryStates,
 } from "nuqs";
-import type { RerankMode } from "@repo/console-types";
 
 const rerankModes = ["fast", "balanced", "thorough"] as const;
 const agePresets = ["1h", "6h", "24h", "72h", "7d", "30d", "none"] as const;
@@ -68,16 +68,17 @@ export function useWorkspaceSearchParams(initialQuery = "") {
     setIncludeContext: (v: boolean) => setParams({ ctx: v }),
     includeHighlights: params.hl,
     setIncludeHighlights: (v: boolean) => setParams({ hl: v }),
-    agePreset: params.age as typeof agePresets[number],
-    setAgePreset: (v: typeof agePresets[number]) => setParams({ age: v }),
-    activeTab: params.view as typeof viewTabs[number],
-    setActiveTab: (v: typeof viewTabs[number]) => setParams({ view: v }),
+    agePreset: params.age as (typeof agePresets)[number],
+    setAgePreset: (v: (typeof agePresets)[number]) => setParams({ age: v }),
+    activeTab: params.view as (typeof viewTabs)[number],
+    setActiveTab: (v: (typeof viewTabs)[number]) => setParams({ view: v }),
     // Helper for clearing all filters
-    clearFilters: () => setParams({
-      sources: [],
-      types: [],
-      actors: [],
-      age: "none",
-    }),
+    clearFilters: () =>
+      setParams({
+        sources: [],
+        types: [],
+        actors: [],
+        age: "none",
+      }),
   };
 }

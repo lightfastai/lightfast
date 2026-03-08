@@ -5,9 +5,9 @@
  */
 
 import matter from "gray-matter";
-import type { MDXMetadata } from "./types";
-import { deriveSlug } from "./slug";
 import { hashContent } from "./hash";
+import { deriveSlug } from "./slug";
+import type { MDXMetadata } from "./types";
 
 /**
  * Parse MDX file and extract metadata
@@ -42,15 +42,12 @@ import { hashContent } from "./hash";
  * // }
  * ```
  */
-export function parseMDX(
-  filePath: string,
-  content: string,
-): MDXMetadata {
+export function parseMDX(filePath: string, content: string): MDXMetadata {
   // Parse frontmatter using gray-matter
   const { data: frontmatter, content: body } = matter(content);
 
   // Extract title from frontmatter or first h1
-  let title: string | undefined = undefined;
+  let title: string | undefined;
   if (frontmatter.title && typeof frontmatter.title === "string") {
     title = frontmatter.title;
   } else {
@@ -62,11 +59,8 @@ export function parseMDX(
   }
 
   // Extract description from frontmatter
-  let description: string | undefined = undefined;
-  if (
-    frontmatter.description &&
-    typeof frontmatter.description === "string"
-  ) {
+  let description: string | undefined;
+  if (frontmatter.description && typeof frontmatter.description === "string") {
     description = frontmatter.description;
   }
 

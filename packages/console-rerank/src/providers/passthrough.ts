@@ -6,10 +6,10 @@
  */
 
 import type {
-  RerankProvider,
   RerankCandidate,
-  RerankResponse,
   RerankOptions,
+  RerankProvider,
+  RerankResponse,
 } from "../types";
 
 /**
@@ -27,7 +27,7 @@ export class PassthroughRerankProvider implements RerankProvider {
   rerank(
     _query: string,
     candidates: RerankCandidate[],
-    options?: RerankOptions,
+    options?: RerankOptions
   ): Promise<RerankResponse> {
     const threshold = options?.threshold ?? 0;
     const topK = options?.topK ?? candidates.length;

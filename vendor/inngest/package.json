@@ -1,55 +1,48 @@
 {
-	"name": "@vendor/inngest",
-	"private": true,
-	"version": "0.1.0",
-	"type": "module",
-	"exports": {
-		".": {
-			"types": "./dist/src/index.d.ts",
-			"default": "./dist/src/index.js"
-		},
-		"./server": {
-			"types": "./dist/src/server.d.ts",
-			"default": "./dist/src/server.js"
-		},
-		"./hono": {
-			"types": "./dist/src/hono.d.ts",
-			"default": "./dist/src/hono.js"
-		},
-		"./env": {
-			"types": "./dist/env.d.ts",
-			"default": "./dist/env.js"
-		}
-	},
-	"license": "MIT",
-	"scripts": {
-		"build": "tsc",
-		"clean": "git clean -xdf .cache .turbo dist node_modules",
-		"dev": "tsc",
-		"format": "prettier --check . --ignore-path ../../.gitignore",
-		"lint": "eslint",
-		"typecheck": "tsc --noEmit --emitDeclarationOnly false"
-	},
-	"devDependencies": {
-		"@repo/eslint-config": "workspace:*",
-		"@repo/prettier-config": "workspace:*",
-		"@repo/typescript-config": "workspace:*",
-		"eslint": "catalog:",
-		"prettier": "catalog:",
-		"typescript": "catalog:"
-	},
-	"prettier": "@repo/prettier-config",
-	"dependencies": {
-		"@t3-oss/env-core": "catalog:",
-		"inngest": "catalog:",
-		"zod": "catalog:zod3"
-	},
-	"peerDependencies": {
-		"hono": "catalog:"
-	},
-	"peerDependenciesMeta": {
-		"hono": {
-			"optional": true
-		}
-	}
+  "name": "@vendor/inngest",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./server": {
+      "types": "./dist/src/server.d.ts",
+      "default": "./dist/src/server.js"
+    },
+    "./hono": {
+      "types": "./dist/src/hono.d.ts",
+      "default": "./dist/src/hono.js"
+    },
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "default": "./dist/env.js"
+    }
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "catalog:",
+    "inngest": "catalog:",
+    "zod": "catalog:zod3"
+  },
+  "peerDependencies": {
+    "hono": "catalog:"
+  },
+  "peerDependenciesMeta": {
+    "hono": {
+      "optional": true
+    }
+  }
 }

@@ -4,20 +4,20 @@
 
 export interface RepositoryPermissions {
   admin: boolean;
-  push: boolean;
   pull: boolean;
+  push: boolean;
 }
 
 export interface RepositoryMetadata {
-  fullName?: string;
-  description?: string;
-  language?: string;
-  private?: boolean;
-  owner?: string;
-  ownerAvatar?: string;
-  stargazersCount?: number;
-  updatedAt?: string;
   deleted?: boolean;
   deletedAt?: string;
+  description?: string;
   extras?: Record<string, unknown>;
+  fullName?: string;
+  language?: string;
+  owner?: string;
+  ownerAvatar?: string;
+  private?: boolean;
+  stargazersCount?: number;
+  updatedAt?: string;
 }

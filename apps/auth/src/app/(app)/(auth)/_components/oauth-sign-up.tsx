@@ -1,27 +1,32 @@
 "use client";
-import * as React from "react";
-import type { OAuthStrategy } from "@vendor/clerk/types";
-import { useClerk, useSignUp } from "@vendor/clerk/client";
-import { toast } from "@repo/ui/components/ui/sonner";
-import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
-import { handleClerkError } from "~/app/lib/clerk/error-handler";
+import { Button } from "@repo/ui/components/ui/button";
+import { toast } from "@repo/ui/components/ui/sonner";
+import { useClerk, useSignUp } from "@vendor/clerk/client";
+import type { OAuthStrategy } from "@vendor/clerk/types";
 import { useLogger } from "@vendor/observability/client-log";
+import * as React from "react";
+import { handleClerkError } from "~/app/lib/clerk/error-handler";
 import { consoleUrl } from "~/lib/related-projects";
 
 interface OAuthSignUpProps {
-  onError?: (errorMessage: string, isSignUpRestricted?: boolean) => void;
   invitationTicket?: string | null;
+  onError?: (errorMessage: string, isSignUpRestricted?: boolean) => void;
 }
 
-export function OAuthSignUp({ onError, invitationTicket }: OAuthSignUpProps = {}) {
+export function OAuthSignUp({
+  onError,
+  invitationTicket,
+}: OAuthSignUpProps = {}) {
   const { signUp, isLoaded } = useSignUp();
   const { setActive } = useClerk();
   const [loading, setLoading] = React.useState<OAuthStrategy | null>(null);
   const log = useLogger();
 
   const signUpWith = async (strategy: OAuthStrategy) => {
-    if (!signUp) return;
+    if (!signUp) {
+      return;
+    }
 
     try {
       setLoading(strategy);
@@ -54,7 +59,7 @@ export function OAuthSignUp({ onError, invitationTicket }: OAuthSignUpProps = {}
         });
         if (onError) {
           onError(
-            "Please use the email option above to complete your invitation sign-up.",
+            "Please use the email option above to complete your invitation sign-up."
           );
         }
         setLoading(null);
@@ -91,11 +96,11 @@ export function OAuthSignUp({ onError, invitationTicket }: OAuthSignUpProps = {}
 
   return (
     <Button
-      variant="outline"
       className="w-full"
-      size="lg"
-      onClick={() => signUpWith("oauth_github")}
       disabled={!isLoaded || loading !== null}
+      onClick={() => signUpWith("oauth_github")}
+      size="lg"
+      variant="outline"
     >
       {loading === "oauth_github" ? (
         <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />

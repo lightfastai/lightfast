@@ -5,17 +5,12 @@
  * so we parse markdown ourselves and output the JSON format directly.
  */
 
-import { unified } from "unified";
-import remarkParse from "remark-parse";
-import remarkGfm from "remark-gfm";
-import type {
-  Content,
-  ListItem,
-  TableCell,
-} from "mdast";
-
 // Import official basehub RichTextNode type for type compatibility
 import type { RichTextNode as BasehubRichTextNode } from "basehub/api-transaction";
+import type { Content, ListItem, TableCell } from "mdast";
+import remarkGfm from "remark-gfm";
+import remarkParse from "remark-parse";
+import { unified } from "unified";
 
 // Re-export basehub's type for consumers
 export type RichTextNode = BasehubRichTextNode;
@@ -39,8 +34,8 @@ type Mark =
  * Context passed through the AST conversion to track state like marks
  */
 interface ConversionContext {
-  marks: Mark[];
   isInTableHeader: boolean;
+  marks: Mark[];
 }
 
 /**
@@ -59,7 +54,7 @@ function createTextNode(text: string, marks: Mark[] = []): RichTextNode {
  */
 function convertInlineContent(
   children: Content[],
-  ctx: ConversionContext,
+  ctx: ConversionContext
 ): RichTextNode[] {
   const result: RichTextNode[] = [];
 
@@ -77,7 +72,7 @@ function convertInlineContent(
           marks: [...ctx.marks, { type: "bold" as const }],
         };
         result.push(
-          ...convertInlineContent(child.children as Content[], strongCtx),
+          ...convertInlineContent(child.children as Content[], strongCtx)
         );
         break;
       }
@@ -87,7 +82,7 @@ function convertInlineContent(
           marks: [...ctx.marks, { type: "italic" as const }],
         };
         result.push(
-          ...convertInlineContent(child.children as Content[], emCtx),
+          ...convertInlineContent(child.children as Content[], emCtx)
         );
         break;
       }
@@ -97,15 +92,12 @@ function convertInlineContent(
           marks: [...ctx.marks, { type: "strike" as const }],
         };
         result.push(
-          ...convertInlineContent(
-            (child).children as Content[],
-            deleteCtx,
-          ),
+          ...convertInlineContent(child.children as Content[], deleteCtx)
         );
         break;
       }
       case "inlineCode": {
-        const codeValue = (child).value;
+        const codeValue = child.value;
         const codeMark: Mark = {
           type: "code",
           attrs: { isInline: true, language: "", code: codeValue },
@@ -121,7 +113,7 @@ function convertInlineContent(
         };
         const linkCtx = { ...ctx, marks: [...ctx.marks, linkMark] };
         result.push(
-          ...convertInlineContent(linkNode.children as Content[], linkCtx),
+          ...convertInlineContent(linkNode.children as Content[], linkCtx)
         );
         break;
       }
@@ -144,7 +136,7 @@ function convertInlineContent(
         // Handle any other inline nodes by trying to extract their children
         if ("children" in child && Array.isArray(child.children)) {
           result.push(
-            ...convertInlineContent(child.children as Content[], ctx),
+            ...convertInlineContent(child.children as Content[], ctx)
           );
         }
       }
@@ -159,7 +151,7 @@ function convertInlineContent(
  */
 function convertNode(
   node: Content,
-  ctx: ConversionContext,
+  ctx: ConversionContext
 ): RichTextNode | RichTextNode[] | null {
   switch (node.type) {
     case "paragraph": {
@@ -191,7 +183,7 @@ function convertNode(
     case "list": {
       const list = node;
       const listContent = list.children.map((item: ListItem) =>
-        convertNode(item, ctx),
+        convertNode(item, ctx)
       ) as RichTextNode[];
 
       if (list.ordered) {
@@ -254,18 +246,22 @@ function convertNode(
 
         const cells = row.children.map((cell: TableCell) => {
           const tableCell = cell;
-          const cellType = isHeaderRow ? "tableHeader" as const : "tableCell" as const;
+          const cellType = isHeaderRow
+            ? ("tableHeader" as const)
+            : ("tableCell" as const);
 
           // Table cells should contain a paragraph wrapping the inline content
           const cellInlineContent = convertInlineContent(
             tableCell.children as Content[],
-            rowCtx,
+            rowCtx
           );
 
           return {
             type: cellType,
             attrs: { colspan: 1, rowspan: 1 },
-            content: [{ type: "paragraph" as const, content: cellInlineContent }],
+            content: [
+              { type: "paragraph" as const, content: cellInlineContent },
+            ],
           };
         });
 

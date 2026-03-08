@@ -1,11 +1,11 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
-import { z } from "zod";
 import type {
+  LightfastAnswerRuntimeContext,
   RelatedToolInput,
   RelatedToolOutput,
-  LightfastAnswerRuntimeContext,
 } from "@repo/console-ai-types";
 import { RelatedResponseSchema } from "@repo/console-types";
+import { z } from "zod";
 
 const inputSchema: z.ZodType<RelatedToolInput> = z.object({
   id: z.string().describe("The observation ID to find related events for"),
@@ -34,7 +34,7 @@ export function workspaceRelatedTool() {
       const handler = context.tools?.workspaceRelated?.handler;
       if (!handler) {
         throw new Error(
-          "Workspace related handler not configured in runtime context.",
+          "Workspace related handler not configured in runtime context."
         );
       }
       return handler(input);

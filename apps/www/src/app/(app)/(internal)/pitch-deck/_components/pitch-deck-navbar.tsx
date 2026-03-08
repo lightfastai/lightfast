@@ -1,15 +1,15 @@
 "use client";
 
-import NextLink from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
+  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  NavigationMenuLink,
 } from "@repo/ui/components/ui/navigation-menu";
+import NextLink from "next/link";
 import { RESOURCES_NAV } from "~/config/nav";
 
 const navLinkClass =
@@ -19,22 +19,22 @@ export function PitchDeckNavbar() {
   return (
     <div className="flex items-center gap-0.5">
       {/* Home link */}
-      <Button asChild variant="none" size="sm" className={navLinkClass}>
+      <Button asChild className={navLinkClass} size="sm" variant="none">
         <NextLink href="/" prefetch>
           Home
         </NextLink>
       </Button>
 
       {/* Resources dropdown */}
-      <NavigationMenu viewport={false} className="static [&>div]:!static">
+      <NavigationMenu className="[&>div]:!static static" viewport={false}>
         <NavigationMenuList>
           <NavigationMenuItem className="static">
             <NavigationMenuTrigger
-              className={`px-1.5 text-sm rounded bg-transparent hover:bg-transparent dark:hover:bg-transparent focus:bg-transparent dark:focus:bg-transparent data-[state=open]:bg-transparent dark:data-[state=open]:bg-transparent hover:text-foreground dark:hover:text-foreground focus:text-foreground dark:focus:text-foreground data-[state=open]:text-foreground dark:data-[state=open]:text-foreground ${navLinkClass}`}
+              className={`rounded bg-transparent px-1.5 text-sm hover:bg-transparent hover:text-foreground focus:bg-transparent focus:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground dark:data-[state=open]:bg-transparent dark:data-[state=open]:text-foreground dark:focus:bg-transparent dark:focus:text-foreground dark:hover:bg-transparent dark:hover:text-foreground ${navLinkClass}`}
             >
               Resources
             </NavigationMenuTrigger>
-            <NavigationMenuContent className="left-0 right-0 w-full md:w-full">
+            <NavigationMenuContent className="right-0 left-0 w-full md:w-full">
               <div className="flex flex-col gap-1 rounded-sm">
                 {RESOURCES_NAV.map((item) => (
                   <NavigationMenuLink asChild key={item.href}>

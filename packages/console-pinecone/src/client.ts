@@ -5,10 +5,17 @@
  * Provides a convenience API with sensible defaults for the console application.
  */
 
-import { PineconeClient as VendorPineconeClient } from "@vendor/pinecone/client";
-import { PINECONE_CONFIG } from "@repo/console-config";
-import type { UpsertRequest, UpsertResponse, QueryRequest, QueryResponse, FetchResponse, UpdateRequest } from "@vendor/pinecone/types";
 import type { RecordMetadata } from "@pinecone-database/pinecone";
+import { PINECONE_CONFIG } from "@repo/console-config";
+import { PineconeClient as VendorPineconeClient } from "@vendor/pinecone/client";
+import type {
+  FetchResponse,
+  QueryRequest,
+  QueryResponse,
+  UpdateRequest,
+  UpsertRequest,
+  UpsertResponse,
+} from "@vendor/pinecone/types";
 
 /**
  * Console-specific Pinecone client with injected configuration
@@ -17,7 +24,7 @@ import type { RecordMetadata } from "@pinecone-database/pinecone";
  * injects private configuration defaults from @repo/console-config.
  */
 export class ConsolePineconeClient {
-  private client: VendorPineconeClient;
+  private readonly client: VendorPineconeClient;
 
   constructor() {
     this.client = new VendorPineconeClient();

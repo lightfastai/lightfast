@@ -1,13 +1,13 @@
 import type React from "react";
-import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
-import { SPRING_CONFIGS, MOTION_DURATION } from "./timing";
+import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { MOTION_DURATION, SPRING_CONFIGS } from "./timing";
 
 interface IsometricCardProps {
+  animate?: boolean;
   children: React.ReactNode;
   entranceFrame: number;
-  animate?: boolean;
-  width: number;
   height: number;
+  width: number;
   /** Absolute position within the isometric plane */
   x: number;
   y: number;

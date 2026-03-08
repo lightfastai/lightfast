@@ -5,18 +5,22 @@
  * URL pattern: /{orgSlug}
  */
 
-import organizationNames from '../data/organization-names.json' with { type: 'json' };
+import organizationNames from "../data/organization-names.json" with {
+  type: "json",
+};
 
 /**
  * All reserved organization names (sorted alphabetically)
  */
-export const all: ReadonlyArray<string> = organizationNames;
+export const all: readonly string[] = organizationNames;
 
 /**
  * Set of reserved organization names for O(1) lookup performance
  * @internal
  */
-const reservedSet = new Set(organizationNames.map(name => name.toLowerCase()));
+const reservedSet = new Set(
+  organizationNames.map((name) => name.toLowerCase())
+);
 
 /**
  * Check if an organization slug is reserved (case-insensitive)
@@ -34,7 +38,9 @@ const reservedSet = new Set(organizationNames.map(name => name.toLowerCase()));
  * ```
  */
 export function check(slug: string): boolean {
-  if (!slug) return false;
+  if (!slug) {
+    return false;
+  }
   return reservedSet.has(slug.toLowerCase());
 }
 

@@ -6,68 +6,82 @@
 
 import type { SourceEvent, TransformContext } from "@repo/console-types";
 import type { SourceType } from "@repo/console-validation";
-import {
-  transformGitHubPush,
-  transformGitHubPullRequest,
-  transformGitHubIssue,
-  transformGitHubRelease,
-  transformGitHubDiscussion,
-  transformVercelDeployment,
-  sentryTransformers,
-  linearTransformers,
-} from "@repo/console-webhooks/transformers";
 import type {
-  GitHubWebhookEventType,
-  PushEvent,
-  PullRequestEvent,
-  IssuesEvent,
-  ReleaseEvent,
+  VercelWebhookEventType,
+  VercelWebhookPayload,
+} from "@repo/console-webhooks";
+import type {
   DiscussionEvent,
-  SentryWebhookEventType,
-  SentryIssueWebhook,
+  GitHubWebhookEventType,
+  IssuesEvent,
+  LinearCommentWebhook,
+  LinearCycleWebhook,
+  LinearIssueWebhook,
+  LinearProjectUpdateWebhook,
+  LinearProjectWebhook,
+  LinearWebhookEventType,
+  PullRequestEvent,
+  PushEvent,
+  ReleaseEvent,
   SentryErrorWebhook,
   SentryEventAlertWebhook,
+  SentryIssueWebhook,
   SentryMetricAlertWebhook,
-  LinearWebhookEventType,
-  LinearIssueWebhook,
-  LinearCommentWebhook,
-  LinearProjectWebhook,
-  LinearCycleWebhook,
-  LinearProjectUpdateWebhook,
+  SentryWebhookEventType,
 } from "@repo/console-webhooks/transformers";
-import type {
-  VercelWebhookPayload,
-  VercelWebhookEventType,
-} from "@repo/console-webhooks";
+import {
+  linearTransformers,
+  sentryTransformers,
+  transformGitHubDiscussion,
+  transformGitHubIssue,
+  transformGitHubPullRequest,
+  transformGitHubPush,
+  transformGitHubRelease,
+  transformVercelDeployment,
+} from "@repo/console-webhooks/transformers";
 
 export interface WebhookPayload {
-  source: SourceType;
   eventType: string;
   payload: unknown;
+  source: SourceType;
 }
 
 interface GitHubWebhookPayload extends WebhookPayload {
-  source: "github";
   eventType: GitHubWebhookEventType;
-  payload: PushEvent | PullRequestEvent | IssuesEvent | ReleaseEvent | DiscussionEvent;
+  payload:
+    | PushEvent
+    | PullRequestEvent
+    | IssuesEvent
+    | ReleaseEvent
+    | DiscussionEvent;
+  source: "github";
 }
 
 interface VercelWebhookPayloadWrapper extends WebhookPayload {
-  source: "vercel";
   eventType: VercelWebhookEventType;
   payload: VercelWebhookPayload;
+  source: "vercel";
 }
 
 export interface SentryWebhookPayload extends WebhookPayload {
-  source: "sentry";
   eventType: SentryWebhookEventType;
-  payload: SentryIssueWebhook | SentryErrorWebhook | SentryEventAlertWebhook | SentryMetricAlertWebhook;
+  payload:
+    | SentryIssueWebhook
+    | SentryErrorWebhook
+    | SentryEventAlertWebhook
+    | SentryMetricAlertWebhook;
+  source: "sentry";
 }
 
 export interface LinearWebhookPayload extends WebhookPayload {
-  source: "linear";
   eventType: LinearWebhookEventType;
-  payload: LinearIssueWebhook | LinearCommentWebhook | LinearProjectWebhook | LinearCycleWebhook | LinearProjectUpdateWebhook;
+  payload:
+    | LinearIssueWebhook
+    | LinearCommentWebhook
+    | LinearProjectWebhook
+    | LinearCycleWebhook
+    | LinearProjectUpdateWebhook;
+  source: "linear";
 }
 
 /**
@@ -147,7 +161,9 @@ function transformGitHubWebhook(
       );
       break;
     default:
-      throw new Error(`Unsupported GitHub event type: ${String(webhook.eventType satisfies never)}`);
+      throw new Error(
+        `Unsupported GitHub event type: ${String(webhook.eventType satisfies never)}`
+      );
   }
 
   // Add test suffix to sourceId for uniqueness across runs

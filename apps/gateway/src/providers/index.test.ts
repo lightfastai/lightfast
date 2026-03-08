@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 // Set process.env vars for conditional provider registration (read at module load)
 vi.hoisted(() => {
@@ -60,11 +60,11 @@ vi.mock("../lib/token-store", () => ({
 }));
 
 import {
-  getProvider,
   GitHubProvider,
-  VercelProvider,
+  getProvider,
   LinearProvider,
   SentryProvider,
+  VercelProvider,
 } from "./index.js";
 
 describe("getProvider", () => {

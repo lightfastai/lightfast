@@ -1,1 +1,4 @@
-export { isClerkAPIResponseError, isUserLockedError } from "@clerk/shared/error";
+export {
+  isClerkAPIResponseError,
+  isUserLockedError,
+} from "@clerk/shared/error";

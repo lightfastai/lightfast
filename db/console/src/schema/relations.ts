@@ -1,19 +1,18 @@
 import { relations } from "drizzle-orm";
-
+import { gwInstallations } from "./tables/gw-installations";
+import { gwResources } from "./tables/gw-resources";
+import { gwTokens } from "./tables/gw-tokens";
+import { orgActorIdentities } from "./tables/org-actor-identities";
+import { orgWorkspaces } from "./tables/org-workspaces";
+import { workspaceActorProfiles } from "./tables/workspace-actor-profiles";
+import { workspaceIntegrations } from "./tables/workspace-integrations";
 import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-documents";
 import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
-import { workspaceUserActivities } from "./tables/workspace-user-activities";
-import { workspaceIntegrations } from "./tables/workspace-integrations";
-import { orgWorkspaces } from "./tables/org-workspaces";
 import { workspaceNeuralObservations } from "./tables/workspace-neural-observations";
 import { workspaceObservationClusters } from "./tables/workspace-observation-clusters";
-import { workspaceActorProfiles } from "./tables/workspace-actor-profiles";
-import { orgActorIdentities } from "./tables/org-actor-identities";
-import { workspaceTemporalStates } from "./tables/workspace-temporal-states";
 import { workspaceObservationRelationships } from "./tables/workspace-observation-relationships";
-import { gwInstallations } from "./tables/gw-installations";
-import { gwTokens } from "./tables/gw-tokens";
-import { gwResources } from "./tables/gw-resources";
+import { workspaceTemporalStates } from "./tables/workspace-temporal-states";
+import { workspaceUserActivities } from "./tables/workspace-user-activities";
 
 /**
  * Define relations between tables for Drizzle ORM queries
@@ -23,11 +22,14 @@ import { gwResources } from "./tables/gw-resources";
  */
 
 // Gateway relations
-export const gwInstallationsRelations = relations(gwInstallations, ({ many }) => ({
-  tokens: many(gwTokens),
-  resources: many(gwResources),
-  workspaceIntegrations: many(workspaceIntegrations),
-}));
+export const gwInstallationsRelations = relations(
+  gwInstallations,
+  ({ many }) => ({
+    tokens: many(gwTokens),
+    resources: many(gwResources),
+    workspaceIntegrations: many(workspaceIntegrations),
+  })
+);
 
 export const gwTokensRelations = relations(gwTokens, ({ one }) => ({
   installation: one(gwInstallations, {
@@ -52,46 +54,58 @@ export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
   temporalStates: many(workspaceTemporalStates),
 }));
 
-export const workspaceKnowledgeDocumentsRelations = relations(workspaceKnowledgeDocuments, ({ one, many }) => ({
-  workspace: one(orgWorkspaces, {
-    fields: [workspaceKnowledgeDocuments.workspaceId],
-    references: [orgWorkspaces.id],
-  }),
-  vectorChunks: many(workspaceKnowledgeVectorChunks),
-}));
+export const workspaceKnowledgeDocumentsRelations = relations(
+  workspaceKnowledgeDocuments,
+  ({ one, many }) => ({
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceKnowledgeDocuments.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+    vectorChunks: many(workspaceKnowledgeVectorChunks),
+  })
+);
 
-export const workspaceKnowledgeVectorChunksRelations = relations(workspaceKnowledgeVectorChunks, ({ one }) => ({
-  workspace: one(orgWorkspaces, {
-    fields: [workspaceKnowledgeVectorChunks.workspaceId],
-    references: [orgWorkspaces.id],
-  }),
-  document: one(workspaceKnowledgeDocuments, {
-    fields: [workspaceKnowledgeVectorChunks.docId],
-    references: [workspaceKnowledgeDocuments.id],
-  }),
-}));
+export const workspaceKnowledgeVectorChunksRelations = relations(
+  workspaceKnowledgeVectorChunks,
+  ({ one }) => ({
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceKnowledgeVectorChunks.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+    document: one(workspaceKnowledgeDocuments, {
+      fields: [workspaceKnowledgeVectorChunks.docId],
+      references: [workspaceKnowledgeDocuments.id],
+    }),
+  })
+);
 
-export const workspaceUserActivitiesRelations = relations(workspaceUserActivities, ({ one }) => ({
-  workspace: one(orgWorkspaces, {
-    fields: [workspaceUserActivities.workspaceId],
-    references: [orgWorkspaces.id],
-  }),
-  relatedActivity: one(workspaceUserActivities, {
-    fields: [workspaceUserActivities.relatedActivityId],
-    references: [workspaceUserActivities.id],
-  }),
-}));
+export const workspaceUserActivitiesRelations = relations(
+  workspaceUserActivities,
+  ({ one }) => ({
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceUserActivities.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+    relatedActivity: one(workspaceUserActivities, {
+      fields: [workspaceUserActivities.relatedActivityId],
+      references: [workspaceUserActivities.id],
+    }),
+  })
+);
 
-export const workspaceIntegrationsRelations = relations(workspaceIntegrations, ({ one }) => ({
-  workspace: one(orgWorkspaces, {
-    fields: [workspaceIntegrations.workspaceId],
-    references: [orgWorkspaces.id],
-  }),
-  installation: one(gwInstallations, {
-    fields: [workspaceIntegrations.installationId],
-    references: [gwInstallations.id],
-  }),
-}));
+export const workspaceIntegrationsRelations = relations(
+  workspaceIntegrations,
+  ({ one }) => ({
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceIntegrations.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+    installation: one(gwInstallations, {
+      fields: [workspaceIntegrations.installationId],
+      references: [gwInstallations.id],
+    }),
+  })
+);
 
 export const workspaceNeuralObservationsRelations = relations(
   workspaceNeuralObservations,
@@ -104,7 +118,7 @@ export const workspaceNeuralObservationsRelations = relations(
       fields: [workspaceNeuralObservations.clusterId],
       references: [workspaceObservationClusters.id],
     }),
-  }),
+  })
 );
 
 export const workspaceObservationClustersRelations = relations(
@@ -115,7 +129,7 @@ export const workspaceObservationClustersRelations = relations(
       references: [orgWorkspaces.id],
     }),
     observations: many(workspaceNeuralObservations),
-  }),
+  })
 );
 
 // Actor Profile relations
@@ -127,7 +141,7 @@ export const workspaceActorProfilesRelations = relations(
       references: [orgWorkspaces.id],
     }),
     // Note: identities relation removed - now using org-level orgActorIdentities
-  }),
+  })
 );
 
 // Temporal states relation
@@ -138,7 +152,7 @@ export const workspaceTemporalStatesRelations = relations(
       fields: [workspaceTemporalStates.workspaceId],
       references: [orgWorkspaces.id],
     }),
-  }),
+  })
 );
 
 // Org-level actor identities relation
@@ -148,7 +162,7 @@ export const orgActorIdentitiesRelations = relations(
   () => ({
     // No direct FK relations - clerkOrgId references Clerk org (external)
     // canonicalActorId links logically to workspaceActorProfiles.actorId
-  }),
+  })
 );
 
 // Workspace observation relationships - edges in the relationship graph
@@ -167,5 +181,5 @@ export const workspaceObservationRelationshipsRelations = relations(
       fields: [workspaceObservationRelationships.targetObservationId],
       references: [workspaceNeuralObservations.id],
     }),
-  }),
+  })
 );

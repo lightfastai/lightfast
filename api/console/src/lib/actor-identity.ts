@@ -3,13 +3,13 @@ import { orgActorIdentities } from "@db/console/schema";
 import type { SourceActor } from "@repo/console-types";
 
 interface UpsertIdentityInput {
-  clerkOrgId: string;
   canonicalActorId: string;
-  source: string;
-  sourceId: string;
-  sourceActor: SourceActor | null;
-  mappingMethod: string;
+  clerkOrgId: string;
   confidenceScore: number;
+  mappingMethod: string;
+  source: string;
+  sourceActor: SourceActor | null;
+  sourceId: string;
 }
 
 /**
@@ -60,4 +60,3 @@ export async function upsertOrgActorIdentity(
       },
     });
 }
-

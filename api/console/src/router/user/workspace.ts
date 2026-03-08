@@ -1,15 +1,21 @@
+import { db } from "@db/console/client";
+import {
+  gwInstallations,
+  orgWorkspaces,
+  workspaceIntegrations,
+} from "@db/console/schema";
+import { createCustomWorkspace, getWorkspaceKey } from "@db/console/utils";
+import {
+  workspaceCreateInputSchema,
+  workspaceListInputSchema,
+} from "@repo/console-validation/schemas";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { db } from "@db/console/client";
-import { orgWorkspaces, workspaceIntegrations, gwInstallations } from "@db/console/schema";
-import { eq, desc, and } from "drizzle-orm";
-import { workspaceListInputSchema, workspaceCreateInputSchema } from "@repo/console-validation/schemas";
 import { clerkClient } from "@vendor/clerk/server";
-import { getWorkspaceKey, createCustomWorkspace } from "@db/console/utils";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-
-import { userScopedProcedure } from "../../trpc";
 import { recordActivity } from "../../lib/activity";
+import { userScopedProcedure } from "../../trpc";
 
 /**
  * User-scoped workspace access router
@@ -45,12 +51,13 @@ export const workspaceAccessRouter = {
       }
 
       // Verify user has access to this organization
-      const membership = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: clerkOrg.id,
-      });
+      const membership =
+        await clerk.organizations.getOrganizationMembershipList({
+          organizationId: clerkOrg.id,
+        });
 
       const userMembership = membership.data.find(
-        (m) => m.publicUserData?.userId === ctx.auth.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId
       );
 
       if (!userMembership) {
@@ -95,35 +102,37 @@ export const workspaceAccessRouter = {
     .input(
       workspaceCreateInputSchema.extend({
         // Optional: Connect GitHub repository during workspace creation
-        githubRepository: z.object({
-          gwInstallationId: z.string(),
-          installationId: z.string(), // GitHub App installation external ID
-          repoId: z.string(),
-          repoName: z.string(),
-          repoFullName: z.string(),
-          defaultBranch: z.string(),
-          isPrivate: z.boolean(),
-          isArchived: z.boolean(),
-          syncConfig: z.object({
-            branches: z.array(z.string()).optional(),
-            paths: z.array(z.string()).optional(),
-            events: z.array(z.string()).optional(),
-            autoSync: z.boolean(),
-          }),
-        }).optional(),
+        githubRepository: z
+          .object({
+            gwInstallationId: z.string(),
+            installationId: z.string(), // GitHub App installation external ID
+            repoId: z.string(),
+            repoName: z.string(),
+            repoFullName: z.string(),
+            defaultBranch: z.string(),
+            isPrivate: z.boolean(),
+            isArchived: z.boolean(),
+            syncConfig: z.object({
+              branches: z.array(z.string()).optional(),
+              paths: z.array(z.string()).optional(),
+              events: z.array(z.string()).optional(),
+              autoSync: z.boolean(),
+            }),
+          })
+          .optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-
       // Verify user has access to this organization
       const clerk = await clerkClient();
 
-      const membership = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: input.clerkOrgId,
-      });
+      const membership =
+        await clerk.organizations.getOrganizationMembershipList({
+          organizationId: input.clerkOrgId,
+        });
 
       const userMembership = membership.data.find(
-        (m) => m.publicUserData?.userId === ctx.auth.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId
       );
 
       if (!userMembership) {
@@ -137,7 +146,7 @@ export const workspaceAccessRouter = {
       try {
         const workspaceId = await createCustomWorkspace(
           input.clerkOrgId,
-          input.workspaceName,
+          input.workspaceName
         );
 
         // Fetch workspace to get slug
@@ -182,8 +191,8 @@ export const workspaceAccessRouter = {
             .where(
               and(
                 eq(gwInstallations.id, repo.gwInstallationId),
-                eq(gwInstallations.orgId, input.clerkOrgId),
-              ),
+                eq(gwInstallations.orgId, input.clerkOrgId)
+              )
             )
             .limit(1);
 
@@ -207,10 +216,7 @@ export const workspaceAccessRouter = {
 
           const existing = existingResult.find((ws) => {
             const data = ws.sourceConfig;
-            return (
-              data.sourceType === "github" &&
-              data.repoId === repo.repoId
-            );
+            return data.sourceType === "github" && data.repoId === repo.repoId;
           });
 
           let workspaceSourceId: string;
@@ -281,11 +287,14 @@ export const workspaceAccessRouter = {
         return {
           workspaceId,
           workspaceKey,
-          workspaceSlug: workspace.slug,  // Internal slug for Pinecone
-          workspaceName: workspace.name,  // User-facing name for URLs
+          workspaceSlug: workspace.slug, // Internal slug for Pinecone
+          workspaceName: workspace.name, // User-facing name for URLs
         };
       } catch (error) {
-        if (error instanceof Error && error.message.includes("already exists")) {
+        if (
+          error instanceof Error &&
+          error.message.includes("already exists")
+        ) {
           throw new TRPCError({
             code: "CONFLICT",
             message: error.message,

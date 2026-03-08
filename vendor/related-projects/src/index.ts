@@ -17,9 +17,9 @@
  * ```
  */
 
-export { withRelatedProject } from "@vercel/related-projects";
 export type {
   RelatedProjectsOptions,
   VercelRelatedProject,
   VercelRelatedProjects,
 } from "@vercel/related-projects";
+export { withRelatedProject } from "@vercel/related-projects";

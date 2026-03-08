@@ -1,35 +1,35 @@
 "use client";
 
-import * as React from "react";
-import NextLink from "next/link";
-import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
-import { Menu, X } from "lucide-react";
+import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import {
   Sheet,
-  SheetTrigger,
   SheetPrimitive,
+  SheetTrigger,
 } from "@repo/ui/components/ui/sheet";
-import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
-import { Icons } from "@repo/ui/components/icons";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
+import { Menu, X } from "lucide-react";
+import NextLink from "next/link";
+import * as React from "react";
 import { INTERNAL_NAV, RESOURCES_NAV, SOCIAL_NAV } from "~/config/nav";
 
 export function AppMobileNav() {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet onOpenChange={setOpen} open={open}>
       <SheetTrigger asChild>
         <button
-          className="md:hidden p-2 text-foreground/60 hover:text-foreground transition-colors"
           aria-label="Toggle Menu"
+          className="p-2 text-foreground/60 transition-colors hover:text-foreground md:hidden"
         >
           <Menu className="h-5 w-5" />
         </button>
       </SheetTrigger>
       <SheetPrimitive.Portal>
-        <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <SheetPrimitive.Content className="fixed inset-y-0 left-0 z-50 h-full w-screen bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left data-[state=closed]:duration-300 data-[state=open]:duration-500">
+        <SheetPrimitive.Overlay className="data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50 data-[state=closed]:animate-out data-[state=open]:animate-in" />
+        <SheetPrimitive.Content className="data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left fixed inset-y-0 left-0 z-50 h-full w-screen bg-background data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:duration-300 data-[state=open]:duration-500">
           {/* Visually hidden title for accessibility */}
           <SheetPrimitive.Title className="sr-only">
             Navigation Menu
@@ -37,29 +37,29 @@ export function AppMobileNav() {
 
           {/* Header */}
           <div className="flex items-center justify-between p-6 pb-4">
-            <SheetPrimitive.Close className="flex items-center gap-2 text-foreground hover:opacity-70 transition-opacity">
+            <SheetPrimitive.Close className="flex items-center gap-2 text-foreground transition-opacity hover:opacity-70">
               <X className="h-5 w-5" />
-              <span className="text-lg font-medium">Menu</span>
+              <span className="font-medium text-lg">Menu</span>
             </SheetPrimitive.Close>
           </div>
 
           {/* Content */}
-          <div className="flex flex-col h-[calc(100vh-5rem)]">
+          <div className="flex h-[calc(100vh-5rem)] flex-col">
             <ScrollArea className="flex-1 overflow-hidden">
-              <div className="px-6 space-y-6">
+              <div className="space-y-6 px-6">
                 {/* Resources section */}
                 <div className="space-y-3">
-                  <div className="text-sm text-muted-foreground uppercase tracking-wide">
+                  <div className="text-muted-foreground text-sm uppercase tracking-wide">
                     Resources
                   </div>
                   <div className="space-y-1">
                     {RESOURCES_NAV.map((item) => (
                       <NextLink
-                        key={item.href}
+                        className="block py-1 font-medium text-foreground text-lg transition-colors hover:text-muted-foreground"
                         href={item.href}
-                        prefetch
+                        key={item.href}
                         onClick={() => setOpen(false)}
-                        className="block text-lg font-medium py-1 text-foreground hover:text-muted-foreground transition-colors"
+                        prefetch
                       >
                         {item.title}
                       </NextLink>
@@ -69,32 +69,31 @@ export function AppMobileNav() {
 
                 {/* Top-level nav items */}
                 <div className="space-y-3">
-                  <div className="text-sm text-muted-foreground uppercase tracking-wide">
+                  <div className="text-muted-foreground text-sm uppercase tracking-wide">
                     More
                   </div>
                   <div className="space-y-1">
-                    {INTERNAL_NAV.map(
-                      (item) =>
-                        item.microfrontend ? (
-                          <MicrofrontendLink
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setOpen(false)}
-                            className="block text-lg font-medium py-1 text-foreground hover:text-muted-foreground transition-colors"
-                          >
-                            {item.title}
-                          </MicrofrontendLink>
-                        ) : (
-                          <NextLink
-                            key={item.href}
-                            href={item.href}
-                            prefetch
-                            onClick={() => setOpen(false)}
-                            className="block text-lg font-medium py-1 text-foreground hover:text-muted-foreground transition-colors"
-                          >
-                            {item.title}
-                          </NextLink>
-                        )
+                    {INTERNAL_NAV.map((item) =>
+                      item.microfrontend ? (
+                        <MicrofrontendLink
+                          className="block py-1 font-medium text-foreground text-lg transition-colors hover:text-muted-foreground"
+                          href={item.href}
+                          key={item.href}
+                          onClick={() => setOpen(false)}
+                        >
+                          {item.title}
+                        </MicrofrontendLink>
+                      ) : (
+                        <NextLink
+                          className="block py-1 font-medium text-foreground text-lg transition-colors hover:text-muted-foreground"
+                          href={item.href}
+                          key={item.href}
+                          onClick={() => setOpen(false)}
+                          prefetch
+                        >
+                          {item.title}
+                        </NextLink>
+                      )
                     )}
                   </div>
                 </div>
@@ -102,17 +101,17 @@ export function AppMobileNav() {
             </ScrollArea>
 
             {/* CTA buttons */}
-            <div className="border-t p-6 space-y-3">
-              <Button asChild size="lg" className="w-full">
+            <div className="space-y-3 border-t p-6">
+              <Button asChild className="w-full" size="lg">
                 <NextLink
                   href="/early-access"
-                  prefetch
                   onClick={() => setOpen(false)}
+                  prefetch
                 >
                   Join Early Access
                 </NextLink>
               </Button>
-              <Button asChild variant="outline" size="lg" className="w-full">
+              <Button asChild className="w-full" size="lg" variant="outline">
                 <MicrofrontendLink
                   href="/sign-in"
                   onClick={() => setOpen(false)}
@@ -123,15 +122,15 @@ export function AppMobileNav() {
             </div>
 
             {/* Footer with social links */}
-            <div className="border-t p-6 flex items-center justify-center gap-6">
+            <div className="flex items-center justify-center gap-6 border-t p-6">
               {SOCIAL_NAV.map((item) => (
                 <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={item.title}
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  href={item.href}
+                  key={item.href}
+                  rel="noopener noreferrer"
+                  target="_blank"
                 >
                   {item.icon === "twitter" && (
                     <Icons.twitter className="h-5 w-5" />

@@ -3,14 +3,14 @@ import { workspaceIngestionPayloads } from "@db/console/schema";
 import type { SourceType } from "@repo/console-validation";
 
 export interface StoreIngestionPayloadParams {
-  workspaceId: string;
   deliveryId: string;
-  source: SourceType;
   eventType: string;
-  payload: string; // Raw JSON string from request.text()
   headers: Record<string, string>;
-  receivedAt: Date;
   ingestionSource?: "webhook" | "backfill" | "manual" | "api";
+  payload: string; // Raw JSON string from request.text()
+  receivedAt: Date;
+  source: SourceType;
+  workspaceId: string;
 }
 
 /** @deprecated Use StoreIngestionPayloadParams instead */
@@ -55,7 +55,9 @@ export async function storeIngestionPayload(
  * @param headers - Request Headers object
  * @returns Record of relevant header key-value pairs
  */
-export function extractWebhookHeaders(headers: Headers): Record<string, string> {
+export function extractWebhookHeaders(
+  headers: Headers
+): Record<string, string> {
   const relevantKeys = [
     // Common
     "user-agent",

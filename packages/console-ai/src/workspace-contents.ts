@@ -1,14 +1,16 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
-import { z } from "zod";
 import type {
   ContentsToolInput,
   ContentsToolOutput,
   LightfastAnswerRuntimeContext,
 } from "@repo/console-ai-types";
 import { V1ContentsResponseSchema } from "@repo/console-types";
+import { z } from "zod";
 
 const inputSchema: z.ZodType<ContentsToolInput> = z.object({
-  ids: z.array(z.string()).describe("Array of observation IDs to fetch content for"),
+  ids: z
+    .array(z.string())
+    .describe("Array of observation IDs to fetch content for"),
 });
 
 const outputSchema: z.ZodType<ContentsToolOutput> = V1ContentsResponseSchema;
@@ -27,7 +29,7 @@ export function workspaceContentsTool() {
       const handler = context.tools?.workspaceContents?.handler;
       if (!handler) {
         throw new Error(
-          "Workspace contents handler not configured in runtime context.",
+          "Workspace contents handler not configured in runtime context."
         );
       }
       return handler(input);

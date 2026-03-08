@@ -78,7 +78,7 @@ cd apps/console && pnpm with-env <command>
 # Build & Quality
 pnpm build:console                        # Next.js build
 pnpm build:relay / build:gateway / build:backfill  # Vercel CLI builds
-pnpm lint && pnpm typecheck
+pnpm check && pnpm typecheck
 
 # Database (run from db/console/)
 pnpm db:generate      # NEVER write manual .sql files

@@ -1,12 +1,12 @@
-import type { Box3D, Face, Polygon, Shape, Bounds } from "./types";
 import {
-  project,
-  ensureCW,
   clipPolygon,
-  signedArea,
+  ensureCW,
   faceToPath,
   polyBounds,
+  project,
+  signedArea,
 } from "./math";
+import type { Bounds, Box3D, Face, Polygon, Shape } from "./types";
 
 // ── Face constructors ────────────────────────────────────
 
@@ -73,7 +73,9 @@ function aabbHit(a: Box3D, b: Box3D): Box3D | null {
   const mx = Math.min(a.x + a.w, b.x + b.w);
   const my = Math.min(a.y + a.h, b.y + b.h);
   const mz = Math.min(a.z + a.d, b.z + b.d);
-  if (mx <= x || my <= y || mz <= z) return null;
+  if (mx <= x || my <= y || mz <= z) {
+    return null;
+  }
   return { x, y, z, w: mx - x, h: my - y, d: mz - z };
 }
 
@@ -86,7 +88,9 @@ function aabbHit(a: Box3D, b: Box3D): Box3D | null {
 
 function innerFaces(a: Box3D, b: Box3D): Face[] {
   const int = aabbHit(a, b);
-  if (!int) return [];
+  if (!int) {
+    return [];
+  }
   const out: Face[] = [];
 
   // Bottom floor — only if cavity does not punch through A's bottom
@@ -97,8 +101,9 @@ function innerFaces(a: Box3D, b: Box3D): Face[] {
       project(int.x + int.w, int.y + int.h, int.z),
       project(int.x, int.y + int.h, int.z),
     ]);
-    if (c.length >= 3 && Math.abs(signedArea(c)) > 0.01)
+    if (c.length >= 3 && Math.abs(signedArea(c)) > 0.01) {
       out.push({ contour: c, holes: [], type: "top" });
+    }
   }
 
   // Front wall — only if cavity does not punch through A's front
@@ -109,8 +114,9 @@ function innerFaces(a: Box3D, b: Box3D): Face[] {
       project(int.x + int.w, int.y, int.z + int.d),
       project(int.x, int.y, int.z + int.d),
     ]);
-    if (c.length >= 3 && Math.abs(signedArea(c)) > 0.01)
+    if (c.length >= 3 && Math.abs(signedArea(c)) > 0.01) {
       out.push({ contour: c, holes: [], type: "front" });
+    }
   }
 
   // Left wall — only if cavity does not punch through A's left
@@ -121,8 +127,9 @@ function innerFaces(a: Box3D, b: Box3D): Face[] {
       project(int.x, int.y + int.h, int.z + int.d),
       project(int.x, int.y, int.z + int.d),
     ]);
-    if (c.length >= 3 && Math.abs(signedArea(c)) > 0.01)
+    if (c.length >= 3 && Math.abs(signedArea(c)) > 0.01) {
       out.push({ contour: c, holes: [], type: "right" });
+    }
   }
 
   return out;
@@ -132,7 +139,9 @@ function innerFaces(a: Box3D, b: Box3D): Face[] {
 
 function clipFace(face: Face, sil: Polygon): Face {
   const hole = clipPolygon(face.contour, sil);
-  if (hole.length < 3 || Math.abs(signedArea(hole)) < 0.01) return face;
+  if (hole.length < 3 || Math.abs(signedArea(hole)) < 0.01) {
+    return face;
+  }
   return { ...face, holes: [...face.holes, hole] };
 }
 
@@ -146,7 +155,9 @@ export function createBox(b: Box3D): Shape {
 
 /** A minus B — carves B out of A */
 function _subtract(a: Box3D, b: Box3D): Shape {
-  if (!aabbHit(a, b)) return createBox(a);
+  if (!aabbHit(a, b)) {
+    return createBox(a);
+  }
 
   const bSil = silhouette(b);
   const outer = createBox(a).faces.map((f) => clipFace(f, bSil));
@@ -173,7 +184,9 @@ function _union(a: Box3D, b: Box3D): Shape {
 /** A ∩ B — only the overlapping volume */
 function _intersect(a: Box3D, b: Box3D): Shape {
   const int = aabbHit(a, b);
-  if (!int) return { faces: [] };
+  if (!int) {
+    return { faces: [] };
+  }
   return createBox(int);
 }
 
@@ -187,7 +200,8 @@ export function facePath(face: Face): string {
 /** Bounding box of the entire shape in projected 2D */
 export function shapeBounds(shape: Shape): Bounds {
   const all = shape.faces.flatMap((f) => f.contour);
-  if (all.length === 0) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+  if (all.length === 0) {
+    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+  }
   return polyBounds(all);
 }
-

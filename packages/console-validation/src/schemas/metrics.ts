@@ -342,4 +342,3 @@ export type OperationMetric =
   | z.infer<typeof profileUpdatedMetricSchema>
   | z.infer<typeof actorResolutionMetricSchema>
   | z.infer<typeof clusterAffinityMetricSchema>;
-

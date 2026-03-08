@@ -1,3 +1,5 @@
+import type { EntityCategory } from "@repo/console-validation";
+import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -11,8 +13,6 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
-import type { EntityCategory } from "@repo/console-validation";
 import { orgWorkspaces } from "./org-workspaces";
 import { workspaceNeuralObservations } from "./workspace-neural-observations";
 
@@ -77,8 +77,11 @@ export const workspaceNeuralEntities = pgTable(
     /**
      * First observation where this entity was discovered (BIGINT FK)
      */
-    sourceObservationId: bigint("source_observation_id", { mode: "number" })
-      .references(() => workspaceNeuralObservations.id, { onDelete: "set null" }),
+    sourceObservationId: bigint("source_observation_id", {
+      mode: "number",
+    }).references(() => workspaceNeuralObservations.id, {
+      onDelete: "set null",
+    }),
 
     /**
      * Text snippet providing evidence for extraction
@@ -141,29 +144,30 @@ export const workspaceNeuralEntities = pgTable(
     uniqueEntityKey: uniqueIndex("entity_workspace_category_key_idx").on(
       table.workspaceId,
       table.category,
-      table.key,
+      table.key
     ),
 
     // Lookup by workspace and category
     workspaceCategoryIdx: index("entity_workspace_category_idx").on(
       table.workspaceId,
-      table.category,
+      table.category
     ),
 
     // Key search
     workspaceKeyIdx: index("entity_workspace_key_idx").on(
       table.workspaceId,
-      table.key,
+      table.key
     ),
 
     // Last seen for cleanup/ranking
     workspaceLastSeenIdx: index("entity_workspace_last_seen_idx").on(
       table.workspaceId,
-      table.lastSeenAt,
+      table.lastSeenAt
     ),
-  }),
+  })
 );
 
 // Type exports
 export type WorkspaceNeuralEntity = typeof workspaceNeuralEntities.$inferSelect;
-export type InsertWorkspaceNeuralEntity = typeof workspaceNeuralEntities.$inferInsert;
+export type InsertWorkspaceNeuralEntity =
+  typeof workspaceNeuralEntities.$inferInsert;

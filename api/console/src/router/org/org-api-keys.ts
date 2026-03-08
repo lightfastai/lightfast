@@ -1,15 +1,15 @@
-import type { TRPCRouterRecord } from "@trpc/server";
-import { TRPCError } from "@trpc/server";
 import { db } from "@db/console/client";
 import { orgApiKeys } from "@db/console/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { generateOrgApiKey, hashApiKey } from "@repo/console-api-key";
 import {
   createOrgApiKeySchema,
-  revokeOrgApiKeySchema,
   deleteOrgApiKeySchema,
+  revokeOrgApiKeySchema,
   rotateOrgApiKeySchema,
 } from "@repo/console-validation/schemas";
-import { generateOrgApiKey, hashApiKey } from "@repo/console-api-key";
+import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
+import { and, desc, eq } from "drizzle-orm";
 
 import { orgScopedProcedure } from "../../trpc";
 
@@ -171,9 +171,7 @@ export const orgApiKeysRouter = {
         });
       }
 
-      await db
-        .delete(orgApiKeys)
-        .where(eq(orgApiKeys.id, existingKey.id));
+      await db.delete(orgApiKeys).where(eq(orgApiKeys.id, existingKey.id));
 
       return { success: true };
     }),

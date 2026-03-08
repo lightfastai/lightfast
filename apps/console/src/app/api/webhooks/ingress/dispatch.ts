@@ -1,20 +1,27 @@
 import { inngest } from "@api/console/inngest";
-import type { WebhookEnvelope } from "@repo/gateway-types";
-import type { TransformContext, SourceEvent } from "@repo/console-types";
+import type { SourceEvent, TransformContext } from "@repo/console-types";
+import type {
+  DiscussionEvent,
+  IssuesEvent,
+  LinearWebhookEventType,
+  PullRequestEvent,
+  PushEvent,
+  ReleaseEvent,
+  SentryWebhookEventType,
+  VercelWebhookEventType,
+  VercelWebhookPayload,
+} from "@repo/console-webhooks";
 import {
-  transformGitHubPush,
-  transformGitHubPullRequest,
-  transformGitHubIssue,
-  transformGitHubRelease,
-  transformGitHubDiscussion,
   linearTransformers,
   sentryTransformers,
+  transformGitHubDiscussion,
+  transformGitHubIssue,
+  transformGitHubPullRequest,
+  transformGitHubPush,
+  transformGitHubRelease,
   transformVercelDeployment,
 } from "@repo/console-webhooks";
-import type { VercelWebhookPayload, VercelWebhookEventType } from "@repo/console-webhooks";
-import type { LinearWebhookEventType } from "@repo/console-webhooks";
-import type { SentryWebhookEventType } from "@repo/console-webhooks";
-import type { PushEvent, PullRequestEvent, IssuesEvent, ReleaseEvent, DiscussionEvent } from "@repo/console-webhooks";
+import type { WebhookEnvelope } from "@repo/gateway-types";
 import type { ResolvedWorkspace } from "./resolve-workspace";
 
 /**
@@ -35,7 +42,7 @@ import type { ResolvedWorkspace } from "./resolve-workspace";
 function transformGitHubEvent(
   eventType: string,
   payload: unknown,
-  context: TransformContext,
+  context: TransformContext
 ): SourceEvent | null {
   switch (eventType) {
     case "push":
@@ -61,11 +68,13 @@ function transformGitHubEvent(
 function transformLinearEvent(
   eventType: string,
   payload: unknown,
-  context: TransformContext,
+  context: TransformContext
 ): SourceEvent | null {
   // Extract entity type from "Type:action" format
   const entityType = eventType.split(":")[0] ?? "";
-  if (!(entityType in linearTransformers)) return null;
+  if (!(entityType in linearTransformers)) {
+    return null;
+  }
   const transformer = linearTransformers[entityType as LinearWebhookEventType];
   return transformer(payload, context);
 }
@@ -78,18 +87,22 @@ function transformLinearEvent(
 function transformSentryEvent(
   eventType: string,
   payload: unknown,
-  context: TransformContext,
+  context: TransformContext
 ): SourceEvent | null {
   // For issue events, the payload action determines the sub-type
   if (eventType === "issue") {
     const p = payload as { action?: string };
     const sentryKey = `issue.${p.action ?? "created"}`;
-    if (!(sentryKey in sentryTransformers)) return null;
+    if (!(sentryKey in sentryTransformers)) {
+      return null;
+    }
     const transformer = sentryTransformers[sentryKey as SentryWebhookEventType];
     return transformer(payload, context);
   }
 
-  if (!(eventType in sentryTransformers)) return null;
+  if (!(eventType in sentryTransformers)) {
+    return null;
+  }
   const transformer = sentryTransformers[eventType as SentryWebhookEventType];
   return transformer(payload, context);
 }
@@ -102,13 +115,15 @@ function transformSentryEvent(
 function transformVercelEvent(
   eventType: string,
   payload: unknown,
-  context: TransformContext,
+  context: TransformContext
 ): SourceEvent | null {
-  if (!eventType.startsWith("deployment")) return null;
+  if (!eventType.startsWith("deployment")) {
+    return null;
+  }
   return transformVercelDeployment(
     payload as VercelWebhookPayload,
     eventType as VercelWebhookEventType,
-    context,
+    context
   );
 }
 
@@ -123,7 +138,7 @@ function transformVercelEvent(
  */
 export async function dispatchToInngest(
   envelope: WebhookEnvelope,
-  workspace: ResolvedWorkspace,
+  workspace: ResolvedWorkspace
 ): Promise<void> {
   const { provider, eventType, payload, deliveryId, receivedAt } = envelope;
   const context: TransformContext = {
@@ -150,7 +165,7 @@ export async function dispatchToInngest(
 
   if (!sourceEvent) {
     console.log(
-      `[ingress/dispatch] No transformer for ${envelope.provider}:${eventType}, skipping observation`,
+      `[ingress/dispatch] No transformer for ${envelope.provider}:${eventType}, skipping observation`
     );
     return;
   }

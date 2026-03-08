@@ -35,29 +35,21 @@ export const openaiDark: ThemeRegistrationRaw = {
     },
     // Quoted strings only — green
     {
-      scope: [
-        "string.quoted",
-        "string.template",
-      ],
+      scope: ["string.quoted", "string.template"],
       settings: {
         foreground: "#00a67d",
       },
     },
     // Unquoted strings (bare args like `lightfast` in shell) — plain white
     {
-      scope: [
-        "string.unquoted",
-      ],
+      scope: ["string.unquoted"],
       settings: {
         foreground: "#dcdcdc",
       },
     },
     // Object keys (model:, input:) — pink
     {
-      scope: [
-        "meta.object-literal.key",
-        "support.type.property-name",
-      ],
+      scope: ["meta.object-literal.key", "support.type.property-name"],
       settings: {
         foreground: "#df3079",
       },
@@ -88,10 +80,7 @@ export const openaiDark: ThemeRegistrationRaw = {
     },
     // Built-in objects (console) — orange
     {
-      scope: [
-        "support.variable",
-        "support.class",
-      ],
+      scope: ["support.variable", "support.class"],
       settings: {
         foreground: "#e9950c",
       },
@@ -132,11 +121,7 @@ export const openaiDark: ThemeRegistrationRaw = {
     },
     // Punctuation
     {
-      scope: [
-        "punctuation",
-        "meta.brace",
-        "meta.delimiter",
-      ],
+      scope: ["punctuation", "meta.brace", "meta.delimiter"],
       settings: {
         foreground: "#dcdcdc",
       },

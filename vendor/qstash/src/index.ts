@@ -32,11 +32,11 @@
  * ```
  */
 
-export { QStashClient, getQStashClient } from "./client";
 export type {
   PublishJsonOptions,
   PublishToTopicOptions,
   QStashPublishResponse,
 } from "./client";
-export { Receiver } from "./receiver";
+export { getQStashClient, QStashClient } from "./client";
 export type { VerifyOptions } from "./receiver";
+export { Receiver } from "./receiver";

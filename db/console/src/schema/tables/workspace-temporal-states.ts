@@ -14,12 +14,24 @@ import { orgWorkspaces } from "./org-workspaces";
 /**
  * Entity types that can have temporal state tracking
  */
-export type TemporalEntityType = "project" | "feature" | "service" | "sprint" | "issue" | "pr";
+export type TemporalEntityType =
+  | "project"
+  | "feature"
+  | "service"
+  | "sprint"
+  | "issue"
+  | "pr";
 
 /**
  * State types for temporal tracking
  */
-export type TemporalStateType = "status" | "progress" | "health" | "risk" | "priority" | "assignee";
+export type TemporalStateType =
+  | "status"
+  | "progress"
+  | "health"
+  | "risk"
+  | "priority"
+  | "assignee";
 
 /**
  * Bi-temporal state tracking for engineering entities
@@ -150,7 +162,7 @@ export const workspaceTemporalStates = pgTable(
       table.entityType,
       table.entityId,
       table.stateType,
-      table.validFrom,
+      table.validFrom
     ),
 
     // Index for current state lookups (fast path)
@@ -158,21 +170,23 @@ export const workspaceTemporalStates = pgTable(
       table.workspaceId,
       table.entityType,
       table.entityId,
-      table.isCurrent,
+      table.isCurrent
     ),
 
     // Index for workspace + entity type queries (dashboard views)
     workspaceEntityIdx: index("temporal_workspace_entity_idx").on(
       table.workspaceId,
-      table.entityType,
+      table.entityType
     ),
 
     // Index for finding states by source observation
     sourceObsIdx: index("temporal_source_obs_idx").on(
-      table.sourceObservationId,
+      table.sourceObservationId
     ),
-  }),
+  })
 );
 
-export type WorkspaceTemporalState = typeof workspaceTemporalStates.$inferSelect;
-export type InsertWorkspaceTemporalState = typeof workspaceTemporalStates.$inferInsert;
+export type WorkspaceTemporalState =
+  typeof workspaceTemporalStates.$inferSelect;
+export type InsertWorkspaceTemporalState =
+  typeof workspaceTemporalStates.$inferInsert;

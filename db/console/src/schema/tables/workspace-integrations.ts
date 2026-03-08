@@ -1,9 +1,22 @@
-import { pgTable, varchar, timestamp, text, boolean, index, jsonb, integer } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import type {
+  ClerkUserId,
+  SourceIdentifier,
+  SyncStatus,
+} from "@repo/console-validation";
 import { nanoid } from "@repo/lib";
-import { orgWorkspaces } from "./org-workspaces";
+import { sql } from "drizzle-orm";
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { gwInstallations } from "./gw-installations";
-import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-validation";
+import { orgWorkspaces } from "./org-workspaces";
 
 /**
  * Workspace Sources
@@ -35,8 +48,10 @@ export const workspaceIntegrations = pgTable(
     // Gateway installation FK (org-scoped)
     // TODO(NOT-NULL): Nullable during phased migration. Will become .notNull() with
     // onDelete: "cascade" after existing rows are backfilled with gw_installations refs.
-    installationId: varchar("installation_id", { length: 191 })
-      .references(() => gwInstallations.id, { onDelete: "set null" }),
+    installationId: varchar("installation_id", { length: 191 }).references(
+      () => gwInstallations.id,
+      { onDelete: "set null" }
+    ),
 
     // Denormalized provider for fast filtering (replaces sourceConfig.sourceType join)
     // TODO(NOT-NULL): Nullable during phased migration. Will become .notNull() after
@@ -44,7 +59,9 @@ export const workspaceIntegrations = pgTable(
     provider: varchar("provider", { length: 50 }),
 
     // Who connected this source to the workspace
-    connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
+    connectedBy: varchar("connected_by", { length: 191 })
+      .notNull()
+      .$type<ClerkUserId>(),
 
     /**
      * Unified source configuration containing all source-specific data and sync settings.
@@ -84,68 +101,71 @@ export const workspaceIntegrations = pgTable(
      *   }
      * }
      */
-    sourceConfig: jsonb("source_config").$type<
-      | {
-          version: 1;
-          sourceType: "github";
-          type: "repository";
-          installationId: string;        // GitHub App installation ID
-          repoId: string;                // GitHub repo ID
-          repoName: string;              // "frontend"
-          repoFullName: string;          // "acme/frontend"
-          defaultBranch: string;         // "main"
-          isPrivate: boolean;
-          isArchived: boolean;
-          sync: {
-            branches?: string[];         // ["main", "develop"]
-            paths?: string[];            // ["**/*"]
-            events?: string[];           // ["push", "pull_request"]
-            autoSync: boolean;           // Auto-sync on changes
-          };
-          status?: {                     // NEW: Optional status tracking
-            configStatus?: "configured" | "awaiting_config";
-            configPath?: string;
-            lastConfigCheck?: string;
-          };
-        }
-      | {
-          version: 1;
-          sourceType: "vercel";
-          type: "project";
-          projectId: string;               // Vercel project ID
-          projectName: string;             // "my-nextjs-app"
-          teamId?: string;                 // Vercel team ID (null for personal accounts)
-          teamSlug?: string;               // Team slug for display
-          configurationId: string;         // Integration configuration ID (from OAuth)
-          sync: {
-            events?: string[];             // ["deployment.created", "deployment.ready", ...]
-            autoSync: boolean;             // Track deployments automatically
-          };
-        }
-      | {
-          version: 1;
-          sourceType: "sentry";
-          type: "project";
-          projectSlug: string;
-          projectId: string;
-          sync: {
-            events?: string[];
-            autoSync: boolean;
-          };
-        }
-      | {
-          version: 1;
-          sourceType: "linear";
-          type: "team";
-          teamId: string;
-          teamKey: string;
-          teamName: string;
-          sync: {
-            events?: string[];
-            autoSync: boolean;
-          };
-        }
-    >().notNull(),
+    sourceConfig: jsonb("source_config")
+      .$type<
+        | {
+            version: 1;
+            sourceType: "github";
+            type: "repository";
+            installationId: string; // GitHub App installation ID
+            repoId: string; // GitHub repo ID
+            repoName: string; // "frontend"
+            repoFullName: string; // "acme/frontend"
+            defaultBranch: string; // "main"
+            isPrivate: boolean;
+            isArchived: boolean;
+            sync: {
+              branches?: string[]; // ["main", "develop"]
+              paths?: string[]; // ["**/*"]
+              events?: string[]; // ["push", "pull_request"]
+              autoSync: boolean; // Auto-sync on changes
+            };
+            status?: {
+              // NEW: Optional status tracking
+              configStatus?: "configured" | "awaiting_config";
+              configPath?: string;
+              lastConfigCheck?: string;
+            };
+          }
+        | {
+            version: 1;
+            sourceType: "vercel";
+            type: "project";
+            projectId: string; // Vercel project ID
+            projectName: string; // "my-nextjs-app"
+            teamId?: string; // Vercel team ID (null for personal accounts)
+            teamSlug?: string; // Team slug for display
+            configurationId: string; // Integration configuration ID (from OAuth)
+            sync: {
+              events?: string[]; // ["deployment.created", "deployment.ready", ...]
+              autoSync: boolean; // Track deployments automatically
+            };
+          }
+        | {
+            version: 1;
+            sourceType: "sentry";
+            type: "project";
+            projectSlug: string;
+            projectId: string;
+            sync: {
+              events?: string[];
+              autoSync: boolean;
+            };
+          }
+        | {
+            version: 1;
+            sourceType: "linear";
+            type: "team";
+            teamId: string;
+            teamKey: string;
+            teamName: string;
+            sync: {
+              events?: string[];
+              autoSync: boolean;
+            };
+          }
+      >()
+      .notNull(),
 
     /**
      * Fast lookup field for provider-specific resource IDs.
@@ -155,34 +175,59 @@ export const workspaceIntegrations = pgTable(
      * - GitHub: repoId (e.g., "567890123")
      * - Vercel: projectId (e.g., "prj_123456")
      */
-    providerResourceId: varchar("provider_resource_id", { length: 191 }).notNull().$type<SourceIdentifier>(),
+    providerResourceId: varchar("provider_resource_id", { length: 191 })
+      .notNull()
+      .$type<SourceIdentifier>(),
 
     // Status
     isActive: boolean("is_active").notNull().default(true),
 
     // Sync tracking
-    lastSyncedAt: timestamp("last_synced_at", { mode: "string", withTimezone: true }),
-    lastSyncStatus: varchar("last_sync_status", { length: 50 }).$type<SyncStatus>(), // "success" | "failed" | "pending"
+    lastSyncedAt: timestamp("last_synced_at", {
+      mode: "string",
+      withTimezone: true,
+    }),
+    lastSyncStatus: varchar("last_sync_status", {
+      length: 50,
+    }).$type<SyncStatus>(), // "success" | "failed" | "pending"
     lastSyncError: text("last_sync_error"),
 
     // Document count (denormalized for performance)
     documentCount: integer("document_count").notNull().default(0),
 
     // Timestamps
-    connectedAt: timestamp("connected_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
+    connectedAt: timestamp("connected_at", {
+      mode: "string",
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
-    workspaceIdIdx: index("workspace_source_workspace_id_idx").on(table.workspaceId),
-    installationIdIdx: index("workspace_source_installation_id_idx").on(table.installationId),
-    connectedByIdx: index("workspace_source_connected_by_idx").on(table.connectedBy),
+    workspaceIdIdx: index("workspace_source_workspace_id_idx").on(
+      table.workspaceId
+    ),
+    installationIdIdx: index("workspace_source_installation_id_idx").on(
+      table.installationId
+    ),
+    connectedByIdx: index("workspace_source_connected_by_idx").on(
+      table.connectedBy
+    ),
     isActiveIdx: index("workspace_source_is_active_idx").on(table.isActive),
     // Index for fast provider resource lookups (e.g., "find all sources for this repo")
-    providerResourceIdIdx: index("workspace_source_provider_resource_id_idx").on(table.providerResourceId),
+    providerResourceIdIdx: index(
+      "workspace_source_provider_resource_id_idx"
+    ).on(table.providerResourceId),
   })
 );
 
 // Type exports
 export type WorkspaceIntegration = typeof workspaceIntegrations.$inferSelect;
-export type InsertWorkspaceIntegration = typeof workspaceIntegrations.$inferInsert;
+export type InsertWorkspaceIntegration =
+  typeof workspaceIntegrations.$inferInsert;

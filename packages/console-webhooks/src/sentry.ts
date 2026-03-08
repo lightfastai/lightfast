@@ -5,12 +5,12 @@
  */
 
 export type {
-  SentryIssueWebhook,
+  SentryActor,
+  SentryErrorEvent,
   SentryErrorWebhook,
   SentryEventAlertWebhook,
-  SentryMetricAlertWebhook,
   SentryIssue,
-  SentryErrorEvent,
-  SentryActor,
+  SentryIssueWebhook,
+  SentryMetricAlertWebhook,
   SentryWebhookEventType,
 } from "./transformers/sentry.js";

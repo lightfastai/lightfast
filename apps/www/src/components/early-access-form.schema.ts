@@ -18,12 +18,8 @@ export const earlyAccessFormSchema = z.object({
     .email("Please enter a valid email address")
     .toLowerCase()
     .trim(),
-  companySize: z
-    .string()
-    .min(1, "Company size is required"),
-  sources: z
-    .array(z.string())
-    .min(1, "Please select at least one data source"),
+  companySize: z.string().min(1, "Company size is required"),
+  sources: z.array(z.string()).min(1, "Please select at least one data source"),
 });
 
 export type EarlyAccessFormValues = z.infer<typeof earlyAccessFormSchema>;

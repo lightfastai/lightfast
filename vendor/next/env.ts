@@ -12,5 +12,6 @@ export const env = createEnv({
   client: {},
   experimental__runtimeEnv: {},
   skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
+    !!process.env.SKIP_ENV_VALIDATION ||
+    process.env.npm_lifecycle_event === "lint",
 });

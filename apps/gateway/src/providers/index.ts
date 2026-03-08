@@ -3,24 +3,20 @@ import { GitHubProvider } from "./impl/github.js";
 import { LinearProvider } from "./impl/linear.js";
 import { SentryProvider } from "./impl/sentry.js";
 import { VercelProvider } from "./impl/vercel.js";
-import type {
-  ConnectionProvider,
-  ProviderFor,
-  ProviderName,
-} from "./types.js";
+import type { ConnectionProvider, ProviderFor, ProviderName } from "./types.js";
 
 export type {
-  ConnectionProvider,
-  ProviderName,
-  OAuthTokens,
-  ProviderOptions,
   AuthOptionsFor,
-  GitHubAuthOptions,
-  LinearAuthOptions,
-  ProviderFor,
-  TokenResult,
-  JwtTokenResult,
   CallbackResult,
+  ConnectionProvider,
+  GitHubAuthOptions,
+  JwtTokenResult,
+  LinearAuthOptions,
+  OAuthTokens,
+  ProviderFor,
+  ProviderName,
+  ProviderOptions,
+  TokenResult,
 } from "./types.js";
 
 const providers = new Map<ProviderName, ConnectionProvider>([
@@ -36,7 +32,11 @@ if (process.env.LINEAR_CLIENT_ID && process.env.LINEAR_CLIENT_SECRET) {
   providers.set("linear", new LinearProvider());
 }
 
-if (process.env.SENTRY_APP_SLUG && process.env.SENTRY_CLIENT_ID && process.env.SENTRY_CLIENT_SECRET) {
+if (
+  process.env.SENTRY_APP_SLUG &&
+  process.env.SENTRY_CLIENT_ID &&
+  process.env.SENTRY_CLIENT_SECRET
+) {
   providers.set("sentry", new SentryProvider());
 }
 

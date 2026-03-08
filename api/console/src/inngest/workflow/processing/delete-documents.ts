@@ -10,11 +10,15 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceKnowledgeDocuments, orgWorkspaces, workspaceKnowledgeVectorChunks } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
-import { inngest } from "../../client/client";
-import { log } from "@vendor/observability/log";
+import {
+  orgWorkspaces,
+  workspaceKnowledgeDocuments,
+  workspaceKnowledgeVectorChunks,
+} from "@db/console/schema";
 import { pineconeClient } from "@repo/console-pinecone";
+import { log } from "@vendor/observability/log";
+import { and, eq } from "drizzle-orm";
+import { inngest } from "../../client/client";
 
 /**
  * Delete document function (multi-source)
@@ -47,8 +51,7 @@ export const deleteDocuments = inngest.createFunction(
   },
   { event: "apps-console/documents.delete" },
   async ({ event, step }) => {
-    const { workspaceId, documentId, sourceType, sourceId } =
-      event.data;
+    const { workspaceId, documentId, sourceType, sourceId } = event.data;
 
     log.info("Deleting document (multi-source)", {
       workspaceId,
@@ -82,8 +85,8 @@ export const deleteDocuments = inngest.createFunction(
           .where(
             and(
               eq(workspaceKnowledgeDocuments.workspaceId, workspaceId),
-              eq(workspaceKnowledgeDocuments.id, documentId),
-            ),
+              eq(workspaceKnowledgeDocuments.id, documentId)
+            )
           )
           .limit(1);
 
@@ -96,8 +99,8 @@ export const deleteDocuments = inngest.createFunction(
               and(
                 eq(workspaceKnowledgeDocuments.workspaceId, workspaceId),
                 eq(workspaceKnowledgeDocuments.sourceType, sourceType),
-                eq(workspaceKnowledgeDocuments.sourceId, sourceId),
-              ),
+                eq(workspaceKnowledgeDocuments.sourceId, sourceId)
+              )
             )
             .limit(1);
 
@@ -161,7 +164,7 @@ export const deleteDocuments = inngest.createFunction(
           {
             docId: docInfo.docId,
           },
-          docInfo.namespaceName,
+          docInfo.namespaceName
         );
 
         log.info("Deleted vectors from Pinecone via metadata (multi-source)", {
@@ -186,9 +189,12 @@ export const deleteDocuments = inngest.createFunction(
           .delete(workspaceKnowledgeVectorChunks)
           .where(
             and(
-              eq(workspaceKnowledgeVectorChunks.workspaceId, docInfo.workspaceId),
-              eq(workspaceKnowledgeVectorChunks.docId, docInfo.docId),
-            ),
+              eq(
+                workspaceKnowledgeVectorChunks.workspaceId,
+                docInfo.workspaceId
+              ),
+              eq(workspaceKnowledgeVectorChunks.docId, docInfo.docId)
+            )
           );
 
         log.info("Deleted vector entries", {
@@ -206,7 +212,9 @@ export const deleteDocuments = inngest.createFunction(
     // Step 4: Delete docs_documents row
     await step.run("document.delete", async () => {
       try {
-        await db.delete(workspaceKnowledgeDocuments).where(eq(workspaceKnowledgeDocuments.id, docInfo.docId));
+        await db
+          .delete(workspaceKnowledgeDocuments)
+          .where(eq(workspaceKnowledgeDocuments.id, docInfo.docId));
 
         log.info("Deleted document (multi-source)", {
           docId: docInfo.docId,
@@ -224,5 +232,5 @@ export const deleteDocuments = inngest.createFunction(
       status: "deleted",
       docId: docInfo.docId,
     };
-  },
+  }
 );

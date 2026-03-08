@@ -2,9 +2,9 @@ import { Receiver as UpstashReceiver } from "@upstash/qstash";
 import { qstashEnv } from "../env";
 
 export interface VerifyOptions {
-  signature: string;
   body: string;
   clockTolerance?: number;
+  signature: string;
 }
 
 /**
@@ -14,7 +14,7 @@ export interface VerifyOptions {
  * by validating the HMAC-SHA256 signature.
  */
 export class Receiver {
-  private receiver: UpstashReceiver;
+  private readonly receiver: UpstashReceiver;
 
   constructor(options?: {
     currentSigningKey?: string;

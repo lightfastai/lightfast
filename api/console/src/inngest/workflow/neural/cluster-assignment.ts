@@ -12,34 +12,34 @@
 
 import { db } from "@db/console/client";
 import { workspaceObservationClusters } from "@db/console/schema";
-import { eq, and, gte, desc, sql } from "drizzle-orm";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
-import { log } from "@vendor/observability/log";
 import { nanoid } from "@repo/lib";
+import { log } from "@vendor/observability/log";
 import { differenceInHours, subDays } from "date-fns";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 
 const CLUSTER_AFFINITY_THRESHOLD = 60;
 const MAX_RECENT_CLUSTERS = 10;
 const CLUSTER_LOOKBACK_DAYS = 7;
 
 interface ClusterAssignmentInput {
-  workspaceId: string;
-  embeddingVector: number[];
-  vectorId: string;
-  topics: string[];
-  entityIds: string[];
   actorId: string | null;
-  occurredAt: string;
-  title: string;
+  embeddingVector: number[];
+  entityIds: string[];
   indexName: string;
   namespace: string;
+  occurredAt: string;
+  title: string;
+  topics: string[];
+  vectorId: string;
+  workspaceId: string;
 }
 
 interface ClusterAssignmentResult {
+  affinityScore: number | null;
   clusterId: number;
   isNew: boolean;
-  affinityScore: number | null;
 }
 
 /**
@@ -196,7 +196,9 @@ async function getEmbeddingSimilarity(
  * Calculate Jaccard overlap between two arrays
  */
 function calculateOverlap(arr1: string[], arr2: string[]): number {
-  if (arr1.length === 0 || arr2.length === 0) return 0;
+  if (arr1.length === 0 || arr2.length === 0) {
+    return 0;
+  }
 
   const set1 = new Set(arr1);
   const set2 = new Set(arr2);
@@ -284,7 +286,9 @@ async function updateClusterMetrics(
     where: eq(workspaceObservationClusters.id, clusterId),
   });
 
-  if (!cluster) return;
+  if (!cluster) {
+    return;
+  }
 
   // Merge entities and actors
   const existingEntities = cluster.primaryEntities ?? [];

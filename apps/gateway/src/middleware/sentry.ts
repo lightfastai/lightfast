@@ -1,4 +1,8 @@
-import { captureException, captureMessage, withScope } from "@vendor/observability/sentry";
+import {
+  captureException,
+  captureMessage,
+  withScope,
+} from "@vendor/observability/sentry";
 import { createMiddleware } from "hono/factory";
 import type { RequestIdVariables } from "./request-id.js";
 
@@ -21,9 +25,13 @@ export const sentry = createMiddleware<{
       scope.setTag("http.method", c.req.method);
       scope.setTag("http.path", c.req.path);
       const requestId = c.get("requestId");
-      if (requestId) {scope.setTag("request_id", requestId);}
+      if (requestId) {
+        scope.setTag("request_id", requestId);
+      }
       const correlationId = c.get("correlationId");
-      if (correlationId) {scope.setTag("correlation_id", correlationId);}
+      if (correlationId) {
+        scope.setTag("correlation_id", correlationId);
+      }
       scope.setContext("request", {
         method: c.req.method,
         path: c.req.path,
@@ -42,9 +50,13 @@ export const sentry = createMiddleware<{
       scope.setTag("http.path", c.req.path);
       scope.setTag("http.status", String(c.res.status));
       const requestId = c.get("requestId");
-      if (requestId) {scope.setTag("request_id", requestId);}
+      if (requestId) {
+        scope.setTag("request_id", requestId);
+      }
       const correlationId = c.get("correlationId");
-      if (correlationId) {scope.setTag("correlation_id", correlationId);}
+      if (correlationId) {
+        scope.setTag("correlation_id", correlationId);
+      }
       scope.setContext("request", {
         method: c.req.method,
         path: c.req.path,
@@ -53,7 +65,7 @@ export const sentry = createMiddleware<{
       });
       captureMessage(
         `HTTP ${c.res.status}: ${c.req.method} ${c.req.path}`,
-        "error",
+        "error"
       );
     });
   }

@@ -7,13 +7,13 @@ import { z } from "zod";
  * Used for semantic grouping and targeted search.
  */
 export const entityCategorySchema = z.enum([
-  "engineer",    // Team members, contributors (@mentions, emails)
-  "project",     // Features, repos, tickets (#123, ENG-456)
-  "endpoint",    // API routes (POST /api/users)
-  "config",      // Environment variables (DATABASE_URL)
-  "definition",  // File paths, technical terms
-  "service",     // External services, dependencies
-  "reference",   // Generic references (commits, branches)
+  "engineer", // Team members, contributors (@mentions, emails)
+  "project", // Features, repos, tickets (#123, ENG-456)
+  "endpoint", // API routes (POST /api/users)
+  "config", // Environment variables (DATABASE_URL)
+  "definition", // File paths, technical terms
+  "service", // External services, dependencies
+  "reference", // Generic references (commits, branches)
 ]);
 
 export type EntityCategory = z.infer<typeof entityCategorySchema>;
@@ -61,4 +61,6 @@ export const llmEntityExtractionResponseSchema = z.object({
 });
 
 export type LLMExtractedEntity = z.infer<typeof llmExtractedEntitySchema>;
-export type LLMEntityExtractionResponse = z.infer<typeof llmEntityExtractionResponseSchema>;
+export type LLMEntityExtractionResponse = z.infer<
+  typeof llmEntityExtractionResponseSchema
+>;

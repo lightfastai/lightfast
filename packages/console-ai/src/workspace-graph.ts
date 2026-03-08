@@ -1,11 +1,11 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
-import { z } from "zod";
 import type {
   GraphToolInput,
   GraphToolOutput,
   LightfastAnswerRuntimeContext,
 } from "@repo/console-ai-types";
 import { GraphResponseSchema } from "@repo/console-types";
+import { z } from "zod";
 
 const inputSchema: z.ZodType<GraphToolInput> = z.object({
   id: z.string().describe("The observation ID to traverse from"),
@@ -41,7 +41,7 @@ export function workspaceGraphTool() {
       const handler = context.tools?.workspaceGraph?.handler;
       if (!handler) {
         throw new Error(
-          "Workspace graph handler not configured in runtime context.",
+          "Workspace graph handler not configured in runtime context."
         );
       }
       return handler(input);

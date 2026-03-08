@@ -45,15 +45,13 @@
 // ============================================================================
 
 export type {
+  AuthErrorCode,
   // Database client
   DbClient,
-  ResourceType,
-  AuthErrorCode,
-  UserRole,
-  // Workspace access
-  WorkspaceAccessContext,
-  WorkspaceAccessData,
-  WorkspaceAccessResult,
+  // Organization access
+  OrgAccessContext,
+  OrgAccessData,
+  OrgAccessResult,
   // Workspace resolution
   ResolveWorkspaceByNameContext,
   ResolveWorkspaceBySlugContext,
@@ -63,12 +61,14 @@ export type {
   ResourceOwnershipContext,
   ResourceOwnershipData,
   ResourceOwnershipResult,
+  ResourceType,
   // Tenant isolation
   TenantFilter,
-  // Organization access
-  OrgAccessContext,
-  OrgAccessData,
-  OrgAccessResult,
+  UserRole,
+  // Workspace access
+  WorkspaceAccessContext,
+  WorkspaceAccessData,
+  WorkspaceAccessResult,
 } from "./types";
 
 // ============================================================================
@@ -76,10 +76,10 @@ export type {
 // ============================================================================
 
 export {
-  verifyWorkspaceAccess,
   resolveWorkspaceByName,
   resolveWorkspaceBySlug,
   verifyOrgAccess,
+  verifyWorkspaceAccess,
 } from "./workspace";
 
 // ============================================================================
@@ -87,9 +87,9 @@ export {
 // ============================================================================
 
 export {
-  verifyResourceOwnership,
-  verifyMultipleResourceOwnership,
   assertResourceOwnership,
+  verifyMultipleResourceOwnership,
+  verifyResourceOwnership,
 } from "./resources";
 
 // ============================================================================
@@ -97,12 +97,12 @@ export {
 // ============================================================================
 
 export {
-  createTenantFilter,
-  isValidTenantId,
-  extractTenantId,
-  createTenantFilterFromWorkspace,
   assertTenantIdsMatch,
   belongsToTenant,
-  filterResourcesByTenant,
   createMultiTenantFilter,
+  createTenantFilter,
+  createTenantFilterFromWorkspace,
+  extractTenantId,
+  filterResourcesByTenant,
+  isValidTenantId,
 } from "./tenant";

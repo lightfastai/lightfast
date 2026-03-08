@@ -5,8 +5,8 @@
  * so the existing transformer produces identical SourceEvent output.
  */
 import type {
-  VercelWebhookPayload,
   VercelWebhookEventType,
+  VercelWebhookPayload,
 } from "@repo/console-webhooks";
 
 /**
@@ -41,9 +41,11 @@ function mapReadyStateToEventType(readyState?: string): VercelWebhookEventType {
  */
 export function adaptVercelDeploymentForTransformer(
   deployment: Record<string, unknown>,
-  projectName: string,
+  projectName: string
 ): { webhookPayload: VercelWebhookPayload; eventType: VercelWebhookEventType } {
-  const eventType = mapReadyStateToEventType(deployment.readyState as string | undefined);
+  const eventType = mapReadyStateToEventType(
+    deployment.readyState as string | undefined
+  );
   const createdAt = (deployment.created as number | undefined) ?? Date.now();
 
   const webhookPayload: VercelWebhookPayload = {
@@ -62,7 +64,11 @@ export function adaptVercelDeploymentForTransformer(
           | "QUEUED"
           | "CANCELED"
           | undefined,
-        meta: deployment.meta as VercelWebhookPayload["payload"]["deployment"] extends { meta?: infer M } ? M : never,
+        meta: deployment.meta as VercelWebhookPayload["payload"]["deployment"] extends {
+          meta?: infer M;
+        }
+          ? M
+          : never,
       },
       project: {
         id: (deployment.projectId as string | undefined) ?? "",
@@ -77,20 +83,24 @@ export function adaptVercelDeploymentForTransformer(
 /**
  * Parse Vercel rate limit info from response headers.
  */
-export function parseVercelRateLimit(headers: Headers): {
-  remaining: number;
-  resetAt: Date;
-  limit: number;
-} | undefined {
+export function parseVercelRateLimit(headers: Headers):
+  | {
+      remaining: number;
+      resetAt: Date;
+      limit: number;
+    }
+  | undefined {
   const remaining = headers.get("x-ratelimit-remaining");
   const reset = headers.get("x-ratelimit-reset");
   const limit = headers.get("x-ratelimit-limit");
 
-  if (!remaining || !reset || !limit) return undefined;
+  if (!(remaining && reset && limit)) {
+    return undefined;
+  }
 
   return {
-    remaining: parseInt(remaining, 10),
-    resetAt: new Date(parseInt(reset, 10) * 1000),
-    limit: parseInt(limit, 10),
+    remaining: Number.parseInt(remaining, 10),
+    resetAt: new Date(Number.parseInt(reset, 10) * 1000),
+    limit: Number.parseInt(limit, 10),
   };
 }

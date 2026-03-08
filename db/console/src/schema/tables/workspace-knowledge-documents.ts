@@ -5,6 +5,12 @@
  * Workspace-scoped: Documents belong directly to workspaces.
  */
 
+import type {
+  ContentHash,
+  DocumentSlug,
+  SourceType,
+} from "@repo/console-validation";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -14,13 +20,7 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
 import { orgWorkspaces } from "./org-workspaces";
-import type {
-  SourceType,
-  DocumentSlug,
-  ContentHash,
-} from "@repo/console-validation";
 
 export const workspaceKnowledgeDocuments = pgTable(
   "lightfast_workspace_knowledge_documents",
@@ -34,7 +34,9 @@ export const workspaceKnowledgeDocuments = pgTable(
 
     // Source identification (discriminated union)
     /** Source type - discriminator for union */
-    sourceType: varchar("source_type", { length: 50 }).notNull().$type<SourceType>(),
+    sourceType: varchar("source_type", { length: 50 })
+      .notNull()
+      .$type<SourceType>(),
     /** Source-specific identifier (e.g., issue ID, page ID, file path) */
     sourceId: varchar("source_id", { length: 255 }).notNull(),
     /** Source-specific metadata (JSONB for flexibility) */
@@ -47,7 +49,9 @@ export const workspaceKnowledgeDocuments = pgTable(
     /** URL-friendly slug */
     slug: varchar("slug", { length: 256 }).notNull().$type<DocumentSlug>(),
     /** Content hash (SHA-256) of latest processed version */
-    contentHash: varchar("content_hash", { length: 64 }).notNull().$type<ContentHash>(),
+    contentHash: varchar("content_hash", { length: 64 })
+      .notNull()
+      .$type<ContentHash>(),
     /** Configuration hash (embedding + chunking) used when document was processed */
     configHash: varchar("config_hash", { length: 64 }).$type<ContentHash>(),
     /** Number of chunks in latest version */
@@ -76,11 +80,13 @@ export const workspaceKnowledgeDocuments = pgTable(
       t.sourceType,
       t.sourceId
     ),
-  }),
+  })
 );
 
 // Type exports
-export type WorkspaceKnowledgeDocument = typeof workspaceKnowledgeDocuments.$inferSelect;
-export type InsertWorkspaceKnowledgeDocument = typeof workspaceKnowledgeDocuments.$inferInsert;
+export type WorkspaceKnowledgeDocument =
+  typeof workspaceKnowledgeDocuments.$inferSelect;
+export type InsertWorkspaceKnowledgeDocument =
+  typeof workspaceKnowledgeDocuments.$inferInsert;
 
 // Zod schema exports

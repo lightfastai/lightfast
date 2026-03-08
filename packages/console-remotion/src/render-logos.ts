@@ -23,7 +23,9 @@ function buildIco(pngs: Buffer[]): Buffer {
   let dataOffset = HEADER + ENTRY * pngs.length;
   for (let i = 0; i < pngs.length; i++) {
     const png = pngs[i];
-    if (!png) throw new Error(`Missing PNG buffer at index ${i}`);
+    if (!png) {
+      throw new Error(`Missing PNG buffer at index ${i}`);
+    }
     // Read dimensions from PNG header (IHDR chunk at byte 16)
     const w = png.readUInt32BE(16);
     const h = png.readUInt32BE(20);
@@ -58,7 +60,7 @@ async function main() {
 
   for (const variant of LOGO_VARIANTS) {
     console.log(
-      `Rendering ${variant.id} (${variant.width}×${variant.height})...`,
+      `Rendering ${variant.id} (${variant.width}×${variant.height})...`
     );
     const composition = await selectComposition({
       serveUrl: bundled,
@@ -77,7 +79,7 @@ async function main() {
 
   // ── Render Twitter banner ────────────────────────────────
   console.log(
-    `Rendering ${TWITTER_BANNER_CONFIG.id} (${TWITTER_BANNER_CONFIG.width}×${TWITTER_BANNER_CONFIG.height})...`,
+    `Rendering ${TWITTER_BANNER_CONFIG.id} (${TWITTER_BANNER_CONFIG.width}×${TWITTER_BANNER_CONFIG.height})...`
   );
   const twitterComp = await selectComposition({
     serveUrl: bundled,
@@ -92,9 +94,13 @@ async function main() {
   console.log(`  → ${TWITTER_BANNER_CONFIG.filename}`);
 
   // ── Build favicon.ico (16 + 32 + 48 bundled) ───────────
-  const icoSizes = ["favicon-16x16.png", "favicon-32x32.png", "favicon-48x48.png"];
+  const icoSizes = [
+    "favicon-16x16.png",
+    "favicon-32x32.png",
+    "favicon-48x48.png",
+  ];
   const pngBuffers = await Promise.all(
-    icoSizes.map((f) => fs.readFile(path.join(outputDir, f))),
+    icoSizes.map((f) => fs.readFile(path.join(outputDir, f)))
   );
 
   const icoPath = path.join(outputDir, "favicon.ico");
@@ -103,7 +109,7 @@ async function main() {
 
   const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
   console.log(
-    `\nAll ${LOGO_VARIANTS.length} variants + favicon.ico rendered in ${elapsed}s`,
+    `\nAll ${LOGO_VARIANTS.length} variants + favicon.ico rendered in ${elapsed}s`
   );
   console.log(`Output: ${outputDir}`);
 }

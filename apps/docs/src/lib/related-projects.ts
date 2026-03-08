@@ -1,6 +1,8 @@
 import { env } from "~/env";
 
-const isDevelopment = env.NEXT_PUBLIC_VERCEL_ENV !== "production" && env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
+const isDevelopment =
+  env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
+  env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
 
 // Get the www URL dynamically based on environment
 export const wwwUrl = isDevelopment

@@ -1,5 +1,12 @@
-import { pgTable, varchar, timestamp, index, uniqueIndex, text } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
+import {
+  index,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 export const gwWebhookDeliveries = pgTable(
   "lightfast_gw_webhook_deliveries",
@@ -19,15 +26,18 @@ export const gwWebhookDeliveries = pgTable(
     // For DLQ replay — store raw payload on failed deliveries
     payload: text("payload"),
 
-    receivedAt: timestamp("received_at", { mode: "string", withTimezone: true }).notNull(),
+    receivedAt: timestamp("received_at", {
+      mode: "string",
+      withTimezone: true,
+    }).notNull(),
   },
   (table) => ({
     providerDeliveryIdx: uniqueIndex("gw_wd_provider_delivery_idx").on(
       table.provider,
-      table.deliveryId,
+      table.deliveryId
     ),
     statusIdx: index("gw_wd_status_idx").on(table.status),
-  }),
+  })
 );
 
 export type GwWebhookDelivery = typeof gwWebhookDeliveries.$inferSelect;

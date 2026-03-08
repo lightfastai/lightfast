@@ -1,12 +1,16 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  adaptGitHubPRForTransformer,
   adaptGitHubIssueForTransformer,
+  adaptGitHubPRForTransformer,
   adaptGitHubReleaseForTransformer,
   parseGitHubRateLimit,
 } from "./github";
 
-const repo = { full_name: "owner/repo", html_url: "https://github.com/owner/repo", id: 12345 };
+const repo = {
+  full_name: "owner/repo",
+  html_url: "https://github.com/owner/repo",
+  id: 12_345,
+};
 
 describe("adaptGitHubPRForTransformer", () => {
   it("maps open PR to action: opened", () => {
@@ -16,14 +20,24 @@ describe("adaptGitHubPRForTransformer", () => {
   });
 
   it("maps closed PR to action: closed", () => {
-    const pr = { state: "closed", number: 2, user: { login: "alice" }, merged: false };
+    const pr = {
+      state: "closed",
+      number: 2,
+      user: { login: "alice" },
+      merged: false,
+    };
     const result = adaptGitHubPRForTransformer(pr, repo);
     expect(result.action).toBe("closed");
   });
 
   it("maps merged PR (state: closed, merged: true) to action: closed", () => {
     // Transformer handles merge detection separately via pr.merged
-    const pr = { state: "closed", number: 3, user: { login: "alice" }, merged: true };
+    const pr = {
+      state: "closed",
+      number: 3,
+      user: { login: "alice" },
+      merged: true,
+    };
     const result = adaptGitHubPRForTransformer(pr, repo);
     expect(result.action).toBe("closed");
   });
@@ -47,7 +61,11 @@ describe("adaptGitHubPRForTransformer", () => {
   });
 
   it("repository is passed through from repo parameter", () => {
-    const customRepo = { full_name: "other/repo", html_url: "https://github.com/other/repo", id: 99 };
+    const customRepo = {
+      full_name: "other/repo",
+      html_url: "https://github.com/other/repo",
+      id: 99,
+    };
     const pr = { state: "open", number: 6, user: { login: "alice" } };
     const result = adaptGitHubPRForTransformer(pr, customRepo);
     expect(result.repository).toBe(customRepo);
@@ -123,7 +141,7 @@ describe("parseGitHubRateLimit", () => {
     expect(result).not.toBeUndefined();
     expect(result!.remaining).toBe(4999);
     expect(result!.limit).toBe(5000);
-    expect(result!.resetAt).toEqual(new Date(1700000000 * 1000));
+    expect(result!.resetAt).toEqual(new Date(1_700_000_000 * 1000));
   });
 
   it("resetAt is Unix seconds multiplied by 1000", () => {
@@ -133,7 +151,7 @@ describe("parseGitHubRateLimit", () => {
       "x-ratelimit-limit": "5000",
     };
     const result = parseGitHubRateLimit(headers);
-    expect(result!.resetAt.getTime()).toBe(1700000000 * 1000);
+    expect(result!.resetAt.getTime()).toBe(1_700_000_000 * 1000);
   });
 
   it("returns undefined when x-ratelimit-remaining is missing", () => {

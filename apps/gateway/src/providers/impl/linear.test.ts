@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Context } from "hono";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../env", () => ({
   env: {
@@ -28,8 +28,12 @@ const dbMocks = vi.hoisted(() => {
   const select = vi.fn().mockReturnValue({ from: selectFrom });
 
   return {
-    insert, values, onConflictDoUpdate, returning,
-    select, selectLimit,
+    insert,
+    values,
+    onConflictDoUpdate,
+    returning,
+    select,
+    selectLimit,
   };
 });
 
@@ -59,10 +63,10 @@ vi.mock("@repo/lib", () => ({
   encrypt: vi.fn().mockResolvedValue("encrypted-value"),
 }));
 
-import { LinearProvider } from "./linear.js";
 import { db } from "@db/console/client";
 import { decrypt } from "@repo/lib";
 import { updateTokenRecord } from "../../lib/token-store.js";
+import { LinearProvider } from "./linear.js";
 
 const provider = new LinearProvider();
 
@@ -71,8 +75,12 @@ describe("LinearProvider", () => {
     vi.clearAllMocks();
     // Reset Drizzle INSERT chain
     dbMocks.insert.mockReturnValue({ values: dbMocks.values });
-    dbMocks.values.mockReturnValue({ onConflictDoUpdate: dbMocks.onConflictDoUpdate });
-    dbMocks.onConflictDoUpdate.mockReturnValue({ returning: dbMocks.returning });
+    dbMocks.values.mockReturnValue({
+      onConflictDoUpdate: dbMocks.onConflictDoUpdate,
+    });
+    dbMocks.onConflictDoUpdate.mockReturnValue({
+      returning: dbMocks.returning,
+    });
     // Reset Drizzle SELECT chain
     const selectWhere = vi.fn().mockReturnValue({ limit: dbMocks.selectLimit });
     const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
@@ -113,23 +121,23 @@ describe("LinearProvider", () => {
           access_token: "lin-tok-123",
           token_type: "Bearer",
           scope: "read,write",
-          expires_in: 315360000,
+          expires_in: 315_360_000,
         }),
       } as unknown as Response);
 
       const result = await provider.exchangeCode(
         "auth-code",
-        "https://redirect.test",
+        "https://redirect.test"
       );
 
       expect(result.accessToken).toBe("lin-tok-123");
       expect(result.tokenType).toBe("Bearer");
       expect(result.scope).toBe("read,write");
-      expect(result.expiresIn).toBe(315360000);
+      expect(result.expiresIn).toBe(315_360_000);
       expect(result.refreshToken).toBeUndefined();
       expect(globalThis.fetch).toHaveBeenCalledWith(
         "https://api.linear.app/oauth/token",
-        expect.objectContaining({ method: "POST" }),
+        expect.objectContaining({ method: "POST" })
       );
     });
 
@@ -147,7 +155,7 @@ describe("LinearProvider", () => {
 
       const result = await provider.exchangeCode(
         "auth-code",
-        "https://redirect.test",
+        "https://redirect.test"
       );
 
       expect(result.refreshToken).toBe("lin-rt-456");
@@ -161,7 +169,7 @@ describe("LinearProvider", () => {
       } as Response);
 
       await expect(
-        provider.exchangeCode("bad-code", "https://redirect.test"),
+        provider.exchangeCode("bad-code", "https://redirect.test")
       ).rejects.toThrow("Linear token exchange failed: 401");
     });
   });
@@ -186,7 +194,7 @@ describe("LinearProvider", () => {
       expect(result.expiresIn).toBe(3600);
       expect(globalThis.fetch).toHaveBeenCalledWith(
         "https://api.linear.app/oauth/token",
-        expect.objectContaining({ method: "POST" }),
+        expect.objectContaining({ method: "POST" })
       );
     });
 
@@ -197,7 +205,7 @@ describe("LinearProvider", () => {
       } as Response);
 
       await expect(provider.refreshToken("bad-rt")).rejects.toThrow(
-        "Linear token refresh failed: 400",
+        "Linear token refresh failed: 400"
       );
     });
   });
@@ -217,7 +225,7 @@ describe("LinearProvider", () => {
           headers: expect.objectContaining({
             Authorization: "Bearer tok-123",
           }),
-        }),
+        })
       );
     });
 
@@ -237,7 +245,7 @@ describe("LinearProvider", () => {
       } as Response);
 
       await expect(provider.revokeToken("tok-123")).rejects.toThrow(
-        "Linear token revocation failed: 500",
+        "Linear token revocation failed: 500"
       );
     });
   });
@@ -257,13 +265,22 @@ describe("LinearProvider", () => {
             access_token: "lin-tok",
             token_type: "Bearer",
             scope: "read,write",
-            expires_in: 315360000,
+            expires_in: 315_360_000,
           }),
         } as unknown as Response)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
-            data: { viewer: { id: "v1", organization: { id: "org-ext-1", name: "My Org", urlKey: "my-org" } } },
+            data: {
+              viewer: {
+                id: "v1",
+                organization: {
+                  id: "org-ext-1",
+                  name: "My Org",
+                  urlKey: "my-org",
+                },
+              },
+            },
           }),
         } as unknown as Response);
 
@@ -298,7 +315,7 @@ describe("LinearProvider", () => {
               urlKey: "my-org",
             },
           }),
-        }),
+        })
       );
     });
 
@@ -310,7 +327,7 @@ describe("LinearProvider", () => {
             access_token: "lin-tok",
             token_type: "Bearer",
             scope: "read,write",
-            expires_in: 315360000,
+            expires_in: 315_360_000,
           }),
         } as unknown as Response)
         .mockResolvedValueOnce({
@@ -339,7 +356,7 @@ describe("LinearProvider", () => {
     it("throws when code is missing", async () => {
       const c = mockContext({});
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("missing code");
     });
   });
@@ -371,27 +388,35 @@ describe("LinearProvider", () => {
       mockDbSelect([]);
 
       await expect(
-        provider.resolveToken({ id: "inst-1" } as any),
+        provider.resolveToken({ id: "inst-1" } as any)
       ).rejects.toThrow("no_token_found");
     });
 
     it("throws when token is expired and no refresh token", async () => {
       const pastDate = new Date(Date.now() - 60_000).toISOString();
-      mockDbSelect([{ accessToken: "encrypted-tok", expiresAt: pastDate, refreshToken: null }]);
+      mockDbSelect([
+        {
+          accessToken: "encrypted-tok",
+          expiresAt: pastDate,
+          refreshToken: null,
+        },
+      ]);
 
       await expect(
-        provider.resolveToken({ id: "inst-1" } as any),
+        provider.resolveToken({ id: "inst-1" } as any)
       ).rejects.toThrow("token_expired:no_refresh_token");
     });
 
     it("refreshes expired token when refresh token exists", async () => {
       const pastDate = new Date(Date.now() - 60_000).toISOString();
-      mockDbSelect([{
-        id: "tok-1",
-        accessToken: "encrypted-tok",
-        expiresAt: pastDate,
-        refreshToken: "encrypted-refresh",
-      }]);
+      mockDbSelect([
+        {
+          id: "tok-1",
+          accessToken: "encrypted-tok",
+          expiresAt: pastDate,
+          refreshToken: "encrypted-refresh",
+        },
+      ]);
 
       vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
         ok: true,
@@ -414,12 +439,12 @@ describe("LinearProvider", () => {
         "tok-1",
         expect.objectContaining({ accessToken: "lin-tok-refreshed" }),
         "encrypted-refresh",
-        pastDate,
+        pastDate
       );
     });
 
     it("returns expiresIn for token with future expiry", async () => {
-      const futureDate = new Date(Date.now() + 3600_000).toISOString();
+      const futureDate = new Date(Date.now() + 3_600_000).toISOString();
       mockDbSelect([{ accessToken: "encrypted-tok", expiresAt: futureDate }]);
 
       const result = await provider.resolveToken({ id: "inst-1" } as any);

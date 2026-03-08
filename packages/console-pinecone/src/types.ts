@@ -17,22 +17,22 @@ import type { RecordMetadata } from "@pinecone-database/pinecone";
  * All fields are required - no optional fields.
  */
 export interface VectorMetadata extends RecordMetadata {
-  /** Chunk text content */
-  text: string;
+  /** 0-based chunk index within document */
+  chunkIndex: number;
+  /** Document content hash */
+  contentHash: string;
+  /** Owning document id */
+  docId: string;
   /** Document repo-relative path */
   path: string;
   /** URL-friendly slug */
   slug: string;
-  /** Document content hash */
-  contentHash: string;
-  /** 0-based chunk index within document */
-  chunkIndex: number;
-  /** Owning document id */
-  docId: string;
-  /** Human title */
-  title: string;
   /** Short snippet (first 200 chars of chunk) */
   snippet: string;
+  /** Chunk text content */
+  text: string;
+  /** Human title */
+  title: string;
   /** Source URL */
   url: string;
 }

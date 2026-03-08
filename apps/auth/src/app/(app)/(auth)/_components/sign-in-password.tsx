@@ -1,12 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { useSignIn } from "@vendor/clerk/client";
-import { useForm } from "@vendor/forms";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
 import {
   Form,
   FormControl,
@@ -14,9 +10,12 @@ import {
   FormItem,
   FormMessage,
 } from "@repo/ui/components/ui/form";
-import { Icons } from "@repo/ui/components/icons";
-import { handleClerkError } from "~/app/lib/clerk/error-handler";
+import { Input } from "@repo/ui/components/ui/input";
+import { useSignIn } from "@vendor/clerk/client";
+import { useForm } from "@vendor/forms";
 import { useLogger } from "@vendor/observability/client-log";
+import { z } from "zod";
+import { handleClerkError } from "~/app/lib/clerk/error-handler";
 
 const passwordSchema = z.object({
   identifier: z.string().min(1, "Email or username is required"),
@@ -26,8 +25,8 @@ const passwordSchema = z.object({
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
 interface SignInPasswordProps {
-  onSuccess: () => void;
   onError: (error: string) => void;
+  onSuccess: () => void;
 }
 
 export function SignInPassword({ onSuccess, onError }: SignInPasswordProps) {
@@ -43,7 +42,9 @@ export function SignInPassword({ onSuccess, onError }: SignInPasswordProps) {
   });
 
   async function onSubmit(data: PasswordFormData) {
-    if (!signIn) return;
+    if (!signIn) {
+      return;
+    }
 
     try {
       // Attempt to sign in with password
@@ -80,7 +81,7 @@ export function SignInPassword({ onSuccess, onError }: SignInPasswordProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
           control={form.control}
           name="identifier"
@@ -88,10 +89,10 @@ export function SignInPassword({ onSuccess, onError }: SignInPasswordProps) {
             <FormItem>
               <FormControl>
                 <Input
-                  type="text"
-                  placeholder="Email or username"
                   className="bg-background dark:bg-background"
+                  placeholder="Email or username"
                   size="lg"
+                  type="text"
                   {...field}
                 />
               </FormControl>
@@ -107,10 +108,10 @@ export function SignInPassword({ onSuccess, onError }: SignInPasswordProps) {
             <FormItem>
               <FormControl>
                 <Input
-                  type="password"
+                  className="bg-background dark:bg-background"
                   placeholder="Password"
                   size="lg"
-                  className="bg-background dark:bg-background"
+                  type="password"
                   {...field}
                 />
               </FormControl>
@@ -120,10 +121,10 @@ export function SignInPassword({ onSuccess, onError }: SignInPasswordProps) {
         />
 
         <Button
-          type="submit"
-          size="lg"
           className="w-full"
           disabled={!isLoaded || form.formState.isSubmitting}
+          size="lg"
+          type="submit"
         >
           {form.formState.isSubmitting ? (
             <>
@@ -138,4 +139,3 @@ export function SignInPassword({ onSuccess, onError }: SignInPasswordProps) {
     </Form>
   );
 }
-

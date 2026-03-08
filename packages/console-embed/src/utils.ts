@@ -5,12 +5,11 @@
  * for the console application.
  */
 
-import type { EmbeddingProvider } from "@vendor/embed";
-import { createCohereEmbedding } from "@vendor/embed";
-import type { CohereInputType } from "@vendor/embed";
-import { embedEnv } from "@vendor/embed/env";
 import { EMBEDDING_CONFIG } from "@repo/console-config";
 import type { CohereEmbeddingModel } from "@repo/console-validation";
+import type { CohereInputType, EmbeddingProvider } from "@vendor/embed";
+import { createCohereEmbedding } from "@vendor/embed";
+import { embedEnv } from "@vendor/embed/env";
 
 /**
  * Default embedding configuration
@@ -19,15 +18,15 @@ import type { CohereEmbeddingModel } from "@repo/console-validation";
  * and is validated against the database schema enum.
  */
 export interface EmbeddingDefaults {
-	/**
-	 * Default embedding dimension
-	 */
-	dimension: number;
+  /**
+   * Default embedding dimension
+   */
+  dimension: number;
 
-	/**
-	 * Default Cohere embedding model (strongly typed)
-	 */
-	model: CohereEmbeddingModel;
+  /**
+   * Default Cohere embedding model (strongly typed)
+   */
+  model: CohereEmbeddingModel;
 }
 
 /**
@@ -47,22 +46,22 @@ export interface EmbeddingDefaults {
  * ```
  */
 export function resolveEmbeddingDefaults(): EmbeddingDefaults {
-	return {
-		dimension: EMBEDDING_CONFIG.cohere.dimension,
-		model: EMBEDDING_CONFIG.cohere.model,
-	};
+  return {
+    dimension: EMBEDDING_CONFIG.cohere.dimension,
+    model: EMBEDDING_CONFIG.cohere.model,
+  };
 }
 
 /**
  * Embedding provider configuration
  */
 export interface EmbeddingProviderConfig {
-	/**
-	 * Input type for embedding optimization
-	 * - search_query: Optimize for search queries (short text, user intent)
-	 * - search_document: Optimize for document indexing (long passages)
-	 */
-	inputType: "search_query" | "search_document";
+  /**
+   * Input type for embedding optimization
+   * - search_query: Optimize for search queries (short text, user intent)
+   * - search_document: Optimize for document indexing (long passages)
+   */
+  inputType: "search_query" | "search_document";
 }
 
 /**
@@ -87,34 +86,33 @@ export interface EmbeddingProviderConfig {
  * ```
  */
 export function createEmbeddingProvider(
-	config: EmbeddingProviderConfig,
+  config: EmbeddingProviderConfig
 ): EmbeddingProvider {
-	return createCohereEmbedding({
-		apiKey: embedEnv.COHERE_API_KEY,
-		model: EMBEDDING_CONFIG.cohere.model,
-		inputType: config.inputType as CohereInputType,
-		dimension: EMBEDDING_CONFIG.cohere.dimension,
-	});
+  return createCohereEmbedding({
+    apiKey: embedEnv.COHERE_API_KEY,
+    model: EMBEDDING_CONFIG.cohere.model,
+    inputType: config.inputType as CohereInputType,
+    dimension: EMBEDDING_CONFIG.cohere.dimension,
+  });
 }
 
 /**
  * Workspace configuration required for embedding provider selection
  */
 export interface WorkspaceEmbeddingConfig {
-	/**
-	 * Workspace ID for error messages
-	 */
-	id: string;
+  /**
+   * Embedding dimension
+   */
+  embeddingDim: number | null;
 
-	/**
-	 * Embedding model used by this workspace
-	 */
-	embeddingModel: string | null;
-
-	/**
-	 * Embedding dimension
-	 */
-	embeddingDim: number | null;
+  /**
+   * Embedding model used by this workspace
+   */
+  embeddingModel: string | null;
+  /**
+   * Workspace ID for error messages
+   */
+  id: string;
 }
 
 /**
@@ -143,15 +141,15 @@ export interface WorkspaceEmbeddingConfig {
  * ```
  */
 export function createEmbeddingProviderForWorkspace(
-	workspace: WorkspaceEmbeddingConfig,
-	config: EmbeddingProviderConfig,
+  workspace: WorkspaceEmbeddingConfig,
+  config: EmbeddingProviderConfig
 ): EmbeddingProvider {
-	return createCohereEmbedding({
-		apiKey: embedEnv.COHERE_API_KEY,
-		model: EMBEDDING_CONFIG.cohere.model,
-		inputType: config.inputType as CohereInputType,
-		dimension: workspace.embeddingDim ?? EMBEDDING_CONFIG.cohere.dimension,
-	});
+  return createCohereEmbedding({
+    apiKey: embedEnv.COHERE_API_KEY,
+    model: EMBEDDING_CONFIG.cohere.model,
+    inputType: config.inputType as CohereInputType,
+    dimension: workspace.embeddingDim ?? EMBEDDING_CONFIG.cohere.dimension,
+  });
 }
 
 /**
@@ -163,22 +161,22 @@ export function createEmbeddingProviderForWorkspace(
  * @returns Ordered list of embedding vectors matching the input order
  */
 export async function embedTextsInBatches(
-	provider: EmbeddingProvider,
-	items: { text: string }[],
-	options: { batchSize?: number } = {},
+  provider: EmbeddingProvider,
+  items: { text: string }[],
+  options: { batchSize?: number } = {}
 ): Promise<number[][]> {
-	const batchSize = options.batchSize ?? 96;
-	const embeddings: number[][] = [];
+  const batchSize = options.batchSize ?? 96;
+  const embeddings: number[][] = [];
 
-	if (items.length === 0) {
-		return embeddings;
-	}
+  if (items.length === 0) {
+    return embeddings;
+  }
 
-	for (let i = 0; i < items.length; i += batchSize) {
-		const batch = items.slice(i, i + batchSize);
-		const response = await provider.embed(batch.map((item) => item.text));
-		embeddings.push(...response.embeddings);
-	}
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const response = await provider.embed(batch.map((item) => item.text));
+    embeddings.push(...response.embeddings);
+  }
 
-	return embeddings;
+  return embeddings;
 }

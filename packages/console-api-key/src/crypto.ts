@@ -141,4 +141,3 @@ export function isValidApiKeyFormat(key: string): boolean {
     LIGHTFAST_API_KEY_PREFIX.length + API_KEY_SECRET_LENGTH;
   return key.length === expectedLength;
 }
-

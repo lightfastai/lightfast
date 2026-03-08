@@ -1,4 +1,4 @@
-import type { SectionProvider, CommunicationStyle } from "@repo/prompt-engine";
+import type { CommunicationStyle, SectionProvider } from "@repo/prompt-engine";
 
 const STYLE_INSTRUCTIONS: Record<CommunicationStyle, string> = {
   formal: `COMMUNICATION STYLE:
@@ -27,7 +27,9 @@ const STYLE_INSTRUCTIONS: Record<CommunicationStyle, string> = {
 };
 
 export const answerStyleSection: SectionProvider = (ctx) => {
-  if (!ctx.features.style) return null;
+  if (!ctx.features.style) {
+    return null;
+  }
 
   return {
     id: "style",

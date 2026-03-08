@@ -18,8 +18,13 @@ const cancelSchema = z.object({
   installationId: z.string().min(1),
 });
 
-async function isValidApiKey(key: string | undefined, expected: string): Promise<boolean> {
-  if (!key) { return false; }
+async function isValidApiKey(
+  key: string | undefined,
+  expected: string
+): Promise<boolean> {
+  if (!key) {
+    return false;
+  }
   return timingSafeStringEqual(key, expected);
 }
 
@@ -48,7 +53,7 @@ trigger.post("/", async (c) => {
   if (!parsed.success) {
     return c.json(
       { error: "validation_error", details: parsed.error.flatten() },
-      400,
+      400
     );
   }
   const body = parsed.data;
@@ -69,7 +74,7 @@ trigger.post("/", async (c) => {
     console.error("Failed to send backfill event to Inngest", err);
     return c.json(
       { error: "temporary_failure", message: "Failed to enqueue backfill" },
-      502,
+      502
     );
   }
 
@@ -99,7 +104,7 @@ trigger.post("/cancel", async (c) => {
   if (!parsed.success) {
     return c.json(
       { error: "validation_error", details: parsed.error.flatten() },
-      400,
+      400
     );
   }
   const body = parsed.data;
@@ -116,7 +121,7 @@ trigger.post("/cancel", async (c) => {
     console.error("Failed to send cancel event to Inngest", err);
     return c.json(
       { error: "temporary_failure", message: "Failed to enqueue cancellation" },
-      502,
+      502
     );
   }
 

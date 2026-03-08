@@ -1,11 +1,15 @@
 "use client";
 
-import { Component } from "react";
-import type { ReactNode, ErrorInfo } from "react";
-import { Alert, AlertTitle, AlertDescription } from "@repo/ui/components/ui/alert";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
 import { AlertCircle, ShieldAlert } from "lucide-react";
 import Link from "next/link";
+import type { ErrorInfo, ReactNode } from "react";
+import { Component } from "react";
 
 interface Props {
   children: ReactNode;
@@ -13,9 +17,9 @@ interface Props {
 }
 
 interface State {
-  hasError: boolean;
   error: Error | null;
   errorType: "access_denied" | "not_found" | "unknown";
+  hasError: boolean;
 }
 
 /**
@@ -59,11 +63,14 @@ export class OrgPageErrorBoundary extends Component<Props, State> {
 
       // Customize message based on error type
       let title = "Failed to load organization page";
-      let message = this.state.error.message || "An unexpected error occurred while loading this page.";
+      let message =
+        this.state.error.message ||
+        "An unexpected error occurred while loading this page.";
 
       if (errorType === "access_denied") {
         title = "Access Denied";
-        message = "You don't have permission to access this organization. Please select an organization you belong to.";
+        message =
+          "You don't have permission to access this organization. Please select an organization you belong to.";
       } else if (errorType === "not_found") {
         title = "Organization Not Found";
         message = "This organization doesn't exist or has been removed.";
@@ -71,7 +78,7 @@ export class OrgPageErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="flex min-h-[400px] items-center justify-center p-4">
-          <Alert variant="destructive" className="max-w-lg">
+          <Alert className="max-w-lg" variant="destructive">
             {errorType === "access_denied" ? (
               <ShieldAlert className="h-4 w-4" />
             ) : (
@@ -82,14 +89,12 @@ export class OrgPageErrorBoundary extends Component<Props, State> {
               <p>{message}</p>
               <div className="flex gap-2">
                 {errorType === "unknown" && (
-                  <Button onClick={this.reset} variant="outline" size="sm">
+                  <Button onClick={this.reset} size="sm" variant="outline">
                     Retry
                   </Button>
                 )}
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/account/teams/new">
-                    Select organization
-                  </Link>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/account/teams/new">Select organization</Link>
                 </Button>
               </div>
             </AlertDescription>

@@ -49,10 +49,10 @@ export type UserRole = "org:admin" | "org:member";
  * @property db - Database client instance (dependency injection)
  */
 export interface WorkspaceAccessContext {
-  userId: string;
   clerkOrgSlug: string;
-  workspaceName: string;
   db: DbClient;
+  userId: string;
+  workspaceName: string;
 }
 
 /**
@@ -65,11 +65,11 @@ export interface WorkspaceAccessContext {
  * @property userRole - User's role in the organization
  */
 export interface WorkspaceAccessData {
+  clerkOrgId: string;
+  userRole: string;
   workspaceId: string;
   workspaceName: string;
   workspaceSlug: string;
-  clerkOrgId: string;
-  userRole: string;
 }
 
 /**
@@ -110,9 +110,9 @@ export type WorkspaceAccessResult =
  */
 export interface ResolveWorkspaceByNameContext {
   clerkOrgSlug: string;
-  workspaceName: string;
-  userId: string;
   db: DbClient;
+  userId: string;
+  workspaceName: string;
 }
 
 /**
@@ -127,9 +127,9 @@ export interface ResolveWorkspaceByNameContext {
  */
 export interface ResolveWorkspaceBySlugContext {
   clerkOrgSlug: string;
-  workspaceSlug: string;
-  userId: string;
   db: DbClient;
+  userId: string;
+  workspaceSlug: string;
 }
 
 /**
@@ -141,10 +141,10 @@ export interface ResolveWorkspaceBySlugContext {
  * @property clerkOrgId - Clerk organization ID
  */
 export interface ResolveWorkspaceData {
+  clerkOrgId: string;
   workspaceId: string;
   workspaceName: string;
   workspaceSlug: string;
-  clerkOrgId: string;
 }
 
 /**
@@ -174,10 +174,10 @@ export type ResolveWorkspaceResult =
  * @property db - Database client instance
  */
 export interface ResourceOwnershipContext {
-  userId: string;
+  db: DbClient;
   resourceId: string;
   resourceType: ResourceType;
-  db: DbClient;
+  userId: string;
 }
 
 /**

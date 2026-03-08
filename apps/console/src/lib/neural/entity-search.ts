@@ -1,8 +1,11 @@
-import { eq, and, inArray, desc } from "drizzle-orm";
 import { db } from "@db/console/client";
-import { workspaceNeuralEntities, workspaceNeuralObservations } from "@db/console/schema";
-import type { EntityCategory } from "@repo/console-validation";
+import {
+  workspaceNeuralEntities,
+  workspaceNeuralObservations,
+} from "@db/console/schema";
 import type { EntitySearchResult } from "@repo/console-types";
+import type { EntityCategory } from "@repo/console-validation";
+import { and, desc, eq, inArray } from "drizzle-orm";
 
 /**
  * Patterns to extract entity references from search queries
@@ -132,16 +135,20 @@ export async function searchByEntities(
   const results: EntitySearchResult[] = [];
   for (const entity of matchedEntities) {
     const obsId = entity.sourceObservationId;
-    if (obsId === null) continue;
+    if (obsId === null) {
+      continue;
+    }
 
     const obs = obsMap.get(obsId);
-    if (!obs) continue;
+    if (!obs) {
+      continue;
+    }
 
     results.push({
-      entityId: String(entity.id),  // Convert BIGINT to string for API response
+      entityId: String(entity.id), // Convert BIGINT to string for API response
       entityKey: entity.key,
       entityCategory: entity.category,
-      observationId: obs.externalId,  // Return externalId (nanoid) for API
+      observationId: obs.externalId, // Return externalId (nanoid) for API
       observationTitle: obs.title,
       observationSnippet: obs.content.substring(0, 200),
       occurrenceCount: entity.occurrenceCount,

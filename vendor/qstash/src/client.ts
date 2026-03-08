@@ -1,33 +1,33 @@
 import type {
-  PublishToUrlResponse,
   PublishToUrlGroupsResponse,
+  PublishToUrlResponse,
 } from "@upstash/qstash";
 import { Client } from "@upstash/qstash";
 import { qstashEnv } from "../env";
 
 export interface PublishJsonOptions<TBody = unknown> {
-  url: string;
   body?: TBody;
+  callback?: string;
+  deduplicationId?: string;
+  delay?: number;
   headers?: Record<string, string>;
   retries?: number;
-  delay?: number;
-  deduplicationId?: string;
-  callback?: string;
+  url: string;
 }
 
 export interface PublishToTopicOptions<TBody = unknown> {
-  topic: string;
   body?: TBody;
+  deduplicationId?: string;
+  delay?: number;
   headers?: Record<string, string>;
   retries?: number;
-  delay?: number;
-  deduplicationId?: string;
+  topic: string;
 }
 
 export interface QStashPublishResponse {
+  deduplicated?: boolean;
   messageId: string;
   url?: string;
-  deduplicated?: boolean;
 }
 
 /**
@@ -37,7 +37,7 @@ export interface QStashPublishResponse {
  * for durable, at-least-once delivery.
  */
 export class QStashClient {
-  private client: Client;
+  private readonly client: Client;
 
   constructor(token?: string) {
     this.client = new Client({
@@ -49,7 +49,7 @@ export class QStashClient {
    * Publish a JSON message to a URL endpoint for durable delivery
    */
   async publishJSON<TBody = unknown>(
-    options: PublishJsonOptions<TBody>,
+    options: PublishJsonOptions<TBody>
   ): Promise<QStashPublishResponse> {
     const { url, body, headers, retries, delay, deduplicationId, callback } =
       options;
@@ -75,7 +75,7 @@ export class QStashClient {
    * Publish a JSON message to a QStash topic
    */
   async publishToTopic<TBody = unknown>(
-    options: PublishToTopicOptions<TBody>,
+    options: PublishToTopicOptions<TBody>
   ): Promise<QStashPublishResponse[]> {
     const { topic, body, headers, retries, delay, deduplicationId } = options;
 

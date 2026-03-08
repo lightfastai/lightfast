@@ -102,7 +102,11 @@
           "labels": [
             { "id": "label_perf", "name": "Performance", "color": "#fbbf24" },
             { "id": "label_p2", "name": "P2", "color": "#f97316" },
-            { "id": "label_infra", "name": "Infrastructure", "color": "#06b6d4" }
+            {
+              "id": "label_infra",
+              "name": "Infrastructure",
+              "color": "#06b6d4"
+            }
           ],
           "subscriberIds": ["user_jeevan_linear"]
         }
@@ -392,8 +396,20 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 104, "node_id": "L_104", "name": "performance", "color": "#fbbf24", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "infrastructure", "color": "#06b6d4", "default": false }
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "performance",
+              "color": "#fbbf24",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "infrastructure",
+              "color": "#06b6d4",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -581,8 +597,20 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 104, "node_id": "L_104", "name": "performance", "color": "#fbbf24", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "infrastructure", "color": "#06b6d4", "default": false }
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "performance",
+              "color": "#fbbf24",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "infrastructure",
+              "color": "#06b6d4",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -934,7 +962,10 @@
               "githubDeployment": "1"
             }
           },
-          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
           "team": {
             "id": "team_lightfastai",
             "slug": "lightfastai",
@@ -971,7 +1002,10 @@
               "previousBuildTime": 480
             }
           },
-          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
           "team": {
             "id": "team_lightfastai",
             "slug": "lightfastai",
@@ -1081,7 +1115,11 @@
           "labels": [
             { "id": "label_perf", "name": "Performance", "color": "#fbbf24" },
             { "id": "label_p2", "name": "P2", "color": "#f97316" },
-            { "id": "label_infra", "name": "Infrastructure", "color": "#06b6d4" }
+            {
+              "id": "label_infra",
+              "name": "Infrastructure",
+              "color": "#06b6d4"
+            }
           ],
           "attachments": {
             "nodes": [

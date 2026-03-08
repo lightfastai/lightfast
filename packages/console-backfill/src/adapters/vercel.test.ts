@@ -1,17 +1,19 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   adaptVercelDeploymentForTransformer,
   parseVercelRateLimit,
 } from "./vercel";
 
-function makeDeployment(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+function makeDeployment(
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> {
   return {
     uid: "dpl-abc123",
     name: "my-app",
     url: "my-app.vercel.app",
     projectId: "prj-xyz",
     readyState: "READY",
-    created: 1700000000000,
+    created: 1_700_000_000_000,
     meta: {},
     ...overrides,
   };
@@ -19,59 +21,95 @@ function makeDeployment(overrides: Record<string, unknown> = {}): Record<string,
 
 describe("adaptVercelDeploymentForTransformer — readyState mapping", () => {
   it('READY → eventType: "deployment.succeeded"', () => {
-    const { eventType } = adaptVercelDeploymentForTransformer(makeDeployment({ readyState: "READY" }), "my-app");
+    const { eventType } = adaptVercelDeploymentForTransformer(
+      makeDeployment({ readyState: "READY" }),
+      "my-app"
+    );
     expect(eventType).toBe("deployment.succeeded");
   });
 
   it('ERROR → eventType: "deployment.error"', () => {
-    const { eventType } = adaptVercelDeploymentForTransformer(makeDeployment({ readyState: "ERROR" }), "my-app");
+    const { eventType } = adaptVercelDeploymentForTransformer(
+      makeDeployment({ readyState: "ERROR" }),
+      "my-app"
+    );
     expect(eventType).toBe("deployment.error");
   });
 
   it('CANCELED → eventType: "deployment.canceled"', () => {
-    const { eventType } = adaptVercelDeploymentForTransformer(makeDeployment({ readyState: "CANCELED" }), "my-app");
+    const { eventType } = adaptVercelDeploymentForTransformer(
+      makeDeployment({ readyState: "CANCELED" }),
+      "my-app"
+    );
     expect(eventType).toBe("deployment.canceled");
   });
 
   it('BUILDING → eventType: "deployment.created"', () => {
-    const { eventType } = adaptVercelDeploymentForTransformer(makeDeployment({ readyState: "BUILDING" }), "my-app");
+    const { eventType } = adaptVercelDeploymentForTransformer(
+      makeDeployment({ readyState: "BUILDING" }),
+      "my-app"
+    );
     expect(eventType).toBe("deployment.created");
   });
 
   it('undefined readyState → eventType: "deployment.created"', () => {
-    const { eventType } = adaptVercelDeploymentForTransformer(makeDeployment({ readyState: undefined }), "my-app");
+    const { eventType } = adaptVercelDeploymentForTransformer(
+      makeDeployment({ readyState: undefined }),
+      "my-app"
+    );
     expect(eventType).toBe("deployment.created");
   });
 });
 
 describe("adaptVercelDeploymentForTransformer", () => {
   it('webhookPayload.id equals "backfill-{deployment.uid}"', () => {
-    const { webhookPayload } = adaptVercelDeploymentForTransformer(makeDeployment({ uid: "dpl-test" }), "my-app");
+    const { webhookPayload } = adaptVercelDeploymentForTransformer(
+      makeDeployment({ uid: "dpl-test" }),
+      "my-app"
+    );
     expect(webhookPayload.id).toBe("backfill-dpl-test");
   });
 
   it("webhookPayload.type matches mapped eventType", () => {
     const deployment = makeDeployment({ readyState: "ERROR" });
-    const { webhookPayload, eventType } = adaptVercelDeploymentForTransformer(deployment, "my-app");
+    const { webhookPayload, eventType } = adaptVercelDeploymentForTransformer(
+      deployment,
+      "my-app"
+    );
     expect(webhookPayload.type).toBe(eventType);
   });
 
   it("webhookPayload.createdAt equals deployment.created when present", () => {
-    const { webhookPayload } = adaptVercelDeploymentForTransformer(makeDeployment({ created: 1700000000000 }), "my-app");
-    expect(webhookPayload.createdAt).toBe(1700000000000);
+    const { webhookPayload } = adaptVercelDeploymentForTransformer(
+      makeDeployment({ created: 1_700_000_000_000 }),
+      "my-app"
+    );
+    expect(webhookPayload.createdAt).toBe(1_700_000_000_000);
   });
 
   it("webhookPayload.createdAt equals Date.now() when deployment.created is undefined", () => {
-    const fakeNow = 1700000000000;
+    const fakeNow = 1_700_000_000_000;
     vi.spyOn(Date, "now").mockReturnValue(fakeNow);
-    const { webhookPayload } = adaptVercelDeploymentForTransformer(makeDeployment({ created: undefined }), "my-app");
+    const { webhookPayload } = adaptVercelDeploymentForTransformer(
+      makeDeployment({ created: undefined }),
+      "my-app"
+    );
     expect(webhookPayload.createdAt).toBe(fakeNow);
     vi.restoreAllMocks();
   });
 
   it("webhookPayload.payload.deployment has id, name, url, readyState, meta from input", () => {
-    const deployment = makeDeployment({ uid: "dpl-1", name: "app-1", url: "app.vercel.app", readyState: "READY", meta: { sha: "abc" } });
-    const { webhookPayload } = adaptVercelDeploymentForTransformer(deployment, "my-app");
+    const deployment = makeDeployment({
+      uid: "dpl-1",
+      name: "app-1",
+      url: "app.vercel.app",
+      readyState: "READY",
+      meta: { sha: "abc" },
+    });
+    const { webhookPayload } = adaptVercelDeploymentForTransformer(
+      deployment,
+      "my-app"
+    );
     expect(webhookPayload.payload.deployment).toMatchObject({
       id: "dpl-1",
       name: "app-1",
@@ -83,7 +121,10 @@ describe("adaptVercelDeploymentForTransformer", () => {
 
   it("webhookPayload.payload.project has id and name from input", () => {
     const deployment = makeDeployment({ projectId: "prj-my" });
-    const { webhookPayload } = adaptVercelDeploymentForTransformer(deployment, "my-project");
+    const { webhookPayload } = adaptVercelDeploymentForTransformer(
+      deployment,
+      "my-project"
+    );
     expect(webhookPayload.payload.project).toMatchObject({
       id: "prj-my",
       name: "my-project",
@@ -91,12 +132,18 @@ describe("adaptVercelDeploymentForTransformer", () => {
   });
 
   it("when projectName is passed, project.name equals projectName", () => {
-    const { webhookPayload } = adaptVercelDeploymentForTransformer(makeDeployment(), "custom-name");
+    const { webhookPayload } = adaptVercelDeploymentForTransformer(
+      makeDeployment(),
+      "custom-name"
+    );
     expect(webhookPayload.payload.project!.name).toBe("custom-name");
   });
 
   it("function returns { webhookPayload, eventType } tuple", () => {
-    const result = adaptVercelDeploymentForTransformer(makeDeployment(), "my-app");
+    const result = adaptVercelDeploymentForTransformer(
+      makeDeployment(),
+      "my-app"
+    );
     expect(result).toHaveProperty("webhookPayload");
     expect(result).toHaveProperty("eventType");
   });
@@ -113,7 +160,7 @@ describe("parseVercelRateLimit", () => {
     expect(result).not.toBeUndefined();
     expect(result!.remaining).toBe(99);
     expect(result!.limit).toBe(100);
-    expect(result!.resetAt).toEqual(new Date(1700000000 * 1000));
+    expect(result!.resetAt).toEqual(new Date(1_700_000_000 * 1000));
   });
 
   it("resetAt is Unix seconds multiplied by 1000 (same as GitHub adapter)", () => {
@@ -123,7 +170,7 @@ describe("parseVercelRateLimit", () => {
       "x-ratelimit-limit": "100",
     });
     const result = parseVercelRateLimit(headers);
-    expect(result!.resetAt.getTime()).toBe(1700000000 * 1000);
+    expect(result!.resetAt.getTime()).toBe(1_700_000_000 * 1000);
   });
 
   it("returns undefined when x-ratelimit-remaining is missing", () => {

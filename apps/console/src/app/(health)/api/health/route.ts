@@ -25,10 +25,7 @@ export function GET(request: NextRequest) {
     const bearerRegex = /^Bearer\s+(.+)$/i;
     const bearerMatch = bearerRegex.exec(authHeader);
     if (!bearerMatch?.[1] || bearerMatch[1] !== authToken) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }
 

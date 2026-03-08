@@ -13,8 +13,8 @@ import type {
   TransformContext,
 } from "@repo/console-types";
 import { toExternalLinearEventType } from "@repo/console-types";
+import { sanitizeBody, sanitizeTitle } from "../sanitize.js";
 import { validateSourceEvent } from "../validation.js";
-import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
 // ============================================================================
 // Official Linear Webhook Payload Types
@@ -27,9 +27,9 @@ import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
  */
 export interface LinearWebhookBase {
   action: "create" | "update" | "remove";
-  type: LinearWebhookEventType;
   createdAt: string; // ISO timestamp
   organizationId: string;
+  type: LinearWebhookEventType;
   webhookId: string;
   webhookTimestamp: number;
 }
@@ -45,8 +45,8 @@ export type LinearWebhookEventType = keyof typeof linearTransformers;
  * Sent when issues are created, updated, or deleted
  */
 export interface LinearIssueWebhook extends LinearWebhookBase {
-  type: "Issue";
   data: LinearIssue;
+  type: "Issue";
   updatedFrom?: Partial<LinearIssue>;
 }
 
@@ -55,8 +55,8 @@ export interface LinearIssueWebhook extends LinearWebhookBase {
  * Sent when comments are created, updated, or deleted
  */
 export interface LinearCommentWebhook extends LinearWebhookBase {
-  type: "Comment";
   data: LinearComment;
+  type: "Comment";
   updatedFrom?: Partial<LinearComment>;
 }
 
@@ -65,8 +65,8 @@ export interface LinearCommentWebhook extends LinearWebhookBase {
  * Sent when projects are created, updated, or deleted
  */
 export interface LinearProjectWebhook extends LinearWebhookBase {
-  type: "Project";
   data: LinearProject;
+  type: "Project";
   updatedFrom?: Partial<LinearProject>;
 }
 
@@ -75,8 +75,8 @@ export interface LinearProjectWebhook extends LinearWebhookBase {
  * Sent when cycles (sprints) are created, updated, or deleted
  */
 export interface LinearCycleWebhook extends LinearWebhookBase {
-  type: "Cycle";
   data: LinearCycle;
+  type: "Cycle";
   updatedFrom?: Partial<LinearCycle>;
 }
 
@@ -85,8 +85,8 @@ export interface LinearCycleWebhook extends LinearWebhookBase {
  * Sent when project updates are created, updated, or deleted
  */
 export interface LinearProjectUpdateWebhook extends LinearWebhookBase {
-  type: "ProjectUpdate";
   data: LinearProjectUpdate;
+  type: "ProjectUpdate";
   updatedFrom?: Partial<LinearProjectUpdate>;
 }
 
@@ -99,69 +99,69 @@ export interface LinearProjectUpdateWebhook extends LinearWebhookBase {
  * @see https://developers.linear.app/docs/graphql/types/issue
  */
 export interface LinearIssue {
-  id: string;
-  identifier: string; // e.g., "LIGHT-123"
-  title: string;
+  archivedAt?: string;
+  assignee?: LinearUser;
+  /** Attachments linked to this issue (GitHub PRs, Sentry issues, etc.) */
+  attachments?: {
+    nodes?: LinearAttachment[];
+  };
+  autoArchivedAt?: string;
+  autoClosedAt?: string;
+  boardOrder: number;
+  branchName: string;
+  canceledAt?: string;
+  completedAt?: string;
+  createdAt: string;
+  creator?: LinearUser;
+  customerTicketCount: number;
+  cycle?: {
+    id: string;
+    name: string;
+    number: number;
+  };
   description?: string;
   descriptionData?: string; // Prosemirror JSON
+  dueDate?: string;
+  estimate?: number;
+  id: string;
+  identifier: string; // e.g., "LIGHT-123"
+  labels: LinearLabel[];
+  number: number;
+  parent?: {
+    id: string;
+    identifier: string;
+    title: string;
+  };
+  previousIdentifiers: string[];
   priority: number; // 0 = No priority, 1 = Urgent, 2 = High, 3 = Medium, 4 = Low
   priorityLabel: string;
-  estimate?: number;
-  boardOrder: number;
+  project?: {
+    id: string;
+    name: string;
+    url: string;
+  };
+  slaBreachesAt?: string;
+  slaStartedAt?: string;
+  snoozedUntilAt?: string;
   sortOrder: number;
   startedAt?: string;
-  completedAt?: string;
-  canceledAt?: string;
-  autoClosedAt?: string;
-  autoArchivedAt?: string;
-  dueDate?: string;
-  slaStartedAt?: string;
-  slaBreachesAt?: string;
-  trashed?: boolean;
-  snoozedUntilAt?: string;
-  createdAt: string;
-  updatedAt: string;
-  archivedAt?: string;
-  number: number;
-  url: string;
-  branchName: string;
-  customerTicketCount: number;
-  previousIdentifiers: string[];
-  subIssueSortOrder?: number;
-  team: {
-    id: string;
-    key: string;
-    name: string;
-  };
   state: {
     id: string;
     name: string;
     color: string;
     type: "backlog" | "unstarted" | "started" | "completed" | "canceled";
   };
-  creator?: LinearUser;
-  assignee?: LinearUser;
-  parent?: {
-    id: string;
-    identifier: string;
-    title: string;
-  };
-  project?: {
-    id: string;
-    name: string;
-    url: string;
-  };
-  cycle?: {
-    id: string;
-    name: string;
-    number: number;
-  };
-  labels: LinearLabel[];
+  subIssueSortOrder?: number;
   subscriberIds: string[];
-  /** Attachments linked to this issue (GitHub PRs, Sentry issues, etc.) */
-  attachments?: {
-    nodes?: LinearAttachment[];
+  team: {
+    id: string;
+    key: string;
+    name: string;
   };
+  title: string;
+  trashed?: boolean;
+  updatedAt: string;
+  url: string;
 }
 
 /**
@@ -170,31 +170,27 @@ export interface LinearIssue {
  */
 export interface LinearAttachment {
   id: string;
-  title: string;
-  url?: string;
-  source?: string;
-  sourceType?: string;
   metadata?: {
     state?: string;
     number?: number;
     shortId?: string;
   };
+  source?: string;
+  sourceType?: string;
+  title: string;
+  url?: string;
 }
 
 /**
  * Linear Comment
  */
 export interface LinearComment {
-  id: string;
+  archivedAt?: string;
   body: string;
   bodyData?: string; // Prosemirror JSON
   createdAt: string;
-  updatedAt: string;
-  archivedAt?: string;
   editedAt?: string;
-  url: string;
-  reactionData: unknown[];
-  user: LinearUser;
+  id: string;
   issue: {
     id: string;
     identifier: string;
@@ -204,120 +200,130 @@ export interface LinearComment {
   parent?: {
     id: string;
   };
+  reactionData: unknown[];
+  updatedAt: string;
+  url: string;
+  user: LinearUser;
 }
 
 /**
  * Linear Project
  */
 export interface LinearProject {
-  id: string;
-  name: string;
+  archivedAt?: string;
+  autoArchivedAt?: string;
+  canceledAt?: string;
+  color: string;
+  completedAt?: string;
+  completedIssueCountHistory: number[];
+  completedScopeHistory: number[];
+  createdAt: string;
   description?: string;
   icon?: string;
-  color: string;
-  state: "backlog" | "planned" | "started" | "paused" | "completed" | "canceled";
-  createdAt: string;
-  updatedAt: string;
-  archivedAt?: string;
-  canceledAt?: string;
-  completedAt?: string;
-  autoArchivedAt?: string;
-  targetDate?: string;
-  startDate?: string;
-  startedAt?: string;
-  progress: number; // 0-1
-  scope: number;
-  url: string;
-  slugId: string;
-  sortOrder: number;
-  issueCountHistory: number[];
-  completedIssueCountHistory: number[];
-  scopeHistory: number[];
-  completedScopeHistory: number[];
+  id: string;
   inProgressScopeHistory: number[];
-  slackNewIssue: boolean;
-  slackIssueComments: boolean;
-  slackIssueStatuses: boolean;
+  issueCountHistory: number[];
   lead?: LinearUser;
   members: LinearUser[];
+  name: string;
+  progress: number; // 0-1
+  scope: number;
+  scopeHistory: number[];
+  slackIssueComments: boolean;
+  slackIssueStatuses: boolean;
+  slackNewIssue: boolean;
+  slugId: string;
+  sortOrder: number;
+  startDate?: string;
+  startedAt?: string;
+  state:
+    | "backlog"
+    | "planned"
+    | "started"
+    | "paused"
+    | "completed"
+    | "canceled";
+  targetDate?: string;
   teams: Array<{
     id: string;
     key: string;
     name: string;
   }>;
+  updatedAt: string;
+  url: string;
 }
 
 /**
  * Linear Cycle (Sprint)
  */
 export interface LinearCycle {
-  id: string;
-  number: number;
-  name?: string;
-  description?: string;
-  startsAt: string;
-  endsAt: string;
-  completedAt?: string;
-  autoArchivedAt?: string;
-  createdAt: string;
-  updatedAt: string;
   archivedAt?: string;
+  autoArchivedAt?: string;
+  completedAt?: string;
+  completedIssueCountHistory: number[];
+  completedScopeHistory: number[];
+  createdAt: string;
+  description?: string;
+  endsAt: string;
+  id: string;
+  inProgressScopeHistory: number[];
+  issueCountHistory: number[];
+  name?: string;
+  number: number;
   progress: number;
   scope: number;
-  url: string;
-  issueCountHistory: number[];
-  completedIssueCountHistory: number[];
   scopeHistory: number[];
-  completedScopeHistory: number[];
-  inProgressScopeHistory: number[];
+  startsAt: string;
   team: {
     id: string;
     key: string;
     name: string;
   };
+  updatedAt: string;
+  url: string;
 }
 
 /**
  * Linear Project Update
  */
 export interface LinearProjectUpdate {
-  id: string;
+  archivedAt?: string;
   body: string;
   bodyData?: string;
   createdAt: string;
-  updatedAt: string;
   editedAt?: string;
-  archivedAt?: string;
-  url: string;
   health: "onTrack" | "atRisk" | "offTrack";
-  user: LinearUser;
+  id: string;
   project: {
     id: string;
     name: string;
     url: string;
   };
+  updatedAt: string;
+  url: string;
+  user: LinearUser;
 }
 
 /**
  * Linear User
  */
 export interface LinearUser {
-  id: string;
-  name: string;
+  active: boolean;
+  avatarUrl?: string;
   displayName: string;
   email: string;
-  avatarUrl?: string;
+  id: string;
   isMe: boolean;
-  active: boolean;
+  name: string;
 }
 
 /**
  * Linear Label
  */
 export interface LinearLabel {
+  color: string;
   id: string;
   name: string;
-  color: string;
 }
 
 // ============================================================================
@@ -416,7 +422,10 @@ export function transformLinearIssue(
           label: "tracked_in",
         });
       }
-      if (attachment.sourceType === "sentryIssue" && attachment.metadata?.shortId) {
+      if (
+        attachment.sourceType === "sentryIssue" &&
+        attachment.metadata?.shortId
+      ) {
         refs.push({
           type: "issue",
           id: attachment.metadata.shortId,
@@ -441,7 +450,9 @@ export function transformLinearIssue(
     `State: ${issue.state.name}`,
     `Priority: ${issue.priorityLabel}`,
     issue.project ? `Project: ${issue.project.name}` : "",
-    issue.cycle ? `Cycle: ${issue.cycle.name || `Cycle ${issue.cycle.number}`}` : "",
+    issue.cycle
+      ? `Cycle: ${issue.cycle.name || `Cycle ${issue.cycle.number}`}`
+      : "",
     issue.assignee ? `Assignee: ${issue.assignee.displayName}` : "",
     issue.labels.length > 0
       ? `Labels: ${issue.labels.map((l) => l.name).join(", ")}`
@@ -452,9 +463,13 @@ export function transformLinearIssue(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: toExternalLinearEventType("Issue", payload.action) ?? `issue.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType:
+      toExternalLinearEventType("Issue", payload.action) ??
+      `issue.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-issue:${issue.team.key}:${issue.identifier}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] ${issue.identifier}: ${issue.title.slice(0, 80)}`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] ${issue.identifier}: ${issue.title.slice(0, 80)}`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: issue.creator
       ? {
@@ -538,9 +553,13 @@ export function transformLinearComment(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: toExternalLinearEventType("Comment", payload.action) ?? `comment.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType:
+      toExternalLinearEventType("Comment", payload.action) ??
+      `comment.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-comment:${comment.issue.identifier}:${comment.id}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] ${comment.issue.identifier}: ${comment.body.slice(0, 60)}...`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] ${comment.issue.identifier}: ${comment.body.slice(0, 60)}...`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: comment.user
       ? {
@@ -627,9 +646,13 @@ export function transformLinearProject(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: toExternalLinearEventType("Project", payload.action) ?? `project.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType:
+      toExternalLinearEventType("Project", payload.action) ??
+      `project.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-project:${project.slugId}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] Project: ${project.name}`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] Project: ${project.name}`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: project.lead
       ? {
@@ -715,9 +738,13 @@ export function transformLinearCycle(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: toExternalLinearEventType("Cycle", payload.action) ?? `cycle.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType:
+      toExternalLinearEventType("Cycle", payload.action) ??
+      `cycle.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-cycle:${cycle.team.key}:${cycle.number}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] ${cycleName} (${cycle.team.name})`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] ${cycleName} (${cycle.team.name})`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: undefined,
     occurredAt: payload.createdAt,
@@ -786,9 +813,13 @@ export function transformLinearProjectUpdate(
 
   const event: SourceEvent = {
     source: "linear",
-    sourceType: toExternalLinearEventType("ProjectUpdate", payload.action) ?? `project-update.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
+    sourceType:
+      toExternalLinearEventType("ProjectUpdate", payload.action) ??
+      `project-update.${payload.action === "create" ? "created" : payload.action === "update" ? "updated" : "deleted"}`,
     sourceId: `linear-project-update:${update.project.id}:${update.id}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] ${update.project.name}: ${update.body.slice(0, 60)}...`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] ${update.project.name}: ${update.body.slice(0, 60)}...`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: update.user
       ? {
@@ -816,7 +847,11 @@ export function transformLinearProjectUpdate(
   // Validate before returning (logs errors but doesn't block)
   const validation = validateSourceEvent(event);
   if (!validation.success && validation.errors) {
-    logValidationErrors("transformLinearProjectUpdate", event, validation.errors);
+    logValidationErrors(
+      "transformLinearProjectUpdate",
+      event,
+      validation.errors
+    );
   }
 
   return event;

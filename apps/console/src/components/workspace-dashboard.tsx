@@ -1,20 +1,20 @@
 "use client";
 
-import { useSuspenseQueries } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import { WorkspaceHeader } from "./workspace-header";
-import { MetricsSidebar } from "./metrics-sidebar";
-import { ActivityTimeline } from "./activity-timeline";
-import { StoreOverview } from "./stores-overview";
-import { ConnectedSourcesOverview } from "./connected-sources-overview";
-import { SystemHealthOverview } from "./system-health-overview";
-import { LightfastConfigOverview } from "./lightfast-config-overview";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { useSuspenseQueries } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
+import { ActivityTimeline } from "./activity-timeline";
+import { ConnectedSourcesOverview } from "./connected-sources-overview";
+import { LightfastConfigOverview } from "./lightfast-config-overview";
+import { MetricsSidebar } from "./metrics-sidebar";
+import { StoreOverview } from "./stores-overview";
+import { SystemHealthOverview } from "./system-health-overview";
+import { WorkspaceHeader } from "./workspace-header";
 
 const PerformanceMetrics = dynamic(
   () => import("./performance-metrics").then((m) => m.PerformanceMetrics),
-  { ssr: false, loading: () => <Skeleton className="h-80 w-full" /> },
+  { ssr: false, loading: () => <Skeleton className="h-80 w-full" /> }
 );
 
 interface WorkspaceDashboardProps {
@@ -44,7 +44,7 @@ export function WorkspaceDashboard({
       {
         ...trpc.workspace.sources.list.queryOptions({
           clerkOrgSlug: orgSlug,
-          workspaceName: workspaceName,
+          workspaceName,
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -54,7 +54,7 @@ export function WorkspaceDashboard({
         // Single store per workspace (1:1 relationship)
         ...trpc.workspace.store.get.queryOptions({
           clerkOrgSlug: orgSlug,
-          workspaceName: workspaceName,
+          workspaceName,
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -63,7 +63,7 @@ export function WorkspaceDashboard({
       {
         ...trpc.workspace.documents.stats.queryOptions({
           clerkOrgSlug: orgSlug,
-          workspaceName: workspaceName,
+          workspaceName,
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -72,7 +72,7 @@ export function WorkspaceDashboard({
       {
         ...trpc.workspace.jobs.stats.queryOptions({
           clerkOrgSlug: orgSlug,
-          workspaceName: workspaceName,
+          workspaceName,
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -81,7 +81,7 @@ export function WorkspaceDashboard({
       {
         ...trpc.activities.list.queryOptions({
           clerkOrgSlug: orgSlug,
-          workspaceName: workspaceName,
+          workspaceName,
           limit: 20,
         }),
         refetchOnMount: false,
@@ -91,7 +91,7 @@ export function WorkspaceDashboard({
       {
         ...trpc.workspace.jobPercentiles.queryOptions({
           clerkOrgSlug: orgSlug,
-          workspaceName: workspaceName,
+          workspaceName,
           timeRange: "24h",
         }),
         refetchOnMount: false,
@@ -101,7 +101,7 @@ export function WorkspaceDashboard({
       {
         ...trpc.workspace.performanceTimeSeries.queryOptions({
           clerkOrgSlug: orgSlug,
-          workspaceName: workspaceName,
+          workspaceName,
           timeRange: "24h",
         }),
         refetchOnMount: false,
@@ -111,7 +111,7 @@ export function WorkspaceDashboard({
       {
         ...trpc.workspace.health.overview.queryOptions({
           clerkOrgSlug: orgSlug,
-          workspaceName: workspaceName,
+          workspaceName,
         }),
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -130,44 +130,44 @@ export function WorkspaceDashboard({
     <div className="space-y-6">
       {/* Header - Full Width */}
       <WorkspaceHeader
+        orgSlug={orgSlug}
+        sourcesConnected={sources.total}
         workspaceName={
           workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)
         }
         workspaceUrlName={workspaceName}
-        sourcesConnected={sources.total}
-        orgSlug={orgSlug}
       />
 
       {/* First Section - Config + Metrics Grid (like PlanetScale VTGates + Vitess) */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_400px]">
         {/* Left: Lightfast Config (like VTGates) */}
         <LightfastConfigOverview
+          store={store}
           workspaceName={
             workspaceName.charAt(0).toUpperCase() + workspaceName.slice(1)
           }
-          store={store}
         />
 
         {/* Right: Metrics Sidebar (like Vitess stats) */}
         <MetricsSidebar
-          sourcesCount={sources.total}
-          totalDocuments={documents.total}
-          totalChunks={documents.chunks}
-          successRate={jobStats.successRate}
           avgDurationMs={jobStats.avgDurationMs}
           recentJobsCount={jobStats.total}
+          sourcesCount={sources.total}
+          successRate={jobStats.successRate}
+          totalChunks={documents.chunks}
+          totalDocuments={documents.total}
         />
       </div>
 
       {/* Main Grid Layout - 2 columns (65% / 35%) */}
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
         {/* Left Column - Main Content */}
         <div className="space-y-6">
           {/* System Health Overview - Hierarchical Status */}
           <SystemHealthOverview
             health={health}
-            store={store}
             sources={normalizedSources}
+            store={store}
           />
 
           {/* Performance Metrics - Percentiles & Time Series Charts */}
@@ -200,13 +200,13 @@ export function WorkspaceDashboardSkeleton() {
       <Skeleton className="h-20 w-full" />
 
       {/* First Section - Config + Metrics Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_400px]">
         <Skeleton className="h-[400px] w-full" />
         <Skeleton className="h-[400px] w-full" />
       </div>
 
       {/* Main Grid Skeleton - 2 columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
         {/* Left Column */}
         <div className="space-y-6">
           <Skeleton className="h-64 w-full" />

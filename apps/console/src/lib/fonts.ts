@@ -1,6 +1,5 @@
-import localFont from "next/font/local";
-
 import { cn } from "@repo/ui/lib/utils";
+import localFont from "next/font/local";
 
 /**
  * PP Neue Montreal - Primary font family
@@ -90,5 +89,5 @@ export const fonts = cn(
   ppNeueMontreal.variable,
   exposurePlus.variable,
   ppSupplySans.variable,
-  "touch-manipulation font-sans antialiased",
+  "touch-manipulation font-sans antialiased"
 );

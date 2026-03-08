@@ -1,16 +1,9 @@
-import Link from "next/link";
-import { blog  } from "@vendor/cms";
-import type {Post} from "@vendor/cms";
-import {
-  JsonLd
-  
-  
-  
-  
-  
-} from "@vendor/seo/json-ld";
-import type {GraphContext, BlogPosting} from "@vendor/seo/json-ld";
+import type { Post } from "@vendor/cms";
+import { blog } from "@vendor/cms";
+import type { BlogPosting, GraphContext } from "@vendor/seo/json-ld";
+import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Lightfast Blog – Operating Infrastructure for Agents and Apps",
@@ -132,8 +125,8 @@ export default async function BlogPage() {
       {/* Posts List */}
       <div className="space-y-2">
         {posts.length === 0 ? (
-          <div className="bg-card/40 border border-transparent rounded-xs p-4">
-            <h2 className="text-sm font-semibold mb-4">Coming soon</h2>
+          <div className="rounded-xs border border-transparent bg-card/40 p-4">
+            <h2 className="mb-4 font-semibold text-sm">Coming soon</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
               We're preparing news and updates about Lightfast. Check back soon
               for product announcements, feature releases, and insights from the
@@ -158,25 +151,25 @@ export default async function BlogPage() {
 
             return (
               <article
+                className="rounded-xs border border-transparent bg-card p-4 transition-colors hover:border-border/40"
                 key={post._slug ?? post._title}
-                className="bg-card border border-transparent rounded-xs p-4 hover:border-border/40 transition-colors"
               >
                 <Link
+                  className="group block"
                   href={`/blog/${post.slug ?? post._slug}`}
-                  className="block group"
                 >
-                  <h2 className="text-md font-base mb-1 group-hover:text-foreground/80 transition-colors">
+                  <h2 className="mb-1 font-base text-md transition-colors group-hover:text-foreground/80">
                     {post._title}
                   </h2>
 
                   {post.description && (
-                    <p className="text-muted-foreground text-md leading-relaxed mb-4">
+                    <p className="mb-4 text-md text-muted-foreground leading-relaxed">
                       {post.description}
                     </p>
                   )}
 
                   {/* Metadata */}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
                     {primaryCategory && (
                       <>
                         <span>{primaryCategory}</span>

@@ -5,32 +5,32 @@
  * Keys authenticate the org and can access all workspaces within it.
  */
 
-import type { NextRequest } from "next/server";
 import { db } from "@db/console/client";
 import { orgApiKeys } from "@db/console/schema";
-import { eq, and, sql } from "drizzle-orm";
 import { hashApiKey, isValidApiKeyFormat } from "@repo/console-api-key";
 import { log } from "@vendor/observability/log";
+import { and, eq, sql } from "drizzle-orm";
+import type { NextRequest } from "next/server";
 
 export interface ApiKeyAuthContext {
-  orgId: string;      // clerkOrgId — sole scoping mechanism
-  userId: string;     // createdByUserId for audit
-  apiKeyId: string;   // publicId
+  apiKeyId: string; // publicId
   clerkOrgId: string; // same as orgId, kept for backward compat
+  orgId: string; // clerkOrgId — sole scoping mechanism
+  userId: string; // createdByUserId for audit
 }
 
 export interface AuthSuccess {
-  success: true;
   auth: ApiKeyAuthContext;
+  success: true;
 }
 
 export interface AuthError {
-  success: false;
   error: {
     code: string;
     message: string;
   };
   status: number;
+  success: false;
 }
 
 export type AuthResult = AuthSuccess | AuthError;
@@ -58,7 +58,8 @@ export async function withApiKeyAuth(
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "API key required. Provide 'Authorization: Bearer <api-key>' header.",
+        message:
+          "API key required. Provide 'Authorization: Bearer <api-key>' header.",
       },
       status: 401,
     };
@@ -93,7 +94,9 @@ export async function withApiKeyAuth(
         expiresAt: orgApiKeys.expiresAt,
       })
       .from(orgApiKeys)
-      .where(and(eq(orgApiKeys.keyHash, keyHash), eq(orgApiKeys.isActive, true)))
+      .where(
+        and(eq(orgApiKeys.keyHash, keyHash), eq(orgApiKeys.isActive, true))
+      )
       .limit(1);
 
     if (!foundKey) {
@@ -173,7 +176,10 @@ export async function withApiKeyAuth(
 /**
  * Helper to create error response from AuthError
  */
-export function createAuthErrorResponse(result: AuthError, requestId: string): Response {
+export function createAuthErrorResponse(
+  result: AuthError,
+  requestId: string
+): Response {
   return Response.json(
     {
       error: result.error.code,

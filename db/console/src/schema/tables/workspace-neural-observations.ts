@@ -1,3 +1,4 @@
+import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -10,28 +11,37 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
  * Reference to related entities extracted from observation
  */
 export interface ObservationReference {
-  type: 'commit' | 'branch' | 'pr' | 'issue' | 'deployment' | 'project' |
-        'cycle' | 'assignee' | 'reviewer' | 'team' | 'label';
   id: string;
-  url?: string;
   label?: string;
+  type:
+    | "commit"
+    | "branch"
+    | "pr"
+    | "issue"
+    | "deployment"
+    | "project"
+    | "cycle"
+    | "assignee"
+    | "reviewer"
+    | "team"
+    | "label";
+  url?: string;
 }
 
 /**
  * Actor who performed the action
  */
 export interface ObservationActor {
+  avatarUrl?: string;
+  email?: string;
   id: string;
   name: string;
-  email?: string;
-  avatarUrl?: string;
 }
 
 /**
@@ -156,7 +166,8 @@ export const workspaceNeuralObservations = pgTable(
     /**
      * References to related entities
      */
-    sourceReferences: jsonb("source_references").$type<ObservationReference[]>(),
+    sourceReferences:
+      jsonb("source_references").$type<ObservationReference[]>(),
 
     /**
      * Source-specific metadata
@@ -214,7 +225,7 @@ export const workspaceNeuralObservations = pgTable(
     // Workspace + time range queries
     workspaceOccurredIdx: index("obs_workspace_occurred_idx").on(
       table.workspaceId,
-      table.occurredAt,
+      table.occurredAt
     ),
 
     // Cluster membership
@@ -224,37 +235,36 @@ export const workspaceNeuralObservations = pgTable(
     sourceIdx: index("obs_source_idx").on(
       table.workspaceId,
       table.source,
-      table.sourceType,
+      table.sourceType
     ),
 
     // Deduplication by source ID
     sourceIdIdx: index("obs_source_id_idx").on(
       table.workspaceId,
-      table.sourceId,
+      table.sourceId
     ),
 
     // Type filtering
-    typeIdx: index("obs_type_idx").on(
-      table.workspaceId,
-      table.observationType,
-    ),
+    typeIdx: index("obs_type_idx").on(table.workspaceId, table.observationType),
 
     // Vector ID lookups (fallback path)
     embeddingTitleIdx: index("obs_embedding_title_idx").on(
       table.workspaceId,
-      table.embeddingTitleId,
+      table.embeddingTitleId
     ),
     embeddingContentIdx: index("obs_embedding_content_idx").on(
       table.workspaceId,
-      table.embeddingContentId,
+      table.embeddingContentId
     ),
     embeddingSummaryIdx: index("obs_embedding_summary_idx").on(
       table.workspaceId,
-      table.embeddingSummaryId,
+      table.embeddingSummaryId
     ),
-  }),
+  })
 );
 
 // Type exports
-export type WorkspaceNeuralObservation = typeof workspaceNeuralObservations.$inferSelect;
-export type InsertWorkspaceNeuralObservation = typeof workspaceNeuralObservations.$inferInsert;
+export type WorkspaceNeuralObservation =
+  typeof workspaceNeuralObservations.$inferSelect;
+export type InsertWorkspaceNeuralObservation =
+  typeof workspaceNeuralObservations.$inferInsert;

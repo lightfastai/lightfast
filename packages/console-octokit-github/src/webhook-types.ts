@@ -6,15 +6,15 @@
  */
 
 export type {
-  PushEvent,
+  DiscussionEvent,
   InstallationEvent,
   InstallationRepositoriesEvent,
-  RepositoryEvent,
+  IssuesEvent,
   // Neural observation event types
   PullRequestEvent,
-  IssuesEvent,
+  PushEvent,
   ReleaseEvent,
-  DiscussionEvent,
+  RepositoryEvent,
 } from "@octokit/webhooks-types";
 
 /**

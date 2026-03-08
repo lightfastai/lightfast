@@ -1,10 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useFormCompat, Form } from "@repo/ui/components/ui/form";
-import { teamFormSchema } from "@repo/console-validation/forms";
 import type { TeamFormValues } from "@repo/console-validation/forms";
+import { teamFormSchema } from "@repo/console-validation/forms";
+import { Form, useFormCompat } from "@repo/ui/components/ui/form";
+import type { ReactNode } from "react";
 
 /**
  * Team Form Provider

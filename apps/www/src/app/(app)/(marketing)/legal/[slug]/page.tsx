@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
+import type { LegalPostQueryResponse } from "@vendor/cms";
 
-import { legal  } from "@vendor/cms";
-import type {LegalPostQueryResponse} from "@vendor/cms";
+import { legal } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
-import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 interface LegalPageProps {
   params: Promise<{ slug: string }>;
@@ -18,7 +18,9 @@ export async function generateMetadata({
 }: LegalPageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await legal.getPost(slug);
-  if (!post) return {};
+  if (!post) {
+    return {};
+  }
   return {
     title: post._title ?? undefined,
     description: post.description ?? undefined,
@@ -27,9 +29,7 @@ export async function generateMetadata({
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   const posts = await legal.getPosts().catch(() => []);
-  return posts
-    .filter((p) => !!p._slug)
-    .map((p) => ({ slug: p._slug ?? "" }));
+  return posts.filter((p) => !!p._slug).map((p) => ({ slug: p._slug ?? "" }));
 }
 
 export default async function LegalPage({ params }: LegalPageProps) {
@@ -42,7 +42,9 @@ export default async function LegalPage({ params }: LegalPageProps) {
 
         const response = data as LegalPostQueryResponse;
         const page = response.legalPages?.item;
-        if (!page) notFound();
+        if (!page) {
+          notFound();
+        }
 
         const lastModified = page._sys?.lastModifiedAt
           ? new Date(page._sys.lastModifiedAt)
@@ -56,20 +58,23 @@ export default async function LegalPage({ params }: LegalPageProps) {
           : "";
 
         return (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start py-8 sm:py-12 lg:py-16">
+          <div className="grid grid-cols-1 items-start gap-8 py-8 sm:py-12 md:grid-cols-12 lg:py-16">
             <div className="md:col-span-2">
               {dateStr && (
-                <div className="text-sm text-muted-foreground">
-                  <p className="font-medium mb-1">Last updated</p>
+                <div className="text-muted-foreground text-sm">
+                  <p className="mb-1 font-medium">Last updated</p>
                   <time className="whitespace-nowrap">{dateStr}</time>
                 </div>
               )}
             </div>
 
-            <article className="md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4 space-y-8">
+            <article className="space-y-8 md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4">
               {page.body?.json?.content ? (
                 <div className="max-w-none">
-                  <Body content={page.body.json.content} codeBlockComponent={SSRCodeBlock} />
+                  <Body
+                    codeBlockComponent={SSRCodeBlock}
+                    content={page.body.json.content}
+                  />
                 </div>
               ) : null}
             </article>

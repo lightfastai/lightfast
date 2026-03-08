@@ -1,4 +1,5 @@
 #!/usr/bin/env npx tsx
+
 /**
  * Dataset Verification (Pre-flight Check)
  *
@@ -15,16 +16,16 @@
  *   npx tsx src/cli/verify-datasets.ts [dataset-name]
  */
 
-import { loadDataset, listDatasets } from "../loader/index.js";
 import type { SourceEvent } from "@repo/console-types";
 import { EVENT_REGISTRY } from "@repo/console-types";
+import { listDatasets, loadDataset } from "../loader/index.js";
 
 interface VerifyResult {
   dataset: string;
-  eventCount: number;
   errors: string[];
-  warnings: string[];
+  eventCount: number;
   sources: Record<string, number>;
+  warnings: string[];
 }
 
 function verifyDataset(name: string): VerifyResult {
@@ -50,26 +51,38 @@ function verifyDataset(name: string): VerifyResult {
   // === Required fields ===
   for (let i = 0; i < ds.events.length; i++) {
     const e = ds.events[i];
-    if (!e) continue;
+    if (!e) {
+      continue;
+    }
     const prefix = `event[${i}]`;
 
     // Cast to partial to validate fields that the type claims are required
     const raw = e as Partial<SourceEvent>;
-    if (!raw.source) result.errors.push(`${prefix}: missing source`);
-    if (!raw.sourceType) result.errors.push(`${prefix}: missing sourceType`);
-    if (!raw.sourceId) result.errors.push(`${prefix}: missing sourceId`);
-    if (!raw.title?.length)
+    if (!raw.source) {
+      result.errors.push(`${prefix}: missing source`);
+    }
+    if (!raw.sourceType) {
+      result.errors.push(`${prefix}: missing sourceType`);
+    }
+    if (!raw.sourceId) {
+      result.errors.push(`${prefix}: missing sourceId`);
+    }
+    if (!raw.title?.length) {
       result.errors.push(`${prefix}: missing or empty title`);
-    if (!raw.body?.length)
+    }
+    if (!raw.body?.length) {
       result.errors.push(`${prefix}: missing or empty body`);
+    }
 
     // Test data markers
-    if (!e.sourceId.includes(":test:"))
+    if (!e.sourceId.includes(":test:")) {
       result.errors.push(
         `${prefix}: sourceId missing :test: suffix (got: ${e.sourceId})`
       );
-    if (!e.metadata.testData)
+    }
+    if (!e.metadata.testData) {
       result.errors.push(`${prefix}: missing testData: true in metadata`);
+    }
 
     // Track source distribution
     result.sources[e.source] = (result.sources[e.source] ?? 0) + 1;
@@ -81,7 +94,9 @@ function verifyDataset(name: string): VerifyResult {
   const titlePrefixCache = new Map<string, string[]>();
   function getTitlePrefixes(source: string): string[] {
     const cached = titlePrefixCache.get(source);
-    if (cached !== undefined) return cached;
+    if (cached !== undefined) {
+      return cached;
+    }
     const prefixes = [
       ...new Set(
         Object.values(EVENT_REGISTRY)
@@ -95,11 +110,16 @@ function verifyDataset(name: string): VerifyResult {
 
   for (let i = 0; i < ds.events.length; i++) {
     const e = ds.events[i];
-    if (!e) continue;
+    if (!e) {
+      continue;
+    }
     const prefix = `event[${i}]`;
     const validPrefixes = getTitlePrefixes(e.source);
 
-    if (validPrefixes.length > 0 && !validPrefixes.some((p) => e.title.startsWith(p))) {
+    if (
+      validPrefixes.length > 0 &&
+      !validPrefixes.some((p) => e.title.startsWith(p))
+    ) {
       result.errors.push(
         `${prefix}: ${e.source} title has unexpected format: "${e.title.slice(0, 50)}"`
       );
@@ -110,10 +130,10 @@ function verifyDataset(name: string): VerifyResult {
   const timestamps = ds.events
     .map((e, i) => ({
       index: i,
-      time: e.occurredAt ? new Date(e.occurredAt).getTime() : NaN,
+      time: e.occurredAt ? new Date(e.occurredAt).getTime() : Number.NaN,
       raw: e.occurredAt,
     }))
-    .filter((t) => !isNaN(t.time));
+    .filter((t) => !Number.isNaN(t.time));
 
   for (let i = 1; i < timestamps.length; i++) {
     const prev = timestamps[i - 1];
@@ -178,7 +198,9 @@ function verifyCrossReferences(
   let match;
   while ((match = issuePattern.exec(allText)) !== null) {
     const num = match[1];
-    if (num) issueNumbers.add(num);
+    if (num) {
+      issueNumbers.add(num);
+    }
   }
 
   // For each issue number, verify it appears in at least 2 events (cross-referenced)
@@ -201,7 +223,9 @@ function verifyCrossReferences(
   const linearIds = new Set<string>();
   while ((match = linearPattern.exec(allText)) !== null) {
     const id = match[1];
-    if (id) linearIds.add(id);
+    if (id) {
+      linearIds.add(id);
+    }
   }
 
   for (const id of linearIds) {
@@ -262,9 +286,7 @@ function main() {
       result.errors.length === 0
         ? "\x1b[32mPASS\x1b[0m"
         : "\x1b[31mFAIL\x1b[0m";
-    console.log(
-      `${status} ${result.dataset} (${result.eventCount} events)`
-    );
+    console.log(`${status} ${result.dataset} (${result.eventCount} events)`);
 
     if (Object.keys(result.sources).length > 0) {
       const sourceSummary = Object.entries(result.sources)

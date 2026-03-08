@@ -76,7 +76,9 @@ export const V1SearchRequestSchema = z.object({
   includeContext: z
     .boolean()
     .default(true)
-    .describe("Include contextual information like topic clusters (default: true)"),
+    .describe(
+      "Include contextual information like topic clusters (default: true)"
+    ),
   /** Include highlighted snippets (default: true) */
   includeHighlights: z
     .boolean()

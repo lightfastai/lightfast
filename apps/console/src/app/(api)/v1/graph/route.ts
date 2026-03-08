@@ -8,16 +8,16 @@
  * Accepts parameters via JSON body for SDK/MCP consistency.
  */
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
-import { log } from "@vendor/observability/log";
 import { V1GraphRequestSchema } from "@repo/console-types";
-import {
-  withDualAuth,
-  createDualAuthErrorResponse,
-} from "../lib/with-dual-auth";
+import { log } from "@vendor/observability/log";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { graphLogic } from "~/lib/v1/graph";
+import {
+  createDualAuthErrorResponse,
+  withDualAuth,
+} from "../lib/with-dual-auth";
 
 export async function POST(request: NextRequest) {
   const requestId = randomUUID();
@@ -62,7 +62,11 @@ export async function POST(request: NextRequest) {
     const { workspaceId } = authResult.auth;
 
     const result = await graphLogic(
-      { workspaceId, userId: authResult.auth.userId, authType: authResult.auth.authType },
+      {
+        workspaceId,
+        userId: authResult.auth.userId,
+        authType: authResult.auth.authType,
+      },
       { observationId, depth, allowedTypes, requestId }
     );
 
@@ -84,7 +88,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "INTERNAL_ERROR",
-        message: error instanceof Error ? error.message : "Graph traversal failed",
+        message:
+          error instanceof Error ? error.message : "Graph traversal failed",
         requestId,
       },
       { status: 500 }

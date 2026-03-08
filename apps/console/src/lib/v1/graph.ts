@@ -3,14 +3,14 @@ import {
   workspaceNeuralObservations,
   workspaceObservationRelationships,
 } from "@db/console/schema";
-import { and, eq, or, inArray } from "drizzle-orm";
 import { log } from "@vendor/observability/log";
+import { and, eq, inArray, or } from "drizzle-orm";
 import type { V1AuthContext } from "./types";
 
 export interface GraphLogicInput {
-  observationId: string;
-  depth: number;
   allowedTypes?: string[] | null;
+  depth: number;
+  observationId: string;
   requestId: string;
 }
 
@@ -50,11 +50,14 @@ export interface GraphLogicOutput {
 
 export async function graphLogic(
   auth: V1AuthContext,
-  input: GraphLogicInput,
+  input: GraphLogicInput
 ): Promise<GraphLogicOutput> {
   const startTime = Date.now();
 
-  log.debug("v1/graph logic executing", { requestId: input.requestId, observationId: input.observationId });
+  log.debug("v1/graph logic executing", {
+    requestId: input.requestId,
+    observationId: input.observationId,
+  });
 
   // Step 1: Get the root observation
   const rootObs = await db.query.workspaceNeuralObservations.findFirst({
@@ -95,8 +98,14 @@ export async function graphLogic(
         and(
           eq(workspaceObservationRelationships.workspaceId, auth.workspaceId),
           or(
-            inArray(workspaceObservationRelationships.sourceObservationId, frontier),
-            inArray(workspaceObservationRelationships.targetObservationId, frontier)
+            inArray(
+              workspaceObservationRelationships.sourceObservationId,
+              frontier
+            ),
+            inArray(
+              workspaceObservationRelationships.targetObservationId,
+              frontier
+            )
           )
         )
       );

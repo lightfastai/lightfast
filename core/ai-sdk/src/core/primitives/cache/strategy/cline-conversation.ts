@@ -2,16 +2,16 @@ import type { ModelMessage } from "ai";
 import type { CacheStrategy, CacheStrategyResult } from "./base";
 
 export interface ClineConversationStrategyConfig {
-	/**
-	 * Whether to always cache the system prompt
-	 * @default true
-	 */
-	cacheSystemPrompt?: boolean;
-	/**
-	 * Number of recent user messages to cache as breakpoints
-	 * @default 2
-	 */
-	recentUserMessagesToCache?: number;
+  /**
+   * Whether to always cache the system prompt
+   * @default true
+   */
+  cacheSystemPrompt?: boolean;
+  /**
+   * Number of recent user messages to cache as breakpoints
+   * @default 2
+   */
+  recentUserMessagesToCache?: number;
 }
 
 /**
@@ -26,33 +26,33 @@ export interface ClineConversationStrategyConfig {
  * 4 breakpoint limit and ensuring compatibility with thinking mode.
  */
 export class ClineConversationStrategy implements CacheStrategy {
-	private cacheSystemPrompt: boolean;
-	private recentUserMessagesToCache: number;
+  private readonly cacheSystemPrompt: boolean;
+  private readonly recentUserMessagesToCache: number;
 
-	constructor(config: ClineConversationStrategyConfig = {}) {
-		this.cacheSystemPrompt = config.cacheSystemPrompt ?? true;
-		this.recentUserMessagesToCache = config.recentUserMessagesToCache ?? 2;
-	}
+  constructor(config: ClineConversationStrategyConfig = {}) {
+    this.cacheSystemPrompt = config.cacheSystemPrompt ?? true;
+    this.recentUserMessagesToCache = config.recentUserMessagesToCache ?? 2;
+  }
 
-	/**
-	 * Run Cline's caching strategy
-	 * 1. Always cache system prompt (biggest efficiency gain, works with thinking)
-	 * 2. Cache last N user messages only (strategic conversation breakpoints)
-	 */
-	run(messages: ModelMessage[]): CacheStrategyResult {
-		// Find all user message indices
-		const userMessageIndices = messages.reduce(
-			(acc, msg, index) => (msg.role === "user" ? [...acc, index] : acc),
-			[] as number[],
-		);
+  /**
+   * Run Cline's caching strategy
+   * 1. Always cache system prompt (biggest efficiency gain, works with thinking)
+   * 2. Cache last N user messages only (strategic conversation breakpoints)
+   */
+  run(messages: ModelMessage[]): CacheStrategyResult {
+    // Find all user message indices
+    const userMessageIndices = messages.reduce(
+      (acc, msg, index) => (msg.role === "user" ? [...acc, index] : acc),
+      [] as number[]
+    );
 
-		// Get the last N user message indices to cache
-		const messageIndicesToCache = userMessageIndices.slice(
-			-this.recentUserMessagesToCache,
-		);
+    // Get the last N user message indices to cache
+    const messageIndicesToCache = userMessageIndices.slice(
+      -this.recentUserMessagesToCache
+    );
 
-		return {
-			messageIndicesToCache,
-		};
-	}
+    return {
+      messageIndicesToCache,
+    };
+  }
 }

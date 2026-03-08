@@ -1,5 +1,40 @@
 "use client";
 
+import type { ChatStatus, FileUIPart, JSONValue } from "ai";
+import {
+  ImageIcon,
+  Loader2Icon,
+  PaperclipIcon,
+  PlusIcon,
+  SendIcon,
+  SquareIcon,
+  XIcon,
+} from "lucide-react";
+import { nanoid } from "nanoid";
+import type {
+  ChangeEventHandler,
+  ClipboardEventHandler,
+  ComponentProps,
+  FormEvent,
+  FormEventHandler,
+  HTMLAttributes,
+  KeyboardEventHandler,
+  RefObject,
+} from "react";
+import {
+  createContext,
+  Fragment,
+  forwardRef,
+  useCallback,
+  useContext,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -15,32 +50,6 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Textarea } from "../ui/textarea";
-import { cn } from "../../lib/utils";
-import type { ChatStatus, FileUIPart, JSONValue } from "ai";
-import {
-  ImageIcon,
-  Loader2Icon,
-  PaperclipIcon,
-  PlusIcon,
-  SendIcon,
-  SquareIcon,
-  XIcon,
-} from "lucide-react";
-import { nanoid } from "nanoid";
-import {
-  createContext,
-  forwardRef,
-  Fragment,
-  useCallback,
-  useContext,
-  useEffect,
-  useImperativeHandle,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState
-} from "react";
-import type {ChangeEventHandler, ClipboardEventHandler, ComponentProps, FormEvent, FormEventHandler, HTMLAttributes, KeyboardEventHandler, RefObject} from "react";
 
 export type PromptInputAttachmentItem = FileUIPart & {
   id: string;
@@ -68,16 +77,16 @@ export type PromptInputAttachmentItem = FileUIPart & {
   /**
    * Upload state - 'pending' while uploading, 'complete' when done
    */
-  uploadState?: 'pending' | 'complete';
+  uploadState?: "pending" | "complete";
 };
 
 interface AttachmentsContext {
-  files: PromptInputAttachmentItem[];
   add: (files: File[] | FileList) => void;
-  remove: (id: string) => void;
   clear: (options?: { revokeObjectURLs?: boolean }) => void;
-  openFileDialog: () => void;
   fileInputRef: RefObject<HTMLInputElement | null>;
+  files: PromptInputAttachmentItem[];
+  openFileDialog: () => void;
+  remove: (id: string) => void;
 }
 
 const AttachmentsContext = createContext<AttachmentsContext | null>(null);
@@ -116,7 +125,7 @@ export function PromptInputAttachment({
   ...props
 }: PromptInputAttachmentProps) {
   const attachments = usePromptInputAttachments();
-  const isUploading = data.uploadState === 'pending';
+  const isUploading = data.uploadState === "pending";
 
   return (
     <div
@@ -153,12 +162,12 @@ export function PromptInputAttachment({
       )}
       <Button
         aria-label="Remove attachment"
-        className="-right-1.5 -top-1.5 absolute h-6 w-6 rounded-full opacity-0 group-hover:opacity-100"
+        className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100"
+        disabled={isUploading}
         onClick={() => attachments.remove(data.id)}
         size="icon"
         type="button"
         variant="outline"
-        disabled={isUploading}
       >
         <XIcon className="h-3 w-3" />
       </Button>
@@ -240,26 +249,26 @@ export const PromptInputActionAddAttachments = ({
 };
 
 export interface PromptInputAttachmentPayload {
-  id: string;
+  contentType?: string;
   file?: File;
-  url?: string;
-  mediaType?: string;
   filename?: string;
+  id: string;
+  mediaType?: string;
+  metadata?: Record<string, JSONValue> | null;
   size?: number;
   storagePath?: string;
-  contentType?: string;
-  metadata?: Record<string, JSONValue> | null;
-  uploadState?: 'pending' | 'complete';
+  uploadState?: "pending" | "complete";
+  url?: string;
 }
 
 export interface PromptInputMessage {
-  text?: string;
   attachments?: PromptInputAttachmentPayload[];
+  text?: string;
 }
 
 export interface PromptInputRef {
-  form: HTMLFormElement | null;
   clear: (options?: { revokeObjectURLs?: boolean }) => void;
+  form: HTMLFormElement | null;
   reset: () => void;
 }
 
@@ -290,223 +299,244 @@ export type PromptInputProps = Omit<
   ) => void;
 };
 
-export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(({
-  className,
-  accept,
-  multiple,
-  globalDrop,
-  syncHiddenInput,
-  maxFiles,
-  maxFileSize,
-  onError,
-  onAttachmentUpload,
-  onAttachmentsChange,
-  onSubmit,
-  ...props
-}, ref) => {
-  const [items, setItems] = useState<PromptInputAttachmentItem[]>([]);
-  const itemsRef = useRef<PromptInputAttachmentItem[]>(items);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const anchorRef = useRef<HTMLSpanElement>(null);
-  const formRef = useRef<HTMLFormElement | null>(null);
-
-  // Find nearest form to scope drag & drop
-  useEffect(() => {
-    const root = anchorRef.current?.closest("form");
-    if (root instanceof HTMLFormElement) {
-      formRef.current = root;
-    }
-  }, []);
-
-  const openFileDialog = useCallback(() => {
-    inputRef.current?.click();
-  }, []);
-
-  const matchesAccept = useCallback(
-    (f: File) => {
-      if (!accept || accept.trim() === "") {
-        return true;
-      }
-
-      // Parse accept string into patterns
-      const patterns = accept.split(',').map(p => p.trim());
-
-      return patterns.some(pattern => {
-        // Handle wildcard patterns like "image/*"
-        if (pattern.includes('*')) {
-          const prefix = pattern.replace('/*', '/');
-          return f.type.startsWith(prefix);
-        }
-        // Handle exact MIME types like "application/pdf"
-        if (pattern.includes('/')) {
-          return f.type === pattern;
-        }
-        // Handle file extensions like ".pdf"
-        if (pattern.startsWith('.')) {
-          return f.name.toLowerCase().endsWith(pattern.toLowerCase());
-        }
-        return false;
-      });
+export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
+  (
+    {
+      className,
+      accept,
+      multiple,
+      globalDrop,
+      syncHiddenInput,
+      maxFiles,
+      maxFileSize,
+      onError,
+      onAttachmentUpload,
+      onAttachmentsChange,
+      onSubmit,
+      ...props
     },
-    [accept]
-  );
+    ref
+  ) => {
+    const [items, setItems] = useState<PromptInputAttachmentItem[]>([]);
+    const itemsRef = useRef<PromptInputAttachmentItem[]>(items);
+    const inputRef = useRef<HTMLInputElement | null>(null);
+    const anchorRef = useRef<HTMLSpanElement>(null);
+    const formRef = useRef<HTMLFormElement | null>(null);
 
-  const add = useCallback(
-    (files: File[] | FileList) => {
-      void (async () => {
-        const incoming = Array.from(files);
-        const accepted = incoming.filter((f) => matchesAccept(f));
-        if (accepted.length === 0) {
-          onError?.({
-            code: "accept",
-            message: "No files match the accepted types.",
-          });
-          return;
+    // Find nearest form to scope drag & drop
+    useEffect(() => {
+      const root = anchorRef.current?.closest("form");
+      if (root instanceof HTMLFormElement) {
+        formRef.current = root;
+      }
+    }, []);
+
+    const openFileDialog = useCallback(() => {
+      inputRef.current?.click();
+    }, []);
+
+    const matchesAccept = useCallback(
+      (f: File) => {
+        if (!accept || accept.trim() === "") {
+          return true;
         }
 
-        const withinSize = (f: File) =>
-          maxFileSize ? f.size <= maxFileSize : true;
-        const sized = accepted.filter(withinSize);
+        // Parse accept string into patterns
+        const patterns = accept.split(",").map((p) => p.trim());
 
-        // Find which files are too large for better error messaging
-        const oversized = accepted.filter(f => !withinSize(f));
-        if (sized.length === 0 && oversized.length > 0) {
-          const maxMB = maxFileSize ? Math.floor(maxFileSize / (1024 * 1024)) : 0;
-          const firstOversized = oversized[0];
-          const fileSizeMB = firstOversized ? Math.floor(firstOversized.size / (1024 * 1024)) : 0;
+        return patterns.some((pattern) => {
+          // Handle wildcard patterns like "image/*"
+          if (pattern.includes("*")) {
+            const prefix = pattern.replace("/*", "/");
+            return f.type.startsWith(prefix);
+          }
+          // Handle exact MIME types like "application/pdf"
+          if (pattern.includes("/")) {
+            return f.type === pattern;
+          }
+          // Handle file extensions like ".pdf"
+          if (pattern.startsWith(".")) {
+            return f.name.toLowerCase().endsWith(pattern.toLowerCase());
+          }
+          return false;
+        });
+      },
+      [accept]
+    );
 
-          onError?.({
-            code: "max_file_size",
-            message: oversized.length === 1
-              ? `"${firstOversized?.name}" is ${fileSizeMB}MB (max ${maxMB}MB)`
-              : `${oversized.length} files exceed ${maxMB}MB limit`,
-          });
-          return;
-        }
+    const add = useCallback(
+      (files: File[] | FileList) => {
+        void (async () => {
+          const incoming = Array.from(files);
+          const accepted = incoming.filter((f) => matchesAccept(f));
+          if (accepted.length === 0) {
+            onError?.({
+              code: "accept",
+              message: "No files match the accepted types.",
+            });
+            return;
+          }
 
-        const currentLength = itemsRef.current.length;
-        const capacity =
-          typeof maxFiles === "number"
-            ? Math.max(0, maxFiles - currentLength)
-            : undefined;
+          const withinSize = (f: File) =>
+            maxFileSize ? f.size <= maxFileSize : true;
+          const sized = accepted.filter(withinSize);
 
-        // Reject ALL files if the total would exceed maxFiles
-        if (typeof capacity === "number" && sized.length > capacity) {
-          onError?.({
-            code: "max_files",
-            message: `Maximum ${maxFiles} files allowed. Please select ${maxFiles} or fewer files.`,
-          });
-          return; // Early exit - don't upload any files
-        }
+          // Find which files are too large for better error messaging
+          const oversized = accepted.filter((f) => !withinSize(f));
+          if (sized.length === 0 && oversized.length > 0) {
+            const maxMB = maxFileSize
+              ? Math.floor(maxFileSize / (1024 * 1024))
+              : 0;
+            const firstOversized = oversized[0];
+            const fileSizeMB = firstOversized
+              ? Math.floor(firstOversized.size / (1024 * 1024))
+              : 0;
 
-        const capped =
-          typeof capacity === "number" ? sized.slice(0, capacity) : sized;
+            onError?.({
+              code: "max_file_size",
+              message:
+                oversized.length === 1
+                  ? `"${firstOversized?.name}" is ${fileSizeMB}MB (max ${maxMB}MB)`
+                  : `${oversized.length} files exceed ${maxMB}MB limit`,
+            });
+            return;
+          }
 
-        if (capped.length === 0) {
-          return;
-        }
+          const currentLength = itemsRef.current.length;
+          const capacity =
+            typeof maxFiles === "number"
+              ? Math.max(0, maxFiles - currentLength)
+              : undefined;
 
-        if (onAttachmentUpload) {
-          // Create pending items immediately for visual feedback
-          const pendingItems: PromptInputAttachmentItem[] = capped.map((file) => {
-            const itemId = nanoid();
-            // Create preview URL for images, empty string for others (required by FileUIPart)
-            const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+          // Reject ALL files if the total would exceed maxFiles
+          if (typeof capacity === "number" && sized.length > capacity) {
+            onError?.({
+              code: "max_files",
+              message: `Maximum ${maxFiles} files allowed. Please select ${maxFiles} or fewer files.`,
+            });
+            return; // Early exit - don't upload any files
+          }
 
-            return {
-              id: itemId,
-              type: "file",
-              url: previewUrl,
-              mediaType: file.type || "application/octet-stream",
-              filename: file.name,
-              file,
-              size: file.size,
-              uploadState: 'pending' as const,
-            };
-          });
+          const capped =
+            typeof capacity === "number" ? sized.slice(0, capacity) : sized;
 
-          // Add pending items to UI immediately
-          setItems((prev) => prev.concat(pendingItems));
+          if (capped.length === 0) {
+            return;
+          }
 
-          // Upload files and update items as they complete
-          for (const pendingItem of pendingItems) {
-            const file = pendingItem.file;
-            if (!file) continue;
+          if (onAttachmentUpload) {
+            // Create pending items immediately for visual feedback
+            const pendingItems: PromptInputAttachmentItem[] = capped.map(
+              (file) => {
+                const itemId = nanoid();
+                // Create preview URL for images, empty string for others (required by FileUIPart)
+                const previewUrl = file.type.startsWith("image/")
+                  ? URL.createObjectURL(file)
+                  : "";
 
-            try {
-              const uploaded = await onAttachmentUpload(file);
-              if (!uploaded) {
-                // Remove the pending item if upload returned null/undefined
-                setItems((prev) => prev.filter((item) => item.id !== pendingItem.id));
-                revokeObjectURL(pendingItem.url);
+                return {
+                  id: itemId,
+                  type: "file",
+                  url: previewUrl,
+                  mediaType: file.type || "application/octet-stream",
+                  filename: file.name,
+                  file,
+                  size: file.size,
+                  uploadState: "pending" as const,
+                };
+              }
+            );
+
+            // Add pending items to UI immediately
+            setItems((prev) => prev.concat(pendingItems));
+
+            // Upload files and update items as they complete
+            for (const pendingItem of pendingItems) {
+              const file = pendingItem.file;
+              if (!file) {
                 continue;
               }
 
-              const mediaType = uploaded.mediaType;
-              const filename = uploaded.filename ?? pendingItem.filename ?? "";
-              const size = uploaded.size ?? file.size;
-              const finalUrl = uploaded.url ? uploaded.url : pendingItem.url;
+              try {
+                const uploaded = await onAttachmentUpload(file);
+                if (!uploaded) {
+                  // Remove the pending item if upload returned null/undefined
+                  setItems((prev) =>
+                    prev.filter((item) => item.id !== pendingItem.id)
+                  );
+                  revokeObjectURL(pendingItem.url);
+                  continue;
+                }
 
-              // Update the pending item with completed upload data
-              setItems((prev) =>
-                prev.map((item) =>
-                  item.id === pendingItem.id
-                    ? {
-                        ...uploaded,
-                        type: "file",
-                        id: pendingItem.id,
-                        url: finalUrl,
-                        mediaType,
-                        filename,
-                        size,
-                        contentType: uploaded.contentType ?? mediaType,
-                        uploadState: 'complete' as const,
-                      }
-                    : item
-                )
-              );
-            } catch (error) {
-              const message =
-                error instanceof Error ? error.message : "Failed to upload attachment.";
-              onError?.({ code: "upload_failed", message });
+                const mediaType = uploaded.mediaType;
+                const filename =
+                  uploaded.filename ?? pendingItem.filename ?? "";
+                const size = uploaded.size ?? file.size;
+                const finalUrl = uploaded.url ? uploaded.url : pendingItem.url;
 
-              // Remove the failed pending item
-              setItems((prev) => prev.filter((item) => item.id !== pendingItem.id));
-              revokeObjectURL(pendingItem.url);
+                // Update the pending item with completed upload data
+                setItems((prev) =>
+                  prev.map((item) =>
+                    item.id === pendingItem.id
+                      ? {
+                          ...uploaded,
+                          type: "file",
+                          id: pendingItem.id,
+                          url: finalUrl,
+                          mediaType,
+                          filename,
+                          size,
+                          contentType: uploaded.contentType ?? mediaType,
+                          uploadState: "complete" as const,
+                        }
+                      : item
+                  )
+                );
+              } catch (error) {
+                const message =
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to upload attachment.";
+                onError?.({ code: "upload_failed", message });
+
+                // Remove the failed pending item
+                setItems((prev) =>
+                  prev.filter((item) => item.id !== pendingItem.id)
+                );
+                revokeObjectURL(pendingItem.url);
+              }
             }
+
+            return;
           }
 
-          return;
-        }
+          const next: PromptInputAttachmentItem[] = capped.map((file) => ({
+            id: nanoid(),
+            type: "file",
+            url: URL.createObjectURL(file),
+            mediaType: file.type || "application/octet-stream",
+            filename: file.name,
+            file,
+            size: file.size,
+          }));
 
-        const next: PromptInputAttachmentItem[] = capped.map((file) => ({
-          id: nanoid(),
-          type: "file",
-          url: URL.createObjectURL(file),
-          mediaType: file.type || "application/octet-stream",
-          filename: file.name,
-          file,
-          size: file.size,
-        }));
+          if (next.length > 0) {
+            setItems((prev) => prev.concat(next));
+          }
+        })();
+      },
+      [matchesAccept, maxFiles, maxFileSize, onAttachmentUpload, onError]
+    );
 
-        if (next.length > 0) {
-          setItems((prev) => prev.concat(next));
-        }
-      })();
-    },
-    [matchesAccept, maxFiles, maxFileSize, onAttachmentUpload, onError]
-  );
+    const remove = useCallback((id: string) => {
+      setItems((prev) => {
+        const found = prev.find((file) => file.id === id);
+        revokeObjectURL(found?.url);
+        return prev.filter((file) => file.id !== id);
+      });
+    }, []);
 
-  const remove = useCallback((id: string) => {
-    setItems((prev) => {
-      const found = prev.find((file) => file.id === id);
-      revokeObjectURL(found?.url);
-      return prev.filter((file) => file.id !== id);
-    });
-  }, []);
-
-  const clear = useCallback(
-    (options?: { revokeObjectURLs?: boolean }) => {
+    const clear = useCallback((options?: { revokeObjectURLs?: boolean }) => {
       const shouldRevoke = options?.revokeObjectURLs ?? true;
       setItems((prev) => {
         if (shouldRevoke) {
@@ -519,163 +549,166 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(({
       if (inputRef.current) {
         inputRef.current.value = "";
       }
-    },
-    [],
-  );
+    }, []);
 
-  // Expose form ref and clear method to parent
-  useImperativeHandle(ref, () => ({
-    form: formRef.current,
-    clear,
-    reset: () => {
-      formRef.current?.reset();
-      clear();
-    },
-  }), [clear]);
-
-  // Note: File input cannot be programmatically set for security reasons
-  // The syncHiddenInput prop is no longer functional
-  useEffect(() => {
-    if (syncHiddenInput && inputRef.current) {
-      // Clear the input when items are cleared
-      if (items.length === 0) {
-        inputRef.current.value = "";
-      }
-    }
-  }, [items, syncHiddenInput]);
-
-  useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
-
-  useEffect(() => {
-    onAttachmentsChange?.(items);
-  }, [items, onAttachmentsChange]);
-
-  // Attach drop handlers on nearest form and document (opt-in)
-  useEffect(() => {
-    const form = formRef.current;
-    if (!form) {
-      return;
-    }
-    const onDragOver = (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes("Files")) {
-        e.preventDefault();
-      }
-    };
-    const onDrop = (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes("Files")) {
-        e.preventDefault();
-      }
-      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-        add(e.dataTransfer.files);
-      }
-    };
-    form.addEventListener("dragover", onDragOver);
-    form.addEventListener("drop", onDrop);
-    return () => {
-      form.removeEventListener("dragover", onDragOver);
-      form.removeEventListener("drop", onDrop);
-    };
-  }, [add]);
-
-  useEffect(() => {
-    if (!globalDrop) {
-      return;
-    }
-    const onDragOver = (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes("Files")) {
-        e.preventDefault();
-      }
-    };
-    const onDrop = (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes("Files")) {
-        e.preventDefault();
-      }
-      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-        add(e.dataTransfer.files);
-      }
-    };
-    document.addEventListener("dragover", onDragOver);
-    document.addEventListener("drop", onDrop);
-    return () => {
-      document.removeEventListener("dragover", onDragOver);
-      document.removeEventListener("drop", onDrop);
-    };
-  }, [add, globalDrop]);
-
-  const handleChange: ChangeEventHandler<HTMLInputElement> = (event) => {
-    if (event.currentTarget.files) {
-      add(event.currentTarget.files);
-    }
-  };
-
-  const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
-    event.preventDefault();
-
-    const attachmentsPayload: PromptInputAttachmentPayload[] = items.map(
-      (item) => ({
-        id: item.id,
-        file: item.file,
-        url: item.url,
-        mediaType: item.mediaType,
-        filename: item.filename,
-        size: item.size,
-        storagePath: item.storagePath,
-        contentType: item.contentType,
-        metadata: item.metadata ?? null,
-        uploadState: item.uploadState,
+    // Expose form ref and clear method to parent
+    useImperativeHandle(
+      ref,
+      () => ({
+        form: formRef.current,
+        clear,
+        reset: () => {
+          formRef.current?.reset();
+          clear();
+        },
       }),
+      [clear]
     );
 
-    const messageEl = event.currentTarget.elements.namedItem("message");
-    onSubmit(
-      {
-        text: messageEl instanceof HTMLTextAreaElement ? messageEl.value : "",
-        attachments: attachmentsPayload,
-      },
-      event,
+    // Note: File input cannot be programmatically set for security reasons
+    // The syncHiddenInput prop is no longer functional
+    useEffect(() => {
+      if (syncHiddenInput && inputRef.current) {
+        // Clear the input when items are cleared
+        if (items.length === 0) {
+          inputRef.current.value = "";
+        }
+      }
+    }, [items, syncHiddenInput]);
+
+    useEffect(() => {
+      itemsRef.current = items;
+    }, [items]);
+
+    useEffect(() => {
+      onAttachmentsChange?.(items);
+    }, [items, onAttachmentsChange]);
+
+    // Attach drop handlers on nearest form and document (opt-in)
+    useEffect(() => {
+      const form = formRef.current;
+      if (!form) {
+        return;
+      }
+      const onDragOver = (e: DragEvent) => {
+        if (e.dataTransfer?.types.includes("Files")) {
+          e.preventDefault();
+        }
+      };
+      const onDrop = (e: DragEvent) => {
+        if (e.dataTransfer?.types.includes("Files")) {
+          e.preventDefault();
+        }
+        if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+          add(e.dataTransfer.files);
+        }
+      };
+      form.addEventListener("dragover", onDragOver);
+      form.addEventListener("drop", onDrop);
+      return () => {
+        form.removeEventListener("dragover", onDragOver);
+        form.removeEventListener("drop", onDrop);
+      };
+    }, [add]);
+
+    useEffect(() => {
+      if (!globalDrop) {
+        return;
+      }
+      const onDragOver = (e: DragEvent) => {
+        if (e.dataTransfer?.types.includes("Files")) {
+          e.preventDefault();
+        }
+      };
+      const onDrop = (e: DragEvent) => {
+        if (e.dataTransfer?.types.includes("Files")) {
+          e.preventDefault();
+        }
+        if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+          add(e.dataTransfer.files);
+        }
+      };
+      document.addEventListener("dragover", onDragOver);
+      document.addEventListener("drop", onDrop);
+      return () => {
+        document.removeEventListener("dragover", onDragOver);
+        document.removeEventListener("drop", onDrop);
+      };
+    }, [add, globalDrop]);
+
+    const handleChange: ChangeEventHandler<HTMLInputElement> = (event) => {
+      if (event.currentTarget.files) {
+        add(event.currentTarget.files);
+      }
+    };
+
+    const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
+      event.preventDefault();
+
+      const attachmentsPayload: PromptInputAttachmentPayload[] = items.map(
+        (item) => ({
+          id: item.id,
+          file: item.file,
+          url: item.url,
+          mediaType: item.mediaType,
+          filename: item.filename,
+          size: item.size,
+          storagePath: item.storagePath,
+          contentType: item.contentType,
+          metadata: item.metadata ?? null,
+          uploadState: item.uploadState,
+        })
+      );
+
+      const messageEl = event.currentTarget.elements.namedItem("message");
+      onSubmit(
+        {
+          text: messageEl instanceof HTMLTextAreaElement ? messageEl.value : "",
+          attachments: attachmentsPayload,
+        },
+        event
+      );
+
+      // Don't clear automatically - let parent control via ref.reset() or ref.clear()
+      // This allows parent to validate before clearing (e.g., check for pending uploads)
+    };
+
+    const ctx = useMemo<AttachmentsContext>(
+      () => ({
+        files: items.map((item) => ({ ...item, id: item.id })),
+        add,
+        remove,
+        clear,
+        openFileDialog,
+        fileInputRef: inputRef,
+      }),
+      [items, add, remove, clear, openFileDialog]
     );
 
-    // Don't clear automatically - let parent control via ref.reset() or ref.clear()
-    // This allows parent to validate before clearing (e.g., check for pending uploads)
-  };
-
-  const ctx = useMemo<AttachmentsContext>(
-    () => ({
-      files: items.map((item) => ({ ...item, id: item.id })),
-      add,
-      remove,
-      clear,
-      openFileDialog,
-      fileInputRef: inputRef,
-    }),
-    [items, add, remove, clear, openFileDialog]
-  );
-
-  return (
-    <AttachmentsContext.Provider value={ctx}>
-      <span aria-hidden="true" className="hidden" ref={anchorRef} />
-      <input
-        accept={accept}
-        className="hidden"
-        multiple={multiple}
-        onChange={handleChange}
-        ref={inputRef}
-        type="file"
-      />
-      <form
-        ref={formRef}
-        className={cn(
-          "w-full divide-y overflow-hidden rounded-xl border bg-background shadow-sm",
-          className
-        )}
-        onSubmit={handleSubmit}
-        {...props}
-      />
-    </AttachmentsContext.Provider>
-  );
-});
+    return (
+      <AttachmentsContext.Provider value={ctx}>
+        <span aria-hidden="true" className="hidden" ref={anchorRef} />
+        <input
+          accept={accept}
+          className="hidden"
+          multiple={multiple}
+          onChange={handleChange}
+          ref={inputRef}
+          type="file"
+        />
+        <form
+          className={cn(
+            "w-full divide-y overflow-hidden rounded-xl border bg-background shadow-sm",
+            className
+          )}
+          onSubmit={handleSubmit}
+          ref={formRef}
+          {...props}
+        />
+      </AttachmentsContext.Provider>
+    );
+  }
+);
 
 PromptInput.displayName = "PromptInput";
 

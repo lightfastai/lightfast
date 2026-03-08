@@ -1,6 +1,6 @@
+import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { createMetadata } from "@vendor/seo/metadata";
 import { SignUpForm } from "../_components/sign-up-form";
 
 export const metadata: Metadata = createMetadata({
@@ -34,4 +34,3 @@ export default function SignUpPage() {
     </Suspense>
   );
 }
-

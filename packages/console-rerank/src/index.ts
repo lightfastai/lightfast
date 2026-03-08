@@ -7,33 +7,29 @@
  * @packageDocumentation
  */
 
-// Export types
-export type {
-  RerankProvider,
-  RerankCandidate,
-  RerankResult,
-  RerankResponse,
-  RerankOptions,
-  RerankMode,
-} from "./types";
-
 // Export factory
 export { createRerankProvider } from "./factory";
-
-// Export providers
 export {
-  PassthroughRerankProvider,
-  createPassthroughRerankProvider,
-} from "./providers/passthrough";
-
-export {
+  type CohereRerankConfig,
   CohereRerankProvider,
   createCohereRerankProvider,
-  type CohereRerankConfig,
 } from "./providers/cohere";
-
 export {
-  LLMRerankProvider,
   createLLMRerankProvider,
   type LLMRerankConfig,
+  LLMRerankProvider,
 } from "./providers/llm";
+// Export providers
+export {
+  createPassthroughRerankProvider,
+  PassthroughRerankProvider,
+} from "./providers/passthrough";
+// Export types
+export type {
+  RerankCandidate,
+  RerankMode,
+  RerankOptions,
+  RerankProvider,
+  RerankResponse,
+  RerankResult,
+} from "./types";

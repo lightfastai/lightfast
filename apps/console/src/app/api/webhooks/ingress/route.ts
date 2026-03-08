@@ -1,8 +1,8 @@
-import { serve } from "@vendor/upstash-workflow/nextjs";
-import type { WebhookEnvelope } from "@repo/gateway-types";
 import { storeIngestionPayload } from "@repo/console-webhooks/storage";
-import { resolveWorkspaceFromOrgId } from "./resolve-workspace";
+import type { WebhookEnvelope } from "@repo/gateway-types";
+import { serve } from "@vendor/upstash-workflow/nextjs";
 import { dispatchToInngest } from "./dispatch";
+import { resolveWorkspaceFromOrgId } from "./resolve-workspace";
 
 export const runtime = "nodejs";
 
@@ -30,7 +30,7 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
   // Unknown org — graceful skip (org may have been deleted or not yet synced)
   if (!workspace) {
     console.warn(
-      `[ingress] Unknown orgId: ${envelope.orgId}, deliveryId: ${envelope.deliveryId}`,
+      `[ingress] Unknown orgId: ${envelope.orgId}, deliveryId: ${envelope.deliveryId}`
     );
     return;
   }

@@ -1,5 +1,5 @@
-import { openapi } from "@/src/lib/openapi";
 import { createAPIPage } from "fumadocs-openapi/ui";
+import { openapi } from "@/src/lib/openapi";
 
 /**
  * Minimal API page component for embedding operations inline in MDX.
@@ -22,9 +22,7 @@ export const InlineAPIPage = createAPIPage(openapi, {
       return (
         <>
           {slots.operations?.map((op) => (
-            <div key={`${op.item.path}:${op.item.method}`}>
-              {op.children}
-            </div>
+            <div key={`${op.item.path}:${op.item.method}`}>{op.children}</div>
           ))}
         </>
       );

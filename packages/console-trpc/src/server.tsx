@@ -1,19 +1,20 @@
-import type { TRPCQueryOptions } from "@trpc/tanstack-react-query";
-import { cache } from "react";
-import { headers } from "next/headers";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
-import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
-
-import type { UserRouter, OrgRouter, M2MRouter } from "@api/console";
+import type { OrgRouter, UserRouter } from "@api/console";
 import {
-  userRouter,
-  orgRouter,
-  m2mRouter,
-  createUserTRPCContext,
   createOrgTRPCContext,
+  createUserTRPCContext,
+  m2mRouter,
+  orgRouter,
+  userRouter,
 } from "@api/console";
 import { createM2MToken } from "@repo/console-clerk-m2m";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import type {
+  TRPCOptionsProxy,
+  TRPCQueryOptions,
+} from "@trpc/tanstack-react-query";
+import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
+import { headers } from "next/headers";
+import { cache } from "react";
 
 import { createQueryClient } from "./client";
 
@@ -143,7 +144,7 @@ export function HydrateClient(props: { children: React.ReactNode }) {
 
 export function prefetch(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  queryOptions: ReturnType<TRPCQueryOptions<any>>,
+  queryOptions: ReturnType<TRPCQueryOptions<any>>
 ) {
   const queryClient = getQueryClient();
   if (

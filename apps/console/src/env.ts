@@ -1,16 +1,15 @@
-import { createEnv } from "@t3-oss/env-nextjs";
-import { vercel } from "@t3-oss/env-nextjs/presets-zod";
-import { z } from "zod";
-
-import { clerkEnvBase } from "@vendor/clerk/env";
-import { sentryEnv } from "@vendor/observability/sentry-env";
-import { betterstackEnv } from "@vendor/observability/betterstack-env";
-import { env as knockEnv } from "@vendor/knock/env";
 import { env as dbEnv } from "@db/console/env";
 import { githubEnv } from "@repo/console-octokit-github/env";
 import { vercelEnv } from "@repo/console-vercel/env";
-import { upstashEnv } from "@vendor/upstash/env";
+import { createEnv } from "@t3-oss/env-nextjs";
+import { vercel } from "@t3-oss/env-nextjs/presets-zod";
+import { clerkEnvBase } from "@vendor/clerk/env";
 import { basehubEnv } from "@vendor/cms/env";
+import { env as knockEnv } from "@vendor/knock/env";
+import { betterstackEnv } from "@vendor/observability/betterstack-env";
+import { sentryEnv } from "@vendor/observability/sentry-env";
+import { upstashEnv } from "@vendor/upstash/env";
+import { z } from "zod";
 
 export const env = createEnv({
   extends: [
@@ -64,7 +63,7 @@ export const env = createEnv({
         {
           message:
             "ENCRYPTION_KEY must be 32 bytes (64 hex chars or 44 base64 chars)",
-        },
+        }
       )
       .refine(
         (key) => {
@@ -73,7 +72,7 @@ export const env = createEnv({
             "0000000000000000000000000000000000000000000000000000000000000000";
           if (key === weakKey) {
             throw new Error(
-              "Default ENCRYPTION_KEY is not allowed. Generate a secure key with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
+              "Default ENCRYPTION_KEY is not allowed. Generate a secure key with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
             );
           }
           return true;
@@ -81,7 +80,7 @@ export const env = createEnv({
         {
           message:
             "ENCRYPTION_KEY must be a cryptographically secure random value",
-        },
+        }
       ),
   },
   client: {

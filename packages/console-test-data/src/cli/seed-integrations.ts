@@ -10,20 +10,20 @@
  */
 
 import { db } from "@db/console";
-import { workspaceIntegrations } from "@db/console/schema";
 import type { InsertWorkspaceIntegration } from "@db/console/schema";
+import { workspaceIntegrations } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
-import { eq, and } from "@vendor/db";
+import { and, eq } from "@vendor/db";
 
 interface SeedOptions {
-  workspaceId: string;
   userId: string;
+  workspaceId: string;
 }
 
 interface DemoSource {
-  sourceConfig: InsertWorkspaceIntegration["sourceConfig"];
-  providerResourceId: string;
   documentCount: number;
+  providerResourceId: string;
+  sourceConfig: InsertWorkspaceIntegration["sourceConfig"];
 }
 
 /**
@@ -64,7 +64,14 @@ const DEMO_SOURCES: DemoSource[] = [
       teamSlug: "lightfastai",
       configurationId: "icfg_demo_001",
       sync: {
-        events: ["deployment.created", "deployment.succeeded", "deployment.ready", "deployment.error", "deployment.canceled", "deployment.check-rerequested"],
+        events: [
+          "deployment.created",
+          "deployment.succeeded",
+          "deployment.ready",
+          "deployment.error",
+          "deployment.canceled",
+          "deployment.check-rerequested",
+        ],
         autoSync: true,
       },
     },
@@ -116,12 +123,17 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       .where(
         and(
           eq(workspaceIntegrations.workspaceId, workspaceId),
-          eq(workspaceIntegrations.providerResourceId, source.providerResourceId),
-        ),
+          eq(
+            workspaceIntegrations.providerResourceId,
+            source.providerResourceId
+          )
+        )
       );
 
     if (existingIntegration.length > 0) {
-      console.log(`  [skip] ${source.sourceConfig.sourceType} workspace integration already exists`);
+      console.log(
+        `  [skip] ${source.sourceConfig.sourceType} workspace integration already exists`
+      );
       continue;
     }
 
@@ -136,7 +148,9 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       lastSyncStatus: "success",
       documentCount: source.documentCount,
     });
-    console.log(`  [created] ${source.sourceConfig.sourceType} workspace integration`);
+    console.log(
+      `  [created] ${source.sourceConfig.sourceType} workspace integration`
+    );
   }
 
   console.log("\nDone! All integrations seeded.");

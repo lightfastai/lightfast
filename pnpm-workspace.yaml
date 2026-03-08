@@ -14,10 +14,7 @@ catalog:
   lucide-react: ^0.577.0
   superjson: ^2.2.6
   '@types/node': ^20.16.11
-  eslint: ^9.23.0
-  prettier: ^3.8.1
   typescript: ^5.8.2
-  typescript-eslint: ^8.56.1
   '@ai-sdk/gateway': 1.0.7
   '@ai-sdk/react': 2.0.15
   ai: 5.0.52
@@ -86,7 +83,5 @@ ignoredBuiltDependencies:
 - sharp
 linkWorkspacePackages: true
 publicHoistPattern:
-- '@ianvs/prettier-plugin-sort-imports'
-- prettier-plugin-tailwindcss
 - '*import-in-the-middle*'
 - '*require-in-the-middle*'

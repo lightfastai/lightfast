@@ -2,11 +2,11 @@ import type { Metadata, Viewport } from "next";
 
 import "~/styles/globals.css";
 
-import { cn } from "@repo/ui/lib/utils";
 import { fonts as geistFonts } from "@repo/ui/lib/fonts";
-import { ppNeueMontreal, exposurePlus, ppSupplySans } from "~/lib/fonts";
+import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
+import { exposurePlus, ppNeueMontreal, ppSupplySans } from "~/lib/fonts";
 
 export const metadata: Metadata = createMetadata({
   title: "Console",
@@ -53,17 +53,17 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      suppressHydrationWarning
       className={cn(
         geistFonts,
         ppNeueMontreal.variable,
         exposurePlus.variable,
-        ppSupplySans.variable,
+        ppSupplySans.variable
       )}
+      lang="en"
+      suppressHydrationWarning
     >
       <head />
-      <body className="dark bg-background min-h-screen antialiased">
+      <body className="dark min-h-screen bg-background antialiased">
         {children}
         <VercelAnalytics />
         <SpeedInsights />

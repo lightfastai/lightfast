@@ -39,7 +39,7 @@ export function serve<TPayload = unknown>(
      * Disable telemetry
      */
     disableTelemetry?: boolean;
-  },
+  }
 ) {
   // Wrap handler with error logging
   const wrappedHandler = async (context: WorkflowContext<TPayload>) => {

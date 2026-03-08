@@ -4,37 +4,37 @@
  */
 
 export interface VercelProject {
-  id: string;
-  name: string;
-  framework: string | null;
-  updatedAt: number;
   createdAt: number;
+  framework: string | null;
+  id: string;
   latestDeployments?: {
     id: string;
     url: string;
     createdAt: number;
     readyState: string;
   }[];
+  name: string;
   targets?: {
     production?: {
       alias?: string[];
     };
   };
+  updatedAt: number;
 }
 
 export interface VercelProjectsResponse {
-  projects: VercelProject[];
   pagination: {
     count: number;
     next: string | null;
     prev: string | null;
   };
+  projects: VercelProject[];
 }
 
 export interface VercelProjectForUI {
-  id: string;
-  name: string;
   framework: string | null;
-  updatedAt: number;
+  id: string;
   isConnected: boolean;
+  name: string;
+  updatedAt: number;
 }

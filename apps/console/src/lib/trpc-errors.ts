@@ -1,6 +1,6 @@
-import type { TRPCClientError } from "@trpc/client";
+import type { OrgRouter, UserRouter } from "@api/console";
 import { toast } from "@repo/ui/components/ui/sonner";
-import type { UserRouter, OrgRouter } from "@api/console";
+import type { TRPCClientError } from "@trpc/client";
 
 /**
  * Combined router type for error handling

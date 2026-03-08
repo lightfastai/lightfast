@@ -7,13 +7,13 @@
  * @see https://docs.cohere.com/docs/rerank-2
  */
 
-import { CohereClient } from "cohere-ai";
 import { log } from "@vendor/observability/log";
+import { CohereClient } from "cohere-ai";
 import type {
-  RerankProvider,
   RerankCandidate,
-  RerankResponse,
   RerankOptions,
+  RerankProvider,
+  RerankResponse,
 } from "../types";
 
 /**
@@ -71,7 +71,7 @@ export class CohereRerankProvider implements RerankProvider {
   async rerank(
     query: string,
     candidates: RerankCandidate[],
-    options?: RerankOptions,
+    options?: RerankOptions
   ): Promise<RerankResponse> {
     const threshold = options?.threshold ?? this.defaultThreshold;
     const topK = options?.topK ?? candidates.length;
@@ -115,7 +115,7 @@ export class CohereRerankProvider implements RerankProvider {
 
       // Build score map from Cohere results
       const scoreMap = new Map(
-        response.results.map((r) => [r.index, r.relevanceScore]),
+        response.results.map((r) => [r.index, r.relevanceScore])
       );
 
       // Map to results format with threshold filtering
@@ -204,7 +204,7 @@ export class CohereRerankProvider implements RerankProvider {
  * Create a Cohere rerank provider
  */
 export function createCohereRerankProvider(
-  config?: CohereRerankConfig,
+  config?: CohereRerankConfig
 ): CohereRerankProvider {
   return new CohereRerankProvider(config);
 }

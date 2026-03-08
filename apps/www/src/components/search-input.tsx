@@ -1,23 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { FormEvent, KeyboardEvent } from "react";
-import { ArrowUp } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { SearchResults } from "./search-results";
+import { ArrowUp } from "lucide-react";
+import type { FormEvent, KeyboardEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTextCycle } from "~/hooks/use-text-cycle";
+import { SearchResults } from "./search-results";
 
 interface SearchResult {
-  documentId: string;
+  author: string;
   chunkId: string;
+  documentId: string;
+  highlight: string;
+  occurredAt: string;
   score: number;
+  sectionLabel?: string;
+  source: string;
   title: string;
   type: string;
-  source: string;
-  occurredAt: string;
-  author: string;
-  sectionLabel?: string;
-  highlight: string;
   url: string;
 }
 
@@ -98,7 +98,7 @@ export function SearchInput() {
     {
       interval: 2000,
       loop: true,
-    },
+    }
   );
 
   // Track previous placeholder to animate it out
@@ -109,7 +109,9 @@ export function SearchInput() {
   const lastShownRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (rotatingPlaceholder === undefined) return;
+    if (rotatingPlaceholder === undefined) {
+      return;
+    }
 
     const prev = lastShownRef.current;
     lastShownRef.current = rotatingPlaceholder;
@@ -159,31 +161,31 @@ export function SearchInput() {
 
   return (
     <>
-      <div className="w-full max-w-3xl mx-auto">
-        <form onSubmit={handleSubmit} className="relative">
+      <div className="mx-auto w-full max-w-3xl">
+        <form className="relative" onSubmit={handleSubmit}>
           <input
-            type="text"
-            ref={inputRef}
-            value={query}
+            className="w-full border-border border-b bg-transparent pr-12 pb-3 text-foreground text-lg outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+            disabled={isSearching}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={""}
-            className="w-full bg-transparent text-foreground text-lg placeholder:text-muted-foreground border-b border-border focus:border-foreground outline-none transition-colors pb-3 pr-12"
-            disabled={isSearching}
+            ref={inputRef}
+            type="text"
+            value={query}
           />
 
           {/* Animated placeholder overlay (only when input is empty) */}
           {query.trim().length === 0 && (
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 flex items-end pb-3 pr-12"
+              className="pointer-events-none absolute inset-0 flex items-end pr-12 pb-3"
             >
-              <div className="relative h-[1.75rem] overflow-hidden w-full text-muted-foreground text-2xl">
+              <div className="relative h-[1.75rem] w-full overflow-hidden text-2xl text-muted-foreground">
                 {/* Previous text sliding out */}
                 {placeholderAnim.prev && (
                   <span
-                    key={`prev-${placeholderAnim.counter}`}
                     className="absolute inset-x-0 bottom-0 animate-lf-slide-up-out"
+                    key={`prev-${placeholderAnim.counter}`}
                   >
                     {placeholderAnim.prev}
                   </span>
@@ -191,8 +193,8 @@ export function SearchInput() {
                 {/* Current text sliding in */}
                 {rotatingPlaceholder && (
                   <span
-                    key={`curr-${placeholderAnim.counter}`}
                     className="absolute inset-x-0 bottom-0 animate-lf-slide-up-in"
+                    key={`curr-${placeholderAnim.counter}`}
                   >
                     {rotatingPlaceholder}
                   </span>
@@ -202,11 +204,11 @@ export function SearchInput() {
           )}
 
           <Button
-            type="submit"
-            size="icon"
-            variant="ghost"
+            className="absolute right-0 bottom-1 h-8 w-8 rounded-full disabled:opacity-30"
             disabled={!query.trim() || isSearching}
-            className="absolute right-0 bottom-1 rounded-full h-8 w-8 disabled:opacity-30"
+            size="icon"
+            type="submit"
+            variant="ghost"
           >
             <ArrowUp className="h-5 w-5" />
             <span className="sr-only">Submit</span>
@@ -215,8 +217,8 @@ export function SearchInput() {
       </div>
 
       {isSearching && (
-        <div className="w-full max-w-3xl mx-auto mt-12">
-          <p className="text-sm text-muted-foreground">Searching...</p>
+        <div className="mx-auto mt-12 w-full max-w-3xl">
+          <p className="text-muted-foreground text-sm">Searching...</p>
         </div>
       )}
 

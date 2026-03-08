@@ -1,21 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useSuspenseQuery, useQueries } from "@tanstack/react-query";
-import { Search, Loader2 } from "lucide-react";
-import { Badge } from "@repo/ui/components/ui/badge";
-import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
+import { useTRPC } from "@repo/console-trpc/react";
 import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
-import { useTRPC } from "@repo/console-trpc/react";
-import { useWorkspaceForm } from "./workspace-form-provider";
+import { useQueries, useSuspenseQuery } from "@tanstack/react-query";
+import { Loader2, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useOAuthPopup } from "~/hooks/use-oauth-popup";
 import type { LinearTeam } from "./workspace-form-provider";
+import { useWorkspaceForm } from "./workspace-form-provider";
 
 /**
  * Linear accordion item for the Sources section.
@@ -74,16 +74,19 @@ export function LinearSourceItem() {
   });
 
   const isLoadingTeams = teamsQueries.some((q) => q.isLoading);
-  const teamsError = teamsQueries.every((q) => q.error) && teamsQueries.length > 0
-    ? teamsQueries[0]?.error ?? null
-    : null;
+  const teamsError =
+    teamsQueries.every((q) => q.error) && teamsQueries.length > 0
+      ? (teamsQueries[0]?.error ?? null)
+      : null;
 
   // Merge teams from all installations, tagging each with its installationId
   const teams: LinearTeam[] = useMemo(() => {
     const result: LinearTeam[] = [];
     for (let i = 0; i < linearData.length; i++) {
       const conn = linearData[i];
-      if (!conn) continue;
+      if (!conn) {
+        continue;
+      }
       const query = teamsQueries[i];
       if (query?.data?.teams) {
         for (const team of query.data.teams) {
@@ -94,73 +97,76 @@ export function LinearSourceItem() {
     return result;
   }, [linearData, teamsQueries]);
 
-  const filteredTeams = teams.filter((t) =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.key.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredTeams = teams.filter(
+    (t) =>
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.key.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <AccordionItem value="linear">
       <AccordionTrigger className="px-4 hover:no-underline">
-        <div className="flex items-center gap-3 flex-1">
+        <div className="flex flex-1 items-center gap-3">
           <IntegrationLogoIcons.linear className="h-5 w-5 shrink-0" />
           <span className="font-medium">Linear</span>
           {hasConnection ? (
-            <Badge variant="secondary" className="text-xs">Connected</Badge>
+            <Badge className="text-xs" variant="secondary">
+              Connected
+            </Badge>
           ) : (
-            <Badge variant="outline" className="text-xs text-muted-foreground">Not connected</Badge>
+            <Badge className="text-muted-foreground text-xs" variant="outline">
+              Not connected
+            </Badge>
           )}
           {selectedLinearTeam && (
-            <Badge variant="default" className="text-xs ml-auto mr-2">
+            <Badge className="mr-2 ml-auto text-xs" variant="default">
               1 selected
             </Badge>
           )}
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4">
-        {!hasConnection ? (
-          <div className="flex flex-col items-center py-6 text-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              Connect Linear to track issues and projects
-            </p>
-            <Button onClick={handleConnect} variant="outline">
-              <IntegrationLogoIcons.linear className="h-4 w-4 mr-2" />
-              Connect Linear
-            </Button>
-          </div>
-        ) : (
+        {hasConnection ? (
           <div className="space-y-4 pt-2">
             {selectedLinearTeam && !showPicker ? (
               /* Selected card view */
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-3">
                   <div
-                    className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
-                    style={{ backgroundColor: selectedLinearTeam.color ?? undefined }}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                    style={{
+                      backgroundColor: selectedLinearTeam.color ?? undefined,
+                    }}
                   >
-                    <span className="text-xs font-bold text-white">
+                    <span className="font-bold text-white text-xs">
                       {selectedLinearTeam.key}
                     </span>
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">{selectedLinearTeam.name}</span>
-                      <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                      <span className="truncate font-medium">
+                        {selectedLinearTeam.name}
+                      </span>
+                      <span className="shrink-0 rounded border px-2 py-0.5 text-muted-foreground text-xs">
                         {selectedLinearTeam.key}
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button variant="outline" size="sm" onClick={() => setShowPicker(true)}>
+                  <div className="flex shrink-0 gap-2">
+                    <Button
+                      onClick={() => setShowPicker(true)}
+                      size="sm"
+                      variant="outline"
+                    >
                       Change
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
                       onClick={() => {
                         setSelectedLinearTeam(null);
                         setShowPicker(true);
                       }}
+                      size="sm"
+                      variant="ghost"
                     >
                       Clear
                     </Button>
@@ -171,70 +177,81 @@ export function LinearSourceItem() {
               <>
                 {/* Search */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
+                    className="pl-10"
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search teams..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
                   />
                 </div>
 
                 {/* Team List */}
-                <div className="rounded-lg border bg-card max-h-[260px] overflow-y-auto">
+                <div className="max-h-[260px] overflow-y-auto rounded-lg border bg-card">
                   {teamsError ? (
-                    <div className="flex flex-col items-center py-6 text-center gap-3">
-                      <p className="text-sm text-destructive">
-                        Failed to load teams. The connection may need to be refreshed.
+                    <div className="flex flex-col items-center gap-3 py-6 text-center">
+                      <p className="text-destructive text-sm">
+                        Failed to load teams. The connection may need to be
+                        refreshed.
                       </p>
-                      <Button onClick={handleConnect} variant="outline" size="sm">
+                      <Button
+                        onClick={handleConnect}
+                        size="sm"
+                        variant="outline"
+                      >
                         Reconnect Linear
                       </Button>
                     </div>
                   ) : isLoadingTeams ? (
                     <div className="p-8 text-center text-muted-foreground">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                      <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />
                       Loading teams...
                     </div>
                   ) : filteredTeams.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">
-                      {searchQuery ? "No teams match your search" : "No teams found"}
+                      {searchQuery
+                        ? "No teams match your search"
+                        : "No teams found"}
                     </div>
                   ) : (
                     <div className="divide-y">
                       {filteredTeams.map((team) => (
                         <button
-                          key={team.id}
-                          type="button"
-                          className={`flex items-center gap-3 p-4 w-full text-left hover:bg-accent transition-colors cursor-pointer ${
-                            selectedLinearTeam?.id === team.id ? "bg-accent/50" : ""
+                          className={`flex w-full cursor-pointer items-center gap-3 p-4 text-left transition-colors hover:bg-accent ${
+                            selectedLinearTeam?.id === team.id
+                              ? "bg-accent/50"
+                              : ""
                           }`}
+                          key={team.id}
                           onClick={() => {
                             setSelectedLinearTeam(
-                              selectedLinearTeam?.id === team.id ? null : team,
+                              selectedLinearTeam?.id === team.id ? null : team
                             );
                             if (selectedLinearTeam?.id !== team.id) {
                               setShowPicker(false);
                             }
                           }}
+                          type="button"
                         >
                           <div
-                            className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
                             style={{ backgroundColor: team.color ?? undefined }}
                           >
-                            <span className="text-xs font-bold text-white">
+                            <span className="font-bold text-white text-xs">
                               {team.key}
                             </span>
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium truncate">{team.name}</span>
-                              <span className="text-xs text-muted-foreground border px-2 py-0.5 rounded shrink-0">
+                              <span className="truncate font-medium">
+                                {team.name}
+                              </span>
+                              <span className="shrink-0 rounded border px-2 py-0.5 text-muted-foreground text-xs">
                                 {team.key}
                               </span>
                             </div>
                             {team.description && (
-                              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              <p className="mt-0.5 truncate text-muted-foreground text-xs">
                                 {team.description}
                               </p>
                             )}
@@ -246,17 +263,27 @@ export function LinearSourceItem() {
                 </div>
 
                 {/* Missing team link */}
-                <div className="text-center text-sm text-muted-foreground">
+                <div className="text-center text-muted-foreground text-sm">
                   Missing a team?{" "}
                   <button
+                    className="text-blue-500 underline-offset-4 transition-colors hover:text-blue-600 hover:underline"
                     onClick={handleConnect}
-                    className="text-blue-500 hover:text-blue-600 underline-offset-4 hover:underline transition-colors"
                   >
                     Reconnect Linear →
                   </button>
                 </div>
               </>
             )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4 py-6 text-center">
+            <p className="text-muted-foreground text-sm">
+              Connect Linear to track issues and projects
+            </p>
+            <Button onClick={handleConnect} variant="outline">
+              <IntegrationLogoIcons.linear className="mr-2 h-4 w-4" />
+              Connect Linear
+            </Button>
           </div>
         )}
       </AccordionContent>

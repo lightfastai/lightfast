@@ -18,9 +18,9 @@ export type ProviderOptions = GitHubAuthOptions | LinearAuthOptions;
 
 export interface OAuthTokens {
   accessToken: string;
-  refreshToken?: string;
   expiresIn?: number;
+  raw: Record<string, unknown>;
+  refreshToken?: string;
   scope?: string;
   tokenType?: string;
-  raw: Record<string, unknown>;
 }

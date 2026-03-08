@@ -1,44 +1,43 @@
-import NextLink from "next/link";
-
 import { Icons } from "@repo/ui/components/icons";
+import NextLink from "next/link";
 import { LISSAJOUS_PATHS } from "~/lib/generated/lissajous-paths";
 
 export function AppFooter() {
   return (
-    <footer className="dark w-full h-full flex flex-col bg-background text-foreground">
+    <footer className="dark flex h-full w-full flex-col bg-background text-foreground">
       <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 pt-16 pb-16">
+        <div className="grid grid-cols-1 gap-8 pt-16 pb-16 lg:grid-cols-2 lg:gap-12">
           {/* Logo - left column */}
           <div>
-            <NextLink href="/" aria-label="Lightfast">
+            <NextLink aria-label="Lightfast" href="/">
               <Icons.logoShort className="h-4 w-auto text-muted-foreground" />
             </NextLink>
           </div>
 
           {/* Nav columns - right column with nested 3-column grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 gap-8 lg:grid-cols-3">
             {/* Product Column */}
             <div className="flex flex-col gap-3">
-              <h3 className="text-muted-foreground text-sm font-medium">
+              <h3 className="font-medium text-muted-foreground text-sm">
                 Product
               </h3>
               <nav className="flex flex-col gap-2">
                 <NextLink
+                  className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/pricing"
-                  className="text-foreground hover:text-muted-foreground text-sm transition-colors"
                 >
                   Pricing
                 </NextLink>
                 <NextLink
+                  className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/blog"
-                  className="text-foreground hover:text-muted-foreground text-sm transition-colors"
                 >
                   Blog
                 </NextLink>
                 <NextLink
+                  className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/changelog"
-                  className="text-foreground hover:text-muted-foreground text-sm transition-colors"
                 >
                   Changelog
                 </NextLink>
@@ -47,25 +46,25 @@ export function AppFooter() {
 
             {/* Resources Column */}
             <div className="flex flex-col gap-3">
-              <h3 className="text-muted-foreground text-sm font-medium">
+              <h3 className="font-medium text-muted-foreground text-sm">
                 Resources
               </h3>
               <nav className="flex flex-col gap-2">
                 <NextLink
+                  className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/docs/get-started/overview"
-                  className="text-foreground hover:text-muted-foreground text-sm transition-colors"
                 >
                   Documentation
                 </NextLink>
                 <NextLink
+                  className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/early-access"
-                  className="text-foreground hover:text-muted-foreground text-sm transition-colors"
                 >
                   Early Access
                 </NextLink>
                 <NextLink
+                  className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/docs/api-reference/overview"
-                  className="text-foreground hover:text-muted-foreground text-sm transition-colors"
                 >
                   API Reference
                 </NextLink>
@@ -74,31 +73,31 @@ export function AppFooter() {
 
             {/* Connect Column */}
             <div className="flex flex-col gap-3">
-              <h3 className="text-muted-foreground text-sm font-medium">
+              <h3 className="font-medium text-muted-foreground text-sm">
                 Connect
               </h3>
               <nav className="flex flex-col gap-2">
                 <NextLink
+                  className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="https://x.com/lightfastai"
-                  target="_blank"
                   rel="noopener noreferrer"
-                  className="text-foreground hover:text-muted-foreground text-sm transition-colors"
+                  target="_blank"
                 >
                   Twitter
                 </NextLink>
                 <NextLink
+                  className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="https://github.com/lightfastai"
-                  target="_blank"
                   rel="noopener noreferrer"
-                  className="text-foreground hover:text-muted-foreground text-sm transition-colors"
+                  target="_blank"
                 >
                   GitHub
                 </NextLink>
                 <NextLink
+                  className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="https://discord.gg/YqPDfcar2C"
-                  target="_blank"
                   rel="noopener noreferrer"
-                  className="text-foreground hover:text-muted-foreground text-sm transition-colors"
+                  target="_blank"
                 >
                   Discord
                 </NextLink>
@@ -118,20 +117,20 @@ export function AppFooter() {
           <div className="lg:grid lg:grid-cols-3 lg:gap-8">
             <nav className="flex flex-wrap items-center gap-x-6 gap-y-2">
               <NextLink
+                className="text-muted-foreground text-sm transition-colors hover:text-foreground"
                 href="mailto:hello@lightfast.ai"
-                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
               >
                 Contact
               </NextLink>
               <NextLink
+                className="text-muted-foreground text-sm transition-colors hover:text-foreground"
                 href="/legal/privacy"
-                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
               >
                 Privacy
               </NextLink>
               <NextLink
+                className="text-muted-foreground text-sm transition-colors hover:text-foreground"
                 href="/legal/terms"
-                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
               >
                 Terms
               </NextLink>
@@ -141,7 +140,7 @@ export function AppFooter() {
             <div className="hidden lg:block" />
 
             {/* Location (desktop only, mobile shown above) */}
-            <p className="hidden lg:block text-muted-foreground text-sm">
+            <p className="hidden text-muted-foreground text-sm lg:block">
               Built in Melbourne
             </p>
           </div>
@@ -149,25 +148,25 @@ export function AppFooter() {
       </div>
 
       {/* Lissajous patterns grid */}
-      <div className="hidden md:block mt-auto mx-auto w-full max-w-[1400px] md:py-16 md:px-16 lg:px-24">
-        <div className="grid grid-cols-3 md:grid-cols-9 gap-4">
+      <div className="mx-auto mt-auto hidden w-full max-w-[1400px] md:block md:px-16 md:py-16 lg:px-24">
+        <div className="grid grid-cols-3 gap-4 md:grid-cols-9">
           {LISSAJOUS_PATHS.map((pattern) => (
             <div
+              className="flex aspect-square items-center justify-center border border-border p-4"
               key={pattern.name}
-              className="aspect-square border border-border flex items-center justify-center p-4"
             >
               <svg
-                viewBox="0 0 100 100"
+                className="h-full w-full"
                 fill="none"
+                viewBox="0 0 100 100"
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-full h-full"
               >
                 <path
                   d={pattern.d}
                   stroke="var(--border)"
-                  strokeWidth={1.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  strokeWidth={1.5}
                 />
               </svg>
             </div>

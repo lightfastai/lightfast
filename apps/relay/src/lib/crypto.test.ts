@@ -1,12 +1,16 @@
-import { describe, it, expect } from "vitest";
-import { computeHmacSha256, computeHmacSha1, timingSafeEqual } from "./crypto.js";
+import { describe, expect, it } from "vitest";
+import {
+  computeHmacSha1,
+  computeHmacSha256,
+  timingSafeEqual,
+} from "./crypto.js";
 
 describe("computeHmacSha256", () => {
   it("produces correct hex signature for known input", async () => {
     // RFC 4231 test vector #2 (key="Jefe", data="what do ya want for nothing?")
     const sig = await computeHmacSha256("what do ya want for nothing?", "Jefe");
     expect(sig).toBe(
-      "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843",
+      "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"
     );
   });
 
@@ -89,7 +93,7 @@ describe("timingSafeEqual", () => {
     const sig = await computeHmacSha256("webhook-payload", "wh_secret");
     expect(sig).toHaveLength(64);
     expect(timingSafeEqual(sig, sig)).toBe(true);
-    const tampered = sig[0] === "a" ? "b" + sig.slice(1) : "a" + sig.slice(1);
+    const tampered = sig[0] === "a" ? `b${sig.slice(1)}` : `a${sig.slice(1)}`;
     expect(timingSafeEqual(sig, tampered)).toBe(false);
   });
 
@@ -97,7 +101,7 @@ describe("timingSafeEqual", () => {
     const sig = await computeHmacSha1("webhook-payload", "wh_secret");
     expect(sig).toHaveLength(40);
     expect(timingSafeEqual(sig, sig)).toBe(true);
-    const tampered = sig[0] === "a" ? "b" + sig.slice(1) : "a" + sig.slice(1);
+    const tampered = sig[0] === "a" ? `b${sig.slice(1)}` : `a${sig.slice(1)}`;
     expect(timingSafeEqual(sig, tampered)).toBe(false);
   });
 });

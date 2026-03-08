@@ -1,17 +1,22 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  LightfastError,
   AuthenticationError,
-  ValidationError,
+  LightfastError,
+  NetworkError,
   NotFoundError,
   RateLimitError,
   ServerError,
-  NetworkError,
+  ValidationError,
 } from "./errors";
 
 describe("LightfastError", () => {
   it("should create error with all properties", () => {
-    const error = new LightfastError("TEST_CODE", "Test message", "req_123", 400);
+    const error = new LightfastError(
+      "TEST_CODE",
+      "Test message",
+      "req_123",
+      400
+    );
 
     expect(error.name).toBe("LightfastError");
     expect(error.code).toBe("TEST_CODE");
@@ -21,7 +26,12 @@ describe("LightfastError", () => {
   });
 
   it("should serialize to JSON", () => {
-    const error = new LightfastError("TEST_CODE", "Test message", "req_123", 400);
+    const error = new LightfastError(
+      "TEST_CODE",
+      "Test message",
+      "req_123",
+      400
+    );
     const json = error.toJSON();
 
     expect(json).toEqual({

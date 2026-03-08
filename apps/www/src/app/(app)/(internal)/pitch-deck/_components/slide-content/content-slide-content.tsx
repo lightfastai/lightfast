@@ -23,18 +23,18 @@ export function ContentSlideContent({
       >
         {slide.title}
       </h2>
-      <div className="flex-1 flex flex-col justify-end">
+      <div className="flex flex-1 flex-col justify-end">
         <div
           className={cn(
             "grid",
             isFixed
               ? "grid-cols-2 gap-16"
-              : "grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8"
+              : "grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-8"
           )}
         >
           <p
             className={cn(
-              "uppercase tracking-wider text-neutral-500",
+              "text-neutral-500 uppercase tracking-wider",
               isFixed ? "text-base" : "text-[10px] sm:text-xs"
             )}
           >
@@ -43,11 +43,11 @@ export function ContentSlideContent({
           <div className={cn(isFixed ? "space-y-6" : "space-y-2 sm:space-y-4")}>
             {slide.rightText.map((text, textIdx) => (
               <p
-                key={`right-text-${textIdx}`}
                 className={cn(
-                  "border-b border-neutral-300 text-neutral-700",
-                  isFixed ? "text-xl pb-4" : "text-xs sm:text-sm pb-2"
+                  "border-neutral-300 border-b text-neutral-700",
+                  isFixed ? "pb-4 text-xl" : "pb-2 text-xs sm:text-sm"
                 )}
+                key={`right-text-${textIdx}`}
               >
                 {text}
               </p>

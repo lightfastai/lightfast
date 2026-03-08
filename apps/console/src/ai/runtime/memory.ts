@@ -1,8 +1,8 @@
+import type { Memory } from "@lightfastai/ai-sdk/memory";
 import { Redis } from "@upstash/redis";
 import type { UIMessage } from "ai";
-import type { Memory } from "@lightfastai/ai-sdk/memory";
-import type { AnswerMemoryContext } from "../types";
 import { env } from "~/env";
+import type { AnswerMemoryContext } from "../types";
 
 interface SessionMessagesData<TMessage> {
   messages: TMessage[];
@@ -22,14 +22,18 @@ interface SessionData {
 export class AnswerRedisMemory
   implements Memory<UIMessage, AnswerMemoryContext>
 {
-  private redis: Redis;
+  private readonly redis: Redis;
 
   // Redis key patterns with answer: prefix
   private readonly KEYS = {
-    sessionMetadata: (sessionId: string) => `answer:session:${sessionId}:metadata`,
-    sessionMessages: (sessionId: string) => `answer:session:${sessionId}:messages`,
-    sessionActiveStream: (sessionId: string) => `answer:session:${sessionId}:active_stream`,
-    sessionStreams: (sessionId: string) => `answer:session:${sessionId}:streams`,
+    sessionMetadata: (sessionId: string) =>
+      `answer:session:${sessionId}:metadata`,
+    sessionMessages: (sessionId: string) =>
+      `answer:session:${sessionId}:messages`,
+    sessionActiveStream: (sessionId: string) =>
+      `answer:session:${sessionId}:active_stream`,
+    sessionStreams: (sessionId: string) =>
+      `answer:session:${sessionId}:streams`,
     stream: (streamId: string) => `answer:stream:${streamId}`,
   } as const;
 
@@ -44,7 +48,7 @@ export class AnswerRedisMemory
     const url = config?.url ?? env.KV_REST_API_URL;
     const token = config?.token ?? env.KV_REST_API_TOKEN;
 
-    if (!url || !token) {
+    if (!(url && token)) {
       throw new Error("KV_REST_API_URL and KV_REST_API_TOKEN are required");
     }
 
@@ -68,7 +72,12 @@ export class AnswerRedisMemory
     // Check if the key exists first
     const exists = await this.redis.exists(key);
 
-    if (!exists) {
+    if (exists) {
+      // Append to existing messages array
+      await this.redis.json.arrappend(key, "$.messages", message);
+      // Refresh TTL
+      await this.redis.expire(key, this.TTL.MESSAGES);
+    } else {
       // Initialize with the first message if session doesn't exist
       const data: SessionMessagesData<UIMessage> = { messages: [message] };
       // Type assertion is safe here - we know the structure matches
@@ -78,11 +87,6 @@ export class AnswerRedisMemory
         data as RedisJsonData<SessionMessagesData<UIMessage>>
       );
       // Set TTL on message list
-      await this.redis.expire(key, this.TTL.MESSAGES);
-    } else {
-      // Append to existing messages array
-      await this.redis.json.arrappend(key, "$.messages", message);
-      // Refresh TTL
       await this.redis.expire(key, this.TTL.MESSAGES);
     }
   }
@@ -129,7 +133,9 @@ export class AnswerRedisMemory
     const key = this.KEYS.sessionMetadata(sessionId);
     const data = await this.redis.get(key);
 
-    if (!data) return null;
+    if (!data) {
+      return null;
+    }
 
     // Handle both string and already-parsed data
     let sessionData: SessionData;
@@ -163,7 +169,10 @@ export class AnswerRedisMemory
     await this.redis.lpush(this.KEYS.sessionStreams(sessionId), streamId);
     await this.redis.ltrim(this.KEYS.sessionStreams(sessionId), 0, 99);
     // Set TTL on stream list
-    await this.redis.expire(this.KEYS.sessionStreams(sessionId), this.TTL.STREAM);
+    await this.redis.expire(
+      this.KEYS.sessionStreams(sessionId),
+      this.TTL.STREAM
+    );
   }
 
   async getSessionStreams(sessionId: string): Promise<string[]> {

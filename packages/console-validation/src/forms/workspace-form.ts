@@ -7,8 +7,8 @@
  */
 
 import { z } from "zod";
-import { workspaceCreateInputSchema } from "../schemas/workspace";
 import { workspaceNameSchema } from "../primitives/slugs";
+import { workspaceCreateInputSchema } from "../schemas/workspace";
 
 /**
  * Workspace Creation Form Schema
@@ -24,10 +24,12 @@ import { workspaceNameSchema } from "../primitives/slugs";
  * });
  * ```
  */
-export const workspaceFormSchema = workspaceCreateInputSchema.extend({
-  // Rename clerkOrgId to organizationId for form field naming
-  organizationId: z.string().min(1, "Please select an organization"),
-}).omit({ clerkOrgId: true });
+export const workspaceFormSchema = workspaceCreateInputSchema
+  .extend({
+    // Rename clerkOrgId to organizationId for form field naming
+    organizationId: z.string().min(1, "Please select an organization"),
+  })
+  .omit({ clerkOrgId: true });
 
 export type WorkspaceFormValues = z.infer<typeof workspaceFormSchema>;
 

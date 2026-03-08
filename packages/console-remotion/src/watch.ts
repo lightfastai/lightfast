@@ -1,7 +1,7 @@
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const compositionsDir = path.resolve(__dirname, "compositions");
@@ -35,7 +35,9 @@ function render() {
 }
 
 function scheduleRender() {
-  if (debounceTimer) clearTimeout(debounceTimer);
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
   debounceTimer = setTimeout(render, 500);
 }
 
@@ -45,13 +47,21 @@ render();
 // Watch compositions directory for changes
 console.log("[remotion] Watching compositions for changes...");
 
-const watcher = fs.watch(compositionsDir, { recursive: true }, (event, filename) => {
-  if (!filename) return;
-  // Only react to .ts/.tsx file changes
-  if (!/\.(ts|tsx|css)$/.test(filename)) return;
-  console.log(`[remotion] Changed: ${filename}`);
-  scheduleRender();
-});
+const watcher = fs.watch(
+  compositionsDir,
+  { recursive: true },
+  (_event, filename) => {
+    if (!filename) {
+      return;
+    }
+    // Only react to .ts/.tsx file changes
+    if (!/\.(ts|tsx|css)$/.test(filename)) {
+      return;
+    }
+    console.log(`[remotion] Changed: ${filename}`);
+    scheduleRender();
+  }
+);
 
 process.on("SIGINT", () => {
   watcher.close();

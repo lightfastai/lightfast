@@ -2,11 +2,11 @@ import type { Metadata, Viewport } from "next";
 
 import "~/styles/globals.css";
 
-import { ClerkProvider } from "@vendor/clerk/client";
 import { Toaster } from "@repo/ui/components/ui/sonner";
-import { cn } from "@repo/ui/lib/utils";
 import { fonts as geistFonts } from "@repo/ui/lib/fonts";
+import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
+import { ClerkProvider } from "@vendor/clerk/client";
 import { createMetadata } from "@vendor/seo/metadata";
 import { env } from "~/env";
 import { exposurePlus, ppNeueMontreal, ppSupplySans } from "~/lib/fonts";
@@ -68,31 +68,36 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      suppressHydrationWarning
       className={cn(
         geistFonts,
         ppNeueMontreal.variable,
         exposurePlus.variable,
-        ppSupplySans.variable,
+        ppSupplySans.variable
       )}
+      lang="en"
+      suppressHydrationWarning
     >
       <head />
-      <body className={cn("bg-background dark font-sans min-h-screen antialiased")}><ClerkProvider
+      <body
+        className={cn("dark min-h-screen bg-background font-sans antialiased")}
+      >
+        <ClerkProvider
           publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-          signInUrl="/sign-in"
-          signUpUrl="/sign-up"
-          waitlistUrl="/early-access"
           signInFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
+          signInUrl="/sign-in"
           signUpFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
+          signUpUrl="/sign-up"
           taskUrls={{
             "choose-organization": `${consoleUrl}/account/teams/new`,
-          }}>
+          }}
+          waitlistUrl="/early-access"
+        >
           {children}
           <Toaster position="bottom-right" />
           <VercelAnalytics />
           <SpeedInsights />
-        </ClerkProvider></body>
+        </ClerkProvider>
+      </body>
     </html>
   );
 }

@@ -1,7 +1,7 @@
-import Link from "next/link";
-import Image from "next/image";
-import { FileText, Terminal, Layers, Timer } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
+import { FileText, Layers, Terminal, Timer } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 const iconMap = {
   "file-text": FileText,
@@ -69,45 +69,45 @@ export function NextSteps({ steps = defaultSteps }: NextStepsProps) {
   return (
     <div className="my-16">
       {/* Centered heading */}
-      <h2 className="text-center text-4xl sm:text-4xl font-medium tracking-tight mb-6">
+      <h2 className="mb-6 text-center font-medium text-4xl tracking-tight sm:text-4xl">
         Next steps
       </h2>
 
       <div
         className={cn(
-          "grid grid-cols-1 sm:grid-cols-2 gap-6",
+          "grid grid-cols-1 gap-6 sm:grid-cols-2",
           steps.length >= 4 && "lg:grid-cols-4",
-          steps.length === 3 && "lg:grid-cols-3",
+          steps.length === 3 && "lg:grid-cols-3"
         )}
       >
         {steps.map((step, _index) => {
           const Icon = iconMap[step.icon];
 
           return (
-            <Link key={step.href} href={step.href} className="group block">
+            <Link className="group block" href={step.href} key={step.href}>
               <div className="space-y-4">
                 {/* Card with image and icon */}
                 <div
                   className={cn(
-                    "relative rounded-xs overflow-hidden transition-all h-40",
-                    !step.image && "bg-card/80 border border-border/50",
+                    "relative h-40 overflow-hidden rounded-xs transition-all",
+                    !step.image && "border border-border/50 bg-card/80"
                   )}
                 >
                   {step.image && (
                     <Image
-                      src={step.image}
                       alt={step.title}
+                      className="object-cover"
                       fill
                       priority
                       quality={60}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                      className="object-cover"
+                      src={step.image}
                     />
                   )}
 
                   {/* Icon overlay - centered */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="flex h-8 w-8 items-center justify-center bg-foreground/10 backdrop-blur-sm rounded-xs">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xs bg-foreground/10 backdrop-blur-sm">
                       <Icon
                         className="h-5 w-5 text-white drop-shadow-lg"
                         strokeWidth={1.5}
@@ -118,10 +118,10 @@ export function NextSteps({ steps = defaultSteps }: NextStepsProps) {
 
                 {/* Title and description below card */}
                 <div className="space-y-2">
-                  <h3 className="text-lg font-medium text-foreground">
+                  <h3 className="font-medium text-foreground text-lg">
                     {step.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     {step.description}
                   </p>
                 </div>

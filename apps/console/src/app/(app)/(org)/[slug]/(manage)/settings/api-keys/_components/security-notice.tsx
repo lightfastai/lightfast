@@ -5,11 +5,11 @@
  */
 export function SecurityNotice() {
   return (
-    <div className="p-4 bg-muted/50 border border-border rounded-lg">
-      <h3 className="text-sm font-medium text-foreground mb-2">
+    <div className="rounded-lg border border-border bg-muted/50 p-4">
+      <h3 className="mb-2 font-medium text-foreground text-sm">
         Security Best Practices
       </h3>
-      <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+      <ul className="list-inside list-disc space-y-1 text-muted-foreground text-sm">
         <li>
           Never share your API keys publicly or commit them to version control
         </li>

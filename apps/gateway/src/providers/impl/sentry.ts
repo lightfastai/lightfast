@@ -1,11 +1,11 @@
 import { db } from "@db/console/client";
-import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
+import { gwInstallations, gwTokens } from "@db/console/schema";
 import { decrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
-import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store.js";
+import { updateTokenRecord, writeTokenRecord } from "../../lib/token-store.js";
 import { gatewayBaseUrl } from "../../lib/urls.js";
 import {
   decodeSentryToken,
@@ -13,12 +13,12 @@ import {
   sentryOAuthResponseSchema,
 } from "../schemas.js";
 import type {
-  ConnectionProvider,
-  SentryAccountInfo,
-  TokenResult,
-  OAuthTokens,
   CallbackResult,
   CallbackStateData,
+  ConnectionProvider,
+  OAuthTokens,
+  SentryAccountInfo,
+  TokenResult,
 } from "../types.js";
 
 export class SentryProvider implements ConnectionProvider {
@@ -27,7 +27,7 @@ export class SentryProvider implements ConnectionProvider {
 
   getAuthorizationUrl(state: string): string {
     const url = new URL(
-      `https://sentry.io/sentry-apps/${env.SENTRY_APP_SLUG}/external-install/`,
+      `https://sentry.io/sentry-apps/${env.SENTRY_APP_SLUG}/external-install/`
     );
     url.searchParams.set("state", state);
     return url.toString();
@@ -50,12 +50,15 @@ export class SentryProvider implements ConnectionProvider {
           client_id: env.SENTRY_CLIENT_ID,
           client_secret: env.SENTRY_CLIENT_SECRET,
         }),
-      },
+      }
     );
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error("[sentry] token exchange failed:", { status: response.status, body: errorBody });
+      console.error("[sentry] token exchange failed:", {
+        status: response.status,
+        body: errorBody,
+      });
       throw new Error(`Sentry token exchange failed: ${response.status}`);
     }
 
@@ -68,9 +71,7 @@ export class SentryProvider implements ConnectionProvider {
         ? encodeSentryToken({ installationId, token: data.refreshToken })
         : undefined,
       expiresIn: data.expiresAt
-        ? Math.floor(
-            (new Date(data.expiresAt).getTime() - Date.now()) / 1000,
-          )
+        ? Math.floor((new Date(data.expiresAt).getTime() - Date.now()) / 1000)
         : undefined,
       raw: rawData as Record<string, unknown>,
     };
@@ -93,7 +94,7 @@ export class SentryProvider implements ConnectionProvider {
           client_id: env.SENTRY_CLIENT_ID,
           client_secret: env.SENTRY_CLIENT_SECRET,
         }),
-      },
+      }
     );
 
     if (!response.ok) {
@@ -110,18 +111,20 @@ export class SentryProvider implements ConnectionProvider {
           ? encodeSentryToken({ installationId, token: data.refreshToken })
           : data.refreshToken,
       expiresIn: data.expiresAt
-        ? Math.floor(
-            (new Date(data.expiresAt).getTime() - Date.now()) / 1000,
-          )
+        ? Math.floor((new Date(data.expiresAt).getTime() - Date.now()) / 1000)
         : undefined,
       raw: rawData as Record<string, unknown>,
     };
   }
 
   async revokeToken(accessToken: string): Promise<void> {
-    if (!accessToken.includes(":")) {return;}
+    if (!accessToken.includes(":")) {
+      return;
+    }
     const { installationId } = decodeSentryToken(accessToken);
-    if (!installationId) {return;}
+    if (!installationId) {
+      return;
+    }
 
     const response = await fetch(
       `https://sentry.io/api/0/sentry-app-installations/${installationId}/`,
@@ -130,7 +133,7 @@ export class SentryProvider implements ConnectionProvider {
         headers: {
           Authorization: `Bearer ${env.SENTRY_CLIENT_SECRET}`,
         },
-      },
+      }
     );
 
     if (!response.ok) {
@@ -141,7 +144,7 @@ export class SentryProvider implements ConnectionProvider {
   registerWebhook(
     _connectionId: string,
     _callbackUrl: string,
-    _secret: string,
+    _secret: string
   ): Promise<string> {
     // Sentry webhook URL is registered during the SentryApp configuration
     // in the Sentry developer settings, not via API.
@@ -150,7 +153,7 @@ export class SentryProvider implements ConnectionProvider {
 
   async deregisterWebhook(
     _connectionId: string,
-    _webhookId: string,
+    _webhookId: string
   ): Promise<void> {
     // Sentry webhooks are deregistered by revoking the installation
     // (handled by revokeToken). No separate deregistration needed.
@@ -160,15 +163,22 @@ export class SentryProvider implements ConnectionProvider {
 
   async handleCallback(
     c: Context,
-    stateData: CallbackStateData,
+    stateData: CallbackStateData
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
     const sentryInstallationId = c.req.query("installationId");
-    if (!code) {throw new Error("missing code");}
-    if (!sentryInstallationId) {throw new Error("missing installationId query param");}
+    if (!code) {
+      throw new Error("missing code");
+    }
+    if (!sentryInstallationId) {
+      throw new Error("missing installationId query param");
+    }
 
     // Encode installationId:authCode composite for exchangeCode
-    const compositeCode = encodeSentryToken({ installationId: sentryInstallationId, token: code });
+    const compositeCode = encodeSentryToken({
+      installationId: sentryInstallationId,
+      token: code,
+    });
     const redirectUri = `${gatewayBaseUrl}/gateway/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(compositeCode, redirectUri);
 
@@ -214,7 +224,9 @@ export class SentryProvider implements ConnectionProvider {
       .returning({ id: gwInstallations.id });
 
     const installation = rows[0];
-    if (!installation) {throw new Error("upsert_failed");}
+    if (!installation) {
+      throw new Error("upsert_failed");
+    }
 
     await writeTokenRecord(installation.id, oauthTokens);
 
@@ -237,7 +249,9 @@ export class SentryProvider implements ConnectionProvider {
       .limit(1);
 
     const tokenRow = tokenRows[0];
-    if (!tokenRow) {throw new Error("no_token_found");}
+    if (!tokenRow) {
+      throw new Error("no_token_found");
+    }
 
     // Check expiry and refresh if needed (Sentry supports token refresh)
     if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
@@ -245,10 +259,18 @@ export class SentryProvider implements ConnectionProvider {
         throw new Error("token_expired:no_refresh_token");
       }
 
-      const decryptedRefresh = await decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
+      const decryptedRefresh = await decrypt(
+        tokenRow.refreshToken,
+        env.ENCRYPTION_KEY
+      );
       const refreshed = await this.refreshToken(decryptedRefresh);
 
-      await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
+      await updateTokenRecord(
+        tokenRow.id,
+        refreshed,
+        tokenRow.refreshToken,
+        tokenRow.expiresAt
+      );
 
       return {
         accessToken: refreshed.accessToken,
@@ -257,12 +279,17 @@ export class SentryProvider implements ConnectionProvider {
       };
     }
 
-    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    const decryptedToken = await decrypt(
+      tokenRow.accessToken,
+      env.ENCRYPTION_KEY
+    );
     return {
       accessToken: decryptedToken,
       provider: this.name,
       expiresIn: tokenRow.expiresAt
-        ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
+        ? Math.floor(
+            (new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000
+          )
         : null,
     };
   }

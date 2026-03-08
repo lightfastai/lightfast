@@ -11,7 +11,7 @@
  */
 export async function computeHmacSha256(
   message: string,
-  secret: string,
+  secret: string
 ): Promise<string> {
   const secretBytes = new TextEncoder().encode(secret);
   const key = await crypto.subtle.importKey(
@@ -19,7 +19,7 @@ export async function computeHmacSha256(
     secretBytes,
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"],
+    ["sign"]
   );
 
   const messageBytes = new TextEncoder().encode(message);
@@ -34,7 +34,7 @@ export async function computeHmacSha256(
  */
 export async function computeHmacSha1(
   message: string,
-  secret: string,
+  secret: string
 ): Promise<string> {
   const secretBytes = new TextEncoder().encode(secret);
   const key = await crypto.subtle.importKey(
@@ -42,7 +42,7 @@ export async function computeHmacSha1(
     secretBytes,
     { name: "HMAC", hash: "SHA-1" },
     false,
-    ["sign"],
+    ["sign"]
   );
 
   const messageBytes = new TextEncoder().encode(message);
@@ -80,7 +80,7 @@ export function timingSafeEqual(a: string, b: string): boolean {
  */
 export async function timingSafeStringEqual(
   a: string,
-  b: string,
+  b: string
 ): Promise<boolean> {
   const encoder = new TextEncoder();
   const [digestA, digestB] = await Promise.all([
@@ -107,7 +107,7 @@ function hexToBytes(hex: string): Uint8Array {
   }
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
+    bytes[i / 2] = Number.parseInt(hex.slice(i, i + 2), 16);
   }
   return bytes;
 }

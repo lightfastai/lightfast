@@ -1,27 +1,26 @@
-import type { Metadata } from "next";
-import * as React from "react";
-import { ArrowUpRight, ArrowRight, Check, HelpCircle } from "lucide-react";
-import { createMetadata } from "@vendor/seo/metadata";
-import {
-  JsonLd
-  
-  
-  
-} from "@vendor/seo/json-ld";
-import type {FAQPage, SoftwareApplication, WithContext} from "@vendor/seo/json-ld";
-import { Button } from "@repo/ui/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { cn } from "@repo/ui/lib/utils";
+import type {
+  FAQPage,
+  SoftwareApplication,
+  WithContext,
+} from "@vendor/seo/json-ld";
+import { JsonLd } from "@vendor/seo/json-ld";
+import { createMetadata } from "@vendor/seo/metadata";
+import { ArrowRight, ArrowUpRight, Check, HelpCircle } from "lucide-react";
+import type { Metadata } from "next";
+import type * as React from "react";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast Pricing – Scales With Your Team",
@@ -70,22 +69,22 @@ const featureExplanations = {
 };
 
 interface FeatureTooltipProps {
-  term: string;
   explanation: string;
+  term: string;
 }
 
 function FeatureTooltip({ term, explanation }: FeatureTooltipProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="inline-flex items-center gap-1 cursor-help group">
-          <span className="border-b border-dotted border-muted-foreground/50 group-hover:border-muted-foreground transition-colors">
+        <span className="group inline-flex cursor-help items-center gap-1">
+          <span className="border-muted-foreground/50 border-b border-dotted transition-colors group-hover:border-muted-foreground">
             {term}
           </span>
-          <HelpCircle className="h-3 w-3 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
+          <HelpCircle className="h-3 w-3 text-muted-foreground/50 transition-colors group-hover:text-muted-foreground" />
         </span>
       </TooltipTrigger>
-      <TooltipContent className="max-w-xs text-xs font-normal bg-background text-foreground border">
+      <TooltipContent className="max-w-xs border bg-background font-normal text-foreground text-xs">
         {explanation}
       </TooltipContent>
     </Tooltip>
@@ -93,15 +92,15 @@ function FeatureTooltip({ term, explanation }: FeatureTooltipProps) {
 }
 
 interface PricingPlan {
-  plan: string;
-  name: string;
+  addOns?: string[];
+  buttonText: string;
   description: string;
   features: (string | React.ReactNode)[];
-  addOns?: string[];
-  monthlyPrice: number | string;
-  interval: string;
-  buttonText: string;
   highlighted?: boolean;
+  interval: string;
+  monthlyPrice: number | string;
+  name: string;
+  plan: string;
 }
 
 const pricingPlans: PricingPlan[] = [
@@ -131,19 +130,19 @@ const pricingPlans: PricingPlan[] = [
       "5 sources included",
       "60-day retention",
       <FeatureTooltip
+        explanation={featureExplanations.semanticSearch}
         key="semantic-search"
         term="Semantic search (AI-powered)"
-        explanation={featureExplanations.semanticSearch}
       />,
       <FeatureTooltip
+        explanation={featureExplanations.basicNeuralMemory}
         key="basic-neural"
         term="Basic Decision Surfacing"
-        explanation={featureExplanations.basicNeuralMemory}
       />,
       <FeatureTooltip
+        explanation={featureExplanations.identityTracking}
         key="identity-email"
         term="Identity tracking (email-based)"
-        explanation={featureExplanations.identityTracking}
       />,
       "API access (25K calls/day)",
       "Email support",
@@ -168,25 +167,25 @@ const pricingPlans: PricingPlan[] = [
       "Unlimited sources",
       "1-year retention (configurable)",
       <FeatureTooltip
+        explanation={featureExplanations.advancedNeuralMemory}
         key="advanced-neural"
         term="Advanced Decision Surfacing"
-        explanation={featureExplanations.advancedNeuralMemory}
       />,
       "Auto-summaries (daily/weekly)",
       <FeatureTooltip
+        explanation={featureExplanations.actorExpertiseProfiles}
         key="actor-profiles"
         term="Actor expertise profiles"
-        explanation={featureExplanations.actorExpertiseProfiles}
       />,
       <FeatureTooltip
+        explanation={featureExplanations.fullIdentityMapping}
         key="full-identity"
         term="Full identity mapping (OAuth/SSO)"
-        explanation={featureExplanations.fullIdentityMapping}
       />,
       <FeatureTooltip
+        explanation={featureExplanations.temporalStateTracking}
         key="temporal-tracking"
         term="Temporal state tracking"
-        explanation={featureExplanations.temporalStateTracking}
       />,
       "Priority API access",
       "SSO/SAML",
@@ -311,19 +310,21 @@ export default function PricingPage() {
       <div className="mt-10 flex w-full flex-col gap-20 overflow-x-clip pb-32 md:px-10">
         {/* Hero Section */}
         <section className="relative">
-          <div className="max-w-6xl mx-auto grid grid-cols-12">
+          <div className="mx-auto grid max-w-6xl grid-cols-12">
             <div className="col-span-12 md:col-span-10 md:col-start-2 lg:col-span-10 lg:col-start-2">
               <div className="flex w-full flex-col items-center text-center">
                 {/* Small label */}
                 <div className="mb-4">
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  <p className="text-muted-foreground text-xs uppercase tracking-widest">
                     Pricing
                   </p>
                 </div>
 
                 {/* Heading */}
                 <h1
-                  className={`text-3xl sm:text-4xl md:text-5xl font-medium px-4 text-balance font-pp`}
+                  className={
+                    "text-balance px-4 font-medium font-pp text-3xl sm:text-4xl md:text-5xl"
+                  }
                 >
                   Choose the plan that fits your team
                 </h1>
@@ -331,9 +332,8 @@ export default function PricingPage() {
                 {/* Description */}
                 <div className="mt-8 px-4">
                   <p className="text-base text-muted-foreground">
-                    Simple pricing that scales with your team. Start
-                    free, then scale Lightfast as more people and agents rely on
-                    it.
+                    Simple pricing that scales with your team. Start free, then
+                    scale Lightfast as more people and agents rely on it.
                   </p>
                 </div>
               </div>
@@ -342,28 +342,28 @@ export default function PricingPage() {
         </section>
 
         {/* Pricing Section */}
-        <div className="max-w-6xl px-4 mx-auto w-full py-10">
-          <div className="space-y-8 w-full">
+        <div className="mx-auto w-full max-w-6xl px-4 py-10">
+          <div className="w-full space-y-8">
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-3 gap-8 w-full">
+            <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-4 lg:grid-cols-3">
               {pricingPlans.map((plan) => {
                 const price = plan.monthlyPrice;
 
                 return (
                   <div
-                    key={plan.plan}
                     className={cn(
-                      "flex flex-col bg-card rounded-sm p-6 h-full",
+                      "flex h-full flex-col rounded-sm bg-card p-6",
                       plan.highlighted
                         ? "border border-foreground shadow-lg"
                         : "",
                       "md:col-span-2 lg:col-span-1",
                       plan.plan === "business" &&
-                        "md:col-start-2 lg:col-start-auto",
+                        "md:col-start-2 lg:col-start-auto"
                     )}
+                    key={plan.plan}
                   >
                     <div className="space-y-1">
-                      <h3 className="text-md font-bold text-foreground">
+                      <h3 className="font-bold text-foreground text-md">
                         {plan.name}
                       </h3>
                       <p className="text-md text-muted-foreground">
@@ -371,30 +371,30 @@ export default function PricingPage() {
                       </p>
                     </div>
 
-                    <div className="space-y-3 mt-6 flex-1">
+                    <div className="mt-6 flex-1 space-y-3">
                       {plan.features.map((feature, featureIndex) => (
                         <div
-                          key={featureIndex}
                           className="flex items-start gap-3"
+                          key={featureIndex}
                         >
-                          <Check className="w-4 h-4 text-foreground flex-shrink-0 mt-0.5" />
-                          <div className="text-sm text-foreground">
+                          <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
+                          <div className="text-foreground text-sm">
                             {feature}
                           </div>
                         </div>
                       ))}
 
                       {plan.addOns && (
-                        <div className="pt-3 mt-3 border-t border-border/50">
-                          <p className="text-xs font-semibold text-foreground mb-2">
+                        <div className="mt-3 border-border/50 border-t pt-3">
+                          <p className="mb-2 font-semibold text-foreground text-xs">
                             Scale as needed:
                           </p>
                           {plan.addOns.map((addOn, addOnIndex) => (
                             <div
-                              key={addOnIndex}
                               className="flex items-start gap-3"
+                              key={addOnIndex}
                             >
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-muted-foreground text-sm">
                                 {addOn}
                               </span>
                             </div>
@@ -407,12 +407,12 @@ export default function PricingPage() {
                       <div className="space-y-4">
                         <div className="flex items-baseline gap-2">
                           {price === 0 ? (
-                            <span className="text-4xl font-bold text-foreground">
+                            <span className="font-bold text-4xl text-foreground">
                               Free
                             </span>
                           ) : price === "Contact" ? null : (
                             <>
-                              <span className="text-4xl font-bold text-foreground">
+                              <span className="font-bold text-4xl text-foreground">
                                 ${price}
                               </span>
                               <span className="text-muted-foreground">
@@ -423,7 +423,7 @@ export default function PricingPage() {
                         </div>
 
                         {plan.plan === "team" && (
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-muted-foreground text-sm">
                             $60/month for 3 users minimum
                           </p>
                         )}
@@ -431,13 +431,11 @@ export default function PricingPage() {
                         <div className="flex justify-start">
                           <a href="mailto:sales@lightfast.ai">
                             <Button
-                              variant={
-                                plan.highlighted ? "default" : "outline"
-                              }
                               className="rounded-full"
+                              variant={plan.highlighted ? "default" : "outline"}
                             >
                               {plan.buttonText}
-                              <ArrowUpRight className="w-4 h-4 ml-2" />
+                              <ArrowUpRight className="ml-2 h-4 w-4" />
                             </Button>
                           </a>
                         </div>
@@ -451,12 +449,12 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ Section */}
-        <div className="max-w-6xl mx-auto w-full px-4 py-10">
+        <div className="mx-auto w-full max-w-6xl px-4 py-10">
           <div className="w-full">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-16">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-16">
               {/* Left: Badge */}
               <div>
-                <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground">
+                <span className="inline-flex h-7 items-center rounded-md border border-border px-3 text-muted-foreground text-xs">
                   FAQ
                 </span>
               </div>
@@ -464,20 +462,20 @@ export default function PricingPage() {
               {/* Right: FAQ content - spans 2 columns */}
               <div className="lg:col-span-2">
                 {/* Header with CTA */}
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-8 pb-8 border-b border-border">
+                <div className="mb-8 flex flex-col border-border border-b pb-8 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-1">
-                    <p className="text-base md:text-lg leading-relaxed text-muted-foreground">
+                    <p className="text-base text-muted-foreground leading-relaxed md:text-lg">
                       Find answers.
                     </p>
                   </div>
 
                   <div className="mt-6 lg:mt-0 lg:text-right">
-                    <p className="text-sm text-muted-foreground mb-2">
+                    <p className="mb-2 text-muted-foreground text-sm">
                       Any more questions?
                     </p>
                     <a
+                      className="group inline-flex items-center gap-2 font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
                       href="mailto:sales@lightfast.ai"
-                      className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors group"
                     >
                       Talk to sales
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -487,29 +485,29 @@ export default function PricingPage() {
 
                 {/* FAQ Accordion */}
                 <Accordion
-                  type="single"
-                  collapsible
                   className="w-full"
+                  collapsible
                   defaultValue={faqs[0]?.question}
+                  type="single"
                 >
                   {faqs.map((faq) => (
                     <AccordionItem
+                      className="border-border border-b last:border-b-0"
                       key={faq.question}
                       value={faq.question}
-                      className="border-b border-border last:border-b-0"
                     >
                       <AccordionTrigger
                         className={cn(
-                          "flex justify-between items-center w-full py-6 text-left",
-                          "hover:no-underline group",
+                          "flex w-full items-center justify-between py-6 text-left",
+                          "group hover:no-underline"
                         )}
                       >
-                        <span className="text-base font-medium text-foreground pr-4">
+                        <span className="pr-4 font-medium text-base text-foreground">
                           {faq.question}
                         </span>
                       </AccordionTrigger>
-                      <AccordionContent className="pb-6 pr-12">
-                        <p className="text-sm leading-relaxed text-muted-foreground">
+                      <AccordionContent className="pr-12 pb-6">
+                        <p className="text-muted-foreground text-sm leading-relaxed">
                           {faq.answer}
                         </p>
                       </AccordionContent>

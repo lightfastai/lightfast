@@ -31,7 +31,7 @@ import fg from "fast-glob";
  */
 export async function matchFiles(
   repoPath: string,
-  globs: string[],
+  globs: string[]
 ): Promise<string[]> {
   try {
     // Use fast-glob to match files
@@ -56,7 +56,7 @@ export async function matchFiles(
   } catch (error) {
     // If glob matching fails, throw a helpful error
     throw new Error(
-      `Failed to match files with globs ${JSON.stringify(globs)}: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to match files with globs ${JSON.stringify(globs)}: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
@@ -89,14 +89,14 @@ export function validateGlobPatterns(globs: string[]): string[] {
 
     if (glob.startsWith("/")) {
       errors.push(
-        `Pattern '${glob}' should not start with / (use repo-relative paths)`,
+        `Pattern '${glob}' should not start with / (use repo-relative paths)`
       );
     }
 
     // Check for absolute path indicators on Windows
     if (/^[a-zA-Z]:/.test(glob)) {
       errors.push(
-        `Pattern '${glob}' appears to be an absolute path (use repo-relative paths)`,
+        `Pattern '${glob}' appears to be an absolute path (use repo-relative paths)`
       );
     }
   }
@@ -133,7 +133,7 @@ export function matchesGlobs(filePath: string, globs: string[]): boolean {
             .replace(/\*\*/g, ".*")
             .replace(/\*/g, "[^/]*")
             .replace(/\?/g, "[^/]")
-            .replace(/\./g, "\\."),
+            .replace(/\./g, "\\.")
         );
         if (pattern.test(filePath)) {
           return true;
@@ -142,10 +142,7 @@ export function matchesGlobs(filePath: string, globs: string[]): boolean {
         // Exact match
         return true;
       }
-    } catch {
-      // If pattern matching fails, skip this pattern
-      continue;
-    }
+    } catch {}
   }
 
   return false;

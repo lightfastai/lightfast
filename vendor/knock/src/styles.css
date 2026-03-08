@@ -29,7 +29,9 @@
   --rnf-disabled-foreground: oklch(0.6 0 0); /* disabled text - brightened */
 
   /* Status Colors */
-  --rnf-success-color: oklch(0.704 0.191 22.216); /* destructive red - use for alerts */
+  --rnf-success-color: oklch(
+    0.704 0.191 22.216
+  ); /* destructive red - use for alerts */
   --rnf-error-color: oklch(0.704 0.191 22.216); /* error red */
   --rnf-warning-color: oklch(0.922 0 0); /* warning yellow */
 
@@ -52,15 +54,15 @@
 
 /* Icon Button Styling */
 .rnf-notification-icon-button {
-  width: var(--rnf-notification-icon-button-size);
-  height: var(--rnf-notification-icon-button-size);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  background: transparent;
-  cursor: pointer;
+  width: var(--rnf-notification-icon-button-size);
+  height: var(--rnf-notification-icon-button-size);
   color: var(--rnf-foreground);
+  cursor: pointer;
+  background: transparent;
+  border: none;
   transition: all 0.2s ease-in-out;
 }
 
@@ -75,27 +77,27 @@
 
 /* Popover Styling */
 .rnf-notification-feed-popover {
+  overflow: hidden;
+  color: var(--rnf-foreground);
   background-color: var(--rnf-surface);
   border: 1px solid var(--rnf-border-color);
   border-radius: var(--rnf-border-radius-lg);
   box-shadow: none;
-  color: var(--rnf-foreground);
-  overflow: hidden;
 }
 
 /* Feed Container */
 .rnf-notification-feed {
-  background-color: var(--rnf-surface);
-  color: var(--rnf-foreground);
   overflow: hidden;
+  color: var(--rnf-foreground);
+  background-color: var(--rnf-surface);
 }
 
 /* Notification Item Styling */
 .rnf-notification-item {
+  color: var(--rnf-foreground);
   background-color: var(--rnf-surface-secondary);
   border: 1px solid var(--rnf-border-color);
   border-radius: var(--rnf-border-radius-md);
-  color: var(--rnf-foreground);
   transition: background-color 0.2s ease-in-out;
 }
 
@@ -109,29 +111,29 @@
 
 /* Notification Content */
 .rnf-notification-title {
-  color: var(--rnf-foreground);
   font-weight: 600;
+  color: var(--rnf-foreground);
 }
 
 .rnf-notification-body {
-  color: var(--rnf-foreground-secondary);
   font-size: var(--rnf-font-size-sm);
+  color: var(--rnf-foreground-secondary);
 }
 
 .rnf-notification-timestamp {
-  color: var(--rnf-foreground-secondary);
   font-size: var(--rnf-font-size-xs);
+  color: var(--rnf-foreground-secondary);
 }
 
 /* Button Styling */
 .rnf-button {
-  background-color: var(--rnf-primary);
-  color: var(--rnf-primary-foreground);
-  border: none;
-  border-radius: var(--rnf-border-radius-md);
   padding: 0.5rem 1rem;
   font-size: var(--rnf-font-size-sm);
+  color: var(--rnf-primary-foreground);
   cursor: pointer;
+  background-color: var(--rnf-primary);
+  border: none;
+  border-radius: var(--rnf-border-radius-md);
   transition: opacity 0.2s ease-in-out;
 }
 
@@ -140,17 +142,17 @@
 }
 
 .rnf-button:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Close Button */
 .rnf-close-button {
-  background: transparent;
-  border: none;
+  padding: 0.25rem;
   color: var(--rnf-foreground-secondary);
   cursor: pointer;
-  padding: 0.25rem;
+  background: transparent;
+  border: none;
   transition: color 0.2s ease-in-out;
 }
 
@@ -160,15 +162,15 @@
 
 /* Mark All As Read Button */
 .rnf-mark-all-as-read {
-  background: transparent;
-  border: none;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: var(--rnf-font-size-sm);
   color: var(--rnf-primary);
   cursor: pointer;
-  font-size: var(--rnf-font-size-sm);
-  padding: 0.5rem 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  background: transparent;
+  border: none;
   transition: color 0.2s ease-in-out;
 }
 
@@ -204,9 +206,9 @@
 
 /* Empty State */
 .rnf-empty-state {
+  padding: 2rem;
   color: var(--rnf-foreground-secondary);
   text-align: center;
-  padding: 2rem;
 }
 
 /* Scrollbar Styling */

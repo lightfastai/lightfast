@@ -1,16 +1,16 @@
 "use client";
 
+import { useOrganizationList } from "@vendor/clerk/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useOrganizationList } from "@vendor/clerk/client";
 
 interface TeamSwitcherLinkProps {
-  orgId: string;
-  orgSlug: string;
-  workspaceName?: string;
   children: React.ReactNode;
   className?: string;
   onSwitch?: () => void;
+  orgId: string;
+  orgSlug: string;
+  workspaceName?: string;
 }
 
 /**
@@ -75,9 +75,9 @@ export function TeamSwitcherLink({
 
   return (
     <Link
+      className={className}
       href={targetUrl}
       onClick={handleClick}
-      className={className}
       prefetch={true}
     >
       {children}

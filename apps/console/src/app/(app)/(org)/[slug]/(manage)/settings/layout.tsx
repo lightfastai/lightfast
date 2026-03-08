@@ -13,11 +13,11 @@ export default async function SettingsLayout({
   // Settings are accessible to all org members - no additional role check needed here
 
   return (
-    <div className="flex flex-col w-full">
-      <div className="mx-auto w-full max-w-7xl px-6 lg:px-8 pb-16">
+    <div className="flex w-full flex-col">
+      <div className="mx-auto w-full max-w-7xl px-6 pb-16 lg:px-8">
         {/* Header */}
         <div className="pb-8">
-          <h1 className="text-3xl font-pp font-medium tracking-tight text-foreground">
+          <h1 className="font-medium font-pp text-3xl text-foreground tracking-tight">
             Settings
           </h1>
         </div>
@@ -34,7 +34,7 @@ export default async function SettingsLayout({
           />
 
           {/* Main Content */}
-          <div className="flex-1 min-w-0 max-w-4xl space-y-6">{children}</div>
+          <div className="min-w-0 max-w-4xl flex-1 space-y-6">{children}</div>
         </div>
       </div>
     </div>

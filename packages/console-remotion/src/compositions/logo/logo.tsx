@@ -1,6 +1,6 @@
-import { useMemo } from "react";
-import type React from "react";
 import { AbsoluteFill, useVideoConfig } from "@vendor/remotion";
+import type React from "react";
+import { useMemo } from "react";
 
 /**
  * Lissajous parameters — same curve used in the LandingHero logo animation.
@@ -23,12 +23,12 @@ function lissajousPath(size: number, padding: number): string {
     const y = center + radius * Math.sin(B * t);
     d += `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`;
   }
-  return d + " Z";
+  return `${d} Z`;
 }
 
 interface LogoProps {
-  transparent?: boolean;
   strokeWidth?: number;
+  transparent?: boolean;
 }
 
 export const Logo: React.FC<LogoProps> = ({
@@ -41,18 +41,20 @@ export const Logo: React.FC<LogoProps> = ({
   const padding = 0.28;
   const sw = swOverride ?? Math.max(1, Math.round(size * 0.035));
 
-  const path = useMemo(() => lissajousPath(size, padding), [size, padding]);
+  const path = useMemo(() => lissajousPath(size, padding), [size]);
 
   return (
-    <AbsoluteFill style={!transparent ? { backgroundColor: "#000000" } : undefined}>
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+    <AbsoluteFill
+      style={transparent ? undefined : { backgroundColor: "#000000" }}
+    >
+      <svg height={height} viewBox={`0 0 ${width} ${height}`} width={width}>
         <path
           d={path}
           fill="none"
           stroke="#ffffff"
-          strokeWidth={sw}
           strokeLinecap="round"
           strokeLinejoin="round"
+          strokeWidth={sw}
         />
       </svg>
     </AbsoluteFill>

@@ -1,21 +1,21 @@
 import {
+  extendZodWithOpenApi,
   OpenAPIRegistry,
   OpenApiGeneratorV31,
-  extendZodWithOpenApi,
 } from "@asteasolutions/zod-to-openapi";
-import { z } from "zod";
 import {
-  V1SearchRequestSchema,
-  V1SearchResponseSchema,
+  GraphResponseSchema,
+  RelatedResponseSchema,
   V1ContentsRequestSchema,
   V1ContentsResponseSchema,
   V1FindSimilarRequestSchema,
   V1FindSimilarResponseSchema,
   V1GraphRequestSchema,
-  GraphResponseSchema,
   V1RelatedRequestSchema,
-  RelatedResponseSchema,
+  V1SearchRequestSchema,
+  V1SearchResponseSchema,
 } from "@repo/console-types/api";
+import { z } from "zod";
 
 extendZodWithOpenApi(z);
 

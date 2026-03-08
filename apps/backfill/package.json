@@ -13,7 +13,6 @@
     "build": "tsup && pnpm with-env node dist/src/env.js",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "NODE_ENV=development pnpm with-env srvx --prod --import tsx -p 4109 src/index.ts",
-    "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
@@ -29,18 +28,13 @@
     "zod": "catalog:zod3"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "dotenv-cli": "catalog:",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "srvx": "^0.11.8",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

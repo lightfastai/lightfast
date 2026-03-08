@@ -38,8 +38,7 @@ export const platformEngineersUseCases: UseCaseItem[] = [
   },
   {
     title: "Environment parity scoring",
-    description:
-      "Measure how far staging has drifted from production",
+    description: "Measure how far staging has drifted from production",
   },
   {
     title: "Integration health monitoring",

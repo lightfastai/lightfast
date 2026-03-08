@@ -6,6 +6,7 @@
  * (commit SHAs, issue IDs, branch names).
  */
 
+import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -17,7 +18,6 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 import { workspaceNeuralObservations } from "./workspace-neural-observations";
 
@@ -38,6 +38,8 @@ export type RelationshipType =
  * Relationship metadata
  */
 export interface RelationshipMetadata {
+  /** Additional context about the relationship */
+  context?: string;
   /** How the relationship was detected */
   detectionMethod?:
     | "explicit"
@@ -45,8 +47,6 @@ export interface RelationshipMetadata {
     | "branch_match"
     | "pr_match"
     | "entity_cooccurrence";
-  /** Additional context about the relationship */
-  context?: string;
 }
 
 /**
@@ -82,14 +82,18 @@ export const workspaceObservationRelationships = pgTable(
      */
     sourceObservationId: bigint("source_observation_id", { mode: "number" })
       .notNull()
-      .references(() => workspaceNeuralObservations.id, { onDelete: "cascade" }),
+      .references(() => workspaceNeuralObservations.id, {
+        onDelete: "cascade",
+      }),
 
     /**
      * Target observation (edge end)
      */
     targetObservationId: bigint("target_observation_id", { mode: "number" })
       .notNull()
-      .references(() => workspaceNeuralObservations.id, { onDelete: "cascade" }),
+      .references(() => workspaceNeuralObservations.id, {
+        onDelete: "cascade",
+      }),
 
     /**
      * Type of relationship

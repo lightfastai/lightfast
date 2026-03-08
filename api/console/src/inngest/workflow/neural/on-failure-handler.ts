@@ -27,16 +27,16 @@
  * ```
  */
 
-import { log } from "@vendor/observability/log";
-import { getJobByInngestRunId, completeJob } from "../../../lib/jobs";
-import type { Events } from "../../client/client";
 import type { WorkflowOutput } from "@repo/console-validation";
+import { log } from "@vendor/observability/log";
+import { completeJob, getJobByInngestRunId } from "../../../lib/jobs";
+import type { Events } from "../../client/client";
 
 /** Base shape all neural workflow failure outputs must satisfy */
 interface NeuralFailureOutput {
+  error: string;
   inngestFunctionId: string;
   status: "failure";
-  error: string;
   [key: string]: unknown;
 }
 
@@ -57,7 +57,7 @@ export function createNeuralOnFailureHandler<TEventName extends keyof Events>(
       data: Events[TEventName]["data"];
       error: string;
     }) => NeuralFailureOutput;
-  },
+  }
 ) {
   return async ({
     event,
@@ -90,7 +90,10 @@ export function createNeuralOnFailureHandler<TEventName extends keyof Events>(
           // `NeuralFailureOutput` is intentionally broad so the factory stays
           // generic. Type safety is enforced per-workflow via `satisfies` in
           // each `buildOutput` callback; the cast here is therefore safe.
-          output: config.buildOutput({ data, error: error.message }) as unknown as WorkflowOutput,
+          output: config.buildOutput({
+            data,
+            error: error.message,
+          }) as unknown as WorkflowOutput,
         });
       }
     }

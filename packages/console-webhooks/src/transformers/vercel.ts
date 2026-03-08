@@ -4,8 +4,8 @@ import type {
   TransformContext,
 } from "@repo/console-types";
 import { toExternalVercelEventType } from "@repo/console-types";
+import { sanitizeBody, sanitizeTitle } from "../sanitize.js";
 import { validateSourceEvent } from "../validation.js";
-import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 /**
  * Vercel deployment event types
  */
@@ -21,10 +21,8 @@ export type VercelWebhookEventType =
  * Vercel webhook payload structure
  */
 export interface VercelWebhookPayload {
-  id: string;
-  type: string;
   createdAt: number;
-  region?: string;
+  id: string;
   payload: {
     deployment?: {
       id: string;
@@ -61,6 +59,8 @@ export interface VercelWebhookPayload {
     };
     [key: string]: unknown;
   };
+  region?: string;
+  type: string;
 }
 
 /**
@@ -75,7 +75,7 @@ export function transformVercelDeployment(
   const project = payload.payload.project;
   const team = payload.payload.team;
 
-  if (!deployment || !project) {
+  if (!(deployment && project)) {
     throw new Error("Missing deployment or project in Vercel webhook payload");
   }
 
@@ -202,11 +202,14 @@ export function transformVercelDeployment(
   // Validate before returning (logs errors but doesn't block)
   const validation = validateSourceEvent(event);
   if (!validation.success && validation.errors) {
-    console.error("[Transformer:transformVercelDeployment] Invalid SourceEvent:", {
-      sourceId: event.sourceId,
-      sourceType: event.sourceType,
-      errors: validation.errors,
-    });
+    console.error(
+      "[Transformer:transformVercelDeployment] Invalid SourceEvent:",
+      {
+        sourceId: event.sourceId,
+        sourceType: event.sourceType,
+        errors: validation.errors,
+      }
+    );
   }
 
   return event;

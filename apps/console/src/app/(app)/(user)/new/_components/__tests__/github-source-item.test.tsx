@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Accordion } from "@repo/ui/components/ui/accordion";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Suspense } from "react";
-import { Accordion } from "@repo/ui/components/ui/accordion";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GitHubSourceItem } from "../github-source-item";
 
 // ── Hoisted mocks (accessible in vi.mock factories) ──────────────────────────
@@ -125,7 +125,7 @@ const GITHUB_REPOS_KEY = [
 
 function renderComponent(options?: {
   connectionData?: unknown;
-  reposData?: typeof MOCK_REPO[];
+  reposData?: (typeof MOCK_REPO)[];
 }) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -136,7 +136,7 @@ function renderComponent(options?: {
     GITHUB_LIST_KEY,
     options?.connectionData === undefined
       ? MOCK_CONNECTION
-      : options.connectionData,
+      : options.connectionData
   );
 
   // Pre-seed repos cache to avoid async loading
@@ -147,11 +147,11 @@ function renderComponent(options?: {
   return render(
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<div>Loading...</div>}>
-        <Accordion type="single" defaultValue="github">
+        <Accordion defaultValue="github" type="single">
           <GitHubSourceItem />
         </Accordion>
       </Suspense>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
 }
 
@@ -185,7 +185,7 @@ describe("GitHubSourceItem", () => {
     it("shows adjust permissions link", () => {
       renderComponent();
       expect(
-        screen.getByText(/Adjust GitHub App permissions/),
+        screen.getByText(/Adjust GitHub App permissions/)
       ).toBeInTheDocument();
     });
   });
@@ -202,7 +202,7 @@ describe("GitHubSourceItem", () => {
     it("shows 'Connect GitHub' button when no installations", () => {
       renderComponent({ connectionData: null });
       expect(
-        screen.getByRole("button", { name: /Connect GitHub/i }),
+        screen.getByRole("button", { name: /Connect GitHub/i })
       ).toBeInTheDocument();
     });
 
@@ -232,16 +232,17 @@ describe("GitHubSourceItem", () => {
 
       await user.click(screen.getByText(/Adjust GitHub App permissions/));
 
-      const buildUrl = mockOpenCustomUrl.mock.calls[0]?.[0] as (
-        data: { url: string; state: string },
-      ) => string;
+      const buildUrl = mockOpenCustomUrl.mock.calls[0]?.[0] as (data: {
+        url: string;
+        state: string;
+      }) => string;
       const url = buildUrl({
         url: "https://github.com/login/oauth/authorize?client_id=abc",
         state: "test-state-123",
       });
 
       expect(url).toBe(
-        "https://github.com/apps/test-github-app/installations/select_target?state=test-state-123",
+        "https://github.com/apps/test-github-app/installations/select_target?state=test-state-123"
       );
     });
   });
@@ -259,9 +260,7 @@ describe("GitHubSourceItem", () => {
       const user = userEvent.setup();
       renderComponent({ connectionData: null });
 
-      await user.click(
-        screen.getByRole("button", { name: /Connect GitHub/i }),
-      );
+      await user.click(screen.getByRole("button", { name: /Connect GitHub/i }));
 
       expect(mockHandleConnect).toHaveBeenCalledOnce();
     });
@@ -270,7 +269,7 @@ describe("GitHubSourceItem", () => {
       renderComponent({ connectionData: null });
 
       expect(mockUseOAuthPopup).toHaveBeenCalledWith(
-        expect.objectContaining({ provider: "github" }),
+        expect.objectContaining({ provider: "github" })
       );
     });
   });
@@ -285,7 +284,7 @@ describe("GitHubSourceItem", () => {
       await user.click(screen.getByText("my-repo"));
 
       expect(mockWorkspaceForm.toggleRepository).toHaveBeenCalledWith(
-        MOCK_REPO,
+        MOCK_REPO
       );
     });
 

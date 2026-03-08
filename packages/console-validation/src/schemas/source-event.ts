@@ -54,7 +54,7 @@ export const sourceEventSchema = z.object({
   sourceType: z.string().min(1), // Internal format: "pull-request.merged"
   sourceId: z.string().min(1),
   title: z.string().min(1).max(200),
-  body: z.string().max(50000),
+  body: z.string().max(50_000),
   actor: sourceActorSchema.optional(),
   occurredAt: z.string().datetime({ offset: true }),
   references: z.array(sourceReferenceSchema),

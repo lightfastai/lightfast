@@ -1,16 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Capture handler and onFailure from createFunction ──
 
 let capturedHandler: (args: { event: any; step: any }) => Promise<unknown>;
-let capturedOnFailure: ((args: { error: any; event: any; step: any }) => Promise<unknown>) | undefined;
+let capturedOnFailure:
+  | ((args: { error: any; event: any; step: any }) => Promise<unknown>)
+  | undefined;
 
 vi.mock("../inngest/client", () => ({
   inngest: {
     createFunction: (
       config: any,
       _trigger: unknown,
-      handler: typeof capturedHandler,
+      handler: typeof capturedHandler
     ) => {
       capturedHandler = handler;
       if (config.onFailure) {
@@ -79,9 +81,13 @@ const mockConnector = {
 function mockTokenResponse(token = "tok-1") {
   mockFetch.mockResolvedValueOnce(
     new Response(
-      JSON.stringify({ accessToken: token, provider: "github", expiresIn: 3600 }),
-      { status: 200 },
-    ),
+      JSON.stringify({
+        accessToken: token,
+        provider: "github",
+        expiresIn: 3600,
+      }),
+      { status: 200 }
+    )
   );
 }
 
@@ -113,7 +119,7 @@ describe("get-token step", () => {
       "https://gateway.test/services/gateway/inst-1/token",
       expect.objectContaining({
         headers: expect.objectContaining({ "X-API-Key": "test-key" }),
-      }),
+      })
     );
   });
 
@@ -121,9 +127,9 @@ describe("get-token step", () => {
     mockFetch.mockResolvedValueOnce(new Response("", { status: 401 }));
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Gateway getToken failed: 401");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Gateway getToken failed: 401"
+    );
   });
 });
 
@@ -133,9 +139,9 @@ describe("connector resolution", () => {
     mockGetConnector.mockReturnValue(null);
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("No backfill connector for provider");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "No backfill connector for provider"
+    );
   });
 });
 
@@ -157,7 +163,10 @@ describe("pagination loop — single page", () => {
     mockDispatchResponse();
     const step = makeStep();
 
-    const result = (await capturedHandler({ event: makeEvent(), step })) as Record<string, unknown>;
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
     expect(result.eventsDispatched).toBe(3);
     expect(result.pagesProcessed).toBe(1);
   });
@@ -180,7 +189,7 @@ describe("pagination loop — single page", () => {
     const dispatchCall = mockFetch.mock.calls.find(
       (call) =>
         (call[1] as RequestInit | undefined)?.method === "POST" &&
-        call[0] === "https://relay.test/api/webhooks/github",
+        call[0] === "https://relay.test/api/webhooks/github"
     );
     expect(dispatchCall).toBeDefined();
     const init = dispatchCall![1] as RequestInit;
@@ -211,13 +220,13 @@ describe("dispatch error handling", () => {
     });
     // Dispatch returns 500
     mockFetch.mockResolvedValueOnce(
-      new Response("Internal Server Error", { status: 500 }),
+      new Response("Internal Server Error", { status: 500 })
     );
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Relay ingestWebhook failed: 500");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Relay ingestWebhook failed: 500"
+    );
   });
 });
 
@@ -240,7 +249,10 @@ describe("pagination loop — multiple pages", () => {
     mockDispatchResponse();
     const step = makeStep();
 
-    const result = (await capturedHandler({ event: makeEvent(), step })) as Record<string, unknown>;
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
     expect(result.pagesProcessed).toBe(2);
     expect(result.eventsDispatched).toBe(2);
 
@@ -264,9 +276,9 @@ describe("fetchPage error mid-pagination", () => {
     mockConnector.fetchPage.mockRejectedValueOnce(new Error("API timeout"));
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("API timeout");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "API timeout"
+    );
   });
 });
 
@@ -371,7 +383,7 @@ describe("completion", () => {
     // Find the sendEvent call for notify-completion
     const sendCalls = step.sendEvent.mock.calls;
     const completionCall = sendCalls.find(
-      (call: unknown[]) => call[0] === "notify-completion",
+      (call: unknown[]) => call[0] === "notify-completion"
     );
     expect(completionCall).toBeDefined();
     expect(completionCall![1]).toMatchObject({
@@ -417,7 +429,10 @@ describe("completion", () => {
     mockDispatchResponse();
     const step = makeStep();
 
-    const result = (await capturedHandler({ event: makeEvent(), step })) as Record<string, unknown>;
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
     expect(result.eventsProduced).toBe(5);
     expect(result.eventsDispatched).toBe(5);
     expect(result.pagesProcessed).toBe(2);

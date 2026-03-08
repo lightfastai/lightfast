@@ -5,20 +5,20 @@
  */
 
 import { randomUUID } from "node:crypto";
-import type { SourceEvent } from "@repo/console-types";
 import { inngest } from "@api/console/inngest/client";
+import type { SourceEvent } from "@repo/console-types";
 
 export interface TriggerOptions {
-  workspaceId: string;
-  onProgress?: (current: number, total: number) => void;
   batchSize?: number; // Number of events to send in parallel per batch
   delayMs?: number; // Delay between batches to avoid overwhelming
+  onProgress?: (current: number, total: number) => void;
+  workspaceId: string;
 }
 
 export interface TriggerResult {
-  triggered: number;
-  sourceIds: string[];
   duration: number;
+  sourceIds: string[];
+  triggered: number;
 }
 
 /**
@@ -54,7 +54,9 @@ export const triggerObservationCapture = async (
 
   for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
     const batch = batches[batchIndex];
-    if (!batch) continue;
+    if (!batch) {
+      continue;
+    }
 
     const results = await Promise.all(
       batch.map(async (event) => {

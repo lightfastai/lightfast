@@ -6,11 +6,11 @@ export default function AccountSettingsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col w-full">
-      <div className="mx-auto w-full max-w-7xl px-6 lg:px-8 pb-16">
+    <div className="flex w-full flex-col">
+      <div className="mx-auto w-full max-w-7xl px-6 pb-16 lg:px-8">
         {/* Header */}
         <div className="py-8">
-          <h1 className="text-3xl font-pp font-medium tracking-tight text-foreground">
+          <h1 className="font-medium font-pp text-3xl text-foreground tracking-tight">
             Your Account
           </h1>
         </div>
@@ -23,7 +23,7 @@ export default function AccountSettingsLayout({
           />
 
           {/* Main Content */}
-          <div className="flex-1 min-w-0">{children}</div>
+          <div className="min-w-0 flex-1">{children}</div>
         </div>
       </div>
     </div>

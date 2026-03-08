@@ -1,6 +1,12 @@
-import { sql } from "drizzle-orm";
-import { pgTable, varchar, timestamp, text, uniqueIndex } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
+import { sql } from "drizzle-orm";
+import {
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { gwInstallations } from "./gw-installations";
 
 export const gwTokens = pgTable(
@@ -27,8 +33,10 @@ export const gwTokens = pgTable(
       .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
-    installationIdIdx: uniqueIndex("gw_tok_installation_id_idx").on(table.installationId),
-  }),
+    installationIdIdx: uniqueIndex("gw_tok_installation_id_idx").on(
+      table.installationId
+    ),
+  })
 );
 
 export type GwToken = typeof gwTokens.$inferSelect;

@@ -11,22 +11,19 @@
  *   9.1 — Happy path: authorize → callback → poll completed
  *   9.2 — Reactivation: existing connection → reactivated flag flows through
  */
+
+import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import {
-  describe,
-  it,
-  expect,
-  vi,
+  afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
-  afterAll,
+  describe,
+  expect,
+  it,
+  vi,
 } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
-import type { TestDb } from "@repo/console-test-db";
 
 // ── Shared state ──
 let db: TestDb;
@@ -40,9 +37,7 @@ const { redisMock, redisStore, mockGetProvider, mockProvider } =
       name: "github" as const,
       getAuthorizationUrl: vi
         .fn()
-        .mockReturnValue(
-          "https://github.com/login/oauth/authorize?mock=1",
-        ),
+        .mockReturnValue("https://github.com/login/oauth/authorize?mock=1"),
       handleCallback: vi.fn().mockResolvedValue({
         installationId: "inst-1",
         provider: "github",
@@ -96,7 +91,9 @@ vi.mock("@vercel/related-projects", () => ({
     projectName: string;
     defaultHost: string;
   }) => {
-    if (defaultHost.includes("4110")) return `${defaultHost}/services`;
+    if (defaultHost.includes("4110")) {
+      return `${defaultHost}/services`;
+    }
     return defaultHost;
   },
 }));
@@ -114,14 +111,18 @@ vi.mock("@gateway/providers", () => ({
   getProvider: (...args: unknown[]): unknown => mockGetProvider(...args),
 }));
 
-// ── Imports after mocks ──
-import { createTRPCRouter, createCallerFactory } from "@console/trpc";
-import type { createUserTRPCContext } from "@console/trpc";
 import { connectionsRouter } from "@console/router/org/connections";
-import gatewayApp from "@gateway/app";
-import { makeApiKeyFixture, installServiceRouter, TEST_WORKSPACE_SETTINGS } from "./harness.js";
+import type { createUserTRPCContext } from "@console/trpc";
+// ── Imports after mocks ──
+import { createCallerFactory, createTRPCRouter } from "@console/trpc";
 import { orgWorkspaces } from "@db/console/schema";
+import gatewayApp from "@gateway/app";
 import { oauthResultKey } from "@gateway/cache";
+import {
+  installServiceRouter,
+  makeApiKeyFixture,
+  TEST_WORKSPACE_SETTINGS,
+} from "./harness.js";
 
 // Use crypto.randomUUID() for unique IDs — avoids importing @repo/lib
 function uid() {
@@ -159,40 +160,45 @@ beforeEach(() => {
 
   redisMock.hset.mockImplementation(
     (key: string, fields: Record<string, unknown>) => {
-      const existing =
-        (redisStore.get(key) ?? {}) as Record<string, unknown>;
+      const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
       redisStore.set(key, { ...existing, ...fields });
       return Promise.resolve(1);
-    },
+    }
   );
   redisMock.hgetall.mockImplementation(<T>(key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as T),
+    Promise.resolve((redisStore.get(key) ?? null) as T)
   );
   redisMock.set.mockImplementation(
     (key: string, value: unknown, opts?: { nx?: boolean }) => {
-      if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
+      if (opts?.nx && redisStore.has(key)) {
+        return Promise.resolve(null);
+      }
       redisStore.set(key, value);
       return Promise.resolve("OK");
-    },
+    }
   );
   redisMock.del.mockImplementation((...keys: string[]) => {
     const allKeys = keys.flat();
     let count = 0;
     for (const k of allKeys) {
-      if (redisStore.delete(k)) count++;
+      if (redisStore.delete(k)) {
+        count++;
+      }
     }
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation(<T>(key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as T),
+    Promise.resolve((redisStore.get(key) ?? null) as T)
   );
   redisMock.pipeline.mockImplementation(() => {
     const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing =
-            (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          const existing = (redisStore.get(key) ?? {}) as Record<
+            string,
+            unknown
+          >;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
@@ -208,7 +214,7 @@ beforeEach(() => {
 
   mockGetProvider.mockReturnValue(mockProvider);
   mockProvider.getAuthorizationUrl.mockReturnValue(
-    "https://github.com/login/oauth/authorize?mock=1",
+    "https://github.com/login/oauth/authorize?mock=1"
   );
   mockProvider.handleCallback.mockResolvedValue({
     installationId: "inst-1",
@@ -254,7 +260,7 @@ describe("Suite 9 — Full CLI OAuth Flow E2E", () => {
 
       // 3. Simulate browser callback: GET /services/gateway/github/callback?code=abc&state=<state>
       const callbackRes = await gatewayApp.request(
-        `/services/gateway/github/callback?code=abc&state=${state}`,
+        `/services/gateway/github/callback?code=abc&state=${state}`
       );
       expect(callbackRes.status).toBe(200); // inline HTML
 
@@ -269,7 +275,7 @@ describe("Suite 9 — Full CLI OAuth Flow E2E", () => {
 
       // 5. Poll: GET /services/gateway/oauth/status?state=<state>
       const pollRes = await gatewayApp.request(
-        `/services/gateway/oauth/status?state=${state}`,
+        `/services/gateway/oauth/status?state=${state}`
       );
       expect(pollRes.status).toBe(200);
       const pollJson = (await pollRes.json()) as {
@@ -316,7 +322,7 @@ describe("Suite 9 — Full CLI OAuth Flow E2E", () => {
 
       // 3. Simulate callback — reactivated connection
       const callbackRes = await gatewayApp.request(
-        `/services/gateway/github/callback?code=abc&state=${state}`,
+        `/services/gateway/github/callback?code=abc&state=${state}`
       );
       expect(callbackRes.status).toBe(200); // inline HTML (reactivated, still inline)
 
@@ -330,7 +336,7 @@ describe("Suite 9 — Full CLI OAuth Flow E2E", () => {
 
       // 5. Poll → { status: "completed", reactivated: "true" }
       const pollRes = await gatewayApp.request(
-        `/services/gateway/oauth/status?state=${state}`,
+        `/services/gateway/oauth/status?state=${state}`
       );
       expect(pollRes.status).toBe(200);
       const pollJson = (await pollRes.json()) as {

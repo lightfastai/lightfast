@@ -50,7 +50,7 @@ export function serve<TPayload = unknown>(
       failStatus: number;
       failResponse: string;
     }) => Promise<void>;
-  },
+  }
 ): (ctx: Context) => Promise<Response> {
   const wrappedHandler = async (context: WorkflowContext<TPayload>) => {
     try {

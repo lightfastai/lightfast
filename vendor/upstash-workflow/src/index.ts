@@ -31,7 +31,7 @@
  * ```
  */
 
-export { WorkflowClient, getWorkflowClient } from "./client";
+export { getWorkflowClient, WorkflowClient } from "./client";
 export { serve } from "./nextjs";
 export type {
   WorkflowConfig,
