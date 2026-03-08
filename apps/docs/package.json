@@ -21,11 +21,11 @@
     "search:sync:ci": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY -y"
   },
   "dependencies": {
-    "@mixedbread/sdk": "^0.50.1",
+    "@mixedbread/sdk": "^0.46.0",
     "@radix-ui/react-popover": "^1.1.14",
     "@repo/ui": "workspace:*",
     "@sentry/nextjs": "catalog:",
-    "@t3-oss/env-nextjs": "^0.12.0",
+    "@t3-oss/env-nextjs": "catalog:",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/seo": "workspace:*",
