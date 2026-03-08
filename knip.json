@@ -50,10 +50,35 @@
       "entry": ["src/index.ts"],
       "project": ["src/**/*.{ts,tsx}"]
     },
+    "packages/cms-workflows": {
+      "entry": ["src/index.ts", "src/publish-blog.ts", "src/publish-changelog.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/console-test-data": {
+      "entry": ["src/index.ts", "src/cli/**/*.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/integration-tests": {
+      "entry": ["src/**/*.test.ts", "src/**/*.integration.test.ts"],
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": [
+        "@repo/console-backfill",
+        "@vendor/inngest",
+        "@vendor/qstash",
+        "@vendor/related-projects",
+        "@vendor/upstash",
+        "@vendor/upstash-workflow"
+      ]
+    },
     "packages/og": {
       "entry": ["src/index.ts"],
       "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["react"]
+      "ignoreDependencies": ["react", "@types/react"]
+    },
+    "packages/ui": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["@turbo/gen"]
     },
     "vendor/*": {
       "entry": ["src/index.ts"],
@@ -76,8 +101,15 @@
       "drizzle": false,
       "ignoreDependencies": ["next"]
     },
+    "vendor/next": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "drizzle": false,
+      "ignoreDependencies": ["webpack"]
+    },
     "internal/eslint": {
-      "entry": ["base.js", "nextjs.js", "react.js", "hono.js"]
+      "entry": ["base.js", "nextjs.js", "react.js", "hono.js"],
+      "ignoreDependencies": ["@types/eslint__js"]
     },
     "internal/prettier": {
       "entry": ["index.js"]
@@ -116,6 +148,7 @@
     "srvx",
     "tsx",
     "prettier",
-    "eslint"
+    "eslint",
+    "@vitest/coverage-v8"
   ]
 }

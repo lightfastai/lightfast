@@ -11,7 +11,6 @@ export const config: NextConfig = withVercelToolbar()({
   poweredByHeader: false,
   reactStrictMode: true,
   reactCompiler: true,
-  serverExternalPackages: ["import-in-the-middle", "require-in-the-middle"],
 
   compiler: {
     removeConsole:
