@@ -27,9 +27,6 @@ const config: NextConfig = withSentry(
         // @db packages
         "@db/console",
         // @repo packages
-        "@repo/console-api-services",
-        "@repo/console-auth-middleware",
-        "@repo/console-backfill",
         "@repo/console-embed",
         "@repo/console-octokit-github",
         "@repo/console-pinecone",
@@ -38,9 +35,7 @@ const config: NextConfig = withSentry(
         "@repo/console-validation",
         "@repo/console-vercel",
         "@repo/console-webhooks",
-        "@repo/lib",
         "@repo/ui",
-        "@repo/url-utils",
         // @vendor packages
         "@vendor/analytics",
         "@vendor/clerk",
@@ -57,13 +52,10 @@ const config: NextConfig = withSentry(
           "recharts",
           "shiki",
           "date-fns",
-          "octokit",
-          // Internal packages (all transpilePackages except console-backfill)
+          // Internal packages
           "@repo/console-ai",
           "@repo/console-ai-types",
           "@repo/console-api-key",
-          "@repo/console-api-services",
-          "@repo/console-auth-middleware",
           "@repo/console-clerk-cache",
           "@repo/console-embed",
           "@repo/console-octokit-github",
@@ -75,8 +67,6 @@ const config: NextConfig = withSentry(
           "@repo/console-vercel",
           "@repo/console-webhooks",
           "@repo/console-workspace-cache",
-          "@repo/lib",
-          "@repo/url-utils",
           // Vendor packages
           "@vendor/analytics",
           "@vendor/clerk",
