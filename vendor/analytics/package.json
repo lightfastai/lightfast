@@ -33,7 +33,6 @@
 		"@repo/eslint-config": "workspace:*",
 		"@repo/prettier-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
-		"@types/eslint": "^8.56.5",
 		"@types/node": "catalog:",
 		"@types/react": "19.2.2",
 		"@types/react-dom": "19.2.2",

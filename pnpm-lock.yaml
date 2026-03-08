@@ -15,9 +15,6 @@ catalogs:
     '@clerk/backend':
       specifier: 2.31.0
       version: 2.31.0
-    '@clerk/elements':
-      specifier: 0.24.8
-      version: 0.24.8
     '@clerk/nextjs':
       specifier: 6.37.4
       version: 6.37.4
@@ -3289,9 +3286,6 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
-      '@types/eslint':
-        specifier: ^8.56.5
-        version: 8.56.12
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.22
@@ -3313,9 +3307,6 @@ importers:
 
   vendor/clerk:
     dependencies:
-      '@clerk/elements':
-        specifier: 'catalog:'
-        version: 0.24.8(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@clerk/nextjs':
         specifier: 'catalog:'
         version: 6.37.4(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -3423,9 +3414,6 @@ importers:
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
-      ai:
-        specifier: 'catalog:'
-        version: 5.0.52(zod@3.25.76)
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.43.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.2.17)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(postgres@3.4.7)
@@ -3565,18 +3553,15 @@ importers:
 
   vendor/inngest:
     dependencies:
-      '@inngest/agent-kit':
-        specifier: ^0.7.3
-        version: 0.7.3(@cfworker/json-schema@4.1.1)(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
-      '@inngest/middleware-sentry':
+      '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.1.3(@sentry/core@10.40.0)(@sentry/types@10.20.0)(inngest@3.44.3(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@4.21.2)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)(zod@3.25.76))
+        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
       hono:
         specifier: 'catalog:'
         version: 4.12.3
       inngest:
         specifier: 'catalog:'
-        version: 3.44.3(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@4.21.2)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)(zod@3.25.76)
+        version: 3.44.3(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)(zod@3.25.76)
       zod:
         specifier: catalog:zod3
         version: 3.25.76
@@ -3590,12 +3575,6 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
-      '@t3-oss/env-core':
-        specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
-      concurrently:
-        specifier: ^9.1.0
-        version: 9.2.1
       eslint:
         specifier: 'catalog:'
         version: 9.38.0(jiti@2.6.1)
@@ -3710,9 +3689,6 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
-      '@types/eslint':
-        specifier: ^8.56.5
-        version: 8.56.12
       eslint:
         specifier: 'catalog:'
         version: 9.38.0(jiti@2.6.1)
@@ -3737,9 +3713,6 @@ importers:
       '@sentry/core':
         specifier: 'catalog:'
         version: 10.40.0
-      '@sentry/nextjs':
-        specifier: 'catalog:'
-        version: 10.40.0(@opentelemetry/context-async-hooks@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(webpack@5.105.0)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
@@ -3925,12 +3898,6 @@ importers:
       '@vendor/clerk':
         specifier: workspace:^
         version: link:../clerk
-      js-cookie:
-        specifier: ^3.0.5
-        version: 3.0.5
-      react:
-        specifier: ^19.2.1
-        version: 19.2.1
       zod:
         specifier: catalog:zod3
         version: 3.25.76
@@ -3944,12 +3911,6 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
-      '@types/js-cookie':
-        specifier: ^3.0.6
-        version: 3.0.6
-      '@types/react':
-        specifier: ^19.1.11
-        version: 19.2.2
       eslint:
         specifier: 'catalog:'
         version: 9.38.0(jiti@2.6.1)
@@ -4030,15 +3991,9 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
-      '@types/js-cookie':
-        specifier: ^3.0.6
-        version: 3.0.6
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.22
-      '@types/react':
-        specifier: ^19.1.11
-        version: 19.2.2
       eslint:
         specifier: 'catalog:'
         version: 9.38.0(jiti@2.6.1)
@@ -4781,17 +4736,6 @@ packages:
       react: ^19.2.1
       react-dom: ^19.2.1
 
-  '@clerk/elements@0.24.8':
-    resolution: {integrity: sha512-ETI4SMBI7HWQRdryloDcfBAblIoYcqRAkKZ4sBoQTnmqvgPWGw3ydjSkrU0jSpSPSUCkEAakgaQKkXwiUOothA==}
-    engines: {node: '>=18.17.0'}
-    peerDependencies:
-      next: ^13.5.7 || ^14.2.25 || ^15.2.3 || ^16
-      react: ^19.2.1
-      react-dom: ^19.2.1
-    peerDependenciesMeta:
-      next:
-        optional: true
-
   '@clerk/nextjs@6.37.4':
     resolution: {integrity: sha512-Cl0eYQVdAN2ilLf9lT4UK1WWNWrqv1E5Z+Hx4F5zC+p0Vw4W9yhxwotDalYXgBLXFuLnwQBm5jB460X+gEFtVA==}
     engines: {node: '>=18.17.0'}
@@ -4885,9 +4829,6 @@ packages:
   '@discoveryjs/json-ext@0.5.7':
     resolution: {integrity: sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==}
     engines: {node: '>=10.0.0'}
-
-  '@dmitryrechkin/json-schema-to-zod@1.0.1':
-    resolution: {integrity: sha512-cG9gC4NMu/7JZqmRZy6uIb+l+kxek2GFQ0/qrhw7xeFK2l5B9yF9FVuujoqFPLRGDHNFYqtBWht7hY4KB0ngrA==}
 
   '@dmsnell/diff-match-patch@1.1.0':
     resolution: {integrity: sha512-yejLPmM5pjsGvxS9gXablUSbInW7H976c/FJ4iQxWIm7/38xBySRemTPDe34lhg1gVLbJntX0+sH0jYfU+PN9A==}
@@ -6182,12 +6123,6 @@ packages:
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [x64]
     os: [win32]
-
-  '@inngest/agent-kit@0.7.3':
-    resolution: {integrity: sha512-FcGwAADcmTS+V1TTOn98eR/wI3m10jJDox2+Mo1UVrcRjW6Cx/iW2VjOG1bhWrOuAFQXDL9zFzd6au6dkzR5Ww==}
-
-  '@inngest/ai@0.1.2':
-    resolution: {integrity: sha512-79Ez/2142GU5Fo44fMxo8rW6PaeVvIFnYqePdEeGTiymTGMMmcsAtrMTfnvq4AnMorFnrtTh6rr6P9xlSdhPJA==}
 
   '@inngest/ai@0.1.7':
     resolution: {integrity: sha512-5xWatW441jacGf9czKEZdgAmkvoy7GS2tp7X8GSbdGeRXzjisHR6vM+q8DQbv6rqRsmQoCQ5iShh34MguELvUQ==}
@@ -7748,19 +7683,6 @@ packages:
 
   '@radix-ui/react-focus-scope@1.1.7':
     resolution: {integrity: sha512-t2ODlkXBQyn7jkl6TNaw/MtVEVvIGelJDCG41Okq/KwUsJBwQ4XVZsHAVUkK4mBv3ewiAS3PGuUWuY2BoK4ZUw==}
-    peerDependencies:
-      '@types/react': ^19.1.11
-      '@types/react-dom': ^19.1.8
-      react: ^19.2.1
-      react-dom: ^19.2.1
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      '@types/react-dom':
-        optional: true
-
-  '@radix-ui/react-form@0.1.8':
-    resolution: {integrity: sha512-QM70k4Zwjttifr5a4sZFts9fn8FzHYvQ5PiB19O2HsYibaHSVt9fH9rzB0XZo/YcM+b7t/p7lYCT/F5eOeF5yQ==}
     peerDependencies:
       '@types/react': ^19.1.11
       '@types/react-dom': ^19.1.8
@@ -10339,15 +10261,6 @@ packages:
     resolution: {integrity: sha512-p96FSY54r+WJ50FIOsCOjyj/wavs8921hG5+kVMmZgKcvIKxMXHTrjNJvRgWa/zuX3B6t2lijLNFaOyuxUH+2A==}
     engines: {node: '>=14.6'}
 
-  '@xstate/react@6.0.0':
-    resolution: {integrity: sha512-xXlLpFJxqLhhmecAXclBECgk+B4zYSrDTl8hTfPZBogkn82OHKbm9zJxox3Z/YXoOhAQhKFTRLMYGdlbhc6T9A==}
-    peerDependencies:
-      react: ^19.2.1
-      xstate: ^5.20.0
-    peerDependenciesMeta:
-      xstate:
-        optional: true
-
   '@xtuc/ieee754@1.2.0':
     resolution: {integrity: sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==}
 
@@ -11103,11 +11016,6 @@ packages:
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
-  concurrently@9.2.1:
-    resolution: {integrity: sha512-fsfrO0MxV64Znoy8/l1vVIjjHa29SZyyqPgQBwhiDcaW8wJc2W3XWVOGx4M3oJBnv/zdUZIIp1gDeS98GzP8Ng==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   confbox@0.1.8:
     resolution: {integrity: sha512-RMtmw0iFkeR4YV+fUOSucriAQNb9g8zFR52MWCtl+cCZOFRNL6zeB395vPzFhEjjn4fMxXudmELnl/KF/WrK6w==}
 
@@ -11255,9 +11163,6 @@ packages:
 
   csstype@3.1.3:
     resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
-
-  cuint@0.2.2:
-    resolution: {integrity: sha512-d4ZVpCW31eWwCMe1YT3ur7mUDnTXbgwyzaL320DrcRT45rfjYxkt5QWLrmOJ+/UEAI2+fQgKe/fCjR8l4TpRgw==}
 
   cytoscape-cose-bilkent@4.1.0:
     resolution: {integrity: sha512-wgQlVIUJF13Quxiv5e1gstZ08rnZj2XaLHGoFMYXz7SkNfCDOOteKBE6SYRfA9WxxI/iBc3ajfDoc6hb/MRAHQ==}
@@ -13178,42 +13083,6 @@ packages:
   inline-style-parser@0.2.4:
     resolution: {integrity: sha512-0aO8FkhNZlj/ZIbNi7Lxxr12obT7cL1moPfE4tg1LkX7LlLfC6DeX4l2ZEud1ukP9jNQyNnfzQVqwbwmAATY4Q==}
 
-  inngest@3.32.5:
-    resolution: {integrity: sha512-jBxILtxhsO1FuU+RwnhzPGRiAIQv/IUcOnIM+3TbGAr+6+p5jjHK0tNw1sAlRo/UKNUwQ1wDodqNhljxSejhsA==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      '@sveltejs/kit': '>=1.27.3'
-      '@vercel/node': '>=2.15.9'
-      aws-lambda: '>=1.0.7'
-      express: '>=4.19.2'
-      fastify: '>=4.21.0'
-      h3: '>=1.8.1'
-      hono: '>=4.2.7'
-      koa: '>=2.14.2'
-      next: '>=12.0.0'
-      typescript: '>=4.7.2'
-    peerDependenciesMeta:
-      '@sveltejs/kit':
-        optional: true
-      '@vercel/node':
-        optional: true
-      aws-lambda:
-        optional: true
-      express:
-        optional: true
-      fastify:
-        optional: true
-      h3:
-        optional: true
-      hono:
-        optional: true
-      koa:
-        optional: true
-      next:
-        optional: true
-      typescript:
-        optional: true
-
   inngest@3.44.3:
     resolution: {integrity: sha512-tCzFBCl47+Mt6sscMiKeN28N+FPCyF/3ntVAGxgmx5NjgXHjXxGeAyWhYMAYSU1Agk+R8f+jjR/uN2bOHTs3DA==}
     engines: {node: '>=20'}
@@ -13778,9 +13647,6 @@ packages:
   language-tags@1.0.9:
     resolution: {integrity: sha512-MbjN408fEndfiQXbFQ1vnd+1NoLDsnQW41410oQBXiyXDMYH5z505juWa4KUE1LqxRC7DgOgZDbKLxHIwm27hA==}
     engines: {node: '>=0.10'}
-
-  layerr@3.0.0:
-    resolution: {integrity: sha512-tv754Ki2dXpPVApOrjTyRo4/QegVb9eVFq4mjqp4+NM5NaX7syQvN5BBNfV/ZpAHCEHV24XdUVrBAoka4jt3pA==}
 
   layout-base@1.0.2:
     resolution: {integrity: sha512-8h2oVEZNktL4BH2JCOI90iD1yXwL6iNW7KcCKT2QZgQJR2vbqDsldCTPRU9NifTCqHZci57XvQQ15YTu+sTYPg==}
@@ -15860,10 +15726,6 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  shell-quote@1.8.3:
-    resolution: {integrity: sha512-ObmnIF4hXNg1BqhnHmgbDETF8dLPCggZWBjkQfhZpbszZnYur5DUljTcCHii5LC3J5E0yeO/1LIMyH+UvHQgyw==}
-    engines: {node: '>= 0.4'}
-
   shiki@1.17.7:
     resolution: {integrity: sha512-Zf6hNtWhFyF4XP5OOsXkBTEx9JFPiN0TQx4wSe+Vqeuczewgk2vT4IZhF4gka55uelm052BD5BaHavNqUNZd+A==}
 
@@ -16650,10 +16512,6 @@ packages:
   uid-promise@1.0.0:
     resolution: {integrity: sha512-R8375j0qwXyIu/7R0tjdF06/sElHqbmdmWC9M2qQHpEVbvE4I5+38KJI7LUUmQMp7NVq4tKHiBMkT0NFM453Ig==}
 
-  ulidx@2.4.1:
-    resolution: {integrity: sha512-xY7c8LPyzvhvew0Fn+Ek3wBC9STZAuDI/Y5andCKi9AX6/jvfaX45PhsDX8oxgPL0YFp0Jhr8qWMbS/p9375Xg==}
-    engines: {node: '>=16'}
-
   unbox-primitive@1.1.0:
     resolution: {integrity: sha512-nWJ91DjeOkej/TA8pXQ3myruKpKEYgqvpw9lz4OPHj/NWFNluYrjbz9j01CJ8yKQd2g4jFoOkINCTW2I5LEEyw==}
     engines: {node: '>= 0.4'}
@@ -16779,15 +16637,6 @@ packages:
     resolution: {integrity: sha512-94iG+dEdEP/Sl3WWde+w9StIunlV8Dgj+vkt5wTwMoFQLaijiEZSXXy8KtcStpmEDtIptRJiNeD4ACTtVvnIKA==}
     peerDependencies:
       react: ^19.2.1
-
-  use-isomorphic-layout-effect@1.2.1:
-    resolution: {integrity: sha512-tpZZ+EX0gaghDAiFR37hj5MgY6ZN55kLiPkJsKxBMZ6GZdOSPJXiOzPM984oPYZ5AnehYx5WQp1+ME8I/P/pRA==}
-    peerDependencies:
-      '@types/react': '*'
-      react: ^19.2.1
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
 
   use-sidecar@1.1.3:
     resolution: {integrity: sha512-Fedw0aZvkhynoPYlA5WXrMCAMm+nSWdZt6lzJQ7Ok8S6Q+VsHmHpRWndVRJ8Be0ZbkfPc5LRYH+5XrzXcEeLRQ==}
@@ -17263,9 +17112,6 @@ packages:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
     engines: {node: '>=0.4'}
 
-  xxhashjs@0.2.2:
-    resolution: {integrity: sha512-AkTuIuVTET12tpsVIQo+ZU6f/qDmKuRUcjaqR+OIvm+aCBsZ95i7UVY5WJ9TMsSaZ0DA2WxoZ4acu0sPH+OKAw==}
-
   y18n@5.0.8:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}
     engines: {node: '>=10'}
@@ -17354,9 +17200,6 @@ packages:
 
   zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
-
-  zod@3.22.5:
-    resolution: {integrity: sha512-HqnGsCdVZ2xc0qWPLdO25WnseXThh0kEYKIdV5F/hTHO75hNZFp8thxSeHhiPrHZKrFTo1SOgkAj9po5bexZlw==}
 
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
@@ -18542,27 +18385,6 @@ snapshots:
       react-dom: 19.2.1(react@19.2.1)
       tslib: 2.8.1
 
-  '@clerk/elements@0.24.8(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
-    dependencies:
-      '@clerk/clerk-react': 5.60.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      '@clerk/shared': 3.45.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      '@clerk/types': 4.101.15(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      '@radix-ui/primitive': 1.1.3
-      '@radix-ui/react-form': 0.1.8(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      '@radix-ui/react-slot': 1.2.4(@types/react@19.2.2)(react@19.2.1)
-      '@xstate/react': 6.0.0(@types/react@19.2.2)(react@19.2.1)(xstate@5.23.0)
-      client-only: 0.0.1
-      react: 19.2.1
-      react-dom: 19.2.1(react@19.2.1)
-      tslib: 2.8.1
-      type-fest: 4.41.0
-      xstate: 5.23.0
-    optionalDependencies:
-      next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-    transitivePeerDependencies:
-      - '@types/react'
-      - '@types/react-dom'
-
   '@clerk/nextjs@6.37.4(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
       '@clerk/backend': 2.31.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -18645,10 +18467,6 @@ snapshots:
   '@date-fns/tz@1.4.1': {}
 
   '@discoveryjs/json-ext@0.5.7': {}
-
-  '@dmitryrechkin/json-schema-to-zod@1.0.1':
-    dependencies:
-      zod: 3.25.76
 
   '@dmsnell/diff-match-patch@1.1.0': {}
 
@@ -19446,46 +19264,10 @@ snapshots:
   '@img/sharp-win32-x64@0.34.4':
     optional: true
 
-  '@inngest/agent-kit@0.7.3(@cfworker/json-schema@4.1.1)(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)':
-    dependencies:
-      '@dmitryrechkin/json-schema-to-zod': 1.0.1
-      '@inngest/ai': 0.1.2
-      '@modelcontextprotocol/sdk': 1.27.1(@cfworker/json-schema@4.1.1)(zod@3.25.76)
-      eventsource: 3.0.7
-      express: 4.21.2
-      inngest: 3.32.5(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@4.21.2)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)
-      xxhashjs: 0.2.2
-      zod: 3.25.76
-      zod-to-json-schema: 3.24.6(zod@3.25.76)
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - '@sveltejs/kit'
-      - '@vercel/node'
-      - aws-lambda
-      - encoding
-      - fastify
-      - h3
-      - hono
-      - koa
-      - next
-      - supports-color
-      - typescript
-
-  '@inngest/ai@0.1.2':
-    dependencies:
-      '@types/node': 22.18.11
-      typescript: 5.9.3
-
   '@inngest/ai@0.1.7':
     dependencies:
       '@types/node': 22.18.11
       typescript: 5.9.3
-
-  '@inngest/middleware-sentry@0.1.3(@sentry/core@10.40.0)(@sentry/types@10.20.0)(inngest@3.44.3(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@4.21.2)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)(zod@3.25.76))':
-    dependencies:
-      '@sentry/core': 10.40.0
-      '@sentry/types': 10.20.0
-      inngest: 3.44.3(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@4.21.2)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)(zod@3.25.76)
 
   '@inngest/middleware-sentry@0.1.3(@sentry/core@10.40.0)(@sentry/types@10.20.0)(inngest@3.44.3(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)(zod@3.25.76))':
     dependencies:
@@ -21461,20 +21243,6 @@ snapshots:
       '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.2.2)(react@19.2.1)
       '@radix-ui/react-primitive': 2.1.3(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@radix-ui/react-use-callback-ref': 1.1.1(@types/react@19.2.2)(react@19.2.1)
-      react: 19.2.1
-      react-dom: 19.2.1(react@19.2.1)
-    optionalDependencies:
-      '@types/react': 19.2.2
-      '@types/react-dom': 19.2.2(@types/react@19.2.2)
-
-  '@radix-ui/react-form@0.1.8(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
-    dependencies:
-      '@radix-ui/primitive': 1.1.3
-      '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.2.2)(react@19.2.1)
-      '@radix-ui/react-context': 1.1.2(@types/react@19.2.2)(react@19.2.1)
-      '@radix-ui/react-id': 1.1.1(@types/react@19.2.2)(react@19.2.1)
-      '@radix-ui/react-label': 2.1.7(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      '@radix-ui/react-primitive': 2.1.3(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
     optionalDependencies:
@@ -24804,16 +24572,6 @@ snapshots:
 
   '@xmldom/xmldom@0.9.8': {}
 
-  '@xstate/react@6.0.0(@types/react@19.2.2)(react@19.2.1)(xstate@5.23.0)':
-    dependencies:
-      react: 19.2.1
-      use-isomorphic-layout-effect: 1.2.1(@types/react@19.2.2)(react@19.2.1)
-      use-sync-external-store: 1.6.0(react@19.2.1)
-    optionalDependencies:
-      xstate: 5.23.0
-    transitivePeerDependencies:
-      - '@types/react'
-
   '@xtuc/ieee754@1.2.0': {}
 
   '@xtuc/long@4.2.2': {}
@@ -25688,15 +25446,6 @@ snapshots:
 
   concat-map@0.0.1: {}
 
-  concurrently@9.2.1:
-    dependencies:
-      chalk: 4.1.2
-      rxjs: 7.8.2
-      shell-quote: 1.8.3
-      supports-color: 8.1.1
-      tree-kill: 1.2.2
-      yargs: 17.7.2
-
   confbox@0.1.8: {}
 
   confbox@0.2.2: {}
@@ -25843,8 +25592,6 @@ snapshots:
       - postcss
 
   csstype@3.1.3: {}
-
-  cuint@0.2.2: {}
 
   cytoscape-cose-bilkent@4.1.0(cytoscape@3.33.1):
     dependencies:
@@ -28233,70 +27980,6 @@ snapshots:
 
   inline-style-parser@0.2.4: {}
 
-  inngest@3.32.5(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@4.21.2)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3):
-    dependencies:
-      '@bufbuild/protobuf': 2.9.0
-      '@inngest/ai': 0.1.2
-      '@jpwilliams/waitgroup': 2.1.1
-      '@types/debug': 4.1.12
-      canonicalize: 1.0.8
-      chalk: 4.1.2
-      cross-fetch: 4.1.0(encoding@0.1.13)
-      debug: 4.4.3
-      hash.js: 1.1.7
-      json-stringify-safe: 5.0.1
-      ms: 2.1.3
-      serialize-error-cjs: 0.1.4
-      strip-ansi: 5.2.0
-      ulidx: 2.4.1
-      zod: 3.22.5
-    optionalDependencies:
-      '@vercel/node': 5.6.9(encoding@0.1.13)(rollup@4.59.0)
-      express: 4.21.2
-      h3: 1.15.4
-      hono: 4.12.3
-      next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-
-  inngest@3.44.3(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@4.21.2)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)(zod@3.25.76):
-    dependencies:
-      '@bufbuild/protobuf': 2.9.0
-      '@inngest/ai': 0.1.7
-      '@jpwilliams/waitgroup': 2.1.1
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/auto-instrumentations-node': 0.56.1(@opentelemetry/api@1.9.0)(encoding@0.1.13)
-      '@opentelemetry/context-async-hooks': 1.30.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/exporter-trace-otlp-http': 0.57.2(@opentelemetry/api@1.9.0)
-      '@opentelemetry/instrumentation': 0.57.2(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-base': 1.30.1(@opentelemetry/api@1.9.0)
-      '@standard-schema/spec': 1.1.0
-      '@types/debug': 4.1.12
-      canonicalize: 1.0.8
-      chalk: 4.1.2
-      cross-fetch: 4.1.0(encoding@0.1.13)
-      debug: 4.4.3
-      hash.js: 1.1.7
-      json-stringify-safe: 5.0.1
-      ms: 2.1.3
-      serialize-error-cjs: 0.1.4
-      strip-ansi: 5.2.0
-      temporal-polyfill: 0.2.5
-      zod: 3.25.76
-    optionalDependencies:
-      '@vercel/node': 5.6.9(encoding@0.1.13)(rollup@4.59.0)
-      express: 4.21.2
-      h3: 1.15.4
-      hono: 4.12.3
-      next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-
   inngest@3.44.3(@vercel/node@5.6.9(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.3)(next@16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(typescript@5.9.3)(zod@3.25.76):
     dependencies:
       '@bufbuild/protobuf': 2.9.0
@@ -28877,8 +28560,6 @@ snapshots:
   language-tags@1.0.9:
     dependencies:
       language-subtag-registry: 0.3.23
-
-  layerr@3.0.0: {}
 
   layout-base@1.0.2: {}
 
@@ -31419,8 +31100,6 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  shell-quote@1.8.3: {}
-
   shiki@1.17.7:
     dependencies:
       '@shikijs/core': 1.17.7
@@ -32318,10 +31997,6 @@ snapshots:
 
   uid-promise@1.0.0: {}
 
-  ulidx@2.4.1:
-    dependencies:
-      layerr: 3.0.0
-
   unbox-primitive@1.1.0:
     dependencies:
       call-bound: 1.0.4
@@ -32475,12 +32150,6 @@ snapshots:
     dependencies:
       dequal: 2.0.3
       react: 19.2.1
-
-  use-isomorphic-layout-effect@1.2.1(@types/react@19.2.2)(react@19.2.1):
-    dependencies:
-      react: 19.2.1
-    optionalDependencies:
-      '@types/react': 19.2.2
 
   use-sidecar@1.1.3(@types/react@19.2.2)(react@19.2.1):
     dependencies:
@@ -33532,10 +33201,6 @@ snapshots:
 
   xtend@4.0.2: {}
 
-  xxhashjs@0.2.2:
-    dependencies:
-      cuint: 0.2.2
-
   y18n@5.0.8: {}
 
   yallist@3.1.1: {}
@@ -33609,8 +33274,6 @@ snapshots:
   zod@3.22.3: {}
 
   zod@3.22.4: {}
-
-  zod@3.22.5: {}
 
   zod@3.25.76: {}
 

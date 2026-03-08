@@ -26,7 +26,6 @@
 	"dependencies": {
 		"@planetscale/database": "^1.19.0",
 		"@t3-oss/env-core": "catalog:",
-		"ai": "catalog:",
 		"drizzle-orm": "catalog:",
 		"drizzle-zod": "catalog:",
 		"zod": "catalog:zod3"

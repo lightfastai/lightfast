@@ -28,7 +28,6 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/eslint": "^8.56.5",
     "eslint": "catalog:",
     "next": "catalog:next16",
     "typescript": "catalog:",

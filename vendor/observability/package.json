@@ -43,7 +43,6 @@
     "@logtail/edge": "^0.5.0",
     "@logtail/next": "^0.2.0",
     "@sentry/core": "catalog:",
-    "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
     "zod": "catalog:zod3"

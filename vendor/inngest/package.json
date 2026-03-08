@@ -34,16 +34,13 @@
 		"@repo/eslint-config": "workspace:*",
 		"@repo/prettier-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
-		"@t3-oss/env-core": "catalog:",
-		"concurrently": "^9.1.0",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
 		"typescript": "catalog:"
 	},
 	"prettier": "@repo/prettier-config",
 	"dependencies": {
-		"@inngest/agent-kit": "^0.7.3",
-		"@inngest/middleware-sentry": "catalog:",
+		"@t3-oss/env-core": "catalog:",
 		"inngest": "catalog:",
 		"zod": "catalog:zod3"
 	},
