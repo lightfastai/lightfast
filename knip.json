@@ -1,0 +1,88 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.{js,ts,sh}"],
+      "ignoreDependencies": ["turbo-ignore"]
+    },
+    "apps/console": {
+      "entry": ["src/app/**/*.{ts,tsx}", "next.config.ts", "sentry.*.config.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/www": {
+      "entry": ["src/app/**/*.{ts,tsx}", "next.config.ts", "sentry.*.config.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/auth": {
+      "entry": ["src/app/**/*.{ts,tsx}", "next.config.ts", "sentry.*.config.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/docs": {
+      "entry": ["src/app/**/*.{ts,tsx}", "next.config.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/relay": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "apps/gateway": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "apps/backfill": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "api/*": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "core/*": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "db/*": {
+      "entry": ["src/index.ts", "src/drizzle.config.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/*": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "vendor/*": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "drizzle": false
+    },
+    "internal/eslint": {
+      "entry": ["base.js", "nextjs.js", "react.js", "hono.js"]
+    },
+    "internal/prettier": {
+      "entry": ["index.js"]
+    },
+    "internal/typescript": {
+      "entry": ["base.json"]
+    }
+  },
+  "ignore": [
+    "tmp/**",
+    "worktrees/**",
+    "thoughts/**",
+    ".agents/**",
+    ".claude/**",
+    "**/drizzle.config.ts",
+    "**/sentry.*.config.ts",
+    "**/sentry-init.ts"
+  ],
+  "ignoreWorkspaces": [
+    "packages/console-remotion",
+    "packages/tech-stack-detector"
+  ],
+  "ignoreDependencies": [
+    "@repo/typescript-config",
+    "@repo/prettier-config",
+    "@repo/eslint-config",
+    "@repo/console-remotion",
+    "@repo/tech-stack-detector"
+  ]
+}
