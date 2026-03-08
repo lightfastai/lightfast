@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useOrganizationList } from "@clerk/nextjs";
+import { useOrganizationList } from "@vendor/clerk/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { Input } from "@repo/ui/components/ui/input";
@@ -125,15 +125,14 @@ export function TeamGeneralSettingsClient({
 	};
 
 	return (
-		<div className="space-y-8">
-			<div>
+        <div className="space-y-8">
+            <div>
 				<h2 className="text-2xl font-pp font-medium text-foreground">General</h2>
 				<p className="text-sm text-muted-foreground mt-1">
 					Manage your team's profile and preferences.
 				</p>
 			</div>
-
-			<Form {...form}>
+            <Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 					{/* Team Name Section */}
 					<div className="space-y-4">
@@ -196,9 +195,8 @@ export function TeamGeneralSettingsClient({
 					</div>
 				</form>
 			</Form>
-
-			{/* Additional Settings */}
-			<div className="space-y-4">
+            {/* Additional Settings */}
+            <div className="space-y-4">
 				<div>
 					<h2 className="text-xl font-semibold text-foreground">
 						Additional Settings
@@ -208,6 +206,6 @@ export function TeamGeneralSettingsClient({
 					</p>
 				</div>
 			</div>
-		</div>
-	);
+        </div>
+    );
 }

@@ -33,7 +33,7 @@
  * @see https://clerk.com/docs/machine-auth/m2m-tokens
  */
 
-import { createClerkClient } from "@clerk/backend";
+import { createClerkClient } from "@vendor/clerk/backend";
 import { consoleM2MEnv } from "./env";
 
 /**
@@ -167,7 +167,7 @@ export async function verifyM2MToken(token: string): Promise<{
 
   // Verify token using Clerk's M2M API
   // No need to pass machineSecretKey - it's already in the client
-  const verified = await clerk.m2m.verifyToken({
+  const verified = await clerk.m2m.verify({
     token,
   });
 

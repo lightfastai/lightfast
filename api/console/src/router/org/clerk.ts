@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 import { userScopedProcedure } from "../../trpc";
-import { clerkClient } from "@clerk/nextjs/server";
+import { clerkClient } from "@vendor/clerk/server";
 import {
 	getOrganizationMembership
 	

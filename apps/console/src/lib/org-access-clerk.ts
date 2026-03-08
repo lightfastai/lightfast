@@ -1,5 +1,5 @@
 import "server-only";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@vendor/clerk/server";
 import { getCachedUserOrgMemberships } from "@repo/console-clerk-cache";
 
 /**

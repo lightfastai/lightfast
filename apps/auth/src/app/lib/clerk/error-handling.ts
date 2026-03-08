@@ -1,5 +1,5 @@
-import { isClerkAPIResponseError, isUserLockedError } from '@clerk/shared'
-import type { ClerkAPIError } from '@clerk/types'
+import { isClerkAPIResponseError, isUserLockedError } from "@vendor/clerk"
+import type { ClerkAPIError } from "@vendor/clerk/types"
 
 /**
  * Extract user-friendly error message from Clerk errors

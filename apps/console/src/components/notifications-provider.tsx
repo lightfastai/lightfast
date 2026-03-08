@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@vendor/clerk/client";
 import { NotificationsProvider } from "@vendor/knock/components/provider";
 import type { ReactNode } from "react";
 

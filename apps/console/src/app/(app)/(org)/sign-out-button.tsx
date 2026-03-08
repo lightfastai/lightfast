@@ -1,6 +1,6 @@
 "use client";
 
-import { useClerk } from "@clerk/nextjs";
+import { useClerk } from "@vendor/clerk/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { authUrl } from "~/lib/related-projects";
 

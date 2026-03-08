@@ -1,6 +1,6 @@
 'use client'
 
-import { AuthenticateWithRedirectCallback } from '@clerk/nextjs'
+import { AuthenticateWithRedirectCallback } from "@vendor/clerk/client"
 
 export default function Page() {
   // Handle the redirect flow by calling the Clerk.handleRedirectCallback() method
@@ -16,8 +16,6 @@ export default function Page() {
       continueSignUpUrl="/sign-in"
       signInFallbackRedirectUrl="/account/teams/new"
       signUpFallbackRedirectUrl="/account/teams/new"
-      afterSignInUrl="/account/teams/new"
-      afterSignUpUrl="/account/teams/new"
     />
   )
 }

@@ -44,14 +44,10 @@ export {
   useReverification,
   useSession,
   useSessionList,
-  useSignIn,
-  useSignUp,
   useUser,
 } from "@clerk/nextjs";
 
-export type {
-  UseOrganizationCreationDefaultsParams,
-  UseOrganizationCreationDefaultsReturn,
-} from "@clerk/nextjs";
+// useSignIn and useSignUp use the legacy programmatic API (Core 3 replaced with components-based API)
+export { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
 
-export { ClerkProvider, SignedIn, SignedOut, Protect } from "@clerk/nextjs";
+export { ClerkProvider, Show } from "@clerk/nextjs";

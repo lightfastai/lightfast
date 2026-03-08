@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useOrganizationList } from "@clerk/nextjs";
+import { useOrganizationList } from "@vendor/clerk/client";
 
 interface TeamSwitcherLinkProps {
   orgId: string;

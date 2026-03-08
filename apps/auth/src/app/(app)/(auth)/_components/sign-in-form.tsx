@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useSignIn } from "@clerk/nextjs";
+import { useSignIn } from "@vendor/clerk/client";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";

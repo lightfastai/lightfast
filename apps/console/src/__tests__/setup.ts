@@ -9,7 +9,61 @@
 process.env.SKIP_ENV_VALIDATION = "true";
 
 // jest-dom matchers (toBeInTheDocument, toHaveTextContent, etc.)
-import "@testing-library/jest-dom/vitest";
+// Use the /matchers entry and call expect.extend() ourselves so we control which
+// `expect` instance receives the extension. Importing "/vitest" as a side-effect
+// calls `import { expect } from 'vitest'` inside jest-dom's own module, which in
+// vitest 4's threads pool can resolve to a different module instance than the one
+// the test workers use, silently making the matchers unreachable at runtime.
+import * as jestDomMatchers from "@testing-library/jest-dom/matchers";
+import { expect } from "vitest";
+expect.extend(jestDomMatchers);
+
+// Vitest 4 compatibility: the jest-dom/vitest entry only augments the `vitest` module's
+// Assertion type via `declare module 'vitest'`. In vitest 4, ExpectStatic (defined in
+// @vitest/expect) returns @vitest/expect.Assertion<T> directly, and the augmentation on
+// the re-exporting `vitest` module does not propagate. We must also augment @vitest/expect.
+declare module "@vitest/expect" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- T must match original Assertion<T> generic for module augmentation
+  interface Assertion<T> {
+    toBeInTheDocument(): void;
+    toBeVisible(): void;
+    toBeEmptyDOMElement(): void;
+    toBeDisabled(): void;
+    toBeEnabled(): void;
+    toBeInvalid(): void;
+    toBeRequired(): void;
+    toBeValid(): void;
+    toBeChecked(): void;
+    toBePartiallyChecked(): void;
+    toContainElement(element: HTMLElement | SVGElement | null): void;
+    toContainHTML(htmlText: string): void;
+    toHaveAttribute(attr: string, value?: unknown): void;
+    toHaveClass(...classNames: (string | RegExp)[]): void;
+    toHaveClass(classNames: string, options?: { exact: boolean }): void;
+    toHaveDisplayValue(
+      value: string | RegExp | (string | RegExp)[],
+    ): void;
+    toHaveFocus(): void;
+    toHaveFormValues(expectedValues: Record<string, unknown>): void;
+    toHaveStyle(css: string | Record<string, unknown>): void;
+    toHaveTextContent(
+      text: string | RegExp,
+      options?: { normalizeWhitespace: boolean },
+    ): void;
+    toHaveValue(value?: string | string[] | number | null): void;
+    toHaveRole(role: string): void;
+    toHaveAccessibleDescription(text?: string | RegExp): void;
+    toHaveAccessibleErrorMessage(text?: string | RegExp): void;
+    toHaveAccessibleName(text?: string | RegExp): void;
+    toHaveDescription(text?: string | RegExp): void;
+    toHaveErrorMessage(text?: string | RegExp): void;
+    toHaveSelection(selection?: string): void;
+    toBePressed(): void;
+    toBePartiallyPressed(): void;
+    toAppearBefore(element: HTMLElement | SVGElement): void;
+    toAppearAfter(element: HTMLElement | SVGElement): void;
+  }
+}
 
 // Polyfill stubs for APIs that Radix primitives may reference
 if (typeof globalThis.ResizeObserver === "undefined") {

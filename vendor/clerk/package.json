@@ -12,7 +12,8 @@
     "./server": "./src/server.ts",
     "./types": "./src/types.ts",
     "./webhooks": "./src/webhooks.ts",
-    "./client": "./src/client/index.ts"
+    "./client": "./src/client/index.ts",
+    "./backend": "./src/backend.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -24,7 +25,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/backend": "catalog:",
     "@clerk/nextjs": "catalog:",
+    "@clerk/shared": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "next": "catalog:next16",
     "react": "catalog:react19",
@@ -33,7 +36,6 @@
     "zod": "catalog:zod3"
   },
   "devDependencies": {
-    "@clerk/types": "catalog:",
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",

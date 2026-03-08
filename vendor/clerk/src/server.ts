@@ -11,7 +11,6 @@ export { clerkMiddleware } from "@clerk/nextjs/server";
 export type {
   ClerkMiddlewareAuth,
   ClerkMiddlewareSessionAuthObject,
-  ClerkMiddlewareAuthObject,
   ClerkMiddlewareOptions,
 } from "@clerk/nextjs/server";
 export type {

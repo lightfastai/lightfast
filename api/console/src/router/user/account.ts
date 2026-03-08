@@ -1,6 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { clerkClient } from "@clerk/nextjs/server";
+import { clerkClient } from "@vendor/clerk/server";
 import { userScopedProcedure } from "../../trpc";
 
 /**
