@@ -39,8 +39,9 @@ export {
   useReverification,
   useSession,
   useSessionList,
+  // useSignIn and useSignUp use Core 3 programmatic API (signIn.emailCode.sendCode, signIn.finalize, etc.)
+  useSignIn,
+  useSignUp,
   useUser,
   Waitlist,
 } from "@clerk/nextjs";
-// useSignIn and useSignUp use the legacy programmatic API (Core 3 replaced with components-based API)
-export { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
