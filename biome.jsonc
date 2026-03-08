@@ -7,11 +7,8 @@
   "linter": {
     "rules": {
       "a11y": {
-        "noNoninteractiveElementInteractions": "off",
         "noSvgWithoutTitle": "off",
-        "useAriaPropsForRole": "off",
         "useButtonType": "off",
-        "useFocusableInteractive": "off",
         "useSemanticElements": "off"
       },
       "complexity": {
@@ -20,41 +17,28 @@
         "noForEach": "off",
         "noVoid": "off"
       },
-      "correctness": {
-        "noNestedComponentDefinitions": "off"
-      },
       "performance": {
-        "noAccumulatingSpread": "off",
         "noBarrelFile": "off",
-        "noImgElement": "off",
         "noNamespaceImport": "off",
         "useTopLevelRegex": "off"
       },
       "security": {
-        "noDangerouslySetInnerHtml": "off",
-        "noGlobalEval": "off"
+        "noDangerouslySetInnerHtml": "off"
       },
       "style": {
         "noEnum": "off",
         "noExportedImports": "off",
-        "noNamespace": "off",
         "noNestedTernary": "off",
         "noNonNullAssertion": "off",
-        "noParameterAssign": "off",
         "noParameterProperties": "off",
-        "useCollapsedIf": "off",
         "useConsistentMemberAccessibility": "off",
-        "useDefaultSwitchClause": "off",
-        "useFilenamingConvention": "off",
-        "useForOf": "off"
+        "useDefaultSwitchClause": "off"
       },
       "suspicious": {
         "noAlert": "off",
         "noArrayIndexKey": "off",
         "noAssignInExpressions": "off",
         "noBitwiseOperators": "off",
-        "noControlCharactersInRegex": "off",
-        "noDocumentCookie": "off",
         "noEmptyBlockStatements": "off",
         "noEvolvingTypes": "off",
         "noExplicitAny": "off",

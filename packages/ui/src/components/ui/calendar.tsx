@@ -119,6 +119,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
+        // biome-ignore lint/correctness/noNestedComponentDefinitions: react-day-picker API requires inline component definitions
         Root: ({ className, rootRef, ...props }) => {
           return (
             <div
@@ -129,6 +130,7 @@ function Calendar({
             />
           );
         },
+        // biome-ignore lint/correctness/noNestedComponentDefinitions: react-day-picker API requires inline component definitions
         Chevron: ({ className, orientation, ...props }) => {
           if (orientation === "left") {
             return (
@@ -150,6 +152,7 @@ function Calendar({
           );
         },
         DayButton: CalendarDayButton,
+        // biome-ignore lint/correctness/noNestedComponentDefinitions: react-day-picker API requires inline component definitions
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>

@@ -159,7 +159,7 @@ export const backfillOrchestrator = inngest.createFunction(
         .replace(/\n/g, "\\n")
         .replace(/\r/g, "\\r")
         .replace(/\t/g, "\\t")
-        // eslint-disable-next-line no-control-regex
+        // biome-ignore lint/suspicious/noControlCharactersInRegex: intentionally matching control characters to escape them
         .replace(/[\x00-\x1f]/g, (ch) => {
           const hex = ch.charCodeAt(0).toString(16).padStart(4, "0");
           return `\\u${hex}`;

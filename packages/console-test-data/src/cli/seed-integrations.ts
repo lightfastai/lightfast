@@ -164,6 +164,7 @@ function parseArgs(): SeedOptions {
   const args = process.argv.slice(2);
   const options: SeedOptions = { workspaceId: "", userId: "" };
 
+  // biome-ignore lint/style/useForOf: requires index mutation (args[++i]) for flag parsing
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === "-w" || arg === "--workspace") {

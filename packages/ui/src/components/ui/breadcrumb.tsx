@@ -50,14 +50,17 @@ function BreadcrumbLink({
 
 function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   return (
-    <span
-      aria-current="page"
-      aria-disabled="true"
-      className={cn("font-normal text-foreground", className)}
-      data-slot="breadcrumb-page"
-      role="link"
-      {...props}
-    />
+    <>
+      {/* biome-ignore lint/a11y/useFocusableInteractive: breadcrumb current page is non-interactive by design, role="link" is presentational */}
+      <span
+        aria-current="page"
+        aria-disabled="true"
+        className={cn("font-normal text-foreground", className)}
+        data-slot="breadcrumb-page"
+        role="link"
+        {...props}
+      />
+    </>
   );
 }
 
