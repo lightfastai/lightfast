@@ -25,7 +25,7 @@
     "@repo/console-validation": "workspace:*",
     "fast-glob": "^3.3.2",
     "neverthrow": "catalog:",
-    "yaml": "^2.7.0",
+    "yaml": "^2.8.2",
     "zod": "catalog:zod3"
   },
   "devDependencies": {
@@ -35,7 +35,7 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "tsup": "^8.5.0",
+    "tsup": "^8.5.1",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

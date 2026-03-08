@@ -31,7 +31,7 @@
     "eslint": "catalog:",
     "next": "catalog:next16",
     "typescript": "catalog:",
-    "webpack": "^5"
+    "webpack": "^5.105.4"
   },
   "dependencies": {
     "@logtail/next": "^0.2.0",

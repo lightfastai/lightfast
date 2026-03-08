@@ -20,15 +20,15 @@
     "render:lissajous": "npx tsx src/render-lissajous.ts"
   },
   "dependencies": {
-    "@remotion/bundler": "^4.0.242",
-    "@remotion/cli": "^4.0.242",
-    "@remotion/fonts": "^4.0.242",
-    "@remotion/renderer": "^4.0.242",
+    "@remotion/bundler": "^4.0.434",
+    "@remotion/cli": "^4.0.434",
+    "@remotion/fonts": "^4.0.434",
+    "@remotion/renderer": "^4.0.434",
     "@vendor/remotion": "workspace:*",
     "clsx": "catalog:",
-    "react": "19.2.1",
-    "react-dom": "19.2.1",
-    "remotion": "^4.0.242",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "remotion": "^4.0.434",
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {
@@ -39,14 +39,14 @@
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "css-loader": "^7.1.2",
+    "css-loader": "^7.1.4",
     "eslint": "catalog:",
     "postcss": "catalog:tailwind4",
     "postcss-loader": "^8.1.1",
     "prettier": "catalog:",
     "style-loader": "^4.0.0",
     "tailwindcss": "catalog:tailwind4",
-    "tsx": "^4.19.2",
+    "tsx": "^4.21.0",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"

@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@vendor/cms": "workspace:*",
-    "basehub": "^9.5.2",
+    "basehub": "^9.5.3",
     "gray-matter": "^4.0.3",
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
@@ -37,7 +37,7 @@
     "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "tsx": "^4.19.2",
+    "tsx": "^4.21.0",
     "typescript": "catalog:"
   },
   "prettier": "@repo/prettier-config"
