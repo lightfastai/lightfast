@@ -1,4 +1,4 @@
-import { friendlyWords } from "friendlier-words";
+import { friendlyWords } from "@repo/lib/friendly-words";
 
 /**
  * Minimal constants for workspace/store slug generation

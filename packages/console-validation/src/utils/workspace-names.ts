@@ -1,4 +1,4 @@
-import { friendlyWords } from "friendlier-words";
+import { friendlyWords } from "@repo/lib/friendly-words";
 import { WORKSPACE_NAME, STORE_NAME } from "../constants/naming";
 
 /**

@@ -7,6 +7,7 @@ export default defineConfig({
     "datetime/index": "src/datetime/index.ts",
     uuid: "src/uuid.ts",
     nanoid: "src/nanoid.ts",
+    "friendly-words": "src/friendly-words.ts",
   },
   format: ["esm"],
   dts: false,

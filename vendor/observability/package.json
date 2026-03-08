@@ -40,8 +40,8 @@
   },
   "prettier": "@repo/prettier-config",
   "dependencies": {
-    "@logtail/edge": "^0.5.0",
-    "@logtail/next": "^0.2.0",
+    "@logtail/edge": "^0.5.8",
+    "@logtail/next": "^0.3.1",
     "@sentry/core": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",

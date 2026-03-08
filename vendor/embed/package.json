@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
-    "cohere-ai": "^7.19.0",
+    "cohere-ai": "^7.20.0",
     "zod": "catalog:zod3"
   },
   "devDependencies": {

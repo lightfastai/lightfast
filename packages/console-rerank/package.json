@@ -22,7 +22,7 @@
     "@ai-sdk/gateway": "catalog:",
     "@vendor/observability": "workspace:*",
     "ai": "catalog:",
-    "cohere-ai": "^7.19.0",
+    "cohere-ai": "^7.20.0",
     "zod": "catalog:zod3"
   },
   "devDependencies": {

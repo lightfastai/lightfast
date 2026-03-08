@@ -43,11 +43,11 @@
 	"prettier": "@repo/prettier-config",
 	"dependencies": {
 "@t3-oss/env-nextjs": "catalog:",
-		"@vercel/analytics": "^1.5.0",
-		"@vercel/speed-insights": "^1.2.0",
+		"@vercel/analytics": "^1.6.1",
+		"@vercel/speed-insights": "^1.3.1",
 		"next": "catalog:next16",
-		"posthog-js": "^1.302.2",
-		"posthog-node": "^5.17.2",
+		"posthog-js": "^1.359.1",
+		"posthog-node": "^5.28.0",
 		"react": "catalog:react19",
 		"server-only": "^0.0.1",
 		"zod": "catalog:zod3"

@@ -35,7 +35,7 @@
   "prettier": "@repo/prettier-config",
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
-    "@vercel/flags-core": "^1.0.1",
+    "@vercel/flags-core": "^1.1.0",
     "zod": "catalog:zod3"
   }
 }
