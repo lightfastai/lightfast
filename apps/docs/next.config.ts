@@ -17,7 +17,7 @@ const withMDX = createMDX();
 let config: NextConfig = withBetterStack(
   mergeNextConfig(vendorConfig, {
     /** Enables hot reloading for local packages without a build step */
-    transpilePackages: ["@repo/og", "@repo/ui", "@repo/url-utils", "@vendor/seo", "@vendor/observability", "@vendor/next"],
+    transpilePackages: ["@repo/ui", "@vendor/seo", "@vendor/observability", "@vendor/next"],
 
     /** Asset prefix for serving through console app rewrites (/docs path) */
     assetPrefix: "/docs",
