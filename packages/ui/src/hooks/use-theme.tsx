@@ -16,8 +16,8 @@ export const ThemeChanger = () => {
 
   return (
     <Button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       variant="ghost"
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
     >
       {theme === "dark" ? <Moon /> : <Sun />}
     </Button>
