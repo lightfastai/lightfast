@@ -103,16 +103,14 @@ export async function deepDetect(
   } = options;
 
   // Normalize URL
-  if (!url.startsWith("http")) {
-    url = `https://${url}`;
-  }
+  const normalizedUrl = url.startsWith("http") ? url : `https://${url}`;
 
-  const domain = new URL(url).hostname;
+  const domain = new URL(normalizedUrl).hostname;
   const start = performance.now();
   const tiersUsed: Tier[] = [1, 2];
 
   // Step 1: fetchAndParse to get HTML for both tier1 matching and link extraction
-  const fetchResult = await fetchAndParse(url, timeout);
+  const fetchResult = await fetchAndParse(normalizedUrl, timeout);
   const tier1Matches = fetchResult
     ? matchTier1Rules(fetchResult.data, fetchResult.targetHostname, SIGNATURES)
     : [];
@@ -120,10 +118,10 @@ export async function deepDetect(
 
   // Step 2: Parallel — tier2 + discovery
   const [tier2Matches, discovered] = await Promise.all([
-    runTier2(url, SIGNATURES),
+    runTier2(normalizedUrl, SIGNATURES),
     discover(domain, {
       htmlLinks,
-      rootUrl: url,
+      rootUrl: normalizedUrl,
       discoveryTimeout,
     }),
   ]);
@@ -133,7 +131,7 @@ export async function deepDetect(
   let networkDomains = new Set<string>();
   if (!skipBrowser) {
     tiersUsed.push(3);
-    const tier3Result = await runTier3(url, SIGNATURES, timeout);
+    const tier3Result = await runTier3(normalizedUrl, SIGNATURES, timeout);
     tier3Matches = tier3Result.matches;
     networkDomains = tier3Result.networkDomains;
   }
@@ -208,7 +206,7 @@ export async function deepDetect(
   primaryDetected.sort((a, b) => b.confidence - a.confidence);
 
   const primary: DetectionResult = {
-    url,
+    url: normalizedUrl,
     domain,
     detected: primaryDetected,
     totalChecked: SIGNATURES.length,

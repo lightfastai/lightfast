@@ -80,13 +80,10 @@ export async function runTier3(
     // Batch-check all globals in a single evaluate call
     const globalNames = globalsToCheck.map((g) => g.global);
     const globalResults = await page.evaluate((names: string[]) => {
-      return names.map((name) => {
-        try {
-          return typeof eval(name) !== "undefined";
-        } catch {
-          return false;
-        }
-      });
+      return names.map(
+        (name) =>
+          typeof (globalThis as Record<string, unknown>)[name] !== "undefined"
+      );
     }, globalNames);
 
     for (let i = 0; i < globalsToCheck.length; i++) {

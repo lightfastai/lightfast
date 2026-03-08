@@ -201,10 +201,10 @@ export function WorkspaceSearch({
   };
 
   return (
-    <div
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: search landmark captures keyboard events for the search form
+    <search
       className="flex h-full flex-col overflow-hidden"
       onKeyDown={handleKeyDown}
-      role="search"
     >
       {/* Split Layout */}
       <div className="flex flex-1 overflow-hidden">
@@ -287,7 +287,7 @@ export function WorkspaceSearch({
           />
         </div>
       </div>
-    </div>
+    </search>
   );
 }
 

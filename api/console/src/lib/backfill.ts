@@ -1,4 +1,3 @@
-// biome-ignore lint/correctness/noUnusedImports: used when backfill is enabled
 import { withRelatedProject } from "@vendor/related-projects";
 // biome-ignore lint/correctness/noUnusedImports: used when backfill is enabled
 import { env } from "../env";

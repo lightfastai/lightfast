@@ -27,11 +27,11 @@ export async function probeCommonPrefixes(
   alreadyDiscovered = new Set<string>(),
   timeout = 5000
 ): Promise<DiscoveredUrl[]> {
-  rootDomain = rootDomain.toLowerCase();
+  const normalizedDomain = rootDomain.toLowerCase();
   const probes = COMMON_PREFIXES.filter(
-    (prefix) => !alreadyDiscovered.has(`${prefix}.${rootDomain}`)
+    (prefix) => !alreadyDiscovered.has(`${prefix}.${normalizedDomain}`)
   ).map(async (prefix): Promise<DiscoveredUrl | null> => {
-    const hostname = `${prefix}.${rootDomain}`;
+    const hostname = `${prefix}.${normalizedDomain}`;
     const probeUrl = `https://${hostname}`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);

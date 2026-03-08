@@ -10,6 +10,7 @@
  *   pnpm --filter @repo/console-test-data reset-demo -- -w <workspaceId> [-i] [--dry-run]
  */
 
+import { parseArgs as nodeParseArgs } from "node:util";
 import { db } from "@db/console/client";
 import {
   orgWorkspaces,
@@ -163,23 +164,19 @@ async function resetDemoEnvironment(options: ResetOptions) {
 
 // CLI parsing
 function parseArgs(): ResetOptions {
-  const args = process.argv.slice(2);
-  const options: ResetOptions = {
-    workspaceId: "",
-    inject: false,
-    dryRun: false,
-  };
+  const { values } = nodeParseArgs({
+    args: process.argv.slice(2),
+    options: {
+      workspace: { type: "string", short: "w" },
+      inject: { type: "boolean", short: "i", default: false },
+      "dry-run": { type: "boolean", default: false },
+      help: { type: "boolean", short: "h", default: false },
+    },
+    strict: false,
+  });
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg === "-w" || arg === "--workspace") {
-      options.workspaceId = args[++i] ?? "";
-    } else if (arg === "-i" || arg === "--inject") {
-      options.inject = true;
-    } else if (arg === "--dry-run") {
-      options.dryRun = true;
-    } else if (arg === "-h" || arg === "--help") {
-      console.log(`
+  if (values.help) {
+    console.log(`
 Usage: reset-demo -w <workspaceId> [-i] [--dry-run]
 
 Options:
@@ -191,11 +188,14 @@ Options:
 Example:
   pnpm --filter @repo/console-test-data reset-demo -- -w ws_abc123 -i
 `);
-      process.exit(0);
-    }
+    process.exit(0);
   }
 
-  return options;
+  return {
+    workspaceId: (values.workspace as string) ?? "",
+    inject: (values.inject as boolean) ?? false,
+    dryRun: (values["dry-run"] as boolean) ?? false,
+  };
 }
 
 const options = parseArgs();

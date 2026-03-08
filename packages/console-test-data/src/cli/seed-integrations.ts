@@ -9,6 +9,7 @@
  *   pnpm seed-integrations:prod -- -w <workspaceId> -u <clerkUserId>
  */
 
+import { parseArgs as nodeParseArgs } from "node:util";
 import { db } from "@db/console";
 import type { InsertWorkspaceIntegration } from "@db/console/schema";
 import { workspaceIntegrations } from "@db/console/schema";
@@ -161,17 +162,18 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
 // ---------------------------------------------------------------------------
 
 function parseArgs(): SeedOptions {
-  const args = process.argv.slice(2);
-  const options: SeedOptions = { workspaceId: "", userId: "" };
+  const { values } = nodeParseArgs({
+    args: process.argv.slice(2),
+    options: {
+      workspace: { type: "string", short: "w" },
+      user: { type: "string", short: "u" },
+      help: { type: "boolean", short: "h", default: false },
+    },
+    strict: false,
+  });
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg === "-w" || arg === "--workspace") {
-      options.workspaceId = args[++i] ?? "";
-    } else if (arg === "-u" || arg === "--user") {
-      options.userId = args[++i] ?? "";
-    } else if (arg === "-h" || arg === "--help") {
-      console.log(`
+  if (values.help) {
+    console.log(`
 Usage: seed-integrations -w <workspaceId> -u <clerkUserId>
 
 Seeds demo workspace integrations for GitHub, Vercel, Sentry,
@@ -185,11 +187,13 @@ Options:
 Example:
   pnpm seed-integrations:prod -- -w ws_abc123 -u user_abc123
 `);
-      process.exit(0);
-    }
+    process.exit(0);
   }
 
-  return options;
+  return {
+    workspaceId: (values.workspace as string) ?? "",
+    userId: (values.user as string) ?? "",
+  };
 }
 
 const options = parseArgs();

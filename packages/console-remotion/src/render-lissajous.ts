@@ -41,7 +41,7 @@ function computePath(
 async function main() {
   const outputPath = path.resolve(
     __dirname,
-    "../../../apps/www/src/lib/generated/lissajous-paths.ts"
+    "../../../packages/ui/src/lib/lissajous-paths.ts"
   );
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
 

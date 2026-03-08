@@ -1,3 +1,4 @@
+// biome-ignore lint/style/useFilenamingConvention: Remotion requires PascalCase entry point
 import { Composition, Still } from "remotion";
 import { LandingHero } from "./compositions/landing-hero/landing-hero";
 import { LOGO_VARIANTS, Logo } from "./compositions/logo";

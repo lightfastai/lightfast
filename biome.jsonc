@@ -2,16 +2,20 @@
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
   "files": {
-    "includes": ["**/*", "!.claude", "!apps/www/src/lib/generated"]
+    "includes": [
+      "**/*",
+      "!.claude",
+      "!packages/ui/src/components/ui",
+      "!packages/ui/src/hooks",
+      "!packages/ui/src/lib",
+      "!vendor/cms/basehub-types.d.ts"
+    ]
   },
   "linter": {
     "rules": {
       "a11y": {
-        "noNoninteractiveElementInteractions": "off",
         "noSvgWithoutTitle": "off",
-        "useAriaPropsForRole": "off",
         "useButtonType": "off",
-        "useFocusableInteractive": "off",
         "useSemanticElements": "off"
       },
       "complexity": {
@@ -20,41 +24,28 @@
         "noForEach": "off",
         "noVoid": "off"
       },
-      "correctness": {
-        "noNestedComponentDefinitions": "off"
-      },
       "performance": {
-        "noAccumulatingSpread": "off",
         "noBarrelFile": "off",
-        "noImgElement": "off",
         "noNamespaceImport": "off",
         "useTopLevelRegex": "off"
       },
       "security": {
-        "noDangerouslySetInnerHtml": "off",
-        "noGlobalEval": "off"
+        "noDangerouslySetInnerHtml": "off"
       },
       "style": {
         "noEnum": "off",
         "noExportedImports": "off",
-        "noNamespace": "off",
         "noNestedTernary": "off",
         "noNonNullAssertion": "off",
-        "noParameterAssign": "off",
         "noParameterProperties": "off",
-        "useCollapsedIf": "off",
         "useConsistentMemberAccessibility": "off",
-        "useDefaultSwitchClause": "off",
-        "useFilenamingConvention": "off",
-        "useForOf": "off"
+        "useDefaultSwitchClause": "off"
       },
       "suspicious": {
         "noAlert": "off",
         "noArrayIndexKey": "off",
         "noAssignInExpressions": "off",
         "noBitwiseOperators": "off",
-        "noControlCharactersInRegex": "off",
-        "noDocumentCookie": "off",
         "noEmptyBlockStatements": "off",
         "noEvolvingTypes": "off",
         "noExplicitAny": "off",
