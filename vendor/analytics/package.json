@@ -34,8 +34,8 @@
 		"@repo/prettier-config": "workspace:*",
 		"@repo/typescript-config": "workspace:*",
 		"@types/node": "catalog:",
-		"@types/react": "19.2.2",
-		"@types/react-dom": "19.2.2",
+		"@types/react": "19.2.14",
+		"@types/react-dom": "19.2.3",
 		"eslint": "catalog:",
 		"prettier": "catalog:",
 		"typescript": "catalog:"

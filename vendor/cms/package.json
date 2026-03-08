@@ -26,9 +26,9 @@
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "catalog:",
-    "basehub": "^9.5.2",
+    "basehub": "^9.5.3",
     "clsx": "catalog:",
-    "react": "19.2.1",
+    "react": "19.2.4",
     "tailwind-merge": "catalog:",
     "zod": "catalog:zod3"
   },

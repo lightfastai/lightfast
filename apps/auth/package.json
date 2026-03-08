@@ -35,8 +35,8 @@
     "geist": "catalog:",
     "lucide-react": "catalog:",
     "next": "catalog:next16",
-    "react": "19.2.1",
-    "react-dom": "19.2.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
     "zod": "catalog:zod3"
   },
   "devDependencies": {
@@ -45,9 +45,9 @@
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@tailwindcss/typography": "catalog:tailwind4",
     "@types/node": "catalog:",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
-    "autoprefixer": "^10.4.21",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "autoprefixer": "^10.4.27",
     "babel-plugin-react-compiler": "catalog:",
     "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",

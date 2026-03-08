@@ -50,7 +50,7 @@
     "@types/node": "catalog:",
     "dotenv-cli": "^8.0.0",
     "eslint": "catalog:",
-    "tsx": "^4.19.2",
+    "tsx": "^4.21.0",
     "typescript": "catalog:"
   }
 }

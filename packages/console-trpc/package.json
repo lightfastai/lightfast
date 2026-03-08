@@ -33,7 +33,7 @@
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
     "next": "catalog:next16",
-    "react": "19.2.1",
+    "react": "19.2.4",
     "superjson": "catalog:"
   },
   "devDependencies": {
@@ -41,7 +41,7 @@
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "@types/react": "19.2.2",
+    "@types/react": "19.2.14",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
