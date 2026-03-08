@@ -70,7 +70,7 @@
     "tailwindcss": "catalog:tailwind4",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
-    "vitest": "^3.2.4"
+    "vitest": "catalog:"
   },
   "prettier": "@repo/prettier-config"
 }

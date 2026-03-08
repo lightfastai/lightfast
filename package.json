@@ -64,7 +64,7 @@
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.56.1",
     "vercel": "^50.28.0",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.18"
   },
   "prettier": "@repo/prettier-config",
   "pnpm": {

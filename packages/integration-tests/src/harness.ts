@@ -318,7 +318,7 @@ export function withTimeFaults(
 ): ReturnType<typeof makeStep> {
   const originalRun = step.run;
   const wrappedRun = vi.fn(async (name: string, fn: () => unknown) => {
-    const result: unknown = await originalRun(name, fn);
+    const result: unknown = await (originalRun as (name: string, fn: () => unknown) => unknown)(name, fn);
     const fault = faults.find((f) => f.afterStep === name);
     if (fault) {
       vi.advanceTimersByTime(fault.advanceMs);
