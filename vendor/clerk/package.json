@@ -24,7 +24,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/elements": "catalog:",
     "@clerk/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "next": "catalog:next16",
