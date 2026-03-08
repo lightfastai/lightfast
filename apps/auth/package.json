@@ -15,21 +15,16 @@
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
-    "@clerk/elements": "catalog:",
     "@clerk/nextjs": "catalog:",
     "@clerk/shared": "catalog:",
-    "@clerk/themes": "catalog:",
     "@clerk/types": "catalog:",
     "@hookform/resolvers": "^3.10.0",
-    "@repo/og": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@repo/url-utils": "workspace:*",
     "@rescale/nemo": "^2.0.2",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/analytics": "workspace:*",
     "@vendor/clerk": "workspace:*",
-    "@vendor/db": "workspace:*",
     "@vendor/forms": "workspace:*",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
@@ -39,11 +34,9 @@
     "@vercel/related-projects": "catalog:",
     "geist": "catalog:",
     "lucide-react": "catalog:",
-    "neverthrow": "catalog:",
     "next": "catalog:next16",
     "react": "19.2.1",
     "react-dom": "19.2.1",
-    "svix": "^1.62.0",
     "zod": "catalog:zod3"
   },
   "devDependencies": {
