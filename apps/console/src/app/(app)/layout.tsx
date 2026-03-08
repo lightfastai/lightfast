@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider } from "@vendor/clerk/client";
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import { TRPCReactProvider } from "@repo/console-trpc/react";
 import { prefetch, HydrateClient, userTrpc } from "@repo/console-trpc/server";

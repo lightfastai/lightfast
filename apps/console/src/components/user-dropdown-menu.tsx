@@ -3,7 +3,7 @@
 import {
   useClerk,
   useUser,
-} from "@clerk/nextjs";
+} from "@vendor/clerk/client";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -84,8 +84,12 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
     void signOut();
   };
 
-  if (!isLoaded || !user) {
+  if (!isLoaded) {
     return <div className="size-6 rounded-full bg-white border border-border/50" />;
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (

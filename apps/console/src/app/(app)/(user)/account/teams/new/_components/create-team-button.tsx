@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
-import { useOrganizationList } from "@clerk/nextjs";
+import { useOrganizationList } from "@vendor/clerk/client";
 import type { TeamFormValues } from "@repo/console-validation/forms";
 import { showErrorToast } from "~/lib/trpc-errors";
 

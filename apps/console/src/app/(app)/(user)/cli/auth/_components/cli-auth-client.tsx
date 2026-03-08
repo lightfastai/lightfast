@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@vendor/clerk/client";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 

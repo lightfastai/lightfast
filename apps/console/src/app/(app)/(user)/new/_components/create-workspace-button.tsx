@@ -13,7 +13,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useTRPC } from "@repo/console-trpc/react";
 import { showErrorToast } from "~/lib/trpc-errors";
-import { useOrganizationList } from "@clerk/nextjs";
+import { useOrganizationList } from "@vendor/clerk/client";
 import { useWorkspaceForm } from "./workspace-form-provider";
 import type { WorkspaceFormValues } from "@repo/console-validation/forms";
 

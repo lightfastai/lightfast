@@ -1,4 +1,4 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@vendor/clerk/server";
 import { SignOutButton } from "./sign-out-button";
 
 /**

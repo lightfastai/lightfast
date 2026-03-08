@@ -4,7 +4,7 @@ import { smoothStream, stepCountIs } from "ai";
 import { createAgent } from "@lightfastai/ai-sdk/agent";
 import { fetchRequestHandler } from "@lightfastai/ai-sdk/server/adapters/fetch";
 import { randomUUID } from "node:crypto";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log";
 import type { AnswerAppRuntimeContext } from "@repo/console-ai-types";
 import { workspaceSearchTool } from "@repo/console-ai/workspace-search";

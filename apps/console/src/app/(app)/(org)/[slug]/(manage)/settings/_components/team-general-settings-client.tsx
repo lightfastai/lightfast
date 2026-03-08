@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useOrganizationList } from "@clerk/nextjs";
+import { useOrganizationList } from "@vendor/clerk/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { Input } from "@repo/ui/components/ui/input";

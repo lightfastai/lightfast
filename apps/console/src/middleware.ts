@@ -1,4 +1,4 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
 import {
   composeCspOptions,
   createClerkCspDirectives,
