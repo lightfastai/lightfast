@@ -15,9 +15,7 @@ import { env } from "~/env";
 let config: NextConfig = withBetterStack(
 	mergeNextConfig(vendorConfig, {
 		transpilePackages: [
-			"@repo/og",
 			"@repo/ui",
-			"@repo/url-utils",
 			"@vendor/seo",
 			"@vendor/observability",
 			"@vendor/next",
