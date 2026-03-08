@@ -33,7 +33,6 @@
     "@vendor/related-projects": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
-    "drizzle-orm": "catalog:",
     "hono": "catalog:",
     "zod": "catalog:zod3"
   },
@@ -44,6 +43,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "dotenv-cli": "catalog:",
+    "drizzle-orm": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "srvx": "^0.11.8",

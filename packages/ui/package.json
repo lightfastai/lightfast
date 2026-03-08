@@ -39,7 +39,6 @@
 		"@tailwindcss/postcss": "catalog:tailwind4",
 		"@tailwindcss/typography": "catalog:tailwind4",
 		"@turbo/gen": "^2.5.5",
-		"@types/eslint": "^8.56.5",
 		"@types/node": "catalog:",
 		"@types/react": "19.2.2",
 		"@types/react-dom": "19.2.2",

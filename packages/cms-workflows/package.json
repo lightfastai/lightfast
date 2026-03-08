@@ -17,8 +17,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../apps/www/.vercel/.env.development.local --",
-    "publish:blog": "pnpm with-env tsx scripts/publish-blog.ts",
-    "publish:changelog": "pnpm with-env tsx scripts/publish-changelog.ts"
+    "publish:blog": "pnpm with-env tsx src/publish-blog.ts",
+    "publish:changelog": "pnpm with-env tsx src/publish-changelog.ts"
   },
   "dependencies": {
     "@vendor/cms": "workspace:*",

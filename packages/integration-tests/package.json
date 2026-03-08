@@ -10,11 +10,7 @@
     "lint": "eslint src/"
   },
   "devDependencies": {
-    "@api/console": "workspace:*",
     "@db/console": "workspace:*",
-    "@lightfast/backfill": "workspace:*",
-    "@lightfast/gateway": "workspace:*",
-    "@lightfast/relay": "workspace:*",
     "@repo/console-api-key": "workspace:*",
     "@repo/console-backfill": "workspace:*",
     "@repo/console-test-db": "workspace:*",

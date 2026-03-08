@@ -18,8 +18,8 @@ import { resolve } from "node:path";
 import matter from "gray-matter";
 import {
   createChangelogEntry,
-} from "../src/mutations/changelog.js";
-import type { ChangelogEntryInput } from "../src/mutations/changelog.js";
+} from "./mutations/changelog.js";
+import type { ChangelogEntryInput } from "./mutations/changelog.js";
 import { changelog } from "@vendor/cms";
 
 interface InternalFields {
