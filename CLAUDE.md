@@ -14,10 +14,10 @@ See `SPEC.md` for business goals and product vision.
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │  Next.js Apps                                                                   │
 │  ┌──────────────────┐  ┌────────────┐  ┌────────────┐  ┌─────────┐  ┌───────┐ │
-│  │ console (4107)   │  │ www (4101) │  │ auth (4104)│  │docs(4105│  │chat   │ │
-│  │ @api/console     │  │ marketing  │  │ Clerk      │  │Fumadocs │  │(4106) │ │
-│  │ tRPC + Inngest   │  │ CMS        │  │ OAuth      │  │MDX      │  │AI SDK │ │
-│  └───────┬──────────┘  └────────────┘  └────────────┘  └─────────┘  └───────┘ │
+│  │ console (4107)   │  │ www (4101) │  │ auth (4104)│  │docs(4105│             │
+│  │ @api/console     │  │ marketing  │  │ Clerk      │  │Fumadocs │             │
+│  │ tRPC + Inngest   │  │ CMS        │  │ OAuth      │  │MDX      │             │
+│  └───────┬──────────┘  └────────────┘  └────────────┘  └─────────┘             │
 │          │                                                                      │
 │  Hono Services (srvx, edge runtime)                                             │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐              │
@@ -31,7 +31,7 @@ See `SPEC.md` for business goals and product vision.
 │                          @vendor/upstash (Redis)                                │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
-Packages: @repo/* (ui, lib, ai)  |  @repo/console-* (23)  |  @repo/chat-* (5)  |  @vendor/* (22)
+Packages: @repo/* (ui, lib, ai)  |  @repo/console-* (23)  |  @vendor/* (22)
 ```
 
 ### Vercel Microfrontends (lightfast.ai)
@@ -39,8 +39,6 @@ Packages: @repo/* (ui, lib, ai)  |  @repo/console-* (23)  |  @repo/chat-* (5)  |
 3 apps (console, www, auth) served through single domain via `apps/console/microfrontends.json`.
 Console is default app (catch-all routes, sitemap.xml, robots.txt).
 Docs proxied via console rewrites (`next.config.ts`), not in microfrontends config.
-
-Note: `apps/chat` (4106) is independent, not part of microfrontends.
 
 ### Hono Services
 
@@ -64,7 +62,6 @@ Internal auth via `X-API-Key` header. Types shared via `@repo/gateway-types`.
 pnpm dev:app          # Full stack: console + www + auth + relay + backfill + gateway (port 3024 via microfrontends)
 pnpm dev:console      # Console only (4107)
 pnpm dev:www          # Marketing site (4101)
-pnpm dev:chat         # Chat app (4106) - independent
 pnpm dev:docs         # Docs site (4105)
 pnpm dev:relay        # Relay service (4108)
 pnpm dev:gateway      # Gateway service (4110)
