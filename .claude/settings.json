@@ -5,5 +5,18 @@
     "semgrep@claude-plugins-official": true,
     "pinecone@claude-plugins-official": true,
     "posthog@claude-plugins-official": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "case \"$CLAUDE_TOOL_INPUT_FILE_PATH\" in *.ts|*.tsx|*.js|*.jsx) SKIP_ENV_VALIDATION=true npx eslint --fix --no-warn-ignored \"$CLAUDE_TOOL_INPUT_FILE_PATH\" 2>/dev/null ;; esac; true"
+          }
+        ]
+      }
+    ]
   }
 }
