@@ -36,7 +36,6 @@
     "@repo/console-ai": "workspace:*",
     "@repo/console-ai-types": "workspace:*",
     "@repo/console-api-key": "workspace:*",
-    "@repo/console-api-services": "workspace:*",
     "@repo/console-auth-middleware": "workspace:*",
     "@repo/console-backfill": "workspace:*",
     "@repo/console-clerk-cache": "workspace:*",
