@@ -1,5 +1,5 @@
-import { isClerkAPIResponseError, isUserLockedError } from '@clerk/shared'
-import type { ClerkAPIError } from '@clerk/types'
+import { isClerkAPIResponseError, isUserLockedError } from '@clerk/shared/error'
+import type { ClerkAPIError } from "@clerk/shared/types"
 
 export interface AuthError {
   code: string

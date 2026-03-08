@@ -67,35 +67,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
-      waitlistUrl="/early-access"
-      signInFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
-      signUpFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
-      taskUrls={{
-        "choose-organization": `${consoleUrl}/account/teams/new`,
-      }}
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn(
+        geistFonts,
+        ppNeueMontreal.variable,
+        exposurePlus.variable,
+        ppSupplySans.variable,
+      )}
     >
-      <html
-        lang="en"
-        suppressHydrationWarning
-        className={cn(
-          geistFonts,
-          ppNeueMontreal.variable,
-          exposurePlus.variable,
-          ppSupplySans.variable,
-        )}
-      >
-        <head />
-        <body className={cn("bg-background dark font-sans min-h-screen antialiased")}>
+      <head />
+      <body className={cn("bg-background dark font-sans min-h-screen antialiased")}><ClerkProvider
+          publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+          waitlistUrl="/early-access"
+          signInFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
+          signUpFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
+          taskUrls={{
+            "choose-organization": `${consoleUrl}/account/teams/new`,
+          }}>
           {children}
           <Toaster position="bottom-right" />
           <VercelAnalytics />
           <SpeedInsights />
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider></body>
+    </html>
   );
 }

@@ -2,7 +2,7 @@ import React from "react";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
-import { SignedOut, RedirectToTasks } from "@clerk/nextjs";
+import { Show, RedirectToTasks } from "@clerk/nextjs";
 
 export default function AuthLayout({
   children,
@@ -11,9 +11,9 @@ export default function AuthLayout({
 }) {
   return (
     <>
-      <SignedOut>
+      <Show when="signed-out">
         <RedirectToTasks />
-      </SignedOut>
+      </Show>
       <div className="min-h-screen bg-background flex flex-col">
         {/* Top Navbar aligned with marketing header structure */}
         <header className="shrink-0 fixed top-0 left-0 right-0 z-50 py-4 page-gutter bg-background">

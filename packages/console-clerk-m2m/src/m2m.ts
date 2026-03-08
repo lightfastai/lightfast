@@ -167,7 +167,7 @@ export async function verifyM2MToken(token: string): Promise<{
 
   // Verify token using Clerk's M2M API
   // No need to pass machineSecretKey - it's already in the client
-  const verified = await clerk.m2m.verifyToken({
+  const verified = await clerk.m2m.verify({
     token,
   });
 

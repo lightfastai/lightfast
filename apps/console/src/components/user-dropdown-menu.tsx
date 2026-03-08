@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  SignedIn,
   useClerk,
   useUser,
 } from "@clerk/nextjs";
@@ -85,14 +84,13 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
     void signOut();
   };
 
-  if (!isLoaded) {
+  if (!isLoaded || !user) {
     return <div className="size-6 rounded-full bg-white border border-border/50" />;
   }
 
   return (
     <>
-      <SignedIn>
-        <DropdownMenu>
+      <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
@@ -131,7 +129,6 @@ export function UserDropdownMenu({ className }: UserDropdownMenuProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </SignedIn>
     </>
   );
 }

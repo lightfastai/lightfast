@@ -16,8 +16,6 @@ export default function Page() {
 			continueSignUpUrl="/sign-up"
 			signInFallbackRedirectUrl="/account/teams/new"
 			signUpFallbackRedirectUrl="/account/teams/new"
-			afterSignInUrl="/account/teams/new"
-			afterSignUpUrl="/account/teams/new"
 		/>
 	);
 }

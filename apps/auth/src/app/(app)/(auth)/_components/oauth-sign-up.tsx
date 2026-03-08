@@ -1,8 +1,8 @@
 "use client";
-
 import * as React from "react";
-import type { OAuthStrategy } from "@clerk/types";
-import { useSignUp, useClerk } from "@clerk/nextjs";
+import type { OAuthStrategy } from "@clerk/shared/types";
+import { useClerk } from "@clerk/nextjs";
+import { useSignUp } from "@clerk/nextjs/legacy";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
