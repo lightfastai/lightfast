@@ -20,8 +20,6 @@
   },
   "dependencies": {
     "@db/console": "workspace:*",
-    "@neondatabase/serverless": "catalog:",
-    "@repo/console-validation": "workspace:*",
     "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",

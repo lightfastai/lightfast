@@ -120,9 +120,6 @@ catalogs:
     neverthrow:
       specifier: ^8.2.0
       version: 8.2.0
-    postgres:
-      specifier: ^3.4.5
-      version: 3.4.7
     prettier:
       specifier: ^3.5.3
       version: 3.6.2
@@ -534,9 +531,6 @@ importers:
       '@repo/console-backfill':
         specifier: workspace:*
         version: link:../../packages/console-backfill
-      '@repo/gateway-types':
-        specifier: workspace:*
-        version: link:../../packages/gateway-types
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
@@ -1050,9 +1044,6 @@ importers:
       '@repo/console-sentry':
         specifier: workspace:*
         version: link:../../packages/console-sentry
-      '@repo/console-validation':
-        specifier: workspace:*
-        version: link:../../packages/console-validation
       '@repo/console-vercel':
         specifier: workspace:*
         version: link:../../packages/console-vercel
@@ -1089,9 +1080,6 @@ importers:
       hono:
         specifier: 'catalog:'
         version: 4.12.3
-      postgres:
-        specifier: 'catalog:'
-        version: 3.4.7
       zod:
         specifier: catalog:zod3
         version: 3.25.76
@@ -1141,12 +1129,6 @@ importers:
       '@db/console':
         specifier: workspace:*
         version: link:../../db/console
-      '@neondatabase/serverless':
-        specifier: 'catalog:'
-        version: 1.0.2
-      '@repo/console-validation':
-        specifier: workspace:*
-        version: link:../../packages/console-validation
       '@repo/gateway-types':
         specifier: workspace:*
         version: link:../../packages/gateway-types
@@ -30783,7 +30765,8 @@ snapshots:
     dependencies:
       xtend: 4.0.2
 
-  postgres@3.4.7: {}
+  postgres@3.4.7:
+    optional: true
 
   posthog-js@1.335.5:
     dependencies:

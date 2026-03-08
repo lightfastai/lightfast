@@ -23,7 +23,6 @@
     "@repo/console-linear": "workspace:*",
     "@repo/console-octokit-github": "workspace:*",
     "@repo/console-sentry": "workspace:*",
-    "@repo/console-validation": "workspace:*",
     "@repo/console-vercel": "workspace:*",
     "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
@@ -36,7 +35,6 @@
     "@vendor/upstash-workflow": "workspace:*",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
-    "postgres": "catalog:",
     "zod": "catalog:zod3"
   },
   "devDependencies": {
