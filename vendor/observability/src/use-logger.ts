@@ -1,4 +1,4 @@
-import { useLogger as useLogtailLogger } from "@logtail/next";
+import { useLogger as useLogtailLogger } from "@logtail/next/hooks";
 
 import type { Logger } from "./types";
 

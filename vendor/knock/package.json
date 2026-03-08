@@ -24,8 +24,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@knocklabs/node": "^1.20.0",
-    "@knocklabs/react": "^0.8.11",
+    "@knocklabs/node": "^1.29.1",
+    "@knocklabs/react": "^0.11.7",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
     "zod": "catalog:zod3"

@@ -34,12 +34,12 @@
     "webpack": "^5.105.4"
   },
   "dependencies": {
-    "@logtail/next": "^0.2.0",
+    "@logtail/next": "^0.3.1",
     "@next/bundle-analyzer": "^16.0.0",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/observability": "workspace:*",
-    "@vercel/toolbar": "^0.1.28",
+    "@vercel/toolbar": "^0.2.2",
     "next-secure-headers": "^2.2.0"
   },
   "prettier": "@repo/prettier-config"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useLogger as useLogtailLogger } from '@logtail/next';
+import { useLogger as useLogtailLogger } from '@logtail/next/hooks';
 import { useMemo } from 'react';
 
 /**

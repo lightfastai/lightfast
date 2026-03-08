@@ -24,6 +24,10 @@
     "./nanoid": {
       "types": "./dist/nanoid.d.ts",
       "default": "./dist/nanoid.js"
+    },
+    "./friendly-words": {
+      "types": "./dist/friendly-words.d.ts",
+      "default": "./dist/friendly-words.js"
     }
   },
   "license": "MIT",
@@ -37,6 +41,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "joyful": "^1.1.1",
     "nanoid": "catalog:",
     "uuid": "^11.1.0"
   },

@@ -50,8 +50,7 @@
     "@repo/gateway-types": "workspace:*",
     "@repo/lib": "workspace:*",
     "@vendor/db": "workspace:*",
-    "drizzle-orm": "catalog:",
-    "friendlier-words": "^1.1.3"
+    "drizzle-orm": "catalog:"
   },
   "devDependencies": {
     "@planetscale/database": "^1.19.0",
@@ -60,7 +59,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "dotenv-cli": "^8.0.0",
-    "drizzle-kit": "^0.31.4",
+    "drizzle-kit": "^0.31.9",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "tsup": "^8.5.1",
