@@ -228,7 +228,7 @@ After structure approval:
 - [ ] Migration applies cleanly: `pnpm db:migrate`
 - [ ] Unit tests pass: `pnpm test`
 - [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm lint`
+- [ ] Linting passes: `pnpm check`
 - [ ] Integration tests pass: `pnpm test:integration`
 
 #### Manual Verification:
@@ -322,7 +322,7 @@ After structure approval:
    - Research actual code patterns using parallel sub-tasks
    - Include specific file paths and line numbers
    - Write measurable success criteria with clear automated vs manual distinction
-   - automated steps should use `pnpm` whenever possible - for example `pnpm lint` instead of `cd apps/console && npx eslint .`
+   - automated steps should use `pnpm` whenever possible - for example `pnpm check` instead of `cd apps/console && npx biome check .`
 
 4. **Be Practical**:
    - Focus on incremental, testable changes
@@ -347,7 +347,7 @@ After structure approval:
 **Always separate success criteria into two categories:**
 
 1. **Automated Verification** (can be run by execution agents):
-   - Commands that can be run: `pnpm test`, `pnpm lint`, etc.
+   - Commands that can be run: `pnpm test`, `pnpm check`, etc.
    - Specific files that should exist
    - Code compilation/type checking
    - Automated test suites
@@ -365,7 +365,7 @@ After structure approval:
 #### Automated Verification:
 - [ ] Database migration runs successfully: `pnpm db:migrate`
 - [ ] All unit tests pass: `pnpm test`
-- [ ] No linting errors: `pnpm lint`
+- [ ] No linting errors: `pnpm check`
 - [ ] Type checking passes: `pnpm typecheck`
 
 #### Manual Verification:
