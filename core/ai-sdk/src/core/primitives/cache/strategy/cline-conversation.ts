@@ -41,10 +41,12 @@ export class ClineConversationStrategy implements CacheStrategy {
    */
   run(messages: ModelMessage[]): CacheStrategyResult {
     // Find all user message indices
-    const userMessageIndices = messages.reduce(
-      (acc, msg, index) => (msg.role === "user" ? [...acc, index] : acc),
-      [] as number[]
-    );
+    const userMessageIndices: number[] = [];
+    for (const [index, msg] of messages.entries()) {
+      if (msg.role === "user") {
+        userMessageIndices.push(index);
+      }
+    }
 
     // Get the last N user message indices to cache
     const messageIndicesToCache = userMessageIndices.slice(

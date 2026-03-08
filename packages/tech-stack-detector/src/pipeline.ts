@@ -20,17 +20,15 @@ export async function detect(
   const { skipBrowser = false, timeout = 10_000 } = options;
 
   // Normalize URL
-  if (!url.startsWith("http")) {
-    url = `https://${url}`;
-  }
+  const normalizedUrl = url.startsWith("http") ? url : `https://${url}`;
 
-  const domain = new URL(url).hostname;
+  const domain = new URL(normalizedUrl).hostname;
   const tiersUsed: Tier[] = [1, 2];
 
   // Tier 1 + Tier 2 run in parallel
   const [tier1Matches, tier2Matches] = await Promise.all([
-    runTier1(url, SIGNATURES, timeout),
-    runTier2(url, SIGNATURES),
+    runTier1(normalizedUrl, SIGNATURES, timeout),
+    runTier2(normalizedUrl, SIGNATURES),
   ]);
 
   // Tier 3 runs after (headless browser)
@@ -38,7 +36,7 @@ export async function detect(
   let unmatchedDomains: string[] | undefined;
   if (!skipBrowser) {
     tiersUsed.push(3);
-    const tier3Result = await runTier3(url, SIGNATURES, timeout);
+    const tier3Result = await runTier3(normalizedUrl, SIGNATURES, timeout);
     tier3Matches = tier3Result.matches;
 
     const unmatched = findUnmatchedDomains(tier3Result.networkDomains, domain);
@@ -81,7 +79,7 @@ export async function detect(
   detected.sort((a, b) => b.confidence - a.confidence);
 
   return {
-    url,
+    url: normalizedUrl,
     domain,
     detected,
     totalChecked: SIGNATURES.length,

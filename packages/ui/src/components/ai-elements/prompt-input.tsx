@@ -135,6 +135,7 @@ export function PromptInputAttachment({
     >
       {data.mediaType.startsWith("image/") && data.url ? (
         <div className="relative size-full">
+          {/* biome-ignore lint/performance/noImgElement: UI package is framework-agnostic, no next/image */}
           <img
             alt={data.filename ?? "attachment"}
             className={cn(
@@ -568,11 +569,9 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
     // Note: File input cannot be programmatically set for security reasons
     // The syncHiddenInput prop is no longer functional
     useEffect(() => {
-      if (syncHiddenInput && inputRef.current) {
-        // Clear the input when items are cleared
-        if (items.length === 0) {
-          inputRef.current.value = "";
-        }
+      // Clear the input when items are cleared
+      if (syncHiddenInput && inputRef.current && items.length === 0) {
+        inputRef.current.value = "";
       }
     }, [items, syncHiddenInput]);
 

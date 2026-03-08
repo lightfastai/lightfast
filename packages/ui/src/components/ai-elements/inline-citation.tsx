@@ -82,6 +82,8 @@ export const InlineCitationCardTrigger = ({
           <>
             <div className="flex -space-x-1">
               {uniqueDomains.map((domain, index) => (
+                // biome-ignore lint/a11y/noNoninteractiveElementInteractions: onError is a load handler, not user interaction
+                // biome-ignore lint/performance/noImgElement: UI package is framework-agnostic, no next/image
                 // biome-ignore lint/correctness/useImageSize: favicon thumbnails with fixed CSS dimensions
                 <img
                   alt={domain}

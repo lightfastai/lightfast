@@ -82,6 +82,7 @@ export async function runTier3(
     const globalResults = await page.evaluate((names: string[]) => {
       return names.map((name) => {
         try {
+          // biome-ignore lint/security/noGlobalEval: eval runs inside Playwright browser sandbox to detect globals
           return typeof eval(name) !== "undefined";
         } catch {
           return false;

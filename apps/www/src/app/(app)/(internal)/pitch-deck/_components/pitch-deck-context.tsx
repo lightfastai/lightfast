@@ -55,6 +55,7 @@ export function PitchDeckProvider({
   const setPrefaceExpanded = React.useCallback((expanded: boolean) => {
     _setPrefaceExpanded(expanded);
     // Persist to cookie
+    // biome-ignore lint/suspicious/noDocumentCookie: client-side cookie for pitch deck preference persistence
     document.cookie = `${PREFACE_COOKIE_NAME}=${expanded}; path=/; max-age=${PREFACE_COOKIE_MAX_AGE}`;
   }, []);
 
@@ -62,6 +63,7 @@ export function PitchDeckProvider({
     _setPrefaceExpanded((prev) => {
       const next = !prev;
       // Persist to cookie
+      // biome-ignore lint/suspicious/noDocumentCookie: client-side cookie for pitch deck preference persistence
       document.cookie = `${PREFACE_COOKIE_NAME}=${next}; path=/; max-age=${PREFACE_COOKIE_MAX_AGE}`;
       return next;
     });
