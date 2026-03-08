@@ -8,6 +8,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { ClerkProvider } from "@vendor/clerk/client";
 import { createMetadata } from "@vendor/seo/metadata";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { env } from "~/env";
 import { exposurePlus, ppNeueMontreal, ppSupplySans } from "~/lib/fonts";
 import { consoleUrl } from "~/lib/related-projects";
@@ -92,7 +93,7 @@ export default function RootLayout({
           }}
           waitlistUrl="/early-access"
         >
-          {children}
+          <NuqsAdapter>{children}</NuqsAdapter>
           <Toaster position="bottom-right" />
           <VercelAnalytics />
           <SpeedInsights />
