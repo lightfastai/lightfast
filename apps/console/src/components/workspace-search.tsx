@@ -201,98 +201,93 @@ export function WorkspaceSearch({
   };
 
   return (
-    <>
-      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: search landmark captures keyboard events for the search form */}
-      <div
-        className="flex h-full flex-col overflow-hidden"
-        onKeyDown={handleKeyDown}
-        role="search"
-      >
-        {/* Split Layout */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* LEFT PANEL — Controls */}
-          <div className="flex flex-1 flex-col overflow-hidden border-border">
-            <ScrollArea className="h-full">
-              <div className="space-y-5 p-4">
-                <h1 className="font-semibold text-2xl">
-                  Explore your infrastructure
-                </h1>
-                {/* Query Input */}
-                <SearchPromptInput
-                  clearDisabledReason="No filters applied"
-                  isClearDisabled={
-                    sourceTypes.length === 0 &&
-                    observationTypes.length === 0 &&
-                    actorNames.length === 0 &&
-                    agePreset === "none"
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: search landmark captures keyboard events for the search form
+    <search
+      className="flex h-full flex-col overflow-hidden"
+      onKeyDown={handleKeyDown}
+    >
+      {/* Split Layout */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* LEFT PANEL — Controls */}
+        <div className="flex flex-1 flex-col overflow-hidden border-border">
+          <ScrollArea className="h-full">
+            <div className="space-y-5 p-4">
+              <h1 className="font-semibold text-2xl">
+                Explore your infrastructure
+              </h1>
+              {/* Query Input */}
+              <SearchPromptInput
+                clearDisabledReason="No filters applied"
+                isClearDisabled={
+                  sourceTypes.length === 0 &&
+                  observationTypes.length === 0 &&
+                  actorNames.length === 0 &&
+                  agePreset === "none"
+                }
+                isSubmitDisabled={isSearching || !inputValue.trim() || !store}
+                mode={mode}
+                onChange={setInputValue}
+                onClear={clearFilters}
+                onModeChange={(v) => setMode(v as RerankMode)}
+                onSubmit={handlePromptSubmit}
+                placeholder="Ask a question or describe what you're looking for..."
+                status={isSearching ? "submitted" : "ready"}
+                submitDisabledReason={
+                  store ? undefined : "No store configured for this workspace"
+                }
+                value={inputValue}
+              />
+
+              <div className="mt-12">
+                <SearchFilters
+                  actorNames={actorNames}
+                  agePreset={agePreset}
+                  includeContext={includeContext}
+                  includeHighlights={includeHighlights}
+                  limit={limit}
+                  observationTypes={observationTypes}
+                  offset={offset}
+                  onActorNamesChange={setActorNames}
+                  onAgePresetChange={(v) =>
+                    void setAgePreset(v as typeof agePreset)
                   }
-                  isSubmitDisabled={isSearching || !inputValue.trim() || !store}
-                  mode={mode}
-                  onChange={setInputValue}
-                  onClear={clearFilters}
-                  onModeChange={(v) => setMode(v as RerankMode)}
-                  onSubmit={handlePromptSubmit}
-                  placeholder="Ask a question or describe what you're looking for..."
-                  status={isSearching ? "submitted" : "ready"}
-                  submitDisabledReason={
-                    store ? undefined : "No store configured for this workspace"
-                  }
-                  value={inputValue}
+                  onIncludeContextChange={setIncludeContext}
+                  onIncludeHighlightsChange={setIncludeHighlights}
+                  onLimitChange={setLimit}
+                  onObservationTypesChange={setObservationTypes}
+                  onOffsetChange={setOffset}
+                  onSourceTypesChange={setSourceTypes}
+                  orgSlug={orgSlug}
+                  sourceTypes={sourceTypes}
+                  workspaceName={workspaceName}
                 />
-
-                <div className="mt-12">
-                  <SearchFilters
-                    actorNames={actorNames}
-                    agePreset={agePreset}
-                    includeContext={includeContext}
-                    includeHighlights={includeHighlights}
-                    limit={limit}
-                    observationTypes={observationTypes}
-                    offset={offset}
-                    onActorNamesChange={setActorNames}
-                    onAgePresetChange={(v) =>
-                      void setAgePreset(v as typeof agePreset)
-                    }
-                    onIncludeContextChange={setIncludeContext}
-                    onIncludeHighlightsChange={setIncludeHighlights}
-                    onLimitChange={setLimit}
-                    onObservationTypesChange={setObservationTypes}
-                    onOffsetChange={setOffset}
-                    onSourceTypesChange={setSourceTypes}
-                    orgSlug={orgSlug}
-                    sourceTypes={sourceTypes}
-                    workspaceName={workspaceName}
-                  />
-                </div>
-
-                {/* Error Display */}
-                {error && (
-                  <>
-                    <Separator />
-                    <p className="text-destructive text-sm">{error}</p>
-                  </>
-                )}
               </div>
-            </ScrollArea>
-          </div>
 
-          {/* RIGHT PANEL — Results */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <SearchResultsPanel
-              activeTab={activeTab}
-              expandedId={expandedId}
-              offset={offset}
-              onActiveTabChange={(v) =>
-                void setActiveTab(v as typeof activeTab)
-              }
-              onExpandedIdChange={setExpandedId}
-              searchResults={searchResults}
-              storeId={store ? store.id : ""}
-            />
-          </div>
+              {/* Error Display */}
+              {error && (
+                <>
+                  <Separator />
+                  <p className="text-destructive text-sm">{error}</p>
+                </>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* RIGHT PANEL — Results */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <SearchResultsPanel
+            activeTab={activeTab}
+            expandedId={expandedId}
+            offset={offset}
+            onActiveTabChange={(v) => void setActiveTab(v as typeof activeTab)}
+            onExpandedIdChange={setExpandedId}
+            searchResults={searchResults}
+            storeId={store ? store.id : ""}
+          />
         </div>
       </div>
-    </>
+    </search>
   );
 }
 
