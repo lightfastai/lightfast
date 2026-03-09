@@ -65,6 +65,7 @@ reviews:
     - "!tmp/**"
     - "!worktrees/**"
     - "!.claude/**"
+    - "!.agents/**"
 
   # ── Path-specific review instructions ──
   # These tell CodeRabbit HOW to review each area of the monorepo
