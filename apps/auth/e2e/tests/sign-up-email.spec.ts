@@ -32,9 +32,7 @@ test.describe("Sign-Up: Email Code Flow", () => {
     await page.getByRole("button", { name: "Continue with Email" }).click();
 
     await expect(page).toHaveURL(/step=code/);
-    await expect(
-      page.getByText("We sent a verification code")
-    ).toBeVisible();
+    await expect(page.getByText("We sent a verification code")).toBeVisible();
   });
 
   test("entering 424242 OTP completes sign-up", async ({ page }) => {
@@ -49,9 +47,9 @@ test.describe("Sign-Up: Email Code Flow", () => {
     const otpInput = page.getByRole("textbox");
     await otpInput.fill("424242");
 
-    await expect(
-      page.getByText(/Verifying|Redirecting/)
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Verifying|Redirecting/)).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("sign-in link navigates to /sign-in", async ({ page }) => {

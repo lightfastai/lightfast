@@ -29,12 +29,8 @@ test.describe("Sign-In: Email Code Flow", () => {
 
     // URL should transition to step=code
     await expect(page).toHaveURL(/step=code/);
-    await expect(
-      page.getByText("We sent a verification code")
-    ).toBeVisible();
-    await expect(
-      page.getByText("test+clerk_test@lightfast.ai")
-    ).toBeVisible();
+    await expect(page.getByText("We sent a verification code")).toBeVisible();
+    await expect(page.getByText("test+clerk_test@lightfast.ai")).toBeVisible();
   });
 
   test("entering 424242 OTP verifies and redirects", async ({ page }) => {
@@ -53,9 +49,9 @@ test.describe("Sign-In: Email Code Flow", () => {
     await otpInput.fill("424242");
 
     // Step 3: should show verifying/redirecting state
-    await expect(
-      page.getByText(/Verifying|Redirecting/)
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Verifying|Redirecting/)).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("resend code button works", async ({ page }) => {

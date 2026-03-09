@@ -11,9 +11,7 @@ test.describe("Middleware Redirects", () => {
 
     // Should not stay at the bare auth root — either redirected to
     // /sign-in or to the MF proxy homepage
-    expect(
-      url.includes("/sign-in") || !url.includes(":4104/")
-    ).toBeTruthy();
+    expect(url.includes("/sign-in") || !url.includes(":4104/")).toBeTruthy();
   });
 
   // Authenticated redirect tests require the full multi-app stack (console + auth)
@@ -21,11 +19,9 @@ test.describe("Middleware Redirects", () => {
   // isolated auth-only test runs. These redirects are covered by:
   // 1. The middleware logic itself (unit-testable)
   // 2. Full-stack E2E runs with pnpm dev:app
-  test.skip(
-    "authenticated user visiting /sign-in redirects to console",
-    async () => {
-      // Requires: console dev server at port 4107
-      // Test: sign in → goto /sign-in → expect redirect to console
-    }
-  );
+  // biome-ignore lint/suspicious/noSkippedTests: requires full-stack dev:app to run
+  test.skip("authenticated user visiting /sign-in redirects to console", async () => {
+    // Requires: console dev server at port 4107
+    // Test: sign in → goto /sign-in → expect redirect to console
+  });
 });

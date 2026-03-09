@@ -23,7 +23,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `pnpm dev:auth`,
+    command: "pnpm dev:auth",
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,

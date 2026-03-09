@@ -8,9 +8,7 @@ test.describe("Error States", () => {
     await page.goto("/sign-in?error=Something+went+wrong");
 
     await expect(page.getByText("Something went wrong")).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "Try again" })
-    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Try again" })).toBeVisible();
   });
 
   test("error banner try again link clears error", async ({ page }) => {
@@ -42,9 +40,7 @@ test.describe("Error States", () => {
     await page.goto("/sign-up?error=Invalid+email");
 
     await expect(page.getByText("Invalid email")).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "Try again" })
-    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Try again" })).toBeVisible();
   });
 
   test("wrong OTP shows inline error", async ({ page }) => {
