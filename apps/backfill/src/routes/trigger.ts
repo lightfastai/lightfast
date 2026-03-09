@@ -12,7 +12,9 @@ const cancelSchema = z.object({
 });
 
 function isValidApiKey(key: string | undefined, expected: string): boolean {
-  if (!key) { return false; }
+  if (!key) {
+    return false;
+  }
   return timingSafeStringEqual(key, expected);
 }
 
@@ -26,7 +28,7 @@ const trigger = new Hono<{ Variables: LifecycleVariables }>();
  */
 trigger.post("/", async (c) => {
   const { GATEWAY_API_KEY } = env;
-  if (!(isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
+  if (!isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY)) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
@@ -41,7 +43,7 @@ trigger.post("/", async (c) => {
   if (!parsed.success) {
     return c.json(
       { error: "validation_error", details: parsed.error.issues },
-      400,
+      400
     );
   }
   const body = parsed.data;
@@ -63,7 +65,7 @@ trigger.post("/", async (c) => {
     console.error("Failed to send backfill event to Inngest", err);
     return c.json(
       { error: "temporary_failure", message: "Failed to enqueue backfill" },
-      502,
+      502
     );
   }
 
@@ -78,7 +80,7 @@ trigger.post("/", async (c) => {
  */
 trigger.post("/cancel", async (c) => {
   const { GATEWAY_API_KEY } = env;
-  if (!(isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
+  if (!isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY)) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
@@ -93,7 +95,7 @@ trigger.post("/cancel", async (c) => {
   if (!parsed.success) {
     return c.json(
       { error: "validation_error", details: parsed.error.issues },
-      400,
+      400
     );
   }
   const body = parsed.data;
@@ -110,7 +112,7 @@ trigger.post("/cancel", async (c) => {
     console.error("Failed to send cancel event to Inngest", err);
     return c.json(
       { error: "temporary_failure", message: "Failed to enqueue cancellation" },
-      502,
+      502
     );
   }
 

@@ -15,8 +15,7 @@
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@repo/console-providers": "workspace:*",
@@ -25,14 +24,9 @@
     "zod": "catalog:zod4"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "@types/react": "^19.2.14",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
+    "@types/react": "19.2.14",
     "typescript": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

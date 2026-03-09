@@ -1,7 +1,8 @@
+import { HydrateClient, prefetch, userTrpc } from "@repo/console-trpc/server";
 import { Suspense } from "react";
-import { prefetch, HydrateClient, userTrpc } from "@repo/console-trpc/server";
 
 export const dynamic = "force-dynamic";
+
 import { ProfileDataDisplay } from "./_components/profile-data-display";
 import { ProfileDataLoading } from "./_components/profile-data-loading";
 
@@ -24,14 +25,14 @@ import { ProfileDataLoading } from "./_components/profile-data-loading";
  * - refetchOnMount/refetchOnWindowFocus disabled
  */
 export default function GeneralSettingsPage() {
-	// CRITICAL: Prefetch BEFORE HydrateClient wrapping
-	prefetch(userTrpc.account.get.queryOptions());
+  // CRITICAL: Prefetch BEFORE HydrateClient wrapping
+  prefetch(userTrpc.account.get.queryOptions());
 
-	return (
-		<HydrateClient>
-			<Suspense fallback={<ProfileDataLoading />}>
-				<ProfileDataDisplay />
-			</Suspense>
-		</HydrateClient>
-	);
+  return (
+    <HydrateClient>
+      <Suspense fallback={<ProfileDataLoading />}>
+        <ProfileDataDisplay />
+      </Suspense>
+    </HydrateClient>
+  );
 }

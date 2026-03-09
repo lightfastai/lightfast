@@ -11,15 +11,16 @@
  * - ids: string[] (required) - Content IDs (doc_* or obs_*)
  */
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
-
-import { log } from "@vendor/observability/log";
 import { V1ContentsRequestSchema } from "@repo/console-validation";
-
-import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
+import { log } from "@vendor/observability/log";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { contentsLogic } from "~/lib/v1/contents";
+import {
+  createDualAuthErrorResponse,
+  withDualAuth,
+} from "../lib/with-dual-auth";
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -95,7 +96,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "INTERNAL_ERROR",
-        message: error instanceof Error ? error.message : "Failed to fetch contents",
+        message:
+          error instanceof Error ? error.message : "Failed to fetch contents",
         requestId,
       },
       { status: 500 }

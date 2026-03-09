@@ -2,7 +2,7 @@
  * RS256 JWT utilities for GitHub App authentication.
  * Uses jose — edge-compatible, no Node.js crypto.
  */
-import { SignJWT, importPKCS8 } from "jose";
+import { importPKCS8, SignJWT } from "jose";
 
 /**
  * Create a signed RS256 JWT.
@@ -12,7 +12,7 @@ import { SignJWT, importPKCS8 } from "jose";
  */
 export async function createRS256JWT(
   payload: Record<string, unknown>,
-  privateKeyPem: string,
+  privateKeyPem: string
 ): Promise<string> {
   const pem = normalizePem(privateKeyPem);
   const key = await importPKCS8(pem, "RS256");
@@ -30,16 +30,14 @@ export async function createRS256JWT(
  *  - PKCS#1 (BEGIN RSA PRIVATE KEY) → reject with guidance
  */
 function normalizePem(rawKey: string): string {
-  let pem = rawKey
-    .replace(/^["']|["']$/g, "")
-    .replace(/\\n/g, "\n");
+  let pem = rawKey.replace(/^["']|["']$/g, "").replace(/\\n/g, "\n");
 
   if (!pem.includes("-----BEGIN")) {
     try {
       pem = atob(pem);
     } catch {
       throw new Error(
-        "Private key is not a valid PEM key or base64-encoded PEM",
+        "Private key is not a valid PEM key or base64-encoded PEM"
       );
     }
   }
@@ -48,7 +46,7 @@ function normalizePem(rawKey: string): string {
     throw new Error(
       "Private key is in PKCS#1 format (RSA PRIVATE KEY). " +
         "Web Crypto requires PKCS#8. Convert with: " +
-        "openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem",
+        "openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem"
     );
   }
 

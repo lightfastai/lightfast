@@ -10,7 +10,10 @@ const inngestRoute = new Hono();
 inngestRoute.on(
   ["GET", "POST", "PUT"],
   "/",
-  serve({ client: inngest, functions: [backfillOrchestrator, backfillEntityWorker] }),
+  serve({
+    client: inngest,
+    functions: [backfillOrchestrator, backfillEntityWorker],
+  })
 );
 
 export { inngestRoute };

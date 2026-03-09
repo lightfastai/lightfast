@@ -15,24 +15,21 @@
  * Infrastructure: PGlite (shapes 1–2), QStash capture mock (shape 3).
  * No external network calls. Each test makes a single in-process HTTP call.
  */
+
+import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
+import { fixtures } from "@repo/console-test-db/fixtures";
 import {
-  describe,
-  it,
-  expect,
-  vi,
+  afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
-  afterAll,
+  describe,
+  expect,
+  it,
+  vi,
 } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
-import type { TestDb } from "@repo/console-test-db";
-import { fixtures } from "@repo/console-test-db/fixtures";
-import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 
 // ── shapeOf: converts a value to its structural skeleton ──
 //
@@ -41,8 +38,12 @@ import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 // arrays with a single-element array of the first element's shape.
 // Object keys are sorted for stable snapshot ordering.
 function shapeOf(val: unknown): unknown {
-  if (val === null) return "null";
-  if (val === undefined) return "undefined";
+  if (val === null) {
+    return "null";
+  }
+  if (val === undefined) {
+    return "undefined";
+  }
   if (Array.isArray(val)) {
     return val.length > 0 ? [shapeOf(val[0])] : [];
   }
@@ -50,7 +51,7 @@ function shapeOf(val: unknown): unknown {
     return Object.fromEntries(
       Object.entries(val as Record<string, unknown>)
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([k, v]) => [k, shapeOf(v)]),
+        .map(([k, v]) => [k, shapeOf(v)])
     );
   }
   return typeof val;
@@ -60,27 +61,30 @@ function shapeOf(val: unknown): unknown {
 let db: TestDb;
 
 // ── Create all mock state in vi.hoisted ──
-const {
-  redisMock,
-  redisStore,
-  qstashMessages,
-  qstashMock,
-} = await vi.hoisted(async () => {
-  const { makeRedisMock, makeQStashMock } = await import("./harness.js");
-  const redisStore = new Map<string, unknown>();
-  const messages: { url: string; body: unknown; headers?: Record<string, string> }[] = [];
-  return {
-    redisMock: makeRedisMock(redisStore),
-    redisStore,
-    qstashMessages: messages,
-    qstashMock: makeQStashMock(messages),
-  };
-});
+const { redisMock, redisStore, qstashMessages, qstashMock } = await vi.hoisted(
+  async () => {
+    const { makeRedisMock, makeQStashMock } = await import("./harness.js");
+    const redisStore = new Map<string, unknown>();
+    const messages: {
+      url: string;
+      body: unknown;
+      headers?: Record<string, string>;
+    }[] = [];
+    return {
+      redisMock: makeRedisMock(redisStore),
+      redisStore,
+      qstashMessages: messages,
+      qstashMock: makeQStashMock(messages),
+    };
+  }
+);
 
 // ── vi.mock declarations ──
 
 vi.mock("@db/console/client", () => ({
-  get db() { return db; },
+  get db() {
+    return db;
+  },
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -89,7 +93,11 @@ vi.mock("@vendor/upstash", () => ({
 
 vi.mock("@vendor/qstash", () => ({
   getQStashClient: () => qstashMock,
-  Receiver: class { verify() { return Promise.resolve(true); } },
+  Receiver: class {
+    verify() {
+      return Promise.resolve(true);
+    }
+  },
 }));
 
 vi.mock("@vendor/inngest/hono", () => ({
@@ -102,7 +110,9 @@ vi.mock("@vendor/inngest", () => ({
     createFunction = vi.fn(() => ({ id: "mock" }));
   },
   EventSchemas: class {
-    fromSchema() { return this; }
+    fromSchema() {
+      return this;
+    }
   },
   NonRetriableError: class extends Error {
     constructor(msg: string) {
@@ -113,13 +123,21 @@ vi.mock("@vendor/inngest", () => ({
 }));
 
 vi.mock("@vendor/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vercel/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
@@ -158,40 +176,58 @@ beforeEach(() => {
   qstashMessages.length = 0;
   redisStore.clear();
 
-  redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
-    redisStore.set(key, { ...existing, ...fields });
-    return Promise.resolve(1);
-  });
-  redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
+  redisMock.hset.mockImplementation(
+    (key: string, fields: Record<string, unknown>) => {
+      const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+      redisStore.set(key, { ...existing, ...fields });
+      return Promise.resolve(1);
+    }
   );
-  redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean }) => {
-    if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
-    redisStore.set(key, value);
-    return Promise.resolve("OK");
-  });
+  redisMock.hgetall.mockImplementation((key: string) =>
+    Promise.resolve(
+      (redisStore.get(key) ?? null) as Record<string, string> | null
+    )
+  );
+  redisMock.set.mockImplementation(
+    (key: string, value: unknown, opts?: { nx?: boolean }) => {
+      if (opts?.nx && redisStore.has(key)) {
+        return Promise.resolve(null);
+      }
+      redisStore.set(key, value);
+      return Promise.resolve("OK");
+    }
+  );
   redisMock.del.mockImplementation((...keys: string[]) => {
     const allKeys = keys.flat();
     let count = 0;
-    for (const k of allKeys) { if (redisStore.delete(k)) count++; }
+    for (const k of allKeys) {
+      if (redisStore.delete(k)) {
+        count++;
+      }
+    }
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation((key: string) =>
-    Promise.resolve(redisStore.get(key) ?? null),
+    Promise.resolve(redisStore.get(key) ?? null)
   );
   redisMock.pipeline.mockImplementation(() => {
     const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          const existing = (redisStore.get(key) ?? {}) as Record<
+            string,
+            unknown
+          >;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
       }),
       expire: vi.fn(() => pipe),
-      exec: vi.fn(() => { ops.forEach((op) => op()); return []; }),
+      exec: vi.fn(() => {
+        ops.forEach((op) => op());
+        return [];
+      }),
     };
     return pipe;
   });
@@ -239,7 +275,10 @@ describe("0.1 — Boundary contract shapes", () => {
     });
     await db.insert(gwInstallations).values(inst);
 
-    const encryptedToken = await encrypt("snap-access-token-xyz", ENCRYPTION_KEY);
+    const encryptedToken = await encrypt(
+      "snap-access-token-xyz",
+      ENCRYPTION_KEY
+    );
     const token = fixtures.token({
       installationId: inst.id,
       accessToken: encryptedToken,

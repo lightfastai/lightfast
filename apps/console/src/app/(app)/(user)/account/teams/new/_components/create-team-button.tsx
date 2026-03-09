@@ -1,15 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useTRPC } from "@repo/console-trpc/react";
+import type { TeamFormValues } from "@repo/console-validation/forms";
+import { Button } from "@repo/ui/components/ui/button";
 import { useFormContext, useFormState } from "@repo/ui/components/ui/form";
+import { toast } from "@repo/ui/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useOrganizationList } from "@vendor/clerk/client";
 import { produce } from "immer";
 import { Loader2 } from "lucide-react";
-import { Button } from "@repo/ui/components/ui/button";
-import { toast } from "@repo/ui/components/ui/sonner";
-import { useTRPC } from "@repo/console-trpc/react";
-import { useOrganizationList } from "@clerk/nextjs";
-import type { TeamFormValues } from "@repo/console-validation/forms";
+import { useRouter } from "next/navigation";
 import { showErrorToast } from "~/lib/trpc-errors";
 
 /**
@@ -38,13 +38,13 @@ export function CreateTeamButton() {
       onMutate: async (variables) => {
         // Cancel outgoing queries to prevent race conditions
         await queryClient.cancelQueries({
-          queryKey: trpc.organization.listUserOrganizations.queryOptions()
-            .queryKey,
+          queryKey:
+            trpc.organization.listUserOrganizations.queryOptions().queryKey,
         });
 
         // Snapshot previous data for rollback
         const previousOrgs = queryClient.getQueryData(
-          trpc.organization.listUserOrganizations.queryOptions().queryKey,
+          trpc.organization.listUserOrganizations.queryOptions().queryKey
         );
 
         // Optimistically update the organization list
@@ -54,28 +54,32 @@ export function CreateTeamButton() {
             produce(previousOrgs, (draft) => {
               // Add the new organization to the list
               draft.unshift({
-                id: "temp-" + Date.now(), // Temporary ID
+                id: `temp-${Date.now()}`, // Temporary ID
                 name: variables.slug,
                 slug: variables.slug,
                 role: "org:admin",
                 imageUrl: "",
               });
-            }),
+            })
           );
         }
 
         return { previousOrgs };
       },
-      onError: (err, variables, context) => {
+      onError: (err, _variables, context) => {
         // Rollback on error
         if (context?.previousOrgs) {
           queryClient.setQueryData(
             trpc.organization.listUserOrganizations.queryOptions().queryKey,
-            context.previousOrgs,
+            context.previousOrgs
           );
         }
 
-        showErrorToast(err, "Failed to create team", "Failed to create team. Please try again.");
+        showErrorToast(
+          err,
+          "Failed to create team",
+          "Failed to create team. Please try again."
+        );
       },
       onSuccess: async (data) => {
         toast.success(`Team created! Successfully created ${data.slug}`);
@@ -91,11 +95,11 @@ export function CreateTeamButton() {
       onSettled: () => {
         // Invalidate to ensure consistency with server
         void queryClient.invalidateQueries({
-          queryKey: trpc.organization.listUserOrganizations.queryOptions()
-            .queryKey,
+          queryKey:
+            trpc.organization.listUserOrganizations.queryOptions().queryKey,
         });
       },
-    }),
+    })
   );
 
   const handleCreateTeam = async () => {
@@ -117,11 +121,7 @@ export function CreateTeamButton() {
   const isDisabled = !isValid || createOrgMutation.isPending;
 
   return (
-    <Button
-      onClick={handleCreateTeam}
-      className="w-full"
-      disabled={isDisabled}
-    >
+    <Button className="w-full" disabled={isDisabled} onClick={handleCreateTeam}>
       {createOrgMutation.isPending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

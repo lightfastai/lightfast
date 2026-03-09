@@ -1,13 +1,17 @@
 import { z } from "zod";
-import type { ProviderDefinition, EventDefinition, ActionEventDef } from "./define";
+import type {
+  ActionEventDef,
+  EventDefinition,
+  ProviderDefinition,
+} from "./define";
 import type { GitHubConfig } from "./providers/github/auth";
-import type { VercelConfig } from "./providers/vercel/auth";
-import type { LinearConfig } from "./providers/linear/auth";
-import type { SentryConfig } from "./providers/sentry/auth";
 import { github } from "./providers/github/index";
-import { vercel } from "./providers/vercel/index";
+import type { LinearConfig } from "./providers/linear/auth";
 import { linear } from "./providers/linear/index";
+import type { SentryConfig } from "./providers/sentry/auth";
 import { sentry } from "./providers/sentry/index";
+import type { VercelConfig } from "./providers/vercel/auth";
+import { vercel } from "./providers/vercel/index";
 
 // ── The Registry ──────────────────────────────────────────────────────────────
 
@@ -15,15 +19,20 @@ import { sentry } from "./providers/sentry/index";
 // Adding a provider = add entry here + add to PROVIDERS below.
 interface ProviderConfigMap {
   readonly github: GitHubConfig;
-  readonly vercel: VercelConfig;
   readonly linear: LinearConfig;
   readonly sentry: SentryConfig;
+  readonly vercel: VercelConfig;
 }
 
 export const PROVIDERS = {
-  github, vercel, linear, sentry,
+  github,
+  vercel,
+  linear,
+  sentry,
 } as const satisfies {
-  readonly [K in keyof ProviderConfigMap]: ProviderDefinition<ProviderConfigMap[K]>;
+  readonly [K in keyof ProviderConfigMap]: ProviderDefinition<
+    ProviderConfigMap[K]
+  >;
 };
 
 export type ProviderName = keyof typeof PROVIDERS;
@@ -35,7 +44,7 @@ export type SourceType = ProviderName;
 
 /** Zod enum schema derived from provider keys — use at API/DB boundaries. */
 export const sourceTypeSchema = z.enum(
-  Object.keys(PROVIDERS) as [ProviderName, ...ProviderName[]],
+  Object.keys(PROVIDERS) as [ProviderName, ...ProviderName[]]
 );
 
 // ── Type-Level Event Key Derivation ──────────────────────────────────────────
@@ -45,29 +54,35 @@ export const sourceTypeSchema = z.enum(
  * Returns the actions record if it has specific literal keys (not just `string`).
  * Returns `never` for simple events without actions.
  */
-type ActionsOf<E> = E extends ActionEventDef<infer _S, infer A>
-  ? string extends keyof A ? never : A
-  : never;
+type ActionsOf<E> =
+  E extends ActionEventDef<infer _S, infer A>
+    ? string extends keyof A
+      ? never
+      : A
+    : never;
 
 /** Derive event keys for a single provider from its events map */
 type DeriveProviderKeys<P extends ProviderName> = {
-  [E in keyof (typeof PROVIDERS)[P]["events"] & string]:
-    [ActionsOf<(typeof PROVIDERS)[P]["events"][E]>] extends [never]
-      ? `${P}:${E}`
-      : `${P}:${E}.${keyof ActionsOf<(typeof PROVIDERS)[P]["events"][E]> & string}`
+  [E in keyof (typeof PROVIDERS)[P]["events"] & string]: [
+    ActionsOf<(typeof PROVIDERS)[P]["events"][E]>,
+  ] extends [never]
+    ? `${P}:${E}`
+    : `${P}:${E}.${keyof ActionsOf<(typeof PROVIDERS)[P]["events"][E]> & string}`;
 }[keyof (typeof PROVIDERS)[P]["events"] & string];
 
 /** All valid event keys — derived from provider definitions at the type level */
-export type EventKey = { [P in ProviderName]: DeriveProviderKeys<P> }[ProviderName];
+export type EventKey = {
+  [P in ProviderName]: DeriveProviderKeys<P>;
+}[ProviderName];
 
 // ── Runtime Event Registry Derivation ────────────────────────────────────────
 
 export interface EventRegistryEntry {
-  source: SourceType;
-  label: string;
-  weight: number;
-  externalKeys: readonly string[];
   category: string;
+  externalKeys: readonly string[];
+  label: string;
+  source: SourceType;
+  weight: number;
 }
 
 /** Derived event registry — single source of truth is the provider definitions */
@@ -102,7 +117,9 @@ export const EVENT_REGISTRY: Record<EventKey, EventRegistryEntry> = (() => {
 
 // ── Provider Lookup ───────────────────────────────────────────────────────────
 
-export function getProvider<N extends ProviderName>(name: N): (typeof PROVIDERS)[N];
+export function getProvider<N extends ProviderName>(
+  name: N
+): (typeof PROVIDERS)[N];
 export function getProvider(name: string): ProviderDefinition | undefined;
 export function getProvider(name: string) {
   return (PROVIDERS as Record<string, ProviderDefinition>)[name];
@@ -133,7 +150,9 @@ export const providerConfigSchema = z.discriminatedUnion("sourceType", [
 export type ProviderConfig = z.infer<typeof providerConfigSchema>;
 
 /** Get the default sync events for a provider. */
-export function getDefaultSyncEvents(provider: ProviderName): readonly string[] {
+export function getDefaultSyncEvents(
+  provider: ProviderName
+): readonly string[] {
   return PROVIDERS[provider].defaultSyncEvents;
 }
 

@@ -1,29 +1,26 @@
 {
-	"name": "@repo/og",
-	"license": "MIT",
-	"version": "0.0.0",
-	"private": true,
-	"type": "module",
-	"sideEffects": false,
-	"exports": {
-		".": "./src/index.ts",
-		"./layouts/*": "./src/layouts/*.tsx",
-		"./brand": "./src/brand/index.ts",
-		"./types": "./src/types.ts"
-	},
-	"scripts": {
-		"lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
-		"typecheck": "tsc --noEmit",
-		"clean": "git clean -xdf .cache .turbo node_modules"
-	},
-	"dependencies": {
-		"react": "19.2.1"
-	},
-	"devDependencies": {
-		"@repo/eslint-config": "workspace:*",
-		"@repo/typescript-config": "workspace:*",
-		"@types/react": "^19.2.14",
-		"eslint": "catalog:",
-		"typescript": "catalog:"
-	}
+  "name": "@repo/og",
+  "license": "MIT",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./layouts/*": "./src/layouts/*.tsx",
+    "./brand": "./src/brand/index.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "clean": "git clean -xdf .cache .turbo node_modules"
+  },
+  "dependencies": {
+    "react": "19.2.4"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "19.2.14",
+    "typescript": "catalog:"
+  }
 }

@@ -1,8 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type * as PageTree from "fumadocs-core/page-tree";
 import { Icons } from "@repo/ui/components/icons";
 import {
   Sidebar,
@@ -11,11 +8,14 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
-import { DocsSidebarScrollArea } from "./docs-sidebar-scroll-area";
+import type * as PageTree from "fumadocs-core/page-tree";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { wwwUrl } from "../lib/related-projects";
+import { DocsSidebarScrollArea } from "./docs-sidebar-scroll-area";
 
 interface DocsSidebarProps {
   tree?: PageTree.Root;
@@ -45,31 +45,31 @@ export function DocsSidebar({ tree }: DocsSidebarProps) {
 
   return (
     <Sidebar
+      className="![border-right:0] border-0"
       side="left"
       variant="sidebar"
-      className="border-0 ![border-right:0]"
     >
       {/* Static Header - Logo, Trigger, Matrix, Back to Home */}
       <SidebarHeader className="!p-0 gap-0">
         {/* Logo - aligned with main header */}
-        <div className="h-[4.25rem] page-gutter -ml-2 flex flex-row items-center gap-2">
+        <div className="page-gutter -ml-2 flex h-[4.25rem] flex-row items-center gap-2">
           <Link href={wwwUrl}>
-            <Icons.logoShort className="h-4 w-4 text-foreground group-hover:text-foreground transition-colors" />
+            <Icons.logoShort className="h-4 w-4 text-foreground transition-colors group-hover:text-foreground" />
           </Link>
         </div>
       </SidebarHeader>
 
       {/* Scrollable Documentation Navigation */}
-      <DocsSidebarScrollArea className="flex-1 min-h-0 w-full">
-        <div className="w-full max-w-full min-w-0 overflow-hidden px-12 py-4">
+      <DocsSidebarScrollArea className="min-h-0 w-full flex-1">
+        <div className="w-full min-w-0 max-w-full overflow-hidden px-12 py-4">
           {tree?.children.map((item, index) => {
             if (item.type === "separator") {
               return (
                 <SidebarGroup
-                  key={item.$id ?? `item-${index}`}
                   className="mb-6"
+                  key={item.$id ?? `item-${index}`}
                 >
-                  <SidebarGroupLabel className="text-xs text-muted-foreground px-0">
+                  <SidebarGroupLabel className="px-0 text-muted-foreground text-xs">
                     {item.name}
                   </SidebarGroupLabel>
                 </SidebarGroup>
@@ -79,10 +79,10 @@ export function DocsSidebar({ tree }: DocsSidebarProps) {
             if (item.type === "folder") {
               return (
                 <SidebarGroup
-                  key={item.$id ?? `item-${index}`}
                   className="mb-6"
+                  key={item.$id ?? `item-${index}`}
                 >
-                  <SidebarGroupLabel className="text-xs text-muted-foreground font-normal px-0">
+                  <SidebarGroupLabel className="px-0 font-normal text-muted-foreground text-xs">
                     {item.name}
                   </SidebarGroupLabel>
                   <SidebarGroupContent>
@@ -92,29 +92,31 @@ export function DocsSidebar({ tree }: DocsSidebarProps) {
                         if (child.type === "folder") {
                           return (
                             <div
-                              key={child.$id ?? `child-${childIndex}`}
                               className="mb-4"
+                              key={child.$id ?? `child-${childIndex}`}
                             >
-                              <div className="text-xs text-muted-foreground/70 px-3 mb-1 font-medium">
+                              <div className="mb-1 px-3 font-medium text-muted-foreground/70 text-xs">
                                 {child.name}
                               </div>
                               <div className="ml-2">
                                 {child.children.map((page) => {
-                                  if (page.type !== "page") return null;
+                                  if (page.type !== "page") {
+                                    return null;
+                                  }
 
                                   const isActive = page.url === pathname;
 
                                   return (
                                     <SidebarMenuItem
-                                      key={page.url}
                                       className="-mx-3"
+                                      key={page.url}
                                     >
                                       <SidebarMenuButton
                                         asChild
+                                        className="h-auto w-fit justify-start truncate whitespace-nowrap rounded-lg px-3 py-1.5 text-sm hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground"
                                         isActive={isActive}
-                                        className="h-auto px-3 py-1.5 w-fit text-sm rounded-lg whitespace-nowrap truncate hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground justify-start"
                                       >
-                                        <Link prefetch href={page.url}>
+                                        <Link href={page.url} prefetch>
                                           {page.name}
                                         </Link>
                                       </SidebarMenuButton>
@@ -131,13 +133,13 @@ export function DocsSidebar({ tree }: DocsSidebarProps) {
                           const isActive = child.url === pathname;
 
                           return (
-                            <SidebarMenuItem key={child.url} className="-mx-3">
+                            <SidebarMenuItem className="-mx-3" key={child.url}>
                               <SidebarMenuButton
                                 asChild
+                                className="h-auto w-fit justify-start truncate whitespace-nowrap rounded-lg px-3 py-1.5 text-sm hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground"
                                 isActive={isActive}
-                                className="h-auto px-3 py-1.5 w-fit text-sm rounded-lg whitespace-nowrap truncate hover:bg-accent/70 hover:text-accent-foreground data-[active=true]:bg-accent/70 data-[active=true]:text-accent-foreground justify-start"
                               >
-                                <Link prefetch href={child.url}>
+                                <Link href={child.url} prefetch>
                                   {child.name}
                                 </Link>
                               </SidebarMenuButton>

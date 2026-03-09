@@ -9,7 +9,7 @@ export class AsyncExecutor<EventType extends string, KeyType> {
     private readonly event: EventType,
     private readonly key: KeyType,
     private readonly logger?: Logger,
-    private readonly errorFormatter?: ErrorFormatter,
+    private readonly errorFormatter?: ErrorFormatter
   ) {}
 
   async execute<T>(fn: () => Promise<T>): Promise<T> {

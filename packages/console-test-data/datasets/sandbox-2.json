@@ -38,9 +38,7 @@
               "packages/console-search/src/graph/types.ts"
             ],
             "removed": [],
-            "modified": [
-              "packages/console-search/src/index.ts"
-            ]
+            "modified": ["packages/console-search/src/index.ts"]
           }
         ],
         "head_commit": {
@@ -65,9 +63,7 @@
             "packages/console-search/src/graph/types.ts"
           ],
           "removed": [],
-          "modified": [
-            "packages/console-search/src/index.ts"
-          ]
+          "modified": ["packages/console-search/src/index.ts"]
         },
         "repository": {
           "id": 901234567,
@@ -255,8 +251,20 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 104, "node_id": "L_104", "name": "feature", "color": "0075ca", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "search", "color": "7c3aed", "default": false }
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "feature",
+              "color": "0075ca",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "search",
+              "color": "7c3aed",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -443,8 +451,20 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 104, "node_id": "L_104", "name": "feature", "color": "0075ca", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "search", "color": "7c3aed", "default": false }
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "feature",
+              "color": "0075ca",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "search",
+              "color": "7c3aed",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -637,9 +657,7 @@
               "username": "jeevanpillay"
             },
             "added": [],
-            "removed": [
-              "packages/ui/src/components/use-toast.tsx"
-            ],
+            "removed": ["packages/ui/src/components/use-toast.tsx"],
             "modified": [
               "apps/console/src/components/workspace/search-panel.tsx",
               "apps/console/src/components/settings/api-keys.tsx",
@@ -665,9 +683,7 @@
             "username": "jeevanpillay"
           },
           "added": [],
-          "removed": [
-            "packages/ui/src/components/use-toast.tsx"
-          ],
+          "removed": ["packages/ui/src/components/use-toast.tsx"],
           "modified": [
             "apps/console/src/components/workspace/search-panel.tsx",
             "apps/console/src/components/settings/api-keys.tsx",
@@ -747,9 +763,7 @@
               "email": "jp@lightfast.ai",
               "username": "jeevanpillay"
             },
-            "added": [
-              "api/console/src/trpc/middleware/dual-auth.ts"
-            ],
+            "added": ["api/console/src/trpc/middleware/dual-auth.ts"],
             "removed": [],
             "modified": [
               "api/console/src/trpc/routers/org/search.ts",
@@ -775,9 +789,7 @@
             "email": "jp@lightfast.ai",
             "username": "jeevanpillay"
           },
-          "added": [
-            "api/console/src/trpc/middleware/dual-auth.ts"
-          ],
+          "added": ["api/console/src/trpc/middleware/dual-auth.ts"],
           "removed": [],
           "modified": [
             "api/console/src/trpc/routers/org/search.ts",
@@ -968,7 +980,10 @@
               "githubDeployment": "1"
             }
           },
-          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
           "team": {
             "id": "team_lightfastai",
             "slug": "lightfastai",
@@ -1002,7 +1017,10 @@
               "githubDeployment": "1"
             }
           },
-          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
           "team": {
             "id": "team_lightfastai",
             "slug": "lightfastai",
@@ -1148,20 +1166,32 @@
               "function": "executeAnswerQuery"
             },
             "tags": [
-              {"key": "environment", "value": "preview"},
-              {"key": "release", "value": "feat/search-answer-workspace-rework@f6f7a8b9"},
-              {"key": "branch", "value": "feat/search-answer-workspace-rework"},
-              {"key": "transaction", "value": "/api/answer"},
-              {"key": "url", "value": "https://lightfast-console-git-feat-search-answer.vercel.app/api/answer"}
+              { "key": "environment", "value": "preview" },
+              {
+                "key": "release",
+                "value": "feat/search-answer-workspace-rework@f6f7a8b9"
+              },
+              {
+                "key": "branch",
+                "value": "feat/search-answer-workspace-rework"
+              },
+              { "key": "transaction", "value": "/api/answer" },
+              {
+                "key": "url",
+                "value": "https://lightfast-console-git-feat-search-answer.vercel.app/api/answer"
+              }
             ],
             "contexts": {
-              "runtime": {"name": "node", "version": "22.0.0"},
-              "trace": {"trace_id": "trace_sb2_001", "span_id": "span_sb2_001"}
+              "runtime": { "name": "node", "version": "22.0.0" },
+              "trace": {
+                "trace_id": "trace_sb2_001",
+                "span_id": "span_sb2_001"
+              }
             },
             "web_url": "https://lightfast.sentry.io/issues/5001/events/evt_sb2_err_001/"
           }
         },
-        "installation": {"uuid": "install_sb2_001"}
+        "installation": { "uuid": "install_sb2_001" }
       }
     },
     {
@@ -1180,7 +1210,11 @@
             "statusDetails": {},
             "isPublic": false,
             "platform": "node",
-            "project": {"id": "201", "name": "lightfast-console", "slug": "lightfast-console"},
+            "project": {
+              "id": "201",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
             "type": "error",
             "metadata": {
               "type": "TypeError",
@@ -1201,8 +1235,12 @@
             "annotations": []
           }
         },
-        "installation": {"uuid": "install_sb2_001"},
-        "actor": {"type": "application", "id": "sentry_app_001", "name": "Sentry"}
+        "installation": { "uuid": "install_sb2_001" },
+        "actor": {
+          "type": "application",
+          "id": "sentry_app_001",
+          "name": "Sentry"
+        }
       }
     },
     {
@@ -1227,14 +1265,17 @@
               "value": "Cannot read properties of undefined (reading 'results')"
             },
             "tags": [
-              {"key": "environment", "value": "preview"},
-              {"key": "release", "value": "feat/search-answer-workspace-rework@f6f7a8b9"}
+              { "key": "environment", "value": "preview" },
+              {
+                "key": "release",
+                "value": "feat/search-answer-workspace-rework@f6f7a8b9"
+              }
             ],
             "web_url": "https://lightfast.sentry.io/issues/5001/events/evt_sb2_alert_001/"
           },
           "triggered_rule": "Error Rate Preview Environments"
         },
-        "installation": {"uuid": "install_sb2_001"}
+        "installation": { "uuid": "install_sb2_001" }
       }
     },
     {
@@ -1520,7 +1561,11 @@
             },
             "isPublic": false,
             "platform": "node",
-            "project": {"id": "201", "name": "lightfast-console", "slug": "lightfast-console"},
+            "project": {
+              "id": "201",
+              "name": "lightfast-console",
+              "slug": "lightfast-console"
+            },
             "type": "error",
             "metadata": {
               "type": "TypeError",
@@ -1529,7 +1574,11 @@
               "function": "executeAnswerQuery"
             },
             "numComments": 0,
-            "assignedTo": {"email": "jp@lightfast.ai", "id": "501", "name": "Jeevan Pillay"},
+            "assignedTo": {
+              "email": "jp@lightfast.ai",
+              "id": "501",
+              "name": "Jeevan Pillay"
+            },
             "isBookmarked": false,
             "isSubscribed": true,
             "hasSeen": true,
@@ -1541,8 +1590,8 @@
             "annotations": []
           }
         },
-        "installation": {"uuid": "install_sb2_001"},
-        "actor": {"type": "user", "id": "501", "name": "Jeevan Pillay"}
+        "installation": { "uuid": "install_sb2_001" },
+        "actor": { "type": "user", "id": "501", "name": "Jeevan Pillay" }
       }
     },
     {
@@ -1577,9 +1626,27 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 104, "node_id": "L_104", "name": "feature", "color": "0075ca", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "search", "color": "7c3aed", "default": false },
-            { "id": 106, "node_id": "L_106", "name": "answer", "color": "0e8a16", "default": false }
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "feature",
+              "color": "0075ca",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "search",
+              "color": "7c3aed",
+              "default": false
+            },
+            {
+              "id": 106,
+              "node_id": "L_106",
+              "name": "answer",
+              "color": "0e8a16",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -1766,9 +1833,27 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 104, "node_id": "L_104", "name": "feature", "color": "0075ca", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "search", "color": "7c3aed", "default": false },
-            { "id": 106, "node_id": "L_106", "name": "answer", "color": "0e8a16", "default": false }
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "feature",
+              "color": "0075ca",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "search",
+              "color": "7c3aed",
+              "default": false
+            },
+            {
+              "id": 106,
+              "node_id": "L_106",
+              "name": "answer",
+              "color": "0e8a16",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -1956,7 +2041,10 @@
               "githubDeployment": "1"
             }
           },
-          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
           "team": {
             "id": "team_lightfastai",
             "slug": "lightfastai",
@@ -1991,7 +2079,10 @@
               "githubDeployment": "1"
             }
           },
-          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
           "team": {
             "id": "team_lightfastai",
             "slug": "lightfastai",

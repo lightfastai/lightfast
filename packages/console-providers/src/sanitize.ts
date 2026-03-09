@@ -7,7 +7,7 @@
  */
 
 /** Maximum body length for PostTransformEvent (10KB) */
-export const MAX_BODY_LENGTH = 10000;
+export const MAX_BODY_LENGTH = 10_000;
 
 /** Maximum title length for PostTransformEvent */
 export const MAX_TITLE_LENGTH = 200;
@@ -30,13 +30,13 @@ export function truncateWithEllipsis(str: string, maxLength: number): string {
   if (str.length <= maxLength) {
     return str;
   }
-  return str.slice(0, maxLength - 3) + "...";
+  return `${str.slice(0, maxLength - 3)}...`;
 }
 
 /** Sanitize content for storage — truncates and trims */
 export function sanitizeContent(
   content: string,
-  maxLength: number = MAX_BODY_LENGTH,
+  maxLength: number = MAX_BODY_LENGTH
 ): string {
   const trimmed = content.trim();
   return truncateWithEllipsis(trimmed, maxLength);

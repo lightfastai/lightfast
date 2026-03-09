@@ -1,4 +1,4 @@
-import { docs, meta, apiDocs, apiMeta } from "fumadocs-mdx:collections/server";
+import { apiDocs, apiMeta, docs, meta } from "fumadocs-mdx:collections/server";
 import { loader, multiple } from "fumadocs-core/source";
 import { toFumadocsSource } from "fumadocs-mdx/runtime/server";
 import { openapiSource } from "fumadocs-openapi/server";
@@ -6,23 +6,23 @@ import { openapi } from "./openapi";
 
 // Docs source (general documentation)
 const docsSource = loader({
-	baseUrl: "/docs",
-	source: toFumadocsSource(docs, meta),
+  baseUrl: "/docs",
+  source: toFumadocsSource(docs, meta),
 });
 
 // API source (API reference documentation)
 // Combines manual MDX pages (getting-started, sdks-tools) with virtual OpenAPI endpoint pages
 const apiSource = loader({
-	baseUrl: "/docs/api-reference",
-	source: multiple({
-		mdx: toFumadocsSource(apiDocs, apiMeta),
-		openapi: await openapiSource(openapi, {
-			// Use operationId for flat URLs (no tag folders)
-			// This generates /docs/api-reference/search, /docs/api-reference/contents, etc.
-			groupBy: "none",
-			per: "operation",
-		}),
-	}),
+  baseUrl: "/docs/api-reference",
+  source: multiple({
+    mdx: toFumadocsSource(apiDocs, apiMeta),
+    openapi: await openapiSource(openapi, {
+      // Use operationId for flat URLs (no tag folders)
+      // This generates /docs/api-reference/search, /docs/api-reference/contents, etc.
+      groupBy: "none",
+      per: "operation",
+    }),
+  }),
 });
 
 /**
@@ -38,7 +38,7 @@ export const { getPage, getPages, pageTree } = docsSource;
 
 // Export API methods with different names
 export const {
-	getPage: getApiPage,
-	getPages: getApiPages,
-	pageTree: apiPageTree,
+  getPage: getApiPage,
+  getPages: getApiPages,
+  pageTree: apiPageTree,
 } = apiSource;

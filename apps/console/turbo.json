@@ -59,14 +59,19 @@
         "INNGEST_SIGNING_KEY",
         "PORT"
       ],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "next-env.d.ts"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        "next-env.d.ts"
+      ]
     },
     "dev": {
       "persistent": true,
       "with": [
         "@lightfast/console#dev:inngest",
         "@lightfast/console#dev:qstash",
-        "lightfast#dev:ngrok",
+        "//#dev:ngrok",
         "@db/console#dev:studio"
       ]
     },

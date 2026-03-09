@@ -38,17 +38,11 @@
     "@repo/console-clerk-cache": "workspace:*",
     "@trpc/server": "catalog:",
     "@vendor/clerk": "workspace:*",
-    "drizzle-orm": "catalog:",
-    "zod": "catalog:zod4"
+    "drizzle-orm": "catalog:"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "typescript": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

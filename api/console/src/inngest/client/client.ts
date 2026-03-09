@@ -1,11 +1,10 @@
-import { EventSchemas, Inngest } from "inngest";
-import type { GetEvents } from "inngest";
 import { sentryMiddleware } from "@inngest/middleware-sentry";
-import { z } from "zod";
-
-import { env } from "@vendor/inngest/env";
 import { sourceTypeSchema } from "@repo/console-providers";
 import { ingestionSourceSchema } from "@repo/console-validation";
+import { env } from "@vendor/inngest/env";
+import type { GetEvents } from "inngest";
+import { EventSchemas, Inngest } from "inngest";
+import { z } from "zod";
 
 /**
  * Inngest event schemas for console application
@@ -143,22 +142,35 @@ const eventsMap = {
       sourceId: z.string(),
       title: z.string(),
       body: z.string(),
-      actor: z.object({
-        id: z.string(),
-        name: z.string(),
-        email: z.string().nullable(),
-        avatarUrl: z.string().nullable(),
-      }).nullable(),
+      actor: z
+        .object({
+          id: z.string(),
+          name: z.string(),
+          email: z.string().nullable(),
+          avatarUrl: z.string().nullable(),
+        })
+        .nullable(),
       occurredAt: z.string(),
-      references: z.array(z.object({
-        type: z.enum([
-          "commit", "branch", "pr", "issue", "deployment", "project",
-          "cycle", "assignee", "reviewer", "team", "label"
-        ]),
-        id: z.string(),
-        url: z.string().nullable(),
-        label: z.string().nullable(),
-      })),
+      references: z.array(
+        z.object({
+          type: z.enum([
+            "commit",
+            "branch",
+            "pr",
+            "issue",
+            "deployment",
+            "project",
+            "cycle",
+            "assignee",
+            "reviewer",
+            "team",
+            "label",
+          ]),
+          id: z.string(),
+          url: z.string().nullable(),
+          label: z.string().nullable(),
+        })
+      ),
       metadata: z.record(z.string(), z.unknown()),
     }),
     /** How this event was ingested (webhook, backfill, manual, api). Defaults to "webhook" in the consumer. */
@@ -198,12 +210,14 @@ const eventsMap = {
     /** Observation that triggered update */
     observationId: z.string(),
     /** Source actor data for profile enrichment */
-    sourceActor: z.object({
-      id: z.string(),
-      name: z.string(),
-      email: z.string().nullable(),
-      avatarUrl: z.string().nullable(),
-    }).nullable(),
+    sourceActor: z
+      .object({
+        id: z.string(),
+        name: z.string(),
+        email: z.string().nullable(),
+        avatarUrl: z.string().nullable(),
+      })
+      .nullable(),
   }),
 
   "apps-console/neural/cluster.check-summary": z.object({

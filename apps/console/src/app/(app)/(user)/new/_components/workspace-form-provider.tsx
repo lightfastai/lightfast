@@ -1,10 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useFormCompat, Form } from "@repo/ui/components/ui/form";
-import { workspaceFormSchema } from "@repo/console-validation/forms";
 import type { WorkspaceFormValues } from "@repo/console-validation/forms";
+import { workspaceFormSchema } from "@repo/console-validation/forms";
+import { Form, useFormCompat } from "@repo/ui/components/ui/form";
+import type { ReactNode } from "react";
 
 /**
  * WorkspaceFormProvider
@@ -13,22 +13,22 @@ import type { WorkspaceFormValues } from "@repo/console-validation/forms";
  * Source selection has been moved to SourceSelectionProvider in sources/new.
  */
 export function WorkspaceFormProvider({
-	children,
-	initialOrgId,
-	initialWorkspaceName,
+  children,
+  initialOrgId,
+  initialWorkspaceName,
 }: {
-	children: ReactNode;
-	initialOrgId?: string;
-	initialWorkspaceName?: string;
+  children: ReactNode;
+  initialOrgId?: string;
+  initialWorkspaceName?: string;
 }) {
-	const form = useFormCompat<WorkspaceFormValues>({
-		resolver: zodResolver(workspaceFormSchema),
-		defaultValues: {
-			organizationId: initialOrgId ?? "",
-			workspaceName: initialWorkspaceName ?? "",
-		},
-		mode: "onChange",
-	});
+  const form = useFormCompat<WorkspaceFormValues>({
+    resolver: zodResolver(workspaceFormSchema),
+    defaultValues: {
+      organizationId: initialOrgId ?? "",
+      workspaceName: initialWorkspaceName ?? "",
+    },
+    mode: "onChange",
+  });
 
-	return <Form {...form}>{children}</Form>;
+  return <Form {...form}>{children}</Form>;
 }

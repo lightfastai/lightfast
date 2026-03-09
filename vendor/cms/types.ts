@@ -11,10 +11,8 @@
 import "./basehub-types.d.ts";
 
 // Re-export the augmented Scalars type
-export type { Scalars } from "basehub";
-
 // Re-export specific scalar types for convenience
-export type { Scalars as BasehubScalars } from "basehub";
+export type { Scalars, Scalars as BasehubScalars } from "basehub";
 
 // Type aliases for commonly used BSHBSelect types
 import type { Scalars } from "basehub";

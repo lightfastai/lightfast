@@ -1,0 +1,909 @@
+
+ ▐▛███▜▌   Claude Code v2.1.70
+▝▜█████▛▘  Opus 4.6 · Claude API
+  ▘▘ ▝▝    ~/Code/@lightfastai/lightfast
+
+❯ consider                                                                  
+                                                                            
+  Based on everything — graph decoupling, DOs, autonomous agency:           
+                                                                            
+  1. **Decouple graph from observation-capture** — Split `notify.ts`        
+  fan-out so graph edges are built independently via linking-keys table +   
+  dedicated Inngest function                                                
+                                                                            
+  2. **Extract actor resolution into standalone pipeline** — Separate actor 
+   identity reconciliation from observation ingestion so it runs as its own 
+   fan-out stream                                                           
+                                                                            
+  3. **Design and implement the Entity DO runtime** — Entity DOs with       
+  state, edges, event handlers, alarms, hibernation — the stateful graph    
+  node primitive on Cloudflare Workers                                      
+                                                                            
+  4. **Implement Key DOs as rendezvous matchmakers** — Thin DOs that        
+  accumulate entity references per linking key (commit SHA, branch, PR      
+  number) and broker introductions between Entity DOs                       
+                                                                            
+  5. **Implement the action execution layer** — Bidirectional relay that    
+  can write back to providers (GitHub, Linear, Vercel, Slack) with          
+  permissions, audit trail, and confidence-gated execution                  
+                                                                            
+  6. **Build the autonomous coordinator process** — The ambient             
+  intelligence loop: graph state snapshot → LLM inference → intent          
+  detection → action planning → confidence-gated execution/suggestion       
+                                                                            
+  7. **Ship the confidence spectrum + user trust UI** — Console interface   
+  where users see agent suggestions, approve/reject, tune confidence        
+  thresholds, and gradually grant autonomy in respect to @SPEC.md is this   
+  the most minimal architecture to achieve what we want.                    
+                                                                            
+  note: we also intend to use Rivet.gg's Actor model instead of Cloudflare  
+  deployed onto Vercel.                                                     
+                                                                            
+  we also want to integarte research we did previously about Cloudflare     
+  Codemode to access ALL APIs from connected providers.                     
+  ⎿  Read SPEC.md (66 lines)
+
+❯ Tool loaded. 
+
+⏺ Let me gather the existing research on these topics before analyzing
+  minimality.
+
+⏺ 2 agents finished (ctrl+o to expand)
+   ├─ thoughts-locator (Find existing research on graph, actors, codemod) · 14
+   tool uses · 27.3k tokens
+   │  ⎿  Done
+   └─ codebase-locator (Find notify.ts and current graph architecture) · 10 tool
+    uses · 19.4k tokens
+      ⎿  Done
+
+⏺ Now let me read the two most critical research documents to understand the
+  current state of thinking.
+
+⏺ Read 3 files (ctrl+o to expand)
+
+⏺ Now let me read the current observation-capture structure to understand the
+  monolith, and also check what RivetKit skills exist.
+
+⏺ Searched for 2 patterns, read 4 files (ctrl+o to expand)
+
+⏺ Now I have a thorough picture of the current state, the existing research, and
+   RivetKit's capabilities. Let me give you the analysis.
+
+  ---
+  Analysis: Is This the Most Minimal Architecture?
+
+  Short answer: No. Your 7 steps contain 2 that are premature, and 2 that your 
+  existing research already solves — you just haven't connected the dots.
+
+  Let me map your 7 steps against SPEC.md's pipeline (Observe → Remember → 
+  Reason → Act) and your existing research:
+
+  ---
+  The SPEC.md Pipeline vs. Your 7 Steps
+
+  ┌────────────┬─────────────┬─────────────────────────────────────────────┐
+  │  SPEC.md   │    Your     │             What Already Exists             │
+  │   Phase    │   Step(s)   │                                             │
+  ├────────────┼─────────────┼─────────────────────────────────────────────┤
+  │ Observe    │ —           │ relay → QStash → observation-capture        │
+  │            │             │ (working)                                   │
+  ├────────────┼─────────────┼─────────────────────────────────────────────┤
+  │ Remember   │ Steps 1, 2, │ Observation store + entities +              │
+  │            │  3, 4       │ relationships (working, imperfect)          │
+  ├────────────┼─────────────┼─────────────────────────────────────────────┤
+  │ Reason     │ Step 6      │ Nothing yet                                 │
+  ├────────────┼─────────────┼─────────────────────────────────────────────┤
+  │ Act        │ Step 5      │ MCP Code Mode research (fully designed, not │
+  │            │             │  built)                                     │
+  ├────────────┼─────────────┼─────────────────────────────────────────────┤
+  │ Trust/UX   │ Step 7      │ Nothing yet                                 │
+  └────────────┴─────────────┴─────────────────────────────────────────────┘
+
+  ★ Insight ─────────────────────────────────────
+  The critical realization: Your existing research has already solved the
+  hardest design problems — the neural graph decoupling research
+  (2026-03-06-neural-graph-connection-extraction.md) gives you steps 1-2 as a
+  single Inngest-level change, and the MCP Code Mode research
+  (2026-03-05-mcp-provider-api-server-architecture.md) gives you step 5
+  entirely. The gap isn't architecture — it's connecting these two pieces
+  through a reasoning layer.
+  ─────────────────────────────────────────────────
+
+  ---
+  Step-by-Step Verdict
+
+  Steps 1 + 2: Graph Decoupling + Actor Resolution Extraction
+
+  KEEP, but merge into one step.
+
+  Your own research already confirms these are a single change. The Level 1
+  decision in neural-graph-connection-extraction.md says:
+
+  Fan out from notify.ts to separate independent Inngest functions:
+  - observation.capture — simplified
+  - graph.build — linking key extraction + edge materialization
+  - actor.resolve — cross-source identity resolution
+
+  This is steps 1 and 2 combined. The linking-key table + reactive graph builder
+   achieves eventual consistency without any actor runtime. This is your 
+  existing plan. Just execute it.
+
+  Steps 3 + 4: Entity DOs + Key DOs (Rivet Actors)
+
+  PREMATURE. Remove from the critical path.
+
+  Your own research explicitly labeled this "Level 2 — Under Exploration."
+  Here's why it's not needed yet:
+
+  - The linking-key Inngest approach (Level 1) already achieves eventual
+  consistency for the graph. Order doesn't matter — whichever event arrives
+  second triggers full edge materialization.
+  - Rivet Actors add sub-second latency and per-key single-threaded execution —
+  these are performance optimizations, not functional requirements.
+  - You don't yet have the graph builder running independently. Adding a
+  stateful actor runtime on top of a system that doesn't exist yet is building
+  the roof before the walls.
+
+  When you'd actually need Rivet Actors: When the Inngest graph builder hits
+  throughput/latency limits (thousands of linking-key events per second needing
+  sub-second materialization). That's a scaling problem you don't have yet.
+
+  Step 5: Action Execution Layer
+
+  KEEP — but it's already fully designed as your MCP Server.
+
+  The mcp-provider-api-server-architecture.md research is literally this step:
+
+  ┌────────────────────────────────┬────────────────────────────────────────┐
+  │           MCP Layer            │                Maps To                 │
+  ├────────────────────────────────┼────────────────────────────────────────┤
+  │ Layer 1 (Memory tools)         │ "What happened?" — feeds Reason        │
+  ├────────────────────────────────┼────────────────────────────────────────┤
+  │ Layer 2                        │ "Do something about it" — the Act      │
+  │ (lightfast_api_execute)        │ phase                                  │
+  └────────────────────────────────┴────────────────────────────────────────┘
+
+  The Code Mode pattern gives you bidirectional relay to all connected providers
+   with:
+  - Authenticated sandboxed execution (token injected server-side, never in
+  context)
+  - Provider validation against gwInstallations
+  - Audit trail (every execute call is logged)
+
+  You don't need a separate "action execution layer" — the MCP server IS the 
+  action execution layer. The autonomous coordinator (step 6) calls
+  lightfast_api_execute as its action primitive.
+
+  Step 6: Autonomous Coordinator
+
+  KEEP — this is the actual missing piece.
+
+  This is the Reason phase of SPEC.md. None of your existing research covers it.
+   The coordinator is:
+
+  1. Input: Graph state (via lightfast_search, lightfast_graph,
+  lightfast_related MCP tools)
+  2. Processing: LLM inference → intent detection → action planning
+  3. Output: Either suggestion (low confidence) or action (high confidence) via
+  lightfast_api_execute
+
+  But the minimal version is simpler than "ambient intelligence loop." It's an
+  Inngest function triggered by graph state changes (linking-key events, cluster
+   summaries) that runs an LLM to decide if action is needed.
+
+  Step 7: Confidence Spectrum + Trust UI
+
+  KEEP — essential for the Act phase.
+
+  Without this, agents can't execute. The confidence gate IS the product
+  differentiator — "every action traces to source events" (SPEC.md principle).
+
+  ---
+  The Minimal Architecture (4 steps, not 7)
+
+  Step 1: Graph Decoupling (your Level 1)
+          ├── Linking key table + reactive graph builder (Inngest)
+          ├── Actor resolution as independent pipeline
+          └── notify.ts becomes fan-out point
+
+  Step 2: MCP Server (your Code Mode research)
+          ├── Layer 1: Memory tools (search, graph, related)
+          ├── Layer 2: Provider API tools (api_search, api_execute)
+          └── Deployed as apps/mcp Hono service
+
+  Step 3: Reasoning Coordinator
+          ├── Inngest function triggered by graph state changes
+          ├── LLM inference: graph snapshot → intent → action plan
+          ├── Confidence scoring against user-defined thresholds
+          └── Executes via MCP Layer 2 tools (or queues for approval)
+
+  Step 4: Trust UI
+          ├── Console interface for suggestions/approvals
+          ├── Confidence threshold tuning per provider/action type
+          └── Audit trail visualization (action → source events)
+
+  Where Rivet Actors Fit (Later)
+
+  Rivet Actors become relevant as a Step 5 optimization when you need:
+
+  - Entity Actors: Persistent stateful graph nodes that maintain their own edge
+  state, react to events in real-time, and sleep when inactive. Replace the
+  DB-polling graph builder with event-driven actors.
+  - Key Actors: Rendezvous points that accumulate references per linking key and
+   broker introductions. Replace the Inngest debounced graph builder with
+  sub-second materialization.
+
+  The key insight from Rivet's architecture doc is the actor-per-entity pattern
+  — each entity (commit SHA, PR, Linear issue) becomes a sleeping actor that
+  wakes when new observations reference it. This is elegant, but it's an
+  evolution of the linking-key table, not a prerequisite.
+
+  ★ Insight ─────────────────────────────────────
+  1. Your existing research already solved 4 of 7 steps — steps 1-2 are the
+  neural graph research (Level 1), step 5 is the MCP Code Mode research. The
+  work was done; it just wasn't assembled.
+  2. The MCP server is the most leveraged next build — it simultaneously enables
+   the Act phase AND provides the interface that the Reasoning Coordinator will
+  use. Build it, and you get two phases for the price of one.
+  3. Rivet Actors are a scaling optimization, not a functional requirement. The
+  Inngest linking-key approach gives you eventual consistency today. Actors give
+   you real-time graph materialization when you need it. Ship the simpler
+  version first; you'll know when latency matters because users will tell you.
+  ─────────────────────────────────────────────────
+
+  Integrating Your Two Constraints
+
+  Rivet.gg instead of Cloudflare DOs: Correct to defer. RivetKit deploys on
+  Vercel via app.all("/api/rivet/*", (c) => registry.handler(c.req.raw)), so
+  when you do need actors, they slot into your existing Hono/Vercel
+  infrastructure without a Cloudflare dependency.
+
+  Cloudflare Code Mode for provider APIs: Already fully integrated into your MCP
+   research. The lightfast_api_search + lightfast_api_execute pattern IS the
+  Code Mode pattern — isolated-vm sandboxes replace Cloudflare Workers isolates,
+   and your gwInstallations + getToken() flow handles auth. Same concept, your
+  infrastructure.
+
+  ---
+  Bottom line: Ship steps 1 → 2 → 3 → 4 in that order. The graph decoupling
+  unblocks everything. The MCP server gives you both memory-read and
+  action-write in 7 fixed tools. The coordinator connects them. The trust UI
+  makes it safe. Actors come when you need speed.
+
+✻ Baked for 3m 28s
+
+❯ hmm, you misunderstand tho, the Rivet Actors / DO is literally one of the 
+   core primitives in this architecture. It's not a scaling/performance     
+  consideration, it's to building the daemon shepard eventually, the        
+  process runner/execution engine. The pipeline to act autonomously on      
+  behalf of user essentially.                                               
+
+⏺ You're right — I misframed actors as an optimization layer. Let me correct
+  that.
+
+❯ Tool loaded. 
+
+⏺ Let me re-read the RivetKit actor primitives that matter for this reframe —
+  specifically lifecycle, scheduling, and workflows.
+
+⏺ Read 4 files (ctrl+o to expand)
+
+⏺ Now I see the full picture of RivetKit's primitives. Let me correct my
+  analysis.
+
+  ---
+  Corrected Analysis: Actors as the Core Execution Primitive
+
+  I was wrong. I treated Rivet Actors as a faster version of the Inngest graph
+  builder. They're not — they're the daemon runtime. The persistent process that
+   observes, accumulates, reasons, and acts on behalf of the user.
+
+  ★ Insight ─────────────────────────────────────
+  The key distinction I missed: Inngest functions are request-response (event in
+   → process → done). Rivet Actors are persistent processes with a run loop,
+  durable state, schedule alarms, hibernation, and inter-actor communication.
+  The actor doesn't just process an event and exit — it stays alive, accumulates
+   context over time, wakes on new signals, and eventually decides to act. This
+  is the difference between a webhook handler and an agent.
+  ─────────────────────────────────────────────────
+
+  What Rivet Actors Actually Give You Here
+
+  Mapping actor primitives to SPEC.md's pipeline:
+
+  ┌──────────────────┬────────────────┬─────────────────────────────────────┐
+  │ Rivet Primitive  │ SPEC.md Phase  │           What It Enables           │
+  ├──────────────────┼────────────────┼─────────────────────────────────────┤
+  │ run (background  │                │ The ambient reasoning loop — polls  │
+  │ loop)            │ Reason         │ graph state, detects patterns,      │
+  │                  │                │ plans actions                       │
+  ├──────────────────┼────────────────┼─────────────────────────────────────┤
+  │ state            │                │ Per-entity accumulated context that │
+  │ (persisted,      │ Remember       │  survives crashes/upgrades/sleep    │
+  │ in-memory)       │                │                                     │
+  ├──────────────────┼────────────────┼─────────────────────────────────────┤
+  │ schedule.after / │                │ "Check back in 30 minutes if this   │
+  │  schedule.at     │ Reason         │ PR still has no review" — durable   │
+  │                  │                │ timers                              │
+  ├──────────────────┼────────────────┼─────────────────────────────────────┤
+  │ actions (inbound │ Observe        │ Entity actors receive new           │
+  │  RPCs)           │                │ observations as action calls        │
+  ├──────────────────┼────────────────┼─────────────────────────────────────┤
+  │ c.client()       │                │ Coordinator actor queries Entity    │
+  │ (inter-actor)    │ Reason         │ Actors: "what's the state of PR     │
+  │                  │                │ #42?"                               │
+  ├──────────────────┼────────────────┼─────────────────────────────────────┤
+  │                  │                │ Cost-efficient — actors hibernate   │
+  │ onWake / onSleep │ Infrastructure │ when nothing is happening, wake on  │
+  │                  │                │ new signals                         │
+  ├──────────────────┼────────────────┼─────────────────────────────────────┤
+  │ workflow()       │                │ Multi-step action execution with    │
+  │ (durable steps)  │ Act            │ replay safety (e.g., create Linear  │
+  │                  │                │ issue → link to PR → assign)        │
+  ├──────────────────┼────────────────┼─────────────────────────────────────┤
+  │ broadcast        │ Act            │ Push suggestions/actions to         │
+  │ (events)         │                │ connected Trust UI clients          │
+  └──────────────────┴────────────────┴─────────────────────────────────────┘
+
+  Revised Architecture Map
+
+  Here's how the system actually works with actors as the core:
+
+                      External Providers
+                      (GitHub, Linear, Vercel, Sentry)
+                             │
+                             ▼
+                ┌─────────────────────────┐
+                │  relay → QStash → notify│  ← Step 1: Graph decoupling
+                │  Fan-out to:            │
+                │   • observation.capture │  (Inngest — store & embed)
+                │   • actor events        │  (wake relevant Entity/Key Actors)
+                │   • SSE realtime        │
+                └────────────┬────────────┘
+                             │
+                             ▼
+                ┌─────────────────────────┐
+                │  Rivet Actor Registry   │  ← Steps 3+4+6: The runtime
+                │                         │
+                │  Entity Actors          │  Per PR, per issue, per deployment
+                │   • state: accumulated  │  observations, edges, actor IDs
+                │   • run: reasoning loop │  "should I act on this?"
+                │   • schedule: "check    │  back if no review in 2h"
+                │   • actions: receive    │  new observations, answer queries
+                │                         │
+                │  Key Actors             │  Per commit SHA, branch, issue ID
+                │   • state: [entityRefs] │  which entities share this key
+                │   • actions: register() │  new entity → broker introductions
+                │   • matchmaking         │  "PR #42 and Deploy abc123 share
+                │                         │   commit SHA → connect them"
+                │                         │
+                │  Coordinator Actor      │  Per workspace (the daemon)
+                │   • run: ambient loop   │  graph snapshot → LLM → intent
+                │   • state: thresholds,  │  user trust config, action history
+                │   • actions: suggest(), │  execute(), getStatus()
+                │   • workflow: multi-    │  step actions with rollback
+                └────────────┬────────────┘
+                             │
+                             ▼
+                ┌─────────────────────────┐
+                │  MCP Server (apps/mcp)  │  ← Step 5: Action interface
+                │                         │
+                │  Layer 1: Memory        │  Actors query workspace memory
+                │   lightfast_search      │  (what happened?)
+                │   lightfast_graph       │
+                │                         │
+                │  Layer 2: Provider APIs │  Actors execute via Code Mode
+                │   lightfast_api_execute │  (do something about it)
+                │   lightfast_api_search  │  (discover API endpoints)
+                └─────────────────────────┘
+                             │
+                             ▼
+                ┌─────────────────────────┐
+                │  Trust UI (Console)     │  ← Step 7: Human interface
+                │                         │
+                │  WebSocket → Coordinator│  Actor broadcasts suggestions
+                │  Approve / Reject / Tune│  User sets confidence thresholds
+                │  Audit trail            │  Action → source events chain
+                └─────────────────────────┘
+
+  So: Is Your 7-Step Plan Minimal?
+
+  Almost. It's 5, not 7. Two merges are possible:
+
+  ┌─────────────────┬──────────┬────────────────────────────────────────────┐
+  │   Your Steps    │  Merge   │                 Rationale                  │
+  ├─────────────────┼──────────┼────────────────────────────────────────────┤
+  │ 1 Graph         │ → Step 1 │ Same change — notify.ts becomes fan-out    │
+  │ decoupling      │          │ point                                      │
+  ├─────────────────┼──────────┼────────────────────────────────────────────┤
+  │ 2 Actor         │ ↑ merges │ Actor resolution is one of the fan-out     │
+  │ resolution      │  into 1  │ targets from notify.ts. It's the same      │
+  │ extraction      │          │ refactor.                                  │
+  ├─────────────────┼──────────┼────────────────────────────────────────────┤
+  │ 3 Entity Actor  │ → Step 2 │ One Rivet registry, deployed as one        │
+  │ runtime         │          │ service                                    │
+  ├─────────────────┼──────────┼────────────────────────────────────────────┤
+  │                 │ ↑ merges │ Key Actors are just another actor type in  │
+  │ 4 Key Actors    │  into 2  │ the same registry. Same setup({ use: {     │
+  │                 │          │ entity, key, coordinator } }).             │
+  ├─────────────────┼──────────┼────────────────────────────────────────────┤
+  │ 5 Action        │ → Step 3 │ The MCP server — already fully designed in │
+  │ execution layer │          │  your Code Mode research                   │
+  ├─────────────────┼──────────┼────────────────────────────────────────────┤
+  │                 │          │ The coordinator IS an actor. It's const    │
+  │ 6 Coordinator   │ ↑ merges │ coordinator = actor({ run: workflow(...)   │
+  │ process         │  into 2  │ }) in the same registry as Entity and Key  │
+  │                 │          │ actors.                                    │
+  ├─────────────────┼──────────┼────────────────────────────────────────────┤
+  │                 │          │ The product surface. Coordinator           │
+  │ 7 Trust UI      │ → Step 4 │ broadcasts to connected Trust UI clients   │
+  │                 │          │ via WebSocket.                             │
+  └─────────────────┴──────────┴────────────────────────────────────────────┘
+
+  The Minimal 5-Step Plan
+
+  Step 1: Data Pipeline Decoupling (your steps 1+2)
+  - notify.ts fans out to independent pipelines
+  - observation.capture simplified (embed, classify, store)
+  - graph.linking-keys.extracted event emitted
+  - Actor resolution as independent stream
+  - Linking key table replaces JSONB containment queries
+
+  Step 2: Rivet Actor Runtime (your steps 3+4+6)
+  - apps/actors — new Hono + RivetKit service on Vercel
+  - Three actor types in one registry:
+    - Entity Actors: per-PR, per-issue, per-deployment. Accumulate observations,
+   maintain local graph state, run reasoning loops, schedule follow-ups.
+    - Key Actors: per-commit-SHA, per-branch. Accumulate entity references,
+  broker introductions between Entity Actors when new observations arrive.
+    - Coordinator Actor: per-workspace daemon. Aggregates signals from Entity
+  Actors, runs LLM inference, decides suggest vs. execute, manages confidence
+  thresholds.
+  - Connected to Rivet Cloud (or self-hosted) for multi-region, hibernation,
+  fault tolerance
+
+  Step 3: MCP Server (your step 5)
+  - apps/mcp — the action interface
+  - Layer 1 (Memory): 5 tools wrapping V1 API
+  - Layer 2 (Provider APIs): lightfast_api_search + lightfast_api_execute with
+  Code Mode
+  - Actors call MCP tools via internal API to execute actions on providers
+  - Already fully designed in your research
+
+  Step 4: Wire Actors ↔ MCP (implicit in your plan, but its own integration
+  step)
+  - Coordinator Actor's workflow() calls lightfast_api_execute to act on
+  providers
+  - Entity Actors query lightfast_search / lightfast_graph for context
+  - Action results flow back as observations through the relay pipeline (closed
+  loop)
+
+  Step 5: Trust UI (your step 7)
+  - Console interface connects to Coordinator Actor via WebSocket
+  - Coordinator broadcasts suggestions/actions
+  - User approves/rejects/tunes confidence thresholds per provider/action type
+  - Audit trail: every action traces back through Entity Actor state →
+  observations → source events
+
+  ★ Insight ─────────────────────────────────────
+  1. The actor IS the agent. The run handler is the reasoning loop.
+  schedule.after is "check back later." workflow() is durable multi-step action
+  execution. state is accumulated memory. You're not building an agent on top of
+   actors — the actor model IS the agent architecture.
+  2. Steps 3+4+6 in your original plan are all actor types in one setup() call.
+  They share a registry, deploy as one service, and communicate via c.client().
+  Separating them into 3 implementation steps would mean deploying the actor
+  runtime 3 times — wasteful. Design all 3 actor types together, ship them as
+  one registry.
+  3. Step 4 (Wire Actors ↔ MCP) is the closed loop that makes SPEC.md real.
+  Without it, actors can observe and reason but not act. Without actors, the MCP
+   server can act but not reason. The wiring step is where Observe → Remember → 
+  Reason → Act becomes a single continuous pipeline rather than 4 disconnected
+  systems.
+  ─────────────────────────────────────────────────
+
+  Dependency Order
+
+  Step 1 (Data Pipeline) ──────────────────────────────────────┐
+     notify.ts fan-out, linking keys, actor resolution          │
+                                                                │
+  Step 2 (Actor Runtime) ◄──── needs clean event stream ───────┘
+     Entity + Key + Coordinator actors                          │
+                                                                │
+  Step 3 (MCP Server) ◄──── can build in parallel with Step 2  │
+     Memory tools + Provider API tools                          │
+                                                                │
+  Step 4 (Wire Actors ↔ MCP) ◄──── needs both 2 and 3 ────────┘
+     Coordinator calls MCP to act, results loop back            │
+                                                                │
+  Step 5 (Trust UI) ◄──── needs Step 4 ────────────────────────┘
+     WebSocket to Coordinator, approve/reject/tune
+
+  Steps 2 and 3 can be built in parallel since they're independent. That's your
+  fastest critical path: Step 1 → (Steps 2 ∥ 3) → Step 4 → Step 5.
+
+  What About the Inngest Graph Builder?
+
+  Here's the interesting question: with actors as the runtime, do you still need
+   the Inngest graph builder from your Level 1 research?
+
+  Yes, but it evolves. In the short term, the Inngest graph builder materializes
+   edges into the database (your existing schema). In the long term, Key Actors
+  subsume this role — each Key Actor IS the source of truth for its linking
+  key's edges, with the database as a read replica. The migration path:
+
+  1. Phase A: Inngest graph builder writes to
+  workspace_observation_relationships (current schema)
+  2. Phase B: Key Actors take over edge materialization, Inngest graph builder
+  becomes a fallback/reconciliation path
+  3. Phase C: Key Actors ARE the graph, database is a projection
+
+  This means Step 1 (data pipeline decoupling) is still valuable even with
+  actors, because it establishes the event-driven fan-out that actors later
+  consume directly.
+
+✻ Brewed for 2m 16s
+
+❯ well this makes sense. but now consider this: how does the                
+  ┌─────────────────┬────────────────┬────────────────────────────────┐     
+    │ Rivet Primitive │ SPEC.md Phase  │        What It Enables         │   
+    ├─────────────────┼────────────────┼────────────────────────────────┤   
+    │ run (background │                │ The ambient reasoning loop —   │   
+    │  loop)          │ Reason         │ polls graph state, detects     │   
+    │                 │                │ patterns, plans actions        │   
+    ├─────────────────┼────────────────┼────────────────────────────────┤   
+    │ state           │                │ Per-entity accumulated context │   
+    │ (persisted,     │ Remember       │  that survives                 │   
+    │ in-memory)      │                │ crashes/upgrades/sleep         │   
+    ├─────────────────┼────────────────┼────────────────────────────────┤   
+    │ schedule.after  │                │ "Check back in 30 minutes if   │   
+    │ / schedule.at   │ Reason         │ this PR still has no review" — │   
+    │                 │                │  durable timers                │   
+    ├─────────────────┼────────────────┼────────────────────────────────┤   
+    │ actions         │ Observe        │ Entity actors receive new      │   
+    │ (inbound RPCs)  │                │ observations as action calls   │   
+    ├─────────────────┼────────────────┼────────────────────────────────┤   
+    │ c.client()      │                │ Coordinator actor queries      │   
+    │ (inter-actor)   │ Reason         │ Entity Actors: "what's the     │   
+    │                 │                │ state of PR #42?"              │   
+    ├─────────────────┼────────────────┼────────────────────────────────┤   
+    │ onWake /        │                │ Cost-efficient — actors        │   
+    │ onSleep         │ Infrastructure │ hibernate when nothing is      │   
+    │                 │                │ happening, wake on new signals │   
+    ├─────────────────┼────────────────┼────────────────────────────────┤   
+    │                 │                │ Multi-step action execution    │   
+    │ workflow()      │ Act            │ with replay safety (e.g.,      │   
+    │ (durable steps) │                │ create Linear issue → link to  │   
+    │                 │                │ PR → assign)                   │   
+    ├─────────────────┼────────────────┼────────────────────────────────┤   
+    │ broadcast       │ Act            │ Push suggestions/actions to    │   
+    │ (events)        │                │ connected Trust UI clients     │   
+    └─────────────────┴────────────────┴────────────────────────────────    
+  layer become dynamic. consider Lightfast itself. i'm single dev. i expect 
+   to be solo founder for next 1 year. the same problems i face, are not    
+  the same problem that other "teams" will face.                            
+                                                                            
+  What's the single smartest and most radically innovative and accretive    
+  and useful and compelling addition you could make to the plan at this     
+  point?"                                                                   
+
+⏺ The question isn't about adding a step. It's about what makes the actor layer
+  alive — what gives it agency without you hand-coding every pattern it should
+  detect and every action it should take.
+
+  The answer is already in SPEC.md:
+
+  Primitives over features: Composable building blocks. Every capability is a 
+  configuration, not a new subsystem.
+
+  And:
+
+  Intent over API calls: Agents express what they want. The system resolves how.
+
+  The single most accretive addition:
+
+  ---
+  The Actor Layer Programs Itself
+
+  Right now your plan has Entity Actors with hardcoded reasoning loops — you'd
+  write the run handler that checks "has this PR been open 5 days with no
+  review?" That doesn't scale to one developer. You'd need to anticipate every
+  pattern across every provider for every team's workflow.
+
+  Instead: the Coordinator Actor's run loop IS an LLM agent that uses the MCP 
+  server as its tool interface.
+
+  Coordinator Actor (per workspace)
+  ├── run: workflow(async (ctx) => {
+  │     while (!c.aborted) {
+  │       // 1. Observe: query own accumulated state
+  │       const signals = c.state.pendingSignals;
+  │
+  │       // 2. Reason: LLM with workspace memory as context
+  │       const plan = await ctx.step("reason", () =>
+  │         generatePlan({
+  │           signals,
+  │           tools: MCP_TOOL_DEFINITIONS,  // the 7 fixed tools
+  │           invariants: c.state.userInvariants,  // user-defined rules
+  │           history: c.state.actionHistory,
+  │         })
+  │       );
+  │
+  │       // 3. Act (or Suggest): confidence-gated
+  │       if (plan.confidence >= c.state.threshold) {
+  │         await ctx.step("execute", () =>
+  │           mcp.lightfast_api_execute(plan)
+  │         );
+  │       } else {
+  │         c.broadcast("suggestion", plan);  // → Trust UI
+  │       }
+  │
+  │       // 4. Sleep until next signal
+  │       await ctx.sleep("wait-for-signal", signals);
+  │     }
+  │   })
+  ├── state: {
+  │     userInvariants: [],      // "PRs should be reviewed within 24h"
+  │     actionHistory: [],       // what it did and what happened
+  │     threshold: 0.8,          // user-tunable confidence gate
+  │     pendingSignals: [],      // accumulated from Entity Actors
+  │   }
+
+  But here's the radical part — the userInvariants aren't code. They're natural 
+  language.
+
+  "When a Sentry error spikes above 100 occurrences and a related PR was
+  merged in the last 2 hours, create a Linear issue and assign it to
+  whoever authored the PR."
+
+  The Coordinator Actor receives this as a string. The LLM in the run loop uses
+  lightfast_search to check the graph, lightfast_graph to trace the
+  relationship, lightfast_api_execute to create the issue — all through the same
+   7 MCP tools. No new code. No new actor type. No deployment.
+
+  ★ Insight ─────────────────────────────────────
+  1. This is why the MCP server matters more than I initially said. It's not
+  just the action interface for humans — it's the action interface for the
+  Coordinator Actor itself. The actor reasons through the same tools an external
+   AI agent would use. The MCP server becomes the single capability surface for
+  both autonomous and human-directed operation.
+  2. User invariants as natural language eliminate the "solo founder" scaling 
+  problem. You don't write detection logic for every team's workflow. Each user
+  writes invariants in plain English. The Coordinator Actor's LLM interprets
+  them against the graph. Your job is the runtime, not the rules.
+  3. This is SPEC.md's "Intent over API calls" realized as architecture. The
+  invariant "PRs should be reviewed within 24h" is intent. The Coordinator
+  resolves it to: schedule a check → query graph → find unreviewed PRs → find
+  the right reviewer via actor profiles → create a reminder or assign. The user
+  never specifies API calls.
+  ─────────────────────────────────────────────────
+
+  What This Changes in Your 5-Step Plan
+
+  Nothing structurally. It's a design constraint on Step 2 (Actor Runtime):
+
+  - Entity Actors stay as-is — they accumulate observations and maintain
+  per-entity state
+  - Key Actors stay as-is — they broker introductions via linking keys
+  - Coordinator Actor gains userInvariants: string[] in its state, and its run
+  loop becomes an LLM agent loop that interprets invariants against the graph
+  via MCP tools
+
+  And a design constraint on Step 5 (Trust UI):
+
+  - Add an invariant editor: natural language rules that get stored in the
+  Coordinator Actor's state
+  - The approval flow shows which invariant triggered each suggestion, plus the
+  source events that matched
+
+  The Flywheel
+
+  This creates a self-reinforcing loop that gets better without you writing
+  code:
+
+  User writes invariant
+    → Coordinator detects pattern via graph + LLM
+      → Suggests action (below threshold) or executes (above)
+        → User approves/rejects
+          → Action history improves future confidence scoring
+            → User raises threshold (more autonomy)
+              → System acts more, user intervenes less
+
+  Every approval teaches the system. Every rejection refines it. The flywheel
+  runs on natural language invariants and 7 fixed MCP tools. You build the 
+  runtime once; every user programs their own agent by describing what they 
+  want.
+
+  That's the most compelling thing you can ship as a solo founder — a system
+  where your users do the work of making it smarter, not you.
+
+✻ Cogitated for 41s
+
+❯ well, now consider this: no review on pr, but what if it continues this.  
+  for example, in my scenario, i dont have much time, i cant review prs. i  
+  also write 300 code changes 50k line prs bc thats just how i code fast.   
+  can it also then execute the review for me. so not only does it create    
+  the linear issue, eventually it realises, you know what this is           
+  important, let's go do it cause jeevan (single dev in team) doesn't have  
+  time. at other times, it's like you know what sarah is free.              
+
+⏺ That's the full vision. The actor doesn't just detect "PR needs review" — it
+  does the review. And the decision of whether to do it itself vs. assign it is
+  itself a reasoning step based on team state.
+
+  This is where the architecture gets genuinely interesting, because the
+  Coordinator Actor already has everything it needs:
+
+  ---
+  The Actor That Does the Work, Not Just Notices It
+
+  The invariant isn't "PRs should be reviewed within 24h". That's the trigger.
+  The full invariant is:
+
+  "PRs should be reviewed. If no one is available within a reasonable
+  time, perform the review autonomously — check for bugs, security
+  issues, test coverage, and style. Post the review. If critical issues
+  are found, block the merge and notify the author."
+
+  The Coordinator's reasoning loop already has:
+
+  1. lightfast_search — "what's the state of PR #287?" → accumulated
+  observations (commits, CI results, deploy previews)
+  2. lightfast_graph — trace from PR → commits → files changed → related Sentry
+  errors → Linear issues
+  3. lightfast_api_execute({ provider: "github" }) — fetch the full diff, read
+  file contents, post a review
+  4. Actor profiles in state — who's on the team, who's been active recently,
+  who authored what
+
+  The decision tree inside the run loop becomes:
+
+  Signal: PR #287 has no review after 4h
+
+  Step 1: Who could review?
+    → lightfast_search("team members active today")
+    → Actor profiles: Sarah last active 2h ago, Jeevan 15min ago but
+      has 12 open PRs
+
+  Step 2: Is anyone realistically available?
+    → Jeevan: solo dev, 300-file PR queue, signal history shows
+      reviews take 3+ days when backlogged
+    → Sarah: available but not on this codebase area
+    → Decision: no one available in reasonable time
+
+  Step 3: Can I do it myself?
+    → lightfast_api_execute({ provider: "github", code: `
+        const diff = await api.request("/repos/org/repo/pulls/287");
+        const files = await api.request("/repos/org/repo/pulls/287/files");
+        return { diff, files };
+      ` })
+    → Feed diff + file contents + related observations to LLM
+    → Generate review: bugs, security, test gaps, style
+
+  Step 4: Confidence gate
+    → Review confidence: 0.85 (high — clear patterns detected)
+    → Threshold for "post review": 0.7 ✓
+    → Threshold for "block merge": 0.95 ✗ (suggest, don't block)
+
+  Step 5: Act
+    → lightfast_api_execute({ provider: "github", code: `
+        await api.request("/repos/org/repo/pulls/287/reviews", {
+          method: "POST",
+          body: JSON.stringify({
+            body: reviewBody,
+            event: "COMMENT"  // not REQUEST_CHANGES — below blocking threshold
+          })
+        });
+      ` })
+    → broadcast("action_taken", { ... }) → Trust UI
+
+  But next week, Sarah joins the team. Same invariant, different outcome:
+
+  Signal: PR #312 has no review after 4h
+
+  Step 1: Who could review?
+    → Sarah: active 30min ago, worked on this module last week,
+      no open review queue
+
+  Step 2: Is anyone realistically available?
+    → Yes — Sarah is the right reviewer
+
+  Step 3: Act differently
+    → lightfast_api_execute({ provider: "github", code: `
+        await api.request("/repos/org/repo/pulls/312/requested_reviewers", {
+          method: "POST",
+          body: JSON.stringify({ reviewers: ["sarah"] })
+        });
+      ` })
+    → lightfast_api_execute({ provider: "linear", code: `
+        // Create a task for Sarah with context
+      ` })
+
+  Same invariant. Same actor. Same code. Different team state → different 
+  action.
+
+  ★ Insight ─────────────────────────────────────
+  1. The actor's action space is unbounded because MCP Code Mode is. "Review a
+  PR" isn't a hardcoded capability — it's fetch diff → LLM analysis → post 
+  review, all through lightfast_api_execute. "Assign to Sarah" is the same tool
+  with different code. The Coordinator doesn't have a fixed set of things it can
+   do — it has authenticated access to every API endpoint of every connected
+  provider.
+  2. Team state IS graph state. "Jeevan is overloaded" isn't a separate signal —
+   it's derivable from the observation graph: 12 open PRs, 3-day average review
+  time, last 50 observations are all commits (no reviews). The LLM reads the
+  same graph everyone else does. "Sarah is free" comes from the same data: few
+  open items, recent activity in the relevant codebase area.
+  3. This is the difference between an alert system and an operating layer.
+  PagerDuty says "PR needs review." Lightfast says "PR needs review → no one is
+  available → I'll review it → here are 3 issues I found → I'm not confident
+  enough to block merge but I posted comments → when you have time, look at the
+  security concern on line 247."
+  ─────────────────────────────────────────────────
+
+  What This Means for Architecture
+
+  Nothing changes structurally. This is the same 5 steps. But it reveals an
+  important design principle for the Coordinator Actor:
+
+  The Coordinator doesn't have action types. It has tools and judgment.
+
+  The temptation is to build:
+  // DON'T DO THIS
+  actions: {
+    reviewPR: (c, prNumber) => { ... },
+    assignReviewer: (c, prNumber, reviewer) => { ... },
+    createLinearIssue: (c, title, assignee) => { ... },
+  }
+
+  Instead, the Coordinator has exactly one action pattern:
+
+  // The Coordinator's run loop
+  run: workflow(async (ctx) => {
+    while (!c.aborted) {
+      const signals = c.state.pendingSignals;
+
+      // LLM decides WHAT to do AND HOW to do it
+      // using MCP tools as its action space
+      const plan = await ctx.step("reason", () =>
+        reason({
+          signals,
+          invariants: c.state.userInvariants,
+          teamState: c.state.teamProfiles,
+          history: c.state.actionHistory,
+          tools: MCP_TOOLS,  // the 7 tools ARE the action space
+        })
+      );
+
+      // Execute the plan (which may be "review the PR yourself"
+      // or "assign to Sarah" or "do nothing yet, check back in 2h")
+      for (const step of plan.steps) {
+        if (step.confidence >= c.state.thresholds[step.type]) {
+          await ctx.step(step.id, () => mcp.call(step.tool, step.args));
+        } else {
+          c.broadcast("suggestion", step);
+        }
+      }
+
+      // Schedule next check or wait for new signals
+      if (plan.checkBack) {
+        c.schedule.after(plan.checkBack, "wake");
+      }
+    }
+  })
+
+  The LLM generates the plan. The plan is a sequence of MCP tool calls. The
+  confidence gate decides which execute and which become suggestions. The 
+  Coordinator is a general-purpose agent whose capabilities are defined entirely
+   by what's connected.
+
+  Connect Slack? It can now message people. Connect Jira? It can manage tickets.
+   Connect PagerDuty? It can escalate incidents. You never write a new action 
+  handler. You plug in a provider, its API becomes available via
+  lightfast_api_execute, and the Coordinator's LLM naturally incorporates it
+  into its plans.
+
+  That's the operating layer from SPEC.md: "Express intent, not API calls. The 
+  system resolves what to do and where."
+
+✻ Cooked for 48s

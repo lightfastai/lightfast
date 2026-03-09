@@ -1,9 +1,9 @@
-import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
+import { createServer } from "node:http";
 
 interface AuthResult {
-  token: string;
   state: string;
+  token: string;
 }
 
 /**
@@ -23,7 +23,7 @@ export function startAuthServer(): Promise<{
     });
 
     const server = createServer((req, res) => {
-      const url = new URL(req.url ?? "/", `http://localhost`);
+      const url = new URL(req.url ?? "/", "http://localhost");
 
       if (url.pathname === "/callback") {
         const token = url.searchParams.get("token");

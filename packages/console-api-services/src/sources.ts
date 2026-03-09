@@ -26,7 +26,7 @@ export class SourcesService extends DeusApiM2MService {
           }
           throw error;
         },
-      },
+      }
     );
   }
 
@@ -55,7 +55,7 @@ export class SourcesService extends DeusApiM2MService {
           }
           throw error;
         },
-      },
+      }
     );
   }
 
@@ -73,7 +73,7 @@ export class SourcesService extends DeusApiM2MService {
       {
         fallbackMessage: "Failed to mark repository inactive",
         details: params,
-      },
+      }
     );
   }
 
@@ -83,11 +83,12 @@ export class SourcesService extends DeusApiM2MService {
   async markInstallationInactive(githubInstallationId: string) {
     return await this.call(
       "m2m.sources.markGithubInstallationInactive",
-      (caller) => caller.sources.markGithubInstallationInactive({ githubInstallationId }),
+      (caller) =>
+        caller.sources.markGithubInstallationInactive({ githubInstallationId }),
       {
         fallbackMessage: "Failed to mark installation repositories inactive",
         details: { githubInstallationId },
-      },
+      }
     );
   }
 
@@ -101,7 +102,7 @@ export class SourcesService extends DeusApiM2MService {
       {
         fallbackMessage: "Failed to mark repository as deleted",
         details: { githubRepoId },
-      },
+      }
     );
   }
 
@@ -112,12 +113,11 @@ export class SourcesService extends DeusApiM2MService {
   async updateMetadata(githubRepoId: string) {
     return await this.call(
       "m2m.sources.updateGithubMetadata",
-      (caller) =>
-        caller.sources.updateGithubMetadata({ githubRepoId }),
+      (caller) => caller.sources.updateGithubMetadata({ githubRepoId }),
       {
         fallbackMessage: "Failed to update repository metadata",
         details: { githubRepoId },
-      },
+      }
     );
   }
 }

@@ -1,26 +1,30 @@
-'use client';
+"use client";
 
-import { useLogger as useLogtailLogger } from '@logtail/next';
-import { useMemo } from 'react';
+import { useLogger as useLogtailLogger } from "@logtail/next/hooks";
+import { useMemo } from "react";
 
 /**
  * Client logger interface that matches the Logtail Logger
  */
 export interface ClientLogger {
   debug: (message: string, args?: Record<string, unknown>) => void;
+  error: (message: string, args?: Record<string, unknown>) => void;
   info: (message: string, args?: Record<string, unknown>) => void;
   warn: (message: string, args?: Record<string, unknown>) => void;
-  error: (message: string, args?: Record<string, unknown>) => void;
 }
 
 /**
  * Console logger that matches the Logtail interface
  */
 const consoleLogger: ClientLogger = {
-  debug: (message: string, args?: Record<string, unknown>) => console.debug(message, args),
-  info: (message: string, args?: Record<string, unknown>) => console.info(message, args),
-  warn: (message: string, args?: Record<string, unknown>) => console.warn(message, args),
-  error: (message: string, args?: Record<string, unknown>) => console.error(message, args),
+  debug: (message: string, args?: Record<string, unknown>) =>
+    console.debug(message, args),
+  info: (message: string, args?: Record<string, unknown>) =>
+    console.info(message, args),
+  warn: (message: string, args?: Record<string, unknown>) =>
+    console.warn(message, args),
+  error: (message: string, args?: Record<string, unknown>) =>
+    console.error(message, args),
 };
 
 /**
@@ -29,16 +33,17 @@ const consoleLogger: ClientLogger = {
  */
 export function useLogger(): ClientLogger {
   const logtailLogger = useLogtailLogger();
-  
+
   return useMemo(() => {
     // Check if BetterStack is configured by checking if the logger has a proper config
     // When not configured, Logtail returns a logger but it won't actually send logs
-    const isBetterStackConfigured = process.env.NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN;
-    
+    const isBetterStackConfigured =
+      process.env.NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN;
+
     if (!isBetterStackConfigured) {
       return consoleLogger;
     }
-    
+
     return logtailLogger;
   }, [logtailLogger]);
 }

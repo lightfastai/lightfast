@@ -1,6 +1,9 @@
 import type { BackfillConfig } from "@repo/console-backfill";
 import { getConnector } from "@repo/console-backfill";
-import { createGatewayClient, createRelayClient } from "@repo/gateway-service-clients";
+import {
+  createGatewayClient,
+  createRelayClient,
+} from "@repo/gateway-service-clients";
 import { NonRetriableError } from "@vendor/inngest";
 
 import { env } from "../env.js";
@@ -47,7 +50,11 @@ export const backfillEntityWorker = inngest.createFunction(
       correlationId,
     } = event.data;
 
-    const gw = createGatewayClient({ apiKey: env.GATEWAY_API_KEY, correlationId, requestSource: "backfill" });
+    const gw = createGatewayClient({
+      apiKey: env.GATEWAY_API_KEY,
+      correlationId,
+      requestSource: "backfill",
+    });
 
     // ── Fetch token outside step boundary ──
     // Tokens must NOT be persisted in Inngest state (step return values are memoized).
@@ -56,11 +63,11 @@ export const backfillEntityWorker = inngest.createFunction(
 
     // ── Resolve connector ──
     const connector = getConnector(
-      provider as Parameters<typeof getConnector>[0],
+      provider as Parameters<typeof getConnector>[0]
     );
     if (!connector) {
       throw new NonRetriableError(
-        `No backfill connector for provider: ${provider}`,
+        `No backfill connector for provider: ${provider}`
       );
     }
 
@@ -76,7 +83,11 @@ export const backfillEntityWorker = inngest.createFunction(
       },
     };
 
-    const relay = createRelayClient({ apiKey: env.GATEWAY_API_KEY, correlationId, requestSource: "backfill" });
+    const relay = createRelayClient({
+      apiKey: env.GATEWAY_API_KEY,
+      correlationId,
+      requestSource: "backfill",
+    });
 
     // ── Pagination loop ──
     let cursor: unknown = null;
@@ -112,12 +123,13 @@ export const backfillEntityWorker = inngest.createFunction(
                 ? (err as { status: number }).status
                 : undefined;
             if (status === 401) {
-              const { accessToken: freshToken } = await gw.getToken(installationId);
+              const { accessToken: freshToken } =
+                await gw.getToken(installationId);
               const refreshedConfig = { ...config, accessToken: freshToken };
               const page = await connector.fetchPage(
                 refreshedConfig,
                 entityType,
-                cursor,
+                cursor
               );
               return {
                 events: page.events,
@@ -135,7 +147,7 @@ export const backfillEntityWorker = inngest.createFunction(
             }
             throw err;
           }
-        },
+        }
       );
 
       // If token was refreshed inside the step, re-fetch outside step boundary
@@ -149,33 +161,36 @@ export const backfillEntityWorker = inngest.createFunction(
 
       // Dispatch each event to Relay service
       // Return count from step so it survives memoized replay (callbacks are skipped on retry)
-      const dispatched = await step.run(`dispatch-${entityType}-p${pageNum}`, async () => {
-        const BATCH_SIZE = 5;
-        const events = fetchResult.events;
-        let count = 0;
+      const dispatched = await step.run(
+        `dispatch-${entityType}-p${pageNum}`,
+        async () => {
+          const BATCH_SIZE = 5;
+          const events = fetchResult.events;
+          let count = 0;
 
-        for (let i = 0; i < events.length; i += BATCH_SIZE) {
-          const batch = events.slice(i, i + BATCH_SIZE);
-          await Promise.all(
-            batch.map((webhookEvent) =>
-              relay.dispatchWebhook(
-                provider,
-                {
-                  connectionId: installationId,
-                  orgId,
-                  deliveryId: webhookEvent.deliveryId,
-                  eventType: webhookEvent.eventType,
-                  payload: webhookEvent.payload,
-                  receivedAt: Date.now(),
-                },
-                holdForReplay,
-              ),
-            ),
-          );
-          count += batch.length;
+          for (let i = 0; i < events.length; i += BATCH_SIZE) {
+            const batch = events.slice(i, i + BATCH_SIZE);
+            await Promise.all(
+              batch.map((webhookEvent) =>
+                relay.dispatchWebhook(
+                  provider,
+                  {
+                    connectionId: installationId,
+                    orgId,
+                    deliveryId: webhookEvent.deliveryId,
+                    eventType: webhookEvent.eventType,
+                    payload: webhookEvent.payload,
+                    receivedAt: Date.now(),
+                  },
+                  holdForReplay
+                )
+              )
+            );
+            count += batch.length;
+          }
+          return count;
         }
-        return count;
-      });
+      );
       eventsDispatched += dispatched;
 
       // Rate limit sleep if near threshold (dynamic, based on response headers)
@@ -188,7 +203,7 @@ export const backfillEntityWorker = inngest.createFunction(
         if (sleepMs > 0) {
           await step.sleep(
             `rate-limit-${entityType}-p${pageNum}`,
-            `${Math.ceil(sleepMs / 1000)}s`,
+            `${Math.ceil(sleepMs / 1000)}s`
           );
         }
       }
@@ -207,5 +222,5 @@ export const backfillEntityWorker = inngest.createFunction(
       eventsDispatched,
       pagesProcessed: pageNum,
     };
-  },
+  }
 );

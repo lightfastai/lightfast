@@ -4,10 +4,10 @@ import { flagsEnv } from "~/env";
 type FlagsClient = ReturnType<typeof createClient>;
 
 export interface FlagsClientOptions {
-  /** SSE stream config */
-  stream?: { initTimeoutMs: number };
   /** Polling fallback config */
   polling?: { intervalMs: number; initTimeoutMs: number };
+  /** SSE stream config */
+  stream?: { initTimeoutMs: number };
 }
 
 const DEFAULT_OPTIONS: FlagsClientOptions = {
@@ -19,16 +19,22 @@ let client: FlagsClient | null = null;
 let initPromise: Promise<void> | null = null;
 
 function getClient(): FlagsClient | null {
-  if (client) return client;
+  if (client) {
+    return client;
+  }
   const sdkKey = flagsEnv.FLAGS;
-  if (!sdkKey) return null;
+  if (!sdkKey) {
+    return null;
+  }
   client = createClient(sdkKey, DEFAULT_OPTIONS);
   return client;
 }
 
 async function ensureInitialized(): Promise<FlagsClient | null> {
   const c = getClient();
-  if (!c) return null;
+  if (!c) {
+    return null;
+  }
   if (!initPromise) {
     const result = c.initialize();
     initPromise = result instanceof Promise ? result : Promise.resolve();
@@ -52,10 +58,12 @@ async function ensureInitialized(): Promise<FlagsClient | null> {
 export async function evaluateFlag(
   key: string,
   defaultValue: boolean,
-  context?: Record<string, unknown>,
+  context?: Record<string, unknown>
 ): Promise<boolean> {
   const c = await ensureInitialized();
-  if (!c) return defaultValue;
+  if (!c) {
+    return defaultValue;
+  }
   const result = await c.evaluate<boolean>(key, defaultValue, context);
   return result.value ?? defaultValue;
 }

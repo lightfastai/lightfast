@@ -13,5 +13,6 @@ export const upstashEnv = createEnv({
     KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
   },
   skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
+    !!process.env.SKIP_ENV_VALIDATION ||
+    process.env.npm_lifecycle_event === "lint",
 });

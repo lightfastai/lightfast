@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Mock externals ──
 
@@ -39,10 +39,12 @@ app.route("/api/estimate", estimate);
 
 function request(
   body: Record<string, unknown> | string,
-  headers: Record<string, string> = {},
+  headers: Record<string, string> = {}
 ) {
   const h = new Headers(headers);
-  if (!h.has("content-type")) h.set("content-type", "application/json");
+  if (!h.has("content-type")) {
+    h.set("content-type", "application/json");
+  }
   return app.request("/api/estimate", {
     method: "POST",
     headers: h,
@@ -109,7 +111,7 @@ describe("POST /api/estimate", () => {
   it("returns 400 when required fields are missing", async () => {
     const res = await request(
       { installationId: "inst-1" },
-      { "X-API-Key": "test-key" },
+      { "X-API-Key": "test-key" }
     );
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({ error: "invalid_body" });
@@ -119,7 +121,7 @@ describe("POST /api/estimate", () => {
 
   it("returns 404 when connection not found", async () => {
     mockGatewayClient.getConnection.mockRejectedValueOnce(
-      new Error("Gateway getConnection failed: 404 for inst-1"),
+      new Error("Gateway getConnection failed: 404 for inst-1")
     );
 
     const res = await request(validBody, { "X-API-Key": "test-key" });
@@ -127,25 +129,15 @@ describe("POST /api/estimate", () => {
     expect(await res.json()).toMatchObject({ error: "connection_not_found" });
   });
 
-  // ── No connector ──
+  // ── Invalid provider (rejected by schema validation) ──
 
-  it("returns 400 when no connector for provider", async () => {
-    mockGatewayClient.getConnection.mockResolvedValueOnce({
-      ...defaultConnection,
-      resources: [],
-    });
-    mockGatewayClient.getToken.mockResolvedValueOnce({
-      accessToken: "ghs_token123",
-      provider: "unknown",
-      expiresIn: 3600,
-    });
-
+  it("returns 400 when provider is not a valid source type", async () => {
     const res = await request(
       { ...validBody, provider: "unknown" },
-      { "X-API-Key": "test-key" },
+      { "X-API-Key": "test-key" }
     );
     expect(res.status).toBe(400);
-    expect(await res.json()).toMatchObject({ error: "no_connector" });
+    expect(await res.json()).toMatchObject({ error: "invalid_body" });
   });
 
   // ── Token fetch failed ──
@@ -153,7 +145,7 @@ describe("POST /api/estimate", () => {
   it("returns 502 when token fetch fails", async () => {
     mockGatewayClient.getConnection.mockResolvedValueOnce(defaultConnection);
     mockGatewayClient.getToken.mockRejectedValueOnce(
-      new Error("Gateway getToken failed: 500 for inst-1"),
+      new Error("Gateway getToken failed: 500 for inst-1")
     );
 
     const res = await request(validBody, { "X-API-Key": "test-key" });
@@ -209,7 +201,7 @@ describe("POST /api/estimate", () => {
 
     const res = await request(
       { ...validBody, entityTypes: ["pull_request"] },
-      { "X-API-Key": "test-key" },
+      { "X-API-Key": "test-key" }
     );
     expect(res.status).toBe(200);
 
@@ -227,12 +219,16 @@ describe("POST /api/estimate", () => {
 
     // First resource has more pages, second doesn't
     mockFetchPage
-      .mockResolvedValueOnce({ events: [], nextCursor: "cursor-1", rawCount: 100 })
+      .mockResolvedValueOnce({
+        events: [],
+        nextCursor: "cursor-1",
+        rawCount: 100,
+      })
       .mockResolvedValueOnce({ events: [], nextCursor: null, rawCount: 30 });
 
     const res = await request(
       { ...validBody, entityTypes: ["pull_request"] },
-      { "X-API-Key": "test-key" },
+      { "X-API-Key": "test-key" }
     );
     expect(res.status).toBe(200);
 
@@ -253,7 +249,7 @@ describe("POST /api/estimate", () => {
 
     const res = await request(
       { ...validBody, entityTypes: ["pull_request"] },
-      { "X-API-Key": "test-key" },
+      { "X-API-Key": "test-key" }
     );
     expect(res.status).toBe(200);
 

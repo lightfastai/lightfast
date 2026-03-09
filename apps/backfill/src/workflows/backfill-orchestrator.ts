@@ -1,5 +1,8 @@
 import { getConnector } from "@repo/console-backfill";
-import { createGatewayClient, createRelayClient } from "@repo/gateway-service-clients";
+import {
+  createGatewayClient,
+  createRelayClient,
+} from "@repo/gateway-service-clients";
 import { NonRetriableError } from "@vendor/inngest";
 
 import { env } from "../env.js";
@@ -30,22 +33,35 @@ export const backfillOrchestrator = inngest.createFunction(
   },
   { event: "apps-backfill/run.requested" },
   async ({ event, step }) => {
-    const { installationId, provider, orgId, depth, entityTypes, holdForReplay, correlationId } = event.data;
+    const {
+      installationId,
+      provider,
+      orgId,
+      depth,
+      entityTypes,
+      holdForReplay,
+      correlationId: rawCorrelationId,
+    } = event.data;
+    const correlationId = rawCorrelationId as string | undefined;
 
     if (depth <= 0) {
       throw new NonRetriableError(
-        `Invalid depth: ${depth} — must be a positive number of days`,
+        `Invalid depth: ${depth} — must be a positive number of days`
       );
     }
 
-    const gw = createGatewayClient({ apiKey: env.GATEWAY_API_KEY, correlationId, requestSource: "backfill" });
+    const gw = createGatewayClient({
+      apiKey: env.GATEWAY_API_KEY,
+      correlationId,
+      requestSource: "backfill",
+    });
 
     // ── Step 1: Fetch connection details from Gateway service ──
     const connection = await step.run("get-connection", async () => {
       const conn = await gw.getConnection(installationId);
       if (conn.status !== "active") {
         throw new NonRetriableError(
-          `Connection is not active: ${installationId} (status: ${conn.status})`,
+          `Connection is not active: ${installationId} (status: ${conn.status})`
         );
       }
       return conn;
@@ -53,14 +69,14 @@ export const backfillOrchestrator = inngest.createFunction(
 
     // ── Step 1b: Fetch backfill history from Gateway ──
     const backfillHistory = await step.run("get-backfill-history", () =>
-      gw.getBackfillRuns(installationId, "completed"),
+      gw.getBackfillRuns(installationId, "completed")
     );
 
     // ── Step 2: Resolve entity types and validate connector ──
     const connector = getConnector(provider);
     if (!connector) {
       throw new NonRetriableError(
-        `No backfill connector for provider: ${provider}`,
+        `No backfill connector for provider: ${provider}`
       );
     }
 
@@ -71,12 +87,12 @@ export const backfillOrchestrator = inngest.createFunction(
 
     // Compute `since` inside a step so it's deterministic across retries/replays
     const since = await step.run("compute-since", () =>
-      new Date(Date.now() - depth * 24 * 60 * 60 * 1000).toISOString(),
+      new Date(Date.now() - depth * 24 * 60 * 60 * 1000).toISOString()
     );
 
     // ── Step 3: Enumerate work units (resource x entityType) ──
     const workUnits = connection.resources.flatMap((resource) =>
-      resolvedEntityTypes.map((entityType) => ({
+      resolvedEntityTypes.map((entityType: string) => ({
         entityType,
         resource: {
           providerResourceId: resource.providerResourceId,
@@ -84,7 +100,7 @@ export const backfillOrchestrator = inngest.createFunction(
         },
         // Stable ID for step naming
         workUnitId: `${resource.providerResourceId}-${entityType}`,
-      })),
+      }))
     );
 
     // ── Gap-aware filtering: skip entity types fully covered by prior runs ──
@@ -92,7 +108,9 @@ export const backfillOrchestrator = inngest.createFunction(
     // to the requested `since` — meaning it already fetched a wider or equal range.
     // deliveryId dedup at the relay handles any overlap on boundaries.
     const filteredWorkUnits = workUnits.filter((wu) => {
-      const priorRun = backfillHistory.find((h) => h.entityType === wu.entityType);
+      const priorRun = backfillHistory.find(
+        (h) => h.entityType === wu.entityType
+      );
       if (!priorRun) {
         return true; // No prior run — must fetch
       }
@@ -151,7 +169,7 @@ export const backfillOrchestrator = inngest.createFunction(
             error: err instanceof Error ? err.message : "entity worker failed",
           };
         }
-      }),
+      })
     );
 
     // ── Step 5: Aggregate results ──
@@ -179,8 +197,13 @@ export const backfillOrchestrator = inngest.createFunction(
             status: allSucceeded ? "completed" : "failed",
             pagesProcessed: results.reduce((s, r) => s + r.pagesProcessed, 0),
             eventsProduced: results.reduce((s, r) => s + r.eventsProduced, 0),
-            eventsDispatched: results.reduce((s, r) => s + r.eventsDispatched, 0),
-            error: allSucceeded ? undefined : results.find((r) => !r.success)?.error,
+            eventsDispatched: results.reduce(
+              (s, r) => s + r.eventsDispatched,
+              0
+            ),
+            error: allSucceeded
+              ? undefined
+              : results.find((r) => !r.success)?.error,
           });
         }
       });
@@ -191,7 +214,11 @@ export const backfillOrchestrator = inngest.createFunction(
     // After all workers complete, drain them through the admin catchup endpoint
     // so Console receives historical events in chronological order as a single batch.
     if (holdForReplay && succeeded.length > 0) {
-      const relay = createRelayClient({ apiKey: env.GATEWAY_API_KEY, correlationId, requestSource: "backfill" });
+      const relay = createRelayClient({
+        apiKey: env.GATEWAY_API_KEY,
+        correlationId,
+        requestSource: "backfill",
+      });
       await step.run("replay-held-webhooks", async () => {
         const BATCH_SIZE = 200;
         const MAX_ITERATIONS = 500; // Safety cap: 500 * 200 = 100k webhooks max
@@ -201,7 +228,10 @@ export const backfillOrchestrator = inngest.createFunction(
         while (remaining > 0 && iterations < MAX_ITERATIONS) {
           iterations++;
           try {
-            const result = await relay.replayCatchup(installationId, BATCH_SIZE);
+            const result = await relay.replayCatchup(
+              installationId,
+              BATCH_SIZE
+            );
             remaining = result.remaining;
           } catch {
             break;
@@ -229,13 +259,13 @@ export const backfillOrchestrator = inngest.createFunction(
       failed: failed.length,
       eventsProduced: completionResults.reduce(
         (sum, r) => sum + r.eventsProduced,
-        0,
+        0
       ),
       eventsDispatched: completionResults.reduce(
         (sum, r) => sum + r.eventsDispatched,
-        0,
+        0
       ),
       results: completionResults,
     };
-  },
+  }
 );

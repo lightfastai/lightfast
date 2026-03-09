@@ -1,8 +1,8 @@
-import type { NextConfig } from "next";
 import { withBetterStack as withBetterStackNext } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import withVercelToolbar from "@vercel/toolbar/plugins/next";
+import type { NextConfig } from "next";
 import { createSecureHeaders } from "next-secure-headers";
 
 import { env } from "../env";
@@ -11,7 +11,6 @@ export const config: NextConfig = withVercelToolbar()({
   poweredByHeader: false,
   reactStrictMode: true,
   reactCompiler: true,
-  serverExternalPackages: ["import-in-the-middle", "require-in-the-middle"],
 
   compiler: {
     removeConsole:
@@ -22,7 +21,7 @@ export const config: NextConfig = withVercelToolbar()({
 
   images: {
     formats: ["image/avif", "image/webp"],
-    minimumCacheTTL: 31536000,
+    minimumCacheTTL: 31_536_000,
     remotePatterns: [
       {
         protocol: "https",
@@ -90,10 +89,7 @@ export const config: NextConfig = withVercelToolbar()({
       dynamic: 30,
       static: 180,
     },
-    optimizePackageImports: [
-      "@repo/ui",
-      "lucide-react",
-    ],
+    optimizePackageImports: ["@repo/ui", "lucide-react"],
   },
 
   // This is required to support PostHog trailing slash API requests
@@ -146,7 +142,7 @@ export const sentryConfig: Parameters<typeof withSentryConfig>[1] = {
 };
 
 export const withSentry: (sourceConfig: NextConfig) => NextConfig = (
-  sourceConfig: NextConfig,
+  sourceConfig: NextConfig
 ) => withSentryConfig(sourceConfig, sentryConfig);
 
 /**
@@ -155,12 +151,17 @@ export const withSentry: (sourceConfig: NextConfig) => NextConfig = (
  */
 export const withAnalyzer = (sourceConfig: NextConfig): NextConfig =>
   // Type assertion needed due to multiple Next.js versions in monorepo
-  withBundleAnalyzer()(sourceConfig as unknown as Parameters<ReturnType<typeof withBundleAnalyzer>>[0]);
+  withBundleAnalyzer()(
+    sourceConfig as unknown as Parameters<
+      ReturnType<typeof withBundleAnalyzer>
+    >[0]
+  );
 
 /**
  * @type {(sourceConfig: import("next").NextConfig) => import("next").NextConfig}
  * @returns {import("next").NextConfig}
  */
 export const withBetterStack: (sourceConfig: NextConfig) => NextConfig = (
-  sourceConfig: NextConfig,
+  sourceConfig: NextConfig
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- withBetterStackNext types are loosely typed
 ) => withBetterStackNext(sourceConfig);

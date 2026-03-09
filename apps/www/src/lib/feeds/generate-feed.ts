@@ -50,7 +50,7 @@ export async function generateBlogFeed(): Promise<Feed> {
           id: url,
           link: url,
           description: post.description ?? "Read more on the Lightfast blog",
-          date: date,
+          date,
           category: (post.categories ?? []).map((cat) => ({
             name: cat._title ?? "Uncategorized",
           })),

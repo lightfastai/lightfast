@@ -2,8 +2,7 @@
 @import "@repo/ui/globals.css";
 
 /* Custom font family CSS variables - provided by next/font/local */
-/* Default font-sans remains Geist - use these explicitly when needed */
-/* Usage: font-[family-name:var(--font-pp-neue-montreal)] or font-[family-name:var(--font-exposure-plus)] */
+/* Default font-sans remains Geist - use font-pp explicitly for headings */
 
 :root {
   /* PP Neue Montreal Typography Settings */
@@ -14,11 +13,7 @@
 @layer utilities {
   .font-pp {
     font-family: var(--font-pp-neue-montreal);
-    letter-spacing: var(--font-pp-letter-spacing);
     line-height: var(--font-pp-line-height);
-  }
-
-  .font-exposure {
-    font-family: var(--font-exposure-plus);
+    letter-spacing: var(--font-pp-letter-spacing);
   }
 }

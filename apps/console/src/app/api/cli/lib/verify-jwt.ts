@@ -4,7 +4,9 @@ export async function verifyCliJwt(
   req: Request
 ): Promise<{ userId: string } | null> {
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return null;
+  }
 
   const token = authHeader.replace("Bearer ", "");
   try {

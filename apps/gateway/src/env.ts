@@ -17,13 +17,7 @@ const server = {
 export const env = createEnv({
   clientPrefix: "" as const,
   client: {},
-  extends: [
-    vercel(),
-    upstashEnv,
-    qstashEnv,
-    dbEnv,
-    ...PROVIDER_ENVS(),
-  ],
+  extends: [vercel(), upstashEnv, qstashEnv, dbEnv, ...PROVIDER_ENVS()],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])

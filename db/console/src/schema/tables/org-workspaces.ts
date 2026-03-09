@@ -1,3 +1,5 @@
+import type { ClerkOrgId, WorkspaceSettings } from "@repo/console-validation";
+import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
   index,
@@ -7,9 +9,6 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
-import type { ClerkOrgId } from "@repo/console-validation";
-import type { WorkspaceSettings } from "@repo/console-validation";
 
 /**
  * Organization Workspaces table represents isolated knowledge bases within an organization.
@@ -112,12 +111,12 @@ export const orgWorkspaces = pgTable(
     // Unique constraint: one name per organization (names are user-facing)
     orgNameIdx: uniqueIndex("workspace_org_name_idx").on(
       table.clerkOrgId,
-      table.name,
+      table.name
     ),
 
     // Index on slug for internal lookups (not unique globally)
     slugIdx: index("workspace_slug_idx").on(table.slug),
-  }),
+  })
 );
 
 // Type exports

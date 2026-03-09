@@ -1,13 +1,13 @@
-import { basehub } from "basehub";
-import type { CreateOp } from "basehub/api-transaction";
 import { basehubEnv } from "@vendor/cms/env";
-import { markdownToBaseHubJson } from "../utils/markdown-to-basehub";
 import type {
-  ContentType,
   BusinessGoal,
+  ContentType,
   CTAType,
   PostStatus,
 } from "@vendor/cms/types";
+import { basehub } from "basehub";
+import type { CreateOp } from "basehub/api-transaction";
+import { markdownToBaseHubJson } from "../utils/markdown-to-basehub";
 
 // Re-export types for consumers of this module
 export type { ContentType, BusinessGoal, CTAType, PostStatus };
@@ -19,31 +19,45 @@ type MutationValue = NonNullable<CreateInstanceOp["value"]>;
 // Narrow input type for distribution component (matches DistributionComponent fields)
 export interface DistributionInput {
   businessGoal?: BusinessGoal | null;
-  primaryProductArea?: string | null;
-  targetPersona?: string | null;
   campaignTag?: string | null;
   distributionChannels?: string[] | null;
+  primaryProductArea?: string | null;
+  targetPersona?: string | null;
 }
 
 // Narrow input type for engagement component (matches EngagementComponent fields)
 export interface EngagementInput {
-  ctaType?: CTAType | null;
-  ctaTitle?: string | null;
-  ctaDescriptionMarkdown?: string | null;
   ctaButtonText?: string | null;
   ctaButtonUrl?: string | null;
+  ctaDescriptionMarkdown?: string | null;
+  ctaTitle?: string | null;
+  ctaType?: CTAType | null;
 }
 
 // Input type for creating a blog post via AI, aligned with the PostItem schema
 export interface AIGeneratedPost {
-  // Core content fields
-  title: string;
-  slug?: string;
-  description: string;
-  excerpt: string;
-  tldr: string; // AEO field for AI citation (80-100 words)
+  authorIds: string[]; // AuthorItem IDs
+
+  // Relationships
+  categoryIds: string[]; // CategoriesItem IDs
   content: string;
   contentType: ContentType;
+  description: string;
+
+  // Distribution component
+  distribution?: DistributionInput;
+
+  // Engagement component (CTA)
+  engagement?: EngagementInput;
+  excerpt: string;
+
+  // Media (optional)
+  featuredImageId?: string | null; // BlockImage ID
+  ogImageId?: string | null; // BlockOgImage ID
+
+  // Publishing
+  publishedAt?: Date;
+  relatedPostIds?: string[]; // PostItem IDs
 
   // SEO fields (maps to SeoComponent)
   seo: {
@@ -54,26 +68,12 @@ export interface AIGeneratedPost {
     canonicalUrl?: string;
     noIndex?: boolean;
   };
-
-  // Distribution component
-  distribution?: DistributionInput;
-
-  // Engagement component (CTA)
-  engagement?: EngagementInput;
-
-  // Relationships
-  categoryIds: string[]; // CategoriesItem IDs
-  authorIds: string[]; // AuthorItem IDs
-  relatedPostIds?: string[]; // PostItem IDs
-
-  // Media (optional)
-  featuredImageId?: string | null; // BlockImage ID
-  ogImageId?: string | null; // BlockOgImage ID
-  videoId?: string | null; // BlockVideo ID
-
-  // Publishing
-  publishedAt?: Date;
+  slug?: string;
   status?: PostStatus;
+  // Core content fields
+  title: string;
+  tldr: string; // AEO field for AI citation (80-100 words)
+  videoId?: string | null; // BlockVideo ID
 }
 
 const getMutationClient = () => {
@@ -99,7 +99,9 @@ interface MutationResult {
   transaction: { message: string | null; status: string };
 }
 
-export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<MutationResult> {
+export async function createBlogPostFromAI(
+  data: AIGeneratedPost
+): Promise<MutationResult> {
   const client = getMutationClient();
   const parentId = await getBlogPostCollectionId();
 
@@ -139,7 +141,10 @@ export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<Mutat
 
   // Add optional fields
   if (data.featuredImageId) {
-    valueFields.featuredImage = { type: "reference", value: data.featuredImageId };
+    valueFields.featuredImage = {
+      type: "reference",
+      value: data.featuredImageId,
+    };
   }
 
   if (data.ogImageId) {
@@ -151,7 +156,10 @@ export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<Mutat
   }
 
   if (data.relatedPostIds && data.relatedPostIds.length > 0) {
-    valueFields.relatedPosts = { type: "reference", value: data.relatedPostIds };
+    valueFields.relatedPosts = {
+      type: "reference",
+      value: data.relatedPostIds,
+    };
   }
 
   // SEO component fields
@@ -159,7 +167,10 @@ export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<Mutat
     type: "instance",
     value: {
       focusKeyword: { type: "text", value: data.seo.focusKeyword },
-      secondaryKeywords: { type: "text", value: data.seo.secondaryKeywords.join(", ") },
+      secondaryKeywords: {
+        type: "text",
+        value: data.seo.secondaryKeywords.join(", "),
+      },
       metaDescription: { type: "text", value: seoMetaDescription },
       metaTitle: { type: "text", value: seoMetaTitle },
       canonicalUrl: { type: "text", value: data.seo.canonicalUrl ?? null },
@@ -172,11 +183,26 @@ export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<Mutat
     valueFields.distribution = {
       type: "instance",
       value: {
-        businessGoal: { type: "select", value: data.distribution.businessGoal ?? null },
-        primaryProductArea: { type: "text", value: data.distribution.primaryProductArea ?? null },
-        targetPersona: { type: "text", value: data.distribution.targetPersona ?? null },
-        campaignTag: { type: "text", value: data.distribution.campaignTag ?? null },
-        distributionChannels: { type: "text", value: distributionChannels ?? null },
+        businessGoal: {
+          type: "select",
+          value: data.distribution.businessGoal ?? null,
+        },
+        primaryProductArea: {
+          type: "text",
+          value: data.distribution.primaryProductArea ?? null,
+        },
+        targetPersona: {
+          type: "text",
+          value: data.distribution.targetPersona ?? null,
+        },
+        campaignTag: {
+          type: "text",
+          value: data.distribution.campaignTag ?? null,
+        },
+        distributionChannels: {
+          type: "text",
+          value: distributionChannels ?? null,
+        },
       },
     };
   }
@@ -186,14 +212,23 @@ export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<Mutat
     const engagementValue: MutationValue = {
       ctaType: { type: "select", value: data.engagement.ctaType ?? null },
       ctaTitle: { type: "text", value: data.engagement.ctaTitle ?? null },
-      ctaButtonText: { type: "text", value: data.engagement.ctaButtonText ?? null },
-      ctaButtonUrl: { type: "text", value: data.engagement.ctaButtonUrl ?? null },
+      ctaButtonText: {
+        type: "text",
+        value: data.engagement.ctaButtonText ?? null,
+      },
+      ctaButtonUrl: {
+        type: "text",
+        value: data.engagement.ctaButtonUrl ?? null,
+      },
     };
 
     if (data.engagement.ctaDescriptionMarkdown) {
       engagementValue.ctaDescription = {
         type: "rich-text",
-        value: { format: "json", value: markdownToBaseHubJson(data.engagement.ctaDescriptionMarkdown) },
+        value: {
+          format: "json",
+          value: markdownToBaseHubJson(data.engagement.ctaDescriptionMarkdown),
+        },
       };
     }
 
@@ -207,15 +242,17 @@ export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<Mutat
     transaction: {
       __args: {
         autoCommit: `AI: Create post - ${data.title}`,
-        data: [{
-          type: "create",
-          parentId: parentId,
-          data: {
-            type: "instance",
-            title: data.title,
-            value: valueFields,
+        data: [
+          {
+            type: "create",
+            parentId,
+            data: {
+              type: "instance",
+              title: data.title,
+              value: valueFields,
+            },
           },
-        }],
+        ],
       },
       message: true,
       status: true,
@@ -225,7 +262,7 @@ export async function createBlogPostFromAI(data: AIGeneratedPost): Promise<Mutat
 
 export async function updatePostStatus(
   postId: string,
-  status: Extract<PostStatus, "published" | "archived">,
+  status: Extract<PostStatus, "published" | "archived">
 ): Promise<MutationResult> {
   const client = getMutationClient();
 
@@ -233,13 +270,15 @@ export async function updatePostStatus(
     transaction: {
       __args: {
         autoCommit: `Update post status to ${status}`,
-        data: [{
-          type: "update",
-          id: postId,
-          value: {
-            status: { type: "select", value: status },
+        data: [
+          {
+            type: "update",
+            id: postId,
+            value: {
+              status: { type: "select", value: status },
+            },
           },
-        }],
+        ],
       },
       message: true,
       status: true,

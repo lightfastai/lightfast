@@ -3,7 +3,7 @@
  */
 export function getSlideYKeyframes(
   index: number,
-  totalSlides: number,
+  totalSlides: number
 ): { input: number[]; output: string[] } {
   const slideStart = index / totalSlides;
   const slideEnd = (index + 1) / totalSlides;
@@ -34,7 +34,7 @@ export function getSlideYKeyframes(
  */
 export function getSlideScaleKeyframes(
   index: number,
-  totalSlides: number,
+  totalSlides: number
 ): { input: number[]; output: number[] } {
   const slideStart = index / totalSlides;
   const slideEnd = (index + 1) / totalSlides;
@@ -65,7 +65,7 @@ export function getSlideScaleKeyframes(
  */
 export function getSlideOpacityKeyframes(
   index: number,
-  totalSlides: number,
+  totalSlides: number
 ): { input: number[]; output: number[] } {
   const slideEnd = (index + 1) / totalSlides;
   return {
@@ -79,7 +79,7 @@ export function getSlideOpacityKeyframes(
  */
 export function getSlideZIndexKeyframes(
   index: number,
-  totalSlides: number,
+  totalSlides: number
 ): { input: number[]; output: number[] } {
   const slideStart = index / totalSlides;
   const slideEnd = (index + 1) / totalSlides;
@@ -94,7 +94,7 @@ export function getSlideZIndexKeyframes(
  */
 export function getIndicatorOpacityKeyframes(
   index: number,
-  totalSlides: number,
+  totalSlides: number
 ): { input: number[]; output: number[] } {
   const slideStart = index / totalSlides;
   const slideEnd = (index + 1) / totalSlides;
@@ -109,7 +109,7 @@ export function getIndicatorOpacityKeyframes(
  */
 export function getIndicatorWidthKeyframes(
   index: number,
-  totalSlides: number,
+  totalSlides: number
 ): { input: number[]; output: number[] } {
   const slideStart = index / totalSlides;
   const slideEnd = (index + 1) / totalSlides;
@@ -124,7 +124,7 @@ export function getIndicatorWidthKeyframes(
  */
 export function getSlideIndexFromProgress(
   progress: number,
-  totalSlides: number,
+  totalSlides: number
 ): number {
   return Math.min(Math.floor(progress * totalSlides), totalSlides - 1);
 }
@@ -137,7 +137,7 @@ export function getSlideIndexFromProgress(
 export function getScrollTargetForSlide(
   index: number,
   totalSlides: number,
-  scrollHeight: number,
+  scrollHeight: number
 ): number {
   const scrollPerSlide = scrollHeight / (totalSlides + 1);
   return index * scrollPerSlide;

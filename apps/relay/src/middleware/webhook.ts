@@ -1,14 +1,14 @@
-import { createMiddleware } from "hono/factory";
-import {
-  getProvider,
-  serviceAuthWebhookBodySchema,
-  timingSafeStringEqual,
-} from "@repo/console-providers";
 import type {
   ProviderDefinition,
   ProviderName,
   ServiceAuthWebhookBody,
 } from "@repo/console-providers";
+import {
+  getProvider,
+  serviceAuthWebhookBodySchema,
+  timingSafeStringEqual,
+} from "@repo/console-providers";
+import { createMiddleware } from "hono/factory";
 import { env } from "../env.js";
 import type { LifecycleVariables } from "./lifecycle.js";
 
@@ -23,22 +23,22 @@ import type { LifecycleVariables } from "./lifecycle.js";
  * helper below provides the narrowed "post-middleware" view for the handler.
  */
 export interface WebhookVariables extends LifecycleVariables {
-  providerDef: ProviderDefinition;
-  providerName: ProviderName;
-  /** True when request authenticated via X-API-Key (internal service). */
-  isServiceAuth: boolean;
-  /** Present only on service auth path — validated body. */
-  serviceAuthBody: ServiceAuthWebhookBody | undefined;
-  /** Present only on standard webhook path — raw body string for HMAC. */
-  rawBody: string | undefined;
-  /** Parsed + schema-validated webhook payload (both paths). Set by payloadParseAndExtract. */
-  parsedPayload: unknown;
   /** Set by payloadParseAndExtract. */
   deliveryId: string;
   /** Set by payloadParseAndExtract. */
   eventType: string;
+  /** True when request authenticated via X-API-Key (internal service). */
+  isServiceAuth: boolean;
+  /** Parsed + schema-validated webhook payload (both paths). Set by payloadParseAndExtract. */
+  parsedPayload: unknown;
+  providerDef: ProviderDefinition;
+  providerName: ProviderName;
+  /** Present only on standard webhook path — raw body string for HMAC. */
+  rawBody: string | undefined;
   /** Set by payloadParseAndExtract. */
   resourceId: string | null;
+  /** Present only on service auth path — validated body. */
+  serviceAuthBody: ServiceAuthWebhookBody | undefined;
 }
 
 /**
@@ -46,24 +46,29 @@ export interface WebhookVariables extends LifecycleVariables {
  * Use with `c as unknown as WebhookContext` if needed, or just `c.get()` directly
  * since the variables are now non-optional.
  */
-export type WebhookContext = {
+export interface WebhookContext {
   get(key: "providerDef"): ProviderDefinition;
   get(key: "providerName"): ProviderName;
   get(key: "isServiceAuth"): boolean;
   get(key: "serviceAuthBody"): ServiceAuthWebhookBody | undefined;
   get(key: "rawBody"): string | undefined;
   get(key: "parsedPayload"): unknown;
-  get(key: "deliveryId"): string;
-  get(key: "eventType"): string;
+  get(key: "eventType" | "deliveryId"): string;
   get(key: "resourceId"): string | null;
-};
+}
 
 // ── Map provider names to their webhook secret env vars ──────────────────────
 
-const webhookSecretEnvKey: Record<ProviderName, keyof Pick<
-  typeof env,
-  "GITHUB_WEBHOOK_SECRET" | "VERCEL_CLIENT_INTEGRATION_SECRET" | "LINEAR_WEBHOOK_SIGNING_SECRET" | "SENTRY_CLIENT_SECRET"
->> = {
+const webhookSecretEnvKey: Record<
+  ProviderName,
+  keyof Pick<
+    typeof env,
+    | "GITHUB_WEBHOOK_SECRET"
+    | "VERCEL_CLIENT_INTEGRATION_SECRET"
+    | "LINEAR_WEBHOOK_SIGNING_SECRET"
+    | "SENTRY_CLIENT_SECRET"
+  >
+> = {
   github: "GITHUB_WEBHOOK_SECRET",
   vercel: "VERCEL_CLIENT_INTEGRATION_SECRET",
   linear: "LINEAR_WEBHOOK_SIGNING_SECRET",
@@ -128,7 +133,10 @@ export const serviceAuthBodyValidator = createMiddleware<{
 
   const result = serviceAuthWebhookBodySchema.safeParse(raw);
   if (!result.success) {
-    return c.json({ error: "invalid_body", details: result.error.flatten() }, 400);
+    return c.json(
+      { error: "invalid_body", details: result.error.flatten() },
+      400
+    );
   }
 
   c.set("serviceAuthBody", result.data);
@@ -199,7 +207,11 @@ export const signatureVerify = createMiddleware<{
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
 
-  const valid = providerDef.webhook.verifySignature(rawBody, c.req.raw.headers, secret);
+  const valid = providerDef.webhook.verifySignature(
+    rawBody,
+    c.req.raw.headers,
+    secret
+  );
   if (!valid) {
     return c.json({ error: "invalid_signature" }, 401);
   }
@@ -251,11 +263,17 @@ export const payloadParseAndExtract = createMiddleware<{
 
     try {
       const headers = c.req.raw.headers;
-      deliveryId = providerDef.webhook.extractDeliveryId(headers, parsedPayload);
+      deliveryId = providerDef.webhook.extractDeliveryId(
+        headers,
+        parsedPayload
+      );
       eventType = providerDef.webhook.extractEventType(headers, parsedPayload);
       resourceId = providerDef.webhook.extractResourceId(parsedPayload);
     } catch {
-      return c.json({ error: "extraction_failed", provider: c.get("providerName") }, 400);
+      return c.json(
+        { error: "extraction_failed", provider: c.get("providerName") },
+        400
+      );
     }
   }
 

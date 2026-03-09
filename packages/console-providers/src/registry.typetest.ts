@@ -1,17 +1,26 @@
-import { describe, it, expectTypeOf } from "vitest";
-import { EVENT_REGISTRY, getProvider } from "./registry";
-import type { PROVIDERS, ProviderName, EventKey, EventRegistryEntry, ProviderAccountInfo, ProviderConfig } from "./registry";
+import { describe, expectTypeOf, it } from "vitest";
 import type { ProviderDefinition } from "./define";
 import type { GitHubConfig } from "./providers/github/auth";
-import type { VercelConfig } from "./providers/vercel/auth";
 import type { LinearConfig } from "./providers/linear/auth";
 import type { SentryConfig } from "./providers/sentry/auth";
+import type { VercelConfig } from "./providers/vercel/auth";
+import type {
+  EventKey,
+  EventRegistryEntry,
+  PROVIDERS,
+  ProviderAccountInfo,
+  ProviderConfig,
+  ProviderName,
+} from "./registry";
+import { EVENT_REGISTRY, getProvider } from "./registry";
 
 // ── Category 1: ProviderName ────────────────────────────────────────────────
 
 describe("ProviderName", () => {
   it("matches PROVIDERS keys exactly", () => {
-    expectTypeOf<ProviderName>().toEqualTypeOf<"github" | "vercel" | "linear" | "sentry">();
+    expectTypeOf<ProviderName>().toEqualTypeOf<
+      "github" | "vercel" | "linear" | "sentry"
+    >();
   });
 });
 
@@ -73,18 +82,26 @@ describe("EventKey derivation", () => {
 describe("getProvider type narrowing", () => {
   it("returns narrow type for literal provider name", () => {
     const gh = getProvider("github");
-    expectTypeOf(gh.webhook.extractSecret).parameter(0).toEqualTypeOf<GitHubConfig>();
+    expectTypeOf(gh.webhook.extractSecret)
+      .parameter(0)
+      .toEqualTypeOf<GitHubConfig>();
   });
 
   it("returns different narrow types per provider", () => {
     const vc = getProvider("vercel");
-    expectTypeOf(vc.webhook.extractSecret).parameter(0).toEqualTypeOf<VercelConfig>();
+    expectTypeOf(vc.webhook.extractSecret)
+      .parameter(0)
+      .toEqualTypeOf<VercelConfig>();
 
     const ln = getProvider("linear");
-    expectTypeOf(ln.webhook.extractSecret).parameter(0).toEqualTypeOf<LinearConfig>();
+    expectTypeOf(ln.webhook.extractSecret)
+      .parameter(0)
+      .toEqualTypeOf<LinearConfig>();
 
     const st = getProvider("sentry");
-    expectTypeOf(st.webhook.extractSecret).parameter(0).toEqualTypeOf<SentryConfig>();
+    expectTypeOf(st.webhook.extractSecret)
+      .parameter(0)
+      .toEqualTypeOf<SentryConfig>();
   });
 
   it("returns ProviderDefinition | undefined for dynamic string", () => {
@@ -135,11 +152,15 @@ describe("ProviderDefinition providerConfigSchema", () => {
 
 describe("EVENT_REGISTRY", () => {
   it("is typed as Record<EventKey, EventRegistryEntry>", () => {
-    expectTypeOf(EVENT_REGISTRY).toEqualTypeOf<Record<EventKey, EventRegistryEntry>>();
+    expectTypeOf(EVENT_REGISTRY).toEqualTypeOf<
+      Record<EventKey, EventRegistryEntry>
+    >();
   });
 
   it("entries are indexable by known event keys", () => {
-    expectTypeOf(EVENT_REGISTRY["github:push"]).toEqualTypeOf<EventRegistryEntry>();
+    expectTypeOf(
+      EVENT_REGISTRY["github:push"]
+    ).toEqualTypeOf<EventRegistryEntry>();
   });
 });
 

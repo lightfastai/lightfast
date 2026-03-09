@@ -1,5 +1,5 @@
-import { getApiPages, apiPageTree } from "./source";
 import type * as PageTree from "fumadocs-core/page-tree";
+import { apiPageTree, getApiPages } from "./source";
 
 /**
  * Build a custom page tree that includes OpenAPI virtual pages
@@ -14,8 +14,8 @@ export function buildApiPageTree(): PageTree.Root {
   const allPages = getApiPages();
 
   // Separate MDX pages from OpenAPI pages
-  const openapiPages = allPages.filter((page) =>
-    "getAPIPageProps" in page.data
+  const openapiPages = allPages.filter(
+    (page) => "getAPIPageProps" in page.data
   );
 
   // Build flat list of endpoint pages directly under "Endpoints" folder
@@ -25,12 +25,14 @@ export function buildApiPageTree(): PageTree.Root {
     type: "folder",
     name: "Endpoints",
     index: undefined,
-    children: openapiPages.map((page): PageTree.Item => ({
-      type: "page",
-      name: page.data.title ?? "Untitled",
-      url: page.url,
-      external: false,
-    })),
+    children: openapiPages.map(
+      (page): PageTree.Item => ({
+        type: "page",
+        name: page.data.title ?? "Untitled",
+        url: page.url,
+        external: false,
+      })
+    ),
   };
 
   // Insert the Endpoints folder into the existing tree

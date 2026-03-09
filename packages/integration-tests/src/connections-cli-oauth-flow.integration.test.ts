@@ -10,22 +10,19 @@
  * Uses gatewayApp.request() directly — no tRPC, no service mesh router.
  * Infrastructure: PGlite (real DB), in-memory Redis Map.
  */
+
+import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import {
-  describe,
-  it,
-  expect,
-  vi,
+  afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
-  afterAll,
+  describe,
+  expect,
+  it,
+  vi,
 } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
-import type { TestDb } from "@repo/console-test-db";
 
 // ── Shared state (assigned in beforeAll, lazy getter in vi.mock) ──
 let db: TestDb;
@@ -39,9 +36,7 @@ const { redisMock, redisStore, mockGetProvider, mockProvider } =
       name: "github" as const,
       getAuthorizationUrl: vi
         .fn()
-        .mockReturnValue(
-          "https://github.com/login/oauth/authorize?mock=1",
-        ),
+        .mockReturnValue("https://github.com/login/oauth/authorize?mock=1"),
       handleCallback: vi.fn().mockResolvedValue({
         installationId: "inst-1",
         provider: "github",
@@ -94,7 +89,7 @@ vi.mock("@vendor/related-projects", () => ({
 
 // ── Import app after mocks are registered ──
 import gatewayApp from "@gateway/app";
-import { oauthStateKey, oauthResultKey } from "@gateway/cache";
+import { oauthResultKey, oauthStateKey } from "@gateway/cache";
 
 // ── Request helpers ──
 
@@ -102,7 +97,7 @@ const API_KEY = "0".repeat(64); // matches setup.ts GATEWAY_API_KEY
 const ORG_ID = "org_test123";
 
 function authHeaders(
-  extra: Record<string, string> = {},
+  extra: Record<string, string> = {}
 ): Record<string, string> {
   return {
     "X-API-Key": API_KEY,
@@ -114,7 +109,7 @@ function authHeaders(
 
 function req(
   path: string,
-  init: { method?: string; headers?: Record<string, string> } = {},
+  init: { method?: string; headers?: Record<string, string> } = {}
 ) {
   return gatewayApp.request(`/services/gateway${path}`, {
     method: init.method ?? "GET",
@@ -134,40 +129,45 @@ beforeEach(() => {
   // Re-wire Redis mock implementations (clearAllMocks resets them)
   redisMock.hset.mockImplementation(
     (key: string, fields: Record<string, unknown>) => {
-      const existing =
-        (redisStore.get(key) ?? {}) as Record<string, unknown>;
+      const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
       redisStore.set(key, { ...existing, ...fields });
       return Promise.resolve(1);
-    },
+    }
   );
   redisMock.hgetall.mockImplementation(<T>(key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as T),
+    Promise.resolve((redisStore.get(key) ?? null) as T)
   );
   redisMock.set.mockImplementation(
     (key: string, value: unknown, opts?: { nx?: boolean }) => {
-      if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
+      if (opts?.nx && redisStore.has(key)) {
+        return Promise.resolve(null);
+      }
       redisStore.set(key, value);
       return Promise.resolve("OK");
-    },
+    }
   );
   redisMock.del.mockImplementation((...keys: string[]) => {
     const allKeys = keys.flat();
     let count = 0;
     for (const k of allKeys) {
-      if (redisStore.delete(k)) count++;
+      if (redisStore.delete(k)) {
+        count++;
+      }
     }
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation(<T>(key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as T),
+    Promise.resolve((redisStore.get(key) ?? null) as T)
   );
   redisMock.pipeline.mockImplementation(() => {
     const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing =
-            (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          const existing = (redisStore.get(key) ?? {}) as Record<
+            string,
+            unknown
+          >;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
@@ -192,7 +192,9 @@ beforeEach(() => {
           const allKeys = keys.flat();
           let count = 0;
           for (const k of allKeys) {
-            if (redisStore.delete(k)) count++;
+            if (redisStore.delete(k)) {
+              count++;
+            }
           }
           return count;
         });
@@ -200,8 +202,10 @@ beforeEach(() => {
       }),
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing =
-            (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          const existing = (redisStore.get(key) ?? {}) as Record<
+            string,
+            unknown
+          >;
           redisStore.set(key, { ...existing, ...fields });
           return 1;
         });
@@ -219,7 +223,7 @@ beforeEach(() => {
   // Re-wire provider mock
   mockGetProvider.mockReturnValue(mockProvider);
   mockProvider.getAuthorizationUrl.mockReturnValue(
-    "https://github.com/login/oauth/authorize?mock=1",
+    "https://github.com/login/oauth/authorize?mock=1"
   );
   mockProvider.handleCallback.mockResolvedValue({
     installationId: "inst-1",
@@ -265,7 +269,7 @@ describe("Suite 7 — CLI OAuth Flow Routes", () => {
     it("GET /:provider/authorize with ?redirect_to=https://evil.com → 400", async () => {
       const res = await req(
         "/github/authorize?redirect_to=https%3A%2F%2Fevil.com",
-        { headers: authHeaders() },
+        { headers: authHeaders() }
       );
       expect(res.status).toBe(400);
       const json = (await res.json()) as { error: string };
@@ -275,7 +279,7 @@ describe("Suite 7 — CLI OAuth Flow Routes", () => {
     it("GET /:provider/authorize with ?redirect_to=http://localhost:9000 → 200", async () => {
       const res = await req(
         "/github/authorize?redirect_to=http%3A%2F%2Flocalhost%3A9000",
-        { headers: authHeaders() },
+        { headers: authHeaders() }
       );
       expect(res.status).toBe(200);
       const json = (await res.json()) as { url: string; state: string };
@@ -289,16 +293,15 @@ describe("Suite 7 — CLI OAuth Flow Routes", () => {
       });
       expect(res.status).toBe(200);
       const json = (await res.json()) as { url: string; state: string };
-      expect(json.url).toBe(
-        "https://github.com/login/oauth/authorize?mock=1",
-      );
+      expect(json.url).toBe("https://github.com/login/oauth/authorize?mock=1");
       expect(typeof json.state).toBe("string");
       expect(json.state.length).toBeGreaterThan(0);
 
       // Assert Redis oauthStateKey written with { redirectTo: "inline", provider, orgId }
-      const stateData = redisStore.get(
-        oauthStateKey(json.state),
-      ) as Record<string, string>;
+      const stateData = redisStore.get(oauthStateKey(json.state)) as Record<
+        string,
+        string
+      >;
       expect(stateData).toBeDefined();
       expect(stateData.redirectTo).toBe("inline");
       expect(stateData.provider).toBe("github");
@@ -384,7 +387,7 @@ describe("Suite 7 — CLI OAuth Flow Routes", () => {
     it("Error: inline HTML contains error message, oauthResultKey has { status: 'failed' }", async () => {
       const state = "inline-error-state-456";
       mockProvider.handleCallback.mockRejectedValueOnce(
-        new Error("exchange_failed"),
+        new Error("exchange_failed")
       );
       // Seed OAuth state in Redis
       redisStore.set(oauthStateKey(state), {
@@ -455,9 +458,7 @@ describe("Suite 7 — CLI OAuth Flow Routes", () => {
       };
 
       // 2. GET callback?code=abc&state=<state> (mockProvider.handleCallback succeeds)
-      const callbackRes = await req(
-        `/github/callback?code=abc&state=${state}`,
-      );
+      const callbackRes = await req(`/github/callback?code=abc&state=${state}`);
       expect(callbackRes.status).toBe(200); // inline HTML, not JSON
 
       // 3. GET /oauth/status?state=<state> → { status: "completed" }

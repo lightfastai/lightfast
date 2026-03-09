@@ -1,8 +1,19 @@
-import { sql } from "drizzle-orm";
-import { pgTable, varchar, timestamp, text, index, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
-import type { ClerkUserId, GwInstallationBackfillConfig } from "@repo/console-validation";
 import type { ProviderAccountInfo, SourceType } from "@repo/console-providers";
+import type {
+  ClerkUserId,
+  GwInstallationBackfillConfig,
+} from "@repo/console-validation";
+import { nanoid } from "@repo/lib";
+import { sql } from "drizzle-orm";
+import {
+  index,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 export const gwInstallations = pgTable(
   "lightfast_gw_installations",
@@ -14,7 +25,9 @@ export const gwInstallations = pgTable(
 
     provider: varchar("provider", { length: 50 }).notNull().$type<SourceType>(),
     externalId: varchar("external_id", { length: 191 }).notNull(),
-    connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
+    connectedBy: varchar("connected_by", { length: 191 })
+      .notNull()
+      .$type<ClerkUserId>(),
     orgId: varchar("org_id", { length: 191 }).notNull(),
 
     status: varchar("status", { length: 50 }).notNull(), // active|pending|error|revoked
@@ -36,12 +49,17 @@ export const gwInstallations = pgTable(
      * NEVER add resource-specific data (repos[], projects[], teams[]) — those
      * belong in providerConfig on workspace_integrations, one row per resource.
      */
-    providerAccountInfo: jsonb("provider_account_info").$type<ProviderAccountInfo>(),
+    providerAccountInfo: jsonb(
+      "provider_account_info"
+    ).$type<ProviderAccountInfo>(),
 
     /** Optional backfill configuration for this installation. */
-    backfillConfig: jsonb("backfill_config").$type<GwInstallationBackfillConfig>(),
+    backfillConfig:
+      jsonb("backfill_config").$type<GwInstallationBackfillConfig>(),
 
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
       .notNull()
       .defaultNow()
@@ -50,12 +68,15 @@ export const gwInstallations = pgTable(
   (table) => ({
     providerExternalIdx: uniqueIndex("gw_inst_provider_external_idx").on(
       table.provider,
-      table.externalId,
+      table.externalId
     ),
     orgIdIdx: index("gw_inst_org_id_idx").on(table.orgId),
-    orgProviderIdx: index("gw_inst_org_provider_idx").on(table.orgId, table.provider),
+    orgProviderIdx: index("gw_inst_org_provider_idx").on(
+      table.orgId,
+      table.provider
+    ),
     connectedByIdx: index("gw_inst_connected_by_idx").on(table.connectedBy),
-  }),
+  })
 );
 
 export type GwInstallation = typeof gwInstallations.$inferSelect;

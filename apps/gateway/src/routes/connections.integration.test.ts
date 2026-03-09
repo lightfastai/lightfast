@@ -4,16 +4,22 @@
  * Real DB queries (drizzle-orm, @db/console/schema) — no hollow chain mocks.
  * External services (Redis, providers, workflow, env) are still mocked.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach, afterEach, afterAll } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
+
+import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
 import { eq } from "@vendor/db";
-import { gwInstallations, gwTokens, gwResources } from "@db/console/schema";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 // ── PGlite singleton ──
 
@@ -32,7 +38,9 @@ const {
   mockCreateConfig,
 } = vi.hoisted(() => {
   const mockGetInstallationToken = vi.fn().mockResolvedValue("tok-123");
-  const mockCreateConfig = vi.fn().mockImplementation((_env: unknown, _runtime: unknown) => ({}));
+  const mockCreateConfig = vi
+    .fn()
+    .mockImplementation((_env: unknown, _runtime: unknown) => ({}));
 
   return {
     mockRedisHset: vi.fn().mockResolvedValue("OK"),
@@ -50,7 +58,9 @@ const {
 // DB client uses a getter so the PGlite instance is resolved lazily after beforeAll.
 
 vi.mock("@db/console/client", () => ({
-  get db() { return db; },
+  get db() {
+    return db;
+  },
 }));
 
 vi.mock("../env", () => ({
@@ -79,22 +89,47 @@ vi.mock("@repo/console-providers", async (importOriginal) => {
     github: {
       name: "github",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: false, getActiveToken: (...args: unknown[]) => mockGetInstallationToken(...args) },
+      oauth: {
+        buildAuthUrl: vi.fn(),
+        processCallback: vi.fn(),
+        revokeToken: vi.fn(),
+        usesStoredToken: false,
+        getActiveToken: (...args: unknown[]) =>
+          mockGetInstallationToken(...args),
+      },
     },
     vercel: {
       name: "vercel",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: true, getActiveToken: vi.fn() },
+      oauth: {
+        buildAuthUrl: vi.fn(),
+        processCallback: vi.fn(),
+        revokeToken: vi.fn(),
+        usesStoredToken: true,
+        getActiveToken: vi.fn(),
+      },
     },
     linear: {
       name: "linear",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: true, getActiveToken: vi.fn() },
+      oauth: {
+        buildAuthUrl: vi.fn(),
+        processCallback: vi.fn(),
+        revokeToken: vi.fn(),
+        usesStoredToken: true,
+        getActiveToken: vi.fn(),
+      },
     },
     sentry: {
       name: "sentry",
       createConfig: (...args: unknown[]) => mockCreateConfig(...args),
-      oauth: { buildAuthUrl: vi.fn(), processCallback: vi.fn(), revokeToken: vi.fn(), usesStoredToken: true, getActiveToken: vi.fn() },
+      oauth: {
+        buildAuthUrl: vi.fn(),
+        processCallback: vi.fn(),
+        revokeToken: vi.fn(),
+        usesStoredToken: true,
+        getActiveToken: vi.fn(),
+      },
     },
   };
   return {
@@ -116,7 +151,6 @@ vi.mock("../lib/urls", () => ({
   relayBaseUrl: "https://relay.test/api",
 }));
 
-
 // ── Import app after mocks ──
 
 import { Hono } from "hono";
@@ -131,13 +165,14 @@ function request(
     method?: string;
     body?: string | Record<string, unknown>;
     headers?: Record<string, string>;
-  } = {},
+  } = {}
 ) {
   const headers = new Headers(init.headers);
   if (!headers.has("content-type") && init.body) {
     headers.set("content-type", "application/json");
   }
-  const body = typeof init.body === "object" ? JSON.stringify(init.body) : init.body;
+  const body =
+    typeof init.body === "object" ? JSON.stringify(init.body) : init.body;
   return app.request(path, { method: init.method ?? "GET", headers, body });
 }
 
@@ -151,7 +186,9 @@ beforeAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockCreateConfig.mockImplementation((_env: unknown, _runtime: unknown) => ({}));
+  mockCreateConfig.mockImplementation(
+    (_env: unknown, _runtime: unknown) => ({})
+  );
   mockGetInstallationToken.mockResolvedValue("tok-123");
 });
 
@@ -192,7 +229,7 @@ describe("GET /connections/:id (integration)", () => {
     const res = await request(`/connections/${inst.id}`, { headers: API });
     expect(res.status).toBe(200);
 
-    const json = await res.json() as {
+    const json = (await res.json()) as {
       id: string;
       provider: string;
       hasToken: boolean;
@@ -212,7 +249,7 @@ describe("GET /connections/:id (integration)", () => {
     const res = await request(`/connections/${inst.id}`, { headers: API });
     expect(res.status).toBe(200);
 
-    const json = await res.json() as { hasToken: boolean };
+    const json = (await res.json()) as { hasToken: boolean };
     expect(json.hasToken).toBe(false);
   });
 
@@ -226,7 +263,7 @@ describe("GET /connections/:id (integration)", () => {
     const res = await request(`/connections/${inst.id}`, { headers: API });
     expect(res.status).toBe(200);
 
-    const json = await res.json() as { hasToken: boolean };
+    const json = (await res.json()) as { hasToken: boolean };
     expect(json.hasToken).toBe(true);
   });
 });
@@ -235,7 +272,9 @@ describe("GET /connections/:id (integration)", () => {
 
 describe("GET /connections/:id/token (integration)", () => {
   it("returns 404 when installation does not exist", async () => {
-    const res = await request("/connections/missing-id/token", { headers: API });
+    const res = await request("/connections/missing-id/token", {
+      headers: API,
+    });
     expect(res.status).toBe(404);
   });
 
@@ -243,16 +282,25 @@ describe("GET /connections/:id/token (integration)", () => {
     const inst = fixtures.installation({ status: "revoked" });
     await db.insert(gwInstallations).values(inst);
 
-    const res = await request(`/connections/${inst.id}/token`, { headers: API });
+    const res = await request(`/connections/${inst.id}/token`, {
+      headers: API,
+    });
     expect(res.status).toBe(400);
-    expect(await res.json()).toMatchObject({ error: "installation_not_active" });
+    expect(await res.json()).toMatchObject({
+      error: "installation_not_active",
+    });
   });
 
   it("calls oauth.getActiveToken for an active github installation", async () => {
-    const inst = fixtures.installation({ provider: "github", status: "active" });
+    const inst = fixtures.installation({
+      provider: "github",
+      status: "active",
+    });
     await db.insert(gwInstallations).values(inst);
 
-    const res = await request(`/connections/${inst.id}/token`, { headers: API });
+    const res = await request(`/connections/${inst.id}/token`, {
+      headers: API,
+    });
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ accessToken: "tok-123" });
     expect(mockGetInstallationToken).toHaveBeenCalledOnce();
@@ -318,7 +366,9 @@ describe("POST /connections/:id/resources (integration)", () => {
       headers: API,
     });
     expect(res.status).toBe(400);
-    expect(await res.json()).toMatchObject({ error: "installation_not_active" });
+    expect(await res.json()).toMatchObject({
+      error: "installation_not_active",
+    });
   });
 
   it("returns 400 when providerResourceId is missing", async () => {
@@ -331,11 +381,17 @@ describe("POST /connections/:id/resources (integration)", () => {
       headers: API,
     });
     expect(res.status).toBe(400);
-    expect(await res.json()).toMatchObject({ error: "missing_provider_resource_id" });
+    expect(await res.json()).toMatchObject({
+      error: "missing_provider_resource_id",
+    });
   });
 
   it("links a new resource and returns it", async () => {
-    const inst = fixtures.installation({ provider: "github", status: "active", orgId: "org-1" });
+    const inst = fixtures.installation({
+      provider: "github",
+      status: "active",
+      orgId: "org-1",
+    });
     await db.insert(gwInstallations).values(inst);
 
     const res = await request(`/connections/${inst.id}/resources`, {
@@ -345,9 +401,13 @@ describe("POST /connections/:id/resources (integration)", () => {
     });
     expect(res.status).toBe(200);
 
-    const json = await res.json() as {
+    const json = (await res.json()) as {
       status: string;
-      resource: { id: string; providerResourceId: string; resourceName: string };
+      resource: {
+        id: string;
+        providerResourceId: string;
+        resourceName: string;
+      };
     };
     expect(json.status).toBe("linked");
     expect(json.resource.providerResourceId).toBe("my-org/my-repo");
@@ -356,12 +416,15 @@ describe("POST /connections/:id/resources (integration)", () => {
     // Verify Redis cache was populated with correct key
     expect(mockRedisHset).toHaveBeenCalledWith(
       "gw:resource:github:my-org/my-repo",
-      { connectionId: inst.id, orgId: "org-1" },
+      { connectionId: inst.id, orgId: "org-1" }
     );
   });
 
   it("returns 409 when an active resource already exists for the same providerResourceId", async () => {
-    const inst = fixtures.installation({ provider: "github", status: "active" });
+    const inst = fixtures.installation({
+      provider: "github",
+      status: "active",
+    });
     await db.insert(gwInstallations).values(inst);
 
     // Pre-insert an active resource
@@ -378,11 +441,17 @@ describe("POST /connections/:id/resources (integration)", () => {
       headers: API,
     });
     expect(res.status).toBe(409);
-    expect(await res.json()).toMatchObject({ error: "resource_already_linked" });
+    expect(await res.json()).toMatchObject({
+      error: "resource_already_linked",
+    });
   });
 
   it("allows re-linking a removed resource (status=removed is not a conflict)", async () => {
-    const inst = fixtures.installation({ provider: "github", status: "active", orgId: "org-1" });
+    const inst = fixtures.installation({
+      provider: "github",
+      status: "active",
+      orgId: "org-1",
+    });
     await db.insert(gwInstallations).values(inst);
 
     // Pre-insert a removed resource for the same providerResourceId
@@ -427,10 +496,13 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
     await db.insert(gwResources).values(resource);
 
     // Try to delete via inst1 — should 404 because installationId doesn't match
-    const res = await request(`/connections/${inst1.id}/resources/${resource.id}`, {
-      method: "DELETE",
-      headers: API,
-    });
+    const res = await request(
+      `/connections/${inst1.id}/resources/${resource.id}`,
+      {
+        method: "DELETE",
+        headers: API,
+      }
+    );
     expect(res.status).toBe(404);
   });
 
@@ -438,13 +510,19 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
     const inst = fixtures.installation();
     await db.insert(gwInstallations).values(inst);
 
-    const resource = fixtures.resource({ installationId: inst.id, status: "removed" });
+    const resource = fixtures.resource({
+      installationId: inst.id,
+      status: "removed",
+    });
     await db.insert(gwResources).values(resource);
 
-    const res = await request(`/connections/${inst.id}/resources/${resource.id}`, {
-      method: "DELETE",
-      headers: API,
-    });
+    const res = await request(
+      `/connections/${inst.id}/resources/${resource.id}`,
+      {
+        method: "DELETE",
+        headers: API,
+      }
+    );
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({ error: "already_removed" });
   });
@@ -460,12 +538,18 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
     });
     await db.insert(gwResources).values(resource);
 
-    const res = await request(`/connections/${inst.id}/resources/${resource.id}`, {
-      method: "DELETE",
-      headers: API,
-    });
+    const res = await request(
+      `/connections/${inst.id}/resources/${resource.id}`,
+      {
+        method: "DELETE",
+        headers: API,
+      }
+    );
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ status: "removed", resourceId: resource.id });
+    expect(await res.json()).toMatchObject({
+      status: "removed",
+      resourceId: resource.id,
+    });
 
     // Verify the resource was actually updated in the DB
     const rows = await db
@@ -475,6 +559,8 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
     expect(rows[0]!.status).toBe("removed");
 
     // Verify Redis cache cleanup with correct key
-    expect(mockRedisDel).toHaveBeenCalledWith("gw:resource:github:my-org/my-repo");
+    expect(mockRedisDel).toHaveBeenCalledWith(
+      "gw:resource:github:my-org/my-repo"
+    );
   });
 });

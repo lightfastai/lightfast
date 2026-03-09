@@ -1,33 +1,27 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
-import { z } from "zod";
-import type {
-  ContentsToolInput,
-  ContentsToolOutput,
-  LightfastAnswerRuntimeContext,
-} from "@repo/console-ai-types";
+import type { LightfastAnswerRuntimeContext } from "@repo/console-ai-types";
 import { V1ContentsResponseSchema } from "@repo/console-validation";
+import { z } from "zod";
 
-const inputSchema: z.ZodType<ContentsToolInput> = z.object({
-  ids: z.array(z.string()).meta({ description: "Array of observation IDs to fetch content for" }),
+const inputSchema = z.object({
+  ids: z
+    .array(z.string())
+    .meta({ description: "Array of observation IDs to fetch content for" }),
 });
 
-const outputSchema = V1ContentsResponseSchema as unknown as z.ZodType<ContentsToolOutput>;
+const outputSchema = V1ContentsResponseSchema;
 
 export function workspaceContentsTool() {
-  return createTool<
-    LightfastAnswerRuntimeContext,
-    typeof inputSchema,
-    typeof outputSchema
-  >({
+  return createTool<LightfastAnswerRuntimeContext>({
     description:
       "Fetch full content for specific observations by ID. Use this to get the complete details of a document after finding it via search or related queries.",
-    inputSchema,
-    outputSchema,
+    inputSchema: inputSchema as any,
+    outputSchema: outputSchema as any,
     execute: async (input, context) => {
       const handler = context.tools?.workspaceContents?.handler;
       if (!handler) {
         throw new Error(
-          "Workspace contents handler not configured in runtime context.",
+          "Workspace contents handler not configured in runtime context."
         );
       }
       return handler(input);

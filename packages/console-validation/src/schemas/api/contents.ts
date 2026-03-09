@@ -12,7 +12,10 @@ import { RequestIdSchema } from "./common";
  */
 export const ContentsRequestSchema = z.object({
   /** Array of document IDs to fetch */
-  ids: z.array(z.string()).min(1, "At least one ID required").max(50, "Maximum 50 IDs per request"),
+  ids: z
+    .array(z.string())
+    .min(1, "At least one ID required")
+    .max(50, "Maximum 50 IDs per request"),
 });
 
 export type ContentsRequest = z.infer<typeof ContentsRequestSchema>;

@@ -1,8 +1,8 @@
+import type { WorkspaceSettings } from "@repo/console-validation";
+import { EMBEDDING_DEFAULTS } from "@repo/console-validation/constants";
 import { db } from "../client";
 import { orgWorkspaces } from "../schema";
 import { generateRandomSlug } from "./workspace-names";
-import { EMBEDDING_DEFAULTS } from "@repo/console-validation/constants";
-import type { WorkspaceSettings } from "@repo/console-validation";
 
 /**
  * Compute workspace key from slug
@@ -23,10 +23,13 @@ export function getWorkspaceKey(slug: string): string {
  */
 export function buildWorkspaceNamespace(
   clerkOrgId: string,
-  workspaceId: string,
+  workspaceId: string
 ): string {
   const sanitize = (s: string) =>
-    s.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 50);
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, "")
+      .slice(0, 50);
   return `${sanitize(clerkOrgId)}:ws_${sanitize(workspaceId)}`;
 }
 
@@ -35,7 +38,7 @@ export function buildWorkspaceNamespace(
  */
 export function buildWorkspaceSettings(
   clerkOrgId: string,
-  workspaceId: string,
+  workspaceId: string
 ): WorkspaceSettings {
   return {
     version: 1,
@@ -71,7 +74,7 @@ export function buildWorkspaceSettings(
  */
 export async function createCustomWorkspace(
   clerkOrgId: string,
-  name: string,
+  name: string
 ): Promise<string> {
   // Generate random slug for Pinecone index naming
   // This decouples user-facing name from internal identifier
@@ -88,8 +91,8 @@ export async function createCustomWorkspace(
       .values({
         id: workspaceId,
         clerkOrgId,
-        name,      // User-facing name (e.g., "My-Awesome-Workspace")
-        slug,      // Random slug for Pinecone (e.g., "robust-chicken")
+        name, // User-facing name (e.g., "My-Awesome-Workspace")
+        slug, // Random slug for Pinecone (e.g., "robust-chicken")
         settings: buildWorkspaceSettings(clerkOrgId, workspaceId),
       })
       .returning({ id: orgWorkspaces.id });

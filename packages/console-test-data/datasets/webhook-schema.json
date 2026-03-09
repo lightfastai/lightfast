@@ -4,10 +4,7 @@
   "title": "Webhook Test Dataset",
   "description": "Test dataset containing raw webhook payloads that flow through production transformers",
   "type": "object",
-  "required": [
-    "name",
-    "webhooks"
-  ],
+  "required": ["name", "webhooks"],
   "additionalProperties": false,
   "properties": {
     "$schema": {
@@ -33,21 +30,12 @@
   "definitions": {
     "WebhookPayload": {
       "type": "object",
-      "required": [
-        "source",
-        "eventType",
-        "payload"
-      ],
+      "required": ["source", "eventType", "payload"],
       "additionalProperties": false,
       "properties": {
         "source": {
           "type": "string",
-          "enum": [
-            "github",
-            "vercel",
-            "sentry",
-            "linear"
-          ],
+          "enum": ["github", "vercel", "sentry", "linear"],
           "description": "Webhook source platform"
         },
         "eventType": {
@@ -88,13 +76,7 @@
               "description": "Sentry event types"
             },
             {
-              "enum": [
-                "Issue",
-                "Comment",
-                "Project",
-                "Cycle",
-                "ProjectUpdate"
-              ],
+              "enum": ["Issue", "Comment", "Project", "Cycle", "ProjectUpdate"],
               "description": "Linear event types (entity types)"
             }
           ]

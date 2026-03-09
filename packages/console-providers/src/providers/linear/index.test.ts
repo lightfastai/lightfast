@@ -5,10 +5,18 @@
  *  1. POST /oauth/token  (token exchange)
  *  2. POST /graphql      (viewer query)
  */
-import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from "vitest";
-import { linear } from "./index";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { computeHmac } from "../../crypto";
 import type { LinearConfig } from "./auth";
+import { linear } from "./index";
 
 // ── Global fetch mock ──────────────────────────────────────────────────────────
 
@@ -77,7 +85,9 @@ describe("oauth.buildAuthUrl", () => {
 
   it("includes redirect_uri using callbackBaseUrl", () => {
     const url = linear.oauth.buildAuthUrl(testConfig, "s");
-    expect(url).toContain(encodeURIComponent("https://app.lightfast.ai/gateway/linear/callback"));
+    expect(url).toContain(
+      encodeURIComponent("https://app.lightfast.ai/gateway/linear/callback")
+    );
   });
 
   it("uses default scopes read,write when not specified", () => {
@@ -86,7 +96,9 @@ describe("oauth.buildAuthUrl", () => {
   });
 
   it("uses custom scopes from options", () => {
-    const url = linear.oauth.buildAuthUrl(testConfig, "s", { scopes: ["read", "issues:write"] });
+    const url = linear.oauth.buildAuthUrl(testConfig, "s", {
+      scopes: ["read", "issues:write"],
+    });
     expect(url).toContain("scope=read%2Cissues%3Awrite");
   });
 });
@@ -103,7 +115,7 @@ describe("oauth.exchangeCode", () => {
     const tokens = await linear.oauth.exchangeCode(
       testConfig,
       "auth-code-123",
-      "https://app.lightfast.ai/gateway/linear/callback",
+      "https://app.lightfast.ai/gateway/linear/callback"
     );
 
     expect(tokens.accessToken).toBe("lin_api_token123");
@@ -114,14 +126,21 @@ describe("oauth.exchangeCode", () => {
   });
 
   it("sends POST with form-encoded body", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponse) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponse),
+    });
 
-    await linear.oauth.exchangeCode(testConfig, "code", "https://redirect.example.com");
+    await linear.oauth.exchangeCode(
+      testConfig,
+      "code",
+      "https://redirect.example.com"
+    );
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://api.linear.app/oauth/token");
     expect((init.headers as Record<string, string>)["Content-Type"]).toBe(
-      "application/x-www-form-urlencoded",
+      "application/x-www-form-urlencoded"
     );
     expect(init.body).toContain("grant_type=authorization_code");
   });
@@ -130,7 +149,11 @@ describe("oauth.exchangeCode", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 400 });
 
     await expect(
-      linear.oauth.exchangeCode(testConfig, "bad-code", "https://redirect.example.com"),
+      linear.oauth.exchangeCode(
+        testConfig,
+        "bad-code",
+        "https://redirect.example.com"
+      )
     ).rejects.toThrow("Linear token exchange failed: 400");
   });
 });
@@ -139,16 +162,29 @@ describe("oauth.exchangeCode", () => {
 
 describe("oauth.refreshToken", () => {
   it("returns new OAuthTokens on success", async () => {
-    const refreshed = { ...tokenResponse, access_token: "lin_new_token", refresh_token: "lin_new_refresh" };
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(refreshed) });
+    const refreshed = {
+      ...tokenResponse,
+      access_token: "lin_new_token",
+      refresh_token: "lin_new_refresh",
+    };
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(refreshed),
+    });
 
-    const tokens = await linear.oauth.refreshToken(testConfig, "lin_refresh_token456");
+    const tokens = await linear.oauth.refreshToken(
+      testConfig,
+      "lin_refresh_token456"
+    );
     expect(tokens.accessToken).toBe("lin_new_token");
     expect(tokens.refreshToken).toBe("lin_new_refresh");
   });
 
   it("sends grant_type=refresh_token in request body", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponse) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponse),
+    });
 
     await linear.oauth.refreshToken(testConfig, "refresh-token");
 
@@ -160,9 +196,9 @@ describe("oauth.refreshToken", () => {
   it("throws on HTTP error", async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
 
-    await expect(linear.oauth.refreshToken(testConfig, "expired-token")).rejects.toThrow(
-      "Linear token refresh failed: 401",
-    );
+    await expect(
+      linear.oauth.refreshToken(testConfig, "expired-token")
+    ).rejects.toThrow("Linear token refresh failed: 401");
   });
 });
 
@@ -172,7 +208,9 @@ describe("oauth.revokeToken", () => {
   it("resolves without error on success", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
-    await expect(linear.oauth.revokeToken(testConfig, "lin_api_token")).resolves.toBeUndefined();
+    await expect(
+      linear.oauth.revokeToken(testConfig, "lin_api_token")
+    ).resolves.toBeUndefined();
   });
 
   it("sends Bearer authorization header with the access token", async () => {
@@ -190,7 +228,7 @@ describe("oauth.revokeToken", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
     await expect(linear.oauth.revokeToken(testConfig, "token")).rejects.toThrow(
-      "Linear token revocation failed: 500",
+      "Linear token revocation failed: 500"
     );
   });
 });
@@ -199,15 +237,25 @@ describe("oauth.revokeToken", () => {
 
 describe("oauth.processCallback", () => {
   it("throws when code is missing", async () => {
-    await expect(linear.oauth.processCallback(testConfig, {})).rejects.toThrow("missing code");
+    await expect(linear.oauth.processCallback(testConfig, {})).rejects.toThrow(
+      "missing code"
+    );
   });
 
   it("returns CallbackResult with connected status and org externalId", async () => {
     mockFetch
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponse) })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(viewerWithOrgResponse) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(tokenResponse),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(viewerWithOrgResponse),
+      });
 
-    const result = await linear.oauth.processCallback(testConfig, { code: "lin-code-123" });
+    const result = await linear.oauth.processCallback(testConfig, {
+      code: "lin-code-123",
+    });
 
     expect(result.status).toBe("connected");
     expect(result.externalId).toBe("org-id-xyz");
@@ -219,25 +267,44 @@ describe("oauth.processCallback", () => {
 
   it("does not include organization in accountInfo (display data resolved live)", async () => {
     mockFetch
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponse) })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(viewerWithOrgResponse) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(tokenResponse),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(viewerWithOrgResponse),
+      });
 
-    const result = await linear.oauth.processCallback(testConfig, { code: "lin-code" });
+    const result = await linear.oauth.processCallback(testConfig, {
+      code: "lin-code",
+    });
 
     if (result.status === "connected") {
       // organization field is removed — display data is resolved live in connections.linear.get
       expect(result.accountInfo).not.toHaveProperty("organization");
       // raw contains only OAuth metadata
-      expect(result.accountInfo.raw).toMatchObject({ token_type: "Bearer", scope: "read,write" });
+      expect(result.accountInfo.raw).toMatchObject({
+        token_type: "Bearer",
+        scope: "read,write",
+      });
     }
   });
 
   it("returns viewer.id as externalId when no organization", async () => {
     mockFetch
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponse) })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(viewerWithoutOrgResponse) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(tokenResponse),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(viewerWithoutOrgResponse),
+      });
 
-    const result = await linear.oauth.processCallback(testConfig, { code: "lin-code" });
+    const result = await linear.oauth.processCallback(testConfig, {
+      code: "lin-code",
+    });
 
     expect(result.externalId).toBe("viewer-id-abc");
     if (result.status === "connected") {
@@ -248,20 +315,34 @@ describe("oauth.processCallback", () => {
 
   it("throws when Linear API returns neither org nor viewer id", async () => {
     mockFetch
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponse) })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ data: { viewer: null } }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(tokenResponse),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: { viewer: null } }),
+      });
 
-    await expect(linear.oauth.processCallback(testConfig, { code: "lin-code" })).rejects.toThrow(
-      "Linear API did not return a viewer or organization ID",
-    );
+    await expect(
+      linear.oauth.processCallback(testConfig, { code: "lin-code" })
+    ).rejects.toThrow("Linear API did not return a viewer or organization ID");
   });
 
   it("includes tokens in returned CallbackResult", async () => {
     mockFetch
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponse) })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(viewerWithOrgResponse) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(tokenResponse),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(viewerWithOrgResponse),
+      });
 
-    const result = await linear.oauth.processCallback(testConfig, { code: "lin-code" });
+    const result = await linear.oauth.processCallback(testConfig, {
+      code: "lin-code",
+    });
     if (result.status === "connected") {
       expect(result.tokens.accessToken).toBe("lin_api_token123");
     }
@@ -270,21 +351,27 @@ describe("oauth.processCallback", () => {
   it("throws when token exchange fails", async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 400 });
 
-    await expect(linear.oauth.processCallback(testConfig, { code: "bad-code" })).rejects.toThrow(
-      "Linear token exchange failed: 400",
-    );
+    await expect(
+      linear.oauth.processCallback(testConfig, { code: "bad-code" })
+    ).rejects.toThrow("Linear token exchange failed: 400");
   });
 
   it("uses correct redirect_uri in token exchange", async () => {
     mockFetch
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponse) })
-      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(viewerWithOrgResponse) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(tokenResponse),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(viewerWithOrgResponse),
+      });
 
     await linear.oauth.processCallback(testConfig, { code: "lin-code" });
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(init.body).toContain(
-      encodeURIComponent("https://app.lightfast.ai/gateway/linear/callback"),
+      encodeURIComponent("https://app.lightfast.ai/gateway/linear/callback")
     );
   });
 });
@@ -326,12 +413,16 @@ describe("webhook.verifySignature", () => {
 describe("webhook.extractEventType", () => {
   it("returns type:action composite when both present", () => {
     const payload = { type: "Issue", action: "created" };
-    expect(linear.webhook.extractEventType(new Headers(), payload)).toBe("Issue:created");
+    expect(linear.webhook.extractEventType(new Headers(), payload)).toBe(
+      "Issue:created"
+    );
   });
 
   it("returns type only when action is absent", () => {
     const payload = { type: "Issue" };
-    expect(linear.webhook.extractEventType(new Headers(), payload)).toBe("Issue");
+    expect(linear.webhook.extractEventType(new Headers(), payload)).toBe(
+      "Issue"
+    );
   });
 
   it("returns 'unknown' when type is absent", () => {
@@ -344,11 +435,17 @@ describe("webhook.extractEventType", () => {
 describe("webhook.extractDeliveryId", () => {
   it("returns linear-delivery header when present", () => {
     const headers = new Headers({ "linear-delivery": "linear-del-id-123" });
-    expect(linear.webhook.extractDeliveryId(headers, {})).toBe("linear-del-id-123");
+    expect(linear.webhook.extractDeliveryId(headers, {})).toBe(
+      "linear-del-id-123"
+    );
   });
 
   it("returns deterministic fingerprint when header is absent", () => {
-    const payload = { type: "Issue", action: "created", data: { id: "issue-1" } };
+    const payload = {
+      type: "Issue",
+      action: "created",
+      data: { id: "issue-1" },
+    };
     const id1 = linear.webhook.extractDeliveryId(new Headers(), payload);
     const id2 = linear.webhook.extractDeliveryId(new Headers(), payload);
     // Same payload → same fingerprint
@@ -362,7 +459,9 @@ describe("webhook.extractDeliveryId", () => {
   });
 
   it("fingerprint is a 32-char hex string", () => {
-    const id = linear.webhook.extractDeliveryId(new Headers(), { type: "Issue" });
+    const id = linear.webhook.extractDeliveryId(new Headers(), {
+      type: "Issue",
+    });
     expect(id).toMatch(/^[0-9a-f]{32}$/);
   });
 });

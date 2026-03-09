@@ -1,5 +1,7 @@
-import type { WebhookEnvelope } from "@repo/console-providers";
-import type { PostTransformEvent } from "@repo/console-providers";
+import type {
+  PostTransformEvent,
+  WebhookEnvelope,
+} from "@repo/console-providers";
 import { transformWebhookPayload } from "@repo/console-providers";
 
 /**
@@ -8,7 +10,7 @@ import { transformWebhookPayload } from "@repo/console-providers";
  * Returns null for unsupported event types.
  */
 export function transformEnvelope(
-  envelope: WebhookEnvelope,
+  envelope: WebhookEnvelope
 ): PostTransformEvent | null {
   return transformWebhookPayload(
     envelope.provider,
@@ -18,6 +20,6 @@ export function transformEnvelope(
       deliveryId: envelope.deliveryId,
       receivedAt: new Date(envelope.receivedAt),
       eventType: envelope.eventType,
-    },
+    }
   );
 }

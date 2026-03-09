@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@vendor/clerk/client";
 import { NotificationsProvider } from "@vendor/knock/components/provider";
 import type { ReactNode } from "react";
 
@@ -13,17 +13,13 @@ export function ConsoleNotificationsProvider({
 
   // Always wrap with provider, even if user is still loading
   // This ensures Knock context is available when needed
-  if (!isLoaded || !user) {
+  if (!(isLoaded && user)) {
     return (
-      <NotificationsProvider userId="loading">
-        {children}
-      </NotificationsProvider>
+      <NotificationsProvider userId="loading">{children}</NotificationsProvider>
     );
   }
 
   return (
-    <NotificationsProvider userId={user.id}>
-      {children}
-    </NotificationsProvider>
+    <NotificationsProvider userId={user.id}>{children}</NotificationsProvider>
   );
 }

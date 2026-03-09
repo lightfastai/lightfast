@@ -1,5 +1,7 @@
 "use client";
 
+import type { ComponentProps } from "react";
+import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import {
   Tooltip,
@@ -7,8 +9,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-import { cn } from "../../lib/utils";
-import type { ComponentProps } from "react";
 
 export type ActionsProps = ComponentProps<"div">;
 
@@ -35,7 +35,7 @@ export const Action = ({
   const button = (
     <Button
       className={cn(
-        "relative h-8 w-8 p-2 rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0",
+        "relative h-8 w-8 rounded-md p-2 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0",
         className
       )}
       size={size}

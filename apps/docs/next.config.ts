@@ -3,12 +3,12 @@ import type { NextConfig } from "next/types";
 
 import "./src/env";
 
+import { mergeNextConfig } from "@vendor/next/merge-config";
 import {
   config as vendorConfig,
   withBetterStack,
   withSentry,
 } from "@vendor/next/next-config-builder";
-import { mergeNextConfig } from "@vendor/next/merge-config";
 
 import { env } from "./src/env";
 
@@ -17,7 +17,12 @@ const withMDX = createMDX();
 let config: NextConfig = withBetterStack(
   mergeNextConfig(vendorConfig, {
     /** Enables hot reloading for local packages without a build step */
-    transpilePackages: ["@repo/og", "@repo/ui", "@repo/url-utils", "@vendor/seo", "@vendor/observability", "@vendor/next"],
+    transpilePackages: [
+      "@repo/ui",
+      "@vendor/seo",
+      "@vendor/observability",
+      "@vendor/next",
+    ],
 
     /** Asset prefix for serving through console app rewrites (/docs path) */
     assetPrefix: "/docs",
@@ -39,7 +44,7 @@ let config: NextConfig = withBetterStack(
         },
       ],
     },
-  }),
+  })
 );
 
 if (env.VERCEL) {

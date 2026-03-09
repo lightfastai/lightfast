@@ -2,8 +2,8 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
-  writeFileSync,
   unlinkSync,
+  writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -15,10 +15,10 @@ const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 export const getBaseUrl = () => env.LIGHTFAST_API_URL;
 
 export interface LightfastConfig {
-  orgId: string;
-  orgSlug: string;
-  orgName: string;
   apiKey: string;
+  orgId: string;
+  orgName: string;
+  orgSlug: string;
 }
 
 function ensureConfigDir(): void {
@@ -34,7 +34,9 @@ export function getConfig(): LightfastConfig | null {
     return { orgId: "", orgSlug: "", orgName: "env", apiKey: envKey };
   }
 
-  if (!existsSync(CONFIG_FILE)) return null;
+  if (!existsSync(CONFIG_FILE)) {
+    return null;
+  }
   try {
     return JSON.parse(readFileSync(CONFIG_FILE, "utf-8")) as LightfastConfig;
   } catch {
@@ -48,5 +50,7 @@ export function saveConfig(config: LightfastConfig): void {
 }
 
 export function clearConfig(): void {
-  if (existsSync(CONFIG_FILE)) unlinkSync(CONFIG_FILE);
+  if (existsSync(CONFIG_FILE)) {
+    unlinkSync(CONFIG_FILE);
+  }
 }

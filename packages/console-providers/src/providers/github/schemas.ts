@@ -23,8 +23,16 @@ const ghCommitSchema = z.object({
   message: z.string(),
   timestamp: z.string(),
   url: z.string(),
-  author: z.object({ name: z.string(), email: z.string(), username: z.string().optional() }),
-  committer: z.object({ name: z.string(), email: z.string(), username: z.string().optional() }),
+  author: z.object({
+    name: z.string(),
+    email: z.string(),
+    username: z.string().optional(),
+  }),
+  committer: z.object({
+    name: z.string(),
+    email: z.string(),
+    username: z.string().optional(),
+  }),
   distinct: z.boolean(),
   added: z.array(z.string()),
   removed: z.array(z.string()),
@@ -154,17 +162,29 @@ export const preTransformGitHubDiscussionEventSchema = z.object({
 export const githubWebhookPayloadSchema = z
   .object({
     repository: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
-    installation: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
+    installation: z
+      .object({ id: z.union([z.string(), z.number()]) })
+      .optional(),
   })
   .passthrough();
 
 // ─── Inferred types ──────────────────────────────────────────────────────────
 
-export type PreTransformGitHubPushEvent = z.infer<typeof preTransformGitHubPushEventSchema>;
-export type PreTransformGitHubPullRequestEvent = z.infer<typeof preTransformGitHubPullRequestEventSchema>;
-export type PreTransformGitHubIssuesEvent = z.infer<typeof preTransformGitHubIssuesEventSchema>;
-export type PreTransformGitHubReleaseEvent = z.infer<typeof preTransformGitHubReleaseEventSchema>;
-export type PreTransformGitHubDiscussionEvent = z.infer<typeof preTransformGitHubDiscussionEventSchema>;
+export type PreTransformGitHubPushEvent = z.infer<
+  typeof preTransformGitHubPushEventSchema
+>;
+export type PreTransformGitHubPullRequestEvent = z.infer<
+  typeof preTransformGitHubPullRequestEventSchema
+>;
+export type PreTransformGitHubIssuesEvent = z.infer<
+  typeof preTransformGitHubIssuesEventSchema
+>;
+export type PreTransformGitHubReleaseEvent = z.infer<
+  typeof preTransformGitHubReleaseEventSchema
+>;
+export type PreTransformGitHubDiscussionEvent = z.infer<
+  typeof preTransformGitHubDiscussionEventSchema
+>;
 export type GitHubWebhookPayload = z.infer<typeof githubWebhookPayloadSchema>;
 
 export type GitHubWebhookEventType =

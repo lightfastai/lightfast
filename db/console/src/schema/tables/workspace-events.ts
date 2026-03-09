@@ -1,3 +1,4 @@
+import type { PostTransformEvent, SourceType } from "@repo/console-providers";
 import {
   bigint,
   index,
@@ -7,7 +8,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
-import type { PostTransformEvent, SourceType } from "@repo/console-providers";
 
 /**
  * Workspace Events table stores transformed PostTransformEvent objects
@@ -74,7 +74,10 @@ export const workspaceEvents = pgTable(
     /**
      * When the original webhook was received by the relay service.
      */
-    receivedAt: timestamp("received_at", { mode: "string", withTimezone: true }).notNull(),
+    receivedAt: timestamp("received_at", {
+      mode: "string",
+      withTimezone: true,
+    }).notNull(),
 
     /**
      * When this record was created.
@@ -90,15 +93,13 @@ export const workspaceEvents = pgTable(
      */
     workspaceEventCursorIdx: index("workspace_event_cursor_idx").on(
       table.workspaceId,
-      table.id,
+      table.id
     ),
 
     /**
      * Trace back to relay's delivery tracking for debugging.
      */
-    eventDeliveryIdx: index("event_delivery_idx").on(
-      table.deliveryId,
-    ),
+    eventDeliveryIdx: index("event_delivery_idx").on(table.deliveryId),
 
     /**
      * Filter events by source integration and event type within a workspace.
@@ -106,7 +107,7 @@ export const workspaceEvents = pgTable(
     workspaceSourceIdx: index("workspace_event_source_idx").on(
       table.workspaceId,
       table.source,
-      table.sourceType,
+      table.sourceType
     ),
 
     /**
@@ -114,9 +115,9 @@ export const workspaceEvents = pgTable(
      */
     workspaceEventDateIdx: index("workspace_event_date_idx").on(
       table.workspaceId,
-      table.receivedAt,
+      table.receivedAt
     ),
-  }),
+  })
 );
 
 // Type exports

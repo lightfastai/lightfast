@@ -21,7 +21,9 @@ export const serviceAuthWebhookBodySchema = z.object({
   payload: z.unknown(),
   receivedAt: z.number().finite(),
 });
-export type ServiceAuthWebhookBody = z.infer<typeof serviceAuthWebhookBodySchema>;
+export type ServiceAuthWebhookBody = z.infer<
+  typeof serviceAuthWebhookBodySchema
+>;
 
 /**
  * Payload passed from the thin webhook route to the durable receipt workflow.
@@ -78,7 +80,7 @@ export const gatewayConnectionSchema = z.object({
       id: z.string(),
       providerResourceId: z.string(),
       resourceName: z.string().nullable(),
-    }),
+    })
   ),
 });
 export type GatewayConnection = z.infer<typeof gatewayConnectionSchema>;

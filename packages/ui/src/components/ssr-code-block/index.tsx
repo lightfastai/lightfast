@@ -1,9 +1,9 @@
-import type { BundledLanguage } from "shiki";
-import { codeToHast } from "shiki";
+import { cn } from "@repo/ui/lib/utils";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import { Fragment } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
-import { cn } from "@repo/ui/lib/utils";
+import type { BundledLanguage } from "shiki";
+import { codeToHast } from "shiki";
 import { SSRCodeBlockCopyButton } from "./copy-button";
 import { openaiDark } from "./openai-dark-theme";
 
@@ -12,8 +12,8 @@ export type { BundledLanguage, BundledTheme } from "shiki";
 
 interface SSRCodeBlockProps {
   children: string;
-  language?: string;
   className?: string;
+  language?: string;
   showHeader?: boolean;
 }
 
@@ -47,7 +47,7 @@ export async function SSRCodeBlock({
   let lightHast: HastNodes;
   let darkHast: HastNodes;
   try {
-    [lightHast, darkHast] = await Promise.all([
+    [lightHast, darkHast] = (await Promise.all([
       codeToHast(code, {
         lang,
         theme: "github-light-default",
@@ -56,10 +56,10 @@ export async function SSRCodeBlock({
         lang,
         theme: openaiDark,
       }),
-    ]) as [HastNodes, HastNodes];
+    ])) as [HastNodes, HastNodes];
   } catch {
     // If language is not supported, fall back to plain text
-    [lightHast, darkHast] = await Promise.all([
+    [lightHast, darkHast] = (await Promise.all([
       codeToHast(code, {
         lang: "text",
         theme: "github-light-default",
@@ -68,7 +68,7 @@ export async function SSRCodeBlock({
         lang: "text",
         theme: openaiDark,
       }),
-    ]) as [HastNodes, HastNodes];
+    ])) as [HastNodes, HastNodes];
   }
 
   // Convert HAST to JSX for both themes
@@ -84,7 +84,7 @@ export async function SSRCodeBlock({
     }) => (
       <pre
         {...props}
-        className="m-0 p-0 bg-transparent border-0 leading-[1.7]! tracking-normal"
+        className="m-0 border-0 bg-transparent p-0 leading-[1.7]! tracking-normal"
       />
     ),
     code: ({
@@ -135,11 +135,11 @@ export async function SSRCodeBlock({
 
   return (
     <div className={cn("my-4", className)}>
-      <div className="rounded-sm dark:bg-card/80 overflow-hidden scrollbar-thin">
+      <div className="scrollbar-thin overflow-hidden rounded-sm dark:bg-card/80">
         {/* Header with language label and copy button */}
         {showHeader && (
-          <div className="flex items-center justify-between pl-6 pr-3 py-2">
-            <span className="text-xs font-mono font-medium text-muted-foreground">
+          <div className="flex items-center justify-between py-2 pr-3 pl-6">
+            <span className="font-medium font-mono text-muted-foreground text-xs">
               {language}
             </span>
             <SSRCodeBlockCopyButton code={code} />
@@ -153,11 +153,11 @@ export async function SSRCodeBlock({
             {/* text-foreground provides base color for plain text (no syntax highlighting) */}
             <div className="flex-1 text-foreground">
               {/* Light theme - hidden in dark mode */}
-              <div className="block dark:hidden font-mono text-xs">
+              <div className="block font-mono text-xs dark:hidden">
                 {lightJsx}
               </div>
               {/* Dark theme - hidden in light mode */}
-              <div className="hidden dark:block font-mono text-sm">
+              <div className="hidden font-mono text-sm dark:block">
                 {darkJsx}
               </div>
             </div>

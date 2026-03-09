@@ -23,9 +23,6 @@ import type { PartialCspDirectives } from "./types";
 export function createSentryCspDirectives(): PartialCspDirectives {
   return {
     // Connections: Sentry error reporting endpoints
-    connectSrc: [
-      "https://*.ingest.sentry.io",
-      "https://*.ingest.us.sentry.io",
-    ],
+    connectSrc: ["https://*.ingest.sentry.io", "https://*.ingest.us.sentry.io"],
   };
 }

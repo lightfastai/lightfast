@@ -1,6 +1,6 @@
+import { basehubEnv } from "@vendor/cms/env";
 import { basehub } from "basehub";
 import type { Operation } from "basehub/api-transaction";
-import { basehubEnv } from "@vendor/cms/env";
 import { markdownToBaseHubJson } from "../utils/markdown-to-basehub";
 
 // Extract update operation types
@@ -16,16 +16,16 @@ interface MutationResult {
  * SEO input for changelog entries
  */
 export interface ChangelogSeoInput {
-  metaTitle?: string;
-  metaDescription?: string;
-  focusKeyword?: string;
-  secondaryKeyword?: string;
   canonicalUrl?: string;
-  noIndex?: boolean;
   faq?: {
     question: string;
     answer: string;
   }[];
+  focusKeyword?: string;
+  metaDescription?: string;
+  metaTitle?: string;
+  noIndex?: boolean;
+  secondaryKeyword?: string;
 }
 
 /**
@@ -33,33 +33,33 @@ export interface ChangelogSeoInput {
  * Maps to ChangelogPagesItem schema fields.
  */
 export interface ChangelogEntryInput {
-  /** Main title displayed in changelog list (e.g., "Neural Memory Foundation") */
-  title: string;
-  /** Version prefix for breadcrumb display (e.g., "0-1", format: \d+-\d+) */
-  prefix: string;
-  /** Descriptive URL slug without version prefix (e.g., "lightfast-neural-memory-foundation-2026") */
-  slug: string;
   /** Main content as markdown - rendered via RichText */
   body: string;
+  /** Short excerpt for listings and feeds (max 300 chars) */
+  excerpt?: string;
+  // AEO fields
+  /** BaseHub asset ID for featured image */
+  featuredImageId?: string;
+  /** Bullet list of bug fixes */
+  fixes?: string;
   /** Bullet list of improvements (plain text, newline-separated) */
   improvements?: string;
   /** Bullet list of infrastructure changes */
   infrastructure?: string;
-  /** Bullet list of bug fixes */
-  fixes?: string;
   /** Bullet list of patches */
   patches?: string;
-  // AEO fields
-  /** BaseHub asset ID for featured image */
-  featuredImageId?: string;
+  /** Version prefix for breadcrumb display (e.g., "0-1", format: \d+-\d+) */
+  prefix: string;
   /** ISO 8601 date string for publish date (defaults to createdAt) */
   publishedAt?: string;
-  /** Short excerpt for listings and feeds (max 300 chars) */
-  excerpt?: string;
-  /** Brief summary optimized for AI citation (50-100 words) */
-  tldr?: string;
   /** SEO metadata and FAQ schema */
   seo?: ChangelogSeoInput;
+  /** Descriptive URL slug without version prefix (e.g., "lightfast-neural-memory-foundation-2026") */
+  slug: string;
+  /** Main title displayed in changelog list (e.g., "Neural Memory Foundation") */
+  title: string;
+  /** Brief summary optimized for AI citation (50-100 words) */
+  tldr?: string;
 }
 
 const getMutationClient = () => {
@@ -78,7 +78,8 @@ async function getChangelogCollectionId(): Promise<string> {
       },
     },
   });
-  return (result as { changelog: { post: { _id: string } } }).changelog.post._id;
+  return (result as { changelog: { post: { _id: string } } }).changelog.post
+    ._id;
 }
 
 /**
@@ -98,7 +99,10 @@ function buildSeoValue(seo: ChangelogSeoInput) {
         focusKeyword: { type: "text" as const, value: seo.focusKeyword },
       }),
       ...(seo.secondaryKeyword !== undefined && {
-        secondaryKeyword: { type: "text" as const, value: seo.secondaryKeyword },
+        secondaryKeyword: {
+          type: "text" as const,
+          value: seo.secondaryKeyword,
+        },
       }),
       ...(seo.canonicalUrl !== undefined && {
         canonicalUrl: { type: "text" as const, value: seo.canonicalUrl },
@@ -106,18 +110,19 @@ function buildSeoValue(seo: ChangelogSeoInput) {
       ...(seo.noIndex !== undefined && {
         noIndex: { type: "boolean" as const, value: seo.noIndex },
       }),
-      ...(seo.faq && seo.faq.length > 0 && {
-        faq: {
-          type: "collection" as const,
-          value: seo.faq.map((item) => ({
-            type: "instance" as const,
-            value: {
-              question: { type: "text" as const, value: item.question },
-              answer: { type: "text" as const, value: item.answer },
-            },
-          })),
-        },
-      }),
+      ...(seo.faq &&
+        seo.faq.length > 0 && {
+          faq: {
+            type: "collection" as const,
+            value: seo.faq.map((item) => ({
+              type: "instance" as const,
+              value: {
+                question: { type: "text" as const, value: item.question },
+                answer: { type: "text" as const, value: item.answer },
+              },
+            })),
+          },
+        }),
     },
   };
 }
@@ -126,7 +131,9 @@ function buildSeoValue(seo: ChangelogSeoInput) {
  * Create a new changelog entry in BaseHub.
  * Requires BASEHUB_ADMIN_TOKEN environment variable.
  */
-export async function createChangelogEntry(data: ChangelogEntryInput): Promise<MutationResult> {
+export async function createChangelogEntry(
+  data: ChangelogEntryInput
+): Promise<MutationResult> {
   const client = getMutationClient();
   const parentId = await getChangelogCollectionId();
 
@@ -134,54 +141,59 @@ export async function createChangelogEntry(data: ChangelogEntryInput): Promise<M
     transaction: {
       __args: {
         autoCommit: `Create changelog: ${data.title}`,
-        data: [{
-          type: "create",
-          parentId: parentId,
-          data: {
-            type: "instance",
-            title: data.title,
-            value: {
-              // Version prefix for breadcrumb (e.g., "0-1")
-              prefix: { type: "text", value: data.prefix },
-              // Custom slug field (different from _slug system field)
-              slug: { type: "text", value: data.slug },
-              body: {
-                type: "rich-text",
-                value: {
-                  format: "json",
-                  value: markdownToBaseHubJson(data.body),
+        data: [
+          {
+            type: "create",
+            parentId,
+            data: {
+              type: "instance",
+              title: data.title,
+              value: {
+                // Version prefix for breadcrumb (e.g., "0-1")
+                prefix: { type: "text", value: data.prefix },
+                // Custom slug field (different from _slug system field)
+                slug: { type: "text", value: data.slug },
+                body: {
+                  type: "rich-text",
+                  value: {
+                    format: "json",
+                    value: markdownToBaseHubJson(data.body),
+                  },
                 },
+                // Optional categorized sections - only include if provided
+                ...(data.improvements && {
+                  improvements: { type: "text", value: data.improvements },
+                }),
+                ...(data.infrastructure && {
+                  infrastructure: { type: "text", value: data.infrastructure },
+                }),
+                ...(data.fixes && {
+                  fixes: { type: "text", value: data.fixes },
+                }),
+                ...(data.patches && {
+                  patches: { type: "text", value: data.patches },
+                }),
+                // AEO fields
+                ...(data.featuredImageId && {
+                  featuredImage: {
+                    type: "image" as const,
+                    value: { url: data.featuredImageId },
+                  },
+                }),
+                ...(data.publishedAt && {
+                  publishedAt: { type: "date", value: data.publishedAt },
+                }),
+                ...(data.excerpt !== undefined && {
+                  excerpt: { type: "text", value: data.excerpt },
+                }),
+                ...(data.tldr !== undefined && {
+                  tldr: { type: "text", value: data.tldr },
+                }),
+                ...(data.seo && { seo: buildSeoValue(data.seo) }),
               },
-              // Optional categorized sections - only include if provided
-              ...(data.improvements && {
-                improvements: { type: "text", value: data.improvements },
-              }),
-              ...(data.infrastructure && {
-                infrastructure: { type: "text", value: data.infrastructure },
-              }),
-              ...(data.fixes && {
-                fixes: { type: "text", value: data.fixes },
-              }),
-              ...(data.patches && {
-                patches: { type: "text", value: data.patches },
-              }),
-              // AEO fields
-              ...(data.featuredImageId && {
-                featuredImage: { type: "image" as const, value: { url: data.featuredImageId } },
-              }),
-              ...(data.publishedAt && {
-                publishedAt: { type: "date", value: data.publishedAt },
-              }),
-              ...(data.excerpt !== undefined && {
-                excerpt: { type: "text", value: data.excerpt },
-              }),
-              ...(data.tldr !== undefined && {
-                tldr: { type: "text", value: data.tldr },
-              }),
-              ...(data.seo && { seo: buildSeoValue(data.seo) }),
             },
           },
-        }],
+        ],
       },
       message: true,
       status: true,
@@ -194,7 +206,7 @@ export async function createChangelogEntry(data: ChangelogEntryInput): Promise<M
  */
 export async function updateChangelogEntry(
   entryId: string,
-  data: Partial<ChangelogEntryInput>,
+  data: Partial<ChangelogEntryInput>
 ): Promise<MutationResult> {
   const client = getMutationClient();
 
@@ -206,7 +218,10 @@ export async function updateChangelogEntry(
     ...(data.body && {
       body: {
         type: "rich-text" as const,
-        value: { format: "json" as const, value: markdownToBaseHubJson(data.body) },
+        value: {
+          format: "json" as const,
+          value: markdownToBaseHubJson(data.body),
+        },
       },
     }),
     ...(data.improvements !== undefined && {
@@ -223,7 +238,10 @@ export async function updateChangelogEntry(
     }),
     // AEO fields - for updates, image fields use "media" type
     ...(data.featuredImageId !== undefined && {
-      featuredImage: { type: "media" as const, value: { url: data.featuredImageId } },
+      featuredImage: {
+        type: "media" as const,
+        value: { url: data.featuredImageId },
+      },
     }),
     ...(data.publishedAt !== undefined && {
       publishedAt: { type: "date" as const, value: data.publishedAt },
@@ -243,13 +261,17 @@ export async function updateChangelogEntry(
     transaction: {
       __args: {
         autoCommit: `Update changelog: ${data.title ?? entryId}`,
-        data: [{
-          type: "update" as const,
-          id: entryId,
-          ...(data.title && { title: data.title }),
-          ...(data.slug && { slug: data.slug }),
-          ...(Object.keys(valueUpdates).length > 0 && { value: valueUpdates }),
-        }],
+        data: [
+          {
+            type: "update" as const,
+            id: entryId,
+            ...(data.title && { title: data.title }),
+            ...(data.slug && { slug: data.slug }),
+            ...(Object.keys(valueUpdates).length > 0 && {
+              value: valueUpdates,
+            }),
+          },
+        ],
       },
       message: true,
       status: true,

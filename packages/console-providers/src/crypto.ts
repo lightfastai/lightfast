@@ -3,8 +3,8 @@
  * Uses @noble/hashes — audited, edge-compatible, no Node.js crypto.
  */
 import { hmac } from "@noble/hashes/hmac.js";
-import { sha256 } from "@noble/hashes/sha2.js";
 import { sha1 } from "@noble/hashes/legacy.js";
+import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
 
 /**
@@ -14,7 +14,7 @@ import { bytesToHex, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
 export function computeHmac(
   message: string,
   secret: string,
-  algorithm: "SHA-256" | "SHA-1",
+  algorithm: "SHA-256" | "SHA-1"
 ): string {
   const hashFn = algorithm === "SHA-256" ? sha256 : sha1;
   return bytesToHex(hmac(hashFn, utf8ToBytes(secret), utf8ToBytes(message)));

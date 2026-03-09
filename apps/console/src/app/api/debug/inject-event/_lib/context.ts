@@ -1,12 +1,11 @@
-import type { WorkspaceIntegration } from "@db/console/schema";
-import type { GwInstallation } from "@db/console/schema";
+import type { GwInstallation, WorkspaceIntegration } from "@db/console/schema";
 import type { EventKey } from "@repo/console-providers";
 
 export function buildContext(
   integration: WorkspaceIntegration,
   installation: GwInstallation,
   eventKey: EventKey,
-  context?: string,
+  context?: string
 ): string {
   const provider = integration.provider;
   const cfg = integration.providerConfig;

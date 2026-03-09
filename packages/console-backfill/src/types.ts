@@ -13,46 +13,46 @@ export interface BackfillWebhookEvent {
 export interface BackfillPage<TCursor = unknown> {
   events: BackfillWebhookEvent[];
   nextCursor: TCursor | null;
-  rawCount: number;
   rateLimit?: {
     remaining: number;
     resetAt: Date;
     limit: number;
   };
+  rawCount: number;
 }
 
 export interface BackfillConfig {
-  /** Installation ID (gw_installations.id) */
-  installationId: string;
-  /** Provider name */
-  provider: SourceType;
-  /** ISO timestamp = now - depth days */
-  since: string;
   /**
    * Decrypted access token from Connections token vault.
    * @internal SENSITIVE — never log or serialize BackfillConfig objects directly.
    * Use only for Authorization headers within connectors.
    */
   accessToken: string;
+  /** Installation ID (gw_installations.id) */
+  installationId: string;
+  /** Provider name */
+  provider: SourceType;
   /** Single resource for this work unit */
   resource: {
     providerResourceId: string;
     resourceName: string | null;
   };
+  /** ISO timestamp = now - depth days */
+  since: string;
 }
 
 export interface BackfillConnector<TCursor = unknown> {
-  readonly provider: SourceType;
-  readonly supportedEntityTypes: string[];
   readonly defaultEntityTypes: string[];
-  validateScopes(config: BackfillConfig): Promise<void>;
+  estimateTotal?(
+    config: BackfillConfig,
+    entityType: string
+  ): Promise<number | null>;
   fetchPage(
     config: BackfillConfig,
     entityType: string,
-    cursor: TCursor | null,
+    cursor: TCursor | null
   ): Promise<BackfillPage<TCursor>>;
-  estimateTotal?(
-    config: BackfillConfig,
-    entityType: string,
-  ): Promise<number | null>;
+  readonly provider: SourceType;
+  readonly supportedEntityTypes: string[];
+  validateScopes(config: BackfillConfig): Promise<void>;
 }

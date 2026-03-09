@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Capture handler from createFunction ──
 
@@ -9,7 +9,7 @@ vi.mock("../inngest/client", () => ({
     createFunction: (
       _config: unknown,
       _trigger: unknown,
-      handler: typeof capturedHandler,
+      handler: typeof capturedHandler
     ) => {
       capturedHandler = handler;
       return { id: "mock-entity-worker" };
@@ -19,7 +19,11 @@ vi.mock("../inngest/client", () => ({
 
 const mockGatewayClient = {
   getConnection: vi.fn(),
-  getToken: vi.fn().mockResolvedValue({ accessToken: "tok-1", provider: "github", expiresIn: 3600 }),
+  getToken: vi.fn().mockResolvedValue({
+    accessToken: "tok-1",
+    provider: "github",
+    expiresIn: 3600,
+  }),
   getBackfillRuns: vi.fn(),
   upsertBackfillRun: vi.fn(),
 };
@@ -83,7 +87,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockGetConnector.mockReturnValue(mockConnector);
   mockConnector.fetchPage.mockReset();
-  mockGatewayClient.getToken.mockResolvedValue({ accessToken: "tok-1", provider: "github", expiresIn: 3600 });
+  mockGatewayClient.getToken.mockResolvedValue({
+    accessToken: "tok-1",
+    provider: "github",
+    expiresIn: 3600,
+  });
   mockRelayClient.dispatchWebhook.mockResolvedValue(undefined);
 });
 
@@ -105,13 +113,13 @@ describe("get-token step", () => {
 
   it("throws when gateway getToken fails", async () => {
     mockGatewayClient.getToken.mockRejectedValueOnce(
-      new Error("Gateway getToken failed: 401 for inst-1"),
+      new Error("Gateway getToken failed: 401 for inst-1")
     );
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Gateway getToken failed: 401");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Gateway getToken failed: 401"
+    );
   });
 });
 
@@ -120,9 +128,9 @@ describe("connector resolution", () => {
     mockGetConnector.mockReturnValue(null);
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("No backfill connector for provider");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "No backfill connector for provider"
+    );
   });
 });
 
@@ -139,7 +147,10 @@ describe("pagination loop — single page", () => {
     });
     const step = makeStep();
 
-    const result = (await capturedHandler({ event: makeEvent(), step })) as Record<string, unknown>;
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
     expect(result.eventsDispatched).toBe(3);
     expect(result.pagesProcessed).toBe(1);
   });
@@ -164,7 +175,7 @@ describe("pagination loop — single page", () => {
         deliveryId: "d1",
         eventType: "pull_request",
       }),
-      undefined, // holdForReplay
+      undefined // holdForReplay
     );
   });
 });
@@ -179,13 +190,13 @@ describe("dispatch error handling", () => {
       rawCount: 1,
     });
     mockRelayClient.dispatchWebhook.mockRejectedValueOnce(
-      new Error("Relay ingestWebhook failed: 500 — Internal Server Error"),
+      new Error("Relay ingestWebhook failed: 500 — Internal Server Error")
     );
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Relay ingestWebhook failed: 500");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Relay ingestWebhook failed: 500"
+    );
   });
 });
 
@@ -203,7 +214,10 @@ describe("pagination loop — multiple pages", () => {
     });
     const step = makeStep();
 
-    const result = (await capturedHandler({ event: makeEvent(), step })) as Record<string, unknown>;
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
     expect(result.pagesProcessed).toBe(2);
     expect(result.eventsDispatched).toBe(2);
 
@@ -222,9 +236,9 @@ describe("fetchPage error mid-pagination", () => {
     mockConnector.fetchPage.mockRejectedValueOnce(new Error("API timeout"));
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("API timeout");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "API timeout"
+    );
   });
 });
 
@@ -279,7 +293,10 @@ describe("completion", () => {
     });
     const step = makeStep();
 
-    const result = (await capturedHandler({ event: makeEvent(), step })) as Record<string, unknown>;
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
     expect(result).toEqual({
       entityType: "pull_request",
       resource: "123",
@@ -309,7 +326,10 @@ describe("completion", () => {
     });
     const step = makeStep();
 
-    const result = (await capturedHandler({ event: makeEvent(), step })) as Record<string, unknown>;
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
     expect(result.eventsProduced).toBe(5);
     expect(result.eventsDispatched).toBe(5);
     expect(result.pagesProcessed).toBe(2);
@@ -332,7 +352,7 @@ describe("holdForReplay", () => {
     expect(mockRelayClient.dispatchWebhook).toHaveBeenCalledWith(
       "github",
       expect.any(Object),
-      true, // holdForReplay
+      true // holdForReplay
     );
   });
 
@@ -351,7 +371,7 @@ describe("holdForReplay", () => {
     expect(mockRelayClient.dispatchWebhook).toHaveBeenCalledWith(
       "github",
       expect.any(Object),
-      undefined, // holdForReplay not set
+      undefined // holdForReplay not set
     );
   });
 });

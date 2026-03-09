@@ -27,9 +27,9 @@ reviews:
   suggested_reviewers: false
   auto_assign_reviewers: false
 
-  # Auto-review triggers
+  # Auto-review triggers (disabled — use @coderabbitai in PR comments to trigger)
   auto_review:
-    enabled: true
+    enabled: false
     drafts: false
     auto_incremental_review: true
     # Pause after 5 pushes to same PR to avoid noise
@@ -65,6 +65,7 @@ reviews:
     - "!tmp/**"
     - "!worktrees/**"
     - "!.claude/**"
+    - "!.agents/**"
 
   # ── Path-specific review instructions ──
   # These tell CodeRabbit HOW to review each area of the monorepo

@@ -18,18 +18,16 @@
  * - includeHighlights: boolean (default true) - Include highlighted snippets
  */
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
-
-import { log } from "@vendor/observability/log";
 import { V1SearchRequestSchema } from "@repo/console-validation";
-
-import {
-  withDualAuth,
-  createDualAuthErrorResponse,
-} from "../lib/with-dual-auth";
+import { log } from "@vendor/observability/log";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { searchLogic } from "~/lib/v1/search";
+import {
+  createDualAuthErrorResponse,
+  withDualAuth,
+} from "../lib/with-dual-auth";
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -66,7 +64,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json(
         { error: "INVALID_JSON", message: "Invalid JSON body", requestId },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -81,7 +79,7 @@ export async function POST(request: NextRequest) {
           details: parseResult.error.flatten().fieldErrors,
           requestId,
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -143,7 +141,7 @@ export async function POST(request: NextRequest) {
         message: error instanceof Error ? error.message : "Search failed",
         requestId,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -154,6 +152,6 @@ export async function POST(request: NextRequest) {
 export function GET() {
   return NextResponse.json(
     { error: "METHOD_NOT_ALLOWED", message: "Use POST method" },
-    { status: 405 },
+    { status: 405 }
   );
 }

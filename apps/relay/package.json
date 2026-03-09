@@ -10,10 +10,9 @@
     }
   },
   "scripts": {
-    "build": "tsc --noEmit && tsup && pnpm with-env node dist/src/env.js",
+    "build": "tsup && pnpm with-env node dist/src/env.js",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "NODE_ENV=development pnpm with-env srvx --prod --import tsx -p 4108 src/index.ts",
-    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
@@ -33,22 +32,17 @@
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
     "hono": "catalog:",
-    "zod": "catalog:zod4"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
     "@repo/console-test-data": "workspace:*",
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "dotenv-cli": "catalog:",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "srvx": "^0.11.8",
-    "tsup": "^8.5.0",
-    "tsx": "^4.19.2",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

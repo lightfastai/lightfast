@@ -1,8 +1,8 @@
 import { RichText } from "basehub/react-rich-text";
-import type { ComponentProps, ReactNode } from "react";
-import { cn } from "../lib/utils";
 import Image from "next/image";
 import Link from "next/link";
+import type { ComponentProps, ReactNode } from "react";
+import { cn } from "../lib/utils";
 
 type CodeBlockRenderer = (props: {
   children: string;
@@ -30,7 +30,7 @@ function createRichTextComponents(codeBlockComponent?: CodeBlockRenderer) {
       </ol>
     ),
     li: ({ children }: { children?: ReactNode }) => (
-      <li className="text-foreground/90 leading-7 break-words">{children}</li>
+      <li className="break-words text-foreground/90 leading-7">{children}</li>
     ),
 
     // Table elements with responsive wrapper
@@ -38,7 +38,7 @@ function createRichTextComponents(codeBlockComponent?: CodeBlockRenderer) {
       children,
       ...props
     }: { children?: ReactNode } & React.HTMLAttributes<HTMLTableElement>) => (
-      <div className="my-6 overflow-x-auto rounded-xs overflow-hidden text-foreground">
+      <div className="my-6 overflow-hidden overflow-x-auto rounded-xs text-foreground">
         <table className="min-w-full border-collapse" {...props}>
           {children}
         </table>
@@ -68,7 +68,7 @@ function createRichTextComponents(codeBlockComponent?: CodeBlockRenderer) {
       </tbody>
     ),
     tr: ({ children }: { children?: ReactNode }) => (
-      <tr className="hover:bg-muted/50 transition-colors">{children}</tr>
+      <tr className="transition-colors hover:bg-muted/50">{children}</tr>
     ),
     // BaseHub passes lowercase colspan/rowspan and colwidth - we ignore colwidth to prevent layout issues
     th: ({
@@ -99,7 +99,11 @@ function createRichTextComponents(codeBlockComponent?: CodeBlockRenderer) {
       rowspan?: number;
       colwidth?: number[] | null;
     }) => (
-      <td className="px-4 py-3 text-sm align-top" colSpan={colspan} rowSpan={rowspan}>
+      <td
+        className="px-4 py-3 align-top text-sm"
+        colSpan={colspan}
+        rowSpan={rowspan}
+      >
         {children}
       </td>
     ),
@@ -144,8 +148,8 @@ function createRichTextComponents(codeBlockComponent?: CodeBlockRenderer) {
         return (
           <code
             className={cn(
-              "bg-muted/50 rounded-md px-1 py-0.5 text-sm font-mono",
-              className,
+              "rounded-md bg-muted/50 px-1 py-0.5 font-mono text-sm",
+              className
             )}
           >
             {children}
@@ -166,16 +170,18 @@ function createRichTextComponents(codeBlockComponent?: CodeBlockRenderer) {
       width?: number;
       height?: number;
     }) => {
-      if (!src) return null;
+      if (!src) {
+        return null;
+      }
       return (
-        <div className="relative aspect-[4/3] my-6 rounded-xs overflow-hidden bg-card">
+        <div className="relative my-6 aspect-[4/3] overflow-hidden rounded-xs bg-card">
           <Image
-            src={src}
             alt={alt ?? ""}
+            className="object-cover"
             fill
             priority
             quality={85}
-            className="object-cover"
+            src={src}
           />
         </div>
       );
@@ -183,13 +189,15 @@ function createRichTextComponents(codeBlockComponent?: CodeBlockRenderer) {
 
     // Link - always opens in new tab for CMS content
     a: ({ children, href }: { children?: ReactNode; href?: string }) => {
-      if (!href) return <span>{children}</span>;
+      if (!href) {
+        return <span>{children}</span>;
+      }
       return (
         <Link
-          href={href}
           className="text-primary underline underline-offset-4 hover:text-primary/80"
-          target="_blank"
+          href={href}
           rel="noopener noreferrer"
+          target="_blank"
         >
           {children}
         </Link>
@@ -198,22 +206,22 @@ function createRichTextComponents(codeBlockComponent?: CodeBlockRenderer) {
 
     // Heading components with consistent styling
     h1: ({ children }: { children?: ReactNode }) => (
-      <h1 className="scroll-m-20 text-2xl font-bold tracking-tight mb-4 mt-6">
+      <h1 className="mt-6 mb-4 scroll-m-20 font-bold text-2xl tracking-tight">
         {children}
       </h1>
     ),
     h2: ({ children }: { children?: ReactNode }) => (
-      <h2 className="scroll-m-20 text-xl font-semibold tracking-tight mb-3 mt-6">
+      <h2 className="mt-6 mb-3 scroll-m-20 font-semibold text-xl tracking-tight">
         {children}
       </h2>
     ),
     h3: ({ children }: { children?: ReactNode }) => (
-      <h3 className="scroll-m-20 text-lg font-semibold tracking-tight mb-2 mt-5">
+      <h3 className="mt-5 mb-2 scroll-m-20 font-semibold text-lg tracking-tight">
         {children}
       </h3>
     ),
     h4: ({ children }: { children?: ReactNode }) => (
-      <h4 className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-4">
+      <h4 className="mt-4 mb-2 scroll-m-20 font-semibold text-base tracking-tight">
         {children}
       </h4>
     ),
@@ -228,12 +236,14 @@ function createRichTextComponents(codeBlockComponent?: CodeBlockRenderer) {
 
     // Paragraph - no font size here, inherited from Body wrapper
     p: ({ children }: { children?: ReactNode }) => (
-      <p className="leading-7 [&:not(:first-child)]:mt-3 break-words">{children}</p>
+      <p className="break-words leading-7 [&:not(:first-child)]:mt-3">
+        {children}
+      </p>
     ),
 
     // Blockquote for quotes
     blockquote: ({ children }: { children?: ReactNode }) => (
-      <blockquote className="mt-6 border-l-2 border-border pl-6 italic text-foreground/80">
+      <blockquote className="mt-6 border-border border-l-2 pl-6 text-foreground/80 italic">
         {children}
       </blockquote>
     ),
@@ -249,7 +259,12 @@ export const Body = ({
   codeBlockComponent,
   ...props
 }: BodyProps) => (
-  <div className={cn("text-md [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}>
+  <div
+    className={cn(
+      "text-md [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+      className
+    )}
+  >
     <RichText
       // @ts-expect-error BaseHub RichText components typing issue
       components={{

@@ -1,13 +1,13 @@
-import NextLink from "next/link";
-import { cookies } from "next/headers";
-import { Button } from "@repo/ui/components/ui/button";
 import { Icons } from "@repo/ui/components/icons";
-import { PitchDeckNavbar } from "./_components/pitch-deck-navbar";
+import { Button } from "@repo/ui/components/ui/button";
+import { cookies } from "next/headers";
+import NextLink from "next/link";
+import { DownloadButton } from "./_components/download-button";
 import { PitchDeckProvider } from "./_components/pitch-deck-context";
 import { PitchDeckLayoutContent } from "./_components/pitch-deck-layout-content";
-import { PrefaceToggle } from "./_components/preface-toggle";
-import { DownloadButton } from "./_components/download-button";
 import { PitchDeckMobileNav } from "./_components/pitch-deck-mobile-nav";
+import { PitchDeckNavbar } from "./_components/pitch-deck-navbar";
+import { PrefaceToggle } from "./_components/preface-toggle";
 
 export default async function PitchDeckLayout({
   children,
@@ -23,7 +23,7 @@ export default async function PitchDeckLayout({
     <PitchDeckProvider defaultPrefaceExpanded={defaultPrefaceExpanded}>
       <div className="relative min-h-screen bg-background">
         {/* Header - navbar-v2 style */}
-        <header className="fixed top-0 left-0 right-0 z-50 py-4 page-gutter">
+        <header className="page-gutter fixed top-0 right-0 left-0 z-50 py-4">
           <div className="relative flex items-center justify-center">
             {/* Left: Sidebar toggle (absolute positioned) */}
             <div className="absolute left-0 flex items-center">
@@ -31,42 +31,42 @@ export default async function PitchDeckLayout({
             </div>
 
             {/* Desktop: Centered nav pill */}
-            <nav className="hidden md:flex relative h-9 items-center gap-0.5 rounded-md pl-4 pr-1 py-1">
+            <nav className="relative hidden h-9 items-center gap-0.5 rounded-md py-1 pr-1 pl-4 md:flex">
               {/* Glass backdrop layer */}
-              <div className="absolute inset-0 rounded-md bg-card/40 border border-border/50 backdrop-blur-md -z-10" />
+              <div className="absolute inset-0 -z-10 rounded-md border border-border/50 bg-card/40 backdrop-blur-md" />
 
               {/* Logo */}
               <NextLink
+                className="mr-auto flex items-center pr-4"
                 href="/"
                 prefetch
-                className="flex items-center mr-auto pr-4"
               >
-                <Icons.logoShort className="w-4 h-4 text-foreground/60 hover:text-foreground transition-colors" />
+                <Icons.logoShort className="h-4 w-4 text-foreground/60 transition-colors hover:text-foreground" />
               </NextLink>
 
               {/* Menu dropdown */}
               <PitchDeckNavbar />
 
               {/* Contact button */}
-              <Button asChild size="sm" className="ml-1">
+              <Button asChild className="ml-1" size="sm">
                 <a href="mailto:jp@lightfast.ai">Contact</a>
               </Button>
             </nav>
 
             {/* Mobile: Logo left, hamburger right */}
-            <div className="flex md:hidden items-center justify-between w-full">
+            <div className="flex w-full items-center justify-between md:hidden">
               <NextLink
+                className="flex items-center transition-opacity hover:opacity-80"
                 href="/"
                 prefetch
-                className="flex items-center hover:opacity-80 transition-opacity"
               >
-                <Icons.logoShort className="w-4 h-4 text-foreground" />
+                <Icons.logoShort className="h-4 w-4 text-foreground" />
               </NextLink>
               <PitchDeckMobileNav />
             </div>
 
             {/* Right: Download button (absolute positioned) */}
-            <div className="absolute right-0 hidden md:flex items-center">
+            <div className="absolute right-0 hidden items-center md:flex">
               <DownloadButton />
             </div>
           </div>

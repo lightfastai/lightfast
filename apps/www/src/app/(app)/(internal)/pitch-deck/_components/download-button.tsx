@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { Download, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
+import { Download, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { exportSlidesToPdfLazy } from "../_lib/export-slides-lazy";
 
 export function DownloadButton() {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleDownload = async () => {
-    if (isExporting) return;
+    if (isExporting) {
+      return;
+    }
 
     setIsExporting(true);
     try {
@@ -21,7 +23,7 @@ export function DownloadButton() {
   };
 
   return (
-    <Button variant="ghost" onClick={handleDownload} disabled={isExporting}>
+    <Button disabled={isExporting} onClick={handleDownload} variant="ghost">
       {isExporting ? (
         <Loader2 className="size-4 animate-spin" />
       ) : (

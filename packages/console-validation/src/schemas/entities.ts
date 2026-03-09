@@ -7,13 +7,13 @@ import { z } from "zod";
  * Used for semantic grouping and targeted search.
  */
 export const entityCategorySchema = z.enum([
-  "engineer",    // Team members, contributors (@mentions, emails)
-  "project",     // Features, repos, tickets (#123, ENG-456)
-  "endpoint",    // API routes (POST /api/users)
-  "config",      // Environment variables (DATABASE_URL)
-  "definition",  // File paths, technical terms
-  "service",     // External services, dependencies
-  "reference",   // Generic references (commits, branches)
+  "engineer", // Team members, contributors (@mentions, emails)
+  "project", // Features, repos, tickets (#123, ENG-456)
+  "endpoint", // API routes (POST /api/users)
+  "config", // Environment variables (DATABASE_URL)
+  "definition", // File paths, technical terms
+  "service", // External services, dependencies
+  "reference", // Generic references (commits, branches)
 ]);
 
 export type EntityCategory = z.infer<typeof entityCategorySchema>;
@@ -61,7 +61,9 @@ export const llmEntityExtractionResponseSchema = z.object({
 });
 
 export type LLMExtractedEntity = z.infer<typeof llmExtractedEntitySchema>;
-export type LLMEntityExtractionResponse = z.infer<typeof llmEntityExtractionResponseSchema>;
+export type LLMEntityExtractionResponse = z.infer<
+  typeof llmEntityExtractionResponseSchema
+>;
 
 /**
  * Entity extracted from observation content
@@ -69,34 +71,34 @@ export type LLMEntityExtractionResponse = z.infer<typeof llmEntityExtractionResp
 export interface ExtractedEntity {
   /** Entity classification */
   category: EntityCategory;
-  /** Canonical key (e.g., "@sarah", "POST /api/users", "#123") */
-  key: string;
-  /** Human-readable value/description */
-  value?: string;
   /** Extraction confidence (0.0 - 1.0) */
   confidence: number;
   /** Text snippet providing extraction context */
   evidence: string;
+  /** Canonical key (e.g., "@sarah", "POST /api/users", "#123") */
+  key: string;
+  /** Human-readable value/description */
+  value?: string;
 }
 
 /**
  * Entity search result for hybrid retrieval
  */
 export interface EntitySearchResult {
+  /** Extraction confidence */
+  confidence: number;
+  /** Entity category */
+  entityCategory: EntityCategory;
   /** Entity database ID */
   entityId: string;
   /** Entity key */
   entityKey: string;
-  /** Entity category */
-  entityCategory: EntityCategory;
   /** Linked observation ID */
   observationId: string;
-  /** Observation title */
-  observationTitle: string;
   /** Content snippet */
   observationSnippet: string;
+  /** Observation title */
+  observationTitle: string;
   /** How many times this entity has been seen */
   occurrenceCount: number;
-  /** Extraction confidence */
-  confidence: number;
 }

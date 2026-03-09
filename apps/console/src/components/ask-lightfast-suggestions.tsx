@@ -2,13 +2,13 @@
 
 import { Button } from "@repo/ui/components/ui/button";
 import { cn } from "@repo/ui/lib/utils";
-import { Search, Activity, GitBranch, X } from "lucide-react";
+import { Activity, GitBranch, Search, X } from "lucide-react";
 import { useState } from "react";
 
 interface PromptCategory {
+  icon: React.ReactNode;
   id: string;
   label: string;
-  icon: React.ReactNode;
   prompts: string[];
 }
 
@@ -16,7 +16,7 @@ const categories: PromptCategory[] = [
   {
     id: "explore",
     label: "Explore",
-    icon: <Search className="w-3 h-3" />,
+    icon: <Search className="h-3 w-3" />,
     prompts: [
       "What are the main topics in this workspace?",
       "Summarize the most recent documents",
@@ -27,7 +27,7 @@ const categories: PromptCategory[] = [
   {
     id: "activity",
     label: "Activity",
-    icon: <Activity className="w-3 h-3" />,
+    icon: <Activity className="h-3 w-3" />,
     prompts: [
       "What changed in the last 24 hours?",
       "Show me recent pull requests and their status",
@@ -38,7 +38,7 @@ const categories: PromptCategory[] = [
   {
     id: "connections",
     label: "Connections",
-    icon: <GitBranch className="w-3 h-3" />,
+    icon: <GitBranch className="h-3 w-3" />,
     prompts: [
       "How are the recent changes connected?",
       "What dependencies exist between components?",
@@ -79,41 +79,26 @@ export function AskLightfastSuggestions({
   };
 
   const selectedCategoryData = categories.find(
-    (c) => c.id === selectedCategory,
+    (c) => c.id === selectedCategory
   );
 
   return (
-    <div className="w-full mx-auto">
-      {!selectedCategory ? (
-        <div className="flex flex-wrap justify-center gap-3">
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              variant="outline"
-              size="lg"
-              className="dark:bg-card/40 dark:border-border/50 dark:backdrop-blur-md active:bg-transparent rounded-md hover:bg-transparent dark:hover:bg-transparent hover:border-border/50"
-              onClick={() => handleCategoryClick(category.id)}
-            >
-              {category.icon}
-              <span className="text-sm">{category.label}</span>
-            </Button>
-          ))}
-        </div>
-      ) : (
-        <div className="border border-border/50 p-2 rounded-md bg-card/40 backdrop-blur-md shadow-sm">
+    <div className="mx-auto w-full">
+      {selectedCategory ? (
+        <div className="rounded-md border border-border/50 bg-card/40 p-2 shadow-sm backdrop-blur-md">
           <div className="flex items-center justify-between px-2 pb-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground px-2">
+            <div className="flex items-center gap-2 px-2 text-muted-foreground text-sm">
               {selectedCategoryData?.icon}
               <span>{selectedCategoryData?.label}</span>
             </div>
             <Button
-              variant="ghost"
-              size="icon"
               className="h-6 w-6 rounded-full"
               onClick={() => {
                 setSelectedCategory(null);
                 setVisiblePrompts(0);
               }}
+              size="icon"
+              variant="ghost"
             >
               <X className="h-3 w-3" />
             </Button>
@@ -121,25 +106,40 @@ export function AskLightfastSuggestions({
           <div className="grid gap-1">
             {selectedCategoryData?.prompts.map((prompt, index) => (
               <div
-                key={`${selectedCategory}-${prompt}`}
                 className={cn(
-                  "opacity-0 translate-y-4 transition-all duration-500 ease-out",
-                  index < visiblePrompts && "opacity-100 translate-y-0",
+                  "translate-y-4 opacity-0 transition-all duration-500 ease-out",
+                  index < visiblePrompts && "translate-y-0 opacity-100"
                 )}
+                key={`${selectedCategory}-${prompt}`}
                 style={{
                   transitionDelay: `${index * 150}ms`,
                 }}
               >
                 <Button
-                  variant="ghost"
+                  className="w-full justify-start whitespace-normal text-left hover:bg-transparent dark:hover:bg-muted/30"
                   onClick={() => handlePromptClick(prompt)}
-                  className="w-full text-left justify-start whitespace-normal hover:bg-transparent dark:hover:bg-muted/30"
+                  variant="ghost"
                 >
-                  <span className="text-sm font-base">{prompt}</span>
+                  <span className="font-base text-sm">{prompt}</span>
                 </Button>
               </div>
             ))}
           </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap justify-center gap-3">
+          {categories.map((category) => (
+            <Button
+              className="rounded-md hover:border-border/50 hover:bg-transparent active:bg-transparent dark:border-border/50 dark:bg-card/40 dark:backdrop-blur-md dark:hover:bg-transparent"
+              key={category.id}
+              onClick={() => handleCategoryClick(category.id)}
+              size="lg"
+              variant="outline"
+            >
+              {category.icon}
+              <span className="text-sm">{category.label}</span>
+            </Button>
+          ))}
         </div>
       )}
     </div>

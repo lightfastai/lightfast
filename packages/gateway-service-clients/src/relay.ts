@@ -4,9 +4,9 @@ import { relayUrl } from "./urls.js";
 
 export interface DispatchPayload {
   connectionId: string;
-  orgId: string;
   deliveryId: string;
   eventType: string;
+  orgId: string;
   payload: unknown;
   receivedAt: number;
 }
@@ -25,7 +25,7 @@ export function createRelayClient(config: ServiceClientConfig) {
     async dispatchWebhook(
       provider: string,
       payload: DispatchPayload,
-      holdForReplay?: boolean,
+      holdForReplay?: boolean
     ): Promise<void> {
       const response = await fetch(`${relayUrl}/webhooks/${provider}`, {
         method: "POST",
@@ -39,13 +39,15 @@ export function createRelayClient(config: ServiceClientConfig) {
       });
       if (!response.ok) {
         const text = await response.text().catch(() => "unknown");
-        throw new Error(`Relay dispatchWebhook failed: ${response.status} — ${text}`);
+        throw new Error(
+          `Relay dispatchWebhook failed: ${response.status} — ${text}`
+        );
       }
     },
 
     async replayCatchup(
       installationId: string,
-      batchSize: number,
+      batchSize: number
     ): Promise<{ remaining: number }> {
       const response = await fetch(`${relayUrl}/admin/replay/catchup`, {
         method: "POST",

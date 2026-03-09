@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import pc from "picocolors";
-import { getConfig } from "../lib/config.js";
 import { getStreamUrl } from "../lib/api.js";
+import { getConfig } from "../lib/config.js";
 import { connectSSE } from "../lib/sse.js";
 
 interface SourceEventNotification {
@@ -17,12 +17,12 @@ interface SourceEventNotification {
 }
 
 interface CatchUpEvent {
-  payloadId: number;
-  source: string;
-  eventType: string;
-  deliveryId: string;
-  receivedAt: number;
   catchUp: true;
+  deliveryId: string;
+  eventType: string;
+  payloadId: number;
+  receivedAt: number;
+  source: string;
 }
 
 export const listenCommand = new Command("listen")
@@ -35,9 +35,7 @@ export const listenCommand = new Command("listen")
       process.exit(1);
     }
 
-    console.log(
-      `  Listening for events in ${pc.bold(config.orgName)}...`
-    );
+    console.log(`  Listening for events in ${pc.bold(config.orgName)}...`);
     console.log(pc.dim("  Press Ctrl+C to stop."));
     console.log();
 
@@ -58,11 +56,17 @@ export const listenCommand = new Command("listen")
         console.log(pc.yellow(`  ${reason}`));
       },
       onEvent: (event) => {
-        if (event.event === "connected") return;
+        if (event.event === "connected") {
+          return;
+        }
 
-        if (event.event !== "event") return;
+        if (event.event !== "event") {
+          return;
+        }
 
-        const data = JSON.parse(event.data) as SourceEventNotification | CatchUpEvent;
+        const data = JSON.parse(event.data) as
+          | SourceEventNotification
+          | CatchUpEvent;
 
         if (opts.json) {
           console.log(JSON.stringify(data));

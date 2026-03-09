@@ -3,9 +3,7 @@
   "tags": ["vendor"],
   "tasks": {
     "build": {
-      "passThroughEnv": [
-        "PINECONE_API_KEY"
-      ]
+      "passThroughEnv": ["PINECONE_API_KEY"]
     }
   }
 }

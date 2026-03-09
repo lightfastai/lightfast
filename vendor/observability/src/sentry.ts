@@ -3,6 +3,8 @@
  * Keeps app-layer code importing from @vendor/observability/sentry
  * instead of @sentry/core directly.
  */
+
+export type { Scope } from "@sentry/core";
 export {
   addBreadcrumb,
   captureException,
@@ -14,8 +16,6 @@ export {
   ServerRuntimeClient,
   withScope,
 } from "@sentry/core";
-
-export type { Scope } from "@sentry/core";
 
 import {
   createStackParser,

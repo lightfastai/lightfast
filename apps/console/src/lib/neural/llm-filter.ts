@@ -4,10 +4,11 @@
  * Uses GPT-5.1 Instant via Vercel AI Gateway for ultra-fast semantic relevance scoring.
  * Filters out low-relevance results and combines LLM + vector scores.
  */
-import { generateObject } from "ai";
+
 import { gateway } from "@ai-sdk/gateway";
-import { z } from "zod";
 import { log } from "@vendor/observability/log";
+import { generateObject } from "ai";
+import { z } from "zod";
 
 /** Relevance score schema for LLM output */
 const relevanceScoreSchema = z.object({
@@ -19,32 +20,32 @@ const relevanceScoreSchema = z.object({
         .min(0)
         .max(1)
         .describe(
-          "Relevance score from 0.0 (irrelevant) to 1.0 (highly relevant)",
+          "Relevance score from 0.0 (irrelevant) to 1.0 (highly relevant)"
         ),
-    }),
+    })
   ),
 });
 
 /** Input candidate for LLM filtering */
 export interface FilterCandidate {
   id: string;
-  title: string;
-  snippet: string;
   score: number; // Vector similarity score
+  snippet: string;
+  title: string;
 }
 
 /** Output with combined scores */
 export interface ScoredResult extends FilterCandidate {
-  relevanceScore: number; // LLM relevance (0-1)
   finalScore: number; // Combined score
+  relevanceScore: number; // LLM relevance (0-1)
 }
 
 /** LLM filter result */
 export interface LLMFilterResult {
-  results: ScoredResult[];
-  latency: number;
-  filtered: number;
   bypassed: boolean;
+  filtered: number;
+  latency: number;
+  results: ScoredResult[];
 }
 
 /** Default options for LLM filtering */
@@ -67,7 +68,7 @@ export async function llmRelevanceFilter(
   query: string,
   candidates: FilterCandidate[],
   requestId: string,
-  options: Partial<typeof DEFAULT_OPTIONS> = {},
+  options: Partial<typeof DEFAULT_OPTIONS> = {}
 ): Promise<LLMFilterResult> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
@@ -166,12 +167,12 @@ export async function llmRelevanceFilter(
  */
 function buildRelevancePrompt(
   query: string,
-  candidates: FilterCandidate[],
+  candidates: FilterCandidate[]
 ): string {
   const candidateList = candidates
     .map(
       (c, i) =>
-        `${i + 1}. [${c.id}] "${c.title}": ${c.snippet.slice(0, 200)}...`,
+        `${i + 1}. [${c.id}] "${c.title}": ${c.snippet.slice(0, 200)}...`
     )
     .join("\n");
 

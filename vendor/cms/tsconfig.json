@@ -1,13 +1,5 @@
 {
   "extends": "@repo/typescript-config/react-library.json",
-  "include": [
-    "*.ts",
-    "components",
-    "basehub-types.d.ts",
-    "basehub.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["*.ts", "components", "basehub-types.d.ts", "basehub.config.ts"],
+  "exclude": ["node_modules", "dist"]
 }

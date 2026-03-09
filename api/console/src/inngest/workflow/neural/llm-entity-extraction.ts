@@ -40,4 +40,3 @@ GUIDELINES:
 
 Return entities with confidence scores reflecting how certain you are about the extraction.`;
 }
-

@@ -1,29 +1,29 @@
-import arcjet from "@arcjet/next";
 import type { ArcjetDecision } from "@arcjet/next";
+import arcjet from "@arcjet/next";
 import { env } from "../env";
 
+export { type ArcjetCanDecorate, setRateLimitHeaders } from "@arcjet/decorate";
 // Re-export everything from Arcjet for convenience
-export { default as arcjet } from "@arcjet/next";
 export {
+  type ArcjetBotCategory,
+  type ArcjetDecision,
+  type ArcjetMode,
+  type ArcjetReason,
+  type ArcjetWellKnownBot,
+  default as arcjet,
   detectBot,
   fixedWindow,
   protectSignup,
+  request,
   sensitiveInfo,
   shield,
-  tokenBucket,
   slidingWindow,
+  tokenBucket,
   validateEmail,
-  request,
-  type ArcjetBotCategory,
-  type ArcjetWellKnownBot,
-  type ArcjetMode,
-  type ArcjetDecision,
-  type ArcjetReason,
 } from "@arcjet/next";
-export { setRateLimitHeaders, type ArcjetCanDecorate } from "@arcjet/decorate";
 
 // Export middleware utilities
-export { securityMiddleware, noseconeOptions } from "./middleware";
+export { noseconeOptions, securityMiddleware } from "./middleware";
 
 // Export the Arcjet key for apps to create their own instances
 export const ARCJET_KEY = env.ARCJET_KEY;
@@ -54,8 +54,7 @@ export const checkDecision = (decision: ArcjetDecision) => {
     isBot: reason.isBot(),
     isRateLimit: reason.isRateLimit(),
     isShield: reason.isShield(),
-    reason: reason,
+    reason,
     ip: decision.ip,
   };
 };
-

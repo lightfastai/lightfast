@@ -11,18 +11,21 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceNeuralObservations, workspaceNeuralEntities } from "@db/console/schema";
-import { and, or, inArray, eq } from "drizzle-orm";
+import {
+  workspaceNeuralEntities,
+  workspaceNeuralObservations,
+} from "@db/console/schema";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
-import { pineconeClient } from "@repo/console-pinecone";
 import type { VectorMetadata } from "@repo/console-pinecone";
+import { pineconeClient } from "@repo/console-pinecone";
+import type { EntitySearchResult } from "@repo/console-validation";
 import { getCachedWorkspaceConfig } from "@repo/console-workspace-cache";
 import { log } from "@vendor/observability/log";
-import type { FilterCandidate } from "./llm-filter";
-import { searchByEntities } from "./entity-search";
-import { searchClusters } from "./cluster-search";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { searchActorProfiles } from "./actor-search";
-import type { EntitySearchResult } from "@repo/console-validation";
+import { searchClusters } from "./cluster-search";
+import { searchByEntities } from "./entity-search";
+import type { FilterCandidate } from "./llm-filter";
 
 // ============================================================================
 // EMPTY RESULT CONSTANTS
@@ -42,28 +45,36 @@ const EMPTY_ACTOR_RESULT = { results: [], latency: 0 } as const;
  * Information about which embedding views matched for an observation
  */
 interface ViewMatch {
-  view: "title" | "content" | "summary" | "legacy";
   score: number;
   vectorId: string;
+  view: "title" | "content" | "summary" | "legacy";
 }
 
 /**
  * Normalized vector result with observation ID
  */
 interface NormalizedVectorResult {
-  observationId: string;
-  score: number;
   matchedViews: ViewMatch[];
   metadata?: VectorMetadata;
+  observationId: string;
+  score: number;
 }
 
 /**
  * Extract view type from vector ID prefix
  */
-function getViewFromVectorId(vectorId: string): "title" | "content" | "summary" | "legacy" {
-  if (vectorId.startsWith("obs_title_")) return "title";
-  if (vectorId.startsWith("obs_content_")) return "content";
-  if (vectorId.startsWith("obs_summary_")) return "summary";
+function getViewFromVectorId(
+  vectorId: string
+): "title" | "content" | "summary" | "legacy" {
+  if (vectorId.startsWith("obs_title_")) {
+    return "title";
+  }
+  if (vectorId.startsWith("obs_content_")) {
+    return "content";
+  }
+  if (vectorId.startsWith("obs_summary_")) {
+    return "summary";
+  }
   return "legacy";
 }
 
@@ -84,7 +95,9 @@ async function normalizeVectorIds(
   vectorMatches: { id: string; score: number; metadata?: VectorMetadata }[],
   requestId?: string
 ): Promise<NormalizedVectorResult[]> {
-  if (vectorMatches.length === 0) return [];
+  if (vectorMatches.length === 0) {
+    return [];
+  }
 
   // Separate matches with observationId in metadata (Phase 3) from those without (legacy)
   const withObsId: typeof vectorMatches = [];
@@ -101,10 +114,13 @@ async function normalizeVectorIds(
   }
 
   // Group matches by observation ID
-  const obsGroups = new Map<string, {
-    matches: ViewMatch[];
-    metadata?: VectorMetadata;
-  }>();
+  const obsGroups = new Map<
+    string,
+    {
+      matches: ViewMatch[];
+      metadata?: VectorMetadata;
+    }
+  >();
 
   // Process matches with observationId directly (no DB lookup needed - Phase 3 path)
   for (const match of withObsId) {
@@ -151,25 +167,55 @@ async function normalizeVectorIds(
 
     // Build vector ID → observation mapping for legacy vectors
     // Uses externalId (nanoid) for API-facing lookups
-    const vectorToObs = new Map<string, { id: string; view: "title" | "content" | "summary" | "legacy" }>();
+    const vectorToObs = new Map<
+      string,
+      { id: string; view: "title" | "content" | "summary" | "legacy" }
+    >();
     for (const obs of observations) {
-      if (obs.embeddingTitleId) vectorToObs.set(obs.embeddingTitleId, { id: obs.externalId, view: "title" });
-      if (obs.embeddingContentId) vectorToObs.set(obs.embeddingContentId, { id: obs.externalId, view: "content" });
-      if (obs.embeddingSummaryId) vectorToObs.set(obs.embeddingSummaryId, { id: obs.externalId, view: "summary" });
-      if (obs.embeddingVectorId) vectorToObs.set(obs.embeddingVectorId, { id: obs.externalId, view: "legacy" });
+      if (obs.embeddingTitleId) {
+        vectorToObs.set(obs.embeddingTitleId, {
+          id: obs.externalId,
+          view: "title",
+        });
+      }
+      if (obs.embeddingContentId) {
+        vectorToObs.set(obs.embeddingContentId, {
+          id: obs.externalId,
+          view: "content",
+        });
+      }
+      if (obs.embeddingSummaryId) {
+        vectorToObs.set(obs.embeddingSummaryId, {
+          id: obs.externalId,
+          view: "summary",
+        });
+      }
+      if (obs.embeddingVectorId) {
+        vectorToObs.set(obs.embeddingVectorId, {
+          id: obs.externalId,
+          view: "legacy",
+        });
+      }
     }
 
     // Add legacy matches to obsGroups
     for (const match of withoutObsId) {
       const obs = vectorToObs.get(match.id);
       if (!obs) {
-        log.warn("Vector ID not found in database", { vectorId: match.id, requestId });
+        log.warn("Vector ID not found in database", {
+          vectorId: match.id,
+          requestId,
+        });
         continue;
       }
 
       const existing = obsGroups.get(obs.id);
       if (existing) {
-        existing.matches.push({ view: obs.view, score: match.score, vectorId: match.id });
+        existing.matches.push({
+          view: obs.view,
+          score: match.score,
+          vectorId: match.id,
+        });
       } else {
         obsGroups.set(obs.id, {
           matches: [{ view: obs.view, score: match.score, vectorId: match.id }],
@@ -214,9 +260,6 @@ async function normalizeVectorIds(
 // ============================================================================
 
 export interface FourPathSearchParams {
-  workspaceId: string;
-  query: string;
-  topK: number;
   filters?: {
     sourceTypes?: string[];
     observationTypes?: string[];
@@ -226,10 +269,19 @@ export interface FourPathSearchParams {
       end?: string;
     };
   };
+  query: string;
   requestId?: string;
+  topK: number;
+  workspaceId: string;
 }
 
 export interface FourPathSearchResult {
+  /** Actor profile results */
+  actors: {
+    displayName: string;
+    expertiseDomains: string[];
+    score: number;
+  }[];
   /** Merged candidates ready for reranking */
   candidates: FilterCandidate[];
   /** Cluster context results */
@@ -237,12 +289,6 @@ export interface FourPathSearchResult {
     topicLabel: string | null;
     summary: string | null;
     keywords: string[];
-    score: number;
-  }[];
-  /** Actor profile results */
-  actors: {
-    displayName: string;
-    expertiseDomains: string[];
     score: number;
   }[];
   /** Latency breakdown */
@@ -255,8 +301,6 @@ export interface FourPathSearchResult {
     normalize: number;
     total: number;
   };
-  /** Total candidates before dedup */
-  total: number;
   /** Search paths status */
   paths: {
     vector: boolean;
@@ -264,6 +308,8 @@ export interface FourPathSearchResult {
     cluster: boolean;
     actor: boolean;
   };
+  /** Total candidates before dedup */
+  total: number;
 }
 
 /**
@@ -334,8 +380,12 @@ function mergeSearchResults(
       // Boost score for entity confirmation (+0.2)
       existing.score = Math.min(1.0, existing.score + 0.2);
       // Prefer entity title/snippet if available
-      if (entity.observationTitle) existing.title = entity.observationTitle;
-      if (entity.observationSnippet) existing.snippet = entity.observationSnippet;
+      if (entity.observationTitle) {
+        existing.title = entity.observationTitle;
+      }
+      if (entity.observationSnippet) {
+        existing.snippet = entity.observationSnippet;
+      }
     } else {
       // Add new result from entity match
       resultMap.set(entity.observationId, {
@@ -369,10 +419,19 @@ export async function fourPathParallelSearch(
   const workspace = await getCachedWorkspaceConfig(workspaceId);
 
   if (!workspace) {
-    throw new Error(`Workspace not found or not configured for search: ${workspaceId}`);
+    throw new Error(
+      `Workspace not found or not configured for search: ${workspaceId}`
+    );
   }
 
-  const { indexName, namespaceName, embeddingModel, embeddingDim, hasClusters, hasActors } = workspace;
+  const {
+    indexName,
+    namespaceName,
+    embeddingModel,
+    embeddingDim,
+    hasClusters,
+    hasActors,
+  } = workspace;
 
   // 2. Generate query embedding
   const embedStart = Date.now();
@@ -397,64 +456,87 @@ export async function fourPathParallelSearch(
   const pineconeFilter = buildPineconeFilter(filters);
   const parallelStart = Date.now();
 
-  const [vectorResults, entityResults, clusterResults, actorResults] = await Promise.all([
-    // Path 1: Vector similarity search (always execute)
-    (async () => {
-      const start = Date.now();
-      try {
-        const results = await pineconeClient.query<VectorMetadata>(
-          indexName,
-          {
-            vector: queryVector,
-            topK,
-            includeMetadata: true,
-            filter: pineconeFilter,
-          },
-          namespaceName
-        );
-        return { results, latency: Date.now() - start, success: true };
-      } catch (error) {
-        log.error("Vector search failed", { requestId, error: error instanceof Error ? error.message : String(error) });
-        return { results: { matches: [] }, latency: Date.now() - start, success: false };
-      }
-    })(),
+  const [vectorResults, entityResults, clusterResults, actorResults] =
+    await Promise.all([
+      // Path 1: Vector similarity search (always execute)
+      (async () => {
+        const start = Date.now();
+        try {
+          const results = await pineconeClient.query<VectorMetadata>(
+            indexName,
+            {
+              vector: queryVector,
+              topK,
+              includeMetadata: true,
+              filter: pineconeFilter,
+            },
+            namespaceName
+          );
+          return { results, latency: Date.now() - start, success: true };
+        } catch (error) {
+          log.error("Vector search failed", {
+            requestId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return {
+            results: { matches: [] },
+            latency: Date.now() - start,
+            success: false,
+          };
+        }
+      })(),
 
-    // Path 2: Entity search (always execute - fast pattern matching)
-    (async () => {
-      const start = Date.now();
-      try {
-        const results = await searchByEntities(query, workspaceId, topK);
-        return { results, latency: Date.now() - start, success: true };
-      } catch (error) {
-        log.error("Entity search failed", { requestId, error: error instanceof Error ? error.message : String(error) });
-        return { results: [], latency: Date.now() - start, success: false };
-      }
-    })(),
+      // Path 2: Entity search (always execute - fast pattern matching)
+      (async () => {
+        const start = Date.now();
+        try {
+          const results = await searchByEntities(query, workspaceId, topK);
+          return { results, latency: Date.now() - start, success: true };
+        } catch (error) {
+          log.error("Entity search failed", {
+            requestId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return { results: [], latency: Date.now() - start, success: false };
+        }
+      })(),
 
-    // Path 3: Cluster context search (skip if no clusters)
-    hasClusters
-      ? (async () => {
-          try {
-            return await searchClusters(workspaceId, indexName, namespaceName, queryVector, 3);
-          } catch (error) {
-            log.error("Cluster search failed", { requestId, error: error instanceof Error ? error.message : String(error) });
-            return EMPTY_CLUSTER_RESULT;
-          }
-        })()
-      : Promise.resolve(EMPTY_CLUSTER_RESULT),
+      // Path 3: Cluster context search (skip if no clusters)
+      hasClusters
+        ? (async () => {
+            try {
+              return await searchClusters(
+                workspaceId,
+                indexName,
+                namespaceName,
+                queryVector,
+                3
+              );
+            } catch (error) {
+              log.error("Cluster search failed", {
+                requestId,
+                error: error instanceof Error ? error.message : String(error),
+              });
+              return EMPTY_CLUSTER_RESULT;
+            }
+          })()
+        : Promise.resolve(EMPTY_CLUSTER_RESULT),
 
-    // Path 4: Actor profile search (skip if no actors)
-    hasActors
-      ? (async () => {
-          try {
-            return await searchActorProfiles(workspaceId, query, 5);
-          } catch (error) {
-            log.error("Actor search failed", { requestId, error: error instanceof Error ? error.message : String(error) });
-            return EMPTY_ACTOR_RESULT;
-          }
-        })()
-      : Promise.resolve(EMPTY_ACTOR_RESULT),
-  ]);
+      // Path 4: Actor profile search (skip if no actors)
+      hasActors
+        ? (async () => {
+            try {
+              return await searchActorProfiles(workspaceId, query, 5);
+            } catch (error) {
+              log.error("Actor search failed", {
+                requestId,
+                error: error instanceof Error ? error.message : String(error),
+              });
+              return EMPTY_ACTOR_RESULT;
+            }
+          })()
+        : Promise.resolve(EMPTY_ACTOR_RESULT),
+    ]);
 
   log.info("4-path parallel search complete", {
     requestId,
@@ -528,16 +610,16 @@ export async function fourPathParallelSearch(
 // ============================================================================
 
 export interface EnrichedResult {
-  id: string;
-  title: string;
-  url: string;
-  snippet: string;
-  score: number;
-  source: string;
-  type: string;
-  occurredAt: string | null;
   entities: { key: string; category: string }[];
+  id: string;
+  occurredAt: string | null;
   references: { type: string; id: string; url?: string; label?: string }[];
+  score: number;
+  snippet: string;
+  source: string;
+  title: string;
+  type: string;
+  url: string;
 }
 
 /**
@@ -589,24 +671,30 @@ export async function enrichSearchResults(
   const internalObsIds = observations.map((o) => o.id);
 
   // Query entities using internal BIGINT IDs
-  const entities = internalObsIds.length > 0
-    ? await db
-        .select({
-          observationId: workspaceNeuralEntities.sourceObservationId,
-          key: workspaceNeuralEntities.key,
-          category: workspaceNeuralEntities.category,
-        })
-        .from(workspaceNeuralEntities)
-        .where(
-          and(
-            eq(workspaceNeuralEntities.workspaceId, workspaceId),
-            inArray(workspaceNeuralEntities.sourceObservationId, internalObsIds)
+  const entities =
+    internalObsIds.length > 0
+      ? await db
+          .select({
+            observationId: workspaceNeuralEntities.sourceObservationId,
+            key: workspaceNeuralEntities.key,
+            category: workspaceNeuralEntities.category,
+          })
+          .from(workspaceNeuralEntities)
+          .where(
+            and(
+              eq(workspaceNeuralEntities.workspaceId, workspaceId),
+              inArray(
+                workspaceNeuralEntities.sourceObservationId,
+                internalObsIds
+              )
+            )
           )
-        )
-    : [];
+      : [];
 
   // Build internal ID to externalId map for entity grouping
-  const internalToExternalMap = new Map(observations.map((o) => [o.id, o.externalId]));
+  const internalToExternalMap = new Map(
+    observations.map((o) => [o.id, o.externalId])
+  );
 
   // Group entities by externalId (for result matching)
   const entityMap = new Map<string, { key: string; category: string }[]>();
@@ -638,7 +726,9 @@ export async function enrichSearchResults(
     const snippet = candidate?.snippet ?? "";
 
     // Extract references from sourceReferences (typed as JSONB array)
-    const rawRefs = obs?.sourceReferences as { type: string; id: string; url?: string; label?: string }[] | null;
+    const rawRefs = obs?.sourceReferences as
+      | { type: string; id: string; url?: string; label?: string }[]
+      | null;
     const references = rawRefs ?? [];
 
     return {

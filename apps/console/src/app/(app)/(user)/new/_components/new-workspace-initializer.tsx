@@ -1,14 +1,14 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { WorkspaceFormProvider } from "./workspace-form-provider";
 
 interface NewWorkspaceInitializerProps {
-  teamSlugHint?: string;
-  initialWorkspaceName?: string;
   children: ReactNode;
+  initialWorkspaceName?: string;
+  teamSlugHint?: string;
 }
 
 /**

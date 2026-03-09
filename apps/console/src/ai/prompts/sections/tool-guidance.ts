@@ -1,11 +1,11 @@
 import type { SectionProvider } from "@repo/prompt-engine";
 
 interface ToolGuidance {
-  name: string;
-  whenToUse: string;
-  howToUse: string;
-  resultHandling: string;
   failureHandling: string;
+  howToUse: string;
+  name: string;
+  resultHandling: string;
+  whenToUse: string;
 }
 
 const ANSWER_TOOL_GUIDANCE: Record<string, ToolGuidance> = {
@@ -57,8 +57,7 @@ const ANSWER_TOOL_GUIDANCE: Record<string, ToolGuidance> = {
     name: "workspaceRelated",
     whenToUse:
       "Use for direct relationships only (not transitive). Faster than workspaceGraph for simple 'what's related to X?' questions. Use when you need the immediate context around an event.",
-    howToUse:
-      "Pass the observation ID. Default limit=5 is usually sufficient.",
+    howToUse: "Pass the observation ID. Default limit=5 is usually sufficient.",
     resultHandling:
       "List related items with their relationship type and source. Group by source type if there are many.",
     failureHandling:
@@ -67,13 +66,17 @@ const ANSWER_TOOL_GUIDANCE: Record<string, ToolGuidance> = {
 };
 
 export const answerToolGuidanceSection: SectionProvider = (ctx) => {
-  if (!ctx.features.toolGuidance) return null;
+  if (!ctx.features.toolGuidance) {
+    return null;
+  }
 
   const activeGuidance = ctx.activeTools
     .map((toolName) => ANSWER_TOOL_GUIDANCE[toolName])
     .filter((g): g is ToolGuidance => g !== undefined);
 
-  if (activeGuidance.length === 0) return null;
+  if (activeGuidance.length === 0) {
+    return null;
+  }
 
   return {
     id: "tool-guidance",

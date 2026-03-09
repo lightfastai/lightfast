@@ -1,13 +1,9 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
-import { z } from "zod";
-import type {
-  GraphToolInput,
-  GraphToolOutput,
-  LightfastAnswerRuntimeContext,
-} from "@repo/console-ai-types";
+import type { LightfastAnswerRuntimeContext } from "@repo/console-ai-types";
 import { GraphResponseSchema } from "@repo/console-validation";
+import { z } from "zod";
 
-const inputSchema: z.ZodType<GraphToolInput> = z.object({
+const inputSchema = z.object({
   id: z.string().meta({ description: "The observation ID to traverse from" }),
   depth: z
     .number()
@@ -25,23 +21,19 @@ const inputSchema: z.ZodType<GraphToolInput> = z.object({
     .meta({ description: "Max relationships to return" }),
 });
 
-const outputSchema = GraphResponseSchema as unknown as z.ZodType<GraphToolOutput>;
+const outputSchema = GraphResponseSchema;
 
 export function workspaceGraphTool() {
-  return createTool<
-    LightfastAnswerRuntimeContext,
-    typeof inputSchema,
-    typeof outputSchema
-  >({
+  return createTool<LightfastAnswerRuntimeContext>({
     description:
       "Traverse the relationship graph between events. Use this to answer questions like 'which PR fixed which issue' or 'which deploy included which commits'. Returns connected nodes and their relationships across sources.",
-    inputSchema,
-    outputSchema,
+    inputSchema: inputSchema as any,
+    outputSchema: outputSchema as any,
     execute: async (input, context) => {
       const handler = context.tools?.workspaceGraph?.handler;
       if (!handler) {
         throw new Error(
-          "Workspace graph handler not configured in runtime context.",
+          "Workspace graph handler not configured in runtime context."
         );
       }
       return handler(input);

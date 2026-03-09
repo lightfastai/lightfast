@@ -1,7 +1,7 @@
-import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
 import { workspaceUserActivities } from "@db/console/schema";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
+import type { TRPCRouterRecord } from "@trpc/server";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { z } from "zod";
 
 import { orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
@@ -52,22 +52,32 @@ export const activitiesRouter = {
       });
 
       // Build where conditions
-      const whereConditions = [eq(workspaceUserActivities.workspaceId, workspaceId)];
+      const whereConditions = [
+        eq(workspaceUserActivities.workspaceId, workspaceId),
+      ];
 
       if (input.category) {
-        whereConditions.push(eq(workspaceUserActivities.category, input.category));
+        whereConditions.push(
+          eq(workspaceUserActivities.category, input.category)
+        );
       }
 
       if (input.actorUserId) {
-        whereConditions.push(eq(workspaceUserActivities.actorUserId, input.actorUserId));
+        whereConditions.push(
+          eq(workspaceUserActivities.actorUserId, input.actorUserId)
+        );
       }
 
       if (input.startDate) {
-        whereConditions.push(gte(workspaceUserActivities.timestamp, input.startDate));
+        whereConditions.push(
+          gte(workspaceUserActivities.timestamp, input.startDate)
+        );
       }
 
       if (input.endDate) {
-        whereConditions.push(lte(workspaceUserActivities.timestamp, input.endDate));
+        whereConditions.push(
+          lte(workspaceUserActivities.timestamp, input.endDate)
+        );
       }
 
       // Fetch activities with pagination
@@ -125,7 +135,9 @@ export const activitiesRouter = {
         "30d": 720,
       }[input.timeRange];
 
-      const startTime = new Date(Date.now() - rangeHours * 60 * 60 * 1000).toISOString();
+      const startTime = new Date(
+        Date.now() - rangeHours * 60 * 60 * 1000
+      ).toISOString();
 
       // Fetch all activities in time range
       const activities = await db

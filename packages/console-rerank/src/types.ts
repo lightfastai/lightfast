@@ -11,24 +11,23 @@
  */
 export interface RerankCandidate {
   /**
+   * Text content to use for relevance scoring
+   */
+  content: string;
+  /**
    * Unique identifier for the candidate
    */
   id: string;
 
   /**
-   * Title of the document/observation
-   */
-  title: string;
-
-  /**
-   * Text content to use for relevance scoring
-   */
-  content: string;
-
-  /**
    * Original vector similarity score (0-1)
    */
   score: number;
+
+  /**
+   * Title of the document/observation
+   */
+  title: string;
 }
 
 /**
@@ -41,9 +40,9 @@ export interface RerankResult {
   id: string;
 
   /**
-   * Final reranked score (0-1)
+   * Original vector score preserved
    */
-  score: number;
+  originalScore: number;
 
   /**
    * Provider-specific relevance score (0-1)
@@ -51,9 +50,9 @@ export interface RerankResult {
   relevance: number;
 
   /**
-   * Original vector score preserved
+   * Final reranked score (0-1)
    */
-  originalScore: number;
+  score: number;
 }
 
 /**
@@ -61,9 +60,19 @@ export interface RerankResult {
  */
 export interface RerankResponse {
   /**
-   * Reranked results sorted by score descending
+   * Whether reranking was bypassed (e.g., small result set)
    */
-  results: RerankResult[];
+  bypassed: boolean;
+
+  /**
+   * True if minimum results guarantee was used (threshold bypassed)
+   */
+  fallback?: boolean;
+
+  /**
+   * Number of candidates filtered out
+   */
+  filtered: number;
 
   /**
    * Time taken for reranking in milliseconds
@@ -74,21 +83,10 @@ export interface RerankResponse {
    * Provider name that performed the reranking
    */
   provider: string;
-
   /**
-   * Number of candidates filtered out
+   * Reranked results sorted by score descending
    */
-  filtered: number;
-
-  /**
-   * Whether reranking was bypassed (e.g., small result set)
-   */
-  bypassed: boolean;
-
-  /**
-   * True if minimum results guarantee was used (threshold bypassed)
-   */
-  fallback?: boolean;
+  results: RerankResult[];
 }
 
 /**
@@ -96,15 +94,12 @@ export interface RerankResponse {
  */
 export interface RerankOptions {
   /**
-   * Maximum number of results to return
+   * Minimum number of results to return. If threshold filtering
+   * would return fewer than this, top results by score are returned
+   * regardless of threshold.
+   * @default 0 (no minimum guarantee)
    */
-  topK?: number;
-
-  /**
-   * Minimum relevance threshold to include result
-   * @default 0.4
-   */
-  threshold?: number;
+  minResults?: number;
 
   /**
    * Request ID for logging/tracing
@@ -112,12 +107,14 @@ export interface RerankOptions {
   requestId?: string;
 
   /**
-   * Minimum number of results to return. If threshold filtering
-   * would return fewer than this, top results by score are returned
-   * regardless of threshold.
-   * @default 0 (no minimum guarantee)
+   * Minimum relevance threshold to include result
+   * @default 0.4
    */
-  minResults?: number;
+  threshold?: number;
+  /**
+   * Maximum number of results to return
+   */
+  topK?: number;
 }
 
 /**
@@ -143,7 +140,7 @@ export interface RerankProvider {
   rerank(
     query: string,
     candidates: RerankCandidate[],
-    options?: RerankOptions,
+    options?: RerankOptions
   ): Promise<RerankResponse>;
 }
 

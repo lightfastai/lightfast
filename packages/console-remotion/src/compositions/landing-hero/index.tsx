@@ -14,11 +14,7 @@ export const LANDING_HERO_GIF_RENDER_PROFILE = {
   numberOfGifLoops: null,
 } as const satisfies Pick<
   RenderMediaOptions,
-  | "codec"
-  | "imageFormat"
-  | "scale"
-  | "everyNthFrame"
-  | "numberOfGifLoops"
+  "codec" | "imageFormat" | "scale" | "everyNthFrame" | "numberOfGifLoops"
 >;
 
 /**
@@ -32,7 +28,10 @@ export const LANDING_HERO_WEBM_RENDER_PROFILE = {
   codec: "vp9",
   imageFormat: "png",
   scale: 2,
-} as const satisfies Pick<RenderMediaOptions, "codec" | "imageFormat" | "scale">;
+} as const satisfies Pick<
+  RenderMediaOptions,
+  "codec" | "imageFormat" | "scale"
+>;
 
 /** Frame used for the static poster image shown while the video loads. */
 export const LANDING_HERO_POSTER_FRAME = 150;

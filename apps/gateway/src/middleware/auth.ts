@@ -14,7 +14,7 @@ export const apiKeyAuth: MiddlewareHandler = async (c: Context, next) => {
 
   const { GATEWAY_API_KEY } = env;
 
-  if (!timingSafeStringEqual(apiKey, GATEWAY_API_KEY)) {
+  if (!timingSafeStringEqual(apiKey, GATEWAY_API_KEY!)) {
     return c.json({ error: "unauthorized" }, 401);
   }
 

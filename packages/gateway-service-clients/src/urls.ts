@@ -36,7 +36,5 @@ export const backfillUrl = `${withRelatedProject({
 /** Console URL (cross-service). */
 export const consoleUrl = withRelatedProject({
   projectName: "lightfast-console",
-  defaultHost: isDevelopment
-    ? "http://localhost:3024"
-    : "https://lightfast.ai",
+  defaultHost: isDevelopment ? "http://localhost:3024" : "https://lightfast.ai",
 });

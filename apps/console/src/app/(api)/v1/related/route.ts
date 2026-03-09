@@ -8,16 +8,16 @@
  * Accepts parameters via JSON body for SDK/MCP consistency.
  */
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
-import { log } from "@vendor/observability/log";
 import { V1RelatedRequestSchema } from "@repo/console-validation";
-import {
-  withDualAuth,
-  createDualAuthErrorResponse,
-} from "../lib/with-dual-auth";
+import { log } from "@vendor/observability/log";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { relatedLogic } from "~/lib/v1/related";
+import {
+  createDualAuthErrorResponse,
+  withDualAuth,
+} from "../lib/with-dual-auth";
 
 export async function POST(request: NextRequest) {
   const requestId = randomUUID();
@@ -61,7 +61,11 @@ export async function POST(request: NextRequest) {
     const { workspaceId } = authResult.auth;
 
     const result = await relatedLogic(
-      { workspaceId, userId: authResult.auth.userId, authType: authResult.auth.authType },
+      {
+        workspaceId,
+        userId: authResult.auth.userId,
+        authType: authResult.auth.authType,
+      },
       { observationId, requestId }
     );
 
@@ -81,7 +85,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "INTERNAL_ERROR",
-        message: error instanceof Error ? error.message : "Related lookup failed",
+        message:
+          error instanceof Error ? error.message : "Related lookup failed",
         requestId,
       },
       { status: 500 }

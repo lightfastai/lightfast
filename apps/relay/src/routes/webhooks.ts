@@ -1,22 +1,25 @@
-import { Hono } from "hono";
-import { and, eq } from "@vendor/db";
-import { getQStashClient } from "@vendor/qstash";
-import { workflowClient } from "@vendor/upstash-workflow/client";
-import { relayBaseUrl, consoleUrl } from "../lib/urls.js";
-import { webhookSeenKey } from "../lib/cache.js";
-import { redis } from "@vendor/upstash";
-import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/console-providers";
 import { db } from "@db/console/client";
 import { gwWebhookDeliveries } from "@db/console/schema";
+import type {
+  WebhookEnvelope,
+  WebhookReceiptPayload,
+} from "@repo/console-providers";
+import { and, eq } from "@vendor/db";
+import { getQStashClient } from "@vendor/qstash";
+import { redis } from "@vendor/upstash";
+import { workflowClient } from "@vendor/upstash-workflow/client";
+import { Hono } from "hono";
+import { webhookSeenKey } from "../lib/cache.js";
+import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
 import type { WebhookVariables } from "../middleware/webhook.js";
 import {
-  providerGuard,
-  serviceAuthDetect,
-  serviceAuthBodyValidator,
-  webhookHeaderGuard,
-  rawBodyCapture,
-  signatureVerify,
   payloadParseAndExtract,
+  providerGuard,
+  rawBodyCapture,
+  serviceAuthBodyValidator,
+  serviceAuthDetect,
+  signatureVerify,
+  webhookHeaderGuard,
 } from "../middleware/webhook.js";
 
 const webhooks = new Hono<{ Variables: WebhookVariables }>();
@@ -59,13 +62,15 @@ webhooks.post(
     // ── Service auth path (backfill / internal service) ──
     if (isServiceAuth) {
       const body = c.get("serviceAuthBody");
-      if (!body) return c.json({ error: "missing_body" }, 400);
+      if (!body) {
+        return c.json({ error: "missing_body" }, 400);
+      }
 
       // Dedup — prevents duplicates from backfill retries and re-runs.
       const dedupResult = await redis.set(
         webhookSeenKey(providerName, deliveryId),
         "1",
-        { nx: true, ex: 86400 },
+        { nx: true, ex: 86_400 }
       );
       if (dedupResult === null) {
         return c.json({ status: "duplicate", deliveryId });
@@ -81,7 +86,9 @@ webhooks.post(
           installationId: body.connectionId,
           status: "received",
           payload: JSON.stringify(parsedPayload),
-          receivedAt: new Date(body.receivedAt < 1e12 ? body.receivedAt * 1000 : body.receivedAt).toISOString(),
+          receivedAt: new Date(
+            body.receivedAt < 1e12 ? body.receivedAt * 1000 : body.receivedAt
+          ).toISOString(),
         })
         .onConflictDoNothing();
 
@@ -117,15 +124,18 @@ webhooks.post(
           .where(
             and(
               eq(gwWebhookDeliveries.provider, providerName),
-              eq(gwWebhookDeliveries.deliveryId, deliveryId),
-            ),
+              eq(gwWebhookDeliveries.deliveryId, deliveryId)
+            )
           );
       } catch (err) {
-        console.error("[webhooks] failed to update delivery status after enqueue", {
-          provider: providerName,
-          deliveryId,
-          error: err,
-        });
+        console.error(
+          "[webhooks] failed to update delivery status after enqueue",
+          {
+            provider: providerName,
+            deliveryId,
+            error: err,
+          }
+        );
       }
 
       return c.json({ status: "accepted", deliveryId });
@@ -152,7 +162,7 @@ webhooks.post(
     });
 
     return c.json({ status: "accepted", deliveryId }, 200);
-  },
+  }
 );
 
 export { webhooks };

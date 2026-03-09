@@ -14,8 +14,6 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "npx tsx src/watch.ts",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "typecheck": "tsc --noEmit",
     "studio": "npx remotion studio src/index.ts",
     "render:webm": "npx tsx src/render.ts",
@@ -29,28 +27,23 @@
     "@remotion/renderer": "^4.0.434",
     "@vendor/remotion": "workspace:*",
     "clsx": "catalog:",
-    "react": "19.2.1",
-    "react-dom": "19.2.1",
-    "remotion": "^4.0.242",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "remotion": "^4.0.434",
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@types/node": "catalog:",
-    "@types/react": "^19.2.14",
+    "@types/react": "catalog:",
     "css-loader": "^7.1.4",
-    "eslint": "catalog:",
     "postcss": "catalog:tailwind4",
     "postcss-loader": "^8.1.1",
-    "prettier": "catalog:",
     "style-loader": "^4.0.0",
     "tailwindcss": "catalog:tailwind4",
-    "tsx": "^4.19.2",
+    "tsx": "^4.21.0",
     "typescript": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

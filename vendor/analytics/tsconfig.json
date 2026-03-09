@@ -1,21 +1,11 @@
 {
   "extends": "@repo/typescript-config/react-library.json",
   "compilerOptions": {
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "paths": {
-      "~/env": [
-        "./env.ts"
-      ]
+      "~/env": ["./env.ts"]
     }
   },
-  "include": [
-    "*.ts",
-    "src"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["*.ts", "src"],
+  "exclude": ["node_modules", "dist"]
 }

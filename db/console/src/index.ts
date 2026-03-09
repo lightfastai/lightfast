@@ -1,53 +1,126 @@
 // Schema exports
-export {
-  // Gateway-owned tables
-  gwInstallations, type GwInstallation, type InsertGwInstallation,
-  gwTokens, type GwToken, type InsertGwToken,
-  gwResources, type GwResource, type InsertGwResource,
-  gwWebhookDeliveries, type GwWebhookDelivery, type InsertGwWebhookDelivery,
-  // Org-scoped tables
-  orgWorkspaces, type OrgWorkspace, type InsertOrgWorkspace,
-  orgApiKeys, type OrgApiKey, type InsertOrgApiKey,
-  // Workspace-scoped tables
-  workspaceKnowledgeDocuments, type WorkspaceKnowledgeDocument, type InsertWorkspaceKnowledgeDocument,
-  workspaceKnowledgeVectorChunks, type WorkspaceKnowledgeVectorChunk, type InsertWorkspaceKnowledgeVectorChunk,
-  workspaceIntegrations, type WorkspaceIntegration, type InsertWorkspaceIntegration,
-  workspaceWorkflowRuns, type WorkspaceWorkflowRun, type InsertWorkspaceWorkflowRun,
-  workspaceOperationsMetrics, type WorkspaceOperationMetric, type InsertWorkspaceOperationMetric, type OperationMetricTags,
-  workspaceUserActivities, type WorkspaceUserActivity, type InsertWorkspaceUserActivity,
-  // Neural memory tables
-  workspaceNeuralObservations, type WorkspaceNeuralObservation, type InsertWorkspaceNeuralObservation,
-  workspaceObservationClusters, type WorkspaceObservationCluster, type InsertWorkspaceObservationCluster,
-  workspaceNeuralEntities, type WorkspaceNeuralEntity, type InsertWorkspaceNeuralEntity,
-  workspaceActorProfiles, type WorkspaceActorProfile, type InsertWorkspaceActorProfile,
-  orgActorIdentities, type OrgActorIdentity, type InsertOrgActorIdentity,
-  workspaceTemporalStates, type WorkspaceTemporalState, type InsertWorkspaceTemporalState,
-  // Workspace event storage
-  workspaceEvents, type WorkspaceEvent, type InsertWorkspaceEvent,
-  // Relationship graph tables
-  workspaceObservationRelationships, type WorkspaceObservationRelationship, type InsertWorkspaceObservationRelationship, type RelationshipType,
-  // Relations
-  gwInstallationsRelations, gwTokensRelations, gwResourcesRelations,
-  orgWorkspacesRelations,
-  workspaceKnowledgeDocumentsRelations, workspaceKnowledgeVectorChunksRelations,
-  workspaceUserActivitiesRelations, workspaceIntegrationsRelations,
-  workspaceNeuralObservationsRelations, workspaceObservationClustersRelations,
-  workspaceActorProfilesRelations, workspaceTemporalStatesRelations,
-  orgActorIdentitiesRelations, workspaceObservationRelationshipsRelations,
-} from "./schema";
-
-// Re-exported types from schema
-export type {
-  WorkflowInput, WorkflowOutput, GitHubSourceMetadata,
-  JobDurationTags, DocumentsIndexedTags, ErrorTags, NeuralObservationTags, EntityExtractionTags, ClusterTags, ProfileUpdateTags, ActorResolutionTags, ClusterAffinityTags,
-  ObservationReference, ObservationActor, ObservationMetadata,
-  TemporalEntityType, TemporalStateType,
-  RelationshipMetadata,
-} from "./schema";
 
 // Client
 export { db } from "./client";
 
+// Re-exported types from schema
+export type {
+  ActorResolutionTags,
+  ClusterAffinityTags,
+  ClusterTags,
+  DocumentsIndexedTags,
+  EntityExtractionTags,
+  ErrorTags,
+  GitHubSourceMetadata,
+  JobDurationTags,
+  NeuralObservationTags,
+  ObservationActor,
+  ObservationMetadata,
+  ObservationReference,
+  ProfileUpdateTags,
+  RelationshipMetadata,
+  TemporalEntityType,
+  TemporalStateType,
+  WorkflowInput,
+  WorkflowOutput,
+} from "./schema";
+export {
+  type GwInstallation,
+  type GwResource,
+  type GwToken,
+  type GwWebhookDelivery,
+  // Gateway-owned tables
+  gwInstallations,
+  // Relations
+  gwInstallationsRelations,
+  gwResources,
+  gwResourcesRelations,
+  gwTokens,
+  gwTokensRelations,
+  gwWebhookDeliveries,
+  type InsertGwInstallation,
+  type InsertGwResource,
+  type InsertGwToken,
+  type InsertGwWebhookDelivery,
+  type InsertOrgActorIdentity,
+  type InsertOrgApiKey,
+  type InsertOrgWorkspace,
+  type InsertWorkspaceActorProfile,
+  type InsertWorkspaceEvent,
+  type InsertWorkspaceIntegration,
+  type InsertWorkspaceKnowledgeDocument,
+  type InsertWorkspaceKnowledgeVectorChunk,
+  type InsertWorkspaceNeuralEntity,
+  type InsertWorkspaceNeuralObservation,
+  type InsertWorkspaceObservationCluster,
+  type InsertWorkspaceObservationRelationship,
+  type InsertWorkspaceOperationMetric,
+  type InsertWorkspaceTemporalState,
+  type InsertWorkspaceUserActivity,
+  type InsertWorkspaceWorkflowRun,
+  type OperationMetricTags,
+  type OrgActorIdentity,
+  type OrgApiKey,
+  type OrgWorkspace,
+  orgActorIdentities,
+  orgActorIdentitiesRelations,
+  orgApiKeys,
+  // Org-scoped tables
+  orgWorkspaces,
+  orgWorkspacesRelations,
+  type RelationshipType,
+  type WorkspaceActorProfile,
+  type WorkspaceEvent,
+  type WorkspaceIntegration,
+  type WorkspaceKnowledgeDocument,
+  type WorkspaceKnowledgeVectorChunk,
+  type WorkspaceNeuralEntity,
+  type WorkspaceNeuralObservation,
+  type WorkspaceObservationCluster,
+  type WorkspaceObservationRelationship,
+  type WorkspaceOperationMetric,
+  type WorkspaceTemporalState,
+  type WorkspaceUserActivity,
+  type WorkspaceWorkflowRun,
+  workspaceActorProfiles,
+  workspaceActorProfilesRelations,
+  // Workspace event storage
+  workspaceEvents,
+  workspaceIntegrations,
+  workspaceIntegrationsRelations,
+  // Workspace-scoped tables
+  workspaceKnowledgeDocuments,
+  workspaceKnowledgeDocumentsRelations,
+  workspaceKnowledgeVectorChunks,
+  workspaceKnowledgeVectorChunksRelations,
+  workspaceNeuralEntities,
+  // Neural memory tables
+  workspaceNeuralObservations,
+  workspaceNeuralObservationsRelations,
+  workspaceObservationClusters,
+  workspaceObservationClustersRelations,
+  // Relationship graph tables
+  workspaceObservationRelationships,
+  workspaceObservationRelationshipsRelations,
+  workspaceOperationsMetrics,
+  workspaceTemporalStates,
+  workspaceTemporalStatesRelations,
+  workspaceUserActivities,
+  workspaceUserActivitiesRelations,
+  workspaceWorkflowRuns,
+} from "./schema";
+
 // Utilities
-export { getWorkspaceKey, buildWorkspaceNamespace, buildWorkspaceSettings, createCustomWorkspace } from "./utils/workspace";
-export { generateWorkspaceName, generateRandomSlug, validateWorkspaceSlug, generateStoreSlug, validateStoreSlug } from "./utils/workspace-names";
+export {
+  buildWorkspaceNamespace,
+  buildWorkspaceSettings,
+  createCustomWorkspace,
+  getWorkspaceKey,
+} from "./utils/workspace";
+export {
+  generateRandomSlug,
+  generateStoreSlug,
+  generateWorkspaceName,
+  validateStoreSlug,
+  validateWorkspaceSlug,
+} from "./utils/workspace-names";

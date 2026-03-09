@@ -1,28 +1,29 @@
-import { convertToModelMessages } from "ai";
 import type {
-	ModelMessage,
-	ToolSet,
-	UIMessage,
-	UIMessageStreamWriter,
-	LanguageModel,
-	ToolChoice,
-	StopCondition,
-	PrepareStepFunction,
-	StreamTextTransform,
-	StreamTextOnChunkCallback,
-	StreamTextOnFinishCallback,
-	StreamTextOnStepFinishCallback,
- streamText } from "ai";
+  LanguageModel,
+  ModelMessage,
+  PrepareStepFunction,
+  StopCondition,
+  StreamTextOnChunkCallback,
+  StreamTextOnFinishCallback,
+  StreamTextOnStepFinishCallback,
+  StreamTextTransform,
+  streamText,
+  ToolChoice,
+  ToolSet,
+  UIMessage,
+  UIMessageStreamWriter,
+} from "ai";
+import { convertToModelMessages } from "ai";
 import type { Memory } from "../memory";
+import type { RuntimeContext, SystemContext } from "../server/adapters/types";
 import {
-	AgentConfigurationError,
-	CacheOperationError,
-	ContextCreationError,
-	MessageConversionError,
-	NoMessagesError,
-	ToolExecutionError,
+  AgentConfigurationError,
+  CacheOperationError,
+  ContextCreationError,
+  MessageConversionError,
+  NoMessagesError,
+  ToolExecutionError,
 } from "../server/errors";
-import type { SystemContext, RuntimeContext } from "../server/adapters/types";
 import type { ProviderCache } from "./cache";
 import type { ToolFactorySet } from "./tool";
 
@@ -32,277 +33,287 @@ type StreamTextParams = Parameters<typeof streamText>[0];
 // Vercel AI SDK configuration - derived from actual streamText parameters
 // We omit the fields that Lightfast handles (messages, tools, system) and re-type with proper generics
 export type VercelAIConfig<TOOLS extends ToolSet = ToolSet> = Omit<
-	StreamTextParams,
-	| "messages"
-	| "tools"
-	| "system"
-	| "prompt"
-	| "toolChoice"
-	| "stopWhen"
-	| "onChunk"
-	| "onFinish"
-	| "onStepFinish"
-	| "prepareStep"
-	| "experimental_transform"
+  StreamTextParams,
+  | "messages"
+  | "tools"
+  | "system"
+  | "prompt"
+  | "toolChoice"
+  | "stopWhen"
+  | "onChunk"
+  | "onFinish"
+  | "onStepFinish"
+  | "prepareStep"
+  | "experimental_transform"
 > & {
-	// Re-type the generic-dependent fields with our TOOLS type
-	toolChoice?: ToolChoice<TOOLS>;
-	stopWhen?: StopCondition<TOOLS> | StopCondition<TOOLS>[];
-	onChunk?: StreamTextOnChunkCallback<TOOLS>;
-	onFinish?: StreamTextOnFinishCallback<TOOLS>;
-	onStepFinish?: StreamTextOnStepFinishCallback<TOOLS>;
-	prepareStep?: PrepareStepFunction<TOOLS>;
-	experimental_transform?:
-		| StreamTextTransform<TOOLS>
-		| StreamTextTransform<TOOLS>[];
+  // Re-type the generic-dependent fields with our TOOLS type
+  toolChoice?: ToolChoice<TOOLS>;
+  stopWhen?: StopCondition<TOOLS> | StopCondition<TOOLS>[];
+  onChunk?: StreamTextOnChunkCallback<TOOLS>;
+  onFinish?: StreamTextOnFinishCallback<TOOLS>;
+  onStepFinish?: StreamTextOnStepFinishCallback<TOOLS>;
+  prepareStep?: PrepareStepFunction<TOOLS>;
+  experimental_transform?:
+    | StreamTextTransform<TOOLS>
+    | StreamTextTransform<TOOLS>[];
 };
 
 // Lightfast-specific configuration
 export interface LightfastConfig<
-	TRuntimeContext = {},
-	TTools extends
-		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
+  TRuntimeContext = {},
+  TTools extends ToolFactorySet<
+    RuntimeContext<TRuntimeContext>
+  > = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 > {
-	// Required Lightfast fields
-	name: string;
-	system: string;
-	tools?: TTools | ((context: TRuntimeContext) => TTools);  // Optional - user might not have tools
-	createRuntimeContext?: (params: {  // Optional - user might not need runtime context
-		sessionId: string;
-		resourceId: string;
-	}) => TRuntimeContext;
-
-	// Optional Lightfast features
-	cache?: ProviderCache;
+  // Optional Lightfast features
+  cache?: ProviderCache;
+  createRuntimeContext?: (params: {
+    // Optional - user might not need runtime context
+    sessionId: string;
+    resourceId: string;
+  }) => TRuntimeContext;
+  // Required Lightfast fields
+  name: string;
+  system: string;
+  tools?: TTools | ((context: TRuntimeContext) => TTools); // Optional - user might not have tools
 }
 
 export interface StreamOptions<
-	TMessage extends UIMessage = UIMessage,
-	TRequestContext = {},
-	TMemoryContext = {},
+  TMessage extends UIMessage = UIMessage,
+  TRequestContext = {},
+  TMemoryContext = {},
 > {
-	sessionId: string;
-	messages: TMessage[];
-	memory: Memory<TMessage, TMemoryContext>;
-	resourceId: string;
-	systemContext: SystemContext;
-	requestContext: TRequestContext;
-	dataStream?: UIMessageStreamWriter<TMessage>; // UIMessageStreamWriter for artifact support with proper generic
+  dataStream?: UIMessageStreamWriter<TMessage>; // UIMessageStreamWriter for artifact support with proper generic
+  memory: Memory<TMessage, TMemoryContext>;
+  messages: TMessage[];
+  requestContext: TRequestContext;
+  resourceId: string;
+  sessionId: string;
+  systemContext: SystemContext;
 }
 
 // Combined options for creating an agent
 export interface AgentOptions<
-	TRuntimeContext = {},
-	TTools extends
-		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
+  TRuntimeContext = {},
+  TTools extends ToolFactorySet<
+    RuntimeContext<TRuntimeContext>
+  > = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 > extends LightfastConfig<TRuntimeContext, TTools>,
-		VercelAIConfig<ToolSet> {
-	// All fields are inherited from the two interfaces
-	// Note: VercelAIConfig uses ToolSet since factories are resolved to tools at runtime
+    VercelAIConfig<ToolSet> {
+  // All fields are inherited from the two interfaces
+  // Note: VercelAIConfig uses ToolSet since factories are resolved to tools at runtime
 }
 
 export class Agent<
-	TRuntimeContext = {},
-	TTools extends
-		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
+  TRuntimeContext = {},
+  TTools extends ToolFactorySet<
+    RuntimeContext<TRuntimeContext>
+  > = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 > {
-	// Clean separation: Vercel AI SDK config vs Lightfast config
-	private readonly vercelConfig: VercelAIConfig<ToolSet>;
-	private readonly lightfastConfig: LightfastConfig<TRuntimeContext, TTools>;
+  // Clean separation: Vercel AI SDK config vs Lightfast config
+  private readonly vercelConfig: VercelAIConfig<ToolSet>;
+  private readonly lightfastConfig: LightfastConfig<TRuntimeContext, TTools>;
 
-	constructor(options: AgentOptions<TRuntimeContext, TTools>) {
-		// Destructure into Lightfast and Vercel configs
-		const {
-			// Lightfast-specific fields
-			name,
-			system,
-			tools,
-			createRuntimeContext,
-			cache,
-			// Everything else is Vercel AI SDK config
-			...vercelConfig
-		} = options;
+  constructor(options: AgentOptions<TRuntimeContext, TTools>) {
+    // Destructure into Lightfast and Vercel configs
+    const {
+      // Lightfast-specific fields
+      name,
+      system,
+      tools,
+      createRuntimeContext,
+      cache,
+      // Everything else is Vercel AI SDK config
+      ...vercelConfig
+    } = options;
 
-		// Store Lightfast configuration
-		this.lightfastConfig = {
-			name,
-			system,
-			tools,
-			createRuntimeContext,
-			cache,
-		};
+    // Store Lightfast configuration
+    this.lightfastConfig = {
+      name,
+      system,
+      tools,
+      createRuntimeContext,
+      cache,
+    };
 
-		// Store Vercel AI SDK configuration
-		this.vercelConfig = vercelConfig as VercelAIConfig<ToolSet>;
-	}
+    // Store Vercel AI SDK configuration
+    this.vercelConfig = vercelConfig as VercelAIConfig<ToolSet>;
+  }
 
-	// Public getter for agent name
-	get name(): string {
-		return this.lightfastConfig.name;
-	}
+  // Public getter for agent name
+  get name(): string {
+    return this.lightfastConfig.name;
+  }
 
-	// Public getter for the model (commonly needed)
-	get model(): LanguageModel {
-		return this.vercelConfig.model;
-	}
+  // Public getter for the model (commonly needed)
+  get model(): LanguageModel {
+    return this.vercelConfig.model;
+  }
 
-	/**
-	 * Builds parameters for streamText for the given messages and context
-	 * Returns an object that can be directly passed to streamText
-	 * Does not actually call streamText - that's handled by runtime.ts
-	 */
-	buildStreamParams<
-		TMessage extends UIMessage = UIMessage,
-		TRequestContext = {},
-		TMemoryContext = {},
-	>({
-		sessionId,
-		messages,
-		memory: _memory,
-		resourceId,
-		systemContext,
-		requestContext,
-		dataStream,
-	}: StreamOptions<TMessage, TRequestContext, TMemoryContext>): Parameters<
-		typeof streamText
-	>[0] {
-		// IMPORTANT: Do NOT refactor to `messages?.length === 0` — optional chaining returns
-		// undefined for null/undefined, which !== 0, silently bypassing this guard.
-		if (!messages || messages.length === 0) {
-			throw new NoMessagesError();
-		}
+  /**
+   * Builds parameters for streamText for the given messages and context
+   * Returns an object that can be directly passed to streamText
+   * Does not actually call streamText - that's handled by runtime.ts
+   */
+  buildStreamParams<
+    TMessage extends UIMessage = UIMessage,
+    TRequestContext = {},
+    TMemoryContext = {},
+  >({
+    sessionId,
+    messages,
+    memory: _memory,
+    resourceId,
+    systemContext,
+    requestContext,
+    dataStream,
+  }: StreamOptions<TMessage, TRequestContext, TMemoryContext>): Parameters<
+    typeof streamText
+  >[0] {
+    // IMPORTANT: Do NOT refactor to `messages?.length === 0` — optional chaining returns
+    // undefined for null/undefined, which !== 0, silently bypassing this guard.
+    if (!messages || messages.length === 0) {
+      throw new NoMessagesError();
+    }
 
-		// Create agent-specific runtime context if provided
-		let agentContext: TRuntimeContext | {} = {};
-		if (this.lightfastConfig.createRuntimeContext) {
-			try {
-				agentContext = this.lightfastConfig.createRuntimeContext({
-					sessionId,
-					resourceId,
-				});
-			} catch (error) {
-				throw new ContextCreationError(
-					"runtime",
-					error instanceof Error ? error.message : String(error),
-					error instanceof Error ? error : undefined,
-				);
-			}
-		}
+    // Create agent-specific runtime context if provided
+    let agentContext: TRuntimeContext | {} = {};
+    if (this.lightfastConfig.createRuntimeContext) {
+      try {
+        agentContext = this.lightfastConfig.createRuntimeContext({
+          sessionId,
+          resourceId,
+        });
+      } catch (error) {
+        throw new ContextCreationError(
+          "runtime",
+          error instanceof Error ? error.message : String(error),
+          error instanceof Error ? error : undefined
+        );
+      }
+    }
 
-		// Merge all context levels: system -> request -> agent -> dataStream
-		// The merged context is what tools actually receive
-		const mergedContext: SystemContext & TRequestContext & TRuntimeContext & { dataStream?: UIMessageStreamWriter<TMessage> } = {
-			...systemContext,
-			...requestContext,
-			...agentContext,
-			...(dataStream && { dataStream }), // Add dataStream if provided
-		} as SystemContext & TRequestContext & TRuntimeContext & { dataStream?: UIMessageStreamWriter<TMessage> };
+    // Merge all context levels: system -> request -> agent -> dataStream
+    // The merged context is what tools actually receive
+    const mergedContext: SystemContext &
+      TRequestContext &
+      TRuntimeContext & { dataStream?: UIMessageStreamWriter<TMessage> } = {
+      ...systemContext,
+      ...requestContext,
+      ...agentContext,
+      ...(dataStream && { dataStream }), // Add dataStream if provided
+    } as SystemContext &
+      TRequestContext &
+      TRuntimeContext & { dataStream?: UIMessageStreamWriter<TMessage> };
 
-		// Resolve tool factories into actual tools by injecting merged context
-		const resolvedTools: ToolSet = {};
-		if (this.lightfastConfig.tools) {
-			const tools =
-				typeof this.lightfastConfig.tools === "function"
-					? this.lightfastConfig.tools(mergedContext as TRuntimeContext)
-					: this.lightfastConfig.tools;
+    // Resolve tool factories into actual tools by injecting merged context
+    const resolvedTools: ToolSet = {};
+    if (this.lightfastConfig.tools) {
+      const tools =
+        typeof this.lightfastConfig.tools === "function"
+          ? this.lightfastConfig.tools(mergedContext as TRuntimeContext)
+          : this.lightfastConfig.tools;
 
-			// Validate tools is a valid object
-			if (!tools || typeof tools !== "object") {
-				throw new ToolExecutionError(
-					"tools",
-					"Tools resolution returned null, undefined, or non-object value",
-				);
-			}
+      // Validate tools is a valid object
+      if (!tools || typeof tools !== "object") {
+        throw new ToolExecutionError(
+          "tools",
+          "Tools resolution returned null, undefined, or non-object value"
+        );
+      }
 
-			for (const [name, factory] of Object.entries(tools)) {
-				try {
-					resolvedTools[name] = factory(mergedContext as unknown as RuntimeContext<TRuntimeContext>);
-				} catch (error) {
-					throw new ToolExecutionError(
-						name,
-						`Failed to resolve tool factory '${name}': ${error instanceof Error ? error.message : String(error)}`,
-						error instanceof Error ? error : undefined,
-					);
-				}
-			}
-		}
+      for (const [name, factory] of Object.entries(tools)) {
+        try {
+          resolvedTools[name] = factory(
+            mergedContext as unknown as RuntimeContext<TRuntimeContext>
+          );
+        } catch (error) {
+          throw new ToolExecutionError(
+            name,
+            `Failed to resolve tool factory '${name}': ${error instanceof Error ? error.message : String(error)}`,
+            error instanceof Error ? error : undefined
+          );
+        }
+      }
+    }
 
-		// Ensure model is set
-		if (!this.vercelConfig.model) {
-			throw new AgentConfigurationError("model", "Model must be configured");
-		}
+    // Ensure model is set
+    if (!this.vercelConfig.model) {
+      throw new AgentConfigurationError("model", "Model must be configured");
+    }
 
-		// Convert system config to messages with cache control
-		let systemMessages: ModelMessage[] = [];
-		let modelMessages: ModelMessage[];
+    // Convert system config to messages with cache control
+    let systemMessages: ModelMessage[] = [];
+    let modelMessages: ModelMessage[];
 
-		if (this.lightfastConfig.cache) {
-			try {
-				// Use provider cache implementation
-				systemMessages = this.lightfastConfig.cache.applySystemCaching(
-					this.lightfastConfig.system,
-				);
+    if (this.lightfastConfig.cache) {
+      try {
+        // Use provider cache implementation
+        systemMessages = this.lightfastConfig.cache.applySystemCaching(
+          this.lightfastConfig.system
+        );
 
-				// Convert messages to model messages
-				const baseModelMessages = convertToModelMessages(messages, {
-					tools: resolvedTools,
-				});
+        // Convert messages to model messages
+        const baseModelMessages = convertToModelMessages(messages, {
+          tools: resolvedTools,
+        });
 
-				// Apply message caching
-				modelMessages = this.lightfastConfig.cache.applyMessageCaching(
-					baseModelMessages,
-					messages,
-				);
-			} catch (error) {
-				throw new CacheOperationError(
-					"system and message caching",
-					error instanceof Error ? error.message : String(error),
-					error instanceof Error ? error : undefined,
-				);
-			}
-		} else {
-			try {
-				// No cache provider - use simple system message
-				systemMessages.push({
-					role: "system",
-					content: this.lightfastConfig.system,
-				});
+        // Apply message caching
+        modelMessages = this.lightfastConfig.cache.applyMessageCaching(
+          baseModelMessages,
+          messages
+        );
+      } catch (error) {
+        throw new CacheOperationError(
+          "system and message caching",
+          error instanceof Error ? error.message : String(error),
+          error instanceof Error ? error : undefined
+        );
+      }
+    } else {
+      try {
+        // No cache provider - use simple system message
+        systemMessages.push({
+          role: "system",
+          content: this.lightfastConfig.system,
+        });
 
-				// Convert messages without caching
-				modelMessages = convertToModelMessages(messages, {
-					tools: resolvedTools,
-				});
-			} catch (error) {
-				throw new MessageConversionError(
-					"convert to model messages",
-					error instanceof Error ? error.message : String(error),
-					error instanceof Error ? error : undefined,
-				);
-			}
-		}
+        // Convert messages without caching
+        modelMessages = convertToModelMessages(messages, {
+          tools: resolvedTools,
+        });
+      } catch (error) {
+        throw new MessageConversionError(
+          "convert to model messages",
+          error instanceof Error ? error.message : String(error),
+          error instanceof Error ? error : undefined
+        );
+      }
+    }
 
-		// Prepend system messages to the model messages
-		// This way we maintain proper typing
-		const allModelMessages = [...systemMessages, ...modelMessages];
+    // Prepend system messages to the model messages
+    // This way we maintain proper typing
+    const allModelMessages = [...systemMessages, ...modelMessages];
 
-		// Return the parameters for streamText
-		// The actual streaming is handled by runtime.ts
-		return {
-			// Spread all Vercel AI SDK config
-			...this.vercelConfig,
-			// Override with our specific runtime values
-			messages: allModelMessages,
-			tools: resolvedTools,
-		} as Parameters<typeof streamText>[0];
-	}
+    // Return the parameters for streamText
+    // The actual streaming is handled by runtime.ts
+    return {
+      // Spread all Vercel AI SDK config
+      ...this.vercelConfig,
+      // Override with our specific runtime values
+      messages: allModelMessages,
+      tools: resolvedTools,
+    } as Parameters<typeof streamText>[0];
+  }
 
-	// Expose config for testing or inspection
-	get config(): LightfastConfig<TRuntimeContext, TTools> & VercelAIConfig<ToolSet> {
-		return {
-			...this.lightfastConfig,
-			...this.vercelConfig,
-		};
-	}
+  // Expose config for testing or inspection
+  get config(): LightfastConfig<TRuntimeContext, TTools> &
+    VercelAIConfig<ToolSet> {
+    return {
+      ...this.lightfastConfig,
+      ...this.vercelConfig,
+    };
+  }
 }
 
 /**
@@ -310,11 +321,12 @@ export class Agent<
  * All tools must be created using createTool() which returns ToolFactory functions
  */
 export function createAgent<
-	TRuntimeContext = {},
-	TTools extends
-		ToolFactorySet<RuntimeContext<TRuntimeContext>> = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
+  TRuntimeContext = {},
+  TTools extends ToolFactorySet<
+    RuntimeContext<TRuntimeContext>
+  > = ToolFactorySet<RuntimeContext<TRuntimeContext>>,
 >(
-	options: AgentOptions<TRuntimeContext, TTools>,
+  options: AgentOptions<TRuntimeContext, TTools>
 ): Agent<TRuntimeContext, TTools> {
-	return new Agent(options);
+  return new Agent(options);
 }

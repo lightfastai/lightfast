@@ -1,9 +1,9 @@
 declare const __CLI_VERSION__: string;
 
 import { Command } from "commander";
+import { listenCommand } from "./commands/listen.js";
 import { loginCommand } from "./commands/login.js";
 import { logoutCommand } from "./commands/logout.js";
-import { listenCommand } from "./commands/listen.js";
 
 const program = new Command();
 program

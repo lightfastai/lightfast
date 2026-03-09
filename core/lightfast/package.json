@@ -53,22 +53,18 @@
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint . --fix"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "^3.25.76"
+    "@repo/console-validation": "workspace:*"
   },
   "devDependencies": {
-    "@repo/console-validation": "workspace:*",
-    "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.3.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "eslint": "catalog:",
-    "tsup": "^8.5.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "tsup": "^8.5.1",
     "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=18"

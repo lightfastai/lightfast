@@ -1,15 +1,4 @@
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { changelog  } from "@vendor/cms";
-import type {ChangelogEntryQueryResponse} from "@vendor/cms";
-import { Body } from "@vendor/cms/components/body";
-import { Feed, isDraft } from "@vendor/cms/components/feed";
 import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
-import { JsonLd } from "@vendor/seo/json-ld";
-import type { JsonLdData } from "@vendor/seo/json-ld";
 import {
   Accordion,
   AccordionContent,
@@ -17,6 +6,17 @@ import {
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
 import { Button } from "@repo/ui/components/ui/button";
+import type { ChangelogEntryQueryResponse } from "@vendor/cms";
+import { changelog } from "@vendor/cms";
+import { Body } from "@vendor/cms/components/body";
+import { Feed, isDraft } from "@vendor/cms/components/feed";
+import type { JsonLdData } from "@vendor/seo/json-ld";
+import { JsonLd } from "@vendor/seo/json-ld";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
 interface ChangelogPageProps {
   params: Promise<{ slug: string }>;
@@ -47,7 +47,9 @@ export async function generateMetadata({
     return {};
   }
 
-  if (!entry) return {};
+  if (!entry) {
+    return {};
+  }
 
   // Use SEO fields with fallbacks
   const title = entry.seo?.metaTitle ?? entry._title ?? "Changelog";
@@ -96,7 +98,9 @@ export async function generateMetadata({
 
 // Helper to parse bullet points from markdown text
 function parseBulletPoints(text: string | null | undefined): string[] {
-  if (!text) return [];
+  if (!text) {
+    return [];
+  }
   return text
     .split("\n")
     .map((line) => line.trim())
@@ -117,7 +121,9 @@ export default async function ChangelogEntryPage({
 
         const response = data as ChangelogEntryQueryResponse;
         const entry = response.changelog?.post?.item;
-        if (!entry) notFound();
+        if (!entry) {
+          notFound();
+        }
 
         // Fetch adjacent entries for navigation
         const adjacentEntries = await changelog
@@ -176,7 +182,7 @@ export default async function ChangelogEntryPage({
 
         // Generate FAQ schema if FAQ items exist
         const faqItems = entry.seo?.faq?.items?.filter(
-          (item) => item.question && item.answer,
+          (item) => item.question && item.answer
         );
         const faqSchema =
           faqItems && faqItems.length > 0
@@ -222,43 +228,43 @@ export default async function ChangelogEntryPage({
             <JsonLd code={structuredData as JsonLdData} />
 
             <article className="space-y-3">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 <Button
-                  variant="link"
-                  className="h-auto p-0 text-sm text-muted-foreground hover:text-foreground"
                   asChild
+                  className="h-auto p-0 text-muted-foreground text-sm hover:text-foreground"
+                  variant="link"
                 >
                   <Link href="/changelog">Changelog</Link>
                 </Button>
                 {entry.prefix ? <> / {entry.prefix}</> : null}
               </p>
 
-              <h2 className="text-2xl font-pp font-medium pb-4">
+              <h2 className="pb-4 font-medium font-pp text-2xl">
                 {entry._title}
               </h2>
 
               {entry.featuredImage?.url && (
-                <div className="relative w-full bg-card aspect-video rounded-lg overflow-hidden">
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-card">
                   <Image
-                    src={entry.featuredImage.url}
                     alt={entry.featuredImage.alt ?? entry._title ?? ""}
-                    width={entry.featuredImage.width ?? 900}
+                    className="h-full w-full object-cover"
                     height={entry.featuredImage.height ?? 506}
-                    className="w-full h-full object-cover"
                     priority
+                    src={entry.featuredImage.url}
+                    width={entry.featuredImage.width ?? 900}
                   />
                 </div>
               )}
 
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {/* @todo add author into basehub Changelog component */}
                 Jeevan Pillay · {dateStr}
               </p>
 
               {/* TL;DR Summary for AEO */}
               {entry.tldr && (
-                <div className="bg-card rounded-xs p-8 my-8">
-                  <h3 className="text-xs font-semibold text-muted-foreground font-mono uppercase tracking-widest mb-4">
+                <div className="my-8 rounded-xs bg-card p-8">
+                  <h3 className="mb-4 font-mono font-semibold text-muted-foreground text-xs uppercase tracking-widest">
                     TL;DR
                   </h3>
                   <p className="text-foreground/90 text-sm leading-relaxed">
@@ -268,14 +274,17 @@ export default async function ChangelogEntryPage({
               )}
 
               {entry.excerpt && (
-                <p className="pt-4 text-sm text-muted-foreground leading-relaxed">
+                <p className="pt-4 text-muted-foreground text-sm leading-relaxed">
                   {entry.excerpt}
                 </p>
               )}
 
               {entry.body?.json?.content ? (
                 <div className="">
-                  <Body content={entry.body.json.content} codeBlockComponent={SSRCodeBlock} />
+                  <Body
+                    codeBlockComponent={SSRCodeBlock}
+                    content={entry.body.json.content}
+                  />
                 </div>
               ) : null}
 
@@ -287,23 +296,23 @@ export default async function ChangelogEntryPage({
 
                     return (
                       <div
+                        className="overflow-hidden rounded-sm border"
                         key={section.key}
-                        className="border rounded-sm overflow-hidden"
                       >
-                        <Accordion type="multiple" className="w-full">
+                        <Accordion className="w-full" type="multiple">
                           <AccordionItem
-                            value={section.key}
                             className="border-none"
+                            value={section.key}
                           >
-                            <AccordionTrigger className="text-base font-semibold px-4 py-3">
+                            <AccordionTrigger className="px-4 py-3 font-semibold text-base">
                               {section.title} ({count})
                             </AccordionTrigger>
                             <AccordionContent className="px-4">
                               <ul className="space-y-2 text-foreground/80">
                                 {items.map((item, itemIdx) => (
                                   <li
+                                    className="text-sm leading-relaxed"
                                     key={`${item}-${itemIdx}`}
-                                    className="leading-relaxed text-sm"
                                   >
                                     • {item}
                                   </li>
@@ -319,7 +328,7 @@ export default async function ChangelogEntryPage({
               )}
 
               {entry.body?.readingTime ? (
-                <div className="text-xs text-muted-foreground">
+                <div className="text-muted-foreground text-xs">
                   {entry.body.readingTime} min read
                 </div>
               ) : null}
@@ -328,19 +337,19 @@ export default async function ChangelogEntryPage({
               {(adjacentEntries.previous ?? adjacentEntries.next) && (
                 <nav
                   aria-label="Changelog navigation"
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-8"
+                  className="grid grid-cols-1 gap-4 pt-8 md:grid-cols-2"
                 >
                   {adjacentEntries.previous ? (
                     <Link
-                      href={`/changelog/${adjacentEntries.previous.slug}`}
                       className="group"
+                      href={`/changelog/${adjacentEntries.previous.slug}`}
                     >
                       <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
-                        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1 text-muted-foreground text-sm">
                           <ChevronLeft className="h-4 w-4" />
                           Previous post
                         </span>
-                        <span className="block mt-1 font-medium text-sm text-foreground line-clamp-2">
+                        <span className="mt-1 line-clamp-2 block font-medium text-foreground text-sm">
                           {adjacentEntries.previous._title}
                         </span>
                       </div>
@@ -350,15 +359,15 @@ export default async function ChangelogEntryPage({
                   )}
                   {adjacentEntries.next ? (
                     <Link
-                      href={`/changelog/${adjacentEntries.next.slug}`}
                       className="group md:text-right"
+                      href={`/changelog/${adjacentEntries.next.slug}`}
                     >
                       <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
-                        <span className="flex items-center justify-end gap-1 text-sm text-muted-foreground md:justify-end">
+                        <span className="flex items-center justify-end gap-1 text-muted-foreground text-sm md:justify-end">
                           Next post
                           <ChevronRight className="h-4 w-4" />
                         </span>
-                        <span className="block mt-1 font-medium text-sm text-foreground line-clamp-2">
+                        <span className="mt-1 line-clamp-2 block font-medium text-foreground text-sm">
                           {adjacentEntries.next._title}
                         </span>
                       </div>

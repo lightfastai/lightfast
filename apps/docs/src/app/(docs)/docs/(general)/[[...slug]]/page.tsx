@@ -1,39 +1,39 @@
-import { getPage, getPages  } from "@/src/lib/source";
-import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
-import { DeveloperPlatformLanding } from "./_components/developer-platform-landing";
-import { DocsLayout } from "@/src/components/docs-layout";
-import { mdxComponents } from "@/mdx-components";
-import { createMetadata } from "@vendor/seo/metadata";
-import { JsonLd } from "@vendor/seo/json-ld";
 import type {
+  BreadcrumbList,
   GraphContext,
   Organization,
-  WebSite,
   TechArticle,
-  BreadcrumbList,
+  WebSite,
 } from "@vendor/seo/json-ld";
+import { JsonLd } from "@vendor/seo/json-ld";
+import { createMetadata } from "@vendor/seo/metadata";
+import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
+import { mdxComponents } from "@/mdx-components";
+import { DocsLayout } from "@/src/components/docs-layout";
+import { getPage, getPages } from "@/src/lib/source";
+import { DeveloperPlatformLanding } from "./_components/developer-platform-landing";
 
 /**
  * Extended frontmatter SEO fields.
  * These match the schema defined in source.config.ts
  */
 interface ExtendedFrontmatter {
-  // Required fields (enforced by docsSchema in source.config.ts)
-  title: string;
-  description: string;
-  keywords: string;
   author: string;
-  publishedAt: string;
-  updatedAt: string;
   // Optional overrides (have good auto-generated defaults)
   canonical?: string;
+  description: string;
+  keywords: string;
+  nofollow?: boolean;
+  noindex?: boolean;
+  ogDescription?: string;
   ogImage?: string;
   ogTitle?: string;
-  ogDescription?: string;
-  noindex?: boolean;
-  nofollow?: boolean;
   proficiencyLevel?: "Beginner" | "Intermediate" | "Advanced" | "Expert";
+  publishedAt: string;
+  // Required fields (enforced by docsSchema in source.config.ts)
+  title: string;
+  updatedAt: string;
 }
 
 export default async function Page({
@@ -133,7 +133,7 @@ export default async function Page({
     "@type": "TechArticle",
     "@id": `https://lightfast.ai/docs/${slug.join("/")}#article`,
     headline: title,
-    description: description,
+    description,
     url: `https://lightfast.ai/docs/${slug.join("/")}`,
     author: { "@type": "Person", name: frontmatter.author },
     publisher: {
@@ -165,9 +165,9 @@ export default async function Page({
         <article className="max-w-none">
           {/* Page Header */}
           {(title || description) && (
-            <div className="flex w-full flex-col items-center text-center mb-16 max-w-3xl mx-auto">
+            <div className="mx-auto mb-16 flex w-full max-w-3xl flex-col items-center text-center">
               {title ? (
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-light leading-[1.1] tracking-[-0.02em] text-balance font-[family-name:var(--font-exposure-plus)]">
+                <h1 className="text-balance font-[family-name:var(--font-exposure-plus)] font-light text-2xl leading-[1.1] tracking-[-0.02em] sm:text-3xl md:text-4xl">
                   {title}
                 </h1>
               ) : null}
@@ -292,15 +292,19 @@ export async function generateMetadata({
   const title = `${frontmatter.title} – Lightfast Docs`;
   const description = frontmatter.description;
 
-  const pageKeywords = frontmatter.keywords.split(",").map((k: string) => k.trim());
-  const canonical = frontmatter.canonical ?? `https://lightfast.ai/docs${pageUrl}`;
+  const pageKeywords = frontmatter.keywords
+    .split(",")
+    .map((k: string) => k.trim());
+  const canonical =
+    frontmatter.canonical ?? `https://lightfast.ai/docs${pageUrl}`;
   const noindex = frontmatter.noindex ?? false;
   const nofollow = frontmatter.nofollow ?? false;
 
   // Use ogTitle/ogDescription/ogImage overrides if provided, otherwise use defaults
   const ogTitle = frontmatter.ogTitle ?? title;
   const ogDescription = frontmatter.ogDescription ?? description;
-  const ogImage = frontmatter.ogImage ?? `https://lightfast.ai/docs${pageUrl}/og`;
+  const ogImage =
+    frontmatter.ogImage ?? `https://lightfast.ai/docs${pageUrl}/og`;
 
   // Enhance the metadata with comprehensive SEO properties
   return createMetadata({
@@ -325,7 +329,10 @@ export async function generateMetadata({
       "REST API",
       "security best practices",
     ],
-    authors: [{ name: frontmatter.author }, { name: "Lightfast", url: "https://lightfast.ai" }],
+    authors: [
+      { name: frontmatter.author },
+      { name: "Lightfast", url: "https://lightfast.ai" },
+    ],
     creator: "Lightfast",
     publisher: "Lightfast",
     robots: {

@@ -21,26 +21,19 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@knocklabs/node": "^1.20.0",
-    "@knocklabs/react": "^0.8.11",
+    "@knocklabs/node": "^1.29.1",
+    "@knocklabs/react": "^0.11.7",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
-    "zod": "catalog:zod4"
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "@types/react": "^19.2.14",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
+    "@types/react": "catalog:",
     "typescript": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

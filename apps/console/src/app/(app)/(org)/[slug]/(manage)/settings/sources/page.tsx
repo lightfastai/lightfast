@@ -1,5 +1,5 @@
+import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
 import { Suspense } from "react";
-import { prefetch, HydrateClient, orgTrpc } from "@repo/console-trpc/server";
 import { SourcesHeader } from "./_components/sources-header";
 import { SourcesList } from "./_components/sources-list";
 import { SourcesListLoading } from "./_components/sources-list-loading";
@@ -25,21 +25,21 @@ import { SourcesListLoading } from "./_components/sources-list-loading";
  * 4. Suspense shows loading state during hydration
  */
 export default function SourcesSettingsPage() {
-	// Prefetch org-level connections
-	// CRITICAL: This must happen BEFORE HydrateClient wrapping
-	prefetch(orgTrpc.connections.list.queryOptions());
+  // Prefetch org-level connections
+  // CRITICAL: This must happen BEFORE HydrateClient wrapping
+  prefetch(orgTrpc.connections.list.queryOptions());
 
-	return (
-		<div className="space-y-6">
-			{/* Static Header (Server Component) */}
-			<SourcesHeader />
+  return (
+    <div className="space-y-6">
+      {/* Static Header (Server Component) */}
+      <SourcesHeader />
 
-			{/* Client Island with Suspense boundary */}
-			<HydrateClient>
-				<Suspense fallback={<SourcesListLoading />}>
-					<SourcesList />
-				</Suspense>
-			</HydrateClient>
-		</div>
-	);
+      {/* Client Island with Suspense boundary */}
+      <HydrateClient>
+        <Suspense fallback={<SourcesListLoading />}>
+          <SourcesList />
+        </Suspense>
+      </HydrateClient>
+    </div>
+  );
 }

@@ -2,14 +2,15 @@ import type { Metadata, Viewport } from "next";
 
 import "~/styles/globals.css";
 
-import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@repo/ui/components/ui/sonner";
-import { cn } from "@repo/ui/lib/utils";
 import { fonts as geistFonts } from "@repo/ui/lib/fonts";
+import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
+import { ClerkProvider } from "@vendor/clerk/client";
 import { createMetadata } from "@vendor/seo/metadata";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { env } from "~/env";
-import { exposurePlus, ppNeueMontreal, ppSupplySans } from "~/lib/fonts";
+import { ppNeueMontreal } from "~/lib/fonts";
 import { consoleUrl } from "~/lib/related-projects";
 
 export const metadata: Metadata = createMetadata({
@@ -67,35 +68,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
-      waitlistUrl="/early-access"
-      signInFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
-      signUpFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
-      taskUrls={{
-        "choose-organization": `${consoleUrl}/account/teams/new`,
-      }}
+    <html
+      className={cn(geistFonts, ppNeueMontreal.variable)}
+      lang="en"
+      suppressHydrationWarning
     >
-      <html
-        lang="en"
-        suppressHydrationWarning
-        className={cn(
-          geistFonts,
-          ppNeueMontreal.variable,
-          exposurePlus.variable,
-          ppSupplySans.variable,
-        )}
+      <head />
+      <body
+        className={cn("dark min-h-screen bg-background font-sans antialiased")}
       >
-        <head />
-        <body className={cn("bg-background dark font-sans min-h-screen antialiased")}>
-          {children}
+        <ClerkProvider
+          publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+          signInFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
+          signInUrl="/sign-in"
+          signUpFallbackRedirectUrl={`${consoleUrl}/account/teams/new`}
+          signUpUrl="/sign-up"
+          taskUrls={{
+            "choose-organization": `${consoleUrl}/account/teams/new`,
+          }}
+          waitlistUrl="/early-access"
+        >
+          <NuqsAdapter>{children}</NuqsAdapter>
           <Toaster position="bottom-right" />
           <VercelAnalytics />
           <SpeedInsights />
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

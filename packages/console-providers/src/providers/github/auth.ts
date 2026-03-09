@@ -44,8 +44,16 @@ export type GitHubConfig = z.infer<typeof githubConfigSchema>;
 // ── OAuth Response Schema ──
 
 export const githubOAuthResponseSchema = z.union([
-  z.object({ access_token: z.string(), token_type: z.string(), scope: z.string() }),
-  z.object({ error: z.string(), error_description: z.string(), error_uri: z.string() }),
+  z.object({
+    access_token: z.string(),
+    token_type: z.string(),
+    scope: z.string(),
+  }),
+  z.object({
+    error: z.string(),
+    error_description: z.string(),
+    error_uri: z.string(),
+  }),
 ]);
 
 // ── Provider Config Schema ──

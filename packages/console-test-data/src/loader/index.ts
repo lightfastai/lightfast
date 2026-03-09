@@ -5,21 +5,21 @@
  * using production transformers.
  */
 
-import { readFileSync, existsSync, readdirSync } from "node:fs";
-import { resolve, join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import type { PostTransformEvent } from "@repo/console-providers";
 import type { WebhookPayload } from "./transform.js";
 import { transformWebhook } from "./transform.js";
 
 export interface Dataset {
-  name: string;
   description?: string;
   events: PostTransformEvent[];
+  name: string;
 }
 
 interface RawDataset {
-  name: string;
   description?: string;
+  name: string;
   webhooks: WebhookPayload[];
 }
 
@@ -44,9 +44,11 @@ export const loadDataset = (nameOrPath: string): Dataset => {
 
   const raw = JSON.parse(readFileSync(filePath, "utf-8")) as RawDataset;
 
-  if (!raw.name) throw new Error(`Dataset missing: name`);
+  if (!raw.name) {
+    throw new Error("Dataset missing: name");
+  }
   if (!Array.isArray(raw.webhooks) || raw.webhooks.length === 0) {
-    throw new Error(`Dataset must have at least one webhook`);
+    throw new Error("Dataset must have at least one webhook");
   }
 
   // Transform webhooks to PostTransformEvents using production transformers
@@ -66,7 +68,9 @@ export const loadDataset = (nameOrPath: string): Dataset => {
  */
 export const listDatasets = (): string[] => {
   const datasetsDir = getDatasetsDir();
-  if (!existsSync(datasetsDir)) return [];
+  if (!existsSync(datasetsDir)) {
+    return [];
+  }
 
   return readdirSync(datasetsDir)
     .filter((f) => f.endsWith(".json") && !f.includes("schema"))
@@ -104,7 +108,9 @@ export const stressScenario = (count: number): PostTransformEvent[] => {
 
   while (events.length < count) {
     for (const event of base) {
-      if (events.length >= count) break;
+      if (events.length >= count) {
+        break;
+      }
       events.push({
         ...event,
         sourceId: `${event.sourceId}:stress:${stressIndex++}`,

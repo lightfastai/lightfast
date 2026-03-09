@@ -13,33 +13,33 @@
  * Infrastructure: PGlite (real DB for API key/workspace lookups), in-memory Redis,
  *   service mesh router (gatewayApp intercepts tRPC → connections fetches).
  */
+
+import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import {
-  describe,
-  it,
-  expect,
-  vi,
+  afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
-  afterAll,
+  describe,
+  expect,
+  it,
+  vi,
 } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
-import type { TestDb } from "@repo/console-test-db";
 
 // ── Shared state ──
 let db: TestDb;
 
 // ── Octokit mock functions (hoisted so vi.mock factory can reference them) ──
-const { mockCreateGitHubApp, mockGetAppInstallation, mockGetInstallationRepositories } =
-  vi.hoisted(() => ({
-    mockCreateGitHubApp: vi.fn().mockReturnValue({}),
-    mockGetAppInstallation: vi.fn(),
-    mockGetInstallationRepositories: vi.fn(),
-  }));
+const {
+  mockCreateGitHubApp,
+  mockGetAppInstallation,
+  mockGetInstallationRepositories,
+} = vi.hoisted(() => ({
+  mockCreateGitHubApp: vi.fn().mockReturnValue({}),
+  mockGetAppInstallation: vi.fn(),
+  mockGetInstallationRepositories: vi.fn(),
+}));
 
 // ── Create mock state in vi.hoisted ──
 const { redisMock, redisStore, mockGetProvider, mockProvider } =
@@ -50,9 +50,7 @@ const { redisMock, redisStore, mockGetProvider, mockProvider } =
       name: "github" as const,
       getAuthorizationUrl: vi
         .fn()
-        .mockReturnValue(
-          "https://github.com/login/oauth/authorize?mock=1",
-        ),
+        .mockReturnValue("https://github.com/login/oauth/authorize?mock=1"),
       handleCallback: vi.fn().mockResolvedValue({
         installationId: "inst-1",
         provider: "github",
@@ -110,7 +108,9 @@ vi.mock("@vercel/related-projects", () => ({
     defaultHost: string;
   }) => {
     // Gateway service URL needs /services prefix for service mesh to route correctly
-    if (defaultHost.includes("4110")) return `${defaultHost}/services`;
+    if (defaultHost.includes("4110")) {
+      return `${defaultHost}/services`;
+    }
     return defaultHost;
   },
 }));
@@ -142,14 +142,18 @@ vi.mock("@gateway/providers", () => ({
   getProvider: (...args: unknown[]): unknown => mockGetProvider(...args),
 }));
 
-// ── Imports after mocks ──
-import { createTRPCRouter, createCallerFactory } from "@console/trpc";
-import type { createUserTRPCContext } from "@console/trpc";
 import { connectionsRouter } from "@console/router/org/connections";
+import type { createUserTRPCContext } from "@console/trpc";
+// ── Imports after mocks ──
+import { createCallerFactory, createTRPCRouter } from "@console/trpc";
+import { gwInstallations, orgWorkspaces } from "@db/console/schema";
 import gatewayApp from "@gateway/app";
-import { makeApiKeyFixture, installServiceRouter, TEST_WORKSPACE_SETTINGS } from "./harness.js";
-import { orgWorkspaces, gwInstallations } from "@db/console/schema";
 import type { GitHubAccountInfo } from "@repo/console-providers";
+import {
+  installServiceRouter,
+  makeApiKeyFixture,
+  TEST_WORKSPACE_SETTINGS,
+} from "./harness.js";
 
 // Use crypto.randomUUID() for unique IDs — avoids importing @repo/lib
 function uid() {
@@ -190,7 +194,11 @@ type AuthContext =
 function makeCaller(auth: AuthContext, headers?: Headers) {
   // Cast to TRPCCtx: PgliteDatabase is interface-compatible with NeonHttpDatabase at runtime.
   // The discriminated union auth type requires double-cast to avoid member exhaustiveness errors.
-  return createCaller({ auth, db, headers: headers ?? new Headers() } as unknown as TRPCCtx);
+  return createCaller({
+    auth,
+    db,
+    headers: headers ?? new Headers(),
+  } as unknown as TRPCCtx);
 }
 
 function apiKeyCaller(rawKey: string, workspaceId: string) {
@@ -199,7 +207,7 @@ function apiKeyCaller(rawKey: string, workspaceId: string) {
     new Headers({
       Authorization: `Bearer ${rawKey}`,
       "X-Workspace-ID": workspaceId,
-    }),
+    })
   );
 }
 
@@ -219,40 +227,45 @@ beforeEach(() => {
   // Re-wire Redis mock implementations
   redisMock.hset.mockImplementation(
     (key: string, fields: Record<string, unknown>) => {
-      const existing =
-        (redisStore.get(key) ?? {}) as Record<string, unknown>;
+      const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
       redisStore.set(key, { ...existing, ...fields });
       return Promise.resolve(1);
-    },
+    }
   );
   redisMock.hgetall.mockImplementation(<T>(key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as T),
+    Promise.resolve((redisStore.get(key) ?? null) as T)
   );
   redisMock.set.mockImplementation(
     (key: string, value: unknown, opts?: { nx?: boolean }) => {
-      if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
+      if (opts?.nx && redisStore.has(key)) {
+        return Promise.resolve(null);
+      }
       redisStore.set(key, value);
       return Promise.resolve("OK");
-    },
+    }
   );
   redisMock.del.mockImplementation((...keys: string[]) => {
     const allKeys = keys.flat();
     let count = 0;
     for (const k of allKeys) {
-      if (redisStore.delete(k)) count++;
+      if (redisStore.delete(k)) {
+        count++;
+      }
     }
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation(<T>(key: string) =>
-    Promise.resolve((redisStore.get(key) as T) ?? null),
+    Promise.resolve((redisStore.get(key) as T) ?? null)
   );
   redisMock.pipeline.mockImplementation(() => {
     const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing =
-            (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          const existing = (redisStore.get(key) ?? {}) as Record<
+            string,
+            unknown
+          >;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
@@ -269,7 +282,7 @@ beforeEach(() => {
   // Re-wire provider mock
   mockGetProvider.mockReturnValue(mockProvider);
   mockProvider.getAuthorizationUrl.mockReturnValue(
-    "https://github.com/login/oauth/authorize?mock=1",
+    "https://github.com/login/oauth/authorize?mock=1"
   );
   mockProvider.handleCallback.mockResolvedValue({
     installationId: "inst-1",
@@ -281,7 +294,7 @@ beforeEach(() => {
   mockCreateGitHubApp.mockReturnValue({});
   mockGetAppInstallation.mockResolvedValue({
     account: {
-      id: 67890,
+      id: 67_890,
       login: "test-org",
       type: "Organization",
       avatar_url: "https://avatars.githubusercontent.com/u/67890",
@@ -326,24 +339,24 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
     it("No Authorization header → throws UNAUTHORIZED", async () => {
       const caller = makeCaller({ type: "unauthenticated" });
       await expect(
-        caller.cliAuthorize({ provider: "github" }),
+        caller.cliAuthorize({ provider: "github" })
       ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     });
 
     it("Bearer token with no matching API key → throws UNAUTHORIZED", async () => {
       const caller = makeCaller(
         { type: "unauthenticated" },
-        new Headers({ Authorization: "Bearer sk-lf-testkey" }),
+        new Headers({ Authorization: "Bearer sk-lf-testkey" })
       );
       await expect(
-        caller.cliAuthorize({ provider: "github" }),
+        caller.cliAuthorize({ provider: "github" })
       ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     });
 
     it("Invalid API key (not in DB) → throws UNAUTHORIZED 'Invalid API key'", async () => {
       const caller = apiKeyCaller("sk-lf-notindb-invalid", "ws-nonexistent");
       await expect(
-        caller.cliAuthorize({ provider: "github" }),
+        caller.cliAuthorize({ provider: "github" })
       ).rejects.toMatchObject({
         code: "UNAUTHORIZED",
         message: "Invalid API key",
@@ -357,7 +370,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       });
       const caller = apiKeyCaller(rawKey, "ws-any");
       await expect(
-        caller.cliAuthorize({ provider: "github" }),
+        caller.cliAuthorize({ provider: "github" })
       ).rejects.toMatchObject({
         code: "UNAUTHORIZED",
         message: "API key expired",
@@ -456,7 +469,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       try {
         const caller = apiKeyCaller(rawKey, wsId);
         await expect(
-          caller.cliAuthorize({ provider: "github" }),
+          caller.cliAuthorize({ provider: "github" })
         ).rejects.toMatchObject({ code: "BAD_REQUEST" });
       } finally {
         restore();
@@ -490,9 +503,10 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
 
         // Verify X-Org-Id was set to clerkOrgId (state in Redis has orgId)
         const { oauthStateKey } = await import("@gateway/cache");
-        const stateData = redisStore.get(
-          oauthStateKey(r.state),
-        ) as Record<string, string>;
+        const stateData = redisStore.get(oauthStateKey(r.state)) as Record<
+          string,
+          string
+        >;
         expect(stateData.orgId).toBe(clerkOrgId);
         expect(stateData.connectedBy).toBe(userId);
         expect(stateData.redirectTo).toBe("inline");
@@ -503,11 +517,10 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
   });
 
   describe("8.3 — getAuthorizeUrl procedure", () => {
-
     it("clerk-pending auth → throws FORBIDDEN (orgScopedProcedure rejects)", async () => {
       const caller = makeCaller({ type: "clerk-pending", userId: "u1" });
       await expect(
-        caller.getAuthorizeUrl({ provider: "github" }),
+        caller.getAuthorizeUrl({ provider: "github" })
       ).rejects.toMatchObject({ code: "FORBIDDEN" });
     });
 
@@ -526,9 +539,10 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
 
         // Verify X-Org-Id was passed correctly
         const { oauthStateKey } = await import("@gateway/cache");
-        const stateData = redisStore.get(
-          oauthStateKey(r.state),
-        ) as Record<string, string>;
+        const stateData = redisStore.get(oauthStateKey(r.state)) as Record<
+          string,
+          string
+        >;
         expect(stateData.orgId).toBe(orgId);
       } finally {
         restore();
@@ -546,7 +560,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       try {
         const caller = clerkActiveCaller("user_clerk_err", orgId);
         await expect(
-          caller.getAuthorizeUrl({ provider: "github" }),
+          caller.getAuthorizeUrl({ provider: "github" })
         ).rejects.toMatchObject({ code: "BAD_REQUEST" });
       } finally {
         restore();
@@ -577,7 +591,12 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
 
       // github.list makes a live API call per installation — mock the response
       mockGetAppInstallation.mockResolvedValueOnce({
-        account: { id: 67890, login: "test-org", type: "Organization", avatar_url: "" },
+        account: {
+          id: 67_890,
+          login: "test-org",
+          type: "Organization",
+          avatar_url: "",
+        },
         permissions: {},
         events: [],
         created_at: "2026-01-01T00:00:00Z",
@@ -587,7 +606,9 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       const result = await caller.github.list();
 
       expect(result).not.toBeNull();
-      if (!result) throw new Error("Expected result to be non-null");
+      if (!result) {
+        throw new Error("Expected result to be non-null");
+      }
       expect(result.installations).toHaveLength(1);
       expect(result.installations[0]?.accountLogin).toBe("test-org");
       expect(result.installations[0]?.gwInstallationId).toBe(rowId);
@@ -617,13 +638,23 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       // github.list makes a live API call per installation — mock both responses
       mockGetAppInstallation
         .mockResolvedValueOnce({
-          account: { id: 11111, login: "org-a", type: "Organization", avatar_url: "" },
+          account: {
+            id: 11_111,
+            login: "org-a",
+            type: "Organization",
+            avatar_url: "",
+          },
           permissions: {},
           events: [],
           created_at: "2026-01-01T00:00:00Z",
         })
         .mockResolvedValueOnce({
-          account: { id: 22222, login: "org-b", type: "Organization", avatar_url: "" },
+          account: {
+            id: 22_222,
+            login: "org-b",
+            type: "Organization",
+            avatar_url: "",
+          },
           permissions: {},
           events: [],
           created_at: "2026-01-01T00:00:00Z",
@@ -633,7 +664,9 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       const result = await caller.github.list();
 
       expect(result).not.toBeNull();
-      if (!result) throw new Error("Expected result to be non-null");
+      if (!result) {
+        throw new Error("Expected result to be non-null");
+      }
       expect(result.installations).toHaveLength(2);
       const logins = result.installations.map((i) => i.accountLogin);
       expect(logins).toContain("org-a");
@@ -663,7 +696,12 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
 
       // Only the active installation triggers a live API call
       mockGetAppInstallation.mockResolvedValueOnce({
-        account: { id: 33333, login: "active-org", type: "Organization", avatar_url: "" },
+        account: {
+          id: 33_333,
+          login: "active-org",
+          type: "Organization",
+          avatar_url: "",
+        },
         permissions: {},
         events: [],
         created_at: "2026-01-01T00:00:00Z",
@@ -673,7 +711,9 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       const result = await caller.github.list();
 
       expect(result).not.toBeNull();
-      if (!result) throw new Error("Expected result to be non-null");
+      if (!result) {
+        throw new Error("Expected result to be non-null");
+      }
       expect(result.installations).toHaveLength(1);
       expect(result.installations[0]?.accountLogin).toBe("active-org");
     });
@@ -732,7 +772,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       // Mock returns a valid installation (validate confirms it exists)
       mockGetAppInstallation.mockResolvedValueOnce({
         account: {
-          id: 67890,
+          id: 67_890,
           login: "test-org",
           type: "Organization",
           avatar_url: "https://avatars.githubusercontent.com/u/67890",
@@ -751,7 +791,9 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       const updated = allRows.find((r) => r.id === rowId);
       expect(updated?.providerAccountInfo?.sourceType).toBe("github");
       if (updated?.providerAccountInfo?.sourceType === "github") {
-        expect(updated.providerAccountInfo.lastValidatedAt >= before).toBe(true);
+        expect(updated.providerAccountInfo.lastValidatedAt >= before).toBe(
+          true
+        );
         expect(updated.providerAccountInfo.raw).toEqual({});
       }
     });
@@ -813,7 +855,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         caller.github.repositories({
           integrationId: "nonexistent-id",
           installationId: "12345",
-        }),
+        })
       ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
 
@@ -835,7 +877,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         caller.github.repositories({
           integrationId: rowId,
           installationId: "99999", // not in providerAccountInfo
-        }),
+        })
       ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
 
@@ -886,7 +928,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         caller.github.repositories({
           integrationId: rowId,
           installationId: "12345",
-        }),
+        })
       ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
 
@@ -903,7 +945,9 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         providerAccountInfo: makeGitHubAccountInfo(),
       });
 
-      mockGetInstallationRepositories.mockResolvedValueOnce({ repositories: [] });
+      mockGetInstallationRepositories.mockResolvedValueOnce({
+        repositories: [],
+      });
 
       const caller = clerkActiveCaller("user_1", orgId);
       const result = await caller.github.repositories({

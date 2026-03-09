@@ -1,5 +1,5 @@
-import { inspectRoutes } from "hono/dev";
 import { printRouteTable } from "@vendor/observability/print-routes";
+import { inspectRoutes } from "hono/dev";
 import app from "./app.js";
 import { env } from "./env.js";
 

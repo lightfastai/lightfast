@@ -1,8 +1,8 @@
-import NextLink from "next/link";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import { AppNavbarMenu } from "./app-navbar-menu";
+import NextLink from "next/link";
 import { AppMobileNavLazy } from "./app-mobile-nav-lazy";
+import { AppNavbarMenu } from "./app-navbar-menu";
 
 /**
  * Server-rendered navbar component
@@ -10,27 +10,30 @@ import { AppMobileNavLazy } from "./app-mobile-nav-lazy";
  */
 export function AppNavbar() {
   return (
-    <div id="app-navbar" className="shrink-0 py-4 page-gutter bg-background md:bg-transparent border-b border-border md:border-b-0">
+    <div
+      className="page-gutter shrink-0 border-border border-b bg-background py-4 md:border-b-0 md:bg-transparent"
+      id="app-navbar"
+    >
       {/* Centered nav container */}
       <div className="relative flex items-center justify-center">
         {/* Desktop: Centered nav pill */}
-        <nav className="hidden md:flex relative h-9 items-center gap-0.5 rounded-md pl-4 pr-1 py-1">
+        <nav className="relative hidden h-9 items-center gap-0.5 rounded-md py-1 pr-1 pl-4 md:flex">
           {/* Glass backdrop layer - sibling so dropdown's backdrop-blur isn't trapped */}
-          <div className="absolute inset-0 rounded-md bg-card/40 border border-border/50 backdrop-blur-md -z-10" />
+          <div className="absolute inset-0 -z-10 rounded-md border border-border/50 bg-card/40 backdrop-blur-md" />
           {/* Logo */}
           <NextLink
+            className="mr-auto flex items-center pr-4"
             href="/"
             prefetch
-            className="flex items-center mr-auto pr-4"
           >
-            <Icons.logoShort className="w-4 h-4 text-foreground/60 hover:text-foreground transition-colors" />
+            <Icons.logoShort className="h-4 w-4 text-foreground/60 transition-colors hover:text-foreground" />
           </NextLink>
 
           {/* Nav items */}
           <AppNavbarMenu />
 
           {/* Join Early Access Button */}
-          <Button asChild size="sm" className="ml-1">
+          <Button asChild className="ml-1" size="sm">
             <NextLink href="/early-access" prefetch>
               Join Early Access
             </NextLink>
@@ -38,13 +41,13 @@ export function AppNavbar() {
         </nav>
 
         {/* Mobile: Logo left, hamburger right */}
-        <div className="flex md:hidden items-center justify-between w-full">
+        <div className="flex w-full items-center justify-between md:hidden">
           <NextLink
+            className="flex items-center transition-opacity hover:opacity-80"
             href="/"
             prefetch
-            className="flex items-center hover:opacity-80 transition-opacity"
           >
-            <Icons.logoShort className="w-4 h-4 text-foreground" />
+            <Icons.logoShort className="h-4 w-4 text-foreground" />
           </NextLink>
           <AppMobileNavLazy />
         </div>

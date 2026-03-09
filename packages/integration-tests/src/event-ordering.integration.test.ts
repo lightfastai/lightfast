@@ -12,24 +12,21 @@
  * Infrastructure: PGlite, in-memory Redis, QStash capture, Inngest capture,
  * service router (all three apps).
  */
+
+import { gwInstallations, gwResources } from "@db/console/schema";
+import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
+import { fixtures } from "@repo/console-test-db/fixtures";
 import {
-  describe,
-  it,
-  expect,
-  vi,
+  afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
-  afterAll,
+  describe,
+  expect,
+  it,
+  vi,
 } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
-import type { TestDb } from "@repo/console-test-db";
-import { fixtures } from "@repo/console-test-db/fixtures";
-import { gwInstallations, gwResources } from "@db/console/schema";
 
 // ── Shared state ──
 let db: TestDb;
@@ -46,7 +43,11 @@ const {
 } = await vi.hoisted(async () => {
   const { makeRedisMock, makeQStashMock } = await import("./harness.js");
   const redisStore = new Map<string, unknown>();
-  const messages: { url: string; body: unknown; headers?: Record<string, string> }[] = [];
+  const messages: {
+    url: string;
+    body: unknown;
+    headers?: Record<string, string>;
+  }[] = [];
   const inngestEventsSent: { name: string; data: unknown }[] = [];
   const capturedHandlers = new Map<
     string,
@@ -54,11 +55,13 @@ const {
   >();
 
   const sendMock = vi.fn(
-    (event: { name: string; data: unknown } | { name: string; data: unknown }[]) => {
+    (
+      event: { name: string; data: unknown } | { name: string; data: unknown }[]
+    ) => {
       const all = Array.isArray(event) ? event : [event];
       inngestEventsSent.push(...all);
       return Promise.resolve({ ids: all.map((_, i) => `evt-${i}`) });
-    },
+    }
   );
 
   return {
@@ -75,7 +78,9 @@ const {
 // ── vi.mock declarations ──
 
 vi.mock("@db/console/client", () => ({
-  get db() { return db; },
+  get db() {
+    return db;
+  },
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -84,7 +89,11 @@ vi.mock("@vendor/upstash", () => ({
 
 vi.mock("@vendor/qstash", () => ({
   getQStashClient: () => qstashMock,
-  Receiver: class { verify() { return Promise.resolve(true); } },
+  Receiver: class {
+    verify() {
+      return Promise.resolve(true);
+    }
+  },
 }));
 
 vi.mock("@vendor/inngest/hono", () => ({
@@ -98,15 +107,17 @@ vi.mock("@vendor/inngest", () => ({
       (
         config: { id: string },
         _trigger: unknown,
-        handler: (args: { event: unknown; step: unknown }) => Promise<unknown>,
+        handler: (args: { event: unknown; step: unknown }) => Promise<unknown>
       ) => {
         capturedHandlers.set(config.id, handler);
         return { id: config.id };
-      },
+      }
     );
   },
   EventSchemas: class {
-    fromSchema() { return this; }
+    fromSchema() {
+      return this;
+    }
   },
   NonRetriableError: class extends Error {
     constructor(msg: string) {
@@ -117,13 +128,21 @@ vi.mock("@vendor/inngest", () => ({
 }));
 
 vi.mock("@vendor/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vercel/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
@@ -143,9 +162,9 @@ import relayApp from "@relay/app";
 // Force backfill workflows to register handlers
 await import("@backfill/orchestrator");
 
+import { cancelBackfillService } from "@gateway/urls";
 // ── Utilities ──
 import { withEventPermutations } from "./harness.js";
-import { cancelBackfillService } from "@gateway/urls";
 
 const API_KEY = "0".repeat(64);
 
@@ -162,47 +181,67 @@ async function resetStores() {
 /** Restore mock implementations that vi.clearAllMocks() resets */
 function restoreMockImpls() {
   inngestSendMock.mockImplementation(
-    (event: { name: string; data: unknown } | { name: string; data: unknown }[]) => {
+    (
+      event: { name: string; data: unknown } | { name: string; data: unknown }[]
+    ) => {
       const all = Array.isArray(event) ? event : [event];
       inngestEventsSent.push(...all);
       return Promise.resolve({ ids: all.map((_, i) => `evt-${i}`) });
-    },
+    }
   );
 
-  redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
-    redisStore.set(key, { ...existing, ...fields });
-    return Promise.resolve(1);
-  });
-  redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
+  redisMock.hset.mockImplementation(
+    (key: string, fields: Record<string, unknown>) => {
+      const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+      redisStore.set(key, { ...existing, ...fields });
+      return Promise.resolve(1);
+    }
   );
-  redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean; ex?: number }) => {
-    if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
-    redisStore.set(key, value);
-    return Promise.resolve("OK");
-  });
+  redisMock.hgetall.mockImplementation((key: string) =>
+    Promise.resolve(
+      (redisStore.get(key) ?? null) as Record<string, string> | null
+    )
+  );
+  redisMock.set.mockImplementation(
+    (key: string, value: unknown, opts?: { nx?: boolean; ex?: number }) => {
+      if (opts?.nx && redisStore.has(key)) {
+        return Promise.resolve(null);
+      }
+      redisStore.set(key, value);
+      return Promise.resolve("OK");
+    }
+  );
   redisMock.del.mockImplementation((...keys: string[]) => {
     const allKeys = keys.flat();
     let count = 0;
-    for (const k of allKeys) { if (redisStore.delete(k)) count++; }
+    for (const k of allKeys) {
+      if (redisStore.delete(k)) {
+        count++;
+      }
+    }
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation((key: string) =>
-    Promise.resolve(redisStore.get(key) ?? null),
+    Promise.resolve(redisStore.get(key) ?? null)
   );
   redisMock.pipeline.mockImplementation(() => {
     const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          const existing = (redisStore.get(key) ?? {}) as Record<
+            string,
+            unknown
+          >;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
       }),
       expire: vi.fn(() => pipe),
-      exec: vi.fn(() => { ops.forEach((op) => op()); return []; }),
+      exec: vi.fn(() => {
+        ops.forEach((op) => op());
+        return [];
+      }),
     };
     return pipe;
   });
@@ -252,7 +291,10 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
         restoreMockImpls();
         await db.insert(gwInstallations).values(inst);
         await db.insert(gwResources).values(resource);
-        redisStore.set(cacheKey, { connectionId: inst.id, orgId: "org-perm-teardown" });
+        redisStore.set(cacheKey, {
+          connectionId: inst.id,
+          orgId: "org-perm-teardown",
+        });
       },
 
       effects: [
@@ -261,7 +303,9 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
           deliver: async () => {
             // Connections publishes cancel → deliver to backfill → Inngest run.cancelled
             await cancelBackfillService({ installationId: inst.id });
-            const cancelMsg = qstashMessages.find((m) => m.url.includes("/trigger/cancel"));
+            const cancelMsg = qstashMessages.find((m) =>
+              m.url.includes("/trigger/cancel")
+            );
             if (cancelMsg) {
               await backfillApp.request("/api/trigger/cancel", {
                 method: "POST",
@@ -284,12 +328,16 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
           label: "soft-delete-db",
           deliver: async () => {
             // Use PGlite raw query — avoids drizzle-orm direct import
-            const client = (db as unknown as { $client: { exec: (sql: string) => Promise<unknown> } }).$client;
+            const client = (
+              db as unknown as {
+                $client: { exec: (sql: string) => Promise<unknown> };
+              }
+            ).$client;
             await client.exec(
-              `UPDATE lightfast_gw_installations SET status = 'revoked' WHERE id = '${inst.id}'`,
+              `UPDATE lightfast_gw_installations SET status = 'revoked' WHERE id = '${inst.id}'`
             );
             await client.exec(
-              `UPDATE lightfast_gw_resources SET status = 'removed' WHERE installation_id = '${inst.id}'`,
+              `UPDATE lightfast_gw_resources SET status = 'removed' WHERE installation_id = '${inst.id}'`
             );
           },
         },
@@ -312,7 +360,9 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
 
         // Backfill cancel event fired
         expect(
-          inngestEventsSent.some((e) => e.name === "apps-backfill/run.cancelled"),
+          inngestEventsSent.some(
+            (e) => e.name === "apps-backfill/run.cancelled"
+          )
         ).toBe(true);
       },
 
@@ -363,7 +413,7 @@ describe("Suite 6.2 — Concurrent relay dispatches are order-independent", () =
 
         // All 3 have distinct delivery IDs
         const ids = qstashMessages.map(
-          (m) => (m.body as { deliveryId: string }).deliveryId,
+          (m) => (m.body as { deliveryId: string }).deliveryId
         );
         expect(new Set(ids).size).toBe(3);
         for (const id of deliveryIds) {
@@ -443,12 +493,16 @@ describe("Suite 6.3 — Backfill notify + relay dispatch are order-independent",
       invariant: () => {
         // Backfill was notified (Inngest run.requested fired)
         expect(
-          inngestEventsSent.some((e) => e.name === "apps-backfill/run.requested"),
+          inngestEventsSent.some(
+            (e) => e.name === "apps-backfill/run.requested"
+          )
         ).toBe(true);
 
         // Relay webhook was published to QStash
         const webhookEnvelopes = qstashMessages.filter(
-          (m) => (m.body as { deliveryId?: string }).deliveryId === "del-perm-mixed-1",
+          (m) =>
+            (m.body as { deliveryId?: string }).deliveryId ===
+            "del-perm-mixed-1"
         );
         expect(webhookEnvelopes).toHaveLength(1);
       },

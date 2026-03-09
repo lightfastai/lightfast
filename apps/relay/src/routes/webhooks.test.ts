@@ -1,9 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { computeHmac } from "@repo/console-providers";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Convenience wrappers matching the old relay crypto API used throughout this test
-const computeHmacSha256 = (msg: string, secret: string) => computeHmac(msg, secret, "SHA-256");
-const computeHmacSha1 = (msg: string, secret: string) => computeHmac(msg, secret, "SHA-1");
+const computeHmacSha256 = (msg: string, secret: string) =>
+  computeHmac(msg, secret, "SHA-256");
+const computeHmacSha1 = (msg: string, secret: string) =>
+  computeHmac(msg, secret, "SHA-1");
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 
@@ -21,10 +23,21 @@ const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv, dbOps } =
       mockPublishJSON: vi.fn().mockResolvedValue({ messageId: "msg-1" }),
       mockRedisSet: vi.fn().mockResolvedValue("OK"),
       mockWorkflowTrigger: vi
-        .fn<(args: { url: string; body: string; headers?: Record<string, string> }) => Promise<{ workflowRunId: string }>>()
+        .fn<
+          (args: {
+            url: string;
+            body: string;
+            headers?: Record<string, string>;
+          }) => Promise<{ workflowRunId: string }>
+        >()
         .mockResolvedValue({ workflowRunId: "wf-1" }),
       mockEnv: env,
-      dbOps: [] as { op: "insert" | "update"; table?: unknown; values?: unknown; set?: unknown }[],
+      dbOps: [] as {
+        op: "insert" | "update";
+        table?: unknown;
+        values?: unknown;
+        set?: unknown;
+      }[],
     };
   });
 
@@ -47,7 +60,10 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
 vi.mock("@db/console/client", () => ({
   db: {
     insert: (...args: unknown[]) => {
-      const entry = { op: "insert" as const, table: args[0] } as (typeof dbOps)[number];
+      const entry = {
+        op: "insert" as const,
+        table: args[0],
+      } as (typeof dbOps)[number];
       dbOps.push(entry);
       return {
         values: (...valArgs: unknown[]) => {
@@ -57,7 +73,10 @@ vi.mock("@db/console/client", () => ({
       };
     },
     update: (...args: unknown[]) => {
-      const entry = { op: "update" as const, table: args[0] } as (typeof dbOps)[number];
+      const entry = {
+        op: "update" as const,
+        table: args[0],
+      } as (typeof dbOps)[number];
       dbOps.push(entry);
       return {
         set: (...setArgs: unknown[]) => {
@@ -83,7 +102,10 @@ app.route("/webhooks", webhooks);
 
 function request(
   path: string,
-  init: { body?: string | Record<string, unknown>; headers?: Record<string, string> },
+  init: {
+    body?: string | Record<string, unknown>;
+    headers?: Record<string, string>;
+  }
 ) {
   const headers = new Headers(init.headers);
   if (!headers.has("content-type")) {
@@ -97,10 +119,12 @@ function request(
 /** Extract and parse the JSON body from the Nth workflow trigger call. */
 function getTriggerBody<T = Record<string, unknown>>(
   mock: typeof mockWorkflowTrigger,
-  callIndex = 0,
+  callIndex = 0
 ): T {
   const call = mock.mock.calls[callIndex];
-  if (!call) throw new Error(`No trigger call at index ${callIndex}`);
+  if (!call) {
+    throw new Error(`No trigger call at index ${callIndex}`);
+  }
   return JSON.parse(call[0].body) as T;
 }
 
@@ -204,10 +228,14 @@ describe("POST /webhooks/:provider", () => {
       expect(res.status).toBe(200);
 
       // Verify the workflow receives the complete payload including extra fields
-      const triggeredPayload = getTriggerBody<{ payload: Record<string, unknown> }>(mockWorkflowTrigger).payload;
+      const triggeredPayload = getTriggerBody<{
+        payload: Record<string, unknown>;
+      }>(mockWorkflowTrigger).payload;
       expect(triggeredPayload.sender).toEqual({ login: "octocat", id: 1 });
       expect(triggeredPayload.ref).toBe("refs/heads/main");
-      expect((triggeredPayload.commits as { message: string }[])[0]?.message).toBe("feat: 新しい機能 🎉");
+      expect(
+        (triggeredPayload.commits as { message: string }[])[0]?.message
+      ).toBe("feat: 新しい機能 🎉");
     });
 
     it("handles unicode body with correct HMAC verification", async () => {
@@ -276,7 +304,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-redis-fail",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -294,7 +322,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-qstash-fail",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -329,7 +357,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-100",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -351,7 +379,7 @@ describe("POST /webhooks/:provider", () => {
           provider: "github",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
           correlationId: undefined,
         },
         retries: 5,
@@ -369,7 +397,7 @@ describe("POST /webhooks/:provider", () => {
             installationId: "conn-1",
             status: "received",
             payload: JSON.stringify({ repository: { id: 42 } }),
-            receivedAt: new Date(1700000000000).toISOString(),
+            receivedAt: new Date(1_700_000_000_000).toISOString(),
           },
         },
         {
@@ -400,7 +428,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-101",
           eventType: "push",
           payload: "not-an-object",
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -419,7 +447,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-dup",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -450,7 +478,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-hold",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key", "X-Backfill-Hold": "true" },
       });
@@ -485,7 +513,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-no-hold",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -605,7 +633,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-parity",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -622,10 +650,9 @@ describe("POST /webhooks/:provider", () => {
           eventType: "push",
           status: "enqueued",
           installationId: "conn-1",
-        }),
+        })
       );
     });
-
   });
 
   describe("HMAC route → workflow payload contract", () => {

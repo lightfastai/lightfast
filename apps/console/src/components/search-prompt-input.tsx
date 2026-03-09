@@ -1,27 +1,27 @@
 "use client";
 
-import type { FormEvent } from "react";
-import { forwardRef, useRef, useEffect, useState } from "react";
-import { cn } from "@repo/ui/lib/utils";
-import { ArrowUp } from "lucide-react";
-import type { ChatStatus } from "ai";
+import type {
+  PromptInputMessage,
+  PromptInputRef,
+} from "@repo/ui/components/ai-elements/prompt-input";
 import {
   PromptInput,
   PromptInputBody,
+  PromptInputClear,
+  PromptInputSubmit,
   PromptInputTextarea,
   PromptInputToolbar,
   PromptInputTools,
-  PromptInputSubmit,
-  PromptInputClear,
 } from "@repo/ui/components/ai-elements/prompt-input";
 import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@repo/ui/components/ui/toggle-group";
-import type {
-  PromptInputMessage,
-  PromptInputRef,
-} from "@repo/ui/components/ai-elements/prompt-input";
+import { cn } from "@repo/ui/lib/utils";
+import type { ChatStatus } from "ai";
+import { ArrowUp } from "lucide-react";
+import type { FormEvent } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { MODE_OPTIONS } from "./search-constants";
 
 /**
@@ -41,14 +41,17 @@ const AnimatedModeToggle = forwardRef<
   } | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      return;
+    }
 
     const updateBgPosition = () => {
       const container = containerRef.current;
-      if (!container) return;
-      const selectedButton = container.querySelector<HTMLElement>(
-        `[data-state="on"]`,
-      );
+      if (!container) {
+        return;
+      }
+      const selectedButton =
+        container.querySelector<HTMLElement>(`[data-state="on"]`);
 
       if (selectedButton) {
         const containerRect = container.getBoundingClientRect();
@@ -74,11 +77,12 @@ const AnimatedModeToggle = forwardRef<
   }, []);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      return;
+    }
 
-    const selectedButton = containerRef.current.querySelector<HTMLElement>(
-      `[data-state="on"]`,
-    );
+    const selectedButton =
+      containerRef.current.querySelector<HTMLElement>(`[data-state="on"]`);
 
     if (selectedButton) {
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -89,21 +93,21 @@ const AnimatedModeToggle = forwardRef<
         left: buttonRect.left - containerRect.left,
       });
     }
-  }, [value]);
+  }, []);
 
   return (
     <div className="relative inline-flex">
       <div
+        className="relative flex items-center gap-1 bg-transparent p-0.5"
         ref={containerRef}
-        className="relative flex items-center gap-1 p-0.5 bg-transparent"
         style={{ perspective: "1000px" }}
       >
         {/* Animated sliding background */}
         <div
           className={cn(
             "absolute inset-y-0 rounded-sm transition-all duration-300 ease-out",
-            "bg-accent dark:bg-accent border",
-            "pointer-events-none",
+            "border bg-accent dark:bg-accent",
+            "pointer-events-none"
           )}
           style={{
             width: bgStyle?.width ? `${bgStyle.width}px` : "0px",
@@ -113,22 +117,22 @@ const AnimatedModeToggle = forwardRef<
 
         {/* Toggle items */}
         <ToggleGroup
+          className="relative z-10 flex items-center gap-1"
+          onValueChange={(v) => v && onValueChange(v)}
           type="single"
           value={value}
-          onValueChange={(v) => v && onValueChange(v)}
-          className="flex items-center gap-1 relative z-10"
         >
           {MODE_OPTIONS.map((opt) => (
             <ToggleGroupItem
-              key={opt.value}
-              value={opt.value}
               className={cn(
-                "h-6 px-4 rounded-sm dark:border-border text-xs",
+                "h-6 rounded-sm px-4 text-xs dark:border-border",
                 "relative transition-colors duration-200",
                 "data-[state=on]:bg-transparent data-[state=on]:text-foreground",
-                "data-[state=off]:text-muted-foreground data-[state=off]:bg-transparent",
+                "data-[state=off]:bg-transparent data-[state=off]:text-muted-foreground"
               )}
+              key={opt.value}
               title={opt.description}
+              value={opt.value}
             >
               {opt.label}
             </ToggleGroupItem>
@@ -140,22 +144,22 @@ const AnimatedModeToggle = forwardRef<
 });
 
 interface SearchPromptInputProps {
-  placeholder: string;
+  className?: string;
+  clearDisabledReason?: string;
+  isClearDisabled?: boolean;
+  isSubmitDisabled: boolean;
+  mode?: string;
+  onChange?: (value: string) => void;
+  onClear?: () => void;
+  onModeChange?: (mode: string) => void;
   onSubmit: (
     message: PromptInputMessage,
-    event: FormEvent<HTMLFormElement>,
+    event: FormEvent<HTMLFormElement>
   ) => Promise<void>;
+  placeholder: string;
   status: ChatStatus;
-  isSubmitDisabled: boolean;
   submitDisabledReason?: string;
-  onClear?: () => void;
-  isClearDisabled?: boolean;
-  clearDisabledReason?: string;
   value?: string;
-  onChange?: (value: string) => void;
-  className?: string;
-  mode?: string;
-  onModeChange?: (mode: string) => void;
 }
 
 /**
@@ -181,57 +185,57 @@ export const SearchPromptInput = forwardRef<
     mode,
     onModeChange,
   },
-  ref,
+  ref
 ) {
   return (
     <PromptInput
-      ref={ref}
-      onSubmit={onSubmit}
       className={cn(
-        "w-full border border-border/50 rounded-xl overflow-hidden transition-all bg-card/40 backdrop-blur-md shadow-sm",
+        "w-full overflow-hidden rounded-xl border border-border/50 bg-card/40 shadow-sm backdrop-blur-md transition-all",
         "!divide-y-0",
-        className,
+        className
       )}
+      onSubmit={onSubmit}
+      ref={ref}
     >
       <PromptInputBody className="flex flex-col">
         <PromptInputTextarea
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
           className={cn(
-            "w-full resize-none border-0 rounded-none focus-visible:ring-0 whitespace-pre-wrap break-words p-3",
+            "w-full resize-none whitespace-pre-wrap break-words rounded-none border-0 p-3 focus-visible:ring-0",
             "!bg-transparent focus:!bg-transparent hover:!bg-transparent disabled:!bg-transparent dark:!bg-transparent",
-            "outline-none min-h-0 h-[56px]",
+            "h-[56px] min-h-0 outline-none"
           )}
+          onChange={(e) => onChange?.(e.target.value)}
+          placeholder={placeholder}
           style={{ lineHeight: "24px" }}
+          value={value}
         />
       </PromptInputBody>
       <PromptInputToolbar
         className={cn(
-          "flex items-center justify-between gap-2 bg-transparent p-2 transition-[color,box-shadow]",
+          "flex items-center justify-between gap-2 bg-transparent p-2 transition-[color,box-shadow]"
         )}
       >
         {mode !== undefined && onModeChange && (
-          <AnimatedModeToggle value={mode} onValueChange={onModeChange} />
+          <AnimatedModeToggle onValueChange={onModeChange} value={mode} />
         )}
         <PromptInputTools className="flex items-center gap-2">
           {onClear && (
             <PromptInputClear
-              onClick={onClear}
+              className="h-8 px-3 dark:shadow-sm"
               disabled={isClearDisabled}
+              onClick={onClear}
               title={clearDisabledReason ?? "Clear filters"}
-              className="px-3 h-8 dark:shadow-sm"
             />
           )}
           <PromptInputSubmit
-            status={status}
+            className="!rounded-full h-8 w-8 dark:border-border/50 dark:shadow-sm"
             disabled={isSubmitDisabled}
-            title={submitDisabledReason}
             size="icon"
+            status={status}
+            title={submitDisabledReason}
             variant="outline"
-            className="h-8 w-8 !rounded-full dark:border-border/50 dark:shadow-sm"
           >
-            <ArrowUp className="w-4 h-4" />
+            <ArrowUp className="h-4 w-4" />
           </PromptInputSubmit>
         </PromptInputTools>
       </PromptInputToolbar>

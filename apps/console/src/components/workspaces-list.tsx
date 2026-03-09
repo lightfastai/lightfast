@@ -1,17 +1,13 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import {
-  Plus,
-  Search,
-  Clock,
-} from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
+import { Input } from "@repo/ui/components/ui/input";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Clock, Plus, Search } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 interface WorkspacesListProps {
   orgSlug: string;
@@ -33,23 +29,23 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
 
   // Filter workspaces by search query (search by name)
   const filteredWorkspaces = workspaces.filter((workspace) =>
-    workspace.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    workspace.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <div className="space-y-6">
       {/* Search and Create Button */}
       <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            className="pl-9"
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search workspaces..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
           />
         </div>
-        <Button className="gap-2" asChild size="sm">
+        <Button asChild className="gap-2" size="sm">
           <Link href={`/new?teamSlug=${orgSlug}`}>
             <Plus className="h-4 w-4" />
             New workspace
@@ -60,16 +56,16 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
       {/* Empty States */}
       {filteredWorkspaces.length === 0 && searchQuery ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
-          <p className="text-sm font-medium">No workspaces found</p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <Search className="mb-4 h-12 w-12 text-muted-foreground/50" />
+          <p className="font-medium text-sm">No workspaces found</p>
+          <p className="mt-1 text-muted-foreground text-xs">
             No workspaces matching &quot;{searchQuery}&quot;
           </p>
         </div>
       ) : filteredWorkspaces.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-sm font-medium">No workspaces yet</p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="font-medium text-sm">No workspaces yet</p>
+          <p className="mt-1 text-muted-foreground text-xs">
             Create your first workspace to get started
           </p>
         </div>
@@ -80,23 +76,23 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
             {filteredWorkspaces.map((workspace) => {
               return (
                 <Link
-                  key={workspace.id}
-                  href={`/${orgSlug}/${workspace.name}`}
                   className="group"
+                  href={`/${orgSlug}/${workspace.name}`}
+                  key={workspace.id}
                 >
-                  <Card className="h-full transition-colors py-0 bg-card/40 border-border/50 hover:bg-accent/50 rounded-md">
-                    <CardContent className="p-5 space-y-4">
+                  <Card className="h-full rounded-md border-border/50 bg-card/40 py-0 transition-colors hover:bg-accent/50">
+                    <CardContent className="space-y-4 p-5">
                       {/* Header: Name */}
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-base group-hover:text-primary transition-colors truncate">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate font-semibold text-base transition-colors group-hover:text-primary">
                             {workspace.name}
                           </h3>
                         </div>
                       </div>
 
                       {/* Created Date */}
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 text-muted-foreground text-xs">
                         <Clock className="h-3.5 w-3.5" />
                         <span>
                           Created {formatRelativeTime(workspace.createdAt)}
@@ -122,10 +118,18 @@ function formatRelativeTime(dateString: string): string {
   const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
   const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-  if (diffInMinutes < 1) return "just now";
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-  if (diffInDays < 30) return `${diffInDays}d ago`;
+  if (diffInMinutes < 1) {
+    return "just now";
+  }
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}m ago`;
+  }
+  if (diffInHours < 24) {
+    return `${diffInHours}h ago`;
+  }
+  if (diffInDays < 30) {
+    return `${diffInDays}d ago`;
+  }
 
   return date.toLocaleDateString("en-US", {
     month: "short",

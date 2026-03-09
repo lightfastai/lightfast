@@ -1,10 +1,13 @@
-import type { NextRequest } from "next/server";
-import { withApiKeyAuth, createAuthErrorResponse } from "~/app/(api)/v1/lib/with-api-key-auth";
-import { realtime } from "@repo/console-upstash-realtime";
-import type { EventNotification } from "@repo/console-upstash-realtime";
 import { db } from "@db/console/client";
 import { orgWorkspaces, workspaceEvents } from "@db/console/schema";
-import { eq, and, gt } from "drizzle-orm";
+import type { EventNotification } from "@repo/console-upstash-realtime";
+import { realtime } from "@repo/console-upstash-realtime";
+import { and, eq, gt } from "drizzle-orm";
+import type { NextRequest } from "next/server";
+import {
+  createAuthErrorResponse,
+  withApiKeyAuth,
+} from "~/app/(api)/v1/lib/with-api-key-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,8 +40,12 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   if (!row) {
     return Response.json(
-      { error: "WORKSPACE_NOT_FOUND", message: "No workspace found for this org", requestId },
-      { status: 404 },
+      {
+        error: "WORKSPACE_NOT_FOUND",
+        message: "No workspace found for this org",
+        requestId,
+      },
+      { status: 404 }
     );
   }
 
@@ -66,8 +73,8 @@ export async function GET(request: NextRequest): Promise<Response> {
             }
             controller.enqueue(
               encoder.encode(
-                `id: ${notification.eventId}\nevent: event\ndata: ${JSON.stringify(notification)}\n\n`,
-              ),
+                `id: ${notification.eventId}\nevent: event\ndata: ${JSON.stringify(notification)}\n\n`
+              )
             );
           } catch {
             // Malformed message or closed stream — skip
@@ -81,7 +88,7 @@ export async function GET(request: NextRequest): Promise<Response> {
 
       try {
         if (lastEventId) {
-          const lastId = parseInt(lastEventId, 10);
+          const lastId = Number.parseInt(lastEventId, 10);
           if (!Number.isNaN(lastId)) {
             const missed = await db
               .select({
@@ -93,8 +100,8 @@ export async function GET(request: NextRequest): Promise<Response> {
               .where(
                 and(
                   eq(workspaceEvents.workspaceId, row.id),
-                  gt(workspaceEvents.id, lastId),
-                ),
+                  gt(workspaceEvents.id, lastId)
+                )
               )
               .orderBy(workspaceEvents.id)
               .limit(1000);
@@ -107,13 +114,18 @@ export async function GET(request: NextRequest): Promise<Response> {
                 sourceEvent: missed_row.sourceEvent,
               };
               controller.enqueue(
-                encoder.encode(`id: ${missed_row.id}\nevent: event\ndata: ${JSON.stringify(notification)}\n\n`),
+                encoder.encode(
+                  `id: ${missed_row.id}\nevent: event\ndata: ${JSON.stringify(notification)}\n\n`
+                )
               );
             }
           }
         }
       } catch (err) {
-        console.error("[events/stream] Catch-up query failed", { orgId, error: err });
+        console.error("[events/stream] Catch-up query failed", {
+          orgId,
+          error: err,
+        });
         controller.error(err);
         return;
       }
@@ -124,15 +136,17 @@ export async function GET(request: NextRequest): Promise<Response> {
         if (notification.eventId > lastCatchUpId) {
           controller.enqueue(
             encoder.encode(
-              `id: ${notification.eventId}\nevent: event\ndata: ${JSON.stringify(notification)}\n\n`,
-            ),
+              `id: ${notification.eventId}\nevent: event\ndata: ${JSON.stringify(notification)}\n\n`
+            )
           );
         }
       }
 
       // 3d. Send connection event
       controller.enqueue(
-        encoder.encode(`event: connected\ndata: ${JSON.stringify({ orgId })}\n\n`),
+        encoder.encode(
+          `event: connected\ndata: ${JSON.stringify({ orgId })}\n\n`
+        )
       );
 
       // 3e. Heartbeat to keep connection alive (every 30s)

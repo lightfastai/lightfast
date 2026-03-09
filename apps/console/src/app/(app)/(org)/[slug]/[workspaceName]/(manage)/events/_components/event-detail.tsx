@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import { formatDistanceToNow } from "date-fns";
 import type { PostTransformEvent } from "@repo/console-providers";
+import { formatDistanceToNow } from "date-fns";
+import Image from "next/image";
 
 interface EventDetailProps {
   event: {
@@ -18,14 +18,16 @@ export function EventDetail({ event }: EventDetailProps) {
   const { sourceEvent, ingestionSource, receivedAt, createdAt } = event;
 
   return (
-    <div className="px-6 py-4 bg-muted/20 border-t border-border/40 space-y-4 text-sm">
+    <div className="space-y-4 border-border/40 border-t bg-muted/20 px-6 py-4 text-sm">
       {/* Body */}
       {sourceEvent.body && (
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Body</p>
-          <p className="text-sm whitespace-pre-wrap break-words leading-relaxed text-foreground/80">
+          <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+            Body
+          </p>
+          <p className="whitespace-pre-wrap break-words text-foreground/80 text-sm leading-relaxed">
             {sourceEvent.body.length > 1000
-              ? sourceEvent.body.slice(0, 1000) + "…"
+              ? `${sourceEvent.body.slice(0, 1000)}…`
               : sourceEvent.body}
           </p>
         </div>
@@ -34,21 +36,25 @@ export function EventDetail({ event }: EventDetailProps) {
       {/* Actor */}
       {sourceEvent.actor && (
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Actor</p>
+          <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+            Actor
+          </p>
           <div className="flex items-center gap-2">
             {sourceEvent.actor.avatarUrl && (
               <Image
-                src={sourceEvent.actor.avatarUrl}
                 alt={sourceEvent.actor.name}
-                width={20}
-                height={20}
                 className="rounded-full"
+                height={20}
+                src={sourceEvent.actor.avatarUrl}
                 unoptimized
+                width={20}
               />
             )}
             <span>{sourceEvent.actor.name}</span>
             {sourceEvent.actor.email && (
-              <span className="text-muted-foreground">{sourceEvent.actor.email}</span>
+              <span className="text-muted-foreground">
+                {sourceEvent.actor.email}
+              </span>
             )}
           </div>
         </div>
@@ -57,20 +63,24 @@ export function EventDetail({ event }: EventDetailProps) {
       {/* References */}
       {sourceEvent.references.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">References</p>
+          <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+            References
+          </p>
           <div className="flex flex-wrap gap-1.5">
             {sourceEvent.references.map((ref, i) => (
               <span
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted px-2 py-0.5 text-xs"
                 key={i}
-                className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted border border-border/60"
               >
-                <span className="text-muted-foreground capitalize">{ref.type}</span>
+                <span className="text-muted-foreground capitalize">
+                  {ref.type}
+                </span>
                 {ref.url ? (
                   <a
+                    className="font-mono text-primary hover:underline"
                     href={ref.url}
-                    target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline font-mono"
+                    target="_blank"
                   >
                     {ref.label ?? ref.id}
                   </a>
@@ -86,40 +96,50 @@ export function EventDetail({ event }: EventDetailProps) {
       {/* Metadata */}
       {(() => {
         const entries = Object.entries(sourceEvent.metadata);
-        if (entries.length === 0) return null;
+        if (entries.length === 0) {
+          return null;
+        }
         return (
-        <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Metadata</p>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-1">
-            {entries.map(([key, value]) => (
-              <div key={key} className="contents">
-                <dt className="text-xs text-muted-foreground truncate">{key}</dt>
-                <dd className="text-xs font-mono truncate">{String(value)}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+          <div>
+            <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+              Metadata
+            </p>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-1">
+              {entries.map(([key, value]) => (
+                <div className="contents" key={key}>
+                  <dt className="truncate text-muted-foreground text-xs">
+                    {key}
+                  </dt>
+                  <dd className="truncate font-mono text-xs">
+                    {String(value)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         );
       })()}
 
       {/* Timestamps & IDs */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-1 border-t border-border/40">
-        <div className="text-xs text-muted-foreground">Event time</div>
-        <div className="text-xs font-mono">
-          {formatDistanceToNow(new Date(sourceEvent.occurredAt), { addSuffix: true })}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 border-border/40 border-t pt-1">
+        <div className="text-muted-foreground text-xs">Event time</div>
+        <div className="font-mono text-xs">
+          {formatDistanceToNow(new Date(sourceEvent.occurredAt), {
+            addSuffix: true,
+          })}
         </div>
-        <div className="text-xs text-muted-foreground">Received</div>
-        <div className="text-xs font-mono">
+        <div className="text-muted-foreground text-xs">Received</div>
+        <div className="font-mono text-xs">
           {formatDistanceToNow(new Date(receivedAt), { addSuffix: true })}
         </div>
-        <div className="text-xs text-muted-foreground">Stored</div>
-        <div className="text-xs font-mono">
+        <div className="text-muted-foreground text-xs">Stored</div>
+        <div className="font-mono text-xs">
           {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
         </div>
-        <div className="text-xs text-muted-foreground">Source ID</div>
-        <div className="text-xs font-mono truncate">{sourceEvent.sourceId}</div>
-        <div className="text-xs text-muted-foreground">Ingestion</div>
-        <div className="text-xs font-mono">{ingestionSource}</div>
+        <div className="text-muted-foreground text-xs">Source ID</div>
+        <div className="truncate font-mono text-xs">{sourceEvent.sourceId}</div>
+        <div className="text-muted-foreground text-xs">Ingestion</div>
+        <div className="font-mono text-xs">{ingestionSource}</div>
       </div>
     </div>
   );

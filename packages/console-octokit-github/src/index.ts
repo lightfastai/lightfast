@@ -1,5 +1,5 @@
-import { App, Octokit } from "octokit";
 import type { components } from "@octokit/openapi-types";
+import { App, Octokit } from "octokit";
 
 /**
  * GitHub App Authentication Utilities
@@ -27,8 +27,8 @@ export type OrgMembershipRole = "admin" | "member";
  * GitHub App configuration
  */
 export interface GitHubAppConfig {
-	appId: string;
-	privateKey: string;
+  appId: string;
+  privateKey: string;
 }
 
 /**
@@ -40,21 +40,21 @@ export interface GitHubAppConfig {
  * - Extra quotes or whitespace
  */
 export function formatPrivateKey(key: string): string {
-	let formatted = key;
+  let formatted = key;
 
-	// Remove any surrounding quotes
-	formatted = formatted.replace(/^["']|["']$/g, "");
+  // Remove any surrounding quotes
+  formatted = formatted.replace(/^["']|["']$/g, "");
 
-	// Replace literal \n with actual newlines
-	formatted = formatted.replace(/\\n/g, "\n");
+  // Replace literal \n with actual newlines
+  formatted = formatted.replace(/\\n/g, "\n");
 
-	// Ensure proper PEM format with headers
-	if (!formatted.includes("BEGIN")) {
-		// Key is likely base64 only, add headers
-		formatted = `-----BEGIN RSA PRIVATE KEY-----\n${formatted}\n-----END RSA PRIVATE KEY-----`;
-	}
+  // Ensure proper PEM format with headers
+  if (!formatted.includes("BEGIN")) {
+    // Key is likely base64 only, add headers
+    formatted = `-----BEGIN RSA PRIVATE KEY-----\n${formatted}\n-----END RSA PRIVATE KEY-----`;
+  }
 
-	return formatted;
+  return formatted;
 }
 
 /**
@@ -65,17 +65,17 @@ export function formatPrivateKey(key: string): string {
  * @returns GitHub App instance
  */
 export function createGitHubApp(
-	config: GitHubAppConfig,
-	shouldFormatKey = false,
+  config: GitHubAppConfig,
+  shouldFormatKey = false
 ): App {
-	const privateKey = shouldFormatKey
-		? formatPrivateKey(config.privateKey)
-		: config.privateKey;
+  const privateKey = shouldFormatKey
+    ? formatPrivateKey(config.privateKey)
+    : config.privateKey;
 
-	return new App({
-		appId: config.appId,
-		privateKey,
-	});
+  return new App({
+    appId: config.appId,
+    privateKey,
+  });
 }
 
 /**
@@ -87,17 +87,17 @@ export function createGitHubApp(
  * @returns List of installations accessible to the user
  */
 export async function getUserInstallations(
-	userAccessToken: string,
+  userAccessToken: string
 ): Promise<{ installations: GitHubInstallation[] }> {
-	const octokit = new Octokit({ auth: userAccessToken });
+  const octokit = new Octokit({ auth: userAccessToken });
 
-	const { data } = await octokit.request("GET /user/installations", {
-		headers: {
-			"X-GitHub-Api-Version": "2022-11-28",
-		},
-	});
+  const { data } = await octokit.request("GET /user/installations", {
+    headers: {
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
 
-	return data;
+  return data;
 }
 
 /**
@@ -111,20 +111,20 @@ export async function getUserInstallations(
  * @returns Installation details including account info
  */
 export async function getAppInstallation(
-	app: App,
-	installationId: number,
+  app: App,
+  installationId: number
 ): Promise<GitHubInstallation> {
-	const { data } = await app.octokit.request(
-		"GET /app/installations/{installation_id}",
-		{
-			installation_id: installationId,
-			headers: {
-				"X-GitHub-Api-Version": "2022-11-28",
-			},
-		},
-	);
+  const { data } = await app.octokit.request(
+    "GET /app/installations/{installation_id}",
+    {
+      installation_id: installationId,
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    }
+  );
 
-	return data;
+  return data;
 }
 
 /**
@@ -135,18 +135,18 @@ export async function getAppInstallation(
  * @returns List of repositories
  */
 export async function getInstallationRepositories(
-	app: App,
-	installationId: number,
+  app: App,
+  installationId: number
 ) {
-	const octokit = await app.getInstallationOctokit(installationId);
+  const octokit = await app.getInstallationOctokit(installationId);
 
-	const { data } = await octokit.request("GET /installation/repositories", {
-		headers: {
-			"X-GitHub-Api-Version": "2022-11-28",
-		},
-	});
+  const { data } = await octokit.request("GET /installation/repositories", {
+    headers: {
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
 
-	return data;
+  return data;
 }
 
 /**
@@ -160,27 +160,27 @@ export async function getInstallationRepositories(
  * @returns Pull request data
  */
 export async function getPullRequest(
-	app: App,
-	installationId: number,
-	owner: string,
-	repo: string,
-	pullNumber: number,
+  app: App,
+  installationId: number,
+  owner: string,
+  repo: string,
+  pullNumber: number
 ) {
-	const octokit = await app.getInstallationOctokit(installationId);
+  const octokit = await app.getInstallationOctokit(installationId);
 
-	const { data } = await octokit.request(
-		"GET /repos/{owner}/{repo}/pulls/{pull_number}",
-		{
-			owner,
-			repo,
-			pull_number: pullNumber,
-			headers: {
-				"X-GitHub-Api-Version": "2022-11-28",
-			},
-		},
-	);
+  const { data } = await octokit.request(
+    "GET /repos/{owner}/{repo}/pulls/{pull_number}",
+    {
+      owner,
+      repo,
+      pull_number: pullNumber,
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    }
+  );
 
-	return data;
+  return data;
 }
 
 /**
@@ -193,22 +193,22 @@ export async function getPullRequest(
  * @returns Repository data
  */
 export async function getRepository(
-	app: App,
-	installationId: number,
-	owner: string,
-	repo: string,
+  app: App,
+  installationId: number,
+  owner: string,
+  repo: string
 ) {
-	const octokit = await app.getInstallationOctokit(installationId);
+  const octokit = await app.getInstallationOctokit(installationId);
 
-	const { data } = await octokit.request("GET /repos/{owner}/{repo}", {
-		owner,
-		repo,
-		headers: {
-			"X-GitHub-Api-Version": "2022-11-28",
-		},
-	});
+  const { data } = await octokit.request("GET /repos/{owner}/{repo}", {
+    owner,
+    repo,
+    headers: {
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
 
-	return data;
+  return data;
 }
 
 /**
@@ -222,27 +222,27 @@ export async function getRepository(
  * @returns List of open pull requests
  */
 export async function listOpenPullRequests(
-	app: App,
-	installationId: number,
-	owner: string,
-	repo: string,
-	limit = 50,
+  app: App,
+  installationId: number,
+  owner: string,
+  repo: string,
+  limit = 50
 ) {
-	const octokit = await app.getInstallationOctokit(installationId);
+  const octokit = await app.getInstallationOctokit(installationId);
 
-	const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
-		owner,
-		repo,
-		state: "open",
-		per_page: limit,
-		sort: "updated",
-		direction: "desc",
-		headers: {
-			"X-GitHub-Api-Version": "2022-11-28",
-		},
-	});
+  const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
+    owner,
+    repo,
+    state: "open",
+    per_page: limit,
+    sort: "updated",
+    direction: "desc",
+    headers: {
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
 
-	return data;
+  return data;
 }
 
 /**
@@ -252,15 +252,15 @@ export async function listOpenPullRequests(
  * @returns User profile data including login (username)
  */
 export async function getAuthenticatedUser(userAccessToken: string) {
-	const octokit = new Octokit({ auth: userAccessToken });
+  const octokit = new Octokit({ auth: userAccessToken });
 
-	const { data } = await octokit.request("GET /user", {
-		headers: {
-			"X-GitHub-Api-Version": "2022-11-28",
-		},
-	});
+  const { data } = await octokit.request("GET /user", {
+    headers: {
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
 
-	return data;
+  return data;
 }
 
 /**
@@ -273,31 +273,33 @@ export async function getAuthenticatedUser(userAccessToken: string) {
  * @throws Error if user is not a member of the organization
  */
 export async function getOrganizationMembership(
-	userAccessToken: string,
-	org: string,
-	username: string,
+  userAccessToken: string,
+  org: string,
+  username: string
 ): Promise<{ role: OrgMembershipRole; state: string }> {
-	const octokit = new Octokit({ auth: userAccessToken });
+  const octokit = new Octokit({ auth: userAccessToken });
 
-	const { data } = await octokit.request(
-		"GET /orgs/{org}/memberships/{username}",
-		{
-			org,
-			username,
-			headers: {
-				"X-GitHub-Api-Version": "2022-11-28",
-			},
-		},
-	);
+  const { data } = await octokit.request(
+    "GET /orgs/{org}/memberships/{username}",
+    {
+      org,
+      username,
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    }
+  );
 
-	return {
-		role: data.role as OrgMembershipRole,
-		state: data.state,
-	};
+  return {
+    role: data.role as OrgMembershipRole,
+    state: data.state,
+  };
 }
-
-// Export throttled utilities
-export { createThrottledOctokit, getThrottledInstallationOctokit } from "./throttled";
 
 // Export GitHub environment configuration
 export { githubEnv } from "./env";
+// Export throttled utilities
+export {
+  createThrottledOctokit,
+  getThrottledInstallationOctokit,
+} from "./throttled";

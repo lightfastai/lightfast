@@ -1,16 +1,16 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { createNEMO } from "@rescale/nemo";
+import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
 import {
   composeCspOptions,
-  createClerkCspDirectives,
   createAnalyticsCspDirectives,
+  createClerkCspDirectives,
   createKnockCspDirectives,
-  createSentryCspDirectives,
   createNextjsCspDirectives,
+  createSentryCspDirectives,
 } from "@vendor/security/csp";
 import { securityMiddleware } from "@vendor/security/middleware";
-import { createNEMO } from "@rescale/nemo";
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { authUrl } from "~/lib/related-projects";
 
 // Security headers with composable CSP configuration
@@ -20,8 +20,8 @@ const securityHeaders = securityMiddleware(
     createClerkCspDirectives(),
     createAnalyticsCspDirectives(),
     createKnockCspDirectives(),
-    createSentryCspDirectives(),
-  ),
+    createSentryCspDirectives()
+  )
 );
 
 // Public routes that don't require authentication
@@ -68,7 +68,11 @@ const isOrgPageRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
 
 // v1 API routes - auth handled at route level (API key or session)
 // Must bypass Clerk middleware to allow API key authentication
-const isV1ApiRoute = createRouteMatcher(["/v1/(.*)", "/api/cli/(.*)", "/api/events/(.*)"]);
+const isV1ApiRoute = createRouteMatcher([
+  "/v1/(.*)",
+  "/api/cli/(.*)",
+  "/api/events/(.*)",
+]);
 
 /**
  * Compose middleware with NEMO
@@ -78,7 +82,7 @@ const composedMiddleware = createNEMO(
   {},
   {
     before: [],
-  },
+  }
 );
 
 /**
@@ -103,7 +107,10 @@ export default clerkMiddleware(
 
     // Helper to apply headers and return redirect
     const createRedirectResponse = async (url: URL) => {
-      console.log("[Middleware] Creating redirect response to:", url.toString());
+      console.log(
+        "[Middleware] Creating redirect response to:",
+        url.toString()
+      );
       const redirectResponse = NextResponse.redirect(url);
       const headersResponse = await securityHeaders();
 
@@ -154,7 +161,7 @@ export default clerkMiddleware(
     // Redirect pending users to team creation
     else if (isPending) {
       return await createRedirectResponse(
-        new URL("/account/teams/new", req.url),
+        new URL("/account/teams/new", req.url)
       );
     }
     // Protect all other routes
@@ -189,7 +196,7 @@ export default clerkMiddleware(
     },
     // Enable debug logging in development
     // debug: process.env.NODE_ENV === "development",
-  },
+  }
 );
 
 export const config = {

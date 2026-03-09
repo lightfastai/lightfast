@@ -7,10 +7,18 @@
  * processCallback validates that configurationId from the query matches
  * installation_id from the token exchange response.
  */
-import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from "vitest";
-import { vercel } from "./index";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { computeHmac } from "../../crypto";
 import type { VercelConfig } from "./auth";
+import { vercel } from "./index";
 
 // ── Global fetch mock ──────────────────────────────────────────────────────────
 
@@ -58,7 +66,7 @@ describe("oauth.buildAuthUrl", () => {
   it("builds Vercel integration install URL with integrationSlug", () => {
     const url = vercel.oauth.buildAuthUrl(testConfig, "state-abc");
     expect(url).toContain(
-      "https://vercel.com/integrations/my-vercel-integration/new",
+      "https://vercel.com/integrations/my-vercel-integration/new"
     );
   });
 
@@ -84,7 +92,7 @@ describe("oauth.exchangeCode", () => {
     const tokens = await vercel.oauth.exchangeCode(
       testConfig,
       "vercel-code-123",
-      "https://app.lightfast.ai/gateway/vercel/callback",
+      "https://app.lightfast.ai/gateway/vercel/callback"
     );
 
     expect(tokens.accessToken).toBe("vercel-access-token-abc");
@@ -93,22 +101,36 @@ describe("oauth.exchangeCode", () => {
   });
 
   it("sends POST to Vercel token endpoint with form-encoded body", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponseTeam),
+    });
 
-    await vercel.oauth.exchangeCode(testConfig, "code", "https://redirect.example.com");
+    await vercel.oauth.exchangeCode(
+      testConfig,
+      "code",
+      "https://redirect.example.com"
+    );
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://api.vercel.com/v2/oauth/access_token");
     expect((init.headers as Record<string, string>)["Content-Type"]).toBe(
-      "application/x-www-form-urlencoded",
+      "application/x-www-form-urlencoded"
     );
     expect(init.method).toBe("POST");
   });
 
   it("includes client_id, client_secret, code, and redirect_uri in body", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponseTeam),
+    });
 
-    await vercel.oauth.exchangeCode(testConfig, "my-code", "https://redirect.example.com");
+    await vercel.oauth.exchangeCode(
+      testConfig,
+      "my-code",
+      "https://redirect.example.com"
+    );
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const body = init.body as string;
@@ -121,7 +143,11 @@ describe("oauth.exchangeCode", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 400 });
 
     await expect(
-      vercel.oauth.exchangeCode(testConfig, "bad-code", "https://redirect.example.com"),
+      vercel.oauth.exchangeCode(
+        testConfig,
+        "bad-code",
+        "https://redirect.example.com"
+      )
     ).rejects.toThrow("Vercel token exchange failed: 400");
   });
 });
@@ -130,9 +156,9 @@ describe("oauth.exchangeCode", () => {
 
 describe("oauth.refreshToken", () => {
   it("always rejects — Vercel tokens do not support refresh", async () => {
-    await expect(vercel.oauth.refreshToken(testConfig, "any-token")).rejects.toThrow(
-      "do not support refresh",
-    );
+    await expect(
+      vercel.oauth.refreshToken(testConfig, "any-token")
+    ).rejects.toThrow("do not support refresh");
   });
 
   it("does not call fetch", async () => {
@@ -148,7 +174,7 @@ describe("oauth.revokeToken", () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
     await expect(
-      vercel.oauth.revokeToken(testConfig, "vercel-access-token"),
+      vercel.oauth.revokeToken(testConfig, "vercel-access-token")
     ).resolves.toBeUndefined();
   });
 
@@ -167,9 +193,9 @@ describe("oauth.revokeToken", () => {
   it("throws on HTTP error", async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 422 });
 
-    await expect(vercel.oauth.revokeToken(testConfig, "bad-token")).rejects.toThrow(
-      "Vercel token revocation failed: 422",
-    );
+    await expect(
+      vercel.oauth.revokeToken(testConfig, "bad-token")
+    ).rejects.toThrow("Vercel token revocation failed: 422");
   });
 });
 
@@ -178,13 +204,15 @@ describe("oauth.revokeToken", () => {
 describe("oauth.processCallback", () => {
   it("throws when code is missing", async () => {
     await expect(
-      vercel.oauth.processCallback(testConfig, { configurationId: "icfg-abc123" }),
+      vercel.oauth.processCallback(testConfig, {
+        configurationId: "icfg-abc123",
+      })
     ).rejects.toThrow("missing code");
   });
 
   it("throws when configurationId is missing", async () => {
     await expect(
-      vercel.oauth.processCallback(testConfig, { code: "vercel-code" }),
+      vercel.oauth.processCallback(testConfig, { code: "vercel-code" })
     ).rejects.toThrow("missing configurationId");
   });
 
@@ -198,12 +226,15 @@ describe("oauth.processCallback", () => {
       vercel.oauth.processCallback(testConfig, {
         code: "vercel-code",
         configurationId: "icfg-DIFFERENT",
-      }),
+      })
     ).rejects.toThrow("configurationId mismatch");
   });
 
   it("returns externalId = team_id when team is present", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponseTeam),
+    });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -214,7 +245,10 @@ describe("oauth.processCallback", () => {
   });
 
   it("returns externalId = user_id when team_id is null", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseUser) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponseUser),
+    });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -225,28 +259,40 @@ describe("oauth.processCallback", () => {
   });
 
   it("accountInfo has correct sourceType and version", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponseTeam),
+    });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
       configurationId: "icfg-abc123",
     });
 
-    if (result.status === "connected" || result.status === "connected-redirect") {
+    if (
+      result.status === "connected" ||
+      result.status === "connected-redirect"
+    ) {
       expect(result.accountInfo.sourceType).toBe("vercel");
       expect(result.accountInfo.version).toBe(1);
     }
   });
 
   it("accountInfo raw contains installation_id, user_id, team_id, token_type", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponseTeam),
+    });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
       configurationId: "icfg-abc123",
     });
 
-    if (result.status === "connected" || result.status === "connected-redirect") {
+    if (
+      result.status === "connected" ||
+      result.status === "connected-redirect"
+    ) {
       const raw = result.accountInfo.raw as typeof tokenResponseTeam;
       expect(raw.installation_id).toBe("icfg-abc123");
       expect(raw.user_id).toBe("user-xyz");
@@ -255,7 +301,10 @@ describe("oauth.processCallback", () => {
   });
 
   it("returns connected-redirect with nextUrl when next query param is present", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponseTeam),
+    });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -270,7 +319,10 @@ describe("oauth.processCallback", () => {
   });
 
   it("returns connected status when next query param is absent", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponseTeam),
+    });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -281,7 +333,10 @@ describe("oauth.processCallback", () => {
   });
 
   it("includes tokens in returned CallbackResult", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponseTeam),
+    });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
@@ -294,14 +349,20 @@ describe("oauth.processCallback", () => {
   });
 
   it("accountInfo includes all deployment event types", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(tokenResponseTeam) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(tokenResponseTeam),
+    });
 
     const result = await vercel.oauth.processCallback(testConfig, {
       code: "vercel-code",
       configurationId: "icfg-abc123",
     });
 
-    if (result.status === "connected" || result.status === "connected-redirect") {
+    if (
+      result.status === "connected" ||
+      result.status === "connected-redirect"
+    ) {
       expect(result.accountInfo.events).toContain("deployment.created");
       expect(result.accountInfo.events).toContain("deployment.succeeded");
       expect(result.accountInfo.events).toContain("deployment.error");
@@ -343,7 +404,9 @@ describe("webhook.verifySignature", () => {
   });
 
   it("uses clientIntegrationSecret as webhook secret", () => {
-    expect(vercel.webhook.extractSecret(testConfig)).toBe(testConfig.clientIntegrationSecret);
+    expect(vercel.webhook.extractSecret(testConfig)).toBe(
+      testConfig.clientIntegrationSecret
+    );
   });
 });
 
@@ -352,7 +415,9 @@ describe("webhook.verifySignature", () => {
 describe("webhook.extractEventType", () => {
   it("returns payload.type field", () => {
     const payload = { type: "deployment.succeeded" };
-    expect(vercel.webhook.extractEventType(new Headers(), payload)).toBe("deployment.succeeded");
+    expect(vercel.webhook.extractEventType(new Headers(), payload)).toBe(
+      "deployment.succeeded"
+    );
   });
 
   it("returns 'unknown' when type is absent", () => {
@@ -369,7 +434,9 @@ describe("webhook.extractEventType", () => {
       "deployment.check-rerequested",
     ];
     for (const type of types) {
-      expect(vercel.webhook.extractEventType(new Headers(), { type })).toBe(type);
+      expect(vercel.webhook.extractEventType(new Headers(), { type })).toBe(
+        type
+      );
     }
   });
 });
@@ -379,12 +446,16 @@ describe("webhook.extractEventType", () => {
 describe("webhook.extractDeliveryId", () => {
   it("returns payload.id when present", () => {
     const payload = { id: "evt-delivery-123" };
-    expect(vercel.webhook.extractDeliveryId(new Headers(), payload)).toBe("evt-delivery-123");
+    expect(vercel.webhook.extractDeliveryId(new Headers(), payload)).toBe(
+      "evt-delivery-123"
+    );
   });
 
   it("returns a UUID when payload.id is absent", () => {
     const id = vercel.webhook.extractDeliveryId(new Headers(), {});
-    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    expect(id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+    );
   });
 });
 
@@ -446,6 +517,8 @@ describe("webhook.parsePayload", () => {
   });
 
   it("accepts any object (loose schema)", () => {
-    expect(() => vercel.webhook.parsePayload({ arbitrary: "data" })).not.toThrow();
+    expect(() =>
+      vercel.webhook.parsePayload({ arbitrary: "data" })
+    ).not.toThrow();
   });
 });

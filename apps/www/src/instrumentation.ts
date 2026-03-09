@@ -20,8 +20,7 @@ const register = () => {
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
       environment: env.NEXT_PUBLIC_VERCEL_ENV,
       sendDefaultPii: true,
-      tracesSampleRate:
-        env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
+      tracesSampleRate: env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
       debug: false,
       enableLogs: true,
       includeLocalVariables: true,
@@ -40,8 +39,7 @@ const register = () => {
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
       environment: env.NEXT_PUBLIC_VERCEL_ENV,
       sendDefaultPii: true,
-      tracesSampleRate:
-        env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
+      tracesSampleRate: env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
       debug: false,
       enableLogs: true,
       integrations: sharedIntegrations(),

@@ -11,11 +11,14 @@ import { env } from "../env.js";
  */
 export async function writeTokenRecord(
   installationId: string,
-  oauthTokens: OAuthTokens,
+  oauthTokens: OAuthTokens
 ): Promise<void> {
-  const encryptedAccess = await encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
+  const encryptedAccess = await encrypt(
+    oauthTokens.accessToken,
+    env.ENCRYPTION_KEY!
+  );
   const encryptedRefresh = oauthTokens.refreshToken
-    ? await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY)
+    ? await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY!)
     : null;
 
   const expiresAt = oauthTokens.expiresIn
@@ -62,7 +65,7 @@ function assertEncryptedFormat(value: string): void {
   } catch (e) {
     const reason = e instanceof Error ? e.message : String(e);
     throw new Error(
-      `existingEncryptedRefreshToken does not appear to be an encrypted value — refusing to persist potentially plaintext token (${reason})`,
+      `existingEncryptedRefreshToken does not appear to be an encrypted value — refusing to persist potentially plaintext token (${reason})`
     );
   }
 }
@@ -77,13 +80,19 @@ export async function updateTokenRecord(
   tokenId: string,
   oauthTokens: OAuthTokens,
   existingEncryptedRefreshToken: string | null,
-  existingExpiresAt: string | null,
+  existingExpiresAt: string | null
 ): Promise<void> {
-  const encryptedAccess = await encrypt(oauthTokens.accessToken, env.ENCRYPTION_KEY);
+  const encryptedAccess = await encrypt(
+    oauthTokens.accessToken,
+    env.ENCRYPTION_KEY!
+  );
 
   let newEncryptedRefresh: string | null;
   if (oauthTokens.refreshToken) {
-    newEncryptedRefresh = await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY);
+    newEncryptedRefresh = await encrypt(
+      oauthTokens.refreshToken,
+      env.ENCRYPTION_KEY!
+    );
   } else if (existingEncryptedRefreshToken) {
     assertEncryptedFormat(existingEncryptedRefreshToken);
     newEncryptedRefresh = existingEncryptedRefreshToken;

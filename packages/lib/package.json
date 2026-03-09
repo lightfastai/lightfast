@@ -24,6 +24,10 @@
     "./nanoid": {
       "types": "./dist/nanoid.d.ts",
       "default": "./dist/nanoid.js"
+    },
+    "./friendly-words": {
+      "types": "./dist/friendly-words.d.ts",
+      "default": "./dist/friendly-words.js"
     }
   },
   "license": "MIT",
@@ -31,26 +35,20 @@
     "build": "tsup && tsc --incremental false",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "test": "vitest run",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "joyful": "^1.1.1",
     "nanoid": "catalog:",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "@types/uuid": "^10.0.0",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
-    "tsup": "^8.5.0",
+    "tsup": "^8.5.1",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

@@ -18,7 +18,6 @@
  * ```
  */
 
+export type { Client, WorkflowContext } from "@upstash/workflow";
 export { workflowClient } from "./client";
 export { serve } from "./nextjs";
-export type { Client } from "@upstash/workflow";
-export type { WorkflowContext } from "@upstash/workflow";

@@ -14,28 +14,19 @@
     "build": "tsup",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsup --watch",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/gateway": "catalog:",
-    "@repo/console-config": "workspace:*",
-    "@vendor/embed": "workspace:*",
     "@vendor/observability": "workspace:*",
     "ai": "catalog:",
-    "cohere-ai": "^7.19.0",
-    "zod": "catalog:zod4"
+    "cohere-ai": "^7.20.0",
+    "zod": "catalog:zod3"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
-    "tsup": "^8.5.0",
+    "tsup": "^8.5.1",
     "typescript": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

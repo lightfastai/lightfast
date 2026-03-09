@@ -158,7 +158,9 @@ export const linearProjectSchema = z.object({
   slackIssueStatuses: z.boolean(),
   lead: linearUserSchema.optional(),
   members: z.array(linearUserSchema),
-  teams: z.array(z.object({ id: z.string(), key: z.string(), name: z.string() })),
+  teams: z.array(
+    z.object({ id: z.string(), key: z.string(), name: z.string() })
+  ),
 });
 
 export const linearCycleSchema = z.object({
@@ -213,29 +215,33 @@ const linearWebhookBaseSchema = z.object({
 
 // ─── Webhook envelope schemas ─────────────────────────────────────────────────
 
-export const preTransformLinearIssueWebhookSchema = linearWebhookBaseSchema.extend({
-  type: z.literal("Issue"),
-  data: linearIssueSchema,
-  updatedFrom: z.unknown().optional(),
-});
+export const preTransformLinearIssueWebhookSchema =
+  linearWebhookBaseSchema.extend({
+    type: z.literal("Issue"),
+    data: linearIssueSchema,
+    updatedFrom: z.unknown().optional(),
+  });
 
-export const preTransformLinearCommentWebhookSchema = linearWebhookBaseSchema.extend({
-  type: z.literal("Comment"),
-  data: linearCommentSchema,
-  updatedFrom: z.unknown().optional(),
-});
+export const preTransformLinearCommentWebhookSchema =
+  linearWebhookBaseSchema.extend({
+    type: z.literal("Comment"),
+    data: linearCommentSchema,
+    updatedFrom: z.unknown().optional(),
+  });
 
-export const preTransformLinearProjectWebhookSchema = linearWebhookBaseSchema.extend({
-  type: z.literal("Project"),
-  data: linearProjectSchema,
-  updatedFrom: z.unknown().optional(),
-});
+export const preTransformLinearProjectWebhookSchema =
+  linearWebhookBaseSchema.extend({
+    type: z.literal("Project"),
+    data: linearProjectSchema,
+    updatedFrom: z.unknown().optional(),
+  });
 
-export const preTransformLinearCycleWebhookSchema = linearWebhookBaseSchema.extend({
-  type: z.literal("Cycle"),
-  data: linearCycleSchema,
-  updatedFrom: z.unknown().optional(),
-});
+export const preTransformLinearCycleWebhookSchema =
+  linearWebhookBaseSchema.extend({
+    type: z.literal("Cycle"),
+    data: linearCycleSchema,
+    updatedFrom: z.unknown().optional(),
+  });
 
 export const preTransformLinearProjectUpdateWebhookSchema =
   linearWebhookBaseSchema.extend({
@@ -274,9 +280,19 @@ export type LinearWebhookEventType =
   | "Cycle"
   | "ProjectUpdate";
 
-export type PreTransformLinearIssueWebhook = z.infer<typeof preTransformLinearIssueWebhookSchema>;
-export type PreTransformLinearCommentWebhook = z.infer<typeof preTransformLinearCommentWebhookSchema>;
-export type PreTransformLinearProjectWebhook = z.infer<typeof preTransformLinearProjectWebhookSchema>;
-export type PreTransformLinearCycleWebhook = z.infer<typeof preTransformLinearCycleWebhookSchema>;
-export type PreTransformLinearProjectUpdateWebhook = z.infer<typeof preTransformLinearProjectUpdateWebhookSchema>;
+export type PreTransformLinearIssueWebhook = z.infer<
+  typeof preTransformLinearIssueWebhookSchema
+>;
+export type PreTransformLinearCommentWebhook = z.infer<
+  typeof preTransformLinearCommentWebhookSchema
+>;
+export type PreTransformLinearProjectWebhook = z.infer<
+  typeof preTransformLinearProjectWebhookSchema
+>;
+export type PreTransformLinearCycleWebhook = z.infer<
+  typeof preTransformLinearCycleWebhookSchema
+>;
+export type PreTransformLinearProjectUpdateWebhook = z.infer<
+  typeof preTransformLinearProjectUpdateWebhookSchema
+>;
 export type LinearWebhookPayload = z.infer<typeof linearWebhookPayloadSchema>;

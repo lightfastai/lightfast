@@ -1,4 +1,4 @@
-import type { PostTransformEvent, EventKey } from "@repo/console-providers";
+import type { EventKey, PostTransformEvent } from "@repo/console-providers";
 import { EVENT_REGISTRY } from "@repo/console-providers";
 
 /**
@@ -41,27 +41,51 @@ export const SIGNIFICANCE_THRESHOLD = 40;
  */
 
 interface SignificanceResult {
-  score: number;
   factors: string[];
+  score: number;
 }
 
 /**
  * Content signals that increase significance.
  * Each match adds to the score.
  */
-const SIGNIFICANCE_SIGNALS: { pattern: RegExp; weight: number; factor: string }[] = [
+const SIGNIFICANCE_SIGNALS: {
+  pattern: RegExp;
+  weight: number;
+  factor: string;
+}[] = [
   // Critical keywords (high weight)
-  { pattern: /\b(breaking|critical|urgent|security|vulnerability|CVE-\d+)\b/i, weight: 20, factor: "critical_keyword" },
-  { pattern: /\b(hotfix|emergency|incident|outage|downtime)\b/i, weight: 15, factor: "incident_keyword" },
+  {
+    pattern: /\b(breaking|critical|urgent|security|vulnerability|CVE-\d+)\b/i,
+    weight: 20,
+    factor: "critical_keyword",
+  },
+  {
+    pattern: /\b(hotfix|emergency|incident|outage|downtime)\b/i,
+    weight: 15,
+    factor: "incident_keyword",
+  },
 
   // Important keywords (medium weight)
-  { pattern: /\b(major|important|significant|release|deploy)\b/i, weight: 10, factor: "important_keyword" },
+  {
+    pattern: /\b(major|important|significant|release|deploy)\b/i,
+    weight: 10,
+    factor: "important_keyword",
+  },
   { pattern: /\b(feature|feat|new)\b/i, weight: 8, factor: "feature_keyword" },
   { pattern: /\b(fix|bug|patch|resolve)\b/i, weight: 5, factor: "fix_keyword" },
 
   // Routine keywords (negative weight)
-  { pattern: /\b(chore|deps|dependencies|bump|update|upgrade)\b/i, weight: -10, factor: "routine_keyword" },
-  { pattern: /\b(typo|whitespace|formatting|lint)\b/i, weight: -15, factor: "trivial_keyword" },
+  {
+    pattern: /\b(chore|deps|dependencies|bump|update|upgrade)\b/i,
+    weight: -10,
+    factor: "routine_keyword",
+  },
+  {
+    pattern: /\b(typo|whitespace|formatting|lint)\b/i,
+    weight: -15,
+    factor: "trivial_keyword",
+  },
   { pattern: /\b(wip|draft|temp|test)\b/i, weight: -10, factor: "wip_keyword" },
 ];
 
@@ -75,16 +99,20 @@ const SIGNIFICANCE_SIGNALS: { pattern: RegExp; weight: number; factor: string }[
  * 4. Add bonus for substantial content
  * 5. Clamp to 0-100 range
  */
-export function scoreSignificance(sourceEvent: PostTransformEvent): SignificanceResult {
+export function scoreSignificance(
+  sourceEvent: PostTransformEvent
+): SignificanceResult {
   const factors: string[] = [];
 
   // 1. Event type base weight (from EVENT_REGISTRY)
-  const eventKey = `${sourceEvent.source}:${sourceEvent.sourceType}` as EventKey;
+  const eventKey =
+    `${sourceEvent.source}:${sourceEvent.sourceType}` as EventKey;
   let score = EVENT_REGISTRY[eventKey].weight;
   factors.push(`base:${sourceEvent.source}:${sourceEvent.sourceType}`);
 
   // 2. Content signal matching
-  const textToAnalyze = `${sourceEvent.title} ${sourceEvent.body}`.toLowerCase();
+  const textToAnalyze =
+    `${sourceEvent.title} ${sourceEvent.body}`.toLowerCase();
 
   for (const signal of SIGNIFICANCE_SIGNALS) {
     if (signal.pattern.test(textToAnalyze)) {

@@ -68,7 +68,6 @@ The following components are licensed under the **MIT License**:
 - `packages/email` - Email utilities
 - `packages/lib` - Shared library
 - `packages/prompt-engine` - Prompt engine
-- `packages/url-utils` - URL utilities
 
 #### Vendor Integrations
 - All packages in `vendor/` (analytics, clerk, db, email, embed, forms, inngest, knock, mastra, observability, pinecone, security, storage, upstash, upstash-workflow)

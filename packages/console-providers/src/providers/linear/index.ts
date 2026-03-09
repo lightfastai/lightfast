@@ -1,22 +1,28 @@
-import { defineProvider, actionEvent } from "../../define";
 import { z } from "zod";
-import { linearConfigSchema, linearAccountInfoSchema, linearOAuthRawSchema, linearOAuthResponseSchema, linearProviderConfigSchema } from "./auth";
-import type { LinearConfig, LinearAccountInfo } from "./auth";
-import type { OAuthTokens, CallbackResult } from "../../types";
 import { computeHmac, timingSafeEqual } from "../../crypto";
+import { actionEvent, defineProvider } from "../../define";
+import type { CallbackResult, OAuthTokens } from "../../types";
+import type { LinearAccountInfo, LinearConfig } from "./auth";
 import {
-  preTransformLinearIssueWebhookSchema,
-  preTransformLinearCommentWebhookSchema,
-  preTransformLinearProjectWebhookSchema,
-  preTransformLinearCycleWebhookSchema,
-  preTransformLinearProjectUpdateWebhookSchema,
+  linearAccountInfoSchema,
+  linearConfigSchema,
+  linearOAuthRawSchema,
+  linearOAuthResponseSchema,
+  linearProviderConfigSchema,
+} from "./auth";
+import {
   linearWebhookPayloadSchema,
+  preTransformLinearCommentWebhookSchema,
+  preTransformLinearCycleWebhookSchema,
+  preTransformLinearIssueWebhookSchema,
+  preTransformLinearProjectUpdateWebhookSchema,
+  preTransformLinearProjectWebhookSchema,
 } from "./schemas";
 import {
-  transformLinearIssue,
   transformLinearComment,
-  transformLinearProject,
   transformLinearCycle,
+  transformLinearIssue,
+  transformLinearProject,
   transformLinearProjectUpdate,
 } from "./transformers";
 
@@ -36,7 +42,7 @@ async function fetchLinearExternalId(accessToken: string): Promise<string> {
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
-      query: `{ viewer { id organization { id } } }`,
+      query: "{ viewer { id organization { id } } }",
     }),
   });
 
@@ -49,10 +55,14 @@ async function fetchLinearExternalId(accessToken: string): Promise<string> {
   };
 
   const orgId = result.data?.viewer?.organization?.id;
-  if (orgId) return orgId;
+  if (orgId) {
+    return orgId;
+  }
 
   const viewerId = result.data?.viewer?.id;
-  if (viewerId) return viewerId;
+  if (viewerId) {
+    return viewerId;
+  }
 
   throw new Error("Linear API did not return a viewer or organization ID");
 }
@@ -63,7 +73,7 @@ function stableStringify(value: unknown): string {
     return JSON.stringify(value);
   }
   if (Array.isArray(value)) {
-    return "[" + value.map(stableStringify).join(",") + "]";
+    return `[${value.map(stableStringify).join(",")}]`;
   }
   const sorted = Object.keys(value as Record<string, unknown>)
     .sort()
@@ -71,24 +81,24 @@ function stableStringify(value: unknown): string {
       (k) =>
         JSON.stringify(k) +
         ":" +
-        stableStringify((value as Record<string, unknown>)[k]),
+        stableStringify((value as Record<string, unknown>)[k])
     );
-  return "{" + sorted.join(",") + "}";
+  return `{${sorted.join(",")}}`;
 }
 
 /** Deterministic fingerprint from payload for idempotent delivery IDs. */
 function stableFingerprint(payload: unknown): string {
   const str = stableStringify(payload);
-  let h1 = 0x811c9dc5;
-  let h2 = 0x050c5d1f;
-  let h3 = 0x1a47e90b;
-  let h4 = 0x7fee3cb1;
+  let h1 = 0x81_1c_9d_c5;
+  let h2 = 0x05_0c_5d_1f;
+  let h3 = 0x1a_47_e9_0b;
+  let h4 = 0x7f_ee_3c_b1;
   for (let i = 0; i < str.length; i++) {
     const c = str.charCodeAt(i);
-    h1 = Math.imul(h1 ^ c, 0x01000193);
-    h2 = Math.imul(h2 ^ c, 0x01000193);
-    h3 = Math.imul(h3 ^ c, 0x01000193);
-    h4 = Math.imul(h4 ^ c, 0x01000193);
+    h1 = Math.imul(h1 ^ c, 0x01_00_01_93);
+    h2 = Math.imul(h2 ^ c, 0x01_00_01_93);
+    h3 = Math.imul(h3 ^ c, 0x01_00_01_93);
+    h4 = Math.imul(h4 ^ c, 0x01_00_01_93);
   }
   return [h1, h2, h3, h4]
     .map((h) => (h >>> 0).toString(16).padStart(8, "0"))
@@ -97,7 +107,11 @@ function stableFingerprint(payload: unknown): string {
 
 // ── Standalone OAuth helpers (avoids circular self-reference in processCallback) ──
 
-async function exchangeLinearCode(config: LinearConfig, code: string, redirectUri: string): Promise<OAuthTokens> {
+async function exchangeLinearCode(
+  config: LinearConfig,
+  code: string,
+  redirectUri: string
+): Promise<OAuthTokens> {
   const response = await fetch("https://api.linear.app/oauth/token", {
     method: "POST",
     signal: AbortSignal.timeout(15_000),
@@ -111,7 +125,9 @@ async function exchangeLinearCode(config: LinearConfig, code: string, redirectUr
     }).toString(),
   });
 
-  if (!response.ok) throw new Error(`Linear token exchange failed: ${response.status}`);
+  if (!response.ok) {
+    throw new Error(`Linear token exchange failed: ${response.status}`);
+  }
 
   const rawData: unknown = await response.json();
   const data = linearOAuthResponseSchema.parse(rawData);
@@ -134,12 +150,13 @@ export const linear = defineProvider({
     LINEAR_CLIENT_SECRET: z.string().min(1),
     LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1),
   },
-  createConfig: (env, runtime) => linearConfigSchema.parse({
-    clientId: env.LINEAR_CLIENT_ID,
-    clientSecret: env.LINEAR_CLIENT_SECRET,
-    webhookSigningSecret: env.LINEAR_WEBHOOK_SIGNING_SECRET,
-    callbackBaseUrl: runtime.callbackBaseUrl,
-  }),
+  createConfig: (env, runtime) =>
+    linearConfigSchema.parse({
+      clientId: env.LINEAR_CLIENT_ID,
+      clientSecret: env.LINEAR_CLIENT_SECRET,
+      webhookSigningSecret: env.LINEAR_WEBHOOK_SIGNING_SECRET,
+      callbackBaseUrl: runtime.callbackBaseUrl,
+    }),
   name: "linear",
   displayName: "Linear",
   description: "Connect your Linear workspace",
@@ -148,17 +165,44 @@ export const linear = defineProvider({
   providerConfigSchema: linearProviderConfigSchema,
 
   categories: {
-    Issue: { label: "Issues", description: "Capture issue creates, updates, and deletes", type: "observation" },
-    Comment: { label: "Comments", description: "Capture comment activity on issues", type: "observation" },
-    IssueLabel: { label: "Issue Labels", description: "Capture issue label changes", type: "observation" },
-    Project: { label: "Projects", description: "Capture project lifecycle events", type: "observation" },
-    Cycle: { label: "Cycles", description: "Capture sprint/cycle lifecycle events", type: "observation" },
-    ProjectUpdate: { label: "Project Updates", description: "Capture project status updates", type: "observation" },
+    Issue: {
+      label: "Issues",
+      description: "Capture issue creates, updates, and deletes",
+      type: "observation",
+    },
+    Comment: {
+      label: "Comments",
+      description: "Capture comment activity on issues",
+      type: "observation",
+    },
+    IssueLabel: {
+      label: "Issue Labels",
+      description: "Capture issue label changes",
+      type: "observation",
+    },
+    Project: {
+      label: "Projects",
+      description: "Capture project lifecycle events",
+      type: "observation",
+    },
+    Cycle: {
+      label: "Cycles",
+      description: "Capture sprint/cycle lifecycle events",
+      type: "observation",
+    },
+    ProjectUpdate: {
+      label: "Project Updates",
+      description: "Capture project status updates",
+      type: "observation",
+    },
   },
 
   events: {
     Issue: actionEvent({
-      label: "Issues", weight: 50, schema: preTransformLinearIssueWebhookSchema, transform: transformLinearIssue,
+      label: "Issues",
+      weight: 50,
+      schema: preTransformLinearIssueWebhookSchema,
+      transform: transformLinearIssue,
       actions: {
         created: { label: "Issue Created", weight: 50 },
         updated: { label: "Issue Updated", weight: 35 },
@@ -166,7 +210,10 @@ export const linear = defineProvider({
       },
     }),
     Comment: actionEvent({
-      label: "Comments", weight: 25, schema: preTransformLinearCommentWebhookSchema, transform: transformLinearComment,
+      label: "Comments",
+      weight: 25,
+      schema: preTransformLinearCommentWebhookSchema,
+      transform: transformLinearComment,
       actions: {
         created: { label: "Comment Added", weight: 25 },
         updated: { label: "Comment Updated", weight: 20 },
@@ -174,7 +221,10 @@ export const linear = defineProvider({
       },
     }),
     Project: actionEvent({
-      label: "Projects", weight: 45, schema: preTransformLinearProjectWebhookSchema, transform: transformLinearProject,
+      label: "Projects",
+      weight: 45,
+      schema: preTransformLinearProjectWebhookSchema,
+      transform: transformLinearProject,
       actions: {
         created: { label: "Project Created", weight: 45 },
         updated: { label: "Project Updated", weight: 35 },
@@ -182,7 +232,10 @@ export const linear = defineProvider({
       },
     }),
     Cycle: actionEvent({
-      label: "Cycles", weight: 40, schema: preTransformLinearCycleWebhookSchema, transform: transformLinearCycle,
+      label: "Cycles",
+      weight: 40,
+      schema: preTransformLinearCycleWebhookSchema,
+      transform: transformLinearCycle,
       actions: {
         created: { label: "Cycle Created", weight: 40 },
         updated: { label: "Cycle Updated", weight: 30 },
@@ -190,7 +243,10 @@ export const linear = defineProvider({
       },
     }),
     ProjectUpdate: actionEvent({
-      label: "Project Updates", weight: 45, schema: preTransformLinearProjectUpdateWebhookSchema, transform: transformLinearProjectUpdate,
+      label: "Project Updates",
+      weight: 45,
+      schema: preTransformLinearProjectUpdateWebhookSchema,
+      transform: transformLinearProjectUpdate,
       actions: {
         created: { label: "Project Update Posted", weight: 45 },
         updated: { label: "Project Update Edited", weight: 30 },
@@ -237,13 +293,17 @@ export const linear = defineProvider({
     extractSecret: (config) => config.webhookSigningSecret,
     verifySignature: (rawBody, headers, secret) => {
       const signature = headers.get("linear-signature");
-      if (!signature) return false;
+      if (!signature) {
+        return false;
+      }
       const expected = computeHmac(rawBody, secret, "SHA-256");
       return timingSafeEqual(signature, expected);
     },
     extractEventType: (_headers, payload) => {
       const p = payload as { type?: string; action?: string };
-      if (p.type && p.action) return `${p.type}:${p.action}`;
+      if (p.type && p.action) {
+        return `${p.type}:${p.action}`;
+      }
       return p.type ?? "unknown";
     },
     extractDeliveryId: (headers, payload) => {
@@ -260,9 +320,13 @@ export const linear = defineProvider({
     buildAuthUrl: (config, state, options) => {
       const url = new URL("https://linear.app/oauth/authorize");
       url.searchParams.set("client_id", config.clientId);
-      url.searchParams.set("redirect_uri", `${config.callbackBaseUrl}/gateway/linear/callback`);
+      url.searchParams.set(
+        "redirect_uri",
+        `${config.callbackBaseUrl}/gateway/linear/callback`
+      );
       url.searchParams.set("response_type", "code");
-      const scopes = (options?.scopes as string[] | undefined)?.join(",") ?? "read,write";
+      const scopes =
+        (options?.scopes as string[] | undefined)?.join(",") ?? "read,write";
       url.searchParams.set("scope", scopes);
       url.searchParams.set("state", state);
       return url.toString();
@@ -281,7 +345,9 @@ export const linear = defineProvider({
         }).toString(),
       });
 
-      if (!response.ok) throw new Error(`Linear token refresh failed: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Linear token refresh failed: ${response.status}`);
+      }
 
       const rawData: unknown = await response.json();
       const data = linearOAuthResponseSchema.parse(rawData);
@@ -304,16 +370,22 @@ export const linear = defineProvider({
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      if (!response.ok) throw new Error(`Linear token revocation failed: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Linear token revocation failed: ${response.status}`);
+      }
     },
     usesStoredToken: true,
     getActiveToken: (_config, _storedExternalId, storedAccessToken) => {
-      if (!storedAccessToken) return Promise.reject(new Error("linear: no stored access token"));
+      if (!storedAccessToken) {
+        return Promise.reject(new Error("linear: no stored access token"));
+      }
       return Promise.resolve(storedAccessToken);
     },
     processCallback: async (config, query) => {
       const code = query.code;
-      if (!code) throw new Error("missing code");
+      if (!code) {
+        throw new Error("missing code");
+      }
 
       const redirectUri = `${config.callbackBaseUrl}/gateway/linear/callback`;
       const oauthTokens = await exchangeLinearCode(config, code, redirectUri);
@@ -334,7 +406,11 @@ export const linear = defineProvider({
           events: ["Issue", "Comment", "IssueLabel", "Project", "Cycle"],
           installedAt: now,
           lastValidatedAt: now,
-          raw: { token_type: raw.token_type, scope: raw.scope, expires_in: raw.expires_in },
+          raw: {
+            token_type: raw.token_type,
+            scope: raw.scope,
+            expires_in: raw.expires_in,
+          },
         },
         tokens: oauthTokens,
       } satisfies CallbackResult<LinearAccountInfo>;

@@ -1,7 +1,7 @@
 import { categories as categoriesAPI } from "@vendor/cms";
-import { CategoryNav } from "~/components/blog-category-nav";
 import { RssIcon } from "lucide-react";
 import Link from "next/link";
+import { CategoryNav } from "~/components/blog-category-nav";
 
 export default async function BlogListingLayout({
   children,
@@ -11,12 +11,12 @@ export default async function BlogListingLayout({
   const allCategories = await categoriesAPI.getCategories();
 
   return (
-    <div className="w-full max-w-2xl mx-auto pt-24 pb-32">
-      <div className="flex items-center justify-between mb-12">
-        <h1 className="text-3xl font-pp text-foreground font-medium">Blog</h1>
+    <div className="mx-auto w-full max-w-2xl pt-24 pb-32">
+      <div className="mb-12 flex items-center justify-between">
+        <h1 className="font-medium font-pp text-3xl text-foreground">Blog</h1>
         <Link
+          className="inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
           href="/blog/feed.xml"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           title="Subscribe to RSS Feed"
         >
           <RssIcon className="h-4 w-4" />
@@ -26,12 +26,12 @@ export default async function BlogListingLayout({
 
       <div className="relative">
         {/* Desktop: Category nav positioned to the left of content */}
-        <div className="hidden xl:block absolute right-full mr-12 top-0">
+        <div className="absolute top-0 right-full mr-12 hidden xl:block">
           <CategoryNav categories={allCategories} />
         </div>
 
         {/* Mobile/tablet: Category nav above content */}
-        <div className="xl:hidden mb-8">
+        <div className="mb-8 xl:hidden">
           <CategoryNav categories={allCategories} />
         </div>
 

@@ -1,26 +1,29 @@
-import { postTransformEventSchema } from "./post-transform-event";
 import type { PostTransformEvent } from "./post-transform-event";
+import { postTransformEventSchema } from "./post-transform-event";
 
 export interface ValidationResult<T> {
-  success: boolean;
   data?: T;
   errors?: string[];
+  success: boolean;
 }
 
 export function logValidationErrors(
   transformerName: string,
   event: PostTransformEvent,
-  errors: string[],
+  errors: string[]
 ): void {
-  console.error(`[Transformer:${transformerName}] Invalid PostTransformEvent:`, {
-    sourceId: event.sourceId,
-    sourceType: event.sourceType,
-    errors,
-  });
+  console.error(
+    `[Transformer:${transformerName}] Invalid PostTransformEvent:`,
+    {
+      sourceId: event.sourceId,
+      sourceType: event.sourceType,
+      errors,
+    }
+  );
 }
 
 export function validatePostTransformEvent(
-  event: PostTransformEvent,
+  event: PostTransformEvent
 ): ValidationResult<PostTransformEvent> {
   const result = postTransformEventSchema.safeParse(event);
 
@@ -30,9 +33,7 @@ export function validatePostTransformEvent(
 
   return {
     success: false,
-    errors: result.error.issues.map(
-      (e) => `${e.path.join(".")}: ${e.message}`,
-    ),
+    errors: result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`),
   };
 }
 
@@ -40,7 +41,7 @@ export function validatePostTransformEvent(
  * Sanitize a PostTransformEvent by stripping invalid URL fields.
  */
 export function sanitizePostTransformEvent(
-  event: PostTransformEvent,
+  event: PostTransformEvent
 ): PostTransformEvent {
   const isValidUrl = (u: string): boolean => {
     try {

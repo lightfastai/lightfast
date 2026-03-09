@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const server = {
   GATEWAY_API_KEY: z.string().min(1),
-  SENTRY_DSN: z.url().optional(),
+  SENTRY_DSN: z.string().url().optional(),
   INNGEST_APP_NAME: z.string().min(1).startsWith("lightfast-"),
   INNGEST_EVENT_KEY: z.string().min(1).optional(),
   INNGEST_SIGNING_KEY: z.string().min(1).startsWith("signkey-").optional(),

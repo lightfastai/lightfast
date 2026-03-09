@@ -3,9 +3,7 @@
   "tags": ["vendor"],
   "tasks": {
     "build": {
-      "passThroughEnv": [
-        "FLAGS"
-      ]
+      "passThroughEnv": ["FLAGS"]
     }
   }
 }

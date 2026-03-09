@@ -1,38 +1,53 @@
-import type { TRPCRouterRecord } from "@trpc/server";
-import { TRPCError } from "@trpc/server";
 import { db } from "@db/console/client";
 import {
-  orgWorkspaces,
-  workspaceKnowledgeDocuments,
-  workspaceWorkflowRuns,
-  workspaceIntegrations,
   gwInstallations,
+  orgWorkspaces,
   workspaceActorProfiles,
   workspaceEvents,
+  workspaceIntegrations,
+  workspaceKnowledgeDocuments,
+  workspaceWorkflowRuns,
 } from "@db/console/schema";
-import { eq, and, desc, count, sql, inArray, sum, avg, gte, like } from "drizzle-orm";
-import { getWorkspaceKey, createCustomWorkspace } from "@db/console/utils";
+import { createCustomWorkspace, getWorkspaceKey } from "@db/console/utils";
+import type { ProviderName, SourceType } from "@repo/console-providers";
 import {
-  workspaceListInputSchema,
+  getDefaultSyncEvents,
+  PROVIDERS,
+  sourceTypeSchema,
+} from "@repo/console-providers";
+import type { BackfillTriggerPayload } from "@repo/console-validation";
+import {
   workspaceCreateInputSchema,
-  workspaceStatisticsInputSchema,
-  workspaceUpdateNameInputSchema,
-  workspaceJobPercentilesInputSchema,
-  workspacePerformanceTimeSeriesInputSchema,
-  workspaceSystemHealthInputSchema,
   workspaceIntegrationDisconnectInputSchema,
+  workspaceJobPercentilesInputSchema,
+  workspaceListInputSchema,
+  workspacePerformanceTimeSeriesInputSchema,
+  workspaceStatisticsInputSchema,
+  workspaceSystemHealthInputSchema,
+  workspaceUpdateNameInputSchema,
 } from "@repo/console-validation/schemas";
-import { z } from "zod";
-import { clerkClient } from "@vendor/clerk/server";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
-import { orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
+import { createBackfillClient } from "@repo/gateway-service-clients";
+import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
+import { clerkClient } from "@vendor/clerk/server";
+import {
+  and,
+  avg,
+  count,
+  desc,
+  eq,
+  gte,
+  inArray,
+  like,
+  sql,
+  sum,
+} from "drizzle-orm";
+import { z } from "zod";
+import { env } from "../../env";
 import { recordActivity } from "../../lib/activity";
 import { ensureActorLinked } from "../../lib/actor-linking";
-import type { BackfillTriggerPayload } from "@repo/console-validation";
-import { createBackfillClient } from "@repo/gateway-service-clients";
-import { env } from "../../env";
-import { getDefaultSyncEvents, sourceTypeSchema, PROVIDERS } from "@repo/console-providers";
-import type { ProviderName, SourceType } from "@repo/console-providers";
+import { orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 
 /**
  * Workspace router - internal procedures for API routes
@@ -53,7 +68,6 @@ export const workspaceRouter = {
   listByClerkOrgSlug: orgScopedProcedure
     .input(workspaceListInputSchema)
     .query(async ({ ctx, input }) => {
-
       // Get org by slug from URL
       const clerk = await clerkClient();
 
@@ -70,12 +84,13 @@ export const workspaceRouter = {
       }
 
       // Verify user has access to this organization
-      const membership = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: clerkOrg.id,
-      });
+      const membership =
+        await clerk.organizations.getOrganizationMembershipList({
+          organizationId: clerkOrg.id,
+        });
 
       const userMembership = membership.data.find(
-        (m) => m.publicUserData?.userId === ctx.auth.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId
       );
 
       if (!userMembership) {
@@ -164,16 +179,16 @@ export const workspaceRouter = {
   create: orgScopedProcedure
     .input(workspaceCreateInputSchema)
     .mutation(async ({ ctx, input }) => {
-
       // Verify user has access to this organization
       const clerk = await clerkClient();
 
-      const membership = await clerk.organizations.getOrganizationMembershipList({
-        organizationId: input.clerkOrgId,
-      });
+      const membership =
+        await clerk.organizations.getOrganizationMembershipList({
+          organizationId: input.clerkOrgId,
+        });
 
       const userMembership = membership.data.find(
-        (m) => m.publicUserData?.userId === ctx.auth.userId,
+        (m) => m.publicUserData?.userId === ctx.auth.userId
       );
 
       if (!userMembership) {
@@ -187,7 +202,7 @@ export const workspaceRouter = {
       try {
         const workspaceId = await createCustomWorkspace(
           input.clerkOrgId,
-          input.workspaceName,
+          input.workspaceName
         );
 
         // Fetch workspace to get slug
@@ -223,13 +238,16 @@ export const workspaceRouter = {
 
         // Trigger backfill for all active connections in this org (best-effort)
         const activeInstallations = await db
-          .select({ id: gwInstallations.id, provider: gwInstallations.provider })
+          .select({
+            id: gwInstallations.id,
+            provider: gwInstallations.provider,
+          })
           .from(gwInstallations)
           .where(
             and(
               eq(gwInstallations.orgId, input.clerkOrgId),
-              eq(gwInstallations.status, "active"),
-            ),
+              eq(gwInstallations.status, "active")
+            )
           );
 
         for (const inst of activeInstallations) {
@@ -243,11 +261,14 @@ export const workspaceRouter = {
         return {
           workspaceId,
           workspaceKey,
-          workspaceSlug: workspace.slug,  // Internal slug for Pinecone
-          workspaceName: workspace.name,  // User-facing name for URLs
+          workspaceSlug: workspace.slug, // Internal slug for Pinecone
+          workspaceName: workspace.name, // User-facing name for URLs
         };
       } catch (error) {
-        if (error instanceof Error && error.message.includes("already exists")) {
+        if (
+          error instanceof Error &&
+          error.message.includes("already exists")
+        ) {
           throw new TRPCError({
             code: "CONFLICT",
             message: error.message,
@@ -291,7 +312,7 @@ export const workspaceRouter = {
           eq(workspaceWorkflowRuns.workspaceId, workspaceId),
           eq(workspaceWorkflowRuns.status, "completed"),
           gte(workspaceWorkflowRuns.createdAt, startTime),
-          sql`${workspaceWorkflowRuns.durationMs} IS NOT NULL`,
+          sql`${workspaceWorkflowRuns.durationMs} IS NOT NULL`
         ),
         columns: {
           durationMs: true,
@@ -326,7 +347,7 @@ export const workspaceRouter = {
         p50: getPercentile(50),
         p95: getPercentile(95),
         p99: getPercentile(99),
-        max: durations[durations.length - 1] ?? 0,
+        max: durations.at(-1) ?? 0,
         sampleSize: durations.length,
       };
     }),
@@ -363,7 +384,7 @@ export const workspaceRouter = {
       const recentJobs = await db.query.workspaceWorkflowRuns.findMany({
         where: and(
           eq(workspaceWorkflowRuns.workspaceId, workspaceId),
-          gte(workspaceWorkflowRuns.createdAt, startTime),
+          gte(workspaceWorkflowRuns.createdAt, startTime)
         ),
         columns: {
           createdAt: true,
@@ -435,7 +456,6 @@ export const workspaceRouter = {
       return points;
     }),
 
-
   /**
    * Update workspace name
    * Used by workspace settings page to update the user-facing name
@@ -454,7 +474,7 @@ export const workspaceRouter = {
       const existingWorkspace = await db.query.orgWorkspaces.findFirst({
         where: and(
           eq(orgWorkspaces.clerkOrgId, clerkOrgId),
-          eq(orgWorkspaces.name, input.newName),
+          eq(orgWorkspaces.name, input.newName)
         ),
       });
 
@@ -544,12 +564,14 @@ export const workspaceRouter = {
           .from(workspaceIntegrations)
           .innerJoin(
             gwInstallations,
-            eq(workspaceIntegrations.installationId, gwInstallations.id),
+            eq(workspaceIntegrations.installationId, gwInstallations.id)
           )
-          .where(and(
-            eq(workspaceIntegrations.workspaceId, workspaceId),
-            eq(workspaceIntegrations.isActive, true),
-          ))
+          .where(
+            and(
+              eq(workspaceIntegrations.workspaceId, workspaceId),
+              eq(workspaceIntegrations.isActive, true)
+            )
+          )
           .orderBy(desc(workspaceIntegrations.connectedAt));
 
         // Format for compatibility with old interface
@@ -561,7 +583,7 @@ export const workspaceRouter = {
               acc[s.sourceType] = (acc[s.sourceType] ?? 0) + 1;
               return acc;
             },
-            {} as Record<string, number>,
+            {} as Record<string, number>
           ),
           list: sources.map((s) => ({
             id: s.id,
@@ -578,7 +600,8 @@ export const workspaceRouter = {
             lastSyncStatus: s.lastSyncStatus, // For UI compatibility
             metadata: s.providerConfig,
             backfillConfig: s.backfillConfig,
-            resource: { // For backward compatibility
+            resource: {
+              // For backward compatibility
               id: s.id,
               resourceData: s.providerConfig,
             },
@@ -614,7 +637,10 @@ export const workspaceRouter = {
             documentCount: count(workspaceKnowledgeDocuments.id),
           })
           .from(orgWorkspaces)
-          .leftJoin(workspaceKnowledgeDocuments, eq(orgWorkspaces.id, workspaceKnowledgeDocuments.workspaceId))
+          .leftJoin(
+            workspaceKnowledgeDocuments,
+            eq(orgWorkspaces.id, workspaceKnowledgeDocuments.workspaceId)
+          )
           .where(eq(orgWorkspaces.id, workspaceId))
           .groupBy(orgWorkspaces.id)
           .limit(1);
@@ -698,25 +724,39 @@ export const workspaceRouter = {
         });
 
         // Get recent jobs (last 24 hours)
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const oneDayAgo = new Date(
+          Date.now() - 24 * 60 * 60 * 1000
+        ).toISOString();
 
         // Get job statistics with SQL aggregation (single query)
         const [jobStats] = await db
           .select({
             total: count(),
-            queued: sum(sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'queued' THEN 1 ELSE 0 END`),
-            running: sum(sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'running' THEN 1 ELSE 0 END`),
-            completed: sum(sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'completed' THEN 1 ELSE 0 END`),
-            failed: sum(sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'failed' THEN 1 ELSE 0 END`),
-            cancelled: sum(sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'cancelled' THEN 1 ELSE 0 END`),
-            avgDurationMs: avg(sql<number>`CAST(${workspaceWorkflowRuns.durationMs} AS BIGINT)`),
+            queued: sum(
+              sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'queued' THEN 1 ELSE 0 END`
+            ),
+            running: sum(
+              sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'running' THEN 1 ELSE 0 END`
+            ),
+            completed: sum(
+              sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'completed' THEN 1 ELSE 0 END`
+            ),
+            failed: sum(
+              sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'failed' THEN 1 ELSE 0 END`
+            ),
+            cancelled: sum(
+              sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'cancelled' THEN 1 ELSE 0 END`
+            ),
+            avgDurationMs: avg(
+              sql<number>`CAST(${workspaceWorkflowRuns.durationMs} AS BIGINT)`
+            ),
           })
           .from(workspaceWorkflowRuns)
           .where(
             and(
               eq(workspaceWorkflowRuns.workspaceId, workspaceId),
-              gte(workspaceWorkflowRuns.createdAt, oneDayAgo),
-            ),
+              gte(workspaceWorkflowRuns.createdAt, oneDayAgo)
+            )
           );
 
         return {
@@ -725,7 +765,8 @@ export const workspaceRouter = {
           failed: Number(jobStats?.failed) || 0,
           successRate:
             (jobStats?.total ?? 0) > 0
-              ? ((Number(jobStats?.completed) || 0) / (jobStats?.total ?? 0)) * 100
+              ? ((Number(jobStats?.completed) || 0) / (jobStats?.total ?? 0)) *
+                100
               : 0,
           avgDurationMs: Math.round(Number(jobStats?.avgDurationMs) || 0),
         };
@@ -746,12 +787,14 @@ export const workspaceRouter = {
         });
 
         // Get recent jobs (last 24 hours)
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const oneDayAgo = new Date(
+          Date.now() - 24 * 60 * 60 * 1000
+        ).toISOString();
 
         const recentJobs = await db.query.workspaceWorkflowRuns.findMany({
           where: and(
             eq(workspaceWorkflowRuns.workspaceId, workspaceId),
-            gte(workspaceWorkflowRuns.createdAt, oneDayAgo),
+            gte(workspaceWorkflowRuns.createdAt, oneDayAgo)
           ),
           orderBy: [desc(workspaceWorkflowRuns.createdAt)],
           limit: 5,
@@ -789,12 +832,14 @@ export const workspaceRouter = {
         });
 
         // Get recent jobs for health calculation (last 24h)
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const oneDayAgo = new Date(
+          Date.now() - 24 * 60 * 60 * 1000
+        ).toISOString();
 
         const recentJobs = await db.query.workspaceWorkflowRuns.findMany({
           where: and(
             eq(workspaceWorkflowRuns.workspaceId, workspaceId),
-            gte(workspaceWorkflowRuns.createdAt, oneDayAgo),
+            gte(workspaceWorkflowRuns.createdAt, oneDayAgo)
           ),
           columns: {
             status: true,
@@ -804,15 +849,21 @@ export const workspaceRouter = {
 
         // Calculate health status helper
         const getHealthStatus = (
-          successRate: number,
+          successRate: number
         ): "healthy" | "degraded" | "down" => {
-          if (successRate >= 95) return "healthy";
-          if (successRate >= 80) return "degraded";
+          if (successRate >= 95) {
+            return "healthy";
+          }
+          if (successRate >= 80) {
+            return "degraded";
+          }
           return "down";
         };
 
         // Calculate overall workspace health
-        const completedJobs = recentJobs.filter((j) => j.status === "completed");
+        const completedJobs = recentJobs.filter(
+          (j) => j.status === "completed"
+        );
         const workspaceSuccessRate =
           recentJobs.length > 0
             ? (completedJobs.length / recentJobs.length) * 100
@@ -873,16 +924,16 @@ export const workspaceRouter = {
           projectId: z.string(),
           projectName: z.string(),
           installationId: z.string(),
-        }),
+        })
       )
       .mutation(async ({ ctx, input }) => {
-        const { workspaceId, projectId, projectName, installationId } = input;
+        const { workspaceId, projectId, installationId } = input;
 
         // Verify org owns the workspace
         const workspace = await ctx.db.query.orgWorkspaces.findFirst({
           where: and(
             eq(orgWorkspaces.id, workspaceId),
-            eq(orgWorkspaces.clerkOrgId, ctx.auth.orgId),
+            eq(orgWorkspaces.clerkOrgId, ctx.auth.orgId)
           ),
         });
 
@@ -898,7 +949,7 @@ export const workspaceRouter = {
           where: and(
             eq(gwInstallations.id, installationId),
             eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, "vercel"),
+            eq(gwInstallations.provider, "vercel")
           ),
         });
 
@@ -921,7 +972,7 @@ export const workspaceRouter = {
         const existing = await ctx.db.query.workspaceIntegrations.findFirst({
           where: and(
             eq(workspaceIntegrations.workspaceId, workspaceId),
-            eq(workspaceIntegrations.providerResourceId, projectId),
+            eq(workspaceIntegrations.providerResourceId, projectId)
           ),
         });
 
@@ -981,7 +1032,7 @@ export const workspaceRouter = {
       .input(
         z.object({
           integrationId: z.string(),
-        }),
+        })
       )
       .mutation(async ({ ctx, input }) => {
         const integration = await ctx.db.query.workspaceIntegrations.findFirst({
@@ -1014,7 +1065,7 @@ export const workspaceRouter = {
         z.object({
           integrationId: z.string(),
           events: z.array(z.string()),
-        }),
+        })
       )
       .mutation(async ({ ctx, input }) => {
         // Verify integration belongs to user's org
@@ -1074,11 +1125,11 @@ export const workspaceRouter = {
               z.object({
                 resourceId: z.string(),
                 resourceName: z.string(),
-              }),
+              })
             )
             .min(1)
             .max(50),
-        }),
+        })
       )
       .mutation(async ({ ctx, input }) => {
         const { provider, workspaceId, gwInstallationId, resources } = input;
@@ -1087,12 +1138,15 @@ export const workspaceRouter = {
         const workspace = await ctx.db.query.orgWorkspaces.findFirst({
           where: and(
             eq(orgWorkspaces.id, workspaceId),
-            eq(orgWorkspaces.clerkOrgId, ctx.auth.orgId),
+            eq(orgWorkspaces.clerkOrgId, ctx.auth.orgId)
           ),
         });
 
         if (!workspace) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Workspace not found" });
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Workspace not found",
+          });
         }
 
         // 2. Verify org owns the installation for this provider
@@ -1100,7 +1154,7 @@ export const workspaceRouter = {
           where: and(
             eq(gwInstallations.id, gwInstallationId),
             eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, provider),
+            eq(gwInstallations.provider, provider)
           ),
         });
 
@@ -1115,12 +1169,12 @@ export const workspaceRouter = {
         const existing = await ctx.db.query.workspaceIntegrations.findMany({
           where: and(
             eq(workspaceIntegrations.workspaceId, workspaceId),
-            eq(workspaceIntegrations.installationId, gwInstallationId),
+            eq(workspaceIntegrations.installationId, gwInstallationId)
           ),
         });
 
         const existingMap = new Map(
-          existing.map((e) => [e.providerResourceId, e]),
+          existing.map((e) => [e.providerResourceId, e])
         );
 
         // 4. Categorize resources
@@ -1132,10 +1186,10 @@ export const workspaceRouter = {
           const existingIntegration = existingMap.get(resource.resourceId);
           if (!existingIntegration) {
             toCreate.push(resource);
-          } else if (!existingIntegration.isActive) {
-            toReactivate.push(existingIntegration.id);
-          } else {
+          } else if (existingIntegration.isActive) {
             alreadyActive.push(resource.resourceId);
+          } else {
+            toReactivate.push(existingIntegration.id);
           }
         }
 
@@ -1253,7 +1307,7 @@ export const workspaceRouter = {
           cursor: z.number().optional(),
           search: z.string().max(200).optional(),
           receivedAfter: z.string().datetime().optional(),
-        }),
+        })
       )
       .query(async ({ ctx, input }) => {
         const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
@@ -1276,7 +1330,7 @@ export const workspaceRouter = {
 
         if (search) {
           conditions.push(
-            sql`${workspaceEvents.sourceEvent}->>'title' ILIKE ${"%" + search + "%"}`,
+            sql`${workspaceEvents.sourceEvent}->>'title' ILIKE ${`%${search}%`}`
           );
         }
 
@@ -1301,7 +1355,7 @@ export const workspaceRouter = {
 
         const hasMore = rows.length > limit;
         const events = hasMore ? rows.slice(0, limit) : rows;
-        const nextCursor = hasMore ? (events[events.length - 1]?.id ?? null) : null;
+        const nextCursor = hasMore ? (events.at(-1)?.id ?? null) : null;
 
         return {
           workspaceId,

@@ -4,19 +4,19 @@ import { PROVIDER_SLUGS } from "@repo/console-providers";
 // ── Normalized Types ─────────────────────────────────────────────────────────
 
 export interface NormalizedInstallation {
-  id: string;
-  externalId: string;
-  label: string;
   avatarUrl?: string | null;
+  externalId: string;
+  id: string;
+  label: string;
 }
 
 export interface NormalizedResource {
-  id: string;
-  name: string;
-  subtitle?: string | null;
   badge?: string | null;
   iconColor?: string | null;
   iconLabel?: string | null;
+  id: string;
+  name: string;
+  subtitle?: string | null;
 }
 
 // ── Adapter Interface ────────────────────────────────────────────────────────
@@ -24,16 +24,6 @@ export interface NormalizedResource {
 export type InstallationMode = "multi" | "merged" | "single";
 
 export interface ProviderConnectAdapter {
-  provider: ProviderName;
-  installationMode: InstallationMode;
-  resourceLabel: string;
-  resourceQueryKeys: readonly (readonly unknown[])[];
-
-  getConnectionQueryOptions: (trpc: any) => any;
-  extractInstallations: (data: unknown) => NormalizedInstallation[];
-  getResourceQueryOptions: (trpc: any, installationId: string, externalId: string) => any;
-  extractResources: (data: unknown) => NormalizedResource[];
-
   /**
    * Build the `resources` array for the generic `bulkLinkResources` mutation.
    * Maps raw tRPC response items to `{ resourceId, resourceName, metadata }`.
@@ -45,6 +35,19 @@ export interface ProviderConnectAdapter {
 
   /** Optional: custom OAuth URL builder (GitHub "Adjust permissions") */
   customConnectUrl?: (data: { url: string; state: string }) => string;
+  extractInstallations: (data: unknown) => NormalizedInstallation[];
+  extractResources: (data: unknown) => NormalizedResource[];
+
+  getConnectionQueryOptions: (trpc: any) => any;
+  getResourceQueryOptions: (
+    trpc: any,
+    installationId: string,
+    externalId: string
+  ) => any;
+  installationMode: InstallationMode;
+  provider: ProviderName;
+  resourceLabel: string;
+  resourceQueryKeys: readonly (readonly unknown[])[];
 }
 
 // ── GitHub ────────────────────────────────────────────────────────────────────
@@ -59,7 +62,9 @@ const githubAdapter: ProviderConnectAdapter = {
     trpc.connections.github.list.queryOptions(),
 
   extractInstallations: (data) => {
-    if (!data) return [];
+    if (!data) {
+      return [];
+    }
     const d = data as any;
     return (d.installations ?? []).map((inst: any) => ({
       id: inst.gwInstallationId,
@@ -182,7 +187,9 @@ const sentryAdapter: ProviderConnectAdapter = {
     trpc.connections.sentry.get.queryOptions(),
 
   extractInstallations: (data) => {
-    if (!data) return [];
+    if (!data) {
+      return [];
+    }
     const d = data as any;
     return [{ id: d.id, externalId: d.id, label: "Sentry" }];
   },

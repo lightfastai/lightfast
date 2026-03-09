@@ -33,7 +33,5 @@ export const relayBaseUrl = `${withRelatedProject({
 // Get the console URL dynamically based on environment
 export const consoleUrl = withRelatedProject({
   projectName: "lightfast-console",
-  defaultHost: isDevelopment
-    ? "http://localhost:3024"
-    : "https://lightfast.ai",
+  defaultHost: isDevelopment ? "http://localhost:3024" : "https://lightfast.ai",
 });

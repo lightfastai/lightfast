@@ -4,99 +4,99 @@ import type { CacheStrategy } from "../strategy/base";
 import { ClineConversationStrategy } from "../strategy/cline-conversation";
 
 export interface AnthropicCacheConfig {
-	/**
-	 * Caching strategy to use
-	 * @default ClineConversationStrategy
-	 */
-	strategy?: CacheStrategy;
-	/**
-	 * Whether to enable cache control
-	 * @default true
-	 */
-	enabled?: boolean;
+  /**
+   * Whether to enable cache control
+   * @default true
+   */
+  enabled?: boolean;
+  /**
+   * Caching strategy to use
+   * @default ClineConversationStrategy
+   */
+  strategy?: CacheStrategy;
 }
 
 /**
  * Anthropic-specific implementation of provider caching
  */
 export class AnthropicProviderCache implements ProviderCache {
-	private strategy: CacheStrategy;
-	private enabled: boolean;
+  private readonly strategy: CacheStrategy;
+  private readonly enabled: boolean;
 
-	constructor(config: AnthropicCacheConfig = {}) {
-		this.strategy = config.strategy ?? new ClineConversationStrategy();
-		this.enabled = config.enabled ?? true;
-	}
+  constructor(config: AnthropicCacheConfig = {}) {
+    this.strategy = config.strategy ?? new ClineConversationStrategy();
+    this.enabled = config.enabled ?? true;
+  }
 
-	applySystemCaching(system: string): ModelMessage[] {
-		if (!this.enabled) {
-			return [
-				{
-					role: "system",
-					content: system,
-				},
-			];
-		}
+  applySystemCaching(system: string): ModelMessage[] {
+    if (!this.enabled) {
+      return [
+        {
+          role: "system",
+          content: system,
+        },
+      ];
+    }
 
-		// For Cline strategy, always cache system prompt
-		if (this.cacheSystemPrompt) {
-			return [
-				{
-					role: "system",
-					content: system,
-					providerOptions: {
-						anthropic: {
-							cacheControl: { type: "ephemeral" },
-						},
-					},
-				},
-			];
-		}
+    // For Cline strategy, always cache system prompt
+    if (this.cacheSystemPrompt) {
+      return [
+        {
+          role: "system",
+          content: system,
+          providerOptions: {
+            anthropic: {
+              cacheControl: { type: "ephemeral" },
+            },
+          },
+        },
+      ];
+    }
 
-		return [
-			{
-				role: "system",
-				content: system,
-			},
-		];
-	}
+    return [
+      {
+        role: "system",
+        content: system,
+      },
+    ];
+  }
 
-	private readonly cacheSystemPrompt: boolean = true;
+  private readonly cacheSystemPrompt: boolean = true;
 
-	applyMessageCaching<TMessage extends UIMessage>(
-		messages: ModelMessage[],
-		_originalMessages: TMessage[],
-	): ModelMessage[] {
-		if (!this.enabled) {
-			return messages;
-		}
+  applyMessageCaching<TMessage extends UIMessage>(
+    messages: ModelMessage[],
+    _originalMessages: TMessage[]
+  ): ModelMessage[] {
+    if (!this.enabled) {
+      return messages;
+    }
 
-		// Use strategy to determine which messages should be cached
-		const strategyResult = this.strategy.run(messages);
-		const indicesToCache = strategyResult.messageIndicesToCache;
+    // Use strategy to determine which messages should be cached
+    const strategyResult = this.strategy.run(messages);
+    const indicesToCache = strategyResult.messageIndicesToCache;
 
-		// Apply Anthropic-specific cache control to the specified messages
-		return messages.map((message, index) => {
-			if (indicesToCache.includes(index)) {
-				return {
-					...message,
-					providerOptions: {
-						anthropic: {
-							cacheControl: { type: "ephemeral" },
-						},
-					},
-				};
-			}
-			return message;
-		});
-	}
+    // Apply Anthropic-specific cache control to the specified messages
+    return messages.map((message, index) => {
+      if (indicesToCache.includes(index)) {
+        return {
+          ...message,
+          providerOptions: {
+            anthropic: {
+              cacheControl: { type: "ephemeral" },
+            },
+          },
+        };
+      }
+      return message;
+    });
+  }
 }
 
 /**
  * Factory function for creating an Anthropic cache provider
  */
 export function anthropicCache(
-	config?: AnthropicCacheConfig,
+  config?: AnthropicCacheConfig
 ): AnthropicProviderCache {
-	return new AnthropicProviderCache(config);
+  return new AnthropicProviderCache(config);
 }

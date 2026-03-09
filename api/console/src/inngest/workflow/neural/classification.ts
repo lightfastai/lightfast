@@ -9,11 +9,12 @@
 
 import type { PostTransformEvent } from "@repo/console-providers";
 
-
 /**
  * Build the classification prompt for Claude Haiku
  */
-export function buildClassificationPrompt(sourceEvent: PostTransformEvent): string {
+export function buildClassificationPrompt(
+  sourceEvent: PostTransformEvent
+): string {
   return `Classify this engineering event into categories.
 
 EVENT DETAILS:
@@ -66,55 +67,111 @@ const CATEGORY_PATTERNS: { category: string; patterns: RegExp[] }[] = [
   // Security (high priority)
   {
     category: "security",
-    patterns: [/\bsecurity\b/i, /\bvulnerability\b/i, /\bCVE-\d+/i, /\bauth\b/i, /\bpermission/i],
+    patterns: [
+      /\bsecurity\b/i,
+      /\bvulnerability\b/i,
+      /\bCVE-\d+/i,
+      /\bauth\b/i,
+      /\bpermission/i,
+    ],
   },
 
   // Incident (high priority)
   {
     category: "incident",
-    patterns: [/\bincident\b/i, /\boutage\b/i, /\bdowntime\b/i, /\bemergency\b/i, /\bhotfix\b/i],
+    patterns: [
+      /\bincident\b/i,
+      /\boutage\b/i,
+      /\bdowntime\b/i,
+      /\bemergency\b/i,
+      /\bhotfix\b/i,
+    ],
   },
 
   // Bug fixes
   {
     category: "bug_fix",
-    patterns: [/\bfix(es|ed|ing)?\b/i, /\bbug\b/i, /\bpatch\b/i, /\bresolve[sd]?\b/i, /\bcorrect/i],
+    patterns: [
+      /\bfix(es|ed|ing)?\b/i,
+      /\bbug\b/i,
+      /\bpatch\b/i,
+      /\bresolve[sd]?\b/i,
+      /\bcorrect/i,
+    ],
   },
 
   // Features
   {
     category: "feature",
-    patterns: [/\bfeat(ure)?[:\s]/i, /\badd(s|ed|ing)?\b/i, /\bnew\b/i, /\bimplement/i, /\bintroduce/i],
+    patterns: [
+      /\bfeat(ure)?[:\s]/i,
+      /\badd(s|ed|ing)?\b/i,
+      /\bnew\b/i,
+      /\bimplement/i,
+      /\bintroduce/i,
+    ],
   },
 
   // Performance
   {
     category: "performance",
-    patterns: [/\bperf(ormance)?\b/i, /\boptimiz/i, /\bspeed/i, /\bfaster\b/i, /\bslow/i],
+    patterns: [
+      /\bperf(ormance)?\b/i,
+      /\boptimiz/i,
+      /\bspeed/i,
+      /\bfaster\b/i,
+      /\bslow/i,
+    ],
   },
 
   // Testing
   {
     category: "testing",
-    patterns: [/\btest(s|ing)?\b/i, /\bspec\b/i, /\bcoverage\b/i, /\be2e\b/i, /\bunit\b/i],
+    patterns: [
+      /\btest(s|ing)?\b/i,
+      /\bspec\b/i,
+      /\bcoverage\b/i,
+      /\be2e\b/i,
+      /\bunit\b/i,
+    ],
   },
 
   // Documentation
   {
     category: "documentation",
-    patterns: [/\bdocs?\b/i, /\breadme\b/i, /\bcomment/i, /\bjsdoc\b/i, /\bdocumentation\b/i],
+    patterns: [
+      /\bdocs?\b/i,
+      /\breadme\b/i,
+      /\bcomment/i,
+      /\bjsdoc\b/i,
+      /\bdocumentation\b/i,
+    ],
   },
 
   // Infrastructure
   {
     category: "infrastructure",
-    patterns: [/\bci\b/i, /\bcd\b/i, /\bpipeline\b/i, /\bworkflow\b/i, /\bdocker/i, /\bconfig/i, /\binfra/i],
+    patterns: [
+      /\bci\b/i,
+      /\bcd\b/i,
+      /\bpipeline\b/i,
+      /\bworkflow\b/i,
+      /\bdocker/i,
+      /\bconfig/i,
+      /\binfra/i,
+    ],
   },
 
   // Refactoring
   {
     category: "refactor",
-    patterns: [/\brefactor/i, /\brestructure/i, /\breorganize/i, /\bcleanup\b/i, /\bchore\b/i],
+    patterns: [
+      /\brefactor/i,
+      /\brestructure/i,
+      /\breorganize/i,
+      /\bcleanup\b/i,
+      /\bchore\b/i,
+    ],
   },
 
   // Discussion
@@ -126,7 +183,12 @@ const CATEGORY_PATTERNS: { category: string; patterns: RegExp[] }[] = [
   // Decision
   {
     category: "decision",
-    patterns: [/\bdecision\b/i, /\bdecide[sd]?\b/i, /\badr\b/i, /\barchitecture\b/i],
+    patterns: [
+      /\bdecision\b/i,
+      /\bdecide[sd]?\b/i,
+      /\badr\b/i,
+      /\barchitecture\b/i,
+    ],
   },
 ];
 
@@ -139,7 +201,8 @@ export function classifyObservationFallback(sourceEvent: PostTransformEvent): {
   secondaryCategories: string[];
 } {
   const body = sourceEvent.body || "";
-  const text = `${sourceEvent.sourceType} ${sourceEvent.title} ${body}`.toLowerCase();
+  const text =
+    `${sourceEvent.sourceType} ${sourceEvent.title} ${body}`.toLowerCase();
 
   // Priority-ordered patterns - first match wins
   let primaryCategory = "other";
@@ -151,13 +214,12 @@ export function classifyObservationFallback(sourceEvent: PostTransformEvent): {
   }
 
   // Extract secondary categories (all matches except primary)
-  const secondaryCategories = CATEGORY_PATTERNS
-    .filter(({ category, patterns }) =>
+  const secondaryCategories = CATEGORY_PATTERNS.filter(
+    ({ category, patterns }) =>
       category !== primaryCategory && patterns.some((p) => p.test(text))
-    )
+  )
     .map(({ category }) => category)
     .slice(0, 3);
 
   return { primaryCategory, secondaryCategories };
 }
-

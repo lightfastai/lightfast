@@ -26,7 +26,9 @@ export function getBaseEventType(source: string, sourceType: string): string {
     : sourceType;
 
   const provider = getProvider(source);
-  if (!provider) return cleanType;
+  if (!provider) {
+    return cleanType;
+  }
   return provider.getBaseEventType(cleanType);
 }
 
@@ -38,8 +40,13 @@ export function getBaseEventType(source: string, sourceType: string): string {
  * deriveObservationType("vercel", "deployment.succeeded") // "deployment_succeeded"
  * deriveObservationType("linear", "issue.created") // "issue.created"
  */
-export function deriveObservationType(source: string, sourceType: string): string {
+export function deriveObservationType(
+  source: string,
+  sourceType: string
+): string {
   const provider = getProvider(source);
-  if (!provider) return sourceType;
+  if (!provider) {
+    return sourceType;
+  }
   return provider.deriveObservationType(sourceType);
 }

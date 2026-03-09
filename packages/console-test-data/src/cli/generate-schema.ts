@@ -7,10 +7,10 @@
  */
 
 import { writeFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PROVIDERS } from "@repo/console-providers";
 import type { ProviderName } from "@repo/console-providers";
+import { PROVIDERS } from "@repo/console-providers";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outputPath = resolve(__dirname, "../../datasets/webhook-schema.json");
@@ -74,5 +74,5 @@ const schema = {
   },
 };
 
-writeFileSync(outputPath, JSON.stringify(schema, null, 2) + "\n");
+writeFileSync(outputPath, `${JSON.stringify(schema, null, 2)}\n`);
 console.log(`Generated: ${outputPath}`);

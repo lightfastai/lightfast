@@ -1,4 +1,4 @@
-import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
+import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
 import { RealtimeProviderWrapper } from "@repo/console-upstash-realtime/client";
 
 interface EventsLayoutProps {
@@ -21,7 +21,7 @@ export default async function EventsLayout({
         workspaceName,
         source,
         limit: 30,
-      }),
+      })
     );
   }
 

@@ -1,4 +1,7 @@
-import type { BackfillEstimatePayload, BackfillTriggerPayload } from "@repo/console-validation";
+import type {
+  BackfillEstimatePayload,
+  BackfillTriggerPayload,
+} from "@repo/console-validation";
 
 import type { ServiceClientConfig } from "./headers.js";
 import { buildServiceHeaders } from "./headers.js";
@@ -20,7 +23,9 @@ export function createBackfillClient(config: ServiceClientConfig) {
      * Probe the backfill service for a scope estimate.
      * Direct HTTP call — does not go through relay.
      */
-    async estimate(payload: BackfillEstimatePayload): Promise<Record<string, unknown>> {
+    async estimate(
+      payload: BackfillEstimatePayload
+    ): Promise<Record<string, unknown>> {
       const response = await fetch(`${backfillUrl}/estimate`, {
         method: "POST",
         headers: { ...h, "Content-Type": "application/json" },
@@ -34,7 +39,9 @@ export function createBackfillClient(config: ServiceClientConfig) {
      * Trigger a historical backfill directly on the backfill service.
      * Direct HTTP call — does not go through relay.
      */
-    async trigger(payload: BackfillTriggerPayload): Promise<{ status: string; installationId: string }> {
+    async trigger(
+      payload: BackfillTriggerPayload
+    ): Promise<{ status: string; installationId: string }> {
       const response = await fetch(`${backfillUrl}/trigger`, {
         method: "POST",
         headers: { ...h, "Content-Type": "application/json" },
@@ -43,9 +50,14 @@ export function createBackfillClient(config: ServiceClientConfig) {
       });
       if (!response.ok) {
         const text = await response.text().catch(() => "unknown");
-        throw new Error(`Backfill trigger failed: ${response.status} — ${text}`);
+        throw new Error(
+          `Backfill trigger failed: ${response.status} — ${text}`
+        );
       }
-      return response.json() as Promise<{ status: string; installationId: string }>;
+      return response.json() as Promise<{
+        status: string;
+        installationId: string;
+      }>;
     },
   };
 }

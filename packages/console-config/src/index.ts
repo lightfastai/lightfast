@@ -6,32 +6,29 @@
  * @packageDocumentation
  */
 
-// Export schema and types
-export { LightfastConfigSchema, type LightfastConfig } from "./schema";
-
-// Export parsing functions and errors
-export { loadConfig, validateConfig, ConfigError } from "./parse";
-
 // Export glob utilities
 export {
+  matchesGlobs,
   matchFiles,
   validateGlobPatterns,
-  matchesGlobs,
 } from "./glob";
-
-// Export private infrastructure configuration
-export {
-  PRIVATE_CONFIG,
-  PINECONE_CONFIG,
-  EMBEDDING_CONFIG,
-  RERANK_CONFIG,
-  CHUNKING_CONFIG,
-  GITHUB_CONFIG,
-  type PrivateConfig,
-} from "./private-config";
-
 // Export neural memory configuration
 export {
   LLM_ENTITY_EXTRACTION_CONFIG,
   type LLMEntityExtractionConfig,
 } from "./neural";
+// Export parsing functions and errors
+export { ConfigError, loadConfig, validateConfig } from "./parse";
+
+// Export private infrastructure configuration
+export {
+  CHUNKING_CONFIG,
+  EMBEDDING_CONFIG,
+  GITHUB_CONFIG,
+  PINECONE_CONFIG,
+  PRIVATE_CONFIG,
+  type PrivateConfig,
+  RERANK_CONFIG,
+} from "./private-config";
+// Export schema and types
+export { type LightfastConfig, LightfastConfigSchema } from "./schema";

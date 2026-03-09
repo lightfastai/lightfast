@@ -1,8 +1,8 @@
-import { Suspense } from "react";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { EventsTable } from "./_components/events-table";
-import { PROVIDER_SLUGS } from "@repo/console-providers/display";
 import type { ProviderSlug } from "@repo/console-providers/display";
+import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { Suspense } from "react";
+import { EventsTable } from "./_components/events-table";
 
 export default async function EventsPage({
   params,
@@ -23,17 +23,17 @@ export default async function EventsPage({
   return (
     <div className="pb-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="font-semibold text-2xl tracking-tight">Events</h1>
+        <p className="mt-1 text-muted-foreground text-sm">
           Real-time activity from your connected sources.
         </p>
       </div>
 
       <Suspense fallback={<EventsFeedSkeleton />}>
         <EventsTable
+          initialSource={initialSource}
           orgSlug={slug}
           workspaceName={workspaceName}
-          initialSource={initialSource}
         />
       </Suspense>
     </div>
@@ -44,11 +44,11 @@ function EventsFeedSkeleton() {
   return (
     <div className="space-y-4">
       <Skeleton className="h-10 w-80" />
-      <div className="rounded-lg border border-border/60 overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-border/60">
         {Array.from({ length: 8 }, (_, i) => (
-          <div key={i} className="border-b border-border/60 py-3 px-4">
+          <div className="border-border/60 border-b px-4 py-3" key={i}>
             <div className="flex items-start gap-3">
-              <Skeleton className="h-5 w-5 mt-0.5 rounded" />
+              <Skeleton className="mt-0.5 h-5 w-5 rounded" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/3" />

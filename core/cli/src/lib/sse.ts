@@ -1,18 +1,18 @@
 import { EventSourceParserStream } from "eventsource-parser/stream";
 
 interface SSEEvent {
-  event: string;
   data: string;
+  event: string;
   id?: string;
 }
 
 interface ConnectOptions {
-  url: string;
-  token: string;
-  onEvent: (event: SSEEvent) => void;
   onConnect: () => void;
   onDisconnect: (reason: string) => void;
+  onEvent: (event: SSEEvent) => void;
   signal?: AbortSignal;
+  token: string;
+  url: string;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -29,7 +29,9 @@ export async function connectSSE(opts: ConnectOptions): Promise<void> {
         Authorization: `Bearer ${opts.token}`,
         Accept: "text/event-stream",
       };
-      if (lastEventId) headers["Last-Event-ID"] = lastEventId;
+      if (lastEventId) {
+        headers["Last-Event-ID"] = lastEventId;
+      }
 
       const response = await fetch(opts.url, { headers, signal: opts.signal });
       if (!response.ok) {
@@ -45,14 +47,20 @@ export async function connectSSE(opts: ConnectOptions): Promise<void> {
       retryMs = 1000;
       opts.onConnect();
 
-      if (!response.body) throw new Error("No response body");
-      const stream = response
-        .body.pipeThrough(new TextDecoderStream())
+      if (!response.body) {
+        throw new Error("No response body");
+      }
+      const stream = response.body
+        .pipeThrough(new TextDecoderStream())
         .pipeThrough(new EventSourceParserStream());
 
       for await (const event of stream) {
-        if (opts.signal?.aborted) break;
-        if (event.id) lastEventId = event.id;
+        if (opts.signal?.aborted) {
+          break;
+        }
+        if (event.id) {
+          lastEventId = event.id;
+        }
         opts.onEvent({
           event: event.event ?? "message",
           data: event.data,
@@ -63,8 +71,12 @@ export async function connectSSE(opts: ConnectOptions): Promise<void> {
       // Stream ended (Vercel 300s limit) — reconnect
       opts.onDisconnect("Reconnecting...");
     } catch {
-      if (opts.signal?.aborted) return;
-      opts.onDisconnect(`Connection lost. Reconnecting in ${retryMs / 1000}s...`);
+      if (opts.signal?.aborted) {
+        return;
+      }
+      opts.onDisconnect(
+        `Connection lost. Reconnecting in ${retryMs / 1000}s...`
+      );
       await sleep(retryMs);
       retryMs = Math.min(retryMs * 2, 30_000);
     }

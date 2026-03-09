@@ -16,7 +16,9 @@ export const workspaceEmbeddingConfigSchema = z.object({
   chunkOverlap: z.number().int().min(0).max(1024).default(50),
 });
 
-export type WorkspaceEmbeddingConfig = z.infer<typeof workspaceEmbeddingConfigSchema>;
+export type WorkspaceEmbeddingConfig = z.infer<
+  typeof workspaceEmbeddingConfigSchema
+>;
 
 /**
  * Workspace settings schema V1

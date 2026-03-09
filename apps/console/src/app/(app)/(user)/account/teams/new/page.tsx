@@ -1,9 +1,10 @@
 import { Icons } from "@repo/ui/components/icons";
 
 export const dynamic = "force-dynamic";
+
+import { CreateTeamButton } from "./_components/create-team-button";
 import { TeamFormProvider } from "./_components/team-form-provider";
 import { TeamNameInput } from "./_components/team-name-input";
-import { CreateTeamButton } from "./_components/create-team-button";
 
 export default async function CreateTeamPage({
   searchParams,
@@ -14,15 +15,15 @@ export default async function CreateTeamPage({
   const initialTeamName = params.teamName ?? "";
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4">
+    <div className="flex flex-1 items-center justify-center p-4">
       <div className="w-full max-w-md space-y-4">
         {/* Logo */}
-        <div className="rounded-sm bg-card p-3 w-fit">
+        <div className="w-fit rounded-sm bg-card p-3">
           <Icons.logoShort className="h-5 w-5 text-foreground" />
         </div>
 
         {/* Heading */}
-        <h1 className="text-2xl pb-4 font-pp font-medium text-foreground">
+        <h1 className="pb-4 font-medium font-pp text-2xl text-foreground">
           Create your team
         </h1>
 

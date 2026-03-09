@@ -8,7 +8,7 @@ import { z } from "zod";
  * - /apps/auth/src/app/(app)/(auth)/_components/sign-up-email-input.tsx
  */
 export const authEmailFormSchema = z.object({
-	email: z.string().email("Please enter a valid email address"),
+  email: z.string().email("Please enter a valid email address"),
 });
 
 export type AuthEmailFormValues = z.infer<typeof authEmailFormSchema>;

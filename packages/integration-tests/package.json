@@ -6,20 +6,14 @@
   "license": "FSL-1.1-Apache-2.0",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache src/"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@api/console": "workspace:*",
     "@db/console": "workspace:*",
-    "@lightfast/backfill": "workspace:*",
-    "@lightfast/gateway": "workspace:*",
-    "@lightfast/relay": "workspace:*",
     "@repo/console-api-key": "workspace:*",
     "@repo/console-backfill": "workspace:*",
     "@repo/console-providers": "workspace:*",
     "@repo/console-test-db": "workspace:*",
-    "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "@vendor/inngest": "workspace:*",
@@ -27,7 +21,6 @@
     "@vendor/related-projects": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
-    "eslint": "catalog:",
     "hono": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

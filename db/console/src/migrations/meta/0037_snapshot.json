@@ -141,12 +141,8 @@
           "name": "lightfast_gw_backfill_runs_installation_id_lightfast_gw_installations_id_fk",
           "tableFrom": "lightfast_gw_backfill_runs",
           "tableTo": "lightfast_gw_installations",
-          "columnsFrom": [
-            "installation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["installation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -415,12 +411,8 @@
           "name": "lightfast_gw_resources_installation_id_lightfast_gw_installations_id_fk",
           "tableFrom": "lightfast_gw_resources",
           "tableTo": "lightfast_gw_installations",
-          "columnsFrom": [
-            "installation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["installation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -507,12 +499,8 @@
           "name": "lightfast_gw_tokens_installation_id_lightfast_gw_installations_id_fk",
           "tableFrom": "lightfast_gw_tokens",
           "tableTo": "lightfast_gw_installations",
-          "columnsFrom": [
-            "installation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["installation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -992,9 +980,7 @@
         "lightfast_workspace_api_keys_public_id_unique": {
           "name": "lightfast_workspace_api_keys_public_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "public_id"
-          ]
+          "columns": ["public_id"]
         }
       },
       "policies": {},
@@ -1274,12 +1260,8 @@
           "name": "lightfast_workspace_actor_profiles_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_actor_profiles",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1289,9 +1271,7 @@
         "lightfast_workspace_actor_profiles_external_id_unique": {
           "name": "lightfast_workspace_actor_profiles_external_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "external_id"
-          ]
+          "columns": ["external_id"]
         }
       },
       "policies": {},
@@ -1461,12 +1441,8 @@
           "name": "lightfast_workspace_events_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_events",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1659,12 +1635,8 @@
           "name": "lightfast_workspace_integrations_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_integrations",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1672,12 +1644,8 @@
           "name": "lightfast_workspace_integrations_installation_id_lightfast_gw_installations_id_fk",
           "tableFrom": "lightfast_workspace_integrations",
           "tableTo": "lightfast_gw_installations",
-          "columnsFrom": [
-            "installation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["installation_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1880,12 +1848,8 @@
           "name": "lightfast_workspace_knowledge_documents_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_knowledge_documents",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1999,12 +1963,8 @@
           "name": "lightfast_workspace_knowledge_vector_chunks_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_knowledge_vector_chunks",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2012,12 +1972,8 @@
           "name": "lightfast_workspace_knowledge_vector_chunks_doc_id_lightfast_workspace_knowledge_documents_id_fk",
           "tableFrom": "lightfast_workspace_knowledge_vector_chunks",
           "tableTo": "lightfast_workspace_knowledge_documents",
-          "columnsFrom": [
-            "doc_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["doc_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2252,12 +2208,8 @@
           "name": "lightfast_workspace_neural_entities_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_neural_entities",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2265,12 +2217,8 @@
           "name": "lightfast_workspace_neural_entities_source_observation_id_lightfast_workspace_neural_observations_id_fk",
           "tableFrom": "lightfast_workspace_neural_entities",
           "tableTo": "lightfast_workspace_neural_observations",
-          "columnsFrom": [
-            "source_observation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_observation_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2280,9 +2228,7 @@
         "lightfast_workspace_neural_entities_external_id_unique": {
           "name": "lightfast_workspace_neural_entities_external_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "external_id"
-          ]
+          "columns": ["external_id"]
         }
       },
       "policies": {},
@@ -2642,12 +2588,8 @@
           "name": "lightfast_workspace_neural_observations_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_neural_observations",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2657,9 +2599,7 @@
         "lightfast_workspace_neural_observations_external_id_unique": {
           "name": "lightfast_workspace_neural_observations_external_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "external_id"
-          ]
+          "columns": ["external_id"]
         }
       },
       "policies": {},
@@ -2846,12 +2786,8 @@
           "name": "lightfast_workspace_observation_clusters_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_observation_clusters",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2861,9 +2797,7 @@
         "lightfast_workspace_observation_clusters_external_id_unique": {
           "name": "lightfast_workspace_observation_clusters_external_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "external_id"
-          ]
+          "columns": ["external_id"]
         }
       },
       "policies": {},
@@ -3072,12 +3006,8 @@
           "name": "lightfast_workspace_observation_relationships_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_observation_relationships",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3085,12 +3015,8 @@
           "name": "lightfast_workspace_observation_relationships_source_observation_id_lightfast_workspace_neural_observations_id_fk",
           "tableFrom": "lightfast_workspace_observation_relationships",
           "tableTo": "lightfast_workspace_neural_observations",
-          "columnsFrom": [
-            "source_observation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_observation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3098,12 +3024,8 @@
           "name": "lightfast_workspace_observation_relationships_target_observation_id_lightfast_workspace_neural_observations_id_fk",
           "tableFrom": "lightfast_workspace_observation_relationships",
           "tableTo": "lightfast_workspace_neural_observations",
-          "columnsFrom": [
-            "target_observation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["target_observation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3113,9 +3035,7 @@
         "lightfast_workspace_observation_relationships_external_id_unique": {
           "name": "lightfast_workspace_observation_relationships_external_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "external_id"
-          ]
+          "columns": ["external_id"]
         }
       },
       "policies": {},
@@ -3309,12 +3229,8 @@
           "name": "lightfast_workspace_operations_metrics_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_operations_metrics",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3560,12 +3476,8 @@
           "name": "lightfast_workspace_temporal_states_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_temporal_states",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3853,12 +3765,8 @@
           "name": "lightfast_workspace_user_activities_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_user_activities",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4099,12 +4007,8 @@
           "name": "lightfast_workspace_workflow_runs_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_workflow_runs",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

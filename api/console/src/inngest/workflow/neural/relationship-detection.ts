@@ -9,29 +9,32 @@
  */
 
 import { db } from "@db/console/client";
+import type {
+  InsertWorkspaceObservationRelationship,
+  RelationshipType,
+} from "@db/console/schema";
 import {
   workspaceNeuralObservations,
   workspaceObservationRelationships,
 } from "@db/console/schema";
 import type {
-  InsertWorkspaceObservationRelationship,
-  RelationshipType,
-} from "@db/console/schema";
-import type { PostTransformReference, PostTransformEvent } from "@repo/console-providers";
+  PostTransformEvent,
+  PostTransformReference,
+} from "@repo/console-providers";
 import { log } from "@vendor/observability/log";
+import { and, eq, or, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { eq, and, or, sql } from "drizzle-orm";
 
 /**
  * Detected relationship before database insertion
  */
 interface DetectedRelationship {
-  targetObservationId: number;
-  relationshipType: RelationshipType;
+  confidence: number;
   linkingKey: string;
   linkingKeyType: string;
-  confidence: number;
   metadata?: Record<string, unknown>;
+  relationshipType: RelationshipType;
+  targetObservationId: number;
 }
 
 /**
@@ -48,7 +51,9 @@ export async function detectAndCreateRelationships(
   sourceEvent: PostTransformEvent
 ): Promise<number> {
   const references = sourceEvent.references;
-  if (references.length === 0) return 0;
+  if (references.length === 0) {
+    return 0;
+  }
 
   const detectedRelationships: DetectedRelationship[] = [];
 
@@ -62,9 +67,7 @@ export async function detectAndCreateRelationships(
   const issueIds = references
     .filter((r) => r.type === "issue")
     .map((r) => r.id);
-  const prIds = references
-    .filter((r) => r.type === "pr")
-    .map((r) => r.id);
+  const prIds = references.filter((r) => r.type === "pr").map((r) => r.id);
 
   // 1. Find observations with matching commit SHAs
   if (commitShas.length > 0) {
@@ -89,7 +92,8 @@ export async function detectAndCreateRelationships(
       );
 
       // Explicit resolution gets "explicit" detection method
-      const detectionMethod = commitRef?.label === "resolved_by" ? "explicit" : "commit_match";
+      const detectionMethod =
+        commitRef?.label === "resolved_by" ? "explicit" : "commit_match";
 
       detectedRelationships.push({
         targetObservationId: match.id,
@@ -225,7 +229,10 @@ export async function detectAndCreateRelationships(
     );
 
     // Combine and deduplicate
-    const allSentryMatches = new Map<number, { id: number; linkingKey: string }>();
+    const allSentryMatches = new Map<
+      number,
+      { id: number; linkingKey: string }
+    >();
     for (const m of [...sentryMatches, ...sentryTitleMatches]) {
       if (!allSentryMatches.has(m.id)) {
         allSentryMatches.set(m.id, { id: m.id, linkingKey: m.linkingKey });
@@ -248,7 +255,9 @@ export async function detectAndCreateRelationships(
   const deduped = deduplicateRelationships(detectedRelationships);
 
   // Insert relationships
-  if (deduped.length === 0) return 0;
+  if (deduped.length === 0) {
+    return 0;
+  }
 
   const inserts: InsertWorkspaceObservationRelationship[] = deduped.map(
     (rel) => ({
@@ -293,7 +302,9 @@ async function findObservationsByReference(
   refType: string,
   refIds: string[]
 ): Promise<{ id: number; source: string; linkingKey: string }[]> {
-  if (refIds.length === 0) return [];
+  if (refIds.length === 0) {
+    return [];
+  }
 
   // Build JSONB containment conditions for each ref ID
   const conditions = refIds.map(
@@ -340,7 +351,9 @@ async function findObservationsByIssueId(
   excludeId: number,
   issueIds: string[]
 ): Promise<{ id: number; linkingKey: string }[]> {
-  if (issueIds.length === 0) return [];
+  if (issueIds.length === 0) {
+    return [];
+  }
 
   // JSONB containment conditions for issue references
   const jsonbConditions = issueIds.map(
@@ -350,12 +363,10 @@ async function findObservationsByIssueId(
 
   // Title/sourceId ILIKE conditions
   const titleConditions = issueIds.map(
-    (id) =>
-      sql`${workspaceNeuralObservations.title} ILIKE ${"%" + id + "%"}`
+    (id) => sql`${workspaceNeuralObservations.title} ILIKE ${`%${id}%`}`
   );
   const sourceIdConditions = issueIds.map(
-    (id) =>
-      sql`${workspaceNeuralObservations.sourceId} ILIKE ${"%" + id + "%"}`
+    (id) => sql`${workspaceNeuralObservations.sourceId} ILIKE ${`%${id}%`}`
   );
 
   const results = await db
@@ -404,12 +415,13 @@ async function findObservationsByPrId(
   excludeId: number,
   prIds: string[]
 ): Promise<{ id: number; linkingKey: string }[]> {
-  if (prIds.length === 0) return [];
+  if (prIds.length === 0) {
+    return [];
+  }
 
   // Build conditions for sourceId matching (PR IDs are in sourceId like "pr:acme/platform#478")
   const sourceIdConditions = prIds.map(
-    (id) =>
-      sql`${workspaceNeuralObservations.sourceId} ILIKE ${"%" + id + "%"}`
+    (id) => sql`${workspaceNeuralObservations.sourceId} ILIKE ${`%${id}%`}`
   );
 
   const results = await db

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────────
 const { mockTrigger, mockFindFirst } = vi.hoisted(() => ({
@@ -125,7 +125,7 @@ describe("notifyBackfill", () => {
 
     expect(mockFindFirst).toHaveBeenCalled();
     expect(mockTrigger).toHaveBeenCalledWith(
-      expect.objectContaining({ depth: 90, entityTypes: ["issue"] }),
+      expect.objectContaining({ depth: 90, entityTypes: ["issue"] })
     );
   });
 
@@ -140,7 +140,7 @@ describe("notifyBackfill", () => {
     });
 
     expect(mockTrigger).toHaveBeenCalledWith(
-      expect.objectContaining({ depth: 30 }),
+      expect.objectContaining({ depth: 30 })
     );
   });
 
@@ -153,7 +153,7 @@ describe("notifyBackfill", () => {
         installationId: "inst-1",
         provider: "github",
         orgId: "org-1",
-      }),
+      })
     ).resolves.toBeUndefined();
   });
 
@@ -169,7 +169,7 @@ describe("notifyBackfill", () => {
     });
 
     expect(mockTrigger).toHaveBeenCalledWith(
-      expect.objectContaining({ holdForReplay: true }),
+      expect.objectContaining({ holdForReplay: true })
     );
   });
 });

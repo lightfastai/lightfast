@@ -18,22 +18,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/backend": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/clerk": "workspace:*",
     "zod": "catalog:zod4"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "eslintConfig": {
     "extends": "@repo/eslint-config/base"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

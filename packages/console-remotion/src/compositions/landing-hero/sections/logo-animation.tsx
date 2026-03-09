@@ -1,7 +1,7 @@
 import type React from "react";
 import { useCurrentFrame } from "remotion";
-import { createBox, facePath, shapeBounds, project } from "../shared/iso";
 import type { Box3D, Vec2 } from "../shared/iso";
+import { createBox, facePath, project, shapeBounds } from "../shared/iso";
 
 const FACE_FILL: Record<string, string> = {
   top: "var(--background)",
@@ -26,20 +26,16 @@ const lissajousPoints: Vec2[] = (() => {
       project(
         cx + 60 * Math.sin(3 * t + Math.PI / 2),
         cy + 60 * Math.sin(2 * t),
-        topZ,
-      ),
+        topZ
+      )
     );
   }
   return pts;
 })();
 
-const lissajousPath =
-  lissajousPoints
-    .map(
-      (v, i) =>
-        `${i === 0 ? "M" : "L"}${v[0].toFixed(2)},${v[1].toFixed(2)}`,
-    )
-    .join(" ") + " Z";
+const lissajousPath = `${lissajousPoints
+  .map((v, i) => `${i === 0 ? "M" : "L"}${v[0].toFixed(2)},${v[1].toFixed(2)}`)
+  .join(" ")} Z`;
 
 // Total path length (including close segment)
 const lissajousLength = (() => {
@@ -47,12 +43,14 @@ const lissajousLength = (() => {
   for (let i = 1; i < lissajousPoints.length; i++) {
     const curr = lissajousPoints[i];
     const prev = lissajousPoints[i - 1];
-    if (!curr || !prev) continue;
+    if (!(curr && prev)) {
+      continue;
+    }
     const dx = curr[0] - prev[0];
     const dy = curr[1] - prev[1];
     len += Math.sqrt(dx * dx + dy * dy);
   }
-  const last = lissajousPoints[lissajousPoints.length - 1];
+  const last = lissajousPoints.at(-1);
   const first = lissajousPoints[0];
   if (last && first) {
     len += Math.sqrt((first[0] - last[0]) ** 2 + (first[1] - last[1]) ** 2);
@@ -90,19 +88,15 @@ export const LogoAnimation: React.FC = () => {
   const head = headPosition(progress);
 
   return (
-    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-      <svg
-        viewBox={`${vx} ${vy} ${vw} ${vh}`}
-        width={vw}
-        height={vh}
-      >
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+      <svg height={vh} viewBox={`${vx} ${vy} ${vw} ${vh}`} width={vw}>
         {shape.faces.map((face, faceIndex) => (
           <path
-            key={`${face.type}-${faceIndex}`}
             d={facePath(face)}
-            style={{ fill: FACE_FILL[face.type], stroke: "var(--border)" }}
-            strokeWidth={1}
             fillRule="evenodd"
+            key={`${face.type}-${faceIndex}`}
+            strokeWidth={1}
+            style={{ fill: FACE_FILL[face.type], stroke: "var(--border)" }}
           />
         ))}
 
@@ -110,19 +104,19 @@ export const LogoAnimation: React.FC = () => {
         <path
           d={lissajousPath}
           fill="none"
-          style={{ stroke: "var(--border)" }}
           strokeWidth={1}
+          style={{ stroke: "var(--border)" }}
         />
 
         {/* Animated comet trail */}
         <path
           d={lissajousPath}
           fill="none"
-          style={{ stroke: "var(--foreground)" }}
-          strokeWidth={1.5}
           strokeDasharray={`${trailLength} ${gapLength}`}
           strokeDashoffset={dashOffset}
           strokeLinecap="round"
+          strokeWidth={1.5}
+          style={{ stroke: "var(--foreground)" }}
         />
 
         {/* Head dot */}

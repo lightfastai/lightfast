@@ -1,22 +1,33 @@
-import type { PostTransformEvent, PostTransformReference } from "../../post-transform-event";
-import type { TransformContext } from "../../types";
-import { validatePostTransformEvent, logValidationErrors } from "../../validation";
-import { sanitizeTitle, sanitizeBody } from "../../sanitize";
 import type {
-  PreTransformSentryIssueWebhook,
+  PostTransformEvent,
+  PostTransformReference,
+} from "../../post-transform-event";
+import { sanitizeBody, sanitizeTitle } from "../../sanitize";
+import type { TransformContext } from "../../types";
+import {
+  logValidationErrors,
+  validatePostTransformEvent,
+} from "../../validation";
+import type {
   PreTransformSentryErrorWebhook,
   PreTransformSentryEventAlertWebhook,
+  PreTransformSentryIssueWebhook,
   PreTransformSentryMetricAlertWebhook,
 } from "./schemas";
 
 export function transformSentryIssue(
   payload: PreTransformSentryIssueWebhook,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const { issue } = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "issue", id: issue.shortId, url: issue.permalink ?? null, label: null });
+  refs.push({
+    type: "issue",
+    id: issue.shortId,
+    url: issue.permalink ?? null,
+    label: null,
+  });
   refs.push({
     type: "project",
     id: issue.project.slug,
@@ -25,7 +36,12 @@ export function transformSentryIssue(
   });
 
   if (issue.assignedTo) {
-    refs.push({ type: "assignee", id: issue.assignedTo.email ?? issue.assignedTo.name, url: null, label: null });
+    refs.push({
+      type: "assignee",
+      id: issue.assignedTo.email ?? issue.assignedTo.name,
+      url: null,
+      label: null,
+    });
   }
 
   if (issue.statusDetails?.inCommit?.commit) {
@@ -71,7 +87,9 @@ export function transformSentryIssue(
     source: "sentry",
     sourceType: `issue.${payload.action}`,
     sourceId: `sentry-issue:${issue.project.slug}:${issue.shortId}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] ${errorType}: ${errorValue.slice(0, 80)}`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] ${errorType}: ${errorValue.slice(0, 80)}`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: {
       id: String(payload.actor.id),
@@ -115,12 +133,17 @@ export function transformSentryIssue(
 
 export function transformSentryError(
   payload: PreTransformSentryErrorWebhook,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const { error: errorEvent } = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "project", id: String(errorEvent.project), url: null, label: null });
+  refs.push({
+    type: "project",
+    id: String(errorEvent.project),
+    url: null,
+    label: null,
+  });
 
   const stackInfo =
     errorEvent.exception?.values
@@ -153,7 +176,8 @@ export function transformSentryError(
     actor: errorEvent.user
       ? {
           id: errorEvent.user.id ?? errorEvent.user.email ?? "unknown",
-          name: errorEvent.user.username ?? errorEvent.user.email ?? "Unknown User",
+          name:
+            errorEvent.user.username ?? errorEvent.user.email ?? "Unknown User",
           email: errorEvent.user.email ?? null,
           avatarUrl: null,
         }
@@ -189,12 +213,17 @@ export function transformSentryError(
 
 export function transformSentryEventAlert(
   payload: PreTransformSentryEventAlertWebhook,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const { event, triggered_rule } = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "project", id: String(event.project), url: null, label: null });
+  refs.push({
+    type: "project",
+    id: String(event.project),
+    url: null,
+    label: null,
+  });
 
   const errorType = event.metadata.type ?? "Alert";
   const errorValue = event.metadata.value ?? event.title;
@@ -223,7 +252,7 @@ export function transformSentryEventAlert(
       triggeredRule: triggered_rule,
       platform: event.platform,
       errorType: event.metadata.type,
-      errorValue: errorValue,
+      errorValue,
       webUrl: event.web_url,
       installationId: payload.installation.uuid,
     },
@@ -231,7 +260,11 @@ export function transformSentryEventAlert(
 
   const validation = validatePostTransformEvent(eventOut);
   if (!validation.success && validation.errors) {
-    logValidationErrors("transformSentryEventAlert", eventOut, validation.errors);
+    logValidationErrors(
+      "transformSentryEventAlert",
+      eventOut,
+      validation.errors
+    );
   }
 
   return eventOut;
@@ -239,7 +272,7 @@ export function transformSentryEventAlert(
 
 export function transformSentryMetricAlert(
   payload: PreTransformSentryMetricAlertWebhook,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const { metric_alert } = payload.data;
   const alertRule = metric_alert.alert_rule;

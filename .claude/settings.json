@@ -1,0 +1,22 @@
+{
+  "enabledPlugins": {
+    "vercel@claude-plugins-official": true,
+    "coderabbit@claude-plugins-official": true,
+    "semgrep@claude-plugins-official": true,
+    "pinecone@claude-plugins-official": true,
+    "posthog@claude-plugins-official": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "case \"$CLAUDE_TOOL_INPUT_FILE_PATH\" in *.ts|*.tsx|*.js|*.jsx) npx @biomejs/biome check --write --unsafe \"$CLAUDE_TOOL_INPUT_FILE_PATH\" 2>/dev/null ;; esac; true"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -8,9 +8,9 @@ import type { PostTransformEvent, SourceType } from "@repo/console-providers";
 import { transformWebhookPayload } from "@repo/console-providers";
 
 export interface WebhookPayload {
-  source: SourceType;
   eventType: string;
   payload: unknown;
+  source: SourceType;
 }
 
 /**
@@ -35,7 +35,7 @@ export function transformWebhook(
       deliveryId: generateDeliveryId(),
       receivedAt: new Date(),
       eventType: webhook.eventType,
-    },
+    }
   );
 
   if (!event) {

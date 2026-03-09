@@ -1,5 +1,5 @@
-import { inspectRoutes } from "hono/dev";
 import { printRouteTable } from "@vendor/observability/print-routes";
+import { inspectRoutes } from "hono/dev";
 import app from "./app.js";
 import { env } from "./env.js";
 
@@ -7,4 +7,4 @@ const routes = inspectRoutes(app)
   .filter((r) => !r.isMiddleware)
   .map(({ method, path }) => ({ method, path }));
 
-printRouteTable(routes, { service: "gateway", port: env.PORT });
+printRouteTable(routes, { service: "gateway", port: env.PORT! });

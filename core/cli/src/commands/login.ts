@@ -1,11 +1,11 @@
+import select from "@inquirer/select";
 import { Command } from "commander";
 import open from "open";
 import ora from "ora";
 import pc from "picocolors";
-import select from "@inquirer/select";
-import { startAuthServer } from "../lib/auth-server.js";
 import { listOrganizations, setupOrg } from "../lib/api.js";
-import { saveConfig, getConfig, getBaseUrl } from "../lib/config.js";
+import { startAuthServer } from "../lib/auth-server.js";
+import { getBaseUrl, getConfig, saveConfig } from "../lib/config.js";
 
 export const loginCommand = new Command("login")
   .description("Authenticate with Lightfast and select an organization")
@@ -20,7 +20,7 @@ export const loginCommand = new Command("login")
     const { port, state, waitForToken } = await startAuthServer();
     const authUrl = `${getBaseUrl()}/cli/auth?port=${port}&state=${encodeURIComponent(state)}`;
 
-    console.log(`  Opening browser to authenticate...`);
+    console.log("  Opening browser to authenticate...");
     console.log(pc.dim(`  If it doesn't open, visit: ${authUrl}`));
     console.log();
 
@@ -49,9 +49,7 @@ export const loginCommand = new Command("login")
 
     if (orgs.length === 0) {
       console.log(
-        pc.yellow(
-          "  No organizations found. Create one at lightfast.ai first."
-        )
+        pc.yellow("  No organizations found. Create one at lightfast.ai first.")
       );
       process.exit(1);
     }
@@ -71,9 +69,7 @@ export const loginCommand = new Command("login")
     try {
       result = await setupOrg(jwt, selectedOrgId);
     } catch {
-      setupSpinner.fail(
-        "Session expired. Please run `lightfast login` again."
-      );
+      setupSpinner.fail("Session expired. Please run `lightfast login` again.");
       process.exit(1);
     }
     setupSpinner.succeed(`Linked to ${pc.bold(result.orgName)}!`);
@@ -87,5 +83,7 @@ export const loginCommand = new Command("login")
     });
 
     console.log();
-    console.log(`  Run ${pc.cyan("lightfast listen")} to stream webhook events.`);
+    console.log(
+      `  Run ${pc.cyan("lightfast listen")} to stream webhook events.`
+    );
   });

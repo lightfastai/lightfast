@@ -10,7 +10,7 @@ export const GET = handle({
   middleware: async ({ channels }) => {
     const { userId, orgId } = await auth();
 
-    if (!userId || !orgId) {
+    if (!(userId && orgId)) {
       return new Response("Unauthorized", { status: 401 });
     }
 

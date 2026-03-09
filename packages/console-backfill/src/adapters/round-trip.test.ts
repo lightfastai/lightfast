@@ -8,30 +8,33 @@
  * (e.g. pr.additions), these tests surface it immediately instead of
  * silently dropping backfilled events in production.
  */
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 // Skip env validation for transitive @db/console imports
 vi.hoisted(() => {
   process.env.SKIP_ENV_VALIDATION = "1";
 });
+
 import {
-  adaptGitHubPRForTransformer,
-  adaptGitHubIssueForTransformer,
-  adaptGitHubReleaseForTransformer,
-} from "./github";
-import {
-  adaptVercelDeploymentForTransformer,
-} from "./vercel";
-import {
-  transformGitHubPullRequest,
+  type PostTransformReference,
   transformGitHubIssue,
+  transformGitHubPullRequest,
   transformGitHubRelease,
   transformVercelDeployment,
-  type PostTransformReference,
 } from "@repo/console-providers";
+import {
+  adaptGitHubIssueForTransformer,
+  adaptGitHubPRForTransformer,
+  adaptGitHubReleaseForTransformer,
+} from "./github";
+import { adaptVercelDeploymentForTransformer } from "./vercel";
 
 // Minimal TransformContext — matches { deliveryId: string, receivedAt: Date, eventType: string }
-const context = { deliveryId: "backfill-roundtrip-test", receivedAt: new Date(), eventType: "" };
+const context = {
+  deliveryId: "backfill-roundtrip-test",
+  receivedAt: new Date(),
+  eventType: "",
+};
 
 /**
  * Realistic GitHub list API PR response.
@@ -46,7 +49,11 @@ const githubListPR = {
   title: "feat: add backfill support",
   body: "Implements historical data backfill.\n\nFixes #10",
   html_url: "https://github.com/owner/repo/pull/42",
-  user: { id: 1234, login: "alice", avatar_url: "https://avatars.githubusercontent.com/u/1234" },
+  user: {
+    id: 1234,
+    login: "alice",
+    avatar_url: "https://avatars.githubusercontent.com/u/1234",
+  },
   head: {
     ref: "feat/backfill",
     sha: "abc123def456",
@@ -72,7 +79,11 @@ const githubListIssue = {
   title: "Support historical data import",
   body: "We need backfill capabilities for onboarding.",
   html_url: "https://github.com/owner/repo/issues/10",
-  user: { id: 5678, login: "carol", avatar_url: "https://avatars.githubusercontent.com/u/5678" },
+  user: {
+    id: 5678,
+    login: "carol",
+    avatar_url: "https://avatars.githubusercontent.com/u/5678",
+  },
   updated_at: "2026-01-19T12:00:00Z",
   created_at: "2026-01-15T09:00:00Z",
   assignees: [{ login: "carol" }],
@@ -87,7 +98,11 @@ const githubListRelease = {
   target_commitish: "main",
   draft: false,
   prerelease: false,
-  author: { id: 1234, login: "alice", avatar_url: "https://avatars.githubusercontent.com/u/1234" },
+  author: {
+    id: 1234,
+    login: "alice",
+    avatar_url: "https://avatars.githubusercontent.com/u/1234",
+  },
   published_at: "2026-01-20T14:00:00Z",
   created_at: "2026-01-20T13:00:00Z",
   html_url: "https://github.com/owner/repo/releases/tag/v2.0.0",
@@ -96,7 +111,7 @@ const githubListRelease = {
 const repoData = {
   full_name: "owner/repo",
   html_url: "https://github.com/owner/repo",
-  id: 12345,
+  id: 12_345,
 };
 
 const vercelListDeployment = {
@@ -105,7 +120,7 @@ const vercelListDeployment = {
   url: "my-app-abc123.vercel.app",
   projectId: "prj-xyz",
   readyState: "READY",
-  created: 1700000000000,
+  created: 1_700_000_000_000,
   meta: {
     githubCommitSha: "abc123def456",
     githubCommitRef: "main",
@@ -123,7 +138,7 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
   beforeAll(() => {
     adapted = adaptGitHubPRForTransformer(
       githubListPR as unknown as Record<string, unknown>,
-      repoData as unknown as Record<string, unknown>,
+      repoData as unknown as Record<string, unknown>
     );
   });
 
@@ -166,7 +181,9 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
 
   it("references include PR, branch, and commit refs", () => {
     const event = transformGitHubPullRequest(adapted, context);
-    const refTypes = event.references.map((r: PostTransformReference) => r.type);
+    const refTypes = event.references.map(
+      (r: PostTransformReference) => r.type
+    );
     expect(refTypes).toContain("pr");
     expect(refTypes).toContain("branch");
     expect(refTypes).toContain("commit");
@@ -179,8 +196,11 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
 
   it("open PR produces opened sourceType", () => {
     const openPR = adaptGitHubPRForTransformer(
-      { ...githubListPR, state: "open", merged: false } as unknown as Record<string, unknown>,
-      repoData as unknown as Record<string, unknown>,
+      { ...githubListPR, state: "open", merged: false } as unknown as Record<
+        string,
+        unknown
+      >,
+      repoData as unknown as Record<string, unknown>
     );
     const event = transformGitHubPullRequest(openPR, context);
     expect(event.sourceType).toContain("opened");
@@ -193,7 +213,7 @@ describe("GitHub Issue: adapter → transformer round-trip", () => {
   beforeAll(() => {
     adapted = adaptGitHubIssueForTransformer(
       githubListIssue as unknown as Record<string, unknown>,
-      repoData as unknown as Record<string, unknown>,
+      repoData as unknown as Record<string, unknown>
     );
   });
 
@@ -229,7 +249,7 @@ describe("GitHub Release: adapter → transformer round-trip", () => {
   beforeAll(() => {
     adapted = adaptGitHubReleaseForTransformer(
       githubListRelease as unknown as Record<string, unknown>,
-      repoData as unknown as Record<string, unknown>,
+      repoData as unknown as Record<string, unknown>
     );
   });
 
@@ -255,20 +275,26 @@ describe("GitHub Release: adapter → transformer round-trip", () => {
 
   it("references include branch ref (target_commitish)", () => {
     const event = transformGitHubRelease(adapted, context);
-    const branchRefs = event.references.filter((r: PostTransformReference) => r.type === "branch");
+    const branchRefs = event.references.filter(
+      (r: PostTransformReference) => r.type === "branch"
+    );
     expect(branchRefs.length).toBeGreaterThan(0);
     expect(branchRefs[0]!.id).toBe("main");
   });
 });
 
 describe("Vercel Deployment: adapter → transformer round-trip", () => {
-  let webhookPayload: ReturnType<typeof adaptVercelDeploymentForTransformer>["webhookPayload"];
-  let eventType: ReturnType<typeof adaptVercelDeploymentForTransformer>["eventType"];
+  let webhookPayload: ReturnType<
+    typeof adaptVercelDeploymentForTransformer
+  >["webhookPayload"];
+  let eventType: ReturnType<
+    typeof adaptVercelDeploymentForTransformer
+  >["eventType"];
 
   beforeAll(() => {
     const result = adaptVercelDeploymentForTransformer(
       vercelListDeployment as unknown as Record<string, unknown>,
-      "my-app",
+      "my-app"
     );
     webhookPayload = result.webhookPayload;
     eventType = result.eventType;
@@ -276,36 +302,57 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
 
   it("transformer does not throw", () => {
     expect(() =>
-      transformVercelDeployment(webhookPayload, { ...context, eventType }),
+      transformVercelDeployment(webhookPayload, { ...context, eventType })
     ).not.toThrow();
   });
 
   it("produces a PostTransformEvent with non-empty sourceId", () => {
-    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
+    const event = transformVercelDeployment(webhookPayload, {
+      ...context,
+      eventType,
+    });
     expect(event.sourceId).toContain("dpl-abc123xyz");
   });
 
   it("source is vercel", () => {
-    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
+    const event = transformVercelDeployment(webhookPayload, {
+      ...context,
+      eventType,
+    });
     expect(event.source).toBe("vercel");
   });
 
   it("title is non-empty", () => {
-    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
+    const event = transformVercelDeployment(webhookPayload, {
+      ...context,
+      eventType,
+    });
     expect(event.title).toBeTruthy();
   });
 
   it("references include deployment and project refs", () => {
-    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
-    const refTypes = event.references.map((r: PostTransformReference) => r.type);
+    const event = transformVercelDeployment(webhookPayload, {
+      ...context,
+      eventType,
+    });
+    const refTypes = event.references.map(
+      (r: PostTransformReference) => r.type
+    );
     expect(refTypes).toContain("deployment");
     expect(refTypes).toContain("project");
   });
 
   it("git metadata flows through to commit/branch references", () => {
-    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
-    const commitRefs = event.references.filter((r: PostTransformReference) => r.type === "commit");
-    const branchRefs = event.references.filter((r: PostTransformReference) => r.type === "branch");
+    const event = transformVercelDeployment(webhookPayload, {
+      ...context,
+      eventType,
+    });
+    const commitRefs = event.references.filter(
+      (r: PostTransformReference) => r.type === "commit"
+    );
+    const branchRefs = event.references.filter(
+      (r: PostTransformReference) => r.type === "branch"
+    );
     expect(commitRefs.length).toBeGreaterThan(0);
     expect(commitRefs[0]!.id).toBe("abc123def456");
     expect(branchRefs.length).toBeGreaterThan(0);
@@ -313,17 +360,26 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
   });
 
   it("READY deployment produces succeeded sourceType", () => {
-    const event = transformVercelDeployment(webhookPayload, { ...context, eventType });
+    const event = transformVercelDeployment(webhookPayload, {
+      ...context,
+      eventType,
+    });
     expect(event.sourceType).toContain("succeeded");
   });
 
   it("ERROR deployment produces error sourceType", () => {
     const { webhookPayload: errPayload, eventType: errType } =
       adaptVercelDeploymentForTransformer(
-        { ...vercelListDeployment, readyState: "ERROR" } as unknown as Record<string, unknown>,
-        "my-app",
+        { ...vercelListDeployment, readyState: "ERROR" } as unknown as Record<
+          string,
+          unknown
+        >,
+        "my-app"
       );
-    const event = transformVercelDeployment(errPayload, { ...context, eventType: errType });
+    const event = transformVercelDeployment(errPayload, {
+      ...context,
+      eventType: errType,
+    });
     expect(event.sourceType).toContain("error");
   });
 });

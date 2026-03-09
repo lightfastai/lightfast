@@ -1,4 +1,5 @@
 import type { IconDef } from "./define";
+
 export type { IconDef } from "./define";
 
 // ── Provider Display Data ────────────────────────────────────────────────────
@@ -6,10 +7,10 @@ export type { IconDef } from "./define";
 // The type import above is erased at compile time — zero runtime imports.
 
 interface ProviderDisplayEntry {
-  readonly name: string;
-  readonly displayName: string;
   readonly description: string;
+  readonly displayName: string;
   readonly icon: IconDef;
+  readonly name: string;
 }
 
 export const PROVIDER_DISPLAY = {

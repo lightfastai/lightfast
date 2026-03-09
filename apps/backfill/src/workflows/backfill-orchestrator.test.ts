@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Capture the handler passed to createFunction ──
 
@@ -9,7 +9,7 @@ vi.mock("../inngest/client", () => ({
     createFunction: (
       config: { id: string },
       _trigger: unknown,
-      handler: typeof capturedHandler,
+      handler: typeof capturedHandler
     ) => {
       // Only capture the orchestrator handler (entity worker is mocked out)
       if (config.id === "apps-backfill/run.orchestrator") {
@@ -124,36 +124,42 @@ describe("get-connection step", () => {
   });
 
   it("throws when connection status is inactive", async () => {
-    mockGatewayClient.getConnection.mockResolvedValue(makeConnection({ status: "inactive" }));
+    mockGatewayClient.getConnection.mockResolvedValue(
+      makeConnection({ status: "inactive" })
+    );
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Connection is not active");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Connection is not active"
+    );
   });
 
   it("throws when connection status is error", async () => {
-    mockGatewayClient.getConnection.mockResolvedValue(makeConnection({ status: "error" }));
+    mockGatewayClient.getConnection.mockResolvedValue(
+      makeConnection({ status: "error" })
+    );
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Connection is not active");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Connection is not active"
+    );
   });
 
   it("throws when Connections API returns an error", async () => {
     mockGatewayClient.getConnection.mockRejectedValue(
-      new Error("Gateway getConnection failed: 404 for inst-1"),
+      new Error("Gateway getConnection failed: 404 for inst-1")
     );
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Gateway getConnection failed: 404");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Gateway getConnection failed: 404"
+    );
   });
 
   it("returns early with zero counts when connection has no resources", async () => {
-    mockGatewayClient.getConnection.mockResolvedValue(makeConnection({ resources: [] }));
+    mockGatewayClient.getConnection.mockResolvedValue(
+      makeConnection({ resources: [] })
+    );
     const step = makeStep();
 
     const result = await capturedHandler({ event: makeEvent(), step });
@@ -172,9 +178,9 @@ describe("connector resolution", () => {
     mockGetConnector.mockReturnValue(null);
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("No backfill connector for provider");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "No backfill connector for provider"
+    );
   });
 
   it("entityTypes from event data overrides connector defaultEntityTypes", async () => {
@@ -185,8 +191,13 @@ describe("connector resolution", () => {
 
     // With 2 resources and 1 entity type = 2 work units → 2 invoke calls
     expect(step.invoke).toHaveBeenCalledTimes(2);
-    const invokeCalls = step.invoke.mock.calls as Array<[string, { data: { entityType: string } }]>;
-    expect(invokeCalls.every((call) => call[1].data.entityType === "pull_request")).toBe(true);
+    const invokeCalls = step.invoke.mock.calls as [
+      string,
+      { data: { entityType: string } },
+    ][];
+    expect(
+      invokeCalls.every((call) => call[1].data.entityType === "pull_request")
+    ).toBe(true);
   });
 
   it("uses connector.defaultEntityTypes when entityTypes is absent", async () => {
@@ -212,8 +223,10 @@ describe("work unit enumeration", () => {
   it("1 resource x 1 entity type (override) = 1 work unit", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep();
     const event = makeEvent({ entityTypes: ["pull_request"] });
@@ -228,15 +241,23 @@ describe("invoke entity workers", () => {
   it("step.invoke called once per filtered work unit with correct data", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep();
 
-    await capturedHandler({ event: makeEvent({ entityTypes: ["pull_request"] }), step });
+    await capturedHandler({
+      event: makeEvent({ entityTypes: ["pull_request"] }),
+      step,
+    });
 
     expect(step.invoke).toHaveBeenCalledOnce();
-    const [stepName, invokeOpts] = step.invoke.mock.calls[0] as [string, Record<string, unknown>];
+    const [stepName, invokeOpts] = step.invoke.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
     expect(stepName).toBe("invoke-100-pull_request");
     expect(invokeOpts.data).toMatchObject({
       installationId: "inst-1",
@@ -252,15 +273,20 @@ describe("invoke entity workers", () => {
   it("invoke rejection → { success: false } in results", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep({
       invoke: vi.fn().mockRejectedValue(new Error("worker crashed")),
     });
     const event = makeEvent({ entityTypes: ["pull_request"] });
 
-    const result = (await capturedHandler({ event, step })) as Record<string, unknown>;
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
     expect(result.success).toBe(false);
     expect(result.failed).toBe(1);
   });
@@ -268,8 +294,10 @@ describe("invoke entity workers", () => {
   it("invoke success → { success: true } with correct stats", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep({
       invoke: vi.fn().mockResolvedValue({
@@ -280,7 +308,10 @@ describe("invoke entity workers", () => {
     });
     const event = makeEvent({ entityTypes: ["pull_request"] });
 
-    const result = (await capturedHandler({ event, step })) as Record<string, unknown>;
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
     expect(result.success).toBe(true);
     expect(result.completed).toBe(1);
     expect(result.eventsProduced).toBe(42);
@@ -292,45 +323,65 @@ describe("aggregation", () => {
   it("all work units succeed → success: true", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep({
-      invoke: vi.fn().mockResolvedValue({ eventsProduced: 5, eventsDispatched: 5, pagesProcessed: 1 }),
+      invoke: vi.fn().mockResolvedValue({
+        eventsProduced: 5,
+        eventsDispatched: 5,
+        pagesProcessed: 1,
+      }),
     });
     const event = makeEvent({ entityTypes: ["pull_request"] });
 
-    const result = (await capturedHandler({ event, step })) as Record<string, unknown>;
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
     expect(result.success).toBe(true);
   });
 
   it("any work unit fails → success: false", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     let callCount = 0;
     const step = makeStep({
       invoke: vi.fn().mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
-          return Promise.resolve({ eventsProduced: 5, eventsDispatched: 5, pagesProcessed: 1 });
+          return Promise.resolve({
+            eventsProduced: 5,
+            eventsDispatched: 5,
+            pagesProcessed: 1,
+          });
         }
         return Promise.reject(new Error("fail"));
       }),
     });
     const event = makeEvent({ entityTypes: ["pull_request", "issue"] });
 
-    const result = (await capturedHandler({ event, step })) as Record<string, unknown>;
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
     expect(result.success).toBe(false);
   });
 
   it("eventsProduced and eventsDispatched summed from all completions", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     let callCount = 0;
     const step = makeStep({
@@ -345,7 +396,10 @@ describe("aggregation", () => {
     });
     const event = makeEvent({ entityTypes: ["pull_request", "issue"] });
 
-    const result = (await capturedHandler({ event, step })) as Record<string, unknown>;
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
     // First: 10, Second: 20 → total 30
     expect(result.eventsProduced).toBe(30);
     expect(result.eventsDispatched).toBe(30);
@@ -356,16 +410,28 @@ describe("persist-run-records", () => {
   it("upsertBackfillRun called once per unique entityType with summed stats", async () => {
     // 2 resources, 1 entity type = 2 workers for same entityType
     const step = makeStep({
-      invoke: vi.fn()
-        .mockResolvedValueOnce({ eventsProduced: 10, eventsDispatched: 10, pagesProcessed: 1 })
-        .mockResolvedValueOnce({ eventsProduced: 20, eventsDispatched: 20, pagesProcessed: 2 }),
+      invoke: vi
+        .fn()
+        .mockResolvedValueOnce({
+          eventsProduced: 10,
+          eventsDispatched: 10,
+          pagesProcessed: 1,
+        })
+        .mockResolvedValueOnce({
+          eventsProduced: 20,
+          eventsDispatched: 20,
+          pagesProcessed: 2,
+        }),
     });
     const event = makeEvent({ entityTypes: ["pull_request"] });
 
     await capturedHandler({ event, step });
 
     expect(mockGatewayClient.upsertBackfillRun).toHaveBeenCalledOnce();
-    const [_, record] = mockGatewayClient.upsertBackfillRun.mock.calls[0] as [string, Record<string, unknown>];
+    const [_, record] = mockGatewayClient.upsertBackfillRun.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
     expect(record.entityType).toBe("pull_request");
     expect(record.status).toBe("completed");
     expect(record.eventsProduced).toBe(30);
@@ -376,8 +442,13 @@ describe("persist-run-records", () => {
   it("partial failure writes status: failed with error", async () => {
     // 2 resources for pull_request: 1 succeeds, 1 fails
     const step = makeStep({
-      invoke: vi.fn()
-        .mockResolvedValueOnce({ eventsProduced: 5, eventsDispatched: 5, pagesProcessed: 1 })
+      invoke: vi
+        .fn()
+        .mockResolvedValueOnce({
+          eventsProduced: 5,
+          eventsDispatched: 5,
+          pagesProcessed: 1,
+        })
         .mockRejectedValueOnce(new Error("rate limited")),
     });
     const event = makeEvent({ entityTypes: ["pull_request"] });
@@ -385,7 +456,10 @@ describe("persist-run-records", () => {
     await capturedHandler({ event, step });
 
     expect(mockGatewayClient.upsertBackfillRun).toHaveBeenCalledOnce();
-    const [_, record] = mockGatewayClient.upsertBackfillRun.mock.calls[0] as [string, Record<string, unknown>];
+    const [_, record] = mockGatewayClient.upsertBackfillRun.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
     expect(record.status).toBe("failed");
     expect(record.error).toBe("rate limited");
   });
@@ -393,26 +467,50 @@ describe("persist-run-records", () => {
   it("all-success writes status: completed", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep({
-      invoke: vi.fn().mockResolvedValue({ eventsProduced: 5, eventsDispatched: 5, pagesProcessed: 1 }),
+      invoke: vi.fn().mockResolvedValue({
+        eventsProduced: 5,
+        eventsDispatched: 5,
+        pagesProcessed: 1,
+      }),
     });
     const event = makeEvent({ entityTypes: ["pull_request"] });
 
     await capturedHandler({ event, step });
 
-    const [_, record] = mockGatewayClient.upsertBackfillRun.mock.calls[0] as [string, Record<string, unknown>];
+    const [_, record] = mockGatewayClient.upsertBackfillRun.mock.calls[0] as [
+      string,
+      Record<string, unknown>,
+    ];
     expect(record.status).toBe("completed");
   });
 
   it("persist is skipped when all work units are gap-filtered", async () => {
     // All entity types covered by prior runs
     const history = [
-      { entityType: "pull_request", since: "2020-01-01T00:00:00Z", depth: 30, status: "completed" },
-      { entityType: "issue", since: "2020-01-01T00:00:00Z", depth: 30, status: "completed" },
-      { entityType: "release", since: "2020-01-01T00:00:00Z", depth: 30, status: "completed" },
+      {
+        entityType: "pull_request",
+        since: "2020-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+      },
+      {
+        entityType: "issue",
+        since: "2020-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+      },
+      {
+        entityType: "release",
+        since: "2020-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+      },
     ];
     mockGatewayClient.getBackfillRuns.mockResolvedValue(history);
     const step = makeStep();
@@ -450,7 +548,9 @@ describe("gap-aware filtering", () => {
   });
 
   it("includes entity types when depth escalates beyond prior run", async () => {
-    const recentSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const recentSince = new Date(
+      Date.now() - 7 * 24 * 60 * 60 * 1000
+    ).toISOString();
     const history = [
       {
         entityType: "issue",
@@ -486,9 +586,24 @@ describe("gap-aware filtering", () => {
 
   it("returns early when all work units are skipped", async () => {
     const history = [
-      { entityType: "pull_request", since: "2020-01-01T00:00:00Z", depth: 30, status: "completed" },
-      { entityType: "issue", since: "2020-01-01T00:00:00Z", depth: 30, status: "completed" },
-      { entityType: "release", since: "2020-01-01T00:00:00Z", depth: 30, status: "completed" },
+      {
+        entityType: "pull_request",
+        since: "2020-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+      },
+      {
+        entityType: "issue",
+        since: "2020-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+      },
+      {
+        entityType: "release",
+        since: "2020-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+      },
     ];
     mockGatewayClient.getBackfillRuns.mockResolvedValue(history);
     const step = makeStep();
@@ -510,23 +625,33 @@ describe("holdForReplay", () => {
   it("passes holdForReplay through invoke data", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep();
-    const event = makeEvent({ entityTypes: ["pull_request"], holdForReplay: true });
+    const event = makeEvent({
+      entityTypes: ["pull_request"],
+      holdForReplay: true,
+    });
 
     await capturedHandler({ event, step });
 
-    const [_, invokeOpts] = step.invoke.mock.calls[0] as [string, { data: Record<string, unknown> }];
+    const [_, invokeOpts] = step.invoke.mock.calls[0] as [
+      string,
+      { data: Record<string, unknown> },
+    ];
     expect(invokeOpts.data.holdForReplay).toBe(true);
   });
 
   it("calls replay-held-webhooks step after successful completion when holdForReplay is true", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     mockRelayClient.replayCatchup.mockResolvedValue({ remaining: 0 });
 
@@ -536,9 +661,16 @@ describe("holdForReplay", () => {
         runCalls.push(name);
         return fn();
       }),
-      invoke: vi.fn().mockResolvedValue({ eventsProduced: 5, eventsDispatched: 5, pagesProcessed: 1 }),
+      invoke: vi.fn().mockResolvedValue({
+        eventsProduced: 5,
+        eventsDispatched: 5,
+        pagesProcessed: 1,
+      }),
     });
-    const event = makeEvent({ entityTypes: ["pull_request"], holdForReplay: true });
+    const event = makeEvent({
+      entityTypes: ["pull_request"],
+      holdForReplay: true,
+    });
 
     await capturedHandler({ event, step });
 
@@ -549,8 +681,10 @@ describe("holdForReplay", () => {
   it("skips replay-held-webhooks when holdForReplay is not set", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
 
     const runCalls: string[] = [];
@@ -559,7 +693,11 @@ describe("holdForReplay", () => {
         runCalls.push(name);
         return fn();
       }),
-      invoke: vi.fn().mockResolvedValue({ eventsProduced: 5, eventsDispatched: 5, pagesProcessed: 1 }),
+      invoke: vi.fn().mockResolvedValue({
+        eventsProduced: 5,
+        eventsDispatched: 5,
+        pagesProcessed: 1,
+      }),
     });
     const event = makeEvent({ entityTypes: ["pull_request"] });
 
@@ -571,8 +709,10 @@ describe("holdForReplay", () => {
   it("skips replay when all workers failed", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
 
     const runCalls: string[] = [];
@@ -583,7 +723,10 @@ describe("holdForReplay", () => {
       }),
       invoke: vi.fn().mockRejectedValue(new Error("fail")),
     });
-    const event = makeEvent({ entityTypes: ["pull_request"], holdForReplay: true });
+    const event = makeEvent({
+      entityTypes: ["pull_request"],
+      holdForReplay: true,
+    });
 
     await capturedHandler({ event, step });
 

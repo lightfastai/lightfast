@@ -3,16 +3,16 @@
  * Minimal data needed for auth decisions.
  */
 export interface CachedUserOrgMembership {
-  /** Clerk organization ID */
-  organizationId: string;
-  /** Organization slug for URL matching */
-  organizationSlug: string | null;
-  /** Organization name for display */
-  organizationName: string;
-  /** User's role in the organization */
-  role: string;
   /** Organization image URL */
   imageUrl: string;
+  /** Clerk organization ID */
+  organizationId: string;
+  /** Organization name for display */
+  organizationName: string;
+  /** Organization slug for URL matching */
+  organizationSlug: string | null;
+  /** User's role in the organization */
+  role: string;
 }
 
 /**

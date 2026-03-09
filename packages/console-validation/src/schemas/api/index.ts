@@ -1,30 +1,26 @@
 // Internal API schemas (used by tRPC routers)
-export {
-  SearchRequestSchema,
-  SearchResponseSchema,
-} from "./search";
-export type {
-  SearchResponse,
-} from "./search";
 
+export type { ContentsResponse } from "./contents";
 export {
   ContentsRequestSchema,
   ContentsResponseSchema,
 } from "./contents";
-export type {
-  ContentsResponse,
-} from "./contents";
+export type { SearchResponse } from "./search";
+export {
+  SearchRequestSchema,
+  SearchResponseSchema,
+} from "./search";
 
 // V1 public API schemas (used by SDK, OpenAPI)
 export {
-  V1SearchRequestSchema,
-  V1SearchResponseSchema,
+  GraphResponseSchema,
+  RelatedResponseSchema,
   V1ContentsRequestSchema,
   V1ContentsResponseSchema,
   V1FindSimilarRequestSchema,
   V1FindSimilarResponseSchema,
   V1GraphRequestSchema,
   V1RelatedRequestSchema,
-  GraphResponseSchema,
-  RelatedResponseSchema,
+  V1SearchRequestSchema,
+  V1SearchResponseSchema,
 } from "./v1";

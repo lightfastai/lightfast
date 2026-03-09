@@ -4,8 +4,8 @@
  * Provides typed helpers for tRPC router inputs and outputs
  */
 
+import type { OrgRouter, UserRouter } from "@api/console";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
-import type { UserRouter, OrgRouter } from "@api/console";
 
 /**
  * Combined router type for split user/org routers

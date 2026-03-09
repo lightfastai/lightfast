@@ -10,9 +10,9 @@
  * 2. Triggers the appropriate Knock workflow with organization context
  */
 
-import { inngest } from "../../client/client";
-import { log } from "@vendor/observability/log";
 import { notifications } from "@vendor/knock";
+import { log } from "@vendor/observability/log";
+import { inngest } from "../../client/client";
 
 /** Minimum significance score to trigger a notification */
 const NOTIFICATION_SIGNIFICANCE_THRESHOLD = 70;
@@ -50,7 +50,10 @@ export const notificationDispatch = inngest.createFunction(
     }
 
     // Guard: Only notify for high-significance events
-    if (!significanceScore || significanceScore < NOTIFICATION_SIGNIFICANCE_THRESHOLD) {
+    if (
+      !significanceScore ||
+      significanceScore < NOTIFICATION_SIGNIFICANCE_THRESHOLD
+    ) {
       return {
         status: "skipped",
         reason: "below_notification_threshold",
@@ -67,7 +70,9 @@ export const notificationDispatch = inngest.createFunction(
     // Trigger Knock workflow with organization as tenant
     // Knock will route the notification to all organization members
     await step.run("trigger-knock-workflow", async () => {
-      if (!notifications) return; // TypeScript guard
+      if (!notifications) {
+        return; // TypeScript guard
+      }
 
       await notifications.workflows.trigger(OBSERVATION_WORKFLOW_KEY, {
         recipients: [{ id: clerkOrgId }],
@@ -96,5 +101,5 @@ export const notificationDispatch = inngest.createFunction(
       clerkOrgId,
       significanceScore,
     };
-  },
+  }
 );

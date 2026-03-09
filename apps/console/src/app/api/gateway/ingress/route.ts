@@ -1,11 +1,14 @@
-import { serve } from "@vendor/upstash-workflow/nextjs";
-import type { WebhookEnvelope } from "@repo/console-providers";
 import { db } from "@db/console/client";
-import { eq } from "drizzle-orm";
 import { orgWorkspaces, workspaceEvents } from "@db/console/schema";
-import { transformEnvelope } from "./_lib/transform";
+import type { WebhookEnvelope } from "@repo/console-providers";
 import { sanitizePostTransformEvent } from "@repo/console-providers";
-import { publishInngestNotification, publishEventNotification } from "./_lib/notify";
+import { serve } from "@vendor/upstash-workflow/nextjs";
+import { eq } from "drizzle-orm";
+import {
+  publishEventNotification,
+  publishInngestNotification,
+} from "./_lib/notify";
+import { transformEnvelope } from "./_lib/transform";
 
 export const runtime = "nodejs";
 
@@ -32,7 +35,9 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
       columns: { id: true, name: true, clerkOrgId: true },
     });
 
-    if (!row) return null;
+    if (!row) {
+      return null;
+    }
 
     return {
       workspaceId: row.id,
@@ -44,7 +49,7 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
   // Unknown org — graceful skip (org may have been deleted or not yet synced)
   if (!workspace) {
     console.warn(
-      `[ingress] Unknown orgId: ${envelope.orgId}, deliveryId: ${envelope.deliveryId}`,
+      `[ingress] Unknown orgId: ${envelope.orgId}, deliveryId: ${envelope.deliveryId}`
     );
     return;
   }
@@ -54,7 +59,7 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
     const rawEvent = transformEnvelope(envelope);
     if (!rawEvent) {
       console.log(
-        `[ingress] No transformer for ${envelope.provider}:${envelope.eventType}, skipping`,
+        `[ingress] No transformer for ${envelope.provider}:${envelope.eventType}, skipping`
       );
       return;
     }

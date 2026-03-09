@@ -1,5 +1,5 @@
-import { friendlyWords } from "friendlier-words";
-import { WORKSPACE_NAME, STORE_NAME } from "../constants/naming";
+import { friendlyWords } from "@repo/lib/friendly-words";
+import { STORE_NAME } from "../constants/naming";
 
 /**
  * Generate a friendly workspace name
@@ -36,9 +36,9 @@ export function generateWorkspaceSlug(name: string): string {
   const slug = name
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-") // Convert everything except alphanumeric and hyphens to hyphens
-    .replace(/^-+/, "")            // No leading hyphens
-    .replace(/-+$/, "")            // No trailing hyphens
-    .replace(/-{2,}/g, "-");       // No consecutive hyphens
+    .replace(/^-+/, "") // No leading hyphens
+    .replace(/-+$/, "") // No trailing hyphens
+    .replace(/-{2,}/g, "-"); // No consecutive hyphens
 
   if (slug.length === 0) {
     throw new Error("Workspace slug cannot be empty after sanitization");
@@ -80,9 +80,9 @@ export function generateStoreSlug(name: string): string {
   const storeSlug = name
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-") // Only alphanumeric + hyphens
-    .replace(/^-+/, "")            // No leading hyphens
-    .replace(/-+$/, "")            // No trailing hyphens
-    .replace(/-{2,}/g, "-");       // No consecutive hyphens
+    .replace(/^-+/, "") // No leading hyphens
+    .replace(/-+$/, "") // No trailing hyphens
+    .replace(/-{2,}/g, "-"); // No consecutive hyphens
 
   if (storeSlug.length === 0) {
     throw new Error("Store slug cannot be empty after sanitization");

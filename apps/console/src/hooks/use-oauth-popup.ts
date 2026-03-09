@@ -1,24 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "@repo/ui/components/ui/sonner";
-import { useTRPC } from "@repo/console-trpc/react";
 import type { ProviderSlug } from "@repo/console-providers/display";
+import { useTRPC } from "@repo/console-trpc/react";
+import { toast } from "@repo/ui/components/ui/sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef } from "react";
 
 interface UseOAuthPopupOptions {
-  provider: ProviderSlug;
-  messageType?: string;
-  queryKeysToInvalidate: readonly (readonly unknown[])[];
-  popupWindowName?: string;
-  onSuccess?: () => void;
   errorMessage?: string;
+  messageType?: string;
+  onSuccess?: () => void;
+  popupWindowName?: string;
+  provider: ProviderSlug;
+  queryKeysToInvalidate: readonly (readonly unknown[])[];
 }
 
 interface UseOAuthPopupReturn {
   handleConnect: () => Promise<void>;
   openCustomUrl: (
-    buildUrl: (data: { url: string; state: string }) => string,
+    buildUrl: (data: { url: string; state: string }) => string
   ) => Promise<void>;
 }
 
@@ -45,7 +45,8 @@ export function useOAuthPopup({
 
   const resolvedMessageType = messageType ?? `${provider}_connected`;
   const resolvedWindowName = popupWindowName ?? `${provider}-install`;
-  const capitalizedProvider = provider.charAt(0).toUpperCase() + provider.slice(1);
+  const capitalizedProvider =
+    provider.charAt(0).toUpperCase() + provider.slice(1);
   const resolvedErrorMessage =
     errorMessage ??
     `Failed to connect to ${capitalizedProvider}. Please try again.`;
@@ -67,23 +68,31 @@ export function useOAuthPopup({
     // Primary: BroadcastChannel (works regardless of window.opener / COOP)
     const channel = new BroadcastChannel("oauth-connections");
     channel.onmessage = (event: MessageEvent) => {
-      if ((event.data as { type?: string }).type === resolvedMessageType)
+      if ((event.data as { type?: string }).type === resolvedMessageType) {
         invalidateAll();
+      }
     };
 
     // Fallback: postMessage (works if window.opener is available)
     const handler = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if ((event.data as { type?: string }).type === resolvedMessageType)
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+      if ((event.data as { type?: string }).type === resolvedMessageType) {
         invalidateAll();
+      }
     };
     window.addEventListener("message", handler);
 
     return () => {
       channel.close();
       window.removeEventListener("message", handler);
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+      }
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current);
+      }
     };
   }, [invalidateAll, resolvedMessageType]);
 
@@ -96,14 +105,16 @@ export function useOAuthPopup({
       const popup = window.open(
         url,
         windowName,
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
       );
       if (!popup || popup.closed) {
         alert("Popup was blocked. Please allow popups for this site.");
         return;
       }
       successReceivedRef.current = false;
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+      }
       pollTimerRef.current = setInterval(() => {
         if (popup.closed) {
           if (pollTimerRef.current) {
@@ -127,32 +138,46 @@ export function useOAuthPopup({
         }
       }, 500);
     },
-    [queryClient],
+    [queryClient]
   );
 
   const handleConnect = useCallback(async () => {
     try {
       const data = await queryClient.fetchQuery(
-        trpc.connections.getAuthorizeUrl.queryOptions({ provider }),
+        trpc.connections.getAuthorizeUrl.queryOptions({ provider })
       );
       openPopupAndPoll(data.url, resolvedWindowName);
     } catch {
       toast.error(resolvedErrorMessage);
     }
-  }, [queryClient, trpc, provider, resolvedWindowName, resolvedErrorMessage, openPopupAndPoll]);
+  }, [
+    queryClient,
+    trpc,
+    provider,
+    resolvedWindowName,
+    resolvedErrorMessage,
+    openPopupAndPoll,
+  ]);
 
   const openCustomUrl = useCallback(
     async (buildUrl: (data: { url: string; state: string }) => string) => {
       try {
         const data = await queryClient.fetchQuery(
-          trpc.connections.getAuthorizeUrl.queryOptions({ provider }),
+          trpc.connections.getAuthorizeUrl.queryOptions({ provider })
         );
         openPopupAndPoll(buildUrl(data), resolvedWindowName);
       } catch {
         toast.error(resolvedErrorMessage);
       }
     },
-    [queryClient, trpc, provider, resolvedWindowName, resolvedErrorMessage, openPopupAndPoll],
+    [
+      queryClient,
+      trpc,
+      provider,
+      resolvedWindowName,
+      resolvedErrorMessage,
+      openPopupAndPoll,
+    ]
   );
 
   return { handleConnect, openCustomUrl };

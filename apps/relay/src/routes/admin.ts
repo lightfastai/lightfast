@@ -1,16 +1,16 @@
-import { and, eq, gte, lte, notInArray, or, sql } from "@vendor/db";
-import { Hono } from "hono";
 import { db } from "@db/console/client";
-import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
-import { redis } from "@vendor/upstash";
-import { resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache.js";
-import { replayDeliveries } from "../lib/replay.js";
-import type { SourceType } from "@repo/console-providers";
 import {
   gwInstallations,
   gwResources,
   gwWebhookDeliveries,
 } from "@db/console/schema";
+import type { SourceType } from "@repo/console-providers";
+import { and, eq, gte, lte, notInArray, or, sql } from "@vendor/db";
+import { redis } from "@vendor/upstash";
+import { Hono } from "hono";
+import { RESOURCE_CACHE_TTL, resourceKey } from "../lib/cache.js";
+import { replayDeliveries } from "../lib/replay.js";
+import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
 
 const admin = new Hono();
 
@@ -39,7 +39,8 @@ admin.get("/health", async (c) => {
     databaseStatus = "error";
   }
 
-  const allHealthy = redisStatus === "connected" && databaseStatus === "connected";
+  const allHealthy =
+    redisStatus === "connected" && databaseStatus === "connected";
 
   return c.json(
     {
@@ -48,7 +49,7 @@ admin.get("/health", async (c) => {
       database: databaseStatus,
       uptime_ms: Date.now() - startTime,
     },
-    allHealthy ? 200 : 503,
+    allHealthy ? 200 : 503
   );
 });
 
@@ -72,12 +73,17 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
         orgId: gwInstallations.orgId,
       })
       .from(gwResources)
-      .innerJoin(gwInstallations, eq(gwResources.installationId, gwInstallations.id))
+      .innerJoin(
+        gwInstallations,
+        eq(gwResources.installationId, gwInstallations.id)
+      )
       .where(eq(gwResources.status, "active"))
       .limit(BATCH_SIZE)
       .offset(offset);
 
-    if (batch.length === 0) break;
+    if (batch.length === 0) {
+      break;
+    }
 
     const pipeline = redis.pipeline();
     for (const r of batch) {
@@ -88,7 +94,9 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
     await pipeline.exec();
 
     rebuilt += batch.length;
-    if (batch.length < BATCH_SIZE) break;
+    if (batch.length < BATCH_SIZE) {
+      break;
+    }
     offset += BATCH_SIZE;
   }
 
@@ -101,9 +109,12 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
  * List messages in the webhook DLQ. Requires X-API-Key authentication.
  */
 admin.get("/dlq", apiKeyAuth, async (c) => {
-  const rawLimit = parseInt(c.req.query("limit") ?? "50", 10);
-  const rawOffset = parseInt(c.req.query("offset") ?? "0", 10);
-  const limit = Math.min(Math.max(Number.isNaN(rawLimit) ? 50 : rawLimit, 1), 100);
+  const rawLimit = Number.parseInt(c.req.query("limit") ?? "50", 10);
+  const rawOffset = Number.parseInt(c.req.query("offset") ?? "0", 10);
+  const limit = Math.min(
+    Math.max(Number.isNaN(rawLimit) ? 50 : rawLimit, 1),
+    100
+  );
   const offset = Math.max(Number.isNaN(rawOffset) ? 0 : rawOffset, 0);
 
   const dlqItems = await db
@@ -138,25 +149,20 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
   const pairConditions = body.deliveryIds.map((item) =>
     and(
       eq(gwWebhookDeliveries.provider, item.provider),
-      eq(gwWebhookDeliveries.deliveryId, item.deliveryId),
-    ),
+      eq(gwWebhookDeliveries.deliveryId, item.deliveryId)
+    )
   );
 
   // Fetch only DLQ entries with stored payloads
   const deliveries = await db
     .select()
     .from(gwWebhookDeliveries)
-    .where(
-      and(
-        or(...pairConditions),
-        eq(gwWebhookDeliveries.status, "dlq"),
-      ),
-    );
+    .where(and(or(...pairConditions), eq(gwWebhookDeliveries.status, "dlq")));
 
   if (deliveries.length === 0) {
     return c.json(
       { error: "no_matching_dlq_entries", requestedIds: body.deliveryIds },
-      404,
+      404
     );
   }
 
@@ -190,13 +196,17 @@ admin.post("/replay/catchup", apiKeyAuth, async (c) => {
   const batchSize = Math.min(Math.max(body.batchSize ?? 50, 1), 200);
 
   // Build query: status = "received" (persisted but never delivered)
-  const conditions: Parameters<typeof and>[0][] = [eq(gwWebhookDeliveries.status, "received")];
+  const conditions: Parameters<typeof and>[0][] = [
+    eq(gwWebhookDeliveries.status, "received"),
+  ];
 
   if (body.provider) {
     conditions.push(eq(gwWebhookDeliveries.provider, body.provider));
   }
   if (body.installationId) {
-    conditions.push(eq(gwWebhookDeliveries.installationId, body.installationId));
+    conditions.push(
+      eq(gwWebhookDeliveries.installationId, body.installationId)
+    );
   }
   if (body.since) {
     conditions.push(gte(gwWebhookDeliveries.receivedAt, body.since));
@@ -213,7 +223,10 @@ admin.post("/replay/catchup", apiKeyAuth, async (c) => {
     .limit(batchSize);
 
   if (deliveries.length === 0) {
-    return c.json({ status: "empty", message: "No un-delivered webhooks found" });
+    return c.json({
+      status: "empty",
+      message: "No un-delivered webhooks found",
+    });
   }
 
   const result = await replayDeliveries(deliveries);
@@ -245,19 +258,22 @@ admin.post("/delivery-status", qstashAuth, async (c) => {
     return c.json({ error: "invalid_json" }, 400);
   }
 
-  const { messageId, state, deliveryId } =
-    body as Record<string, unknown>;
+  const { messageId, state, deliveryId } = body as Record<string, unknown>;
 
   if (typeof messageId !== "string" || typeof state !== "string") {
     console.warn("[delivery-status] invalid payload", JSON.stringify(body));
-    return c.json({ error: "missing_required_fields", required: ["messageId", "state"] }, 400);
+    return c.json(
+      { error: "missing_required_fields", required: ["messageId", "state"] },
+      400
+    );
   }
 
   console.log("[delivery-status]", { messageId, state, deliveryId });
 
   // Update webhook delivery status based on QStash callback
   if (typeof deliveryId === "string") {
-    const newStatus = state === "delivered" ? "delivered" : state === "error" ? "dlq" : null;
+    const newStatus =
+      state === "delivered" ? "delivered" : state === "error" ? "dlq" : null;
     if (newStatus) {
       const provider = c.req.query("provider");
       const conditions = [eq(gwWebhookDeliveries.deliveryId, deliveryId)];

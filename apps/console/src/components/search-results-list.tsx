@@ -1,15 +1,15 @@
 "use client";
 
+import type { V1SearchResponse } from "@repo/console-validation";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { FileText } from "lucide-react";
-import type { V1SearchResponse } from "@repo/console-validation";
 import { SearchResultCard } from "./search-result-card";
 
 interface SearchResultsListProps {
-  searchResults: V1SearchResponse;
   expandedId: string;
-  onExpandedIdChange: (id: string) => void;
   offset: number;
+  onExpandedIdChange: (id: string) => void;
+  searchResults: V1SearchResponse;
   storeId: string;
 }
 
@@ -24,7 +24,7 @@ export function SearchResultsList({
     <div className="space-y-2">
       {/* Results header */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           {searchResults.data.length} results
           <span className="ml-1">
             ({searchResults.latency.total}ms total,{" "}
@@ -74,9 +74,9 @@ export function SearchResultsList({
       {/* Result cards */}
       {searchResults.data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <FileText className="h-10 w-10 text-muted-foreground/40 mb-3" />
-          <p className="text-sm font-medium">No results found</p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <FileText className="mb-3 h-10 w-10 text-muted-foreground/40" />
+          <p className="font-medium text-sm">No results found</p>
+          <p className="mt-1 text-muted-foreground text-xs">
             Try a different query or adjust your filters
           </p>
         </div>
@@ -84,13 +84,13 @@ export function SearchResultsList({
         <div className="space-y-3">
           {searchResults.data.map((result, index) => (
             <SearchResultCard
-              key={result.id}
-              result={result}
-              rank={index + offset + 1}
               isExpanded={expandedId === result.id}
+              key={result.id}
               onToggleExpand={() =>
                 onExpandedIdChange(expandedId === result.id ? "" : result.id)
               }
+              rank={index + offset + 1}
+              result={result}
               storeId={storeId}
             />
           ))}

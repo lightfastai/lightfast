@@ -6,19 +6,19 @@
  * lightweight consumers like relay unit tests.
  */
 
-import { readFileSync, existsSync, readdirSync } from "node:fs";
-import { resolve, join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import type { SourceType } from "@repo/console-providers";
 
 export interface RawWebhook {
-  source: SourceType;
   eventType: string;
   payload: Record<string, unknown>;
+  source: SourceType;
 }
 
 interface RawDataset {
-  name: string;
   description?: string;
+  name: string;
   webhooks: RawWebhook[];
 }
 
@@ -27,14 +27,22 @@ const getDatasetsDir = (): string => {
 };
 
 /** Load raw webhooks from a single dataset by name */
-export const loadRawDataset = (name: string): { name: string; webhooks: RawWebhook[] } => {
+export const loadRawDataset = (
+  name: string
+): { name: string; webhooks: RawWebhook[] } => {
   const filePath = join(getDatasetsDir(), `${name}.json`);
   if (!existsSync(filePath)) {
     throw new Error(`Dataset not found: ${filePath}`);
   }
   const raw: unknown = JSON.parse(readFileSync(filePath, "utf-8"));
-  if (!raw || typeof raw !== "object" || !Array.isArray((raw as RawDataset).webhooks)) {
-    throw new Error(`Invalid dataset ${filePath}: missing or non-array "webhooks" field`);
+  if (
+    !raw ||
+    typeof raw !== "object" ||
+    !Array.isArray((raw as RawDataset).webhooks)
+  ) {
+    throw new Error(
+      `Invalid dataset ${filePath}: missing or non-array "webhooks" field`
+    );
   }
   const dataset = raw as RawDataset;
   return { name: dataset.name, webhooks: dataset.webhooks };
@@ -43,7 +51,9 @@ export const loadRawDataset = (name: string): { name: string; webhooks: RawWebho
 /** Load raw webhooks from all sandbox datasets */
 export const loadAllRawWebhooks = (): RawWebhook[] => {
   const datasetsDir = getDatasetsDir();
-  if (!existsSync(datasetsDir)) return [];
+  if (!existsSync(datasetsDir)) {
+    return [];
+  }
 
   return readdirSync(datasetsDir)
     .filter((f) => f.startsWith("sandbox-") && f.endsWith(".json"))
@@ -53,10 +63,18 @@ export const loadAllRawWebhooks = (): RawWebhook[] => {
       try {
         raw = JSON.parse(readFileSync(filePath, "utf-8"));
       } catch (err) {
-        throw new Error(`Failed to parse dataset ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
+        throw new Error(
+          `Failed to parse dataset ${filePath}: ${err instanceof Error ? err.message : String(err)}`
+        );
       }
-      if (!raw || typeof raw !== "object" || !Array.isArray((raw as RawDataset).webhooks)) {
-        throw new Error(`Invalid dataset ${filePath}: missing or non-array "webhooks" field`);
+      if (
+        !raw ||
+        typeof raw !== "object" ||
+        !Array.isArray((raw as RawDataset).webhooks)
+      ) {
+        throw new Error(
+          `Invalid dataset ${filePath}: missing or non-array "webhooks" field`
+        );
       }
       return (raw as RawDataset).webhooks;
     });

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { WebhookReceiptPayload } from "@repo/console-providers";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Mock externals ──
 
@@ -29,8 +29,14 @@ vi.mock("@vendor/upstash", () => ({
     hset: (...args: unknown[]) => mockRedisHset(...args),
     pipeline: () => {
       const pipe = {
-        hset: (...args: unknown[]) => { mockRedisHset(...args); return pipe; },
-        expire: (...args: unknown[]) => { mockRedisExpire(...args); return pipe; },
+        hset: (...args: unknown[]) => {
+          mockRedisHset(...args);
+          return pipe;
+        },
+        expire: (...args: unknown[]) => {
+          mockRedisExpire(...args);
+          return pipe;
+        },
         exec: () => mockPipelineExec(),
       };
       return pipe;
@@ -50,7 +56,8 @@ const mockDbUpdate = vi.fn();
 const mockOnConflictDoNothing = vi.fn().mockResolvedValue(undefined);
 const mockDbSet = vi.fn();
 const mockDbWhere = vi.fn().mockResolvedValue(undefined);
-const dbOps: { op: "insert" | "update"; values?: unknown; set?: unknown }[] = [];
+const dbOps: { op: "insert" | "update"; values?: unknown; set?: unknown }[] =
+  [];
 
 vi.mock("@db/console/client", () => ({
   db: {
@@ -111,7 +118,7 @@ await import("./workflows.js");
 // ── Test helpers ──
 
 function makePayload(
-  overrides: Partial<WebhookReceiptPayload> = {},
+  overrides: Partial<WebhookReceiptPayload> = {}
 ): WebhookReceiptPayload {
   return {
     provider: "github",
@@ -119,7 +126,7 @@ function makePayload(
     eventType: "push",
     resourceId: "res-123",
     payload: { repository: { id: 42 } },
-    receivedAt: 1700000000,
+    receivedAt: 1_700_000_000,
     ...overrides,
   };
 }
@@ -148,7 +155,7 @@ function makeContext(payload: WebhookReceiptPayload) {
  */
 function makeRetryContext(
   payload: WebhookReceiptPayload,
-  cachedSteps: Record<string, unknown>,
+  cachedSteps: Record<string, unknown>
 ) {
   return {
     requestPayload: payload,
@@ -215,8 +222,9 @@ describe("webhook-delivery workflow", () => {
         }),
         retries: 5,
         deduplicationId: "github:del-001",
-        callback: "https://relay.test/api/admin/delivery-status?provider=github",
-      }),
+        callback:
+          "https://relay.test/api/admin/delivery-status?provider=github",
+      })
     );
 
     // Assert full DB write sequence: persist → set installationId → mark enqueued
@@ -229,7 +237,7 @@ describe("webhook-delivery workflow", () => {
           eventType: "push",
           status: "received",
           payload: JSON.stringify({ repository: { id: 42 } }),
-          receivedAt: new Date(1700000000000).toISOString(),
+          receivedAt: new Date(1_700_000_000_000).toISOString(),
         },
       },
       { op: "update", set: { installationId: "conn-1" } },
@@ -248,7 +256,7 @@ describe("webhook-delivery workflow", () => {
     // Should populate Redis cache
     expect(mockRedisHset).toHaveBeenCalledWith(
       expect.stringContaining("gw:resource:github:res-123"),
-      { connectionId: "conn-2", orgId: "org-2" },
+      { connectionId: "conn-2", orgId: "org-2" }
     );
     // Should publish to Console
     expect(mockPublishJSON).toHaveBeenCalledWith(
@@ -257,7 +265,7 @@ describe("webhook-delivery workflow", () => {
           connectionId: "conn-2",
           orgId: "org-2",
         }),
-      }),
+      })
     );
   });
 
@@ -272,7 +280,7 @@ describe("webhook-delivery workflow", () => {
     // 5 steps: dedup, persist-delivery, resolve-connection, publish-to-dlq, update-status-dlq
     expect(ctx.run).toHaveBeenCalledTimes(5);
     expect(mockPublishToTopic).toHaveBeenCalledWith(
-      expect.objectContaining({ topic: "webhook-dlq" }),
+      expect.objectContaining({ topic: "webhook-dlq" })
     );
     expect(mockPublishJSON).not.toHaveBeenCalled();
 
@@ -286,7 +294,7 @@ describe("webhook-delivery workflow", () => {
           eventType: "push",
           status: "received",
           payload: JSON.stringify({ repository: { id: 42 } }),
-          receivedAt: new Date(1700000000000).toISOString(),
+          receivedAt: new Date(1_700_000_000_000).toISOString(),
         },
       },
       { op: "update", set: { status: "dlq" } },
@@ -300,7 +308,7 @@ describe("webhook-delivery workflow", () => {
     await capturedHandler(ctx);
 
     expect(mockPublishToTopic).toHaveBeenCalledWith(
-      expect.objectContaining({ topic: "webhook-dlq" }),
+      expect.objectContaining({ topic: "webhook-dlq" })
     );
   });
 
@@ -320,7 +328,7 @@ describe("webhook-delivery workflow", () => {
           connectionId: "conn-fresh",
           orgId: "org-fresh",
         }),
-      }),
+      })
     );
     // Should have repopulated the cache with correct data
     expect(mockRedisHset).toHaveBeenCalled();
@@ -340,10 +348,9 @@ describe("webhook-delivery workflow", () => {
           connectionId: "conn-3",
           orgId: "org-3",
         }),
-      }),
+      })
     );
   });
-
 
   describe("external dependency failures", () => {
     it("Redis dedup (SET NX) throws → error propagates, webhook is retried by Upstash", async () => {
@@ -351,7 +358,7 @@ describe("webhook-delivery workflow", () => {
 
       const ctx = makeContext(makePayload());
       await expect(capturedHandler(ctx)).rejects.toThrow(
-        "Redis connection refused",
+        "Redis connection refused"
       );
       // No publish should have happened
       expect(mockPublishJSON).not.toHaveBeenCalled();
@@ -415,7 +422,7 @@ describe("webhook-delivery workflow", () => {
 
       const ctx = makeContext(makePayload());
       await expect(capturedHandler(ctx)).rejects.toThrow(
-        "QStash DLQ topic error",
+        "QStash DLQ topic error"
       );
     });
   });
@@ -457,7 +464,7 @@ describe("webhook-delivery workflow", () => {
             connectionId: "conn-1",
             orgId: "org-1",
           }),
-        }),
+        })
       );
     });
 
@@ -490,7 +497,7 @@ describe("webhook-delivery workflow", () => {
             connectionId: "conn-retry",
             orgId: "org-retry",
           }),
-        }),
+        })
       );
     });
 
@@ -508,7 +515,7 @@ describe("webhook-delivery workflow", () => {
       expect(mockRedisSet).not.toHaveBeenCalled();
       expect(mockRedisHgetall).not.toHaveBeenCalled();
       expect(mockPublishToTopic).toHaveBeenCalledWith(
-        expect.objectContaining({ topic: "webhook-dlq" }),
+        expect.objectContaining({ topic: "webhook-dlq" })
       );
       expect(mockPublishJSON).not.toHaveBeenCalled();
     });
@@ -541,8 +548,11 @@ describe("webhook-delivery workflow", () => {
       deliveryId: "del-envelope",
       eventType: "deployment.created",
       resourceId: "prj_abc",
-      payload: { type: "deployment.created", payload: { project: { id: "prj_abc" } } },
-      receivedAt: 1700000001,
+      payload: {
+        type: "deployment.created",
+        payload: { project: { id: "prj_abc" } },
+      },
+      receivedAt: 1_700_000_001,
     });
     const ctx = makeContext(payload);
     await capturedHandler(ctx);
@@ -557,8 +567,11 @@ describe("webhook-delivery workflow", () => {
       orgId: "org-1",
       provider: "vercel",
       eventType: "deployment.created",
-      payload: { type: "deployment.created", payload: { project: { id: "prj_abc" } } },
-      receivedAt: 1700000001,
+      payload: {
+        type: "deployment.created",
+        payload: { project: { id: "prj_abc" } },
+      },
+      receivedAt: 1_700_000_001,
     });
   });
 
@@ -602,7 +615,7 @@ describe("webhook-delivery workflow", () => {
           eventType: "push",
           status: "enqueued",
           installationId: "conn-1",
-        }),
+        })
       );
     });
 
@@ -618,11 +631,10 @@ describe("webhook-delivery workflow", () => {
       expect(finalState).toEqual(
         expect.objectContaining({
           status: "dlq",
-        }),
+        })
       );
       expect(finalState).not.toHaveProperty("installationId");
     });
-
   });
 
   it("DLQ envelope contains all diagnostic fields", async () => {
@@ -636,7 +648,7 @@ describe("webhook-delivery workflow", () => {
       eventType: "Issue:create",
       resourceId: "org-unknown",
       payload: { type: "Issue", action: "create" },
-      receivedAt: 1700000002,
+      receivedAt: 1_700_000_002,
     });
     const ctx = makeContext(payload);
     await capturedHandler(ctx);
@@ -649,7 +661,7 @@ describe("webhook-delivery workflow", () => {
       eventType: "Issue:create",
       resourceId: "org-unknown",
       payload: { type: "Issue", action: "create" },
-      receivedAt: 1700000002,
+      receivedAt: 1_700_000_002,
     });
   });
 });

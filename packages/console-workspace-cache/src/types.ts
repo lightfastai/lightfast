@@ -3,11 +3,11 @@
  * Contains only the fields needed for Pinecone queries and embedding generation.
  */
 export interface CachedWorkspaceConfig {
-  indexName: string;
-  namespaceName: string;
-  embeddingModel: string;
   embeddingDim: number;
+  embeddingModel: string;
+  hasActors: boolean;
   // Capability flags for search path optimization
   hasClusters: boolean;
-  hasActors: boolean;
+  indexName: string;
+  namespaceName: string;
 }

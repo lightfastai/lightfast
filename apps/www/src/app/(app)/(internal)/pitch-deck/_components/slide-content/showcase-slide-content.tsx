@@ -18,7 +18,7 @@ export function ShowcaseSlideContent({
       {/* Title at top */}
       <h2
         className={cn(
-          "font-normal tracking-tight text-foreground",
+          "font-normal text-foreground tracking-tight",
           isFixed
             ? "mb-16 text-6xl"
             : "mb-6 text-xl sm:mb-8 sm:text-2xl md:mb-12 md:text-4xl lg:text-5xl"
@@ -51,17 +51,19 @@ export function ShowcaseSlideContent({
         >
           {slide.metadata.map((item) => (
             <div
-              key={item.label}
               className={cn(
-                "border-b border-neutral-300",
+                "border-neutral-300 border-b",
                 isFixed ? "pb-4" : "pb-1.5 sm:pb-2 md:pb-3"
               )}
+              key={item.label}
             >
               <div className="flex flex-col">
                 <span
                   className={cn(
-                    "font-medium uppercase tracking-wider text-neutral-500",
-                    isFixed ? "text-sm mb-1" : "text-[9px] sm:text-[10px] md:text-xs mb-0.5"
+                    "font-medium text-neutral-500 uppercase tracking-wider",
+                    isFixed
+                      ? "mb-1 text-sm"
+                      : "mb-0.5 text-[9px] sm:text-[10px] md:text-xs"
                   )}
                 >
                   {item.label}

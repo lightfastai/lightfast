@@ -6,15 +6,23 @@
  * payloads (adapter output) ready for direct ingestion through Relay's
  * service auth endpoint.
  */
-import type { BackfillConnector, BackfillConfig, BackfillPage, BackfillWebhookEvent } from "../types.js";
+
 import {
-  adaptGitHubPRForTransformer,
   adaptGitHubIssueForTransformer,
+  adaptGitHubPRForTransformer,
   adaptGitHubReleaseForTransformer,
   parseGitHubRateLimit,
 } from "../adapters/github.js";
+import type {
+  BackfillConfig,
+  BackfillConnector,
+  BackfillPage,
+  BackfillWebhookEvent,
+} from "../types.js";
 
-type GitHubCursor = { page: number };
+interface GitHubCursor {
+  page: number;
+}
 
 class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
   readonly provider = "github" as const;
@@ -29,23 +37,29 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
   async fetchPage(
     config: BackfillConfig,
     entityType: string,
-    cursor: GitHubCursor | null,
+    cursor: GitHubCursor | null
   ): Promise<BackfillPage<GitHubCursor>> {
     // resourceName holds "owner/repo", providerResourceId holds the numeric GitHub repo ID
     const resource = config.resource;
     if (!resource.resourceName) {
-      throw new Error(`No resource found for GitHub backfill (installationId: ${config.installationId})`);
+      throw new Error(
+        `No resource found for GitHub backfill (installationId: ${config.installationId})`
+      );
     }
 
     const repoFullName = resource.resourceName;
     const repoId = Number(resource.providerResourceId);
     if (!Number.isFinite(repoId)) {
-      throw new Error(`Invalid providerResourceId for GitHub backfill (installationId: ${config.installationId}, providerResourceId: ${String(resource.providerResourceId)})`);
+      throw new Error(
+        `Invalid providerResourceId for GitHub backfill (installationId: ${config.installationId}, providerResourceId: ${String(resource.providerResourceId)})`
+      );
     }
 
     const [owner, repo] = repoFullName.split("/");
-    if (!owner || !repo) {
-      throw new Error(`Invalid resourceName (expected owner/repo): ${repoFullName}`);
+    if (!(owner && repo)) {
+      throw new Error(
+        `Invalid resourceName (expected owner/repo): ${repoFullName}`
+      );
     }
 
     const repoData: Record<string, unknown> = {
@@ -73,7 +87,7 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     owner: string,
     repo: string,
     page: number,
-    repoData: Record<string, unknown>,
+    repoData: Record<string, unknown>
   ): Promise<BackfillPage<GitHubCursor>> {
     const url = new URL(`https://api.github.com/repos/${owner}/${repo}/pulls`);
     url.searchParams.set("state", "all");
@@ -91,17 +105,20 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     });
 
     if (!response.ok) {
-      throw new Error(`GitHub API returned ${response.status} fetching PRs for ${owner}/${repo}`);
+      throw new Error(
+        `GitHub API returned ${response.status} fetching PRs for ${owner}/${repo}`
+      );
     }
 
-    const data = (await response.json()) as Array<Record<string, unknown>>;
+    const data = (await response.json()) as Record<string, unknown>[];
     const sinceDate = new Date(config.since);
 
-    const filtered = data.filter(pr =>
-      typeof pr.updated_at === "string"
-      && typeof pr.number === "number"
-      && Number.isFinite(pr.number)
-      && new Date(pr.updated_at) >= sinceDate,
+    const filtered = data.filter(
+      (pr) =>
+        typeof pr.updated_at === "string" &&
+        typeof pr.number === "number" &&
+        Number.isFinite(pr.number) &&
+        new Date(pr.updated_at) >= sinceDate
     );
 
     const events: BackfillWebhookEvent[] = filtered.map((pr) => ({
@@ -110,7 +127,9 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
       payload: adaptGitHubPRForTransformer(pr, repoData),
     }));
 
-    const rateLimit = parseGitHubRateLimit(Object.fromEntries(response.headers.entries()));
+    const rateLimit = parseGitHubRateLimit(
+      Object.fromEntries(response.headers.entries())
+    );
     const hasMore = data.length === 100 && filtered.length === data.length;
 
     return {
@@ -126,12 +145,12 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     owner: string,
     repo: string,
     page: number,
-    repoData: Record<string, unknown>,
+    repoData: Record<string, unknown>
   ): Promise<BackfillPage<GitHubCursor>> {
     const url = new URL(`https://api.github.com/repos/${owner}/${repo}/issues`);
     url.searchParams.set("state", "all");
     url.searchParams.set("sort", "updated");
-    url.searchParams.set("since", config.since);  // GitHub Issues API handles since server-side
+    url.searchParams.set("since", config.since); // GitHub Issues API handles since server-side
     url.searchParams.set("per_page", "100");
     url.searchParams.set("page", String(page));
 
@@ -144,16 +163,19 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     });
 
     if (!response.ok) {
-      throw new Error(`GitHub API returned ${response.status} fetching issues for ${owner}/${repo}`);
+      throw new Error(
+        `GitHub API returned ${response.status} fetching issues for ${owner}/${repo}`
+      );
     }
 
-    const data = (await response.json()) as Array<Record<string, unknown>>;
+    const data = (await response.json()) as Record<string, unknown>[];
 
     // Filter out PRs (items with pull_request key are PRs, not issues) and invalid entries
-    const issuesOnly = data.filter(item =>
-      !item.pull_request
-      && typeof item.number === "number"
-      && Number.isFinite(item.number),
+    const issuesOnly = data.filter(
+      (item) =>
+        !item.pull_request &&
+        typeof item.number === "number" &&
+        Number.isFinite(item.number)
     );
 
     const events: BackfillWebhookEvent[] = issuesOnly.map((issue) => ({
@@ -162,7 +184,9 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
       payload: adaptGitHubIssueForTransformer(issue, repoData),
     }));
 
-    const rateLimit = parseGitHubRateLimit(Object.fromEntries(response.headers.entries()));
+    const rateLimit = parseGitHubRateLimit(
+      Object.fromEntries(response.headers.entries())
+    );
     const hasMore = data.length === 100;
 
     return {
@@ -178,9 +202,11 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     owner: string,
     repo: string,
     page: number,
-    repoData: Record<string, unknown>,
+    repoData: Record<string, unknown>
   ): Promise<BackfillPage<GitHubCursor>> {
-    const url = new URL(`https://api.github.com/repos/${owner}/${repo}/releases`);
+    const url = new URL(
+      `https://api.github.com/repos/${owner}/${repo}/releases`
+    );
     url.searchParams.set("per_page", "100");
     url.searchParams.set("page", String(page));
 
@@ -193,16 +219,22 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
     });
 
     if (!response.ok) {
-      throw new Error(`GitHub API returned ${response.status} fetching releases for ${owner}/${repo}`);
+      throw new Error(
+        `GitHub API returned ${response.status} fetching releases for ${owner}/${repo}`
+      );
     }
 
-    const data = (await response.json()) as Array<Record<string, unknown>>;
+    const data = (await response.json()) as Record<string, unknown>[];
     const sinceDate = new Date(config.since);
 
-    const filtered = data.filter(release => {
-      if (typeof release.id !== "number" || !Number.isFinite(release.id)) return false;
+    const filtered = data.filter((release) => {
+      if (typeof release.id !== "number" || !Number.isFinite(release.id)) {
+        return false;
+      }
       const publishedAt = release.published_at ?? release.created_at;
-      return typeof publishedAt === "string" && new Date(publishedAt) >= sinceDate;
+      return (
+        typeof publishedAt === "string" && new Date(publishedAt) >= sinceDate
+      );
     });
 
     const events: BackfillWebhookEvent[] = filtered.map((release) => ({
@@ -211,7 +243,9 @@ class GitHubBackfillConnector implements BackfillConnector<GitHubCursor> {
       payload: adaptGitHubReleaseForTransformer(release, repoData),
     }));
 
-    const rateLimit = parseGitHubRateLimit(Object.fromEntries(response.headers.entries()));
+    const rateLimit = parseGitHubRateLimit(
+      Object.fromEntries(response.headers.entries())
+    );
     const hasMore = data.length === 100 && filtered.length === data.length;
 
     return {

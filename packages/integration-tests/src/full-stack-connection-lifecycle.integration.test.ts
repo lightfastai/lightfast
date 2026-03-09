@@ -13,24 +13,21 @@
  * Infrastructure: PGlite, in-memory Redis, QStash capture, Inngest capture,
  * service router (all three apps).
  */
+
+import { gwInstallations, gwResources } from "@db/console/schema";
+import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
+import { fixtures } from "@repo/console-test-db/fixtures";
 import {
-  describe,
-  it,
-  expect,
-  vi,
+  afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
-  afterAll,
+  describe,
+  expect,
+  it,
+  vi,
 } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
-import type { TestDb } from "@repo/console-test-db";
-import { fixtures } from "@repo/console-test-db/fixtures";
-import { gwInstallations, gwResources } from "@db/console/schema";
 
 // ── Shared state ──
 let db: TestDb;
@@ -47,7 +44,11 @@ const {
 } = await vi.hoisted(async () => {
   const { makeRedisMock, makeQStashMock } = await import("./harness.js");
   const redisStore = new Map<string, unknown>();
-  const messages: { url: string; body: unknown; headers?: Record<string, string> }[] = [];
+  const messages: {
+    url: string;
+    body: unknown;
+    headers?: Record<string, string>;
+  }[] = [];
   const inngestEventsSent: { name: string; data: unknown }[] = [];
   const capturedHandlers = new Map<
     string,
@@ -55,11 +56,13 @@ const {
   >();
 
   const sendMock = vi.fn(
-    (event: { name: string; data: unknown } | { name: string; data: unknown }[]) => {
+    (
+      event: { name: string; data: unknown } | { name: string; data: unknown }[]
+    ) => {
       const all = Array.isArray(event) ? event : [event];
       inngestEventsSent.push(...all);
       return Promise.resolve({ ids: all.map((_, i) => `evt-${i}`) });
-    },
+    }
   );
 
   return {
@@ -76,7 +79,9 @@ const {
 // ── vi.mock declarations ──
 
 vi.mock("@db/console/client", () => ({
-  get db() { return db; },
+  get db() {
+    return db;
+  },
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -85,7 +90,11 @@ vi.mock("@vendor/upstash", () => ({
 
 vi.mock("@vendor/qstash", () => ({
   getQStashClient: () => qstashMock,
-  Receiver: class { verify() { return Promise.resolve(true); } },
+  Receiver: class {
+    verify() {
+      return Promise.resolve(true);
+    }
+  },
 }));
 
 vi.mock("@vendor/inngest/hono", () => ({
@@ -99,15 +108,17 @@ vi.mock("@vendor/inngest", () => ({
       (
         config: { id: string },
         _trigger: unknown,
-        handler: (args: { event: unknown; step: unknown }) => Promise<unknown>,
+        handler: (args: { event: unknown; step: unknown }) => Promise<unknown>
       ) => {
         capturedHandlers.set(config.id, handler);
         return { id: config.id };
-      },
+      }
     );
   },
   EventSchemas: class {
-    fromSchema() { return this; }
+    fromSchema() {
+      return this;
+    }
   },
   NonRetriableError: class extends Error {
     constructor(msg: string) {
@@ -118,13 +129,21 @@ vi.mock("@vendor/inngest", () => ({
 }));
 
 vi.mock("@vendor/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vercel/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
@@ -137,17 +156,17 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
   serve: vi.fn(() => () => new Response("ok")),
 }));
 
+import backfillApp from "@backfill/app";
 // ── Import all apps after mocks ──
 import gatewayApp from "@gateway/app";
-import backfillApp from "@backfill/app";
 import relayApp from "@relay/app";
 
 // Force backfill workflows to load and register handlers
 await import("@backfill/orchestrator");
 
+import { cancelBackfillService } from "@gateway/urls";
 // ── Utilities ──
 import { installServiceRouter, makeStep } from "./harness.js";
-import { cancelBackfillService } from "@gateway/urls";
 
 // ── Lifecycle ──
 
@@ -163,47 +182,67 @@ beforeEach(() => {
 
   // Restore Inngest send implementation
   inngestSendMock.mockImplementation(
-    (event: { name: string; data: unknown } | { name: string; data: unknown }[]) => {
+    (
+      event: { name: string; data: unknown } | { name: string; data: unknown }[]
+    ) => {
       const all = Array.isArray(event) ? event : [event];
       inngestEventsSent.push(...all);
       return Promise.resolve({ ids: all.map((_, i) => `evt-${i}`) });
-    },
+    }
   );
 
-  redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
-    redisStore.set(key, { ...existing, ...fields });
-    return Promise.resolve(1);
-  });
-  redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
+  redisMock.hset.mockImplementation(
+    (key: string, fields: Record<string, unknown>) => {
+      const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+      redisStore.set(key, { ...existing, ...fields });
+      return Promise.resolve(1);
+    }
   );
-  redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean; ex?: number }) => {
-    if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
-    redisStore.set(key, value);
-    return Promise.resolve("OK");
-  });
+  redisMock.hgetall.mockImplementation((key: string) =>
+    Promise.resolve(
+      (redisStore.get(key) ?? null) as Record<string, string> | null
+    )
+  );
+  redisMock.set.mockImplementation(
+    (key: string, value: unknown, opts?: { nx?: boolean; ex?: number }) => {
+      if (opts?.nx && redisStore.has(key)) {
+        return Promise.resolve(null);
+      }
+      redisStore.set(key, value);
+      return Promise.resolve("OK");
+    }
+  );
   redisMock.del.mockImplementation((...keys: string[]) => {
     const allKeys = keys.flat();
     let count = 0;
-    for (const k of allKeys) { if (redisStore.delete(k)) count++; }
+    for (const k of allKeys) {
+      if (redisStore.delete(k)) {
+        count++;
+      }
+    }
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation((key: string) =>
-    Promise.resolve(redisStore.get(key) ?? null),
+    Promise.resolve(redisStore.get(key) ?? null)
   );
   redisMock.pipeline.mockImplementation(() => {
     const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          const existing = (redisStore.get(key) ?? {}) as Record<
+            string,
+            unknown
+          >;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
       }),
       expire: vi.fn(() => pipe),
-      exec: vi.fn(() => { ops.forEach((op) => op()); return []; }),
+      exec: vi.fn(() => {
+        ops.forEach((op) => op());
+        return [];
+      }),
     };
     return pipe;
   });
@@ -236,7 +275,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
     });
 
     expect(res.status).toBe(200);
-    const json = await res.json() as { status: string };
+    const json = (await res.json()) as { status: string };
     expect(json.status).toBe("accepted");
 
     // Inngest run.requested event should have fired
@@ -248,7 +287,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
           provider: "github",
           orgId: "org-lifecycle-happy",
         }) as unknown,
-      }),
+      })
     );
   });
 
@@ -269,7 +308,9 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
     await db.insert(gwResources).values(resource);
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
-    if (!orchHandler) throw new Error("orchestrator handler not registered");
+    if (!orchHandler) {
+      throw new Error("orchestrator handler not registered");
+    }
 
     const step = makeStep({
       waitForEvent: vi.fn().mockResolvedValue({
@@ -289,7 +330,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
     // Install service router so orchestrator fetch() → gatewayApp
     const restore = installServiceRouter({ gatewayApp });
     try {
-      const result = await orchHandler({
+      const result = (await orchHandler({
         event: {
           data: {
             installationId: inst.id,
@@ -300,7 +341,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
           },
         },
         step,
-      }) as {
+      })) as {
         success: boolean;
         workUnits: number;
         eventsProduced: number;
@@ -331,19 +372,22 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
           orgId: "org-lifecycle-1",
           deliveryId: "del-lifecycle-e2e-1",
           eventType: "push",
-          payload: { repository: { id: 99999 } },
+          payload: { repository: { id: 99_999 } },
           receivedAt: Date.now(),
         }),
       });
 
-      const json = await res.json() as { status: string };
+      const json = (await res.json()) as { status: string };
       expect(json.status).toBe("accepted");
 
       // QStash should have received the WebhookEnvelope
       expect(qstashMock.publishJSON).toHaveBeenCalled();
-      const publishCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
+      const publishCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>)
+        .mock.calls;
       const firstPublishCall = publishCalls[0] as unknown[] | undefined;
-      if (!firstPublishCall) throw new Error("expected publishJSON call");
+      if (!firstPublishCall) {
+        throw new Error("expected publishJSON call");
+      }
       const envelope = firstPublishCall[0] as {
         body: { connectionId: string; provider: string; deliveryId: string };
       };
@@ -363,7 +407,9 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
 
     expect(qstashMessages).toHaveLength(1);
     const capturedMsg = qstashMessages[0];
-    if (!capturedMsg) throw new Error("expected qstash message");
+    if (!capturedMsg) {
+      throw new Error("expected qstash message");
+    }
     expect(capturedMsg.url).toContain("/trigger/cancel");
 
     // 2. Deliver captured QStash body to backfill cancel endpoint
@@ -377,12 +423,14 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     });
 
     expect(res.status).toBe(200);
-    const json = await res.json() as { status: string };
+    const json = (await res.json()) as { status: string };
     expect(json.status).toBe("cancelled");
 
     // 3. Inngest run.cancelled event should have fired
     // toMatchObject does recursive partial matching — extra fields like correlationId are ignored
-    const cancelEvent = inngestEventsSent.find(e => e.name === "apps-backfill/run.cancelled");
+    const cancelEvent = inngestEventsSent.find(
+      (e) => e.name === "apps-backfill/run.cancelled"
+    );
     expect(cancelEvent).toBeDefined();
     expect(cancelEvent).toMatchObject({
       name: "apps-backfill/run.cancelled",
@@ -403,11 +451,14 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
       {
         method: "DELETE",
         headers: new Headers({ "X-API-Key": "0".repeat(64) }),
-      },
+      }
     );
 
     expect(res.status).toBe(200);
-    const json = await res.json() as { status: string; installationId: string };
+    const json = (await res.json()) as {
+      status: string;
+      installationId: string;
+    };
     expect(json.status).toBe("teardown_initiated");
     expect(json.installationId).toBe(inst.id);
   });
@@ -419,25 +470,35 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
       orgId: "org-dedup-1",
       deliveryId,
       eventType: "push",
-      payload: { repository: { id: 11111 } },
+      payload: { repository: { id: 11_111 } },
       receivedAt: Date.now(),
     };
 
     // First dispatch — accepted
     const first = await relayApp.request("/api/webhooks/github", {
       method: "POST",
-      headers: new Headers({ "Content-Type": "application/json", "X-API-Key": "0".repeat(64) }),
+      headers: new Headers({
+        "Content-Type": "application/json",
+        "X-API-Key": "0".repeat(64),
+      }),
       body: JSON.stringify(body),
     });
-    expect((await first.json() as { status: string }).status).toBe("accepted");
+    expect(((await first.json()) as { status: string }).status).toBe(
+      "accepted"
+    );
 
     // Second dispatch (retry with same deliveryId) — deduplicated
     const second = await relayApp.request("/api/webhooks/github", {
       method: "POST",
-      headers: new Headers({ "Content-Type": "application/json", "X-API-Key": "0".repeat(64) }),
+      headers: new Headers({
+        "Content-Type": "application/json",
+        "X-API-Key": "0".repeat(64),
+      }),
       body: JSON.stringify({ ...body, receivedAt: Date.now() }),
     });
-    expect((await second.json() as { status: string }).status).toBe("duplicate");
+    expect(((await second.json()) as { status: string }).status).toBe(
+      "duplicate"
+    );
 
     // QStash should only have been called once
     expect(qstashMock.publishJSON).toHaveBeenCalledOnce();
@@ -463,8 +524,11 @@ describe("Suite 5.3 — Full teardown path", () => {
     await db.insert(gwResources).values(resource);
 
     // Populate Redis resource cache (simulates what POST /services/gateway/:id/resources does)
-    const cacheKey = `gw:resource:github:owner/teardown-repo`;
-    redisStore.set(cacheKey, { connectionId: inst.id, orgId: "org-teardown-path" });
+    const cacheKey = "gw:resource:github:owner/teardown-repo";
+    redisStore.set(cacheKey, {
+      connectionId: inst.id,
+      orgId: "org-teardown-path",
+    });
     expect(redisStore.has(cacheKey)).toBe(true);
 
     // ── 2. DELETE /services/gateway/:provider/:id → teardown_initiated ──
@@ -473,10 +537,13 @@ describe("Suite 5.3 — Full teardown path", () => {
       {
         method: "DELETE",
         headers: new Headers({ "X-API-Key": "0".repeat(64) }),
-      },
+      }
     );
     expect(deleteRes.status).toBe(200);
-    const deleteJson = await deleteRes.json() as { status: string; installationId: string };
+    const deleteJson = (await deleteRes.json()) as {
+      status: string;
+      installationId: string;
+    };
     expect(deleteJson.status).toBe("teardown_initiated");
     expect(deleteJson.installationId).toBe(inst.id);
 
@@ -485,9 +552,15 @@ describe("Suite 5.3 — Full teardown path", () => {
     // We simulate it here to test the full cancel delivery chain.
     await cancelBackfillService({ installationId: inst.id });
 
-    const cancelMsg = qstashMessages.find((m) => m.url.includes("/trigger/cancel"));
-    if (!cancelMsg) throw new Error("expected cancel qstash message");
-    expect((cancelMsg.body as { installationId: string }).installationId).toBe(inst.id);
+    const cancelMsg = qstashMessages.find((m) =>
+      m.url.includes("/trigger/cancel")
+    );
+    if (!cancelMsg) {
+      throw new Error("expected cancel qstash message");
+    }
+    expect((cancelMsg.body as { installationId: string }).installationId).toBe(
+      inst.id
+    );
 
     // ── 4. Deliver cancel QStash to backfill → run.cancelled fires ──
     const cancelRes = await backfillApp.request("/api/trigger/cancel", {
@@ -499,9 +572,13 @@ describe("Suite 5.3 — Full teardown path", () => {
       body: JSON.stringify(cancelMsg.body),
     });
     expect(cancelRes.status).toBe(200);
-    expect((await cancelRes.json() as { status: string }).status).toBe("cancelled");
+    expect(((await cancelRes.json()) as { status: string }).status).toBe(
+      "cancelled"
+    );
 
-    const cancelEvent = inngestEventsSent.find(e => e.name === "apps-backfill/run.cancelled");
+    const cancelEvent = inngestEventsSent.find(
+      (e) => e.name === "apps-backfill/run.cancelled"
+    );
     expect(cancelEvent).toBeDefined();
     expect(cancelEvent).toMatchObject({
       name: "apps-backfill/run.cancelled",

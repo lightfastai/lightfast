@@ -13,7 +13,14 @@ export const preTransformVercelWebhookPayloadSchema = z.object({
           name: z.string(),
           url: z.string().optional(),
           readyState: z
-            .enum(["READY", "ERROR", "BUILDING", "QUEUED", "CANCELED", "INITIALIZING"])
+            .enum([
+              "READY",
+              "ERROR",
+              "BUILDING",
+              "QUEUED",
+              "CANCELED",
+              "INITIALIZING",
+            ])
             .optional(),
           errorCode: z.string().optional(),
           meta: z
@@ -95,6 +102,10 @@ export const vercelWebhookPayloadSchema = z
   })
   .passthrough();
 
-export type PreTransformVercelWebhookPayload = z.infer<typeof preTransformVercelWebhookPayloadSchema>;
-export type VercelWebhookEventType = z.infer<typeof vercelWebhookEventTypeSchema>;
+export type PreTransformVercelWebhookPayload = z.infer<
+  typeof preTransformVercelWebhookPayloadSchema
+>;
+export type VercelWebhookEventType = z.infer<
+  typeof vercelWebhookEventTypeSchema
+>;
 export type VercelWebhookPayload = z.infer<typeof vercelWebhookPayloadSchema>;

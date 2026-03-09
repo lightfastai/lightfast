@@ -1,23 +1,24 @@
 "use client";
 
-import * as React from "react";
 import { useIsMobile } from "@repo/ui/hooks/use-mobile";
+import * as React from "react";
 
 const PREFACE_COOKIE_NAME = "pitch_deck_preface";
 const PREFACE_COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 const PREFACE_KEYBOARD_SHORTCUT = "b";
 
 interface PitchDeckContextProps {
+  // Mobile detection - undefined during hydration
+  isMobile: boolean | undefined;
   // Preface visibility state
   prefaceExpanded: boolean;
   setPrefaceExpanded: (expanded: boolean) => void;
   togglePreface: () => void;
-
-  // Mobile detection - undefined during hydration
-  isMobile: boolean | undefined;
 }
 
-const PitchDeckContext = React.createContext<PitchDeckContextProps | null>(null);
+const PitchDeckContext = React.createContext<PitchDeckContextProps | null>(
+  null
+);
 
 export function usePitchDeck() {
   const context = React.useContext(PitchDeckContext);
@@ -54,6 +55,7 @@ export function PitchDeckProvider({
   const setPrefaceExpanded = React.useCallback((expanded: boolean) => {
     _setPrefaceExpanded(expanded);
     // Persist to cookie
+    // biome-ignore lint/suspicious/noDocumentCookie: client-side cookie for pitch deck preference persistence
     document.cookie = `${PREFACE_COOKIE_NAME}=${expanded}; path=/; max-age=${PREFACE_COOKIE_MAX_AGE}`;
   }, []);
 
@@ -61,6 +63,7 @@ export function PitchDeckProvider({
     _setPrefaceExpanded((prev) => {
       const next = !prev;
       // Persist to cookie
+      // biome-ignore lint/suspicious/noDocumentCookie: client-side cookie for pitch deck preference persistence
       document.cookie = `${PREFACE_COOKIE_NAME}=${next}; path=/; max-age=${PREFACE_COOKIE_MAX_AGE}`;
       return next;
     });

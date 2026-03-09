@@ -10,22 +10,26 @@
  */
 
 import { db } from "@db/console";
-import { workspaceIntegrations, gwInstallations, orgWorkspaces } from "@db/console/schema";
 import type { InsertWorkspaceIntegration } from "@db/console/schema";
+import {
+  gwInstallations,
+  orgWorkspaces,
+  workspaceIntegrations,
+} from "@db/console/schema";
 import { nanoid } from "@repo/lib";
-import { eq, and } from "@vendor/db";
+import { and, eq } from "@vendor/db";
 
 interface SeedOptions {
-  workspaceId: string;
   userId: string;
+  workspaceId: string;
 }
 
 interface DemoSource {
-  providerConfig: InsertWorkspaceIntegration["providerConfig"];
-  providerResourceId: string;
   documentCount: number;
   /** Stable externalId used to find/create the gwInstallation for this provider */
   gwExternalId: string;
+  providerConfig: InsertWorkspaceIntegration["providerConfig"];
+  providerResourceId: string;
 }
 
 /**
@@ -59,7 +63,14 @@ const DEMO_SOURCES: DemoSource[] = [
       teamId: "team_lightfastai",
       configurationId: "icfg_demo_001",
       sync: {
-        events: ["deployment.created", "deployment.succeeded", "deployment.ready", "deployment.error", "deployment.canceled", "deployment.check-rerequested"],
+        events: [
+          "deployment.created",
+          "deployment.succeeded",
+          "deployment.ready",
+          "deployment.error",
+          "deployment.canceled",
+          "deployment.check-rerequested",
+        ],
         autoSync: true,
       },
     },
@@ -124,12 +135,14 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       where: and(
         eq(gwInstallations.provider, provider),
         eq(gwInstallations.externalId, source.gwExternalId),
-        eq(gwInstallations.orgId, orgId),
+        eq(gwInstallations.orgId, orgId)
       ),
       columns: { id: true },
     });
 
-    if (!installation) {
+    if (installation) {
+      console.log(`  [skip] ${provider} gwInstallation already exists`);
+    } else {
       const [created] = await db
         .insert(gwInstallations)
         .values({
@@ -143,8 +156,6 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
         .returning({ id: gwInstallations.id });
       installation = created;
       console.log(`  [created] ${provider} gwInstallation`);
-    } else {
-      console.log(`  [skip] ${provider} gwInstallation already exists`);
     }
 
     if (!installation) {
@@ -159,8 +170,11 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       .where(
         and(
           eq(workspaceIntegrations.workspaceId, workspaceId),
-          eq(workspaceIntegrations.providerResourceId, source.providerResourceId),
-        ),
+          eq(
+            workspaceIntegrations.providerResourceId,
+            source.providerResourceId
+          )
+        )
       );
 
     if (existingIntegration.length > 0) {
@@ -194,6 +208,7 @@ function parseArgs(): SeedOptions {
   const args = process.argv.slice(2);
   const options: SeedOptions = { workspaceId: "", userId: "" };
 
+  // biome-ignore lint/style/useForOf: index manipulation (++i) inside loop body
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === "-w" || arg === "--workspace") {

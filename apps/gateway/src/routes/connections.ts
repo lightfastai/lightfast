@@ -1,8 +1,16 @@
 import { db } from "@db/console/client";
-import { gwInstallations, gwResources, gwBackfillRuns, gwTokens } from "@db/console/schema";
-import { getProvider, PROVIDERS } from "@repo/console-providers";
+import {
+  gwBackfillRuns,
+  gwInstallations,
+  gwResources,
+  gwTokens,
+} from "@db/console/schema";
 import type { RuntimeConfig, SourceType } from "@repo/console-providers";
-import { backfillRunRecord, BACKFILL_TERMINAL_STATUSES } from "@repo/console-validation";
+import { getProvider, PROVIDERS } from "@repo/console-providers";
+import {
+  BACKFILL_TERMINAL_STATUSES,
+  backfillRunRecord,
+} from "@repo/console-validation";
 import { decrypt, nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
@@ -11,8 +19,8 @@ import { Hono } from "hono";
 import { html, raw } from "hono/html";
 import { env } from "../env.js";
 import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
-import { writeTokenRecord, updateTokenRecord } from "../lib/token-store.js";
-import { gatewayBaseUrl, consoleUrl } from "../lib/urls.js";
+import { updateTokenRecord, writeTokenRecord } from "../lib/token-store.js";
+import { consoleUrl, gatewayBaseUrl } from "../lib/urls.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import type { TenantVariables } from "../middleware/tenant.js";
 import { tenantMiddleware } from "../middleware/tenant.js";
@@ -24,7 +32,10 @@ const runtime: RuntimeConfig = { callbackBaseUrl: gatewayBaseUrl };
 
 /** Configs keyed by provider name */
 const providerConfigs: Record<string, unknown> = Object.fromEntries(
-  Object.entries(PROVIDERS).map(([name, p]) => [name, p.createConfig(env as unknown as Record<string, string>, runtime)]),
+  Object.entries(PROVIDERS).map(([name, p]) => [
+    name,
+    p.createConfig(env as unknown as Record<string, string>, runtime),
+  ])
 );
 
 const connections = new Hono<{ Variables: TenantVariables }>();
@@ -38,62 +49,72 @@ const connections = new Hono<{ Variables: TenantVariables }>();
  * Generates state token, stores in Redis, returns authorization URL for the provider.
  * Accepts optional `redirect_to` query param for CLI/non-browser clients.
  */
-connections.get("/:provider/authorize", apiKeyAuth, tenantMiddleware, async (c) => {
-  const providerName = c.req.param("provider") as SourceType;
-  const orgId = c.get("orgId");
+connections.get(
+  "/:provider/authorize",
+  apiKeyAuth,
+  tenantMiddleware,
+  async (c) => {
+    const providerName = c.req.param("provider") as SourceType;
+    const orgId = c.get("orgId");
 
-  const providerDef = getProvider(providerName);
-  const config = providerConfigs[providerName];
+    const providerDef = getProvider(providerName);
+    const config = providerConfigs[providerName];
 
-  if (!config) {
-    return c.json({ error: "unknown_provider", provider: providerName }, 400);
-  }
+    if (!config) {
+      return c.json({ error: "unknown_provider", provider: providerName }, 400);
+    }
 
-  // Validate redirect_to — allowlist: "inline", localhost, or consoleUrl
-  const redirectTo = c.req.query("redirect_to");
-  if (redirectTo && redirectTo !== "inline") {
-    try {
-      const url = new URL(redirectTo);
-      if (url.hostname !== "localhost" && !redirectTo.startsWith(consoleUrl)) {
+    // Validate redirect_to — allowlist: "inline", localhost, or consoleUrl
+    const redirectTo = c.req.query("redirect_to");
+    if (redirectTo && redirectTo !== "inline") {
+      try {
+        const url = new URL(redirectTo);
+        if (
+          url.hostname !== "localhost" &&
+          !redirectTo.startsWith(consoleUrl)
+        ) {
+          return c.json({ error: "invalid_redirect_to" }, 400);
+        }
+      } catch {
         return c.json({ error: "invalid_redirect_to" }, 400);
       }
-    } catch {
-      return c.json({ error: "invalid_redirect_to" }, 400);
     }
+
+    const state = nanoid();
+    const connectedBy = c.req.header("X-User-Id") ?? "unknown";
+
+    // Store OAuth state in Redis (10-minute TTL) — atomic pipeline
+    const key = oauthStateKey(state);
+    await redis
+      .pipeline()
+      .hset(key, {
+        provider: providerName,
+        orgId,
+        connectedBy,
+        ...(redirectTo ? { redirectTo } : {}),
+        createdAt: Date.now().toString(),
+      })
+      .expire(key, 600)
+      .exec();
+
+    // config is typed as unknown from providerConfigs — cast as never since runtime consistency is guaranteed
+    const url = providerDef.oauth.buildAuthUrl(config as never, state);
+
+    return c.json({ url, state });
   }
-
-  const state = nanoid();
-  const connectedBy = c.req.header("X-User-Id") ?? "unknown";
-
-  // Store OAuth state in Redis (10-minute TTL) — atomic pipeline
-  const key = oauthStateKey(state);
-  await redis
-    .pipeline()
-    .hset(key, {
-      provider: providerName,
-      orgId,
-      connectedBy,
-      ...(redirectTo ? { redirectTo } : {}),
-      createdAt: Date.now().toString(),
-    })
-    .expire(key, 600)
-    .exec();
-
-  // config is typed as unknown from providerConfigs — cast as never since runtime consistency is guaranteed
-  const url = providerDef.oauth.buildAuthUrl(config as never, state);
-
-  return c.json({ url, state });
-});
+);
 
 /**
  * Validate and consume OAuth state from Redis.
  * Returns stateData if valid, null if missing or expired.
  */
-async function resolveAndConsumeState(
-  c: { req: { query(key: string): string | undefined } },
-): Promise<Record<string, string> | null> {
+async function resolveAndConsumeState(c: {
+  req: { query(key: string): string | undefined };
+}): Promise<Record<string, string> | null> {
   const state = c.req.query("state");
-  if (!state) {return null;}
+  if (!state) {
+    return null;
+  }
 
   // Atomic read-and-delete to prevent state replay via concurrent requests
   const key = oauthStateKey(state);
@@ -103,7 +124,9 @@ async function resolveAndConsumeState(
     .del(key)
     .exec<[Record<string, string> | null, number]>();
 
-  if (!stateData?.orgId) {return null;}
+  if (!stateData?.orgId) {
+    return null;
+  }
 
   return stateData;
 }
@@ -124,7 +147,9 @@ connections.get("/oauth/status", async (c) => {
     return c.json({ error: "missing_state" }, 400);
   }
 
-  const result = await redis.hgetall<Record<string, string>>(oauthResultKey(state));
+  const result = await redis.hgetall<Record<string, string>>(
+    oauthResultKey(state)
+  );
 
   if (!result) {
     return c.json({ status: "pending" });
@@ -171,8 +196,8 @@ connections.get("/:provider/callback", async (c) => {
         .where(
           and(
             eq(gwInstallations.provider, "github"),
-            eq(gwInstallations.externalId, installationId),
-          ),
+            eq(gwInstallations.externalId, installationId)
+          )
         )
         .limit(1);
 
@@ -207,7 +232,10 @@ connections.get("/:provider/callback", async (c) => {
     }
 
     // Pure provider logic — no DB, no Hono coupling
-    const result = await providerDef.oauth.processCallback(config as never, query);
+    const result = await providerDef.oauth.processCallback(
+      config as never,
+      query
+    );
 
     // Handle pending-setup: provider needs additional configuration (e.g., GitHub App request flow).
     // No installation to upsert — just store the setup action and redirect.
@@ -237,7 +265,7 @@ connections.get("/:provider/callback", async (c) => {
                 </div>
                 ${raw("<script>setTimeout(()=>window.close(),2000)</script>")}
               </body>
-            </html>`,
+            </html>`
         );
       }
 
@@ -247,7 +275,9 @@ connections.get("/:provider/callback", async (c) => {
         return c.redirect(redirectUrl.toString());
       }
 
-      const setupUrl = new URL(`${consoleUrl}/provider/${providerName}/connected`);
+      const setupUrl = new URL(
+        `${consoleUrl}/provider/${providerName}/connected`
+      );
       setupUrl.searchParams.set("setup_action", result.setupAction);
       return c.redirect(setupUrl.toString());
     }
@@ -259,8 +289,8 @@ connections.get("/:provider/callback", async (c) => {
       .where(
         and(
           eq(gwInstallations.provider, providerName),
-          eq(gwInstallations.externalId, result.externalId),
-        ),
+          eq(gwInstallations.externalId, result.externalId)
+        )
       )
       .limit(1);
 
@@ -290,10 +320,15 @@ connections.get("/:provider/callback", async (c) => {
       .returning({ id: gwInstallations.id });
 
     const installation = rows[0];
-    if (!installation) {throw new Error("upsert_failed");}
+    if (!installation) {
+      throw new Error("upsert_failed");
+    }
 
     // Persist OAuth tokens for statuses that include them
-    if (result.status === "connected" || result.status === "connected-redirect") {
+    if (
+      result.status === "connected" ||
+      result.status === "connected-redirect"
+    ) {
       await writeTokenRecord(installation.id, result.tokens);
     }
 
@@ -329,7 +364,7 @@ connections.get("/:provider/callback", async (c) => {
               </div>
               ${raw("<script>setTimeout(()=>window.close(),2000)</script>")}
             </body>
-          </html>`,
+          </html>`
       );
     }
 
@@ -343,7 +378,9 @@ connections.get("/:provider/callback", async (c) => {
     }
 
     // Default: redirect to console (existing behavior, backwards compatible)
-    const redirectUrl = new URL(`${consoleUrl}/provider/${providerName}/connected`);
+    const redirectUrl = new URL(
+      `${consoleUrl}/provider/${providerName}/connected`
+    );
     if (reactivated) {
       redirectUrl.searchParams.set("reactivated", "true");
     }
@@ -378,18 +415,16 @@ connections.get("/:provider/callback", async (c) => {
               </div>
             </body>
           </html>`,
-        400,
+        400
       );
     }
 
     if (redirectTo) {
-      return c.redirect(
-        `${redirectTo}?error=${encodeURIComponent(message)}`,
-      );
+      return c.redirect(`${redirectTo}?error=${encodeURIComponent(message)}`);
     }
 
     return c.redirect(
-      `${consoleUrl}/provider/${providerName}/connected?error=${encodeURIComponent(message)}`,
+      `${consoleUrl}/provider/${providerName}/connected?error=${encodeURIComponent(message)}`
     );
   }
 });
@@ -442,14 +477,16 @@ connections.get("/:id", apiKeyAuth, async (c) => {
     orgId: installation.orgId,
     status: installation.status,
     hasToken:
-      !getProvider(installation.provider).oauth.usesStoredToken
-        || installation.tokens.length > 0,
+      !getProvider(installation.provider).oauth.usesStoredToken ||
+      installation.tokens.length > 0,
     tokenExpiresAt: installation.tokens[0]?.expiresAt ?? null,
-    resources: installation.resources.map((r: (typeof installation.resources)[number]) => ({
-      id: r.id,
-      providerResourceId: r.providerResourceId,
-      resourceName: r.resourceName,
-    })),
+    resources: installation.resources.map(
+      (r: (typeof installation.resources)[number]) => ({
+        id: r.id,
+        providerResourceId: r.providerResourceId,
+        resourceName: r.resourceName,
+      })
+    ),
     createdAt: installation.createdAt,
     updatedAt: installation.updatedAt,
   });
@@ -480,7 +517,7 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
   if (installation.status !== "active") {
     return c.json(
       { error: "installation_not_active", status: installation.status },
-      400,
+      400
     );
   }
 
@@ -505,10 +542,21 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
         throw new Error("token_expired:no_refresh_token");
       }
 
-      const decryptedRefresh = await decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
-      const refreshed = await providerDef.oauth.refreshToken(config as never, decryptedRefresh);
+      const decryptedRefresh = await decrypt(
+        tokenRow.refreshToken,
+        env.ENCRYPTION_KEY!
+      );
+      const refreshed = await providerDef.oauth.refreshToken(
+        config as never,
+        decryptedRefresh
+      );
 
-      await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
+      await updateTokenRecord(
+        tokenRow.id,
+        refreshed,
+        tokenRow.refreshToken,
+        tokenRow.expiresAt
+      );
 
       return c.json({
         accessToken: refreshed.accessToken,
@@ -519,25 +567,34 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
 
     // Decrypt stored token if present (null for providers that generate tokens on-demand)
     const decryptedAccessToken = tokenRow
-      ? await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY)
+      ? await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY!)
       : null;
 
     // Provider handles token generation: GitHub creates JWT on-demand, others return stored token
-    const token = await providerDef.oauth.getActiveToken(config as never, installation.externalId, decryptedAccessToken);
+    const token = await providerDef.oauth.getActiveToken(
+      config as never,
+      installation.externalId,
+      decryptedAccessToken
+    );
 
     return c.json({
       accessToken: token,
       provider: providerName,
       expiresIn: tokenRow?.expiresAt
-        ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
-        : 3600,  // GitHub installation tokens expire in 1 hour
+        ? Math.floor(
+            (new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000
+          )
+        : 3600, // GitHub installation tokens expire in 1 hour
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";
     if (message === "no_token_found") {
       return c.json({ error: "no_token_found" }, 404);
     }
-    if (message === "token_expired" || message === "token_expired:no_refresh_token") {
+    if (
+      message === "token_expired" ||
+      message === "token_expired:no_refresh_token"
+    ) {
       return c.json({ error: "token_expired", message }, 401);
     }
     return c.json({ error: "token_generation_failed", message }, 502);
@@ -558,7 +615,12 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
   const installationRows = await db
     .select()
     .from(gwInstallations)
-    .where(and(eq(gwInstallations.id, id), eq(gwInstallations.provider, providerName)))
+    .where(
+      and(
+        eq(gwInstallations.id, id),
+        eq(gwInstallations.provider, providerName)
+      )
+    )
     .limit(1);
 
   const installation = installationRows[0];
@@ -607,7 +669,7 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
   if (installation.status !== "active") {
     return c.json(
       { error: "installation_not_active", status: installation.status },
-      400,
+      400
     );
   }
 
@@ -629,8 +691,8 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
       and(
         eq(gwResources.installationId, id),
         eq(gwResources.providerResourceId, body.providerResourceId),
-        eq(gwResources.status, "active"),
-      ),
+        eq(gwResources.status, "active")
+      )
     )
     .limit(1);
 
@@ -639,7 +701,7 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
   if (existing) {
     return c.json(
       { error: "resource_already_linked", resourceId: existing.id },
-      409,
+      409
     );
   }
 
@@ -662,12 +724,14 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
     .returning();
 
   const resource = resourceRows[0];
-  if (!resource) {return c.json({ error: "insert_failed" }, 500);}
+  if (!resource) {
+    return c.json({ error: "insert_failed" }, 500);
+  }
 
   // Populate Redis routing cache
   await redis.hset(
     resourceKey(installation.provider, body.providerResourceId),
-    { connectionId: id, orgId: installation.orgId },
+    { connectionId: id, orgId: installation.orgId }
   );
 
   return c.json({
@@ -693,7 +757,9 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
   const resourceRows = await db
     .select()
     .from(gwResources)
-    .where(and(eq(gwResources.id, resourceId), eq(gwResources.installationId, id)))
+    .where(
+      and(eq(gwResources.id, resourceId), eq(gwResources.installationId, id))
+    )
     .limit(1);
 
   const resource = resourceRows[0];
@@ -721,7 +787,7 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
 
   if (installation) {
     await redis.del(
-      resourceKey(installation.provider, resource.providerResourceId),
+      resourceKey(installation.provider, resource.providerResourceId)
     );
   }
 
@@ -770,12 +836,17 @@ connections.post("/:id/backfill-runs", apiKeyAuth, async (c) => {
 
   if (!parsed.success) {
     // eslint-disable-next-line @typescript-eslint/no-deprecated
-    return c.json({ error: "invalid_body", details: parsed.error.flatten() }, 400);
+    return c.json(
+      { error: "invalid_body", details: parsed.error.flatten() },
+      400
+    );
   }
 
   const now = new Date().toISOString();
   const data = parsed.data;
-  const isTerminal = (BACKFILL_TERMINAL_STATUSES as readonly string[]).includes(data.status);
+  const isTerminal = (BACKFILL_TERMINAL_STATUSES as readonly string[]).includes(
+    data.status
+  );
 
   const sharedFields = {
     since: data.since,

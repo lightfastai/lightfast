@@ -1,5 +1,5 @@
-import { openapi } from "@/src/lib/openapi";
 import { createAPIPage } from "fumadocs-openapi/ui";
+import { openapi } from "@/src/lib/openapi";
 import client from "./api-page.client";
 import { renderOperationLayout, renderPageLayout } from "./api-page-renderers";
 import { getCodeSamples } from "./code-samples";

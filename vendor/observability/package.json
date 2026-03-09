@@ -26,27 +26,19 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/react": "^19.2.14",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
+    "@types/react": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@repo/prettier-config",
   "dependencies": {
     "@logtail/edge": "^0.5.8",
-    "@logtail/next": "^0.2.0",
+    "@logtail/next": "^0.3.1",
     "@sentry/core": "catalog:",
-    "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
-    "zod": "catalog:zod4"
+    "zod": "catalog:zod3"
   }
 }

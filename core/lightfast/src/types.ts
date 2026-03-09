@@ -1,19 +1,16 @@
 // Re-export API types from console-types for SDK consumers
 // These are used at compile time only (devDependency)
 export type {
-  // Search types
-  V1SearchRequest,
-  V1SearchResponse,
-  V1SearchResult,
-  V1SearchFilters,
-  V1SearchContext,
-  V1SearchLatency,
-  V1SearchMeta,
+  GraphEdge,
+  GraphNode,
+  GraphResponse,
+  RelatedEvent,
+  RelatedResponse,
   RerankMode,
+  V1ContentItem,
   // Contents types
   V1ContentsRequest,
   V1ContentsResponse,
-  V1ContentItem,
   // FindSimilar types
   V1FindSimilarRequest,
   V1FindSimilarResponse,
@@ -21,21 +18,24 @@ export type {
   V1FindSimilarSource,
   // Graph types
   V1GraphRequest,
-  GraphResponse,
-  GraphNode,
-  GraphEdge,
   // Related types
   V1RelatedRequest,
-  RelatedResponse,
-  RelatedEvent,
+  V1SearchContext,
+  V1SearchFilters,
+  V1SearchLatency,
+  V1SearchMeta,
+  // Search types
+  V1SearchRequest,
+  V1SearchResponse,
+  V1SearchResult,
 } from "@repo/console-validation";
 
 import type {
-  V1SearchRequest,
   V1ContentsRequest,
   V1FindSimilarRequest,
   V1GraphRequest,
   V1RelatedRequest,
+  V1SearchRequest,
 } from "@repo/console-validation";
 
 /**
@@ -91,9 +91,7 @@ export type FindSimilarInput = Omit<
   V1FindSimilarRequest,
   "limit" | "threshold" | "sameSourceOnly"
 > &
-  Partial<
-    Pick<V1FindSimilarRequest, "limit" | "threshold" | "sameSourceOnly">
-  >;
+  Partial<Pick<V1FindSimilarRequest, "limit" | "threshold" | "sameSourceOnly">>;
 
 /**
  * SDK input type for graph requests.

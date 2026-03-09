@@ -1,19 +1,19 @@
-import { and, desc, eq, ilike, or, inArray } from "drizzle-orm";
 import { db } from "@db/console/client";
 import {
-  workspaceActorProfiles,
   orgActorIdentities,
   orgWorkspaces,
+  workspaceActorProfiles,
 } from "@db/console/schema";
+import { and, desc, eq, ilike, inArray, or } from "drizzle-orm";
 
 export interface ActorSearchResult {
   actorId: string;
-  displayName: string;
   avatarUrl: string | null;
+  displayName: string;
   expertiseDomains: string[];
-  observationCount: number;
   lastActiveAt: string | null;
   matchType: "mention" | "expertise" | "name";
+  observationCount: number;
   score: number;
 }
 
@@ -112,7 +112,9 @@ export async function searchActorProfiles(
           .filter((i) => profileMap.has(i.canonicalActorId))
           .map((i) => {
             const profile = profileMap.get(i.canonicalActorId);
-            if (!profile) return null;
+            if (!profile) {
+              return null;
+            }
             return {
               actorId: i.canonicalActorId,
               displayName: profile.displayName,
@@ -180,7 +182,9 @@ export async function searchActorProfiles(
 
     // Sort by score then by observation count
     allResults.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
       return b.observationCount - a.observationCount;
     });
 

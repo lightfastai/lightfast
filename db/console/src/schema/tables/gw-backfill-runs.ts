@@ -1,5 +1,13 @@
-import { pgTable, varchar, integer, timestamp, text, uniqueIndex, index } from "drizzle-orm/pg-core";
 import { nanoid } from "@repo/lib";
+import {
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { gwInstallations } from "./gw-installations";
 
 export const gwBackfillRuns = pgTable(
@@ -32,18 +40,25 @@ export const gwBackfillRuns = pgTable(
     error: text("error"),
 
     startedAt: timestamp("started_at", { mode: "string", withTimezone: true }),
-    completedAt: timestamp("completed_at", { mode: "string", withTimezone: true }),
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp("completed_at", {
+      mode: "string",
+      withTimezone: true,
+    }),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => ({
     // One tracking row per installation + entity type (upsert target)
     installationEntityIdx: uniqueIndex("gw_br_installation_entity_idx").on(
       table.installationId,
-      table.entityType,
+      table.entityType
     ),
     installationIdx: index("gw_br_installation_idx").on(table.installationId),
-  }),
+  })
 );
 
 export type GwBackfillRun = typeof gwBackfillRuns.$inferSelect;

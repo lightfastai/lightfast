@@ -8,26 +8,24 @@
  * - m2mRouter: Machine-to-machine procedures for internal services (Inngest, webhooks)
  */
 
-import { createTRPCRouter } from "./trpc";
-
-// User-scoped routers (no org required)
-import { organizationRouter } from "./router/user/organization";
-import { accountRouter } from "./router/user/account";
-import { workspaceAccessRouter } from "./router/user/workspace";
-// Org-scoped routers (active org required)
-import { searchRouter } from "./router/org/search";
-import { contentsRouter } from "./router/org/contents";
-import { clerkRouter } from "./router/org/clerk";
-import { workspaceRouter } from "./router/org/workspace";
-import { connectionsRouter } from "./router/org/connections";
-import { jobsRouter } from "./router/org/jobs";
-import { activitiesRouter } from "./router/org/activities";
-import { orgApiKeysRouter } from "./router/org/org-api-keys";
-
 // M2M routers (internal services only)
 import { jobsM2MRouter } from "./router/m2m/jobs";
 import { sourcesM2MRouter } from "./router/m2m/sources";
 import { workspaceM2MRouter } from "./router/m2m/workspace";
+import { activitiesRouter } from "./router/org/activities";
+import { clerkRouter } from "./router/org/clerk";
+import { connectionsRouter } from "./router/org/connections";
+import { contentsRouter } from "./router/org/contents";
+import { jobsRouter } from "./router/org/jobs";
+import { orgApiKeysRouter } from "./router/org/org-api-keys";
+// Org-scoped routers (active org required)
+import { searchRouter } from "./router/org/search";
+import { workspaceRouter } from "./router/org/workspace";
+import { accountRouter } from "./router/user/account";
+// User-scoped routers (no org required)
+import { organizationRouter } from "./router/user/organization";
+import { workspaceAccessRouter } from "./router/user/workspace";
+import { createTRPCRouter } from "./trpc";
 
 /**
  * User-scoped router

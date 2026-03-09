@@ -38,7 +38,7 @@ export class OpenAIEmbedding implements EmbeddingProvider {
    */
   embed(_texts: string[]): Promise<EmbedResponse> {
     throw new Error(
-      "OpenAI embeddings not implemented in Phase 1. Use CharHashEmbedding instead. OpenAI integration will be added in Phase 2.",
+      "OpenAI embeddings not implemented in Phase 1. Use CharHashEmbedding instead. OpenAI integration will be added in Phase 2."
     );
   }
 }
@@ -56,6 +56,6 @@ export class OpenAIEmbedding implements EmbeddingProvider {
  */
 export function createOpenAIEmbedding(): OpenAIEmbedding {
   throw new Error(
-    "OpenAI embeddings not implemented in Phase 1. Use createCharHashEmbedding() instead.",
+    "OpenAI embeddings not implemented in Phase 1. Use createCharHashEmbedding() instead."
   );
 }

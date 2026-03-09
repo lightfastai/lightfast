@@ -4,13 +4,13 @@ interface RouteInfo {
 }
 
 interface PrintRoutesOptions {
-  service: string;
   port: number;
+  service: string;
 }
 
 export function printRouteTable(
   routes: RouteInfo[],
-  opts: PrintRoutesOptions,
+  opts: PrintRoutesOptions
 ): void {
   const { service, port } = opts;
 
@@ -34,5 +34,5 @@ export function printRouteTable(
     console.log(` ${connector} ${symbol} ${method}  ${route.path}`);
   });
 
-  console.log(`\n \u25cb  read   \u0192  handler\n`);
+  console.log("\n \u25cb  read   \u0192  handler\n");
 }

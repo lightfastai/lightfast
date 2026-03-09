@@ -1,31 +1,31 @@
-import type { NextRequest } from "next/server";
+import { randomUUID } from "node:crypto";
 import { gateway } from "@ai-sdk/gateway";
-import { smoothStream, stepCountIs } from "ai";
 import { createAgent } from "@lightfastai/ai-sdk/agent";
 import { fetchRequestHandler } from "@lightfastai/ai-sdk/server/adapters/fetch";
-import { randomUUID } from "node:crypto";
-import { auth } from "@clerk/nextjs/server";
-import { log } from "@vendor/observability/log";
-import type { AnswerAppRuntimeContext } from "@repo/console-ai-types";
-import { workspaceSearchTool } from "@repo/console-ai/workspace-search";
 import { workspaceContentsTool } from "@repo/console-ai/workspace-contents";
 import { workspaceFindSimilarTool } from "@repo/console-ai/workspace-find-similar";
 import { workspaceGraphTool } from "@repo/console-ai/workspace-graph";
 import { workspaceRelatedTool } from "@repo/console-ai/workspace-related";
-import {
-  withDualAuth,
-  createDualAuthErrorResponse,
-} from "../../lib/with-dual-auth";
+import { workspaceSearchTool } from "@repo/console-ai/workspace-search";
+import type { AnswerAppRuntimeContext } from "@repo/console-ai-types";
+import { auth } from "@vendor/clerk/server";
+import { log } from "@vendor/observability/log";
+import { smoothStream, stepCountIs } from "ai";
+import type { NextRequest } from "next/server";
 import {
   buildAnswerSystemPrompt,
   HARDCODED_WORKSPACE_CONTEXT,
 } from "~/ai/prompts/system-prompt";
 import { AnswerRedisMemory } from "~/ai/runtime/memory";
-import { searchLogic } from "~/lib/v1/search";
 import { contentsLogic } from "~/lib/v1/contents";
 import { findsimilarLogic } from "~/lib/v1/findsimilar";
 import { graphLogic } from "~/lib/v1/graph";
 import { relatedLogic } from "~/lib/v1/related";
+import { searchLogic } from "~/lib/v1/search";
+import {
+  createDualAuthErrorResponse,
+  withDualAuth,
+} from "../../lib/with-dual-auth";
 
 const MODEL_ID = "anthropic/claude-sonnet-4-5-20250929";
 
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
                   includeContext: true,
                   includeHighlights: true,
                   requestId: randomUUID(),
-                },
+                }
               ),
           },
           workspaceContents: {
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
                 {
                   ids: input.ids,
                   requestId: randomUUID(),
-                },
+                }
               ),
           },
           workspaceFindSimilar: {
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
                   limit: input.limit ?? 5,
                   threshold: input.threshold ?? 0.5,
                   requestId: randomUUID(),
-                },
+                }
               ),
           },
           workspaceGraph: {
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
                   observationId: input.id,
                   depth: input.depth ?? 1,
                   requestId: randomUUID(),
-                },
+                }
               ),
           },
           workspaceRelated: {
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
                 {
                   observationId: input.id,
                   requestId: randomUUID(),
-                },
+                }
               ),
           },
         },
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
       {
         error: "Internal server error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -277,7 +277,7 @@ export async function GET(request: NextRequest) {
                   includeContext: true,
                   includeHighlights: true,
                   requestId: randomUUID(),
-                },
+                }
               ),
           },
           workspaceContents: {
@@ -291,7 +291,7 @@ export async function GET(request: NextRequest) {
                 {
                   ids: input.ids,
                   requestId: randomUUID(),
-                },
+                }
               ),
           },
           workspaceFindSimilar: {
@@ -307,7 +307,7 @@ export async function GET(request: NextRequest) {
                   limit: input.limit ?? 5,
                   threshold: input.threshold ?? 0.5,
                   requestId: randomUUID(),
-                },
+                }
               ),
           },
           workspaceGraph: {
@@ -322,7 +322,7 @@ export async function GET(request: NextRequest) {
                   observationId: input.id,
                   depth: input.depth ?? 1,
                   requestId: randomUUID(),
-                },
+                }
               ),
           },
           workspaceRelated: {
@@ -336,7 +336,7 @@ export async function GET(request: NextRequest) {
                 {
                   observationId: input.id,
                   requestId: randomUUID(),
-                },
+                }
               ),
           },
         },
@@ -375,7 +375,7 @@ export async function GET(request: NextRequest) {
       {
         error: "Internal server error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

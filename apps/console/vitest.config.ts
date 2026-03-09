@@ -1,4 +1,4 @@
-import { resolve } from "path";
+import { resolve } from "node:path";
 import { defineConfig, mergeConfig } from "vitest/config";
 import sharedConfig from "../../vitest.shared";
 
@@ -26,17 +26,20 @@ export default mergeConfig(
     },
     resolve: {
       alias: {
-        "~": resolve(__dirname, "src"),
-        "next/image": resolve(__dirname, "src/__tests__/__mocks__/next-image.tsx"),
+        "~": resolve(import.meta.dirname, "src"),
+        "next/image": resolve(
+          import.meta.dirname,
+          "src/__tests__/__mocks__/next-image.tsx"
+        ),
         "@repo/console-octokit-github/env": resolve(
-          __dirname,
-          "src/__tests__/__mocks__/github-env.ts",
+          import.meta.dirname,
+          "src/__tests__/__mocks__/github-env.ts"
         ),
         "server-only": resolve(
-          __dirname,
-          "src/__tests__/__mocks__/server-only.ts",
+          import.meta.dirname,
+          "src/__tests__/__mocks__/server-only.ts"
         ),
       },
     },
-  }),
+  })
 );

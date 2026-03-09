@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 // Import directly from ./registry to avoid auto-registration side effects from ./index
 import {
-  registerConnector,
+  clearRegistry,
   getConnector,
   hasConnector,
-  clearRegistry,
+  registerConnector,
 } from "./registry";
 import type { BackfillConnector } from "./types";
 
@@ -26,7 +26,9 @@ describe("registry", () => {
   it("registerConnector stores connector and getConnector retrieves it", () => {
     const connector = makeConnector("github");
     registerConnector(connector);
-    expect(getConnector("github" as BackfillConnector["provider"])).toBe(connector);
+    expect(getConnector("github" as BackfillConnector["provider"])).toBe(
+      connector
+    );
   });
 
   it("hasConnector returns false for unregistered provider", () => {
@@ -41,7 +43,9 @@ describe("registry", () => {
   });
 
   it("getConnector returns undefined for unknown provider", () => {
-    expect(getConnector("slack" as BackfillConnector["provider"])).toBeUndefined();
+    expect(
+      getConnector("slack" as BackfillConnector["provider"])
+    ).toBeUndefined();
   });
 
   it("re-registering a provider overwrites the existing entry", () => {
@@ -49,6 +53,8 @@ describe("registry", () => {
     const second = makeConnector("github");
     registerConnector(first);
     registerConnector(second);
-    expect(getConnector("github" as BackfillConnector["provider"])).toBe(second);
+    expect(getConnector("github" as BackfillConnector["provider"])).toBe(
+      second
+    );
   });
 });

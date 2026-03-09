@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { sourceTypeSchema } from "@repo/console-providers";
+import { z } from "zod";
 
 // =============================================================================
 // NEURAL OBSERVATION CAPTURE - INPUT
@@ -70,10 +70,18 @@ export const workflowInputSchema = z.discriminatedUnion("inngestFunctionId", [
 ]);
 
 export type WorkflowInput = z.infer<typeof workflowInputSchema>;
-export type NeuralObservationCaptureInput = z.infer<typeof neuralObservationCaptureInputSchema>;
-export type NeuralProfileUpdateInput = z.infer<typeof neuralProfileUpdateInputSchema>;
-export type NeuralClusterSummaryInput = z.infer<typeof neuralClusterSummaryInputSchema>;
-export type NeuralLLMEntityExtractionInput = z.infer<typeof neuralLLMEntityExtractionInputSchema>;
+export type NeuralObservationCaptureInput = z.infer<
+  typeof neuralObservationCaptureInputSchema
+>;
+export type NeuralProfileUpdateInput = z.infer<
+  typeof neuralProfileUpdateInputSchema
+>;
+export type NeuralClusterSummaryInput = z.infer<
+  typeof neuralClusterSummaryInputSchema
+>;
+export type NeuralLLMEntityExtractionInput = z.infer<
+  typeof neuralLLMEntityExtractionInputSchema
+>;
 
 // =============================================================================
 // NEURAL OBSERVATION CAPTURE - OUTPUT (SUCCESS)
@@ -157,7 +165,12 @@ const neuralClusterSummaryOutputSkippedSchema = z.object({
   inngestFunctionId: z.literal("neural.cluster.summary"),
   status: z.literal("skipped"),
   clusterId: z.string(),
-  reason: z.enum(["below_threshold", "summary_recent", "cluster_not_found", "no_observations"]),
+  reason: z.enum([
+    "below_threshold",
+    "summary_recent",
+    "cluster_not_found",
+    "no_observations",
+  ]),
 });
 
 // =============================================================================
@@ -260,19 +273,47 @@ export const workflowOutputSchema = z.union([
 export type WorkflowOutput = z.infer<typeof workflowOutputSchema>;
 
 // Neural workflow output type exports
-export type NeuralObservationCaptureOutputSuccess = z.infer<typeof neuralObservationCaptureOutputSuccessSchema>;
-export type NeuralObservationCaptureOutputFiltered = z.infer<typeof neuralObservationCaptureOutputFilteredSchema>;
-export type NeuralObservationCaptureOutputFailure = z.infer<typeof neuralObservationCaptureOutputFailureSchema>;
-export type NeuralProfileUpdateOutputSuccess = z.infer<typeof neuralProfileUpdateOutputSuccessSchema>;
-export type NeuralProfileUpdateOutputFailure = z.infer<typeof neuralProfileUpdateOutputFailureSchema>;
-export type NeuralClusterSummaryOutputSuccess = z.infer<typeof neuralClusterSummaryOutputSuccessSchema>;
-export type NeuralClusterSummaryOutputSkipped = z.infer<typeof neuralClusterSummaryOutputSkippedSchema>;
-export type NeuralClusterSummaryOutputFailure = z.infer<typeof neuralClusterSummaryOutputFailureSchema>;
-export type NeuralLLMEntityExtractionOutputSuccess = z.infer<typeof neuralLLMEntityExtractionOutputSuccessSchema>;
-export type NeuralLLMEntityExtractionOutputSkipped = z.infer<typeof neuralLLMEntityExtractionOutputSkippedSchema>;
-export type NeuralLLMEntityExtractionOutputFailure = z.infer<typeof neuralLLMEntityExtractionOutputFailureSchema>;
+export type NeuralObservationCaptureOutputSuccess = z.infer<
+  typeof neuralObservationCaptureOutputSuccessSchema
+>;
+export type NeuralObservationCaptureOutputFiltered = z.infer<
+  typeof neuralObservationCaptureOutputFilteredSchema
+>;
+export type NeuralObservationCaptureOutputFailure = z.infer<
+  typeof neuralObservationCaptureOutputFailureSchema
+>;
+export type NeuralProfileUpdateOutputSuccess = z.infer<
+  typeof neuralProfileUpdateOutputSuccessSchema
+>;
+export type NeuralProfileUpdateOutputFailure = z.infer<
+  typeof neuralProfileUpdateOutputFailureSchema
+>;
+export type NeuralClusterSummaryOutputSuccess = z.infer<
+  typeof neuralClusterSummaryOutputSuccessSchema
+>;
+export type NeuralClusterSummaryOutputSkipped = z.infer<
+  typeof neuralClusterSummaryOutputSkippedSchema
+>;
+export type NeuralClusterSummaryOutputFailure = z.infer<
+  typeof neuralClusterSummaryOutputFailureSchema
+>;
+export type NeuralLLMEntityExtractionOutputSuccess = z.infer<
+  typeof neuralLLMEntityExtractionOutputSuccessSchema
+>;
+export type NeuralLLMEntityExtractionOutputSkipped = z.infer<
+  typeof neuralLLMEntityExtractionOutputSkippedSchema
+>;
+export type NeuralLLMEntityExtractionOutputFailure = z.infer<
+  typeof neuralLLMEntityExtractionOutputFailureSchema
+>;
 
 // Backfill workflow type exports
-export type BackfillOrchestratorInput = z.infer<typeof backfillOrchestratorInputSchema>;
-export type BackfillOrchestratorOutputSuccess = z.infer<typeof backfillOrchestratorOutputSuccessSchema>;
-export type BackfillOrchestratorOutputFailure = z.infer<typeof backfillOrchestratorOutputFailureSchema>;
+export type BackfillOrchestratorInput = z.infer<
+  typeof backfillOrchestratorInputSchema
+>;
+export type BackfillOrchestratorOutputSuccess = z.infer<
+  typeof backfillOrchestratorOutputSuccessSchema
+>;
+export type BackfillOrchestratorOutputFailure = z.infer<
+  typeof backfillOrchestratorOutputFailureSchema
+>;

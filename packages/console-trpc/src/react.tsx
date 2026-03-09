@@ -1,8 +1,8 @@
 "use client";
 
+import type { OrgRouter, UserRouter } from "@api/console";
 import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
 import {
   createTRPCClient,
   httpBatchStreamLink,
@@ -10,9 +10,8 @@ import {
   splitLink,
 } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
+import { useState } from "react";
 import SuperJSON from "superjson";
-
-import type { UserRouter, OrgRouter } from "@api/console";
 import { createQueryClient } from "./client";
 
 export interface CreateTRPCReactProviderOptions {
@@ -42,8 +41,12 @@ function getQueryClient() {
 }
 
 function defaultGetBaseUrl() {
-  if (typeof window !== "undefined") return window.location.origin;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
   return `http://localhost:${process.env.PORT ?? 4104}`;
 }
 
@@ -114,7 +117,7 @@ export function TRPCReactProvider({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+      <TRPCProvider queryClient={queryClient} trpcClient={trpcClient}>
         {children}
       </TRPCProvider>
     </QueryClientProvider>

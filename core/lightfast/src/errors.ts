@@ -7,7 +7,7 @@ export class LightfastError extends Error {
     message: string,
     public readonly requestId?: string,
     public readonly status?: number,
-    public readonly cause?: unknown,
+    public readonly cause?: unknown
   ) {
     super(message);
     this.name = "LightfastError";
@@ -43,7 +43,7 @@ export class ValidationError extends LightfastError {
   constructor(
     message: string,
     public readonly details?: Record<string, string[]>,
-    requestId?: string,
+    requestId?: string
   ) {
     super("VALIDATION_ERROR", message, requestId, 400);
     this.name = "ValidationError";
@@ -69,7 +69,7 @@ export class RateLimitError extends LightfastError {
   constructor(
     message: string,
     public readonly retryAfter?: number,
-    requestId?: string,
+    requestId?: string
   ) {
     super("RATE_LIMITED", message, requestId, 429);
     this.name = "RateLimitError";

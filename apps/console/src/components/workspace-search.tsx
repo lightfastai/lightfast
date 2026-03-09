@@ -1,23 +1,23 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
+import type { RerankMode, V1SearchResponse } from "@repo/console-validation";
+import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+import { Separator } from "@repo/ui/components/ui/separator";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import type { V1SearchResponse, RerankMode } from "@repo/console-validation";
-import { useWorkspaceSearchParams } from "./use-workspace-search-params";
-import { SearchPromptInput } from "./search-prompt-input";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 import { dateRangeFromPreset } from "./search-constants";
 import { SearchFilters } from "./search-filters";
+import { SearchPromptInput } from "./search-prompt-input";
 import { SearchResultsPanel } from "./search-results-panel";
-import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
-import { Separator } from "@repo/ui/components/ui/separator";
-import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+import { useWorkspaceSearchParams } from "./use-workspace-search-params";
 
 async function executeSearch(
   body: Record<string, unknown>,
   storeId: string,
-  signal: AbortSignal,
+  signal: AbortSignal
 ): Promise<V1SearchResponse> {
   const response = await fetch("/v1/search", {
     method: "POST",
@@ -39,7 +39,7 @@ async function executeSearch(
     throw new Error(
       errorData.message ??
         errorData.error ??
-        `Search failed: ${response.status}`,
+        `Search failed: ${response.status}`
     );
   }
 
@@ -47,9 +47,9 @@ async function executeSearch(
 }
 
 interface WorkspaceSearchProps {
+  initialQuery: string;
   orgSlug: string;
   workspaceName: string;
-  initialQuery: string;
 }
 
 /**
@@ -96,7 +96,7 @@ export function WorkspaceSearch({
 
   // Local state for search results and input
   const [searchResults, setSearchResults] = useState<V1SearchResponse | null>(
-    null,
+    null
   );
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +113,7 @@ export function WorkspaceSearch({
   const { data: store } = useSuspenseQuery({
     ...trpc.workspace.store.get.queryOptions({
       clerkOrgSlug: orgSlug,
-      workspaceName: workspaceName,
+      workspaceName,
     }),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -131,58 +131,62 @@ export function WorkspaceSearch({
   }, []);
 
   const performSearch = (searchQuery: string) => {
-      if (!searchQuery.trim()) {
-        setError("Please enter a search query");
-        return;
-      }
+    if (!searchQuery.trim()) {
+      setError("Please enter a search query");
+      return;
+    }
 
-      if (!store) {
-        setError(
-          "No store configured for this workspace. Connect a source first.",
-        );
-        return;
-      }
+    if (!store) {
+      setError(
+        "No store configured for this workspace. Connect a source first."
+      );
+      return;
+    }
 
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = new AbortController();
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
 
-      setIsSearching(true);
-      setError(null);
-      // Keep previous results visible during loading to avoid flash of empty state
+    setIsSearching(true);
+    setError(null);
+    // Keep previous results visible during loading to avoid flash of empty state
 
-      const body: Record<string, unknown> = {
-        query: searchQuery.trim(),
-        limit,
-        offset,
-        mode,
-        filters: {
-          ...(sourceTypes.length > 0 && { sourceTypes }),
-          ...(observationTypes.length > 0 && { observationTypes }),
-          ...(actorNames.length > 0 && { actorNames }),
-          ...dateRangeFromPreset(agePreset),
-        },
-        includeContext,
-        includeHighlights,
-      };
+    const body: Record<string, unknown> = {
+      query: searchQuery.trim(),
+      limit,
+      offset,
+      mode,
+      filters: {
+        ...(sourceTypes.length > 0 && { sourceTypes }),
+        ...(observationTypes.length > 0 && { observationTypes }),
+        ...(actorNames.length > 0 && { actorNames }),
+        ...dateRangeFromPreset(agePreset),
+      },
+      includeContext,
+      includeHighlights,
+    };
 
-      executeSearch(body, store.id, abortControllerRef.current.signal)
-        .then((data) => {
-          setSearchResults(data);
-          setIsSearching(false);
-        })
-        .catch((err: unknown) => {
-          if (err instanceof Error && err.name === "AbortError") return;
-          setError(err instanceof Error ? err.message : "Search failed");
-          setSearchResults(null);
-          setIsSearching(false);
-        });
+    executeSearch(body, store.id, abortControllerRef.current.signal)
+      .then((data) => {
+        setSearchResults(data);
+        setIsSearching(false);
+      })
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
+        setError(err instanceof Error ? err.message : "Search failed");
+        setSearchResults(null);
+        setIsSearching(false);
+      });
   };
 
   const handleSearch = () => {
     performSearch(inputValue);
   };
 
-  const handlePromptSubmit = async (message: PromptInputMessage): Promise<void> => {
+  const handlePromptSubmit = async (
+    message: PromptInputMessage
+  ): Promise<void> => {
     const content = message.text?.trim() ?? "";
     await setQuery(content);
     performSearch(content);
@@ -197,62 +201,65 @@ export function WorkspaceSearch({
   };
 
   return (
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: search container handles keyboard navigation
     <div
-      role="search"
-      className="flex flex-col h-full overflow-hidden"
+      className="flex h-full flex-col overflow-hidden"
       onKeyDown={handleKeyDown}
+      role="search"
     >
       {/* Split Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* LEFT PANEL — Controls */}
-        <div className="flex-1  border-border overflow-hidden flex flex-col">
+        <div className="flex flex-1 flex-col overflow-hidden border-border">
           <ScrollArea className="h-full">
-            <div className="p-4 space-y-5">
-              <h1 className="text-2xl font-semibold">
+            <div className="space-y-5 p-4">
+              <h1 className="font-semibold text-2xl">
                 Explore your infrastructure
               </h1>
               {/* Query Input */}
               <SearchPromptInput
-                placeholder="Ask a question or describe what you're looking for..."
-                onSubmit={handlePromptSubmit}
-                status={isSearching ? "submitted" : "ready"}
-                isSubmitDisabled={isSearching || !inputValue.trim() || !store}
-                submitDisabledReason={
-                  !store ? "No store configured for this workspace" : undefined
-                }
-                value={inputValue}
-                onChange={setInputValue}
-                onClear={clearFilters}
+                clearDisabledReason="No filters applied"
                 isClearDisabled={
                   sourceTypes.length === 0 &&
                   observationTypes.length === 0 &&
                   actorNames.length === 0 &&
                   agePreset === "none"
                 }
-                clearDisabledReason="No filters applied"
+                isSubmitDisabled={isSearching || !inputValue.trim() || !store}
                 mode={mode}
+                onChange={setInputValue}
+                onClear={clearFilters}
                 onModeChange={(v) => setMode(v as RerankMode)}
+                onSubmit={handlePromptSubmit}
+                placeholder="Ask a question or describe what you're looking for..."
+                status={isSearching ? "submitted" : "ready"}
+                submitDisabledReason={
+                  store ? undefined : "No store configured for this workspace"
+                }
+                value={inputValue}
               />
 
               <div className="mt-12">
                 <SearchFilters
-                  limit={limit}
-                  onLimitChange={setLimit}
-                  offset={offset}
-                  onOffsetChange={setOffset}
-                  includeContext={includeContext}
-                  onIncludeContextChange={setIncludeContext}
-                  includeHighlights={includeHighlights}
-                  onIncludeHighlightsChange={setIncludeHighlights}
-                  sourceTypes={sourceTypes}
-                  onSourceTypesChange={setSourceTypes}
-                  observationTypes={observationTypes}
-                  onObservationTypesChange={setObservationTypes}
                   actorNames={actorNames}
-                  onActorNamesChange={setActorNames}
                   agePreset={agePreset}
-                  onAgePresetChange={(v) => void setAgePreset(v as typeof agePreset)}
+                  includeContext={includeContext}
+                  includeHighlights={includeHighlights}
+                  limit={limit}
+                  observationTypes={observationTypes}
+                  offset={offset}
+                  onActorNamesChange={setActorNames}
+                  onAgePresetChange={(v) =>
+                    void setAgePreset(v as typeof agePreset)
+                  }
+                  onIncludeContextChange={setIncludeContext}
+                  onIncludeHighlightsChange={setIncludeHighlights}
+                  onLimitChange={setLimit}
+                  onObservationTypesChange={setObservationTypes}
+                  onOffsetChange={setOffset}
+                  onSourceTypesChange={setSourceTypes}
                   orgSlug={orgSlug}
+                  sourceTypes={sourceTypes}
                   workspaceName={workspaceName}
                 />
               </div>
@@ -261,7 +268,7 @@ export function WorkspaceSearch({
               {error && (
                 <>
                   <Separator />
-                  <p className="text-sm text-destructive">{error}</p>
+                  <p className="text-destructive text-sm">{error}</p>
                 </>
               )}
             </div>
@@ -269,14 +276,14 @@ export function WorkspaceSearch({
         </div>
 
         {/* RIGHT PANEL — Results */}
-        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <SearchResultsPanel
-            searchResults={searchResults}
             activeTab={activeTab}
-            onActiveTabChange={(v) => void setActiveTab(v as typeof activeTab)}
             expandedId={expandedId}
-            onExpandedIdChange={setExpandedId}
             offset={offset}
+            onActiveTabChange={(v) => void setActiveTab(v as typeof activeTab)}
+            onExpandedIdChange={setExpandedId}
+            searchResults={searchResults}
             storeId={store ? store.id : ""}
           />
         </div>
@@ -288,21 +295,21 @@ export function WorkspaceSearch({
 // Loading skeleton
 export function WorkspaceSearchSkeleton() {
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-4rem)]">
+    <div className="flex h-[calc(100vh-4rem)] flex-col gap-4">
       {/* Header skeleton */}
       <div className="flex items-center gap-2">
         <Skeleton className="h-7 w-20" />
         <Skeleton className="h-5 w-24" />
       </div>
       {/* Panel skeleton */}
-      <div className="flex-1 rounded-lg border flex">
-        <div className="w-[35%] border-r p-4 space-y-4">
+      <div className="flex flex-1 rounded-lg border">
+        <div className="w-[35%] space-y-4 border-r p-4">
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-full" />
         </div>
-        <div className="flex-1 p-4 space-y-4">
+        <div className="flex-1 space-y-4 p-4">
           <Skeleton className="h-10 w-32" />
           <Skeleton className="h-40 w-full" />
         </div>

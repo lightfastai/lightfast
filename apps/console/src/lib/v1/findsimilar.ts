@@ -1,48 +1,51 @@
- 
-
-import { db } from "@db/console/client";
-import { workspaceNeuralObservations, workspaceKnowledgeDocuments } from "@db/console/schema";
-import { and, eq, or, inArray } from "drizzle-orm";
-import { log } from "@vendor/observability/log";
-import { consolePineconeClient } from "@repo/console-pinecone";
-import { createEmbeddingProvider } from "@repo/console-embed";
-import { getCachedWorkspaceConfig } from "@repo/console-workspace-cache";
-import type { V1FindSimilarResponse, V1FindSimilarResult } from "@repo/console-validation";
 import { recordSystemActivity } from "@api/console/lib/activity";
-
-import { resolveByUrl } from "~/lib/neural/url-resolver";
-import { buildSourceUrl } from "~/lib/neural/url-builder";
+import { db } from "@db/console/client";
+import {
+  workspaceKnowledgeDocuments,
+  workspaceNeuralObservations,
+} from "@db/console/schema";
+import { createEmbeddingProvider } from "@repo/console-embed";
+import { consolePineconeClient } from "@repo/console-pinecone";
+import type {
+  V1FindSimilarResponse,
+  V1FindSimilarResult,
+} from "@repo/console-validation";
+import { getCachedWorkspaceConfig } from "@repo/console-workspace-cache";
+import { log } from "@vendor/observability/log";
+import { and, eq, inArray, or } from "drizzle-orm";
 import {
   resolveObservationById,
   resolveObservationsById,
 } from "~/lib/neural/id-resolver";
+import { buildSourceUrl } from "~/lib/neural/url-builder";
+import { resolveByUrl } from "~/lib/neural/url-resolver";
 import type { V1AuthContext } from "./types";
 
 interface SourceContent {
+  clusterId: number | null;
+  content: string;
   id: string;
   internalId?: number;
-  title: string;
-  content: string;
-  type: string;
   source: string;
-  clusterId: number | null;
+  title: string;
+  type: string;
 }
 
 interface NormalizedMatch {
+  metadata: Record<string, unknown>;
   observationId: string;
   score: number;
-  metadata: Record<string, unknown>;
 }
 
 export interface FindSimilarLogicInput {
-  id?: string;
-  url?: string;
-  limit: number;
-  threshold: number;
-  sameSourceOnly?: boolean;
   excludeIds?: string[];
   filters?: { sourceTypes?: string[]; observationTypes?: string[] };
+  id?: string;
+  limit: number;
   requestId: string;
+  sameSourceOnly?: boolean;
+  threshold: number;
+  url?: string;
 }
 
 export type FindSimilarLogicOutput = V1FindSimilarResponse;
@@ -53,7 +56,9 @@ async function normalizeAndDeduplicate(
   matches: { id: string; score: number; metadata?: Record<string, unknown> }[],
   requestId: string
 ): Promise<NormalizedMatch[]> {
-  if (matches.length === 0) return [];
+  if (matches.length === 0) {
+    return [];
+  }
 
   const withObsId: typeof matches = [];
   const withoutObsId: typeof matches = [];
@@ -66,7 +71,10 @@ async function normalizeAndDeduplicate(
     }
   }
 
-  const obsGroups = new Map<string, { score: number; metadata: Record<string, unknown> }>();
+  const obsGroups = new Map<
+    string,
+    { score: number; metadata: Record<string, unknown> }
+  >();
 
   for (const match of withObsId) {
     const metadata = match.metadata ?? {};
@@ -109,16 +117,27 @@ async function normalizeAndDeduplicate(
 
     const vectorToObs = new Map<string, string>();
     for (const obs of observations) {
-      if (obs.embeddingTitleId) vectorToObs.set(obs.embeddingTitleId, obs.externalId);
-      if (obs.embeddingContentId) vectorToObs.set(obs.embeddingContentId, obs.externalId);
-      if (obs.embeddingSummaryId) vectorToObs.set(obs.embeddingSummaryId, obs.externalId);
-      if (obs.embeddingVectorId) vectorToObs.set(obs.embeddingVectorId, obs.externalId);
+      if (obs.embeddingTitleId) {
+        vectorToObs.set(obs.embeddingTitleId, obs.externalId);
+      }
+      if (obs.embeddingContentId) {
+        vectorToObs.set(obs.embeddingContentId, obs.externalId);
+      }
+      if (obs.embeddingSummaryId) {
+        vectorToObs.set(obs.embeddingSummaryId, obs.externalId);
+      }
+      if (obs.embeddingVectorId) {
+        vectorToObs.set(obs.embeddingVectorId, obs.externalId);
+      }
     }
 
     for (const match of withoutObsId) {
       const obsId = vectorToObs.get(match.id);
       if (!obsId) {
-        log.warn("Vector ID not found in database", { vectorId: match.id, requestId });
+        log.warn("Vector ID not found in database", {
+          vectorId: match.id,
+          requestId,
+        });
         continue;
       }
 
@@ -129,7 +148,10 @@ async function normalizeAndDeduplicate(
           existing.metadata = match.metadata ?? {};
         }
       } else {
-        obsGroups.set(obsId, { score: match.score, metadata: match.metadata ?? {} });
+        obsGroups.set(obsId, {
+          score: match.score,
+          metadata: match.metadata ?? {},
+        });
       }
     }
   }
@@ -169,11 +191,20 @@ async function fetchSourceContent(
 
     if (doc) {
       const metadata = doc.sourceMetadata as Record<string, unknown>;
-      const frontmatter = (metadata.frontmatter ?? {}) as Record<string, unknown>;
+      const frontmatter = (metadata.frontmatter ?? {}) as Record<
+        string,
+        unknown
+      >;
       return {
         id: doc.id,
-        title: typeof frontmatter.title === "string" ? frontmatter.title : doc.sourceId,
-        content: typeof frontmatter.description === "string" ? frontmatter.description : "",
+        title:
+          typeof frontmatter.title === "string"
+            ? frontmatter.title
+            : doc.sourceId,
+        content:
+          typeof frontmatter.description === "string"
+            ? frontmatter.description
+            : "",
         type: "file",
         source: doc.sourceType,
         clusterId: null,
@@ -239,10 +270,14 @@ async function enrichResults(
     }
   >();
 
-  if (resultIds.length === 0) return result;
+  if (resultIds.length === 0) {
+    return result;
+  }
 
   const obsIds = resultIds.filter((id) => !id.startsWith("doc_"));
-  if (obsIds.length === 0) return result;
+  if (obsIds.length === 0) {
+    return result;
+  }
 
   const observationMap = await resolveObservationsById(workspaceId, obsIds, {
     id: true,
@@ -264,7 +299,8 @@ async function enrichResults(
       source: obs.source,
       type: obs.observationType,
       occurredAt: obs.occurredAt,
-      sameCluster: sourceClusterId !== null && obs.clusterId === sourceClusterId,
+      sameCluster:
+        sourceClusterId !== null && obs.clusterId === sourceClusterId,
     });
   }
 
@@ -273,7 +309,7 @@ async function enrichResults(
 
 export async function findsimilarLogic(
   auth: V1AuthContext,
-  input: FindSimilarLogicInput,
+  input: FindSimilarLogicInput
 ): Promise<FindSimilarLogicOutput> {
   const startTime = Date.now();
 
@@ -303,7 +339,9 @@ export async function findsimilarLogic(
   const [workspace, embedResult] = await Promise.all([
     getCachedWorkspaceConfig(auth.workspaceId),
     (async () => {
-      const provider = createEmbeddingProvider({ inputType: "search_document" });
+      const provider = createEmbeddingProvider({
+        inputType: "search_document",
+      });
       return provider.embed([sourceContent.content]);
     })(),
   ]);
@@ -349,19 +387,29 @@ export async function findsimilarLogic(
   // Normalize vector IDs to observation IDs
   const normalizedResults = await normalizeAndDeduplicate(
     auth.workspaceId,
-    pineconeResults.matches as { id: string; score: number; metadata?: Record<string, unknown> }[],
+    pineconeResults.matches as {
+      id: string;
+      score: number;
+      metadata?: Record<string, unknown>;
+    }[],
     input.requestId
   );
 
   // Filter by observation ID and apply threshold
   const exclusions = new Set([sourceContent.id, ...(input.excludeIds ?? [])]);
   const filtered = normalizedResults
-    .filter((m) => !exclusions.has(m.observationId) && m.score >= input.threshold)
+    .filter(
+      (m) => !exclusions.has(m.observationId) && m.score >= input.threshold
+    )
     .slice(0, input.limit);
 
   // Enrich results
   const resultIds = filtered.map((m) => m.observationId);
-  const enrichedData = await enrichResults(auth.workspaceId, resultIds, sourceContent.clusterId);
+  const enrichedData = await enrichResults(
+    auth.workspaceId,
+    resultIds,
+    sourceContent.clusterId
+  );
 
   // Build response
   const similar: V1FindSimilarResult[] = filtered.map((match) => {
@@ -370,14 +418,21 @@ export async function findsimilarLogic(
 
     return {
       id: match.observationId,
-      title: typeof metadata.title === "string" ? metadata.title : (data?.title ?? ""),
+      title:
+        typeof metadata.title === "string"
+          ? metadata.title
+          : (data?.title ?? ""),
       url: data?.url ?? (typeof metadata.url === "string" ? metadata.url : ""),
-      snippet: typeof metadata.snippet === "string" ? metadata.snippet : undefined,
+      snippet:
+        typeof metadata.snippet === "string" ? metadata.snippet : undefined,
       score: match.score,
       vectorSimilarity: match.score,
       entityOverlap: data?.entityOverlap,
       sameCluster: data?.sameCluster ?? false,
-      source: typeof metadata.source === "string" ? metadata.source : (data?.source ?? ""),
+      source:
+        typeof metadata.source === "string"
+          ? metadata.source
+          : (data?.source ?? ""),
       type:
         typeof metadata.observationType === "string"
           ? metadata.observationType

@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { changelog  } from "@vendor/cms";
-import type {ChangelogEntriesQueryResponse} from "@vendor/cms";
+import type { ChangelogEntriesQueryResponse } from "@vendor/cms";
+import { changelog } from "@vendor/cms";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
+import Link from "next/link";
 
 export function HeroChangelogBadge() {
   return (
@@ -28,8 +28,8 @@ export function HeroChangelogBadge() {
 
         return (
           <Link
+            className="inline-flex h-7 items-center gap-2 rounded-sm border border-border/50 bg-card/80 px-2.5 text-muted-foreground text-sm backdrop-blur-md transition-colors hover:text-foreground"
             href={`/changelog/${latest.slug}`}
-            className="inline-flex bg-card/80 border border-border/50 rounded-sm items-center gap-2 h-7 px-2.5 backdrop-blur-md text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <span className="text-foreground">{dateStr}</span>
             <span className="line-clamp-1">{latest._title}</span>

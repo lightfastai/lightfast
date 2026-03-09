@@ -1,9 +1,14 @@
-import { defineProvider, actionEvent } from "../../define";
 import { z } from "zod";
-import { vercelConfigSchema, vercelAccountInfoSchema, vercelOAuthResponseSchema, vercelProviderConfigSchema } from "./auth";
-import type { VercelConfig, VercelAccountInfo, VercelOAuthRaw } from "./auth";
-import type { OAuthTokens, CallbackResult } from "../../types";
 import { computeHmac, timingSafeEqual } from "../../crypto";
+import { actionEvent, defineProvider } from "../../define";
+import type { CallbackResult, OAuthTokens } from "../../types";
+import type { VercelAccountInfo, VercelConfig, VercelOAuthRaw } from "./auth";
+import {
+  vercelAccountInfoSchema,
+  vercelConfigSchema,
+  vercelOAuthResponseSchema,
+  vercelProviderConfigSchema,
+} from "./auth";
 import {
   preTransformVercelWebhookPayloadSchema,
   vercelWebhookPayloadSchema,
@@ -12,7 +17,11 @@ import { transformVercelDeployment } from "./transformers";
 
 // ── Standalone OAuth helpers (avoids circular self-reference in processCallback) ──
 
-async function exchangeVercelCode(config: VercelConfig, code: string, redirectUri: string): Promise<OAuthTokens> {
+async function exchangeVercelCode(
+  config: VercelConfig,
+  code: string,
+  redirectUri: string
+): Promise<OAuthTokens> {
   const body = new URLSearchParams({
     client_id: config.clientSecretId,
     client_secret: config.clientIntegrationSecret,
@@ -27,7 +36,9 @@ async function exchangeVercelCode(config: VercelConfig, code: string, redirectUr
     signal: AbortSignal.timeout(15_000),
   });
 
-  if (!response.ok) throw new Error(`Vercel token exchange failed: ${response.status}`);
+  if (!response.ok) {
+    throw new Error(`Vercel token exchange failed: ${response.status}`);
+  }
 
   const rawData: unknown = await response.json();
   const data = vercelOAuthResponseSchema.parse(rawData);
@@ -47,12 +58,13 @@ export const vercel = defineProvider({
     VERCEL_CLIENT_SECRET_ID: z.string().min(1),
     VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
   },
-  createConfig: (env, runtime) => vercelConfigSchema.parse({
-    integrationSlug: env.VERCEL_INTEGRATION_SLUG,
-    clientSecretId: env.VERCEL_CLIENT_SECRET_ID,
-    clientIntegrationSecret: env.VERCEL_CLIENT_INTEGRATION_SECRET,
-    callbackBaseUrl: runtime.callbackBaseUrl,
-  }),
+  createConfig: (env, runtime) =>
+    vercelConfigSchema.parse({
+      integrationSlug: env.VERCEL_INTEGRATION_SLUG,
+      clientSecretId: env.VERCEL_CLIENT_SECRET_ID,
+      clientIntegrationSecret: env.VERCEL_CLIENT_INTEGRATION_SECRET,
+      callbackBaseUrl: runtime.callbackBaseUrl,
+    }),
   name: "vercel",
   displayName: "Vercel",
   description: "Connect your Vercel projects",
@@ -62,12 +74,36 @@ export const vercel = defineProvider({
 
   // Fine-grained categories for UI/PROVIDER_REGISTRY compatibility
   categories: {
-    "deployment.created": { label: "Deployment Started", description: "Capture when new deployments begin", type: "observation" },
-    "deployment.succeeded": { label: "Deployment Succeeded", description: "Capture successful deployment completions", type: "observation" },
-    "deployment.ready": { label: "Deployment Ready", description: "Capture when deployments are live", type: "observation" },
-    "deployment.error": { label: "Deployment Failed", description: "Capture deployment failures", type: "observation" },
-    "deployment.canceled": { label: "Deployment Canceled", description: "Capture canceled deployments", type: "observation" },
-    "deployment.check-rerequested": { label: "Check Re-requested", description: "Capture deployment check re-request events", type: "observation" },
+    "deployment.created": {
+      label: "Deployment Started",
+      description: "Capture when new deployments begin",
+      type: "observation",
+    },
+    "deployment.succeeded": {
+      label: "Deployment Succeeded",
+      description: "Capture successful deployment completions",
+      type: "observation",
+    },
+    "deployment.ready": {
+      label: "Deployment Ready",
+      description: "Capture when deployments are live",
+      type: "observation",
+    },
+    "deployment.error": {
+      label: "Deployment Failed",
+      description: "Capture deployment failures",
+      type: "observation",
+    },
+    "deployment.canceled": {
+      label: "Deployment Canceled",
+      description: "Capture canceled deployments",
+      type: "observation",
+    },
+    "deployment.check-rerequested": {
+      label: "Check Re-requested",
+      description: "Capture deployment check re-request events",
+      type: "observation",
+    },
   },
 
   // Coarse-grained events for dispatch (resolveCategory strips dot-suffix)
@@ -83,7 +119,10 @@ export const vercel = defineProvider({
         ready: { label: "Deployment Ready", weight: 40 },
         error: { label: "Deployment Failed", weight: 70 },
         canceled: { label: "Deployment Canceled", weight: 65 },
-        "check-rerequested": { label: "Deployment Check Re-requested", weight: 25 },
+        "check-rerequested": {
+          label: "Deployment Check Re-requested",
+          weight: 25,
+        },
       },
     }),
   },
@@ -96,7 +135,11 @@ export const vercel = defineProvider({
     "deployment.canceled",
   ],
 
-  buildProviderConfig: ({ resourceId, providerAccountInfo, defaultSyncEvents }) => {
+  buildProviderConfig: ({
+    resourceId,
+    providerAccountInfo,
+    defaultSyncEvents,
+  }) => {
     if (providerAccountInfo?.sourceType !== "vercel") {
       throw new Error("Invalid provider account info for vercel");
     }
@@ -130,7 +173,9 @@ export const vercel = defineProvider({
     extractSecret: (config) => config.clientIntegrationSecret,
     verifySignature: (rawBody, headers, secret) => {
       const signature = headers.get("x-vercel-signature");
-      if (!signature) return false;
+      if (!signature) {
+        return false;
+      }
       const expected = computeHmac(rawBody, secret, "SHA-1");
       return timingSafeEqual(signature, expected);
     },
@@ -140,15 +185,26 @@ export const vercel = defineProvider({
     },
     extractDeliveryId: (_headers, payload) => {
       const p = payload as { id?: string };
-      if (p.id) return p.id;
+      if (p.id) {
+        return p.id;
+      }
       return crypto.randomUUID();
     },
     extractResourceId: (payload) => {
-      const p = payload as { payload?: { project?: { id?: string | number }; team?: { id?: string | number } } };
+      const p = payload as {
+        payload?: {
+          project?: { id?: string | number };
+          team?: { id?: string | number };
+        };
+      };
       const projectId = p.payload?.project?.id;
-      if (projectId != null) return String(projectId);
+      if (projectId != null) {
+        return String(projectId);
+      }
       const teamId = p.payload?.team?.id;
-      if (teamId != null) return String(teamId);
+      if (teamId != null) {
+        return String(teamId);
+      }
       return null;
     },
     parsePayload: (raw) => vercelWebhookPayloadSchema.parse(raw),
@@ -156,7 +212,9 @@ export const vercel = defineProvider({
 
   oauth: {
     buildAuthUrl: (config, state) => {
-      const url = new URL(`https://vercel.com/integrations/${config.integrationSlug}/new`);
+      const url = new URL(
+        `https://vercel.com/integrations/${config.integrationSlug}/new`
+      );
       url.searchParams.set("state", state);
       return url.toString();
     },
@@ -165,16 +223,26 @@ export const vercel = defineProvider({
       return Promise.reject(new Error("Vercel tokens do not support refresh"));
     },
     revokeToken: async (_config, accessToken) => {
-      const response = await fetch("https://api.vercel.com/v2/oauth/tokens/revoke", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(15_000),
-      });
-      if (!response.ok) throw new Error(`Vercel token revocation failed: ${response.status}`);
+      const response = await fetch(
+        "https://api.vercel.com/v2/oauth/tokens/revoke",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          signal: AbortSignal.timeout(15_000),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Vercel token revocation failed: ${response.status}`);
+      }
     },
     usesStoredToken: true,
     getActiveToken: (_config, _storedExternalId, storedAccessToken) => {
-      if (!storedAccessToken) return Promise.reject(new Error("vercel: no stored access token"));
+      if (!storedAccessToken) {
+        return Promise.reject(new Error("vercel: no stored access token"));
+      }
       return Promise.resolve(storedAccessToken);
     },
     processCallback: async (config, query) => {
@@ -182,8 +250,12 @@ export const vercel = defineProvider({
       const configurationId = query.configurationId;
       const next = query.next;
 
-      if (!code) throw new Error("missing code");
-      if (!configurationId) throw new Error("missing configurationId");
+      if (!code) {
+        throw new Error("missing code");
+      }
+      if (!configurationId) {
+        throw new Error("missing configurationId");
+      }
 
       const redirectUri = `${config.callbackBaseUrl}/gateway/vercel/callback`;
       const oauthTokens = await exchangeVercelCode(config, code, redirectUri);
@@ -192,7 +264,7 @@ export const vercel = defineProvider({
 
       if (parsed.installation_id !== configurationId) {
         throw new Error(
-          `configurationId mismatch: callback=${configurationId} token=${parsed.installation_id}`,
+          `configurationId mismatch: callback=${configurationId} token=${parsed.installation_id}`
         );
       }
 

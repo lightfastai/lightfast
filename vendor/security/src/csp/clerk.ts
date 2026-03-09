@@ -1,5 +1,5 @@
-import type { Source } from "nosecone";
 import { getClerkFrontendApi } from "@vendor/clerk/env";
+import type { Source } from "nosecone";
 import type { PartialCspDirectives } from "./types";
 
 /**
@@ -41,18 +41,12 @@ export function createClerkCspDirectives(): PartialCspDirectives {
     ],
 
     // Images: Clerk CDN for user avatars and assets
-    imgSrc: [
-      "https://img.clerk.com",
-    ],
+    imgSrc: ["https://img.clerk.com"],
 
     // Workers: Allow blob URLs for Clerk's internal workers
-    workerSrc: [
-      "blob:",
-    ],
+    workerSrc: ["blob:"],
 
     // Frames: Cloudflare bot protection challenges
-    frameSrc: [
-      "https://challenges.cloudflare.com",
-    ],
+    frameSrc: ["https://challenges.cloudflare.com"],
   };
 }

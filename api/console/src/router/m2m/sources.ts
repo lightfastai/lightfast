@@ -1,11 +1,11 @@
-import type { TRPCRouterRecord } from "@trpc/server";
 import { db } from "@db/console/client";
-import { workspaceIntegrations, gwInstallations } from "@db/console/schema";
-import { eq, and } from "drizzle-orm";
+import { gwInstallations, workspaceIntegrations } from "@db/console/schema";
+import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { webhookM2MProcedure } from "../../trpc";
 import { recordSystemActivity } from "../../lib/activity";
+import { webhookM2MProcedure } from "../../trpc";
 
 /**
  * Input Schemas
@@ -153,7 +153,9 @@ export const sourcesM2MRouter = {
           .where(eq(workspaceIntegrations.id, source.id))
       );
       // Batch: deactivate all sources atomically (neon-http doesn't support transactions)
-      const updates = await db.batch(updateQueries as [typeof updateQueries[0], ...typeof updateQueries]);
+      const updates = await db.batch(
+        updateQueries as [(typeof updateQueries)[0], ...typeof updateQueries]
+      );
 
       // Record activity for each disconnected source (Tier 3: Fire-and-forget)
       sources.forEach((source) => {
@@ -201,14 +203,14 @@ export const sourcesM2MRouter = {
         .from(workspaceIntegrations)
         .innerJoin(
           gwInstallations,
-          eq(workspaceIntegrations.installationId, gwInstallations.id),
+          eq(workspaceIntegrations.installationId, gwInstallations.id)
         )
         .where(
           and(
             eq(gwInstallations.provider, "github"),
             eq(gwInstallations.externalId, input.githubInstallationId),
-            eq(workspaceIntegrations.isActive, true),
-          ),
+            eq(workspaceIntegrations.isActive, true)
+          )
         );
 
       if (installationSources.length === 0) {
@@ -233,7 +235,9 @@ export const sourcesM2MRouter = {
           .where(eq(workspaceIntegrations.id, source.id))
       );
       // Batch: deactivate all sources atomically (neon-http doesn't support transactions)
-      const updates = await db.batch(updateQueries as [typeof updateQueries[0], ...typeof updateQueries]);
+      const updates = await db.batch(
+        updateQueries as [(typeof updateQueries)[0], ...typeof updateQueries]
+      );
 
       // Record activity for each disconnected source (Tier 3: Fire-and-forget)
       installationSources.forEach((source) => {
@@ -271,7 +275,9 @@ export const sourcesM2MRouter = {
       const sources = await db
         .select()
         .from(workspaceIntegrations)
-        .where(eq(workspaceIntegrations.providerResourceId, input.githubRepoId));
+        .where(
+          eq(workspaceIntegrations.providerResourceId, input.githubRepoId)
+        );
 
       if (sources.length === 0) {
         // Repository not found - already deleted or never existed
@@ -310,7 +316,9 @@ export const sourcesM2MRouter = {
           .where(eq(workspaceIntegrations.id, source.id));
       });
       // Batch: mark deleted atomically (neon-http doesn't support transactions)
-      const updates = await db.batch(updateQueries as [typeof updateQueries[0], ...typeof updateQueries]);
+      const updates = await db.batch(
+        updateQueries as [(typeof updateQueries)[0], ...typeof updateQueries]
+      );
 
       // Record activity for each deleted source (Tier 3: Fire-and-forget)
       githubSources.forEach((source) => {
@@ -348,7 +356,9 @@ export const sourcesM2MRouter = {
       const sources = await db
         .select()
         .from(workspaceIntegrations)
-        .where(eq(workspaceIntegrations.providerResourceId, input.githubRepoId));
+        .where(
+          eq(workspaceIntegrations.providerResourceId, input.githubRepoId)
+        );
 
       if (sources.length === 0) {
         throw new TRPCError({
@@ -372,7 +382,9 @@ export const sourcesM2MRouter = {
           .set({ updatedAt: now })
           .where(eq(workspaceIntegrations.id, source.id))
       );
-      const updates = await db.batch(updateQueries as [typeof updateQueries[0], ...typeof updateQueries]);
+      const updates = await db.batch(
+        updateQueries as [(typeof updateQueries)[0], ...typeof updateQueries]
+      );
 
       // Record activity for each metadata update (Tier 3: Fire-and-forget)
       githubSources.forEach((source) => {

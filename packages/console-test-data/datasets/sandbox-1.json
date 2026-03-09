@@ -324,8 +324,20 @@
             "site_admin": false
           },
           "labels": [
-            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
-            { "id": 102, "node_id": "L_102", "name": "neural-memory", "color": "7c3aed", "default": false }
+            {
+              "id": 101,
+              "node_id": "L_101",
+              "name": "bug",
+              "color": "d73a4a",
+              "default": false
+            },
+            {
+              "id": 102,
+              "node_id": "L_102",
+              "name": "neural-memory",
+              "color": "7c3aed",
+              "default": false
+            }
           ],
           "state": "open",
           "locked": false,
@@ -358,7 +370,14 @@
           "reactions": {
             "url": "https://api.github.com/repos/lightfastai/lightfast/issues/361/reactions",
             "total_count": 0,
-            "+1": 0, "-1": 0, "laugh": 0, "hooray": 0, "confused": 0, "heart": 0, "rocket": 0, "eyes": 0
+            "+1": 0,
+            "-1": 0,
+            "laugh": 0,
+            "hooray": 0,
+            "confused": 0,
+            "heart": 0,
+            "rocket": 0,
+            "eyes": 0
           },
           "html_url": "https://github.com/lightfastai/lightfast/issues/361",
           "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/361/timeline",
@@ -518,8 +537,20 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
-            { "id": 103, "node_id": "L_103", "name": "hotfix", "color": "ff0000", "default": false }
+            {
+              "id": 101,
+              "node_id": "L_101",
+              "name": "bug",
+              "color": "d73a4a",
+              "default": false
+            },
+            {
+              "id": 103,
+              "node_id": "L_103",
+              "name": "hotfix",
+              "color": "ff0000",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -706,8 +737,20 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
-            { "id": 103, "node_id": "L_103", "name": "hotfix", "color": "ff0000", "default": false }
+            {
+              "id": 101,
+              "node_id": "L_101",
+              "name": "bug",
+              "color": "d73a4a",
+              "default": false
+            },
+            {
+              "id": 103,
+              "node_id": "L_103",
+              "name": "hotfix",
+              "color": "ff0000",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -1030,7 +1073,10 @@
               "githubDeployment": "1"
             }
           },
-          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
           "team": {
             "id": "team_lightfastai",
             "slug": "lightfastai",
@@ -1065,7 +1111,10 @@
               "githubDeployment": "1"
             }
           },
-          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
           "team": {
             "id": "team_lightfastai",
             "slug": "lightfastai",
@@ -1256,8 +1305,20 @@
             "site_admin": false
           },
           "labels": [
-            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
-            { "id": 102, "node_id": "L_102", "name": "neural-memory", "color": "7c3aed", "default": false }
+            {
+              "id": 101,
+              "node_id": "L_101",
+              "name": "bug",
+              "color": "d73a4a",
+              "default": false
+            },
+            {
+              "id": 102,
+              "node_id": "L_102",
+              "name": "neural-memory",
+              "color": "7c3aed",
+              "default": false
+            }
           ],
           "state": "closed",
           "locked": false,
@@ -1290,7 +1351,14 @@
           "reactions": {
             "url": "https://api.github.com/repos/lightfastai/lightfast/issues/361/reactions",
             "total_count": 0,
-            "+1": 0, "-1": 0, "laugh": 0, "hooray": 0, "confused": 0, "heart": 0, "rocket": 0, "eyes": 0
+            "+1": 0,
+            "-1": 0,
+            "laugh": 0,
+            "hooray": 0,
+            "confused": 0,
+            "heart": 0,
+            "rocket": 0,
+            "eyes": 0
           },
           "html_url": "https://github.com/lightfastai/lightfast/issues/361",
           "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/361/timeline",

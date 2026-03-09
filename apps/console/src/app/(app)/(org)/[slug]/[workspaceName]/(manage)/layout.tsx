@@ -1,6 +1,7 @@
 import { DebugPanelLoader } from "~/components/debug-panel-loader";
 
-const isDev = !process.env.VERCEL_ENV || process.env.VERCEL_ENV === "development";
+const isDev =
+  !process.env.VERCEL_ENV || process.env.VERCEL_ENV === "development";
 
 export default async function ManageLayout({
   children,
@@ -12,8 +13,8 @@ export default async function ManageLayout({
   const { slug, workspaceName } = await params;
 
   return (
-    <div className="flex flex-1 flex-col h-full overflow-auto">
-      <div className="flex justify-center w-full">
+    <div className="flex h-full flex-1 flex-col overflow-auto">
+      <div className="flex w-full justify-center">
         <div className="w-full max-w-5xl px-6 py-2">{children}</div>
       </div>
       {isDev && <DebugPanelLoader slug={slug} workspaceName={workspaceName} />}

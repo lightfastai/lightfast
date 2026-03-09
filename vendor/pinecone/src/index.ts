@@ -1,24 +1,22 @@
 // Export client
-export { PineconeClient, createPineconeClient, pineconeClient } from "./client";
-
+export { createPineconeClient, PineconeClient, pineconeClient } from "./client";
+// Export errors
+export {
+  PineconeConnectionError,
+  PineconeError,
+  PineconeInvalidRequestError,
+  PineconeNotFoundError,
+  PineconeRateLimitError,
+} from "./errors";
 // Export types
 export type {
-  UpsertRequest,
-  UpsertResponse,
-  QueryRequest,
-  QueryMatch,
-  QueryResponse,
   DeleteRequest,
   FetchedRecord,
   FetchResponse,
+  QueryMatch,
+  QueryRequest,
+  QueryResponse,
   UpdateRequest,
+  UpsertRequest,
+  UpsertResponse,
 } from "./types";
-
-// Export errors
-export {
-  PineconeError,
-  PineconeConnectionError,
-  PineconeRateLimitError,
-  PineconeNotFoundError,
-  PineconeInvalidRequestError,
-} from "./errors";

@@ -1,12 +1,12 @@
-import { realtime } from "@repo/console-upstash-realtime";
-import type { EventNotification } from "@repo/console-upstash-realtime";
-import type { PostTransformEvent } from "@repo/console-providers";
 import { inngest } from "@api/console/inngest";
+import type { PostTransformEvent } from "@repo/console-providers";
+import type { EventNotification } from "@repo/console-upstash-realtime";
+import { realtime } from "@repo/console-upstash-realtime";
 
 export interface ResolvedWorkspace {
+  clerkOrgId: string;
   workspaceId: string;
   workspaceName: string;
-  clerkOrgId: string;
 }
 
 /**
@@ -14,7 +14,7 @@ export interface ResolvedWorkspace {
  */
 export async function publishInngestNotification(
   sourceEvent: PostTransformEvent,
-  workspace: ResolvedWorkspace,
+  workspace: ResolvedWorkspace
 ): Promise<void> {
   await inngest.send({
     name: "apps-console/neural/observation.capture",

@@ -13,18 +13,14 @@ import { z } from "zod";
  * - /apps/www/src/components/early-access-actions.ts (server, safeParse)
  */
 export const earlyAccessFormSchema = z.object({
-	email: z
-		.string()
-		.min(1, "Email is required")
-		.email("Please enter a valid email address")
-		.toLowerCase()
-		.trim(),
-	companySize: z
-		.string()
-		.min(1, "Company size is required"),
-	sources: z
-		.array(z.string())
-		.min(1, "Please select at least one data source"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address")
+    .toLowerCase()
+    .trim(),
+  companySize: z.string().min(1, "Company size is required"),
+  sources: z.array(z.string()).min(1, "Please select at least one data source"),
 });
 
 export type EarlyAccessFormValues = z.infer<typeof earlyAccessFormSchema>;

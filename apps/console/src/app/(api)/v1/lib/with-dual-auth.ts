@@ -6,34 +6,34 @@
  * - Session: Validates workspace access via org membership
  */
 
-import type { NextRequest } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { db } from "@db/console/client";
 import { orgWorkspaces } from "@db/console/schema";
-import { eq } from "drizzle-orm";
-import { log } from "@vendor/observability/log";
 import { LIGHTFAST_API_KEY_PREFIX } from "@repo/console-api-key";
+import { auth } from "@vendor/clerk/server";
+import { log } from "@vendor/observability/log";
+import { eq } from "drizzle-orm";
+import type { NextRequest } from "next/server";
 import { withApiKeyAuth } from "./with-api-key-auth";
 
 export interface DualAuthContext {
-  workspaceId: string;
-  userId: string;
-  authType: "api-key" | "session";
   apiKeyId?: string;
+  authType: "api-key" | "session";
+  userId: string;
+  workspaceId: string;
 }
 
 export interface DualAuthSuccess {
-  success: true;
   auth: DualAuthContext;
+  success: true;
 }
 
 export interface DualAuthError {
-  success: false;
   error: {
     code: string;
     message: string;
   };
   status: number;
+  success: false;
 }
 
 export type DualAuthResult = DualAuthSuccess | DualAuthError;
@@ -50,7 +50,7 @@ export type DualAuthResult = DualAuthSuccess | DualAuthError;
  */
 export async function withDualAuth(
   request: NextRequest,
-  requestId?: string,
+  requestId?: string
 ): Promise<DualAuthResult> {
   // Check for Authorization header
   const authHeader = request.headers.get("authorization");
@@ -94,57 +94,56 @@ export async function withDualAuth(
           apiKeyId: apiKeyResult.auth.apiKeyId,
         },
       };
-    } else {
-      // For other bearer tokens (Clerk JWTs), we rely on X-Workspace-ID header and implicit trust
-      // This is for internal service-to-service calls where the token establishes user identity
-      // but we trust the workspace/user info is valid based on the initial auth
-      const workspaceId = request.headers.get("x-workspace-id");
-      const userId = request.headers.get("x-user-id");
+    }
+    // For other bearer tokens (Clerk JWTs), we rely on X-Workspace-ID header and implicit trust
+    // This is for internal service-to-service calls where the token establishes user identity
+    // but we trust the workspace/user info is valid based on the initial auth
+    const workspaceId = request.headers.get("x-workspace-id");
+    const userId = request.headers.get("x-user-id");
 
-      if (!workspaceId || !userId) {
-        log.warn("Missing X-Workspace-ID or X-User-ID for bearer token", {
-          requestId,
-        });
-        return {
-          success: false,
-          error: {
-            code: "BAD_REQUEST",
-            message:
-              "X-Workspace-ID and X-User-ID headers required with bearer token",
-          },
-          status: 400,
-        };
-      }
-
-      // Validate workspace exists
-      const workspace = await db.query.orgWorkspaces.findFirst({
-        where: eq(orgWorkspaces.id, workspaceId),
-        columns: { id: true },
-      });
-
-      if (!workspace) {
-        return {
-          success: false,
-          error: { code: "NOT_FOUND", message: "Workspace not found" },
-          status: 404,
-        };
-      }
-
-      log.info("Bearer token auth via headers", {
+    if (!(workspaceId && userId)) {
+      log.warn("Missing X-Workspace-ID or X-User-ID for bearer token", {
         requestId,
-        userId,
-        workspaceId,
       });
-
       return {
-        success: true,
-        auth: {
-          workspaceId,
-          userId,
-          authType: "session",
+        success: false,
+        error: {
+          code: "BAD_REQUEST",
+          message:
+            "X-Workspace-ID and X-User-ID headers required with bearer token",
         },
+        status: 400,
       };
     }
+
+    // Validate workspace exists
+    const workspace = await db.query.orgWorkspaces.findFirst({
+      where: eq(orgWorkspaces.id, workspaceId),
+      columns: { id: true },
+    });
+
+    if (!workspace) {
+      return {
+        success: false,
+        error: { code: "NOT_FOUND", message: "Workspace not found" },
+        status: 404,
+      };
+    }
+
+    log.info("Bearer token auth via headers", {
+      requestId,
+      userId,
+      workspaceId,
+    });
+
+    return {
+      success: true,
+      auth: {
+        workspaceId,
+        userId,
+        authType: "session",
+      },
+    };
   }
 
   // Session path - validate via Clerk
@@ -182,7 +181,7 @@ export async function withDualAuth(
   const accessResult = await validateWorkspaceAccess(
     workspaceId,
     userId,
-    requestId,
+    requestId
   );
 
   if (!accessResult.success) {
@@ -213,7 +212,7 @@ export async function withDualAuth(
 async function validateWorkspaceAccess(
   workspaceId: string,
   userId: string,
-  requestId?: string,
+  requestId?: string
 ): Promise<DualAuthResult> {
   try {
     // 1. Fetch workspace to get clerkOrgId
@@ -244,7 +243,7 @@ async function validateWorkspaceAccess(
     const userMemberships = await getCachedUserOrgMemberships(userId);
 
     const isMember = userMemberships.some(
-      (m) => m.organizationId === workspace.clerkOrgId,
+      (m) => m.organizationId === workspace.clerkOrgId
     );
 
     if (!isMember) {
@@ -290,7 +289,7 @@ async function validateWorkspaceAccess(
  */
 export function createDualAuthErrorResponse(
   result: DualAuthError,
-  requestId: string,
+  requestId: string
 ): Response {
   return Response.json(
     {
@@ -298,6 +297,6 @@ export function createDualAuthErrorResponse(
       message: result.error.message,
       requestId,
     },
-    { status: result.status },
+    { status: result.status }
   );
 }

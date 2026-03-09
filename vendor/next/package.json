@@ -20,28 +20,21 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint --cache --cache-strategy content --cache-location .cache/.eslintcache",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/eslint": "^8.56.5",
-    "eslint": "catalog:",
     "next": "catalog:next16",
     "typescript": "catalog:",
-    "webpack": "^5"
+    "webpack": "^5.105.4"
   },
   "dependencies": {
-    "@logtail/next": "^0.2.0",
+    "@logtail/next": "^0.3.1",
     "@next/bundle-analyzer": "^16.0.0",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/observability": "workspace:*",
-    "@vercel/toolbar": "^0.1.28",
+    "@vercel/toolbar": "^0.2.2",
     "next-secure-headers": "^2.2.0"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

@@ -1,14 +1,14 @@
+import type { RequestContext, SystemContext } from "./adapters/types";
 import type { ApiError } from "./errors";
-import type { SystemContext, RequestContext } from "./adapters/types";
 
 /**
  * Base event data that includes system and request context
  */
 export interface BaseLifecycleEvent {
-  /** System context including sessionId and resourceId */
-  systemContext: SystemContext;
   /** Request context including userAgent and ipAddress */
   requestContext?: RequestContext;
+  /** System context including sessionId and resourceId */
+  systemContext: SystemContext;
 }
 
 /**
@@ -23,19 +23,19 @@ export interface ErrorLifecycleEvent extends BaseLifecycleEvent {
  * Stream lifecycle events
  */
 export interface StreamStartEvent extends BaseLifecycleEvent {
-  /** Unique stream identifier */
-  streamId: string;
   /** Agent name */
   agentName: string;
   /** Number of messages in the conversation */
   messageCount: number;
+  /** Unique stream identifier */
+  streamId: string;
 }
 
 export interface StreamCompleteEvent extends BaseLifecycleEvent {
-  /** Unique stream identifier */
-  streamId: string;
   /** Agent name */
   agentName: string;
+  /** Unique stream identifier */
+  streamId: string;
 }
 
 /**
@@ -51,7 +51,7 @@ export interface AgentStartEvent extends BaseLifecycleEvent {
 /**
  * AgentCompleteEvent extends the base lifecycle event and spreads
  * the AI SDK's onFinish callback data, plus our custom fields.
- * 
+ *
  * In practice, when using streamText, additional fields are provided
  * beyond what UIMessageStreamOnFinishCallback types expose.
  */
@@ -64,16 +64,16 @@ export interface AgentCompleteEvent extends BaseLifecycleEvent {
  * Lifecycle callbacks for monitoring and analytics
  */
 export interface LifecycleCallbacks {
-  /** Called when an error occurs */
-  onError?: (event: ErrorLifecycleEvent) => void;
-  /** Called when a stream starts */
-  onStreamStart?: (event: StreamStartEvent) => void;
-  /** Called when a stream completes */
-  onStreamComplete?: (event: StreamCompleteEvent) => void;
-  /** Called when an agent starts processing */
-  onAgentStart?: (event: AgentStartEvent) => void;
   /** Called when an agent completes processing with full AI SDK data */
   onAgentComplete?: (event: AgentCompleteEvent) => void;
+  /** Called when an agent starts processing */
+  onAgentStart?: (event: AgentStartEvent) => void;
+  /** Called when an error occurs */
+  onError?: (event: ErrorLifecycleEvent) => void;
+  /** Called when a stream completes */
+  onStreamComplete?: (event: StreamCompleteEvent) => void;
+  /** Called when a stream starts */
+  onStreamStart?: (event: StreamStartEvent) => void;
 }
 
 /**

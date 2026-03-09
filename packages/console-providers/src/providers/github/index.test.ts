@@ -7,11 +7,20 @@
  * A real 2048-bit RSA PKCS8 key is generated once in beforeAll
  * so JWT-creation paths exercise actual Web Crypto, not just mocks.
  */
-import { describe, it, expect, vi, beforeAll, afterEach, afterAll } from "vitest";
+
 import { generateKeyPairSync } from "node:crypto";
-import { github } from "./index";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { computeHmac } from "../../crypto";
 import type { GitHubConfig } from "./auth";
+import { github } from "./index";
 
 // ── Global fetch mock ──────────────────────────────────────────────────────────
 
@@ -57,7 +66,9 @@ describe("oauth.buildAuthUrl", () => {
   it("builds correct GitHub App installation URL with appSlug", () => {
     const config: GitHubConfig = { ...testConfig, appSlug: "my-github-app" };
     const url = github.oauth.buildAuthUrl(config, "state-abc");
-    expect(url).toContain("https://github.com/apps/my-github-app/installations/new");
+    expect(url).toContain(
+      "https://github.com/apps/my-github-app/installations/new"
+    );
   });
 
   it("embeds state as a query parameter", () => {
@@ -76,14 +87,19 @@ describe("oauth.exchangeCode", () => {
   it("returns OAuthTokens with accessToken, tokenType, and scope on success", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({
-        access_token: "ghu_token123",
-        token_type: "bearer",
-        scope: "repo,user",
-      }),
+      json: () =>
+        Promise.resolve({
+          access_token: "ghu_token123",
+          token_type: "bearer",
+          scope: "repo,user",
+        }),
     });
 
-    const tokens = await github.oauth.exchangeCode(testConfig, "code123", "https://app.example.com/callback");
+    const tokens = await github.oauth.exchangeCode(
+      testConfig,
+      "code123",
+      "https://app.example.com/callback"
+    );
     expect(tokens.accessToken).toBe("ghu_token123");
     expect(tokens.tokenType).toBe("bearer");
     expect(tokens.scope).toBe("repo,user");
@@ -93,15 +109,20 @@ describe("oauth.exchangeCode", () => {
   it("throws when GitHub returns an OAuth error object", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({
-        error: "bad_verification_code",
-        error_description: "The code passed is incorrect or expired.",
-        error_uri: "https://docs.github.com/",
-      }),
+      json: () =>
+        Promise.resolve({
+          error: "bad_verification_code",
+          error_description: "The code passed is incorrect or expired.",
+          error_uri: "https://docs.github.com/",
+        }),
     });
 
     await expect(
-      github.oauth.exchangeCode(testConfig, "bad-code", "https://app.example.com/callback"),
+      github.oauth.exchangeCode(
+        testConfig,
+        "bad-code",
+        "https://app.example.com/callback"
+      )
     ).rejects.toThrow("GitHub OAuth error");
   });
 
@@ -109,21 +130,36 @@ describe("oauth.exchangeCode", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
 
     await expect(
-      github.oauth.exchangeCode(testConfig, "code", "https://app.example.com/callback"),
+      github.oauth.exchangeCode(
+        testConfig,
+        "code",
+        "https://app.example.com/callback"
+      )
     ).rejects.toThrow("GitHub token exchange failed: 401");
   });
 
   it("sends POST with correct content-type and accept headers", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ access_token: "ghu_x", token_type: "bearer", scope: "" }),
+      json: () =>
+        Promise.resolve({
+          access_token: "ghu_x",
+          token_type: "bearer",
+          scope: "",
+        }),
     });
 
-    await github.oauth.exchangeCode(testConfig, "code", "https://app.example.com/cb");
+    await github.oauth.exchangeCode(
+      testConfig,
+      "code",
+      "https://app.example.com/cb"
+    );
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://github.com/login/oauth/access_token");
-    expect((init.headers as Record<string, string>).Accept).toBe("application/json");
+    expect((init.headers as Record<string, string>).Accept).toBe(
+      "application/json"
+    );
     expect(init.method).toBe("POST");
   });
 });
@@ -132,9 +168,9 @@ describe("oauth.exchangeCode", () => {
 
 describe("oauth.refreshToken", () => {
   it("always rejects — GitHub user tokens do not support refresh", async () => {
-    await expect(github.oauth.refreshToken(testConfig, "any-refresh-token")).rejects.toThrow(
-      "do not support refresh",
-    );
+    await expect(
+      github.oauth.refreshToken(testConfig, "any-refresh-token")
+    ).rejects.toThrow("do not support refresh");
   });
 
   it("does not call fetch", async () => {
@@ -149,7 +185,9 @@ describe("oauth.revokeToken", () => {
   it("calls DELETE to the GitHub token endpoint", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
-    await expect(github.oauth.revokeToken(testConfig, "ghu_token123")).resolves.toBeUndefined();
+    await expect(
+      github.oauth.revokeToken(testConfig, "ghu_token123")
+    ).resolves.toBeUndefined();
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toContain(testConfig.clientId);
@@ -162,7 +200,8 @@ describe("oauth.revokeToken", () => {
     await github.oauth.revokeToken(testConfig, "ghu_token");
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const authHeader = (init.headers as Record<string, string>).Authorization ?? "";
+    const authHeader =
+      (init.headers as Record<string, string>).Authorization ?? "";
     expect(authHeader).toMatch(/^Basic /);
     const decoded = atob(authHeader.replace("Basic ", ""));
     expect(decoded).toBe(`${testConfig.clientId}:${testConfig.clientSecret}`);
@@ -171,9 +210,9 @@ describe("oauth.revokeToken", () => {
   it("throws on HTTP error", async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 422 });
 
-    await expect(github.oauth.revokeToken(testConfig, "bad-token")).rejects.toThrow(
-      "GitHub token revocation failed: 422",
-    );
+    await expect(
+      github.oauth.revokeToken(testConfig, "bad-token")
+    ).rejects.toThrow("GitHub token revocation failed: 422");
   });
 });
 
@@ -185,7 +224,7 @@ describe("oauth.processCallback", () => {
       github.oauth.processCallback(testConfig, {
         installation_id: "12345",
         setup_action: "request",
-      }),
+      })
     ).rejects.toThrow("setup_action=request is not yet implemented");
   });
 
@@ -194,13 +233,13 @@ describe("oauth.processCallback", () => {
       github.oauth.processCallback(testConfig, {
         installation_id: "12345",
         setup_action: "update",
-      }),
+      })
     ).rejects.toThrow("setup_action=update is not yet implemented");
   });
 
   it("throws when installation_id is missing", async () => {
     await expect(github.oauth.processCallback(testConfig, {})).rejects.toThrow(
-      "missing installation_id",
+      "missing installation_id"
     );
   });
 
@@ -218,7 +257,9 @@ describe("oauth.processCallback", () => {
   });
 
   it("accountInfo has hardcoded events and empty raw (display data resolved live)", async () => {
-    const result = await github.oauth.processCallback(testConfig, { installation_id: "12345" });
+    const result = await github.oauth.processCallback(testConfig, {
+      installation_id: "12345",
+    });
     if (result.status === "connected-no-token") {
       expect(result.accountInfo.events).toContain("push");
       expect(result.accountInfo.events).toContain("pull_request");
@@ -255,7 +296,9 @@ describe("webhook.verifySignature", () => {
 
   it("returns true for a valid signature with sha256= prefix", () => {
     const expected = computeHmac(body, secret, "SHA-256");
-    const headers = new Headers({ "x-hub-signature-256": `sha256=${expected}` });
+    const headers = new Headers({
+      "x-hub-signature-256": `sha256=${expected}`,
+    });
     const result = github.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(true);
   });
@@ -269,7 +312,9 @@ describe("webhook.verifySignature", () => {
 
   it("returns false for signature computed with wrong secret", () => {
     const wrongSig = computeHmac(body, "wrong-secret", "SHA-256");
-    const headers = new Headers({ "x-hub-signature-256": `sha256=${wrongSig}` });
+    const headers = new Headers({
+      "x-hub-signature-256": `sha256=${wrongSig}`,
+    });
     const result = github.webhook.verifySignature(body, headers, secret);
     expect(result).toBe(false);
   });
@@ -298,12 +343,16 @@ describe("webhook.extractEventType", () => {
 describe("webhook.extractDeliveryId", () => {
   it("returns x-github-delivery header value", () => {
     const headers = new Headers({ "x-github-delivery": "abc-delivery-123" });
-    expect(github.webhook.extractDeliveryId(headers, {})).toBe("abc-delivery-123");
+    expect(github.webhook.extractDeliveryId(headers, {})).toBe(
+      "abc-delivery-123"
+    );
   });
 
   it("returns a UUID-shaped string when header is absent", () => {
     const id = github.webhook.extractDeliveryId(new Headers(), {});
-    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    expect(id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+    );
   });
 });
 
@@ -311,12 +360,12 @@ describe("webhook.extractDeliveryId", () => {
 
 describe("webhook.extractResourceId", () => {
   it("returns repository.id as string when present", () => {
-    const payload = { repository: { id: 12345 } };
+    const payload = { repository: { id: 12_345 } };
     expect(github.webhook.extractResourceId(payload)).toBe("12345");
   });
 
   it("returns installation.id when repository is absent", () => {
-    const payload = { installation: { id: 67890 } };
+    const payload = { installation: { id: 67_890 } };
     expect(github.webhook.extractResourceId(payload)).toBe("67890");
   });
 
@@ -340,7 +389,7 @@ describe("webhook.extractResourceId", () => {
 describe("oauth.getActiveToken", () => {
   it("throws for non-numeric installationId", async () => {
     await expect(
-      github.oauth.getActiveToken(testConfig, "not-a-number", null),
+      github.oauth.getActiveToken(testConfig, "not-a-number", null)
     ).rejects.toThrow("Invalid GitHub installation ID: must be numeric");
   });
 
@@ -358,7 +407,7 @@ describe("oauth.getActiveToken", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
 
     await expect(
-      github.oauth.getActiveToken(testConfig, "12345", null),
+      github.oauth.getActiveToken(testConfig, "12345", null)
     ).rejects.toThrow("GitHub installation token request failed: 404");
   });
 
@@ -369,7 +418,7 @@ describe("oauth.getActiveToken", () => {
     });
 
     await expect(
-      github.oauth.getActiveToken(testConfig, "12345", null),
+      github.oauth.getActiveToken(testConfig, "12345", null)
     ).rejects.toThrow("GitHub installation token response missing valid token");
   });
 
@@ -382,7 +431,9 @@ describe("oauth.getActiveToken", () => {
     await github.oauth.getActiveToken(testConfig, "99999", null);
 
     const [url] = mockFetch.mock.calls[0] as [string];
-    expect(url).toContain("https://api.github.com/app/installations/99999/access_tokens");
+    expect(url).toContain(
+      "https://api.github.com/app/installations/99999/access_tokens"
+    );
   });
 });
 

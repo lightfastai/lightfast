@@ -1,5 +1,7 @@
-declare namespace React {
-  interface HTMLAttributes<_T> {
+export {};
+
+declare module "react" {
+  interface HTMLAttributes<T> {
     tw?: string;
   }
 }

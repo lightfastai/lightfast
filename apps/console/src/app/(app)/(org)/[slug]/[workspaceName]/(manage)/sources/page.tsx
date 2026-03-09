@@ -1,8 +1,8 @@
-import { Suspense } from "react";
-import Link from "next/link";
-import { prefetch, HydrateClient, orgTrpc } from "@repo/console-trpc/server";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
 import { Button } from "@repo/ui/components/ui/button";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import Link from "next/link";
+import { Suspense } from "react";
 import { InstalledSources } from "./_components/installed-sources";
 import { LatestIntegrations } from "./_components/latest-integrations";
 
@@ -22,7 +22,7 @@ export default async function SourcesPage({
     orgTrpc.workspace.sources.list.queryOptions({
       clerkOrgSlug: slug,
       workspaceName,
-    }),
+    })
   );
 
   return (
@@ -31,8 +31,8 @@ export default async function SourcesPage({
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Sources</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h1 className="font-semibold text-2xl tracking-tight">Sources</h1>
+            <p className="mt-1 text-muted-foreground text-sm">
               Manage integrations connected to this workspace
             </p>
           </div>
@@ -50,9 +50,9 @@ export default async function SourcesPage({
             <Suspense fallback={<InstalledSourcesSkeleton />}>
               <InstalledSources
                 clerkOrgSlug={slug}
-                workspaceName={workspaceName}
                 initialSearch={search}
                 initialStatus={status as "all" | "active" | "inactive"}
+                workspaceName={workspaceName}
               />
             </Suspense>
           </div>
@@ -76,9 +76,9 @@ function InstalledSourcesSkeleton() {
         <Skeleton className="h-8 w-32" />
       </div>
       {/* Provider list skeleton */}
-      <div className="w-full rounded-lg border divide-y">
+      <div className="w-full divide-y rounded-lg border">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between px-4 py-3" key={i}>
             <div className="flex items-center gap-3">
               <Skeleton className="h-5 w-5 rounded" />
               <Skeleton className="h-4 w-16" />

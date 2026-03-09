@@ -4,10 +4,8 @@
  */
 export function TeamHeader() {
   return (
-    <div className="text-center mb-8">
-      <h1 className="text-4xl font-bold tracking-tight">
-        Create Your Team
-      </h1>
+    <div className="mb-8 text-center">
+      <h1 className="font-bold text-4xl tracking-tight">Create Your Team</h1>
     </div>
   );
 }

@@ -1,2 +1,7 @@
-export { createGatewayClient, type GatewayClient } from "@repo/gateway-service-clients";
-export { createRelayClient, type RelayClient, type DispatchPayload } from "@repo/gateway-service-clients";
+export {
+  createGatewayClient,
+  createRelayClient,
+  type DispatchPayload,
+  type GatewayClient,
+  type RelayClient,
+} from "@repo/gateway-service-clients";

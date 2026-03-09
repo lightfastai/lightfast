@@ -1,7 +1,7 @@
 import { db } from "@db/console/client";
 import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import type { RuntimeConfig, SourceType } from "@repo/console-providers";
 import { getProvider } from "@repo/console-providers";
-import type { RuntimeConfig, SourceType  } from "@repo/console-providers";
 import { backfillUrl } from "@repo/gateway-service-clients";
 import { decrypt } from "@repo/lib";
 import { and, eq } from "@vendor/db";
@@ -15,8 +15,8 @@ import { gatewayBaseUrl } from "../lib/urls.js";
 
 interface TeardownPayload {
   installationId: string;
-  provider: SourceType;
   orgId: string;
+  provider: SourceType;
 }
 
 /**
@@ -41,7 +41,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
         await qstash.publishJSON({
           url: `${backfillUrl}/trigger/cancel`,
           headers: {
-            "X-API-Key": env.GATEWAY_API_KEY,
+            "X-API-Key": env.GATEWAY_API_KEY!,
           },
           body: { installationId },
           retries: 3,
@@ -54,12 +54,19 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
 
     // Step 2: Revoke token at provider (best-effort)
     await context.run("revoke-token", async () => {
-      if (providerName === "github") {return;} // GitHub uses on-demand JWTs, no stored token
+      if (providerName === "github") {
+        return;
+      } // GitHub uses on-demand JWTs, no stored token
 
       const providerDef = getProvider(providerName);
 
-      const teardownRuntime: RuntimeConfig = { callbackBaseUrl: gatewayBaseUrl };
-      const config = providerDef.createConfig(env as unknown as Record<string, string>, teardownRuntime);
+      const teardownRuntime: RuntimeConfig = {
+        callbackBaseUrl: gatewayBaseUrl,
+      };
+      const config = providerDef.createConfig(
+        env as unknown as Record<string, string>,
+        teardownRuntime
+      );
 
       const tokenRows = await db
         .select()
@@ -68,10 +75,15 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
         .limit(1);
 
       const tokenRow = tokenRows[0];
-      if (!tokenRow) {return;}
+      if (!tokenRow) {
+        return;
+      }
 
       try {
-        const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+        const decryptedToken = await decrypt(
+          tokenRow.accessToken,
+          env.ENCRYPTION_KEY!
+        );
         await providerDef.oauth.revokeToken(config as never, decryptedToken);
       } catch {
         // Best-effort — swallow errors
@@ -86,12 +98,12 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
         .where(
           and(
             eq(gwResources.installationId, installationId),
-            eq(gwResources.status, "active"),
-          ),
+            eq(gwResources.status, "active")
+          )
         );
 
       const keys = linkedResources.map((r) =>
-        resourceKey(providerName, r.providerResourceId),
+        resourceKey(providerName, r.providerResourceId)
       );
       if (keys.length > 0) {
         await redis.del(...keys);
@@ -122,5 +134,5 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       });
       return Promise.resolve();
     },
-  },
+  }
 );

@@ -14,22 +14,19 @@
  * Uses gatewayApp.request() directly — no tRPC, no service mesh router.
  * Infrastructure: PGlite (real DB), in-memory Redis Map.
  */
+
+import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import {
-  describe,
-  it,
-  expect,
-  vi,
+  afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
-  afterAll,
+  describe,
+  expect,
+  it,
+  vi,
 } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
-import type { TestDb } from "@repo/console-test-db";
 
 // ── Shared state (assigned in beforeAll, lazy getter in vi.mock) ──
 let db: TestDb;
@@ -45,7 +42,7 @@ const { redisMock, redisStore, mockGetProvider, mockProvider } =
       getAuthorizationUrl: vi
         .fn()
         .mockReturnValue(
-          "https://github.com/apps/test-app/installations/new?state=mock-state",
+          "https://github.com/apps/test-app/installations/new?state=mock-state"
         ),
       handleCallback: vi.fn().mockResolvedValue({
         installationId: "inst-browser-1",
@@ -100,10 +97,10 @@ vi.mock("@vendor/related-projects", () => ({
   withRelatedProject: ({ defaultHost }: { defaultHost: string }) => defaultHost,
 }));
 
+import { gwInstallations } from "@db/console/schema";
 // ── Import app after mocks are registered ──
 import gatewayApp from "@gateway/app";
-import { oauthStateKey, oauthResultKey } from "@gateway/cache";
-import { gwInstallations } from "@db/console/schema";
+import { oauthResultKey, oauthStateKey } from "@gateway/cache";
 
 // ── Request helpers ──
 
@@ -111,7 +108,7 @@ const API_KEY = "0".repeat(64); // matches setup.ts GATEWAY_API_KEY
 const ORG_ID = "org_browser_test";
 
 function authHeaders(
-  extra: Record<string, string> = {},
+  extra: Record<string, string> = {}
 ): Record<string, string> {
   return {
     "X-API-Key": API_KEY,
@@ -123,7 +120,7 @@ function authHeaders(
 
 function req(
   path: string,
-  init: { method?: string; headers?: Record<string, string> } = {},
+  init: { method?: string; headers?: Record<string, string> } = {}
 ) {
   return gatewayApp.request(`/services/gateway${path}`, {
     method: init.method ?? "GET",
@@ -143,40 +140,45 @@ beforeEach(() => {
   // Re-wire Redis mock implementations (clearAllMocks resets them)
   redisMock.hset.mockImplementation(
     (key: string, fields: Record<string, unknown>) => {
-      const existing =
-        (redisStore.get(key) ?? {}) as Record<string, unknown>;
+      const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
       redisStore.set(key, { ...existing, ...fields });
       return Promise.resolve(1);
-    },
+    }
   );
   redisMock.hgetall.mockImplementation(<T>(key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as T),
+    Promise.resolve((redisStore.get(key) ?? null) as T)
   );
   redisMock.set.mockImplementation(
     (key: string, value: unknown, opts?: { nx?: boolean }) => {
-      if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
+      if (opts?.nx && redisStore.has(key)) {
+        return Promise.resolve(null);
+      }
       redisStore.set(key, value);
       return Promise.resolve("OK");
-    },
+    }
   );
   redisMock.del.mockImplementation((...keys: string[]) => {
     const allKeys = keys.flat();
     let count = 0;
     for (const k of allKeys) {
-      if (redisStore.delete(k)) count++;
+      if (redisStore.delete(k)) {
+        count++;
+      }
     }
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation(<T>(key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as T),
+    Promise.resolve((redisStore.get(key) ?? null) as T)
   );
   redisMock.pipeline.mockImplementation(() => {
     const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing =
-            (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          const existing = (redisStore.get(key) ?? {}) as Record<
+            string,
+            unknown
+          >;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
@@ -201,7 +203,9 @@ beforeEach(() => {
           const allKeys = keys.flat();
           let count = 0;
           for (const k of allKeys) {
-            if (redisStore.delete(k)) count++;
+            if (redisStore.delete(k)) {
+              count++;
+            }
           }
           return count;
         });
@@ -209,8 +213,10 @@ beforeEach(() => {
       }),
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing =
-            (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          const existing = (redisStore.get(key) ?? {}) as Record<
+            string,
+            unknown
+          >;
           redisStore.set(key, { ...existing, ...fields });
           return 1;
         });
@@ -228,7 +234,7 @@ beforeEach(() => {
   // Re-wire provider mock
   mockGetProvider.mockReturnValue(mockProvider);
   mockProvider.getAuthorizationUrl.mockReturnValue(
-    "https://github.com/apps/test-app/installations/new?state=mock-state",
+    "https://github.com/apps/test-app/installations/new?state=mock-state"
   );
   mockProvider.handleCallback.mockResolvedValue({
     installationId: "inst-browser-1",
@@ -293,7 +299,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
       });
 
       const res = await req(
-        `/github/callback?installation_id=12345&state=${state}`,
+        `/github/callback?installation_id=12345&state=${state}`
       );
       // Browser flow without redirectTo → 302 redirect to console
       expect(res.status).toBe(302);
@@ -317,7 +323,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
       });
 
       const res = await req(
-        `/github/callback?installation_id=12345&state=${state}`,
+        `/github/callback?installation_id=12345&state=${state}`
       );
       expect(res.status).toBe(302);
       const location = res.headers.get("Location") ?? "";
@@ -341,7 +347,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
       });
 
       const res = await req(
-        `/github/callback?installation_id=12345&state=${state}`,
+        `/github/callback?installation_id=12345&state=${state}`
       );
       expect(res.status).toBe(302);
       const location = res.headers.get("Location") ?? "";
@@ -364,9 +370,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
         createdAt: Date.now().toString(),
       });
 
-      await req(
-        `/github/callback?installation_id=99999&state=${state}`,
-      );
+      await req(`/github/callback?installation_id=99999&state=${state}`);
 
       expect(mockProvider.handleCallback).toHaveBeenCalledOnce();
       const [ctx, typedState] = mockProvider.handleCallback.mock.calls[0] as [
@@ -395,7 +399,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
           raw: {
             account: {
               login: "test-org",
-              id: 67890,
+              id: 67_890,
               type: "Organization" as const,
               avatar_url: "",
             },
@@ -407,9 +411,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
       });
 
       // Callback WITHOUT state param — triggers fallback via externalId lookup
-      const res = await req(
-        "/github/callback?installation_id=55555",
-      );
+      const res = await req("/github/callback?installation_id=55555");
       // Should succeed (302 redirect), not 400
       expect(res.status).toBe(302);
 
@@ -425,9 +427,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
 
     it("Callback with missing state and no existing DB row → 400", async () => {
       // No state in query, no matching row in DB
-      const res = await req(
-        "/github/callback?installation_id=nonexistent",
-      );
+      const res = await req("/github/callback?installation_id=nonexistent");
       expect(res.status).toBe(400);
       const json = (await res.json()) as { error: string };
       expect(json.error).toBe("invalid_or_expired_state");
@@ -435,7 +435,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
 
     it("Callback error redirects to connected page with error param", async () => {
       mockProvider.handleCallback.mockRejectedValueOnce(
-        new Error("missing installation_id"),
+        new Error("missing installation_id")
       );
 
       const state = "browser-error-state-1";
@@ -446,9 +446,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
         createdAt: Date.now().toString(),
       });
 
-      const res = await req(
-        `/github/callback?state=${state}`,
-      );
+      const res = await req(`/github/callback?state=${state}`);
       expect(res.status).toBe(302);
       const location = res.headers.get("Location") ?? "";
       expect(location).toContain("/provider/github/connected");
@@ -480,7 +478,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
 
       // 2. Callback with state (browser redirect)
       const callbackRes = await req(
-        `/github/callback?installation_id=12345&state=${state}`,
+        `/github/callback?installation_id=12345&state=${state}`
       );
       expect(callbackRes.status).toBe(302);
       const location = callbackRes.headers.get("Location") ?? "";
@@ -514,7 +512,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
       };
 
       const callbackRes = await req(
-        `/github/callback?installation_id=12345&setup_action=install&state=${state}`,
+        `/github/callback?installation_id=12345&setup_action=install&state=${state}`
       );
       expect(callbackRes.status).toBe(302);
       const location = callbackRes.headers.get("Location") ?? "";
@@ -540,7 +538,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
 
       // First callback succeeds
       const res1 = await req(
-        `/github/callback?installation_id=12345&state=${state}`,
+        `/github/callback?installation_id=12345&state=${state}`
       );
       expect(res1.status).toBe(302);
 
@@ -549,7 +547,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
 
       // Second callback with same state fails (state consumed)
       const res2 = await req(
-        `/github/callback?installation_id=12345&state=${state}`,
+        `/github/callback?installation_id=12345&state=${state}`
       );
       expect(res2.status).toBe(400);
       const json = (await res2.json()) as { error: string };
@@ -562,7 +560,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
       // Do NOT seed oauthStateKey — simulating TTL expiry
 
       const res = await req(
-        `/github/callback?installation_id=12345&state=${state}`,
+        `/github/callback?installation_id=12345&state=${state}`
       );
       expect(res.status).toBe(400);
       const json = (await res.json()) as { error: string };
@@ -583,7 +581,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
       };
       expect(pipeInstance.expire).toHaveBeenCalledWith(
         oauthStateKey(state),
-        600,
+        600
       );
     });
 
@@ -598,7 +596,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
       });
 
       const res = await req(
-        `/github/callback?installation_id=12345&state=${state}`,
+        `/github/callback?installation_id=12345&state=${state}`
       );
       expect(res.status).toBe(400);
       const json = (await res.json()) as { error: string };

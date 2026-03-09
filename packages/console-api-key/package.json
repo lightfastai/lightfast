@@ -21,20 +21,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@db/console": "workspace:*",
     "@repo/console-providers": "workspace:*",
-    "@repo/lib": "workspace:*",
-    "@trpc/server": "catalog:",
-    "zod": "catalog:zod4"
+    "@repo/lib": "workspace:*"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "typescript": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

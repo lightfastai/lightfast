@@ -1,8 +1,12 @@
-import { redis } from "@vendor/upstash";
 import { db } from "@db/console/client";
-import { orgWorkspaces, workspaceObservationClusters, workspaceActorProfiles } from "@db/console/schema";
-import { eq, sql } from "drizzle-orm";
+import {
+  orgWorkspaces,
+  workspaceActorProfiles,
+  workspaceObservationClusters,
+} from "@db/console/schema";
 import { log } from "@vendor/observability/log";
+import { redis } from "@vendor/upstash";
+import { eq, sql } from "drizzle-orm";
 import { getWorkspaceConfigCacheKey } from "./keys";
 import type { CachedWorkspaceConfig } from "./types";
 
@@ -43,7 +47,8 @@ export async function getCachedWorkspaceConfig(
     // Cache read failed - log and continue to DB
     log.warn("Workspace config cache read failed", {
       workspaceId,
-      error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+      error:
+        cacheError instanceof Error ? cacheError.message : String(cacheError),
     });
   }
 
@@ -59,7 +64,8 @@ export async function getCachedWorkspaceConfig(
   cacheWorkspaceConfig(workspaceId, config).catch((cacheError) => {
     log.warn("Workspace config cache write failed", {
       workspaceId,
-      error: cacheError instanceof Error ? cacheError.message : String(cacheError),
+      error:
+        cacheError instanceof Error ? cacheError.message : String(cacheError),
     });
   });
 
@@ -136,7 +142,9 @@ async function cacheWorkspaceConfig(
  * Invalidate cached workspace config.
  * Call this when workspace settings are updated.
  */
-export async function invalidateWorkspaceConfig(workspaceId: string): Promise<void> {
+export async function invalidateWorkspaceConfig(
+  workspaceId: string
+): Promise<void> {
   const cacheKey = getWorkspaceConfigCacheKey(workspaceId);
   await redis.del(cacheKey);
   log.info("Workspace config cache invalidated", { workspaceId });

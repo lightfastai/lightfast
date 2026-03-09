@@ -2,8 +2,8 @@ import type { MethodInformation } from "fumadocs-openapi";
 
 interface CodeSample {
   id: string;
-  lang: string;
   label: string;
+  lang: string;
   source: string;
 }
 
@@ -121,7 +121,9 @@ const mcpSamples: Record<string, string> = {
 
 export function getCodeSamples(endpoint: MethodInformation): CodeSample[] {
   const operationId = endpoint.operationId;
-  if (!operationId) return [];
+  if (!operationId) {
+    return [];
+  }
 
   const samples: CodeSample[] = [];
 

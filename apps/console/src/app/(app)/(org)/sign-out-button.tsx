@@ -1,7 +1,7 @@
 "use client";
 
-import { useClerk } from "@clerk/nextjs";
 import { Button } from "@repo/ui/components/ui/button";
+import { useClerk } from "@vendor/clerk/client";
 import { authUrl } from "~/lib/related-projects";
 
 /**
@@ -17,7 +17,7 @@ export function SignOutButton() {
   };
 
   return (
-    <Button onClick={handleSignOut} size="lg" className="rounded-full">
+    <Button className="rounded-full" onClick={handleSignOut} size="lg">
       Sign in as a different user
     </Button>
   );

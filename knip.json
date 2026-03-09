@@ -1,0 +1,168 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.{js,ts,sh}"],
+      "ignoreDependencies": ["turbo-ignore"]
+    },
+    "apps/console": {
+      "entry": [
+        "src/app/**/*.{ts,tsx}",
+        "next.config.ts",
+        "sentry.*.config.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/www": {
+      "entry": [
+        "src/app/**/*.{ts,tsx}",
+        "next.config.ts",
+        "sentry.*.config.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/auth": {
+      "entry": [
+        "src/app/**/*.{ts,tsx}",
+        "next.config.ts",
+        "sentry.*.config.ts",
+        "playwright.config.ts",
+        "e2e/**/*.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts"]
+    },
+    "apps/docs": {
+      "entry": ["src/app/**/*.{ts,tsx}", "next.config.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "apps/relay": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "apps/gateway": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": ["drizzle-orm"]
+    },
+    "apps/backfill": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "api/*": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "core/*": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "db/*": {
+      "entry": ["src/index.ts", "src/drizzle.config.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/*": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/cms-workflows": {
+      "entry": [
+        "src/index.ts",
+        "src/publish-blog.ts",
+        "src/publish-changelog.ts"
+      ],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/console-test-data": {
+      "entry": ["src/index.ts", "src/cli/**/*.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/integration-tests": {
+      "entry": ["src/**/*.test.ts", "src/**/*.integration.test.ts"],
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": [
+        "@repo/console-backfill",
+        "@vendor/inngest",
+        "@vendor/qstash",
+        "@vendor/related-projects",
+        "@vendor/upstash",
+        "@vendor/upstash-workflow"
+      ]
+    },
+    "packages/og": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["react", "@types/react"]
+    },
+    "packages/ui": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["@turbo/gen"]
+    },
+    "vendor/*": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "drizzle": false
+    },
+    "vendor/cms": {
+      "entry": ["src/index.ts", "lib/**/*.ts", "components/**/*.tsx"],
+      "project": ["src/**/*.ts", "lib/**/*.ts", "components/**/*.tsx"],
+      "drizzle": false
+    },
+    "vendor/inngest": {
+      "entry": ["src/index.ts", "env.ts"],
+      "project": ["src/**/*.ts", "env.ts"],
+      "drizzle": false
+    },
+    "vendor/upstash-workflow": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "drizzle": false,
+      "ignoreDependencies": ["next"]
+    },
+    "vendor/next": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "drizzle": false,
+      "ignoreDependencies": ["webpack"]
+    },
+    "internal/eslint": {
+      "entry": ["base.js", "nextjs.js", "react.js", "hono.js"],
+      "ignoreDependencies": ["@types/eslint__js"]
+    },
+    "internal/prettier": {
+      "entry": ["index.js"]
+    },
+    "internal/typescript": {
+      "entry": ["base.json"]
+    }
+  },
+  "ignore": [
+    "tmp/**",
+    "worktrees/**",
+    "thoughts/**",
+    ".agents/**",
+    ".claude/**",
+    "**/drizzle.config.ts",
+    "**/sentry.*.config.ts",
+    "**/sentry-init.ts"
+  ],
+  "ignoreWorkspaces": ["packages/console-remotion"],
+  "ignoreDependencies": [
+    "@repo/typescript-config",
+    "@repo/prettier-config",
+    "@repo/eslint-config",
+    "@repo/console-remotion",
+    "tailwindcss",
+    "@tailwindcss/postcss",
+    "@tailwindcss/typography",
+    "postcss",
+    "autoprefixer",
+    "import-in-the-middle",
+    "require-in-the-middle",
+    "srvx",
+    "tsx",
+    "prettier",
+    "eslint",
+    "@vitest/coverage-v8"
+  ]
+}

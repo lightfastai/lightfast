@@ -1,14 +1,13 @@
-import type { EntityCategory } from "@repo/console-validation";
-import type { ExtractedEntity } from "@repo/console-validation";
+import type { EntityCategory, ExtractedEntity } from "@repo/console-validation";
 
 /**
  * Entity extraction pattern definition
  */
 interface ExtractionPattern {
   category: EntityCategory;
-  pattern: RegExp;
   confidence: number;
   keyExtractor: (match: RegExpMatchArray) => string;
+  pattern: RegExp;
   valueExtractor?: (match: RegExpMatchArray) => string;
 }
 
@@ -37,7 +36,7 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
   {
     category: "project",
     pattern: /\b([A-Z]{2,10}-\d{1,6})\b/g,
-    confidence: 0.90,
+    confidence: 0.9,
     keyExtractor: (m) => m[1] ?? "",
   },
 
@@ -45,7 +44,7 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
   {
     category: "engineer",
     pattern: /@([a-zA-Z0-9_-]{1,39})\b/g,
-    confidence: 0.90,
+    confidence: 0.9,
     keyExtractor: (m) => `@${m[1]}`,
     valueExtractor: (m) => m[1] ?? "",
   },
@@ -61,8 +60,9 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
   // File Paths - common patterns
   {
     category: "definition",
-    pattern: /\b(?:src|lib|packages|apps|api|components)\/[^\s"'<>]{1,150}\.[a-z]{1,10}\b/gi,
-    confidence: 0.80,
+    pattern:
+      /\b(?:src|lib|packages|apps|api|components)\/[^\s"'<>]{1,150}\.[a-z]{1,10}\b/gi,
+    confidence: 0.8,
     keyExtractor: (m) => m[0],
   },
 
@@ -70,7 +70,7 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
   {
     category: "reference",
     pattern: /\b([a-f0-9]{7,40})\b/g,
-    confidence: 0.70,
+    confidence: 0.7,
     keyExtractor: (m) => m[1]?.substring(0, 7) ?? "",
     valueExtractor: (m) => m[1] ?? "",
   },
@@ -107,14 +107,22 @@ function isBlacklisted(key: string): boolean {
 /**
  * Extract evidence snippet around the match
  */
-function extractEvidence(text: string, matchIndex: number, matchLength: number): string {
+function extractEvidence(
+  text: string,
+  matchIndex: number,
+  matchLength: number
+): string {
   const contextSize = 50;
   const start = Math.max(0, matchIndex - contextSize);
   const end = Math.min(text.length, matchIndex + matchLength + contextSize);
 
   let evidence = text.substring(start, end);
-  if (start > 0) evidence = "..." + evidence;
-  if (end < text.length) evidence = evidence + "...";
+  if (start > 0) {
+    evidence = `...${evidence}`;
+  }
+  if (end < text.length) {
+    evidence += "...";
+  }
 
   return evidence.replace(/\s+/g, " ").trim();
 }
@@ -126,7 +134,10 @@ function extractEvidence(text: string, matchIndex: number, matchLength: number):
  * @param content - Observation body content
  * @returns Array of extracted entities (deduplicated by key)
  */
-export function extractEntities(title: string, content: string): ExtractedEntity[] {
+export function extractEntities(
+  title: string,
+  content: string
+): ExtractedEntity[] {
   const text = `${title}\n${content}`;
   const entityMap = new Map<string, ExtractedEntity>();
 
@@ -185,7 +196,8 @@ export function extractFromReferences(
       case "commit":
       case "branch":
         category = "reference";
-        key = ref.type === "branch" ? `branch:${ref.id}` : ref.id.substring(0, 7);
+        key =
+          ref.type === "branch" ? `branch:${ref.id}` : ref.id.substring(0, 7);
         break;
       case "assignee":
       case "reviewer":

@@ -1,15 +1,18 @@
-import Link from "next/link";
-import { Button } from "@repo/ui/components/ui/button";
 import { LightfastCustomGridBackground } from "@repo/ui/components/lightfast-custom-grid-background";
-import { LightfastErrorPage, ErrorCode } from "@repo/ui/components/lightfast-error-page";
+import {
+  ErrorCode,
+  LightfastErrorPage,
+} from "@repo/ui/components/lightfast-error-page";
+import { Button } from "@repo/ui/components/ui/button";
+import Link from "next/link";
 
 export default function NotFound() {
   return (
     <LightfastCustomGridBackground.Root
-      marginVertical="25vh"
       marginHorizontal="25vw"
-      marginVerticalMobile="25vh"
       marginHorizontalMobile="10vw"
+      marginVertical="25vh"
+      marginVerticalMobile="25vh"
     >
       <LightfastCustomGridBackground.Container>
         <LightfastErrorPage

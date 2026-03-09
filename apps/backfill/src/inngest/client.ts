@@ -1,6 +1,13 @@
-import { backfillTriggerPayload, backfillDepthSchema } from "@repo/console-validation";
+import { backfillTriggerPayload } from "@repo/console-validation";
 import { EventSchemas, Inngest } from "@vendor/inngest";
 import { z } from "zod";
+
+// Inline Zod v3-compatible depth schema (console-validation uses Zod v4)
+const backfillDepthSchemaV3 = z.union([
+  z.literal(7),
+  z.literal(30),
+  z.literal(90),
+]);
 
 import { env } from "../env.js";
 
@@ -8,7 +15,7 @@ const eventsMap = {
   "apps-backfill/run.requested": backfillTriggerPayload.extend({
     /** Cross-service correlation ID for distributed tracing */
     correlationId: z.string().optional(),
-  }),
+  }) as any,
   "apps-backfill/run.cancelled": z.object({
     /** Installation ID (matched by cancelOn) */
     installationId: z.string(),
@@ -30,9 +37,9 @@ const eventsMap = {
       resourceName: z.string().nullable(),
     }),
     /** ISO timestamp — computed once by orchestrator */
-    since: z.iso.datetime(),
+    since: z.string().datetime(),
     /** Depth in days — for logging/context */
-    depth: backfillDepthSchema,
+    depth: backfillDepthSchemaV3,
     /** When true, dispatch webhooks with X-Backfill-Hold header (held for batch replay) */
     holdForReplay: z.boolean().optional(),
     /** Cross-service correlation ID for distributed tracing */

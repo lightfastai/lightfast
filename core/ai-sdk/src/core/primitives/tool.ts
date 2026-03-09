@@ -1,20 +1,20 @@
-import {  tool as aiTool } from "ai";
-import type {Tool as AiTool} from "ai";
+import type { Tool as AiTool } from "ai";
+import { tool as aiTool } from "ai";
 import type { z } from "zod";
 
 /**
  * A tool factory function that creates a tool with runtime context
  */
 export type ToolFactory<TRuntimeContext = unknown> = (
-	context: TRuntimeContext,
+  context: TRuntimeContext
 ) => AiTool;
 
 /**
  * Type for a collection of tool factories
  */
 export type ToolFactorySet<TRuntimeContext = unknown> = Record<
-	string,
-	ToolFactory<TRuntimeContext>
+  string,
+  ToolFactory<TRuntimeContext>
 >;
 
 /**
@@ -42,33 +42,33 @@ export type ToolFactorySet<TRuntimeContext = unknown> = Record<
  * ```
  */
 export function createTool<
-	TRuntimeContext = unknown,
-	TInputSchema extends z.ZodType = z.ZodType<any>,
-	TOutputSchema extends z.ZodType = z.ZodType<any>,
+  TRuntimeContext = unknown,
+  TInputSchema extends z.ZodType = z.ZodType<any>,
+  TOutputSchema extends z.ZodType = z.ZodType<any>,
 >(config: {
-	description: string;
-	inputSchema: TInputSchema;
-	outputSchema?: TOutputSchema;
-	execute: (
-		input: z.infer<TInputSchema>,
-		context: TRuntimeContext,
-	) =>
-		| Promise<
-				TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown
-		  >
-		| (TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown);
+  description: string;
+  inputSchema: TInputSchema;
+  outputSchema?: TOutputSchema;
+  execute: (
+    input: z.infer<TInputSchema>,
+    context: TRuntimeContext
+  ) =>
+    | Promise<
+        TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown
+      >
+    | (TOutputSchema extends z.ZodType ? z.infer<TOutputSchema> : unknown);
 }): ToolFactory<TRuntimeContext> {
-	return (context: TRuntimeContext) => {
-		return aiTool({
-			description: config.description,
-			inputSchema: config.inputSchema,
-			outputSchema: config.outputSchema,
-			execute: async (input: z.infer<TInputSchema>) => {
-				// Inject the runtime context as the second parameter
-				return config.execute(input, context);
-			},
-		} as unknown as Parameters<typeof aiTool>[0]);
-	};
+  return (context: TRuntimeContext) => {
+    return aiTool({
+      description: config.description,
+      inputSchema: config.inputSchema,
+      outputSchema: config.outputSchema,
+      execute: async (input: z.infer<TInputSchema>) => {
+        // Inject the runtime context as the second parameter
+        return config.execute(input, context);
+      },
+    } as unknown as Parameters<typeof aiTool>[0]);
+  };
 }
 
 /**
@@ -79,7 +79,6 @@ export type InferToolContext<T> = T extends ToolFactory<infer C> ? C : never;
 /**
  * Type helper to extract the return type of a tool factory
  */
- 
-export type InferTool<T> = T extends ToolFactory<infer _TContext>
-	? ReturnType<T>
-	: never;
+
+export type InferTool<T> =
+  T extends ToolFactory<infer _TContext> ? ReturnType<T> : never;

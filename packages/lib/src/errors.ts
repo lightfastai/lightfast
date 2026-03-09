@@ -2,18 +2,18 @@
  * Options for creating a domain error base class
  */
 export interface DomainErrorOptions {
+  /** Original error cause */
+  cause?: unknown;
   /** Error code string (e.g., "UNAUTHORIZED", "RATE_LIMITED") */
   code: string;
   /** Human-readable error message */
   message: string;
-  /** HTTP status code if applicable */
-  status?: number;
-  /** Request ID for tracing */
-  requestId?: string;
-  /** Original error cause */
-  cause?: unknown;
   /** Additional metadata */
   metadata?: Record<string, unknown>;
+  /** Request ID for tracing */
+  requestId?: string;
+  /** HTTP status code if applicable */
+  status?: number;
 }
 
 /**

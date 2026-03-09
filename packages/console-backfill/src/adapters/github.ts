@@ -6,8 +6,8 @@
  * transformer code and guarantees sourceId equivalence by construction.
  */
 import type {
-  PreTransformGitHubPullRequestEvent,
   PreTransformGitHubIssuesEvent,
+  PreTransformGitHubPullRequestEvent,
   PreTransformGitHubReleaseEvent,
 } from "@repo/console-providers";
 
@@ -23,7 +23,7 @@ import type {
  */
 export function adaptGitHubPRForTransformer(
   pr: Record<string, unknown>,
-  repo: Record<string, unknown>,
+  repo: Record<string, unknown>
 ): PreTransformGitHubPullRequestEvent {
   const state = pr.state as string;
   const action = state === "open" ? "opened" : "closed";
@@ -45,7 +45,7 @@ export function adaptGitHubPRForTransformer(
  */
 export function adaptGitHubIssueForTransformer(
   issue: Record<string, unknown>,
-  repo: Record<string, unknown>,
+  repo: Record<string, unknown>
 ): PreTransformGitHubIssuesEvent {
   const state = issue.state as string;
   const action = state === "open" ? "opened" : "closed";
@@ -65,7 +65,7 @@ export function adaptGitHubIssueForTransformer(
  */
 export function adaptGitHubReleaseForTransformer(
   release: Record<string, unknown>,
-  repo: Record<string, unknown>,
+  repo: Record<string, unknown>
 ): PreTransformGitHubReleaseEvent {
   return {
     action: "published",
@@ -78,22 +78,32 @@ export function adaptGitHubReleaseForTransformer(
 /**
  * Parse GitHub rate limit info from response headers.
  */
-export function parseGitHubRateLimit(headers: Record<string, string>): {
-  remaining: number;
-  resetAt: Date;
-  limit: number;
-} | undefined {
+export function parseGitHubRateLimit(headers: Record<string, string>):
+  | {
+      remaining: number;
+      resetAt: Date;
+      limit: number;
+    }
+  | undefined {
   const remaining = headers["x-ratelimit-remaining"];
   const reset = headers["x-ratelimit-reset"];
   const limit = headers["x-ratelimit-limit"];
 
-  if (!remaining || !reset || !limit) return undefined;
+  if (!(remaining && reset && limit)) {
+    return undefined;
+  }
 
-  const remainingNum = parseInt(remaining, 10);
-  const resetNum = parseInt(reset, 10);
-  const limitNum = parseInt(limit, 10);
+  const remainingNum = Number.parseInt(remaining, 10);
+  const resetNum = Number.parseInt(reset, 10);
+  const limitNum = Number.parseInt(limit, 10);
 
-  if (isNaN(remainingNum) || isNaN(resetNum) || isNaN(limitNum)) return undefined;
+  if (
+    Number.isNaN(remainingNum) ||
+    Number.isNaN(resetNum) ||
+    Number.isNaN(limitNum)
+  ) {
+    return undefined;
+  }
 
   return {
     remaining: remainingNum,

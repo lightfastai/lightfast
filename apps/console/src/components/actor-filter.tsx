@@ -1,24 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
-import { Label } from "@repo/ui/components/ui/label";
 import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@repo/ui/components/ui/popover";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface ActorFilterProps {
-  orgSlug: string;
-  workspaceName: string;
-  selectedActors: string[];
   onSelectionChange: (actors: string[]) => void;
+  orgSlug: string;
+  selectedActors: string[];
+  workspaceName: string;
 }
 
 export function ActorFilter({
@@ -41,7 +41,7 @@ export function ActorFilter({
   const { data: actors } = useQuery({
     ...trpc.workspace.getActors.queryOptions({
       clerkOrgSlug: orgSlug,
-      workspaceName: workspaceName,
+      workspaceName,
       search: debouncedSearch || undefined,
       limit: 50,
     }),
@@ -59,11 +59,11 @@ export function ActorFilter({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
           className="h-9 w-full justify-between font-normal"
+          variant="outline"
         >
           <span className="truncate">
             {selectedActors.length > 0
@@ -73,35 +73,35 @@ export function ActorFilter({
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[250px] p-3" align="start">
+      <PopoverContent align="start" className="w-[250px] p-3">
         <div className="space-y-3">
           <Input
+            className="h-8"
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search actors..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-8"
           />
-          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+          <div className="max-h-[300px] space-y-2 overflow-y-auto">
             {!actors || actors.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-2">
+              <p className="py-2 text-center text-muted-foreground text-sm">
                 {search ? "No actors found." : "Loading actors..."}
               </p>
             ) : (
               actors.map((actor) => (
-                <div key={actor.id} className="flex items-center gap-2">
+                <div className="flex items-center gap-2" key={actor.id}>
                   <Checkbox
-                    id={`actor-${actor.id}`}
                     checked={selectedActors.includes(actor.displayName)}
+                    id={`actor-${actor.id}`}
                     onCheckedChange={(_checked) => {
                       toggleActor(actor.displayName);
                     }}
                   />
                   <Label
+                    className="flex-1 cursor-pointer truncate font-normal text-sm"
                     htmlFor={`actor-${actor.id}`}
-                    className="text-sm font-normal cursor-pointer flex-1 truncate"
                   >
                     {actor.displayName}
-                    <span className="ml-1 text-xs text-muted-foreground">
+                    <span className="ml-1 text-muted-foreground text-xs">
                       ({actor.observationCount})
                     </span>
                   </Label>

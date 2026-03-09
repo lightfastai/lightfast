@@ -2,7 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundle } from "@remotion/bundler";
-import { renderMedia, renderStill, selectComposition } from "@remotion/renderer";
+import {
+  renderMedia,
+  renderStill,
+  selectComposition,
+} from "@remotion/renderer";
 import {
   LANDING_HERO_POSTER_FRAME,
   LANDING_HERO_WEBM_RENDER_PROFILE,
@@ -45,7 +49,7 @@ async function main() {
   console.log(`Poster rendered to: ${posterOutputPath}`);
 
   console.log(
-    `Rendering ${composition.width}x${composition.height} @ ${composition.fps}fps as WebM...`,
+    `Rendering ${composition.width}x${composition.height} @ ${composition.fps}fps as WebM...`
   );
   await renderMedia({
     composition,
@@ -55,7 +59,7 @@ async function main() {
   });
 
   console.log(
-    `WebM rendered to: ${webmOutputPath} in ${((Date.now() - startedAt) / 1000).toFixed(1)}s`,
+    `WebM rendered to: ${webmOutputPath} in ${((Date.now() - startedAt) / 1000).toFixed(1)}s`
   );
 }
 

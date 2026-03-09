@@ -5,34 +5,33 @@
  * using LLM (GPT-5.1-instant) with Braintrust tracing and Inngest AI observability.
  */
 
-import { eq, sql } from "drizzle-orm";
 import { db } from "@db/console/client";
 import {
+  orgWorkspaces,
   workspaceNeuralEntities,
   workspaceNeuralObservations,
-  orgWorkspaces,
 } from "@db/console/schema";
-import { log } from "@vendor/observability/log";
-import { llmEntityExtractionResponseSchema } from "@repo/console-validation";
-import type { LLMEntityExtractionResponse } from "@repo/console-validation";
-import type { ExtractedEntity } from "@repo/console-validation";
 import { LLM_ENTITY_EXTRACTION_CONFIG } from "@repo/console-config";
-
+import type {
+  ExtractedEntity,
+  LLMEntityExtractionResponse,
+  NeuralLLMEntityExtractionInput,
+  NeuralLLMEntityExtractionOutputFailure,
+  NeuralLLMEntityExtractionOutputSkipped,
+  NeuralLLMEntityExtractionOutputSuccess,
+} from "@repo/console-validation";
+import { llmEntityExtractionResponseSchema } from "@repo/console-validation";
+import { log } from "@vendor/observability/log";
+import { eq, sql } from "drizzle-orm";
+import { completeJob, createJob, updateJobStatus } from "../../../lib/jobs";
 import { inngest } from "../../client/client";
 import {
+  buildNeuralTelemetry,
   createTracedModel,
   generateObject,
-  buildNeuralTelemetry,
 } from "./ai-helpers";
 import { buildExtractionPrompt } from "./llm-entity-extraction";
-import { createJob, updateJobStatus, completeJob } from "../../../lib/jobs";
 import { createNeuralOnFailureHandler } from "./on-failure-handler";
-import type {
-  NeuralLLMEntityExtractionInput,
-  NeuralLLMEntityExtractionOutputSuccess,
-  NeuralLLMEntityExtractionOutputSkipped,
-  NeuralLLMEntityExtractionOutputFailure,
-} from "@repo/console-validation";
 
 export const llmEntityExtractionWorkflow = inngest.createFunction(
   {
@@ -49,14 +48,18 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
       "apps-console/neural/llm-entity-extraction.requested",
       {
         logMessage: "Neural LLM entity extraction failed",
-        logContext: ({ workspaceId, observationId }) => ({ workspaceId, observationId }),
-        buildOutput: ({ data: { observationId }, error }) => ({
-          inngestFunctionId: "neural.llm-entity-extraction",
-          status: "failure",
+        logContext: ({ workspaceId, observationId }) => ({
+          workspaceId,
           observationId,
-          error,
-        } satisfies NeuralLLMEntityExtractionOutputFailure),
-      },
+        }),
+        buildOutput: ({ data: { observationId }, error }) =>
+          ({
+            inngestFunctionId: "neural.llm-entity-extraction",
+            status: "failure",
+            observationId,
+            error,
+          }) satisfies NeuralLLMEntityExtractionOutputFailure,
+      }
     ),
   },
   { event: "apps-console/neural/llm-entity-extraction.requested" },
@@ -74,7 +77,8 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
     });
 
     // Create job record for tracking
-    const inngestRunId = event.id ?? `neural-llm-entity-${observationId}-${Date.now()}`;
+    const inngestRunId =
+      event.id ?? `neural-llm-entity-${observationId}-${Date.now()}`;
     const jobId = await step.run("create-job", async () => {
       return createJob({
         clerkOrgId,
@@ -156,16 +160,16 @@ export const llmEntityExtractionWorkflow = inngest.createFunction(
       {
         model: createTracedModel("openai/gpt-5.1-instant"),
         schema: llmEntityExtractionResponseSchema,
-        prompt: buildExtractionPrompt(
-          observation.title,
-          content
-        ),
+        prompt: buildExtractionPrompt(observation.title, content),
         temperature: config.temperature,
-        experimental_telemetry: buildNeuralTelemetry("neural-entity-extraction", {
-          observationId,
-          workspaceId,
-          contentLength,
-        }),
+        experimental_telemetry: buildNeuralTelemetry(
+          "neural-entity-extraction",
+          {
+            observationId,
+            workspaceId,
+            contentLength,
+          }
+        ),
       } as Parameters<typeof generateObject>[0]
     )) as { object: LLMEntityExtractionResponse };
 

@@ -1,36 +1,13 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[javascriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
+  "[javascript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[json]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[jsonc]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  "editor.codeActionsOnSave": { "source.fixAll.biome": "explicit" },
+  "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,
-  "eslint.rules.customizations": [{ "rule": "*", "severity": "warn" }],
-  "eslint.runtime": "node",
-  "eslint.workingDirectories": [
-    { "pattern": "apps/*/" },
-    { "pattern": "internal/*/" },
-    { "pattern": "packages/*/" },
-    { "pattern": "vendor/*/" }
-  ],
-  "prettier.ignorePath": ".gitignore",
+  "prettier.enable": false,
   "tailwindCSS.experimental.classRegex": [
     ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
     ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
@@ -42,7 +19,6 @@
     "next/dist/client/router.d.ts"
   ],
   "typescript.tsdk": "node_modules/typescript/lib",
-  // @note Unknown rule at @tailwind fix: https://github.com/tailwindlabs/tailwindcss/discussions/13881
   "files.associations": {
     "*.css": "tailwindcss"
   }

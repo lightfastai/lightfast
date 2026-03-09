@@ -43,8 +43,7 @@
     "clean": "rm -rf dist .cache .turbo node_modules",
     "build": "tsup",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint . --fix"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
@@ -52,13 +51,10 @@
     "zod": "catalog:zod4"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "eslint": "catalog:",
-    "tsup": "^8.5.0",
-    "typescript": "catalog:",
-    "vitest": "^3.2.4"
+    "tsup": "^8.5.1",
+    "typescript": "catalog:"
   },
   "engines": {
     "node": ">=18"

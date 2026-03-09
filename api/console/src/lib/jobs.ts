@@ -6,24 +6,34 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceWorkflowRuns, workspaceOperationsMetrics } from "@db/console/schema";
-import type { WorkspaceWorkflowRun, InsertWorkspaceWorkflowRun } from "@db/console/schema";
-import type { WorkflowInput, WorkflowOutput } from "@repo/console-validation";
-import { eq } from "drizzle-orm";
-import { log } from "@vendor/observability/log";
 import type {
-	JobTrigger,
-	JobDurationTags,
-	DocumentsIndexedTags,
-	ErrorTags,
-	NeuralObservationTags,
-	EntityExtractionTags,
-	ClusterTags,
-	ProfileUpdateTags,
-	ActorResolutionTags,
-	ClusterAffinityTags,
+  InsertWorkspaceWorkflowRun,
+  WorkspaceWorkflowRun,
+} from "@db/console/schema";
+import {
+  workspaceOperationsMetrics,
+  workspaceWorkflowRuns,
+} from "@db/console/schema";
+import type {
+  ActorResolutionTags,
+  ClusterAffinityTags,
+  ClusterTags,
+  DocumentsIndexedTags,
+  EntityExtractionTags,
+  ErrorTags,
+  JobDurationTags,
+  JobTrigger,
+  NeuralObservationTags,
+  ProfileUpdateTags,
+  WorkflowInput,
+  WorkflowOutput,
 } from "@repo/console-validation";
-import { workflowInputSchema, workflowOutputSchema } from "@repo/console-validation";
+import {
+  workflowInputSchema,
+  workflowOutputSchema,
+} from "@repo/console-validation";
+import { log } from "@vendor/observability/log";
+import { eq } from "drizzle-orm";
 
 /**
  * Create a new job record at workflow start
@@ -35,78 +45,78 @@ import { workflowInputSchema, workflowOutputSchema } from "@repo/console-validat
  * @returns Created job internal BIGINT ID
  */
 export async function createJob(params: {
-	clerkOrgId: string;
-	workspaceId: string;
-	repositoryId?: string | null;
-	inngestRunId: string;
-	inngestFunctionId: string;
-	name: string;
-	trigger: JobTrigger;
-	triggeredBy?: string | null;
-	input?: WorkflowInput;
+  clerkOrgId: string;
+  workspaceId: string;
+  repositoryId?: string | null;
+  inngestRunId: string;
+  inngestFunctionId: string;
+  name: string;
+  trigger: JobTrigger;
+  triggeredBy?: string | null;
+  input?: WorkflowInput;
 }): Promise<number> {
-	try {
-		// Validate input
-		if (params.input) {
-			const validated = workflowInputSchema.safeParse(params.input);
-			if (!validated.success) {
-				log.error("Invalid workflow input", {
-					error: validated.error.format(),
-					input: params.input,
-				});
-				throw new Error(`Invalid workflow input: ${validated.error.message}`);
-			}
-		}
+  try {
+    // Validate input
+    if (params.input) {
+      const validated = workflowInputSchema.safeParse(params.input);
+      if (!validated.success) {
+        log.error("Invalid workflow input", {
+          error: validated.error.format(),
+          input: params.input,
+        });
+        throw new Error(`Invalid workflow input: ${validated.error.message}`);
+      }
+    }
 
-		// Check for existing job with same inngestRunId (idempotency)
-		const existing = await db.query.workspaceWorkflowRuns.findFirst({
-			where: eq(workspaceWorkflowRuns.inngestRunId, params.inngestRunId),
-		});
+    // Check for existing job with same inngestRunId (idempotency)
+    const existing = await db.query.workspaceWorkflowRuns.findFirst({
+      where: eq(workspaceWorkflowRuns.inngestRunId, params.inngestRunId),
+    });
 
-		if (existing) {
-			log.info("Job already exists, returning existing ID", {
-				jobId: existing.id,
-				inngestRunId: params.inngestRunId,
-			});
-			return existing.id;
-		}
+    if (existing) {
+      log.info("Job already exists, returning existing ID", {
+        jobId: existing.id,
+        inngestRunId: params.inngestRunId,
+      });
+      return existing.id;
+    }
 
-		// Create new job record
-		const [job] = await db
-			.insert(workspaceWorkflowRuns)
-			.values({
-				clerkOrgId: params.clerkOrgId,
-				workspaceId: params.workspaceId,
-				repositoryId: params.repositoryId ?? null,
-				inngestRunId: params.inngestRunId,
-				inngestFunctionId: params.inngestFunctionId,
-				name: params.name,
-				status: "queued",
-				trigger: params.trigger,
-				triggeredBy: params.triggeredBy ?? null,
-				input: params.input ?? null,
-			})
-			.returning();
+    // Create new job record
+    const [job] = await db
+      .insert(workspaceWorkflowRuns)
+      .values({
+        clerkOrgId: params.clerkOrgId,
+        workspaceId: params.workspaceId,
+        repositoryId: params.repositoryId ?? null,
+        inngestRunId: params.inngestRunId,
+        inngestFunctionId: params.inngestFunctionId,
+        name: params.name,
+        status: "queued",
+        trigger: params.trigger,
+        triggeredBy: params.triggeredBy ?? null,
+        input: params.input ?? null,
+      })
+      .returning();
 
-		if (!job) {
-			throw new Error("Failed to create job record");
-		}
+    if (!job) {
+      throw new Error("Failed to create job record");
+    }
 
-		log.info("Created job record", {
-			jobId: job.id,
-			inngestRunId: params.inngestRunId,
-			name: params.name,
-		});
+    log.info("Created job record", {
+      jobId: job.id,
+      inngestRunId: params.inngestRunId,
+      name: params.name,
+    });
 
-		return job.id;
-	} catch (error) {
-		log.error("Failed to create job record", {
-			error,
-			inngestRunId: params.inngestRunId,
-			name: params.name,
-		});
-		throw error;
-	}
+    return job.id;
+  } catch (error) {
+    log.error("Failed to create job record", {
+      error,
+      inngestRunId: params.inngestRunId,
+      name: params.name,
+    });
+    throw error;
+  }
 }
 
 /**
@@ -116,26 +126,29 @@ export async function createJob(params: {
  * @param status New status
  */
 export async function updateJobStatus(
-	jobId: number,
-	status: "running" | "queued" | "completed" | "failed" | "cancelled",
+  jobId: number,
+  status: "running" | "queued" | "completed" | "failed" | "cancelled"
 ): Promise<void> {
-	try {
-		const updates: Partial<InsertWorkspaceWorkflowRun> = {
-			status,
-		};
+  try {
+    const updates: Partial<InsertWorkspaceWorkflowRun> = {
+      status,
+    };
 
-		// Set startedAt when transitioning to running
-		if (status === "running") {
-			updates.startedAt = new Date().toISOString();
-		}
+    // Set startedAt when transitioning to running
+    if (status === "running") {
+      updates.startedAt = new Date().toISOString();
+    }
 
-		await db.update(workspaceWorkflowRuns).set(updates).where(eq(workspaceWorkflowRuns.id, jobId));
+    await db
+      .update(workspaceWorkflowRuns)
+      .set(updates)
+      .where(eq(workspaceWorkflowRuns.id, jobId));
 
-		log.info("Updated job status", { jobId, status });
-	} catch (error) {
-		log.error("Failed to update job status", { error, jobId, status });
-		throw error;
-	}
+    log.info("Updated job status", { jobId, status });
+  } catch (error) {
+    log.error("Failed to update job status", { error, jobId, status });
+    throw error;
+  }
 }
 
 /**
@@ -147,110 +160,111 @@ export async function updateJobStatus(
  * @param params Completion parameters (discriminated by status)
  */
 export async function completeJob(
-	params:
-		| {
-				jobId: number;
-				status: "completed" | "failed";
-				output: WorkflowOutput;
-		  }
-		| {
-				jobId: number;
-				status: "cancelled";
-				errorMessage?: string;
-		  },
+  params:
+    | {
+        jobId: number;
+        status: "completed" | "failed";
+        output: WorkflowOutput;
+      }
+    | {
+        jobId: number;
+        status: "cancelled";
+        errorMessage?: string;
+      }
 ): Promise<void> {
-	try {
-		const jobIdNum = params.jobId;
+  try {
+    const jobIdNum = params.jobId;
 
-		// Validate output for completed/failed jobs
-		if (params.status === "completed" || params.status === "failed") {
-			const validated = workflowOutputSchema.safeParse(params.output);
-			if (!validated.success) {
-				log.error("Invalid workflow output", {
-					error: validated.error.format(),
-					output: params.output,
-				});
-				throw new Error(`Invalid workflow output: ${validated.error.message}`);
-			}
-		}
+    // Validate output for completed/failed jobs
+    if (params.status === "completed" || params.status === "failed") {
+      const validated = workflowOutputSchema.safeParse(params.output);
+      if (!validated.success) {
+        log.error("Invalid workflow output", {
+          error: validated.error.format(),
+          output: params.output,
+        });
+        throw new Error(`Invalid workflow output: ${validated.error.message}`);
+      }
+    }
 
-		// Fetch job to calculate duration
-		const job = await db.query.workspaceWorkflowRuns.findFirst({
-			where: eq(workspaceWorkflowRuns.id, jobIdNum),
-		});
+    // Fetch job to calculate duration
+    const job = await db.query.workspaceWorkflowRuns.findFirst({
+      where: eq(workspaceWorkflowRuns.id, jobIdNum),
+    });
 
-		if (!job) {
-			throw new Error(`Job not found: ${params.jobId}`);
-		}
+    if (!job) {
+      throw new Error(`Job not found: ${params.jobId}`);
+    }
 
-		const now = new Date();
-		const completedAt = now.toISOString();
+    const now = new Date();
+    const completedAt = now.toISOString();
 
-		// Calculate duration if job was started
-		let durationMs: string | null = null;
-		if (job.startedAt) {
-			const startTime = new Date(job.startedAt).getTime();
-			const endTime = now.getTime();
-			durationMs = String(endTime - startTime);
-		}
+    // Calculate duration if job was started
+    let durationMs: string | null = null;
+    if (job.startedAt) {
+      const startTime = new Date(job.startedAt).getTime();
+      const endTime = now.getTime();
+      durationMs = String(endTime - startTime);
+    }
 
-		// Update job record
-		await db
-			.update(workspaceWorkflowRuns)
-			.set({
-				status: params.status,
-				output: params.status === "cancelled" ? null : params.output,
-				errorMessage: params.status === "cancelled" ? params.errorMessage ?? null : null,
-				completedAt,
-				durationMs,
-			})
-			.where(eq(workspaceWorkflowRuns.id, jobIdNum));
+    // Update job record
+    await db
+      .update(workspaceWorkflowRuns)
+      .set({
+        status: params.status,
+        output: params.status === "cancelled" ? null : params.output,
+        errorMessage:
+          params.status === "cancelled" ? (params.errorMessage ?? null) : null,
+        completedAt,
+        durationMs,
+      })
+      .where(eq(workspaceWorkflowRuns.id, jobIdNum));
 
-		log.info("Completed job", {
-			jobId: params.jobId,
-			status: params.status,
-			durationMs,
-		});
+    log.info("Completed job", {
+      jobId: params.jobId,
+      status: params.status,
+      durationMs,
+    });
 
-		// Record job duration metric if completed successfully
-		if (params.status === "completed" && durationMs) {
-			await recordJobMetric({
-				clerkOrgId: job.clerkOrgId,
-				workspaceId: job.workspaceId,
-				repositoryId: job.repositoryId ?? undefined,
-				type: "job_duration",
-				value: Number.parseInt(durationMs, 10),
-				unit: "ms",
-				tags: {
-					jobType: job.inngestFunctionId,
-					trigger: job.trigger,
-				},
-			});
-		}
+    // Record job duration metric if completed successfully
+    if (params.status === "completed" && durationMs) {
+      await recordJobMetric({
+        clerkOrgId: job.clerkOrgId,
+        workspaceId: job.workspaceId,
+        repositoryId: job.repositoryId ?? undefined,
+        type: "job_duration",
+        value: Number.parseInt(durationMs, 10),
+        unit: "ms",
+        tags: {
+          jobType: job.inngestFunctionId,
+          trigger: job.trigger,
+        },
+      });
+    }
 
-		// Record error metric if failed
-		if (params.status === "failed") {
-			await recordJobMetric({
-				clerkOrgId: job.clerkOrgId,
-				workspaceId: job.workspaceId,
-				repositoryId: job.repositoryId ?? undefined,
-				type: "errors",
-				value: 1,
-				unit: "count",
-				tags: {
-					jobType: job.inngestFunctionId,
-					errorType: "job_failure",
-				},
-			});
-		}
-	} catch (error) {
-		log.error("Failed to complete job", {
-			error,
-			jobId: params.jobId,
-			status: params.status,
-		});
-		throw error;
-	}
+    // Record error metric if failed
+    if (params.status === "failed") {
+      await recordJobMetric({
+        clerkOrgId: job.clerkOrgId,
+        workspaceId: job.workspaceId,
+        repositoryId: job.repositoryId ?? undefined,
+        type: "errors",
+        value: 1,
+        unit: "count",
+        tags: {
+          jobType: job.inngestFunctionId,
+          errorType: "job_failure",
+        },
+      });
+    }
+  } catch (error) {
+    log.error("Failed to complete job", {
+      error,
+      jobId: params.jobId,
+      status: params.status,
+    });
+    throw error;
+  }
 }
 
 /**
@@ -262,117 +276,117 @@ export async function completeJob(
  * @param params Metric parameters (discriminated by type)
  */
 export async function recordJobMetric(
-	params: (
-		| {
-				type: "job_duration";
-				value: number;
-				unit: "ms";
-				tags: JobDurationTags;
-		  }
-		| {
-				type: "documents_indexed";
-				value: number;
-				unit: "count";
-				tags: DocumentsIndexedTags;
-		  }
-		| {
-				type: "errors";
-				value: 1;
-				unit: "count";
-				tags: ErrorTags;
-		  }
-		// Neural workflow metrics
-		| {
-				type: "observation_captured";
-				value: 1;
-				unit: "count";
-				tags: NeuralObservationTags;
-		  }
-		| {
-				type: "observation_filtered";
-				value: 1;
-				unit: "count";
-				tags: NeuralObservationTags;
-		  }
-		| {
-				type: "observation_duplicate";
-				value: 1;
-				unit: "count";
-				tags: NeuralObservationTags;
-		  }
-		| {
-				type: "observation_below_threshold";
-				value: 1;
-				unit: "count";
-				tags: NeuralObservationTags;
-		  }
-		| {
-				type: "entities_extracted";
-				value: number;
-				unit: "count";
-				tags: EntityExtractionTags;
-		  }
-		| {
-				type: "cluster_assigned";
-				value: 1;
-				unit: "count";
-				tags: ClusterTags;
-		  }
-		| {
-				type: "cluster_summary_generated";
-				value: 1;
-				unit: "count";
-				tags: ClusterTags;
-		  }
-		| {
-				type: "profile_updated";
-				value: 1;
-				unit: "count";
-				tags: ProfileUpdateTags;
-		  }
-		// Analytics metrics
-		| {
-				type: "actor_resolution";
-				value: 1;
-				unit: "count";
-				tags: ActorResolutionTags;
-		  }
-		| {
-				type: "cluster_affinity";
-				value: 1;
-				unit: "count";
-				tags: ClusterAffinityTags;
-		  }
-	) & {
-		clerkOrgId: string;
-		workspaceId: string;
-		repositoryId?: string;
-	},
+  params: (
+    | {
+        type: "job_duration";
+        value: number;
+        unit: "ms";
+        tags: JobDurationTags;
+      }
+    | {
+        type: "documents_indexed";
+        value: number;
+        unit: "count";
+        tags: DocumentsIndexedTags;
+      }
+    | {
+        type: "errors";
+        value: 1;
+        unit: "count";
+        tags: ErrorTags;
+      }
+    // Neural workflow metrics
+    | {
+        type: "observation_captured";
+        value: 1;
+        unit: "count";
+        tags: NeuralObservationTags;
+      }
+    | {
+        type: "observation_filtered";
+        value: 1;
+        unit: "count";
+        tags: NeuralObservationTags;
+      }
+    | {
+        type: "observation_duplicate";
+        value: 1;
+        unit: "count";
+        tags: NeuralObservationTags;
+      }
+    | {
+        type: "observation_below_threshold";
+        value: 1;
+        unit: "count";
+        tags: NeuralObservationTags;
+      }
+    | {
+        type: "entities_extracted";
+        value: number;
+        unit: "count";
+        tags: EntityExtractionTags;
+      }
+    | {
+        type: "cluster_assigned";
+        value: 1;
+        unit: "count";
+        tags: ClusterTags;
+      }
+    | {
+        type: "cluster_summary_generated";
+        value: 1;
+        unit: "count";
+        tags: ClusterTags;
+      }
+    | {
+        type: "profile_updated";
+        value: 1;
+        unit: "count";
+        tags: ProfileUpdateTags;
+      }
+    // Analytics metrics
+    | {
+        type: "actor_resolution";
+        value: 1;
+        unit: "count";
+        tags: ActorResolutionTags;
+      }
+    | {
+        type: "cluster_affinity";
+        value: 1;
+        unit: "count";
+        tags: ClusterAffinityTags;
+      }
+  ) & {
+    clerkOrgId: string;
+    workspaceId: string;
+    repositoryId?: string;
+  }
 ): Promise<void> {
-	try {
-		await db.insert(workspaceOperationsMetrics).values({
-			clerkOrgId: params.clerkOrgId,
-			workspaceId: params.workspaceId,
-			repositoryId: params.repositoryId ?? null,
-			type: params.type,
-			value: params.value,
-			unit: params.unit,
-			tags: params.tags,
-		});
+  try {
+    await db.insert(workspaceOperationsMetrics).values({
+      clerkOrgId: params.clerkOrgId,
+      workspaceId: params.workspaceId,
+      repositoryId: params.repositoryId ?? null,
+      type: params.type,
+      value: params.value,
+      unit: params.unit,
+      tags: params.tags,
+    });
 
-		log.debug("Recorded job metric", {
-			type: params.type,
-			value: params.value,
-			tags: params.tags,
-		});
-	} catch (error) {
-		// Non-fatal - log error but don't throw
-		log.error("Failed to record job metric", {
-			error,
-			type: params.type,
-			value: params.value,
-		});
-	}
+    log.debug("Recorded job metric", {
+      type: params.type,
+      value: params.value,
+      tags: params.tags,
+    });
+  } catch (error) {
+    // Non-fatal - log error but don't throw
+    log.error("Failed to record job metric", {
+      error,
+      type: params.type,
+      value: params.value,
+    });
+  }
 }
 
 /**
@@ -381,24 +395,26 @@ export async function recordJobMetric(
  * @param jobId Job ID (string representation of BIGINT)
  * @returns Job or null if not found
  */
-export async function getJob(jobId: string): Promise<WorkspaceWorkflowRun | null> {
-	try {
-		// Parse jobId to number (BIGINT internal ID)
-		const jobIdNum = parseInt(jobId, 10);
-		if (isNaN(jobIdNum)) {
-			log.error("Invalid job ID format", { jobId });
-			return null;
-		}
+export async function getJob(
+  jobId: string
+): Promise<WorkspaceWorkflowRun | null> {
+  try {
+    // Parse jobId to number (BIGINT internal ID)
+    const jobIdNum = Number.parseInt(jobId, 10);
+    if (Number.isNaN(jobIdNum)) {
+      log.error("Invalid job ID format", { jobId });
+      return null;
+    }
 
-		const job = await db.query.workspaceWorkflowRuns.findFirst({
-			where: eq(workspaceWorkflowRuns.id, jobIdNum),
-		});
+    const job = await db.query.workspaceWorkflowRuns.findFirst({
+      where: eq(workspaceWorkflowRuns.id, jobIdNum),
+    });
 
-		return job ?? null;
-	} catch (error) {
-		log.error("Failed to get job", { error, jobId });
-		return null;
-	}
+    return job ?? null;
+  } catch (error) {
+    log.error("Failed to get job", { error, jobId });
+    return null;
+  }
 }
 
 /**
@@ -408,19 +424,19 @@ export async function getJob(jobId: string): Promise<WorkspaceWorkflowRun | null
  * @returns Job or null if not found
  */
 export async function getJobByInngestRunId(
-	inngestRunId: string,
+  inngestRunId: string
 ): Promise<WorkspaceWorkflowRun | null> {
-	try {
-		const job = await db.query.workspaceWorkflowRuns.findFirst({
-			where: eq(workspaceWorkflowRuns.inngestRunId, inngestRunId),
-		});
+  try {
+    const job = await db.query.workspaceWorkflowRuns.findFirst({
+      where: eq(workspaceWorkflowRuns.inngestRunId, inngestRunId),
+    });
 
-		return job ?? null;
-	} catch (error) {
-		log.error("Failed to get job by Inngest run ID", {
-			error,
-			inngestRunId,
-		});
-		return null;
-	}
+    return job ?? null;
+  } catch (error) {
+    log.error("Failed to get job by Inngest run ID", {
+      error,
+      inngestRunId,
+    });
+    return null;
+  }
 }

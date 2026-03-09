@@ -1,19 +1,28 @@
-import type { PostTransformEvent, PostTransformReference } from "../../post-transform-event";
+import type {
+  PostTransformEvent,
+  PostTransformReference,
+} from "../../post-transform-event";
+import { sanitizeBody, sanitizeTitle } from "../../sanitize";
 import type { TransformContext } from "../../types";
-import { validatePostTransformEvent, logValidationErrors } from "../../validation";
-import { sanitizeTitle, sanitizeBody } from "../../sanitize";
-import type { PreTransformVercelWebhookPayload, VercelWebhookEventType } from "./schemas";
+import {
+  logValidationErrors,
+  validatePostTransformEvent,
+} from "../../validation";
+import type {
+  PreTransformVercelWebhookPayload,
+  VercelWebhookEventType,
+} from "./schemas";
 
 export function transformVercelDeployment(
   payload: PreTransformVercelWebhookPayload,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const eventType = context.eventType as VercelWebhookEventType;
   const deployment = payload.payload.deployment;
   const project = payload.payload.project;
   const team = payload.payload.team;
 
-  if (!deployment || !project) {
+  if (!(deployment && project)) {
     throw new Error("Missing deployment or project in Vercel webhook payload");
   }
 
@@ -99,10 +108,17 @@ export function transformVercelDeployment(
     source: "vercel",
     sourceType: eventType,
     sourceId: `deployment:${deployment.id}`,
-    title: sanitizeTitle(`[${actionTitle}] ${project.name ?? project.id} from ${branch}`),
+    title: sanitizeTitle(
+      `[${actionTitle}] ${project.name ?? project.id} from ${branch}`
+    ),
     body: sanitizeBody(rawBody),
     actor: gitMeta?.githubCommitAuthorName
-      ? { id: gitMeta.githubCommitAuthorName, name: gitMeta.githubCommitAuthorName, email: null, avatarUrl: null }
+      ? {
+          id: gitMeta.githubCommitAuthorName,
+          name: gitMeta.githubCommitAuthorName,
+          email: null,
+          avatarUrl: null,
+        }
       : null,
     occurredAt: new Date(payload.createdAt).toISOString(),
     references: refs,

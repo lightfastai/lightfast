@@ -5,12 +5,17 @@
  * Previously in @repo/gateway-types — consolidated here as the single source of truth.
  */
 
-import { z } from "zod";
 import { sourceTypeSchema } from "@repo/console-providers";
+import { z } from "zod";
 
 // ── Installation Statuses ──
 
-export const installationStatusSchema = z.enum(["pending", "active", "error", "revoked"]);
+export const installationStatusSchema = z.enum([
+  "pending",
+  "active",
+  "error",
+  "revoked",
+]);
 export type InstallationStatus = z.infer<typeof installationStatusSchema>;
 
 // ── Resource Statuses ──
@@ -25,7 +30,11 @@ export type DeliveryStatus = z.infer<typeof deliveryStatusSchema>;
 
 // ── Backfill Depth (internal) ──
 
-export const backfillDepthSchema = z.union([z.literal(7), z.literal(30), z.literal(90)]);
+export const backfillDepthSchema = z.union([
+  z.literal(7),
+  z.literal(30),
+  z.literal(90),
+]);
 
 // ── Installation-level Backfill Config (gwInstallations.backfillConfig) ──
 
@@ -33,17 +42,31 @@ export const gwInstallationBackfillConfigSchema = z.object({
   depth: backfillDepthSchema,
   entityTypes: z.array(z.string()).min(1),
 });
-export type GwInstallationBackfillConfig = z.infer<typeof gwInstallationBackfillConfigSchema>;
+export type GwInstallationBackfillConfig = z.infer<
+  typeof gwInstallationBackfillConfigSchema
+>;
 
 /** Ordered options for UI depth selectors. */
-export const BACKFILL_DEPTH_OPTIONS = [7, 30, 90] as const satisfies readonly z.infer<typeof backfillDepthSchema>[];
+export const BACKFILL_DEPTH_OPTIONS = [
+  7, 30, 90,
+] as const satisfies readonly z.infer<typeof backfillDepthSchema>[];
 
 // ── Backfill Run Statuses (internal) ──
 
-const backfillRunStatusSchema = z.enum(["pending", "running", "completed", "failed", "cancelled"]);
+const backfillRunStatusSchema = z.enum([
+  "pending",
+  "running",
+  "completed",
+  "failed",
+  "cancelled",
+]);
 
 /** Terminal statuses that set `completedAt` */
-export const backfillTerminalStatusSchema = z.enum(["completed", "failed", "cancelled"]);
+export const backfillTerminalStatusSchema = z.enum([
+  "completed",
+  "failed",
+  "cancelled",
+]);
 export const BACKFILL_TERMINAL_STATUSES = backfillTerminalStatusSchema.options;
 
 // ── Trigger payload (Console → Relay → Backfill) ──
@@ -60,7 +83,9 @@ export type BackfillTriggerPayload = z.infer<typeof backfillTriggerPayload>;
 
 // ── Estimate payload (Console → Backfill, omits holdForReplay) ──
 
-export const backfillEstimatePayload = backfillTriggerPayload.omit({ holdForReplay: true });
+export const backfillEstimatePayload = backfillTriggerPayload.omit({
+  holdForReplay: true,
+});
 export type BackfillEstimatePayload = z.infer<typeof backfillEstimatePayload>;
 
 // ── Run record (Entity Worker → Gateway) ──

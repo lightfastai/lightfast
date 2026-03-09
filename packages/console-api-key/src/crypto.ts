@@ -7,8 +7,8 @@
  * - Extracting key previews for display
  */
 
-import { nanoid } from "@repo/lib";
 import { sha256Hex } from "@repo/console-providers";
+import { nanoid } from "@repo/lib";
 
 /**
  * Unified API key prefix for all Lightfast keys
@@ -138,4 +138,3 @@ export function isValidApiKeyFormat(key: string): boolean {
     LIGHTFAST_API_KEY_PREFIX.length + API_KEY_SECRET_LENGTH;
   return key.length === expectedLength;
 }
-

@@ -1,34 +1,34 @@
-import { cn } from "@repo/ui/lib/utils";
-import type React from "react";
-import { isValidElement, Children } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { Info, ExternalLink } from "lucide-react";
-import defaultMdxComponents from "fumadocs-ui/mdx";
-import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
 import {
-  Accordion as AccordionRoot,
   AccordionContent as AccordionContentRoot,
   AccordionItem as AccordionItemRoot,
+  Accordion as AccordionRoot,
   AccordionTrigger as AccordionTriggerRoot,
 } from "@repo/ui/components/ui/accordion";
-import { FeatureList } from "@/src/components/feature-list";
+import { cn } from "@repo/ui/lib/utils";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import defaultMdxComponents from "fumadocs-ui/mdx";
+import { ExternalLink, Info } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import type React from "react";
+import { Children, isValidElement } from "react";
+import { AlphaBanner } from "@/src/components/alpha-banner";
 import { ApiEndpoint } from "@/src/components/api-endpoint";
 import { ApiMethod } from "@/src/components/api-method";
 import {
   ApiReferenceCard,
   ApiReferenceGrid,
 } from "@/src/components/api-reference-card";
+import { FeatureList } from "@/src/components/feature-list";
+import { NextSteps } from "@/src/components/next-steps";
+import { EmbeddedOperation } from "@/src/components/schema/embedded-operation";
 import {
   ValidationError,
   ValidationErrorList,
   ValidationExample,
 } from "@/src/components/validation-error";
 import { authUrl, wwwUrl } from "@/src/lib/related-projects";
-import { NextSteps } from "@/src/components/next-steps";
-import { AlphaBanner } from "@/src/components/alpha-banner";
-import { EmbeddedOperation } from "@/src/components/schema/embedded-operation";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -56,20 +56,22 @@ export const mdxComponents = {
     src?: string;
     alt?: string;
   }) {
-    if (!src) return null;
+    if (!src) {
+      return null;
+    }
 
     return (
       <Image
-        src={src}
         alt={alt ?? ""}
-        width={0}
-        height={0}
-        sizes="100vw"
         className={cn(
           "my-6 rounded-sm border border-border shadow-sm",
-          "w-full h-auto max-h-[400px] object-contain",
-          className,
+          "h-auto max-h-[400px] w-full object-contain",
+          className
         )}
+        height={0}
+        sizes="100vw"
+        src={src}
+        width={0}
       />
     );
   },
@@ -81,8 +83,8 @@ export const mdxComponents = {
       return (
         <code
           className={cn(
-            "bg-muted/50 rounded-md px-1 py-0.5 text-sm font-mono",
-            className,
+            "rounded-md bg-muted/50 px-1 py-0.5 font-mono text-sm",
+            className
           )}
           {...props}
         >
@@ -106,8 +108,8 @@ export const mdxComponents = {
     return (
       <code
         className={cn(
-          "font-mono border text-sm bg-card/80 px-2 rounded-md tracking-wide",
-          className,
+          "rounded-md border bg-card/80 px-2 font-mono text-sm tracking-wide",
+          className
         )}
         {...props}
       >
@@ -171,10 +173,10 @@ export const mdxComponents = {
     const isExternal = href?.startsWith("http");
     return (
       <a
+        className="text-inherit underline decoration-foreground/40 underline-offset-2 transition-colors hover:decoration-foreground"
         href={href}
-        className="text-inherit underline underline-offset-2 decoration-foreground/40 hover:decoration-foreground transition-colors"
-        target={isExternal ? "_blank" : undefined}
         rel={isExternal ? "noopener noreferrer" : undefined}
+        target={isExternal ? "_blank" : undefined}
         {...props}
       >
         {children}
@@ -186,7 +188,7 @@ export const mdxComponents = {
   h1({ children, ...props }: MarkdownComponentProps) {
     return (
       <h1
-        className="scroll-m-20 text-3xl font-bold tracking-tight mb-6 mt-12 first:mt-0"
+        className="mt-12 mb-6 scroll-m-20 font-bold text-3xl tracking-tight first:mt-0"
         {...props}
       >
         {children}
@@ -197,7 +199,7 @@ export const mdxComponents = {
   h2({ children, ...props }: MarkdownComponentProps) {
     return (
       <h2
-        className="scroll-m-20 text-3xl font-semibold tracking-tight mb-5 mt-12"
+        className="mt-12 mb-5 scroll-m-20 font-semibold text-3xl tracking-tight"
         {...props}
       >
         {children}
@@ -208,7 +210,7 @@ export const mdxComponents = {
   h3({ children, ...props }: MarkdownComponentProps) {
     return (
       <h3
-        className="scroll-m-20 text-xl font-semibold tracking-tight mb-4 mt-8"
+        className="mt-8 mb-4 scroll-m-20 font-semibold text-xl tracking-tight"
         {...props}
       >
         {children}
@@ -219,7 +221,7 @@ export const mdxComponents = {
   h4({ children, ...props }: MarkdownComponentProps) {
     return (
       <h4
-        className="scroll-m-20 text-lg font-semibold tracking-tight mb-3 mt-6"
+        className="mt-6 mb-3 scroll-m-20 font-semibold text-lg tracking-tight"
         {...props}
       >
         {children}
@@ -230,7 +232,7 @@ export const mdxComponents = {
   h5({ children, ...props }: MarkdownComponentProps) {
     return (
       <h5
-        className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-4"
+        className="mt-4 mb-2 scroll-m-20 font-semibold text-base tracking-tight"
         {...props}
       >
         {children}
@@ -241,7 +243,7 @@ export const mdxComponents = {
   h6({ children, ...props }: MarkdownComponentProps) {
     return (
       <h6
-        className="scroll-m-20 text-sm font-semibold tracking-tight mb-2 mt-4"
+        className="mt-4 mb-2 scroll-m-20 font-semibold text-sm tracking-tight"
         {...props}
       >
         {children}
@@ -253,7 +255,7 @@ export const mdxComponents = {
   p({ children, ...props }: MarkdownComponentProps) {
     return (
       <p
-        className="text-base leading-7 [&:not(:first-child)]:mt-6 break-words"
+        className="break-words text-base leading-7 [&:not(:first-child)]:mt-6"
         {...props}
       >
         {children}
@@ -287,7 +289,7 @@ export const mdxComponents = {
   li({ className, children, ...props }: MarkdownComponentProps) {
     return (
       <li
-        className={cn("text-base leading-7 break-words", className)}
+        className={cn("break-words text-base leading-7", className)}
         {...props}
       >
         {children}
@@ -305,8 +307,8 @@ export const mdxComponents = {
     return (
       <blockquote
         className={cn(
-          "text-base my-6 border-l-4 border-border pl-6 italic text-muted-foreground",
-          className,
+          "my-6 border-border border-l-4 pl-6 text-base text-muted-foreground italic",
+          className
         )}
         {...props}
       >
@@ -318,7 +320,7 @@ export const mdxComponents = {
   // Table components - minimal styling matching Alert aesthetic
   table({ className, children, ...props }: MarkdownComponentProps) {
     return (
-      <div className="my-10 w-full overflow-x-auto rounded-xs bg-card border border-transparent">
+      <div className="my-10 w-full overflow-x-auto rounded-xs border border-transparent bg-card">
         <table className={cn("w-full border-collapse", className)} {...props}>
           {children}
         </table>
@@ -328,7 +330,7 @@ export const mdxComponents = {
 
   thead({ className, children, ...props }: MarkdownComponentProps) {
     return (
-      <thead className={cn("border-b border-border/50", className)} {...props}>
+      <thead className={cn("border-border/50 border-b", className)} {...props}>
         {children}
       </thead>
     );
@@ -346,8 +348,8 @@ export const mdxComponents = {
     return (
       <tr
         className={cn(
-          "border-b border-border/30 transition-colors hover:bg-muted/30",
-          className,
+          "border-border/30 border-b transition-colors hover:bg-muted/30",
+          className
         )}
         {...props}
       >
@@ -360,8 +362,8 @@ export const mdxComponents = {
     return (
       <th
         className={cn(
-          "text-xs h-10 px-4 text-left align-middle font-semibold [&:has([role=checkbox])]:pr-0 break-words",
-          className,
+          "h-10 break-words px-4 text-left align-middle font-semibold text-xs [&:has([role=checkbox])]:pr-0",
+          className
         )}
         {...props}
       >
@@ -374,8 +376,8 @@ export const mdxComponents = {
     return (
       <td
         className={cn(
-          "text-xs p-4 align-middle [&:has([role=checkbox])]:pr-0 break-words",
-          className,
+          "break-words p-4 align-middle text-xs [&:has([role=checkbox])]:pr-0",
+          className
         )}
         {...props}
       >
@@ -389,12 +391,12 @@ export const mdxComponents = {
     return (
       <div
         className={cn(
-          "bg-card border border-transparent p-6 rounded-xs my-10 [&_*]:text-sm [&_p]:leading-relaxed [&_p]:mt-0 flex gap-3",
-          className,
+          "my-10 flex gap-3 rounded-xs border border-transparent bg-card p-6 [&_*]:text-sm [&_p]:mt-0 [&_p]:leading-relaxed",
+          className
         )}
         {...props}
       >
-        <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+        <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
         <div className="flex-1">{children}</div>
       </div>
     );
@@ -434,10 +436,10 @@ export const mdxComponents = {
     return (
       <div className="my-8">
         <AccordionRoot
-          type="single"
+          className="w-full"
           collapsible
           defaultValue={defaultValue}
-          className="w-full"
+          type="single"
         >
           {children}
         </AccordionRoot>
@@ -456,21 +458,21 @@ export const mdxComponents = {
   }) {
     return (
       <AccordionItemRoot
+        className="border-border border-b last:border-b-0"
         value={value}
-        className="border-b border-border last:border-b-0"
       >
         <AccordionTriggerRoot
           className={cn(
-            "flex justify-between items-center w-full py-6 text-left",
-            "hover:no-underline group",
+            "flex w-full items-center justify-between py-6 text-left",
+            "group hover:no-underline"
           )}
         >
-          <span className="text-base font-medium text-foreground pr-4">
+          <span className="pr-4 font-medium text-base text-foreground">
             {question}
           </span>
         </AccordionTriggerRoot>
-        <AccordionContentRoot className="pb-6 pr-12">
-          <p className="text-sm leading-relaxed text-muted-foreground">
+        <AccordionContentRoot className="pr-12 pb-6">
+          <p className="text-muted-foreground text-sm leading-relaxed">
             {children}
           </p>
         </AccordionContentRoot>
@@ -491,12 +493,12 @@ export const mdxComponents = {
   }) {
     return (
       <Link
+        className={cn(
+          "text-foreground underline decoration-foreground/40 underline-offset-4 transition-colors hover:decoration-foreground",
+          className
+        )}
         href={href}
         prefetch
-        className={cn(
-          "text-foreground underline underline-offset-4 decoration-foreground/40 hover:decoration-foreground transition-colors",
-          className,
-        )}
         {...props}
       >
         {children}
@@ -522,18 +524,18 @@ export const mdxComponents = {
   }) {
     return (
       <Image
-        src={src}
         alt={alt}
-        width={width ?? 700}
+        className={cn(
+          "my-6 rounded-sm border border-border shadow-sm",
+          "max-h-[400px] w-full object-cover",
+          className
+        )}
         height={height ?? 400}
         priority={priority}
         quality={40}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-        className={cn(
-          "my-6 rounded-sm border border-border shadow-sm",
-          "w-full max-h-[400px] object-cover",
-          className,
-        )}
+        src={src}
+        width={width ?? 700}
         {...props}
       />
     );
@@ -555,21 +557,24 @@ export const mdxComponents = {
     const href = `${authUrl}${path.startsWith("/") ? path : `/${path}`}`;
     return (
       <Link
+        className={cn(
+          "text-inherit underline decoration-foreground/40 underline-offset-2 transition-colors hover:decoration-foreground",
+          className
+        )}
         href={href}
         prefetch={!external}
-        target={external ? "_blank" : undefined}
         rel={external ? "noopener noreferrer" : undefined}
-        className={cn(
-          "text-inherit underline underline-offset-2 decoration-foreground/40 hover:decoration-foreground transition-colors",
-          className,
-        )}
+        target={external ? "_blank" : undefined}
         {...props}
       >
         {children}
         {external && (
           <>
             {" "}
-            <ExternalLink aria-hidden="true" className="inline-block w-3 h-3 align-baseline" />
+            <ExternalLink
+              aria-hidden="true"
+              className="inline-block h-3 w-3 align-baseline"
+            />
           </>
         )}
       </Link>
@@ -592,21 +597,24 @@ export const mdxComponents = {
     const href = `${wwwUrl}${path.startsWith("/") ? path : `/${path}`}`;
     return (
       <Link
+        className={cn(
+          "text-inherit underline decoration-foreground/40 underline-offset-2 transition-colors hover:decoration-foreground",
+          className
+        )}
         href={href}
         prefetch={!external}
-        target={external ? "_blank" : undefined}
         rel={external ? "noopener noreferrer" : undefined}
-        className={cn(
-          "text-inherit underline underline-offset-2 decoration-foreground/40 hover:decoration-foreground transition-colors",
-          className,
-        )}
+        target={external ? "_blank" : undefined}
         {...props}
       >
         {children}
         {external && (
           <>
             {" "}
-            <ExternalLink aria-hidden="true" className="inline-block w-3 h-3 align-baseline" />
+            <ExternalLink
+              aria-hidden="true"
+              className="inline-block h-3 w-3 align-baseline"
+            />
           </>
         )}
       </Link>

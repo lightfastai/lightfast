@@ -1,10 +1,10 @@
-import { createMiddleware } from "hono/factory";
+import type { Scope } from "@vendor/observability/sentry";
 import {
   captureException,
   captureMessage,
   withScope,
 } from "@vendor/observability/sentry";
-import type { Scope } from "@vendor/observability/sentry";
+import { createMiddleware } from "hono/factory";
 import type { RequestIdVariables } from "./request-id.js";
 
 /**
@@ -12,15 +12,22 @@ import type { RequestIdVariables } from "./request-id.js";
  */
 function setScopeContext(
   scope: Scope,
-  c: { req: { method: string; path: string }; get: (k: string) => string | undefined },
+  c: {
+    req: { method: string; path: string };
+    get: (k: string) => string | undefined;
+  },
   requestId?: string,
-  correlationId?: string,
+  correlationId?: string
 ): void {
   scope.setTag("service", "relay");
   scope.setTag("http.method", c.req.method);
   scope.setTag("http.path", c.req.path);
-  if (requestId) scope.setTag("request_id", requestId);
-  if (correlationId) scope.setTag("correlation_id", correlationId);
+  if (requestId) {
+    scope.setTag("request_id", requestId);
+  }
+  if (correlationId) {
+    scope.setTag("correlation_id", correlationId);
+  }
   scope.setContext("request", {
     method: c.req.method,
     path: c.req.path,
@@ -58,7 +65,7 @@ export const sentry = createMiddleware<{
       scope.setTag("http.status", String(c.res.status));
       captureMessage(
         `HTTP ${c.res.status}: ${c.req.method} ${c.req.path}`,
-        "error",
+        "error"
       );
     });
   }

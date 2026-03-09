@@ -1,6 +1,6 @@
 import "server-only";
-import { auth, clerkClient } from "@clerk/nextjs/server";
 import { getCachedUserOrgMemberships } from "@repo/console-clerk-cache";
+import { auth, clerkClient } from "@vendor/clerk/server";
 
 /**
  * Organization access utilities using Clerk RBAC
@@ -18,13 +18,13 @@ import { getCachedUserOrgMemberships } from "@repo/console-clerk-cache";
  * Organization with access information
  */
 export interface OrgWithAccess {
-	org: {
-		id: string;
-		name: string;
-		slug: string;
-		imageUrl: string;
-	};
-	role: string; // Clerk role like "org:admin" or "org:member"
+  org: {
+    id: string;
+    name: string;
+    slug: string;
+    imageUrl: string;
+  };
+  role: string; // Clerk role like "org:admin" or "org:member"
 }
 
 /**
@@ -43,45 +43,43 @@ export interface OrgWithAccess {
  * We don't check if it matches auth().orgSlug because middleware's
  * organizationSyncOptions may not have synced yet during RSC fetches.
  */
-export async function requireOrgAccess(
-	slug: string,
-): Promise<OrgWithAccess> {
-	const { userId } = await auth();
+export async function requireOrgAccess(slug: string): Promise<OrgWithAccess> {
+  const { userId } = await auth();
 
-	// User must be authenticated
-	if (!userId) {
-		throw new Error("Authentication required.");
-	}
+  // User must be authenticated
+  if (!userId) {
+    throw new Error("Authentication required.");
+  }
 
-	// Get organization by slug from URL (needed for org metadata like name, imageUrl)
-	const clerk = await clerkClient();
-	let clerkOrg;
-	try {
-		clerkOrg = await clerk.organizations.getOrganization({ slug });
-	} catch {
-		throw new Error(`Organization not found: ${slug}`);
-	}
+  // Get organization by slug from URL (needed for org metadata like name, imageUrl)
+  const clerk = await clerkClient();
+  let clerkOrg;
+  try {
+    clerkOrg = await clerk.organizations.getOrganization({ slug });
+  } catch {
+    throw new Error(`Organization not found: ${slug}`);
+  }
 
-	// User-centric membership check (cached)
-	const userMemberships = await getCachedUserOrgMemberships(userId);
+  // User-centric membership check (cached)
+  const userMemberships = await getCachedUserOrgMemberships(userId);
 
-	const userMembership = userMemberships.find(
-		(m) => m.organizationId === clerkOrg.id,
-	);
+  const userMembership = userMemberships.find(
+    (m) => m.organizationId === clerkOrg.id
+  );
 
-	if (!userMembership) {
-		throw new Error("Access denied to this organization.");
-	}
+  if (!userMembership) {
+    throw new Error("Access denied to this organization.");
+  }
 
-	return {
-		org: {
-			id: clerkOrg.id,
-			name: clerkOrg.name,
-			slug: clerkOrg.slug,
-			imageUrl: clerkOrg.imageUrl,
-		},
-		role: userMembership.role,
-	};
+  return {
+    org: {
+      id: clerkOrg.id,
+      name: clerkOrg.name,
+      slug: clerkOrg.slug,
+      imageUrl: clerkOrg.imageUrl,
+    },
+    role: userMembership.role,
+  };
 }
 
 /**
@@ -91,19 +89,19 @@ export async function requireOrgAccess(
  * @returns True if user has the role
  */
 export async function hasOrgRole(role: "admin" | "member"): Promise<boolean> {
-	const { orgRole } = await auth();
+  const { orgRole } = await auth();
 
-	if (!orgRole) {
-		return false;
-	}
+  if (!orgRole) {
+    return false;
+  }
 
-	// Map our simple roles to Clerk roles
-	const clerkRole = role === "admin" ? "org:admin" : "org:member";
+  // Map our simple roles to Clerk roles
+  const clerkRole = role === "admin" ? "org:admin" : "org:member";
 
-	// Admin has access to everything
-	if (orgRole === "org:admin") {
-		return true;
-	}
+  // Admin has access to everything
+  if (orgRole === "org:admin") {
+    return true;
+  }
 
-	return orgRole === clerkRole;
+  return orgRole === clerkRole;
 }

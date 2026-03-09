@@ -51,10 +51,6 @@ export type IngestionSource = z.infer<typeof ingestionSourceSchema>;
  * ingestionStatusSchema.parse("pending"); // ❌ Not in enum
  * ```
  */
-export const ingestionStatusSchema = z.enum([
-  "processed",
-  "skipped",
-  "failed",
-]);
+export const ingestionStatusSchema = z.enum(["processed", "skipped", "failed"]);
 
 export type IngestionStatus = z.infer<typeof ingestionStatusSchema>;

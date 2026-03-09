@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 
 const DebugPanel = dynamic(
   () => import("./debug-panel").then((m) => m.DebugPanel),
-  { ssr: false },
+  { ssr: false }
 );
 
 export function DebugPanelLoader({

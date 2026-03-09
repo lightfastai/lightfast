@@ -85,7 +85,7 @@ export const STORE_NAME = {
  *
  * @see @repo/console-reserved-names for full list and rationale
  */
-import { workspace, organization } from '@repo/console-reserved-names';
+import { organization, workspace } from "@repo/console-reserved-names";
 
 /**
  * Error Messages
@@ -97,12 +97,15 @@ export const NAMING_ERRORS = {
   ORG_START: "Must start with a letter or number",
   ORG_END: "Must end with a letter or number",
   ORG_CONSECUTIVE: "Cannot contain consecutive hyphens",
-  ORG_RESERVED: "This name is reserved for system use. Please choose a different name.",
+  ORG_RESERVED:
+    "This name is reserved for system use. Please choose a different name.",
 
   WORKSPACE_MIN_LENGTH: `Workspace name must be at least ${WORKSPACE_NAME.MIN_LENGTH} character`,
   WORKSPACE_MAX_LENGTH: `Workspace name must be ${WORKSPACE_NAME.MAX_LENGTH} characters or less`,
-  WORKSPACE_PATTERN: "Only letters, numbers, hyphens (-), periods (.), and underscores (_) are allowed",
-  WORKSPACE_RESERVED: "This name is reserved for system use. Please choose a different name.",
+  WORKSPACE_PATTERN:
+    "Only letters, numbers, hyphens (-), periods (.), and underscores (_) are allowed",
+  WORKSPACE_RESERVED:
+    "This name is reserved for system use. Please choose a different name.",
 
   STORE_MIN_LENGTH: `Store name must be at least ${STORE_NAME.MIN_LENGTH} characters`,
   STORE_MAX_LENGTH: `Store name must be less than ${STORE_NAME.MAX_LENGTH} characters`,

@@ -1,3 +1,4 @@
+import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -9,7 +10,6 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { nanoid } from "@repo/lib";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**

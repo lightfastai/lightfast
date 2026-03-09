@@ -1,13 +1,19 @@
-import type { PostTransformEvent, PostTransformReference } from "../../post-transform-event";
-import type { TransformContext } from "../../types";
-import { validatePostTransformEvent, logValidationErrors } from "../../validation";
-import { sanitizeTitle, sanitizeBody } from "../../sanitize";
 import type {
-  PreTransformLinearIssueWebhook,
+  PostTransformEvent,
+  PostTransformReference,
+} from "../../post-transform-event";
+import { sanitizeBody, sanitizeTitle } from "../../sanitize";
+import type { TransformContext } from "../../types";
+import {
+  logValidationErrors,
+  validatePostTransformEvent,
+} from "../../validation";
+import type {
   PreTransformLinearCommentWebhook,
-  PreTransformLinearProjectWebhook,
   PreTransformLinearCycleWebhook,
+  PreTransformLinearIssueWebhook,
   PreTransformLinearProjectUpdateWebhook,
+  PreTransformLinearProjectWebhook,
 } from "./schemas";
 
 const ACTION_SUFFIX: Record<string, string> = {
@@ -22,16 +28,31 @@ function linearSourceType(entity: string, action: string): string {
 
 export function transformLinearIssue(
   payload: PreTransformLinearIssueWebhook,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const issue = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "issue", id: issue.identifier, url: issue.url, label: null });
-  refs.push({ type: "team", id: issue.team.key, url: null, label: issue.team.name });
+  refs.push({
+    type: "issue",
+    id: issue.identifier,
+    url: issue.url,
+    label: null,
+  });
+  refs.push({
+    type: "team",
+    id: issue.team.key,
+    url: null,
+    label: issue.team.name,
+  });
 
   if (issue.project) {
-    refs.push({ type: "project", id: issue.project.name, url: issue.project.url, label: null });
+    refs.push({
+      type: "project",
+      id: issue.project.name,
+      url: issue.project.url,
+      label: null,
+    });
   }
 
   if (issue.cycle) {
@@ -39,7 +60,12 @@ export function transformLinearIssue(
   }
 
   if (issue.assignee) {
-    refs.push({ type: "assignee", id: issue.assignee.email ?? issue.assignee.name, url: null, label: null });
+    refs.push({
+      type: "assignee",
+      id: issue.assignee.email ?? issue.assignee.name,
+      url: null,
+      label: null,
+    });
   }
 
   for (const label of issue.labels) {
@@ -53,10 +79,23 @@ export function transformLinearIssue(
   if (issue.attachments?.nodes) {
     for (const attachment of issue.attachments.nodes) {
       if (attachment.sourceType === "githubPr" && attachment.metadata?.number) {
-        refs.push({ type: "pr", id: `#${attachment.metadata.number}`, url: attachment.url ?? null, label: "tracked_in" });
+        refs.push({
+          type: "pr",
+          id: `#${attachment.metadata.number}`,
+          url: attachment.url ?? null,
+          label: "tracked_in",
+        });
       }
-      if (attachment.sourceType === "sentryIssue" && attachment.metadata?.shortId) {
-        refs.push({ type: "issue", id: attachment.metadata.shortId, url: attachment.url ?? null, label: "linked" });
+      if (
+        attachment.sourceType === "sentryIssue" &&
+        attachment.metadata?.shortId
+      ) {
+        refs.push({
+          type: "issue",
+          id: attachment.metadata.shortId,
+          url: attachment.url ?? null,
+          label: "linked",
+        });
       }
     }
   }
@@ -75,8 +114,12 @@ export function transformLinearIssue(
     `Priority: ${issue.priorityLabel}`,
     issue.project ? `Project: ${issue.project.name}` : "",
     issue.cycle ? `Cycle: ${issue.cycle.name}` : "",
-    issue.assignee ? `Assignee: ${issue.assignee.displayName ?? issue.assignee.name}` : "",
-    issue.labels.length > 0 ? `Labels: ${issue.labels.map((l) => l.name).join(", ")}` : "",
+    issue.assignee
+      ? `Assignee: ${issue.assignee.displayName ?? issue.assignee.name}`
+      : "",
+    issue.labels.length > 0
+      ? `Labels: ${issue.labels.map((l) => l.name).join(", ")}`
+      : "",
     issue.estimate ? `Estimate: ${issue.estimate} points` : "",
     issue.dueDate ? `Due: ${issue.dueDate}` : "",
   ].filter(Boolean);
@@ -85,7 +128,9 @@ export function transformLinearIssue(
     source: "linear",
     sourceType: linearSourceType("issue", payload.action),
     sourceId: `linear-issue:${issue.team.key}:${issue.identifier}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] ${issue.identifier}: ${issue.title.slice(0, 80)}`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] ${issue.identifier}: ${issue.title.slice(0, 80)}`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: issue.creator
       ? {
@@ -140,12 +185,17 @@ export function transformLinearIssue(
 
 export function transformLinearComment(
   payload: PreTransformLinearCommentWebhook,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const comment = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "issue", id: comment.issue.identifier, url: comment.issue.url, label: null });
+  refs.push({
+    type: "issue",
+    id: comment.issue.identifier,
+    url: comment.issue.url,
+    label: null,
+  });
 
   const actionTitles: Record<string, string> = {
     create: "Comment Added",
@@ -162,7 +212,9 @@ export function transformLinearComment(
     source: "linear",
     sourceType: linearSourceType("comment", payload.action),
     sourceId: `linear-comment:${comment.issue.identifier}:${comment.id}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] ${comment.issue.identifier}: ${comment.body.slice(0, 60)}...`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] ${comment.issue.identifier}: ${comment.body.slice(0, 60)}...`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: {
       id: comment.user.id,
@@ -196,15 +248,25 @@ export function transformLinearComment(
 
 export function transformLinearProject(
   payload: PreTransformLinearProjectWebhook,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const project = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "project", id: project.name, url: project.url, label: null });
+  refs.push({
+    type: "project",
+    id: project.name,
+    url: project.url,
+    label: null,
+  });
 
   if (project.lead) {
-    refs.push({ type: "assignee", id: project.lead.email ?? project.lead.name, url: null, label: "lead" });
+    refs.push({
+      type: "assignee",
+      id: project.lead.email ?? project.lead.name,
+      url: null,
+      label: "lead",
+    });
   }
 
   for (const team of project.teams) {
@@ -223,7 +285,9 @@ export function transformLinearProject(
     `State: ${project.state}`,
     `Progress: ${Math.round(project.progress * 100)}%`,
     project.targetDate ? `Target: ${project.targetDate}` : "",
-    project.lead ? `Lead: ${project.lead.displayName ?? project.lead.name}` : "",
+    project.lead
+      ? `Lead: ${project.lead.displayName ?? project.lead.name}`
+      : "",
     `Teams: ${project.teams.map((t) => t.name).join(", ")}`,
   ].filter(Boolean);
 
@@ -231,7 +295,9 @@ export function transformLinearProject(
     source: "linear",
     sourceType: linearSourceType("project", payload.action),
     sourceId: `linear-project:${project.slugId}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] Project: ${project.name}`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] Project: ${project.name}`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: project.lead
       ? {
@@ -276,13 +342,23 @@ export function transformLinearProject(
 
 export function transformLinearCycle(
   payload: PreTransformLinearCycleWebhook,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const cycle = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "cycle", id: cycle.name ?? `Cycle ${cycle.number}`, url: cycle.url, label: null });
-  refs.push({ type: "team", id: cycle.team.key, url: null, label: cycle.team.name });
+  refs.push({
+    type: "cycle",
+    id: cycle.name ?? `Cycle ${cycle.number}`,
+    url: cycle.url,
+    label: null,
+  });
+  refs.push({
+    type: "team",
+    id: cycle.team.key,
+    url: null,
+    label: cycle.team.name,
+  });
 
   const actionTitles: Record<string, string> = {
     create: "Cycle Created",
@@ -306,7 +382,9 @@ export function transformLinearCycle(
     source: "linear",
     sourceType: linearSourceType("cycle", payload.action),
     sourceId: `linear-cycle:${cycle.team.key}:${cycle.number}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] ${cycleName} (${cycle.team.name})`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] ${cycleName} (${cycle.team.name})`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: null,
     occurredAt: payload.createdAt,
@@ -340,12 +418,17 @@ export function transformLinearCycle(
 
 export function transformLinearProjectUpdate(
   payload: PreTransformLinearProjectUpdateWebhook,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const update = payload.data;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "project", id: update.project.name, url: update.project.url, label: null });
+  refs.push({
+    type: "project",
+    id: update.project.name,
+    url: update.project.url,
+    label: null,
+  });
 
   const actionTitles: Record<string, string> = {
     create: "Project Update Posted",
@@ -369,7 +452,9 @@ export function transformLinearProjectUpdate(
     source: "linear",
     sourceType: linearSourceType("project-update", payload.action),
     sourceId: `linear-project-update:${update.project.id}:${update.id}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] ${update.project.name}: ${update.body.slice(0, 60)}...`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] ${update.project.name}: ${update.body.slice(0, 60)}...`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: {
       id: update.user.id,
@@ -394,7 +479,11 @@ export function transformLinearProjectUpdate(
 
   const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
-    logValidationErrors("transformLinearProjectUpdate", event, validation.errors);
+    logValidationErrors(
+      "transformLinearProjectUpdate",
+      event,
+      validation.errors
+    );
   }
 
   return event;

@@ -23,17 +23,17 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceUserActivities  } from "@db/console/schema";
-import type {InsertWorkspaceUserActivity} from "@db/console/schema";
-import { inngest } from "../inngest/client/client";
-import { log } from "@vendor/observability/log";
+import type { InsertWorkspaceUserActivity } from "@db/console/schema";
+import { workspaceUserActivities } from "@db/console/schema";
 import type {
   ActivityCategory,
-  ActorType,
-  ActivityType,
   ActivityMetadata,
+  ActivityType,
+  ActorType,
 } from "@repo/console-validation";
 import { activityTypeSchema } from "@repo/console-validation";
+import { log } from "@vendor/observability/log";
+import { inngest } from "../inngest/client/client";
 
 /**
  * Activity data interface with validated type information
@@ -60,26 +60,26 @@ import { activityTypeSchema } from "@repo/console-validation";
  * ```
  */
 export interface ActivityData {
-  /** Workspace ID */
-  workspaceId: string;
+  /** Action performed - must match one of the defined activity types */
+  action: ActivityType["action"];
+  /** Actor email (optional, denormalized for privacy) */
+  actorEmail?: string;
   /** Actor type (user, system, webhook, api) */
   actorType: ActorType;
   /** Actor user ID (required if actorType is 'user') */
   actorUserId?: string;
-  /** Actor email (optional, denormalized for privacy) */
-  actorEmail?: string;
   /** Activity category */
   category: ActivityCategory;
-  /** Action performed - must match one of the defined activity types */
-  action: ActivityType["action"];
-  /** Entity type */
-  entityType: string;
   /** Entity ID */
   entityId: string;
+  /** Entity type */
+  entityType: string;
   /** Activity metadata - validated based on action type */
   metadata: ActivityMetadata;
   /** Related activity ID (for grouping) */
   relatedActivityId?: string;
+  /** Workspace ID */
+  workspaceId: string;
 }
 
 /**
@@ -119,7 +119,9 @@ export interface ActivityData {
  */
 export async function recordCriticalActivity(
   data: ActivityData
-): Promise<{ success: true; activityId: number } | { success: false; error: string }> {
+): Promise<
+  { success: true; activityId: number } | { success: false; error: string }
+> {
   try {
     // Validate activity type (action, category, metadata)
     const validation = activityTypeSchema.safeParse({
@@ -140,18 +142,21 @@ export async function recordCriticalActivity(
       };
     }
 
-    const [result] = await db.insert(workspaceUserActivities).values({
-      workspaceId: data.workspaceId,
-      actorType: data.actorType,
-      actorUserId: data.actorUserId ?? null,
-      actorEmail: data.actorEmail ?? null,
-      category: data.category,
-      action: data.action,
-      entityType: data.entityType,
-      entityId: data.entityId,
-      metadata: data.metadata,
-      relatedActivityId: data.relatedActivityId ?? null,
-    }).returning({ id: workspaceUserActivities.id });
+    const [result] = await db
+      .insert(workspaceUserActivities)
+      .values({
+        workspaceId: data.workspaceId,
+        actorType: data.actorType,
+        actorUserId: data.actorUserId ?? null,
+        actorEmail: data.actorEmail ?? null,
+        category: data.category,
+        action: data.action,
+        entityType: data.entityType,
+        entityId: data.entityId,
+        metadata: data.metadata,
+        relatedActivityId: data.relatedActivityId ?? null,
+      })
+      .returning({ id: workspaceUserActivities.id });
 
     log.info("Critical activity recorded", {
       activityId: result?.id,
@@ -310,9 +315,7 @@ export async function recordActivity(
  * });
  * ```
  */
-export function recordSystemActivity(
-  data: ActivityData
-): void {
+export function recordSystemActivity(data: ActivityData): void {
   // Validate activity type (action, category, metadata)
   const validation = activityTypeSchema.safeParse({
     action: data.action,

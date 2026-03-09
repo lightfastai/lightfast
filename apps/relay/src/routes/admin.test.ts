@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 
@@ -23,6 +23,7 @@ const { mockEnv, mockReplayDeliveries, mockDbSelect } = vi.hoisted(() => {
       }),
       // For chains that end at .where() (like remaining-count query),
       // make it thenable so `const [x] = await db.select().from().where()` works
+      // biome-ignore lint/suspicious/noThenProperty: mock db query chain needs .then
       then: (resolve: (v: unknown) => void, reject: (e: unknown) => void) => {
         return Promise.resolve(results).then(resolve, reject);
       },
@@ -123,7 +124,7 @@ vi.mock("../lib/replay", () => ({
 vi.mock("../lib/cache", () => ({
   resourceKey: (provider: string, resourceId: string) =>
     `gw:resource:${provider}:${resourceId}`,
-  RESOURCE_CACHE_TTL: 86400,
+  RESOURCE_CACHE_TTL: 86_400,
 }));
 
 // ── Import after mocks ──
@@ -140,7 +141,7 @@ function request(
     method?: string;
     body?: string | Record<string, unknown>;
     headers?: Record<string, string>;
-  } = {},
+  } = {}
 ) {
   const method = init.method ?? "POST";
   const headers = new Headers(init.headers);

@@ -10,79 +10,77 @@
  * 5. Persist to database
  */
 
+import { createHash } from "node:crypto";
 import { db } from "@db/console/client";
-import {
-  workspaceKnowledgeDocuments,
-  orgWorkspaces,
-  workspaceKnowledgeVectorChunks
-  
-  
+import type {
+  OrgWorkspace,
+  WorkspaceKnowledgeDocument,
 } from "@db/console/schema";
-import type {WorkspaceKnowledgeDocument, OrgWorkspace} from "@db/console/schema";
-import { and, eq } from "drizzle-orm";
-import { chunkText } from "@repo/console-chunking";
+import {
+  orgWorkspaces,
+  workspaceKnowledgeDocuments,
+  workspaceKnowledgeVectorChunks,
+} from "@db/console/schema";
 import type { Chunk } from "@repo/console-chunking";
+import { chunkText } from "@repo/console-chunking";
 import {
   createEmbeddingProviderForWorkspace,
   embedTextsInBatches,
 } from "@repo/console-embed";
-import {
-  pineconeClient
-  
-} from "@repo/console-pinecone";
-import type {VectorMetadata} from "@repo/console-pinecone";
-import { log } from "@vendor/observability/log";
-import { createHash } from "node:crypto";
-import { inngest } from "../../client/client";
+import type { VectorMetadata } from "@repo/console-pinecone";
+import { pineconeClient } from "@repo/console-pinecone";
 import type { SourceType } from "@repo/console-providers";
+import { log } from "@vendor/observability/log";
+import { and, eq } from "drizzle-orm";
+import { inngest } from "../../client/client";
 
 /**
  * Generic document processing event
  * Works with any source type
  */
 interface ProcessDocumentEvent {
-  workspaceId: string;
-  documentId: string;
-
-  // Source identification (discriminated union)
-  sourceType: SourceType;
-  sourceId: string;
-  sourceMetadata: Record<string, unknown>;
-
-  // Document content
-  title: string;
   content: string;
   contentHash: string;
+  documentId: string;
+  metadata?: Record<string, unknown>;
 
   // Optional fields
   parentDocId?: string;
-  metadata?: Record<string, unknown>;
   relationships?: Record<string, unknown>;
+  sourceId: string;
+  sourceMetadata: Record<string, unknown>;
+
+  // Source identification (discriminated union)
+  sourceType: SourceType;
+
+  // Document content
+  title: string;
+  workspaceId: string;
 }
 
 type PreparedDocument = ReadyDocument | SkippedDocument;
 
 interface BasePrepared {
-  event: ProcessDocumentEvent;
   docId?: string;
+  event: ProcessDocumentEvent;
 }
 
 interface ReadyDocument extends BasePrepared {
-  status: "ready";
-  workspace: OrgWorkspace;
-  docId: string;
-  indexName: string;
-  slug: string;
-  contentHash: string;
-  configHash: string;
   chunks: Chunk[];
+  configHash: string;
+  contentHash: string;
+  docId: string;
   embeddings?: number[][];
   existingDoc?: WorkspaceKnowledgeDocument | null;
+  indexName: string;
+  slug: string;
+  status: "ready";
+  workspace: OrgWorkspace;
 }
 
 interface SkippedDocument extends BasePrepared {
-  status: "skipped";
   reason: string;
+  status: "skipped";
 }
 
 /**
@@ -154,7 +152,7 @@ export const processDocuments = inngest.createFunction(
           try {
             const workspace = await getWorkspace(
               workspaceCache,
-              event.data.workspaceId,
+              event.data.workspaceId
             );
 
             // Generate slug from title or sourceId
@@ -182,7 +180,7 @@ export const processDocuments = inngest.createFunction(
             const existingDoc = await findExistingDocument(
               workspace.id,
               event.data.sourceType,
-              event.data.sourceId,
+              event.data.sourceId
             );
 
             const currentConfigHash = computeConfigHash(workspace);
@@ -200,9 +198,15 @@ export const processDocuments = inngest.createFunction(
                 .from(workspaceKnowledgeVectorChunks)
                 .where(
                   and(
-                    eq(workspaceKnowledgeVectorChunks.workspaceId, workspace.id),
-                    eq(workspaceKnowledgeVectorChunks.docId, event.data.documentId),
-                  ),
+                    eq(
+                      workspaceKnowledgeVectorChunks.workspaceId,
+                      workspace.id
+                    ),
+                    eq(
+                      workspaceKnowledgeVectorChunks.docId,
+                      event.data.documentId
+                    )
+                  )
                 )
                 .limit(1);
 
@@ -213,7 +217,7 @@ export const processDocuments = inngest.createFunction(
                     docId: event.data.documentId,
                     workspaceId: workspace.id,
                     sourceType: event.data.sourceType,
-                  },
+                  }
                 );
                 // Don't skip - continue to reprocess and recreate vector entries
               } else {
@@ -261,7 +265,7 @@ export const processDocuments = inngest.createFunction(
             });
             throw error;
           }
-        }),
+        })
       );
 
       const readyDocs = prepared.filter(isReadyDocument);
@@ -275,18 +279,19 @@ export const processDocuments = inngest.createFunction(
         const embeddingProvider = createEmbeddingProviderForWorkspace(
           {
             id: firstDoc.workspace.id,
-            embeddingModel: firstDoc.workspace.settings.embedding.embeddingModel,
+            embeddingModel:
+              firstDoc.workspace.settings.embedding.embeddingModel,
             embeddingDim: firstDoc.workspace.settings.embedding.embeddingDim,
           },
           {
             inputType: "search_document",
-          },
+          }
         );
 
         await generateEmbeddingsForDocuments(
           readyDocs,
           embeddingProvider,
-          96, // Cohere API limit
+          96 // Cohere API limit
         );
         await upsertDocumentsToPinecone(readyDocs);
         await persistDocuments(readyDocs);
@@ -316,8 +321,8 @@ export const processDocuments = inngest.createFunction(
       const eventsToSend = events
         .filter((e) =>
           processedDocs.some(
-            (p) => p.docId === e.data.documentId && e.data.relationships,
-          ),
+            (p) => p.docId === e.data.documentId && e.data.relationships
+          )
         )
         .map((e) => ({
           name: "apps-console/relationships.extract" as const,
@@ -331,7 +336,10 @@ export const processDocuments = inngest.createFunction(
         }));
 
       if (eventsToSend.length > 0) {
-        const eventIds = await step.sendEvent("relationships.trigger-extraction", eventsToSend);
+        const eventIds = await step.sendEvent(
+          "relationships.trigger-extraction",
+          eventsToSend
+        );
 
         await step.run("relationships.log-extraction", () => {
           log.info("Triggered relationship extraction", {
@@ -355,12 +363,12 @@ export const processDocuments = inngest.createFunction(
       skipped: skipped.length,
       results,
     };
-  },
+  }
 );
 
 async function getWorkspace(
   cache: Map<string, OrgWorkspace>,
-  workspaceId: string,
+  workspaceId: string
 ): Promise<OrgWorkspace> {
   const cached = cache.get(workspaceId);
   if (cached) {
@@ -386,7 +394,7 @@ async function getWorkspace(
 async function findExistingDocument(
   workspaceId: string,
   sourceType: SourceType,
-  sourceId: string,
+  sourceId: string
 ): Promise<WorkspaceKnowledgeDocument | undefined> {
   const [existingDoc] = await db
     .select()
@@ -395,8 +403,8 @@ async function findExistingDocument(
       and(
         eq(workspaceKnowledgeDocuments.workspaceId, workspaceId),
         eq(workspaceKnowledgeDocuments.sourceType, sourceType),
-        eq(workspaceKnowledgeDocuments.sourceId, sourceId),
-      ),
+        eq(workspaceKnowledgeDocuments.sourceId, sourceId)
+      )
     )
     .limit(1);
 
@@ -416,7 +424,7 @@ function generateSlug(title: string, sourceId: string): string {
 async function generateEmbeddingsForDocuments(
   docs: ReadyDocument[],
   embeddingProvider: ReturnType<typeof createEmbeddingProviderForWorkspace>,
-  batchSize: number,
+  batchSize: number
 ) {
   const queue: {
     docIndex: number;
@@ -444,10 +452,14 @@ async function generateEmbeddingsForDocuments(
 
   embeddings.forEach((vector, idx) => {
     const target = queue[idx];
-    if (!target) return;
+    if (!target) {
+      return;
+    }
     const doc = docs[target.docIndex];
-    if (!doc) return;
-    doc.embeddings ??= Array(doc.chunks.length);
+    if (!doc) {
+      return;
+    }
+    doc.embeddings ??= new Array(doc.chunks.length);
     doc.embeddings[target.chunkIndex] = vector;
   });
 }
@@ -504,8 +516,11 @@ async function upsertDocumentsToPinecone(docs: ReadyDocument[]) {
 
     // Get namespace from first doc in bucket (all share same namespace)
     const firstBucketDoc = bucket[0];
-    if (!firstBucketDoc) continue;
-    const namespaceName = firstBucketDoc.workspace.settings.embedding.namespaceName;
+    if (!firstBucketDoc) {
+      continue;
+    }
+    const namespaceName =
+      firstBucketDoc.workspace.settings.embedding.namespaceName;
 
     await pineconeClient.upsertVectors(
       indexName,
@@ -514,7 +529,7 @@ async function upsertDocumentsToPinecone(docs: ReadyDocument[]) {
         vectors,
         metadata,
       },
-      namespaceName,
+      namespaceName
     );
 
     log.info("Upserted vectors to Pinecone (multi-source)", {
@@ -567,8 +582,8 @@ async function refreshVectorEntries(doc: ReadyDocument) {
     .where(
       and(
         eq(workspaceKnowledgeVectorChunks.workspaceId, doc.workspace.id),
-        eq(workspaceKnowledgeVectorChunks.docId, doc.docId),
-      ),
+        eq(workspaceKnowledgeVectorChunks.docId, doc.docId)
+      )
     );
 
   const entries = doc.chunks.map((_, chunkIndex) => ({

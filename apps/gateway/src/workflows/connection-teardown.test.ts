@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Capture workflow handler ──
 
 let capturedHandler: (context: unknown) => Promise<void> = () => {
   throw new Error(
-    "serve() was never called — connection-teardown module failed to register its handler",
+    "serve() was never called — connection-teardown module failed to register its handler"
   );
 };
 
@@ -69,7 +69,7 @@ vi.mock("@db/console/client", () => ({
         // biome-ignore lint/suspicious/noThenProperty: intentional thenable mock for Drizzle query builder
         then: (
           resolve: (v: unknown) => unknown,
-          reject: (e: unknown) => unknown,
+          reject: (e: unknown) => unknown
         ) => mockDbQuery().then(resolve, reject),
       };
       return builder;
@@ -110,7 +110,9 @@ vi.mock("@repo/gateway-service-clients", () => ({
 }));
 
 vi.mock("@vendor/qstash", () => ({
-  getQStashClient: () => ({ publishJSON: (...args: unknown[]) => mockPublishJSON(...args) }),
+  getQStashClient: () => ({
+    publishJSON: (...args: unknown[]) => mockPublishJSON(...args),
+  }),
 }));
 
 vi.mock("@repo/console-providers", () => ({
@@ -135,7 +137,9 @@ vi.mock("@repo/console-providers", () => ({
   PROVIDER_ENVS: () => [],
   getProvider: (name: string) => {
     const known = ["github", "vercel", "linear", "sentry"];
-    if (!known.includes(name)) { return undefined; }
+    if (!known.includes(name)) {
+      return undefined;
+    }
     return {
       createConfig: vi.fn().mockReturnValue({}),
       oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
@@ -194,17 +198,17 @@ describe("connection-teardown workflow", () => {
       expect.objectContaining({
         url: "https://backfill.test/api/trigger/cancel",
         body: { installationId: "inst-1" },
-      }),
+      })
     );
     expect(mockDecrypt).toHaveBeenCalled();
     expect(mockRevokeToken).toHaveBeenCalledWith(
       expect.anything(),
-      "decrypted-token",
+      "decrypted-token"
     );
     expect(mockRedisDel).toHaveBeenCalledTimes(1);
     expect(mockRedisDel).toHaveBeenCalledWith(
       "gw:resource:linear:res-1",
-      "gw:resource:linear:res-2",
+      "gw:resource:linear:res-2"
     );
     expect(mockDbUpdate).toHaveBeenCalledTimes(2);
   });
@@ -223,7 +227,7 @@ describe("connection-teardown workflow", () => {
         body: { installationId: "inst-1" },
         retries: 3,
         deduplicationId: "backfill-cancel:inst-1",
-      }),
+      })
     );
   });
 
@@ -253,7 +257,7 @@ describe("connection-teardown workflow", () => {
     expect(mockDecrypt).toHaveBeenCalled();
     expect(mockRevokeToken).toHaveBeenCalledWith(
       expect.anything(),
-      "decrypted-token",
+      "decrypted-token"
     );
   });
 
@@ -307,7 +311,7 @@ describe("connection-teardown workflow", () => {
     expect(mockRedisDel).toHaveBeenCalledWith(
       "gw:resource:github:repo-a",
       "gw:resource:github:repo-b",
-      "gw:resource:github:repo-c",
+      "gw:resource:github:repo-c"
     );
   });
 
@@ -336,10 +340,10 @@ describe("connection-teardown workflow", () => {
     expect(mockDbUpdate).toHaveBeenCalledTimes(2);
     expect(mockTxSet).toHaveBeenCalledTimes(2);
     expect(mockTxSet).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "revoked" }),
+      expect.objectContaining({ status: "revoked" })
     );
     expect(mockTxSet).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "removed" }),
+      expect.objectContaining({ status: "removed" })
     );
   });
 });

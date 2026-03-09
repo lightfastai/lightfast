@@ -2,8 +2,8 @@ import { z } from "zod";
 
 export interface TransformContext {
   deliveryId: string;
-  receivedAt: Date;
   eventType: string;
+  receivedAt: Date;
 }
 
 // ── OAuth Types ──
@@ -19,14 +19,16 @@ export const oAuthTokensSchema = z.object({
 
 export type OAuthTokens = z.infer<typeof oAuthTokensSchema>;
 
-const callbackAccountInfoSchema = z.object({
-  version: z.literal(1),
-  sourceType: z.string(),
-  events: z.array(z.string()),
-  installedAt: z.string(),
-  lastValidatedAt: z.string(),
-  raw: z.unknown(),
-}).passthrough();
+const callbackAccountInfoSchema = z
+  .object({
+    version: z.literal(1),
+    sourceType: z.string(),
+    events: z.array(z.string()),
+    installedAt: z.string(),
+    lastValidatedAt: z.string(),
+    raw: z.unknown(),
+  })
+  .passthrough();
 
 export const callbackResultSchema = z.discriminatedUnion("status", [
   z.object({
@@ -57,19 +59,35 @@ export const callbackResultSchema = z.discriminatedUnion("status", [
 /** Structural base type — used as a type constraint in define.ts.
  * The concrete discriminated union is `ProviderAccountInfo` exported from registry.ts. */
 export interface BaseProviderAccountInfo {
-  version: 1;
-  sourceType: string;
   events: string[];
   installedAt: string;
   lastValidatedAt: string;
   raw: unknown;
+  sourceType: string;
+  version: 1;
 }
 
 // ── Generic CallbackResult for compile-time narrowing ──
 
-export type CallbackResult<TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo> =
-  | { status: "connected"; externalId: string; accountInfo: TAccountInfo; tokens: OAuthTokens }
-  | { status: "connected-no-token"; externalId: string; accountInfo: TAccountInfo }
-  | { status: "connected-redirect"; externalId: string; accountInfo: TAccountInfo; tokens: OAuthTokens; nextUrl: string }
+export type CallbackResult<
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+> =
+  | {
+      status: "connected";
+      externalId: string;
+      accountInfo: TAccountInfo;
+      tokens: OAuthTokens;
+    }
+  | {
+      status: "connected-no-token";
+      externalId: string;
+      accountInfo: TAccountInfo;
+    }
+  | {
+      status: "connected-redirect";
+      externalId: string;
+      accountInfo: TAccountInfo;
+      tokens: OAuthTokens;
+      nextUrl: string;
+    }
   | { status: "pending-setup"; externalId: string; setupAction: string };
-

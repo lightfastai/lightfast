@@ -1,10 +1,23 @@
-import { pgTable, varchar, timestamp, text, boolean, index, jsonb, integer } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import type { ProviderConfig, SourceType } from "@repo/console-providers";
+import type {
+  ClerkUserId,
+  SourceIdentifier,
+  SyncStatus,
+} from "@repo/console-validation";
 import { nanoid } from "@repo/lib";
-import { orgWorkspaces } from "./org-workspaces";
+import { sql } from "drizzle-orm";
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { gwInstallations } from "./gw-installations";
-import type { SourceType, ProviderConfig } from "@repo/console-providers";
-import type { ClerkUserId, SyncStatus, SourceIdentifier } from "@repo/console-validation";
+import { orgWorkspaces } from "./org-workspaces";
 
 /**
  * Workspace Sources
@@ -42,7 +55,9 @@ export const workspaceIntegrations = pgTable(
     provider: varchar("provider", { length: 50 }).notNull().$type<SourceType>(),
 
     // Who connected this source to the workspace
-    connectedBy: varchar("connected_by", { length: 191 }).notNull().$type<ClerkUserId>(),
+    connectedBy: varchar("connected_by", { length: 191 })
+      .notNull()
+      .$type<ClerkUserId>(),
 
     /**
      * Provider-specific stable IDs and sync settings (JSONB).
@@ -68,34 +83,59 @@ export const workspaceIntegrations = pgTable(
      * - GitHub: repoId (e.g., "567890123")
      * - Vercel: projectId (e.g., "prj_123456")
      */
-    providerResourceId: varchar("provider_resource_id", { length: 191 }).notNull().$type<SourceIdentifier>(),
+    providerResourceId: varchar("provider_resource_id", { length: 191 })
+      .notNull()
+      .$type<SourceIdentifier>(),
 
     // Status
     isActive: boolean("is_active").notNull().default(true),
 
     // Sync tracking
-    lastSyncedAt: timestamp("last_synced_at", { mode: "string", withTimezone: true }),
-    lastSyncStatus: varchar("last_sync_status", { length: 50 }).$type<SyncStatus>(), // "success" | "failed" | "pending"
+    lastSyncedAt: timestamp("last_synced_at", {
+      mode: "string",
+      withTimezone: true,
+    }),
+    lastSyncStatus: varchar("last_sync_status", {
+      length: 50,
+    }).$type<SyncStatus>(), // "success" | "failed" | "pending"
     lastSyncError: text("last_sync_error"),
 
     // Document count (denormalized for performance)
     documentCount: integer("document_count").notNull().default(0),
 
     // Timestamps
-    connectedAt: timestamp("connected_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).notNull().default(sql`CURRENT_TIMESTAMP`),
+    connectedAt: timestamp("connected_at", {
+      mode: "string",
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
-    workspaceIdIdx: index("workspace_source_workspace_id_idx").on(table.workspaceId),
-    installationIdIdx: index("workspace_source_installation_id_idx").on(table.installationId),
-    connectedByIdx: index("workspace_source_connected_by_idx").on(table.connectedBy),
+    workspaceIdIdx: index("workspace_source_workspace_id_idx").on(
+      table.workspaceId
+    ),
+    installationIdIdx: index("workspace_source_installation_id_idx").on(
+      table.installationId
+    ),
+    connectedByIdx: index("workspace_source_connected_by_idx").on(
+      table.connectedBy
+    ),
     isActiveIdx: index("workspace_source_is_active_idx").on(table.isActive),
     // Index for fast provider resource lookups (e.g., "find all sources for this repo")
-    providerResourceIdIdx: index("workspace_source_provider_resource_id_idx").on(table.providerResourceId),
+    providerResourceIdIdx: index(
+      "workspace_source_provider_resource_id_idx"
+    ).on(table.providerResourceId),
   })
 );
 
 // Type exports
 export type WorkspaceIntegration = typeof workspaceIntegrations.$inferSelect;
-export type InsertWorkspaceIntegration = typeof workspaceIntegrations.$inferInsert;
+export type InsertWorkspaceIntegration =
+  typeof workspaceIntegrations.$inferInsert;

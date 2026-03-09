@@ -1,6 +1,6 @@
-import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@db/console/client";
 import { orgActorIdentities } from "@db/console/schema";
+import { and, eq, isNull } from "drizzle-orm";
 
 /**
  * Minimal interface for Clerk external account data needed for actor linking.
@@ -15,8 +15,8 @@ interface ClerkExternalAccount {
  * Minimal interface for Clerk user data needed for actor linking.
  */
 interface ClerkUserForLinking {
-  id: string;
   externalAccounts?: ClerkExternalAccount[];
+  id: string;
 }
 
 /**
@@ -66,4 +66,3 @@ export async function ensureActorLinked(
     actorId: result[0]?.actorId ?? null,
   };
 }
-

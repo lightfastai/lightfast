@@ -1,18 +1,24 @@
-import type { PostTransformEvent, PostTransformReference } from "../../post-transform-event";
-import type { TransformContext } from "../../types";
-import { validatePostTransformEvent, logValidationErrors } from "../../validation";
-import { sanitizeTitle, sanitizeBody } from "../../sanitize";
 import type {
-  PreTransformGitHubPushEvent,
-  PreTransformGitHubPullRequestEvent,
-  PreTransformGitHubIssuesEvent,
-  PreTransformGitHubReleaseEvent,
+  PostTransformEvent,
+  PostTransformReference,
+} from "../../post-transform-event";
+import { sanitizeBody, sanitizeTitle } from "../../sanitize";
+import type { TransformContext } from "../../types";
+import {
+  logValidationErrors,
+  validatePostTransformEvent,
+} from "../../validation";
+import type {
   PreTransformGitHubDiscussionEvent,
+  PreTransformGitHubIssuesEvent,
+  PreTransformGitHubPullRequestEvent,
+  PreTransformGitHubPushEvent,
+  PreTransformGitHubReleaseEvent,
 } from "./schemas";
 
 export function transformGitHubPush(
   payload: PreTransformGitHubPushEvent,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const refs: PostTransformReference[] = [];
   const branch = payload.ref.replace("refs/heads/", "");
@@ -33,7 +39,7 @@ export function transformGitHubPush(
 
   const fileCount = payload.commits.reduce(
     (sum, c) => sum + c.added.length + c.modified.length + c.removed.length,
-    0,
+    0
   );
 
   const rawTitle =
@@ -79,7 +85,7 @@ export function transformGitHubPush(
 
 export function transformGitHubPullRequest(
   payload: PreTransformGitHubPullRequestEvent,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const pr = payload.pull_request;
   const refs: PostTransformReference[] = [];
@@ -112,21 +118,41 @@ export function transformGitHubPullRequest(
 
   const linkedIssues = extractLinkedIssues(pr.body ?? "");
   for (const issue of linkedIssues) {
-    refs.push({ type: "issue", id: issue.id, url: issue.url, label: issue.label });
+    refs.push({
+      type: "issue",
+      id: issue.id,
+      url: issue.url,
+      label: issue.label,
+    });
   }
 
   for (const reviewer of pr.requested_reviewers ?? []) {
     if ("login" in reviewer) {
-      refs.push({ type: "reviewer", id: reviewer.login, url: `https://github.com/${reviewer.login}`, label: null });
+      refs.push({
+        type: "reviewer",
+        id: reviewer.login,
+        url: `https://github.com/${reviewer.login}`,
+        label: null,
+      });
     }
   }
 
   for (const assignee of pr.assignees ?? []) {
-    refs.push({ type: "assignee", id: assignee.login, url: `https://github.com/${assignee.login}`, label: null });
+    refs.push({
+      type: "assignee",
+      id: assignee.login,
+      url: `https://github.com/${assignee.login}`,
+      label: null,
+    });
   }
 
   for (const label of pr.labels ?? []) {
-    refs.push({ type: "label", id: typeof label === "string" ? label : label.name, url: null, label: null });
+    refs.push({
+      type: "label",
+      id: typeof label === "string" ? label : label.name,
+      url: null,
+      label: null,
+    });
   }
 
   const actionMap: Record<string, string> = {
@@ -139,7 +165,8 @@ export function transformGitHubPullRequest(
 
   const actionTitle = actionMap[payload.action] ?? `PR ${payload.action}`;
   const rawBody = [pr.title, pr.body ?? ""].join("\n");
-  const effectiveAction = payload.action === "closed" && pr.merged ? "merged" : payload.action;
+  const effectiveAction =
+    payload.action === "closed" && pr.merged ? "merged" : payload.action;
 
   const event: PostTransformEvent = {
     source: "github",
@@ -148,7 +175,12 @@ export function transformGitHubPullRequest(
     title: sanitizeTitle(`[${actionTitle}] ${pr.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
     actor: pr.user
-      ? { id: String(pr.user.id), name: pr.user.login, email: null, avatarUrl: pr.user.avatar_url }
+      ? {
+          id: String(pr.user.id),
+          name: pr.user.login,
+          email: null,
+          avatarUrl: pr.user.avatar_url,
+        }
       : null,
     occurredAt: pr.updated_at,
     references: refs,
@@ -181,19 +213,34 @@ export function transformGitHubPullRequest(
 
 export function transformGitHubIssue(
   payload: PreTransformGitHubIssuesEvent,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const issue = payload.issue;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "issue", id: `#${issue.number}`, url: issue.html_url, label: null });
+  refs.push({
+    type: "issue",
+    id: `#${issue.number}`,
+    url: issue.html_url,
+    label: null,
+  });
 
   for (const assignee of issue.assignees ?? []) {
-    refs.push({ type: "assignee", id: assignee.login, url: `https://github.com/${assignee.login}`, label: null });
+    refs.push({
+      type: "assignee",
+      id: assignee.login,
+      url: `https://github.com/${assignee.login}`,
+      label: null,
+    });
   }
 
   for (const label of issue.labels ?? []) {
-    refs.push({ type: "label", id: typeof label === "string" ? label : label.name, url: null, label: null });
+    refs.push({
+      type: "label",
+      id: typeof label === "string" ? label : label.name,
+      url: null,
+      label: null,
+    });
   }
 
   const actionMap: Record<string, string> = {
@@ -214,7 +261,12 @@ export function transformGitHubIssue(
     title: sanitizeTitle(`[${actionTitle}] ${issue.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
     actor: issue.user
-      ? { id: String(issue.user.id), name: issue.user.login, email: null, avatarUrl: issue.user.avatar_url }
+      ? {
+          id: String(issue.user.id),
+          name: issue.user.login,
+          email: null,
+          avatarUrl: issue.user.avatar_url,
+        }
       : null,
     occurredAt: issue.updated_at,
     references: refs,
@@ -240,7 +292,7 @@ export function transformGitHubIssue(
 
 export function transformGitHubRelease(
   payload: PreTransformGitHubReleaseEvent,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const release = payload.release;
   const refs: PostTransformReference[] = [];
@@ -265,7 +317,9 @@ export function transformGitHubRelease(
     source: "github",
     sourceType: `release.${payload.action}`,
     sourceId: `release:${payload.repository.full_name}:${release.tag_name}`,
-    title: sanitizeTitle(`[${actionTitle}] ${release.name ?? release.tag_name}`),
+    title: sanitizeTitle(
+      `[${actionTitle}] ${release.name ?? release.tag_name}`
+    ),
     body: sanitizeBody(rawBody),
     actor: {
       id: String(release.author.id),
@@ -299,12 +353,17 @@ export function transformGitHubRelease(
 
 export function transformGitHubDiscussion(
   payload: PreTransformGitHubDiscussionEvent,
-  context: TransformContext,
+  context: TransformContext
 ): PostTransformEvent {
   const discussion = payload.discussion;
   const refs: PostTransformReference[] = [];
 
-  refs.push({ type: "label", id: discussion.category.name, url: null, label: null });
+  refs.push({
+    type: "label",
+    id: discussion.category.name,
+    url: null,
+    label: null,
+  });
 
   const actionMap: Record<string, string> = {
     created: "Discussion Created",
@@ -312,7 +371,8 @@ export function transformGitHubDiscussion(
     closed: "Discussion Closed",
   };
 
-  const actionTitle = actionMap[payload.action] ?? `Discussion ${payload.action}`;
+  const actionTitle =
+    actionMap[payload.action] ?? `Discussion ${payload.action}`;
   const rawBody = [discussion.title, discussion.body ?? ""].join("\n");
 
   const event: PostTransformEvent = {
@@ -351,7 +411,7 @@ export function transformGitHubDiscussion(
 }
 
 function extractLinkedIssues(
-  body: string,
+  body: string
 ): { id: string; url: string | null; label: string }[] {
   const matches: { id: string; url: string | null; label: string }[] = [];
 

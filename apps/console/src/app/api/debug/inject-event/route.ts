@@ -1,14 +1,14 @@
-import { generateObject } from "ai";
 import { gateway } from "@ai-sdk/gateway";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@db/console/client";
-import { eq } from "drizzle-orm";
-import { workspaceIntegrations, gwInstallations } from "@db/console/schema";
-import { EVENT_REGISTRY } from "@repo/console-providers";
+import { gwInstallations, workspaceIntegrations } from "@db/console/schema";
 import type { EventKey } from "@repo/console-providers";
+import { EVENT_REGISTRY } from "@repo/console-providers";
 import { createRelayClient } from "@repo/gateway-service-clients";
-import { getSchemaForEvent } from "./_lib/schemas";
+import { generateObject } from "ai";
+import { eq } from "drizzle-orm";
 import { buildContext } from "./_lib/context";
+import { getSchemaForEvent } from "./_lib/schemas";
 
 export const runtime = "nodejs";
 
@@ -41,7 +41,11 @@ export async function POST(request: Request) {
   }
 
   const { integrationId, eventKey, context } = body;
-  console.debug("[inject-event] Request body", { integrationId, eventKey, context });
+  console.debug("[inject-event] Request body", {
+    integrationId,
+    eventKey,
+    context,
+  });
 
   if (typeof integrationId !== "string" || !integrationId) {
     return Response.json({ error: "integrationId required" }, { status: 400 });
@@ -73,7 +77,9 @@ export async function POST(request: Request) {
     });
     return Response.json({ error: "installation_not_found" }, { status: 404 });
   }
-  console.debug("[inject-event] Found installation", { orgId: installation.orgId });
+  console.debug("[inject-event] Found installation", {
+    orgId: installation.orgId,
+  });
 
   // 3. Resolve event type metadata
   if (!(eventKey in EVENT_REGISTRY)) {
@@ -84,7 +90,10 @@ export async function POST(request: Request) {
   const eventDef = EVENT_REGISTRY[validKey];
   // externalKeys always has at least one entry per registry definition
   const wireEventType = eventDef.externalKeys[0] as string;
-  console.debug("[inject-event] Resolved event", { eventKey: validKey, wireEventType });
+  console.debug("[inject-event] Resolved event", {
+    eventKey: validKey,
+    wireEventType,
+  });
 
   // 4. Build schema + context for AI generation
   const schema = getSchemaForEvent(validKey);
@@ -92,7 +101,7 @@ export async function POST(request: Request) {
     integration,
     installation,
     validKey,
-    typeof context === "string" ? context : undefined,
+    typeof context === "string" ? context : undefined
   );
 
   // 5. Generate payload with Claude Haiku
@@ -115,7 +124,7 @@ export async function POST(request: Request) {
     console.debug("[inject-event] Generation failed", { error: String(err) });
     return Response.json(
       { error: "generation_failed", detail: String(err) },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -124,7 +133,10 @@ export async function POST(request: Request) {
   const apiKey = process.env.GATEWAY_API_KEY;
   if (!apiKey) {
     console.debug("[inject-event] GATEWAY_API_KEY not configured");
-    return Response.json({ error: "GATEWAY_API_KEY not configured" }, { status: 500 });
+    return Response.json(
+      { error: "GATEWAY_API_KEY not configured" },
+      { status: 500 }
+    );
   }
 
   const relay = createRelayClient({ apiKey, requestSource: "debug-panel" });
@@ -142,10 +154,12 @@ export async function POST(request: Request) {
       receivedAt: Date.now(),
     });
   } catch (err) {
-    console.debug("[inject-event] Relay dispatch failed", { error: String(err) });
+    console.debug("[inject-event] Relay dispatch failed", {
+      error: String(err),
+    });
     return Response.json(
       { error: "relay_failed", detail: String(err) },
-      { status: 502 },
+      { status: 502 }
     );
   }
 

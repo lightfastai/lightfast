@@ -120,7 +120,7 @@ export const sentryErrorEventSchema = z.object({
     z.union([
       z.tuple([z.string(), z.string()]),
       z.object({ key: z.string(), value: z.string() }),
-    ]),
+    ])
   ),
   contexts: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
   user: z
@@ -142,7 +142,7 @@ export const sentryErrorEventSchema = z.object({
           stacktrace: z
             .object({ frames: z.array(sentryStackFrameSchema) })
             .optional(),
-        }),
+        })
       ),
     })
     .optional(),
@@ -154,7 +154,14 @@ export const sentryErrorEventSchema = z.object({
 // ─── Webhook envelope schemas ─────────────────────────────────────────────────
 
 export const preTransformSentryIssueWebhookSchema = z.object({
-  action: z.enum(["created", "resolved", "assigned", "ignored", "archived", "unresolved"]),
+  action: z.enum([
+    "created",
+    "resolved",
+    "assigned",
+    "ignored",
+    "archived",
+    "unresolved",
+  ]),
   data: z.object({ issue: sentryIssueSchema }),
   installation: z.object({ uuid: z.string() }),
   actor: sentryActorSchema,
@@ -225,8 +232,16 @@ export type SentryWebhookEventType =
   | "event_alert"
   | "metric_alert";
 
-export type PreTransformSentryIssueWebhook = z.infer<typeof preTransformSentryIssueWebhookSchema>;
-export type PreTransformSentryErrorWebhook = z.infer<typeof preTransformSentryErrorWebhookSchema>;
-export type PreTransformSentryEventAlertWebhook = z.infer<typeof preTransformSentryEventAlertWebhookSchema>;
-export type PreTransformSentryMetricAlertWebhook = z.infer<typeof preTransformSentryMetricAlertWebhookSchema>;
+export type PreTransformSentryIssueWebhook = z.infer<
+  typeof preTransformSentryIssueWebhookSchema
+>;
+export type PreTransformSentryErrorWebhook = z.infer<
+  typeof preTransformSentryErrorWebhookSchema
+>;
+export type PreTransformSentryEventAlertWebhook = z.infer<
+  typeof preTransformSentryEventAlertWebhookSchema
+>;
+export type PreTransformSentryMetricAlertWebhook = z.infer<
+  typeof preTransformSentryMetricAlertWebhookSchema
+>;
 export type SentryWebhookPayload = z.infer<typeof sentryWebhookPayloadSchema>;

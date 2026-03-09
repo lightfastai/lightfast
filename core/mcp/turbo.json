@@ -3,9 +3,7 @@
   "tags": ["core"],
   "tasks": {
     "build": {
-      "passThroughEnv": [
-        "LIGHTFAST_API_KEY"
-      ]
+      "passThroughEnv": ["LIGHTFAST_API_KEY"]
     }
   }
 }

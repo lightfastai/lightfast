@@ -1,7 +1,6 @@
-import type { NextRequest } from "next/server";
+import { createOrgTRPCContext, orgRouter } from "@api/console";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-
-import { orgRouter, createOrgTRPCContext } from "@api/console";
+import type { NextRequest } from "next/server";
 import { env } from "~/env";
 
 // Use Node.js runtime instead of Edge for GitHub App crypto operations
@@ -20,59 +19,59 @@ export const runtime = "nodejs";
  * See: apps/console/microfrontends.json
  */
 const getAllowedOrigins = (): Set<string> => {
-	const origins = new Set<string>();
+  const origins = new Set<string>();
 
-	// Production origins (all microfrontends served from lightfast.ai)
-	if (env.VERCEL_ENV === "production") {
-		origins.add("https://lightfast.ai");
-	}
+  // Production origins (all microfrontends served from lightfast.ai)
+  if (env.VERCEL_ENV === "production") {
+    origins.add("https://lightfast.ai");
+  }
 
-	// Preview deployment origins (Vercel preview URLs)
-	if (env.VERCEL_ENV === "preview" && env.VERCEL_URL) {
-		origins.add(`https://${env.VERCEL_URL}`);
-	}
+  // Preview deployment origins (Vercel preview URLs)
+  if (env.VERCEL_ENV === "preview" && env.VERCEL_URL) {
+    origins.add(`https://${env.VERCEL_URL}`);
+  }
 
-	// Development origins (known local ports from microfrontends.json)
-	if (env.NODE_ENV === "development") {
-		origins.add("http://localhost:4107"); // Console app (local dev)
-		origins.add("http://localhost:3024"); // Microfrontends proxy
-		origins.add("http://localhost:4101"); // WWW app
-		origins.add("http://localhost:4104"); // Auth app
-	}
+  // Development origins (known local ports from microfrontends.json)
+  if (env.NODE_ENV === "development") {
+    origins.add("http://localhost:4107"); // Console app (local dev)
+    origins.add("http://localhost:3024"); // Microfrontends proxy
+    origins.add("http://localhost:4101"); // WWW app
+    origins.add("http://localhost:4104"); // Auth app
+  }
 
-	return origins;
+  return origins;
 };
 
 const setCorsHeaders = (req: NextRequest, res: Response) => {
-	const originHeader = req.headers.get("origin");
-	const allowedOrigins = getAllowedOrigins();
+  const originHeader = req.headers.get("origin");
+  const allowedOrigins = getAllowedOrigins();
 
-	// Check if origin is in allowed list
-	const allowOrigin =
-		originHeader && allowedOrigins.has(originHeader) ? originHeader : null;
+  // Check if origin is in allowed list
+  const allowOrigin =
+    originHeader && allowedOrigins.has(originHeader) ? originHeader : null;
 
-	// Reject requests from unauthorized origins
-	if (!allowOrigin) {
-		return res;
-	}
+  // Reject requests from unauthorized origins
+  if (!allowOrigin) {
+    return res;
+  }
 
-	res.headers.set("Access-Control-Allow-Origin", allowOrigin);
-	res.headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-	res.headers.set(
-		"Access-Control-Allow-Headers",
-		"content-type,authorization,x-trpc-source",
-	);
-	res.headers.set("Vary", "Origin");
-	res.headers.set("Access-Control-Allow-Credentials", "true");
+  res.headers.set("Access-Control-Allow-Origin", allowOrigin);
+  res.headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.headers.set(
+    "Access-Control-Allow-Headers",
+    "content-type,authorization,x-trpc-source"
+  );
+  res.headers.set("Vary", "Origin");
+  res.headers.set("Access-Control-Allow-Credentials", "true");
 
-	return res;
+  return res;
 };
 
 export const OPTIONS = (req: NextRequest) => {
-	const response = new Response(null, {
-		status: 204,
-	});
-	return setCorsHeaders(req, response);
+  const response = new Response(null, {
+    status: 204,
+  });
+  return setCorsHeaders(req, response);
 };
 
 /**
@@ -81,20 +80,20 @@ export const OPTIONS = (req: NextRequest) => {
  * Examples: workspace.create, integration.github.list, jobs.list
  */
 const handler = async (req: NextRequest) => {
-	const response = await fetchRequestHandler({
-		endpoint: "/api/trpc/org",
-		router: orgRouter,
-		req,
-		createContext: () =>
-			createOrgTRPCContext({
-				headers: req.headers,
-			}),
-		onError({ error, path }) {
-			console.error(`>>> tRPC Error on 'org.${path}'`, error);
-		},
-	});
+  const response = await fetchRequestHandler({
+    endpoint: "/api/trpc/org",
+    router: orgRouter,
+    req,
+    createContext: () =>
+      createOrgTRPCContext({
+        headers: req.headers,
+      }),
+    onError({ error, path }) {
+      console.error(`>>> tRPC Error on 'org.${path}'`, error);
+    },
+  });
 
-	return setCorsHeaders(req, response);
+  return setCorsHeaders(req, response);
 };
 
 export { handler as GET, handler as POST };

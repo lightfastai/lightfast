@@ -1,18 +1,18 @@
 // Export router types for client usage
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 
-import type { UserRouter, OrgRouter, M2MRouter } from "./root";
+import type { M2MRouter, OrgRouter, UserRouter } from "./root";
 
 /**
  * Console API exports
  */
 
+export type { M2MRouter, OrgRouter, UserRouter } from "./root";
 // Export split routers (user-scoped, org-scoped, and M2M)
-export { userRouter, orgRouter, m2mRouter } from "./root";
-export type { UserRouter, OrgRouter, M2MRouter } from "./root";
+export { m2mRouter, orgRouter, userRouter } from "./root";
 
 // Export split context creation functions
-export { createUserTRPCContext, createOrgTRPCContext } from "./trpc";
+export { createOrgTRPCContext, createUserTRPCContext } from "./trpc";
 
 // Type utilities for split routers
 export type UserRouterInputs = inferRouterInputs<UserRouter>;
