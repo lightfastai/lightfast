@@ -10,6 +10,7 @@ export function PasswordForm() {
         name="identifier"
         placeholder="Email or username"
         required
+        size="lg"
         type="text"
       />
       <Input
@@ -17,6 +18,7 @@ export function PasswordForm() {
         name="password"
         placeholder="Password"
         required
+        size="lg"
         type="password"
       />
       <Button className="w-full" size="lg" type="submit">

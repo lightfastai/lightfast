@@ -44,8 +44,10 @@ export default function AuthError({ error, reset }: AuthErrorProps) {
           description="We encountered an issue with authentication. Please try again."
           errorId={error.digest}
         >
-          <Button onClick={() => reset()}>Try again</Button>
-          <Button asChild variant="outline">
+          <Button onClick={() => reset()} size="lg">
+            Try again
+          </Button>
+          <Button asChild size="lg" variant="outline">
             <Link href="/sign-in">Back to Sign In</Link>
           </Button>
         </LightfastErrorPage>

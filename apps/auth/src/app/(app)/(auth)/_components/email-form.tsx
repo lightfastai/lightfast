@@ -15,10 +15,11 @@ export function EmailForm({ action, ticket }: EmailFormProps) {
     <form action={serverAction} className="space-y-4">
       {ticket && <input name="ticket" type="hidden" value={ticket} />}
       <Input
-        className="h-12 bg-background dark:bg-background"
+        className="bg-background dark:bg-background"
         name="email"
         placeholder="Email Address"
         required
+        size="lg"
         type="email"
       />
       <Button className="w-full" size="lg" type="submit">
