@@ -213,14 +213,14 @@ describe("joinEarlyAccessAction", () => {
 
   // ── Redis ───────────────────────────────────────────────────────
 
-  it("redirects with already-registered on Redis duplicate", async () => {
+  it("redirects to success on Redis duplicate (already registered)", async () => {
     mockSismember.mockResolvedValue(1); // email exists
     await expect(joinEarlyAccessAction(validFormData())).rejects.toThrow(
       "REDIRECT:"
     );
-    expect(mockRedirect).toHaveBeenCalledWith(
-      expect.stringContaining("error=")
-    );
+    const url = mockRedirect.mock.calls[0]?.[0] as string;
+    expect(url).toContain("success=true");
+    expect(url).toContain("email=user");
     // Should NOT call Clerk
     expect(mockWaitlistCreate).not.toHaveBeenCalled();
   });
@@ -264,19 +264,19 @@ describe("joinEarlyAccessAction", () => {
 
   // ── Clerk errors ────────────────────────────────────────────────
 
-  it("redirects with already-registered on Clerk email_address_exists", async () => {
+  it("redirects to success on Clerk email_address_exists (already registered)", async () => {
     mockWaitlistCreate.mockRejectedValue(
       clerkAPIError("email_address_exists")
     );
     await expect(joinEarlyAccessAction(validFormData())).rejects.toThrow(
       "REDIRECT:"
     );
-    expect(mockRedirect).toHaveBeenCalledWith(
-      expect.stringContaining("error=")
-    );
+    const url = mockRedirect.mock.calls[0]?.[0] as string;
+    expect(url).toContain("success=true");
+    expect(url).toContain("email=user");
   });
 
-  it("redirects with isRateLimit on Clerk 429", async () => {
+  it("redirects with isRateLimit and preserves fields on Clerk 429", async () => {
     mockWaitlistCreate.mockRejectedValue(
       clerkAPIError("too_many_requests", { status: 429 })
     );
@@ -285,6 +285,9 @@ describe("joinEarlyAccessAction", () => {
     );
     const url = mockRedirect.mock.calls[0]?.[0] as string;
     expect(url).toContain("isRateLimit=true");
+    expect(url).toContain("email=user");
+    expect(url).toContain("companySize=");
+    expect(url).toContain("sources=");
   });
 
   it("redirects with lockout message on Clerk user_locked with seconds", async () => {
@@ -326,14 +329,16 @@ describe("joinEarlyAccessAction", () => {
 
   // ── Non-Clerk errors ────────────────────────────────────────────
 
-  it("redirects with generic error on non-Clerk errors", async () => {
+  it("redirects with generic error and preserves fields on non-Clerk errors", async () => {
     mockWaitlistCreate.mockRejectedValue(new Error("Network error"));
     await expect(joinEarlyAccessAction(validFormData())).rejects.toThrow(
       "REDIRECT:"
     );
     expect(mockCaptureException).toHaveBeenCalled();
-    expect(mockRedirect).toHaveBeenCalledWith(
-      expect.stringContaining("error=")
-    );
+    const url = mockRedirect.mock.calls[0]?.[0] as string;
+    expect(url).toContain("error=");
+    expect(url).toContain("email=user");
+    expect(url).toContain("companySize=");
+    expect(url).toContain("sources=");
   });
 });
