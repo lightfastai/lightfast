@@ -1,13 +1,10 @@
-import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
-import { env } from "~/env";
 import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
 import { OAuthButton } from "../_components/oauth-button";
 import { OTPIsland } from "../_components/otp-island";
-import { PasswordForm } from "../_components/password-form";
 import { SessionActivator } from "../_components/session-activator";
 import { signInSearchParams } from "../_lib/search-params";
 
@@ -43,12 +40,10 @@ export default async function SignInPage({
   const { step, email, error, token, waitlist } =
     await signInSearchParams.parse(searchParams);
 
-  const showPasswordSignIn = env.NEXT_PUBLIC_VERCEL_ENV !== "production";
-
   return (
     <div className="w-full space-y-8">
-      {/* Header — only on email and password steps */}
-      {(step === "email" || step === "password") && !error && (
+      {/* Header — only on email step */}
+      {step === "email" && !error && (
         <div className="text-center">
           <h1 className="font-medium font-pp text-3xl text-foreground">
             Log in to Lightfast
@@ -70,33 +65,8 @@ export default async function SignInPage({
         {!error && step === "email" && (
           <>
             <EmailForm action="sign-in" />
-
-            {showPasswordSignIn && (
-              <>
-                <SeparatorWithText text="Or" />
-                <Button asChild className="w-full" size="lg" variant="outline">
-                  <a href="/sign-in?step=password">Sign in with Password</a>
-                </Button>
-              </>
-            )}
-
             <SeparatorWithText text="Or" />
             <OAuthButton mode="sign-in" />
-          </>
-        )}
-
-        {/* Step: password — server component form (dev/preview only) */}
-        {!error && step === "password" && (
-          <>
-            <PasswordForm />
-            <Button
-              asChild
-              className="w-full text-muted-foreground hover:text-foreground"
-              size="lg"
-              variant="ghost"
-            >
-              <a href="/sign-in">← Back to other options</a>
-            </Button>
           </>
         )}
 
