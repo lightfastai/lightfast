@@ -45,9 +45,12 @@ const GlobalError = ({ error, reset }: GlobalErrorProperties) => {
               description="Sorry, something went wrong on our end."
               errorId={error.digest}
             >
-              <Button onClick={() => reset()}>Try again</Button>
+              <Button onClick={() => reset()} size="lg">
+                Try again
+              </Button>
               <Button
                 onClick={() => (window.location.href = "/")}
+                size="lg"
                 variant="outline"
               >
                 Return Home
