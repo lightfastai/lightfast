@@ -22,6 +22,13 @@ export const env = createEnv({
     GATEWAY_API_KEY: z.string().min(1),
 
     /**
+     * Feature flag: enable backfill notifications to relay service.
+     * Defaults to false — set to "true" when backfill is production-ready.
+     */
+    // TODO(BACKFILL): remove flag once backfill is production-ready
+    ENABLE_BACKFILL: z.coerce.boolean().default(false),
+
+    /**
      * Encryption key for decrypting OAuth tokens from database
      * Must match the key used by apps/console to encrypt tokens
      *

@@ -22,8 +22,8 @@ export async function notifyBackfill(params: {
   orgId: string;
   correlationId?: string;
 }): Promise<void> {
-  // TODO: Remove when backfill is ready for production
-  return;
+  // TODO(BACKFILL): remove flag once backfill is production-ready
+  if (!env.ENABLE_BACKFILL) return;
 
   const correlationId = params.correlationId ?? crypto.randomUUID();
   try {
