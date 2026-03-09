@@ -37,14 +37,12 @@ const wwwConfig: NextConfig = {
     "@vendor/inngest",
     "@vendor/observability",
     "@vendor/next",
-    "@vendor/upstash",
     "@vendor/cms",
   ],
 
   // Add automatic static optimization where possible
   experimental: {
     optimizePackageImports: [
-      "react-confetti",
       "framer-motion",
       "date-fns",
       "class-variance-authority",
