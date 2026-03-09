@@ -19,7 +19,7 @@
   "dependencies": {
     "@clerk/nextjs": "catalog:",
     "@clerk/shared": "catalog:",
-    "@hookform/resolvers": "catalog:",
+    "@repo/app-header": "workspace:*",
     "@repo/ui": "workspace:*",
     "@rescale/nemo": "^2.1.1",
     "@sentry/nextjs": "catalog:",
@@ -40,7 +40,6 @@
     "react": "19.2.4",
     "react-confetti": "^6.4.0",
     "react-dom": "19.2.4",
-    "react-hook-form": "catalog:",
     "zod": "catalog:zod3"
   },
   "devDependencies": {
