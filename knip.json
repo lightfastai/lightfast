@@ -3,21 +3,23 @@
   "workspaces": {
     ".": {
       "entry": ["scripts/*.{js,ts,sh}"],
-      "ignoreDependencies": ["turbo-ignore"]
+      "ignoreDependencies": ["turbo-ignore", "@biomejs/biome"]
     },
     "apps/console": {
-      "entry": [
-        "src/app/**/*.{ts,tsx}",
-        "next.config.ts"
-      ],
-      "project": ["src/**/*.{ts,tsx}"]
+      "entry": ["src/app/**/*.{ts,tsx}", "next.config.ts"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": [
+        "@repo/console-auth-middleware",
+        "@repo/console-backfill",
+        "@repo/lib",
+        "@vitest/expect",
+        "zustand"
+      ]
     },
     "apps/www": {
-      "entry": [
-        "src/app/**/*.{ts,tsx}",
-        "next.config.ts"
-      ],
-      "project": ["src/**/*.{ts,tsx}"]
+      "entry": ["src/app/**/*.{ts,tsx}", "next.config.ts"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["jiti"]
     },
     "apps/auth": {
       "entry": [
@@ -92,6 +94,9 @@
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["react", "@types/react"]
     },
+    "packages/console-upstash-realtime": {
+      "ignoreDependencies": ["@types/react"]
+    },
     "packages/ui": {
       "entry": ["src/index.ts"],
       "project": ["src/**/*.{ts,tsx}"],
@@ -120,7 +125,7 @@
       "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"],
       "drizzle": false,
-      "ignoreDependencies": ["next"]
+      "ignoreDependencies": ["hono", "next"]
     },
     "vendor/next": {
       "entry": ["src/index.ts"],

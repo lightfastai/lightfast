@@ -19,10 +19,7 @@
   },
   "dependencies": {
     "@db/console": "workspace:*",
-    "@neondatabase/serverless": "catalog:",
-    "@repo/console-api-key": "workspace:*",
     "@repo/console-providers": "workspace:*",
-    "@repo/console-validation": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@vendor/db": "workspace:*",
@@ -35,7 +32,6 @@
     "zod": "catalog:zod3"
   },
   "devDependencies": {
-    "@repo/console-test-data": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "dotenv-cli": "catalog:",

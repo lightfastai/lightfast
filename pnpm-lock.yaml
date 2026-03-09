@@ -120,15 +120,9 @@ catalogs:
     neverthrow:
       specifier: ^8.2.0
       version: 8.2.0
-    postgres:
-      specifier: ^3.4.5
-      version: 3.4.7
     react-hook-form:
       specifier: ^7.71.2
       version: 7.71.2
-    redis:
-      specifier: ^5.6.0
-      version: 5.11.0
     require-in-the-middle:
       specifier: ^7.1.1
       version: 7.5.2
@@ -235,9 +229,6 @@ importers:
       '@ai-sdk/gateway':
         specifier: 'catalog:'
         version: 1.0.7(zod@4.3.6)
-      '@clerk/nextjs':
-        specifier: 'catalog:'
-        version: 7.0.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@db/console':
         specifier: workspace:*
         version: link:../../db/console
@@ -250,9 +241,6 @@ importers:
       '@repo/console-auth-middleware':
         specifier: workspace:^
         version: link:../../packages/console-auth-middleware
-      '@repo/console-backfill':
-        specifier: workspace:*
-        version: link:../../packages/console-backfill
       '@repo/console-chunking':
         specifier: workspace:*
         version: link:../../packages/console-chunking
@@ -298,18 +286,9 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@4.3.6)
-      '@tanstack/react-query':
-        specifier: 'catalog:'
-        version: 5.90.21(react@19.2.4)
-      '@trpc/client':
-        specifier: 'catalog:'
-        version: 11.12.0(@trpc/server@11.12.0(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.12.0(typescript@5.9.3)
-      '@trpc/tanstack-react-query':
-        specifier: 'catalog:'
-        version: 11.12.0(@tanstack/react-query@5.90.21(react@19.2.4))(@trpc/client@11.12.0(@trpc/server@11.12.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.12.0(typescript@5.9.3))(react@19.2.4)(typescript@5.9.3)
       '@vendor/clerk':
         specifier: workspace:*
         version: link:../../vendor/clerk
@@ -322,15 +301,6 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
-      '@vendor/pinecone':
-        specifier: workspace:*
-        version: link:../../vendor/pinecone
-      '@vendor/related-projects':
-        specifier: workspace:*
-        version: link:../../vendor/related-projects
-      '@vercel/related-projects':
-        specifier: 'catalog:'
-        version: 1.0.1
       ai:
         specifier: 'catalog:'
         version: 5.0.52(zod@4.3.6)
@@ -343,21 +313,12 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
-      gray-matter:
-        specifier: ^4.0.3
-        version: 4.0.3
       inngest:
         specifier: 'catalog:'
         version: 3.52.6(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@vercel/node@5.6.11(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.5)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)(zod@4.3.6)
-      minimatch:
-        specifier: ^10.2.3
-        version: 10.2.4
       nanoid:
         specifier: 'catalog:'
         version: 5.1.6
-      react:
-        specifier: ^19.2.4
-        version: 19.2.4
       superjson:
         specifier: 'catalog:'
         version: 2.2.6
@@ -383,12 +344,6 @@ importers:
 
   apps/auth:
     dependencies:
-      '@clerk/nextjs':
-        specifier: 'catalog:'
-        version: 7.0.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@clerk/shared':
-        specifier: 'catalog:'
-        version: 4.0.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -531,9 +486,6 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
-      '@vendor/related-projects':
-        specifier: workspace:*
-        version: link:../../vendor/related-projects
       hono:
         specifier: 'catalog:'
         version: 4.12.5
@@ -579,10 +531,7 @@ importers:
         version: link:../../api/console
       '@clerk/nextjs':
         specifier: 'catalog:'
-        version: 7.0.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@clerk/shared':
-        specifier: 'catalog:'
-        version: 4.0.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 7.0.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@db/console':
         specifier: workspace:*
         version: link:../../db/console
@@ -592,15 +541,6 @@ importers:
       '@lightfastai/ai-sdk':
         specifier: workspace:*
         version: link:../../core/ai-sdk
-      '@nosecone/next':
-        specifier: 1.1.0
-        version: 1.1.0(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
-      '@octokit/openapi-types':
-        specifier: ^26.0.0
-        version: 26.0.0
-      '@octokit/types':
-        specifier: ^15.0.0
-        version: 15.0.0
       '@radix-ui/react-popover':
         specifier: ^1.1.14
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -682,9 +622,6 @@ importers:
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.12.0(typescript@5.9.3)
-      '@trpc/tanstack-react-query':
-        specifier: 'catalog:'
-        version: 11.12.0(@tanstack/react-query@5.90.21(react@19.2.4))(@trpc/client@11.12.0(@trpc/server@11.12.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.12.0(typescript@5.9.3))(react@19.2.4)(typescript@5.9.3)
       '@upstash/redis':
         specifier: 'catalog:'
         version: 1.36.3
@@ -718,9 +655,6 @@ importers:
       '@vendor/upstash':
         specifier: workspace:^
         version: link:../../vendor/upstash
-      '@vendor/upstash-realtime':
-        specifier: workspace:*
-        version: link:../../vendor/upstash-realtime
       '@vendor/upstash-workflow':
         specifier: workspace:*
         version: link:../../vendor/upstash-workflow
@@ -751,9 +685,6 @@ importers:
       nuqs:
         specifier: ^2.8.9
         version: 2.8.9(@tanstack/react-router@1.133.15(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
-      octokit:
-        specifier: ^5.0.5
-        version: 5.0.5
       react:
         specifier: ^19.2.4
         version: 19.2.4
@@ -763,24 +694,9 @@ importers:
       react-hook-form:
         specifier: 'catalog:'
         version: 7.71.2(react@19.2.4)
-      recharts:
-        specifier: ^2.15.4
-        version: 2.15.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      redis:
-        specifier: 'catalog:'
-        version: 5.11.0
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
-      shiki:
-        specifier: ^3.9.2
-        version: 3.13.0
-      sonner:
-        specifier: ^2.0.6
-        version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      superjson:
-        specifier: 'catalog:'
-        version: 2.2.6
       zod:
         specifier: catalog:zod4
         version: 4.3.6
@@ -797,12 +713,6 @@ importers:
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.9.1
-      '@testing-library/react':
-        specifier: ^16.3.0
-        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@testing-library/user-event':
-        specifier: ^14.6.1
-        version: 14.6.1(@testing-library/dom@10.4.1)
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.22
@@ -830,9 +740,6 @@ importers:
       import-in-the-middle:
         specifier: 'catalog:'
         version: 1.15.0
-      nosecone:
-        specifier: 1.0.0-beta.15
-        version: 1.0.0-beta.15
       postcss:
         specifier: catalog:tailwind4
         version: 8.5.8
@@ -1005,9 +912,6 @@ importers:
       hono:
         specifier: 'catalog:'
         version: 4.12.5
-      postgres:
-        specifier: 'catalog:'
-        version: 3.4.7
       zod:
         specifier: catalog:zod4
         version: 4.3.6
@@ -1045,18 +949,9 @@ importers:
       '@db/console':
         specifier: workspace:*
         version: link:../../db/console
-      '@neondatabase/serverless':
-        specifier: 'catalog:'
-        version: 1.0.2
-      '@repo/console-api-key':
-        specifier: workspace:*
-        version: link:../../packages/console-api-key
       '@repo/console-providers':
         specifier: workspace:*
         version: link:../../packages/console-providers
-      '@repo/console-validation':
-        specifier: workspace:*
-        version: link:../../packages/console-validation
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
@@ -1088,9 +983,6 @@ importers:
         specifier: catalog:zod3
         version: 3.25.76
     devDependencies:
-      '@repo/console-test-data':
-        specifier: workspace:*
-        version: link:../../packages/console-test-data
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
@@ -1387,21 +1279,12 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
-      '@t3-oss/env-nextjs':
-        specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
-      friendlier-words:
-        specifier: ^1.1.3
-        version: 1.2.0
-      zod:
-        specifier: catalog:zod3
-        version: 3.25.76
     devDependencies:
       '@planetscale/database':
         specifier: ^1.19.0
@@ -1478,9 +1361,6 @@ importers:
       '@repo/console-validation':
         specifier: workspace:*
         version: link:../console-validation
-      ai:
-        specifier: 'catalog:'
-        version: 5.0.52(zod@4.3.6)
       zod:
         specifier: catalog:zod4
         version: 4.3.6
@@ -1569,9 +1449,6 @@ importers:
       '@repo/console-providers':
         specifier: workspace:*
         version: link:../console-providers
-      '@repo/console-validation':
-        specifier: workspace:*
-        version: link:../console-validation
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -1719,9 +1596,6 @@ importers:
       '@octokit/plugin-throttling':
         specifier: ^11.0.3
         version: 11.0.3(@octokit/core@7.0.6)
-      '@octokit/webhooks-types':
-        specifier: ^7.6.1
-        version: 7.6.1
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
@@ -1944,9 +1818,6 @@ importers:
       '@repo/console-providers':
         specifier: workspace:*
         version: link:../console-providers
-      '@repo/console-validation':
-        specifier: workspace:*
-        version: link:../console-validation
       '@repo/lib':
         specifier: workspace:*
         version: link:../lib
@@ -2080,9 +1951,6 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../lib
-      friendlier-words:
-        specifier: ^1.1.3
-        version: 1.2.0
       zod:
         specifier: catalog:zod4
         version: 4.3.6
@@ -2541,7 +2409,7 @@ importers:
         version: 3.0.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@clerk/nextjs':
         specifier: 'catalog:'
-        version: 7.0.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 7.0.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@clerk/shared':
         specifier: 'catalog:'
         version: 4.0.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -5508,9 +5376,6 @@ packages:
     resolution: {integrity: sha512-MFlzzoDJVw/GcbfzVC1RLR36QqkTLUf79vLVO3D+xn7r0QgxnFoLZgtrzxiQErAjFUOdH6fas2KeQJ1yr/qaXQ==}
     engines: {node: '>= 20'}
 
-  '@octokit/webhooks-types@7.6.1':
-    resolution: {integrity: sha512-S8u2cJzklBC0FgTwWVLaM8tMrDuDMVE4xiTK4EYXM9GntyvrdbSoxqDQa+Fh57CCNApyIpyeqPhhFEmHPfrXgw==}
-
   '@octokit/webhooks@14.1.3':
     resolution: {integrity: sha512-gcK4FNaROM9NjA0mvyfXl0KPusk7a1BeA8ITlYEZVQCXF5gcETTd4yhAU0Kjzd8mXwYHppzJBWgdBVpIR9wUcQ==}
     engines: {node: '>= 20'}
@@ -7200,39 +7065,6 @@ packages:
       react: ^19.2.4
       react-dom: ^19.2.4
 
-  '@redis/bloom@5.11.0':
-    resolution: {integrity: sha512-KYiVilAhAFN3057afUb/tfYJpsEyTkQB+tQcn5gVVA7DgcNOAj8lLxe4j8ov8BF6I9C1Fe/kwlbuAICcTMX8Lw==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.11.0
-
-  '@redis/client@5.11.0':
-    resolution: {integrity: sha512-GHoprlNQD51Xq2Ztd94HHV94MdFZQ3CVrpA04Fz8MVoHM0B7SlbmPEVIjwTbcv58z8QyjnrOuikS0rWF03k5dQ==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@node-rs/xxhash': ^1.1.0
-    peerDependenciesMeta:
-      '@node-rs/xxhash':
-        optional: true
-
-  '@redis/json@5.11.0':
-    resolution: {integrity: sha512-1iAy9kAtcD0quB21RbPTbUqqy+T2Uu2JxucwE+B4A+VaDbIRvpZR6DMqV8Iqaws2YxJYB3GC5JVNzPYio2ErUg==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.11.0
-
-  '@redis/search@5.11.0':
-    resolution: {integrity: sha512-g1l7f3Rnyk/xI99oGHIgWHSKFl45Re5YTIcO8j/JE8olz389yUFyz2+A6nqVy/Zi031VgPDWscbbgOk8hlhZ3g==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.11.0
-
-  '@redis/time-series@5.11.0':
-    resolution: {integrity: sha512-TWFeOcU4xkj0DkndnOyhtxvX1KWD+78UHT3XX3x3XRBUGWeQrKo3jqzDsZwxbggUgf9yLJr/akFHXru66X5UQA==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.11.0
-
   '@remotion/bundler@4.0.434':
     resolution: {integrity: sha512-S62GkQnMbS/svtNTxZwWvKE7oCSVGaeZllMMig07bFXsf+xLbgfZDBhe4iMqdOyk9+++OVmwgz0qNo+1q2r0FQ==}
     peerDependencies:
@@ -8406,34 +8238,9 @@ packages:
       react: ^19.2.4
       react-dom: ^19.2.4
 
-  '@testing-library/dom@10.4.1':
-    resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
-    engines: {node: '>=18'}
-
   '@testing-library/jest-dom@6.9.1':
     resolution: {integrity: sha512-zIcONa+hVtVSSep9UT3jZ5rizo2BsxgyDYU7WFD5eICBE7no3881HGeb/QkGfsJs6JTkY1aQhT7rIPC7e+0nnA==}
     engines: {node: '>=14', npm: '>=6', yarn: '>=1'}
-
-  '@testing-library/react@16.3.2':
-    resolution: {integrity: sha512-XU5/SytQM+ykqMnAnvB2umaJNIOsLF3PVv//1Ew4CTcpz0/BRyy/af40qqrt7SjKpDdT1saBMc42CUok5gaw+g==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@testing-library/dom': ^10.0.0
-      '@types/react': ^19.2.14
-      '@types/react-dom': ^19.2.3
-      react: ^19.2.4
-      react-dom: ^19.2.4
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      '@types/react-dom':
-        optional: true
-
-  '@testing-library/user-event@14.6.1':
-    resolution: {integrity: sha512-vq7fv0rnt+QTXgPxr5Hjc210p6YKq2kmdziLgnsZGgLJ9e6VAShx1pACLuRjd/AS/sr7phAR58OIIpf0LlmQNw==}
-    engines: {node: '>=12', npm: '>=6'}
-    peerDependencies:
-      '@testing-library/dom': '>=7.21.4'
 
   '@tinyhttp/accepts@1.3.0':
     resolution: {integrity: sha512-YaJ4EMgVUI6JHzWO14lr6vn/BLJEoFN4Sqd20l0/oBcLLENkP8gnPtX1jB7OhIu0AE40VCweAqvSP+0/pgzB1g==}
@@ -8564,9 +8371,6 @@ packages:
 
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
-
-  '@types/aria-query@5.0.4':
-    resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
 
   '@types/aws-lambda@8.10.156':
     resolution: {integrity: sha512-LElQP+QliVWykC7OF8dNr04z++HJCMO2lF7k9HuKoSDARqhcjHq8MzbrRwujCSDeBHIlvaimbuY/tVZL36KXFQ==}
@@ -9352,10 +9156,6 @@ packages:
     resolution: {integrity: sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==}
     engines: {node: '>=8'}
 
-  ansi-styles@5.2.0:
-    resolution: {integrity: sha512-Cxwpt2SfTzTtXcfOlzGEee8O+c+MmUgGrNiBcXnuWxuFJHe6a5Hz7qwhwe5OgaSYI0IJvkLqWX1ASG+cJOkEiA==}
-    engines: {node: '>=10'}
-
   ansi-styles@6.2.3:
     resolution: {integrity: sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg==}
     engines: {node: '>=12'}
@@ -9386,9 +9186,6 @@ packages:
   aria-hidden@1.2.6:
     resolution: {integrity: sha512-ik3ZgC9dY/lYVVM++OISsaYDeg1tb0VtP5uL3ouh1koGOaUMDPpbFIei4JkFimWUFPn90sbMNMXQAIVOlnYKJA==}
     engines: {node: '>=10'}
-
-  aria-query@5.3.0:
-    resolution: {integrity: sha512-b0P0sZPKtyu8HkeRAfCq0IfURZK+SuwMjY1UXGBU27wpAiTwQAIlq56IbIO+ytk/JjS1fMR14ee5WBBfKi5J6A==}
 
   aria-query@5.3.2:
     resolution: {integrity: sha512-COROpnaoap1E2F000S62r6A60uHZnmlvomhfyT2DlTcrY1OrBKn2UhH7qn5wTC9zMvD0AY7csdPSNwKP+7WiQw==}
@@ -9740,10 +9537,6 @@ packages:
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
-
-  cluster-key-slot@1.1.2:
-    resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
-    engines: {node: '>=0.10.0'}
 
   cmdk@1.1.1:
     resolution: {integrity: sha512-Vsv7kFaXm+ptHDMZ7izaRsP70GgrW9NBNGswt9OZaVBLlE0SNpDq8eu/VGXyF9r7M0azK3Wy7OlYXsuyYLFzHg==}
@@ -10252,9 +10045,6 @@ packages:
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
-
-  dom-accessibility-api@0.5.16:
-    resolution: {integrity: sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg==}
 
   dom-accessibility-api@0.6.3:
     resolution: {integrity: sha512-7ZgogeTnjuHbo+ct10G9Ffp0mif17idi0IyWNVA/wcwcm7NPOD/WEHVP3n7n3MhXqxoIYm8d6MuZohYWIZ4T3w==}
@@ -10963,10 +10753,6 @@ packages:
   fresh@2.0.0:
     resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
     engines: {node: '>= 0.8'}
-
-  friendlier-words@1.2.0:
-    resolution: {integrity: sha512-N7qITI6SwLwuDl79AgOKEqKj56q/DdQz5S08amuPZZ5V2gFJQvXHuQ5Imm932WjeMiZgXSW3u9zPhL6T0/UIVw==}
-    deprecated: This package has been renamed to joyful. You can install it with npm i joyful
 
   fs-extra@11.1.0:
     resolution: {integrity: sha512-0rcTq621PD5jM/e0a3EJoGC/1TC5ZBCERW82LQuwfGnCa1V8w7dpYH1yNu+SLb6E5dkeCBzKEyLGlFrnr+dUyw==}
@@ -12102,10 +11888,6 @@ packages:
     resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
     engines: {node: '>=12'}
 
-  lz-string@1.5.0:
-    resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
-    hasBin: true
-
   magic-string@0.30.19:
     resolution: {integrity: sha512-2N21sPY9Ws53PZvsEpVtNuSW+ScYbQdp4b9qUaL+9QkHUrGFKo56Lg9Emg5s9V/qrtNBmiR01sYhUOwu3H+VOw==}
 
@@ -13082,10 +12864,6 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
 
-  pretty-format@27.5.1:
-    resolution: {integrity: sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-
   pretty-ms@7.0.1:
     resolution: {integrity: sha512-973driJZvxiGOQ5ONsFhOF/DtzPMOMtgC11kCpUrPGMTgqp2q/1gwzCquocrN33is0VZ5GFHXZYMM9l6h67v2Q==}
     engines: {node: '>=10'}
@@ -13198,9 +12976,6 @@ packages:
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
-
-  react-is@17.0.2:
-    resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
 
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
@@ -13337,10 +13112,6 @@ packages:
   redent@3.0.0:
     resolution: {integrity: sha512-6tDA8g98We0zd0GvVeMT9arEOnTw9qM03L9cJXaCjrip1OO764RDBLBfrB4cwzNGDj5OA5ioymC9GkizgWJDUg==}
     engines: {node: '>=8'}
-
-  redis@5.11.0:
-    resolution: {integrity: sha512-YwXjATVDT+AuxcyfOwZn046aml9jMlQPvU1VXIlLDVAExe0u93aTfPYSeRgG4p9Q/Jlkj+LXJ1XEoFV+j2JKcQ==}
-    engines: {node: '>= 18'}
 
   regenerator-runtime@0.13.11:
     resolution: {integrity: sha512-kY1AZVr2Ra+t+piVaJ4gxaFaReZVH40AKNo7UCX6W+dEwBo/2oZJzqfuN1qLq1oL45o56cPaTXELwrTh8Fpggg==}
@@ -15823,7 +15594,7 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/nextjs@7.0.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@clerk/nextjs@7.0.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@clerk/backend': 3.0.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@clerk/react': 6.0.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -17371,8 +17142,6 @@ snapshots:
       '@octokit/openapi-types': 27.0.0
 
   '@octokit/webhooks-methods@6.0.0': {}
-
-  '@octokit/webhooks-types@7.6.1': {}
 
   '@octokit/webhooks@14.1.3':
     dependencies:
@@ -19295,26 +19064,6 @@ snapshots:
       react-dom: 19.2.4(react@19.2.4)
       react-promise-suspense: 0.3.4
 
-  '@redis/bloom@5.11.0(@redis/client@5.11.0)':
-    dependencies:
-      '@redis/client': 5.11.0
-
-  '@redis/client@5.11.0':
-    dependencies:
-      cluster-key-slot: 1.1.2
-
-  '@redis/json@5.11.0(@redis/client@5.11.0)':
-    dependencies:
-      '@redis/client': 5.11.0
-
-  '@redis/search@5.11.0(@redis/client@5.11.0)':
-    dependencies:
-      '@redis/client': 5.11.0
-
-  '@redis/time-series@5.11.0(@redis/client@5.11.0)':
-    dependencies:
-      '@redis/client': 5.11.0
-
   '@remotion/bundler@4.0.434(@swc/helpers@0.5.15)(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@remotion/media-parser': 4.0.434
@@ -20801,17 +20550,6 @@ snapshots:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
 
-  '@testing-library/dom@10.4.1':
-    dependencies:
-      '@babel/code-frame': 7.29.0
-      '@babel/runtime': 7.28.6
-      '@types/aria-query': 5.0.4
-      aria-query: 5.3.0
-      dom-accessibility-api: 0.5.16
-      lz-string: 1.5.0
-      picocolors: 1.1.1
-      pretty-format: 27.5.1
-
   '@testing-library/jest-dom@6.9.1':
     dependencies:
       '@adobe/css-tools': 4.4.4
@@ -20820,20 +20558,6 @@ snapshots:
       dom-accessibility-api: 0.6.3
       picocolors: 1.1.1
       redent: 3.0.0
-
-  '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@babel/runtime': 7.28.6
-      '@testing-library/dom': 10.4.1
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
-    optionalDependencies:
-      '@types/react': 19.2.14
-      '@types/react-dom': 19.2.3(@types/react@19.2.14)
-
-  '@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1)':
-    dependencies:
-      '@testing-library/dom': 10.4.1
 
   '@tinyhttp/accepts@1.3.0':
     dependencies:
@@ -20976,8 +20700,6 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
-
-  '@types/aria-query@5.0.4': {}
 
   '@types/aws-lambda@8.10.156': {}
 
@@ -22045,8 +21767,6 @@ snapshots:
     dependencies:
       color-convert: 2.0.1
 
-  ansi-styles@5.2.0: {}
-
   ansi-styles@6.2.3: {}
 
   any-promise@1.3.0: {}
@@ -22079,10 +21799,6 @@ snapshots:
   aria-hidden@1.2.6:
     dependencies:
       tslib: 2.8.1
-
-  aria-query@5.3.0:
-    dependencies:
-      dequal: 2.0.3
 
   aria-query@5.3.2: {}
 
@@ -22496,8 +22212,6 @@ snapshots:
       wrap-ansi: 7.0.0
 
   clsx@2.1.1: {}
-
-  cluster-key-slot@1.1.2: {}
 
   cmdk@1.1.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
@@ -23000,8 +22714,6 @@ snapshots:
   dir-glob@3.0.1:
     dependencies:
       path-type: 4.0.0
-
-  dom-accessibility-api@0.5.16: {}
 
   dom-accessibility-api@0.6.3: {}
 
@@ -23819,8 +23531,6 @@ snapshots:
   fresh@0.5.2: {}
 
   fresh@2.0.0: {}
-
-  friendlier-words@1.2.0: {}
 
   fs-extra@11.1.0:
     dependencies:
@@ -25125,8 +24835,6 @@ snapshots:
 
   luxon@3.7.2: {}
 
-  lz-string@1.5.0: {}
-
   magic-string@0.30.19:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -26345,7 +26053,8 @@ snapshots:
     dependencies:
       xtend: 4.0.2
 
-  postgres@3.4.7: {}
+  postgres@3.4.7:
+    optional: true
 
   posthog-js@1.359.1:
     dependencies:
@@ -26374,12 +26083,6 @@ snapshots:
   prettier@2.8.8: {}
 
   prettier@3.8.1: {}
-
-  pretty-format@27.5.1:
-    dependencies:
-      ansi-regex: 5.0.1
-      ansi-styles: 5.2.0
-      react-is: 17.0.2
 
   pretty-ms@7.0.1:
     dependencies:
@@ -26512,8 +26215,6 @@ snapshots:
       react: 19.2.4
 
   react-is@16.13.1: {}
-
-  react-is@17.0.2: {}
 
   react-is@18.3.1: {}
 
@@ -26689,16 +26390,6 @@ snapshots:
     dependencies:
       indent-string: 4.0.0
       strip-indent: 3.0.0
-
-  redis@5.11.0:
-    dependencies:
-      '@redis/bloom': 5.11.0(@redis/client@5.11.0)
-      '@redis/client': 5.11.0
-      '@redis/json': 5.11.0(@redis/client@5.11.0)
-      '@redis/search': 5.11.0(@redis/client@5.11.0)
-      '@redis/time-series': 5.11.0(@redis/client@5.11.0)
-    transitivePeerDependencies:
-      - '@node-rs/xxhash'
 
   regenerator-runtime@0.13.11:
     optional: true

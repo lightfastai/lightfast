@@ -19,8 +19,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/console-providers": "workspace:*",
-    "@repo/console-validation": "workspace:*"
+    "@repo/console-providers": "workspace:*"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

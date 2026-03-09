@@ -32,7 +32,6 @@
     "@vendor/upstash-workflow": "workspace:*",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
-    "postgres": "catalog:",
     "zod": "catalog:zod4"
   },
   "devDependencies": {
