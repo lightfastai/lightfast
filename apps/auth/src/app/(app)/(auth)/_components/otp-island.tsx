@@ -62,8 +62,16 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
     [onError]
   );
 
+  const hasInitRef = React.useRef(false);
+  const verifyingCodeRef = React.useRef<string | null>(null);
+
   // Send OTP on mount (or handle ticket)
   React.useEffect(() => {
+    if (hasInitRef.current) {
+      return;
+    }
+    hasInitRef.current = true;
+
     async function init() {
       if (mode === "sign-up" && ticket) {
         // Invitation ticket flow — may auto-complete
@@ -93,6 +101,7 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
         // Sign-up: create the account then send verification code
         const { error: createError } = await signUp.create({
           emailAddress: email,
+          legalAccepted: true,
         });
         if (createError) {
           handleClerkError(createError);
@@ -122,6 +131,10 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
     if (code.length !== 6 || error) {
       return;
     }
+    if (verifyingCodeRef.current === code) {
+      return; // Already verifying this exact code
+    }
+    verifyingCodeRef.current = code;
 
     async function verify() {
       setIsVerifying(true);
@@ -140,6 +153,11 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
             await signIn.finalize({
               navigate: async () => navigateToConsole(),
             });
+          } else {
+            setError(
+              "Sign-in could not be completed. Please try again or contact support."
+            );
+            setIsVerifying(false);
           }
         } else {
           const { error: verifyError } =
@@ -154,6 +172,11 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
             await signUp.finalize({
               navigate: async () => navigateToConsole(),
             });
+          } else {
+            setError(
+              "Sign-up could not be completed. Please try again or contact support."
+            );
+            setIsVerifying(false);
           }
         }
       } catch {
@@ -195,6 +218,9 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
 
   function handleCodeChange(value: string) {
     setError(null);
+    if (value.length < 6) {
+      verifyingCodeRef.current = null;
+    }
     setCode(value);
   }
 
