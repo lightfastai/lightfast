@@ -1,5 +1,4 @@
 import { Button } from "@repo/ui/components/ui/button";
-import { Separator } from "@repo/ui/components/ui/separator";
 import { createMetadata } from "@vendor/seo/metadata";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Metadata } from "next";
@@ -9,6 +8,7 @@ import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
 import { OAuthButton } from "../_components/oauth-button";
 import { OTPIsland } from "../_components/otp-island";
+import { SeparatorWithText } from "../_components/separator-with-text";
 import { loadSignUpSearchParams } from "../_lib/search-params";
 
 export const metadata: Metadata = createMetadata({
@@ -135,19 +135,6 @@ export default async function SignUpPage({ searchParams }: PageProps) {
           </Button>
         </div>
       )}
-    </div>
-  );
-}
-
-function SeparatorWithText({ text }: { text: string }) {
-  return (
-    <div className="relative">
-      <div className="absolute inset-0 flex items-center">
-        <Separator className="w-full" />
-      </div>
-      <div className="relative flex justify-center text-xs uppercase">
-        <span className="bg-background px-2 text-muted-foreground">{text}</span>
-      </div>
     </div>
   );
 }
