@@ -34,7 +34,6 @@
     "@repo/console-ai": "workspace:*",
     "@repo/console-ai-types": "workspace:*",
     "@repo/console-api-key": "workspace:*",
-    "@repo/console-api-services": "workspace:*",
     "@repo/console-auth-middleware": "workspace:*",
     "@repo/console-backfill": "workspace:*",
     "@repo/console-clerk-cache": "workspace:*",
@@ -87,10 +86,11 @@
     "react-hook-form": "catalog:",
     "recharts": "^2.15.4",
     "redis": "catalog:",
+    "server-only": "^0.0.1",
     "shiki": "^3.9.2",
     "sonner": "^2.0.6",
     "superjson": "catalog:",
-    "zod": "catalog:zod3",
+    "zod": "catalog:zod4",
     "zustand": "catalog:"
   },
   "devDependencies": {
