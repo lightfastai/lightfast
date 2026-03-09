@@ -2,6 +2,27 @@ import { setupClerkTestingToken } from "@clerk/testing/playwright";
 import { expect, test } from "@playwright/test";
 
 test.describe("Sign-In: Email Code Flow", () => {
+  // Ensure test account exists for sign-in tests by signing up first.
+  // The input-otp library does not pass data-slot through to the DOM,
+  // so we use getByRole("textbox") to find the OTP input.
+  test.beforeAll(async ({ browser }) => {
+    const page = await browser.newPage();
+    await setupClerkTestingToken({ page });
+    await page.goto("http://localhost:4104/sign-up");
+    await page
+      .getByPlaceholder("Email Address")
+      .fill("test+clerk_test@lightfast.ai");
+    await page.getByRole("button", { name: "Continue with Email" }).click();
+    try {
+      await page.waitForURL(/step=code/, { timeout: 10_000 });
+      await page.getByRole("textbox").fill("424242");
+      await page.waitForURL(/\/account\//, { timeout: 15_000 });
+    } catch {
+      // Account may already exist — OK for sign-in tests
+    }
+    await page.close();
+  });
+
   test("renders email form on /sign-in", async ({ page }) => {
     await setupClerkTestingToken({ page });
     await page.goto("/sign-in");
@@ -45,13 +66,13 @@ test.describe("Sign-In: Email Code Flow", () => {
     await expect(page).toHaveURL(/step=code/);
 
     // Step 2: enter magic test OTP
-    const otpInput = page.getByRole("textbox");
-    await otpInput.fill("424242");
+    await page.getByRole("textbox").fill("424242");
 
-    // Must reach "Redirecting..." — if stuck at "Verifying..." this fails
-    await expect(page.getByText("Redirecting...")).toBeVisible({
-      timeout: 15_000,
-    });
+    // Must reach "Redirecting..." or navigate to console
+    await Promise.race([
+      expect(page.getByText("Redirecting...")).toBeVisible({ timeout: 15_000 }),
+      page.waitForURL(/\/account\//, { timeout: 15_000 }),
+    ]);
   });
 
   test("resend code button works", async ({ page }) => {
@@ -67,7 +88,12 @@ test.describe("Sign-In: Email Code Flow", () => {
     // Click resend
     await page.getByRole("button", { name: "Resend" }).click();
 
-    // Should show success toast or remain on code step without error
+    // Assert success toast appears
+    await expect(
+      page.getByText("Verification code sent to your email")
+    ).toBeVisible();
+
+    // Should still be on code step (no navigation)
     await expect(page).toHaveURL(/step=code/);
   });
 

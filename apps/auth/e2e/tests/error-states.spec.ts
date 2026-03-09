@@ -54,8 +54,7 @@ test.describe("Error States", () => {
     await expect(page).toHaveURL(/step=code/);
 
     // Enter wrong code
-    const otpInput = page.getByRole("textbox");
-    await otpInput.fill("000000");
+    await page.getByRole("textbox").fill("000000");
 
     // Clerk may return various error messages — check for the AlertCircle icon
     // which accompanies any inline error in the CodeVerificationUI
