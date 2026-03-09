@@ -12,25 +12,12 @@ import {
   validateEmail,
 } from "@vendor/security";
 import { redis } from "@vendor/upstash";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { z } from "zod";
 import { env } from "~/env";
 import { handleClerkError } from "../_lib/clerk-error-handler";
-
-export type EarlyAccessState =
-  | { status: "idle" }
-  | { status: "pending" }
-  | { status: "success"; message: string }
-  | { status: "error"; error: string; isRateLimit?: boolean }
-  | {
-      status: "validation_error";
-      fieldErrors: {
-        email?: string[];
-        companySize?: string[];
-        sources?: string[];
-      };
-      error: string;
-    };
 
 const earlyAccessSchema = z.object({
   email: z
@@ -44,6 +31,18 @@ const earlyAccessSchema = z.object({
 });
 
 const EARLY_ACCESS_EMAILS_SET_KEY = "early-access:emails";
+
+function buildEarlyAccessUrl(
+  params: Record<string, string | boolean | undefined>
+): string {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== "" && value !== false) {
+      searchParams.set(key, String(value));
+    }
+  }
+  return `/early-access?${searchParams.toString()}`;
+}
 
 // Configure Arcjet protection for early access signup
 const aj = arcjet({
@@ -92,30 +91,39 @@ const aj = arcjet({
 });
 
 export async function joinEarlyAccessAction(
-  _prevState: EarlyAccessState | null,
   formData: FormData
-): Promise<EarlyAccessState> {
+): Promise<never> {
   try {
-    // Parse and validate form data first
+    // Parse raw form values for preserving across redirects
+    const rawEmail = (formData.get("email") as string | null) ?? "";
+    const rawCompanySize = (formData.get("companySize") as string | null) ?? "";
+    const rawSources = (formData.get("sources") as string | null) ?? "";
+
+    // Validate form data
     const validatedFields = earlyAccessSchema.safeParse({
-      email: formData.get("email"),
-      companySize: formData.get("companySize"),
-      sources: ((formData.get("sources") as string | null) ?? "")
-        .split(",")
-        .filter(Boolean),
+      email: rawEmail,
+      companySize: rawCompanySize,
+      sources: rawSources.split(",").filter(Boolean),
     });
 
-    // Return field errors if validation fails
+    // Redirect with field errors if validation fails
     if (!validatedFields.success) {
-      return {
-        status: "validation_error",
-        fieldErrors: validatedFields.error.flatten().fieldErrors,
-        error: "Please fix the errors below",
-      };
+      const fieldErrors = validatedFields.error.flatten().fieldErrors;
+      redirect(
+        buildEarlyAccessUrl({
+          email: rawEmail,
+          companySize: rawCompanySize,
+          sources: rawSources,
+          emailError: fieldErrors.email?.[0],
+          companySizeError: fieldErrors.companySize?.[0],
+          sourcesError: fieldErrors.sources?.[0],
+        })
+      );
     }
 
     // Fields have been validated
     const { email, companySize, sources } = validatedFields.data;
+    const sourcesStr = sources.join(",");
 
     // Check Arcjet protection with the validated email
     const req = await request();
@@ -128,48 +136,43 @@ export async function joinEarlyAccessAction(
     if (decision.isDenied()) {
       const reason = decision.reason;
 
-      // Check specific denial reasons
       if (reason.isRateLimit()) {
-        return {
-          status: "error",
-          error: "Too many signup attempts. Please try again later.",
-          isRateLimit: true,
-        };
+        redirect(
+          buildEarlyAccessUrl({
+            error: "Too many signup attempts. Please try again later.",
+            isRateLimit: true,
+            email,
+            companySize,
+            sources: sourcesStr,
+          })
+        );
       }
 
+      let errorMessage =
+        "Your request could not be processed. Please try again.";
       if (reason.isBot()) {
-        return {
-          status: "error",
-          error:
-            "Automated signup detected. Please complete the form manually.",
-        };
-      }
-
-      if (reason.isShield()) {
-        return {
-          status: "error",
-          error: "Request blocked for security reasons. Please try again.",
-        };
-      }
-
-      // Check if email validation failed (disposable, invalid domain, etc.)
-      if (
+        errorMessage =
+          "Automated signup detected. Please complete the form manually.";
+      } else if (reason.isShield()) {
+        errorMessage =
+          "Request blocked for security reasons. Please try again.";
+      } else if (
         "isEmail" in reason &&
         typeof reason.isEmail === "function" &&
         reason.isEmail()
       ) {
-        return {
-          status: "error",
-          error:
-            "Please use a valid email address. Temporary or disposable email addresses are not allowed.",
-        };
+        errorMessage =
+          "Please use a valid email address. Temporary or disposable email addresses are not allowed.";
       }
 
-      // Generic denial message
-      return {
-        status: "error",
-        error: "Your request could not be processed. Please try again.",
-      };
+      redirect(
+        buildEarlyAccessUrl({
+          error: errorMessage,
+          email,
+          companySize,
+          sources: sourcesStr,
+        })
+      );
     }
 
     // Check if email already exists in our Redis cache for fast duplicate detection
@@ -179,12 +182,17 @@ export async function joinEarlyAccessAction(
         email
       );
       if (emailExists) {
-        return {
-          status: "error",
-          error: "This email is already registered for early access!",
-        };
+        redirect(
+          buildEarlyAccessUrl({
+            error: "This email is already registered for early access!",
+          })
+        );
       }
     } catch (redisError) {
+      // redirect() throws — must re-throw
+      if (isRedirectError(redisError)) {
+        throw redisError;
+      }
       // Log Redis errors but don't block the user if Redis is down
       console.error("Redis error checking early access:", redisError);
       captureException(redisError, {
@@ -211,7 +219,7 @@ export async function joinEarlyAccessAction(
             // Store additional metadata about company size and sources
             public_metadata: {
               companySize,
-              sources: sources.join(","),
+              sources: sourcesStr,
               submittedAt: new Date().toISOString(),
             },
           }),
@@ -231,48 +239,54 @@ export async function joinEarlyAccessAction(
 
         // Handle specific error cases
         if (errorResult.isAlreadyExists) {
-          return {
-            status: "error",
-            error: "This email is already registered for early access!",
-          };
+          redirect(
+            buildEarlyAccessUrl({
+              error: "This email is already registered for early access!",
+            })
+          );
         }
 
         if (errorResult.isRateLimit) {
-          return {
-            status: "error",
-            error: errorResult.userMessage,
-            isRateLimit: true,
-          };
+          redirect(
+            buildEarlyAccessUrl({
+              error: errorResult.userMessage,
+              isRateLimit: true,
+              email,
+              companySize,
+              sources: sourcesStr,
+            })
+          );
         }
 
         if (errorResult.isUserLocked) {
           const retryMessage = errorResult.retryAfterSeconds
             ? ` Please try again in ${Math.ceil(errorResult.retryAfterSeconds / 60)} minutes.`
             : " Please try again later.";
-          return {
-            status: "error",
-            error: `Your account is temporarily locked.${retryMessage}`,
-          };
+          redirect(
+            buildEarlyAccessUrl({
+              error: `Your account is temporarily locked.${retryMessage}`,
+              email,
+              companySize,
+              sources: sourcesStr,
+            })
+          );
         }
 
         // For validation errors, return more specific message
         if (errorResult.isValidationError) {
-          return {
-            status: "error",
-            error: errorResult.userMessage,
-          };
+          redirect(
+            buildEarlyAccessUrl({
+              error: errorResult.userMessage,
+              email,
+              companySize,
+              sources: sourcesStr,
+            })
+          );
         }
 
         // For other errors, throw to be caught by outer handler
         throw new Error(errorResult.message);
       }
-
-      // Return immediately for faster response
-      const successResponse: EarlyAccessState = {
-        status: "success",
-        message:
-          "Successfully joined early access! We'll send you an invite when Lightfast is ready.",
-      };
 
       // Track in Redis after response is sent (non-blocking)
       after(async () => {
@@ -289,17 +303,17 @@ export async function joinEarlyAccessAction(
         }
       });
 
-      return successResponse;
+      // Success — redirect with success state
+      redirect(
+        buildEarlyAccessUrl({
+          success: true,
+          email,
+        })
+      );
     } catch (clerkError) {
-      // If it's already an error we want to show, return it
-      if (
-        clerkError instanceof Error &&
-        clerkError.message.includes("already registered")
-      ) {
-        return {
-          status: "error",
-          error: clerkError.message,
-        };
+      // redirect() throws — must re-throw
+      if (isRedirectError(clerkError)) {
+        throw clerkError;
       }
 
       // Handle unexpected Clerk errors
@@ -311,29 +325,33 @@ export async function joinEarlyAccessAction(
         },
       });
 
-      return {
-        status: "error",
-        error: "An unexpected error occurred. Please try again later.",
-      };
+      redirect(
+        buildEarlyAccessUrl({
+          error: "An unexpected error occurred. Please try again later.",
+          email,
+          companySize,
+          sources: sourcesStr,
+        })
+      );
     }
   } catch (error) {
+    // redirect() throws NEXT_REDIRECT — must re-throw it
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
     // Handle any outer errors (validation, etc.)
     console.error("Error in early access action:", error);
     captureException(error, {
       tags: {
         action: "joinEarlyAccess:outer",
       },
-      extra: {
-        formData: Object.fromEntries(formData.entries()),
-      },
     });
 
-    return {
-      status: "error",
-      error:
-        error instanceof Error
-          ? error.message
-          : "An error occurred. Please try again.",
-    };
+    redirect(
+      buildEarlyAccessUrl({
+        error: "An error occurred. Please try again.",
+      })
+    );
   }
 }
