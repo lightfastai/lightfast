@@ -74,12 +74,12 @@ const aj = arcjet({
 export async function joinEarlyAccessAction(
   formData: FormData
 ): Promise<never> {
-  try {
-    // Parse raw form values for preserving across redirects
-    const rawEmail = (formData.get("email") as string | null) ?? "";
-    const rawCompanySize = (formData.get("companySize") as string | null) ?? "";
-    const rawSources = (formData.get("sources") as string | null) ?? "";
+  // Hoisted before try so catch block can preserve form state on error redirects
+  const rawEmail = (formData.get("email") as string | null) ?? "";
+  const rawCompanySize = (formData.get("companySize") as string | null) ?? "";
+  const rawSources = (formData.get("sources") as string | null) ?? "";
 
+  try {
     // Validate form data
     const validatedFields = earlyAccessSchema.safeParse({
       email: rawEmail,
@@ -160,9 +160,11 @@ export async function joinEarlyAccessAction(
         email
       );
       if (emailExists) {
+        // Already registered — show success state (they're already on the list)
         redirect(
           serializeEarlyAccessParams("/early-access", {
-            error: "This email is already registered for early access!",
+            success: true,
+            email,
           })
         );
       }
@@ -206,9 +208,11 @@ export async function joinEarlyAccessAction(
       const code = error.errors[0]?.code;
 
       if (code === "email_address_exists" || code === "form_identifier_exists") {
+        // Already registered — show success state (they're already on the list)
         redirect(
           serializeEarlyAccessParams("/early-access", {
-            error: "This email is already registered for early access!",
+            success: true,
+            email: rawEmail,
           })
         );
       }
@@ -218,6 +222,9 @@ export async function joinEarlyAccessAction(
           serializeEarlyAccessParams("/early-access", {
             error: "Too many signup attempts. Please try again later.",
             isRateLimit: true,
+            email: rawEmail,
+            companySize: rawCompanySize,
+            sources: rawSources,
           })
         );
       }
@@ -230,6 +237,9 @@ export async function joinEarlyAccessAction(
             error: seconds
               ? `Your account is temporarily locked. Please try again in ${Math.ceil(seconds / 60)} minutes.`
               : "Your account is temporarily locked. Please try again later.",
+            email: rawEmail,
+            companySize: rawCompanySize,
+            sources: rawSources,
           })
         );
       }
@@ -241,6 +251,9 @@ export async function joinEarlyAccessAction(
       redirect(
         serializeEarlyAccessParams("/early-access", {
           error: error.errors[0]?.longMessage ?? "An unexpected error occurred. Please try again.",
+          email: rawEmail,
+          companySize: rawCompanySize,
+          sources: rawSources,
         })
       );
     }
@@ -253,6 +266,9 @@ export async function joinEarlyAccessAction(
     redirect(
       serializeEarlyAccessParams("/early-access", {
         error: "An error occurred. Please try again.",
+        email: rawEmail,
+        companySize: rawCompanySize,
+        sources: rawSources,
       })
     );
   }

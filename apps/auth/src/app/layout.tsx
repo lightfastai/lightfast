@@ -73,7 +73,7 @@ export default function RootLayout({
         geistFonts,
         ppNeueMontreal.variable,
         exposurePlus.variable,
-        ppSupplySans.variable
+        ppSupplySans.variable,
       )}
       lang="en"
       suppressHydrationWarning
