@@ -85,13 +85,13 @@ export function SourcesIsland({ defaultSources, error }: SourcesIslandProps) {
                           className="ml-1 cursor-pointer rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelected(selected.filter((s) => s !== value));
+                            setSelected((prev) => prev.filter((s) => s !== value));
                           }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
                               e.stopPropagation();
-                              setSelected(selected.filter((s) => s !== value));
+                              setSelected((prev) => prev.filter((s) => s !== value));
                             }
                           }}
                           role="button"
@@ -122,10 +122,10 @@ export function SourcesIsland({ defaultSources, error }: SourcesIslandProps) {
                     <CommandItem
                       key={source.value}
                       onSelect={() => {
-                        setSelected(
+                        setSelected((prev) =>
                           isSelected
-                            ? selected.filter((s) => s !== source.value)
-                            : [...selected, source.value]
+                            ? prev.filter((s) => s !== source.value)
+                            : [...prev, source.value]
                         );
                       }}
                       value={source.value}

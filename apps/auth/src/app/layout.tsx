@@ -10,7 +10,7 @@ import { ClerkProvider } from "@vendor/clerk/client";
 import { createMetadata } from "@vendor/seo/metadata";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { env } from "~/env";
-import { exposurePlus, ppNeueMontreal, ppSupplySans } from "~/lib/fonts";
+import { ppNeueMontreal } from "~/lib/fonts";
 import { consoleUrl } from "~/lib/related-projects";
 
 export const metadata: Metadata = createMetadata({
@@ -69,12 +69,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={cn(
-        geistFonts,
-        ppNeueMontreal.variable,
-        exposurePlus.variable,
-        ppSupplySans.variable,
-      )}
+      className={cn(geistFonts, ppNeueMontreal.variable)}
       lang="en"
       suppressHydrationWarning
     >
