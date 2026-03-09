@@ -1,4 +1,9 @@
-import { createLoader, createSerializer, parseAsString, parseAsStringLiteral } from "nuqs/server";
+import {
+  createLoader,
+  createSerializer,
+  parseAsString,
+  parseAsStringLiteral,
+} from "nuqs/server";
 
 const signInSteps = ["email", "code", "activate"] as const;
 const signUpSteps = ["email", "code"] as const;

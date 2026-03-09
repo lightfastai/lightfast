@@ -7,10 +7,10 @@ interface TeamSwitcherLinkProps {
   children: React.ReactNode;
   className?: string;
   href: string;
-  /** Async callback invoked before navigation (e.g., set active org in auth SDK) */
-  onNavigate?: () => Promise<void>;
   /** Sync callback invoked on click (e.g., close dropdown) */
   onClick?: () => void;
+  /** Async callback invoked before navigation (e.g., set active org in auth SDK) */
+  onNavigate?: () => Promise<void>;
 }
 
 export function TeamSwitcherLink({

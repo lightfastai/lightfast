@@ -19,5 +19,10 @@ export async function initiateSignIn(formData: FormData) {
 
   // Email validated. Redirect to OTP step — the client island will call
   // signIn.emailCode.sendCode() via Clerk's FAPI.
-  redirect(serializeSignInParams("/sign-in", { step: "code", email: parsed.data.email }));
+  redirect(
+    serializeSignInParams("/sign-in", {
+      step: "code",
+      email: parsed.data.email,
+    })
+  );
 }

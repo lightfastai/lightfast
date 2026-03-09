@@ -13,15 +13,15 @@ import {
 } from "../ui/dropdown-menu";
 
 interface UserMenuProps {
+  className?: string;
   /** User's display email */
   email: string;
   /** 1-2 character initials for avatar */
   initials: string;
-  /** Href for settings link (e.g., "/account/settings/general") */
-  settingsHref: string;
   /** Called when user clicks "Sign out" */
   onSignOut: () => void;
-  className?: string;
+  /** Href for settings link (e.g., "/account/settings/general") */
+  settingsHref: string;
 }
 
 export type { UserMenuProps };

@@ -19,13 +19,13 @@ type TeamSwitcherMode = "organization" | "account";
 
 interface Organization {
   id: string;
-  slug: string | null;
   name: string;
+  slug: string | null;
 }
 
 interface TeamSwitcherProps {
-  /** List of organizations the user belongs to */
-  organizations: Organization[];
+  /** Href for "Create Team" link (e.g., "/account/teams/new") */
+  createTeamHref: string;
   /**
    * Mode determines what is displayed:
    * - "organization": Shows current organization name
@@ -34,8 +34,8 @@ interface TeamSwitcherProps {
   mode?: TeamSwitcherMode;
   /** Called when user selects an org — app should handle auth SDK (e.g., clerk.setActive) */
   onOrgSelect: (orgId: string, orgSlug: string) => Promise<void>;
-  /** Href for "Create Team" link (e.g., "/account/teams/new") */
-  createTeamHref: string;
+  /** List of organizations the user belongs to */
+  organizations: Organization[];
 }
 
 export type { Organization, TeamSwitcherMode, TeamSwitcherProps };

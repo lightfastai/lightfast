@@ -21,12 +21,12 @@ const securityHeaders = securityMiddleware(
     createNextjsCspDirectives(),
     createClerkCspDirectives(),
     createAnalyticsCspDirectives(),
-    createSentryCspDirectives(),
-  ),
+    createSentryCspDirectives()
+  )
 );
 
 async function withSecurityHeaders(
-  response: NextResponse,
+  response: NextResponse
 ): Promise<NextResponse> {
   const headers = await securityHeaders();
   for (const [key, value] of headers.headers.entries()) {
@@ -69,7 +69,7 @@ const composedMiddleware = createNEMO(
       // - Custom analytics for auth events
       // - Fraud detection
     ],
-  },
+  }
 );
 
 // =============================================================================
@@ -127,9 +127,10 @@ export default clerkMiddleware(
     // 5. Return with security headers
     // -------------------------------------------------------------------------
     return withSecurityHeaders(
-      (nemoResponse as NextResponse | null) ?? NextResponse.next(),
+      (nemoResponse as NextResponse | null) ?? NextResponse.next()
     );
   },
+  { signInUrl: "/sign-in", signUpUrl: "/sign-up" }
 );
 
 export const config = {
