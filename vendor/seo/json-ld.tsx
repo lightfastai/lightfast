@@ -5,7 +5,10 @@ import type { Thing, WithContext } from "schema-dts";
 // stay spec-compliant — JSON-LD allows any URI, inline objects, or arrays.
 // Use WithContext<Thing> when a strict "https://schema.org" literal is needed.
 interface GraphContext {
-  "@context": string | Record<string, unknown> | (string | Record<string, unknown>)[];
+  "@context":
+    | string
+    | Record<string, unknown>
+    | (string | Record<string, unknown>)[];
   "@graph": Thing[];
 }
 
@@ -29,7 +32,6 @@ export const JsonLd = ({ code }: JsonLdProps) => (
     dangerouslySetInnerHTML={{
       __html: escapeJsonForHtml(JSON.stringify(code)),
     }}
-    // biome-ignore lint/security/noDangerouslySetInnerHtml: "This is a JSON-LD script with properly escaped content."
     type="application/ld+json"
   />
 );
@@ -39,44 +41,35 @@ export type { GraphContext, JsonLdData };
 
 // Re-export commonly used schema types for convenience
 export type {
-  // Core types
-  Thing,
-  WithContext,
-
-  // Organization types
-  Organization,
-
-  // Website types
-  WebSite,
-  WebPage,
-
+  Answer,
   // Content types
   Article,
-  TechArticle,
-  BlogPosting,
   Blog,
-  FAQPage,
-  Question,
-  Answer,
+  BlogPosting,
   BreadcrumbList,
-  HowTo,
-  HowToStep,
-
-  // Product/Service types
-  SoftwareApplication,
-  Product,
-  Service,
-  Offer,
-
-  // Media types
-  ImageObject,
-  VideoObject,
-
-  // Person types
-  Person,
-
   // Event types
   Event,
+  FAQPage,
+  HowTo,
+  HowToStep,
+  // Media types
+  ImageObject,
+  Offer,
+  // Organization types
+  Organization,
+  // Person types
+  Person,
+  Product,
+  Question,
+  Service,
+  // Product/Service types
+  SoftwareApplication,
+  TechArticle,
+  // Core types
+  Thing,
+  VideoObject,
+  WebPage,
+  // Website types
+  WebSite,
+  WithContext,
 } from "schema-dts";
-
-

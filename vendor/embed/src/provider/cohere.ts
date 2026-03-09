@@ -20,37 +20,37 @@ import type { EmbeddingProvider, EmbedResponse } from "../types";
  * - clustering: Optimize for clustering tasks
  */
 export type CohereInputType =
-	| "search_query"
-	| "search_document"
-	| "classification"
-	| "clustering";
+  | "search_query"
+  | "search_document"
+  | "classification"
+  | "clustering";
 
 /**
  * Cohere embedding configuration
  */
 export interface CohereEmbeddingConfig {
-	/**
-	 * Cohere API key
-	 */
-	apiKey: string;
+  /**
+   * Cohere API key
+   */
+  apiKey: string;
 
-	/**
-	 * Model to use
-	 * @default "embed-english-v3.0"
-	 */
-	model?: string;
+  /**
+   * Embedding dimension
+   * @default 1024 (max for v3)
+   */
+  dimension?: number;
 
-	/**
-	 * Input type for embedding optimization
-	 * @default "search_document"
-	 */
-	inputType?: CohereInputType;
+  /**
+   * Input type for embedding optimization
+   * @default "search_document"
+   */
+  inputType?: CohereInputType;
 
-	/**
-	 * Embedding dimension
-	 * @default 1024 (max for v3)
-	 */
-	dimension?: number;
+  /**
+   * Model to use
+   * @default "embed-english-v3.0"
+   */
+  model?: string;
 }
 
 /**
@@ -75,68 +75,70 @@ export interface CohereEmbeddingConfig {
  * ```
  */
 export class CohereEmbedding implements EmbeddingProvider {
-	readonly dimension: number;
-	private readonly client: CohereClient;
-	private readonly model: string;
-	private readonly inputType: CohereInputType;
+  readonly dimension: number;
+  private readonly client: CohereClient;
+  private readonly model: string;
+  private readonly inputType: CohereInputType;
 
-	constructor(config: CohereEmbeddingConfig) {
-		if (!config.apiKey) {
-			throw new Error("Cohere API key is required");
-		}
+  constructor(config: CohereEmbeddingConfig) {
+    if (!config.apiKey) {
+      throw new Error("Cohere API key is required");
+    }
 
-		this.client = new CohereClient({
-			token: config.apiKey,
-		});
-		this.model = config.model ?? "embed-english-v3.0";
-		this.inputType = config.inputType ?? "search_document";
-		this.dimension = config.dimension ?? 1024;
-	}
+    this.client = new CohereClient({
+      token: config.apiKey,
+    });
+    this.model = config.model ?? "embed-english-v3.0";
+    this.inputType = config.inputType ?? "search_document";
+    this.dimension = config.dimension ?? 1024;
+  }
 
-	/**
-	 * Generate embeddings using Cohere API
-	 *
-	 * @param texts - Array of text strings to embed
-	 * @returns Promise resolving to embed response
-	 */
-	async embed(texts: string[]): Promise<EmbedResponse> {
-		if (texts.length === 0) {
-			return {
-				embeddings: [],
-				model: this.model,
-			};
-		}
+  /**
+   * Generate embeddings using Cohere API
+   *
+   * @param texts - Array of text strings to embed
+   * @returns Promise resolving to embed response
+   */
+  async embed(texts: string[]): Promise<EmbedResponse> {
+    if (texts.length === 0) {
+      return {
+        embeddings: [],
+        model: this.model,
+      };
+    }
 
-		try {
-			const response = await this.client.embed({
-				texts,
-				model: this.model,
-				inputType: this.inputType,
-				embeddingTypes: ["float"],
-			});
+    try {
+      const response = await this.client.embed({
+        texts,
+        model: this.model,
+        inputType: this.inputType,
+        embeddingTypes: ["float"],
+      });
 
-			// Extract embeddings from response
-			// Type is either number[][] or { float?: number[][] }
-			const embeddings = Array.isArray(response.embeddings)
-				? response.embeddings
-				: (response.embeddings.float ?? []);
+      // Extract embeddings from response
+      // Type is either number[][] or { float?: number[][] }
+      const embeddings = Array.isArray(response.embeddings)
+        ? response.embeddings
+        : (response.embeddings.float ?? []);
 
-			return {
-				embeddings,
-				model: this.model,
-				usage: response.meta?.billedUnits?.inputTokens
-					? {
-							totalTokens: response.meta.billedUnits.inputTokens,
-						}
-					: undefined,
-			};
-		} catch (error) {
-			if (error instanceof Error) {
-				throw new Error(`Failed to generate Cohere embeddings: ${error.message}`);
-			}
-			throw error;
-		}
-	}
+      return {
+        embeddings,
+        model: this.model,
+        usage: response.meta?.billedUnits?.inputTokens
+          ? {
+              totalTokens: response.meta.billedUnits.inputTokens,
+            }
+          : undefined,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(
+          `Failed to generate Cohere embeddings: ${error.message}`
+        );
+      }
+      throw error;
+    }
+  }
 }
 
 /**
@@ -156,7 +158,7 @@ export class CohereEmbedding implements EmbeddingProvider {
  * ```
  */
 export function createCohereEmbedding(
-	config: CohereEmbeddingConfig,
+  config: CohereEmbeddingConfig
 ): CohereEmbedding {
-	return new CohereEmbedding(config);
+  return new CohereEmbedding(config);
 }

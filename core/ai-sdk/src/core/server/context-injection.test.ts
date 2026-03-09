@@ -1,428 +1,436 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { createUserMessage } from "../test-utils/message-helpers";
+import { InMemoryMemory } from "../memory/adapters/in-memory";
 import { createAgent } from "../primitives/agent";
 import { createTool } from "../primitives/tool";
-import { InMemoryMemory } from "../memory/adapters/in-memory";
+import { createUserMessage } from "../test-utils/message-helpers";
+import type {
+  RequestContext,
+  RuntimeContext,
+  SystemContext,
+} from "./adapters/types";
 import { streamChat } from "./runtime";
-import type { SystemContext, RequestContext, RuntimeContext } from "./adapters/types";
 
 // Mock the AI SDK's streamText
 vi.mock("ai", async () => {
-	const actual: typeof import("ai") = await vi.importActual("ai");
-	return {
-		...actual,
-		streamText: vi.fn(),
-		createUIMessageStreamResponse: vi.fn(() => new Response()),
-		convertToModelMessages: vi.fn().mockReturnValue([]),
-	};
+  const actual: typeof import("ai") = await vi.importActual("ai");
+  return {
+    ...actual,
+    streamText: vi.fn(),
+    createUIMessageStreamResponse: vi.fn(() => new Response()),
+    convertToModelMessages: vi.fn().mockReturnValue([]),
+  };
 });
 
 // Define context types
 interface CustomRequestContext extends RequestContext {
-	userAgent: string;
-	ipAddress: string;
-	apiKey?: string;
+  apiKey?: string;
+  ipAddress: string;
+  userAgent: string;
 }
 
 interface AgentRuntimeContext {
-	sessionId: string;
-	resourceId: string;
-	customField?: string;
+  customField?: string;
+  resourceId: string;
+  sessionId: string;
 }
 
 describe("Context Injection from Request to Tools", () => {
-	let memory: InMemoryMemory;
-	let capturedContext: any = null;
+  let memory: InMemoryMemory;
+  let capturedContext: any = null;
 
-	beforeEach(() => {
-		memory = new InMemoryMemory();
-		capturedContext = null;
-		vi.clearAllMocks();
-	});
+  beforeEach(() => {
+    memory = new InMemoryMemory();
+    capturedContext = null;
+    vi.clearAllMocks();
+  });
 
-	it("should inject createRequestContext data into tool execution context", async () => {
-		// Create a tool that captures the context it receives
-		const contextCaptureTool = createTool<RuntimeContext<AgentRuntimeContext>>({
-			description: "Captures context for testing",
-			inputSchema: z.object({ 
-				action: z.string() 
-			}),
-			execute: ({ action }, context) => {
-				// Capture the full context that the tool receives
-				capturedContext = context;
-				return Promise.resolve({
-					result: `Executed ${action}`,
-					sessionId: context.sessionId,
-					userAgent: (context as AgentRuntimeContext & CustomRequestContext).userAgent,
-				});
-			},
-		});
+  it("should inject createRequestContext data into tool execution context", async () => {
+    // Create a tool that captures the context it receives
+    const contextCaptureTool = createTool<RuntimeContext<AgentRuntimeContext>>({
+      description: "Captures context for testing",
+      inputSchema: z.object({
+        action: z.string(),
+      }),
+      execute: ({ action }, context) => {
+        // Capture the full context that the tool receives
+        capturedContext = context;
+        return Promise.resolve({
+          result: `Executed ${action}`,
+          sessionId: context.sessionId,
+          userAgent: (context as AgentRuntimeContext & CustomRequestContext)
+            .userAgent,
+        });
+      },
+    });
 
-		// Create an agent with the context-aware tool
-		const agent = createAgent<AgentRuntimeContext>({
-			name: "context-test-agent",
-			model: {} as any,
-			system: "You are a test agent",
-			tools: {
-				captureTool: contextCaptureTool,
-			},
-			createRuntimeContext: ({ sessionId, resourceId }) => ({
-				sessionId,
-				resourceId,
-				customField: "agent-specific-data",
-			}),
-		});
+    // Create an agent with the context-aware tool
+    const agent = createAgent<AgentRuntimeContext>({
+      name: "context-test-agent",
+      model: {} as any,
+      system: "You are a test agent",
+      tools: {
+        captureTool: contextCaptureTool,
+      },
+      createRuntimeContext: ({ sessionId, resourceId }) => ({
+        sessionId,
+        resourceId,
+        customField: "agent-specific-data",
+      }),
+    });
 
-		// Mock the streamText to simulate tool execution
-		const { streamText } = await import("ai");
-		(streamText as any).mockImplementation((params: any) => {
-			// Simulate the AI SDK calling our tool
-			if (params.tools?.captureTool) {
-				// Execute the tool to capture context
-				params.tools.captureTool.execute({ action: "test-action" });
-			}
+    // Mock the streamText to simulate tool execution
+    const { streamText } = await import("ai");
+    (streamText as any).mockImplementation((params: any) => {
+      // Simulate the AI SDK calling our tool
+      if (params.tools?.captureTool) {
+        // Execute the tool to capture context
+        params.tools.captureTool.execute({ action: "test-action" });
+      }
 
-			// Return a mock stream result compatible with runtime.ts expectations
-			return {
-				toUIMessageStream: () =>
-					new ReadableStream({
-						start(controller) {
-							controller.enqueue({ type: "response", id: "chunk" });
-							controller.close();
-						},
-					}),
-			};
-		});
+      // Return a mock stream result compatible with runtime.ts expectations
+      return {
+        toUIMessageStream: () =>
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue({ type: "response", id: "chunk" });
+              controller.close();
+            },
+          }),
+      };
+    });
 
-		// Create contexts
-		const systemContext: SystemContext = {
-			sessionId: "test-session-123",
-			resourceId: "user-456",
-		};
+    // Create contexts
+    const systemContext: SystemContext = {
+      sessionId: "test-session-123",
+      resourceId: "user-456",
+    };
 
-		const requestContext: CustomRequestContext = {
-			userAgent: "Mozilla/5.0 Test Browser",
-			ipAddress: "192.168.1.1",
-			apiKey: "test-api-key",
-		};
+    const requestContext: CustomRequestContext = {
+      userAgent: "Mozilla/5.0 Test Browser",
+      ipAddress: "192.168.1.1",
+      apiKey: "test-api-key",
+    };
 
-		// Create a test message
-		const userMessage = createUserMessage("msg-1", "Test message");
+    // Create a test message
+    const userMessage = createUserMessage("msg-1", "Test message");
 
-		// Call streamChat which should merge contexts and pass to tools
-		await streamChat({
-			agent,
-			sessionId: systemContext.sessionId,
-			message: userMessage,
-			memory,
-			resourceId: systemContext.resourceId,
-			systemContext,
-			requestContext,
-		});
+    // Call streamChat which should merge contexts and pass to tools
+    await streamChat({
+      agent,
+      sessionId: systemContext.sessionId,
+      message: userMessage,
+      memory,
+      resourceId: systemContext.resourceId,
+      systemContext,
+      requestContext,
+    });
 
-		// Verify that the tool received the merged context
-		expect(capturedContext).toBeDefined();
-		expect(capturedContext).toMatchObject({
-			// From systemContext
-			sessionId: "test-session-123",
-			resourceId: "user-456",
-			// From requestContext
-			userAgent: "Mozilla/5.0 Test Browser",
-			ipAddress: "192.168.1.1",
-			apiKey: "test-api-key",
-			// From agent's createRuntimeContext
-			customField: "agent-specific-data",
-		});
-	});
+    // Verify that the tool received the merged context
+    expect(capturedContext).toBeDefined();
+    expect(capturedContext).toMatchObject({
+      // From systemContext
+      sessionId: "test-session-123",
+      resourceId: "user-456",
+      // From requestContext
+      userAgent: "Mozilla/5.0 Test Browser",
+      ipAddress: "192.168.1.1",
+      apiKey: "test-api-key",
+      // From agent's createRuntimeContext
+      customField: "agent-specific-data",
+    });
+  });
 
-	it("should properly merge systemContext, requestContext, and agentContext", async () => {
-		// Create a tool that captures all context fields
-		const mergeTestTool = createTool<any>({
-			description: "Tests context merging",
-			inputSchema: z.object({ test: z.string() }),
-			execute: (_input, context) => {
-				capturedContext = context;
-				return Promise.resolve({ success: true });
-			},
-		});
+  it("should properly merge systemContext, requestContext, and agentContext", async () => {
+    // Create a tool that captures all context fields
+    const mergeTestTool = createTool<any>({
+      description: "Tests context merging",
+      inputSchema: z.object({ test: z.string() }),
+      execute: (_input, context) => {
+        capturedContext = context;
+        return Promise.resolve({ success: true });
+      },
+    });
 
-		const agent = createAgent({
-			name: "merge-test-agent",
-			model: {} as any,
-			system: "Test system",
-			tools: { mergeTestTool },
-			createRuntimeContext: ({ sessionId, resourceId }) => ({
-				sessionId,  // This will override systemContext.sessionId
-				resourceId,
-				agentSpecific: "agent-value",
-				// Test override priority
-				userAgent: "agent-override", // Should be overridden by agentContext
-			}),
-		});
+    const agent = createAgent({
+      name: "merge-test-agent",
+      model: {} as any,
+      system: "Test system",
+      tools: { mergeTestTool },
+      createRuntimeContext: ({ sessionId, resourceId }) => ({
+        sessionId, // This will override systemContext.sessionId
+        resourceId,
+        agentSpecific: "agent-value",
+        // Test override priority
+        userAgent: "agent-override", // Should be overridden by agentContext
+      }),
+    });
 
-		// Mock streamText
-		const { streamText } = await import("ai");
-		(streamText as any).mockImplementation((params: any) => {
-			if (params.tools?.mergeTestTool) {
-				params.tools.mergeTestTool.execute({ test: "value" });
-			}
-			return {
-				toUIMessageStream: () =>
-					new ReadableStream({
-						start(controller) {
-							controller.enqueue({ type: "response", id: "chunk" });
-							controller.close();
-						},
-					}),
-			};
-		});
+    // Mock streamText
+    const { streamText } = await import("ai");
+    (streamText as any).mockImplementation((params: any) => {
+      if (params.tools?.mergeTestTool) {
+        params.tools.mergeTestTool.execute({ test: "value" });
+      }
+      return {
+        toUIMessageStream: () =>
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue({ type: "response", id: "chunk" });
+              controller.close();
+            },
+          }),
+      };
+    });
 
-		const systemContext: SystemContext = {
-			sessionId: "system-session",
-			resourceId: "system-resource",
-		};
+    const systemContext: SystemContext = {
+      sessionId: "system-session",
+      resourceId: "system-resource",
+    };
 
-		const requestContext = {
-			userAgent: "request-user-agent",
-			requestId: "req-123",
-		};
+    const requestContext = {
+      userAgent: "request-user-agent",
+      requestId: "req-123",
+    };
 
-		await streamChat({
-			agent,
-			sessionId: "system-session",
-			message: createUserMessage("1", "test"),
-			memory,
-			resourceId: "system-resource",
-			systemContext,
-			requestContext,
-		});
+    await streamChat({
+      agent,
+      sessionId: "system-session",
+      message: createUserMessage("1", "test"),
+      memory,
+      resourceId: "system-resource",
+      systemContext,
+      requestContext,
+    });
 
-		// Verify merge order: system -> request -> agent (later values override earlier)
-		expect(capturedContext).toMatchObject({
-			// From systemContext (not overridden)
-			sessionId: "system-session",
-			resourceId: "system-resource",
-			// From requestContext (not overridden)
-			requestId: "req-123",
-			// From agentContext (overrides requestContext)
-			userAgent: "agent-override",
-			agentSpecific: "agent-value",
-		});
-	});
+    // Verify merge order: system -> request -> agent (later values override earlier)
+    expect(capturedContext).toMatchObject({
+      // From systemContext (not overridden)
+      sessionId: "system-session",
+      resourceId: "system-resource",
+      // From requestContext (not overridden)
+      requestId: "req-123",
+      // From agentContext (overrides requestContext)
+      userAgent: "agent-override",
+      agentSpecific: "agent-value",
+    });
+  });
 
-	it("should handle dynamic tool resolution with context", async () => {
-		let toolCreationContext: any = null;
-		let toolExecutionContext: any = null;
+  it("should handle dynamic tool resolution with context", async () => {
+    let toolCreationContext: any = null;
+    let toolExecutionContext: any = null;
 
-		// Create dynamic tools based on context
-		const dynamicToolsFactory = (context: any) => {
-			toolCreationContext = context;
-			
-			const dynamicTool = createTool<any>({
-				description: `Tool for session ${context.sessionId}`,
-				inputSchema: z.object({ input: z.string() }),
-				execute: ({ input }, ctx) => {
-					toolExecutionContext = ctx;
-					return Promise.resolve({
-						result: input,
-						sessionFromCreation: toolCreationContext.sessionId,
-						sessionFromExecution: ctx.sessionId,
-					});
-				},
-			});
+    // Create dynamic tools based on context
+    const dynamicToolsFactory = (context: any) => {
+      toolCreationContext = context;
 
-			return {
-				dynamicTool: dynamicTool,
-			};
-		};
+      const dynamicTool = createTool<any>({
+        description: `Tool for session ${context.sessionId}`,
+        inputSchema: z.object({ input: z.string() }),
+        execute: ({ input }, ctx) => {
+          toolExecutionContext = ctx;
+          return Promise.resolve({
+            result: input,
+            sessionFromCreation: toolCreationContext.sessionId,
+            sessionFromExecution: ctx.sessionId,
+          });
+        },
+      });
 
-		const agent = createAgent({
-			name: "dynamic-agent",
-			model: {} as any,
-			system: "Dynamic test",
-			tools: dynamicToolsFactory,
-			createRuntimeContext: ({ sessionId, resourceId }) => ({
-				sessionId,
-				resourceId,
-				timestamp: Date.now(),
-			}),
-		});
+      return {
+        dynamicTool,
+      };
+    };
 
-		// Mock streamText
-		const { streamText } = await import("ai");
-		(streamText as any).mockImplementation((params: any) => {
-			if (params.tools?.dynamicTool) {
-				// Execute the tool to capture the execution context
-				params.tools.dynamicTool.execute({ input: "test" });
-			}
-			return {
-				toUIMessageStream: () =>
-					new ReadableStream({
-						start(controller) {
-							controller.enqueue({ type: "response", id: "chunk" });
-							controller.close();
-						},
-					}),
-			};
-		});
+    const agent = createAgent({
+      name: "dynamic-agent",
+      model: {} as any,
+      system: "Dynamic test",
+      tools: dynamicToolsFactory,
+      createRuntimeContext: ({ sessionId, resourceId }) => ({
+        sessionId,
+        resourceId,
+        timestamp: Date.now(),
+      }),
+    });
 
-		await streamChat({
-			agent,
-			sessionId: "dynamic-session",
-			message: createUserMessage("1", "test"),
-			memory,
-			resourceId: "dynamic-resource",
-			systemContext: {
-				sessionId: "dynamic-session",
-				resourceId: "dynamic-resource",
-			},
-			requestContext: {
-				requestId: "dynamic-request",
-			},
-		});
+    // Mock streamText
+    const { streamText } = await import("ai");
+    (streamText as any).mockImplementation((params: any) => {
+      if (params.tools?.dynamicTool) {
+        // Execute the tool to capture the execution context
+        params.tools.dynamicTool.execute({ input: "test" });
+      }
+      return {
+        toUIMessageStream: () =>
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue({ type: "response", id: "chunk" });
+              controller.close();
+            },
+          }),
+      };
+    });
 
-		// Both contexts should have the same merged data
-		expect(toolCreationContext).toBeDefined();
-		expect(toolExecutionContext).toBeDefined();
-		expect(toolCreationContext).toEqual(toolExecutionContext);
-		expect(toolCreationContext.sessionId).toBe("dynamic-session");
-		expect(toolCreationContext.requestId).toBe("dynamic-request");
-	});
+    await streamChat({
+      agent,
+      sessionId: "dynamic-session",
+      message: createUserMessage("1", "test"),
+      memory,
+      resourceId: "dynamic-resource",
+      systemContext: {
+        sessionId: "dynamic-session",
+        resourceId: "dynamic-resource",
+      },
+      requestContext: {
+        requestId: "dynamic-request",
+      },
+    });
 
-	it("should handle tool factories with missing optional contexts", async () => {
-		const toolWithOptionalContext = createTool({
-			description: "Tool without required context",
-			inputSchema: z.object({ value: z.string() }),
-			execute: ({ value }, context) => {
-				capturedContext = context;
-				return Promise.resolve({ processed: value.toUpperCase() });
-			},
-		});
+    // Both contexts should have the same merged data
+    expect(toolCreationContext).toBeDefined();
+    expect(toolExecutionContext).toBeDefined();
+    expect(toolCreationContext).toEqual(toolExecutionContext);
+    expect(toolCreationContext.sessionId).toBe("dynamic-session");
+    expect(toolCreationContext.requestId).toBe("dynamic-request");
+  });
 
-		const agent = createAgent({
-			name: "no-context-agent",
-			model: {} as any,
-			system: "Test",
-			tools: {
-				testTool: toolWithOptionalContext,
-			},
-			createRuntimeContext: ({ sessionId, resourceId }) => ({
-				sessionId,
-				resourceId,
-			}),
-		});
+  it("should handle tool factories with missing optional contexts", async () => {
+    const toolWithOptionalContext = createTool({
+      description: "Tool without required context",
+      inputSchema: z.object({ value: z.string() }),
+      execute: ({ value }, context) => {
+        capturedContext = context;
+        return Promise.resolve({ processed: value.toUpperCase() });
+      },
+    });
 
-		const { streamText } = await import("ai");
-		(streamText as any).mockImplementation((params: any) => {
-			if (params.tools?.testTool) {
-				params.tools.testTool.execute({ value: "test" });
-			}
-			return {
-				toUIMessageStream: () =>
-					new ReadableStream({
-						start(controller) {
-							controller.enqueue({ type: "response", id: "chunk" });
-							controller.close();
-						},
-					}),
-			};
-		});
+    const agent = createAgent({
+      name: "no-context-agent",
+      model: {} as any,
+      system: "Test",
+      tools: {
+        testTool: toolWithOptionalContext,
+      },
+      createRuntimeContext: ({ sessionId, resourceId }) => ({
+        sessionId,
+        resourceId,
+      }),
+    });
 
-		await streamChat({
-			agent,
-			sessionId: "session",
-			message: createUserMessage("1", "test"),
-			memory,
-			resourceId: "resource",
-			systemContext: { sessionId: "session", resourceId: "resource" },
-			requestContext: {},  // Empty request context
-		});
+    const { streamText } = await import("ai");
+    (streamText as any).mockImplementation((params: any) => {
+      if (params.tools?.testTool) {
+        params.tools.testTool.execute({ value: "test" });
+      }
+      return {
+        toUIMessageStream: () =>
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue({ type: "response", id: "chunk" });
+              controller.close();
+            },
+          }),
+      };
+    });
 
-		// Should still have systemContext at minimum
-		expect(capturedContext).toMatchObject({
-			sessionId: "session",
-			resourceId: "resource",
-		});
-	});
+    await streamChat({
+      agent,
+      sessionId: "session",
+      message: createUserMessage("1", "test"),
+      memory,
+      resourceId: "resource",
+      systemContext: { sessionId: "session", resourceId: "resource" },
+      requestContext: {}, // Empty request context
+    });
 
-	it("should pass context through nested tool execution", async () => {
-		const contexts: any[] = [];
+    // Should still have systemContext at minimum
+    expect(capturedContext).toMatchObject({
+      sessionId: "session",
+      resourceId: "resource",
+    });
+  });
 
-		// Create multiple tools that work together
-		const firstTool = createTool<any>({
-			description: "First tool in chain",
-			inputSchema: z.object({ input: z.string() }),
-			execute: ({ input }, context) => {
-				contexts.push({ tool: "first", context });
-				return Promise.resolve({ next: `processed-${input}` });
-			},
-		});
+  it("should pass context through nested tool execution", async () => {
+    const contexts: any[] = [];
 
-		const secondTool = createTool<any>({
-			description: "Second tool in chain",
-			inputSchema: z.object({ data: z.string() }),
-			execute: ({ data }, context) => {
-				contexts.push({ tool: "second", context });
-				return Promise.resolve({ final: data.toUpperCase() });
-			},
-		});
+    // Create multiple tools that work together
+    const firstTool = createTool<any>({
+      description: "First tool in chain",
+      inputSchema: z.object({ input: z.string() }),
+      execute: ({ input }, context) => {
+        contexts.push({ tool: "first", context });
+        return Promise.resolve({ next: `processed-${input}` });
+      },
+    });
 
-		const agent = createAgent({
-			name: "chain-agent",
-			model: {} as any,
-			system: "Chain test",
-			tools: {
-				firstTool,
-				secondTool,
-			},
-			createRuntimeContext: ({ sessionId, resourceId }) => ({
-				sessionId,
-				resourceId,
-				chainId: "chain-123",
-			}),
-		});
+    const secondTool = createTool<any>({
+      description: "Second tool in chain",
+      inputSchema: z.object({ data: z.string() }),
+      execute: ({ data }, context) => {
+        contexts.push({ tool: "second", context });
+        return Promise.resolve({ final: data.toUpperCase() });
+      },
+    });
 
-		const { streamText } = await import("ai");
-		(streamText as any).mockImplementation((params: any) => {
-			// Simulate calling both tools
-			if (params.tools) {
-				if (params.tools.firstTool) {
-					params.tools.firstTool.execute({ input: "start" });
-				}
-				if (params.tools.secondTool) {
-					params.tools.secondTool.execute({ data: "middle" });
-				}
-			}
-			return {
-				toUIMessageStream: () =>
-					new ReadableStream({
-						start(controller) {
-							controller.enqueue({ type: "response", id: "chunk" });
-							controller.close();
-						},
-					}),
-			};
-		});
+    const agent = createAgent({
+      name: "chain-agent",
+      model: {} as any,
+      system: "Chain test",
+      tools: {
+        firstTool,
+        secondTool,
+      },
+      createRuntimeContext: ({ sessionId, resourceId }) => ({
+        sessionId,
+        resourceId,
+        chainId: "chain-123",
+      }),
+    });
 
-		await streamChat({
-			agent,
-			sessionId: "chain-session",
-			message: createUserMessage("1", "test"),
-			memory,
-			resourceId: "chain-resource",
-			systemContext: { sessionId: "chain-session", resourceId: "chain-resource" },
-			requestContext: { traceId: "trace-456" },
-		});
+    const { streamText } = await import("ai");
+    (streamText as any).mockImplementation((params: any) => {
+      // Simulate calling both tools
+      if (params.tools) {
+        if (params.tools.firstTool) {
+          params.tools.firstTool.execute({ input: "start" });
+        }
+        if (params.tools.secondTool) {
+          params.tools.secondTool.execute({ data: "middle" });
+        }
+      }
+      return {
+        toUIMessageStream: () =>
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue({ type: "response", id: "chunk" });
+              controller.close();
+            },
+          }),
+      };
+    });
 
-		// Both tools should receive the same context
-		expect(contexts).toHaveLength(2);
-		expect(contexts[0].context).toEqual(contexts[1].context);
-		expect(contexts[0].context).toMatchObject({
-			sessionId: "chain-session",
-			resourceId: "chain-resource",
-			traceId: "trace-456",
-			chainId: "chain-123",
-		});
-	});
+    await streamChat({
+      agent,
+      sessionId: "chain-session",
+      message: createUserMessage("1", "test"),
+      memory,
+      resourceId: "chain-resource",
+      systemContext: {
+        sessionId: "chain-session",
+        resourceId: "chain-resource",
+      },
+      requestContext: { traceId: "trace-456" },
+    });
+
+    // Both tools should receive the same context
+    expect(contexts).toHaveLength(2);
+    expect(contexts[0].context).toEqual(contexts[1].context);
+    expect(contexts[0].context).toMatchObject({
+      sessionId: "chain-session",
+      resourceId: "chain-resource",
+      traceId: "trace-456",
+      chainId: "chain-123",
+    });
+  });
 });

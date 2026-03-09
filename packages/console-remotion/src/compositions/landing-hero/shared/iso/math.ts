@@ -1,4 +1,4 @@
-import type { Vec2, Polygon, Bounds } from "./types";
+import type { Bounds, Polygon, Vec2 } from "./types";
 
 // ── Constants ────────────────────────────────────────────
 const COS30 = Math.cos(Math.PI / 6); // √3/2 ≈ 0.866
@@ -21,7 +21,9 @@ export function signedArea(p: Polygon): number {
   for (let i = 0; i < n; i++) {
     const pi = p[i];
     const pj = p[(i + 1) % n];
-    if (!pi || !pj) continue;
+    if (!(pi && pj)) {
+      continue;
+    }
     a += pi[0] * pj[1] - pj[0] * pi[1];
   }
   return a * 0.5;
@@ -49,7 +51,9 @@ function lineHit(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2): Vec2 | null {
   const dx2 = p4[0] - p3[0],
     dy2 = p4[1] - p3[1];
   const cross = dx1 * dy2 - dy1 * dx2;
-  if (Math.abs(cross) < EPS) return null;
+  if (Math.abs(cross) < EPS) {
+    return null;
+  }
   const dx3 = p3[0] - p1[0],
     dy3 = p3[1] - p1[1];
   const t = (dx3 * dy2 - dy3 * dx2) / cross;
@@ -60,33 +64,45 @@ function lineHit(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2): Vec2 | null {
 // Clips `subject` against convex `clip`. Both must be CW (screen).
 // Returns intersection polygon (CW) or empty array.
 export function clipPolygon(subject: Polygon, clip: Polygon): Polygon {
-  if (subject.length === 0 || clip.length === 0) return [];
+  if (subject.length === 0 || clip.length === 0) {
+    return [];
+  }
   let out: Vec2[] = [...subject];
 
   for (let i = 0, cn = clip.length; i < cn; i++) {
-    if (out.length === 0) return [];
+    if (out.length === 0) {
+      return [];
+    }
     const inp = [...out];
     out = [];
     const a = clip[i];
     const b = clip[(i + 1) % cn];
-    if (!a || !b) continue;
+    if (!(a && b)) {
+      continue;
+    }
 
     for (let j = 0, sn = inp.length; j < sn; j++) {
       const cur = inp[j];
       const prev = inp[(j + sn - 1) % sn];
-      if (!cur || !prev) continue;
+      if (!(cur && prev)) {
+        continue;
+      }
       const curIn = side(a, b, cur) >= -EPS;
       const prevIn = side(a, b, prev) >= -EPS;
 
       if (curIn) {
         if (!prevIn) {
           const h = lineHit(prev, cur, a, b);
-          if (h) out.push(h);
+          if (h) {
+            out.push(h);
+          }
         }
         out.push(cur);
       } else if (prevIn) {
         const h = lineHit(prev, cur, a, b);
-        if (h) out.push(h);
+        if (h) {
+          out.push(h);
+        }
       }
     }
   }
@@ -99,8 +115,13 @@ function _pointInPolygon(pt: Vec2, poly: Polygon): boolean {
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
     const pi = poly[i];
     const pj = poly[j];
-    if (!pi || !pj) continue;
-    if (pi[1] > pt[1] !== pj[1] > pt[1] && pt[0] < ((pj[0] - pi[0]) * (pt[1] - pi[1])) / (pj[1] - pi[1]) + pi[0]) {
+    if (!(pi && pj)) {
+      continue;
+    }
+    if (
+      pi[1] > pt[1] !== pj[1] > pt[1] &&
+      pt[0] < ((pj[0] - pi[0]) * (pt[1] - pi[1])) / (pj[1] - pi[1]) + pi[0]
+    ) {
       inside = !inside;
     }
   }
@@ -109,32 +130,45 @@ function _pointInPolygon(pt: Vec2, poly: Polygon): boolean {
 
 // ── SVG path generation ──────────────────────────────────
 function polygonToPath(p: Polygon): string {
-  if (p.length === 0) return "";
-  return (
-    p.map((v, i) => `${i === 0 ? "M" : "L"}${v[0].toFixed(2)},${v[1].toFixed(2)}`).join(" ") +
-    " Z"
-  );
+  if (p.length === 0) {
+    return "";
+  }
+  return `${p
+    .map(
+      (v, i) => `${i === 0 ? "M" : "L"}${v[0].toFixed(2)},${v[1].toFixed(2)}`
+    )
+    .join(" ")} Z`;
 }
 
 /** Builds an SVG path with even-odd holes */
 export function faceToPath(contour: Polygon, holes: Polygon[]): string {
   const outer = polygonToPath(ensureCW(contour));
-  if (holes.length === 0) return outer;
+  if (holes.length === 0) {
+    return outer;
+  }
   const inner = holes.map((h) => polygonToPath(ensureCCW(h))).join(" ");
   return `${outer} ${inner}`;
 }
 
 // ── Bounds ───────────────────────────────────────────────
 export function polyBounds(p: Polygon): Bounds {
-  let minX = Infinity,
-    minY = Infinity,
-    maxX = -Infinity,
-    maxY = -Infinity;
+  let minX = Number.POSITIVE_INFINITY,
+    minY = Number.POSITIVE_INFINITY,
+    maxX = Number.NEGATIVE_INFINITY,
+    maxY = Number.NEGATIVE_INFINITY;
   for (const v of p) {
-    if (v[0] < minX) minX = v[0];
-    if (v[0] > maxX) maxX = v[0];
-    if (v[1] < minY) minY = v[1];
-    if (v[1] > maxY) maxY = v[1];
+    if (v[0] < minX) {
+      minX = v[0];
+    }
+    if (v[0] > maxX) {
+      maxX = v[0];
+    }
+    if (v[1] < minY) {
+      minY = v[1];
+    }
+    if (v[1] > maxY) {
+      maxY = v[1];
+    }
   }
   return { minX, minY, maxX, maxY };
 }

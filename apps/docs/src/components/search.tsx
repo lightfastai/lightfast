@@ -1,19 +1,19 @@
 "use client";
 
+import * as Popover from "@radix-ui/react-popover";
+import { Input } from "@repo/ui/components/ui/input";
 import { cn } from "@repo/ui/lib/utils";
 import {
-  Search as SearchIcon,
-  Loader2,
+  AlignLeft,
   FileText,
   Hash,
-  AlignLeft,
+  Loader2,
+  Search as SearchIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { Input } from "@repo/ui/components/ui/input";
-import * as Popover from "@radix-ui/react-popover";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useDocsSearch } from "~/hooks/use-docs-search";
 
 type SearchAction =
@@ -25,7 +25,7 @@ type SearchAction =
 
 function searchReducer(
   state: { selectedIndex: number; open: boolean },
-  action: SearchAction,
+  action: SearchAction
 ) {
   switch (action.type) {
     case "OPEN":
@@ -35,17 +35,20 @@ function searchReducer(
     case "SELECT":
       return { ...state, selectedIndex: action.index };
     case "NAVIGATE_DOWN":
-      if (action.max === 0) return state;
+      if (action.max === 0) {
+        return state;
+      }
       return {
         ...state,
         selectedIndex: (state.selectedIndex + 1) % action.max,
       };
     case "NAVIGATE_UP":
-      if (action.max === 0) return state;
+      if (action.max === 0) {
+        return state;
+      }
       return {
         ...state,
-        selectedIndex:
-          (state.selectedIndex - 1 + action.max) % action.max,
+        selectedIndex: (state.selectedIndex - 1 + action.max) % action.max,
       };
   }
 }
@@ -85,7 +88,9 @@ export function Search() {
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.isComposing) return;
+      if (e.isComposing) {
+        return;
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         inputRef.current?.focus();
@@ -113,22 +118,22 @@ export function Search() {
         createPortal(
           <div
             aria-hidden="true"
-            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-md animate-in fade-in-0"
+            className="fade-in-0 fixed inset-0 z-40 animate-in bg-black/20 backdrop-blur-md"
             onClick={() => handleClose()}
           />,
-          document.body,
+          document.body
         )}
 
       <Popover.Root
-        open={open}
         onOpenChange={(newOpen) => {
-          if (!newOpen) {
+          if (newOpen) {
+            dispatch({ type: "OPEN" });
+          } else {
             handleClose();
             inputRef.current?.blur();
-          } else {
-            dispatch({ type: "OPEN" });
           }
         }}
+        open={open}
       >
         <Popover.Anchor asChild>
           <div className={cn("relative", open && "z-50")}>
@@ -136,15 +141,20 @@ export function Search() {
             <div
               className={cn(
                 "relative items-center",
-                open ? "flex" : "hidden lg:flex",
+                open ? "flex" : "hidden lg:flex"
               )}
             >
-              <SearchIcon className="absolute left-3 h-4 w-4 text-foreground/60 pointer-events-none z-10" />
+              <SearchIcon className="pointer-events-none absolute left-3 z-10 h-4 w-4 text-foreground/60" />
               <Input
-                ref={inputRef}
-                type="text"
-                placeholder="Search documentation"
-                value={search}
+                className={cn(
+                  "h-9 w-[420px] max-w-[calc(100vw-2rem)] pr-20 pl-10",
+                  "rounded-md border border-border/50 transition-all",
+                  "backdrop-blur-md dark:bg-card/40",
+                  "text-foreground/60",
+                  "focus-visible:ring-0 focus-visible:ring-offset-0",
+                  "focus:outline-none focus-visible:outline-none",
+                  "focus-visible:border-border/50"
+                )}
                 onChange={(e) => setSearch(e.target.value)}
                 onFocus={() => dispatch({ type: "OPEN" })}
                 onKeyDown={(e) => {
@@ -158,32 +168,36 @@ export function Search() {
                   if (open && resultsList.length > 0) {
                     if (e.key === "ArrowDown") {
                       e.preventDefault();
-                      dispatch({ type: "NAVIGATE_DOWN", max: resultsList.length });
+                      dispatch({
+                        type: "NAVIGATE_DOWN",
+                        max: resultsList.length,
+                      });
                     } else if (e.key === "ArrowUp") {
                       e.preventDefault();
-                      dispatch({ type: "NAVIGATE_UP", max: resultsList.length });
-                    } else if (e.key === "Enter" && resultsList[selectedIndex]) {
+                      dispatch({
+                        type: "NAVIGATE_UP",
+                        max: resultsList.length,
+                      });
+                    } else if (
+                      e.key === "Enter" &&
+                      resultsList[selectedIndex]
+                    ) {
                       e.preventDefault();
                       router.push(resultsList[selectedIndex].url);
                       handleClose();
                     }
                   }
                 }}
-                className={cn(
-                  "w-[420px] max-w-[calc(100vw-2rem)] pl-10 pr-20 h-9",
-                  "transition-all rounded-md border border-border/50",
-                  "dark:bg-card/40 backdrop-blur-md",
-                  "text-foreground/60",
-                  "focus-visible:ring-0 focus-visible:ring-offset-0",
-                  "focus-visible:outline-none focus:outline-none",
-                  "focus-visible:border-border/50",
-                )}
+                placeholder="Search documentation"
+                ref={inputRef}
+                type="text"
+                value={search}
               />
-              <div className="absolute right-2 flex items-center gap-1.5 pointer-events-none">
+              <div className="pointer-events-none absolute right-2 flex items-center gap-1.5">
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin text-foreground/60" />
                 ) : (
-                  <kbd className="hidden sm:inline-flex gap-1.5 px-1.5 py-0.5 items-center rounded-md border border-border text-sm font-medium text-foreground/60">
+                  <kbd className="hidden items-center gap-1.5 rounded-md border border-border px-1.5 py-0.5 font-medium text-foreground/60 text-sm sm:inline-flex">
                     {open ? "ESC" : "⌘K"}
                   </kbd>
                 )}
@@ -195,32 +209,32 @@ export function Search() {
         {showResults && (
           <Popover.Portal>
             <Popover.Content
-              onOpenAutoFocus={(e) => e.preventDefault()}
-              onInteractOutside={(e) => e.preventDefault()}
-              onEscapeKeyDown={(e) => e.preventDefault()}
-              side="bottom"
               align="start"
-              sideOffset={6}
               alignOffset={0}
               className={cn(
                 "z-50",
                 "bg-card/40 backdrop-blur-md",
-                "border border-border/50 rounded-sm shadow",
+                "rounded-sm border border-border/50 shadow",
                 "max-h-[420px] overflow-y-auto",
-                "data-[state=open]:animate-in data-[state=closed]:animate-out",
+                "data-[state=closed]:animate-out data-[state=open]:animate-in",
                 "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-                "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+                "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
               )}
+              onEscapeKeyDown={(e) => e.preventDefault()}
+              onInteractOutside={(e) => e.preventDefault()}
+              onOpenAutoFocus={(e) => e.preventDefault()}
+              side="bottom"
+              sideOffset={6}
               style={{ width: "var(--radix-popover-trigger-width)" }}
             >
               {error && (
-                <div className="px-4 py-3 text-sm text-muted-foreground/70">
+                <div className="px-4 py-3 text-muted-foreground/70 text-sm">
                   Unable to search at this time
                 </div>
               )}
 
               {!error && resultsList.length === 0 && (
-                <div className="px-4 py-3 flex items-center gap-2 text-sm text-muted-foreground/70">
+                <div className="flex items-center gap-2 px-4 py-3 text-muted-foreground/70 text-sm">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   Searching...
                 </div>
@@ -230,14 +244,14 @@ export function Search() {
                 <div className="">
                   {resultsList.map((result, index) => (
                     <Link
-                      key={result.id}
-                      href={result.url}
                       className={cn(
-                        "flex items-start gap-3 w-full px-4 py-2.5 text-left transition-colors",
+                        "flex w-full items-start gap-3 px-4 py-2.5 text-left transition-colors",
                         "hover:bg-muted/40",
                         index === selectedIndex && "bg-muted/60",
-                        result.type === "heading" && "pl-7",
+                        result.type === "heading" && "pl-7"
                       )}
+                      href={result.url}
+                      key={result.id}
                       onClick={() => handleClose()}
                       onMouseEnter={() => dispatch({ type: "SELECT", index })}
                     >
@@ -255,15 +269,15 @@ export function Search() {
                       <div className="min-w-0">
                         <div
                           className={cn(
-                            "text-sm text-foreground truncate",
+                            "truncate text-foreground text-sm",
                             result.type === "page" && "font-medium",
-                            result.type !== "page" && "font-normal",
+                            result.type !== "page" && "font-normal"
                           )}
                         >
                           {result.content}
                         </div>
                         {result.type === "page" && result.source && (
-                          <div className="mt-0.5 text-xs text-muted-foreground/60">
+                          <div className="mt-0.5 text-muted-foreground/60 text-xs">
                             {result.source}
                           </div>
                         )}

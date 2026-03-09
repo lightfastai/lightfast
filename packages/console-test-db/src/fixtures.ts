@@ -1,9 +1,9 @@
-import { nanoid } from "@repo/lib";
 import type {
   InsertGwInstallation,
-  InsertGwToken,
   InsertGwResource,
+  InsertGwToken,
 } from "@db/console/schema";
+import { nanoid } from "@repo/lib";
 
 /** Fixture types: like Insert types but with id guaranteed. */
 export type InstallationFixture = InsertGwInstallation & { id: string };
@@ -31,7 +31,7 @@ export const fixtures = {
    * Build a gwTokens insert object. Requires installationId FK.
    */
   token(
-    overrides: Pick<InsertGwToken, "installationId"> & Partial<InsertGwToken>,
+    overrides: Pick<InsertGwToken, "installationId"> & Partial<InsertGwToken>
   ): TokenFixture {
     return {
       accessToken: `ghu_${nanoid()}`,
@@ -44,7 +44,8 @@ export const fixtures = {
    * Build a gwResources insert object. Requires installationId FK.
    */
   resource(
-    overrides: Pick<InsertGwResource, "installationId"> & Partial<InsertGwResource>,
+    overrides: Pick<InsertGwResource, "installationId"> &
+      Partial<InsertGwResource>
   ): ResourceFixture {
     return {
       providerResourceId: nanoid(),

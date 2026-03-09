@@ -5,12 +5,12 @@
  * Post-consolidation: integrations are org-scoped via gw_installations.
  */
 
-import { eq } from "drizzle-orm";
 import {
-  orgApiKeys,
   gwInstallations,
+  orgApiKeys,
   workspaceIntegrations,
 } from "@db/console/schema";
+import { eq } from "drizzle-orm";
 import type {
   ResourceOwnershipContext,
   ResourceOwnershipResult,

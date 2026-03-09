@@ -8,7 +8,6 @@
  * Default font-sans remains Geist from @repo/ui
  */
 
-
 /* Additional custom styles specific to the console app */
 @layer utilities {
   .font-pp {

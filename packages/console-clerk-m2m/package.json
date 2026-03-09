@@ -23,16 +23,11 @@
     "zod": "catalog:zod3"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "typescript": "catalog:"
   },
   "eslintConfig": {
     "extends": "@repo/eslint-config/base"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

@@ -13,8 +13,8 @@ import type {
   TransformContext,
 } from "@repo/console-types";
 import { toExternalSentryEventType } from "@repo/console-types";
+import { sanitizeBody, sanitizeTitle } from "../sanitize.js";
 import { validateSourceEvent } from "../validation.js";
-import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
 
 // ============================================================================
 // Official Sentry Webhook Payload Types
@@ -27,13 +27,13 @@ import { sanitizeTitle, sanitizeBody } from "../sanitize.js";
  */
 export interface SentryIssueWebhook {
   action: "created" | "resolved" | "assigned" | "ignored";
+  actor: SentryActor;
   data: {
     issue: SentryIssue;
   };
   installation: {
     uuid: string;
   };
-  actor: SentryActor;
 }
 
 /**
@@ -100,34 +100,39 @@ export interface SentryMetricAlertWebhook {
  * Documentation: https://docs.sentry.io/api/issues/
  */
 export interface SentryIssue {
-  id: string;
-  shortId: string; // e.g., "LIGHTFAST-123"
-  title: string;
-  culprit: string; // File/function where error originated
-  status: "unresolved" | "resolved" | "ignored";
-  level: "fatal" | "error" | "warning" | "info" | "debug";
-  platform: string;
-  firstSeen: string; // ISO timestamp
-  lastSeen: string; // ISO timestamp
+  annotations: string[];
+  assignedTo?: {
+    id: string;
+    name: string;
+    email: string;
+  };
   count: number; // Total event count
-  userCount: number;
-  permalink: string;
+  culprit: string; // File/function where error originated
+  firstSeen: string; // ISO timestamp
+  hasSeen: boolean;
+  id: string;
+  isBookmarked: boolean;
+  isPublic: boolean;
+  isSubscribed: boolean;
+  lastSeen: string; // ISO timestamp
+  level: "fatal" | "error" | "warning" | "info" | "debug";
+  logger?: string;
   metadata: {
     type: string; // Error type (e.g., "TypeError", "ReferenceError")
     value: string; // Error message
     filename?: string; // Source file
     function?: string; // Function name
   };
+  numComments: number;
+  permalink: string;
+  platform: string;
   project: {
     id: string;
     name: string;
     slug: string;
   };
-  assignedTo?: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  shortId: string; // e.g., "LIGHTFAST-123"
+  status: "unresolved" | "resolved" | "ignored";
   /** Resolution status details - populated when issue is resolved */
   statusDetails?: {
     /** Commit that resolved this issue */
@@ -140,49 +145,19 @@ export interface SentryIssue {
     /** Whether resolved in next release */
     inNextRelease?: boolean;
   };
-  logger?: string;
+  title: string;
   type: "error" | "default";
-  annotations: string[];
-  isPublic: boolean;
-  isBookmarked: boolean;
-  isSubscribed: boolean;
-  hasSeen: boolean;
-  numComments: number;
+  userCount: number;
 }
 
 /**
  * Sentry Error Event (individual error occurrence)
  */
 export interface SentryErrorEvent {
-  event_id: string;
-  project: number;
-  timestamp: string;
-  received: string;
-  platform: string;
-  message?: string;
-  title: string;
-  location?: string;
-  culprit?: string;
-  type: "error" | "default";
-  metadata: {
-    type?: string;
-    value?: string;
-    filename?: string;
-    function?: string;
-  };
-  tags: Array<{ key: string; value: string }>;
-  contexts?: Record<string, Record<string, unknown>>;
-  user?: {
-    id?: string;
-    email?: string;
-    username?: string;
-    ip_address?: string;
-  };
-  sdk?: {
-    name: string;
-    version: string;
-  };
   context?: Record<string, unknown>;
+  contexts?: Record<string, Record<string, unknown>>;
+  culprit?: string;
+  event_id: string;
   exception?: {
     values: Array<{
       type: string;
@@ -200,18 +175,43 @@ export interface SentryErrorEvent {
       };
     }>;
   };
-  web_url?: string;
   issue_url?: string;
+  location?: string;
+  message?: string;
+  metadata: {
+    type?: string;
+    value?: string;
+    filename?: string;
+    function?: string;
+  };
+  platform: string;
+  project: number;
+  received: string;
+  sdk?: {
+    name: string;
+    version: string;
+  };
+  tags: Array<{ key: string; value: string }>;
+  timestamp: string;
+  title: string;
+  type: "error" | "default";
+  user?: {
+    id?: string;
+    email?: string;
+    username?: string;
+    ip_address?: string;
+  };
+  web_url?: string;
 }
 
 /**
  * Sentry Actor (who performed the action)
  */
 export interface SentryActor {
-  type: "user" | "application";
+  email?: string;
   id: string;
   name: string;
-  email?: string;
+  type: "user" | "application";
 }
 
 // ============================================================================
@@ -314,9 +314,13 @@ export function transformSentryIssue(
 
   const event: SourceEvent = {
     source: "sentry",
-    sourceType: toExternalSentryEventType(`issue.${payload.action}`) ?? `issue.${payload.action}`,
+    sourceType:
+      toExternalSentryEventType(`issue.${payload.action}`) ??
+      `issue.${payload.action}`,
     sourceId: `sentry-issue:${issue.project.slug}:${issue.shortId}:${payload.action}`,
-    title: sanitizeTitle(`[${actionTitles[payload.action]}] ${errorType}: ${errorValue.slice(0, 80)}`),
+    title: sanitizeTitle(
+      `[${actionTitles[payload.action]}] ${errorType}: ${errorValue.slice(0, 80)}`
+    ),
     body: sanitizeBody(bodyParts.join("\n")),
     actor: {
       id: payload.actor.id,
@@ -456,7 +460,7 @@ export function transformSentryEventAlert(
   });
 
   const errorType = event.metadata?.type || "Alert";
-  const errorValue = event.metadata?.value || event.title;
+  const _errorValue = event.metadata?.value || event.title;
 
   const bodyParts = [
     `Alert Rule: ${triggered_rule}`,
@@ -491,7 +495,11 @@ export function transformSentryEventAlert(
   // Validate before returning (logs errors but doesn't block)
   const validation = validateSourceEvent(event_out);
   if (!validation.success && validation.errors) {
-    logValidationErrors("transformSentryEventAlert", event_out, validation.errors);
+    logValidationErrors(
+      "transformSentryEventAlert",
+      event_out,
+      validation.errors
+    );
   }
 
   return event_out;
@@ -509,7 +517,9 @@ export function transformSentryMetricAlert(
   const refs: SourceReference[] = [];
 
   const actionTitle =
-    payload.action === "triggered" ? "Metric Alert Triggered" : "Metric Alert Resolved";
+    payload.action === "triggered"
+      ? "Metric Alert Triggered"
+      : "Metric Alert Resolved";
 
   const bodyParts = [
     `Alert: ${alertRule.name}`,

@@ -16,8 +16,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint src/"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@db/console": "workspace:*",
@@ -26,10 +25,8 @@
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "eslint": "catalog:",
     "typescript": "catalog:"
   }
 }

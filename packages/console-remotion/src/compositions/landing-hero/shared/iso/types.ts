@@ -21,18 +21,18 @@ export interface Shape {
 
 /** Axis-aligned 3D box: (x,y) = ground plane, z = vertical */
 export interface Box3D {
+  d: number; // extent along z (height)
+  h: number; // extent along y
+  w: number; // extent along x
   x: number;
   y: number;
   z: number;
-  w: number; // extent along x
-  h: number; // extent along y
-  d: number; // extent along z (height)
 }
 
 /** 2D bounding rectangle */
 export interface Bounds {
-  minX: number;
-  minY: number;
   maxX: number;
   maxY: number;
+  minX: number;
+  minY: number;
 }

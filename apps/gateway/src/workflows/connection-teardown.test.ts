@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Capture workflow handler ──
 
 let capturedHandler: (context: unknown) => Promise<void> = () => {
   throw new Error(
-    "serve() was never called — connection-teardown module failed to register its handler",
+    "serve() was never called — connection-teardown module failed to register its handler"
   );
 };
 
@@ -53,7 +53,7 @@ vi.mock("@db/console/client", () => ({
         // biome-ignore lint/suspicious/noThenProperty: intentional thenable mock for Drizzle query builder
         then: (
           resolve: (v: unknown) => unknown,
-          reject: (e: unknown) => unknown,
+          reject: (e: unknown) => unknown
         ) => mockDbQuery().then(resolve, reject),
       };
       return builder;
@@ -121,14 +121,12 @@ function makeProvider(
     requiresWebhookRegistration: boolean;
     revokeToken: ReturnType<typeof vi.fn>;
     deregisterWebhook: ReturnType<typeof vi.fn>;
-  }> = {},
+  }> = {}
 ) {
   return {
     name: overrides.name ?? "github",
-    requiresWebhookRegistration:
-      overrides.requiresWebhookRegistration ?? false,
-    revokeToken:
-      overrides.revokeToken ?? vi.fn().mockResolvedValue(undefined),
+    requiresWebhookRegistration: overrides.requiresWebhookRegistration ?? false,
+    revokeToken: overrides.revokeToken ?? vi.fn().mockResolvedValue(undefined),
     deregisterWebhook:
       overrides.deregisterWebhook ?? vi.fn().mockResolvedValue(undefined),
   };
@@ -183,7 +181,7 @@ describe("connection-teardown workflow", () => {
     expect(mockRedisDel).toHaveBeenCalledTimes(1);
     expect(mockRedisDel).toHaveBeenCalledWith(
       "gw:resource:linear:res-1",
-      "gw:resource:linear:res-2",
+      "gw:resource:linear:res-2"
     );
     expect(mockDbUpdate).toHaveBeenCalledTimes(2);
   });
@@ -364,7 +362,7 @@ describe("connection-teardown workflow", () => {
     expect(mockRedisDel).toHaveBeenCalledWith(
       "gw:resource:github:repo-a",
       "gw:resource:github:repo-b",
-      "gw:resource:github:repo-c",
+      "gw:resource:github:repo-c"
     );
   });
 
@@ -397,10 +395,10 @@ describe("connection-teardown workflow", () => {
     expect(mockDbUpdate).toHaveBeenCalledTimes(2);
     expect(mockTxSet).toHaveBeenCalledTimes(2);
     expect(mockTxSet).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "revoked" }),
+      expect.objectContaining({ status: "revoked" })
     );
     expect(mockTxSet).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "removed" }),
+      expect.objectContaining({ status: "removed" })
     );
   });
 });

@@ -1,12 +1,12 @@
 export default function NewWorkspaceLayout({
-	children,
+  children,
 }: {
-	children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-	return (
-		<>
-			<div className="mx-auto w-full max-w-2xl px-4">{children}</div>
-			<div aria-hidden className="shrink-0 h-16 md:h-20" />
-		</>
-	);
+  return (
+    <>
+      <div className="mx-auto w-full max-w-2xl px-4">{children}</div>
+      <div aria-hidden className="h-16 shrink-0 md:h-20" />
+    </>
+  );
 }

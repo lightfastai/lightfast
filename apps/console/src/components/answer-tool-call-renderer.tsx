@@ -1,39 +1,45 @@
 "use client";
 
-import type { ToolUIPart } from "ai";
+import type {
+  ContentsToolUIPart,
+  FindSimilarToolUIPart,
+  SearchToolUIPart,
+} from "@repo/console-ai-types";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@repo/ui/components/ui/accordion";
-import { AlertCircle, Loader2, Search } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
-import type {
-  SearchToolUIPart,
-  ContentsToolUIPart,
-  FindSimilarToolUIPart,
-} from "@repo/console-ai-types";
+import type { ToolUIPart } from "ai";
+import { AlertCircle, Loader2, Search } from "lucide-react";
+import { formatToolErrorPayload } from "./answer-tool-error-utils";
 import {
-  SearchToolResult,
   ContentsToolResult,
   FindSimilarToolResult,
+  SearchToolResult,
 } from "./answer-tool-results";
-import { formatToolErrorPayload } from "./answer-tool-error-utils";
 
 interface ToolCallRendererProps {
-  toolPart: ToolUIPart;
-  toolName: string;
   className?: string;
+  toolName: string;
+  toolPart: ToolUIPart;
 }
 
 function getInputPreview(
-  input: Record<string, unknown> | undefined,
+  input: Record<string, unknown> | undefined
 ): string | undefined {
-  if (!input) return undefined;
+  if (!input) {
+    return undefined;
+  }
   const firstArg = Object.values(input)[0];
-  if (typeof firstArg === "string") return firstArg;
-  if (firstArg !== undefined) return JSON.stringify(firstArg);
+  if (typeof firstArg === "string") {
+    return firstArg;
+  }
+  if (firstArg !== undefined) {
+    return JSON.stringify(firstArg);
+  }
   return undefined;
 }
 
@@ -65,12 +71,12 @@ export function ToolCallRenderer({
     const isStreaming = toolPart.state === "input-streaming";
 
     return (
-      <div className={cn("border rounded-lg w-full", className)}>
-        <div className="py-3 px-4 hover:bg-muted/50 transition-colors w-full">
-          <div className="flex items-center gap-2 flex-1">
+      <div className={cn("w-full rounded-lg border", className)}>
+        <div className="w-full px-4 py-3 transition-colors hover:bg-muted/50">
+          <div className="flex flex-1 items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            <div className="text-left flex-1">
-              <div className="font-medium text-xs lowercase text-muted-foreground">
+            <div className="flex-1 text-left">
+              <div className="font-medium text-muted-foreground text-xs lowercase">
                 {isStreaming ? "Preparing" : "Running"} {displayName}
                 {inputPreview ? `: ${inputPreview}` : "..."}
               </div>
@@ -85,7 +91,7 @@ export function ToolCallRenderer({
   if (toolPart.state === "output-error") {
     const { formattedError, isStructured } = formatToolErrorPayload(
       toolPart.errorText,
-      "The tool failed to complete. Please try again.",
+      "The tool failed to complete. Please try again."
     );
 
     const input = ("input" in toolPart ? toolPart.input : undefined) as
@@ -95,18 +101,18 @@ export function ToolCallRenderer({
     const errorLabel = `${displayName} failed`;
 
     return (
-      <div className={cn("border rounded-lg w-full", className)}>
-        <Accordion type="single" collapsible className="w-full">
+      <div className={cn("w-full rounded-lg border", className)}>
+        <Accordion className="w-full" collapsible type="single">
           <AccordionItem value={`tool-error-${toolName}`}>
-            <AccordionTrigger className="py-3 px-4 hover:no-underline data-[state=closed]:hover:bg-muted/50 items-center">
-              <div className="flex items-center gap-2 flex-1">
+            <AccordionTrigger className="items-center px-4 py-3 hover:no-underline data-[state=closed]:hover:bg-muted/50">
+              <div className="flex flex-1 items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-destructive" />
-                <div className="text-left flex-1">
-                  <div className="font-medium text-sm text-destructive">
+                <div className="flex-1 text-left">
+                  <div className="font-medium text-destructive text-sm">
                     {errorLabel}
                   </div>
                   {inputPreview && (
-                    <div className="text-xs text-muted-foreground/70 mt-1 truncate">
+                    <div className="mt-1 truncate text-muted-foreground/70 text-xs">
                       {inputPreview}
                     </div>
                   )}
@@ -116,11 +122,11 @@ export function ToolCallRenderer({
             <AccordionContent className="px-4">
               <div className="pt-3 pb-4">
                 {isStructured ? (
-                  <pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-3 text-[10px] leading-relaxed text-muted-foreground">
+                  <pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-3 text-[10px] text-muted-foreground leading-relaxed">
                     {formattedError}
                   </pre>
                 ) : (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {formattedError}
                   </p>
                 )}
@@ -137,8 +143,7 @@ export function ToolCallRenderer({
     return (
       <SearchToolResult
         data={
-          (toolPart as SearchToolUIPart & { state: "output-available" })
-            .output
+          (toolPart as SearchToolUIPart & { state: "output-available" }).output
         }
       />
     );
@@ -167,19 +172,20 @@ export function ToolCallRenderer({
   }
 
   // JSON fallback for other tools
-  const output = (toolPart as ToolUIPart & { state: "output-available" }).output;
+  const output = (toolPart as ToolUIPart & { state: "output-available" })
+    .output;
   const jsonStr =
     typeof output === "string" ? output : JSON.stringify(output, null, 2);
 
   return (
-    <div className={cn("border rounded-lg w-full", className)}>
-      <Accordion type="single" collapsible className="w-full">
+    <div className={cn("w-full rounded-lg border", className)}>
+      <Accordion className="w-full" collapsible type="single">
         <AccordionItem value={`tool-output-${toolName}`}>
-          <AccordionTrigger className="py-3 px-4 hover:no-underline data-[state=closed]:hover:bg-muted/50">
-            <div className="flex items-center gap-2 flex-1">
+          <AccordionTrigger className="px-4 py-3 hover:no-underline data-[state=closed]:hover:bg-muted/50">
+            <div className="flex flex-1 items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
-              <div className="text-left flex-1">
-                <div className="font-medium text-xs lowercase text-muted-foreground">
+              <div className="flex-1 text-left">
+                <div className="font-medium text-muted-foreground text-xs lowercase">
                   {displayName}
                 </div>
               </div>
@@ -187,7 +193,7 @@ export function ToolCallRenderer({
           </AccordionTrigger>
           <AccordionContent className="px-4">
             <div className="pt-3 pb-4">
-              <pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-3 text-[10px] leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">
+              <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted/40 p-3 text-[10px] text-muted-foreground leading-relaxed">
                 {jsonStr}
               </pre>
             </div>

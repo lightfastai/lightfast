@@ -15,47 +15,47 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import matter from "gray-matter";
-import {
-  createChangelogEntry,
-} from "./mutations/changelog.js";
-import type { ChangelogEntryInput } from "./mutations/changelog.js";
 import { changelog } from "@vendor/cms";
+import matter from "gray-matter";
+import type { ChangelogEntryInput } from "./mutations/changelog.js";
+import { createChangelogEntry } from "./mutations/changelog.js";
 
 interface InternalFields {
-  status: "draft" | "published";
-  source_prs?: string[];
-  generated?: string;
   fact_checked_files?: string[];
+  generated?: string;
   publishedAt?: string;
+  source_prs?: string[];
+  status: "draft" | "published";
 }
 
 interface ChangelogFrontmatter {
-  title: string;
-  prefix: string;
-  slug: string;
-  publishedAt?: string;
+  _internal?: InternalFields;
   excerpt?: string;
-  tldr?: string;
+  fixes?: string[];
   // Categorized sections (arrays in YAML, converted to newline-separated strings)
   improvements?: string[];
   infrastructure?: string[];
-  fixes?: string[];
   patches?: string[];
+  prefix: string;
+  publishedAt?: string;
   seo?: {
     metaDescription?: string;
     focusKeyword?: string;
     secondaryKeyword?: string;
     faq?: { question: string; answer: string }[];
   };
-  _internal?: InternalFields;
+  slug: string;
+  title: string;
+  tldr?: string;
 }
 
 /**
  * Convert array of strings to newline-separated bullet list for BaseHub
  */
 function arrayToText(arr: string[] | undefined): string | undefined {
-  if (!arr || arr.length === 0) return undefined;
+  if (!arr || arr.length === 0) {
+    return undefined;
+  }
   return arr.map((item) => `• ${item}`).join("\n");
 }
 
@@ -65,8 +65,7 @@ async function main() {
     console.error(
       JSON.stringify({
         success: false,
-        error:
-          "Usage: pnpm publish:changelog -- <filepath>",
+        error: "Usage: pnpm publish:changelog -- <filepath>",
       })
     );
     process.exit(1);

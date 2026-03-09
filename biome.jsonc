@@ -1,0 +1,58 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
+  "files": {
+    "includes": [
+      "**/*",
+      "!.claude",
+      "!packages/ui/src/components/ui",
+      "!packages/ui/src/hooks",
+      "!packages/ui/src/lib",
+      "!vendor/cms/basehub-types.d.ts"
+    ]
+  },
+  "linter": {
+    "rules": {
+      "a11y": {
+        "noSvgWithoutTitle": "off",
+        "useButtonType": "off",
+        "useSemanticElements": "off"
+      },
+      "complexity": {
+        "noBannedTypes": "off",
+        "noExcessiveCognitiveComplexity": "off",
+        "noForEach": "off",
+        "noVoid": "off"
+      },
+      "performance": {
+        "noBarrelFile": "off",
+        "noNamespaceImport": "off",
+        "useTopLevelRegex": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
+      },
+      "style": {
+        "noEnum": "off",
+        "noExportedImports": "off",
+        "noNestedTernary": "off",
+        "noNonNullAssertion": "off",
+        "noParameterProperties": "off",
+        "useConsistentMemberAccessibility": "off",
+        "useDefaultSwitchClause": "off"
+      },
+      "suspicious": {
+        "noAlert": "off",
+        "noArrayIndexKey": "off",
+        "noAssignInExpressions": "off",
+        "noBitwiseOperators": "off",
+        "noEmptyBlockStatements": "off",
+        "noEvolvingTypes": "off",
+        "noExplicitAny": "off",
+        "noImplicitAnyLet": "off",
+        "useAwait": "off",
+        "useIterableCallbackReturn": "off"
+      }
+    }
+  }
+}

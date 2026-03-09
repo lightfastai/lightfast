@@ -8,24 +8,21 @@
  * Infrastructure: PGlite (real DB for connections app), service mesh fetch
  * router (localhost:4110 → gatewayApp), Inngest function capture.
  */
+
+import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
+import { fixtures } from "@repo/console-test-db/fixtures";
 import {
-  describe,
-  it,
-  expect,
-  vi,
+  afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
-  afterAll,
+  describe,
+  expect,
+  it,
+  vi,
 } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
-import type { TestDb } from "@repo/console-test-db";
-import { fixtures } from "@repo/console-test-db/fixtures";
-import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 
 // ── Shared state ──
 let db: TestDb;
@@ -63,7 +60,9 @@ const {
 // ── vi.mock declarations ──
 
 vi.mock("@db/console/client", () => ({
-  get db() { return db; },
+  get db() {
+    return db;
+  },
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -72,7 +71,11 @@ vi.mock("@vendor/upstash", () => ({
 
 vi.mock("@vendor/qstash", () => ({
   getQStashClient: () => qstashMock,
-  Receiver: class { verify() { return Promise.resolve(true); } },
+  Receiver: class {
+    verify() {
+      return Promise.resolve(true);
+    }
+  },
 }));
 
 vi.mock("@vendor/inngest/hono", () => ({
@@ -96,15 +99,17 @@ vi.mock("@vendor/inngest", () => {
         (
           config: { id: string },
           _trigger: unknown,
-          handler: (args: { event: unknown; step: unknown }) => Promise<unknown>,
+          handler: (args: { event: unknown; step: unknown }) => Promise<unknown>
         ) => {
           capturedHandlers.set(config.id, handler);
           return { id: config.id };
-        },
+        }
       );
     },
     EventSchemas: class {
-      fromSchema() { return this; }
+      fromSchema() {
+        return this;
+      }
     },
     NonRetriableError: MockNonRetriableError,
   };
@@ -115,13 +120,21 @@ vi.mock("@repo/console-backfill", () => ({
 }));
 
 vi.mock("@vendor/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vercel/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
@@ -142,9 +155,9 @@ import relayApp from "@relay/app";
 await import("@backfill/orchestrator");
 await import("@backfill/entity-worker");
 
+import { encrypt } from "@repo/lib";
 // ── Utilities ──
 import { installServiceRouter, makeStep } from "./harness.js";
-import { encrypt } from "@repo/lib";
 
 // ── Request helper (connections) ──
 const API_KEY = "0".repeat(64);
@@ -155,7 +168,7 @@ function connReq(
     method?: string;
     body?: Record<string, unknown>;
     headers?: Record<string, string>;
-  } = {},
+  } = {}
 ) {
   const headers = new Headers({ "X-API-Key": API_KEY, ...init.headers });
   if (!headers.has("content-type") && init.body) {
@@ -186,40 +199,58 @@ beforeEach(() => {
     fetchPage: vi.fn(),
   });
 
-  redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
-    redisStore.set(key, { ...existing, ...fields });
-    return Promise.resolve(1);
-  });
-  redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
+  redisMock.hset.mockImplementation(
+    (key: string, fields: Record<string, unknown>) => {
+      const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+      redisStore.set(key, { ...existing, ...fields });
+      return Promise.resolve(1);
+    }
   );
-  redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean }) => {
-    if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
-    redisStore.set(key, value);
-    return Promise.resolve("OK");
-  });
+  redisMock.hgetall.mockImplementation((key: string) =>
+    Promise.resolve(
+      (redisStore.get(key) ?? null) as Record<string, string> | null
+    )
+  );
+  redisMock.set.mockImplementation(
+    (key: string, value: unknown, opts?: { nx?: boolean }) => {
+      if (opts?.nx && redisStore.has(key)) {
+        return Promise.resolve(null);
+      }
+      redisStore.set(key, value);
+      return Promise.resolve("OK");
+    }
+  );
   redisMock.del.mockImplementation((...keys: string[]) => {
     const allKeys = keys.flat();
     let count = 0;
-    for (const k of allKeys) { if (redisStore.delete(k)) count++; }
+    for (const k of allKeys) {
+      if (redisStore.delete(k)) {
+        count++;
+      }
+    }
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation((key: string) =>
-    Promise.resolve(redisStore.get(key) ?? null),
+    Promise.resolve(redisStore.get(key) ?? null)
   );
   redisMock.pipeline.mockImplementation(() => {
     const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          const existing = (redisStore.get(key) ?? {}) as Record<
+            string,
+            unknown
+          >;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
       }),
       expire: vi.fn(() => pipe),
-      exec: vi.fn(() => { ops.forEach((op) => op()); return []; }),
+      exec: vi.fn(() => {
+        ops.forEach((op) => op());
+        return [];
+      }),
     };
     return pipe;
   });
@@ -256,12 +287,16 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
 
     expect(res.status).toBe(200);
 
-    const json = await res.json() as {
+    const json = (await res.json()) as {
       id: string;
       provider: string;
       status: string;
       orgId: string;
-      resources: { id: string; providerResourceId: string; resourceName: string | null }[];
+      resources: {
+        id: string;
+        providerResourceId: string;
+        resourceName: string | null;
+      }[];
     };
 
     expect(json.id).toBe(inst.id);
@@ -282,21 +317,32 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
   });
 
   it("returns only active resources (excludes removed)", async () => {
-    const inst = fixtures.installation({ provider: "github", status: "active" });
+    const inst = fixtures.installation({
+      provider: "github",
+      status: "active",
+    });
     await db.insert(gwInstallations).values(inst);
 
-    const activeResource = fixtures.resource({ installationId: inst.id, status: "active" });
-    const removedResource = fixtures.resource({ installationId: inst.id, status: "removed" });
+    const activeResource = fixtures.resource({
+      installationId: inst.id,
+      status: "active",
+    });
+    const removedResource = fixtures.resource({
+      installationId: inst.id,
+      status: "removed",
+    });
     await db.insert(gwResources).values([activeResource, removedResource]);
 
     const res = await connReq(`/services/gateway/${inst.id}`);
     expect(res.status).toBe(200);
 
-    const json = await res.json() as { resources: { id: string }[] };
+    const json = (await res.json()) as { resources: { id: string }[] };
     expect(json.resources).toHaveLength(1);
     const firstResource = json.resources[0];
     expect(firstResource).toBeDefined();
-    if (!firstResource) return;
+    if (!firstResource) {
+      return;
+    }
     expect(firstResource.id).toBe(activeResource.id);
   });
 });
@@ -318,7 +364,9 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
     await db.insert(gwResources).values(resource);
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
-    if (!orchHandler) throw new Error("orchestrator handler not registered");
+    if (!orchHandler) {
+      throw new Error("orchestrator handler not registered");
+    }
 
     const step = makeStep({
       waitForEvent: vi.fn().mockResolvedValue({
@@ -337,7 +385,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
 
     const restore = installServiceRouter({ gatewayApp });
     try {
-      const result = await orchHandler({
+      const result = (await orchHandler({
         event: {
           data: {
             installationId: inst.id,
@@ -348,7 +396,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
           },
         },
         step,
-      }) as { success: boolean; workUnits: number };
+      })) as { success: boolean; workUnits: number };
 
       expect(result.success).toBe(true);
       expect(result.workUnits).toBe(1);
@@ -366,7 +414,9 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
     await db.insert(gwInstallations).values(inst);
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
-    if (!orchHandler) throw new Error("orchestrator handler not registered");
+    if (!orchHandler) {
+      throw new Error("orchestrator handler not registered");
+    }
 
     const step = makeStep();
 
@@ -383,7 +433,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
             },
           },
           step,
-        }),
+        })
       ).rejects.toThrow("Connection is not active");
 
       // Should be a NonRetriableError (from our mock)
@@ -398,7 +448,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
             },
           },
           step,
-        }),
+        })
       ).rejects.toMatchObject({ name: "NonRetriableError" });
     } finally {
       restore();
@@ -415,13 +465,15 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
     // No resources inserted
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
-    if (!orchHandler) throw new Error("orchestrator handler not registered");
+    if (!orchHandler) {
+      throw new Error("orchestrator handler not registered");
+    }
 
     const step = makeStep();
 
     const restore = installServiceRouter({ gatewayApp });
     try {
-      const result = await orchHandler({
+      const result = (await orchHandler({
         event: {
           data: {
             installationId: inst.id,
@@ -432,7 +484,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
           },
         },
         step,
-      }) as { success: boolean; workUnits: number; eventsProduced: number };
+      })) as { success: boolean; workUnits: number; eventsProduced: number };
 
       expect(result.success).toBe(true);
       expect(result.workUnits).toBe(0);
@@ -467,7 +519,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
 
     expect(res.status).toBe(200);
 
-    const json = await res.json() as {
+    const json = (await res.json()) as {
       accessToken: string;
       provider: string;
       expiresIn: number | null;
@@ -487,7 +539,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
     const res = await connReq(`/services/gateway/${inst.id}/token`);
 
     expect(res.status).toBe(400);
-    const json = await res.json() as { error: string };
+    const json = (await res.json()) as { error: string };
     expect(json.error).toBe("installation_not_active");
   });
 
@@ -519,7 +571,10 @@ describe("Suite 3.4 — Entity worker token refresh on 401 mid-pagination", () =
     });
     await db.insert(gwInstallations).values(inst);
 
-    const encryptedToken = await encrypt("initial-access-token", ENCRYPTION_KEY);
+    const encryptedToken = await encrypt(
+      "initial-access-token",
+      ENCRYPTION_KEY
+    );
     const token = fixtures.token({
       installationId: inst.id,
       accessToken: encryptedToken,
@@ -527,18 +582,25 @@ describe("Suite 3.4 — Entity worker token refresh on 401 mid-pagination", () =
     await db.insert(gwTokens).values(token);
 
     const entityHandler = capturedHandlers.get("apps-backfill/entity.worker");
-    if (!entityHandler) throw new Error("entity handler not registered");
+    if (!entityHandler) {
+      throw new Error("entity handler not registered");
+    }
 
     // Connector: throws 401 on first fetchPage, returns one event on second
     const err401 = Object.assign(new Error("Unauthorized"), { status: 401 });
     const mockConnector = {
       defaultEntityTypes: ["pull_request"],
       supportedEntityTypes: ["pull_request"],
-      fetchPage: vi.fn()
+      fetchPage: vi
+        .fn()
         .mockRejectedValueOnce(err401)
         .mockResolvedValueOnce({
           events: [
-            { deliveryId: "del-retry-1", eventType: "pull_request", payload: { number: 1 } },
+            {
+              deliveryId: "del-retry-1",
+              eventType: "pull_request",
+              payload: { number: 1 },
+            },
           ],
           nextCursor: null,
           rawCount: 1,
@@ -550,19 +612,22 @@ describe("Suite 3.4 — Entity worker token refresh on 401 mid-pagination", () =
     //                 relay (port 4108) → accepts dispatched event
     const restore = installServiceRouter({ gatewayApp, relayApp });
     try {
-      const result = await entityHandler({
+      const result = (await entityHandler({
         event: {
           data: {
             installationId: inst.id,
             provider: "sentry",
             orgId: "org-retry-401",
             entityType: "pull_request",
-            resource: { providerResourceId: "owner/retry-repo", resourceName: "retry-repo" },
+            resource: {
+              providerResourceId: "owner/retry-repo",
+              resourceName: "retry-repo",
+            },
             since: new Date().toISOString(),
           },
         },
         step: makeStep(),
-      }) as { eventsDispatched: number; pagesProcessed: number };
+      })) as { eventsDispatched: number; pagesProcessed: number };
 
       // fetchPage was attempted twice: once with initial token (→ 401), once after refresh
       expect(mockConnector.fetchPage).toHaveBeenCalledTimes(2);

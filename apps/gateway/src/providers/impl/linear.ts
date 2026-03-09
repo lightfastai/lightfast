@@ -1,21 +1,21 @@
 import { db } from "@db/console/client";
-import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
+import { gwInstallations, gwTokens } from "@db/console/schema";
 import { decrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
 import type { Context } from "hono";
 import { env } from "../../env.js";
-import { writeTokenRecord, updateTokenRecord } from "../../lib/token-store.js";
+import { updateTokenRecord, writeTokenRecord } from "../../lib/token-store.js";
 import { gatewayBaseUrl } from "../../lib/urls.js";
 import { linearOAuthResponseSchema } from "../schemas.js";
 import type {
+  CallbackResult,
+  CallbackStateData,
   ConnectionProvider,
   LinearAccountInfo,
   LinearAuthOptions,
-  TokenResult,
   OAuthTokens,
-  CallbackResult,
-  CallbackStateData,
+  TokenResult,
 } from "../types.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
@@ -27,9 +27,9 @@ export class LinearProvider implements ConnectionProvider {
   private readonly clientSecret: string;
 
   constructor() {
-    if (!env.LINEAR_CLIENT_ID || !env.LINEAR_CLIENT_SECRET) {
+    if (!(env.LINEAR_CLIENT_ID && env.LINEAR_CLIENT_SECRET)) {
       throw new Error(
-        "LinearProvider requires LINEAR_CLIENT_ID and LINEAR_CLIENT_SECRET",
+        "LinearProvider requires LINEAR_CLIENT_ID and LINEAR_CLIENT_SECRET"
       );
     }
     this.clientId = env.LINEAR_CLIENT_ID;
@@ -41,7 +41,7 @@ export class LinearProvider implements ConnectionProvider {
     url.searchParams.set("client_id", this.clientId);
     url.searchParams.set(
       "redirect_uri",
-      `${gatewayBaseUrl}/gateway/linear/callback`,
+      `${gatewayBaseUrl}/gateway/linear/callback`
     );
     url.searchParams.set("response_type", "code");
     url.searchParams.set("scope", options?.scopes?.join(",") ?? "read,write");
@@ -144,7 +144,7 @@ export class LinearProvider implements ConnectionProvider {
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
-        query: `{ viewer { id organization { id name urlKey } } }`,
+        query: "{ viewer { id organization { id name urlKey } } }",
       }),
     });
 
@@ -171,27 +171,37 @@ export class LinearProvider implements ConnectionProvider {
     }
 
     const viewerId = result.data?.viewer?.id;
-    if (viewerId) {return { externalId: viewerId };}
+    if (viewerId) {
+      return { externalId: viewerId };
+    }
 
     throw new Error("Linear API did not return a viewer or organization ID");
   }
 
   async handleCallback(
     c: Context,
-    stateData: CallbackStateData,
+    stateData: CallbackStateData
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
-    if (!code) {throw new Error("missing code");}
+    if (!code) {
+      throw new Error("missing code");
+    }
 
     const redirectUri = `${gatewayBaseUrl}/gateway/${this.name}/callback`;
     const oauthTokens = await this.exchangeCode(code, redirectUri);
 
-    const linearContext = await this.fetchLinearContext(oauthTokens.accessToken);
+    const linearContext = await this.fetchLinearContext(
+      oauthTokens.accessToken
+    );
     const externalId = linearContext.externalId;
     const now = new Date().toISOString();
 
     // Extract raw Linear response (Zod-validated in exchangeCode, so fields are guaranteed present)
-    const raw = oauthTokens.raw as { token_type: string; scope: string; expires_in: number };
+    const raw = oauthTokens.raw as {
+      token_type: string;
+      scope: string;
+      expires_in: number;
+    };
 
     const accountInfo: LinearAccountInfo = {
       version: 1,
@@ -241,7 +251,9 @@ export class LinearProvider implements ConnectionProvider {
       });
 
     const installation = rows[0];
-    if (!installation) {throw new Error("upsert_failed");}
+    if (!installation) {
+      throw new Error("upsert_failed");
+    }
 
     await writeTokenRecord(installation.id, oauthTokens);
 
@@ -260,7 +272,9 @@ export class LinearProvider implements ConnectionProvider {
       .limit(1);
 
     const tokenRow = tokenRows[0];
-    if (!tokenRow) {throw new Error("no_token_found");}
+    if (!tokenRow) {
+      throw new Error("no_token_found");
+    }
 
     // Check expiry and refresh if needed
     if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
@@ -268,10 +282,18 @@ export class LinearProvider implements ConnectionProvider {
         throw new Error("token_expired:no_refresh_token");
       }
 
-      const decryptedRefresh = await decrypt(tokenRow.refreshToken, env.ENCRYPTION_KEY);
+      const decryptedRefresh = await decrypt(
+        tokenRow.refreshToken,
+        env.ENCRYPTION_KEY
+      );
       const refreshed = await this.refreshToken(decryptedRefresh);
 
-      await updateTokenRecord(tokenRow.id, refreshed, tokenRow.refreshToken, tokenRow.expiresAt);
+      await updateTokenRecord(
+        tokenRow.id,
+        refreshed,
+        tokenRow.refreshToken,
+        tokenRow.expiresAt
+      );
 
       return {
         accessToken: refreshed.accessToken,
@@ -280,12 +302,17 @@ export class LinearProvider implements ConnectionProvider {
       };
     }
 
-    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    const decryptedToken = await decrypt(
+      tokenRow.accessToken,
+      env.ENCRYPTION_KEY
+    );
     return {
       accessToken: decryptedToken,
       provider: this.name,
       expiresIn: tokenRow.expiresAt
-        ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
+        ? Math.floor(
+            (new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000
+          )
         : null,
     };
   }

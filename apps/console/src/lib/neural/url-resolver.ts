@@ -5,7 +5,10 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceNeuralObservations, workspaceKnowledgeDocuments } from "@db/console/schema";
+import {
+  workspaceKnowledgeDocuments,
+  workspaceNeuralObservations,
+} from "@db/console/schema";
 import { and, desc, eq, inArray } from "drizzle-orm";
 
 export interface ResolvedContent {
@@ -17,10 +20,10 @@ export interface ResolvedContent {
  * Parse GitHub URL into components.
  */
 interface ParsedGitHubUrl {
+  identifier: string;
   owner: string;
   repo: string;
   type: "pr" | "issue" | "commit" | "release" | "discussion" | "file";
-  identifier: string;
 }
 
 const URL_PATTERNS = [

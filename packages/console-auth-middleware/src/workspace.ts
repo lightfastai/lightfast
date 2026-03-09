@@ -33,17 +33,16 @@
  * ```
  */
 
-import { eq, and } from "drizzle-orm";
 import { orgWorkspaces } from "@db/console/schema";
+import { and, eq } from "drizzle-orm";
 import type {
-  DbClient,
-  WorkspaceAccessContext,
-  WorkspaceAccessResult,
+  OrgAccessContext,
+  OrgAccessResult,
   ResolveWorkspaceByNameContext,
   ResolveWorkspaceBySlugContext,
   ResolveWorkspaceResult,
-  OrgAccessContext,
-  OrgAccessResult,
+  WorkspaceAccessContext,
+  WorkspaceAccessResult,
 } from "./types";
 
 /**
@@ -108,7 +107,9 @@ export async function verifyOrgAccess(
     }
 
     // 2. User-centric membership check (cached)
-    const { getCachedUserOrgMemberships } = await import("@repo/console-clerk-cache");
+    const { getCachedUserOrgMemberships } = await import(
+      "@repo/console-clerk-cache"
+    );
     const userMemberships = await getCachedUserOrgMemberships(params.userId);
 
     const userMembership = userMemberships.find(
@@ -380,7 +381,9 @@ export async function verifyWorkspaceAccess(
     }
 
     // 2. User-centric membership check (cached)
-    const { getCachedUserOrgMemberships } = await import("@repo/console-clerk-cache");
+    const { getCachedUserOrgMemberships } = await import(
+      "@repo/console-clerk-cache"
+    );
     const userMemberships = await getCachedUserOrgMemberships(params.userId);
 
     const userMembership = userMemberships.find(

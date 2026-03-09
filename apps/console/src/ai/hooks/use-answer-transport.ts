@@ -19,7 +19,7 @@ export function useAnswerTransport({
       api,
       headers,
       body: {
-        messages: messages.length > 0 ? [messages[messages.length - 1]] : [],
+        messages: messages.length > 0 ? [messages.at(-1)] : [],
         ...body,
       },
     }),

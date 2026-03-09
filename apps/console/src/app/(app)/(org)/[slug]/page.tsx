@@ -11,8 +11,8 @@ export default async function OrgHomePage({
   // Data is already prefetched in layout - no need to duplicate here
 
   return (
-    <div className="flex flex-1 flex-col h-full overflow-auto">
-      <div className="flex flex-col gap-6 pt-2 px-6 pb-6">
+    <div className="flex h-full flex-1 flex-col overflow-auto">
+      <div className="flex flex-col gap-6 px-6 pt-2 pb-6">
         <WorkspacesList orgSlug={slug} />
       </div>
     </div>

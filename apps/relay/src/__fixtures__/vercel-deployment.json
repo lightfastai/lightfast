@@ -10,10 +10,7 @@
     "user": {
       "id": "user_nwt4ExHMZpJPMKDg8j5A1Bz7"
     },
-    "alias": [
-      "my-project-git-main-acme.vercel.app",
-      "my-project.vercel.app"
-    ],
+    "alias": ["my-project-git-main-acme.vercel.app", "my-project.vercel.app"],
     "deployment": {
       "id": "dpl_5m8c9xYLNFp5WPqh5QjJiJqw9BN8",
       "meta": {

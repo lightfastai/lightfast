@@ -29,8 +29,6 @@
             "/use-cases",
             "/use-cases/:path",
             "/use-cases/:path/opengraph-image-:hash",
-            "/early-access",
-            "/early-access/opengraph-image-:hash",
             "/legal/:path*",
             "/search",
             "/preview",
@@ -58,10 +56,12 @@
         {
           "group": "auth",
           "paths": [
+            "/early-access",
             "/sign-in",
             "/sign-in/:path*",
             "/sign-up",
-            "/sign-up/opengraph-image-:hash"
+            "/sign-up/opengraph-image-:hash",
+            "/test-page"
           ]
         }
       ]

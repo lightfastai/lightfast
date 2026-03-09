@@ -1,13 +1,8 @@
-import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto.js";
-import {
-  githubWebhookPayloadSchema,
-} from "../schemas.js";
-import type { GitHubWebhookPayload } from "../schemas.js";
-import type {
-  WebhookProvider,
-  WebhookPayload,
-} from "../types.js";
 import type { RelayEnv } from "../../env.js";
+import { computeHmacSha256, timingSafeEqual } from "../../lib/crypto.js";
+import type { GitHubWebhookPayload } from "../schemas.js";
+import { githubWebhookPayloadSchema } from "../schemas.js";
+import type { WebhookPayload, WebhookProvider } from "../types.js";
 
 const SIGNATURE_HEADER = "x-hub-signature-256";
 const DELIVERY_HEADER = "x-github-delivery";
@@ -24,10 +19,12 @@ export class GitHubProvider implements WebhookProvider {
   async verifyWebhook(
     payload: string,
     headers: Headers,
-    secret: string,
+    secret: string
   ): Promise<boolean> {
     const signature = headers.get(SIGNATURE_HEADER);
-    if (!signature) return false;
+    if (!signature) {
+      return false;
+    }
 
     const receivedSig = signature.startsWith(SIGNATURE_PREFIX)
       ? signature.slice(SIGNATURE_PREFIX.length)
@@ -52,10 +49,14 @@ export class GitHubProvider implements WebhookProvider {
   extractResourceId(payload: WebhookPayload): string | null {
     const p = payload as GitHubWebhookPayload;
     const repoId = p.repository?.id;
-    if (repoId != null) return String(repoId);
+    if (repoId != null) {
+      return String(repoId);
+    }
 
     const installId = p.installation?.id;
-    if (installId != null) return String(installId);
+    if (installId != null) {
+      return String(installId);
+    }
 
     return null;
   }

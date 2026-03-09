@@ -15,5 +15,6 @@ export const env = createEnv({
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
   },
   skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
+    !!process.env.SKIP_ENV_VALIDATION ||
+    process.env.npm_lifecycle_event === "lint",
 });

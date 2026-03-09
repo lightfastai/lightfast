@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Capture the handler passed to createFunction ──
 
@@ -9,7 +9,7 @@ vi.mock("../inngest/client", () => ({
     createFunction: (
       _config: unknown,
       _trigger: unknown,
-      handler: typeof capturedHandler,
+      handler: typeof capturedHandler
     ) => {
       capturedHandler = handler;
       return { id: "mock-orchestrator" };
@@ -87,7 +87,7 @@ const mockConnector = {
 
 function mockFetchConnection(conn: Record<string, unknown> = makeConnection()) {
   mockFetch.mockResolvedValueOnce(
-    new Response(JSON.stringify(conn), { status: 200 }),
+    new Response(JSON.stringify(conn), { status: 200 })
   );
 }
 
@@ -109,7 +109,7 @@ describe("get-connection step", () => {
       "https://gateway.test/services/gateway/inst-1",
       expect.objectContaining({
         headers: expect.objectContaining({ "X-API-Key": "test-key" }),
-      }),
+      })
     );
   });
 
@@ -117,27 +117,27 @@ describe("get-connection step", () => {
     mockFetchConnection(makeConnection({ status: "inactive" }));
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Connection is not active");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Connection is not active"
+    );
   });
 
   it("throws when connection status is error", async () => {
     mockFetchConnection(makeConnection({ status: "error" }));
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Connection is not active");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Connection is not active"
+    );
   });
 
   it("throws when Connections API returns 404", async () => {
     mockFetch.mockResolvedValueOnce(new Response("", { status: 404 }));
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("Gateway getConnection failed: 404");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Gateway getConnection failed: 404"
+    );
   });
 
   it("returns early with zero counts when connection has no resources", async () => {
@@ -161,9 +161,9 @@ describe("connector resolution", () => {
     mockGetConnector.mockReturnValue(null);
     const step = makeStep();
 
-    await expect(
-      capturedHandler({ event: makeEvent(), step }),
-    ).rejects.toThrow("No backfill connector for provider");
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "No backfill connector for provider"
+    );
   });
 
   it("entityTypes from event data overrides connector defaultEntityTypes", async () => {
@@ -177,7 +177,9 @@ describe("connector resolution", () => {
     const sendCall = step.sendEvent.mock.calls[0]!;
     const events = sendCall[1] as Array<{ data: { entityType: string } }>;
     expect(events).toHaveLength(2);
-    expect(events.every((e) => e.data.entityType === "pull_request")).toBe(true);
+    expect(events.every((e) => e.data.entityType === "pull_request")).toBe(
+      true
+    );
   });
 
   it("uses connector.defaultEntityTypes when entityTypes is absent", async () => {
@@ -209,8 +211,10 @@ describe("work unit enumeration", () => {
   it("1 resource x 1 entity type (override) = 1 work unit", async () => {
     mockFetchConnection(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep();
     const event = makeEvent({ entityTypes: ["pull_request"] });
@@ -233,7 +237,10 @@ describe("fan-out", () => {
     expect(step.sendEvent).toHaveBeenCalledOnce();
     const [stepName, events] = step.sendEvent.mock.calls[0]!;
     expect(stepName).toBe("fan-out-entity-workers");
-    for (const evt of events as Array<{ name: string; data: Record<string, unknown> }>) {
+    for (const evt of events as Array<{
+      name: string;
+      data: Record<string, unknown>;
+    }>) {
       expect(evt.name).toBe("apps-backfill/entity.requested");
       expect(evt.data).toHaveProperty("installationId", "inst-1");
       expect(evt.data).toHaveProperty("provider", "github");
@@ -260,8 +267,10 @@ describe("wait-for-completions", () => {
   it("null return (timeout) → included in failed results", async () => {
     mockFetchConnection(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep({
       run: vi.fn((_name: string, fn: () => unknown) => fn()),
@@ -271,7 +280,10 @@ describe("wait-for-completions", () => {
     });
     const event = makeEvent({ entityTypes: ["pull_request"] });
 
-    const result = (await capturedHandler({ event, step })) as Record<string, unknown>;
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
     expect(result.success).toBe(false);
     expect(result.failed).toBe(1);
   });
@@ -279,8 +291,10 @@ describe("wait-for-completions", () => {
   it("successful completion event with success: true → included in succeeded", async () => {
     mockFetchConnection(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep({
       run: vi.fn((_name: string, fn: () => unknown) => fn()),
@@ -297,7 +311,10 @@ describe("wait-for-completions", () => {
     });
     const event = makeEvent({ entityTypes: ["pull_request"] });
 
-    const result = (await capturedHandler({ event, step })) as Record<string, unknown>;
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
     expect(result.success).toBe(true);
     expect(result.completed).toBe(1);
   });
@@ -305,8 +322,10 @@ describe("wait-for-completions", () => {
   it("completion event with success: false → included in failed", async () => {
     mockFetchConnection(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep({
       run: vi.fn((_name: string, fn: () => unknown) => fn()),
@@ -324,7 +343,10 @@ describe("wait-for-completions", () => {
     });
     const event = makeEvent({ entityTypes: ["pull_request"] });
 
-    const result = (await capturedHandler({ event, step })) as Record<string, unknown>;
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
     expect(result.success).toBe(false);
     expect(result.failed).toBe(1);
   });
@@ -334,28 +356,40 @@ describe("aggregation", () => {
   it("all work units succeed → success: true", async () => {
     mockFetchConnection(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     const step = makeStep({
       run: vi.fn((_name: string, fn: () => unknown) => fn()),
       sendEvent: vi.fn().mockResolvedValue(undefined),
       waitForEvent: vi.fn().mockResolvedValue({
-        data: { success: true, eventsProduced: 5, eventsDispatched: 5, pagesProcessed: 1 },
+        data: {
+          success: true,
+          eventsProduced: 5,
+          eventsDispatched: 5,
+          pagesProcessed: 1,
+        },
       }),
       sleep: vi.fn().mockResolvedValue(undefined),
     });
     const event = makeEvent({ entityTypes: ["pull_request"] });
 
-    const result = (await capturedHandler({ event, step })) as Record<string, unknown>;
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
     expect(result.success).toBe(true);
   });
 
   it("any work unit fails → success: false", async () => {
     mockFetchConnection(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     let callCount = 0;
     const step = makeStep({
@@ -364,24 +398,44 @@ describe("aggregation", () => {
       waitForEvent: vi.fn().mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
-          return { data: { success: true, eventsProduced: 5, eventsDispatched: 5, pagesProcessed: 1 } };
+          return {
+            data: {
+              success: true,
+              eventsProduced: 5,
+              eventsDispatched: 5,
+              pagesProcessed: 1,
+            },
+          };
         }
-        return { data: { success: false, eventsProduced: 0, eventsDispatched: 0, pagesProcessed: 0, error: "fail" } };
+        return {
+          data: {
+            success: false,
+            eventsProduced: 0,
+            eventsDispatched: 0,
+            pagesProcessed: 0,
+            error: "fail",
+          },
+        };
       }),
       sleep: vi.fn().mockResolvedValue(undefined),
     });
     // 2 entity types so we get one success and one failure
     const event = makeEvent({ entityTypes: ["pull_request", "issue"] });
 
-    const result = (await capturedHandler({ event, step })) as Record<string, unknown>;
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
     expect(result.success).toBe(false);
   });
 
   it("eventsProduced and eventsDispatched summed from all completions", async () => {
     mockFetchConnection(
       makeConnection({
-        resources: [{ id: "r1", providerResourceId: "100", resourceName: "owner/repo" }],
-      }),
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
     );
     let callCount = 0;
     const step = makeStep({
@@ -402,7 +456,10 @@ describe("aggregation", () => {
     });
     const event = makeEvent({ entityTypes: ["pull_request", "issue"] });
 
-    const result = (await capturedHandler({ event, step })) as Record<string, unknown>;
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
     // First: 10, Second: 20 → total 30
     expect(result.eventsProduced).toBe(30);
     expect(result.eventsDispatched).toBe(30);

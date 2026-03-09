@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { changelog  } from "@vendor/cms";
-import type {ChangelogEntriesQueryResponse} from "@vendor/cms";
+import type { ChangelogEntriesQueryResponse } from "@vendor/cms";
+import { changelog } from "@vendor/cms";
 import { Feed, isDraft } from "@vendor/cms/components/feed";
+import Link from "next/link";
 
 export function ChangelogPreview() {
   return (
@@ -23,7 +23,7 @@ export function ChangelogPreview() {
           <>
             {/* Section Header */}
             <div className="mb-8">
-              <h2 className="text-3xl font-pp font-medium tracking-tight text-foreground mb-2">
+              <h2 className="mb-2 font-medium font-pp text-3xl text-foreground tracking-tight">
                 Changelog
               </h2>
               <p className="text-foreground/60">
@@ -32,7 +32,7 @@ export function ChangelogPreview() {
             </div>
 
             {/* Changelog Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {latestEntries.map((item) => {
                 // Use publishedAt if available, fall back to createdAt
                 const publishedTime = item.publishedAt ?? item._sys?.createdAt;
@@ -46,25 +46,25 @@ export function ChangelogPreview() {
 
                 return (
                   <Link
-                    key={item._slug ?? item._title}
-                    href={`/changelog/${item.slug}`}
                     className="group"
+                    href={`/changelog/${item.slug}`}
+                    key={item._slug ?? item._title}
                   >
                     <div className="h-full rounded-md border border-border p-4 transition-colors hover:bg-card/60">
                       {/* Version Badge and Date on same line */}
-                      <div className="flex items-center gap-2 mb-4">
+                      <div className="mb-4 flex items-center gap-2">
                         {item.prefix && (
-                          <span className="inline-flex items-center h-6 px-2 rounded-md border border-border text-xs text-muted-foreground">
+                          <span className="inline-flex h-6 items-center rounded-md border border-border px-2 text-muted-foreground text-xs">
                             {item.prefix}
                           </span>
                         )}
-                        <time className="text-sm text-muted-foreground">
+                        <time className="text-muted-foreground text-sm">
                           {dateStr}
                         </time>
                       </div>
 
                       {/* Title */}
-                      <h3 className="text-base font-medium text-foreground line-clamp-2">
+                      <h3 className="line-clamp-2 font-medium text-base text-foreground">
                         {item._title}
                       </h3>
                     </div>

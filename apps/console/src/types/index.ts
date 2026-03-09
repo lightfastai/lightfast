@@ -4,7 +4,7 @@
  * All types extracted from tRPC RouterOutputs - never import from @db/console/schema directly!
  */
 
-import type { RouterOutputs, RouterInputs } from "@repo/console-trpc/types";
+import type { RouterInputs, RouterOutputs } from "@repo/console-trpc/types";
 
 // ============================================================================
 // Jobs
@@ -27,12 +27,14 @@ export type RecentJob = RouterOutputs["workspace"]["jobs"]["recent"][number];
 // Workspace
 // ============================================================================
 
-export type Workspace = RouterOutputs["workspace"]["listByClerkOrgSlug"][number];
+export type Workspace =
+  RouterOutputs["workspace"]["listByClerkOrgSlug"][number];
 export type WorkspaceDetail = RouterOutputs["workspace"]["getByName"];
 
 // Workspace performance metrics
 export type JobPercentiles = RouterOutputs["workspace"]["jobPercentiles"];
-export type PerformanceTimeSeries = RouterOutputs["workspace"]["performanceTimeSeries"];
+export type PerformanceTimeSeries =
+  RouterOutputs["workspace"]["performanceTimeSeries"];
 export type PerformanceTimeSeriesPoint = PerformanceTimeSeries[number];
 
 // ============================================================================
@@ -58,25 +60,27 @@ export type JobsStats = RouterOutputs["workspace"]["jobs"]["stats"];
  * Used by presentational components that receive individual stat fields
  */
 export interface WorkspaceMetricsSummary {
-  sourcesCount: SourcesList["total"];
-  totalDocuments: DocumentsStats["total"];
-  totalChunks: DocumentsStats["chunks"];
-  successRate: JobsStats["successRate"];
   avgDurationMs: JobsStats["avgDurationMs"];
   recentJobsCount: JobsStats["total"];
+  sourcesCount: SourcesList["total"];
+  successRate: JobsStats["successRate"];
+  totalChunks: DocumentsStats["chunks"];
+  totalDocuments: DocumentsStats["total"];
 }
 
 // ============================================================================
 // Integration
 // ============================================================================
 
-export type EnrichedConnection = RouterOutputs["workspace"]["sources"]["list"]["list"][number];
+export type EnrichedConnection =
+  RouterOutputs["workspace"]["sources"]["list"]["list"][number];
 
 // ============================================================================
 // Organization
 // ============================================================================
 
-export type Organization = RouterOutputs["organization"]["listUserOrganizations"][number];
+export type Organization =
+  RouterOutputs["organization"]["listUserOrganizations"][number];
 export type OrganizationDetail = RouterOutputs["organization"]["find"];
 
 // ============================================================================

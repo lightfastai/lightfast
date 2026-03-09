@@ -144,9 +144,27 @@
             "site_admin": false
           },
           "labels": [
-            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
-            { "id": 104, "node_id": "L_104", "name": "sdk", "color": "0366d6", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "critical", "color": "ff0000", "default": false }
+            {
+              "id": 101,
+              "node_id": "L_101",
+              "name": "bug",
+              "color": "d73a4a",
+              "default": false
+            },
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "sdk",
+              "color": "0366d6",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "critical",
+              "color": "ff0000",
+              "default": false
+            }
           ],
           "state": "open",
           "locked": false,
@@ -163,7 +181,14 @@
           "reactions": {
             "url": "https://api.github.com/repos/lightfastai/lightfast/issues/370/reactions",
             "total_count": 12,
-            "+1": 12, "-1": 0, "laugh": 0, "hooray": 0, "confused": 0, "heart": 0, "rocket": 0, "eyes": 0
+            "+1": 12,
+            "-1": 0,
+            "laugh": 0,
+            "hooray": 0,
+            "confused": 0,
+            "heart": 0,
+            "rocket": 0,
+            "eyes": 0
           },
           "html_url": "https://github.com/lightfastai/lightfast/issues/370",
           "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/370/timeline",
@@ -459,9 +484,7 @@
               "email": "jp@lightfast.ai",
               "username": "jeevanpillay"
             },
-            "added": [
-              "docs/sdk-api-key-migration.md"
-            ],
+            "added": ["docs/sdk-api-key-migration.md"],
             "removed": [],
             "modified": [
               "core/mcp/src/index.ts",
@@ -486,9 +509,7 @@
             "email": "jp@lightfast.ai",
             "username": "jeevanpillay"
           },
-          "added": [
-            "docs/sdk-api-key-migration.md"
-          ],
+          "added": ["docs/sdk-api-key-migration.md"],
           "removed": [],
           "modified": [
             "core/mcp/src/index.ts",
@@ -570,10 +591,34 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
-            { "id": 104, "node_id": "L_104", "name": "sdk", "color": "0366d6", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "critical", "color": "ff0000", "default": false },
-            { "id": 103, "node_id": "L_103", "name": "hotfix", "color": "ff0000", "default": false }
+            {
+              "id": 101,
+              "node_id": "L_101",
+              "name": "bug",
+              "color": "d73a4a",
+              "default": false
+            },
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "sdk",
+              "color": "0366d6",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "critical",
+              "color": "ff0000",
+              "default": false
+            },
+            {
+              "id": 103,
+              "node_id": "L_103",
+              "name": "hotfix",
+              "color": "ff0000",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -760,10 +805,34 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
-            { "id": 104, "node_id": "L_104", "name": "sdk", "color": "0366d6", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "critical", "color": "ff0000", "default": false },
-            { "id": 103, "node_id": "L_103", "name": "hotfix", "color": "ff0000", "default": false }
+            {
+              "id": 101,
+              "node_id": "L_101",
+              "name": "bug",
+              "color": "d73a4a",
+              "default": false
+            },
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "sdk",
+              "color": "0366d6",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "critical",
+              "color": "ff0000",
+              "default": false
+            },
+            {
+              "id": 103,
+              "node_id": "L_103",
+              "name": "hotfix",
+              "color": "ff0000",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -980,9 +1049,7 @@
               "email": "jp@lightfast.ai",
               "username": "jeevanpillay"
             },
-            "added": [
-              "docs/sdk-api-key-migration.md"
-            ],
+            "added": ["docs/sdk-api-key-migration.md"],
             "removed": [],
             "modified": [
               "core/mcp/src/index.ts",
@@ -1313,9 +1380,27 @@
             "site_admin": false
           },
           "labels": [
-            { "id": 101, "node_id": "L_101", "name": "bug", "color": "d73a4a", "default": false },
-            { "id": 104, "node_id": "L_104", "name": "sdk", "color": "0366d6", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "critical", "color": "ff0000", "default": false }
+            {
+              "id": 101,
+              "node_id": "L_101",
+              "name": "bug",
+              "color": "d73a4a",
+              "default": false
+            },
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "sdk",
+              "color": "0366d6",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "critical",
+              "color": "ff0000",
+              "default": false
+            }
           ],
           "state": "closed",
           "locked": false,
@@ -1332,7 +1417,14 @@
           "reactions": {
             "url": "https://api.github.com/repos/lightfastai/lightfast/issues/370/reactions",
             "total_count": 12,
-            "+1": 12, "-1": 0, "laugh": 0, "hooray": 2, "confused": 0, "heart": 0, "rocket": 3, "eyes": 0
+            "+1": 12,
+            "-1": 0,
+            "laugh": 0,
+            "hooray": 2,
+            "confused": 0,
+            "heart": 0,
+            "rocket": 3,
+            "eyes": 0
           },
           "html_url": "https://github.com/lightfastai/lightfast/issues/370",
           "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/370/timeline",

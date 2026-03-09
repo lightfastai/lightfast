@@ -1,10 +1,11 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
-import { z } from "zod";
-
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
+import { env as securityEnv } from "@vendor/security/env";
+import { upstashEnv } from "@vendor/upstash/env";
+import { z } from "zod";
 
 export const env = createEnv({
   extends: [
@@ -12,6 +13,8 @@ export const env = createEnv({
     clerkEnvBase,
     betterstackEnv,
     sentryEnv,
+    securityEnv,
+    upstashEnv,
   ],
   shared: {
     NODE_ENV: z
@@ -31,7 +34,9 @@ export const env = createEnv({
    * For them to be exposed to the client, prefix them with `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_VERCEL_ENV: z.enum(["development", "preview", "production"]).default("development"),
+    NEXT_PUBLIC_VERCEL_ENV: z
+      .enum(["development", "preview", "production"])
+      .default("development"),
   },
   /**
    * Destructure all variables from `process.env` to make sure they aren't tree-shaken away.
@@ -41,7 +46,8 @@ export const env = createEnv({
     NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
   },
   skipValidation:
-    !!process.env.SKIP_ENV_VALIDATION || process.env.npm_lifecycle_event === "lint",
+    !!process.env.SKIP_ENV_VALIDATION ||
+    process.env.npm_lifecycle_event === "lint",
 
   /**
    * Makes it so that empty strings are treated as undefined. `SOME_VAR: z.string()` and

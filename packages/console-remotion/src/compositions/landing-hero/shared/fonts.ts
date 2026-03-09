@@ -6,7 +6,9 @@ let fontsLoaded = false;
 const FONT_FAMILY = "Geist";
 
 export const ensureFontsLoaded = async () => {
-  if (fontsLoaded) return;
+  if (fontsLoaded) {
+    return;
+  }
 
   await Promise.all([
     loadFont({

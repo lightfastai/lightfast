@@ -1,10 +1,7 @@
 "use client";
 
 import type { ColorMode } from "@knocklabs/react";
-import {
-  KnockFeedProvider,
-  KnockProvider,
-} from "@knocklabs/react";
+import { KnockFeedProvider, KnockProvider } from "@knocklabs/react";
 import type { ReactNode } from "react";
 import { env } from "../env";
 
@@ -26,7 +23,10 @@ export const NotificationsProvider = ({
 
   return (
     <KnockProvider apiKey={knockApiKey} userId={userId}>
-      <KnockFeedProvider colorMode={"dark" as ColorMode} feedId={knockFeedChannelId}>
+      <KnockFeedProvider
+        colorMode={"dark" as ColorMode}
+        feedId={knockFeedChannelId}
+      >
         {children}
       </KnockFeedProvider>
     </KnockProvider>

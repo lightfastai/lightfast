@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { computeHmacSha256 } from "../../lib/crypto.js";
 import { GitHubProvider } from "./github.js";
 
@@ -18,7 +18,7 @@ describe("GitHubProvider", () => {
       const result = await provider.verifyWebhook(
         body,
         headers({ "x-hub-signature-256": `sha256=${sig}` }),
-        secret,
+        secret
       );
       expect(result).toBe(true);
     });
@@ -27,7 +27,7 @@ describe("GitHubProvider", () => {
       const result = await provider.verifyWebhook(
         '{"action":"opened"}',
         headers({ "x-hub-signature-256": "sha256=deadbeef" }),
-        secret,
+        secret
       );
       expect(result).toBe(false);
     });
@@ -36,7 +36,7 @@ describe("GitHubProvider", () => {
       const result = await provider.verifyWebhook(
         '{"action":"opened"}',
         headers({}),
-        secret,
+        secret
       );
       expect(result).toBe(false);
     });
@@ -49,7 +49,7 @@ describe("GitHubProvider", () => {
       const result = await provider.verifyWebhook(
         body,
         headers({ "x-hub-signature-256": sig }),
-        secret,
+        secret
       );
       expect(result).toBe(true);
     });
@@ -80,7 +80,7 @@ describe("GitHubProvider", () => {
     it("reads x-github-delivery header", () => {
       const id = provider.extractDeliveryId(
         headers({ "x-github-delivery": "abc-123" }),
-        {},
+        {}
       );
       expect(id).toBe("abc-123");
     });
@@ -89,7 +89,7 @@ describe("GitHubProvider", () => {
       const id1 = provider.extractDeliveryId(headers({}), {});
       const id2 = provider.extractDeliveryId(headers({}), {});
       expect(id1).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
       );
       expect(id1).not.toBe(id2);
     });
@@ -99,7 +99,7 @@ describe("GitHubProvider", () => {
     it("reads x-github-event header", () => {
       const type = provider.extractEventType(
         headers({ "x-github-event": "push" }),
-        {},
+        {}
       );
       expect(type).toBe("push");
     });
@@ -150,12 +150,12 @@ describe("GitHubProvider", () => {
         before: "abc123",
         after: "def456",
         repository: {
-          id: 123456789,
+          id: 123_456_789,
           full_name: "lightfast/console",
           private: true,
           owner: { login: "lightfast", id: 1 },
         },
-        installation: { id: 98765, node_id: "MDIzOk" },
+        installation: { id: 98_765, node_id: "MDIzOk" },
         pusher: { name: "octocat", email: "octocat@github.com" },
         sender: { login: "octocat", id: 1, avatar_url: "https://..." },
         commits: [
@@ -183,9 +183,9 @@ describe("GitHubProvider", () => {
     it("handles GitHub ping event (no repository)", () => {
       const pingPayload = {
         zen: "Responsive is better than fast.",
-        hook_id: 12345,
+        hook_id: 12_345,
         hook: { type: "App", id: 1 },
-        installation: { id: 98765 },
+        installation: { id: 98_765 },
       };
 
       const parsed = provider.parsePayload(pingPayload);
@@ -197,7 +197,7 @@ describe("GitHubProvider", () => {
       const installPayload = {
         action: "created",
         installation: {
-          id: 99999,
+          id: 99_999,
           account: { login: "my-org", id: 42 },
         },
         repositories: [{ id: 1, name: "repo-a" }],

@@ -17,8 +17,8 @@ const handlers = createInngestRouteContext();
  * Used by Inngest dev server and cloud to discover registered functions
  */
 export const GET = handlers.GET as unknown as (
-	request: NextRequest,
-	context: { params: Promise<object> },
+  request: NextRequest,
+  context: { params: Promise<object> }
 ) => Promise<Response>;
 
 /**
@@ -27,8 +27,8 @@ export const GET = handlers.GET as unknown as (
  * Receives events and executes registered workflow functions
  */
 export const POST = handlers.POST as unknown as (
-	request: NextRequest,
-	context: { params: Promise<object> },
+  request: NextRequest,
+  context: { params: Promise<object> }
 ) => Promise<Response>;
 
 /**
@@ -37,6 +37,6 @@ export const POST = handlers.POST as unknown as (
  * Used by Inngest cloud to register functions
  */
 export const PUT = handlers.PUT as unknown as (
-	request: NextRequest,
-	context: { params: Promise<object> },
+  request: NextRequest,
+  context: { params: Promise<object> }
 ) => Promise<Response>;

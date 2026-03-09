@@ -22,8 +22,20 @@
             "site_admin": false
           },
           "labels": [
-            { "id": 104, "node_id": "L_104", "name": "security", "color": "ff0000", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "critical", "color": "8b0000", "default": false }
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "security",
+              "color": "ff0000",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "critical",
+              "color": "8b0000",
+              "default": false
+            }
           ],
           "state": "open",
           "locked": false,
@@ -56,7 +68,14 @@
           "reactions": {
             "url": "https://api.github.com/repos/lightfastai/lightfast/issues/358/reactions",
             "total_count": 0,
-            "+1": 0, "-1": 0, "laugh": 0, "hooray": 0, "confused": 0, "heart": 0, "rocket": 0, "eyes": 0
+            "+1": 0,
+            "-1": 0,
+            "laugh": 0,
+            "hooray": 0,
+            "confused": 0,
+            "heart": 0,
+            "rocket": 0,
+            "eyes": 0
           },
           "html_url": "https://github.com/lightfastai/lightfast/issues/358",
           "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/358/timeline",
@@ -390,8 +409,20 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 104, "node_id": "L_104", "name": "security", "color": "ff0000", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "critical", "color": "8b0000", "default": false }
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "security",
+              "color": "ff0000",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "critical",
+              "color": "8b0000",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -613,8 +644,20 @@
           "requested_reviewers": [],
           "requested_teams": [],
           "labels": [
-            { "id": 104, "node_id": "L_104", "name": "security", "color": "ff0000", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "critical", "color": "8b0000", "default": false }
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "security",
+              "color": "ff0000",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "critical",
+              "color": "8b0000",
+              "default": false
+            }
           ],
           "milestone": null,
           "draft": false,
@@ -946,7 +989,10 @@
               "githubDeployment": "1"
             }
           },
-          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
           "team": {
             "id": "team_lightfastai",
             "slug": "lightfastai",
@@ -981,7 +1027,10 @@
               "githubDeployment": "1"
             }
           },
-          "project": { "id": "prj_lightfast_console", "name": "lightfast-console" },
+          "project": {
+            "id": "prj_lightfast_console",
+            "name": "lightfast-console"
+          },
           "team": {
             "id": "team_lightfastai",
             "slug": "lightfastai",
@@ -1110,8 +1159,20 @@
             "site_admin": false
           },
           "labels": [
-            { "id": 104, "node_id": "L_104", "name": "security", "color": "ff0000", "default": false },
-            { "id": 105, "node_id": "L_105", "name": "critical", "color": "8b0000", "default": false }
+            {
+              "id": 104,
+              "node_id": "L_104",
+              "name": "security",
+              "color": "ff0000",
+              "default": false
+            },
+            {
+              "id": 105,
+              "node_id": "L_105",
+              "name": "critical",
+              "color": "8b0000",
+              "default": false
+            }
           ],
           "state": "closed",
           "locked": false,
@@ -1144,7 +1205,14 @@
           "reactions": {
             "url": "https://api.github.com/repos/lightfastai/lightfast/issues/358/reactions",
             "total_count": 0,
-            "+1": 0, "-1": 0, "laugh": 0, "hooray": 0, "confused": 0, "heart": 0, "rocket": 0, "eyes": 0
+            "+1": 0,
+            "-1": 0,
+            "laugh": 0,
+            "hooray": 0,
+            "confused": 0,
+            "heart": 0,
+            "rocket": 0,
+            "eyes": 0
           },
           "html_url": "https://github.com/lightfastai/lightfast/issues/358",
           "timeline_url": "https://api.github.com/repos/lightfastai/lightfast/issues/358/timeline",

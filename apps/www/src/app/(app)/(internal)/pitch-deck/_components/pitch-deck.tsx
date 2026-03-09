@@ -1,31 +1,31 @@
 "use client";
 
-import { useRef, useEffect, useState, useMemo, useCallback, memo } from "react";
+import { cn } from "@repo/ui/lib/utils";
+import type { MotionValue } from "framer-motion";
 import {
+  AnimatePresence,
   LazyMotion,
   m,
-  AnimatePresence,
+  useMotionValueEvent,
   useScroll,
   useTransform,
-  useMotionValueEvent,
 } from "framer-motion";
-import type { MotionValue } from "framer-motion";
-import { loadMotionFeatures } from "../_lib/motion-features";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PITCH_SLIDES } from "~/config/pitch-deck-data";
 import {
-  getSlideYKeyframes,
-  getSlideScaleKeyframes,
-  getSlideOpacityKeyframes,
-  getSlideZIndexKeyframes,
   getIndicatorOpacityKeyframes,
   getIndicatorWidthKeyframes,
-  getSlideIndexFromProgress,
   getScrollTargetForSlide,
+  getSlideIndexFromProgress,
+  getSlideOpacityKeyframes,
+  getSlideScaleKeyframes,
+  getSlideYKeyframes,
+  getSlideZIndexKeyframes,
 } from "../_lib/animation-utils";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { cn } from "@repo/ui/lib/utils";
-import { PITCH_SLIDES } from "~/config/pitch-deck-data";
-import { resolveSlideComponent } from "./slide-content";
+import { loadMotionFeatures } from "../_lib/motion-features";
 import { MobileBottomBar } from "./mobile-bottom-bar";
+import { resolveSlideComponent } from "./slide-content";
 
 export function PitchDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -79,7 +79,7 @@ export function PitchDeck() {
       const scrollTarget = getScrollTargetForSlide(
         currentSlide - 1,
         PITCH_SLIDES.length,
-        document.documentElement.scrollHeight,
+        document.documentElement.scrollHeight
       );
       window.scrollTo({ top: scrollTarget, behavior: "smooth" });
     }
@@ -90,7 +90,7 @@ export function PitchDeck() {
       const scrollTarget = getScrollTargetForSlide(
         currentSlide + 1,
         PITCH_SLIDES.length,
-        document.documentElement.scrollHeight,
+        document.documentElement.scrollHeight
       );
       window.scrollTo({ top: scrollTarget, behavior: "smooth" });
     }
@@ -100,7 +100,7 @@ export function PitchDeck() {
     const scrollTarget = getScrollTargetForSlide(
       index,
       PITCH_SLIDES.length,
-      document.documentElement.scrollHeight,
+      document.documentElement.scrollHeight
     );
     window.scrollTo({ top: scrollTarget, behavior: "smooth" });
   }, []);
@@ -110,36 +110,36 @@ export function PitchDeck() {
       <main aria-label="Pitch Deck Presentation">
         {/* Desktop: Scroll-driven stacking experience */}
         <div
+          className="relative hidden md:block"
           ref={containerRef}
-          className="hidden md:block relative"
           style={{
             height: `${(PITCH_SLIDES.length + 1) * 100}vh`,
           }}
         >
           {/* Sticky wrapper */}
           <div
-            className="flex flex-col items-center page-gutter py-16 sticky top-0 h-screen justify-center overflow-visible"
-            role="region"
             aria-label="Slide viewer"
+            className="page-gutter sticky top-0 flex h-screen flex-col items-center justify-center overflow-visible py-16"
+            role="region"
           >
             {/* Slide container */}
-            <div className="w-full relative max-w-[860px] aspect-[16/9] overflow-visible">
+            <div className="relative aspect-[16/9] w-full max-w-[860px] overflow-visible">
               {PITCH_SLIDES.map((slide, index) => (
                 <PitchSlide
-                  key={slide.id}
-                  slide={slide}
                   index={index}
-                  totalSlides={PITCH_SLIDES.length}
+                  key={slide.id}
                   scrollProgress={scrollYProgress}
+                  slide={slide}
+                  totalSlides={PITCH_SLIDES.length}
                 />
               ))}
             </div>
 
             {/* Progress Indicator */}
             <SlideIndicator
-              totalSlides={PITCH_SLIDES.length}
-              scrollProgress={scrollYProgress}
               onDotClick={handleIndicatorClick}
+              scrollProgress={scrollYProgress}
+              totalSlides={PITCH_SLIDES.length}
             />
 
             {/* Scroll Hint - disappears on first scroll */}
@@ -148,30 +148,30 @@ export function PitchDeck() {
             {/* Navigation Controls */}
             <NavigationControls
               currentSlide={currentSlide}
-              totalSlides={PITCH_SLIDES.length}
-              onPrev={handlePrevSlide}
               onNext={handleNextSlide}
+              onPrev={handlePrevSlide}
+              totalSlides={PITCH_SLIDES.length}
             />
           </div>
         </div>
 
         {/* Mobile: Simple vertical scroll */}
-        <div className="md:hidden space-y-6 px-4 pt-20 pb-24">
+        <div className="space-y-6 px-4 pt-20 pb-24 md:hidden">
           {PITCH_SLIDES.map((slide, index) => (
             <article
-              key={slide.id}
               aria-label={`Slide ${index + 1}: ${slide.title}`}
+              key={slide.id}
             >
               <div
                 className={cn(
-                  "w-full aspect-[16/9] rounded-sm overflow-hidden shadow-lg",
-                  slide.bgColor,
+                  "aspect-[16/9] w-full overflow-hidden rounded-sm shadow-lg",
+                  slide.bgColor
                 )}
                 style={
                   { "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties
                 }
               >
-                <div className="relative h-full p-4 flex flex-col justify-between">
+                <div className="relative flex h-full flex-col justify-between p-4">
                   <SlideContent slide={slide} />
                 </div>
               </div>
@@ -179,12 +179,10 @@ export function PitchDeck() {
           ))}
           <MobileBottomBar />
         </div>
-
       </main>
     </LazyMotion>
   );
 }
-
 
 function SlideIndicator({
   totalSlides,
@@ -196,14 +194,14 @@ function SlideIndicator({
   onDotClick: (index: number) => void;
 }) {
   return (
-    <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-end gap-2">
+    <div className="fixed top-1/2 right-6 z-50 flex -translate-y-1/2 flex-col items-end gap-2">
       {Array.from({ length: totalSlides }).map((_, index) => (
         <IndicatorLine
-          key={index}
           index={index}
-          totalSlides={totalSlides}
-          scrollProgress={scrollProgress}
+          key={index}
           onDotClick={onDotClick}
+          scrollProgress={scrollProgress}
+          totalSlides={totalSlides}
         />
       ))}
     </div>
@@ -223,24 +221,28 @@ const IndicatorLine = memo(function IndicatorLine({
 }) {
   const opacityKf = useMemo(
     () => getIndicatorOpacityKeyframes(index, totalSlides),
-    [index, totalSlides],
+    [index, totalSlides]
   );
   const widthKf = useMemo(
     () => getIndicatorWidthKeyframes(index, totalSlides),
-    [index, totalSlides],
+    [index, totalSlides]
   );
 
   const handleClick = useCallback(() => onDotClick(index), [onDotClick, index]);
 
-  const opacity = useTransform(scrollProgress, opacityKf.input, opacityKf.output);
+  const opacity = useTransform(
+    scrollProgress,
+    opacityKf.input,
+    opacityKf.output
+  );
   const width = useTransform(scrollProgress, widthKf.input, widthKf.output);
 
   return (
     <m.button
+      aria-label={`Go to slide ${index + 1}`}
+      className="block h-px min-w-6 cursor-pointer bg-foreground transition-colors hover:bg-foreground/80"
       onClick={handleClick}
       style={{ opacity, width }}
-      className="h-px min-w-6 bg-foreground cursor-pointer hover:bg-foreground/80 transition-colors block"
-      aria-label={`Go to slide ${index + 1}`}
     />
   );
 });
@@ -265,36 +267,36 @@ function ScrollHint() {
     <AnimatePresence>
       {!hasScrolled && (
         <m.div
-          className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-none"
-          initial={{ opacity: 1 }}
+          className="pointer-events-none fixed bottom-16 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center"
           exit={{ opacity: 0 }}
+          initial={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
           {/* SCROLL text */}
-          <span className="text-[10px] font-medium tracking-[0.3em] text-muted-foreground uppercase">
+          <span className="font-medium text-[10px] text-muted-foreground uppercase tracking-[0.3em]">
             Scroll
           </span>
 
           {/* Vertical line */}
-          <div className="h-3 w-px bg-muted-foreground/50 mt-1" />
+          <div className="mt-1 h-3 w-px bg-muted-foreground/50" />
 
           {/* Animated diamond indicator */}
           <m.div
             className="mt-1"
             transition={{
               duration: 1.2,
-              repeat: Infinity,
+              repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut",
             }}
           >
-            <div className="w-2 h-2 rotate-45 border border-muted-foreground" />
+            <div className="h-2 w-2 rotate-45 border border-muted-foreground" />
           </m.div>
 
           {/* Dotted line below */}
-          <div className="flex flex-col gap-1 mt-1">
-            <div className="w-px h-1 bg-muted-foreground/40" />
-            <div className="w-px h-1 bg-muted-foreground/30" />
-            <div className="w-px h-1 bg-muted-foreground/20" />
+          <div className="mt-1 flex flex-col gap-1">
+            <div className="h-1 w-px bg-muted-foreground/40" />
+            <div className="h-1 w-px bg-muted-foreground/30" />
+            <div className="h-1 w-px bg-muted-foreground/20" />
           </div>
         </m.div>
       )}
@@ -317,28 +319,28 @@ function NavigationControls({
   const isLast = currentSlide === totalSlides - 1;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4">
+    <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4">
       <button
-        onClick={onPrev}
-        disabled={isFirst}
-        className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         aria-label="Previous slide"
+        className="p-2 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+        disabled={isFirst}
+        onClick={onPrev}
       >
         <ChevronUp className="h-4 w-4" />
       </button>
 
       <span
-        className="text-xs text-muted-foreground tabular-nums"
         aria-live="polite"
+        className="text-muted-foreground text-xs tabular-nums"
       >
         {currentSlide + 1} / {totalSlides}
       </span>
 
       <button
-        onClick={onNext}
-        disabled={isLast}
-        className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         aria-label="Next slide"
+        className="p-2 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+        disabled={isLast}
+        onClick={onNext}
       >
         <ChevronDown className="h-4 w-4" />
       </button>
@@ -357,30 +359,46 @@ const PitchSlide = memo(function PitchSlide({
   totalSlides: number;
   scrollProgress: MotionValue<number>;
 }) {
-  const yKf = useMemo(() => getSlideYKeyframes(index, totalSlides), [index, totalSlides]);
-  const scaleKf = useMemo(() => getSlideScaleKeyframes(index, totalSlides), [index, totalSlides]);
-  const opacityKf = useMemo(() => getSlideOpacityKeyframes(index, totalSlides), [index, totalSlides]);
-  const zIndexKf = useMemo(() => getSlideZIndexKeyframes(index, totalSlides), [index, totalSlides]);
+  const yKf = useMemo(
+    () => getSlideYKeyframes(index, totalSlides),
+    [index, totalSlides]
+  );
+  const scaleKf = useMemo(
+    () => getSlideScaleKeyframes(index, totalSlides),
+    [index, totalSlides]
+  );
+  const opacityKf = useMemo(
+    () => getSlideOpacityKeyframes(index, totalSlides),
+    [index, totalSlides]
+  );
+  const zIndexKf = useMemo(
+    () => getSlideZIndexKeyframes(index, totalSlides),
+    [index, totalSlides]
+  );
 
   const y = useTransform(scrollProgress, yKf.input, yKf.output);
   const scale = useTransform(scrollProgress, scaleKf.input, scaleKf.output);
-  const opacity = useTransform(scrollProgress, opacityKf.input, opacityKf.output);
+  const opacity = useTransform(
+    scrollProgress,
+    opacityKf.input,
+    opacityKf.output
+  );
   const zIndex = useTransform(scrollProgress, zIndexKf.input, zIndexKf.output);
 
   return (
     <m.article
-      style={{ y, scale, opacity, zIndex }}
-      className="absolute inset-0 will-change-transform origin-center"
       aria-label={`Slide ${index + 1} of ${totalSlides}: ${slide.title}`}
+      className="absolute inset-0 origin-center will-change-transform"
+      style={{ y, scale, opacity, zIndex }}
     >
       <div
         className={cn(
-          "w-full aspect-[16/9] rounded-lg overflow-hidden shadow-2xl",
-          slide.bgColor,
+          "aspect-[16/9] w-full overflow-hidden rounded-lg shadow-2xl",
+          slide.bgColor
         )}
         style={{ "--foreground": "oklch(0.205 0 0)" } as React.CSSProperties}
       >
-        <div className="relative h-full w-full p-6 sm:p-8 md:p-12 flex flex-col justify-between">
+        <div className="relative flex h-full w-full flex-col justify-between p-6 sm:p-8 md:p-12">
           <SlideContent slide={slide} />
         </div>
       </div>

@@ -1,11 +1,11 @@
 import { db } from "@db/console/client";
-import { eq } from "drizzle-orm";
 import { orgWorkspaces } from "@db/console/schema";
+import { eq } from "drizzle-orm";
 
 export interface ResolvedWorkspace {
+  clerkOrgId: string;
   workspaceId: string;
   workspaceName: string;
-  clerkOrgId: string;
 }
 
 /**
@@ -16,7 +16,7 @@ export interface ResolvedWorkspace {
  * sufficient — multi-workspace dispatch can be refined in a later phase.
  */
 export async function resolveWorkspaceFromOrgId(
-  orgId: string,
+  orgId: string
 ): Promise<ResolvedWorkspace | null> {
   const workspace = await db.query.orgWorkspaces.findFirst({
     where: eq(orgWorkspaces.clerkOrgId, orgId),
@@ -27,7 +27,9 @@ export async function resolveWorkspaceFromOrgId(
     },
   });
 
-  if (!workspace) return null;
+  if (!workspace) {
+    return null;
+  }
 
   return {
     workspaceId: workspace.id,

@@ -20,7 +20,9 @@ export async function sha256Hex(value: string): Promise<string> {
 export function timingSafeHexEqual(a: string, b: string): boolean {
   const aBytes = safeHexToBytes(a);
   const bBytes = safeHexToBytes(b);
-  if (!aBytes || !bBytes) { return false; }
+  if (!(aBytes && bBytes)) {
+    return false;
+  }
 
   let result = aBytes.length ^ bBytes.length;
   const maxLen = Math.max(aBytes.length, bBytes.length);
@@ -31,10 +33,12 @@ export function timingSafeHexEqual(a: string, b: string): boolean {
 }
 
 function safeHexToBytes(hex: string): Uint8Array | null {
-  if (hex.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(hex)) { return null; }
+  if (hex.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(hex)) {
+    return null;
+  }
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
+    bytes[i / 2] = Number.parseInt(hex.slice(i, i + 2), 16);
   }
   return bytes;
 }

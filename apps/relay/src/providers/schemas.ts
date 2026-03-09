@@ -4,9 +4,7 @@ import { z } from "zod";
 
 export const githubWebhookPayloadSchema = z
   .object({
-    repository: z
-      .object({ id: z.union([z.string(), z.number()]) })
-      .optional(),
+    repository: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
     installation: z
       .object({ id: z.union([z.string(), z.number()]) })
       .optional(),
@@ -19,12 +17,8 @@ export const vercelWebhookPayloadSchema = z
     type: z.string().optional(),
     payload: z
       .object({
-        project: z
-          .object({ id: z.union([z.string(), z.number()]) })
-          .optional(),
-        team: z
-          .object({ id: z.union([z.string(), z.number()]) })
-          .optional(),
+        project: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
+        team: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
       })
       .passthrough()
       .optional(),

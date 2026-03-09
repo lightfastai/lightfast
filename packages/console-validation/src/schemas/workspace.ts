@@ -12,8 +12,7 @@ import {
   clerkUserIdSchema,
   nanoidSchema,
 } from "../primitives/ids";
-import { clerkOrgSlugSchema } from "../primitives/slugs";
-import { workspaceNameSchema } from "../primitives/slugs";
+import { clerkOrgSlugSchema, workspaceNameSchema } from "../primitives/slugs";
 
 /**
  * Workspace Creation Input Schema
@@ -223,7 +222,9 @@ export type WorkspaceIntegrationDisconnectInput = z.infer<
  * - tRPC workspace.resolveFromGithubOrgSlug procedure (public, used by webhooks)
  */
 export const workspaceResolveFromGithubOrgSlugInputSchema = z.object({
-  githubOrgSlug: z.string().min(1, "GitHub organization slug must not be empty"),
+  githubOrgSlug: z
+    .string()
+    .min(1, "GitHub organization slug must not be empty"),
 });
 
 export type WorkspaceResolveFromGithubOrgSlugInput = z.infer<

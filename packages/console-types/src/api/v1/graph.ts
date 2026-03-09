@@ -15,8 +15,17 @@ import { z } from "zod";
  */
 export const V1GraphRequestSchema = z.object({
   id: z.string().describe("Observation ID to start graph traversal from"),
-  depth: z.number().int().min(1).max(3).default(2).describe("Traversal depth (1-3)"),
-  types: z.array(z.string()).optional().describe("Filter by relationship types"),
+  depth: z
+    .number()
+    .int()
+    .min(1)
+    .max(3)
+    .default(2)
+    .describe("Traversal depth (1-3)"),
+  types: z
+    .array(z.string())
+    .optional()
+    .describe("Filter by relationship types"),
 });
 
 export type V1GraphRequest = z.infer<typeof V1GraphRequestSchema>;

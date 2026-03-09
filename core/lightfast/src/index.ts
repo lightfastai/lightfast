@@ -1,70 +1,69 @@
 // Client
-export { Lightfast, createLightfast } from "./client";
 
-// Deprecated aliases
-export { LightfastMemory, createLightfastMemory } from "./client";
-
+// Zod Schemas (for runtime validation, used by MCP server)
+export {
+  V1ContentsRequestSchema,
+  V1FindSimilarRequestSchema,
+  V1GraphRequestSchema,
+  V1RelatedRequestSchema,
+  V1SearchRequestSchema,
+} from "@repo/console-types/api";
+export {
+  createLightfast,
+  createLightfastMemory,
+  Lightfast,
+  LightfastMemory,
+} from "./client";
 // Constants
 export {
-  LIGHTFAST_API_KEY_PREFIX,
   API_KEY_SECRET_LENGTH,
   isValidApiKeyFormat,
+  LIGHTFAST_API_KEY_PREFIX,
 } from "./constants";
-
 // Errors
 export {
-  LightfastError,
   AuthenticationError,
-  ValidationError,
+  LightfastError,
+  NetworkError,
   NotFoundError,
   RateLimitError,
   ServerError,
-  NetworkError,
+  ValidationError,
 } from "./errors";
-
 // Types
 export type {
+  ContentsInput,
+  FindSimilarInput,
+  GraphEdge,
+  GraphInput,
+  GraphNode,
+  GraphResponse,
   LightfastConfig,
   // Deprecated alias
   LightfastMemoryConfig,
+  RelatedEvent,
+  RelatedInput,
+  RelatedResponse,
+  RerankMode,
   // SDK input types (with optional fields for defaults)
   SearchInput,
-  ContentsInput,
-  FindSimilarInput,
-  GraphInput,
-  RelatedInput,
-  // V1 API types (re-exported from @repo/console-types)
-  V1SearchRequest,
-  V1SearchResponse,
-  V1SearchResult,
-  V1SearchFilters,
-  V1SearchContext,
-  V1SearchLatency,
-  V1SearchMeta,
-  RerankMode,
+  V1ContentItem,
   V1ContentsRequest,
   V1ContentsResponse,
-  V1ContentItem,
   V1FindSimilarRequest,
   V1FindSimilarResponse,
   V1FindSimilarResult,
   V1FindSimilarSource,
   // Graph types
   V1GraphRequest,
-  GraphResponse,
-  GraphNode,
-  GraphEdge,
   // Related types
   V1RelatedRequest,
-  RelatedResponse,
-  RelatedEvent,
+  V1SearchContext,
+  V1SearchFilters,
+  V1SearchLatency,
+  V1SearchMeta,
+  // V1 API types (re-exported from @repo/console-types)
+  V1SearchRequest,
+  V1SearchResponse,
+  V1SearchResult,
 } from "./types";
-
-// Zod Schemas (for runtime validation, used by MCP server)
-export {
-  V1SearchRequestSchema,
-  V1ContentsRequestSchema,
-  V1FindSimilarRequestSchema,
-  V1GraphRequestSchema,
-  V1RelatedRequestSchema,
-} from "@repo/console-types/api";

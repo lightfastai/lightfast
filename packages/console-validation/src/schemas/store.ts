@@ -75,7 +75,11 @@ export type StoreListByWorkspaceInput = z.infer<
 /**
  * Pinecone Metric Enum
  */
-export const pineconeMetricSchema = z.enum(["cosine", "euclidean", "dotproduct"]);
+export const pineconeMetricSchema = z.enum([
+  "cosine",
+  "euclidean",
+  "dotproduct",
+]);
 
 export type PineconeMetric = z.infer<typeof pineconeMetricSchema>;
 
@@ -92,7 +96,11 @@ export type PineconeCloud = z.infer<typeof pineconeCloudSchema>;
  * Defines supported embedding providers.
  * Values can be extended without database migration.
  */
-export const embeddingProviderSchema = z.enum(["cohere", "openai", "anthropic"]);
+export const embeddingProviderSchema = z.enum([
+  "cohere",
+  "openai",
+  "anthropic",
+]);
 
 export type EmbeddingProvider = z.infer<typeof embeddingProviderSchema>;
 

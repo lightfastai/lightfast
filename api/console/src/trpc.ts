@@ -8,20 +8,17 @@
  */
 
 import { db } from "@db/console/client";
-import { trpcMiddleware } from "@sentry/core";
-import { initTRPC, TRPCError } from "@trpc/server";
-import superjson from "superjson";
-import { ZodError } from "zod";
-import { eq, and, sql } from "drizzle-orm";
-
-import { auth } from "@vendor/clerk/server";
+import { orgApiKeys } from "@db/console/schema";
+import { hashApiKey } from "@repo/console-api-key";
+import { resolveWorkspaceByName as resolveWorkspace } from "@repo/console-auth-middleware";
 import { getCachedUserOrgMemberships } from "@repo/console-clerk-cache";
 import { verifyM2MToken } from "@repo/console-clerk-m2m";
-import {
-  resolveWorkspaceByName as resolveWorkspace,
-} from "@repo/console-auth-middleware";
-import { hashApiKey } from "@repo/console-api-key";
-import { orgApiKeys } from "@db/console/schema";
+import { trpcMiddleware } from "@sentry/core";
+import { initTRPC, TRPCError } from "@trpc/server";
+import { auth } from "@vendor/clerk/server";
+import { and, eq, sql } from "drizzle-orm";
+import superjson from "superjson";
+import { ZodError } from "zod";
 
 /**
  * Authentication Context - Discriminated Union
@@ -68,7 +65,6 @@ type AuthContext =
  * @see https://trpc.io/docs/server/context
  */
 
-
 /**
  * Create context for user-scoped procedures
  *
@@ -90,9 +86,9 @@ export const createUserTRPCContext = async (opts: { headers: Headers }) => {
     try {
       const verified = await verifyM2MToken(token);
 
-      if (!verified.expired && !verified.revoked) {
+      if (!(verified.expired || verified.revoked)) {
         console.info(
-          `>>> tRPC User Request from ${source} - M2M token (machine: ${verified.subject})`,
+          `>>> tRPC User Request from ${source} - M2M token (machine: ${verified.subject})`
         );
         return {
           auth: {
@@ -116,7 +112,7 @@ export const createUserTRPCContext = async (opts: { headers: Headers }) => {
   if (clerkSession.userId) {
     if (clerkSession.orgId) {
       console.info(
-        `>>> tRPC User Request from ${source} by ${clerkSession.userId} (clerk-active)`,
+        `>>> tRPC User Request from ${source} by ${clerkSession.userId} (clerk-active)`
       );
 
       return {
@@ -131,7 +127,7 @@ export const createUserTRPCContext = async (opts: { headers: Headers }) => {
     }
 
     console.info(
-      `>>> tRPC User Request from ${source} by ${clerkSession.userId} (clerk-pending)`,
+      `>>> tRPC User Request from ${source} by ${clerkSession.userId} (clerk-pending)`
     );
 
     return {
@@ -180,9 +176,9 @@ export const createOrgTRPCContext = async (opts: { headers: Headers }) => {
     try {
       const verified = await verifyM2MToken(token);
 
-      if (!verified.expired && !verified.revoked) {
+      if (!(verified.expired || verified.revoked)) {
         console.info(
-          `>>> tRPC Org Request from ${source} - M2M token (machine: ${verified.subject})`,
+          `>>> tRPC Org Request from ${source} - M2M token (machine: ${verified.subject})`
         );
         return {
           auth: {
@@ -205,7 +201,7 @@ export const createOrgTRPCContext = async (opts: { headers: Headers }) => {
 
   if (clerkSession.userId && clerkSession.orgId) {
     console.info(
-      `>>> tRPC Org Request from ${source} by ${clerkSession.userId} (clerk-active)`,
+      `>>> tRPC Org Request from ${source} by ${clerkSession.userId} (clerk-active)`
     );
 
     return {
@@ -264,7 +260,7 @@ const t = initTRPC.context<typeof createUserTRPCContext>().create({
 const sentryMiddleware = t.middleware(
   trpcMiddleware({
     attachRpcInput: true,
-  }),
+  })
 );
 
 const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
@@ -358,7 +354,10 @@ export const userScopedProcedure = sentrifiedProcedure
       ctx: {
         ...ctx,
         // Type-safe: either clerk-pending or clerk-active
-        auth: ctx.auth as Extract<AuthContext, { type: "clerk-pending" | "clerk-active" }>,
+        auth: ctx.auth as Extract<
+          AuthContext,
+          { type: "clerk-pending" | "clerk-active" }
+        >,
       },
     });
   });
@@ -396,7 +395,8 @@ export const orgScopedProcedure = sentrifiedProcedure
     if (ctx.auth.type !== "clerk-active") {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: "Organization required. Please create or join an organization first.",
+        message:
+          "Organization required. Please create or join an organization first.",
       });
     }
 
@@ -614,7 +614,7 @@ export async function verifyOrgMembership(params: {
 
   // Find membership in target org
   const userMembership = userMemberships.find(
-    (m) => m.organizationId === params.clerkOrgId,
+    (m) => m.organizationId === params.clerkOrgId
   );
 
   if (!userMembership) {

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Context } from "hono";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../env", () => ({
   env: {
@@ -71,8 +71,12 @@ describe("VercelProvider", () => {
     vi.clearAllMocks();
     // Reset Drizzle INSERT chain
     dbMocks.insert.mockReturnValue({ values: dbMocks.values });
-    dbMocks.values.mockReturnValue({ onConflictDoUpdate: dbMocks.onConflictDoUpdate });
-    dbMocks.onConflictDoUpdate.mockReturnValue({ returning: dbMocks.returning });
+    dbMocks.values.mockReturnValue({
+      onConflictDoUpdate: dbMocks.onConflictDoUpdate,
+    });
+    dbMocks.onConflictDoUpdate.mockReturnValue({
+      returning: dbMocks.returning,
+    });
     // Reset Drizzle SELECT chain
     const selectWhere = vi.fn().mockReturnValue({ limit: dbMocks.selectLimit });
     const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
@@ -97,7 +101,7 @@ describe("VercelProvider", () => {
   describe("refreshToken", () => {
     it("rejects — Vercel tokens do not support refresh", async () => {
       await expect(provider.refreshToken("any")).rejects.toThrow(
-        "Vercel tokens do not support refresh",
+        "Vercel tokens do not support refresh"
       );
     });
   });
@@ -133,7 +137,7 @@ describe("VercelProvider", () => {
               team_id: "team_abc",
             },
           }),
-        }),
+        })
       );
       expect(dbMocks.onConflictDoUpdate).toHaveBeenCalled();
       expect(result).toMatchObject({
@@ -187,7 +191,9 @@ describe("VercelProvider", () => {
         connectedBy: "user-1",
       });
 
-      expect(result.nextUrl).toBe("https://vercel.com/integrations/test/complete");
+      expect(result.nextUrl).toBe(
+        "https://vercel.com/integrations/test/complete"
+      );
     });
 
     it("omits nextUrl when next param is absent", async () => {
@@ -211,14 +217,14 @@ describe("VercelProvider", () => {
     it("throws when code is missing", async () => {
       const c = mockContext({ configurationId: "icfg_abc" });
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("missing code");
     });
 
     it("throws when configurationId is missing", async () => {
       const c = mockContext({ code: "auth-code" });
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("missing configurationId");
     });
 
@@ -229,9 +235,12 @@ describe("VercelProvider", () => {
         json: async () => exchangeCodeResponse, // installation_id: "icfg_abc"
       } as unknown as Response);
 
-      const c = mockContext({ code: "auth-code", configurationId: "icfg_DIFFERENT" });
+      const c = mockContext({
+        code: "auth-code",
+        configurationId: "icfg_DIFFERENT",
+      });
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("configurationId mismatch");
     });
 
@@ -246,7 +255,7 @@ describe("VercelProvider", () => {
 
       const c = mockContext({ code: "auth-code", configurationId: "icfg_abc" });
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("upsert_failed");
     });
 
@@ -269,7 +278,7 @@ describe("VercelProvider", () => {
       expect(dbMocks.values).toHaveBeenCalledWith(
         expect.objectContaining({
           externalId: "vercel-user-123", // Falls back to user_id
-        }),
+        })
       );
     });
   });

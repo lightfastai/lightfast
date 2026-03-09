@@ -10,15 +10,15 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceNeuralObservations, orgWorkspaces } from "@db/console/schema";
+import { orgWorkspaces, workspaceNeuralObservations } from "@db/console/schema";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import { eq } from "drizzle-orm";
 
 interface MismatchRecord {
-  observationId: number;
   externalId: string;
-  vectorId: string;
+  observationId: number;
   pineconeObservationId: string;
+  vectorId: string;
   view: "title" | "content" | "summary";
 }
 
@@ -28,7 +28,9 @@ function parseArgs() {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (!arg) continue;
+    if (!arg) {
+      continue;
+    }
     if (arg === "--help" || arg === "-h") {
       parsed.help = true;
     } else if (arg.startsWith("--") || arg.startsWith("-")) {
@@ -112,13 +114,23 @@ async function reconcile(workspaceId: string, dryRun: boolean) {
   for (let i = 0; i < observations.length; i += batchSize) {
     const batch = observations.slice(i, i + batchSize);
     const vectorIds = batch.flatMap((obs) =>
-      [obs.embeddingTitleId, obs.embeddingContentId, obs.embeddingSummaryId].filter(Boolean)
+      [
+        obs.embeddingTitleId,
+        obs.embeddingContentId,
+        obs.embeddingSummaryId,
+      ].filter(Boolean)
     ) as string[];
 
-    if (vectorIds.length === 0) continue;
+    if (vectorIds.length === 0) {
+      continue;
+    }
 
     // Fetch vectors from Pinecone
-    const fetchResult = await consolePineconeClient.fetchVectors(indexName, vectorIds, namespace);
+    const fetchResult = await consolePineconeClient.fetchVectors(
+      indexName,
+      vectorIds,
+      namespace
+    );
 
     for (const obs of batch) {
       const views = [
@@ -128,13 +140,16 @@ async function reconcile(workspaceId: string, dryRun: boolean) {
       ];
 
       for (const { id: vectorId, view } of views) {
-        if (!vectorId) continue;
+        if (!vectorId) {
+          continue;
+        }
         const record = fetchResult.records[vectorId];
-        if (!record?.metadata) continue;
+        if (!record?.metadata) {
+          continue;
+        }
 
-        const pineconeObsId = (record.metadata as Record<string, unknown>).observationId as
-          | string
-          | undefined;
+        const pineconeObsId = (record.metadata as Record<string, unknown>)
+          .observationId as string | undefined;
         if (pineconeObsId && pineconeObsId !== obs.externalId) {
           mismatches.push({
             observationId: obs.id,
@@ -219,7 +234,9 @@ async function reconcile(workspaceId: string, dryRun: boolean) {
     }
   }
 
-  console.log(`\n✅ Reconciliation complete. Fixed ${fixed}/${mismatches.length} vectors.`);
+  console.log(
+    `\n✅ Reconciliation complete. Fixed ${fixed}/${mismatches.length} vectors.`
+  );
 }
 
 async function main() {

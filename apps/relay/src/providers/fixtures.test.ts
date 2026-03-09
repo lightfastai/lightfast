@@ -14,8 +14,12 @@
  * Linear) are fully exercised. Header-based extraction is covered by
  * provider-specific unit tests.
  */
-import { describe, it, expect } from "vitest";
-import { loadAllRawWebhooks, type RawWebhook } from "@repo/console-test-data/raw";
+
+import {
+  loadAllRawWebhooks,
+  type RawWebhook,
+} from "@repo/console-test-data/raw";
+import { describe, expect, it } from "vitest";
 import { getProvider } from "./index.js";
 import type { ProviderName } from "./types.js";
 
@@ -36,9 +40,13 @@ const extractionExpectations: Record<
     resourceIdField: "repository.id or installation.id",
     expectResourceId: (p) => {
       const repo = (p.repository as Record<string, unknown>)?.id;
-      if (repo != null) return String(repo);
+      if (repo != null) {
+        return String(repo);
+      }
       const inst = (p.installation as Record<string, unknown>)?.id;
-      if (inst != null) return String(inst);
+      if (inst != null) {
+        return String(inst);
+      }
       return null;
     },
   },
@@ -47,9 +55,13 @@ const extractionExpectations: Record<
     expectResourceId: (p) => {
       const payload = p.payload as Record<string, unknown> | undefined;
       const project = (payload?.project as Record<string, unknown>)?.id;
-      if (project != null) return String(project);
+      if (project != null) {
+        return String(project);
+      }
       const team = (payload?.team as Record<string, unknown>)?.id;
-      if (team != null) return String(team);
+      if (team != null) {
+        return String(team);
+      }
       return null;
     },
   },
@@ -67,9 +79,14 @@ const extractionExpectations: Record<
 // ── Tests ──
 
 describe("fixture-based provider extraction (real webhook payloads)", () => {
-  for (const providerName of ["github", "vercel", "linear", "sentry"] as const) {
+  for (const providerName of [
+    "github",
+    "vercel",
+    "linear",
+    "sentry",
+  ] as const) {
     const providerWebhooks = allWebhooks.filter(
-      (wh) => wh.source === providerName,
+      (wh) => wh.source === providerName
     );
 
     describe(providerName, () => {
@@ -87,7 +104,9 @@ describe("fixture-based provider extraction (real webhook payloads)", () => {
 
       it("extractResourceId returns expected value for all payloads", () => {
         const expectations = extractionExpectations[providerName];
-        if (!expectations) throw new Error(`No expectations for ${providerName}`);
+        if (!expectations) {
+          throw new Error(`No expectations for ${providerName}`);
+        }
         for (const wh of providerWebhooks) {
           const parsed = provider.parsePayload(wh.payload);
           const actual = provider.extractResourceId(parsed);
@@ -122,7 +141,9 @@ describe("fixture-based provider extraction (real webhook payloads)", () => {
 
   it("covers all 4 providers in fixture data", () => {
     const providers = new Set(allWebhooks.map((wh) => wh.source));
-    expect(providers).toEqual(new Set(["github", "vercel", "linear", "sentry"]));
+    expect(providers).toEqual(
+      new Set(["github", "vercel", "linear", "sentry"])
+    );
   });
 
   it(`loaded ${allWebhooks.length} total webhook fixtures`, () => {

@@ -1,19 +1,22 @@
-import { Hono } from "hono";
-import { and, eq } from "@vendor/db";
-import { getQStashClient } from "@vendor/qstash";
-import { getWorkflowClient } from "@vendor/upstash-workflow/client";
-import { relayBaseUrl, consoleUrl } from "../lib/urls.js";
-import { getEnv } from "../env.js";
-import { getProvider } from "../providers/index.js";
-import type { WebhookProvider } from "../providers/index.js";
-import { webhookSeenKey } from "../lib/cache.js";
-import { redis } from "@vendor/upstash";
-import type { WebhookReceiptPayload, WebhookEnvelope } from "@repo/gateway-types";
-import { timingSafeStringEqual } from "../lib/crypto.js";
-import type { LifecycleVariables } from "../middleware/lifecycle.js";
 import { db } from "@db/console/client";
 import { gwWebhookDeliveries } from "@db/console/schema";
+import type {
+  WebhookEnvelope,
+  WebhookReceiptPayload,
+} from "@repo/gateway-types";
+import { and, eq } from "@vendor/db";
+import { getQStashClient } from "@vendor/qstash";
+import { redis } from "@vendor/upstash";
+import { getWorkflowClient } from "@vendor/upstash-workflow/client";
+import { Hono } from "hono";
+import { getEnv } from "../env.js";
+import { webhookSeenKey } from "../lib/cache.js";
+import { timingSafeStringEqual } from "../lib/crypto.js";
 import { isConsoleFanOutEnabled } from "../lib/flags.js";
+import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
+import type { LifecycleVariables } from "../middleware/lifecycle.js";
+import type { WebhookProvider } from "../providers/index.js";
+import { getProvider } from "../providers/index.js";
 
 const webhooks = new Hono<{ Variables: LifecycleVariables }>();
 
@@ -60,11 +63,22 @@ webhooks.post("/:provider", async (c) => {
       return c.json({ error: "invalid_json" }, 400);
     }
 
-    if (!body.connectionId || !body.orgId || !body.deliveryId || !body.eventType || !body.payload) {
+    if (
+      !(
+        body.connectionId &&
+        body.orgId &&
+        body.deliveryId &&
+        body.eventType &&
+        body.payload
+      )
+    ) {
       return c.json({ error: "missing_required_fields" }, 400);
     }
 
-    if (typeof body.receivedAt !== "number" || !Number.isFinite(body.receivedAt)) {
+    if (
+      typeof body.receivedAt !== "number" ||
+      !Number.isFinite(body.receivedAt)
+    ) {
       return c.json({ error: "invalid_field", field: "receivedAt" }, 400);
     }
 
@@ -81,7 +95,7 @@ webhooks.post("/:provider", async (c) => {
     const dedupResult = await redis.set(
       webhookSeenKey(provider.name, body.deliveryId),
       "1",
-      { nx: true, ex: 86400 },
+      { nx: true, ex: 86_400 }
     );
     if (dedupResult === null) {
       return c.json({ status: "duplicate", deliveryId: body.deliveryId });
@@ -97,13 +111,19 @@ webhooks.post("/:provider", async (c) => {
         installationId: body.connectionId,
         status: "received",
         payload: JSON.stringify(parsedPayload),
-        receivedAt: new Date(body.receivedAt < 1e12 ? body.receivedAt * 1000 : body.receivedAt).toISOString(),
+        receivedAt: new Date(
+          body.receivedAt < 1e12 ? body.receivedAt * 1000 : body.receivedAt
+        ).toISOString(),
       })
       .onConflictDoNothing();
 
     // Check feature flag — skip console delivery if disabled
     if (!(await isConsoleFanOutEnabled(provider.name))) {
-      return c.json({ status: "accepted", deliveryId: body.deliveryId, fanOut: false });
+      return c.json({
+        status: "accepted",
+        deliveryId: body.deliveryId,
+        fanOut: false,
+      });
     }
 
     // Publish directly to Console ingress — skip connection resolution (pre-resolved in body)
@@ -133,15 +153,18 @@ webhooks.post("/:provider", async (c) => {
         .where(
           and(
             eq(gwWebhookDeliveries.provider, provider.name),
-            eq(gwWebhookDeliveries.deliveryId, body.deliveryId),
-          ),
+            eq(gwWebhookDeliveries.deliveryId, body.deliveryId)
+          )
         );
     } catch (err) {
-      console.error("[webhooks] failed to update delivery status after enqueue", {
-        provider: provider.name,
-        deliveryId: body.deliveryId,
-        error: err,
-      });
+      console.error(
+        "[webhooks] failed to update delivery status after enqueue",
+        {
+          provider: provider.name,
+          deliveryId: body.deliveryId,
+          error: err,
+        }
+      );
     }
 
     return c.json({ status: "accepted", deliveryId: body.deliveryId });

@@ -1,5 +1,5 @@
+import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
 import { Suspense } from "react";
-import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
 import { OrgApiKeyList } from "./_components/org-api-key-list";
 import { OrgApiKeyListLoading } from "./_components/org-api-key-list-loading";
 import { SecurityNotice } from "./_components/security-notice";
@@ -21,11 +21,12 @@ export default function OrgApiKeysPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-pp font-medium text-foreground">
+        <h2 className="font-medium font-pp text-2xl text-foreground">
           API Keys
         </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Manage API keys for authenticating with Lightfast services. Keys can access all workspaces in your organization.
+        <p className="mt-1 text-muted-foreground text-sm">
+          Manage API keys for authenticating with Lightfast services. Keys can
+          access all workspaces in your organization.
         </p>
       </div>
 

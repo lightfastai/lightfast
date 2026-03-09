@@ -1,9 +1,9 @@
+import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
 import { Suspense } from "react";
 import {
   WorkspaceDashboard,
   WorkspaceDashboardSkeleton,
 } from "~/components/workspace-dashboard";
-import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
 
 export default async function WorkspacePage({
   params,
@@ -19,51 +19,51 @@ export default async function WorkspacePage({
   prefetch(
     orgTrpc.workspace.sources.list.queryOptions({
       clerkOrgSlug: slug,
-      workspaceName: workspaceName,
+      workspaceName,
     })
   );
   prefetch(
     orgTrpc.workspace.store.get.queryOptions({
       clerkOrgSlug: slug,
-      workspaceName: workspaceName,
+      workspaceName,
     })
   );
   prefetch(
     orgTrpc.workspace.documents.stats.queryOptions({
       clerkOrgSlug: slug,
-      workspaceName: workspaceName,
+      workspaceName,
     })
   );
   prefetch(
     orgTrpc.workspace.jobs.stats.queryOptions({
       clerkOrgSlug: slug,
-      workspaceName: workspaceName,
+      workspaceName,
     })
   );
   prefetch(
     orgTrpc.workspace.jobs.recent.queryOptions({
       clerkOrgSlug: slug,
-      workspaceName: workspaceName,
+      workspaceName,
     })
   );
   prefetch(
     orgTrpc.workspace.jobPercentiles.queryOptions({
       clerkOrgSlug: slug,
-      workspaceName: workspaceName,
+      workspaceName,
       timeRange: "24h",
     })
   );
   prefetch(
     orgTrpc.workspace.performanceTimeSeries.queryOptions({
       clerkOrgSlug: slug,
-      workspaceName: workspaceName,
+      workspaceName,
       timeRange: "24h",
     })
   );
   prefetch(
     orgTrpc.workspace.health.overview.queryOptions({
       clerkOrgSlug: slug,
-      workspaceName: workspaceName,
+      workspaceName,
     })
   );
 
@@ -71,10 +71,7 @@ export default async function WorkspacePage({
     <HydrateClient>
       <div className="flex flex-col gap-6">
         <Suspense fallback={<WorkspaceDashboardSkeleton />}>
-          <WorkspaceDashboard
-            orgSlug={slug}
-            workspaceName={workspaceName}
-          />
+          <WorkspaceDashboard orgSlug={slug} workspaceName={workspaceName} />
         </Suspense>
       </div>
     </HydrateClient>

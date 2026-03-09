@@ -43,15 +43,9 @@ export function createNextjsCspDirectives(): PartialCspDirectives {
     scriptSrc,
 
     // Images: Allow self-hosted images, data URIs (for favicons), and blob URLs
-    imgSrc: [
-      "'self'" as Source,
-      "data:" as Source,
-      "blob:" as Source,
-    ],
+    imgSrc: ["'self'" as Source, "data:" as Source, "blob:" as Source],
 
     // Connections: Allow same-origin requests (for RSC payloads, API routes, etc.)
-    connectSrc: [
-      "'self'" as Source,
-    ],
+    connectSrc: ["'self'" as Source],
   };
 }

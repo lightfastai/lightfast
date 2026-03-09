@@ -2,17 +2,18 @@
 
 import { cn } from "@repo/ui/lib/utils";
 import type { ComponentProps } from "react";
-import { memo, isValidElement } from "react";
+import { isValidElement, memo } from "react";
+import type { Components } from "react-markdown";
+import type { BundledLanguage } from "shiki";
 import { Streamdown } from "streamdown";
 import {
   CodeBlock,
-  CodeBlockHeader,
   CodeBlockActions,
   CodeBlockContent,
   CodeBlockCopyButton,
+  CodeBlockHeader,
 } from "./code-block";
-import type { Components } from "react-markdown";
-import type { BundledLanguage } from "shiki";
+
 type ResponseProps = ComponentProps<typeof Streamdown>;
 
 // Custom components following Streamdown's structure exactly
@@ -27,8 +28,8 @@ const customComponents: Partial<Components> = {
     return (
       <code
         className={cn(
-          "bg-muted/50 rounded-md px-1 py-0.5 text-xs font-mono",
-          className,
+          "rounded-md bg-muted/50 px-1 py-0.5 font-mono text-xs",
+          className
         )}
         {...props}
       />
@@ -40,7 +41,7 @@ const customComponents: Partial<Components> = {
     if (node?.properties && typeof node.properties.className === "string") {
       language = node.properties.className.replace(
         "language-",
-        "",
+        ""
       ) as BundledLanguage;
     }
 
@@ -63,7 +64,7 @@ const customComponents: Partial<Components> = {
         className={cn(
           "my-4 h-auto rounded-md border border-border",
           "bg-muted/50 dark:bg-muted/20",
-          className,
+          className
         )}
       >
         <CodeBlockHeader language={language}>
@@ -71,7 +72,7 @@ const customComponents: Partial<Components> = {
             <CodeBlockCopyButton />
           </CodeBlockActions>
         </CodeBlockHeader>
-        <CodeBlockContent code={code} language={language} className="p-3" />
+        <CodeBlockContent className="p-3" code={code} language={language} />
       </CodeBlock>
     );
   },
@@ -95,10 +96,10 @@ const customComponents: Partial<Components> = {
     const isExternal = href?.startsWith("http");
     return (
       <a
+        className="text-blue-500 underline underline-offset-2 transition-colors hover:text-blue-600"
         href={href}
-        className="text-blue-500 hover:text-blue-600 underline underline-offset-2 transition-colors"
-        target={isExternal ? "_blank" : undefined}
         rel={isExternal ? "noopener noreferrer" : undefined}
+        target={isExternal ? "_blank" : undefined}
         {...props}
       >
         {children}
@@ -109,7 +110,7 @@ const customComponents: Partial<Components> = {
   h1: ({ children, ...props }) => {
     return (
       <h1
-        className="scroll-m-20 text-xl font-bold tracking-tight mb-4 mt-6"
+        className="mt-6 mb-4 scroll-m-20 font-bold text-xl tracking-tight"
         {...props}
       >
         {children}
@@ -119,7 +120,7 @@ const customComponents: Partial<Components> = {
   h2: ({ children, ...props }) => {
     return (
       <h2
-        className="scroll-m-20 text-lg font-semibold tracking-tight mb-3 mt-6"
+        className="mt-6 mb-3 scroll-m-20 font-semibold text-lg tracking-tight"
         {...props}
       >
         {children}
@@ -129,7 +130,7 @@ const customComponents: Partial<Components> = {
   h3: ({ children, ...props }) => {
     return (
       <h3
-        className="scroll-m-20 text-base font-semibold tracking-tight mb-2 mt-5"
+        className="mt-5 mb-2 scroll-m-20 font-semibold text-base tracking-tight"
         {...props}
       >
         {children}
@@ -139,7 +140,7 @@ const customComponents: Partial<Components> = {
   h4: ({ children, ...props }) => {
     return (
       <h4
-        className="scroll-m-20 text-sm font-semibold tracking-tight mb-2 mt-4"
+        className="mt-4 mb-2 scroll-m-20 font-semibold text-sm tracking-tight"
         {...props}
       >
         {children}
@@ -149,7 +150,7 @@ const customComponents: Partial<Components> = {
   h5: ({ children, ...props }) => {
     return (
       <h5
-        className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-3"
+        className="mt-3 mb-1 scroll-m-20 font-semibold text-xs tracking-tight"
         {...props}
       >
         {children}
@@ -159,7 +160,7 @@ const customComponents: Partial<Components> = {
   h6: ({ children, ...props }) => {
     return (
       <h6
-        className="scroll-m-20 text-xs font-semibold tracking-tight mb-1 mt-3"
+        className="mt-3 mb-1 scroll-m-20 font-semibold text-xs tracking-tight"
         {...props}
       >
         {children}
@@ -170,7 +171,7 @@ const customComponents: Partial<Components> = {
   p: ({ children, ...props }) => {
     return (
       <p
-        className="text-sm leading-7 [&:not(:first-child)]:mt-3 break-words"
+        className="break-words text-sm leading-7 [&:not(:first-child)]:mt-3"
         {...props}
       >
         {children}
@@ -200,7 +201,7 @@ const customComponents: Partial<Components> = {
   },
   li: ({ className, children, ...props }) => {
     return (
-      <li className={cn("text-sm leading-7 break-words", className)} {...props}>
+      <li className={cn("break-words text-sm leading-7", className)} {...props}>
         {children}
       </li>
     );
@@ -216,7 +217,7 @@ export const Response = memo(
     <Streamdown
       className={cn(
         "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className,
+        className
       )}
       components={{
         ...customComponents,
@@ -225,7 +226,7 @@ export const Response = memo(
       {...props}
     />
   ),
-  (prevProps, nextProps) => prevProps.children === nextProps.children,
+  (prevProps, nextProps) => prevProps.children === nextProps.children
 );
 
 Response.displayName = "Response";

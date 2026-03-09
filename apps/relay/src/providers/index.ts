@@ -3,22 +3,18 @@ import { GitHubProvider } from "./impl/github.js";
 import { LinearProvider } from "./impl/linear.js";
 import { SentryProvider } from "./impl/sentry.js";
 import { VercelProvider } from "./impl/vercel.js";
-import type {
-  WebhookProvider,
-  ProviderFor,
-  ProviderName,
-} from "./types.js";
+import type { ProviderFor, ProviderName, WebhookProvider } from "./types.js";
 
 export type {
-  WebhookProvider,
-  ProviderName,
-  WebhookPayload,
   GitHubWebhookPayload,
-  VercelWebhookPayload,
   LinearWebhookPayload,
-  SentryWebhookPayload,
-  WebhookPayloadFor,
   ProviderFor,
+  ProviderName,
+  SentryWebhookPayload,
+  VercelWebhookPayload,
+  WebhookPayload,
+  WebhookPayloadFor,
+  WebhookProvider,
 } from "./types.js";
 
 const providers = new Map<ProviderName, WebhookProvider>([

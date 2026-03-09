@@ -32,24 +32,23 @@ export interface WorkflowConfig {
  */
 export interface WorkflowTriggerOptions<TPayload = unknown> {
   /**
-   * Workflow endpoint URL (absolute URL)
-   */
-  url: string;
-
-  /**
    * Payload to send to the workflow
    */
   body: TPayload;
 
   /**
-   * Optional headers to include in the request
-   */
-  headers?: Record<string, string>;
-
-  /**
    * Optional delay before starting workflow (in seconds)
    */
   delay?: number;
+
+  /**
+   * Optional headers to include in the request
+   */
+  headers?: Record<string, string>;
+  /**
+   * Workflow endpoint URL (absolute URL)
+   */
+  url: string;
 
   /**
    * Optional workflow run ID for idempotency
@@ -62,21 +61,20 @@ export interface WorkflowTriggerOptions<TPayload = unknown> {
  */
 export interface WorkflowTriggerResponse {
   /**
-   * Unique ID for this workflow run
-   */
-  workflowRunId: string;
-
-  /**
    * URL to check workflow status
    */
   url: string;
+  /**
+   * Unique ID for this workflow run
+   */
+  workflowRunId: string;
 }
 
 /**
  * Workflow step function
  */
 export type WorkflowStep<TInput = unknown, TOutput = unknown> = (
-  input: TInput,
+  input: TInput
 ) => Promise<TOutput>;
 
 /**
@@ -86,5 +84,5 @@ export type WorkflowStep<TInput = unknown, TOutput = unknown> = (
  * `context.requestPayload` the concrete type at every call site.
  */
 export type WorkflowHandler<TPayload = unknown> = (
-  context: WorkflowContext<TPayload>,
+  context: WorkflowContext<TPayload>
 ) => Promise<void>;

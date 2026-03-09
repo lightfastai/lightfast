@@ -13,63 +13,63 @@ import { useEffect } from "react";
  * Also notifies parent to open the project selector.
  */
 export default function VercelConnectedPage() {
-	useEffect(() => {
-		// Notify parent via BroadcastChannel (works regardless of window.opener / COOP)
-		const channel = new BroadcastChannel("oauth-connections");
-		channel.postMessage({ type: "vercel_connected" });
-		channel.close();
+  useEffect(() => {
+    // Notify parent via BroadcastChannel (works regardless of window.opener / COOP)
+    const channel = new BroadcastChannel("oauth-connections");
+    channel.postMessage({ type: "vercel_connected" });
+    channel.close();
 
-		// Also try postMessage (works when opener is available)
-		const opener = window.opener as Window | null;
-		if (opener) {
-			try {
-				opener.postMessage({ type: "vercel_connected" }, "*");
-			} catch {
-				// Ignore cross-origin errors
-			}
-		}
+    // Also try postMessage (works when opener is available)
+    const opener = window.opener as Window | null;
+    if (opener) {
+      try {
+        opener.postMessage({ type: "vercel_connected" }, "*");
+      } catch {
+        // Ignore cross-origin errors
+      }
+    }
 
-		// Auto-close after 2 seconds
-		const timer = setTimeout(() => {
-			window.close();
-		}, 2000);
+    // Auto-close after 2 seconds
+    const timer = setTimeout(() => {
+      window.close();
+    }, 2000);
 
-		return () => clearTimeout(timer);
-	}, []);
+    return () => clearTimeout(timer);
+  }, []);
 
-	return (
-		<div className="flex min-h-screen items-center justify-center bg-background">
-			<div className="text-center space-y-6 p-8">
-				{/* Success Icon */}
-				<div className="flex justify-center">
-					<div className="rounded-full bg-green-500/10 p-4">
-						<CheckCircle2 className="h-16 w-16 text-green-500" />
-					</div>
-				</div>
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="space-y-6 p-8 text-center">
+        {/* Success Icon */}
+        <div className="flex justify-center">
+          <div className="rounded-full bg-green-500/10 p-4">
+            <CheckCircle2 className="h-16 w-16 text-green-500" />
+          </div>
+        </div>
 
-				{/* Success Message */}
-				<div className="space-y-2">
-					<h1 className="text-2xl font-semibold text-foreground">
-						Vercel Connected!
-					</h1>
-					<p className="text-muted-foreground">
-						Your Vercel account has been successfully connected.
-					</p>
-				</div>
+        {/* Success Message */}
+        <div className="space-y-2">
+          <h1 className="font-semibold text-2xl text-foreground">
+            Vercel Connected!
+          </h1>
+          <p className="text-muted-foreground">
+            Your Vercel account has been successfully connected.
+          </p>
+        </div>
 
-				{/* Close Instructions */}
-				<div className="space-y-2">
-					<p className="text-sm text-muted-foreground">
-						This window will close automatically...
-					</p>
-					<button
-						onClick={() => window.close()}
-						className="text-sm text-primary hover:underline"
-					>
-						Or click here to close now
-					</button>
-				</div>
-			</div>
-		</div>
-	);
+        {/* Close Instructions */}
+        <div className="space-y-2">
+          <p className="text-muted-foreground text-sm">
+            This window will close automatically...
+          </p>
+          <button
+            className="text-primary text-sm hover:underline"
+            onClick={() => window.close()}
+          >
+            Or click here to close now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

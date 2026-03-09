@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Context } from "hono";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../env", () => ({
   env: {
@@ -51,7 +51,7 @@ vi.mock("../../lib/github-jwt", () => ({
   getInstallationDetails: vi.fn().mockResolvedValue({
     account: {
       login: "test-org",
-      id: 12345,
+      id: 12_345,
       type: "Organization",
       avatar_url: "https://avatars.githubusercontent.com/u/12345",
     },
@@ -61,8 +61,11 @@ vi.mock("../../lib/github-jwt", () => ({
   }),
 }));
 
+import {
+  getInstallationDetails,
+  getInstallationToken,
+} from "../../lib/github-jwt.js";
 import { GitHubProvider } from "./github.js";
-import { getInstallationToken, getInstallationDetails } from "../../lib/github-jwt.js";
 
 const provider = new GitHubProvider();
 
@@ -131,12 +134,12 @@ describe("GitHubProvider", () => {
             scope: "repo,user",
             token_type: "bearer",
           }),
-        }),
+        })
       );
 
       const result = await provider.exchangeCode(
         "auth-code",
-        "https://redirect.test",
+        "https://redirect.test"
       );
 
       expect(fetch).toHaveBeenCalledWith(
@@ -149,7 +152,7 @@ describe("GitHubProvider", () => {
             code: "auth-code",
             redirect_uri: "https://redirect.test",
           }),
-        }),
+        })
       );
       expect(result).toEqual({
         accessToken: "ghu_abc123",
@@ -166,11 +169,11 @@ describe("GitHubProvider", () => {
     it("throws on non-ok HTTP response", async () => {
       vi.stubGlobal(
         "fetch",
-        vi.fn().mockResolvedValue({ ok: false, status: 500 }),
+        vi.fn().mockResolvedValue({ ok: false, status: 500 })
       );
 
       await expect(
-        provider.exchangeCode("bad-code", "https://redirect.test"),
+        provider.exchangeCode("bad-code", "https://redirect.test")
       ).rejects.toThrow("GitHub token exchange failed: 500");
     });
 
@@ -184,13 +187,13 @@ describe("GitHubProvider", () => {
             error_description: "The code passed is incorrect or expired.",
             error_uri: "https://docs.github.com",
           }),
-        }),
+        })
       );
 
       await expect(
-        provider.exchangeCode("expired-code", "https://redirect.test"),
+        provider.exchangeCode("expired-code", "https://redirect.test")
       ).rejects.toThrow(
-        "GitHub OAuth error: The code passed is incorrect or expired.",
+        "GitHub OAuth error: The code passed is incorrect or expired."
       );
     });
   });
@@ -198,7 +201,7 @@ describe("GitHubProvider", () => {
   describe("refreshToken", () => {
     it("rejects — GitHub user tokens do not support refresh", async () => {
       await expect(provider.refreshToken("any")).rejects.toThrow(
-        "GitHub user tokens do not support refresh",
+        "GitHub user tokens do not support refresh"
       );
     });
   });
@@ -233,7 +236,7 @@ describe("GitHubProvider", () => {
             raw: {
               account: {
                 login: "test-org",
-                id: 12345,
+                id: 12_345,
                 type: "Organization",
                 avatar_url: "https://avatars.githubusercontent.com/u/12345",
               },
@@ -242,7 +245,7 @@ describe("GitHubProvider", () => {
               created_at: "2026-01-01T00:00:00Z",
             },
           }),
-        }),
+        })
       );
       expect(result).toMatchObject({
         status: "connected",
@@ -268,25 +271,28 @@ describe("GitHubProvider", () => {
     it("throws unimplemented for setup_action=request", async () => {
       const c = mockContext({ setup_action: "request" });
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("setup_action=request is not yet implemented");
     });
 
     it("throws unimplemented for setup_action=update", async () => {
-      const c = mockContext({ installation_id: "ext-42", setup_action: "update" });
+      const c = mockContext({
+        installation_id: "ext-42",
+        setup_action: "update",
+      });
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("setup_action=update is not yet implemented");
     });
 
     it("throws when getInstallationDetails fails (hard-fail, no garbage data)", async () => {
       vi.mocked(getInstallationDetails).mockRejectedValueOnce(
-        new Error("GitHub installation details fetch failed: 401"),
+        new Error("GitHub installation details fetch failed: 401")
       );
 
       const c = mockContext({ installation_id: "ext-42" });
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("GitHub installation details fetch failed: 401");
 
       // Verify no DB upsert was attempted
@@ -296,7 +302,7 @@ describe("GitHubProvider", () => {
     it("throws when installation_id is missing", async () => {
       const c = mockContext({});
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("missing installation_id");
     });
 
@@ -306,7 +312,7 @@ describe("GitHubProvider", () => {
 
       const c = mockContext({ installation_id: "ext-1" });
       await expect(
-        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" }),
+        provider.handleCallback(c, { orgId: "org-1", connectedBy: "user-1" })
       ).rejects.toThrow("upsert_failed");
     });
   });

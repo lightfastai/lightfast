@@ -577,14 +577,30 @@ export type ActivityMetadata = ActivityType["metadata"];
 // Individual Metadata Types (for type-safe usage in code)
 // ============================================================================
 
-export type WorkspaceCreatedMetadata = z.infer<typeof workspaceCreatedMetadataSchema>;
-export type WorkspaceUpdatedMetadata = z.infer<typeof workspaceUpdatedMetadataSchema>;
-export type IntegrationConnectedMetadata = z.infer<typeof integrationConnectedMetadataSchema>;
-export type IntegrationStatusUpdatedMetadata = z.infer<typeof integrationStatusUpdatedMetadataSchema>;
-export type IntegrationConfigUpdatedMetadata = z.infer<typeof integrationConfigUpdatedMetadataSchema>;
-export type IntegrationDisconnectedMetadata = z.infer<typeof integrationDisconnectedMetadataSchema>;
-export type IntegrationDeletedMetadata = z.infer<typeof integrationDeletedMetadataSchema>;
-export type IntegrationMetadataUpdatedMetadata = z.infer<typeof integrationMetadataUpdatedMetadataSchema>;
+export type WorkspaceCreatedMetadata = z.infer<
+  typeof workspaceCreatedMetadataSchema
+>;
+export type WorkspaceUpdatedMetadata = z.infer<
+  typeof workspaceUpdatedMetadataSchema
+>;
+export type IntegrationConnectedMetadata = z.infer<
+  typeof integrationConnectedMetadataSchema
+>;
+export type IntegrationStatusUpdatedMetadata = z.infer<
+  typeof integrationStatusUpdatedMetadataSchema
+>;
+export type IntegrationConfigUpdatedMetadata = z.infer<
+  typeof integrationConfigUpdatedMetadataSchema
+>;
+export type IntegrationDisconnectedMetadata = z.infer<
+  typeof integrationDisconnectedMetadataSchema
+>;
+export type IntegrationDeletedMetadata = z.infer<
+  typeof integrationDeletedMetadataSchema
+>;
+export type IntegrationMetadataUpdatedMetadata = z.infer<
+  typeof integrationMetadataUpdatedMetadataSchema
+>;
 export type StoreCreatedMetadata = z.infer<typeof storeCreatedMetadataSchema>;
 export type JobCancelledMetadata = z.infer<typeof jobCancelledMetadataSchema>;
 export type JobRestartedMetadata = z.infer<typeof jobRestartedMetadataSchema>;
@@ -593,9 +609,12 @@ export type ApiKeyRevokedMetadata = z.infer<typeof apiKeyRevokedMetadataSchema>;
 export type ApiKeyDeletedMetadata = z.infer<typeof apiKeyDeletedMetadataSchema>;
 export type ApiKeyRotatedMetadata = z.infer<typeof apiKeyRotatedMetadataSchema>;
 export type SearchQueryMetadata = z.infer<typeof searchQueryMetadataSchema>;
-export type SearchFindSimilarMetadata = z.infer<typeof searchFindSimilarMetadataSchema>;
-export type SearchContentsMetadata = z.infer<typeof searchContentsMetadataSchema>;
-
+export type SearchFindSimilarMetadata = z.infer<
+  typeof searchFindSimilarMetadataSchema
+>;
+export type SearchContentsMetadata = z.infer<
+  typeof searchContentsMetadataSchema
+>;
 
 /**
  * Insert Activity Schema
@@ -609,7 +628,11 @@ export const insertActivitySchema = z.object({
   actorType: actorTypeSchema,
   actorUserId: z.string().optional(),
   actorEmail: z.string().email().optional(),
-  actorIp: z.string().ip({ version: "v4" }).or(z.string().ip({ version: "v6" })).optional(),
+  actorIp: z
+    .string()
+    .ip({ version: "v4" })
+    .or(z.string().ip({ version: "v6" }))
+    .optional(),
 
   // Activity classification
   category: activityCategorySchema,

@@ -5,10 +5,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": [
-        "NEXT_PUBLIC_VERCEL_ENV",
-        "NEXT_PUBLIC_SENTRY_DSN"
-      ],
+      "env": ["NEXT_PUBLIC_VERCEL_ENV", "NEXT_PUBLIC_SENTRY_DSN"],
       "passThroughEnv": [
         "SENTRY_AUTH_TOKEN",
         "SENTRY_ORG",
@@ -17,7 +14,12 @@
         "MXBAI_STORE_ID",
         "HEALTH_CHECK_AUTH_TOKEN"
       ],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "next-env.d.ts"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        "next-env.d.ts"
+      ]
     },
     "dev": {
       "persistent": true,

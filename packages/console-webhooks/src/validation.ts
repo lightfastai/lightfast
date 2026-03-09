@@ -4,13 +4,13 @@
  * Runtime validation for transformed webhook events using Zod schemas.
  */
 
-import { sourceEventSchema } from "@repo/console-validation";
 import type { SourceEvent } from "@repo/console-types";
+import { sourceEventSchema } from "@repo/console-validation";
 
 export interface ValidationResult<T> {
-  success: boolean;
   data?: T;
   errors?: string[];
+  success: boolean;
 }
 
 /**
@@ -31,8 +31,6 @@ export function validateSourceEvent(
 
   return {
     success: false,
-    errors: result.error.errors.map(
-      (e) => `${e.path.join(".")}: ${e.message}`
-    ),
+    errors: result.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`),
   };
 }

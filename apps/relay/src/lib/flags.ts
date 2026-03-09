@@ -1,5 +1,5 @@
-import { evaluateFlag } from "@vendor/vercel-flags";
 import type { ProviderName } from "@repo/gateway-types";
+import { evaluateFlag } from "@vendor/vercel-flags";
 
 /**
  * Whether webhooks should be fanned out to Console.
@@ -8,7 +8,7 @@ import type { ProviderName } from "@repo/gateway-types";
  * Supports per-provider targeting rules when provider context is provided.
  */
 export async function isConsoleFanOutEnabled(
-  provider?: ProviderName,
+  provider?: ProviderName
 ): Promise<boolean> {
   const context = provider ? { webhook: { provider } } : undefined;
   try {

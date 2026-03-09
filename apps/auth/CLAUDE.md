@@ -2,15 +2,10 @@
 
 ## Test Accounts
 
-Password login test credentials:
-
-- **Email**: `admin@lightfast.ai`
-- **Password**: `ijXFdBJ3U2eMDFnKqngp`
-
-Testing with fresh accounts:
+Use Clerk test accounts for E2E testing (no real email required):
 
 - **Email**: `some-email+clerk_test@lightfast.ai`
-- **Verification Code**: `424242`
+- **OTP Code**: `424242`
 
 ## Development Commands
 

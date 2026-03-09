@@ -5,14 +5,14 @@ import type { ProviderName } from "./providers";
  * Contains all data extracted after signature verification and JSON parsing.
  */
 export interface WebhookReceiptPayload {
-  provider: ProviderName;
-  deliveryId: string;
-  eventType: string;
-  resourceId: string | null;
-  payload: unknown;
-  receivedAt: number;
   /** Cross-service correlation ID for distributed tracing */
   correlationId?: string;
+  deliveryId: string;
+  eventType: string;
+  payload: unknown;
+  provider: ProviderName;
+  receivedAt: number;
+  resourceId: string | null;
 }
 
 /**
@@ -20,20 +20,20 @@ export interface WebhookReceiptPayload {
  * This is the Gateway→Console contract for webhook delivery.
  */
 export interface WebhookEnvelope {
-  /** Unique delivery ID for deduplication */
-  deliveryId: string;
   /** Gateway installation ID (gw_installations.id) */
   connectionId: string;
-  /** Clerk organization ID */
-  orgId: string;
-  /** Provider name */
-  provider: ProviderName;
-  /** Provider-specific event type (e.g., "push", "deployment.created", "Issue:create") */
-  eventType: string;
-  /** Raw provider webhook payload */
-  payload: unknown;
-  /** Unix timestamp in milliseconds when the webhook was received */
-  receivedAt: number;
   /** Cross-service correlation ID for distributed tracing */
   correlationId?: string;
+  /** Unique delivery ID for deduplication */
+  deliveryId: string;
+  /** Provider-specific event type (e.g., "push", "deployment.created", "Issue:create") */
+  eventType: string;
+  /** Clerk organization ID */
+  orgId: string;
+  /** Raw provider webhook payload */
+  payload: unknown;
+  /** Provider name */
+  provider: ProviderName;
+  /** Unix timestamp in milliseconds when the webhook was received */
+  receivedAt: number;
 }

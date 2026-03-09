@@ -1,14 +1,8 @@
 "use client";
 
-import {
-  useCallback,
-  useMemo,
-  useState,
-  startTransition
-  
-} from "react";
-import type {ReactNode} from "react";
 import { PrefetchCrossZoneLinksContext } from "@vercel/microfrontends/next/client";
+import type { ReactNode } from "react";
+import { startTransition, useCallback, useMemo, useState } from "react";
 
 /**
  * Drop-in replacement for PrefetchCrossZoneLinksProvider that always renders
@@ -40,7 +34,7 @@ export function StablePrefetchCrossZoneLinksProvider({
     <PrefetchCrossZoneLinksContext.Provider value={value}>
       {children}
       {[...hrefs].map((href) => (
-        <link key={href} as="fetch" href={href} rel="preload" />
+        <link as="fetch" href={href} key={href} rel="preload" />
       ))}
     </PrefetchCrossZoneLinksContext.Provider>
   );

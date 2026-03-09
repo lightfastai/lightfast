@@ -1,7 +1,7 @@
+import * as schema from "@db/console/schema";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import * as schema from "@db/console/schema";
 import { getMigrationsPath } from "./migrations";
 
 export type TestDb = ReturnType<typeof drizzle<typeof schema>>;
@@ -13,7 +13,9 @@ let instance: { client: PGlite; db: TestDb } | null = null;
  * Singleton per vitest worker — subsequent calls return the same instance.
  */
 export async function createTestDb(): Promise<TestDb> {
-  if (instance) return instance.db;
+  if (instance) {
+    return instance.db;
+  }
 
   const client = new PGlite();
   const db = drizzle(client, { schema });
@@ -29,7 +31,9 @@ export async function createTestDb(): Promise<TestDb> {
  * Uses dynamic discovery via pg_tables — no hardcoded table list needed.
  */
 export async function resetTestDb(): Promise<void> {
-  if (!instance) throw new Error("createTestDb() must be called first");
+  if (!instance) {
+    throw new Error("createTestDb() must be called first");
+  }
 
   await instance.client.exec(`
     DO $$ DECLARE r RECORD;
@@ -45,7 +49,9 @@ export async function resetTestDb(): Promise<void> {
  * Closes the PGlite instance and resets the singleton.
  */
 export async function closeTestDb(): Promise<void> {
-  if (!instance) return;
+  if (!instance) {
+    return;
+  }
   await instance.client.close();
   instance = null;
 }

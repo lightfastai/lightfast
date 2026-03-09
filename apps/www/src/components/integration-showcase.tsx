@@ -16,22 +16,22 @@ const integrations = [
 export function IntegrationShowcase() {
   return (
     <div className="w-full">
-      <span className="inline-flex items-center h-7 px-3 rounded-md border border-border text-xs text-muted-foreground mb-4">
+      <span className="mb-4 inline-flex h-7 items-center rounded-md border border-border px-3 text-muted-foreground text-xs">
         Integrations
       </span>
       {/* Logo Garden Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
         {integrations.map((integration) => {
           const Icon = IntegrationLogoIcons[integration.slug];
           return (
             <div
-              key={integration.slug}
               className="relative flex items-center justify-center"
+              key={integration.slug}
             >
-              <div className="bg-card/40 border border-border/50 backdrop-blur-md h-[4rem] sm:h-[4.5rem] md:h-[5rem] px-3 flex w-full items-center justify-center rounded-md">
+              <div className="flex h-[4rem] w-full items-center justify-center rounded-md border border-border/50 bg-card/40 px-3 backdrop-blur-md sm:h-[4.5rem] md:h-[5rem]">
                 <Icon
-                  className="size-6 sm:size-7 md:size-8 text-muted-foreground"
                   aria-label={`${integration.name} logo`}
+                  className="size-6 text-muted-foreground sm:size-7 md:size-8"
                 />
               </div>
             </div>

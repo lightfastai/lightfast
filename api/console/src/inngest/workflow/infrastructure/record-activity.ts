@@ -12,11 +12,11 @@
  * @see /docs/implementation/user-activity-tracking.md
  */
 
-import { inngest } from "../../client/client";
 import { db } from "@db/console/client";
 import { workspaceUserActivities } from "@db/console/schema";
-import { log } from "@vendor/observability/log";
 import type { ActivityMetadata } from "@repo/console-validation";
+import { log } from "@vendor/observability/log";
+import { inngest } from "../../client/client";
 
 /**
  * Record Activity Workflow
@@ -66,7 +66,7 @@ export const recordActivity = inngest.createFunction(
       batchSize,
       workspaceId,
       firstEventTimestamp: events[0].ts,
-      lastEventTimestamp: events[events.length - 1]?.ts,
+      lastEventTimestamp: events.at(-1)?.ts,
     });
 
     // Step 1: Prepare activity records

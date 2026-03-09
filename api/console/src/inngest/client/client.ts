@@ -1,13 +1,12 @@
-import { EventSchemas, Inngest } from "inngest";
-import type { GetEvents } from "inngest";
 import { sentryMiddleware } from "@inngest/middleware-sentry";
-import { z } from "zod";
-
-import { env } from "@vendor/inngest/env";
 import {
-  sourceTypeSchema,
   ingestionSourceSchema,
+  sourceTypeSchema,
 } from "@repo/console-validation";
+import { env } from "@vendor/inngest/env";
+import type { GetEvents } from "inngest";
+import { EventSchemas, Inngest } from "inngest";
+import { z } from "zod";
 
 /**
  * Inngest event schemas for console application
@@ -190,22 +189,35 @@ const eventsMap = {
         sourceId: z.string(),
         title: z.string(),
         body: z.string(),
-        actor: z.object({
-          id: z.string(),
-          name: z.string(),
-          email: z.string().optional(),
-          avatarUrl: z.string().optional(),
-        }).optional(),
+        actor: z
+          .object({
+            id: z.string(),
+            name: z.string(),
+            email: z.string().optional(),
+            avatarUrl: z.string().optional(),
+          })
+          .optional(),
         occurredAt: z.string(),
-        references: z.array(z.object({
-          type: z.enum([
-            "commit", "branch", "pr", "issue", "deployment", "project",
-            "cycle", "assignee", "reviewer", "team", "label"
-          ]),
-          id: z.string(),
-          url: z.string().optional(),
-          label: z.string().optional(),
-        })),
+        references: z.array(
+          z.object({
+            type: z.enum([
+              "commit",
+              "branch",
+              "pr",
+              "issue",
+              "deployment",
+              "project",
+              "cycle",
+              "assignee",
+              "reviewer",
+              "team",
+              "label",
+            ]),
+            id: z.string(),
+            url: z.string().optional(),
+            label: z.string().optional(),
+          })
+        ),
         metadata: z.record(z.unknown()),
       }),
       /** How this event was ingested (webhook, backfill, manual, api). Defaults to "webhook" in the consumer. */
@@ -257,12 +269,14 @@ const eventsMap = {
       /** Observation that triggered update */
       observationId: z.string(),
       /** Source actor data for profile enrichment */
-      sourceActor: z.object({
-        id: z.string(),
-        name: z.string(),
-        email: z.string().optional(),
-        avatarUrl: z.string().optional(),
-      }).optional(),
+      sourceActor: z
+        .object({
+          id: z.string(),
+          name: z.string(),
+          email: z.string().optional(),
+          avatarUrl: z.string().optional(),
+        })
+        .optional(),
     }),
   },
 

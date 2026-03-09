@@ -1,25 +1,24 @@
 export {
+  APIKeys,
   AuthenticateWithRedirectCallback,
   ClerkDegraded,
   ClerkFailed,
   ClerkLoaded,
   ClerkLoading,
-  RedirectToCreateOrganization,
-  RedirectToOrganizationProfile,
-  RedirectToSignIn,
-  RedirectToSignUp,
-  RedirectToTasks,
-  RedirectToUserProfile,
-} from "@clerk/nextjs";
-
-export {
-  APIKeys,
+  ClerkProvider,
   CreateOrganization,
   GoogleOneTap,
   OrganizationList,
   OrganizationProfile,
   OrganizationSwitcher,
   PricingTable,
+  RedirectToCreateOrganization,
+  RedirectToOrganizationProfile,
+  RedirectToSignIn,
+  RedirectToSignUp,
+  RedirectToTasks,
+  RedirectToUserProfile,
+  Show,
   SignIn,
   SignInButton,
   SignInWithMetamaskButton,
@@ -31,10 +30,6 @@ export {
   UserAvatar,
   UserButton,
   UserProfile,
-  Waitlist,
-} from "@clerk/nextjs";
-
-export {
   useAuth,
   useClerk,
   useEmailLink,
@@ -44,10 +39,9 @@ export {
   useReverification,
   useSession,
   useSessionList,
+  // useSignIn and useSignUp use Core 3 programmatic API (signIn.emailCode.sendCode, signIn.finalize, etc.)
+  useSignIn,
+  useSignUp,
   useUser,
+  Waitlist,
 } from "@clerk/nextjs";
-
-// useSignIn and useSignUp use the legacy programmatic API (Core 3 replaced with components-based API)
-export { useSignIn, useSignUp } from "@clerk/nextjs/legacy";
-
-export { ClerkProvider, Show } from "@clerk/nextjs";

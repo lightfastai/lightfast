@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { computeHmacSha256, computeHmacSha1 } from "../lib/crypto.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { computeHmacSha1, computeHmacSha256 } from "../lib/crypto.js";
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 
@@ -16,11 +16,14 @@ const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv, dbOps } =
     return {
       mockPublishJSON: vi.fn().mockResolvedValue({ messageId: "msg-1" }),
       mockRedisSet: vi.fn().mockResolvedValue("OK"),
-      mockWorkflowTrigger: vi
-        .fn()
-        .mockResolvedValue({ workflowRunId: "wf-1" }),
+      mockWorkflowTrigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
       mockEnv: env,
-      dbOps: [] as { op: "insert" | "update"; table?: unknown; values?: unknown; set?: unknown }[],
+      dbOps: [] as {
+        op: "insert" | "update";
+        table?: unknown;
+        values?: unknown;
+        set?: unknown;
+      }[],
     };
   });
 
@@ -79,15 +82,18 @@ vi.mock("../lib/flags.js", () => ({
 // ── Import app after mocks ──
 
 import { Hono } from "hono";
-import { webhooks } from "./webhooks.js";
 import { isConsoleFanOutEnabled } from "../lib/flags.js";
+import { webhooks } from "./webhooks.js";
 
 const app = new Hono();
 app.route("/webhooks", webhooks);
 
 function request(
   path: string,
-  init: { body?: string | Record<string, unknown>; headers?: Record<string, string> },
+  init: {
+    body?: string | Record<string, unknown>;
+    headers?: Record<string, string>;
+  }
 ) {
   const headers = new Headers(init.headers);
   if (!headers.has("content-type")) {
@@ -272,7 +278,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-redis-fail",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -290,7 +296,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-qstash-fail",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -325,7 +331,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-100",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -347,7 +353,7 @@ describe("POST /webhooks/:provider", () => {
           provider: "github",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
           correlationId: undefined,
         },
         retries: 5,
@@ -365,7 +371,7 @@ describe("POST /webhooks/:provider", () => {
             installationId: "conn-1",
             status: "received",
             payload: JSON.stringify({ repository: { id: 42 } }),
-            receivedAt: new Date(1700000000000).toISOString(),
+            receivedAt: new Date(1_700_000_000_000).toISOString(),
           },
         },
         {
@@ -394,7 +400,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-101",
           eventType: "push",
           payload: "not-an-object",
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -413,7 +419,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-dup",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -446,7 +452,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-flag-off",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -469,7 +475,7 @@ describe("POST /webhooks/:provider", () => {
             installationId: "conn-1",
             status: "received",
             payload: JSON.stringify({ repository: { id: 42 } }),
-            receivedAt: new Date(1700000000000).toISOString(),
+            receivedAt: new Date(1_700_000_000_000).toISOString(),
           },
         },
       ]);
@@ -581,7 +587,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-parity",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -598,7 +604,7 @@ describe("POST /webhooks/:provider", () => {
           eventType: "push",
           status: "enqueued",
           installationId: "conn-1",
-        }),
+        })
       );
     });
 
@@ -612,7 +618,7 @@ describe("POST /webhooks/:provider", () => {
           deliveryId: "del-parity-off",
           eventType: "push",
           payload: { repository: { id: 42 } },
-          receivedAt: 1700000000,
+          receivedAt: 1_700_000_000,
         },
         headers: { "X-API-Key": "test-api-key" },
       });
@@ -622,7 +628,7 @@ describe("POST /webhooks/:provider", () => {
         expect.objectContaining({
           status: "received", // Never advanced
           installationId: "conn-1",
-        }),
+        })
       );
     });
   });

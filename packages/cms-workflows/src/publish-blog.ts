@@ -16,14 +16,12 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import matter from "gray-matter";
-import {
-  createBlogPostFromAI,
-} from "./mutations/blog.js";
-import type { AIGeneratedPost, ContentType } from "./mutations/blog.js";
-import { basehub } from "basehub";
-import { basehubEnv } from "@vendor/cms/env";
 import { blog } from "@vendor/cms";
+import { basehubEnv } from "@vendor/cms/env";
+import { basehub } from "basehub";
+import matter from "gray-matter";
+import type { AIGeneratedPost, ContentType } from "./mutations/blog.js";
+import { createBlogPostFromAI } from "./mutations/blog.js";
 
 // Category slug to ID mapping (populated dynamically)
 const categoryIdCache: Record<string, string> = {};
@@ -98,34 +96,36 @@ async function getAuthorId(authorSlug: string): Promise<string> {
 }
 
 interface InternalFields {
-  status: "draft" | "published";
   generated?: string;
-  sources?: string[];
-  word_count?: number;
-  reading_time?: string;
   publishedAt?: string;
+  reading_time?: string;
+  sources?: string[];
+  status: "draft" | "published";
+  word_count?: number;
 }
 
 interface BlogFrontmatter {
-  title: string;
-  slug: string;
-  publishedAt: string;
+  _internal?: InternalFields;
+  author: string;
   category: string;
   contentType?: ContentType;
   excerpt: string;
-  tldr: string;
-  author: string;
+  publishedAt: string;
   seo: {
     metaDescription: string;
     focusKeyword: string;
     secondaryKeywords?: string[];
     faq?: { question: string; answer: string }[];
   };
-  _internal?: InternalFields;
+  slug: string;
+  title: string;
+  tldr: string;
 }
 
 function mapContentType(category: string, contentType?: string): ContentType {
-  if (contentType) return contentType as ContentType;
+  if (contentType) {
+    return contentType as ContentType;
+  }
 
   // Default content types by category
   const defaults: Record<string, ContentType> = {
@@ -142,8 +142,7 @@ async function main() {
     console.error(
       JSON.stringify({
         success: false,
-        error:
-          "Usage: pnpm publish:blog -- <filepath>",
+        error: "Usage: pnpm publish:blog -- <filepath>",
       })
     );
     process.exit(1);
@@ -191,11 +190,12 @@ async function main() {
   }
 
   // Check SEO fields
-  if (!frontmatter.seo.metaDescription || !frontmatter.seo.focusKeyword) {
+  if (!(frontmatter.seo.metaDescription && frontmatter.seo.focusKeyword)) {
     console.error(
       JSON.stringify({
         success: false,
-        error: "Missing required SEO fields: seo.metaDescription and seo.focusKeyword",
+        error:
+          "Missing required SEO fields: seo.metaDescription and seo.focusKeyword",
       })
     );
     process.exit(1);
@@ -206,7 +206,8 @@ async function main() {
     console.error(
       JSON.stringify({
         success: false,
-        error: "This blog post has already been published. Status is 'published'.",
+        error:
+          "This blog post has already been published. Status is 'published'.",
       })
     );
     process.exit(1);

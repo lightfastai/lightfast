@@ -10,7 +10,7 @@
  * Maximum body length for SourceEvent (10KB)
  * Balances between useful content and storage/embedding costs
  */
-export const MAX_BODY_LENGTH = 10000;
+export const MAX_BODY_LENGTH = 10_000;
 
 /**
  * Maximum title length for SourceEvent
@@ -50,7 +50,7 @@ export function truncateWithEllipsis(str: string, maxLength: number): string {
   if (str.length <= maxLength) {
     return str;
   }
-  return str.slice(0, maxLength - 3) + "...";
+  return `${str.slice(0, maxLength - 3)}...`;
 }
 
 /**

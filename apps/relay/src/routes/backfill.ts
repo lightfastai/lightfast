@@ -1,9 +1,9 @@
+import { getQStashClient } from "@vendor/qstash";
 import { Hono } from "hono";
 import { z } from "zod";
-import { getQStashClient } from "@vendor/qstash";
-import { apiKeyAuth } from "../middleware/auth.js";
-import { backfillUrl } from "../lib/urls.js";
 import { getEnv } from "../env.js";
+import { backfillUrl } from "../lib/urls.js";
+import { apiKeyAuth } from "../middleware/auth.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 const backfill = new Hono<{ Variables: LifecycleVariables }>();
@@ -33,7 +33,10 @@ backfill.post("/", apiKeyAuth, async (c) => {
 
   const parsed = triggerSchema.safeParse(body);
   if (!parsed.success) {
-    return c.json({ error: "validation_error", details: parsed.error.flatten() }, 400);
+    return c.json(
+      { error: "validation_error", details: parsed.error.flatten() },
+      400
+    );
   }
 
   const { installationId, provider, orgId, depth, entityTypes } = parsed.data;

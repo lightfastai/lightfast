@@ -5,29 +5,34 @@
  * Generates LLM summary when cluster reaches threshold.
  */
 
-import { inngest } from "../../client/client";
 import { db } from "@db/console/client";
 import {
-  workspaceObservationClusters,
-  workspaceNeuralObservations,
   orgWorkspaces,
+  workspaceNeuralObservations,
+  workspaceObservationClusters,
 } from "@db/console/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { log } from "@vendor/observability/log";
-import { z } from "zod";
-import { createJob, updateJobStatus, completeJob, recordJobMetric } from "../../../lib/jobs";
-import { createNeuralOnFailureHandler } from "./on-failure-handler";
-import {
-  createTracedModel,
-  generateObject,
-  buildNeuralTelemetry,
-} from "./ai-helpers";
 import type {
   NeuralClusterSummaryInput,
-  NeuralClusterSummaryOutputSuccess,
-  NeuralClusterSummaryOutputSkipped,
   NeuralClusterSummaryOutputFailure,
+  NeuralClusterSummaryOutputSkipped,
+  NeuralClusterSummaryOutputSuccess,
 } from "@repo/console-validation";
+import { log } from "@vendor/observability/log";
+import { and, desc, eq } from "drizzle-orm";
+import { z } from "zod";
+import {
+  completeJob,
+  createJob,
+  recordJobMetric,
+  updateJobStatus,
+} from "../../../lib/jobs";
+import { inngest } from "../../client/client";
+import {
+  buildNeuralTelemetry,
+  createTracedModel,
+  generateObject,
+} from "./ai-helpers";
+import { createNeuralOnFailureHandler } from "./on-failure-handler";
 
 const SUMMARY_THRESHOLD = 5; // Generate summary after 5 observations
 const SUMMARY_AGE_HOURS = 24; // Regenerate if summary > 24 hours old
@@ -78,34 +83,49 @@ export const clusterSummaryCheck = inngest.createFunction(
       "apps-console/neural/cluster.check-summary",
       {
         logMessage: "Neural cluster summary failed",
-        logContext: ({ workspaceId, clusterId }) => ({ workspaceId, clusterId }),
-        buildOutput: ({ data: { clusterId }, error }) => ({
-          inngestFunctionId: "neural.cluster.summary",
-          status: "failure",
+        logContext: ({ workspaceId, clusterId }) => ({
+          workspaceId,
           clusterId,
-          error,
-        } satisfies NeuralClusterSummaryOutputFailure),
-      },
+        }),
+        buildOutput: ({ data: { clusterId }, error }) =>
+          ({
+            inngestFunctionId: "neural.cluster.summary",
+            status: "failure",
+            clusterId,
+            error,
+          }) satisfies NeuralClusterSummaryOutputFailure,
+      }
     ),
   },
   { event: "apps-console/neural/cluster.check-summary" },
   async ({ event, step }) => {
-    const { workspaceId, clerkOrgId: eventClerkOrgId, clusterId, observationCount } = event.data;
+    const {
+      workspaceId,
+      clerkOrgId: eventClerkOrgId,
+      clusterId,
+      observationCount,
+    } = event.data;
 
     // Resolve clerkOrgId (prefer event, fallback to DB)
     // New events receive clerkOrgId from parent workflow (observation-capture)
-    const clerkOrgId = eventClerkOrgId ?? await (async () => {
-      // Track fallback usage to monitor migration progress
-      log.warn("clerkOrgId fallback to DB lookup", { workspaceId, reason: "event_missing_clerkOrgId" });
-      const workspace = await db.query.orgWorkspaces.findFirst({
-        where: eq(orgWorkspaces.id, workspaceId),
-        columns: { clerkOrgId: true },
-      });
-      return workspace?.clerkOrgId ?? "";
-    })();
+    const clerkOrgId =
+      eventClerkOrgId ??
+      (await (async () => {
+        // Track fallback usage to monitor migration progress
+        log.warn("clerkOrgId fallback to DB lookup", {
+          workspaceId,
+          reason: "event_missing_clerkOrgId",
+        });
+        const workspace = await db.query.orgWorkspaces.findFirst({
+          where: eq(orgWorkspaces.id, workspaceId),
+          columns: { clerkOrgId: true },
+        });
+        return workspace?.clerkOrgId ?? "";
+      })());
 
     // Create job record for tracking
-    const inngestRunId = event.id ?? `neural-cluster-${clusterId}-${Date.now()}`;
+    const inngestRunId =
+      event.id ?? `neural-cluster-${clusterId}-${Date.now()}`;
     const jobId = await step.run("create-job", async () => {
       return createJob({
         clerkOrgId,
@@ -180,28 +200,34 @@ export const clusterSummaryCheck = inngest.createFunction(
             inngestFunctionId: "neural.cluster.summary",
             status: "skipped",
             clusterId,
-            reason: observationCount < SUMMARY_THRESHOLD ? "below_threshold" : "cluster_not_found",
+            reason:
+              observationCount < SUMMARY_THRESHOLD
+                ? "below_threshold"
+                : "cluster_not_found",
           } satisfies NeuralClusterSummaryOutputSkipped,
         });
       });
 
-      return { status: "skipped", reason: "threshold_not_met_or_cluster_not_found" };
+      return {
+        status: "skipped",
+        reason: "threshold_not_met_or_cluster_not_found",
+      };
     }
 
     // Step 2: Gather cluster observations
     // TODO: Phase 5 will enable this when clusters are migrated to BIGINT
     // Currently, observations.clusterId is BIGINT but we receive varchar clusterId from events
     // Since all observations have clusterId = null until Phase 5, this query returns nothing
-    const clusterIdNum = parseInt(clusterId, 10);
+    const clusterIdNum = Number.parseInt(clusterId, 10);
     const observations = await step.run("gather-observations", async () => {
       // Skip if clusterId is not a valid number (varchar cluster IDs from Phase 3)
-      if (isNaN(clusterIdNum)) {
+      if (Number.isNaN(clusterIdNum)) {
         return [];
       }
       return db.query.workspaceNeuralObservations.findMany({
         where: and(
           eq(workspaceNeuralObservations.workspaceId, workspaceId),
-          eq(workspaceNeuralObservations.clusterId, clusterIdNum),
+          eq(workspaceNeuralObservations.clusterId, clusterIdNum)
         ),
         orderBy: desc(workspaceNeuralObservations.occurredAt),
         limit: 20, // Limit context size
@@ -301,5 +327,5 @@ Generate a concise summary, key topics, key contributors, and activity status.`,
       summary: summary.summary,
       keyTopics: summary.keyTopics,
     };
-  },
+  }
 );

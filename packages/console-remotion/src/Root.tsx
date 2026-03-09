@@ -1,34 +1,38 @@
+// biome-ignore lint/style/useFilenamingConvention: Remotion requires PascalCase entry point
 import { Composition, Still } from "remotion";
 import { LandingHero } from "./compositions/landing-hero/landing-hero";
-import { Logo, LOGO_VARIANTS } from "./compositions/logo";
-import { TwitterBanner, TWITTER_BANNER_CONFIG } from "./compositions/twitter-banner";
+import { LOGO_VARIANTS, Logo } from "./compositions/logo";
+import {
+  TWITTER_BANNER_CONFIG,
+  TwitterBanner,
+} from "./compositions/twitter-banner";
 
 export const RemotionRoot = () => {
   return (
     <>
       <Composition
-        id="landing-hero"
         component={LandingHero}
         durationInFrames={301}
         fps={30}
-        width={1920}
         height={1280}
+        id="landing-hero"
+        width={1920}
       />
       {LOGO_VARIANTS.map((variant) => (
         <Still
-          key={variant.id}
-          id={variant.id}
           component={Logo}
-          width={variant.width}
-          height={variant.height}
           defaultProps={variant.props}
+          height={variant.height}
+          id={variant.id}
+          key={variant.id}
+          width={variant.width}
         />
       ))}
       <Still
-        id={TWITTER_BANNER_CONFIG.id}
         component={TwitterBanner}
-        width={TWITTER_BANNER_CONFIG.width}
         height={TWITTER_BANNER_CONFIG.height}
+        id={TWITTER_BANNER_CONFIG.id}
+        width={TWITTER_BANNER_CONFIG.width}
       />
     </>
   );

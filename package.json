@@ -36,10 +36,8 @@
     "publish:blog": "pnpm --filter @repo/cms-workflows publish:blog",
     "publish:changelog": "pnpm --filter @repo/cms-workflows publish:changelog",
     "brain": "turbo run eval",
-    "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
-    "format:fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
-    "lint": "SKIP_ENV_VALIDATION=true turbo run lint --continue -- --cache --cache-location .cache/.eslintcache",
-    "lint:fix": "SKIP_ENV_VALIDATION=true turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
+    "check": "npx ultracite@latest check",
+    "fix": "npx ultracite@latest fix",
     "lint:ws": "pnpm dlx sherif@latest",
     "postinstall": "pnpm lint:ws",
     "test": "SKIP_ENV_VALIDATION=true turbo run test",
@@ -56,17 +54,15 @@
     "db:migrate": "pnpm --filter @db/console db:migrate"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.6",
     "@changesets/cli": "^2.30.0",
-    "@repo/prettier-config": "workspace:*",
-    "prettier": "catalog:",
-    "turbo": "^2.8.14",
-    "turbo-ignore": "^2.8.14",
+    "turbo": "2.8.13",
+    "turbo-ignore": "2.8.13",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.56.1",
+    "ultracite": "7.2.5",
     "vercel": "^50.28.0",
     "vitest": "^4.0.18"
   },
-  "prettier": "@repo/prettier-config",
   "pnpm": {
     "overrides": {
       "react": "^19.2.4",

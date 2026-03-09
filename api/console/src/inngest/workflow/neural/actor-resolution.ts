@@ -1,8 +1,8 @@
-import type { SourceEvent, SourceActor } from "@repo/console-types";
 import { db } from "@db/console/client";
 import { workspaceNeuralObservations } from "@db/console/schema";
-import { eq, and, sql } from "drizzle-orm";
+import type { SourceActor, SourceEvent } from "@repo/console-types";
 import { log } from "@vendor/observability/log";
+import { and, eq, sql } from "drizzle-orm";
 
 /**
  * Actor Resolution for Neural Observations
@@ -19,10 +19,10 @@ import { log } from "@vendor/observability/log";
  */
 
 interface ResolvedActor {
-  /** Original actor from source event */
-  sourceActor: SourceActor | null;
   /** Canonical actor ID for this workspace (source:id format) */
   actorId: string | null;
+  /** Original actor from source event */
+  sourceActor: SourceActor | null;
 }
 
 /**
@@ -37,9 +37,11 @@ interface ResolvedActor {
 async function resolveVercelActorViaCommitSha(
   workspaceId: string,
   commitSha: string,
-  _username: string,
+  _username: string
 ): Promise<{ numericId: string } | null> {
-  if (!commitSha) return null;
+  if (!commitSha) {
+    return null;
+  }
 
   try {
     // Find GitHub observation with same commit SHA in references
@@ -49,18 +51,22 @@ async function resolveVercelActorViaCommitSha(
         eq(workspaceNeuralObservations.workspaceId, workspaceId),
         eq(workspaceNeuralObservations.source, "github"),
         // Check if sourceReferences contains a commit with this SHA
-        sql`${workspaceNeuralObservations.sourceReferences}::jsonb @> ${JSON.stringify([{ type: "commit", id: commitSha }])}::jsonb`,
+        sql`${workspaceNeuralObservations.sourceReferences}::jsonb @> ${JSON.stringify([{ type: "commit", id: commitSha }])}::jsonb`
       ),
       columns: {
         actor: true,
       },
     });
 
-    if (!githubEvent?.actor) return null;
+    if (!githubEvent?.actor) {
+      return null;
+    }
 
     // Extract numeric ID from GitHub actor
     const numericId = githubEvent.actor.id;
-    if (!numericId || !/^\d+$/.test(numericId)) return null;
+    if (!(numericId && /^\d+$/.test(numericId))) {
+      return null;
+    }
 
     log.info("Resolved Vercel actor via commit SHA", {
       commitSha,
@@ -85,7 +91,7 @@ async function resolveVercelActorViaCommitSha(
  */
 export async function resolveActor(
   workspaceId: string,
-  sourceEvent: SourceEvent,
+  sourceEvent: SourceEvent
 ): Promise<ResolvedActor> {
   let sourceActor = sourceEvent.actor ?? null;
 
@@ -105,7 +111,7 @@ export async function resolveActor(
       const resolved = await resolveVercelActorViaCommitSha(
         workspaceId,
         commitRef.id,
-        sourceActor.id, // username
+        sourceActor.id // username
       );
 
       if (resolved) {
@@ -129,9 +135,10 @@ export async function resolveActor(
   // For GitHub: github:12345678 (numeric)
   // For Vercel: github:12345678 (if resolved) or github:username (if not)
   // Note: Vercel actors use "github:" prefix since they're GitHub users
-  const actorId = sourceEvent.source === "vercel"
-    ? `github:${sourceActor.id}`
-    : `${sourceEvent.source}:${sourceActor.id}`;
+  const actorId =
+    sourceEvent.source === "vercel"
+      ? `github:${sourceActor.id}`
+      : `${sourceEvent.source}:${sourceActor.id}`;
 
   return {
     actorId,

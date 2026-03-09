@@ -6,7 +6,10 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": { "types": "./dist/src/index.d.ts", "default": "./src/index.ts" },
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./src/index.ts"
+    },
     "./renderer": {
       "types": "./dist/src/renderer.d.ts",
       "default": "./src/renderer.ts"
@@ -20,8 +23,6 @@
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
-    "format": "prettier --check . --ignore-path ../../.gitignore",
-    "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -30,13 +31,8 @@
     "remotion": "^4.0.434"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "eslint": "catalog:",
-    "prettier": "catalog:",
     "typescript": "catalog:"
-  },
-  "prettier": "@repo/prettier-config"
+  }
 }

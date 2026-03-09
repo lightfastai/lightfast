@@ -1,3 +1,4 @@
+import { LIGHTFAST_API_KEY_PREFIX } from "./constants";
 import {
   AuthenticationError,
   LightfastError,
@@ -7,23 +8,22 @@ import {
   ServerError,
   ValidationError,
 } from "./errors";
-import { LIGHTFAST_API_KEY_PREFIX } from "./constants";
 import type {
   ContentsInput,
   FindSimilarInput,
   GraphInput,
+  GraphResponse,
   LightfastConfig,
   RelatedInput,
+  RelatedResponse,
   SearchInput,
   V1ContentsResponse,
   V1FindSimilarResponse,
   V1SearchResponse,
-  GraphResponse,
-  RelatedResponse,
 } from "./types";
 
 const DEFAULT_BASE_URL = "https://lightfast.ai";
-const DEFAULT_TIMEOUT = 30000;
+const DEFAULT_TIMEOUT = 30_000;
 
 declare const __SDK_VERSION__: string;
 const SDK_VERSION = __SDK_VERSION__;
@@ -32,10 +32,10 @@ const SDK_VERSION = __SDK_VERSION__;
  * Error response structure from the API
  */
 interface ApiErrorResponse {
+  details?: Record<string, string[]>;
   error?: string;
   message?: string;
   requestId?: string;
-  details?: Record<string, string[]>;
 }
 
 /**
@@ -87,11 +87,11 @@ export class Lightfast {
     // These must match the .default() values in @repo/console-types/src/api/v1/search.ts
     return this.request<V1SearchResponse>("/v1/search", {
       query: request.query,
-      limit: request.limit ?? 10,              // matches schema .default(10)
-      offset: request.offset ?? 0,              // matches schema .default(0)
-      mode: request.mode ?? "balanced",         // matches schema .default("balanced")
+      limit: request.limit ?? 10, // matches schema .default(10)
+      offset: request.offset ?? 0, // matches schema .default(0)
+      mode: request.mode ?? "balanced", // matches schema .default("balanced")
       filters: request.filters,
-      includeContext: request.includeContext ?? true,      // matches schema .default(true)
+      includeContext: request.includeContext ?? true, // matches schema .default(true)
       includeHighlights: request.includeHighlights ?? true, // matches schema .default(true)
     });
   }
@@ -131,7 +131,7 @@ export class Lightfast {
    * ```
    */
   async findSimilar(request: FindSimilarInput): Promise<V1FindSimilarResponse> {
-    if (!request.id && !request.url) {
+    if (!(request.id || request.url)) {
       throw new ValidationError("Either 'id' or 'url' must be provided");
     }
 
@@ -215,7 +215,7 @@ export class Lightfast {
       if (!response.ok) {
         throw this.handleErrorResponse(
           response.status,
-          data as ApiErrorResponse,
+          data as ApiErrorResponse
         );
       }
 
@@ -243,7 +243,7 @@ export class Lightfast {
    */
   private handleErrorResponse(
     status: number,
-    data: ApiErrorResponse,
+    data: ApiErrorResponse
   ): LightfastError {
     const message = data.error ?? data.message ?? "Unknown error";
     const requestId = data.requestId;

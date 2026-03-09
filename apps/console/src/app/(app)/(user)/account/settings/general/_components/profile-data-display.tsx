@@ -1,10 +1,14 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import { Avatar, AvatarImage, AvatarFallback } from "@repo/ui/components/ui/avatar";
-import { Input } from "@repo/ui/components/ui/input";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 /**
  * Profile Data Display
@@ -19,109 +23,117 @@ import { Button } from "@repo/ui/components/ui/button";
  * - refetchOnMount/refetchOnWindowFocus disabled to prevent unnecessary fetches
  */
 export function ProfileDataDisplay() {
-	const trpc = useTRPC();
+  const trpc = useTRPC();
 
-	const { data: profile } = useSuspenseQuery({
-		...trpc.account.get.queryOptions(),
-		refetchOnMount: false,
-		refetchOnWindowFocus: false,
-		staleTime: 10 * 60 * 1000, // 10 minutes - user profile rarely changes
-	});
+  const { data: profile } = useSuspenseQuery({
+    ...trpc.account.get.queryOptions(),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: 10 * 60 * 1000, // 10 minutes - user profile rarely changes
+  });
 
-	// Get initials for avatar fallback
-	const initials = profile.fullName
-		? profile.fullName
-				.split(" ")
-				.map((n) => n[0])
-				.join("")
-				.toUpperCase()
-				.slice(0, 2)
-		: "U";
+  // Get initials for avatar fallback
+  const initials = profile.fullName
+    ? profile.fullName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "U";
 
-	return (
-		<div className="space-y-8">
-			<div>
-				<h2 className="text-2xl font-pp font-medium text-foreground">General</h2>
-				<p className="text-sm text-muted-foreground mt-1">
-					Manage your personal account settings.
-				</p>
-			</div>
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="font-medium font-pp text-2xl text-foreground">
+          General
+        </h2>
+        <p className="mt-1 text-muted-foreground text-sm">
+          Manage your personal account settings.
+        </p>
+      </div>
 
-			{/* Avatar Section */}
-			<div className="space-y-4">
-				<div>
-					<h2 className="text-xl font-semibold text-foreground">Avatar</h2>
-					<p className="text-sm text-muted-foreground mt-1">
-						This is your avatar.
-					</p>
-					<p className="text-sm text-muted-foreground">
-						Click on the avatar to upload a custom one from your files.
-					</p>
-				</div>
+      {/* Avatar Section */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="font-semibold text-foreground text-xl">Avatar</h2>
+          <p className="mt-1 text-muted-foreground text-sm">
+            This is your avatar.
+          </p>
+          <p className="text-muted-foreground text-sm">
+            Click on the avatar to upload a custom one from your files.
+          </p>
+        </div>
 
-				<div className="flex items-center gap-4">
-					<Avatar className="h-20 w-20">
-						<AvatarImage src={profile.imageUrl} alt={profile.fullName ?? "User"} />
-						<AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xl">
-							{initials}
-						</AvatarFallback>
-					</Avatar>
-				</div>
+        <div className="flex items-center gap-4">
+          <Avatar className="h-20 w-20">
+            <AvatarImage
+              alt={profile.fullName ?? "User"}
+              src={profile.imageUrl}
+            />
+            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xl">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </div>
 
-				<p className="text-sm text-muted-foreground">
-					An avatar is optional but strongly recommended.
-				</p>
-			</div>
+        <p className="text-muted-foreground text-sm">
+          An avatar is optional but strongly recommended.
+        </p>
+      </div>
 
-			{/* Display Name Section */}
-			<div className="space-y-4">
-				<div>
-					<h2 className="text-xl font-semibold text-foreground">Display Name</h2>
-					<p className="text-sm text-muted-foreground mt-1">
-						Please enter your full name, or a display name you are comfortable with.
-					</p>
-				</div>
+      {/* Display Name Section */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="font-semibold text-foreground text-xl">
+            Display Name
+          </h2>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Please enter your full name, or a display name you are comfortable
+            with.
+          </p>
+        </div>
 
-				<div className="w-full space-y-4">
-					<div>
-						<Input
-							type="text"
-							value={profile.fullName ?? ""}
-							disabled
-							className="bg-muted/50"
-						/>
-					</div>
+        <div className="w-full space-y-4">
+          <div>
+            <Input
+              className="bg-muted/50"
+              disabled
+              type="text"
+              value={profile.fullName ?? ""}
+            />
+          </div>
 
-					<p className="text-sm text-muted-foreground">
-						Please use 32 characters at maximum.
-					</p>
+          <p className="text-muted-foreground text-sm">
+            Please use 32 characters at maximum.
+          </p>
 
-					<div className="flex justify-end">
-						<Button disabled variant="secondary">
-							Save
-						</Button>
-					</div>
-				</div>
-			</div>
+          <div className="flex justify-end">
+            <Button disabled variant="secondary">
+              Save
+            </Button>
+          </div>
+        </div>
+      </div>
 
-			{/* Email Section (Read-only) */}
-			<div className="space-y-4">
-				<div>
-					<h2 className="text-xl font-semibold text-foreground">Email</h2>
-					<p className="text-sm text-muted-foreground mt-1">
-						Your primary email address.
-					</p>
-				</div>
+      {/* Email Section (Read-only) */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="font-semibold text-foreground text-xl">Email</h2>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Your primary email address.
+          </p>
+        </div>
 
-				<div className="w-full">
-					<Input
-						type="email"
-						value={profile.primaryEmailAddress ?? ""}
-						disabled
-						className="bg-muted/50"
-					/>
-				</div>
-			</div>
-		</div>
-	);
+        <div className="w-full">
+          <Input
+            className="bg-muted/50"
+            disabled
+            type="email"
+            value={profile.primaryEmailAddress ?? ""}
+          />
+        </div>
+      </div>
+    </div>
+  );
 }

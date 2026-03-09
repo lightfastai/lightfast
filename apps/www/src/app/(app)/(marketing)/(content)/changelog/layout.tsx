@@ -7,14 +7,14 @@ export default function ChangelogLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="max-w-2xl w-full mx-auto pt-24 pb-32 min-w-0">
-      <div className="flex items-center justify-between mb-12">
-        <h1 className="text-3xl font-pp text-foreground font-medium">
+    <div className="mx-auto w-full min-w-0 max-w-2xl pt-24 pb-32">
+      <div className="mb-12 flex items-center justify-between">
+        <h1 className="font-medium font-pp text-3xl text-foreground">
           Changelog
         </h1>
         <Link
+          className="inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
           href="/changelog/rss.xml"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           title="Subscribe to RSS Feed"
         >
           <RssIcon className="h-4 w-4" />

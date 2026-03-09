@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 
@@ -43,7 +43,7 @@ function request(
   init: {
     body?: string | Record<string, unknown>;
     headers?: Record<string, string>;
-  } = {},
+  } = {}
 ) {
   const headers = new Headers(init.headers);
   if (!headers.has("content-type")) {
@@ -162,7 +162,7 @@ describe("POST /api/backfill", () => {
           depth: 30,
           entityTypes: ["Issue", "Comment"],
         },
-      }),
+      })
     );
   });
 

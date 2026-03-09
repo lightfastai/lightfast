@@ -1,13 +1,12 @@
+import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
 import { Suspense } from "react";
-import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
-import { WorkspaceHeader } from "./_components/workspace-header";
-import { OrganizationSelector } from "./_components/organization-selector";
-import { WorkspaceNameInput } from "./_components/workspace-name-input";
-import { SourcesSection } from "./_components/sources-section";
-import { SourcesSectionLoading } from "./_components/sources-section-loading";
 import { CreateWorkspaceButton } from "./_components/create-workspace-button";
 import { NewWorkspaceInitializer } from "./_components/new-workspace-initializer";
-
+import { OrganizationSelector } from "./_components/organization-selector";
+import { SourcesSection } from "./_components/sources-section";
+import { SourcesSectionLoading } from "./_components/sources-section-loading";
+import { WorkspaceHeader } from "./_components/workspace-header";
+import { WorkspaceNameInput } from "./_components/workspace-name-input";
 
 /**
  * Workspace Creation Page
@@ -62,7 +61,7 @@ export default async function NewWorkspacePage({
   prefetch(orgTrpc.connections.sentry.get.queryOptions());
 
   return (
-    <main className="flex-1 flex items-start justify-center py-4">
+    <main className="flex flex-1 items-start justify-center py-4">
       <div className="w-full space-y-4">
         {/* Static Header (Server Component) */}
         <WorkspaceHeader />
@@ -71,18 +70,18 @@ export default async function NewWorkspacePage({
         <HydrateClient>
           {/* Client component handles initialization from cache + URL params */}
           <NewWorkspaceInitializer
-            teamSlugHint={teamSlugHint}
             initialWorkspaceName={initialWorkspaceName}
+            teamSlugHint={teamSlugHint}
           >
             <div className="space-y-8">
               {/* Section 1: General */}
               <div className="flex gap-6">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-foreground text-background font-semibold">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-foreground font-semibold text-background">
                   1
                 </div>
-                <div className="flex-1 min-w-0 space-y-6">
+                <div className="min-w-0 flex-1 space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold mb-4">General</h2>
+                    <h2 className="mb-4 font-semibold text-xl">General</h2>
 
                     <div className="space-y-6">
                       {/* Client Island: Organization Selector */}
@@ -97,13 +96,13 @@ export default async function NewWorkspacePage({
 
               {/* Section 2: Sources (optional) */}
               <div className="flex gap-6">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-foreground text-background font-semibold">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-foreground font-semibold text-background">
                   2
                 </div>
                 <div className="flex-1 space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold mb-2">Sources</h2>
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <h2 className="mb-2 font-semibold text-xl">Sources</h2>
+                    <p className="mb-4 text-muted-foreground text-sm">
                       Select sources to connect to this workspace
                     </p>
 

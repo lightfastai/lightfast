@@ -11,11 +11,7 @@
         "!.next/cache/**",
         "!.next/dev/**"
       ],
-      "env": [
-        "NEXT_PUBLIC_*",
-        "SENTRY_*",
-        "VERCEL_ENV"
-      ]
+      "env": ["NEXT_PUBLIC_*", "SENTRY_*", "VERCEL_ENV"]
     },
     "dev": {
       "cache": false,
@@ -33,29 +29,20 @@
       "cache": false,
       "persistent": true
     },
+    "//#dev:ngrok": {
+      "cache": false,
+      "persistent": true
+    },
     "dev:studio": {
       "cache": false,
       "persistent": true
     },
-    "format": {
-      "outputs": [".cache/.prettiercache"],
-      "outputLogs": "new-only"
-    },
     "transit": {
       "dependsOn": ["^transit"]
     },
-    "lint": {
-      "dependsOn": ["^build", "transit"],
-      "outputs": [".cache/.eslintcache"],
-      "env": []
-    },
     "test": {
       "dependsOn": ["^build"],
-      "inputs": [
-        "src/**",
-        "vitest.config.ts",
-        "tsconfig.json"
-      ],
+      "inputs": ["src/**", "vitest.config.ts", "tsconfig.json"],
       "outputs": [],
       "env": []
     },
@@ -90,10 +77,7 @@
       "interactive": true
     }
   },
-  "globalEnv": [
-    "NODE_ENV",
-    "CI"
-  ],
+  "globalEnv": ["NODE_ENV", "CI"],
   "globalPassThroughEnv": [
     "SKIP_ENV_VALIDATION",
     "npm_lifecycle_event",
@@ -109,10 +93,14 @@
         "dependencies": { "deny": ["packages", "data", "api", "app"] }
       },
       "internal": {
-        "dependencies": { "deny": ["vendor", "packages", "data", "api", "app", "core"] }
+        "dependencies": {
+          "deny": ["vendor", "packages", "data", "api", "app", "core"]
+        }
       },
       "app": {
-        "dependents": { "deny": ["vendor", "packages", "data", "api", "core", "internal"] }
+        "dependents": {
+          "deny": ["vendor", "packages", "data", "api", "core", "internal"]
+        }
       }
     }
   }

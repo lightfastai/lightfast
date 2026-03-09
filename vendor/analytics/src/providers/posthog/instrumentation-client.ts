@@ -8,7 +8,9 @@ import { posthogEnv } from "../../../env";
  * @param options.baseUrl - Base URL for the app (used to construct /ingest proxy path)
  */
 export const initializePostHogAnalytics = (options: { baseUrl: string }) => {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
 
   posthog.init(posthogEnv.NEXT_PUBLIC_POSTHOG_KEY, {
     api_host: `${options.baseUrl}/ingest`,

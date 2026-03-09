@@ -3,9 +3,7 @@
   "tags": ["packages"],
   "tasks": {
     "build": {
-      "passThroughEnv": [
-        "COHERE_API_KEY"
-      ]
+      "passThroughEnv": ["COHERE_API_KEY"]
     }
   }
 }

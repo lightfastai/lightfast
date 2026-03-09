@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface UseTextCycleOptions {
   /**
@@ -26,7 +26,7 @@ interface UseTextCycleOptions {
  */
 export function useTextCycle<T>(
   items: readonly T[],
-  options: UseTextCycleOptions = {},
+  options: UseTextCycleOptions = {}
 ) {
   const { interval = 500, loop = false, onComplete } = options;
 
@@ -48,7 +48,9 @@ export function useTextCycle<T>(
   }, []);
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive) {
+      return;
+    }
 
     let index = currentIndex;
 

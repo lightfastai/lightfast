@@ -1,14 +1,12 @@
-import { NextConfig } from "next";
-import { withMicrofrontends } from "@vercel/microfrontends/next/config";
-
-import { env } from "./src/env";
-
+import { mergeNextConfig } from "@vendor/next/merge-config";
 import {
   config as vendorConfig,
   withBetterStack,
   withSentry,
 } from "@vendor/next/next-config-builder";
-import { mergeNextConfig } from "@vendor/next/merge-config";
+import { withMicrofrontends } from "@vercel/microfrontends/next/config";
+import type { NextConfig } from "next";
+import { env } from "./src/env";
 
 const config: NextConfig = withSentry(
   withBetterStack(
@@ -115,12 +113,14 @@ const config: NextConfig = withSentry(
           },
           {
             source: "/changelog/0-2-lightfast-neural-memory",
-            destination: "/changelog/lightfast-observation-entity-extraction-2026",
+            destination:
+              "/changelog/lightfast-observation-entity-extraction-2026",
             permanent: true,
           },
           {
             source: "/changelog/0-3-lightfast-search-api-hybrid-retrieval",
-            destination: "/changelog/lightfast-search-api-hybrid-retrieval-2026",
+            destination:
+              "/changelog/lightfast-search-api-hybrid-retrieval-2026",
             permanent: true,
           },
           // Bots probe these common sitemap index filenames, but Next.js only
@@ -143,21 +143,27 @@ const config: NextConfig = withSentry(
         // Keep /docs prefix since docs app folder structure has app/docs/
         const vercelEnv = process.env.NEXT_PUBLIC_VERCEL_ENV;
         const docsUrl =
-          vercelEnv === "production" || vercelEnv === "preview" || process.env.NODE_ENV === "production"
+          vercelEnv === "production" ||
+          vercelEnv === "preview" ||
+          process.env.NODE_ENV === "production"
             ? "https://lightfast-docs.vercel.app"
             : "http://localhost:4105";
 
         // Proxy gateway API routes to the gateway service
         // Only in dev — production uses gateway.lightfast.ai directly
         const gatewayUrl =
-          vercelEnv === "production" || vercelEnv === "preview" || process.env.NODE_ENV === "production"
+          vercelEnv === "production" ||
+          vercelEnv === "preview" ||
+          process.env.NODE_ENV === "production"
             ? "https://gateway.lightfast.ai"
             : "http://localhost:4110";
 
         // Proxy relay routes to the relay service
         // Only in dev — production uses relay.lightfast.ai directly
         const relayUrl =
-          vercelEnv === "production" || vercelEnv === "preview" || process.env.NODE_ENV === "production"
+          vercelEnv === "production" ||
+          vercelEnv === "preview" ||
+          process.env.NODE_ENV === "production"
             ? "https://relay.lightfast.ai"
             : "http://localhost:4108";
 
@@ -186,8 +192,8 @@ const config: NextConfig = withSentry(
           },
         ];
       },
-    }),
-  ),
+    })
+  )
 );
 
 export default withMicrofrontends(config, {

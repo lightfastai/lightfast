@@ -9,18 +9,18 @@
 
 // Re-export types from vendor/embed
 export type {
-	EmbedRequest,
-	EmbedResponse,
-	EmbeddingProvider,
+  EmbeddingProvider,
+  EmbedRequest,
+  EmbedResponse,
 } from "@vendor/embed";
 
 // Export console-specific utilities
 export {
-	resolveEmbeddingDefaults,
-	createEmbeddingProvider,
-	createEmbeddingProviderForWorkspace,
-	embedTextsInBatches,
-	type EmbeddingDefaults,
-	type EmbeddingProviderConfig,
-	type WorkspaceEmbeddingConfig,
+  createEmbeddingProvider,
+  createEmbeddingProviderForWorkspace,
+  type EmbeddingDefaults,
+  type EmbeddingProviderConfig,
+  embedTextsInBatches,
+  resolveEmbeddingDefaults,
+  type WorkspaceEmbeddingConfig,
 } from "./utils";

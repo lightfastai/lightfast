@@ -4,11 +4,10 @@
  * Provides typed vector operations and index name helpers tailored to our store model.
  */
 
-import { Pinecone } from "@pinecone-database/pinecone";
 import type { RecordMetadata } from "@pinecone-database/pinecone";
+import { Pinecone } from "@pinecone-database/pinecone";
 
 import { env } from "../env";
-import type { QueryRequest, QueryResponse, UpsertRequest, UpsertResponse, FetchResponse, UpdateRequest } from "./types";
 import {
   PineconeConnectionError,
   PineconeError,
@@ -16,9 +15,17 @@ import {
   PineconeNotFoundError,
   PineconeRateLimitError,
 } from "./errors";
+import type {
+  FetchResponse,
+  QueryRequest,
+  QueryResponse,
+  UpdateRequest,
+  UpsertRequest,
+  UpsertResponse,
+} from "./types";
 
 export class PineconeClient {
-  private client: Pinecone;
+  private readonly client: Pinecone;
 
   constructor() {
     this.client = new Pinecone({
@@ -74,7 +81,7 @@ export class PineconeClient {
     try {
       const indexes = await this.client.listIndexes();
       const indexList = indexes.indexes ?? [];
-      return indexList.some(index => index.name === indexName);
+      return indexList.some((index) => index.name === indexName);
     } catch (error) {
       // If list fails, assume index doesn't exist
       console.warn(`Failed to check index existence: ${String(error)}`);
@@ -152,7 +159,9 @@ export class PineconeClient {
     batchSize = 100,
     namespace?: string
   ): Promise<void> {
-    if (vectorIds.length === 0) return;
+    if (vectorIds.length === 0) {
+      return;
+    }
 
     const index = this.client.index(indexName);
     const targetNamespace = namespace ? index.namespace(namespace) : index;
@@ -260,7 +269,9 @@ export class PineconeClient {
     vectorIds: string[],
     namespace?: string
   ): Promise<FetchResponse<T>> {
-    if (vectorIds.length === 0) return { records: {} };
+    if (vectorIds.length === 0) {
+      return { records: {} };
+    }
 
     const index = this.client.index(indexName);
     const targetNamespace = namespace ? index.namespace(namespace) : index;
@@ -337,7 +348,10 @@ export class PineconeClient {
       throw new PineconeInvalidRequestError("Invalid request", error);
     }
 
-    if (lowerMessage.includes("connection") || lowerMessage.includes("network")) {
+    if (
+      lowerMessage.includes("connection") ||
+      lowerMessage.includes("network")
+    ) {
       throw new PineconeConnectionError("Connection error", error);
     }
 

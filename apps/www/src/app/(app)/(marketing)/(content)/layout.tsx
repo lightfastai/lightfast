@@ -6,12 +6,14 @@ export default function ContentLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex bg-background flex-col min-h-full">
+    <div className="flex min-h-full flex-col bg-background">
       {/* Scrollable content */}
-      <div className="flex-1 flex flex-col page-gutter pt-[var(--content-pt)] [--content-pt:6rem] min-w-0 overflow-hidden">{children}</div>
+      <div className="page-gutter flex min-w-0 flex-1 flex-col overflow-hidden pt-[var(--content-pt)] [--content-pt:6rem]">
+        {children}
+      </div>
 
       {/* Waitlist CTA */}
-      <div className="gap-48 flex-col flex">
+      <div className="flex flex-col gap-48">
         <WaitlistCTA />
       </div>
     </div>

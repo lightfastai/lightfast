@@ -14,15 +14,16 @@
  * - threshold: number (0-1, default 0.5)
  */
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
-
-import { log } from "@vendor/observability/log";
 import { V1FindSimilarRequestSchema } from "@repo/console-types";
-
-import { withDualAuth, createDualAuthErrorResponse } from "../lib/with-dual-auth";
+import { log } from "@vendor/observability/log";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { findsimilarLogic } from "~/lib/v1/findsimilar";
+import {
+  createDualAuthErrorResponse,
+  withDualAuth,
+} from "../lib/with-dual-auth";
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -71,7 +72,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { id, url, limit, threshold, sameSourceOnly, excludeIds, filters } = parseResult.data;
+    const { id, url, limit, threshold, sameSourceOnly, excludeIds, filters } =
+      parseResult.data;
 
     // 3. Call extracted logic
     const response = await findsimilarLogic(
@@ -105,7 +107,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "INTERNAL_ERROR",
-        message: error instanceof Error ? error.message : "Failed to find similar content",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to find similar content",
         requestId,
       },
       { status: 500 }

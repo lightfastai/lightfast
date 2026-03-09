@@ -4,20 +4,13 @@
  * Uses PGlite (in-memory Postgres) with real Drizzle migrations
  * instead of hollow chain mocks. Validates actual query logic.
  */
-import { describe, it, expect, beforeAll, afterEach, afterAll } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
+
+import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
-import { eq, and } from "@vendor/db";
-import {
-  gwInstallations,
-  gwTokens,
-  gwResources,
-} from "@db/console/schema";
+import { and, eq } from "@vendor/db";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 let db: TestDb;
 
@@ -62,7 +55,7 @@ describe("gwInstallations", () => {
     });
 
     await expect(
-      db.insert(gwInstallations).values(duplicate),
+      db.insert(gwInstallations).values(duplicate)
     ).rejects.toThrow();
   });
 
@@ -78,8 +71,8 @@ describe("gwInstallations", () => {
       .where(
         and(
           eq(gwInstallations.orgId, "org-1"),
-          eq(gwInstallations.provider, "github"),
-        ),
+          eq(gwInstallations.provider, "github")
+        )
       );
 
     expect(rows).toHaveLength(1);
@@ -111,9 +104,7 @@ describe("gwTokens", () => {
     const token = fixtures.token({ installationId: inst.id });
     await db.insert(gwTokens).values(token);
 
-    await db
-      .delete(gwInstallations)
-      .where(eq(gwInstallations.id, inst.id));
+    await db.delete(gwInstallations).where(eq(gwInstallations.id, inst.id));
 
     const remaining = await db
       .select()
@@ -153,9 +144,7 @@ describe("gwResources", () => {
     const res = fixtures.resource({ installationId: inst.id });
     await db.insert(gwResources).values(res);
 
-    await db
-      .delete(gwInstallations)
-      .where(eq(gwInstallations.id, inst.id));
+    await db.delete(gwInstallations).where(eq(gwInstallations.id, inst.id));
 
     const remaining = await db
       .select()

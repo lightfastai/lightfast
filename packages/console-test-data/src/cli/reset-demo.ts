@@ -1,4 +1,5 @@
 #!/usr/bin/env npx tsx
+
 /**
  * Reset Demo Environment
  *
@@ -9,30 +10,33 @@
  *   pnpm --filter @repo/console-test-data reset-demo -- -w <workspaceId> [-i] [--dry-run]
  */
 
-import { sql, eq } from "drizzle-orm";
+import { parseArgs as nodeParseArgs } from "node:util";
 import { db } from "@db/console/client";
 import {
-  workspaceNeuralObservations,
+  orgWorkspaces,
   workspaceNeuralEntities,
+  workspaceNeuralObservations,
   workspaceObservationClusters,
   workspaceObservationRelationships,
-  orgWorkspaces,
 } from "@db/console/schema";
 import { pineconeClient } from "@repo/console-pinecone";
+import { eq, sql } from "drizzle-orm";
 import { loadDataset } from "../loader/index.js";
 import { triggerObservationCapture } from "../trigger/trigger.js";
 
 interface ResetOptions {
-  workspaceId: string;
-  inject: boolean;
   dryRun: boolean;
+  inject: boolean;
+  workspaceId: string;
 }
 
 async function resetDemoEnvironment(options: ResetOptions) {
   const { workspaceId, inject, dryRun } = options;
 
   console.log(`\n🧹 Resetting demo environment for workspace: ${workspaceId}`);
-  if (dryRun) console.log("   (DRY RUN - no changes will be made)\n");
+  if (dryRun) {
+    console.log("   (DRY RUN - no changes will be made)\n");
+  }
 
   // Step 1: Count existing data
   const [obsResult] = await db
@@ -55,14 +59,16 @@ async function resetDemoEnvironment(options: ResetOptions) {
     .from(workspaceObservationRelationships)
     .where(eq(workspaceObservationRelationships.workspaceId, workspaceId));
 
-  console.log(`📊 Found:`);
+  console.log("📊 Found:");
   console.log(`   - ${obsResult?.count ?? 0} observations`);
   console.log(`   - ${entityResult?.count ?? 0} entities`);
   console.log(`   - ${clusterResult?.count ?? 0} clusters`);
   console.log(`   - ${relResult?.count ?? 0} relationships`);
 
   if (dryRun) {
-    console.log("\n🔍 Dry run complete. Would delete all of the above + Pinecone vectors.");
+    console.log(
+      "\n🔍 Dry run complete. Would delete all of the above + Pinecone vectors."
+    );
     return;
   }
 
@@ -77,7 +83,9 @@ async function resetDemoEnvironment(options: ResetOptions) {
   }
 
   // Step 3: Delete Pinecone vectors
-  const settings = workspace.settings as { embedding?: { indexName: string; namespaceName: string } } | null;
+  const settings = workspace.settings as {
+    embedding?: { indexName: string; namespaceName: string };
+  } | null;
   if (settings?.embedding) {
     console.log("\n🗑️  Clearing Pinecone vectors...");
     const { indexName, namespaceName } = settings.embedding;
@@ -89,7 +97,9 @@ async function resetDemoEnvironment(options: ResetOptions) {
       );
       console.log(`   ✓ Cleared vectors from ${indexName}/${namespaceName}`);
     } catch (error) {
-      console.log(`   ⚠ Could not clear Pinecone: ${error instanceof Error ? error.message : String(error)}`);
+      console.log(
+        `   ⚠ Could not clear Pinecone: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -100,25 +110,25 @@ async function resetDemoEnvironment(options: ResetOptions) {
   await db
     .delete(workspaceObservationRelationships)
     .where(eq(workspaceObservationRelationships.workspaceId, workspaceId));
-  console.log(`   ✓ Deleted relationships`);
+  console.log("   ✓ Deleted relationships");
 
   // Delete entities (FK to observations)
   await db
     .delete(workspaceNeuralEntities)
     .where(eq(workspaceNeuralEntities.workspaceId, workspaceId));
-  console.log(`   ✓ Deleted entities`);
+  console.log("   ✓ Deleted entities");
 
   // Delete observations
   await db
     .delete(workspaceNeuralObservations)
     .where(eq(workspaceNeuralObservations.workspaceId, workspaceId));
-  console.log(`   ✓ Deleted observations`);
+  console.log("   ✓ Deleted observations");
 
   // Delete clusters
   await db
     .delete(workspaceObservationClusters)
     .where(eq(workspaceObservationClusters.workspaceId, workspaceId));
-  console.log(`   ✓ Deleted clusters`);
+  console.log("   ✓ Deleted clusters");
 
   console.log("\n✅ Cleanup complete!");
 
@@ -137,32 +147,36 @@ async function resetDemoEnvironment(options: ResetOptions) {
       },
     });
 
-    console.log(`\n\n✅ Injected ${result.triggered} events in ${result.duration}ms`);
-    console.log("\n⏳ Wait 90-120 seconds for Inngest workflows to complete indexing.");
-    console.log("   Check status at: http://localhost:8288 (Inngest Dev Server)");
-    console.log("\n🎯 Demo ready! Try searching for: 'Pinecone dimension mismatch'");
+    console.log(
+      `\n\n✅ Injected ${result.triggered} events in ${result.duration}ms`
+    );
+    console.log(
+      "\n⏳ Wait 90-120 seconds for Inngest workflows to complete indexing."
+    );
+    console.log(
+      "   Check status at: http://localhost:8288 (Inngest Dev Server)"
+    );
+    console.log(
+      "\n🎯 Demo ready! Try searching for: 'Pinecone dimension mismatch'"
+    );
   }
 }
 
 // CLI parsing
 function parseArgs(): ResetOptions {
-  const args = process.argv.slice(2);
-  const options: ResetOptions = {
-    workspaceId: "",
-    inject: false,
-    dryRun: false,
-  };
+  const { values } = nodeParseArgs({
+    args: process.argv.slice(2),
+    options: {
+      workspace: { type: "string", short: "w" },
+      inject: { type: "boolean", short: "i", default: false },
+      "dry-run": { type: "boolean", default: false },
+      help: { type: "boolean", short: "h", default: false },
+    },
+    strict: false,
+  });
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg === "-w" || arg === "--workspace") {
-      options.workspaceId = args[++i] ?? "";
-    } else if (arg === "-i" || arg === "--inject") {
-      options.inject = true;
-    } else if (arg === "--dry-run") {
-      options.dryRun = true;
-    } else if (arg === "-h" || arg === "--help") {
-      console.log(`
+  if (values.help) {
+    console.log(`
 Usage: reset-demo -w <workspaceId> [-i] [--dry-run]
 
 Options:
@@ -174,11 +188,14 @@ Options:
 Example:
   pnpm --filter @repo/console-test-data reset-demo -- -w ws_abc123 -i
 `);
-      process.exit(0);
-    }
+    process.exit(0);
   }
 
-  return options;
+  return {
+    workspaceId: (values.workspace as string) ?? "",
+    inject: (values.inject as boolean) ?? false,
+    dryRun: (values["dry-run"] as boolean) ?? false,
+  };
 }
 
 const options = parseArgs();

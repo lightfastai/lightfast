@@ -1,7 +1,11 @@
 import type { Options } from "@nosecone/next";
 import { defaults } from "@nosecone/next";
 import type { Source } from "nosecone";
-import type { CspDirective, CspDirectives, PartialCspDirectives } from "./types";
+import type {
+  CspDirective,
+  CspDirectives,
+  PartialCspDirectives,
+} from "./types";
 
 /**
  * Merge multiple CSP directive arrays into one, removing duplicates
@@ -108,16 +112,17 @@ export function composeCspDirectives(
  * // Final connectSrc: [...defaults, clerk-api, vercel-analytics]
  * ```
  */
-export function composeCspOptions(
-  ...configs: PartialCspDirectives[]
-): Options {
+export function composeCspOptions(...configs: PartialCspDirectives[]): Options {
   const defaultDirectives = defaults.contentSecurityPolicy.directives;
 
   // Merge user configs together
   const userDirectives = composeCspDirectives(...configs);
 
   // Directives that should REPLACE defaults (remove nonces)
-  const replaceDirectives = new Set<keyof CspDirectives>(['scriptSrc', 'styleSrc']);
+  const replaceDirectives = new Set<keyof CspDirectives>([
+    "scriptSrc",
+    "styleSrc",
+  ]);
 
   const directiveKeys: (keyof CspDirectives)[] = [
     "baseUri",
@@ -154,7 +159,7 @@ export function composeCspOptions(
       // MERGE: other directives merge with defaults (extends them)
       mergedDirectives[key] = mergeDirectives(
         safeDefault != null ? ([...safeDefault] as Source[]) : [],
-        userValue,
+        userValue
       );
     } else if (safeDefault != null) {
       // Only default value - keep it

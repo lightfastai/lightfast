@@ -8,52 +8,50 @@
  * Infrastructure: PGlite (for reactivated-installation test), in-memory
  * QStash capture mock, Inngest send mock.
  */
+
+import { gwInstallations } from "@db/console/schema";
+import type { TestDb } from "@repo/console-test-db";
+import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
+import { fixtures } from "@repo/console-test-db/fixtures";
 import {
-  describe,
-  it,
-  expect,
-  vi,
+  afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
-  afterAll,
+  describe,
+  expect,
+  it,
+  vi,
 } from "vitest";
-import {
-  createTestDb,
-  resetTestDb,
-  closeTestDb,
-} from "@repo/console-test-db";
-import type { TestDb } from "@repo/console-test-db";
-import { fixtures } from "@repo/console-test-db/fixtures";
-import { gwInstallations } from "@db/console/schema";
 
 // ── Shared state ──
 let db: TestDb;
 
 // ── Create all mock state in vi.hoisted ──
-const {
-  redisMock,
-  redisStore,
-  qstashMessages,
-  qstashMock,
-  inngestSendMock,
-} = await vi.hoisted(async () => {
-  const { makeRedisMock, makeQStashMock } = await import("./harness.js");
-  const redisStore = new Map<string, unknown>();
-  const messages: { url: string; body: unknown; headers?: Record<string, string> }[] = [];
-  return {
-    redisMock: makeRedisMock(redisStore),
-    redisStore,
-    qstashMessages: messages,
-    qstashMock: makeQStashMock(messages),
-    inngestSendMock: vi.fn().mockResolvedValue({ ids: ["evt-1"] }),
-  };
-});
+const { redisMock, redisStore, qstashMessages, qstashMock, inngestSendMock } =
+  await vi.hoisted(async () => {
+    const { makeRedisMock, makeQStashMock } = await import("./harness.js");
+    const redisStore = new Map<string, unknown>();
+    const messages: {
+      url: string;
+      body: unknown;
+      headers?: Record<string, string>;
+    }[] = [];
+    return {
+      redisMock: makeRedisMock(redisStore),
+      redisStore,
+      qstashMessages: messages,
+      qstashMock: makeQStashMock(messages),
+      inngestSendMock: vi.fn().mockResolvedValue({ ids: ["evt-1"] }),
+    };
+  });
 
 // ── vi.mock declarations ──
 
 vi.mock("@db/console/client", () => ({
-  get db() { return db; },
+  get db() {
+    return db;
+  },
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -62,7 +60,11 @@ vi.mock("@vendor/upstash", () => ({
 
 vi.mock("@vendor/qstash", () => ({
   getQStashClient: () => qstashMock,
-  Receiver: class { verify() { return Promise.resolve(true); } },
+  Receiver: class {
+    verify() {
+      return Promise.resolve(true);
+    }
+  },
 }));
 
 vi.mock("@vendor/inngest/hono", () => ({
@@ -75,7 +77,9 @@ vi.mock("@vendor/inngest", () => ({
     createFunction = vi.fn();
   },
   EventSchemas: class {
-    fromSchema() { return this; }
+    fromSchema() {
+      return this;
+    }
   },
   NonRetriableError: class extends Error {
     constructor(msg: string) {
@@ -86,13 +90,21 @@ vi.mock("@vendor/inngest", () => ({
 }));
 
 vi.mock("@vendor/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vercel/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { projectName: string; defaultHost: string }) =>
+  withRelatedProject: ({
     defaultHost,
+  }: {
+    projectName: string;
+    defaultHost: string;
+  }) => defaultHost,
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
@@ -108,9 +120,7 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 // ── Import apps and utilities after mocks ──
 import backfillApp from "@backfill/app";
 import gatewayApp from "@gateway/app";
-import {
-  cancelBackfillService,
-} from "@gateway/urls";
+import { cancelBackfillService } from "@gateway/urls";
 
 // ── Request helper (backfill) ──
 const API_KEY = "0".repeat(64);
@@ -121,7 +131,7 @@ function triggerReq(
     method?: string;
     body?: Record<string, unknown>;
     headers?: Record<string, string>;
-  } = {},
+  } = {}
 ) {
   const headers = new Headers(init.headers);
   if (!headers.has("content-type") && init.body) {
@@ -148,40 +158,58 @@ beforeEach(() => {
   qstashMessages.length = 0;
   redisStore.clear();
 
-  redisMock.hset.mockImplementation((key: string, fields: Record<string, unknown>) => {
-    const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
-    redisStore.set(key, { ...existing, ...fields });
-    return Promise.resolve(1);
-  });
-  redisMock.hgetall.mockImplementation((key: string) =>
-    Promise.resolve((redisStore.get(key) ?? null) as Record<string, string> | null),
+  redisMock.hset.mockImplementation(
+    (key: string, fields: Record<string, unknown>) => {
+      const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+      redisStore.set(key, { ...existing, ...fields });
+      return Promise.resolve(1);
+    }
   );
-  redisMock.set.mockImplementation((key: string, value: unknown, opts?: { nx?: boolean }) => {
-    if (opts?.nx && redisStore.has(key)) return Promise.resolve(null);
-    redisStore.set(key, value);
-    return Promise.resolve("OK");
-  });
+  redisMock.hgetall.mockImplementation((key: string) =>
+    Promise.resolve(
+      (redisStore.get(key) ?? null) as Record<string, string> | null
+    )
+  );
+  redisMock.set.mockImplementation(
+    (key: string, value: unknown, opts?: { nx?: boolean }) => {
+      if (opts?.nx && redisStore.has(key)) {
+        return Promise.resolve(null);
+      }
+      redisStore.set(key, value);
+      return Promise.resolve("OK");
+    }
+  );
   redisMock.del.mockImplementation((...keys: string[]) => {
     const allKeys = keys.flat();
     let count = 0;
-    for (const k of allKeys) { if (redisStore.delete(k)) count++; }
+    for (const k of allKeys) {
+      if (redisStore.delete(k)) {
+        count++;
+      }
+    }
     return Promise.resolve(count);
   });
   redisMock.get.mockImplementation((key: string) =>
-    Promise.resolve(redisStore.get(key) ?? null),
+    Promise.resolve(redisStore.get(key) ?? null)
   );
   redisMock.pipeline.mockImplementation(() => {
     const ops: (() => void)[] = [];
     const pipe = {
       hset: vi.fn((key: string, fields: Record<string, unknown>) => {
         ops.push(() => {
-          const existing = (redisStore.get(key) ?? {}) as Record<string, unknown>;
+          const existing = (redisStore.get(key) ?? {}) as Record<
+            string,
+            unknown
+          >;
           redisStore.set(key, { ...existing, ...fields });
         });
         return pipe;
       }),
       expire: vi.fn(() => pipe),
-      exec: vi.fn(() => { ops.forEach((op) => op()); return []; }),
+      exec: vi.fn(() => {
+        ops.forEach((op) => op());
+        return [];
+      }),
     };
     return pipe;
   });
@@ -228,10 +256,13 @@ describe("Suite 2.3 — cancelBackfillService publishes cancel body", () => {
 
     expect(qstashMock.publishJSON).toHaveBeenCalledOnce();
 
-    const mockCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock.calls;
+    const mockCalls = (qstashMock.publishJSON as ReturnType<typeof vi.fn>).mock
+      .calls;
     const firstMockCall = mockCalls[0] as unknown[] | undefined;
     expect(firstMockCall).toBeDefined();
-    if (!firstMockCall) return;
+    if (!firstMockCall) {
+      return;
+    }
     const call = firstMockCall[0] as {
       url: string;
       headers: Record<string, string>;
@@ -249,7 +280,9 @@ describe("Suite 2.3 — cancelBackfillService publishes cancel body", () => {
 
     const capturedMsg = qstashMessages[0];
     expect(capturedMsg).toBeDefined();
-    if (!capturedMsg) return;
+    if (!capturedMsg) {
+      return;
+    }
     const capturedHeaders = capturedMsg.headers ?? {};
 
     const res = await triggerReq("/api/trigger/cancel", {
@@ -259,7 +292,10 @@ describe("Suite 2.3 — cancelBackfillService publishes cancel body", () => {
 
     expect(res.status).toBe(200);
 
-    const json = await res.json() as { status: string; installationId: string };
+    const json = (await res.json()) as {
+      status: string;
+      installationId: string;
+    };
     expect(json.status).toBe("cancelled");
     expect(json.installationId).toBe("inst-cancel-e2e");
 
@@ -293,7 +329,7 @@ describe("Suite 2.4 — GitHub OAuth callback does not trigger backfill (moved t
 
     // Call GitHub OAuth callback — should upsert (not insert) since externalId already exists
     const res = await gatewayApp.request(
-      "/services/gateway/github/callback?installation_id=gh-reactivate-ext-1&state=reactivate-state-1",
+      "/services/gateway/github/callback?installation_id=gh-reactivate-ext-1&state=reactivate-state-1"
     );
 
     // Callback redirects on success
@@ -314,7 +350,7 @@ describe("Suite 2.4 — GitHub OAuth callback does not trigger backfill (moved t
 
     // Call GitHub OAuth callback for a NEW installation (no pre-existing DB row)
     const res = await gatewayApp.request(
-      "/services/gateway/github/callback?installation_id=gh-brand-new-ext-1&state=new-install-state",
+      "/services/gateway/github/callback?installation_id=gh-brand-new-ext-1&state=new-install-state"
     );
 
     // Callback redirects on success

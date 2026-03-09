@@ -14,6 +14,11 @@
  * - Privacy-aware (anonymizable for GDPR)
  */
 
+import type {
+  ActivityCategory,
+  ActivityMetadata,
+  ActorType,
+} from "@repo/console-validation";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -25,11 +30,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
-import type {
-  ActivityCategory,
-  ActorType,
-  ActivityMetadata,
-} from "@repo/console-validation";
 
 export const workspaceUserActivities = pgTable(
   "lightfast_workspace_user_activities",
@@ -175,7 +175,7 @@ export const workspaceUserActivities = pgTable(
     // Primary query: workspace timeline (most common)
     workspaceTimestampIdx: index("activity_workspace_timestamp_idx").on(
       table.workspaceId,
-      table.timestamp,
+      table.timestamp
     ),
 
     // Filter by actor (user activity history)
@@ -187,18 +187,18 @@ export const workspaceUserActivities = pgTable(
     // Filter by entity (resource audit trail)
     entityIdx: index("activity_entity_idx").on(
       table.entityType,
-      table.entityId,
+      table.entityId
     ),
 
     // Composite: category + timestamp (analytics queries)
     categoryTimestampIdx: index("activity_category_timestamp_idx").on(
       table.category,
-      table.timestamp,
+      table.timestamp
     ),
 
     // Relationship traversal
     relatedActivityIdx: index("activity_related_idx").on(
-      table.relatedActivityId,
+      table.relatedActivityId
     ),
 
     // Compliance: query by timestamp for retention cleanup
@@ -206,11 +206,12 @@ export const workspaceUserActivities = pgTable(
 
     // Composite: workspace + category + timestamp (filtered timelines)
     workspaceCategoryTimestampIdx: index(
-      "activity_workspace_category_timestamp_idx",
+      "activity_workspace_category_timestamp_idx"
     ).on(table.workspaceId, table.category, table.timestamp),
-  }),
+  })
 );
 
 // TypeScript types
 export type WorkspaceUserActivity = typeof workspaceUserActivities.$inferSelect;
-export type InsertWorkspaceUserActivity = typeof workspaceUserActivities.$inferInsert;
+export type InsertWorkspaceUserActivity =
+  typeof workspaceUserActivities.$inferInsert;

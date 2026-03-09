@@ -1,18 +1,18 @@
 export interface ContentOGProps {
-	title: string;
-	description?: string;
-	category?: string;
-	date?: string;
-	author?: string;
+  author?: string;
+  category?: string;
+  date?: string;
+  description?: string;
+  title: string;
 }
 
 export interface FeatureOGProps {
-	title: string;
-	description?: string;
+  description?: string;
+  title: string;
 }
 
 export interface DocsOGProps {
-	title: string;
-	section?: string;
-	breadcrumb?: string[];
+  breadcrumb?: string[];
+  section?: string;
+  title: string;
 }

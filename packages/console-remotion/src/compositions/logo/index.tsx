@@ -1,14 +1,14 @@
 export { Logo } from "./logo";
 
 interface LogoVariant {
-  id: string;
-  width: number;
-  height: number;
   filename: string;
+  height: number;
+  id: string;
   props: {
     transparent?: boolean;
     strokeWidth?: number;
   };
+  width: number;
 }
 
 export const LOGO_VARIANTS: LogoVariant[] = [

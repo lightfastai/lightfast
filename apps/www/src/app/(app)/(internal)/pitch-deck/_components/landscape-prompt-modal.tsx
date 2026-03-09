@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,11 +8,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
-import { Button } from "@repo/ui/components/ui/button";
+import { RotateCcw } from "lucide-react";
 
 interface LandscapePromptModalProps {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
+  open: boolean;
 }
 
 export function LandscapePromptModal({
@@ -20,23 +20,21 @@ export function LandscapePromptModal({
   onOpenChange,
 }: LandscapePromptModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center sm:text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <RotateCcw className="h-6 w-6 text-muted-foreground animate-pulse" />
+            <RotateCcw className="h-6 w-6 animate-pulse text-muted-foreground" />
           </div>
           <DialogTitle>Rotate for Full Screen</DialogTitle>
           <DialogDescription className="text-center">
-            Turn your device to landscape orientation for the best viewing experience.
+            Turn your device to landscape orientation for the best viewing
+            experience.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-2 pt-4">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button onClick={() => onOpenChange(false)} variant="outline">
             Continue in Portrait
           </Button>
         </div>

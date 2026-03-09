@@ -1,6 +1,6 @@
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { Suspense } from "react";
 import { JobsTableWrapper } from "~/components/jobs-table";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 export default async function JobsPage({
   params,
@@ -27,8 +27,8 @@ export default async function JobsPage({
     <div className="pb-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Jobs</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="font-semibold text-2xl tracking-tight">Jobs</h1>
+        <p className="mt-1 text-muted-foreground text-sm">
           Track workflow executions and background tasks for this workspace
         </p>
       </div>
@@ -38,9 +38,9 @@ export default async function JobsPage({
         <Suspense fallback={<JobsPageSkeleton />}>
           <JobsTableWrapper
             clerkOrgSlug={slug}
-            workspaceName={workspaceName}
-            initialStatus={statusFilter}
             initialSearch={search}
+            initialStatus={statusFilter}
+            workspaceName={workspaceName}
           />
         </Suspense>
       </div>
@@ -52,7 +52,7 @@ function JobsPageSkeleton() {
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-border/60 p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <div className="space-y-2">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-4 w-96" />

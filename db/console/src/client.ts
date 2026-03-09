@@ -12,7 +12,7 @@ neonConfig.fetchEndpoint = (host) => `https://${host}/sql`;
  */
 export function createClient() {
   const sql = neon(
-    `postgresql://${env.DATABASE_USERNAME}:${env.DATABASE_PASSWORD}@${env.DATABASE_HOST}/postgres?sslmode=require`,
+    `postgresql://${env.DATABASE_USERNAME}:${env.DATABASE_PASSWORD}@${env.DATABASE_HOST}/postgres?sslmode=require`
   );
 
   return drizzle({ client: sql, schema });

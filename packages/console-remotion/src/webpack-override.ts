@@ -7,7 +7,12 @@ export const enableCssLoaders: WebpackOverrideFn = (currentConfig) => ({
     rules: [
       // Remove Remotion's built-in CSS rule to avoid double-processing
       ...(currentConfig.module?.rules ?? []).filter((rule) => {
-        if (rule && typeof rule === "object" && "test" in rule && rule.test instanceof RegExp) {
+        if (
+          rule &&
+          typeof rule === "object" &&
+          "test" in rule &&
+          rule.test instanceof RegExp
+        ) {
           return !rule.test.test(".css");
         }
         return true;

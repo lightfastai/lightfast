@@ -1,8 +1,12 @@
 import type { SectionProvider } from "@repo/prompt-engine";
 
 export const answerWorkspaceContextSection: SectionProvider = (ctx) => {
-  if (!ctx.features.userContext) return null;
-  if (!ctx.userContext?.workspace) return null;
+  if (!ctx.features.userContext) {
+    return null;
+  }
+  if (!ctx.userContext?.workspace) {
+    return null;
+  }
 
   const ws = ctx.userContext.workspace;
 

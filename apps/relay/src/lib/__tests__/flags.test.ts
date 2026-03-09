@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@vendor/vercel-flags", () => ({
   evaluateFlag: vi.fn(),
@@ -18,7 +18,11 @@ describe("isConsoleFanOutEnabled", () => {
     const result = await isConsoleFanOutEnabled();
 
     expect(result).toBe(true);
-    expect(evaluateFlag).toHaveBeenCalledWith("console-fan-out", true, undefined);
+    expect(evaluateFlag).toHaveBeenCalledWith(
+      "console-fan-out",
+      true,
+      undefined
+    );
   });
 
   it("passes webhook.provider context when provider is given", async () => {
@@ -56,18 +60,26 @@ describe("isConsoleFanOutEnabled", () => {
 
   it("returns true when evaluateFlag rejects (fail-open, no provider)", async () => {
     const { evaluateFlag } = await import("@vendor/vercel-flags");
-    vi.mocked(evaluateFlag).mockRejectedValue(new Error("SDK initialization failed"));
+    vi.mocked(evaluateFlag).mockRejectedValue(
+      new Error("SDK initialization failed")
+    );
 
     const { isConsoleFanOutEnabled } = await import("../flags.js");
     const result = await isConsoleFanOutEnabled();
 
     expect(result).toBe(true);
-    expect(evaluateFlag).toHaveBeenCalledWith("console-fan-out", true, undefined);
+    expect(evaluateFlag).toHaveBeenCalledWith(
+      "console-fan-out",
+      true,
+      undefined
+    );
   });
 
   it("returns true when evaluateFlag rejects (fail-open, with provider)", async () => {
     const { evaluateFlag } = await import("@vendor/vercel-flags");
-    vi.mocked(evaluateFlag).mockRejectedValue(new Error("SDK initialization failed"));
+    vi.mocked(evaluateFlag).mockRejectedValue(
+      new Error("SDK initialization failed")
+    );
 
     const { isConsoleFanOutEnabled } = await import("../flags.js");
     const result = await isConsoleFanOutEnabled("github");

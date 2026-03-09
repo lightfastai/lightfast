@@ -28,11 +28,11 @@ export function renderOperationLayout(slots: {
   callbacks: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-x-6 gap-y-4 @4xl:flex-row @4xl:items-start">
+    <div className="flex @4xl:flex-row flex-col @4xl:items-start gap-x-6 gap-y-4">
       {/* Main content area */}
       <div className="min-w-0 flex-1">
         {/* Lightfast-branded header with accent border */}
-        <div className="border-l-4 border-[hsl(var(--brand-500))] pl-4 mb-6">
+        <div className="mb-6 border-[hsl(var(--brand-500))] border-l-4 pl-4">
           {slots.header}
         </div>
 
@@ -69,17 +69,17 @@ export function renderPageLayout(slots: {
   webhooks?: { item: { name: string; method: string }; children: ReactNode }[];
 }) {
   return (
-    <div className="flex flex-col gap-24 text-sm @container">
+    <div className="@container flex flex-col gap-24 text-sm">
       {/* Render all operations */}
       {slots.operations?.map((op) => (
-        <div key={`${op.item.path}:${op.item.method}`} className="relative">
+        <div className="relative" key={`${op.item.path}:${op.item.method}`}>
           {op.children}
         </div>
       ))}
 
       {/* Render all webhooks */}
       {slots.webhooks?.map((op) => (
-        <div key={`${op.item.name}:${op.item.method}`} className="relative">
+        <div className="relative" key={`${op.item.name}:${op.item.method}`}>
           {op.children}
         </div>
       ))}

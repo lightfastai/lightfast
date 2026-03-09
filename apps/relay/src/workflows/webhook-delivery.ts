@@ -1,14 +1,22 @@
-import { and, eq } from "@vendor/db";
-import { gwInstallations, gwResources, gwWebhookDeliveries } from "@db/console/schema";
-import { serve } from "@vendor/upstash-workflow/hono";
-import { getQStashClient } from "@vendor/qstash";
-import { relayBaseUrl, consoleUrl } from "../lib/urls.js";
 import { db } from "@db/console/client";
-import { webhookSeenKey, resourceKey, RESOURCE_CACHE_TTL } from "../lib/cache.js";
-import { redis } from "@vendor/upstash";
+import {
+  gwInstallations,
+  gwResources,
+  gwWebhookDeliveries,
+} from "@db/console/schema";
 import type { WebhookReceiptPayload } from "@repo/gateway-types";
+import { and, eq } from "@vendor/db";
+import { getQStashClient } from "@vendor/qstash";
+import { redis } from "@vendor/upstash";
+import { serve } from "@vendor/upstash-workflow/hono";
 import type { WorkflowContext } from "@vendor/upstash-workflow/types";
+import {
+  RESOURCE_CACHE_TTL,
+  resourceKey,
+  webhookSeenKey,
+} from "../lib/cache.js";
 import { isConsoleFanOutEnabled } from "../lib/flags.js";
+import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
 
 const qstash = getQStashClient();
 
@@ -38,7 +46,7 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       const result = await redis.set(
         webhookSeenKey(data.provider, data.deliveryId),
         "1",
-        { nx: true, ex: 86400 },
+        { nx: true, ex: 86_400 }
       );
       return result === null; // null = key already existed = duplicate
     });
@@ -58,7 +66,9 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
           eventType: data.eventType,
           status: "received",
           payload: JSON.stringify(data.payload),
-          receivedAt: new Date(data.receivedAt < 1e12 ? data.receivedAt * 1000 : data.receivedAt).toISOString(),
+          receivedAt: new Date(
+            data.receivedAt < 1e12 ? data.receivedAt * 1000 : data.receivedAt
+          ).toISOString(),
         })
         .onConflictDoNothing();
     });
@@ -67,11 +77,13 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     const connectionInfo = await context.run<ConnectionInfo | null>(
       "resolve-connection",
       async () => {
-        if (!data.resourceId) return null;
+        if (!data.resourceId) {
+          return null;
+        }
 
         // Try Redis cache first
         const cached = await redis.hgetall<Record<string, string>>(
-          resourceKey(data.provider, data.resourceId),
+          resourceKey(data.provider, data.resourceId)
         );
         if (cached?.connectionId && cached.orgId) {
           return { connectionId: cached.connectionId, orgId: cached.orgId };
@@ -84,27 +96,35 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
             orgId: gwInstallations.orgId,
           })
           .from(gwResources)
-          .innerJoin(gwInstallations, eq(gwResources.installationId, gwInstallations.id))
+          .innerJoin(
+            gwInstallations,
+            eq(gwResources.installationId, gwInstallations.id)
+          )
           .where(
             and(
               eq(gwResources.providerResourceId, data.resourceId),
-              eq(gwResources.status, "active"),
-            ),
+              eq(gwResources.status, "active")
+            )
           )
           .limit(1);
 
         const row = rows[0];
-        if (!row) return null;
+        if (!row) {
+          return null;
+        }
 
         // Populate Redis cache for next time (with TTL to prevent stale mappings)
         const key = resourceKey(data.provider, data.resourceId);
         const pipeline = redis.pipeline();
-        pipeline.hset(key, { connectionId: row.installationId, orgId: row.orgId });
+        pipeline.hset(key, {
+          connectionId: row.installationId,
+          orgId: row.orgId,
+        });
         pipeline.expire(key, RESOURCE_CACHE_TTL);
         await pipeline.exec();
 
         return { connectionId: row.installationId, orgId: row.orgId };
-      },
+      }
     );
 
     // Step 3a: Update persisted record with installationId when connection is found
@@ -116,8 +136,8 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
           .where(
             and(
               eq(gwWebhookDeliveries.provider, data.provider),
-              eq(gwWebhookDeliveries.deliveryId, data.deliveryId),
-            ),
+              eq(gwWebhookDeliveries.deliveryId, data.deliveryId)
+            )
           );
       });
     }
@@ -127,7 +147,9 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       await context.run("publish-to-dlq", async () => {
         await qstash.publishToTopic({
           topic: "webhook-dlq",
-          headers: data.correlationId ? { "X-Correlation-Id": data.correlationId } : undefined,
+          headers: data.correlationId
+            ? { "X-Correlation-Id": data.correlationId }
+            : undefined,
           body: {
             provider: data.provider,
             deliveryId: data.deliveryId,
@@ -148,8 +170,8 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
           .where(
             and(
               eq(gwWebhookDeliveries.provider, data.provider),
-              eq(gwWebhookDeliveries.deliveryId, data.deliveryId),
-            ),
+              eq(gwWebhookDeliveries.deliveryId, data.deliveryId)
+            )
           );
       });
       return;
@@ -172,7 +194,9 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     await context.run("publish-to-console", async () => {
       await qstash.publishJSON({
         url: `${consoleUrl}/api/webhooks/ingress`,
-        headers: data.correlationId ? { "X-Correlation-Id": data.correlationId } : undefined,
+        headers: data.correlationId
+          ? { "X-Correlation-Id": data.correlationId }
+          : undefined,
         body: {
           deliveryId: data.deliveryId,
           connectionId: connectionInfo.connectionId,
@@ -197,8 +221,8 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
         .where(
           and(
             eq(gwWebhookDeliveries.provider, data.provider),
-            eq(gwWebhookDeliveries.deliveryId, data.deliveryId),
-          ),
+            eq(gwWebhookDeliveries.deliveryId, data.deliveryId)
+          )
         );
     });
   },
@@ -211,5 +235,5 @@ export const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       });
       return Promise.resolve();
     },
-  },
+  }
 );

@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Check, Copy } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
+import { Check, Copy } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface SSRCodeBlockCopyButtonProps {
-  code: string;
   className?: string;
+  code: string;
 }
 
 export function SSRCodeBlockCopyButton({
@@ -34,15 +34,15 @@ export function SSRCodeBlockCopyButton({
 
   return (
     <button
-      onClick={handleCopy}
+      aria-label="Copy code"
       className={cn(
         "inline-flex items-center justify-center rounded-md",
         "transition-colors hover:bg-muted focus-visible:outline-none",
-        "focus-visible:ring-1 focus-visible:ring-ring h-6 w-6",
+        "h-6 w-6 focus-visible:ring-1 focus-visible:ring-ring",
         "text-muted-foreground hover:text-foreground",
         className
       )}
-      aria-label="Copy code"
+      onClick={handleCopy}
       type="button"
     >
       {copied ? (

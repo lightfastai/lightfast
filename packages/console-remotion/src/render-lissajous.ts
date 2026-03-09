@@ -21,7 +21,7 @@ function computePath(
   b: number,
   delta: number,
   points = 500,
-  padding = 10,
+  padding = 10
 ): string {
   const pts: { x: number; y: number }[] = [];
   for (let i = 0; i <= points; i++) {
@@ -41,7 +41,7 @@ function computePath(
 async function main() {
   const outputPath = path.resolve(
     __dirname,
-    "../../../apps/www/src/lib/generated/lissajous-paths.ts",
+    "../../../packages/ui/src/lib/lissajous-paths.ts"
   );
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
 

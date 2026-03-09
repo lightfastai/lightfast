@@ -7,7 +7,9 @@ interface PitchDeckLayoutContentProps {
   children: React.ReactNode;
 }
 
-export function PitchDeckLayoutContent({ children }: PitchDeckLayoutContentProps) {
+export function PitchDeckLayoutContent({
+  children,
+}: PitchDeckLayoutContentProps) {
   const { prefaceExpanded } = usePitchDeck();
 
   return (
@@ -15,37 +17,43 @@ export function PitchDeckLayoutContent({ children }: PitchDeckLayoutContentProps
       {/* Left Column - Founder Preface */}
       <div
         className={cn(
-          "fixed top-0 left-0 w-[30%] h-screen bg-background z-30",
+          "fixed top-0 left-0 z-30 h-screen w-[30%] bg-background",
           "transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]",
           prefaceExpanded
             ? "translate-x-0 opacity-100"
             : "-translate-x-full opacity-0"
         )}
       >
-        <div className="w-full h-full page-gutter">
+        <div className="page-gutter h-full w-full">
           {/* Position content to align with slide center */}
-          <div className="absolute top-1/2 -translate-y-1/2 left-8 md:left-16 right-8 md:right-16">
+          <div className="absolute top-1/2 right-8 left-8 -translate-y-1/2 md:right-16 md:left-16">
             <div className="max-w-md">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">
+              <p className="mb-4 text-muted-foreground text-xs uppercase tracking-wider">
                 A Note from the Founder
               </p>
-              <div className="space-y-4 text-sm md:text-base text-muted-foreground leading-relaxed">
+              <div className="space-y-4 text-muted-foreground text-sm leading-relaxed md:text-base">
                 <p>
-                  Thank you for taking the time to learn about what we&apos;re building.
+                  Thank you for taking the time to learn about what we&apos;re
+                  building.
                 </p>
                 <p>
-                  This deck represents months of conversations with engineers, late nights
-                  refining our vision, and a genuine belief that we can make a difference
-                  in how teams work.
+                  This deck represents months of conversations with engineers,
+                  late nights refining our vision, and a genuine belief that we
+                  can make a difference in how teams work.
                 </p>
                 <p>
-                  I&apos;d love to hear your thoughts—whether it&apos;s feedback, questions,
-                  or just a conversation about where this space is heading.
+                  I&apos;d love to hear your thoughts—whether it&apos;s
+                  feedback, questions, or just a conversation about where this
+                  space is heading.
                 </p>
               </div>
-              <div className="mt-8 pt-6 border-t border-border">
-                <p className="text-sm font-medium text-foreground">Jeevan Pillay</p>
-                <p className="text-xs text-muted-foreground">Founder, Lightfast</p>
+              <div className="mt-8 border-border border-t pt-6">
+                <p className="font-medium text-foreground text-sm">
+                  Jeevan Pillay
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  Founder, Lightfast
+                </p>
               </div>
             </div>
           </div>

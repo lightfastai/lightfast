@@ -1,31 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import {
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Loader2,
-  PlayCircle,
-  MoreHorizontal,
-  RotateCcw,
-  StopCircle,
-  FileText,
-  GitBranch,
-  GitCommit,
-} from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import {
-  useSuspenseQuery,
-  useQueryClient,
-  useMutation,
-} from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
-import { toast } from "@repo/ui/components/ui/sonner";
 import { Button } from "@repo/ui/components/ui/button";
-import { showErrorToast } from "~/lib/trpc-errors";
-import { Input } from "@repo/ui/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,22 +9,46 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import { Input } from "@repo/ui/components/ui/input";
+import { toast } from "@repo/ui/components/ui/sonner";
+import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { cn } from "@repo/ui/lib/utils";
-import { useJobFilters } from "./use-job-filters";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import {
+  CheckCircle2,
+  Clock,
+  FileText,
+  GitBranch,
+  GitCommit,
+  Loader2,
+  MoreHorizontal,
+  PlayCircle,
+  RotateCcw,
+  StopCircle,
+  XCircle,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { showErrorToast } from "~/lib/trpc-errors";
 import type { Job, JobStatus } from "~/types";
+import { useJobFilters } from "./use-job-filters";
 
 interface JobsTableWrapperProps {
   clerkOrgSlug: string;
-  workspaceName: string;
-  initialStatus?: string;
   initialSearch?: string;
+  initialStatus?: string;
+  workspaceName: string;
 }
 
 interface JobsTableProps {
   clerkOrgSlug: string;
-  workspaceName: string;
-  initialStatus?: string;
   initialSearch?: string;
+  initialStatus?: string;
+  workspaceName: string;
 }
 
 /**
@@ -63,19 +63,24 @@ export function JobsTableWrapper({
   return (
     <JobsTable
       clerkOrgSlug={clerkOrgSlug}
-      workspaceName={workspaceName}
-      initialStatus={initialStatus}
       initialSearch={initialSearch}
+      initialStatus={initialStatus}
+      workspaceName={workspaceName}
     />
   );
 }
 
 function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-  if (ms < 3600000)
-    return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
-  return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
+  if (ms < 1000) {
+    return `${ms}ms`;
+  }
+  if (ms < 60_000) {
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
+  if (ms < 3_600_000) {
+    return `${Math.floor(ms / 60_000)}m ${Math.floor((ms % 60_000) / 1000)}s`;
+  }
+  return `${Math.floor(ms / 3_600_000)}h ${Math.floor((ms % 3_600_000) / 60_000)}m`;
 }
 
 /**
@@ -87,13 +92,15 @@ function formatDuration(ms: number): string {
  */
 function getEventType(jobName: string): string {
   const colonIndex = jobName.indexOf(":");
-  if (colonIndex === -1) return jobName;
+  if (colonIndex === -1) {
+    return jobName;
+  }
   return jobName.substring(0, colonIndex).trim();
 }
 
 interface JobRowProps {
-  job: Job;
   clerkOrgSlug: string;
+  job: Job;
   workspaceName: string;
 }
 
@@ -103,9 +110,16 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
   const queryClient = useQueryClient();
 
   // Extract commit data from job input (safely handle discriminated union)
-  const commitSha: string | undefined = job.input && "afterSha" in job.input ? String(job.input.afterSha) : undefined;
-  const commitMessage: string | undefined = job.input && "commitMessage" in job.input ? String(job.input.commitMessage) : undefined;
-  const branch: string | undefined = job.input && "branch" in job.input ? String(job.input.branch) : undefined;
+  const commitSha: string | undefined =
+    job.input && "afterSha" in job.input
+      ? String(job.input.afterSha)
+      : undefined;
+  const commitMessage: string | undefined =
+    job.input && "commitMessage" in job.input
+      ? String(job.input.commitMessage)
+      : undefined;
+  const branch: string | undefined =
+    job.input && "branch" in job.input ? String(job.input.branch) : undefined;
 
   // Restart mutation
   const restartMutation = useMutation(
@@ -126,7 +140,7 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
       onError: (error) => {
         showErrorToast(error, "Failed to restart job");
       },
-    }),
+    })
   );
 
   const handleRetry = (e: React.MouseEvent) => {
@@ -150,9 +164,9 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
     <>
       <div
         className={cn(
-          "border-b border-border/60 py-4 px-6 hover:bg-muted/30 transition-colors",
+          "border-border/60 border-b px-6 py-4 transition-colors hover:bg-muted/30",
           hasDetails && "cursor-pointer",
-          isExpanded && "bg-muted/30",
+          isExpanded && "bg-muted/30"
         )}
         {...(hasDetails
           ? {
@@ -170,15 +184,15 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
       >
         <div className="flex items-center gap-6">
           {/* Left: Job ID + Event Type */}
-          <div className="flex flex-col gap-1 w-[140px] flex-shrink-0">
+          <div className="flex w-[140px] flex-shrink-0 flex-col gap-1">
             <span className="font-mono text-sm">#{job.id}</span>
-            <span className="text-xs text-muted-foreground truncate">
+            <span className="truncate text-muted-foreground text-xs">
               {getEventType(job.name)}
             </span>
           </div>
 
           {/* Status + Duration */}
-          <div className="flex flex-col gap-1 w-[140px] flex-shrink-0">
+          <div className="flex w-[140px] flex-shrink-0 flex-col gap-1">
             <div className="flex items-center gap-1.5">
               {job.status === "completed" && (
                 <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
@@ -197,7 +211,7 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
               )}
               <span className="text-sm capitalize">{job.status}</span>
             </div>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               {job.durationMs !== null
                 ? formatDuration(Number.parseInt(job.durationMs, 10))
                 : job.status === "running"
@@ -207,27 +221,27 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
           </div>
 
           {/* Middle: Branch + Commit info (stacked vertically) */}
-          <div className="flex flex-col gap-1 flex-1 min-w-0">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
             {/* Branch */}
             <div className="flex items-center gap-2">
-              <GitBranch className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+              <GitBranch className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
               <span className="text-sm">{branch ?? "main"}</span>
             </div>
             {/* Commit */}
             <div className="flex items-center gap-2">
-              <GitCommit className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              <span className="font-mono text-xs text-muted-foreground">
+              <GitCommit className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+              <span className="font-mono text-muted-foreground text-xs">
                 {commitSha?.substring(0, 7) ?? ""}
               </span>
-              <span className="text-xs text-muted-foreground truncate">
+              <span className="truncate text-muted-foreground text-xs">
                 {commitMessage ?? job.name}
               </span>
             </div>
           </div>
 
           {/* Right: Time + User + Actions */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
+          <div className="flex flex-shrink-0 items-center gap-3">
+            <span className="whitespace-nowrap text-muted-foreground text-sm">
               {job.startedAt
                 ? formatDistanceToNow(new Date(job.startedAt), {
                     addSuffix: true,
@@ -237,13 +251,13 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
                   })}
             </span>
             {job.triggeredBy && (
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
+              <span className="whitespace-nowrap text-muted-foreground text-sm">
                 by {job.triggeredBy}
               </span>
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Button className="h-8 w-8 p-0" size="sm" variant="ghost">
                   <MoreHorizontal className="h-4 w-4" />
                   <span className="sr-only">Open menu</span>
                 </Button>
@@ -261,13 +275,13 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
                   <>
                     {hasDetails && <DropdownMenuSeparator />}
                     <DropdownMenuItem
-                      onClick={handleRetry}
                       disabled={restartMutation.isPending}
+                      onClick={handleRetry}
                     >
                       <RotateCcw
                         className={cn(
                           "mr-2 h-4 w-4",
-                          restartMutation.isPending && "animate-spin",
+                          restartMutation.isPending && "animate-spin"
                         )}
                       />
                       {restartMutation.isPending ? "Restarting..." : "Restart"}
@@ -278,8 +292,8 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
                   <>
                     {hasDetails && <DropdownMenuSeparator />}
                     <DropdownMenuItem
-                      onClick={handleCancel}
                       className="text-destructive"
+                      onClick={handleCancel}
                     >
                       <StopCircle className="mr-2 h-4 w-4" />
                       Cancel
@@ -294,26 +308,26 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
 
       {/* Expanded details */}
       {isExpanded && hasDetails && (
-        <div className="border-b border-border/60 bg-muted/20 px-6 py-4">
+        <div className="border-border/60 border-b bg-muted/20 px-6 py-4">
           <div className="space-y-4">
             {job.errorMessage && (
               <div>
-                <h4 className="text-sm font-medium text-destructive mb-2 flex items-center gap-2">
+                <h4 className="mb-2 flex items-center gap-2 font-medium text-destructive text-sm">
                   <XCircle className="h-4 w-4" />
                   Error
                 </h4>
-                <pre className="text-xs bg-background border border-border/60 rounded-lg p-3 overflow-x-auto">
+                <pre className="overflow-x-auto rounded-lg border border-border/60 bg-background p-3 text-xs">
                   {job.errorMessage}
                 </pre>
               </div>
             )}
             {job.output && (
               <div>
-                <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                <h4 className="mb-2 flex items-center gap-2 font-medium text-sm">
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
                   Output
                 </h4>
-                <pre className="text-xs bg-background border border-border/60 rounded-lg p-3 overflow-x-auto max-h-64 overflow-y-auto">
+                <pre className="max-h-64 overflow-x-auto overflow-y-auto rounded-lg border border-border/60 bg-background p-3 text-xs">
                   {JSON.stringify(job.output, null, 2)}
                 </pre>
               </div>
@@ -352,7 +366,8 @@ const EMPTY_STATE_MESSAGES = {
   },
 };
 
-type EmptyStateMessageConfig = (typeof EMPTY_STATE_MESSAGES)[keyof typeof EMPTY_STATE_MESSAGES];
+type EmptyStateMessageConfig =
+  (typeof EMPTY_STATE_MESSAGES)[keyof typeof EMPTY_STATE_MESSAGES];
 
 function EmptyState({ filter }: { filter: string }) {
   const message: EmptyStateMessageConfig =
@@ -363,16 +378,16 @@ function EmptyState({ filter }: { filter: string }) {
 
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="rounded-full bg-muted/20 p-3 mb-4">
+      <div className="mb-4 rounded-full bg-muted/20 p-3">
         <Icon className="h-8 w-8 text-muted-foreground" />
       </div>
-      <h3 className="text-sm font-semibold mb-1">{message.title}</h3>
-      <p className="text-sm text-muted-foreground max-w-sm mb-6">
+      <h3 className="mb-1 font-semibold text-sm">{message.title}</h3>
+      <p className="mb-6 max-w-sm text-muted-foreground text-sm">
         {message.description}
       </p>
       {message.showCTA && (
         <div className="flex flex-col gap-3">
-          <Button variant="outline" size="sm">
+          <Button size="sm" variant="outline">
             <FileText className="mr-2 h-4 w-4" />
             View documentation
           </Button>
@@ -415,7 +430,9 @@ function JobsTable({
   // Poll for updates every 5 seconds if there are running jobs
   useEffect(() => {
     const hasRunningJobs = jobs.some((job) => job.status === "running");
-    if (!hasRunningJobs) return;
+    if (!hasRunningJobs) {
+      return;
+    }
 
     const interval = setInterval(() => {
       // Invalidate and refetch jobs list
@@ -435,12 +452,13 @@ function JobsTable({
   // Normalize once so the filter loop doesn't lowercase on every item
   const searchQueryLower = useMemo(
     () => searchQuery.toLowerCase(),
-    [searchQuery],
+    [searchQuery]
   );
 
   const filteredJobs = useMemo(
-    () => jobs.filter((job) => job.name.toLowerCase().includes(searchQueryLower)),
-    [jobs, searchQueryLower],
+    () =>
+      jobs.filter((job) => job.name.toLowerCase().includes(searchQueryLower)),
+    [jobs, searchQueryLower]
   );
 
   // Single pass over all jobs to compute tab counts
@@ -449,24 +467,32 @@ function JobsTable({
     let completed = 0;
     let failed = 0;
     for (const j of jobs) {
-      if (j.status === "running") running++;
-      else if (j.status === "completed") completed++;
-      else if (j.status === "failed") failed++;
+      if (j.status === "running") {
+        running++;
+      } else if (j.status === "completed") {
+        completed++;
+      } else if (j.status === "failed") {
+        failed++;
+      }
     }
-    return { runningCount: running, completedCount: completed, failedCount: failed };
+    return {
+      runningCount: running,
+      completedCount: completed,
+      failedCount: failed,
+    };
   }, [jobs]);
 
   return (
     <div className="space-y-4">
       {/* Filters bar */}
       <div className="flex items-center justify-between gap-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+        <Tabs className="flex-1" onValueChange={setActiveTab} value={activeTab}>
           <TabsList>
             <TabsTrigger value="all">All ({jobs.length})</TabsTrigger>
             <TabsTrigger value="running">
               Running ({runningCount})
               {runningCount > 0 && (
-                <span className="ml-1.5 flex h-2 w-2 rounded-full bg-primary animate-pulse" />
+                <span className="ml-1.5 flex h-2 w-2 animate-pulse rounded-full bg-primary" />
               )}
             </TabsTrigger>
             <TabsTrigger value="completed">
@@ -476,21 +502,21 @@ function JobsTable({
           </TabsList>
         </Tabs>
         <Input
+          className="w-64"
+          onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search jobs..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-64"
         />
       </div>
 
       {/* Jobs list */}
       {filteredJobs.length > 0 ? (
-        <div className="rounded-lg border border-border/60 overflow-hidden">
+        <div className="overflow-hidden rounded-lg border border-border/60">
           {filteredJobs.map((job) => (
             <JobRow
-              key={job.id}
-              job={job}
               clerkOrgSlug={clerkOrgSlug}
+              job={job}
+              key={job.id}
               workspaceName={workspaceName}
             />
           ))}

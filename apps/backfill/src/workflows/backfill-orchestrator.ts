@@ -29,37 +29,41 @@ export const backfillOrchestrator = inngest.createFunction(
   },
   { event: "apps-backfill/run.requested" },
   async ({ event, step }) => {
-    const { installationId, provider, orgId, depth, entityTypes, correlationId } = event.data;
+    const {
+      installationId,
+      provider,
+      orgId,
+      depth,
+      entityTypes,
+      correlationId,
+    } = event.data;
 
     if (depth <= 0) {
       throw new NonRetriableError(
-        `Invalid depth: ${depth} — must be a positive number of days`,
+        `Invalid depth: ${depth} — must be a positive number of days`
       );
     }
 
     // ── Step 1: Fetch connection details from Gateway service ──
     const connection = await step.run("get-connection", async () => {
-      const response = await fetch(
-        `${gatewayUrl}/gateway/${installationId}`,
-        {
-          headers: {
-            "X-API-Key": env.GATEWAY_API_KEY,
-            "X-Request-Source": "backfill",
-            ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
-          },
-          signal: AbortSignal.timeout(10_000),
+      const response = await fetch(`${gatewayUrl}/gateway/${installationId}`, {
+        headers: {
+          "X-API-Key": env.GATEWAY_API_KEY,
+          "X-Request-Source": "backfill",
+          ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
         },
-      ).catch((err: unknown) => {
+        signal: AbortSignal.timeout(10_000),
+      }).catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "TimeoutError") {
           throw new Error(
-            `Gateway getConnection request timed out for ${installationId}`,
+            `Gateway getConnection request timed out for ${installationId}`
           );
         }
         throw err;
       });
       if (!response.ok) {
         throw new Error(
-          `Gateway getConnection failed: ${response.status} for ${installationId}`,
+          `Gateway getConnection failed: ${response.status} for ${installationId}`
         );
       }
       const conn = (await response.json()) as {
@@ -76,7 +80,7 @@ export const backfillOrchestrator = inngest.createFunction(
       };
       if (conn.status !== "active") {
         throw new NonRetriableError(
-          `Connection is not active: ${installationId} (status: ${conn.status})`,
+          `Connection is not active: ${installationId} (status: ${conn.status})`
         );
       }
       return conn;
@@ -84,11 +88,11 @@ export const backfillOrchestrator = inngest.createFunction(
 
     // ── Step 2: Resolve entity types and validate connector ──
     const connector = getConnector(
-      provider as Parameters<typeof getConnector>[0],
+      provider as Parameters<typeof getConnector>[0]
     );
     if (!connector) {
       throw new NonRetriableError(
-        `No backfill connector for provider: ${provider}`,
+        `No backfill connector for provider: ${provider}`
       );
     }
 
@@ -99,7 +103,7 @@ export const backfillOrchestrator = inngest.createFunction(
 
     // Compute `since` inside a step so it's deterministic across retries/replays
     const since = await step.run("compute-since", () =>
-      new Date(Date.now() - depth * 24 * 60 * 60 * 1000).toISOString(),
+      new Date(Date.now() - depth * 24 * 60 * 60 * 1000).toISOString()
     );
 
     // ── Step 3: Enumerate work units (resource x entityType) ──
@@ -112,7 +116,7 @@ export const backfillOrchestrator = inngest.createFunction(
         },
         // Stable ID for step naming
         workUnitId: `${resource.providerResourceId}-${entityType}`,
-      })),
+      }))
     );
 
     if (workUnits.length === 0) {
@@ -141,7 +145,7 @@ export const backfillOrchestrator = inngest.createFunction(
           depth,
           correlationId,
         },
-      })),
+      }))
     );
 
     // ── Step 5: Wait for all completion events ──
@@ -155,7 +159,7 @@ export const backfillOrchestrator = inngest.createFunction(
         .replace(/\n/g, "\\n")
         .replace(/\r/g, "\\r")
         .replace(/\t/g, "\\t")
-        // eslint-disable-next-line no-control-regex
+        // biome-ignore lint/suspicious/noControlCharactersInRegex: intentionally matching control characters to escape them
         .replace(/[\x00-\x1f]/g, (ch) => {
           const hex = ch.charCodeAt(0).toString(16).padStart(4, "0");
           return `\\u${hex}`;
@@ -163,14 +167,11 @@ export const backfillOrchestrator = inngest.createFunction(
 
     const completionResults = await Promise.all(
       workUnits.map(async (wu) => {
-        const result = await step.waitForEvent(
-          `wait-${wu.workUnitId}`,
-          {
-            event: "apps-backfill/entity.completed",
-            if: `async.data.installationId == '${celEscape(installationId)}' && async.data.resourceId == '${celEscape(wu.resource.providerResourceId)}' && async.data.entityType == '${celEscape(wu.entityType)}'`,
-            timeout: "4h",
-          },
-        );
+        const result = await step.waitForEvent(`wait-${wu.workUnitId}`, {
+          event: "apps-backfill/entity.completed",
+          if: `async.data.installationId == '${celEscape(installationId)}' && async.data.resourceId == '${celEscape(wu.resource.providerResourceId)}' && async.data.entityType == '${celEscape(wu.entityType)}'`,
+          timeout: "4h",
+        });
 
         if (!result) {
           // waitForEvent returns null on timeout
@@ -186,7 +187,7 @@ export const backfillOrchestrator = inngest.createFunction(
         }
 
         return result.data;
-      }),
+      })
     );
 
     // ── Step 6: Aggregate results ──
@@ -202,13 +203,13 @@ export const backfillOrchestrator = inngest.createFunction(
       failed: failed.length,
       eventsProduced: completionResults.reduce(
         (sum, r) => sum + r.eventsProduced,
-        0,
+        0
       ),
       eventsDispatched: completionResults.reduce(
         (sum, r) => sum + r.eventsDispatched,
-        0,
+        0
       ),
       results: completionResults,
     };
-  },
+  }
 );

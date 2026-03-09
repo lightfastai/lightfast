@@ -7,15 +7,15 @@
  * Refactored from apps/console/src/lib/neural/llm-filter.ts
  */
 
-import { generateObject } from "ai";
 import { gateway } from "@ai-sdk/gateway";
-import { z } from "zod";
 import { log } from "@vendor/observability/log";
+import { generateObject } from "ai";
+import { z } from "zod";
 import type {
-  RerankProvider,
   RerankCandidate,
-  RerankResponse,
   RerankOptions,
+  RerankProvider,
+  RerankResponse,
 } from "../types";
 
 /**
@@ -30,9 +30,9 @@ const relevanceScoreSchema = z.object({
         .min(0)
         .max(1)
         .describe(
-          "Relevance score from 0.0 (irrelevant) to 1.0 (highly relevant)",
+          "Relevance score from 0.0 (irrelevant) to 1.0 (highly relevant)"
         ),
-    }),
+    })
   ),
 });
 
@@ -41,22 +41,21 @@ const relevanceScoreSchema = z.object({
  */
 export interface LLMRerankConfig {
   /**
-   * Model to use via AI Gateway
-   * @default "anthropic/claude-haiku-4.5"
+   * Skip LLM if candidate count is <= this value
+   * @default 5
    */
-  model?: string;
+  bypassThreshold?: number;
 
   /**
    * Weight for LLM score in final calculation
    * @default 0.6
    */
   llmWeight?: number;
-
   /**
-   * Weight for vector score in final calculation
-   * @default 0.4
+   * Model to use via AI Gateway
+   * @default "anthropic/claude-haiku-4.5"
    */
-  vectorWeight?: number;
+  model?: string;
 
   /**
    * Minimum relevance threshold to include result
@@ -65,10 +64,10 @@ export interface LLMRerankConfig {
   threshold?: number;
 
   /**
-   * Skip LLM if candidate count is <= this value
-   * @default 5
+   * Weight for vector score in final calculation
+   * @default 0.4
    */
-  bypassThreshold?: number;
+  vectorWeight?: number;
 }
 
 /**
@@ -105,7 +104,7 @@ export class LLMRerankProvider implements RerankProvider {
   async rerank(
     query: string,
     candidates: RerankCandidate[],
-    options?: RerankOptions,
+    options?: RerankOptions
   ): Promise<RerankResponse> {
     const threshold = options?.threshold ?? this.config.threshold;
     const topK = options?.topK ?? candidates.length;
@@ -169,9 +168,7 @@ export class LLMRerankProvider implements RerankProvider {
       });
 
       // Build score map from LLM results
-      const scoreMap = new Map(
-        object.scores.map((s) => [s.id, s.relevance]),
-      );
+      const scoreMap = new Map(object.scores.map((s) => [s.id, s.relevance]));
 
       // Combine LLM and vector scores with threshold filtering
       let results = candidates
@@ -267,7 +264,7 @@ export class LLMRerankProvider implements RerankProvider {
     const candidateList = candidates
       .map(
         (c, i) =>
-          `${i + 1}. [${c.id}] "${c.title}": ${c.content.slice(0, 200)}...`,
+          `${i + 1}. [${c.id}] "${c.title}": ${c.content.slice(0, 200)}...`
       )
       .join("\n");
 
@@ -293,7 +290,7 @@ Return a score for each candidate by its ID.`;
  * Create an LLM rerank provider
  */
 export function createLLMRerankProvider(
-  config?: LLMRerankConfig,
+  config?: LLMRerankConfig
 ): LLMRerankProvider {
   return new LLMRerankProvider(config);
 }

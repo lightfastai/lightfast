@@ -12,22 +12,22 @@
 
 import { db } from "@db/console/client";
 import { workspaceNeuralObservations } from "@db/console/schema";
-import { and, eq, or, inArray } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 
 /**
  * Observation data returned by the resolver
  */
 export interface ResolvedObservation {
-  id: number;           // Internal BIGINT
-  externalId: string;   // Public nanoid for API responses
-  title: string;
+  clusterId: number | null;
   content: string;
-  source: string;
-  sourceId: string;
+  externalId: string; // Public nanoid for API responses
+  id: number; // Internal BIGINT
+  metadata: Record<string, unknown> | null;
   observationType: string;
   occurredAt: string;
-  clusterId: number | null;
-  metadata: Record<string, unknown> | null;
+  source: string;
+  sourceId: string;
+  title: string;
 }
 
 /**
@@ -48,10 +48,18 @@ export function isVectorId(id: string): boolean {
 export function getVectorIdView(
   id: string
 ): "title" | "content" | "summary" | "legacy" | null {
-  if (id.startsWith("obs_title_")) return "title";
-  if (id.startsWith("obs_content_")) return "content";
-  if (id.startsWith("obs_summary_")) return "summary";
-  if (id.startsWith("obs_")) return "legacy";
+  if (id.startsWith("obs_title_")) {
+    return "title";
+  }
+  if (id.startsWith("obs_content_")) {
+    return "content";
+  }
+  if (id.startsWith("obs_summary_")) {
+    return "summary";
+  }
+  if (id.startsWith("obs_")) {
+    return "legacy";
+  }
   return null;
 }
 
@@ -111,7 +119,9 @@ export async function resolveObservationById(
   }
 
   // Fallback: Try vector ID columns if it looks like a vector ID
-  if (!isVectorId(id)) return null;
+  if (!isVectorId(id)) {
+    return null;
+  }
 
   const byVectorId = await db.query.workspaceNeuralObservations.findFirst({
     columns: {
@@ -178,7 +188,9 @@ export async function resolveObservationsById(
   }
 ): Promise<Map<string, ResolvedObservation>> {
   const result = new Map<string, ResolvedObservation>();
-  if (ids.length === 0) return result;
+  if (ids.length === 0) {
+    return result;
+  }
 
   // Separate externalIds (nanoids) from vector IDs
   const externalIds = ids.filter((id) => !isVectorId(id));

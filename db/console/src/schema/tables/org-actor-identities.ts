@@ -105,27 +105,27 @@ export const orgActorIdentities = pgTable(
     uniqueIdentityIdx: uniqueIndex("org_actor_identity_unique_idx").on(
       table.clerkOrgId,
       table.source,
-      table.sourceId,
+      table.sourceId
     ),
 
     // Index for finding identities by canonical actor ID
     canonicalActorIdx: index("org_actor_identity_canonical_idx").on(
       table.clerkOrgId,
-      table.canonicalActorId,
+      table.canonicalActorId
     ),
 
     // Index for Clerk user lookup (org-level)
     clerkUserIdx: index("org_actor_identity_clerk_user_idx").on(
       table.clerkOrgId,
-      table.clerkUserId,
+      table.clerkUserId
     ),
 
     // Index for @mention search by username
     usernameIdx: index("org_actor_identity_username_idx").on(
       table.clerkOrgId,
-      table.sourceUsername,
+      table.sourceUsername
     ),
-  }),
+  })
 );
 
 export type OrgActorIdentity = typeof orgActorIdentities.$inferSelect;

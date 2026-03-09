@@ -34,7 +34,9 @@ export const V1FindSimilarRequestSchema = z
       .min(1)
       .max(50)
       .default(10)
-      .describe("Maximum number of similar items to return (1-50, default: 10)"),
+      .describe(
+        "Maximum number of similar items to return (1-50, default: 10)"
+      ),
     /** Minimum similarity threshold (0-1, default 0.5) */
     threshold: z
       .number()
@@ -46,7 +48,9 @@ export const V1FindSimilarRequestSchema = z
     sameSourceOnly: z
       .boolean()
       .default(false)
-      .describe("Only return results from the same source type (default: false)"),
+      .describe(
+        "Only return results from the same source type (default: false)"
+      ),
     /** IDs to exclude from results */
     excludeIds: z
       .array(z.string())

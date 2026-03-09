@@ -1,15 +1,12 @@
- 
-
+import { recordSystemActivity } from "@api/console/lib/activity";
 import { db } from "@db/console/client";
 import { workspaceKnowledgeDocuments } from "@db/console/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import type { V1ContentItem, V1ContentsResponse } from "@repo/console-types";
 import { log } from "@vendor/observability/log";
-import type { V1ContentsResponse, V1ContentItem } from "@repo/console-types";
-import { recordSystemActivity } from "@api/console/lib/activity";
-
-import { buildSourceUrl } from "~/lib/neural/url-builder";
-import { resolveObservationsById } from "~/lib/neural/id-resolver";
+import { and, eq, inArray } from "drizzle-orm";
 import type { ResolvedObservation } from "~/lib/neural/id-resolver";
+import { resolveObservationsById } from "~/lib/neural/id-resolver";
+import { buildSourceUrl } from "~/lib/neural/url-builder";
 import type { V1AuthContext } from "./types";
 
 export interface ContentsLogicInput {
@@ -21,11 +18,14 @@ export type ContentsLogicOutput = V1ContentsResponse;
 
 export async function contentsLogic(
   auth: V1AuthContext,
-  input: ContentsLogicInput,
+  input: ContentsLogicInput
 ): Promise<ContentsLogicOutput> {
   const startTime = Date.now();
 
-  log.debug("v1/contents logic executing", { requestId: input.requestId, idCount: input.ids.length });
+  log.debug("v1/contents logic executing", {
+    requestId: input.requestId,
+    idCount: input.ids.length,
+  });
 
   // Separate IDs by type
   const docIds = input.ids.filter((id) => id.startsWith("doc_"));
@@ -85,12 +85,21 @@ export async function contentsLogic(
     // Documents
     ...documents.map((doc) => {
       const metadata = doc.sourceMetadata as Record<string, unknown>;
-      const frontmatter = (metadata.frontmatter ?? {}) as Record<string, unknown>;
+      const frontmatter = (metadata.frontmatter ?? {}) as Record<
+        string,
+        unknown
+      >;
       return {
         id: doc.id,
-        title: typeof frontmatter.title === "string" ? frontmatter.title : doc.sourceId,
+        title:
+          typeof frontmatter.title === "string"
+            ? frontmatter.title
+            : doc.sourceId,
         url: buildSourceUrl(doc.sourceType, doc.sourceId, metadata),
-        snippet: typeof frontmatter.description === "string" ? frontmatter.description : "",
+        snippet:
+          typeof frontmatter.description === "string"
+            ? frontmatter.description
+            : "",
         source: doc.sourceType,
         type: "file",
         metadata: frontmatter,
@@ -106,7 +115,10 @@ export async function contentsLogic(
   const missing = input.ids.filter((id) => !foundRequestIds.has(id));
 
   if (missing.length > 0) {
-    log.warn("v1/contents missing IDs", { requestId: input.requestId, missing });
+    log.warn("v1/contents missing IDs", {
+      requestId: input.requestId,
+      missing,
+    });
   }
 
   // Track contents fetch (fire-and-forget)

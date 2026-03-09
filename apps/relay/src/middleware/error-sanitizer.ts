@@ -16,7 +16,7 @@ export const errorSanitizer = createMiddleware(async (c, next) => {
   if (isProduction && c.res.status >= 500) {
     c.res = new Response(
       JSON.stringify({ error: "An unexpected error occurred" }),
-      { status: 500, headers: { "content-type": "application/json" } },
+      { status: 500, headers: { "content-type": "application/json" } }
     );
   }
 });

@@ -8,7 +8,12 @@
  *   pnpm inject -- --workspace <id> [options]
  */
 
-import { loadDataset, listDatasets, balancedScenario, stressScenario } from "../loader";
+import {
+  balancedScenario,
+  listDatasets,
+  loadDataset,
+  stressScenario,
+} from "../loader";
 import { triggerObservationCapture } from "../trigger/trigger";
 
 function parseArgs() {
@@ -17,7 +22,9 @@ function parseArgs() {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (!arg) continue;
+    if (!arg) {
+      continue;
+    }
     if (arg === "--help" || arg === "-h") {
       parsed.help = true;
     } else if (arg.startsWith("--") || arg.startsWith("-")) {
@@ -70,7 +77,7 @@ async function main() {
 
   const workspaceId = (args.workspace ?? args.w) as string;
   const scenarioName = (args.scenario ?? args.s ?? "sandbox-1") as string;
-  const count = parseInt((args.count ?? args.c ?? "6") as string, 10);
+  const count = Number.parseInt((args.count ?? args.c ?? "6") as string, 10);
 
   if (!workspaceId) {
     console.error("Error: --workspace is required");
@@ -103,7 +110,9 @@ async function main() {
     },
   });
 
-  console.log(`\n\nTriggered ${triggerResult.triggered} events in ${triggerResult.duration}ms`);
+  console.log(
+    `\n\nTriggered ${triggerResult.triggered} events in ${triggerResult.duration}ms`
+  );
   console.log("\nDone!");
 }
 

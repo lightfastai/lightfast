@@ -1,8 +1,8 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { AnswerInterface } from "./answer-interface";
 
 interface AskLightfastProps {
@@ -16,7 +16,7 @@ export function AskLightfast({ orgSlug, workspaceName }: AskLightfastProps) {
   const { data: store } = useSuspenseQuery({
     ...trpc.workspace.store.get.queryOptions({
       clerkOrgSlug: orgSlug,
-      workspaceName: workspaceName,
+      workspaceName,
     }),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -33,7 +33,7 @@ export function AskLightfast({ orgSlug, workspaceName }: AskLightfastProps) {
 
 export function AskLightfastSkeleton() {
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-4">
+    <div className="flex h-full flex-col items-center justify-center gap-4">
       <Skeleton className="h-8 w-48" />
       <Skeleton className="h-[72px] w-full max-w-3xl" />
     </div>

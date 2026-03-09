@@ -20,10 +20,10 @@ import type { RecordMetadata } from "@pinecone-database/pinecone";
 export interface UpsertRequest<T extends RecordMetadata = RecordMetadata> {
   /** Vector IDs (stable per chunk) */
   ids: string[];
-  /** Vector embeddings */
-  vectors: number[][];
   /** Metadata for each vector */
   metadata: T[];
+  /** Vector embeddings */
+  vectors: number[][];
 }
 
 /**
@@ -38,14 +38,14 @@ export interface UpsertResponse {
  * Request to query similar vectors
  */
 export interface QueryRequest {
-  /** Query vector */
-  vector: number[];
-  /** Number of results to return */
-  topK: number;
-  /** Whether to include metadata in results */
-  includeMetadata?: boolean;
   /** Optional filter on metadata */
   filter?: Record<string, unknown>;
+  /** Whether to include metadata in results */
+  includeMetadata?: boolean;
+  /** Number of results to return */
+  topK: number;
+  /** Query vector */
+  vector: number[];
 }
 
 /**
@@ -56,10 +56,10 @@ export interface QueryRequest {
 export interface QueryMatch<T extends RecordMetadata = RecordMetadata> {
   /** Vector ID */
   id: string;
-  /** Similarity score */
-  score: number;
   /** Vector metadata (if requested) */
   metadata?: T;
+  /** Similarity score */
+  score: number;
 }
 
 /**
@@ -78,10 +78,10 @@ export interface QueryResponse<T extends RecordMetadata = RecordMetadata> {
  * Request to delete vectors
  */
 export interface DeleteRequest {
-  /** Vector IDs to delete */
-  ids: string[];
   /** Whether to delete all vectors in namespace */
   deleteAll?: boolean;
+  /** Vector IDs to delete */
+  ids: string[];
 }
 
 /**
@@ -89,8 +89,8 @@ export interface DeleteRequest {
  */
 export interface FetchedRecord<T extends RecordMetadata = RecordMetadata> {
   id: string;
-  values: number[];
   metadata?: T;
+  values: number[];
 }
 
 /**

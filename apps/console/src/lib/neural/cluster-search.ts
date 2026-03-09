@@ -1,15 +1,15 @@
-import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@db/console/client";
 import { workspaceObservationClusters } from "@db/console/schema";
 import { consolePineconeClient } from "@repo/console-pinecone";
+import { and, eq, inArray } from "drizzle-orm";
 
 export interface ClusterSearchResult {
-  clusterId: number;  // BIGINT internal ID
-  topicLabel: string;
-  summary: string | null;
+  clusterId: number; // BIGINT internal ID
   keywords: string[];
-  score: number;
   observationCount: number;
+  score: number;
+  summary: string | null;
+  topicLabel: string;
 }
 
 /**
@@ -59,7 +59,10 @@ export async function searchClusters(
       .where(
         and(
           eq(workspaceObservationClusters.workspaceId, workspaceId),
-          inArray(workspaceObservationClusters.topicEmbeddingId, clusterEmbeddingIds)
+          inArray(
+            workspaceObservationClusters.topicEmbeddingId,
+            clusterEmbeddingIds
+          )
         )
       );
 

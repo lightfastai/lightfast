@@ -1,12 +1,11 @@
 import { createEnv } from "@t3-oss/env-core";
 import { vercel } from "@t3-oss/env-core/presets-zod";
+import { dbEnv } from "@vendor/db/env";
+import { qstashEnv } from "@vendor/qstash/env";
+import { upstashEnv } from "@vendor/upstash/env";
 import type { Context } from "hono";
 import { env as honoEnv } from "hono/adapter";
 import { z } from "zod";
-
-import { upstashEnv } from "@vendor/upstash/env";
-import { qstashEnv } from "@vendor/qstash/env";
-import { dbEnv } from "@vendor/db/env";
 
 const server = {
   // Service auth
@@ -38,7 +37,9 @@ const envCache = new WeakMap<object, RelayEnv>();
 /** Validated env from the Hono request context — cached per request. */
 export const getEnv = (c: Context): RelayEnv => {
   const cached = envCache.get(c);
-  if (cached) return cached;
+  if (cached) {
+    return cached;
+  }
   const validated = _createEnv(c);
   envCache.set(c, validated);
   return validated;

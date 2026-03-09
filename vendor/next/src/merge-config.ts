@@ -5,24 +5,24 @@ type DeepPartial<T> = T extends object
   : T;
 
 interface Rewrite {
-  source: string;
-  destination: string;
   basePath?: false;
+  destination: string;
   locale?: false;
+  source: string;
 }
 
 interface Header {
-  source: string;
   basePath?: false;
-  locale?: false;
   headers: { key: string; value: string }[];
+  locale?: false;
+  source: string;
 }
 
 interface RedirectBase {
-  source: string;
-  destination: string;
   basePath?: false;
+  destination: string;
   locale?: false;
+  source: string;
 }
 
 type Redirect = RedirectBase &
@@ -32,25 +32,19 @@ type Redirect = RedirectBase &
   );
 
 interface RewritesObject {
-  beforeFiles?: Rewrite[];
   afterFiles?: Rewrite[];
+  beforeFiles?: Rewrite[];
   fallback?: Rewrite[];
 }
 
 type RewritesResult = Rewrite[] | RewritesObject;
 
-function isPlainObject(
-  value: unknown,
-): value is Record<string, unknown> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value)
-  );
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function isPrimitive(
-  value: unknown,
+  value: unknown
 ): value is string | number | boolean | null | undefined {
   return (
     value === null ||
@@ -63,18 +57,22 @@ function isPrimitive(
 
 function mergeArrays<T>(
   a: T[] | undefined,
-  b: T[] | undefined,
+  b: T[] | undefined
 ): T[] | undefined {
   const left = Array.isArray(a) ? a : [];
   const right = Array.isArray(b) ? b : [];
-  if (!left.length && !right.length) return left;
+  if (!(left.length || right.length)) {
+    return left;
+  }
   // De-duplicate only primitive arrays; object arrays are concatenated
   if (
     (left[0] !== undefined && isPrimitive(left[0])) ||
     (right[0] !== undefined && isPrimitive(right[0]))
   ) {
     const set = new Set<T>();
-    for (const v of [...left, ...right]) set.add(v);
+    for (const v of [...left, ...right]) {
+      set.add(v);
+    }
     return Array.from(set);
   }
   return [...left, ...right];
@@ -82,15 +80,17 @@ function mergeArrays<T>(
 
 function deepMerge<T extends Record<string, unknown>>(
   base: T,
-  custom: Record<string, unknown> | undefined,
+  custom: Record<string, unknown> | undefined
 ): T {
-  if (custom === undefined) return base;
+  if (custom === undefined) {
+    return base;
+  }
 
   // Arrays: concat (with primitive de-dup)
   if (Array.isArray(base) || Array.isArray(custom)) {
     return mergeArrays(
       base as unknown as unknown[],
-      custom as unknown as unknown[],
+      custom as unknown as unknown[]
     ) as unknown as T;
   }
 
@@ -107,12 +107,12 @@ function deepMerge<T extends Record<string, unknown>>(
       if (Array.isArray(bVal) || Array.isArray(cVal)) {
         result[key] = mergeArrays(
           bVal as unknown[] | undefined,
-          cVal as unknown[] | undefined,
+          cVal as unknown[] | undefined
         );
       } else if (isPlainObject(bVal) || isPlainObject(cVal)) {
         result[key] = deepMerge(
           (bVal ?? {}) as Record<string, unknown>,
-          (cVal ?? {}) as Record<string, unknown>,
+          (cVal ?? {}) as Record<string, unknown>
         );
       } else {
         result[key] = cVal === undefined ? bVal : cVal;
@@ -126,9 +126,11 @@ function deepMerge<T extends Record<string, unknown>>(
 }
 
 async function resolveMaybeAsync<T>(
-  value: T | (() => Promise<T>) | undefined,
+  value: T | (() => Promise<T>) | undefined
 ): Promise<T | undefined> {
-  if (!value) return undefined;
+  if (!value) {
+    return undefined;
+  }
   if (typeof value === "function") {
     return await (value as () => Promise<T>)();
   }
@@ -143,12 +145,12 @@ async function resolveMaybeAsync<T>(
  */
 export function mergeNextConfig(
   baseConfig: NextConfig,
-  customConfig: DeepPartial<NextConfig>,
+  customConfig: DeepPartial<NextConfig>
 ): NextConfig {
   // First, deep-merge everything generically
   const merged = deepMerge(
     baseConfig as Record<string, unknown>,
-    customConfig as Record<string, unknown>,
+    customConfig as Record<string, unknown>
   ) as unknown as NextConfig;
 
   // Special handling for rewrites (array or object form)
@@ -157,10 +159,16 @@ export function mergeNextConfig(
     const customRewrites = customConfig.rewrites;
     merged.rewrites = async () => {
       const base = await resolveMaybeAsync<RewritesResult>(
-        baseRewrites as RewritesResult | (() => Promise<RewritesResult>) | undefined,
+        baseRewrites as
+          | RewritesResult
+          | (() => Promise<RewritesResult>)
+          | undefined
       );
       const custom = await resolveMaybeAsync<RewritesResult>(
-        customRewrites as RewritesResult | (() => Promise<RewritesResult>) | undefined,
+        customRewrites as
+          | RewritesResult
+          | (() => Promise<RewritesResult>)
+          | undefined
       );
 
       const b = base ?? [];
@@ -171,14 +179,12 @@ export function mergeNextConfig(
         return [...b, ...c];
       }
       // both objects with beforeFiles/afterFiles/fallback
-      if (!Array.isArray(b) && !Array.isArray(c)) {
+      if (!(Array.isArray(b) || Array.isArray(c))) {
         return {
           beforeFiles:
             mergeArrays(b.beforeFiles ?? [], c.beforeFiles ?? []) ?? [],
-          afterFiles:
-            mergeArrays(b.afterFiles ?? [], c.afterFiles ?? []) ?? [],
-          fallback:
-            mergeArrays(b.fallback ?? [], c.fallback ?? []) ?? [],
+          afterFiles: mergeArrays(b.afterFiles ?? [], c.afterFiles ?? []) ?? [],
+          fallback: mergeArrays(b.fallback ?? [], c.fallback ?? []) ?? [],
         };
       }
       // mixed: flatten to arrays
@@ -207,11 +213,14 @@ export function mergeNextConfig(
     merged.redirects = async () => {
       const base =
         (await resolveMaybeAsync<Redirect[]>(
-          baseRedirects as Redirect[] | (() => Promise<Redirect[]>) | undefined,
+          baseRedirects as Redirect[] | (() => Promise<Redirect[]>) | undefined
         )) ?? [];
       const custom =
         (await resolveMaybeAsync<Redirect[]>(
-          customRedirects as Redirect[] | (() => Promise<Redirect[]>) | undefined,
+          customRedirects as
+            | Redirect[]
+            | (() => Promise<Redirect[]>)
+            | undefined
         )) ?? [];
       return [...base, ...custom];
     };
@@ -224,11 +233,11 @@ export function mergeNextConfig(
     merged.headers = async () => {
       const base =
         (await resolveMaybeAsync<Header[]>(
-          baseHeaders as Header[] | (() => Promise<Header[]>) | undefined,
+          baseHeaders as Header[] | (() => Promise<Header[]>) | undefined
         )) ?? [];
       const custom =
         (await resolveMaybeAsync<Header[]>(
-          customHeaders as Header[] | (() => Promise<Header[]>) | undefined,
+          customHeaders as Header[] | (() => Promise<Header[]>) | undefined
         )) ?? [];
       return [...base, ...custom];
     };
@@ -240,13 +249,15 @@ export function mergeNextConfig(
     const customWebpack = customConfig.webpack;
     merged.webpack = (config: unknown, options) => {
       let result: unknown = config;
-      if (typeof baseWebpack === "function")
+      if (typeof baseWebpack === "function") {
         result = baseWebpack(result, options) as unknown;
-      if (typeof customWebpack === "function")
+      }
+      if (typeof customWebpack === "function") {
         result = (customWebpack as NonNullable<NextConfig["webpack"]>)(
           result,
-          options,
+          options
         ) as unknown;
+      }
       return result;
     };
   }
@@ -256,7 +267,7 @@ export function mergeNextConfig(
 
 export async function createNextConfig(
   customConfig: DeepPartial<NextConfig>,
-  baseConfig?: NextConfig,
+  baseConfig?: NextConfig
 ): Promise<NextConfig> {
   const vendorConfig =
     baseConfig ??

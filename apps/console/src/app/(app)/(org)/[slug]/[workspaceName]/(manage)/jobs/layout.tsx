@@ -1,35 +1,35 @@
-import { HydrateClient, prefetch, orgTrpc } from "@repo/console-trpc/server";
+import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
 
 type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 
 export default async function JobsLayout({
-	params,
-	children,
+  params,
+  children,
 }: {
-	params: Promise<{ slug: string; workspaceName: string }>;
-	children: React.ReactNode;
+  params: Promise<{ slug: string; workspaceName: string }>;
+  children: React.ReactNode;
 }) {
-	const { slug, workspaceName } = await params;
+  const { slug, workspaceName } = await params;
 
-	// Prefetch jobs for all common status filters
-	// This prevents loading skeletons when switching between tabs
-	const statusFilters: (JobStatus | undefined)[] = [
-		undefined, // "all"
-		"running",
-		"completed",
-		"failed",
-	];
+  // Prefetch jobs for all common status filters
+  // This prevents loading skeletons when switching between tabs
+  const statusFilters: (JobStatus | undefined)[] = [
+    undefined, // "all"
+    "running",
+    "completed",
+    "failed",
+  ];
 
-	for (const status of statusFilters) {
-		prefetch(
-			orgTrpc.jobs.list.queryOptions({
-				clerkOrgSlug: slug,
-				workspaceName,
-				status,
-				limit: 50,
-			})
-		);
-	}
+  for (const status of statusFilters) {
+    prefetch(
+      orgTrpc.jobs.list.queryOptions({
+        clerkOrgSlug: slug,
+        workspaceName,
+        status,
+        limit: 50,
+      })
+    );
+  }
 
-	return <HydrateClient>{children}</HydrateClient>;
+  return <HydrateClient>{children}</HydrateClient>;
 }

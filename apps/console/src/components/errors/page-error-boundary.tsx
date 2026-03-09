@@ -1,20 +1,24 @@
 "use client";
 
-import { Component } from "react";
-import type { ReactNode, ErrorInfo } from "react";
-import { Alert, AlertTitle, AlertDescription } from "@repo/ui/components/ui/alert";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
 import { AlertCircle } from "lucide-react";
+import type { ErrorInfo, ReactNode } from "react";
+import { Component } from "react";
 
 interface Props {
   children: ReactNode;
-  fallbackTitle?: string;
   fallbackDescription?: string;
+  fallbackTitle?: string;
 }
 
 interface State {
-  hasError: boolean;
   error: Error | null;
+  hasError: boolean;
 }
 
 /**
@@ -45,15 +49,16 @@ export class PageErrorBoundary extends Component<Props, State> {
     if (this.state.hasError && this.state.error) {
       return (
         <div className="flex min-h-[400px] items-center justify-center p-4">
-          <Alert variant="destructive" className="max-w-lg">
+          <Alert className="max-w-lg" variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>
               {this.props.fallbackTitle ?? "Failed to load page"}
             </AlertTitle>
             <AlertDescription className="mt-2">
-              {this.props.fallbackDescription ?? (this.state.error.message || "An unexpected error occurred")}
+              {this.props.fallbackDescription ??
+                (this.state.error.message || "An unexpected error occurred")}
             </AlertDescription>
-            <Button onClick={this.reset} variant="outline" className="mt-4">
+            <Button className="mt-4" onClick={this.reset} variant="outline">
               Retry
             </Button>
           </Alert>

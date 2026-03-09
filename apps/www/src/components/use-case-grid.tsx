@@ -1,6 +1,6 @@
 export interface UseCaseItem {
-  title: string;
   description: string;
+  title: string;
 }
 
 interface UseCaseGridProps {
@@ -15,18 +15,18 @@ export function UseCaseGrid({ items }: UseCaseGridProps) {
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {columns.map((column, columnIndex) => (
-        <div key={columnIndex} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4" key={columnIndex}>
           {column.map((item, itemIndex) => (
             <div
+              className="rounded-xs border border-border/40 bg-accent/40 px-6 py-9"
               key={itemIndex}
-              className="rounded-xs bg-accent/40 border border-border/40 px-6 py-9"
             >
-              <h3 className="text-md font-medium text-foreground mb-2">
+              <h3 className="mb-2 font-medium text-foreground text-md">
                 {item.title}
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 {item.description}
               </p>
             </div>

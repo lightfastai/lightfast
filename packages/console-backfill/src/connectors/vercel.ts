@@ -5,17 +5,23 @@
  * webhook-compatible shapes for direct ingestion through Relay's service
  * auth endpoint. Produces raw webhook payloads (adapter output), not SourceEvents.
  */
-import type { BackfillConnector, BackfillConfig, BackfillPage, BackfillWebhookEvent } from "../types.js";
+
 import {
   adaptVercelDeploymentForTransformer,
   parseVercelRateLimit,
 } from "../adapters/vercel.js";
+import type {
+  BackfillConfig,
+  BackfillConnector,
+  BackfillPage,
+  BackfillWebhookEvent,
+} from "../types.js";
 
 /** Cursor is the `until` timestamp (ms) for Vercel's pagination */
 type VercelCursor = number;
 
 interface VercelDeploymentsResponse {
-  deployments: Array<Record<string, unknown>>;
+  deployments: Record<string, unknown>[];
   pagination: {
     count: number;
     next: number | null;
@@ -40,7 +46,7 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
 
     if (!response.ok) {
       throw new Error(
-        `Vercel API returned ${response.status}: unable to access deployments for project ${projectId}`,
+        `Vercel API returned ${response.status}: unable to access deployments for project ${projectId}`
       );
     }
   }
@@ -48,7 +54,7 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
   async fetchPage(
     config: BackfillConfig,
     entityType: string,
-    cursor: VercelCursor | null,
+    cursor: VercelCursor | null
   ): Promise<BackfillPage<VercelCursor>> {
     if (entityType !== "deployment") {
       throw new Error(`Unsupported entity type: ${entityType}`);
@@ -59,7 +65,7 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
 
   private async fetchDeployments(
     config: BackfillConfig,
-    cursor: VercelCursor | null,
+    cursor: VercelCursor | null
   ): Promise<BackfillPage<VercelCursor>> {
     // providerResourceId is the Vercel project ID
     const projectId = config.resource.providerResourceId;
@@ -70,7 +76,9 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
     const url = new URL("https://api.vercel.com/v6/deployments");
     url.searchParams.set("projectId", projectId);
     url.searchParams.set("limit", "100");
-    if (cursor) url.searchParams.set("until", cursor.toString());
+    if (cursor) {
+      url.searchParams.set("until", cursor.toString());
+    }
 
     const response = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${config.accessToken}` },
@@ -78,7 +86,7 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
 
     if (!response.ok) {
       throw new Error(
-        `Vercel API returned ${response.status} when fetching deployments`,
+        `Vercel API returned ${response.status} when fetching deployments`
       );
     }
 
@@ -86,17 +94,20 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
     const sinceDate = new Date(config.since);
 
     // Filter deployments within the time window and with a valid uid
-    const filtered = data.deployments.filter((deployment) => {
-      const created = deployment.created as number | undefined;
-      return created ? new Date(created) >= sinceDate : false;
-    }).filter((deployment): deployment is Record<string, unknown> & { uid: string } =>
-      typeof deployment.uid === "string",
-    );
+    const filtered = data.deployments
+      .filter((deployment) => {
+        const created = deployment.created as number | undefined;
+        return created ? new Date(created) >= sinceDate : false;
+      })
+      .filter(
+        (deployment): deployment is Record<string, unknown> & { uid: string } =>
+          typeof deployment.uid === "string"
+      );
 
     const events: BackfillWebhookEvent[] = filtered.map((deployment) => {
       const { webhookPayload, eventType } = adaptVercelDeploymentForTransformer(
         deployment,
-        projectName,
+        projectName
       );
       return {
         deliveryId: `backfill-${config.installationId}-${config.resource.providerResourceId}-deploy-${deployment.uid}`,

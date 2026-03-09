@@ -1,1 +1,1 @@
-export { internalId, externalId, legacyId } from "./id-helpers";
+export { externalId, internalId, legacyId } from "./id-helpers";

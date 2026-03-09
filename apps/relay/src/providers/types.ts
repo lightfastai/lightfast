@@ -1,34 +1,32 @@
-import type {
-  GitHubWebhookPayload as GH,
-  VercelWebhookPayload as VC,
-  LinearWebhookPayload as LN,
-  SentryWebhookPayload as SN,
-  WebhookPayload,
-} from "./schemas.js";
-import type { GitHubProvider } from "./impl/github.js";
-import type { VercelProvider } from "./impl/vercel.js";
-import type { LinearProvider } from "./impl/linear.js";
-import type { SentryProvider } from "./impl/sentry.js";
 import type { ProviderName } from "@repo/gateway-types";
 import type { RelayEnv } from "../env.js";
-
-// Re-export schema types for consumer convenience
-export type {
-  GitHubWebhookPayload,
-  VercelWebhookPayload,
-  LinearWebhookPayload,
-  SentryWebhookPayload,
+import type { GitHubProvider } from "./impl/github.js";
+import type { LinearProvider } from "./impl/linear.js";
+import type { SentryProvider } from "./impl/sentry.js";
+import type { VercelProvider } from "./impl/vercel.js";
+import type {
+  GitHubWebhookPayload as GH,
+  LinearWebhookPayload as LN,
+  SentryWebhookPayload as SN,
+  VercelWebhookPayload as VC,
   WebhookPayload,
 } from "./schemas.js";
 
-// Re-export from @repo/gateway-types
-export {
-  PROVIDER_NAMES,
-} from "@repo/gateway-types";
 export type {
   ProviderName,
   WebhookReceiptPayload,
 } from "@repo/gateway-types";
+
+// Re-export from @repo/gateway-types
+export { PROVIDER_NAMES } from "@repo/gateway-types";
+// Re-export schema types for consumer convenience
+export type {
+  GitHubWebhookPayload,
+  LinearWebhookPayload,
+  SentryWebhookPayload,
+  VercelWebhookPayload,
+  WebhookPayload,
+} from "./schemas.js";
 
 // ── Relay-Specific Type Maps ──
 
@@ -58,15 +56,15 @@ export type ProviderFor<N extends ProviderName> = N extends "github"
 
 /** Slim webhook-only interface for relay providers. */
 export interface WebhookProvider {
-  readonly name: ProviderName;
-  getWebhookSecret(env: RelayEnv): string;
-  verifyWebhook(
-    payload: string,
-    headers: Headers,
-    secret: string,
-  ): Promise<boolean>;
-  parsePayload(raw: unknown): WebhookPayload;
   extractDeliveryId(headers: Headers, payload: WebhookPayload): string;
   extractEventType(headers: Headers, payload: WebhookPayload): string;
   extractResourceId(payload: WebhookPayload): string | null;
+  getWebhookSecret(env: RelayEnv): string;
+  readonly name: ProviderName;
+  parsePayload(raw: unknown): WebhookPayload;
+  verifyWebhook(
+    payload: string,
+    headers: Headers,
+    secret: string
+  ): Promise<boolean>;
 }

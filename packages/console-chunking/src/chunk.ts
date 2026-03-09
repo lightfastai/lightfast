@@ -10,7 +10,7 @@ import { encodingForModel } from "js-tiktoken";
 import type { Chunk, ChunkOptions } from "./types";
 
 // Cache the encoder to avoid recreating it for every chunk operation
-let encoder: Tiktoken | undefined = undefined;
+let encoder: Tiktoken | undefined;
 
 /**
  * Get or create the tiktoken encoder for GPT-4 (cl100k_base)
@@ -60,7 +60,7 @@ export function countTokens(text: string): number {
  */
 export function chunkText(
   text: string,
-  options?: Partial<ChunkOptions>,
+  options?: Partial<ChunkOptions>
 ): Chunk[] {
   // Default options
   const opts: ChunkOptions = {
@@ -91,9 +91,7 @@ export function chunkText(
   }
 
   // Split text into segments if preserveBoundaries is enabled
-  const segments = opts.preserveBoundaries
-    ? splitIntoSegments(text)
-    : [text];
+  const segments = opts.preserveBoundaries ? splitIntoSegments(text) : [text];
 
   let currentChunk = "";
   let currentTokens = 0;
@@ -200,17 +198,16 @@ function splitIntoSegments(text: string): string[] {
   const lines = text.split("\n");
 
   for (const line of lines) {
-
     // Check for code block markers
     if (line.trim().startsWith("```")) {
       inCodeBlock = !inCodeBlock;
-      currentSegment += line + "\n";
+      currentSegment += `${line}\n`;
       continue;
     }
 
     // Inside code block, keep adding lines
     if (inCodeBlock) {
-      currentSegment += line + "\n";
+      currentSegment += `${line}\n`;
       continue;
     }
 
@@ -222,7 +219,7 @@ function splitIntoSegments(text: string): string[] {
     }
 
     // Add line to current segment
-    currentSegment += line + "\n";
+    currentSegment += `${line}\n`;
   }
 
   // Add final segment
@@ -257,7 +254,9 @@ function splitLargeSegment(segment: string, maxTokens: number): string[] {
  * Find overlap text from the end of a chunk (approximately N tokens)
  */
 function findOverlapText(chunk: string, overlapTokens: number): string {
-  if (overlapTokens === 0) return "";
+  if (overlapTokens === 0) {
+    return "";
+  }
 
   const enc = getEncoder();
   const tokens = enc.encode(chunk);

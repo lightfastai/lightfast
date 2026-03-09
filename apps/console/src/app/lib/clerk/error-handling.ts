@@ -1,11 +1,11 @@
-import { isClerkAPIResponseError, isUserLockedError } from "@vendor/clerk"
-import type { ClerkAPIError } from "@vendor/clerk/types"
+import { isClerkAPIResponseError, isUserLockedError } from "@vendor/clerk";
+import type { ClerkAPIError } from "@vendor/clerk/types";
 
 export interface AuthError {
-  code: string
-  message: string
-  longMessage: string
-  meta?: Record<string, unknown>
+  code: string;
+  longMessage: string;
+  message: string;
+  meta?: Record<string, unknown>;
 }
 
 /**
@@ -15,24 +15,24 @@ export function getErrorMessage(err: unknown): string {
   // Handle Clerk API errors
   if (isClerkAPIResponseError(err)) {
     // When isClerkAPIResponseError is true, err.errors is guaranteed to exist
-    const firstError = err.errors[0]
+    const firstError = err.errors[0];
     if (firstError) {
-      return firstError.longMessage ?? firstError.message
+      return firstError.longMessage ?? firstError.message;
     }
   }
 
   // Handle standard Error objects
   if (err instanceof Error) {
-    return err.message
+    return err.message;
   }
 
   // Handle string errors
-  if (typeof err === 'string') {
-    return err
+  if (typeof err === "string") {
+    return err;
   }
 
   // Default error message
-  return 'An unexpected error occurred. Please try again.'
+  return "An unexpected error occurred. Please try again.";
 }
 
 /**
@@ -45,89 +45,98 @@ export function getAllErrors(err: unknown): AuthError[] {
       message: error.message,
       longMessage: error.longMessage ?? error.message,
       meta: error.meta,
-    }))
+    }));
   }
 
-  return []
+  return [];
 }
 
 /**
  * Check if error is due to account lockout
  */
-export function isAccountLockedError(err: unknown): { locked: boolean; expiresInSeconds?: number } {
+export function isAccountLockedError(err: unknown): {
+  locked: boolean;
+  expiresInSeconds?: number;
+} {
   if (isUserLockedError(err)) {
     // When user is locked, check for lockout expiration in the error metadata
     if (isClerkAPIResponseError(err)) {
       const lockoutError = err.errors.find(
-        (error: ClerkAPIError) => error.code === 'user_locked'
-      )
+        (error: ClerkAPIError) => error.code === "user_locked"
+      );
 
       // According to Clerk docs, lockout_expires_in_seconds is included in the response
       // but not in the TypeScript types. We'll access it safely.
-      const meta = lockoutError?.meta as Record<string, unknown> | undefined
-      const expiresInSeconds = meta?.lockout_expires_in_seconds
+      const meta = lockoutError?.meta as Record<string, unknown> | undefined;
+      const expiresInSeconds = meta?.lockout_expires_in_seconds;
 
-      if (typeof expiresInSeconds === 'number') {
+      if (typeof expiresInSeconds === "number") {
         return {
           locked: true,
           expiresInSeconds,
-        }
+        };
       }
     }
 
-    return { locked: true }
+    return { locked: true };
   }
 
-  return { locked: false }
+  return { locked: false };
 }
 
 /**
  * Check if error is due to rate limiting
  */
-export function isRateLimitError(err: unknown): { rateLimited: boolean; retryAfterSeconds?: number } {
-  if (isClerkAPIResponseError(err)) {
-    // Check if it's a rate limit error (429 status or too_many_requests code)
-    if (err.status === 429 || err.errors.some(e => e.code === 'too_many_requests')) {
-      // The Retry-After header might be available on the error object
-      // Note: Clerk's error type doesn't expose headers directly, so we need to check various possible locations
-      // This is a defensive approach since the exact structure depends on Clerk's internal implementation
+export function isRateLimitError(err: unknown): {
+  rateLimited: boolean;
+  retryAfterSeconds?: number;
+} {
+  // Check if it's a Clerk API rate limit error (429 status or too_many_requests code)
+  if (
+    isClerkAPIResponseError(err) &&
+    (err.status === 429 ||
+      err.errors.some((e) => e.code === "too_many_requests"))
+  ) {
+    // The Retry-After header might be available on the error object
+    // Note: Clerk's error type doesn't expose headers directly, so we need to check various possible locations
+    // This is a defensive approach since the exact structure depends on Clerk's internal implementation
 
-      // Try to extract retry-after from various possible locations
-      let retryAfterValue: unknown = undefined;
+    // Try to extract retry-after from various possible locations
+    let retryAfterValue: unknown;
 
-      // Check if headers property exists
-      if ('headers' in err) {
-        const headers = err.headers as Record<string, unknown> | undefined;
-        retryAfterValue = headers?.['retry-after'];
-      }
+    // Check if headers property exists
+    if ("headers" in err) {
+      const headers = err.headers as Record<string, unknown> | undefined;
+      retryAfterValue = headers?.["retry-after"];
+    }
 
-      // Check for direct retryAfter property
-      if (!retryAfterValue && 'retryAfter' in err) {
-        retryAfterValue = err.retryAfter;
-      }
+    // Check for direct retryAfter property
+    if (!retryAfterValue && "retryAfter" in err) {
+      retryAfterValue = err.retryAfter;
+    }
 
-      // Convert to seconds if we found a value
-      if (retryAfterValue !== undefined && retryAfterValue !== null) {
-        const retryAfterSeconds = typeof retryAfterValue === 'string'
-          ? parseInt(retryAfterValue, 10)
-          : typeof retryAfterValue === 'number'
+    // Convert to seconds if we found a value
+    if (retryAfterValue !== undefined && retryAfterValue !== null) {
+      const retryAfterSeconds =
+        typeof retryAfterValue === "string"
+          ? Number.parseInt(retryAfterValue, 10)
+          : typeof retryAfterValue === "number"
             ? retryAfterValue
             : undefined;
 
-        if (retryAfterSeconds !== undefined && !isNaN(retryAfterSeconds)) {
-          return {
-            rateLimited: true,
-            retryAfterSeconds
-          }
-        }
+      if (retryAfterSeconds !== undefined && !Number.isNaN(retryAfterSeconds)) {
+        return {
+          rateLimited: true,
+          retryAfterSeconds,
+        };
       }
-
-      // If we can't find retry-after, still indicate it's rate limited
-      return { rateLimited: true }
     }
+
+    // If we can't find retry-after, still indicate it's rate limited
+    return { rateLimited: true };
   }
 
-  return { rateLimited: false }
+  return { rateLimited: false };
 }
 
 /**
@@ -135,21 +144,21 @@ export function isRateLimitError(err: unknown): { rateLimited: boolean; retryAft
  */
 export function formatLockoutTime(seconds: number): string {
   if (seconds < 60) {
-    return `${seconds} seconds`
+    return `${seconds} seconds`;
   }
 
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
 
   if (minutes === 1) {
     return remainingSeconds > 0
       ? `1 minute and ${remainingSeconds} seconds`
-      : '1 minute'
+      : "1 minute";
   }
 
   return remainingSeconds > 0
     ? `${minutes} minutes and ${remainingSeconds} seconds`
-    : `${minutes} minutes`
+    : `${minutes} minutes`;
 }
 
 /**
@@ -158,27 +167,30 @@ export function formatLockoutTime(seconds: number): string {
  * @param err - The error object
  * @returns Structured error data for logging
  */
-export function formatErrorForLogging(context: string, err: unknown): Record<string, unknown> {
+export function formatErrorForLogging(
+  context: string,
+  err: unknown
+): Record<string, unknown> {
   const errorData: Record<string, unknown> = {
     context,
     timestamp: new Date().toISOString(),
-  }
+  };
 
   if (isClerkAPIResponseError(err)) {
     errorData.error = {
       message: err.message,
       clerkErrors: err.errors,
       status: err.status,
-    }
+    };
   } else if (err instanceof Error) {
     errorData.error = {
       message: err.message,
       stack: err.stack,
-      name: err.name
-    }
+      name: err.name,
+    };
   } else {
-    errorData.error = err
+    errorData.error = err;
   }
 
-  return errorData
+  return errorData;
 }

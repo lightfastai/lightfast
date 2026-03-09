@@ -6,17 +6,18 @@
  * sync.events configuration in seed-integrations.ts
  */
 
-import { readFileSync, readdirSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
 import {
   ALL_GITHUB_EVENTS,
-  ALL_VERCEL_EVENTS,
-  ALL_SENTRY_EVENTS,
   ALL_LINEAR_EVENTS,
+  ALL_SENTRY_EVENTS,
+  ALL_VERCEL_EVENTS,
 } from "@repo/console-types/integrations/events";
 
 // Configuration from seed-integrations.ts
@@ -29,9 +30,9 @@ const ALLOWED_EVENTS = {
 };
 
 interface WebhookPayload {
-  source: string;
   eventType: string;
   payload: unknown;
+  source: string;
 }
 
 interface Dataset {
@@ -80,7 +81,7 @@ function verifyEventFiltering() {
 
   const datasetsDir = join(__dirname, "../../datasets");
   const files = readdirSync(datasetsDir).filter(
-    (f) => f.startsWith("sandbox-") && f.endsWith(".json"),
+    (f) => f.startsWith("sandbox-") && f.endsWith(".json")
   );
 
   let totalEvents = 0;
@@ -102,7 +103,7 @@ function verifyEventFiltering() {
 
       if (!(source in ALLOWED_EVENTS)) {
         issues.push(
-          `  ❌ ${dataset.name}: Unknown source "${source}" for event "${eventType}"`,
+          `  ❌ ${dataset.name}: Unknown source "${source}" for event "${eventType}"`
         );
         filteredEvents++;
         continue;
@@ -110,18 +111,18 @@ function verifyEventFiltering() {
 
       const allowedForSource =
         ALLOWED_EVENTS[source as keyof typeof ALLOWED_EVENTS];
-      if (!(allowedForSource as string[]).includes(normalizedEventType)) {
+      if ((allowedForSource as string[]).includes(normalizedEventType)) {
+        allowedEvents++;
+      } else {
         issues.push(
-          `  ❌ ${dataset.name}: Event "${eventType}" (normalized: "${normalizedEventType}") not in ${source} allowed events: [${allowedForSource.join(", ")}]`,
+          `  ❌ ${dataset.name}: Event "${eventType}" (normalized: "${normalizedEventType}") not in ${source} allowed events: [${allowedForSource.join(", ")}]`
         );
         filteredEvents++;
-      } else {
-        allowedEvents++;
       }
     }
   }
 
-  console.log("\n" + "=".repeat(70));
+  console.log(`\n${"=".repeat(70)}`);
   console.log("Summary:");
   console.log("=".repeat(70));
   console.log(`Total events checked: ${totalEvents}`);
@@ -132,7 +133,7 @@ function verifyEventFiltering() {
     console.log("\n❌ Issues found:\n");
     issues.forEach((issue) => console.log(issue));
     console.log(
-      "\nThese events will be filtered by observation-capture.ts workflow.",
+      "\nThese events will be filtered by observation-capture.ts workflow."
     );
     process.exit(1);
   } else {

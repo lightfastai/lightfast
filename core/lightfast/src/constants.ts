@@ -44,6 +44,7 @@ export function isValidApiKeyFormat(key: string): boolean {
   if (!key.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
     return false;
   }
-  const expectedLength = LIGHTFAST_API_KEY_PREFIX.length + API_KEY_SECRET_LENGTH;
+  const expectedLength =
+    LIGHTFAST_API_KEY_PREFIX.length + API_KEY_SECRET_LENGTH;
   return key.length === expectedLength;
 }

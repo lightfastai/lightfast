@@ -510,12 +510,8 @@
           "name": "lightfast_workspace_stores_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_stores",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -718,12 +714,8 @@
           "name": "lightfast_workspace_knowledge_documents_store_id_lightfast_workspace_stores_id_fk",
           "tableFrom": "lightfast_workspace_knowledge_documents",
           "tableTo": "lightfast_workspace_stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -837,12 +829,8 @@
           "name": "lightfast_workspace_knowledge_vector_chunks_store_id_lightfast_workspace_stores_id_fk",
           "tableFrom": "lightfast_workspace_knowledge_vector_chunks",
           "tableTo": "lightfast_workspace_stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -850,12 +838,8 @@
           "name": "lightfast_workspace_knowledge_vector_chunks_doc_id_lightfast_workspace_knowledge_documents_id_fk",
           "tableFrom": "lightfast_workspace_knowledge_vector_chunks",
           "tableTo": "lightfast_workspace_knowledge_documents",
-          "columnsFrom": [
-            "doc_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["doc_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1042,12 +1026,8 @@
           "name": "lightfast_workspace_integrations_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_integrations",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1055,12 +1035,8 @@
           "name": "lightfast_workspace_integrations_user_source_id_lightfast_user_sources_id_fk",
           "tableFrom": "lightfast_workspace_integrations",
           "tableTo": "lightfast_user_sources",
-          "columnsFrom": [
-            "user_source_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_source_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1311,12 +1287,8 @@
           "name": "lightfast_workspace_workflow_runs_store_id_lightfast_workspace_stores_id_fk",
           "tableFrom": "lightfast_workspace_workflow_runs",
           "tableTo": "lightfast_workspace_stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2006,12 +1978,8 @@
           "name": "lightfast_workspace_neural_observations_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_neural_observations",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2019,12 +1987,8 @@
           "name": "lightfast_workspace_neural_observations_store_id_lightfast_workspace_stores_id_fk",
           "tableFrom": "lightfast_workspace_neural_observations",
           "tableTo": "lightfast_workspace_stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2183,12 +2147,8 @@
           "name": "lightfast_workspace_observation_clusters_workspace_id_lightfast_org_workspaces_id_fk",
           "tableFrom": "lightfast_workspace_observation_clusters",
           "tableTo": "lightfast_org_workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

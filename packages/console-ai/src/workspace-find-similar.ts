@@ -1,11 +1,11 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
-import { z } from "zod";
 import type {
   FindSimilarToolInput,
   FindSimilarToolOutput,
   LightfastAnswerRuntimeContext,
 } from "@repo/console-ai-types";
 import { V1FindSimilarResponseSchema } from "@repo/console-types";
+import { z } from "zod";
 
 const inputSchema: z.ZodType<FindSimilarToolInput> = z.object({
   id: z.string().describe("The observation ID to find similar items for"),
@@ -41,7 +41,7 @@ export function workspaceFindSimilarTool() {
       const handler = context.tools?.workspaceFindSimilar?.handler;
       if (!handler) {
         throw new Error(
-          "Workspace find-similar handler not configured in runtime context.",
+          "Workspace find-similar handler not configured in runtime context."
         );
       }
       return handler(input);

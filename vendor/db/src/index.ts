@@ -3,104 +3,129 @@
  * Provides common database utilities and PlanetScale integration
  */
 
-// Export PlanetScale SDK
-export { createPlanetScaleClient, createDatabase } from "./planetscale";
-export { drizzle } from "./planetscale";
-export { Client } from "./planetscale";
-export type { DatabaseConfig, PlanetScaleDatabase, PlanetScaleConfig } from "./planetscale";
-
-// Export Drizzle ORM SQL utilities — value exports
-export {
-  FakePrimitiveParam,
-  isSQLWrapper,
-  StringChunk,
-  SQL,
-  Name,
-  name,
-  isDriverValueEncoder,
-  noopDecoder,
-  noopEncoder,
-  noopMapper,
-  Param,
-  param,
-  sql,
-  Placeholder,
-  placeholder,
-  fillPlaceholders,
-  View,
-  isView,
-  getViewName,
-  bindIfParam,
-  eq,
-  ne,
-  and,
-  or,
-  not,
-  gt,
-  gte,
-  lt,
-  lte,
-  inArray,
-  notInArray,
-  isNull,
-  isNotNull,
-  exists,
-  notExists,
-  between,
-  notBetween,
-  like,
-  notLike,
-  ilike,
-  notIlike,
-  arrayContains,
-  arrayContained,
-  arrayOverlaps,
-  asc,
-  desc,
-  count,
-  countDistinct,
-  avg,
-  avgDistinct,
-  sum,
-  sumDistinct,
-  max,
-  min,
-  l2Distance,
-  l1Distance,
-  innerProduct,
-  cosineDistance,
-  hammingDistance,
-  jaccardDistance,
-} from "drizzle-orm/sql";
 export { alias } from "drizzle-orm/pg-core";
-
 // Export Drizzle ORM SQL utilities — type-only exports
 export type {
-  Chunk,
+  BinaryOperator,
   BuildQueryConfig,
-  QueryTypingsValue,
-  Query,
-  QueryWithTypings,
-  SQLWrapper,
-  GetDecoderResult,
+  Chunk,
+  ColumnsSelection,
   DriverValueDecoder,
   DriverValueEncoder,
   DriverValueMapper,
-  SQLChunk,
-  ColumnsSelection,
+  GetDecoderResult,
   InferSelectViewModel,
-  BinaryOperator,
+  Query,
+  QueryTypingsValue,
+  QueryWithTypings,
+  SQLChunk,
+  SQLWrapper,
 } from "drizzle-orm/sql";
-
-// Export shared utilities
-export { createSelectSchema, createInsertSchema, createUpdateSchema, createSchemaFactory } from "./utils/drizzle-zod";
-export { isColumnType, isWithEnum, isPgEnum } from "./utils/drizzle-zod";
-export { bufferSchema, jsonSchema, literalSchema } from "./utils/drizzle-zod";
-export type { GetZodType, HandleColumn } from "./utils/drizzle-zod";
-export type { CreateSelectSchema, CreateInsertSchema, CreateUpdateSchema, CreateSchemaFactoryOptions } from "./utils/drizzle-zod";
-export type { Conditions, BuildRefine, BuildSchema, NoUnknownKeys } from "./utils/drizzle-zod";
-export type { Json, IsNever, ColumnIsGeneratedAlwaysAs, GetSelection } from "./utils/drizzle-zod";
+// Export Drizzle ORM SQL utilities — value exports
+export {
+  and,
+  arrayContained,
+  arrayContains,
+  arrayOverlaps,
+  asc,
+  avg,
+  avgDistinct,
+  between,
+  bindIfParam,
+  cosineDistance,
+  count,
+  countDistinct,
+  desc,
+  eq,
+  exists,
+  FakePrimitiveParam,
+  fillPlaceholders,
+  getViewName,
+  gt,
+  gte,
+  hammingDistance,
+  ilike,
+  inArray,
+  innerProduct,
+  isDriverValueEncoder,
+  isNotNull,
+  isNull,
+  isSQLWrapper,
+  isView,
+  jaccardDistance,
+  l1Distance,
+  l2Distance,
+  like,
+  lt,
+  lte,
+  max,
+  min,
+  Name,
+  name,
+  ne,
+  noopDecoder,
+  noopEncoder,
+  noopMapper,
+  not,
+  notBetween,
+  notExists,
+  notIlike,
+  notInArray,
+  notLike,
+  or,
+  Param,
+  Placeholder,
+  param,
+  placeholder,
+  SQL,
+  StringChunk,
+  sql,
+  sum,
+  sumDistinct,
+  View,
+} from "drizzle-orm/sql";
+export type {
+  DatabaseConfig,
+  PlanetScaleConfig,
+  PlanetScaleDatabase,
+} from "./planetscale";
+// Export PlanetScale SDK
+export {
+  Client,
+  createDatabase,
+  createPlanetScaleClient,
+  drizzle,
+} from "./planetscale";
 export { createDrizzleConfig } from "./utils/create-drizzle-config";
+export type {
+  BuildRefine,
+  BuildSchema,
+  ColumnIsGeneratedAlwaysAs,
+  Conditions,
+  CreateInsertSchema,
+  CreateSchemaFactoryOptions,
+  CreateSelectSchema,
+  CreateUpdateSchema,
+  GetSelection,
+  GetZodType,
+  HandleColumn,
+  IsNever,
+  Json,
+  NoUnknownKeys,
+} from "./utils/drizzle-zod";
+// Export shared utilities
+export {
+  bufferSchema,
+  createInsertSchema,
+  createSchemaFactory,
+  createSelectSchema,
+  createUpdateSchema,
+  isColumnType,
+  isPgEnum,
+  isWithEnum,
+  jsonSchema,
+  literalSchema,
+} from "./utils/drizzle-zod";
 
 // Note: Individual database schemas (chat, cloud) are now in their own packages
 // This package provides the shared infrastructure layer

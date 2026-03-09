@@ -1,5 +1,11 @@
-import { describe, it, expect } from "vitest";
-import { getProvider, GitHubProvider, VercelProvider, LinearProvider, SentryProvider } from "./index.js";
+import { describe, expect, it } from "vitest";
+import {
+  GitHubProvider,
+  getProvider,
+  LinearProvider,
+  SentryProvider,
+  VercelProvider,
+} from "./index.js";
 
 describe("getProvider", () => {
   it("returns GitHubProvider for 'github'", () => {

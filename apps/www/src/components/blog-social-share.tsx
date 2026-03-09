@@ -1,16 +1,20 @@
 "use client";
 
 import { Button } from "@repo/ui/components/ui/button";
-import { Link2, Twitter, Linkedin } from "lucide-react";
+import { Link2, Linkedin, Twitter } from "lucide-react";
 import { useState } from "react";
 
 interface SocialShareProps {
+  description?: string;
   title: string;
   url: string;
-  description?: string;
 }
 
-export function SocialShare({ title, url, description: _description }: SocialShareProps) {
+export function SocialShare({
+  title,
+  url,
+  description: _description,
+}: SocialShareProps) {
   const [copied, setCopied] = useState(false);
 
   const shareLinks = {
@@ -34,36 +38,34 @@ export function SocialShare({ title, url, description: _description }: SocialSha
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-muted-foreground">Share:</span>
+      <span className="text-muted-foreground text-sm">Share:</span>
 
       <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => window.open(shareLinks.twitter, "_blank")}
         aria-label="Share on Twitter"
+        onClick={() => window.open(shareLinks.twitter, "_blank")}
+        size="sm"
+        variant="ghost"
       >
         <Twitter className="h-4 w-4" />
       </Button>
 
       <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => window.open(shareLinks.linkedin, "_blank")}
         aria-label="Share on LinkedIn"
+        onClick={() => window.open(shareLinks.linkedin, "_blank")}
+        size="sm"
+        variant="ghost"
       >
         <Linkedin className="h-4 w-4" />
       </Button>
 
       <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleCopyLink}
         aria-label="Copy link"
+        onClick={handleCopyLink}
+        size="sm"
+        variant="ghost"
       >
         <Link2 className="h-4 w-4" />
-        {copied && (
-          <span className="ml-2 text-xs text-green-600">Copied!</span>
-        )}
+        {copied && <span className="ml-2 text-green-600 text-xs">Copied!</span>}
       </Button>
     </div>
   );

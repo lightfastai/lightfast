@@ -13,8 +13,8 @@ import type { ProviderName } from "../providers/types.js";
 
 interface TeardownPayload {
   installationId: string;
-  provider: ProviderName;
   orgId: string;
+  provider: ProviderName;
 }
 
 /**
@@ -44,7 +44,9 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
 
     // Step 2: Revoke token at provider (best-effort)
     await context.run("revoke-token", async () => {
-      if (providerName === "github") {return;} // GitHub uses on-demand JWTs, no stored token
+      if (providerName === "github") {
+        return;
+      } // GitHub uses on-demand JWTs, no stored token
 
       const provider = getProvider(providerName);
       const tokenRows = await db
@@ -54,10 +56,15 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
         .limit(1);
 
       const tokenRow = tokenRows[0];
-      if (!tokenRow) {return;}
+      if (!tokenRow) {
+        return;
+      }
 
       try {
-        const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+        const decryptedToken = await decrypt(
+          tokenRow.accessToken,
+          env.ENCRYPTION_KEY
+        );
         await provider.revokeToken(decryptedToken);
       } catch {
         // Best-effort — swallow errors
@@ -67,7 +74,9 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
     // Step 3: Deregister webhook if applicable (best-effort)
     await context.run("deregister-webhook", async () => {
       const provider = getProvider(providerName);
-      if (!provider.requiresWebhookRegistration) {return;}
+      if (!provider.requiresWebhookRegistration) {
+        return;
+      }
 
       const installationRows = await db
         .select()
@@ -76,7 +85,9 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
         .limit(1);
 
       const installation = installationRows[0];
-      if (!installation) {return;}
+      if (!installation) {
+        return;
+      }
 
       const meta = installation.metadata as Record<string, unknown> | null;
       const webhookId = meta?.webhookId as string | undefined;
@@ -98,12 +109,12 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
         .where(
           and(
             eq(gwResources.installationId, installationId),
-            eq(gwResources.status, "active"),
-          ),
+            eq(gwResources.status, "active")
+          )
         );
 
       const keys = linkedResources.map((r) =>
-        resourceKey(providerName, r.providerResourceId),
+        resourceKey(providerName, r.providerResourceId)
       );
       if (keys.length > 0) {
         await redis.del(...keys);
@@ -134,5 +145,5 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       });
       return Promise.resolve();
     },
-  },
+  }
 );

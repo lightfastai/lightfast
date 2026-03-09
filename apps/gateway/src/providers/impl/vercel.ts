@@ -1,6 +1,6 @@
 import { db } from "@db/console/client";
-import { gwInstallations, gwTokens } from "@db/console/schema";
 import type { GwInstallation } from "@db/console/schema";
+import { gwInstallations, gwTokens } from "@db/console/schema";
 import { decrypt } from "@repo/lib";
 import { and, eq } from "@vendor/db";
 import type { Context } from "hono";
@@ -9,12 +9,12 @@ import { writeTokenRecord } from "../../lib/token-store.js";
 import { gatewayBaseUrl } from "../../lib/urls.js";
 import { vercelOAuthResponseSchema } from "../schemas.js";
 import type {
-  ConnectionProvider,
-  VercelAccountInfo,
-  TokenResult,
-  OAuthTokens,
   CallbackResult,
   CallbackStateData,
+  ConnectionProvider,
+  OAuthTokens,
+  TokenResult,
+  VercelAccountInfo,
 } from "../types.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
@@ -25,7 +25,7 @@ export class VercelProvider implements ConnectionProvider {
 
   getAuthorizationUrl(state: string): string {
     const url = new URL(
-      `https://vercel.com/integrations/${env.VERCEL_INTEGRATION_SLUG}/new`,
+      `https://vercel.com/integrations/${env.VERCEL_INTEGRATION_SLUG}/new`
     );
     url.searchParams.set("state", state);
     return url.toString();
@@ -46,7 +46,7 @@ export class VercelProvider implements ConnectionProvider {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: body.toString(),
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      },
+      }
     );
 
     if (!response.ok) {
@@ -77,7 +77,7 @@ export class VercelProvider implements ConnectionProvider {
           "Content-Type": "application/json",
         },
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      },
+      }
     );
 
     if (!response.ok) {
@@ -89,7 +89,7 @@ export class VercelProvider implements ConnectionProvider {
 
   async handleCallback(
     c: Context,
-    stateData: CallbackStateData,
+    stateData: CallbackStateData
   ): Promise<CallbackResult> {
     const code = c.req.query("code");
     const configurationId = c.req.query("configurationId");
@@ -97,8 +97,12 @@ export class VercelProvider implements ConnectionProvider {
 
     // ── Validate required params ──
 
-    if (!code) {throw new Error("missing code");}
-    if (!configurationId) {throw new Error("missing configurationId");}
+    if (!code) {
+      throw new Error("missing code");
+    }
+    if (!configurationId) {
+      throw new Error("missing configurationId");
+    }
 
     // ── Exchange code for tokens ──
 
@@ -110,7 +114,7 @@ export class VercelProvider implements ConnectionProvider {
     // Cross-validate: callback configurationId must match token exchange installation_id
     if (parsed.installation_id !== configurationId) {
       throw new Error(
-        `configurationId mismatch: callback=${configurationId} token=${parsed.installation_id}`,
+        `configurationId mismatch: callback=${configurationId} token=${parsed.installation_id}`
       );
     }
 
@@ -125,8 +129,8 @@ export class VercelProvider implements ConnectionProvider {
       .where(
         and(
           eq(gwInstallations.provider, "vercel"),
-          eq(gwInstallations.externalId, externalId),
-        ),
+          eq(gwInstallations.externalId, externalId)
+        )
       )
       .limit(1);
 
@@ -184,7 +188,9 @@ export class VercelProvider implements ConnectionProvider {
       .returning({ id: gwInstallations.id });
 
     const installation = rows[0];
-    if (!installation) {throw new Error("upsert_failed");}
+    if (!installation) {
+      throw new Error("upsert_failed");
+    }
 
     await writeTokenRecord(installation.id, oauthTokens);
 
@@ -205,18 +211,25 @@ export class VercelProvider implements ConnectionProvider {
       .limit(1);
 
     const tokenRow = tokenRows[0];
-    if (!tokenRow) {throw new Error("no_token_found");}
+    if (!tokenRow) {
+      throw new Error("no_token_found");
+    }
 
     if (tokenRow.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
       throw new Error("token_expired");
     }
 
-    const decryptedToken = await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY);
+    const decryptedToken = await decrypt(
+      tokenRow.accessToken,
+      env.ENCRYPTION_KEY
+    );
     return {
       accessToken: decryptedToken,
       provider: this.name,
       expiresIn: tokenRow.expiresAt
-        ? Math.floor((new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000)
+        ? Math.floor(
+            (new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000
+          )
         : null,
     };
   }

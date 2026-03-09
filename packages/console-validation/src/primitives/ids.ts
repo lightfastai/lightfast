@@ -98,9 +98,7 @@ export const githubRepoIdSchema = z
  * uuidSchema.parse("not-a-uuid"); // ❌ Invalid format
  * ```
  */
-export const uuidSchema = z
-  .string()
-  .uuid("Invalid UUID format");
+export const uuidSchema = z.string().uuid("Invalid UUID format");
 
 /**
  * Inngest Run ID Schema

@@ -1,5 +1,5 @@
+import { blog, changelog, legal } from "@vendor/cms";
 import type { MetadataRoute } from "next";
-import { legal, changelog, blog } from "@vendor/cms";
 
 /**
  * Get category-based priority for blog posts.
@@ -8,24 +8,39 @@ import { legal, changelog, blog } from "@vendor/cms";
  * @param categories - Array of category objects with _title property
  * @returns Priority value between 0.7 and 0.95
  */
-function getCategoryPriority(categories?: { _title?: string | null }[]): number {
-  if (!categories || categories.length === 0) return 0.8;
+function getCategoryPriority(
+  categories?: { _title?: string | null }[]
+): number {
+  if (!categories || categories.length === 0) {
+    return 0.8;
+  }
 
   const categoryNames = categories
     .map((c) => c._title?.toLowerCase())
     .filter(Boolean) as string[];
 
   // Comparisons get highest priority (0.95) - high SEO value
-  if (categoryNames.includes("comparisons")) return 0.95;
+  if (categoryNames.includes("comparisons")) {
+    return 0.95;
+  }
 
   // Data and Guides get 0.9 - valuable evergreen content
-  if (categoryNames.includes("data") || categoryNames.includes("guides")) return 0.9;
+  if (categoryNames.includes("data") || categoryNames.includes("guides")) {
+    return 0.9;
+  }
 
   // Technology and Product get 0.85 - important but less SEO-driven
-  if (categoryNames.includes("technology") || categoryNames.includes("product")) return 0.85;
+  if (
+    categoryNames.includes("technology") ||
+    categoryNames.includes("product")
+  ) {
+    return 0.85;
+  }
 
   // Company gets 0.7 - lowest priority for company news
-  if (categoryNames.includes("company")) return 0.7;
+  if (categoryNames.includes("company")) {
+    return 0.7;
+  }
 
   // Default for uncategorized posts
   return 0.8;
@@ -42,13 +57,17 @@ function getMostRecentDate(
   entries: {
     _sys?: { lastModifiedAt?: string | null; createdAt?: string | null } | null;
     publishedAt?: string | null;
-  }[],
+  }[]
 ): Date | undefined {
-  if (entries.length === 0) return undefined;
+  if (entries.length === 0) {
+    return undefined;
+  }
 
   // Entries are already sorted by date (newest first) from CMS
   const mostRecent = entries[0];
-  if (!mostRecent) return undefined;
+  if (!mostRecent) {
+    return undefined;
+  }
 
   if (mostRecent._sys?.lastModifiedAt) {
     return new Date(mostRecent._sys.lastModifiedAt);
@@ -147,7 +166,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Blog listing page - uses most recent post's date (accurate: listing changes when new post added)
     {
       url: `${base}/blog`,
-      ...(getMostRecentDate(blogPosts) && { lastModified: getMostRecentDate(blogPosts) }),
+      ...(getMostRecentDate(blogPosts) && {
+        lastModified: getMostRecentDate(blogPosts),
+      }),
       changeFrequency: "weekly",
       priority: 0.8,
     },
@@ -173,7 +194,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Changelog listing - uses most recent entry's date (accurate: listing changes when new entry added)
     {
       url: `${base}/changelog`,
-      ...(getMostRecentDate(changelogEntries) && { lastModified: getMostRecentDate(changelogEntries) }),
+      ...(getMostRecentDate(changelogEntries) && {
+        lastModified: getMostRecentDate(changelogEntries),
+      }),
       changeFrequency: "weekly",
       priority: 0.8,
     },
@@ -201,38 +224,50 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // RSS/Atom feeds for blog (helps feed aggregators discover feeds)
     {
       url: `${base}/blog/rss.xml`,
-      ...(getMostRecentDate(blogPosts) && { lastModified: getMostRecentDate(blogPosts) }),
+      ...(getMostRecentDate(blogPosts) && {
+        lastModified: getMostRecentDate(blogPosts),
+      }),
       changeFrequency: "daily",
       priority: 0.6,
     },
     {
       url: `${base}/blog/atom.xml`,
-      ...(getMostRecentDate(blogPosts) && { lastModified: getMostRecentDate(blogPosts) }),
+      ...(getMostRecentDate(blogPosts) && {
+        lastModified: getMostRecentDate(blogPosts),
+      }),
       changeFrequency: "daily",
       priority: 0.6,
     },
     {
       url: `${base}/blog/feed.xml`,
-      ...(getMostRecentDate(blogPosts) && { lastModified: getMostRecentDate(blogPosts) }),
+      ...(getMostRecentDate(blogPosts) && {
+        lastModified: getMostRecentDate(blogPosts),
+      }),
       changeFrequency: "daily",
       priority: 0.6,
     },
     // RSS/Atom feeds for changelog
     {
       url: `${base}/changelog/rss.xml`,
-      ...(getMostRecentDate(changelogEntries) && { lastModified: getMostRecentDate(changelogEntries) }),
+      ...(getMostRecentDate(changelogEntries) && {
+        lastModified: getMostRecentDate(changelogEntries),
+      }),
       changeFrequency: "daily",
       priority: 0.6,
     },
     {
       url: `${base}/changelog/atom.xml`,
-      ...(getMostRecentDate(changelogEntries) && { lastModified: getMostRecentDate(changelogEntries) }),
+      ...(getMostRecentDate(changelogEntries) && {
+        lastModified: getMostRecentDate(changelogEntries),
+      }),
       changeFrequency: "daily",
       priority: 0.6,
     },
     {
       url: `${base}/changelog/feed.xml`,
-      ...(getMostRecentDate(changelogEntries) && { lastModified: getMostRecentDate(changelogEntries) }),
+      ...(getMostRecentDate(changelogEntries) && {
+        lastModified: getMostRecentDate(changelogEntries),
+      }),
       changeFrequency: "daily",
       priority: 0.6,
     },

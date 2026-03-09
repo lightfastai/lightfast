@@ -10,7 +10,7 @@
  */
 export async function timingSafeStringEqual(
   a: string,
-  b: string,
+  b: string
 ): Promise<boolean> {
   const encoder = new TextEncoder();
   const [digestA, digestB] = await Promise.all([

@@ -1,8 +1,23 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { Github, Globe, CheckCircle2, Clock, AlertCircle, Loader2, ExternalLink, AlertTriangle } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  Github,
+  Globe,
+  Loader2,
+} from "lucide-react";
 import Link from "next/link";
 import type { EnrichedConnection, Source } from "~/types";
 
@@ -74,10 +89,10 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
     displayName = resourceData.projectName;
     detailsUrl = resourceData.teamSlug
       ? `https://vercel.com/${resourceData.teamSlug}/${resourceData.projectName}`
-      : `https://vercel.com/dashboard`;
+      : "https://vercel.com/dashboard";
   } else if (resourceData.sourceType === "sentry") {
     displayName = resourceData.projectSlug;
-    detailsUrl = `https://sentry.io`;
+    detailsUrl = "https://sentry.io";
   } else {
     // Linear
     displayName = resourceData.teamName;
@@ -85,31 +100,35 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
   }
 
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent transition-colors">
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+    <div className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-accent">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="rounded-full bg-muted p-2">
-          {resourceData.sourceType === "github" ? <Github className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+          {resourceData.sourceType === "github" ? (
+            <Github className="h-4 w-4" />
+          ) : (
+            <Globe className="h-4 w-4" />
+          )}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <p className="font-medium text-sm truncate">{displayName}</p>
+            <p className="truncate font-medium text-sm">{displayName}</p>
             {detailsUrl && (
               <Link
+                className="text-muted-foreground transition-colors hover:text-foreground"
                 href={detailsUrl}
-                target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                target="_blank"
               >
                 <ExternalLink className="h-3 w-3" />
               </Link>
             )}
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="secondary" className="text-xs">
+          <div className="mt-1 flex items-center gap-2">
+            <Badge className="text-xs" variant="secondary">
               {resourceData.sourceType}
             </Badge>
             {resourceData.sourceType === "github" && (
-              <Badge variant="outline" className="text-xs">
+              <Badge className="text-xs" variant="outline">
                 {resourceData.defaultBranch}
               </Badge>
             )}
@@ -122,7 +141,7 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
             className={`h-3 w-3 ${statusConfig.color} ${connection.lastSyncStatus === "pending" ? "animate-spin" : ""}`}
           />
         </div>
-        <span className={`text-xs font-medium ${statusConfig.color}`}>
+        <span className={`font-medium text-xs ${statusConfig.color}`}>
           {statusConfig.label}
         </span>
       </div>
@@ -135,29 +154,37 @@ function SourceItem({ connection }: { connection: EnrichedConnection }) {
  */
 function SimpleSourceItem({ source }: { source: Source }) {
   // Check if this source is awaiting configuration
-  const metadata = source.metadata as {
-    status?: {
-      configStatus?: "configured" | "awaiting_config";
-    };
-  } | null | undefined;
+  const metadata = source.metadata as
+    | {
+        status?: {
+          configStatus?: "configured" | "awaiting_config";
+        };
+      }
+    | null
+    | undefined;
   const isAwaitingConfig = metadata?.status?.configStatus === "awaiting_config";
 
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent transition-colors">
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+    <div className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-accent">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="rounded-full bg-muted p-2">
-          {source.type === "github" ? <Github className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+          {source.type === "github" ? (
+            <Github className="h-4 w-4" />
+          ) : (
+            <Globe className="h-4 w-4" />
+          )}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <p className="font-medium text-sm truncate">{source.displayName}</p>
+            <p className="truncate font-medium text-sm">{source.displayName}</p>
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="secondary" className="text-xs">
+          <div className="mt-1 flex items-center gap-2">
+            <Badge className="text-xs" variant="secondary">
               {source.type}
             </Badge>
-            <span className="text-xs text-muted-foreground">
-              {source.documentCount} {source.documentCount === 1 ? "doc" : "docs"}
+            <span className="text-muted-foreground text-xs">
+              {source.documentCount}{" "}
+              {source.documentCount === 1 ? "doc" : "docs"}
             </span>
           </div>
         </div>
@@ -165,19 +192,19 @@ function SimpleSourceItem({ source }: { source: Source }) {
       <div className="flex items-center gap-2">
         {isAwaitingConfig ? (
           <>
-            <div className="rounded-full p-1 bg-amber-50 dark:bg-amber-950/20">
+            <div className="rounded-full bg-amber-50 p-1 dark:bg-amber-950/20">
               <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-500" />
             </div>
-            <span className="text-xs font-medium text-amber-600 dark:text-amber-500">
+            <span className="font-medium text-amber-600 text-xs dark:text-amber-500">
               Needs config
             </span>
           </>
         ) : source.lastSyncedAt ? (
           <>
-            <div className="rounded-full p-1 bg-green-50 dark:bg-green-950/20">
+            <div className="rounded-full bg-green-50 p-1 dark:bg-green-950/20">
               <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-500" />
             </div>
-            <span className="text-xs font-medium text-green-600 dark:text-green-500">
+            <span className="font-medium text-green-600 text-xs dark:text-green-500">
               Synced
             </span>
           </>
@@ -192,18 +219,24 @@ function SimpleSourceItem({ source }: { source: Source }) {
  *
  * Displays all connected sources grouped by provider with sync status.
  */
-export function ConnectedSourcesOverview({ connections, sources }: ConnectedSourcesOverviewProps) {
+export function ConnectedSourcesOverview({
+  connections,
+  sources,
+}: ConnectedSourcesOverviewProps) {
   // If sources prop is provided (from workspace.sources.list), use simple layout
   if (sources) {
     const totalSources = sources.length;
 
     // Count sources awaiting configuration
     const awaitingConfigCount = sources.filter((s) => {
-      const metadata = s.metadata as {
-        status?: {
-          configStatus?: "configured" | "awaiting_config";
-        };
-      } | null | undefined;
+      const metadata = s.metadata as
+        | {
+            status?: {
+              configStatus?: "configured" | "awaiting_config";
+            };
+          }
+        | null
+        | undefined;
       return metadata?.status?.configStatus === "awaiting_config";
     }).length;
 
@@ -212,15 +245,18 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base font-medium">Connected Sources</CardTitle>
+              <CardTitle className="font-medium text-base">
+                Connected Sources
+              </CardTitle>
               <CardDescription className="mt-1">
                 {totalSources === 0
                   ? "No sources connected yet"
                   : `${totalSources} source${totalSources === 1 ? "" : "s"} connected`}
               </CardDescription>
               {awaitingConfigCount > 0 && (
-                <p className="text-sm text-amber-600 dark:text-amber-500 mt-1">
-                  {awaitingConfigCount} source{awaitingConfigCount === 1 ? "" : "s"} awaiting configuration
+                <p className="mt-1 text-amber-600 text-sm dark:text-amber-500">
+                  {awaitingConfigCount} source
+                  {awaitingConfigCount === 1 ? "" : "s"} awaiting configuration
                 </p>
               )}
             </div>
@@ -228,13 +264,14 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
         </CardHeader>
         <CardContent>
           {totalSources === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">
-                Connect your first source to start building your workspace memory.
+            <div className="py-8 text-center">
+              <p className="mb-4 text-muted-foreground">
+                Connect your first source to start building your workspace
+                memory.
               </p>
               <Link
+                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm hover:bg-primary/90"
                 href="/account/teams/new"
-                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 Connect Source
               </Link>
@@ -252,7 +289,9 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
   }
 
   // Otherwise use the full connections layout
-  if (!connections) return null;
+  if (!connections) {
+    return null;
+  }
 
   // Group by sourceType
   const groupedBySourceType = connections.reduce(
@@ -271,9 +310,13 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
   let syncingCount = 0;
   let failedCount = 0;
   for (const c of connections) {
-    if (c.lastSyncStatus === "success") syncedCount++;
-    else if (c.lastSyncStatus === "pending") syncingCount++;
-    else if (c.lastSyncStatus === "failed") failedCount++;
+    if (c.lastSyncStatus === "success") {
+      syncedCount++;
+    } else if (c.lastSyncStatus === "pending") {
+      syncingCount++;
+    } else if (c.lastSyncStatus === "failed") {
+      failedCount++;
+    }
   }
 
   return (
@@ -291,17 +334,26 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
           {totalSources > 0 && (
             <div className="flex gap-2">
               {syncedCount > 0 && (
-                <Badge variant="secondary" className="bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-300">
+                <Badge
+                  className="bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-300"
+                  variant="secondary"
+                >
                   {syncedCount} synced
                 </Badge>
               )}
               {syncingCount > 0 && (
-                <Badge variant="secondary" className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300">
+                <Badge
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-300"
+                  variant="secondary"
+                >
                   {syncingCount} syncing
                 </Badge>
               )}
               {failedCount > 0 && (
-                <Badge variant="secondary" className="bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300">
+                <Badge
+                  className="bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-300"
+                  variant="secondary"
+                >
                   {failedCount} failed
                 </Badge>
               )}
@@ -311,32 +363,38 @@ export function ConnectedSourcesOverview({ connections, sources }: ConnectedSour
       </CardHeader>
       <CardContent>
         {totalSources === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">
+          <div className="py-8 text-center">
+            <p className="mb-4 text-muted-foreground">
               Connect your first source to start building your workspace memory.
             </p>
             <Link
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm hover:bg-primary/90"
               href="/account/teams/new"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               Connect Source
             </Link>
           </div>
         ) : (
           <div className="space-y-4">
-            {Object.entries(groupedBySourceType).map(([sourceType, sources]) => (
-              <div key={sourceType}>
-                <h4 className="text-sm font-semibold mb-2 capitalize flex items-center gap-2">
-                  {sourceType === "github" ? <Github className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
-                  {sourceType} ({sources.length})
-                </h4>
-                <div className="space-y-2">
-                  {sources.map((connection) => (
-                    <SourceItem key={connection.id} connection={connection} />
-                  ))}
+            {Object.entries(groupedBySourceType).map(
+              ([sourceType, sources]) => (
+                <div key={sourceType}>
+                  <h4 className="mb-2 flex items-center gap-2 font-semibold text-sm capitalize">
+                    {sourceType === "github" ? (
+                      <Github className="h-4 w-4" />
+                    ) : (
+                      <Globe className="h-4 w-4" />
+                    )}
+                    {sourceType} ({sources.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {sources.map((connection) => (
+                      <SourceItem connection={connection} key={connection.id} />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
         )}
       </CardContent>

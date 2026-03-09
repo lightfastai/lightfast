@@ -1,10 +1,10 @@
-import type { TRPCRouterRecord } from "@trpc/server";
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-import { inngestM2MProcedure } from "../../trpc";
 import { db } from "@db/console/client";
 import { orgWorkspaces } from "@db/console/schema";
+import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { inngestM2MProcedure } from "../../trpc";
 
 /**
  * Workspace M2M Router

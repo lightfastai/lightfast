@@ -10,10 +10,9 @@
     "build:prod": "pnpm with-env next build --turbopack",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
     "dev": "pnpm with-env next dev --port 4107 --turbo",
+    "proxy": "microfrontends proxy --port 3024",
     "dev:inngest": "npx inngest-cli@latest dev -u http://localhost:3024/api/inngest -u http://localhost:4109/api/inngest",
     "dev:qstash": "npx @upstash/qstash-cli dev",
-
-    "lint": "eslint",
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
@@ -80,7 +79,6 @@
     "zustand": "catalog:"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@testing-library/jest-dom": "^6.6.3",
@@ -93,8 +91,6 @@
     "@vitest/expect": "catalog:",
     "babel-plugin-react-compiler": "catalog:",
     "dotenv-cli": "^8.0.0",
-    "eslint": "catalog:",
-    "eslint-plugin-react-compiler": "19.1.0-rc.2",
     "happy-dom": "^20.8.3",
     "import-in-the-middle": "catalog:",
     "postcss": "catalog:tailwind4",

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Hoisted mocks ──
 const { mockEnv } = vi.hoisted(() => ({
@@ -53,7 +53,7 @@ describe("notifyBackfill", () => {
           provider: "github",
           orgId: "org-1",
         }),
-      }) as RequestInit,
+      }) as RequestInit
     );
   });
 
@@ -65,7 +65,7 @@ describe("notifyBackfill", () => {
         installationId: "inst-1",
         provider: "github",
         orgId: "org-1",
-      }),
+      })
     ).resolves.toBeUndefined();
   });
 
@@ -77,7 +77,7 @@ describe("notifyBackfill", () => {
         installationId: "inst-1",
         provider: "github",
         orgId: "org-1",
-      }),
+      })
     ).resolves.toBeUndefined();
   });
 });

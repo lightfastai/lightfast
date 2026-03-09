@@ -1,14 +1,14 @@
 "use client";
 
-import { SearchInput } from "./search-input";
 import { exposureTrial } from "~/lib/fonts";
+import { SearchInput } from "./search-input";
 
 export function SearchInterface() {
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-8 pb-12">
+    <div className="mx-auto w-full max-w-3xl space-y-8 pb-12">
       {/* Header */}
       <h1
-        className={`text-5xl font-light tracking-[-0.7] text-foreground ${exposureTrial.className}`}
+        className={`font-light text-5xl text-foreground tracking-[-0.7] ${exposureTrial.className}`}
       >
         Search about Lightfast
       </h1>

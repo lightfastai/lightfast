@@ -2,9 +2,9 @@ import { nanoid } from "@repo/lib";
 import { createMiddleware } from "hono/factory";
 
 export interface RequestIdVariables {
-  requestId: string;
   /** Shared across services for cross-service request tracing. */
   correlationId: string;
+  requestId: string;
 }
 
 /**

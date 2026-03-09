@@ -4,7 +4,7 @@ import { NonRetriableError } from "@vendor/inngest";
 
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { relayUrl, gatewayUrl } from "../lib/related-projects.js";
+import { gatewayUrl, relayUrl } from "../lib/related-projects.js";
 
 export const backfillEntityWorker = inngest.createFunction(
   {
@@ -79,11 +79,11 @@ export const backfillEntityWorker = inngest.createFunction(
               ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
             },
             signal: AbortSignal.timeout(30_000),
-          },
+          }
         );
         if (!response.ok) {
           throw new Error(
-            `Gateway getToken failed: ${response.status} for ${installationId}`,
+            `Gateway getToken failed: ${response.status} for ${installationId}`
           );
         }
         return response.json() as Promise<{
@@ -91,16 +91,16 @@ export const backfillEntityWorker = inngest.createFunction(
           provider: string;
           expiresIn: number | null;
         }>;
-      },
+      }
     );
 
     // ── Resolve connector ──
     const connector = getConnector(
-      provider as Parameters<typeof getConnector>[0],
+      provider as Parameters<typeof getConnector>[0]
     );
     if (!connector) {
       throw new NonRetriableError(
-        `No backfill connector for provider: ${provider}`,
+        `No backfill connector for provider: ${provider}`
       );
     }
 
@@ -156,10 +156,12 @@ export const backfillEntityWorker = inngest.createFunction(
                   headers: {
                     "X-API-Key": env.GATEWAY_API_KEY,
                     "X-Request-Source": "backfill",
-                    ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
+                    ...(correlationId
+                      ? { "X-Correlation-Id": correlationId }
+                      : {}),
                   },
                   signal: AbortSignal.timeout(30_000),
-                },
+                }
               );
               if (!tokenResponse.ok) {
                 throw err; // Can't refresh — rethrow original
@@ -171,7 +173,7 @@ export const backfillEntityWorker = inngest.createFunction(
               const page = await connector.fetchPage(
                 refreshedConfig,
                 entityType,
-                cursor,
+                cursor
               );
               return {
                 events: page.events,
@@ -189,7 +191,7 @@ export const backfillEntityWorker = inngest.createFunction(
             }
             throw err;
           }
-        },
+        }
       );
 
       // Apply refreshed token outside step boundary so it survives memoized replay
@@ -201,44 +203,52 @@ export const backfillEntityWorker = inngest.createFunction(
 
       // Dispatch each event to Relay service auth endpoint
       // Return count from step so it survives memoized replay (callbacks are skipped on retry)
-      const dispatched = await step.run(`dispatch-${entityType}-p${pageNum}`, async () => {
-        const BATCH_SIZE = 5;
-        const events = fetchResult.events;
-        let count = 0;
+      const dispatched = await step.run(
+        `dispatch-${entityType}-p${pageNum}`,
+        async () => {
+          const BATCH_SIZE = 5;
+          const events = fetchResult.events;
+          let count = 0;
 
-        for (let i = 0; i < events.length; i += BATCH_SIZE) {
-          const batch = events.slice(i, i + BATCH_SIZE);
-          await Promise.all(
-            batch.map(async (webhookEvent) => {
-              const response = await fetch(`${relayUrl}/webhooks/${provider}`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "X-API-Key": env.GATEWAY_API_KEY,
-                  ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
-                },
-                body: JSON.stringify({
-                  connectionId: installationId,
-                  orgId,
-                  deliveryId: webhookEvent.deliveryId,
-                  eventType: webhookEvent.eventType,
-                  payload: webhookEvent.payload,
-                  receivedAt: Date.now(),
-                }),
-                signal: AbortSignal.timeout(30_000),
-              });
-              if (!response.ok) {
-                const text = await response.text().catch(() => "unknown");
-                throw new Error(
-                  `Relay ingestWebhook failed: ${response.status} — ${text}`,
+          for (let i = 0; i < events.length; i += BATCH_SIZE) {
+            const batch = events.slice(i, i + BATCH_SIZE);
+            await Promise.all(
+              batch.map(async (webhookEvent) => {
+                const response = await fetch(
+                  `${relayUrl}/webhooks/${provider}`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "X-API-Key": env.GATEWAY_API_KEY,
+                      ...(correlationId
+                        ? { "X-Correlation-Id": correlationId }
+                        : {}),
+                    },
+                    body: JSON.stringify({
+                      connectionId: installationId,
+                      orgId,
+                      deliveryId: webhookEvent.deliveryId,
+                      eventType: webhookEvent.eventType,
+                      payload: webhookEvent.payload,
+                      receivedAt: Date.now(),
+                    }),
+                    signal: AbortSignal.timeout(30_000),
+                  }
                 );
-              }
-            }),
-          );
-          count += batch.length;
+                if (!response.ok) {
+                  const text = await response.text().catch(() => "unknown");
+                  throw new Error(
+                    `Relay ingestWebhook failed: ${response.status} — ${text}`
+                  );
+                }
+              })
+            );
+            count += batch.length;
+          }
+          return count;
         }
-        return count;
-      });
+      );
       eventsDispatched += dispatched;
 
       // Rate limit sleep if near threshold (dynamic, based on response headers)
@@ -251,7 +261,7 @@ export const backfillEntityWorker = inngest.createFunction(
         if (sleepMs > 0) {
           await step.sleep(
             `rate-limit-${entityType}-p${pageNum}`,
-            `${Math.ceil(sleepMs / 1000)}s`,
+            `${Math.ceil(sleepMs / 1000)}s`
           );
         }
       }
@@ -285,5 +295,5 @@ export const backfillEntityWorker = inngest.createFunction(
       eventsDispatched,
       pagesProcessed: pageNum,
     };
-  },
+  }
 );

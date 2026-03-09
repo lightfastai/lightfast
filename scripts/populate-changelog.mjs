@@ -388,40 +388,42 @@ async function createChangelogEntry(client, parentId, data) {
     transaction: {
       __args: {
         autoCommit: `Create changelog: ${data.title}`,
-        data: [{
-          type: "create",
-          parentId: parentId,
-          data: {
-            type: "instance",
-            title: data.title,
-            slug: data.slug,
-            value: {
-              body: {
-                type: "rich-text",
-                value: {
-                  format: "markdown",
-                  value: data.body,
+        data: [
+          {
+            type: "create",
+            parentId,
+            data: {
+              type: "instance",
+              title: data.title,
+              slug: data.slug,
+              value: {
+                body: {
+                  type: "rich-text",
+                  value: {
+                    format: "markdown",
+                    value: data.body,
+                  },
                 },
-              },
-              improvements: {
-                type: "text",
-                value: data.improvements ?? null,
-              },
-              infrastructure: {
-                type: "text",
-                value: data.infrastructure ?? null,
-              },
-              fixes: {
-                type: "text",
-                value: data.fixes ?? null,
-              },
-              patches: {
-                type: "text",
-                value: data.patches ?? null,
+                improvements: {
+                  type: "text",
+                  value: data.improvements ?? null,
+                },
+                infrastructure: {
+                  type: "text",
+                  value: data.infrastructure ?? null,
+                },
+                fixes: {
+                  type: "text",
+                  value: data.fixes ?? null,
+                },
+                patches: {
+                  type: "text",
+                  value: data.patches ?? null,
+                },
               },
             },
           },
-        }],
+        ],
       },
       message: true,
       status: true,
@@ -440,7 +442,9 @@ async function main() {
 
   const client = basehub({ token });
 
-  console.log("Creating changelog entries for Neural Memory implementation...\n");
+  console.log(
+    "Creating changelog entries for Neural Memory implementation...\n"
+  );
 
   // First, get the changelog post collection ID
   console.log("Fetching changelog post collection ID...");
@@ -449,7 +453,9 @@ async function main() {
     parentId = await getChangelogCollectionId(client);
     console.log(`  Collection ID: ${parentId}\n`);
   } catch (error) {
-    throw new Error(`Failed to get changelog post collection ID: ${error.message}`);
+    throw new Error(
+      `Failed to get changelog post collection ID: ${error.message}`
+    );
   }
 
   for (const entry of entries) {

@@ -1,11 +1,11 @@
 import type { PITCH_SLIDES } from "~/config/pitch-deck-data";
-import type { SlideVariant } from "./title-slide-content";
+import { ColumnsSlideContent } from "./columns-slide-content";
 import { ContentSlideContent } from "./content-slide-content";
+import { CustomTeamSlide } from "./custom-team-slide";
 import { CustomTitleSlide } from "./custom-title-slide";
 import { CustomWhyNowSlide } from "./custom-why-now-slide";
-import { CustomTeamSlide } from "./custom-team-slide";
 import { ShowcaseSlideContent } from "./showcase-slide-content";
-import { ColumnsSlideContent } from "./columns-slide-content";
+import type { SlideVariant } from "./title-slide-content";
 
 type Slide = (typeof PITCH_SLIDES)[number];
 
@@ -15,7 +15,7 @@ type Slide = (typeof PITCH_SLIDES)[number];
  */
 export function resolveSlideComponent(
   slide: Slide,
-  variant: SlideVariant,
+  variant: SlideVariant
 ): React.ReactElement | null {
   switch (slide.type) {
     case "title":

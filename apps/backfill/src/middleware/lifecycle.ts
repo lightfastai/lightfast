@@ -77,12 +77,18 @@ export const lifecycle = createMiddleware<{
     if (isDev) {
       const prefix = (entry.status as number) >= 400 ? "!!!" : ">>>";
       let line = `${prefix} ${c.req.method} ${c.req.path} ${entry.status as number} ${duration}ms from ${source} [${c.get("requestId")}]`;
-      if (error) {line += ` error="${error}"`;}
+      if (error) {
+        line += ` error="${error}"`;
+      }
       console.log(line);
     }
 
     // Ship structured log to BetterStack (no-op in dev when token is absent)
-    const level = error ? "error" : (entry.status as number) >= 400 ? "warn" : "info";
+    const level = error
+      ? "error"
+      : (entry.status as number) >= 400
+        ? "warn"
+        : "info";
     log[level](`${c.req.method} ${c.req.path}`, entry);
 
     // Add breadcrumb for Sentry error correlation

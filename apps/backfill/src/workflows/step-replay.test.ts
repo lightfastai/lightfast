@@ -1,19 +1,19 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Journal types ──
 
-type JournalEntry = {
+interface JournalEntry {
   name: string;
-  type: "run" | "sendEvent" | "waitForEvent" | "sleep";
   returnValue: unknown;
-};
+  type: "run" | "sendEvent" | "waitForEvent" | "sleep";
+}
 
 /**
  * Creates a step that executes callbacks normally AND records a journal
  * of (stepName, type, returnValue) entries. Used for the "first pass".
  */
 function createRecordingStep(
-  waitForEventResults: Record<string, unknown> = {},
+  waitForEventResults: Record<string, unknown> = {}
 ) {
   const journal: JournalEntry[] = [];
 
@@ -53,7 +53,7 @@ function createReplayStep(journal: JournalEntry[]) {
       throw new Error(
         `Step replay mismatch at index ${index - 1}: ` +
           `expected ${expectedType}("${expectedName}"), ` +
-          `got ${entry?.type}("${entry?.name}")`,
+          `got ${entry?.type}("${entry?.name}")`
       );
     }
     return entry.returnValue;
@@ -61,13 +61,13 @@ function createReplayStep(journal: JournalEntry[]) {
 
   return {
     run: vi.fn(async (name: string, _fn: () => unknown) =>
-      consume(name, "run"),
+      consume(name, "run")
     ),
     sendEvent: vi.fn(async (name: string, _data: unknown) => {
       consume(name, "sendEvent");
     }),
     waitForEvent: vi.fn(async (name: string, _opts: unknown) =>
-      consume(name, "waitForEvent"),
+      consume(name, "waitForEvent")
     ),
     sleep: vi.fn(async (name: string, _duration: unknown) => {
       consume(name, "sleep");
@@ -87,7 +87,7 @@ vi.mock("../inngest/client", () => ({
     createFunction: (
       config: { id: string; onFailure?: Function },
       _trigger: unknown,
-      handler: (args: { event: any; step: any }) => Promise<unknown>,
+      handler: (args: { event: any; step: any }) => Promise<unknown>
     ) => {
       handlers[config.id] = handler;
       return { id: config.id };
@@ -156,8 +156,8 @@ describe("entity-worker step memoization replay", () => {
           provider: "github",
           expiresIn: 3600,
         }),
-        { status: 200 },
-      ),
+        { status: 200 }
+      )
     );
     // fetchPage: 3 events, single page
     mockConnector.fetchPage.mockResolvedValueOnce({
@@ -214,8 +214,8 @@ describe("entity-worker step memoization replay", () => {
           provider: "github",
           expiresIn: 3600,
         }),
-        { status: 200 },
-      ),
+        { status: 200 }
+      )
     );
     // Page 1: 2 events
     mockConnector.fetchPage.mockResolvedValueOnce({
@@ -296,8 +296,8 @@ describe("orchestrator step memoization replay", () => {
             },
           ],
         }),
-        { status: 200 },
-      ),
+        { status: 200 }
+      )
     );
 
     // Configure waitForEvent to return a successful completion
@@ -316,8 +316,7 @@ describe("orchestrator step memoization replay", () => {
       },
     };
 
-    const { step: recordingStep, journal } =
-      createRecordingStep(waitResults);
+    const { step: recordingStep, journal } = createRecordingStep(waitResults);
     const recordResult = await handler({
       event: makeOrchestratorEvent(),
       step: recordingStep,
@@ -365,8 +364,8 @@ describe("orchestrator step memoization replay", () => {
             },
           ],
         }),
-        { status: 200 },
-      ),
+        { status: 200 }
+      )
     );
 
     const waitResults = {
@@ -397,8 +396,7 @@ describe("orchestrator step memoization replay", () => {
       },
     };
 
-    const { step: recordingStep, journal } =
-      createRecordingStep(waitResults);
+    const { step: recordingStep, journal } = createRecordingStep(waitResults);
     const recordResult = await handler({
       event: makeOrchestratorEvent(),
       step: recordingStep,

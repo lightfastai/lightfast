@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,8 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
-import { Button } from "@repo/ui/components/ui/button";
-import { Copy, Check } from "lucide-react";
+import { Check, Copy } from "lucide-react";
+import { useState } from "react";
 
 const CONFIG_TEMPLATE = `version: 1
 include:
@@ -38,9 +38,7 @@ export function ConfigTemplateDialog({ children }: ConfigTemplateDialogProps) {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>lightfast.yml Configuration</DialogTitle>
@@ -50,32 +48,36 @@ export function ConfigTemplateDialog({ children }: ConfigTemplateDialogProps) {
         </DialogHeader>
 
         <div className="relative">
-          <pre className="p-4 rounded-md bg-muted text-sm overflow-x-auto font-mono">
+          <pre className="overflow-x-auto rounded-md bg-muted p-4 font-mono text-sm">
             {CONFIG_TEMPLATE}
           </pre>
           <Button
-            size="sm"
-            variant="outline"
             className="absolute top-2 right-2"
             onClick={handleCopy}
+            size="sm"
+            variant="outline"
           >
             {copied ? (
               <>
-                <Check className="h-3 w-3 mr-1" />
+                <Check className="mr-1 h-3 w-3" />
                 Copied
               </>
             ) : (
               <>
-                <Copy className="h-3 w-3 mr-1" />
+                <Copy className="mr-1 h-3 w-3" />
                 Copy
               </>
             )}
           </Button>
         </div>
 
-        <div className="text-sm text-muted-foreground space-y-2">
-          <p><strong>version</strong>: Always set to 1</p>
-          <p><strong>include</strong>: Glob patterns for files to index</p>
+        <div className="space-y-2 text-muted-foreground text-sm">
+          <p>
+            <strong>version</strong>: Always set to 1
+          </p>
+          <p>
+            <strong>include</strong>: Glob patterns for files to index
+          </p>
         </div>
       </DialogContent>
     </Dialog>

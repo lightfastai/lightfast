@@ -21,13 +21,13 @@
 
 import type {
   EmbeddingProvider,
-  PineconeMetric,
   PineconeCloud,
+  PineconeMetric,
 } from "@repo/console-validation";
 import {
-  PINECONE_DEFAULTS,
-  EMBEDDING_MODEL_DEFAULTS,
   CHUNKING_DEFAULTS,
+  EMBEDDING_MODEL_DEFAULTS,
+  PINECONE_DEFAULTS,
 } from "@repo/console-validation/constants";
 
 /**
