@@ -44,13 +44,13 @@ test.describe("Sign-Up: Email Code Flow", () => {
     await page.getByRole("button", { name: "Continue with Email" }).click();
     await expect(page).toHaveURL(/step=code/);
 
-    const otpInput = page.getByRole("textbox");
-    await otpInput.fill("424242");
+    await page.getByRole("textbox").fill("424242");
 
-    // Must reach "Redirecting..." — if stuck at "Verifying..." this fails
-    await expect(page.getByText("Redirecting...")).toBeVisible({
-      timeout: 15_000,
-    });
+    // Must reach "Redirecting..." or navigate to console
+    await Promise.race([
+      expect(page.getByText("Redirecting...")).toBeVisible({ timeout: 15_000 }),
+      page.waitForURL(/\/account\//, { timeout: 15_000 }),
+    ]);
   });
 
   test("sign-up create request includes legal_accepted", async ({ page }) => {
@@ -67,8 +67,18 @@ test.describe("Sign-Up: Email Code Flow", () => {
 
     const email = `signup-${Date.now()}+clerk_test@lightfast.ai`;
     await page.getByPlaceholder("Email Address").fill(email);
+    // Set up response wait before clicking (init effect fires after navigation)
+    const signUpResponse = page.waitForResponse(
+      (res) =>
+        res.url().includes("sign_ups") && res.request().method() === "POST",
+      { timeout: 10_000 }
+    );
+
     await page.getByRole("button", { name: "Continue with Email" }).click();
     await expect(page).toHaveURL(/step=code/);
+
+    // Wait for the sign_ups POST from the init effect to complete
+    await signUpResponse;
 
     // Verify at least one sign_ups POST included legal_accepted
     const hasLegalAccepted = clerkCreateRequests.some((body) =>

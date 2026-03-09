@@ -22,6 +22,7 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [isRedirecting, setIsRedirecting] = React.useState(false);
   const [isResending, setIsResending] = React.useState(false);
+  const [isInitializing, setIsInitializing] = React.useState(true);
 
   const navigateToConsole = React.useCallback(() => {
     window.location.href = `${consoleUrl}/account/teams/new`;
@@ -113,9 +114,13 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
         }
       }
     }
-    init().catch(() => {
-      setError("An unexpected error occurred. Please try again.");
-    });
+    init()
+      .catch(() => {
+        setError("An unexpected error occurred. Please try again.");
+      })
+      .finally(() => {
+        setIsInitializing(false);
+      });
   }, [
     email,
     mode,
@@ -128,7 +133,7 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
 
   // Auto-verify when 6 digits entered
   React.useEffect(() => {
-    if (code.length !== 6 || error) {
+    if (code.length !== 6 || error || isInitializing) {
       return;
     }
     if (verifyingCodeRef.current === code) {
@@ -185,7 +190,16 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
       }
     }
     verify();
-  }, [code, error, mode, signIn, signUp, handleClerkError, navigateToConsole]);
+  }, [
+    code,
+    error,
+    isInitializing,
+    mode,
+    signIn,
+    signUp,
+    handleClerkError,
+    navigateToConsole,
+  ]);
 
   async function handleResendCode() {
     setIsResending(true);
