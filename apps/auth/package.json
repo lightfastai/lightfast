@@ -10,6 +10,8 @@
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
     "dev": "export VC_MICROFRONTENDS_CONFIG=../../apps/console/microfrontends.json && pnpm with-env next dev --port $(microfrontends port) --turbo",
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_AUTH_PORT:-4104}",
+    "test:e2e": "pnpm with-env playwright test",
+    "test:e2e:ui": "pnpm with-env playwright test --ui",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
@@ -37,6 +39,8 @@
     "zod": "catalog:zod3"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.0.1",
+    "@playwright/test": "^1.58.2",
     "@repo/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@tailwindcss/typography": "catalog:tailwind4",
