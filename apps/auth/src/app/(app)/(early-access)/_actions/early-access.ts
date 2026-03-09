@@ -15,7 +15,7 @@ import { redis } from "@vendor/upstash";
 import { after } from "next/server";
 import { z } from "zod";
 import { env } from "~/env";
-import { handleClerkError } from "~/lib/clerk-error-handler";
+import { handleClerkError } from "../_lib/clerk-error-handler";
 
 export type EarlyAccessState =
   | { status: "idle" }

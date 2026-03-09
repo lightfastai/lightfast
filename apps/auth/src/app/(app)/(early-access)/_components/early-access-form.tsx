@@ -38,9 +38,9 @@ import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import type { EarlyAccessState } from "../_actions/early-access";
+import { joinEarlyAccessAction } from "../_actions/early-access";
 import { ConfettiWrapper } from "./confetti-wrapper";
-import type { EarlyAccessState } from "./early-access-actions";
-import { joinEarlyAccessAction } from "./early-access-actions";
 import type { EarlyAccessFormValues } from "./early-access-form.schema";
 import { earlyAccessFormSchema } from "./early-access-form.schema";
 

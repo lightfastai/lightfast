@@ -19,6 +19,7 @@
   "dependencies": {
     "@clerk/nextjs": "catalog:",
     "@clerk/shared": "catalog:",
+    "@hookform/resolvers": "catalog:",
     "@repo/ui": "workspace:*",
     "@rescale/nemo": "^2.1.1",
     "@sentry/nextjs": "catalog:",
@@ -29,6 +30,7 @@
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:^",
     "@vendor/seo": "workspace:*",
+    "@vendor/upstash": "workspace:*",
     "@vercel/microfrontends": "^2.3.0",
     "@vercel/related-projects": "catalog:",
     "geist": "catalog:",
@@ -36,7 +38,9 @@
     "next": "catalog:next16",
     "nuqs": "^2.8.9",
     "react": "19.2.4",
+    "react-confetti": "^6.4.0",
     "react-dom": "19.2.4",
+    "react-hook-form": "catalog:",
     "zod": "catalog:zod3"
   },
   "devDependencies": {
