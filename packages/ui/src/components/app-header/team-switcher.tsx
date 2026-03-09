@@ -1,54 +1,60 @@
 "use client";
 
-import { useTRPC } from "@repo/console-trpc/react";
-import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
-import { Button } from "@repo/ui/components/ui/button";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { cn } from "../../lib/utils";
+import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
-import { cn } from "@repo/ui/lib/utils";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+} from "../ui/dropdown-menu";
 import { TeamSwitcherLink } from "./team-switcher-link";
 
 type TeamSwitcherMode = "organization" | "account";
 
+interface Organization {
+  id: string;
+  slug: string | null;
+  name: string;
+}
+
 interface TeamSwitcherProps {
+  /** List of organizations the user belongs to */
+  organizations: Organization[];
   /**
    * Mode determines what is displayed:
    * - "organization": Shows current organization name
    * - "account": Shows "My Account" but allows switching to organizations
    */
   mode?: TeamSwitcherMode;
+  /** Called when user selects an org — app should handle auth SDK (e.g., clerk.setActive) */
+  onOrgSelect: (orgId: string, orgSlug: string) => Promise<void>;
+  /** Href for "Create Team" link (e.g., "/account/teams/new") */
+  createTeamHref: string;
 }
 
-export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
-  const trpc = useTRPC();
+export type { Organization, TeamSwitcherMode, TeamSwitcherProps };
+
+export function TeamSwitcher({
+  organizations,
+  mode = "organization",
+  onOrgSelect,
+  createTeamHref,
+}: TeamSwitcherProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  // Fetch organizations
-  const { data: organizations = [] } = useSuspenseQuery({
-    ...trpc.organization.listUserOrganizations.queryOptions(),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000,
-  });
-
   // Extract org slug from pathname (e.g., /someteam/... -> someteam)
-  // Use URL as source of truth instead of Clerk's useOrganization() to avoid race conditions
   const currentOrgSlug = (() => {
     if (mode === "account") {
       return null;
     }
     const pathParts = pathname.split("/").filter(Boolean);
-    // First path part is the org slug (unless it's a reserved route like /new, /account, /api)
     const reservedRoutes = ["new", "account", "api", "sign-in", "sign-up"];
     if (pathParts[0] && !reservedRoutes.includes(pathParts[0])) {
       return pathParts[0];
@@ -56,12 +62,10 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
     return null;
   })();
 
-  // Find current organization by slug from URL
   const currentOrg = currentOrgSlug
     ? organizations.find((org) => org.slug === currentOrgSlug)
     : null;
 
-  // Get initials for avatar
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -71,7 +75,6 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
       .slice(0, 2);
   };
 
-  // Determine display text and avatar based on mode
   const displayText =
     mode === "account" ? "My Account" : (currentOrg?.name ?? "Select team");
   const displayInitials =
@@ -80,12 +83,11 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
   return (
     <DropdownMenu onOpenChange={setOpen} open={open}>
       <div className="flex items-center gap-1">
-        {/* Clickable area - navigates to org (no styling) */}
         {mode === "organization" && currentOrg ? (
           <TeamSwitcherLink
             className="flex min-w-0 items-center gap-2"
-            orgId={currentOrg.id}
-            orgSlug={currentOrg.slug}
+            href={`/${currentOrg.slug}`}
+            onNavigate={() => onOrgSelect(currentOrg.id, currentOrg.slug ?? "")}
           >
             <Avatar className="size-6">
               <AvatarFallback className="bg-foreground text-[10px] text-background">
@@ -105,7 +107,6 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
           </div>
         )}
 
-        {/* Dropdown chevron trigger - shadcn ghost button */}
         <DropdownMenuTrigger asChild>
           <Button className="h-8 w-8 p-0" size="sm" variant="ghost">
             <ChevronsUpDown className="h-4 w-4 opacity-50" />
@@ -117,8 +118,6 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
           <p className="font-medium text-muted-foreground text-xs">Teams</p>
         </div>
         {organizations.map((org) => {
-          // In account mode, no org is selected (no checkmark)
-          // In organization mode, show checkmark for active org
           const isSelected =
             mode === "organization" && currentOrg?.id === org.id;
 
@@ -129,9 +128,9 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
                   "flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent focus:bg-accent",
                   isSelected && "bg-muted/50"
                 )}
-                onSwitch={() => setOpen(false)}
-                orgId={org.id}
-                orgSlug={org.slug}
+                href={`/${org.slug}`}
+                onClick={() => setOpen(false)}
+                onNavigate={() => onOrgSelect(org.id, org.slug ?? "")}
               >
                 <Avatar className="h-5 w-5 shrink-0">
                   <AvatarFallback className="bg-foreground text-[10px] text-background">
@@ -147,11 +146,10 @@ export function TeamSwitcher({ mode = "organization" }: TeamSwitcherProps) {
           );
         })}
 
-        {/* Create Team */}
         <DropdownMenuItem asChild className="p-0">
           <Link
             className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground focus:bg-accent"
-            href="/account/teams/new"
+            href={createTeamHref}
             prefetch={true}
           >
             <div className="flex h-5 w-5 items-center justify-center rounded-full border border-muted-foreground/50 border-dashed">

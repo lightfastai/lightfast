@@ -17,10 +17,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
+import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
+import { useTRPC } from "@repo/console-trpc/react";
+import { useOrganizationList } from "@vendor/clerk/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { BookOpen, HelpCircle, Mail } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TeamSwitcher } from "./team-switcher";
 
 /**
  * Navigation item types
@@ -116,6 +119,21 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
  */
 export function AppSidebar() {
   const pathname = usePathname();
+  const trpc = useTRPC();
+  const { setActive } = useOrganizationList();
+
+  const { data: organizations = [] } = useSuspenseQuery({
+    ...trpc.organization.listUserOrganizations.queryOptions(),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const handleOrgSelect = async (orgId: string) => {
+    if (setActive) {
+      await setActive({ organization: orgId });
+    }
+  };
 
   // Extract orgSlug and workspaceName from pathname
   // Pathname format: /[slug]/[workspaceName]/...
@@ -146,7 +164,12 @@ export function AppSidebar() {
       {/* Org component header - only show if in org context */}
       {orgSlug && (
         <div className="flex h-14 items-center px-4">
-          <TeamSwitcher mode={mode} />
+          <TeamSwitcher
+            createTeamHref="/account/teams/new"
+            mode={mode}
+            onOrgSelect={handleOrgSelect}
+            organizations={organizations}
+          />
         </div>
       )}
       <SidebarContent>

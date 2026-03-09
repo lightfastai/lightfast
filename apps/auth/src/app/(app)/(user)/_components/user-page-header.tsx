@@ -2,23 +2,20 @@
 
 import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
 import { UserMenu } from "@repo/ui/components/app-header/user-menu";
-import { useTRPC } from "@repo/console-trpc/react";
 import { useClerk, useOrganizationList, useUser } from "@vendor/clerk/client";
-import { NotificationsTrigger } from "@vendor/knock/components/trigger";
-import { useSuspenseQuery } from "@tanstack/react-query";
 
 export function UserPageHeader() {
-  const trpc = useTRPC();
   const { signOut } = useClerk();
   const { user, isLoaded } = useUser();
-  const { setActive } = useOrganizationList();
-
-  const { data: organizations = [] } = useSuspenseQuery({
-    ...trpc.organization.listUserOrganizations.queryOptions(),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000,
+  const { setActive, userMemberships } = useOrganizationList({
+    userMemberships: { infinite: true },
   });
+
+  const organizations = (userMemberships.data ?? []).map((m) => ({
+    id: m.organization.id,
+    slug: m.organization.slug,
+    name: m.organization.name,
+  }));
 
   const handleOrgSelect = async (orgId: string) => {
     if (setActive) {
@@ -51,7 +48,6 @@ export function UserPageHeader() {
         organizations={organizations}
       />
       <div className="ml-auto flex items-center gap-3">
-        <NotificationsTrigger />
         {isLoaded && user && (
           <UserMenu
             email={email}
