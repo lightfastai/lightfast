@@ -1,5 +1,6 @@
 "use client";
 
+import { TeamSwitcherLink } from "@repo/ui/components/app-header/team-switcher-link";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -9,11 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { cn } from "@repo/ui/lib/utils";
+import { useOrganizationList } from "@vendor/clerk/client";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { TeamSwitcherLink } from "./team-switcher-link";
 
 interface WorkspaceSwitcherProps {
   orgSlug: string;
@@ -26,6 +27,7 @@ export function WorkspaceSwitcher({
 }: WorkspaceSwitcherProps) {
   const trpc = useTRPC();
   const [open, setOpen] = useState(false);
+  const { setActive } = useOrganizationList();
 
   // Fetch organizations to get current org
   const { data: organizations = [] } = useSuspenseQuery({
@@ -70,9 +72,10 @@ export function WorkspaceSwitcher({
         {currentWorkspace ? (
           <TeamSwitcherLink
             className="flex min-w-0 items-center"
-            orgId={currentOrg.id}
-            orgSlug={currentOrg.slug}
-            workspaceName={currentWorkspace.name}
+            href={`/${currentOrg.slug}/${currentWorkspace.name}`}
+            onNavigate={async () => {
+              if (setActive) await setActive({ organization: currentOrg.id });
+            }}
           >
             <span className="truncate font-medium text-sm">
               {currentWorkspace.name}
@@ -112,10 +115,11 @@ export function WorkspaceSwitcher({
                   "flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent focus:bg-accent",
                   isSelected && "bg-muted/50"
                 )}
-                onSwitch={() => setOpen(false)}
-                orgId={currentOrg.id}
-                orgSlug={currentOrg.slug}
-                workspaceName={workspace.name}
+                href={`/${currentOrg.slug}/${workspace.name}`}
+                onClick={() => setOpen(false)}
+                onNavigate={async () => {
+                  if (setActive) await setActive({ organization: currentOrg.id });
+                }}
               >
                 <span className="flex-1 truncate text-left">
                   {workspace.name}
