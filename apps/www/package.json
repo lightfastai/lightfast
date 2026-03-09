@@ -19,7 +19,6 @@
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
-    "@hookform/resolvers": "catalog:",
     "@repo/og": "workspace:*",
     "@repo/ui": "workspace:*",
     "@rescale/nemo": "^2.1.1",
@@ -33,7 +32,6 @@
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:*",
     "@vendor/seo": "workspace:*",
-    "@vendor/upstash": "workspace:*",
     "@vercel/microfrontends": "^2.3.0",
     "feed": "^5.2.0",
     "framer-motion": "^11.18.2",
@@ -43,9 +41,7 @@
     "lucide-react": "catalog:",
     "next": "catalog:next16",
     "react": "19.2.4",
-    "react-confetti": "^6.4.0",
     "react-dom": "19.2.4",
-    "react-hook-form": "catalog:",
     "zod": "catalog:zod3"
   },
   "devDependencies": {

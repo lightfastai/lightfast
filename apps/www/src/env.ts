@@ -6,7 +6,6 @@ import { env as nextEnv } from "@vendor/next/env";
 import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { env as securityEnv } from "@vendor/security/env";
-import { upstashEnv } from "@vendor/upstash/env";
 import { z } from "zod";
 // NOTE: Avoid importing TS files from vendor packages at config-load time.
 // Mirror the minimal BaseHub env schema here to prevent Node resolution issues.
@@ -20,7 +19,6 @@ export const env = createEnv({
     emailEnv,
     inngestEnv,
     nextEnv,
-    upstashEnv,
   ],
   shared: {
     NODE_ENV: z
@@ -32,8 +30,6 @@ export const env = createEnv({
    * This way you can ensure the app isn't built with invalid env vars.
    */
   server: {
-    // Clerk secret key for waitlist API (server-only, no ClerkProvider needed)
-    CLERK_SECRET_KEY: z.string().min(1).startsWith("sk_"),
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
     PORT: z.coerce.number().positive().optional().default(3000),
     BASEHUB_TOKEN: z.string().min(1).startsWith("bshb_pk_"),

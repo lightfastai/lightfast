@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { serializeSignUpParams } from "../_lib/search-params";
 
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -17,18 +18,22 @@ export async function initiateSignUp(formData: FormData) {
   if (!parsed.success) {
     const message =
       parsed.error.flatten().fieldErrors.email?.[0] ?? "Invalid email";
-    const ticketParam = formData.get("ticket")
-      ? `&ticket=${encodeURIComponent(formData.get("ticket") as string)}`
-      : "";
-    redirect(`/sign-up?error=${encodeURIComponent(message)}${ticketParam}`);
+    const rawTicket = (formData.get("ticket") as string | null) ?? undefined;
+    redirect(
+      serializeSignUpParams("/sign-up", {
+        error: message,
+        ticket: rawTicket ?? null,
+      }),
+    );
   }
 
   // Email validated. Redirect to OTP step — the client island will handle
   // signUp.emailCode.sendCode() or signUp.ticket() via Clerk's FAPI.
-  const ticketParam = parsed.data.ticket
-    ? `&ticket=${encodeURIComponent(parsed.data.ticket)}`
-    : "";
   redirect(
-    `/sign-up?step=code&email=${encodeURIComponent(parsed.data.email)}${ticketParam}`
+    serializeSignUpParams("/sign-up", {
+      step: "code",
+      email: parsed.data.email,
+      ticket: parsed.data.ticket ?? null,
+    }),
   );
 }
