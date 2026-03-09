@@ -1301,10 +1301,6 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
-  internal/eslint: {}
-
-  internal/prettier: {}
-
   internal/typescript: {}
 
   packages/cms-workflows:
@@ -2169,8 +2165,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-
-  packages/tech-stack-detector: {}
 
   packages/ui:
     dependencies:
