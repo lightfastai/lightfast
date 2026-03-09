@@ -48,9 +48,9 @@ test.describe("Sign-In: Email Code Flow", () => {
     const otpInput = page.getByRole("textbox");
     await otpInput.fill("424242");
 
-    // Step 3: should show verifying/redirecting state
-    await expect(page.getByText(/Verifying|Redirecting/)).toBeVisible({
-      timeout: 10_000,
+    // Must reach "Redirecting..." — if stuck at "Verifying..." this fails
+    await expect(page.getByText("Redirecting...")).toBeVisible({
+      timeout: 15_000,
     });
   });
 
@@ -86,5 +86,21 @@ test.describe("Sign-In: Email Code Flow", () => {
     // Back button uses window.location.href — may go through MF proxy
     await expect(page).toHaveURL(/\/sign-in$/);
     await expect(page.getByPlaceholder("Email Address")).toBeVisible();
+  });
+
+  test("clicking GitHub button initiates OAuth redirect", async ({ page }) => {
+    await setupClerkTestingToken({ page });
+    await page.goto("/sign-in");
+
+    const githubButton = page.getByRole("button", {
+      name: "Continue with GitHub",
+    });
+    await expect(githubButton).toBeVisible();
+    await githubButton.click();
+
+    // Clerk's SSO redirect should navigate away from /sign-in
+    await page.waitForURL((url) => !url.pathname.startsWith("/sign-in"), {
+      timeout: 15_000,
+    });
   });
 });

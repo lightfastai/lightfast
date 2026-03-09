@@ -63,4 +63,21 @@ test.describe("Error States", () => {
       page.locator("[data-slot='alert-circle'], .text-destructive")
     ).toBeVisible({ timeout: 10_000 });
   });
+
+  test("too_many_requests error: OTP step loads cleanly without rate-limit error", async ({
+    page,
+  }) => {
+    await setupClerkTestingToken({ page });
+    await page.goto("/sign-in");
+
+    await page
+      .getByPlaceholder("Email Address")
+      .fill("test+clerk_test@lightfast.ai");
+    await page.getByRole("button", { name: "Continue with Email" }).click();
+    await expect(page).toHaveURL(/step=code/);
+
+    // OTP island should render without showing a rate-limit error initially
+    await expect(page.getByText("We sent a verification code")).toBeVisible();
+    await expect(page.getByText("Too many attempts")).not.toBeVisible();
+  });
 });

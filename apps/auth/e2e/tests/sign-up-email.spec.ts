@@ -47,9 +47,34 @@ test.describe("Sign-Up: Email Code Flow", () => {
     const otpInput = page.getByRole("textbox");
     await otpInput.fill("424242");
 
-    await expect(page.getByText(/Verifying|Redirecting/)).toBeVisible({
-      timeout: 10_000,
+    // Must reach "Redirecting..." — if stuck at "Verifying..." this fails
+    await expect(page.getByText("Redirecting...")).toBeVisible({
+      timeout: 15_000,
     });
+  });
+
+  test("sign-up create request includes legal_accepted", async ({ page }) => {
+    await setupClerkTestingToken({ page });
+
+    const clerkCreateRequests: string[] = [];
+    page.on("request", (req) => {
+      if (req.method() === "POST" && req.url().includes("sign_ups")) {
+        clerkCreateRequests.push(req.postData() ?? "");
+      }
+    });
+
+    await page.goto("/sign-up");
+
+    const email = `signup-${Date.now()}+clerk_test@lightfast.ai`;
+    await page.getByPlaceholder("Email Address").fill(email);
+    await page.getByRole("button", { name: "Continue with Email" }).click();
+    await expect(page).toHaveURL(/step=code/);
+
+    // Verify at least one sign_ups POST included legal_accepted
+    const hasLegalAccepted = clerkCreateRequests.some((body) =>
+      body.includes("legal_accepted")
+    );
+    expect(hasLegalAccepted).toBe(true);
   });
 
   test("sign-in link navigates to /sign-in", async ({ page }) => {
@@ -69,5 +94,23 @@ test.describe("Sign-Up: Email Code Flow", () => {
     await expect(
       page.getByText("You've been invited to join Lightfast")
     ).toBeVisible();
+  });
+
+  test("clicking GitHub button initiates OAuth redirect on sign-up", async ({
+    page,
+  }) => {
+    await setupClerkTestingToken({ page });
+    await page.goto("/sign-up");
+
+    const githubButton = page.getByRole("button", {
+      name: "Continue with GitHub",
+    });
+    await expect(githubButton).toBeVisible();
+    await githubButton.click();
+
+    // Should navigate away from /sign-up
+    await page.waitForURL((url) => !url.pathname.startsWith("/sign-up"), {
+      timeout: 15_000,
+    });
   });
 });
