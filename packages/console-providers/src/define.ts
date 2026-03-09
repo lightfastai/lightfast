@@ -69,9 +69,6 @@ export function actionEvent<
   return { kind: "with-actions", ...def };
 }
 
-/** @deprecated Use simpleEvent() or actionEvent() */
-export const defineEvent = simpleEvent;
-
 /** Webhook extraction functions — pure, no env/DB/framework */
 export interface WebhookDef<TConfig> {
   extractDeliveryId: (headers: Headers, payload: unknown) => string;

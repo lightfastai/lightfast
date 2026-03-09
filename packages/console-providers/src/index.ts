@@ -13,7 +13,6 @@ export type {
 } from "./define";
 export {
   actionEvent,
-  defineEvent,
   defineProvider,
   simpleEvent,
 } from "./define";

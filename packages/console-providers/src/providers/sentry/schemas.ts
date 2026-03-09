@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // ─── Shared sub-schemas ──────────────────────────────────────────────────────
 
-export const sentryActorSchema = z.object({
+const sentryActorSchema = z.object({
   type: z.enum(["user", "application"]),
   id: z.union([z.string(), z.number()]),
   name: z.string(),
@@ -19,7 +19,7 @@ const sentryIssueMetadataSchema = z
   })
   .passthrough();
 
-export const sentryIssueSchema = z.object({
+const sentryIssueSchema = z.object({
   id: z.string(),
   shortId: z.string(),
   title: z.string(),
@@ -99,7 +99,7 @@ const sentryStackFrameSchema = z.object({
   module: z.string().nullable().optional(),
 });
 
-export const sentryErrorEventSchema = z.object({
+const sentryErrorEventSchema = z.object({
   event_id: z.string(),
   project: z.number(),
   timestamp: z.union([z.string(), z.number()]),

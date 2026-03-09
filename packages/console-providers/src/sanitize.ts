@@ -7,10 +7,10 @@
  */
 
 /** Maximum body length for PostTransformEvent (10KB) */
-export const MAX_BODY_LENGTH = 10_000;
+const MAX_BODY_LENGTH = 10_000;
 
 /** Maximum title length for PostTransformEvent */
-export const MAX_TITLE_LENGTH = 200;
+const MAX_TITLE_LENGTH = 200;
 
 const HTML_ENTITIES: Record<string, string> = {
   "&": "&amp;",

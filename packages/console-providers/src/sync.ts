@@ -10,5 +10,3 @@ export const syncSchema = z.object({
   events: z.array(z.string()).optional(),
   autoSync: z.boolean(),
 });
-
-export type SyncSettings = z.infer<typeof syncSchema>;

@@ -35,16 +35,16 @@
       "project": ["src/**/*.{ts,tsx}"]
     },
     "apps/relay": {
-      "entry": ["src/index.ts"],
+      "entry": ["src/index.ts", "src/routes-table.ts"],
       "project": ["src/**/*.ts"]
     },
     "apps/gateway": {
-      "entry": ["src/index.ts"],
+      "entry": ["src/index.ts", "src/routes-table.ts"],
       "project": ["src/**/*.ts"],
       "ignoreDependencies": ["drizzle-orm"]
     },
     "apps/backfill": {
-      "entry": ["src/index.ts"],
+      "entry": ["src/index.ts", "src/routes-table.ts"],
       "project": ["src/**/*.ts"]
     },
     "api/*": {
@@ -76,7 +76,11 @@
       "project": ["src/**/*.ts"]
     },
     "packages/integration-tests": {
-      "entry": ["src/**/*.test.ts", "src/**/*.integration.test.ts"],
+      "entry": [
+        "src/**/*.test.ts",
+        "src/**/*.integration.test.ts",
+        "src/__stubs__/*.ts"
+      ],
       "project": ["src/**/*.ts"],
       "ignoreDependencies": [
         "@repo/console-backfill",
@@ -143,7 +147,9 @@
     "worktrees/**",
     "thoughts/**",
     ".agents/**",
-    ".claude/**"
+    ".claude/**",
+    "apps/console/src/lib/base-url.ts",
+    "apps/www/src/lib/base-url.ts"
   ],
   "ignoreWorkspaces": ["packages/console-remotion"],
   "ignoreDependencies": [

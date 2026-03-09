@@ -1,7 +1,7 @@
 import type { PostTransformEvent } from "./post-transform-event";
 import { postTransformEventSchema } from "./post-transform-event";
 
-export interface ValidationResult<T> {
+interface ValidationResult<T> {
   data?: T;
   errors?: string[];
   success: boolean;

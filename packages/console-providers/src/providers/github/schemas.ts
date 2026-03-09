@@ -2,13 +2,13 @@ import { z } from "zod";
 
 // ─── Shared sub-schemas ──────────────────────────────────────────────────────
 
-export const ghUserSchema = z.object({
+const ghUserSchema = z.object({
   login: z.string(),
   id: z.number(),
   avatar_url: z.string(),
 });
 
-export const ghRepositorySchema = z.object({
+const ghRepositorySchema = z.object({
   id: z.number(),
   name: z.string(),
   full_name: z.string(),

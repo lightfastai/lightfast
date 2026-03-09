@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // ─── Shared sub-schemas ──────────────────────────────────────────────────────
 
-export const linearActorSchema = z.object({
+const linearActorSchema = z.object({
   id: z.string(),
   type: z.enum(["user", "oauthClient", "integration"]).optional(),
   name: z.string(),
@@ -10,7 +10,7 @@ export const linearActorSchema = z.object({
   url: z.string().optional(),
 });
 
-export const linearUserSchema = z.object({
+const linearUserSchema = z.object({
   id: z.string(),
   name: z.string(),
   displayName: z.string().optional(),
@@ -20,13 +20,13 @@ export const linearUserSchema = z.object({
   active: z.boolean().optional(),
 });
 
-export const linearLabelSchema = z.object({
+const linearLabelSchema = z.object({
   id: z.string(),
   name: z.string(),
   color: z.string(),
 });
 
-export const linearAttachmentSchema = z.object({
+const linearAttachmentSchema = z.object({
   id: z.string(),
   title: z.string(),
   url: z.string().optional(),
@@ -43,7 +43,7 @@ export const linearAttachmentSchema = z.object({
 
 // ─── Entity schemas ───────────────────────────────────────────────────────────
 
-export const linearIssueSchema = z.object({
+const linearIssueSchema = z.object({
   id: z.string(),
   identifier: z.string(),
   title: z.string(),
@@ -99,7 +99,7 @@ export const linearIssueSchema = z.object({
     .optional(),
 });
 
-export const linearCommentSchema = z.object({
+const linearCommentSchema = z.object({
   id: z.string(),
   body: z.string(),
   bodyData: z.string().optional(),
@@ -120,7 +120,7 @@ export const linearCommentSchema = z.object({
   parent: z.object({ id: z.string() }).optional(),
 });
 
-export const linearProjectSchema = z.object({
+const linearProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
@@ -163,7 +163,7 @@ export const linearProjectSchema = z.object({
   ),
 });
 
-export const linearCycleSchema = z.object({
+const linearCycleSchema = z.object({
   id: z.string(),
   number: z.number(),
   name: z.string().optional(),
@@ -186,7 +186,7 @@ export const linearCycleSchema = z.object({
   team: z.object({ id: z.string(), key: z.string(), name: z.string() }),
 });
 
-export const linearProjectUpdateSchema = z.object({
+const linearProjectUpdateSchema = z.object({
   id: z.string(),
   body: z.string(),
   bodyData: z.string().optional(),
