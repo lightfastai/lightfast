@@ -9,9 +9,15 @@ test.describe("Middleware Redirects", () => {
     await page.goto("/");
     const url = page.url();
 
-    // Should not stay at the bare auth root — either redirected to
-    // /sign-in or to the MF proxy homepage
-    expect(url.includes("/sign-in") || !url.includes(":4104/")).toBeTruthy();
+    // Should not stay at the bare auth root —
+    // either redirected to /sign-in or to the MF proxy
+    const redirectedToSignIn = url.includes("/sign-in");
+    const leftAuthApp = !url.includes(":4104/");
+
+    expect(
+      redirectedToSignIn || leftAuthApp,
+      `Expected redirect to /sign-in or away from :4104, got: ${url}`
+    ).toBeTruthy();
   });
 
   // Authenticated redirect tests require the full multi-app stack (console + auth)
