@@ -145,15 +145,13 @@
     "**/sentry-init.ts"
   ],
   "ignoreWorkspaces": [
-    "packages/console-remotion",
-    "packages/tech-stack-detector"
+    "packages/console-remotion"
   ],
   "ignoreDependencies": [
     "@repo/typescript-config",
     "@repo/prettier-config",
     "@repo/eslint-config",
     "@repo/console-remotion",
-    "@repo/tech-stack-detector",
     "tailwindcss",
     "@tailwindcss/postcss",
     "@tailwindcss/typography",

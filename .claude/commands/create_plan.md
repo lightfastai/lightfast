@@ -7,6 +7,8 @@ model: opus
 
 You are tasked with creating detailed implementation plans through an interactive, iterative process. You should be skeptical, thorough, and work collaboratively with the user to produce high-quality technical specifications.
 
+**CRITICAL: Use `AskUserQuestion` at every checkpoint where you need user input.** Do not present questions as plain text and continue — use the tool to block execution until the user responds. This ensures the planning process is truly collaborative, not a monologue. Never answer your own questions or pick a design option without explicit user input.
+
 ## Initial Response
 
 When this command is invoked:
@@ -27,8 +29,8 @@ Please provide:
 
 I'll analyze this information and work with you to create a comprehensive plan.
 
-Tip: You can also invoke this command with a ticket file directly: `/create_plan thoughts/allison/tickets/eng_1234.md`
-For deeper analysis, try: `/create_plan think deeply about thoughts/allison/tickets/eng_1234.md`
+Tip: You can also invoke this command with a file directly: `/create_plan thoughts/shared/research/2026-03-06-some-topic.md`
+For deeper analysis, try: `/create_plan think deeply about thoughts/shared/plans/2026-03-06-some-topic.md`
 ```
 
 Then wait for the user's input.
@@ -38,8 +40,7 @@ Then wait for the user's input.
 ### Step 1: Context Gathering & Initial Analysis
 
 1. **Read all mentioned files immediately and FULLY**:
-   - Ticket files (e.g., `thoughts/allison/tickets/eng_1234.md`)
-   - Research documents
+   - Ticket files, research documents
    - Related implementation plans
    - Any JSON/data files mentioned
    - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
@@ -52,11 +53,10 @@ Then wait for the user's input.
    - Use the **codebase-locator** agent to find all files related to the ticket/task
    - Use the **codebase-analyzer** agent to understand how the current implementation works
    - If relevant, use the **thoughts-locator** agent to find any existing thoughts documents about this feature
-   - If a Linear ticket is mentioned, use the **linear-ticket-reader** agent to get full details
 
    These agents will:
    - Find relevant source files, configs, and tests
-   - Identify the specific directories to focus on (e.g., if WUI is mentioned, they'll focus on humanlayer-wui/)
+   - Identify the specific directories to focus on
    - Trace data flow and key functions
    - Return detailed explanations with file:line references
 
@@ -72,6 +72,7 @@ Then wait for the user's input.
    - Determine true scope based on codebase reality
 
 5. **Present informed understanding and focused questions**:
+   First, output your findings as text:
    ```
    Based on the ticket and my research of the codebase, I understand we need to [accurate summary].
 
@@ -79,14 +80,9 @@ Then wait for the user's input.
    - [Current implementation detail with file:line reference]
    - [Relevant pattern or constraint discovered]
    - [Potential complexity or edge case identified]
-
-   Questions that my research couldn't answer:
-   - [Specific technical question that requires human judgment]
-   - [Business logic clarification]
-   - [Design preference that affects implementation]
    ```
 
-   Only ask questions that you genuinely cannot answer through code investigation.
+   Then, **use `AskUserQuestion`** to ask the questions your research couldn't answer. Only ask questions that you genuinely cannot answer through code investigation. Frame the question clearly so the user knows what decision you need from them.
 
 ### Step 2: Research & Discovery
 
@@ -113,9 +109,6 @@ After getting initial clarifications:
    - **thoughts-locator** - To find any research, plans, or decisions about this area
    - **thoughts-analyzer** - To extract key insights from the most relevant documents
 
-   **For related tickets:**
-   - **linear-searcher** - To find similar issues or past implementations
-
    Each agent knows how to:
    - Find the right files and code patterns
    - Identify conventions and patterns to follow
@@ -126,6 +119,7 @@ After getting initial clarifications:
 3. **Wait for ALL sub-tasks to complete** before proceeding
 
 4. **Present findings and design options**:
+   Output your research findings as text:
    ```
    Based on my research, here's what I found:
 
@@ -140,15 +134,16 @@ After getting initial clarifications:
    **Open Questions:**
    - [Technical uncertainty]
    - [Design decision needed]
-
-   Which approach aligns best with your vision?
    ```
+
+   Then, **use `AskUserQuestion`** to ask which approach to take. Include the design options and any open questions in the prompt. Do NOT pick an approach yourself — wait for the user's decision.
 
 ### Step 3: Plan Structure Development
 
 Once aligned on approach:
 
 1. **Create initial plan outline**:
+   Output the proposed structure as text:
    ```
    Here's my proposed plan structure:
 
@@ -159,24 +154,21 @@ Once aligned on approach:
    1. [Phase name] - [what it accomplishes]
    2. [Phase name] - [what it accomplishes]
    3. [Phase name] - [what it accomplishes]
-
-   Does this phasing make sense? Should I adjust the order or granularity?
    ```
 
-2. **Get feedback on structure** before writing details
+   Then, **use `AskUserQuestion`** to ask if the phasing makes sense and whether to adjust order or granularity. Do NOT proceed to writing the detailed plan until the user approves the structure.
 
 ### Step 4: Detailed Plan Writing
 
 After structure approval:
 
-1. **Write the plan** to `thoughts/shared/plans/YYYY-MM-DD-ENG-XXXX-description.md`
-   - Format: `YYYY-MM-DD-ENG-XXXX-description.md` where:
+1. **Write the plan** to `thoughts/shared/plans/YYYY-MM-DD-description.md`
+   - Format: `YYYY-MM-DD-description.md` where:
      - YYYY-MM-DD is today's date
-     - ENG-XXXX is the ticket number (omit if no ticket)
      - description is a brief kebab-case description
    - Examples:
-     - With ticket: `2025-01-08-ENG-1478-parent-child-tracking.md`
-     - Without ticket: `2025-01-08-improve-error-handling.md`
+     - `2026-03-07-provider-config-schema-symmetry.md`
+     - `2026-03-06-sources-new-generic-connect-flow.md`
 2. **Use this template structure**:
 
 ````markdown
@@ -228,8 +220,9 @@ After structure approval:
 - [ ] Migration applies cleanly: `pnpm db:migrate`
 - [ ] Unit tests pass: `pnpm test`
 - [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm check`
+- [ ] Linting passes: `pnpm lint`
 - [ ] Integration tests pass: `pnpm test:integration`
+- [ ] Affected app(s) build successfully: `pnpm build:<app>` (include one per affected app)
 
 #### Manual Verification:
 - [ ] Feature works as expected when tested via UI
@@ -271,21 +264,19 @@ After structure approval:
 
 ## References
 
-- Original ticket: `thoughts/allison/tickets/eng_XXXX.md`
 - Related research: `thoughts/shared/research/[relevant].md`
 - Similar implementation: `[file:line]`
 ````
 
-### Step 5: Sync and Review
+### Step 5: Review
 
-1. **Sync the thoughts directory**:
-   - Run `humanlayer thoughts sync` to sync the newly created plan
-   - This ensures the plan is properly indexed and available
+1. **Present the draft plan location**:
+   Output the file path and a brief summary of the plan.
 
-2. **Present the draft plan location**:
+   Then, **use `AskUserQuestion`** to prompt for review feedback. Ask specifically:
    ```
    I've created the initial implementation plan at:
-   `thoughts/shared/plans/YYYY-MM-DD-ENG-XXXX-description.md`
+   `thoughts/shared/plans/YYYY-MM-DD-description.md`
 
    Please review it and let me know:
    - Are the phases properly scoped?
@@ -294,14 +285,13 @@ After structure approval:
    - Missing edge cases or considerations?
    ```
 
-3. **Iterate based on feedback** - be ready to:
+2. **Iterate based on feedback** - be ready to:
    - Add missing phases
    - Adjust technical approach
    - Clarify success criteria (both automated and manual)
    - Add/remove scope items
-   - After making changes, run `humanlayer thoughts sync` again
 
-4. **Continue refining** until the user is satisfied
+3. **Continue refining** — use `AskUserQuestion` after each iteration until the user confirms the plan is ready.
 
 ## Important Guidelines
 
@@ -322,7 +312,7 @@ After structure approval:
    - Research actual code patterns using parallel sub-tasks
    - Include specific file paths and line numbers
    - Write measurable success criteria with clear automated vs manual distinction
-   - automated steps should use `pnpm` whenever possible - for example `pnpm check` instead of `cd apps/console && npx biome check .`
+   - automated steps should use `pnpm` whenever possible - for example `pnpm lint` instead of `cd apps/console && npx eslint .`
 
 4. **Be Practical**:
    - Focus on incremental, testable changes
@@ -347,9 +337,10 @@ After structure approval:
 **Always separate success criteria into two categories:**
 
 1. **Automated Verification** (can be run by execution agents):
-   - Commands that can be run: `pnpm test`, `pnpm check`, etc.
+   - Commands that can be run: `pnpm test`, `pnpm lint`, `pnpm build:<app>`, etc.
    - Specific files that should exist
    - Code compilation/type checking
+   - App builds for affected apps (catches bundling, edge runtime, and build-time errors that typecheck misses)
    - Automated test suites
 
 2. **Manual Verification** (requires human testing):
@@ -365,8 +356,9 @@ After structure approval:
 #### Automated Verification:
 - [ ] Database migration runs successfully: `pnpm db:migrate`
 - [ ] All unit tests pass: `pnpm test`
-- [ ] No linting errors: `pnpm check`
+- [ ] No linting errors: `pnpm lint`
 - [ ] Type checking passes: `pnpm typecheck`
+- [ ] Affected app(s) build: `pnpm build:console`, `pnpm build:relay`, etc.
 
 #### Manual Verification:
 - [ ] New feature appears correctly in the UI
@@ -409,9 +401,9 @@ When spawning research sub-tasks:
    - What information to extract
    - Expected output format
 4. **Be EXTREMELY specific about directories**:
-   - If the ticket mentions "WUI", specify `humanlayer-wui/` directory
-   - If it mentions "daemon", specify `hld/` directory
-   - Never use generic terms like "UI" when you mean "WUI"
+   - If the task mentions "console", specify `apps/console/` directory
+   - If it mentions "relay", specify `apps/relay/` directory
+   - If it mentions "gateway", specify `apps/gateway/` directory
    - Include the full path context in your prompts
 5. **Specify read-only tools** to use
 6. **Request specific file:line references** in responses
@@ -438,12 +430,21 @@ tasks = [
 User: /create_plan
 Assistant: I'll help you create a detailed implementation plan...
 
-User: We need to add parent-child tracking for Claude sub-tasks. See thoughts/allison/tickets/eng_1478.md
-Assistant: Let me read that ticket file completely first...
+User: We need to add parent-child tracking for sub-tasks. See thoughts/shared/research/2026-03-06-parent-child-tracking.md
+Assistant: Let me read that research document completely first...
 
-[Reads file fully]
+[Reads file fully, spawns codebase-analyzer and codebase-locator agents]
 
-Based on the ticket, I understand we need to track parent-child relationships for Claude sub-task events in the hld daemon. Before I start planning, I have some questions...
+Based on the research and my codebase analysis, I understand we need to track parent-child
+relationships for sub-task events. Here's what I found:
+- [Current implementation details with file:line references]
+- [Relevant patterns discovered]
 
-[Interactive process continues...]
+[Calls AskUserQuestion: "Should the parent-child relationship be stored as a foreign key
+in the events table, or as a separate junction table? The current schema suggests...
+Also, should we support multi-level nesting or just single-parent?"]
+
+User responds → assistant proceeds to deeper research → presents design options →
+AskUserQuestion for approach selection → presents plan structure →
+AskUserQuestion for approval → writes plan → AskUserQuestion for review
 ```
