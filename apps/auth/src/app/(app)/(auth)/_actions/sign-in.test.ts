@@ -23,7 +23,7 @@ describe("initiateSignIn", () => {
 
     await expect(initiateSignIn(formData)).rejects.toThrow("REDIRECT:");
     expect(mockRedirect).toHaveBeenCalledWith(
-      "/sign-in?step=code&email=user%40example.com"
+      "/sign-in?step=code&email=user@example.com"
     );
   });
 
@@ -52,7 +52,7 @@ describe("initiateSignIn", () => {
 
     await expect(initiateSignIn(formData)).rejects.toThrow("REDIRECT:");
     expect(mockRedirect).toHaveBeenCalledWith(
-      "/sign-in?step=code&email=user%2Btest%40example.com"
+      "/sign-in?step=code&email=user%2Btest@example.com"
     );
   });
 });
