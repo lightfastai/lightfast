@@ -1,12 +1,13 @@
 import { Separator } from "@repo/ui/components/ui/separator";
 import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
+import type { SearchParams } from "nuqs/server";
 import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
 import { OAuthButton } from "../_components/oauth-button";
 import { OTPIsland } from "../_components/otp-island";
 import { SessionActivator } from "../_components/session-activator";
-import { signInSearchParams } from "../_lib/search-params";
+import { loadSignInSearchParams } from "../_lib/search-params";
 
 export const metadata: Metadata = createMetadata({
   title: "Sign In - Lightfast Auth",
@@ -32,13 +33,13 @@ export const metadata: Metadata = createMetadata({
   },
 });
 
-export default async function SignInPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+interface PageProps {
+  searchParams: Promise<SearchParams>;
+}
+
+export default async function SignInPage({ searchParams }: PageProps) {
   const { step, email, error, token, waitlist } =
-    await signInSearchParams.parse(searchParams);
+    await loadSignInSearchParams(searchParams);
 
   return (
     <div className="w-full space-y-8">

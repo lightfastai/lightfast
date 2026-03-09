@@ -4,11 +4,12 @@ import { createMetadata } from "@vendor/seo/metadata";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Metadata } from "next";
 import NextLink from "next/link";
+import type { SearchParams } from "nuqs/server";
 import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
 import { OAuthButton } from "../_components/oauth-button";
 import { OTPIsland } from "../_components/otp-island";
-import { signUpSearchParams } from "../_lib/search-params";
+import { loadSignUpSearchParams } from "../_lib/search-params";
 
 export const metadata: Metadata = createMetadata({
   title: "Sign Up - Lightfast Auth",
@@ -34,13 +35,13 @@ export const metadata: Metadata = createMetadata({
   },
 });
 
-export default async function SignUpPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+interface PageProps {
+  searchParams: Promise<SearchParams>;
+}
+
+export default async function SignUpPage({ searchParams }: PageProps) {
   const { step, email, error, ticket, __clerk_ticket, waitlist } =
-    await signUpSearchParams.parse(searchParams);
+    await loadSignUpSearchParams(searchParams);
 
   // Support both ?ticket= (nuqs) and ?__clerk_ticket= (Clerk invitation URL)
   const invitationTicket = ticket ?? __clerk_ticket ?? null;
