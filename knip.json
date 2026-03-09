@@ -25,9 +25,11 @@
       "entry": [
         "src/app/**/*.{ts,tsx}",
         "next.config.ts",
-        "sentry.*.config.ts"
+        "sentry.*.config.ts",
+        "playwright.config.ts",
+        "e2e/**/*.ts"
       ],
-      "project": ["src/**/*.{ts,tsx}"]
+      "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts"]
     },
     "apps/docs": {
       "entry": ["src/app/**/*.{ts,tsx}", "next.config.ts"],
@@ -144,9 +146,7 @@
     "**/sentry.*.config.ts",
     "**/sentry-init.ts"
   ],
-  "ignoreWorkspaces": [
-    "packages/console-remotion"
-  ],
+  "ignoreWorkspaces": ["packages/console-remotion"],
   "ignoreDependencies": [
     "@repo/typescript-config",
     "@repo/prettier-config",

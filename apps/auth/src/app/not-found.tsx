@@ -19,7 +19,7 @@ export default function NotFound() {
           code={ErrorCode.NotFound}
           description="Sorry, we couldn't find the page you're looking for."
         >
-          <Button asChild>
+          <Button asChild size="lg">
             <Link href="/">Return Home</Link>
           </Button>
         </LightfastErrorPage>

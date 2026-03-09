@@ -2,3 +2,9 @@
 # clerk configuration (can include secrets)
 /.clerk/
 .vercel
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
