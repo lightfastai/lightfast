@@ -21,7 +21,9 @@
         "LOGTAIL_SOURCE_TOKEN",
         "LOGTAIL_URL",
         "HEALTH_CHECK_AUTH_TOKEN",
-        "ARCJET_KEY"
+        "ARCJET_KEY",
+        "KV_REST_API_URL",
+        "KV_REST_API_TOKEN"
       ],
       "outputs": [
         ".next/**",
