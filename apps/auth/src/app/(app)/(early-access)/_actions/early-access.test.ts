@@ -265,9 +265,7 @@ describe("joinEarlyAccessAction", () => {
   // ── Clerk errors ────────────────────────────────────────────────
 
   it("redirects to success on Clerk email_address_exists (already registered)", async () => {
-    mockWaitlistCreate.mockRejectedValue(
-      clerkAPIError("email_address_exists")
-    );
+    mockWaitlistCreate.mockRejectedValue(clerkAPIError("email_address_exists"));
     await expect(joinEarlyAccessAction(validFormData())).rejects.toThrow(
       "REDIRECT:"
     );

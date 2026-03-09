@@ -25,12 +25,22 @@ export function AppHeader() {
     "";
 
   const initials = (() => {
-    if (!user) return "LF";
+    if (!user) {
+      return "LF";
+    }
     const { firstName, lastName, username } = user;
-    if (firstName && lastName) return `${firstName[0]}${lastName[0]}`.toUpperCase();
-    if (firstName) return firstName.substring(0, 2).toUpperCase();
-    if (lastName) return lastName.substring(0, 2).toUpperCase();
-    if (username) return username.substring(0, 2).toUpperCase();
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    }
+    if (firstName) {
+      return firstName.substring(0, 2).toUpperCase();
+    }
+    if (lastName) {
+      return lastName.substring(0, 2).toUpperCase();
+    }
+    if (username) {
+      return username.substring(0, 2).toUpperCase();
+    }
     return "LF";
   })();
 

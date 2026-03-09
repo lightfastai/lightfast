@@ -23,7 +23,7 @@ export async function initiateSignUp(formData: FormData) {
       serializeSignUpParams("/sign-up", {
         error: message,
         ticket: rawTicket ?? null,
-      }),
+      })
     );
   }
 
@@ -34,6 +34,6 @@ export async function initiateSignUp(formData: FormData) {
       step: "code",
       email: parsed.data.email,
       ticket: parsed.data.ticket ?? null,
-    }),
+    })
   );
 }

@@ -2,6 +2,7 @@
 
 import { Icons } from "@repo/ui/components/icons";
 import { useSignIn } from "@vendor/clerk/client";
+import Link from "next/link";
 import * as React from "react";
 import { consoleUrl } from "~/lib/related-projects";
 
@@ -39,9 +40,12 @@ export function SessionActivator({ token }: SessionActivatorProps) {
     return (
       <div className="space-y-4 text-center">
         <p className="text-destructive text-sm">{error}</p>
-        <a className="text-muted-foreground text-sm underline" href="/sign-in">
+        <Link
+          className="text-muted-foreground text-sm underline"
+          href="/sign-in"
+        >
           Back to Sign In
-        </a>
+        </Link>
       </div>
     );
   }

@@ -3,8 +3,8 @@ import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
 import { ConfettiWrapper } from "../_components/confetti-wrapper";
-import { EarlyAccessErrorBanner } from "../_components/error-banner";
 import { EarlyAccessFormServer } from "../_components/early-access-form-server";
+import { EarlyAccessErrorBanner } from "../_components/error-banner";
 import { loadEarlyAccessSearchParams } from "../_lib/search-params";
 
 export const metadata: Metadata = createMetadata({
@@ -60,17 +60,15 @@ export default async function EarlyAccessPage({
                 You're in!
               </h2>
               <p className="text-muted-foreground text-sm">
-                Successfully joined early access! We'll send you an invite
-                when Lightfast is ready.
+                Successfully joined early access! We'll send you an invite when
+                Lightfast is ready.
               </p>
             </div>
             {email && (
               <div className="rounded-lg border border-border bg-muted/30 p-4">
                 <p className="text-muted-foreground text-sm">
                   We'll send updates to{" "}
-                  <span className="font-medium text-foreground">
-                    {email}
-                  </span>
+                  <span className="font-medium text-foreground">{email}</span>
                 </p>
               </div>
             )}
@@ -91,9 +89,7 @@ export default async function EarlyAccessPage({
             emailError={emailError}
             initialCompanySize={companySize}
             initialEmail={email}
-            initialSources={
-              sources ? sources.split(",").filter(Boolean) : []
-            }
+            initialSources={sources ? sources.split(",").filter(Boolean) : []}
             sourcesError={sourcesError}
           />
         </>

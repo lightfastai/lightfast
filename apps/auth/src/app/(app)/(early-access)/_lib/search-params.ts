@@ -1,4 +1,9 @@
-import { createLoader, createSerializer, parseAsBoolean, parseAsString } from "nuqs/server";
+import {
+  createLoader,
+  createSerializer,
+  parseAsBoolean,
+  parseAsString,
+} from "nuqs/server";
 
 export const earlyAccessSearchParams = {
   // Form field values (preserved across validation errors)

@@ -1,7 +1,7 @@
 "use client";
 
-import { TeamSwitcherLink } from "@repo/ui/components/app-header/team-switcher-link";
 import { useTRPC } from "@repo/console-trpc/react";
+import { TeamSwitcherLink } from "@repo/ui/components/app-header/team-switcher-link";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -10,8 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { cn } from "@repo/ui/lib/utils";
-import { useOrganizationList } from "@vendor/clerk/client";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useOrganizationList } from "@vendor/clerk/client";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -74,7 +74,9 @@ export function WorkspaceSwitcher({
             className="flex min-w-0 items-center"
             href={`/${currentOrg.slug}/${currentWorkspace.name}`}
             onNavigate={async () => {
-              if (setActive) await setActive({ organization: currentOrg.id });
+              if (setActive) {
+                await setActive({ organization: currentOrg.id });
+              }
             }}
           >
             <span className="truncate font-medium text-sm">
@@ -118,7 +120,9 @@ export function WorkspaceSwitcher({
                 href={`/${currentOrg.slug}/${workspace.name}`}
                 onClick={() => setOpen(false)}
                 onNavigate={async () => {
-                  if (setActive) await setActive({ organization: currentOrg.id });
+                  if (setActive) {
+                    await setActive({ organization: currentOrg.id });
+                  }
                 }}
               >
                 <span className="flex-1 truncate text-left">

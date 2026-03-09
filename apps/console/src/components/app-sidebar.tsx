@@ -1,5 +1,7 @@
 "use client";
 
+import { useTRPC } from "@repo/console-trpc/react";
+import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Popover,
@@ -17,10 +19,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
-import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
-import { useTRPC } from "@repo/console-trpc/react";
-import { useOrganizationList } from "@vendor/clerk/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useOrganizationList } from "@vendor/clerk/client";
 import { BookOpen, HelpCircle, Mail } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

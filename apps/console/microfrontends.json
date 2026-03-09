@@ -60,7 +60,8 @@
             "/sign-in",
             "/sign-in/:path*",
             "/sign-up",
-            "/sign-up/opengraph-image-:hash"
+            "/sign-up/opengraph-image-:hash",
+            "/test-page"
           ]
         }
       ]

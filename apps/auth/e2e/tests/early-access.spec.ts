@@ -58,9 +58,7 @@ test.describe("Early Access: URL-Driven States", () => {
       "/early-access?emailError=Please+enter+a+valid+email&email=bad"
     );
 
-    await expect(
-      page.getByText("Please enter a valid email")
-    ).toBeVisible();
+    await expect(page.getByText("Please enter a valid email")).toBeVisible();
   });
 
   test("field values are preserved in error state", async ({ page }) => {
@@ -72,9 +70,7 @@ test.describe("Early Access: URL-Driven States", () => {
     await expect(page.getByLabel("Email address")).toHaveValue(
       "test@company.com"
     );
-    await expect(
-      page.getByText("Please select at least one")
-    ).toBeVisible();
+    await expect(page.getByText("Please select at least one")).toBeVisible();
   });
 
   test("terms and privacy links are present", async ({ page }) => {

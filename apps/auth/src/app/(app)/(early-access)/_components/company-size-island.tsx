@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { useState } from "react";
+import { useRef } from "react";
 
 const COMPANY_SIZES = [
   { value: "1-10", label: "1-10 employees" },
@@ -27,7 +27,7 @@ export function CompanySizeIsland({
   defaultValue,
   error,
 }: CompanySizeIslandProps) {
-  const [value, setValue] = useState(defaultValue);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="space-y-2">
@@ -37,8 +37,21 @@ export function CompanySizeIsland({
       >
         Company size
       </label>
-      <input id="companySize" name="companySize" type="hidden" value={value} />
-      <Select onValueChange={setValue} value={value}>
+      <input
+        defaultValue={defaultValue}
+        id="companySize"
+        name="companySize"
+        ref={inputRef}
+        type="hidden"
+      />
+      <Select
+        defaultValue={defaultValue}
+        onValueChange={(v) => {
+          if (inputRef.current) {
+            inputRef.current.value = v;
+          }
+        }}
+      >
         <SelectTrigger>
           <SelectValue placeholder="Select company size" />
         </SelectTrigger>

@@ -1,5 +1,5 @@
-import { ArrowLeft } from "lucide-react";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
+import { ArrowLeft } from "lucide-react";
 import type React from "react";
 
 export default function EarlyAccessLayout({

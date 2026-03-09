@@ -40,7 +40,7 @@ interface SourcesIslandProps {
 }
 
 export function SourcesIsland({ defaultSources, error }: SourcesIslandProps) {
-  const [selected, setSelected] = useState<string[]>(defaultSources);
+  const [selected, setSelected] = useState<string[]>(() => defaultSources);
   const [open, setOpen] = useState(false);
 
   return (
@@ -85,13 +85,17 @@ export function SourcesIsland({ defaultSources, error }: SourcesIslandProps) {
                           className="ml-1 cursor-pointer rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelected((prev) => prev.filter((s) => s !== value));
+                            setSelected((prev) =>
+                              prev.filter((s) => s !== value)
+                            );
                           }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
                               e.stopPropagation();
-                              setSelected((prev) => prev.filter((s) => s !== value));
+                              setSelected((prev) =>
+                                prev.filter((s) => s !== value)
+                              );
                             }
                           }}
                           role="button"

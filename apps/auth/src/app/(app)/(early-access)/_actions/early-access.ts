@@ -48,10 +48,7 @@ const aj = arcjet({
     }),
     detectBot({
       mode: "LIVE",
-      allow: [
-        "CATEGORY:SEARCH_ENGINE",
-        "CATEGORY:MONITOR",
-      ],
+      allow: ["CATEGORY:SEARCH_ENGINE", "CATEGORY:MONITOR"],
     }),
     slidingWindow({
       mode: "LIVE",
@@ -169,7 +166,9 @@ export async function joinEarlyAccessAction(
         );
       }
     } catch (redisError) {
-      if (isRedirectError(redisError)) throw redisError;
+      if (isRedirectError(redisError)) {
+        throw redisError;
+      }
       console.error("Redis error checking early access:", redisError);
       captureException(redisError, {
         tags: { action: "joinEarlyAccess:redis-check", email },
@@ -201,13 +200,18 @@ export async function joinEarlyAccessAction(
     );
   } catch (error) {
     // redirect() throws NEXT_REDIRECT — must re-throw
-    if (isRedirectError(error)) throw error;
+    if (isRedirectError(error)) {
+      throw error;
+    }
 
     // Handle Clerk SDK errors with typed error checking
     if (isClerkAPIResponseError(error)) {
       const code = error.errors[0]?.code;
 
-      if (code === "email_address_exists" || code === "form_identifier_exists") {
+      if (
+        code === "email_address_exists" ||
+        code === "form_identifier_exists"
+      ) {
         // Already registered — show success state (they're already on the list)
         redirect(
           serializeEarlyAccessParams("/early-access", {
@@ -217,7 +221,11 @@ export async function joinEarlyAccessAction(
         );
       }
 
-      if (error.status === 429 || code === "too_many_requests" || code === "rate_limit_exceeded") {
+      if (
+        error.status === 429 ||
+        code === "too_many_requests" ||
+        code === "rate_limit_exceeded"
+      ) {
         redirect(
           serializeEarlyAccessParams("/early-access", {
             error: "Too many signup attempts. Please try again later.",
@@ -250,7 +258,9 @@ export async function joinEarlyAccessAction(
       });
       redirect(
         serializeEarlyAccessParams("/early-access", {
-          error: error.errors[0]?.longMessage ?? "An unexpected error occurred. Please try again.",
+          error:
+            error.errors[0]?.longMessage ??
+            "An unexpected error occurred. Please try again.",
           email: rawEmail,
           companySize: rawCompanySize,
           sources: rawSources,
