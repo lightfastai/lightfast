@@ -72,6 +72,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@tanstack/react-table": "^8.21.3",
+    "@tanstack/table-core": "^8.21.3",
     "@vendor/forms": "workspace:*",
     "ai": "catalog:",
     "class-variance-authority": "^0.7.1",

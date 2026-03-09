@@ -30,6 +30,7 @@
     "next": "catalog:next16",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
+    "server-only": "^0.0.1",
     "svix": "^1.86.0",
     "zod": "catalog:zod3"
   },

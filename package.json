@@ -51,11 +51,13 @@
     "remotion:studio": "pnpm --filter @repo/console-remotion studio",
     "remotion:render": "pnpm --filter @repo/console-remotion render:gif",
     "db:generate": "pnpm --filter @db/console db:generate",
-    "db:migrate": "pnpm --filter @db/console db:migrate"
+    "db:migrate": "pnpm --filter @db/console db:migrate",
+    "knip": "knip"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.6",
     "@changesets/cli": "^2.30.0",
+    "knip": "^5.85.0",
     "turbo": "2.8.13",
     "turbo-ignore": "2.8.13",
     "typescript": "^5.9.2",
