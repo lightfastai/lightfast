@@ -1,4 +1,3 @@
-import { Separator } from "@repo/ui/components/ui/separator";
 import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
 import type { SearchParams } from "nuqs/server";
@@ -6,6 +5,7 @@ import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
 import { OAuthButton } from "../_components/oauth-button";
 import { OTPIsland } from "../_components/otp-island";
+import { SeparatorWithText } from "../_components/separator-with-text";
 import { SessionActivator } from "../_components/session-activator";
 import { loadSignInSearchParams } from "../_lib/search-params";
 
@@ -78,19 +78,6 @@ export default async function SignInPage({ searchParams }: PageProps) {
 
         {/* Step: activate — thin client island for session creation */}
         {step === "activate" && token && <SessionActivator token={token} />}
-      </div>
-    </div>
-  );
-}
-
-function SeparatorWithText({ text }: { text: string }) {
-  return (
-    <div className="relative">
-      <div className="absolute inset-0 flex items-center">
-        <Separator className="w-full" />
-      </div>
-      <div className="relative flex justify-center text-xs uppercase">
-        <span className="bg-background px-2 text-muted-foreground">{text}</span>
       </div>
     </div>
   );
