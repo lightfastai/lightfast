@@ -10,6 +10,7 @@
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
     "dev": "export VC_MICROFRONTENDS_CONFIG=../../apps/console/microfrontends.json && pnpm with-env next dev --port $(microfrontends port) --turbo",
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_AUTH_PORT:-4104}",
+    "test": "vitest run",
     "test:e2e": "pnpm with-env playwright test",
     "test:e2e:ui": "pnpm with-env playwright test --ui",
     "typecheck": "tsc --noEmit",
@@ -54,7 +55,8 @@
     "postcss": "catalog:tailwind4",
     "require-in-the-middle": "catalog:",
     "tailwindcss": "catalog:tailwind4",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "license": "FSL-1.1-Apache-2.0"
 }
