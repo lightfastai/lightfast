@@ -3,10 +3,19 @@ import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
+import { env as securityEnv } from "@vendor/security/env";
+import { upstashEnv } from "@vendor/upstash/env";
 import { z } from "zod";
 
 export const env = createEnv({
-  extends: [vercel(), clerkEnvBase, betterstackEnv, sentryEnv],
+  extends: [
+    vercel(),
+    clerkEnvBase,
+    betterstackEnv,
+    sentryEnv,
+    securityEnv,
+    upstashEnv,
+  ],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
