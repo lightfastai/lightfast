@@ -21,7 +21,7 @@ describe("initiateSignUp", () => {
 
     await expect(initiateSignUp(formData)).rejects.toThrow("REDIRECT:");
     expect(mockRedirect).toHaveBeenCalledWith(
-      "/sign-up?step=code&email=user%40example.com"
+      "/sign-up?step=code&email=user@example.com"
     );
   });
 
@@ -32,7 +32,7 @@ describe("initiateSignUp", () => {
 
     await expect(initiateSignUp(formData)).rejects.toThrow("REDIRECT:");
     expect(mockRedirect).toHaveBeenCalledWith(
-      "/sign-up?step=code&email=user%40example.com&ticket=inv_abc123"
+      "/sign-up?step=code&email=user@example.com&ticket=inv_abc123"
     );
   });
 
@@ -73,7 +73,7 @@ describe("initiateSignUp", () => {
 
     await expect(initiateSignUp(formData)).rejects.toThrow("REDIRECT:");
     expect(mockRedirect).toHaveBeenCalledWith(
-      "/sign-up?step=code&email=user%40example.com"
+      "/sign-up?step=code&email=user@example.com"
     );
   });
 });
