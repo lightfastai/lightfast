@@ -1,8 +1,8 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { createMetadata } from "@vendor/seo/metadata";
 import { ArrowRight } from "lucide-react";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { UseCaseGrid } from "~/components/use-case-grid";
 import { exposureTrial } from "~/lib/fonts";
 import { engineeringLeadersUseCases } from "./data";
@@ -48,17 +48,17 @@ export default function EngineeringLeadersPage() {
             {/* CTA - centered */}
             <div className="mt-8 flex flex-col justify-center gap-8 sm:flex-row">
               <Button asChild className="rounded-full" size="lg">
-                <Link className="group" href="/early-access">
+                <MicrofrontendLink className="group" href="/early-access">
                   <span>Join Early Access</span>
-                </Link>
+                </MicrofrontendLink>
               </Button>
-              <Link
+              <MicrofrontendLink
                 className="group inline-flex items-center justify-center font-medium text-sm transition-colors hover:text-foreground/80"
                 href="/docs/get-started/overview"
               >
                 <span>Learn more about Lightfast</span>
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
+              </MicrofrontendLink>
             </div>
           </section>
         </div>

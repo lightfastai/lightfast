@@ -1,5 +1,6 @@
 import { Icons } from "@repo/ui/components/icons";
 import { LISSAJOUS_PATHS } from "@repo/ui/lib/lissajous-paths";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import NextLink from "next/link";
 
 export function AppFooter() {
@@ -56,12 +57,12 @@ export function AppFooter() {
                 >
                   Documentation
                 </NextLink>
-                <NextLink
+                <MicrofrontendLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/early-access"
                 >
                   Early Access
-                </NextLink>
+                </MicrofrontendLink>
                 <NextLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/docs/api-reference/overview"

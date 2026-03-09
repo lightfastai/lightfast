@@ -1,5 +1,5 @@
 import { Button } from "@repo/ui/components/ui/button";
-import Link from "next/link";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 
 export function WaitlistCTA() {
   return (
@@ -12,7 +12,7 @@ export function WaitlistCTA() {
 
         {/* CTA Button */}
         <Button asChild className="rounded-full text-md" size="xl">
-          <Link href="/early-access">Join Early Access</Link>
+          <MicrofrontendLink href="/early-access">Join Early Access</MicrofrontendLink>
         </Button>
       </div>
     </section>
