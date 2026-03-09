@@ -71,7 +71,7 @@
       "with": [
         "@lightfast/console#dev:inngest",
         "@lightfast/console#dev:qstash",
-        "lightfast#dev:ngrok",
+        "//#dev:ngrok",
         "@db/console#dev:studio"
       ]
     },

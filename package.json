@@ -56,8 +56,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.6",
     "@changesets/cli": "^2.30.0",
-    "turbo": "^2.8.14",
-    "turbo-ignore": "^2.8.14",
+    "turbo": "2.8.13",
+    "turbo-ignore": "2.8.13",
     "typescript": "^5.9.2",
     "ultracite": "7.2.5",
     "vercel": "^50.28.0",
