@@ -19,7 +19,7 @@
   "dependencies": {
     "@clerk/nextjs": "catalog:",
     "@clerk/shared": "catalog:",
-    "@repo/ui": "workspace:*",
+"@repo/ui": "workspace:*",
     "@rescale/nemo": "^2.1.1",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
