@@ -9,13 +9,16 @@ import {
   workspaceWorkflowRuns,
 } from "@db/console/schema";
 import { createCustomWorkspace, getWorkspaceKey } from "@db/console/utils";
-import type { ProviderName, SourceType } from "@repo/console-providers";
+import type {
+  BackfillTriggerPayload,
+  ProviderName,
+  SourceType,
+} from "@repo/console-providers";
 import {
   getDefaultSyncEvents,
   PROVIDERS,
   sourceTypeSchema,
 } from "@repo/console-providers";
-import type { BackfillTriggerPayload } from "@repo/console-providers";
 import {
   workspaceCreateInputSchema,
   workspaceIntegrationDisconnectInputSchema,

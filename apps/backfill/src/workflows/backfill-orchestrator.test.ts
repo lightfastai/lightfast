@@ -173,6 +173,30 @@ describe("get-connection step", () => {
     );
   });
 
+  it("throws when event.data.orgId does not match connection.orgId", async () => {
+    mockGatewayClient.getConnection.mockResolvedValue(
+      makeConnection({ orgId: "org-different" })
+    );
+    const step = makeStep();
+
+    await expect(
+      capturedHandler({ event: makeEvent({ orgId: "org-1" }), step })
+    ).rejects.toThrow("orgId mismatch");
+  });
+
+  it("proceeds when event.data.orgId matches connection.orgId", async () => {
+    mockGatewayClient.getConnection.mockResolvedValue(
+      makeConnection({ orgId: "org-1" })
+    );
+    const step = makeStep();
+
+    const result = await capturedHandler({
+      event: makeEvent({ orgId: "org-1" }),
+      step,
+    });
+    expect(result).toMatchObject({ success: true });
+  });
+
   it("returns early with zero counts when connection has no resources", async () => {
     mockGatewayClient.getConnection.mockResolvedValue(
       makeConnection({ resources: [] })
@@ -635,6 +659,31 @@ describe("gap-aware filtering", () => {
     expect(result.skipped).toBe(6);
     expect(result.dispatched).toBe(0);
     expect(step.invoke).not.toHaveBeenCalled();
+  });
+});
+
+describe("correlationId forwarding", () => {
+  it("forwards correlationId from event to entity worker invocations", async () => {
+    mockGatewayClient.getConnection.mockResolvedValue(
+      makeConnection({
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
+    );
+    const step = makeStep();
+    const event = makeEvent({
+      entityTypes: ["pull_request"],
+      correlationId: "trace-abc-123",
+    });
+
+    await capturedHandler({ event, step });
+
+    const [_, invokeOpts] = step.invoke.mock.calls[0] as [
+      string,
+      { data: Record<string, unknown> },
+    ];
+    expect(invokeOpts.data.correlationId).toBe("trace-abc-123");
   });
 });
 

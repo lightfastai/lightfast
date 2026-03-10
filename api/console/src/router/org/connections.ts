@@ -4,8 +4,10 @@ import {
   getAppInstallation,
   getInstallationRepositories,
 } from "@repo/console-octokit-github";
-import { sourceTypeSchema } from "@repo/console-providers";
-import { gwInstallationBackfillConfigSchema } from "@repo/console-providers";
+import {
+  gwInstallationBackfillConfigSchema,
+  sourceTypeSchema,
+} from "@repo/console-providers";
 import type { VercelProjectsResponse } from "@repo/console-vercel/types";
 import { createGatewayClient } from "@repo/gateway-service-clients";
 import type { TRPCRouterRecord } from "@trpc/server";

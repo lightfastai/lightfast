@@ -1,5 +1,8 @@
-import { timingSafeStringEqual } from "@repo/console-providers";
-import { backfillTriggerPayload } from "@repo/console-providers";
+import {
+  backfillTriggerPayload,
+  timingSafeStringEqual,
+} from "@repo/console-providers";
+import { createGatewayClient } from "@repo/gateway-service-clients";
 import { Hono } from "hono";
 import { z } from "zod";
 
@@ -99,6 +102,18 @@ trigger.post("/cancel", async (c) => {
     );
   }
   const body = parsed.data;
+
+  // Verify installation exists before emitting cancel event
+  const gw = createGatewayClient({
+    apiKey: GATEWAY_API_KEY,
+    requestSource: "backfill",
+  });
+  const connection = await gw
+    .getConnection(body.installationId)
+    .catch(() => null);
+  if (!connection) {
+    return c.json({ error: "connection_not_found" }, 404);
+  }
 
   try {
     await inngest.send({

@@ -179,7 +179,7 @@ describe("POST /api/admin/replay/catchup", () => {
 
     const res = await request("/api/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
-      body: {},
+      body: { installationId: "inst-1" },
     });
 
     expect(res.status).toBe(200);
@@ -188,6 +188,17 @@ describe("POST /api/admin/replay/catchup", () => {
       message: "No un-delivered webhooks found",
     });
     expect(mockReplayDeliveries).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when installationId is missing", async () => {
+    const res = await request("/api/admin/replay/catchup", {
+      headers: { "X-API-Key": "test-api-key" },
+      body: {},
+    });
+
+    expect(res.status).toBe(400);
+    const json = (await res.json()) as { error: string };
+    expect(json.error).toBe("validation_error");
   });
 
   // ── Filtering ──
@@ -252,7 +263,7 @@ describe("POST /api/admin/replay/catchup", () => {
 
     const res = await request("/api/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
-      body: { provider: "linear" },
+      body: { installationId: "inst-2", provider: "linear" },
     });
 
     expect(res.status).toBe(200);
@@ -272,7 +283,7 @@ describe("POST /api/admin/replay/catchup", () => {
 
     const res = await request("/api/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
-      body: { batchSize: -5 },
+      body: { installationId: "inst-1", batchSize: -5 },
     });
 
     expect(res.status).toBe(200);
@@ -286,7 +297,7 @@ describe("POST /api/admin/replay/catchup", () => {
 
     const res = await request("/api/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
-      body: { batchSize: 500 },
+      body: { installationId: "inst-1", batchSize: 500 },
     });
 
     expect(res.status).toBe(200);
@@ -329,7 +340,7 @@ describe("POST /api/admin/replay/catchup", () => {
 
     const res = await request("/api/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
-      body: {},
+      body: { installationId: "inst-1" },
     });
 
     expect(res.status).toBe(200);

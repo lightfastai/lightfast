@@ -40,7 +40,7 @@ estimate.post("/", async (c) => {
     return c.json({ error: "invalid_body", details: parsed.error.issues }, 400);
   }
 
-  const { installationId, provider, depth, entityTypes } = parsed.data;
+  const { installationId, provider, depth, entityTypes, orgId } = parsed.data;
 
   const gw = createGatewayClient({
     apiKey: GATEWAY_API_KEY,
@@ -50,6 +50,11 @@ estimate.post("/", async (c) => {
   const connection = await gw.getConnection(installationId).catch(() => null);
   if (!connection) {
     return c.json({ error: "connection_not_found" }, 404);
+  }
+
+  // Tenant isolation: verify orgId matches the connection
+  if (orgId && connection.orgId !== orgId) {
+    return c.json({ error: "org_mismatch" }, 403);
   }
 
   // Resolve provider
@@ -87,7 +92,7 @@ estimate.post("/", async (c) => {
           installationId,
           resource: {
             providerResourceId: resource.providerResourceId,
-            resourceName: resource.resourceName,
+            resourceName: resource.resourceName ?? "",
           },
           since,
         };

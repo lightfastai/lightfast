@@ -29,6 +29,7 @@ export {
   rateLimitSchema,
   runtimeConfigSchema,
   simpleEvent,
+  typedEntityHandler,
 } from "./define";
 export type {
   PostTransformActor,
@@ -185,6 +186,7 @@ export {
 export { deriveObservationType, getBaseEventType } from "./event-normalization";
 export type {
   BackfillEstimatePayload,
+  BackfillRunReadRecord,
   BackfillRunRecord,
   BackfillTriggerPayload,
   GatewayConnection,
@@ -203,6 +205,7 @@ export {
   BACKFILL_TERMINAL_STATUSES,
   backfillDepthSchema,
   backfillEstimatePayload,
+  backfillRunReadRecord,
   backfillRunRecord,
   backfillTerminalStatusSchema,
   backfillTriggerPayload,

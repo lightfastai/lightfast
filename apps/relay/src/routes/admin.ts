@@ -8,6 +8,7 @@ import type { SourceType } from "@repo/console-providers";
 import { and, eq, gte, lte, notInArray, or, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { Hono } from "hono";
+import { z } from "zod";
 import { RESOURCE_CACHE_TTL, resourceKey } from "../lib/cache.js";
 import { replayDeliveries } from "../lib/replay.js";
 import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
@@ -170,6 +171,18 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
   return c.json({ status: "replayed", ...result });
 });
 
+const catchupSchema = z.object({
+  installationId: z.string().min(1),
+  batchSize: z
+    .number()
+    .int()
+    .transform((n) => Math.min(Math.max(n, 1), 200))
+    .default(50),
+  provider: z.string().optional(),
+  since: z.string().optional(),
+  until: z.string().optional(),
+});
+
 /**
  * POST /admin/replay/catchup
  *
@@ -180,33 +193,33 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
  * Requires X-API-Key authentication.
  */
 admin.post("/replay/catchup", apiKeyAuth, async (c) => {
-  let body: {
-    provider?: string;
-    installationId?: string;
-    batchSize?: number;
-    since?: string;
-    until?: string;
-  };
+  let raw: unknown;
   try {
-    body = await c.req.json();
+    raw = await c.req.json();
   } catch {
-    body = {};
+    return c.json({ error: "invalid_json" }, 400);
   }
 
-  const batchSize = Math.min(Math.max(body.batchSize ?? 50, 1), 200);
+  const parsed = catchupSchema.safeParse(raw);
+  if (!parsed.success) {
+    return c.json(
+      { error: "validation_error", details: parsed.error.issues },
+      400
+    );
+  }
+  const body = parsed.data;
+
+  const batchSize = body.batchSize;
 
   // Build query: status = "received" (persisted but never delivered)
   const conditions: Parameters<typeof and>[0][] = [
     eq(gwWebhookDeliveries.status, "received"),
   ];
 
+  conditions.push(eq(gwWebhookDeliveries.installationId, body.installationId));
+
   if (body.provider) {
     conditions.push(eq(gwWebhookDeliveries.provider, body.provider));
-  }
-  if (body.installationId) {
-    conditions.push(
-      eq(gwWebhookDeliveries.installationId, body.installationId)
-    );
   }
   if (body.since) {
     conditions.push(gte(gwWebhookDeliveries.receivedAt, body.since));

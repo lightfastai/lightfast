@@ -146,6 +146,8 @@ export const backfillTriggerPayload = z.object({
   depth: backfillDepthSchema.default(30),
   entityTypes: z.array(z.string()).optional(),
   holdForReplay: z.boolean().optional(),
+  /** Cross-service correlation ID for distributed tracing */
+  correlationId: z.string().optional(),
 });
 export type BackfillTriggerPayload = z.infer<typeof backfillTriggerPayload>;
 
@@ -189,10 +191,13 @@ export const proxyEndpointsResponseSchema = z.object({
   ),
 });
 
-export type ProxyEndpointsResponse = z.infer<typeof proxyEndpointsResponseSchema>;
+export type ProxyEndpointsResponse = z.infer<
+  typeof proxyEndpointsResponseSchema
+>;
 
 // ── Run record (Entity Worker → Gateway) ──
 
+/** Schema for upserting a backfill run (POST body — client sends this). */
 export const backfillRunRecord = z.object({
   entityType: z.string().min(1),
   since: z.string().min(1),
@@ -204,3 +209,11 @@ export const backfillRunRecord = z.object({
   error: z.string().optional(),
 });
 export type BackfillRunRecord = z.infer<typeof backfillRunRecord>;
+
+/** Schema for reading a backfill run (GET response — server returns this).
+ *  Extends the write record with server-computed timestamps. */
+export const backfillRunReadRecord = backfillRunRecord.extend({
+  completedAt: z.string().nullable(),
+  startedAt: z.string().nullable().optional(),
+});
+export type BackfillRunReadRecord = z.infer<typeof backfillRunReadRecord>;

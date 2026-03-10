@@ -8,15 +8,12 @@ import { z } from "zod";
 import { env } from "../env.js";
 
 const eventsMap = {
-  "apps-backfill/run.requested": backfillTriggerPayload.extend({
-    /** Cross-service correlation ID for distributed tracing */
-    correlationId: z.string().optional(),
-  }),
+  "apps-backfill/run.requested": backfillTriggerPayload,
   "apps-backfill/run.cancelled": z.object({
     /** Installation ID (matched by cancelOn) */
     installationId: z.string(),
     /** Cross-service correlation ID for distributed tracing */
-    correlationId: z.string().optional(),
+    correlationId: z.string().max(128).optional(),
   }),
   "apps-backfill/entity.requested": z.object({
     /** Correlation ID — matches the orchestrator's trigger event */
@@ -39,7 +36,7 @@ const eventsMap = {
     /** When true, dispatch webhooks with X-Backfill-Hold header (held for batch replay) */
     holdForReplay: z.boolean().optional(),
     /** Cross-service correlation ID for distributed tracing */
-    correlationId: z.string().optional(),
+    correlationId: z.string().max(128).optional(),
   }),
 };
 

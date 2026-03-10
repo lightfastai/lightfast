@@ -159,6 +159,23 @@ describe("POST /api/estimate", () => {
     expect(await res.json()).toMatchObject({ error: "connection_not_found" });
   });
 
+  // ── Org mismatch ──
+
+  it("returns 403 when orgId does not match connection", async () => {
+    mockGatewayClient.getConnection.mockResolvedValueOnce({
+      ...defaultConnection,
+      orgId: "org-different",
+    });
+
+    const res = await request(
+      { ...validBody, orgId: "org-1" },
+      { "X-API-Key": "test-key" }
+    );
+    expect(res.status).toBe(403);
+    const json = await res.json();
+    expect((json as { error: string }).error).toBe("org_mismatch");
+  });
+
   // ── Invalid provider (rejected by schema validation) ──
 
   it("returns 400 when provider is not a valid source type", async () => {
@@ -260,6 +277,26 @@ describe("POST /api/estimate", () => {
     expect(pr.samples[1].hasMore).toBe(false);
     // 2 samples + 1 resource with hasMore × 2 extra pages = 4
     expect(pr.estimatedPages).toBe(4);
+  });
+
+  it("handles URL-unsafe characters in providerResourceId", async () => {
+    mockGatewayClient.getConnection.mockResolvedValueOnce({
+      ...defaultConnection,
+      resources: [
+        { id: "r1", providerResourceId: "foo/bar baz", resourceName: "test" },
+      ],
+    });
+    mockProcessResponse.mockReturnValue({
+      events: [],
+      nextCursor: null,
+      rawCount: 0,
+    });
+
+    const res = await request(
+      { ...validBody, entityTypes: ["pull_request"] },
+      { "X-API-Key": "test-key" }
+    );
+    expect(res.status).toBe(200);
   });
 
   it("handles executeApi errors gracefully with -1 returnedCount", async () => {

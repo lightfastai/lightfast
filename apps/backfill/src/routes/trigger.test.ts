@@ -12,6 +12,13 @@ vi.mock("../inngest/client", () => ({
   inngest: { send: mockInngestSend },
 }));
 
+const mockGatewayClient = {
+  getConnection: vi.fn(),
+};
+vi.mock("@repo/gateway-service-clients", () => ({
+  createGatewayClient: () => mockGatewayClient,
+}));
+
 import { Hono } from "hono";
 import { trigger } from "./trigger.js";
 
@@ -45,6 +52,11 @@ const validBody = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockGatewayClient.getConnection.mockResolvedValue({
+    id: "inst-1",
+    orgId: "org-1",
+    status: "active",
+  });
 });
 
 describe("POST /trigger/", () => {
@@ -198,6 +210,18 @@ describe("POST /trigger/cancel", () => {
     const call = mockInngestSend.mock.calls[0]![0];
     expect(call.name).toBe("apps-backfill/run.cancelled");
     expect(call.data).toEqual({ installationId: "inst-1" });
+  });
+
+  it("returns 404 when installationId is not found", async () => {
+    mockGatewayClient.getConnection.mockRejectedValue(new Error("not found"));
+
+    const res = await request("/trigger/cancel", {
+      body: { installationId: "nonexistent" },
+      headers: { "X-API-Key": "test-key" },
+    });
+    expect(res.status).toBe(404);
+    const json = (await res.json()) as { error: string };
+    expect(json.error).toBe("connection_not_found");
   });
 
   it("inngest.send rejection → 502 response", async () => {
