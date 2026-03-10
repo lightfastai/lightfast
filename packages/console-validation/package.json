@@ -45,7 +45,7 @@
     "@repo/console-providers": "workspace:*",
     "@repo/console-reserved-names": "workspace:^",
     "@repo/lib": "workspace:*",
-    "zod": "catalog:zod4"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

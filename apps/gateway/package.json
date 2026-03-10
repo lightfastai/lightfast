@@ -32,7 +32,7 @@
     "@vendor/upstash-workflow": "workspace:*",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
-    "zod": "catalog:zod4"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/console-test-db": "workspace:*",

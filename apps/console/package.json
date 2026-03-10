@@ -78,7 +78,7 @@
     "react-dom": "19.2.4",
     "react-hook-form": "catalog:",
     "server-only": "^0.0.1",
-    "zod": "catalog:zod4",
+    "zod": "catalog:",
     "zustand": "catalog:"
   },
   "devDependencies": {

@@ -20,7 +20,7 @@
   "dependencies": {
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/clerk": "workspace:*",
-    "zod": "catalog:zod4"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

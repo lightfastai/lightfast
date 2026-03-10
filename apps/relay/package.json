@@ -29,7 +29,7 @@
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
     "hono": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

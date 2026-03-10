@@ -54,6 +54,7 @@ catalog:
   tailwind-merge: ^3.5.0
   typescript: ^5.8.2
   vitest: ^4.0.18
+  zod: ^4.0.0
   zustand: ^5.0.11
 
 catalogs:
@@ -64,10 +65,6 @@ catalogs:
     postcss: 8.5.8
     '@tailwindcss/postcss': 4.2.1
     '@tailwindcss/typography': ^0.5.16
-  zod3:
-    zod: ^3.25.76
-  zod4:
-    zod: ^4.0.0
 
 ignoredBuiltDependencies:
   - bufferutil

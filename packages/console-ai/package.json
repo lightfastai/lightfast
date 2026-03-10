@@ -31,7 +31,7 @@
     "@lightfastai/ai-sdk": "workspace:*",
     "@repo/console-ai-types": "workspace:*",
     "@repo/console-validation": "workspace:*",
-    "zod": "catalog:zod4"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

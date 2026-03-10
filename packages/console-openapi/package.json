@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@repo/console-validation": "workspace:*",
-    "zod": "catalog:zod4",
+    "zod": "catalog:",
     "zod-openapi": "^5.4.6"
   },
   "devDependencies": {

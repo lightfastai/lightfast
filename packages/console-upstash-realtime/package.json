@@ -21,7 +21,7 @@
     "@repo/console-providers": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-realtime": "workspace:*",
-    "zod": "catalog:zod4"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

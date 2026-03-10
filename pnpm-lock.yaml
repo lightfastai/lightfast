@@ -138,6 +138,9 @@ catalogs:
     vitest:
       specifier: ^4.0.18
       version: 4.0.18
+    zod:
+      specifier: ^4.0.0
+      version: 4.3.6
     zustand:
       specifier: ^5.0.11
       version: 5.0.11
@@ -158,14 +161,6 @@ catalogs:
     tailwindcss:
       specifier: 4.2.1
       version: 4.2.1
-  zod3:
-    zod:
-      specifier: ^3.25.76
-      version: 3.25.76
-  zod4:
-    zod:
-      specifier: ^4.0.0
-      version: 4.3.6
 
 overrides:
   react: ^19.2.4
@@ -326,7 +321,7 @@ importers:
         specifier: ^2.8.2
         version: 2.8.2
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
@@ -355,7 +350,7 @@ importers:
         version: 10.42.0(@opentelemetry/context-async-hooks@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.5.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(webpack@5.105.4)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       '@vendor/analytics':
         specifier: workspace:*
         version: link:../../vendor/analytics
@@ -405,8 +400,8 @@ importers:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@clerk/testing':
         specifier: ^2.0.1
@@ -479,7 +474,7 @@ importers:
         version: link:../../packages/lib
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       '@vendor/inngest':
         specifier: workspace:*
         version: link:../../vendor/inngest
@@ -490,8 +485,8 @@ importers:
         specifier: 'catalog:'
         version: 4.12.5
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -698,7 +693,7 @@ importers:
         specifier: ^0.0.1
         version: 0.0.1
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
       zustand:
         specifier: 'catalog:'
@@ -816,7 +811,7 @@ importers:
         specifier: ^0.6.3
         version: 0.6.3
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@mixedbread/cli':
@@ -913,7 +908,7 @@ importers:
         specifier: 'catalog:'
         version: 4.12.5
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@repo/console-test-db':
@@ -957,7 +952,7 @@ importers:
         version: link:../../packages/lib
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
@@ -980,8 +975,8 @@ importers:
         specifier: 'catalog:'
         version: 4.12.5
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -1024,7 +1019,7 @@ importers:
         version: 10.42.0(@opentelemetry/context-async-hooks@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(webpack@5.105.4)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       '@vendor/analytics':
         specifier: workspace:*
         version: link:../../vendor/analytics
@@ -1080,8 +1075,8 @@ importers:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -1147,7 +1142,7 @@ importers:
         specifier: ^11.1.0
         version: 11.1.0
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
@@ -1199,7 +1194,7 @@ importers:
         specifier: ^1.1.0
         version: 1.1.1
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
@@ -1249,7 +1244,7 @@ importers:
         specifier: workspace:*
         version: link:../lightfast
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
@@ -1362,7 +1357,7 @@ importers:
         specifier: workspace:*
         version: link:../console-validation
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
@@ -1516,7 +1511,7 @@ importers:
         specifier: workspace:*
         version: link:../../vendor/clerk
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
@@ -1544,8 +1539,8 @@ importers:
         specifier: ^2.8.2
         version: 2.8.2
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -1598,13 +1593,13 @@ importers:
         version: 11.0.3(@octokit/core@7.0.6)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       octokit:
         specifier: ^5.0.5
         version: 5.0.5
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -1622,7 +1617,7 @@ importers:
         specifier: workspace:*
         version: link:../console-validation
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
       zod-openapi:
         specifier: ^5.4.6
@@ -1678,7 +1673,7 @@ importers:
         specifier: 'catalog:'
         version: 6.1.3
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
@@ -1768,19 +1763,19 @@ importers:
     dependencies:
       '@ai-sdk/gateway':
         specifier: 'catalog:'
-        version: 1.0.7(zod@3.25.76)
+        version: 1.0.7(zod@4.3.6)
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
       ai:
         specifier: 'catalog:'
-        version: 5.0.52(zod@3.25.76)
+        version: 5.0.52(zod@4.3.6)
       cohere-ai:
         specifier: ^7.20.0
         version: 7.20.0
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -1924,7 +1919,7 @@ importers:
         specifier: workspace:*
         version: link:../../vendor/upstash-realtime
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
@@ -1952,7 +1947,7 @@ importers:
         specifier: workspace:*
         version: link:../lib
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
@@ -1974,7 +1969,7 @@ importers:
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       zod:
-        specifier: catalog:zod4
+        specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
@@ -2135,8 +2130,8 @@ importers:
   packages/prompt-engine:
     dependencies:
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2245,7 +2240,7 @@ importers:
         version: link:../../vendor/forms
       ai:
         specifier: 'catalog:'
-        version: 5.0.52(zod@3.25.76)
+        version: 5.0.52(zod@4.3.6)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -2322,8 +2317,8 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2360,7 +2355,7 @@ importers:
     dependencies:
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       '@vercel/analytics':
         specifier: ^1.6.1
         version: 1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
@@ -2383,8 +2378,8 @@ importers:
         specifier: ^0.0.1
         version: 0.0.1
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2415,7 +2410,7 @@ importers:
         version: 4.0.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       next:
         specifier: catalog:next16
         version: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -2432,8 +2427,8 @@ importers:
         specifier: ^1.86.0
         version: 1.86.0
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2449,7 +2444,7 @@ importers:
     dependencies:
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       basehub:
         specifier: ^9.5.3
         version: 9.5.3(@babel/runtime@7.28.6)(@types/react@19.2.14)(react@19.2.4)
@@ -2463,8 +2458,8 @@ importers:
         specifier: 'catalog:'
         version: 3.5.0
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2492,16 +2487,16 @@ importers:
         version: 1.19.0
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.8.3(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7))(zod@3.25.76)
+        version: 0.8.3(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7))(zod@4.3.6)
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2526,13 +2521,13 @@ importers:
     dependencies:
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       resend:
         specifier: ^4.3.0
         version: 4.8.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2548,13 +2543,13 @@ importers:
     dependencies:
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       cohere-ai:
         specifier: ^7.20.0
         version: 7.20.0
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2589,20 +2584,23 @@ importers:
     dependencies:
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       hono:
         specifier: 'catalog:'
         version: 4.12.5
       inngest:
         specifier: 'catalog:'
-        version: 3.52.6(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@vercel/node@5.6.11(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.5)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)(zod@3.25.76)
+        version: 3.52.6(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@vercel/node@5.6.11(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.5)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)(zod@4.3.6)
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -2617,13 +2615,13 @@ importers:
         version: 0.11.7(@tanstack/react-router@1.133.15(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       react:
         specifier: ^19.2.4
         version: 19.2.4
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2688,13 +2686,13 @@ importers:
         version: 10.42.0
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       react:
         specifier: ^19.2.4
         version: 19.2.4
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2713,10 +2711,10 @@ importers:
         version: 6.1.3
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2732,13 +2730,13 @@ importers:
     dependencies:
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       '@upstash/qstash':
         specifier: ^2.9.0
         version: 2.9.0
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2807,13 +2805,13 @@ importers:
         version: 1.1.0(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       '@vendor/clerk':
         specifier: workspace:^
         version: link:../clerk
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2863,13 +2861,13 @@ importers:
     dependencies:
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       '@upstash/redis':
         specifier: ^1.35.1
         version: 1.35.6
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2910,7 +2908,7 @@ importers:
     dependencies:
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       '@upstash/workflow':
         specifier: ^0.2.22
         version: 0.2.22(react@19.2.4)
@@ -2921,8 +2919,8 @@ importers:
         specifier: catalog:next16
         version: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2941,13 +2939,13 @@ importers:
     dependencies:
       '@t3-oss/env-core':
         specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@3.25.76)
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       '@vercel/flags-core':
         specifier: ^1.1.0
         version: 1.1.0(@aws-sdk/credential-provider-web-identity@3.928.0)(flags@4.0.3(@opentelemetry/api@1.9.0)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       zod:
-        specifier: catalog:zod3
-        version: 3.25.76
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -14616,23 +14614,11 @@ snapshots:
 
   '@adobe/css-tools@4.4.4': {}
 
-  '@ai-sdk/gateway@1.0.29(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.9(zod@3.25.76)
-      zod: 3.25.76
-
   '@ai-sdk/gateway@1.0.29(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.9(zod@4.3.6)
       zod: 4.3.6
-
-  '@ai-sdk/gateway@1.0.7(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.3(zod@3.25.76)
-      zod: 3.25.76
 
   '@ai-sdk/gateway@1.0.7(zod@4.3.6)':
     dependencies:
@@ -14653,14 +14639,6 @@ snapshots:
       secure-json-parse: 2.7.0
       zod: 3.25.76
 
-  '@ai-sdk/provider-utils@3.0.3(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@standard-schema/spec': 1.0.0
-      eventsource-parser: 3.0.6
-      zod: 3.25.76
-      zod-to-json-schema: 3.24.6(zod@3.25.76)
-
   '@ai-sdk/provider-utils@3.0.3(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -14668,13 +14646,6 @@ snapshots:
       eventsource-parser: 3.0.6
       zod: 4.3.6
       zod-to-json-schema: 3.24.6(zod@4.3.6)
-
-  '@ai-sdk/provider-utils@3.0.9(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.0
-      '@standard-schema/spec': 1.1.0
-      eventsource-parser: 3.0.6
-      zod: 3.25.76
 
   '@ai-sdk/provider-utils@3.0.9(zod@4.3.6)':
     dependencies:
@@ -20141,11 +20112,6 @@ snapshots:
       typescript: 5.9.3
       zod: 4.3.6
 
-  '@t3-oss/env-core@0.13.10(typescript@5.9.3)(zod@3.25.76)':
-    optionalDependencies:
-      typescript: 5.9.3
-      zod: 3.25.76
-
   '@t3-oss/env-core@0.13.10(typescript@5.9.3)(zod@4.3.6)':
     optionalDependencies:
       typescript: 5.9.3
@@ -20157,13 +20123,6 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
       zod: 4.3.6
-
-  '@t3-oss/env-nextjs@0.13.10(typescript@5.9.3)(zod@3.25.76)':
-    dependencies:
-      '@t3-oss/env-core': 0.13.10(typescript@5.9.3)(zod@3.25.76)
-    optionalDependencies:
-      typescript: 5.9.3
-      zod: 3.25.76
 
   '@t3-oss/env-nextjs@0.13.10(typescript@5.9.3)(zod@4.3.6)':
     dependencies:
@@ -21693,14 +21652,6 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       zod: 4.3.6
 
-  ai@5.0.52(zod@3.25.76):
-    dependencies:
-      '@ai-sdk/gateway': 1.0.29(zod@3.25.76)
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.9(zod@3.25.76)
-      '@opentelemetry/api': 1.9.0
-      zod: 3.25.76
-
   ai@5.0.52(zod@4.3.6):
     dependencies:
       '@ai-sdk/gateway': 1.0.29(zod@4.3.6)
@@ -22798,10 +22749,10 @@ snapshots:
       '@upstash/redis': 1.36.3
       postgres: 3.4.7
 
-  drizzle-zod@0.8.3(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7))(zod@3.25.76):
+  drizzle-zod@0.8.3(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7))(zod@4.3.6):
     dependencies:
       drizzle-orm: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
-      zod: 3.25.76
+      zod: 4.3.6
 
   dunder-proto@1.0.1:
     dependencies:
@@ -24226,46 +24177,6 @@ snapshots:
   inherits@2.0.4: {}
 
   inline-style-parser@0.2.4: {}
-
-  inngest@3.52.6(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@vercel/node@5.6.11(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.5)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)(zod@3.25.76):
-    dependencies:
-      '@bufbuild/protobuf': 2.9.0
-      '@inngest/ai': 0.1.7
-      '@jpwilliams/waitgroup': 2.1.1
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/auto-instrumentations-node': 0.71.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))
-      '@opentelemetry/context-async-hooks': 2.5.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/exporter-trace-otlp-http': 0.213.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/instrumentation': 0.211.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources': 2.5.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-trace-base': 2.5.1(@opentelemetry/api@1.9.0)
-      '@standard-schema/spec': 1.1.0
-      '@traceloop/instrumentation-anthropic': 0.20.0
-      '@types/debug': 4.1.12
-      '@types/ms': 2.1.0
-      canonicalize: 1.0.8
-      chalk: 4.1.2
-      cross-fetch: 4.1.0(encoding@0.1.13)
-      debug: 4.4.3
-      hash.js: 1.1.7
-      json-stringify-safe: 5.0.1
-      ms: 2.1.3
-      serialize-error-cjs: 0.1.4
-      strip-ansi: 5.2.0
-      temporal-polyfill: 0.2.5
-      ulid: 2.4.0
-      zod: 3.25.76
-    optionalDependencies:
-      '@vercel/node': 5.6.11(encoding@0.1.13)(rollup@4.59.0)
-      express: 5.2.1
-      h3: 1.15.4
-      hono: 4.12.5
-      next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - '@opentelemetry/core'
-      - encoding
-      - supports-color
 
   inngest@3.52.6(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@vercel/node@5.6.11(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.5)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)(zod@4.3.6):
     dependencies:

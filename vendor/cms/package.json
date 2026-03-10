@@ -28,7 +28,7 @@
     "clsx": "catalog:",
     "react": "19.2.4",
     "tailwind-merge": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

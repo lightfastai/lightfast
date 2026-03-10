@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "catalog:",
-    "zod": "catalog:zod4"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

@@ -26,7 +26,7 @@
     "@noble/hashes": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "jose": "catalog:",
-    "zod": "catalog:zod4"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

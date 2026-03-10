@@ -21,7 +21,7 @@
     "@vendor/observability": "workspace:*",
     "ai": "catalog:",
     "cohere-ai": "^7.20.0",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

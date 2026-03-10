@@ -33,6 +33,6 @@
     "@nosecone/next": "1.1.0",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/clerk": "workspace:^",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   }
 }
