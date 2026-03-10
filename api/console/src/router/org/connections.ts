@@ -1170,6 +1170,7 @@ export const connectionsRouter = {
           name: string;
           platform: string | null;
           status: string;
+          organization: { slug: string };
         }[];
 
         // 5. Get already-connected projects for this workspace
@@ -1193,6 +1194,7 @@ export const connectionsRouter = {
             slug: p.slug,
             name: p.name,
             platform: p.platform,
+            organizationSlug: p.organization.slug,
             isConnected: connectedIds.has(p.id),
           })),
         };

@@ -208,7 +208,7 @@ const sentryAdapter: ProviderConnectAdapter = {
   buildLinkResources: (rawResources) =>
     (rawResources as any[]).map((p) => ({
       resourceId: p.id,
-      resourceName: p.name,
+      resourceName: `${p.organizationSlug}/${p.slug}`,
     })),
 };
 
