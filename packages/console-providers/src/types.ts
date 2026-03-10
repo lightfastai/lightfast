@@ -6,6 +6,17 @@ export interface TransformContext {
   receivedAt: Date;
 }
 
+// ── Sync Settings ──
+
+/**
+ * Shared sync settings schema for provider configs.
+ * Used by all providers' providerConfigSchema definitions.
+ */
+export const syncSchema = z.object({
+  events: z.array(z.string()).optional(),
+  autoSync: z.boolean(),
+});
+
 // ── OAuth Types ──
 
 export const oAuthTokensSchema = z.object({
@@ -19,33 +30,39 @@ export const oAuthTokensSchema = z.object({
 
 export type OAuthTokens = z.infer<typeof oAuthTokensSchema>;
 
-const callbackAccountInfoSchema = z
-  .object({
-    version: z.literal(1),
-    sourceType: z.string(),
-    events: z.array(z.string()),
-    installedAt: z.string(),
-    lastValidatedAt: z.string(),
-    raw: z.unknown(),
-  })
-  .passthrough();
+// ── Provider Account Info Base Schema ──
+
+export const baseProviderAccountInfoSchema = z.object({
+  version: z.literal(1),
+  sourceType: z.string(),
+  events: z.array(z.string()),
+  installedAt: z.string(),
+  lastValidatedAt: z.string(),
+  raw: z.unknown(),
+});
+
+/** Structural base type — used as a type constraint in define.ts.
+ * The concrete discriminated union is `ProviderAccountInfo` exported from registry.ts. */
+export type BaseProviderAccountInfo = z.infer<typeof baseProviderAccountInfoSchema>;
+
+// ── Callback Result Schema ──
 
 export const callbackResultSchema = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("connected"),
     externalId: z.string(),
-    accountInfo: callbackAccountInfoSchema,
+    accountInfo: baseProviderAccountInfoSchema.loose(),
     tokens: oAuthTokensSchema,
   }),
   z.object({
     status: z.literal("connected-no-token"),
     externalId: z.string(),
-    accountInfo: callbackAccountInfoSchema,
+    accountInfo: baseProviderAccountInfoSchema.loose(),
   }),
   z.object({
     status: z.literal("connected-redirect"),
     externalId: z.string(),
-    accountInfo: callbackAccountInfoSchema,
+    accountInfo: baseProviderAccountInfoSchema.loose(),
     tokens: oAuthTokensSchema,
     nextUrl: z.string(),
   }),
@@ -56,38 +73,12 @@ export const callbackResultSchema = z.discriminatedUnion("status", [
   }),
 ]);
 
-/** Structural base type — used as a type constraint in define.ts.
- * The concrete discriminated union is `ProviderAccountInfo` exported from registry.ts. */
-export interface BaseProviderAccountInfo {
-  events: string[];
-  installedAt: string;
-  lastValidatedAt: string;
-  raw: unknown;
-  sourceType: string;
-  version: 1;
-}
-
 // ── Generic CallbackResult for compile-time narrowing ──
 
 export type CallbackResult<
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
-> =
-  | {
-      status: "connected";
-      externalId: string;
-      accountInfo: TAccountInfo;
-      tokens: OAuthTokens;
-    }
-  | {
-      status: "connected-no-token";
-      externalId: string;
-      accountInfo: TAccountInfo;
-    }
-  | {
-      status: "connected-redirect";
-      externalId: string;
-      accountInfo: TAccountInfo;
-      tokens: OAuthTokens;
-      nextUrl: string;
-    }
-  | { status: "pending-setup"; externalId: string; setupAction: string };
+> = z.infer<typeof callbackResultSchema> extends infer U
+  ? U extends { accountInfo: BaseProviderAccountInfo }
+    ? Omit<U, "accountInfo"> & { accountInfo: TAccountInfo }
+    : U
+  : never;

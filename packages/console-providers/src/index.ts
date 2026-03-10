@@ -255,12 +255,14 @@ export {
   truncateWithEllipsis,
 } from "./sanitize";
 export type {
+  BaseProviderAccountInfo,
   CallbackResult,
   OAuthTokens,
   TransformContext,
 } from "./types";
 // ── Shared OAuth & Callback Contracts ─────────────────────────────────────────
 export {
+  baseProviderAccountInfoSchema,
   callbackResultSchema,
   oAuthTokensSchema,
 } from "./types";
