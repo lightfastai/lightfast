@@ -457,9 +457,6 @@ importers:
 
   apps/backfill:
     dependencies:
-      '@repo/console-backfill':
-        specifier: workspace:*
-        version: link:../../packages/console-backfill
       '@repo/console-providers':
         specifier: workspace:*
         version: link:../../packages/console-providers

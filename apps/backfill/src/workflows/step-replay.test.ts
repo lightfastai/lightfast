@@ -93,11 +93,36 @@ vi.mock("../inngest/client", () => ({
   },
 }));
 
+const mockBuildRequest = vi.fn();
+const mockProcessResponse = vi.fn();
+const mockParseRateLimit = vi.fn();
+
+const mockProvider = {
+  api: { parseRateLimit: mockParseRateLimit },
+  backfill: {
+    supportedEntityTypes: ["pull_request"],
+    defaultEntityTypes: ["pull_request"],
+    entityTypes: {
+      pull_request: {
+        endpointId: "list-pull-requests",
+        buildRequest: mockBuildRequest,
+        processResponse: mockProcessResponse,
+      },
+    },
+  },
+};
+
+const mockGetProvider = vi.fn();
+vi.mock("@repo/console-providers", () => ({
+  getProvider: (...args: unknown[]) => mockGetProvider(...args),
+}));
+
 const mockGatewayClient = {
   getConnection: vi.fn(),
   getToken: vi.fn(),
   getBackfillRuns: vi.fn().mockResolvedValue([]),
   upsertBackfillRun: vi.fn().mockResolvedValue(undefined),
+  executeApi: vi.fn(),
 };
 
 const mockRelayClient = {
@@ -107,11 +132,6 @@ const mockRelayClient = {
 vi.mock("@repo/gateway-service-clients", () => ({
   createGatewayClient: () => mockGatewayClient,
   createRelayClient: () => mockRelayClient,
-}));
-
-const mockGetConnector = vi.fn();
-vi.mock("@repo/console-backfill", () => ({
-  getConnector: (...args: unknown[]) => mockGetConnector(...args),
 }));
 
 vi.mock("../env", () => ({
@@ -125,22 +145,13 @@ await import("./backfill-orchestrator.js");
 
 // ── Shared fixtures ──
 
-const mockConnector = {
-  provider: "github" as const,
-  supportedEntityTypes: ["pull_request"],
-  defaultEntityTypes: ["pull_request"],
-  validateScopes: vi.fn(),
-  fetchPage: vi.fn(),
-};
-
 beforeEach(() => {
   vi.resetAllMocks();
-  mockGetConnector.mockReturnValue(mockConnector);
-  mockGatewayClient.getToken.mockResolvedValue({
-    accessToken: "tok-1",
-    provider: "github",
-    expiresIn: 3600,
-  });
+  mockGetProvider.mockReturnValue(mockProvider);
+  mockBuildRequest.mockReturnValue({});
+  mockProcessResponse.mockReturnValue({ events: [], nextCursor: null, rawCount: 0 });
+  mockParseRateLimit.mockReturnValue(null);
+  mockGatewayClient.executeApi.mockResolvedValue({ status: 200, data: [], headers: {} });
   mockGatewayClient.getConnection.mockResolvedValue({
     id: "inst-1",
     provider: "github",
@@ -174,8 +185,14 @@ describe("entity-worker step memoization replay", () => {
   }
 
   function setupRecordingMocks() {
-    // fetchPage: 3 events, single page
-    mockConnector.fetchPage.mockResolvedValueOnce({
+    // executeApi: return raw response data
+    mockGatewayClient.executeApi.mockResolvedValueOnce({
+      status: 200,
+      data: ["d1", "d2", "d3"],
+      headers: {},
+    });
+    // processResponse: 3 events, single page
+    mockProcessResponse.mockReturnValueOnce({
       events: [
         { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
         { deliveryId: "d2", eventType: "pull_request", payload: { pr: 2 } },
@@ -202,9 +219,9 @@ describe("entity-worker step memoization replay", () => {
       step: recordingStep,
     });
 
-    // ── Replay pass (only getConnector needed — it runs outside step callbacks) ──
+    // ── Replay pass (only getProvider needed — it runs outside step callbacks) ──
     vi.clearAllMocks();
-    mockGetConnector.mockReturnValue(mockConnector);
+    mockGetProvider.mockReturnValue(mockProvider);
     const replayStep = createReplayStep(journal);
     const replayResult = await handler({
       event: makeEntityEvent(),
@@ -223,26 +240,29 @@ describe("entity-worker step memoization replay", () => {
 
     // ── Recording pass ──
     // Page 1: 2 events
-    mockConnector.fetchPage.mockResolvedValueOnce({
-      events: [
-        { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
-        { deliveryId: "d2", eventType: "pull_request", payload: { pr: 2 } },
-      ],
-      nextCursor: { page: 2 },
-      rawCount: 2,
-    });
+    mockGatewayClient.executeApi
+      .mockResolvedValueOnce({ status: 200, data: ["d1", "d2"], headers: {} })
+      .mockResolvedValueOnce({ status: 200, data: ["d3"], headers: {} });
+    mockProcessResponse
+      .mockReturnValueOnce({
+        events: [
+          { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
+          { deliveryId: "d2", eventType: "pull_request", payload: { pr: 2 } },
+        ],
+        nextCursor: { page: 2 },
+        rawCount: 2,
+      })
+      .mockReturnValueOnce({
+        events: [
+          { deliveryId: "d3", eventType: "pull_request", payload: { pr: 3 } },
+        ],
+        nextCursor: null,
+        rawCount: 1,
+      });
     mockRelayClient.dispatchWebhook
       .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined);
-    // Page 2: 1 event
-    mockConnector.fetchPage.mockResolvedValueOnce({
-      events: [
-        { deliveryId: "d3", eventType: "pull_request", payload: { pr: 3 } },
-      ],
-      nextCursor: null,
-      rawCount: 1,
-    });
-    mockRelayClient.dispatchWebhook.mockResolvedValueOnce(undefined);
 
     const { step: recordingStep, journal } = createRecordingStep();
     const recordResult = await handler({
@@ -252,7 +272,7 @@ describe("entity-worker step memoization replay", () => {
 
     // ── Replay pass ──
     vi.clearAllMocks();
-    mockGetConnector.mockReturnValue(mockConnector);
+    mockGetProvider.mockReturnValue(mockProvider);
     const replayStep = createReplayStep(journal);
     const replayResult = await handler({
       event: makeEntityEvent(),
@@ -301,9 +321,9 @@ describe("orchestrator step memoization replay", () => {
       step: recordingStep,
     });
 
-    // ── Replay pass (getConnector runs outside step callbacks) ──
+    // ── Replay pass (getProvider runs outside step callbacks) ──
     vi.clearAllMocks();
-    mockGetConnector.mockReturnValue(mockConnector);
+    mockGetProvider.mockReturnValue(mockProvider);
     const replayStep = createReplayStep(journal);
     const replayResult = await handler({
       event: makeOrchestratorEvent(),
@@ -355,7 +375,7 @@ describe("orchestrator step memoization replay", () => {
 
     // ── Replay pass ──
     vi.clearAllMocks();
-    mockGetConnector.mockReturnValue(mockConnector);
+    mockGetProvider.mockReturnValue(mockProvider);
     // Reset connection mock for replay
     mockGatewayClient.getConnection.mockResolvedValue({
       id: "inst-1",

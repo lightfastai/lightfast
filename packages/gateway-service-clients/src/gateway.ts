@@ -1,6 +1,8 @@
 import type {
   GatewayConnection,
   GatewayTokenResult,
+  ProxyEndpointsResponse,
+  ProxyExecuteResponse,
 } from "@repo/console-providers";
 import type { BackfillRunRecord } from "@repo/console-providers";
 
@@ -73,6 +75,49 @@ export function createGatewayClient(config: ServiceClientConfig) {
       }).catch(() => {
         /* best-effort */
       });
+    },
+
+    async executeApi(
+      installationId: string,
+      request: {
+        endpointId: string;
+        pathParams?: Record<string, string>;
+        queryParams?: Record<string, string>;
+        body?: unknown;
+      }
+    ): Promise<ProxyExecuteResponse> {
+      const response = await fetch(
+        `${gatewayUrl}/gateway/${installationId}/proxy/execute`,
+        {
+          method: "POST",
+          headers: { ...h, "Content-Type": "application/json" },
+          body: JSON.stringify(request),
+          signal: AbortSignal.timeout(60_000),
+        }
+      );
+      if (!response.ok) {
+        const err = new Error(
+          `Gateway executeApi failed: ${response.status} for ${installationId}`
+        );
+        (err as any).status = response.status;
+        throw err;
+      }
+      return response.json() as Promise<ProxyExecuteResponse>;
+    },
+
+    async getApiEndpoints(
+      installationId: string
+    ): Promise<ProxyEndpointsResponse> {
+      const response = await fetch(
+        `${gatewayUrl}/gateway/${installationId}/proxy/endpoints`,
+        { headers: h, signal: AbortSignal.timeout(10_000) }
+      );
+      if (!response.ok) {
+        throw new Error(
+          `Gateway getApiEndpoints failed: ${response.status} for ${installationId}`
+        );
+      }
+      return response.json() as Promise<ProxyEndpointsResponse>;
     },
 
     /**

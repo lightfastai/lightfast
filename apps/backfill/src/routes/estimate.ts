@@ -1,7 +1,9 @@
-import type { BackfillConfig } from "@repo/console-backfill";
-import { getConnector } from "@repo/console-backfill";
-import { timingSafeStringEqual } from "@repo/console-providers";
-import { backfillEstimatePayload } from "@repo/console-providers";
+import {
+  type BackfillContext,
+  backfillEstimatePayload,
+  getProvider,
+  timingSafeStringEqual,
+} from "@repo/console-providers";
 import { createGatewayClient } from "@repo/gateway-service-clients";
 import { Hono } from "hono";
 
@@ -50,22 +52,16 @@ estimate.post("/", async (c) => {
     return c.json({ error: "connection_not_found" }, 404);
   }
 
-  const tokenResult = await gw.getToken(installationId).catch(() => null);
-  if (!tokenResult) {
-    return c.json({ error: "token_fetch_failed" }, 502);
-  }
-  const { accessToken } = tokenResult;
-
-  // Resolve connector
-  const connector = getConnector(provider);
-  if (!connector) {
-    return c.json({ error: "no_connector", provider }, 400);
+  // Resolve provider
+  const providerDef = getProvider(provider);
+  if (!providerDef) {
+    return c.json({ error: "unknown_provider", provider }, 400);
   }
 
   const resolvedEntityTypes =
     entityTypes && entityTypes.length > 0
       ? entityTypes
-      : connector.defaultEntityTypes;
+      : [...providerDef.backfill.defaultEntityTypes];
 
   const since = new Date(
     Date.now() - depth * 24 * 60 * 60 * 1000
@@ -75,25 +71,52 @@ estimate.post("/", async (c) => {
   const probeJobs = resolvedEntityTypes.flatMap((entityType) =>
     connection.resources.map(
       async (resource): Promise<{ entityType: string; sample: Sample }> => {
-        try {
-          const config: BackfillConfig = {
-            installationId,
-            provider,
-            since,
-            accessToken,
-            resource: {
-              providerResourceId: resource.providerResourceId,
-              resourceName: resource.resourceName,
-            },
-          };
-
-          const page = await connector.fetchPage(config, entityType, null);
+        const entityHandler = providerDef.backfill.entityTypes[entityType];
+        if (!entityHandler) {
           return {
             entityType,
             sample: {
               resourceId: resource.providerResourceId,
-              returnedCount: page.rawCount,
-              hasMore: page.nextCursor !== null,
+              returnedCount: 0,
+              hasMore: false,
+            },
+          };
+        }
+
+        const ctx: BackfillContext = {
+          installationId,
+          resource: {
+            providerResourceId: resource.providerResourceId,
+            resourceName: resource.resourceName,
+          },
+          since,
+        };
+
+        try {
+          const request = entityHandler.buildRequest(ctx, null);
+          const raw = await gw.executeApi(installationId, {
+            endpointId: entityHandler.endpointId,
+            ...request,
+          });
+
+          if (raw.status !== 200) {
+            return {
+              entityType,
+              sample: {
+                resourceId: resource.providerResourceId,
+                returnedCount: -1,
+                hasMore: false,
+              },
+            };
+          }
+
+          const processed = entityHandler.processResponse(raw.data, ctx, null);
+          return {
+            entityType,
+            sample: {
+              resourceId: resource.providerResourceId,
+              returnedCount: processed.rawCount,
+              hasMore: processed.nextCursor !== null,
             },
           };
         } catch {

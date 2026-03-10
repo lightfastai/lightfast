@@ -176,6 +176,41 @@ export const backfillEstimatePayload = backfillTriggerPayload.omit({
 });
 export type BackfillEstimatePayload = z.infer<typeof backfillEstimatePayload>;
 
+// ── Proxy wire types ─────────────────────────────────────────────────────────
+
+export const proxyExecuteRequestSchema = z.object({
+  endpointId: z.string(),
+  pathParams: z.record(z.string(), z.string()).optional(),
+  queryParams: z.record(z.string(), z.string()).optional(),
+  body: z.unknown().optional(),
+});
+
+export type ProxyExecuteRequest = z.infer<typeof proxyExecuteRequestSchema>;
+
+export const proxyExecuteResponseSchema = z.object({
+  status: z.number(),
+  data: z.unknown(),
+  headers: z.record(z.string(), z.string()),
+});
+
+export type ProxyExecuteResponse = z.infer<typeof proxyExecuteResponseSchema>;
+
+export const proxyEndpointsResponseSchema = z.object({
+  provider: z.string(),
+  baseUrl: z.string(),
+  endpoints: z.record(
+    z.string(),
+    z.object({
+      method: z.enum(["GET", "POST"]),
+      path: z.string(),
+      description: z.string(),
+      timeout: z.number().optional(),
+    })
+  ),
+});
+
+export type ProxyEndpointsResponse = z.infer<typeof proxyEndpointsResponseSchema>;
+
 // ── Run record (Entity Worker → Gateway) ──
 
 export const backfillRunRecord = z.object({

@@ -1,4 +1,4 @@
-import { getConnector } from "@repo/console-backfill";
+import { getProvider } from "@repo/console-providers";
 import {
   createGatewayClient,
   createRelayClient,
@@ -72,18 +72,18 @@ export const backfillOrchestrator = inngest.createFunction(
       gw.getBackfillRuns(installationId, "completed")
     );
 
-    // ── Step 2: Resolve entity types and validate connector ──
-    const connector = getConnector(provider);
-    if (!connector) {
+    // ── Step 2: Resolve entity types and validate provider ──
+    const providerDef = getProvider(provider);
+    if (!providerDef) {
       throw new NonRetriableError(
-        `No backfill connector for provider: ${provider}`
+        `No backfill provider for provider: ${provider}`
       );
     }
 
     const resolvedEntityTypes =
       entityTypes && entityTypes.length > 0
         ? entityTypes
-        : connector.defaultEntityTypes;
+        : [...providerDef.backfill.defaultEntityTypes];
 
     // Compute `since` inside a step so it's deterministic across retries/replays
     const since = await step.run("compute-since", () =>

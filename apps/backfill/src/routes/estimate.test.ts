@@ -6,24 +6,22 @@ vi.mock("../env", () => ({
   env: { GATEWAY_API_KEY: "test-key" },
 }));
 
-const mockFetchPage = vi.fn();
+const mockBuildRequest = vi.fn();
+const mockProcessResponse = vi.fn();
 
-vi.mock("@repo/console-backfill", () => ({
-  getConnector: (provider: string) => {
-    if (provider === "github") {
-      return {
-        provider: "github",
-        defaultEntityTypes: ["pull_request", "issue", "release"],
-        fetchPage: mockFetchPage,
-      };
-    }
-    return undefined;
-  },
-}));
+const mockGetProvider = vi.fn();
+vi.mock("@repo/console-providers", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@repo/console-providers")>();
+  return {
+    ...actual,
+    getProvider: (...args: unknown[]) => mockGetProvider(...args),
+  };
+});
 
 const mockGatewayClient = {
   getConnection: vi.fn(),
-  getToken: vi.fn(),
+  executeApi: vi.fn(),
 };
 vi.mock("@repo/gateway-service-clients", () => ({
   createGatewayClient: () => mockGatewayClient,
@@ -71,13 +69,33 @@ const defaultConnection = {
   ],
 };
 
+const mockProvider = {
+  api: { parseRateLimit: vi.fn().mockReturnValue(null) },
+  backfill: {
+    supportedEntityTypes: ["pull_request", "issue", "release"],
+    defaultEntityTypes: ["pull_request", "issue", "release"],
+    entityTypes: {
+      pull_request: {
+        endpointId: "list-pull-requests",
+        buildRequest: mockBuildRequest,
+        processResponse: mockProcessResponse,
+      },
+      issue: {
+        endpointId: "list-issues",
+        buildRequest: mockBuildRequest,
+        processResponse: mockProcessResponse,
+      },
+      release: {
+        endpointId: "list-releases",
+        buildRequest: mockBuildRequest,
+        processResponse: mockProcessResponse,
+      },
+    },
+  },
+};
+
 function mockGatewayResponses() {
   mockGatewayClient.getConnection.mockResolvedValueOnce(defaultConnection);
-  mockGatewayClient.getToken.mockResolvedValueOnce({
-    accessToken: "ghs_token123",
-    provider: "github",
-    expiresIn: 3600,
-  });
 }
 
 // ── Tests ──
@@ -85,6 +103,18 @@ function mockGatewayResponses() {
 describe("POST /api/estimate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetProvider.mockReturnValue(mockProvider);
+    mockBuildRequest.mockReturnValue({});
+    mockProcessResponse.mockReturnValue({
+      events: [],
+      nextCursor: null,
+      rawCount: 0,
+    });
+    mockGatewayClient.executeApi.mockResolvedValue({
+      status: 200,
+      data: [],
+      headers: {},
+    });
   });
 
   // ── Auth ──
@@ -140,26 +170,18 @@ describe("POST /api/estimate", () => {
     expect(await res.json()).toMatchObject({ error: "invalid_body" });
   });
 
-  // ── Token fetch failed ──
-
-  it("returns 502 when token fetch fails", async () => {
-    mockGatewayClient.getConnection.mockResolvedValueOnce(defaultConnection);
-    mockGatewayClient.getToken.mockRejectedValueOnce(
-      new Error("Gateway getToken failed: 500 for inst-1")
-    );
-
-    const res = await request(validBody, { "X-API-Key": "test-key" });
-    expect(res.status).toBe(502);
-    expect(await res.json()).toMatchObject({ error: "token_fetch_failed" });
-  });
-
   // ── Success ──
 
   it("returns estimate for valid request with default entity types", async () => {
     mockGatewayResponses();
 
-    // fetchPage called for each resource × entityType (2 resources × 3 entity types = 6 calls)
-    mockFetchPage.mockResolvedValue({
+    // executeApi + processResponse called for each resource × entityType (2 × 3 = 6)
+    mockGatewayClient.executeApi.mockResolvedValue({
+      status: 200,
+      data: [],
+      headers: {},
+    });
+    mockProcessResponse.mockReturnValue({
       events: [],
       nextCursor: null,
       rawCount: 25,
@@ -187,13 +209,13 @@ describe("POST /api/estimate", () => {
     expect(json.totals.estimatedApiCalls).toBe(14); // 6*2 + 2
     expect(json.totals.rateLimitUsage).toBeDefined();
 
-    // fetchPage called 6 times (2 resources × 3 entity types)
-    expect(mockFetchPage).toHaveBeenCalledTimes(6);
+    // executeApi called 6 times (2 resources × 3 entity types)
+    expect(mockGatewayClient.executeApi).toHaveBeenCalledTimes(6);
   });
 
   it("returns estimate with custom entity types", async () => {
     mockGatewayResponses();
-    mockFetchPage.mockResolvedValue({
+    mockProcessResponse.mockReturnValue({
       events: [],
       nextCursor: null,
       rawCount: 10,
@@ -211,20 +233,20 @@ describe("POST /api/estimate", () => {
     expect(json.estimate.issue).toBeUndefined();
 
     // Only 2 calls (2 resources × 1 entity type)
-    expect(mockFetchPage).toHaveBeenCalledTimes(2);
+    expect(mockGatewayClient.executeApi).toHaveBeenCalledTimes(2);
   });
 
   it("accounts for hasMore in page estimates", async () => {
     mockGatewayResponses();
 
     // First resource has more pages, second doesn't
-    mockFetchPage
-      .mockResolvedValueOnce({
+    mockProcessResponse
+      .mockReturnValueOnce({
         events: [],
         nextCursor: "cursor-1",
         rawCount: 100,
       })
-      .mockResolvedValueOnce({ events: [], nextCursor: null, rawCount: 30 });
+      .mockReturnValueOnce({ events: [], nextCursor: null, rawCount: 30 });
 
     const res = await request(
       { ...validBody, entityTypes: ["pull_request"] },
@@ -240,11 +262,16 @@ describe("POST /api/estimate", () => {
     expect(pr.estimatedPages).toBe(4);
   });
 
-  it("handles fetchPage errors gracefully with -1 returnedCount", async () => {
+  it("handles executeApi errors gracefully with -1 returnedCount", async () => {
     mockGatewayResponses();
 
-    mockFetchPage
-      .mockResolvedValueOnce({ events: [], nextCursor: null, rawCount: 50 })
+    mockProcessResponse.mockReturnValueOnce({
+      events: [],
+      nextCursor: null,
+      rawCount: 50,
+    });
+    mockGatewayClient.executeApi
+      .mockResolvedValueOnce({ status: 200, data: [], headers: {} })
       .mockRejectedValueOnce(new Error("API error")); // Second resource fails
 
     const res = await request(

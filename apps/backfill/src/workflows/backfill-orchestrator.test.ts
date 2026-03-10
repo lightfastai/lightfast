@@ -39,9 +39,34 @@ vi.mock("@repo/gateway-service-clients", () => ({
   createRelayClient: () => mockRelayClient,
 }));
 
-const mockGetConnector = vi.fn();
-vi.mock("@repo/console-backfill", () => ({
-  getConnector: (...args: unknown[]) => mockGetConnector(...args),
+const mockProvider = {
+  api: { parseRateLimit: vi.fn().mockReturnValue(null) },
+  backfill: {
+    supportedEntityTypes: ["pull_request", "issue", "release"],
+    defaultEntityTypes: ["pull_request", "issue", "release"],
+    entityTypes: {
+      pull_request: {
+        endpointId: "list-pull-requests",
+        buildRequest: vi.fn(),
+        processResponse: vi.fn(),
+      },
+      issue: {
+        endpointId: "list-issues",
+        buildRequest: vi.fn(),
+        processResponse: vi.fn(),
+      },
+      release: {
+        endpointId: "list-releases",
+        buildRequest: vi.fn(),
+        processResponse: vi.fn(),
+      },
+    },
+  },
+};
+
+const mockGetProvider = vi.fn();
+vi.mock("@repo/console-providers", () => ({
+  getProvider: (...args: unknown[]) => mockGetProvider(...args),
 }));
 
 vi.mock("../env", () => ({
@@ -95,17 +120,9 @@ function makeConnection(overrides: Record<string, unknown> = {}) {
   };
 }
 
-const mockConnector = {
-  provider: "github",
-  supportedEntityTypes: ["pull_request", "issue", "release"],
-  defaultEntityTypes: ["pull_request", "issue", "release"],
-  validateScopes: vi.fn(),
-  fetchPage: vi.fn(),
-};
-
 beforeEach(() => {
   vi.resetAllMocks();
-  mockGetConnector.mockReturnValue(mockConnector);
+  mockGetProvider.mockReturnValue(mockProvider);
   mockGatewayClient.getConnection.mockResolvedValue(makeConnection());
   mockGatewayClient.getBackfillRuns.mockResolvedValue([]);
   mockGatewayClient.upsertBackfillRun.mockResolvedValue(undefined);
@@ -173,17 +190,17 @@ describe("get-connection step", () => {
   });
 });
 
-describe("connector resolution", () => {
-  it("throws when getConnector returns null", async () => {
-    mockGetConnector.mockReturnValue(null);
+describe("provider resolution", () => {
+  it("throws when getProvider returns undefined", async () => {
+    mockGetProvider.mockReturnValue(undefined);
     const step = makeStep();
 
     await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
-      "No backfill connector for provider"
+      "No backfill provider for provider"
     );
   });
 
-  it("entityTypes from event data overrides connector defaultEntityTypes", async () => {
+  it("entityTypes from event data overrides provider defaultEntityTypes", async () => {
     const step = makeStep();
     const event = makeEvent({ entityTypes: ["pull_request"] });
 
@@ -200,7 +217,7 @@ describe("connector resolution", () => {
     ).toBe(true);
   });
 
-  it("uses connector.defaultEntityTypes when entityTypes is absent", async () => {
+  it("uses provider.backfill.defaultEntityTypes when entityTypes is absent", async () => {
     const step = makeStep();
     const event = makeEvent({ entityTypes: undefined });
 

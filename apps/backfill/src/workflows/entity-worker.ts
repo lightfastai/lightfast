@@ -1,5 +1,4 @@
-import type { BackfillConfig } from "@repo/console-backfill";
-import { getConnector } from "@repo/console-backfill";
+import { type BackfillContext, getProvider } from "@repo/console-providers";
 import {
   createGatewayClient,
   createRelayClient,
@@ -56,31 +55,26 @@ export const backfillEntityWorker = inngest.createFunction(
       requestSource: "backfill",
     });
 
-    // ── Fetch token outside step boundary ──
-    // Tokens must NOT be persisted in Inngest state (step return values are memoized).
-    // Fetching outside step.run() means this re-executes on replay (always fresh).
-    const { accessToken: initialToken } = await gw.getToken(installationId);
+    // ── Resolve provider ──
+    const providerDef = getProvider(provider);
+    if (!providerDef) {
+      throw new NonRetriableError(`Unknown provider: ${provider}`);
+    }
 
-    // ── Resolve connector ──
-    const connector = getConnector(
-      provider as Parameters<typeof getConnector>[0]
-    );
-    if (!connector) {
+    const entityHandler = providerDef.backfill.entityTypes[entityType];
+    if (!entityHandler) {
       throw new NonRetriableError(
-        `No backfill connector for provider: ${provider}`
+        `Entity type "${entityType}" is not supported for ${provider} backfill`
       );
     }
 
-    // Build config with singular resource
-    const config: BackfillConfig = {
+    const ctx: BackfillContext = {
       installationId,
-      provider: provider as BackfillConfig["provider"],
-      since,
-      accessToken: initialToken,
       resource: {
         providerResourceId: resource.providerResourceId,
         resourceName: resource.resourceName,
       },
+      since,
     };
 
     const relay = createRelayClient({
@@ -96,66 +90,47 @@ export const backfillEntityWorker = inngest.createFunction(
     let eventsDispatched = 0;
 
     while (true) {
-      // Fetch page — includes inline 401 token refresh
       const fetchResult = await step.run(
         `fetch-${entityType}-p${pageNum}`,
         async () => {
-          try {
-            const page = await connector.fetchPage(config, entityType, cursor);
-            return {
-              events: page.events,
-              nextCursor: page.nextCursor,
-              rawCount: page.rawCount,
-              tokenRefreshed: false,
-              rateLimit: page.rateLimit
-                ? {
-                    remaining: page.rateLimit.remaining,
-                    resetAt: page.rateLimit.resetAt.toISOString(),
-                    limit: page.rateLimit.limit,
-                  }
-                : null,
-            };
-          } catch (err: unknown) {
-            // Token expired — refresh and retry within the same step boundary
-            // This avoids memoization issues (the step either succeeds or throws)
-            const status =
-              err instanceof Error && "status" in err
-                ? (err as { status: number }).status
-                : undefined;
-            if (status === 401) {
-              const { accessToken: freshToken } =
-                await gw.getToken(installationId);
-              const refreshedConfig = { ...config, accessToken: freshToken };
-              const page = await connector.fetchPage(
-                refreshedConfig,
-                entityType,
-                cursor
-              );
-              return {
-                events: page.events,
-                nextCursor: page.nextCursor,
-                rawCount: page.rawCount,
-                tokenRefreshed: true,
-                rateLimit: page.rateLimit
-                  ? {
-                      remaining: page.rateLimit.remaining,
-                      resetAt: page.rateLimit.resetAt.toISOString(),
-                      limit: page.rateLimit.limit,
-                    }
-                  : null,
-              };
-            }
+          const request = entityHandler.buildRequest(ctx, cursor);
+          const raw = await gw.executeApi(installationId, {
+            endpointId: entityHandler.endpointId,
+            ...request,
+          });
+
+          if (raw.status !== 200) {
+            const err = new Error(`Provider API returned ${raw.status}`);
+            (err as any).status = raw.status;
             throw err;
           }
+
+          const processed = entityHandler.processResponse(
+            raw.data,
+            ctx,
+            cursor,
+            raw.headers
+          );
+
+          // Parse rate limits client-side from raw headers
+          const rateLimit = providerDef.api.parseRateLimit(
+            new Headers(raw.headers)
+          );
+
+          return {
+            events: processed.events,
+            nextCursor: processed.nextCursor,
+            rawCount: processed.rawCount,
+            rateLimit: rateLimit
+              ? {
+                  remaining: rateLimit.remaining,
+                  resetAt: rateLimit.resetAt.toISOString(),
+                  limit: rateLimit.limit,
+                }
+              : null,
+          };
         }
       );
-
-      // If token was refreshed inside the step, re-fetch outside step boundary
-      // so the fresh token is NOT persisted in Inngest state
-      if (fetchResult.tokenRefreshed) {
-        const { accessToken: freshToken } = await gw.getToken(installationId);
-        config.accessToken = freshToken;
-      }
 
       eventsProduced += fetchResult.rawCount;
 
@@ -194,17 +169,19 @@ export const backfillEntityWorker = inngest.createFunction(
       eventsDispatched += dispatched;
 
       // Rate limit sleep if near threshold (dynamic, based on response headers)
-      if (
-        fetchResult.rateLimit &&
-        fetchResult.rateLimit.remaining < fetchResult.rateLimit.limit * 0.1
-      ) {
-        const resetAt = new Date(fetchResult.rateLimit.resetAt);
-        const sleepMs = Math.max(0, resetAt.getTime() - Date.now());
-        if (sleepMs > 0) {
-          await step.sleep(
-            `rate-limit-${entityType}-p${pageNum}`,
-            `${Math.ceil(sleepMs / 1000)}s`
+      if (fetchResult.rateLimit) {
+        const { remaining, resetAt, limit } = fetchResult.rateLimit;
+        if (remaining < limit * 0.1) {
+          const sleepMs = Math.max(
+            0,
+            new Date(resetAt).getTime() - Date.now()
           );
+          if (sleepMs > 0) {
+            await step.sleep(
+              `rate-limit-${entityType}-p${pageNum}`,
+              `${Math.ceil(sleepMs / 1000)}s`
+            );
+          }
         }
       }
 

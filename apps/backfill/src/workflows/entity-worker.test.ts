@@ -19,13 +19,10 @@ vi.mock("../inngest/client", () => ({
 
 const mockGatewayClient = {
   getConnection: vi.fn(),
-  getToken: vi.fn().mockResolvedValue({
-    accessToken: "tok-1",
-    provider: "github",
-    expiresIn: 3600,
-  }),
+  getToken: vi.fn(),
   getBackfillRuns: vi.fn(),
   upsertBackfillRun: vi.fn(),
+  executeApi: vi.fn(),
 };
 
 const mockRelayClient = {
@@ -37,9 +34,28 @@ vi.mock("@repo/gateway-service-clients", () => ({
   createRelayClient: () => mockRelayClient,
 }));
 
-const mockGetConnector = vi.fn();
-vi.mock("@repo/console-backfill", () => ({
-  getConnector: (...args: unknown[]) => mockGetConnector(...args),
+const mockBuildRequest = vi.fn();
+const mockProcessResponse = vi.fn();
+const mockParseRateLimit = vi.fn();
+
+const mockProvider = {
+  api: { parseRateLimit: mockParseRateLimit },
+  backfill: {
+    supportedEntityTypes: ["pull_request"],
+    defaultEntityTypes: ["pull_request"],
+    entityTypes: {
+      pull_request: {
+        endpointId: "list-pull-requests",
+        buildRequest: mockBuildRequest,
+        processResponse: mockProcessResponse,
+      },
+    },
+  },
+};
+
+const mockGetProvider = vi.fn();
+vi.mock("@repo/console-providers", () => ({
+  getProvider: (...args: unknown[]) => mockGetProvider(...args),
 }));
 
 vi.mock("../env", () => ({
@@ -75,68 +91,53 @@ function makeStep(overrides: Record<string, ReturnType<typeof vi.fn>> = {}) {
   };
 }
 
-const mockConnector = {
-  provider: "github" as const,
-  supportedEntityTypes: ["pull_request"],
-  defaultEntityTypes: ["pull_request"],
-  validateScopes: vi.fn(),
-  fetchPage: vi.fn(),
-};
-
 beforeEach(() => {
   vi.clearAllMocks();
-  mockGetConnector.mockReturnValue(mockConnector);
-  mockConnector.fetchPage.mockReset();
-  mockGatewayClient.getToken.mockResolvedValue({
-    accessToken: "tok-1",
-    provider: "github",
-    expiresIn: 3600,
+  mockGetProvider.mockReturnValue(mockProvider);
+  mockBuildRequest.mockReturnValue({});
+  mockProcessResponse.mockReturnValue({ events: [], nextCursor: null, rawCount: 0 });
+  mockParseRateLimit.mockReturnValue(null);
+  mockGatewayClient.executeApi.mockResolvedValue({
+    status: 200,
+    data: [],
+    headers: {},
   });
   mockRelayClient.dispatchWebhook.mockResolvedValue(undefined);
 });
 
 // ── Tests ──
 
-describe("get-token step", () => {
-  it("fetches token from gateway client and proceeds", async () => {
-    mockConnector.fetchPage.mockResolvedValueOnce({
-      events: [],
-      nextCursor: null,
-      rawCount: 0,
+describe("provider resolution", () => {
+  it("throws when getProvider returns undefined", async () => {
+    mockGetProvider.mockReturnValue(undefined);
+    const step = makeStep();
+
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Unknown provider"
+    );
+  });
+
+  it("throws when entity type is not supported", async () => {
+    mockGetProvider.mockReturnValue({
+      ...mockProvider,
+      backfill: { ...mockProvider.backfill, entityTypes: {} },
     });
     const step = makeStep();
 
-    await capturedHandler({ event: makeEvent(), step });
-
-    expect(mockGatewayClient.getToken).toHaveBeenCalledWith("inst-1");
-  });
-
-  it("throws when gateway getToken fails", async () => {
-    mockGatewayClient.getToken.mockRejectedValueOnce(
-      new Error("Gateway getToken failed: 401 for inst-1")
-    );
-    const step = makeStep();
-
     await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
-      "Gateway getToken failed: 401"
-    );
-  });
-});
-
-describe("connector resolution", () => {
-  it("throws when getConnector returns null", async () => {
-    mockGetConnector.mockReturnValue(null);
-    const step = makeStep();
-
-    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
-      "No backfill connector for provider"
+      "is not supported for"
     );
   });
 });
 
 describe("pagination loop — single page", () => {
   it("3 events with nextCursor: null → 3 dispatches, loop exits", async () => {
-    mockConnector.fetchPage.mockResolvedValueOnce({
+    mockGatewayClient.executeApi.mockResolvedValueOnce({
+      status: 200,
+      data: [],
+      headers: {},
+    });
+    mockProcessResponse.mockReturnValueOnce({
       events: [
         { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
         { deliveryId: "d2", eventType: "pull_request", payload: { pr: 2 } },
@@ -156,7 +157,7 @@ describe("pagination loop — single page", () => {
   });
 
   it("dispatches to relay with correct payload shape", async () => {
-    mockConnector.fetchPage.mockResolvedValueOnce({
+    mockProcessResponse.mockReturnValueOnce({
       events: [
         { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
       ],
@@ -182,7 +183,7 @@ describe("pagination loop — single page", () => {
 
 describe("dispatch error handling", () => {
   it("throws when Relay dispatch returns non-2xx response", async () => {
-    mockConnector.fetchPage.mockResolvedValueOnce({
+    mockProcessResponse.mockReturnValueOnce({
       events: [
         { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
       ],
@@ -202,16 +203,20 @@ describe("dispatch error handling", () => {
 
 describe("pagination loop — multiple pages", () => {
   it("two pages → 2 fetch steps, cursor passed correctly", async () => {
-    mockConnector.fetchPage.mockResolvedValueOnce({
-      events: [{ deliveryId: "d1", eventType: "pull_request", payload: {} }],
-      nextCursor: { page: 2 },
-      rawCount: 1,
-    });
-    mockConnector.fetchPage.mockResolvedValueOnce({
-      events: [{ deliveryId: "d2", eventType: "pull_request", payload: {} }],
-      nextCursor: null,
-      rawCount: 1,
-    });
+    mockGatewayClient.executeApi
+      .mockResolvedValueOnce({ status: 200, data: [], headers: {} })
+      .mockResolvedValueOnce({ status: 200, data: [], headers: {} });
+    mockProcessResponse
+      .mockReturnValueOnce({
+        events: [{ deliveryId: "d1", eventType: "pull_request", payload: {} }],
+        nextCursor: { page: 2 },
+        rawCount: 1,
+      })
+      .mockReturnValueOnce({
+        events: [{ deliveryId: "d2", eventType: "pull_request", payload: {} }],
+        nextCursor: null,
+        rawCount: 1,
+      });
     const step = makeStep();
 
     const result = (await capturedHandler({
@@ -221,23 +226,39 @@ describe("pagination loop — multiple pages", () => {
     expect(result.pagesProcessed).toBe(2);
     expect(result.eventsDispatched).toBe(2);
 
-    const secondFetchCall = mockConnector.fetchPage.mock.calls[1]!;
-    expect(secondFetchCall[2]).toEqual({ page: 2 });
+    // Verify cursor was passed to the second buildRequest call
+    const secondBuildRequestCall = mockBuildRequest.mock.calls[1]!;
+    expect(secondBuildRequestCall[1]).toEqual({ page: 2 });
   });
 });
 
-describe("fetchPage error mid-pagination", () => {
-  it("propagates fetchPage rejection on second page", async () => {
-    mockConnector.fetchPage.mockResolvedValueOnce({
+describe("executeApi error handling", () => {
+  it("propagates executeApi rejection on second page", async () => {
+    mockGatewayClient.executeApi
+      .mockResolvedValueOnce({ status: 200, data: [], headers: {} })
+      .mockRejectedValueOnce(new Error("API timeout"));
+    mockProcessResponse.mockReturnValueOnce({
       events: [{ deliveryId: "d1", eventType: "pull_request", payload: {} }],
       nextCursor: { page: 2 },
       rawCount: 1,
     });
-    mockConnector.fetchPage.mockRejectedValueOnce(new Error("API timeout"));
     const step = makeStep();
 
     await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
       "API timeout"
+    );
+  });
+
+  it("throws when executeApi returns non-200 status", async () => {
+    mockGatewayClient.executeApi.mockResolvedValueOnce({
+      status: 403,
+      data: null,
+      headers: {},
+    });
+    const step = makeStep();
+
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Provider API returned 403"
     );
   });
 });
@@ -245,15 +266,10 @@ describe("fetchPage error mid-pagination", () => {
 describe("rate limit injection", () => {
   it("remaining < limit * 0.1 → step.sleep called", async () => {
     const futureResetAt = new Date(Date.now() + 60_000);
-    mockConnector.fetchPage.mockResolvedValueOnce({
-      events: [],
-      nextCursor: null,
-      rawCount: 0,
-      rateLimit: {
-        remaining: 5,
-        limit: 5000,
-        resetAt: futureResetAt,
-      },
+    mockParseRateLimit.mockReturnValueOnce({
+      remaining: 5,
+      limit: 5000,
+      resetAt: futureResetAt,
     });
     const step = makeStep();
 
@@ -263,15 +279,10 @@ describe("rate limit injection", () => {
   });
 
   it("remaining >= limit * 0.1 → step.sleep not called", async () => {
-    mockConnector.fetchPage.mockResolvedValueOnce({
-      events: [],
-      nextCursor: null,
-      rawCount: 0,
-      rateLimit: {
-        remaining: 500,
-        limit: 5000,
-        resetAt: new Date(Date.now() + 60_000),
-      },
+    mockParseRateLimit.mockReturnValueOnce({
+      remaining: 500,
+      limit: 5000,
+      resetAt: new Date(Date.now() + 60_000),
     });
     const step = makeStep();
 
@@ -283,7 +294,7 @@ describe("rate limit injection", () => {
 
 describe("completion", () => {
   it("returns correct stats with eventsProduced and eventsDispatched", async () => {
-    mockConnector.fetchPage.mockResolvedValueOnce({
+    mockProcessResponse.mockReturnValueOnce({
       events: [
         { deliveryId: "d1", eventType: "pull_request", payload: {} },
         { deliveryId: "d2", eventType: "pull_request", payload: {} },
@@ -307,23 +318,27 @@ describe("completion", () => {
   });
 
   it("multi-page counts are accurate", async () => {
-    mockConnector.fetchPage.mockResolvedValueOnce({
-      events: [
-        { deliveryId: "d1", eventType: "pull_request", payload: {} },
-        { deliveryId: "d2", eventType: "pull_request", payload: {} },
-        { deliveryId: "d3", eventType: "pull_request", payload: {} },
-      ],
-      nextCursor: { page: 2 },
-      rawCount: 3,
-    });
-    mockConnector.fetchPage.mockResolvedValueOnce({
-      events: [
-        { deliveryId: "d4", eventType: "pull_request", payload: {} },
-        { deliveryId: "d5", eventType: "pull_request", payload: {} },
-      ],
-      nextCursor: null,
-      rawCount: 2,
-    });
+    mockGatewayClient.executeApi
+      .mockResolvedValueOnce({ status: 200, data: [], headers: {} })
+      .mockResolvedValueOnce({ status: 200, data: [], headers: {} });
+    mockProcessResponse
+      .mockReturnValueOnce({
+        events: [
+          { deliveryId: "d1", eventType: "pull_request", payload: {} },
+          { deliveryId: "d2", eventType: "pull_request", payload: {} },
+          { deliveryId: "d3", eventType: "pull_request", payload: {} },
+        ],
+        nextCursor: { page: 2 },
+        rawCount: 3,
+      })
+      .mockReturnValueOnce({
+        events: [
+          { deliveryId: "d4", eventType: "pull_request", payload: {} },
+          { deliveryId: "d5", eventType: "pull_request", payload: {} },
+        ],
+        nextCursor: null,
+        rawCount: 2,
+      });
     const step = makeStep();
 
     const result = (await capturedHandler({
@@ -338,7 +353,7 @@ describe("completion", () => {
 
 describe("holdForReplay", () => {
   it("passes holdForReplay: true to relay.dispatchWebhook", async () => {
-    mockConnector.fetchPage.mockResolvedValueOnce({
+    mockProcessResponse.mockReturnValueOnce({
       events: [
         { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
       ],
@@ -357,7 +372,7 @@ describe("holdForReplay", () => {
   });
 
   it("passes holdForReplay: undefined when not set", async () => {
-    mockConnector.fetchPage.mockResolvedValueOnce({
+    mockProcessResponse.mockReturnValueOnce({
       events: [
         { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
       ],

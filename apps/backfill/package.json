@@ -18,7 +18,6 @@
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
-    "@repo/console-backfill": "workspace:*",
     "@repo/console-providers": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@repo/gateway-service-clients": "workspace:*",
