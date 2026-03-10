@@ -11,6 +11,8 @@ import {
   sentryOAuthResponseSchema,
   sentryProviderConfigSchema,
 } from "./auth";
+import { sentryApi } from "./api";
+import { sentryBackfill } from "./backfill";
 import {
   preTransformSentryErrorWebhookSchema,
   preTransformSentryEventAlertWebhookSchema,
@@ -184,6 +186,9 @@ export const sentry = defineProvider({
   },
 
   deriveObservationType: (sourceType) => sourceType,
+
+  api: sentryApi,
+  backfill: sentryBackfill,
 
   webhook: {
     headersSchema: z.object({

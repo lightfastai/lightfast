@@ -135,6 +135,111 @@ export const runtimeConfigSchema = z.object({
 });
 export type RuntimeConfig = z.infer<typeof runtimeConfigSchema>;
 
+// ── API Surface schemas ─────────────────────────────────────────────────────────
+
+export const rateLimitSchema = z.object({
+  remaining: z.number(),
+  resetAt: z.date(),
+  limit: z.number(),
+});
+
+export type RateLimit = z.infer<typeof rateLimitSchema>;
+
+// ── Backfill schemas ────────────────────────────────────────────────────────────
+
+export const backfillWebhookEventSchema = z.object({
+  /** Unique per event: "backfill-{installationId}-{entityType}-{itemId}" */
+  deliveryId: z.string(),
+  /** Provider-specific event type, e.g. "pull_request", "issues", "deployment.succeeded" */
+  eventType: z.string(),
+  /** Webhook-shaped payload from adapter — matches PreTransform* schemas */
+  payload: z.unknown(),
+});
+
+export type BackfillWebhookEvent = z.infer<typeof backfillWebhookEventSchema>;
+
+export const backfillContextSchema = z.object({
+  /** Gateway installation ID */
+  installationId: z.string(),
+  /** Single resource for this work unit */
+  resource: z.object({
+    providerResourceId: z.string(),
+    resourceName: z.string().nullable(),
+  }),
+  /** ISO timestamp = now - depth days */
+  since: z.string(),
+});
+
+export type BackfillContext = z.infer<typeof backfillContextSchema>;
+
+// ── API Surface interfaces (contain functions — cannot be Zod) ──────────────────
+
+export interface ApiEndpoint {
+  /** HTTP method */
+  readonly method: "GET" | "POST";
+  /** URL path template with {param} placeholders. Example: "/repos/{owner}/{repo}/pulls" */
+  readonly path: string;
+  /** Human-readable description */
+  readonly description: string;
+  /** Request timeout in ms. Default: 30_000 */
+  readonly timeout?: number;
+  /** Zod schema for the response body. Uses .passthrough() to allow extra fields. */
+  readonly responseSchema: z.ZodType;
+}
+
+export interface ProviderApi {
+  /** Base URL for the provider's API. Example: "https://api.github.com" */
+  readonly baseUrl: string;
+  /** Default headers for all API calls. */
+  readonly defaultHeaders?: Record<string, string>;
+  /** Build the Authorization header value from the active token.
+   *  Default behavior (when omitted): `Bearer ${token}`. */
+  readonly buildAuthHeader?: (token: string) => string;
+  /** Parse rate-limit info from response headers. Return null if not parseable.
+   *  This is an API-level concern — consumed by callers, never by gateway. */
+  readonly parseRateLimit: (headers: Headers) => RateLimit | null;
+  /** Available API endpoints, keyed by a stable identifier */
+  readonly endpoints: Record<string, ApiEndpoint>;
+}
+
+// ── Backfill interfaces (contain functions — cannot be Zod) ─────────────────────
+
+/** How to backfill a single entity type using a provider API endpoint */
+export interface BackfillEntityHandler {
+  /** Which API endpoint to use from the provider's api.endpoints catalog */
+  readonly endpointId: string;
+  /** Build the request parameters for the gateway proxy.
+   *  Called once per page. `cursor` is null for the first page. */
+  buildRequest(
+    ctx: BackfillContext,
+    cursor: unknown
+  ): {
+    pathParams?: Record<string, string>;
+    queryParams?: Record<string, string>;
+    body?: unknown;
+  };
+  /** Process the raw API response into webhook events + next cursor.
+   *  `responseHeaders` is provided for providers that need
+   *  header-based pagination (e.g., Sentry's Link header cursors). */
+  processResponse(
+    data: unknown,
+    ctx: BackfillContext,
+    cursor: unknown,
+    responseHeaders?: Record<string, string>
+  ): {
+    events: BackfillWebhookEvent[];
+    nextCursor: unknown | null;
+    rawCount: number;
+  };
+}
+
+/** Backfill definition — required on every ProviderDefinition */
+export interface BackfillDef {
+  readonly supportedEntityTypes: readonly string[];
+  readonly defaultEntityTypes: readonly string[];
+  readonly entityTypes: Record<string, BackfillEntityHandler>;
+}
+
 export interface ProviderDefinition<
   TConfig = unknown,
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
@@ -166,6 +271,8 @@ export interface ProviderDefinition<
   readonly defaultSyncEvents: readonly string[];
   /** Map sourceType to observation type string for storage. */
   readonly deriveObservationType: (sourceType: string) => string;
+  readonly api: ProviderApi;
+  readonly backfill: BackfillDef;
   readonly description: string;
   readonly displayName: string;
   /** Pre-built createEnv() preset — for use in @t3-oss/env-core `extends` arrays.

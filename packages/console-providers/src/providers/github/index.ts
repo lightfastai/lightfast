@@ -10,6 +10,8 @@ import {
   githubOAuthResponseSchema,
   githubProviderConfigSchema,
 } from "./auth";
+import { githubApi } from "./api";
+import { githubBackfill } from "./backfill";
 import {
   githubWebhookPayloadSchema,
   preTransformGitHubDiscussionEventSchema,
@@ -334,6 +336,9 @@ export const github = defineProvider({
   },
 
   deriveObservationType: (sourceType) => sourceType,
+
+  api: githubApi,
+  backfill: githubBackfill,
 
   envSchema: {
     GITHUB_APP_SLUG: z.string().min(1),

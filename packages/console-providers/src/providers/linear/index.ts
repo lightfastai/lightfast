@@ -10,6 +10,8 @@ import {
   linearOAuthResponseSchema,
   linearProviderConfigSchema,
 } from "./auth";
+import { linearApi } from "./api";
+import { linearBackfill } from "./backfill";
 import {
   linearWebhookPayloadSchema,
   preTransformLinearCommentWebhookSchema,
@@ -284,6 +286,9 @@ export const linear = defineProvider({
   },
 
   deriveObservationType: (sourceType) => sourceType,
+
+  api: linearApi,
+  backfill: linearBackfill,
 
   webhook: {
     headersSchema: z.object({

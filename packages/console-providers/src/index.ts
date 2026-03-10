@@ -2,11 +2,18 @@
 export type {
   ActionDef,
   ActionEventDef,
+  ApiEndpoint,
+  BackfillContext,
+  BackfillDef,
+  BackfillEntityHandler,
+  BackfillWebhookEvent,
   CategoryDef,
   EventDefinition,
   IconDef,
   OAuthDef,
+  ProviderApi,
   ProviderDefinition,
+  RateLimit,
   RuntimeConfig,
   SimpleEventDef,
   WebhookDef,
@@ -14,12 +21,37 @@ export type {
 export {
   actionDefSchema,
   actionEvent,
+  backfillContextSchema,
+  backfillWebhookEventSchema,
   categoryDefSchema,
   defineProvider,
   iconDefSchema,
+  rateLimitSchema,
   runtimeConfigSchema,
   simpleEvent,
 } from "./define";
+
+// GitHub API
+export {
+  parseGitHubRateLimit,
+  githubPullRequestSchema,
+  githubIssueSchema,
+  githubReleaseSchema,
+  githubUserSchema,
+} from "./providers/github/api";
+
+// Vercel API
+export {
+  parseVercelRateLimit,
+  vercelDeploymentSchema,
+  vercelDeploymentsResponseSchema,
+} from "./providers/vercel/api";
+
+// Linear API
+export { parseLinearRateLimit, graphqlResponseSchema } from "./providers/linear/api";
+
+// Sentry API
+export { parseSentryRateLimit } from "./providers/sentry/api";
 export type {
   PostTransformActor,
   PostTransformEvent,

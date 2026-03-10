@@ -9,6 +9,8 @@ import {
   vercelOAuthResponseSchema,
   vercelProviderConfigSchema,
 } from "./auth";
+import { vercelApi } from "./api";
+import { vercelBackfill } from "./backfill";
 import {
   preTransformVercelWebhookPayloadSchema,
   vercelWebhookPayloadSchema,
@@ -164,6 +166,9 @@ export const vercel = defineProvider({
   getBaseEventType: (sourceType) => sourceType,
 
   deriveObservationType: (sourceType) => sourceType.replace(".", "_"),
+
+  api: vercelApi,
+  backfill: vercelBackfill,
 
   webhook: {
     headersSchema: z.object({
