@@ -46,7 +46,7 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
 
     if (!response.ok) {
       throw new Error(
-        `Vercel API returned ${response.status}: unable to access deployments for project ${projectId}`
+        `Vercel API returned ${response.status}: unable to access deployments for project ${projectId}`,
       );
     }
   }
@@ -54,7 +54,7 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
   async fetchPage(
     config: BackfillConfig,
     entityType: string,
-    cursor: VercelCursor | null
+    cursor: VercelCursor | null,
   ): Promise<BackfillPage<VercelCursor>> {
     if (entityType !== "deployment") {
       throw new Error(`Unsupported entity type: ${entityType}`);
@@ -65,7 +65,7 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
 
   private async fetchDeployments(
     config: BackfillConfig,
-    cursor: VercelCursor | null
+    cursor: VercelCursor | null,
   ): Promise<BackfillPage<VercelCursor>> {
     // providerResourceId is the Vercel project ID
     const projectId = config.resource.providerResourceId;
@@ -86,7 +86,7 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
 
     if (!response.ok) {
       throw new Error(
-        `Vercel API returned ${response.status} when fetching deployments`
+        `Vercel API returned ${response.status} when fetching deployments`,
       );
     }
 
@@ -101,13 +101,13 @@ class VercelBackfillConnector implements BackfillConnector<VercelCursor> {
       })
       .filter(
         (deployment): deployment is Record<string, unknown> & { uid: string } =>
-          typeof deployment.uid === "string"
+          typeof deployment.uid === "string",
       );
 
     const events: BackfillWebhookEvent[] = filtered.map((deployment) => {
       const { webhookPayload, eventType } = adaptVercelDeploymentForTransformer(
         deployment,
-        projectName
+        projectName,
       );
       return {
         deliveryId: `backfill-${config.installationId}-${config.resource.providerResourceId}-deploy-${deployment.uid}`,

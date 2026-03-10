@@ -7,11 +7,15 @@ export function parseLinearRateLimit(headers: Headers): RateLimit | null {
   const remaining = headers.get("x-ratelimit-requests-remaining");
   const reset = headers.get("x-ratelimit-requests-reset");
   const limit = headers.get("x-ratelimit-requests-limit");
-  if (!remaining || !reset || !limit) return null;
-  const r = parseInt(remaining, 10);
-  const s = parseInt(reset, 10); // Linear returns UTC epoch MILLISECONDS
-  const l = parseInt(limit, 10);
-  if (Number.isNaN(r) || Number.isNaN(s) || Number.isNaN(l)) return null;
+  if (!(remaining && reset && limit)) {
+    return null;
+  }
+  const r = Number.parseInt(remaining, 10);
+  const s = Number.parseInt(reset, 10); // Linear returns UTC epoch MILLISECONDS
+  const l = Number.parseInt(limit, 10);
+  if (Number.isNaN(r) || Number.isNaN(s) || Number.isNaN(l)) {
+    return null;
+  }
   return { remaining: r, resetAt: new Date(s), limit: l }; // s is already in ms
 }
 

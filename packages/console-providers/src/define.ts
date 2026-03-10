@@ -175,39 +175,37 @@ export type BackfillContext = z.infer<typeof backfillContextSchema>;
 // ── API Surface interfaces (contain functions — cannot be Zod) ──────────────────
 
 export interface ApiEndpoint {
+  /** Human-readable description */
+  readonly description: string;
   /** HTTP method */
   readonly method: "GET" | "POST";
   /** URL path template with {param} placeholders. Example: "/repos/{owner}/{repo}/pulls" */
   readonly path: string;
-  /** Human-readable description */
-  readonly description: string;
-  /** Request timeout in ms. Default: 30_000 */
-  readonly timeout?: number;
   /** Zod schema for the response body. Uses .passthrough() to allow extra fields. */
   readonly responseSchema: z.ZodType;
+  /** Request timeout in ms. Default: 30_000 */
+  readonly timeout?: number;
 }
 
 export interface ProviderApi {
   /** Base URL for the provider's API. Example: "https://api.github.com" */
   readonly baseUrl: string;
-  /** Default headers for all API calls. */
-  readonly defaultHeaders?: Record<string, string>;
   /** Build the Authorization header value from the active token.
    *  Default behavior (when omitted): `Bearer ${token}`. */
   readonly buildAuthHeader?: (token: string) => string;
+  /** Default headers for all API calls. */
+  readonly defaultHeaders?: Record<string, string>;
+  /** Available API endpoints, keyed by a stable identifier */
+  readonly endpoints: Record<string, ApiEndpoint>;
   /** Parse rate-limit info from response headers. Return null if not parseable.
    *  This is an API-level concern — consumed by callers, never by gateway. */
   readonly parseRateLimit: (headers: Headers) => RateLimit | null;
-  /** Available API endpoints, keyed by a stable identifier */
-  readonly endpoints: Record<string, ApiEndpoint>;
 }
 
 // ── Backfill interfaces (contain functions — cannot be Zod) ─────────────────────
 
 /** How to backfill a single entity type using a provider API endpoint */
 export interface BackfillEntityHandler {
-  /** Which API endpoint to use from the provider's api.endpoints catalog */
-  readonly endpointId: string;
   /** Build the request parameters for the gateway proxy.
    *  Called once per page. `cursor` is null for the first page. */
   buildRequest(
@@ -218,6 +216,8 @@ export interface BackfillEntityHandler {
     queryParams?: Record<string, string>;
     body?: unknown;
   };
+  /** Which API endpoint to use from the provider's api.endpoints catalog */
+  readonly endpointId: string;
   /** Process the raw API response into webhook events + next cursor.
    *  `responseHeaders` is provided for providers that need
    *  header-based pagination (e.g., Sentry's Link header cursors). */
@@ -235,9 +235,9 @@ export interface BackfillEntityHandler {
 
 /** Backfill definition — required on every ProviderDefinition */
 export interface BackfillDef {
-  readonly supportedEntityTypes: readonly string[];
   readonly defaultEntityTypes: readonly string[];
   readonly entityTypes: Record<string, BackfillEntityHandler>;
+  readonly supportedEntityTypes: readonly string[];
 }
 
 export interface ProviderDefinition<
@@ -252,6 +252,8 @@ export interface ProviderDefinition<
   TProviderConfigSchema extends z.ZodObject = z.ZodObject,
 > {
   readonly accountInfoSchema: TAccountInfoSchema;
+  readonly api: ProviderApi;
+  readonly backfill: BackfillDef;
   /** Build the providerConfig JSONB blob for a new workspace integration record. */
   readonly buildProviderConfig: (params: {
     resourceId: string;
@@ -271,8 +273,6 @@ export interface ProviderDefinition<
   readonly defaultSyncEvents: readonly string[];
   /** Map sourceType to observation type string for storage. */
   readonly deriveObservationType: (sourceType: string) => string;
-  readonly api: ProviderApi;
-  readonly backfill: BackfillDef;
   readonly description: string;
   readonly displayName: string;
   /** Pre-built createEnv() preset — for use in @t3-oss/env-core `extends` arrays.

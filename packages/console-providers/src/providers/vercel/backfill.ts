@@ -1,4 +1,8 @@
-import type { BackfillContext, BackfillDef, BackfillWebhookEvent } from "../../define";
+import type {
+  BackfillContext,
+  BackfillDef,
+  BackfillWebhookEvent,
+} from "../../define";
 import { vercelDeploymentsResponseSchema } from "./api";
 import type {
   PreTransformVercelWebhookPayload,
@@ -7,9 +11,7 @@ import type {
 
 // ── Adapter Functions ─────────────────────────────────────────────────────────────
 
-function mapReadyStateToEventType(
-  readyState?: string
-): VercelWebhookEventType {
+function mapReadyStateToEventType(readyState?: string): VercelWebhookEventType {
   switch (readyState) {
     case "READY":
       return "deployment.succeeded";
@@ -112,8 +114,7 @@ export const vercelBackfill: BackfillDef = {
         });
 
         const hasMore =
-          pagination.next !== null &&
-          filtered.length === deployments.length;
+          pagination.next !== null && filtered.length === deployments.length;
 
         return {
           events,

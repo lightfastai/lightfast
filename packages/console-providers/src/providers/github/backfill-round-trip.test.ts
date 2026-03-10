@@ -16,14 +16,18 @@ vi.hoisted(() => {
 });
 
 import type { PostTransformReference } from "../../post-transform-event";
-import { transformGitHubIssue, transformGitHubPullRequest, transformGitHubRelease } from "./transformers";
+import { adaptVercelDeploymentForTransformer } from "../vercel/backfill";
 import { transformVercelDeployment } from "../vercel/transformers";
 import {
   adaptGitHubIssueForTransformer,
   adaptGitHubPRForTransformer,
   adaptGitHubReleaseForTransformer,
 } from "./backfill";
-import { adaptVercelDeploymentForTransformer } from "../vercel/backfill";
+import {
+  transformGitHubIssue,
+  transformGitHubPullRequest,
+  transformGitHubRelease,
+} from "./transformers";
 
 // Minimal TransformContext — matches { deliveryId: string, receivedAt: number }
 const context = {

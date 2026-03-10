@@ -2,6 +2,7 @@ import { z } from "zod";
 import { computeHmac, timingSafeEqual } from "../../crypto";
 import { actionEvent, defineProvider } from "../../define";
 import type { CallbackResult, OAuthTokens } from "../../types";
+import { vercelApi } from "./api";
 import type { VercelAccountInfo, VercelConfig, VercelOAuthRaw } from "./auth";
 import {
   vercelAccountInfoSchema,
@@ -9,7 +10,6 @@ import {
   vercelOAuthResponseSchema,
   vercelProviderConfigSchema,
 } from "./auth";
-import { vercelApi } from "./api";
 import { vercelBackfill } from "./backfill";
 import {
   preTransformVercelWebhookPayloadSchema,

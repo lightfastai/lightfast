@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { parseVercelRateLimit } from "./api";
-import {
-  adaptVercelDeploymentForTransformer,
-} from "./backfill";
+import { adaptVercelDeploymentForTransformer } from "./backfill";
 
 function makeDeployment(
   overrides: Record<string, unknown> = {}

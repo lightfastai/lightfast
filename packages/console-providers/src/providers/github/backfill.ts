@@ -184,10 +184,7 @@ export const githubBackfill: BackfillDef = {
         const items = z.array(githubReleaseSchema).parse(data);
         const sinceDate = new Date(ctx.since);
         const filtered = items.filter((release) => {
-          if (
-            typeof release.id !== "number" ||
-            !Number.isFinite(release.id)
-          ) {
+          if (typeof release.id !== "number" || !Number.isFinite(release.id)) {
             return false;
           }
           const publishedAt = release.published_at ?? release.created_at;

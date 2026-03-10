@@ -2,6 +2,7 @@ import { z } from "zod";
 import { computeHmac, timingSafeEqual } from "../../crypto";
 import { actionEvent, defineProvider, simpleEvent } from "../../define";
 import type { CallbackResult, OAuthTokens } from "../../types";
+import { sentryApi } from "./api";
 import type { SentryAccountInfo, SentryConfig } from "./auth";
 import {
   decodeSentryToken,
@@ -11,7 +12,6 @@ import {
   sentryOAuthResponseSchema,
   sentryProviderConfigSchema,
 } from "./auth";
-import { sentryApi } from "./api";
 import { sentryBackfill } from "./backfill";
 import {
   preTransformSentryErrorWebhookSchema,

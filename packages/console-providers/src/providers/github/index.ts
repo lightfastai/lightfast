@@ -3,6 +3,7 @@ import { computeHmac, timingSafeEqual } from "../../crypto";
 import { actionEvent, defineProvider, simpleEvent } from "../../define";
 import { createRS256JWT } from "../../jwt";
 import type { CallbackResult, OAuthTokens } from "../../types";
+import { githubApi } from "./api";
 import type { GitHubAccountInfo, GitHubConfig } from "./auth";
 import {
   githubAccountInfoSchema,
@@ -10,7 +11,6 @@ import {
   githubOAuthResponseSchema,
   githubProviderConfigSchema,
 } from "./auth";
-import { githubApi } from "./api";
 import { githubBackfill } from "./backfill";
 import {
   githubWebhookPayloadSchema,

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { computeHmac, timingSafeEqual } from "../../crypto";
 import { actionEvent, defineProvider } from "../../define";
 import type { CallbackResult, OAuthTokens } from "../../types";
+import { linearApi } from "./api";
 import type { LinearAccountInfo, LinearConfig } from "./auth";
 import {
   linearAccountInfoSchema,
@@ -10,7 +11,6 @@ import {
   linearOAuthResponseSchema,
   linearProviderConfigSchema,
 } from "./auth";
-import { linearApi } from "./api";
 import { linearBackfill } from "./backfill";
 import {
   linearWebhookPayloadSchema,
