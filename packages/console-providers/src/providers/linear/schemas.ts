@@ -273,12 +273,16 @@ export type LinearCycle = z.infer<typeof linearCycleSchema>;
 export type LinearProjectUpdate = z.infer<typeof linearProjectUpdateSchema>;
 
 export type LinearWebhookBase = z.infer<typeof linearWebhookBaseSchema>;
-export type LinearWebhookEventType =
-  | "Issue"
-  | "Comment"
-  | "Project"
-  | "Cycle"
-  | "ProjectUpdate";
+export const linearWebhookEventTypeSchema = z.enum([
+  "Issue",
+  "Comment",
+  "Project",
+  "Cycle",
+  "ProjectUpdate",
+]);
+export type LinearWebhookEventType = z.infer<
+  typeof linearWebhookEventTypeSchema
+>;
 
 export type PreTransformLinearIssueWebhook = z.infer<
   typeof preTransformLinearIssueWebhookSchema

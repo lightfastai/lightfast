@@ -111,6 +111,7 @@ export * from "./schemas/gateway";
 export * from "./schemas/ingestion";
 export * from "./schemas/job";
 export * from "./schemas/metrics";
+export * from "./schemas/neural";
 export * from "./schemas/org-api-key";
 export * from "./schemas/organization";
 export * from "./schemas/source-metadata";

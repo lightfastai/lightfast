@@ -1,9 +1,7 @@
 import { db } from "@db/console/client";
 import { workspaceNeuralObservations } from "@db/console/schema";
-import type {
-  PostTransformActor,
-  PostTransformEvent,
-} from "@repo/console-providers";
+import type { PostTransformEvent } from "@repo/console-providers";
+import type { ResolvedActor } from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
 import { and, eq, sql } from "drizzle-orm";
 
@@ -20,13 +18,6 @@ import { and, eq, sql } from "drizzle-orm";
  *
  * Future: Add github_clerk_mappings cache table for O(1) reverse lookups.
  */
-
-interface ResolvedActor {
-  /** Canonical actor ID for this workspace (source:id format) */
-  actorId: string | null;
-  /** Original actor from source event */
-  sourceActor: PostTransformActor | null;
-}
 
 /**
  * Attempt to resolve Vercel actor to numeric GitHub ID via commit SHA.

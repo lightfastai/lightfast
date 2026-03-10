@@ -13,6 +13,10 @@
 import { db } from "@db/console/client";
 import { workspaceObservationClusters } from "@db/console/schema";
 import { consolePineconeClient } from "@repo/console-pinecone";
+import type {
+  ClusterAssignmentInput,
+  ClusterAssignmentResult,
+} from "@repo/console-validation";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
 import { nanoid } from "@repo/lib";
 import { log } from "@vendor/observability/log";
@@ -22,25 +26,6 @@ import { and, desc, eq, gte, sql } from "drizzle-orm";
 const CLUSTER_AFFINITY_THRESHOLD = 60;
 const MAX_RECENT_CLUSTERS = 10;
 const CLUSTER_LOOKBACK_DAYS = 7;
-
-interface ClusterAssignmentInput {
-  actorId: string | null;
-  embeddingVector: number[];
-  entityIds: string[];
-  indexName: string;
-  namespace: string;
-  occurredAt: string;
-  title: string;
-  topics: string[];
-  vectorId: string;
-  workspaceId: string;
-}
-
-interface ClusterAssignmentResult {
-  affinityScore: number | null;
-  clusterId: number;
-  isNew: boolean;
-}
 
 /**
  * Assign observation to a cluster (existing or new)

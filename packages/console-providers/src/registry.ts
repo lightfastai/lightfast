@@ -77,13 +77,14 @@ export type EventKey = {
 
 // ── Runtime Event Registry Derivation ────────────────────────────────────────
 
-export interface EventRegistryEntry {
-  category: string;
-  externalKeys: readonly string[];
-  label: string;
-  source: SourceType;
-  weight: number;
-}
+export const eventRegistryEntrySchema = z.object({
+  category: z.string(),
+  externalKeys: z.array(z.string()).readonly(),
+  label: z.string(),
+  source: sourceTypeSchema,
+  weight: z.number(),
+});
+export type EventRegistryEntry = z.infer<typeof eventRegistryEntrySchema>;
 
 /** Derived event registry — single source of truth is the provider definitions */
 export const EVENT_REGISTRY: Record<EventKey, EventRegistryEntry> = (() => {

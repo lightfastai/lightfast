@@ -187,9 +187,13 @@ export type PreTransformGitHubDiscussionEvent = z.infer<
 >;
 export type GitHubWebhookPayload = z.infer<typeof githubWebhookPayloadSchema>;
 
-export type GitHubWebhookEventType =
-  | "push"
-  | "pull_request"
-  | "issues"
-  | "release"
-  | "discussion";
+export const githubWebhookEventTypeSchema = z.enum([
+  "push",
+  "pull_request",
+  "issues",
+  "release",
+  "discussion",
+]);
+export type GitHubWebhookEventType = z.infer<
+  typeof githubWebhookEventTypeSchema
+>;

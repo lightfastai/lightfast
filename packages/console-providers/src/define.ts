@@ -1,5 +1,5 @@
 import { createEnv } from "@t3-oss/env-core";
-import type { z } from "zod";
+import { z } from "zod";
 import type { PostTransformEvent } from "./post-transform-event";
 import type {
   BaseProviderAccountInfo,
@@ -8,17 +8,19 @@ import type {
   TransformContext,
 } from "./types";
 
-export interface CategoryDef {
-  description: string;
-  label: string;
-  type: "observation" | "sync+observation";
-}
+export const categoryDefSchema = z.object({
+  description: z.string(),
+  label: z.string(),
+  type: z.enum(["observation", "sync+observation"]),
+});
+export type CategoryDef = z.infer<typeof categoryDefSchema>;
 
 /** Per-action sub-event definition (e.g., "opened", "merged" for pull_request) */
-export interface ActionDef {
-  label: string;
-  weight: number;
-}
+export const actionDefSchema = z.object({
+  label: z.string(),
+  weight: z.number(),
+});
+export type ActionDef = z.infer<typeof actionDefSchema>;
 
 /** Simple event — no sub-actions */
 export interface SimpleEventDef<S extends z.ZodType = z.ZodType> {
@@ -128,9 +130,10 @@ export interface OAuthDef<
 }
 
 /** Runtime values not sourced from env (e.g. callbackBaseUrl) */
-export interface RuntimeConfig {
-  callbackBaseUrl: string;
-}
+export const runtimeConfigSchema = z.object({
+  callbackBaseUrl: z.string(),
+});
+export type RuntimeConfig = z.infer<typeof runtimeConfigSchema>;
 
 export interface ProviderDefinition<
   TConfig = unknown,
@@ -255,7 +258,8 @@ export function defineProvider<
 // ── Display-Layer Types ──────────────────────────────────────────────────────
 
 /** Framework-agnostic SVG icon data — renderable by any UI layer */
-export interface IconDef {
-  readonly d: string;
-  readonly viewBox: string;
-}
+export const iconDefSchema = z.object({
+  d: z.string(),
+  viewBox: z.string(),
+});
+export type IconDef = z.infer<typeof iconDefSchema>;

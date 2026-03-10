@@ -12,8 +12,12 @@ export type {
   WebhookDef,
 } from "./define";
 export {
+  actionDefSchema,
   actionEvent,
+  categoryDefSchema,
   defineProvider,
+  iconDefSchema,
+  runtimeConfigSchema,
   simpleEvent,
 } from "./define";
 export type {
@@ -38,6 +42,7 @@ export type {
 } from "./providers/github/schemas";
 // ── Pre-Transform Schemas & Types ─────────────────────────────────────────────
 export {
+  githubWebhookEventTypeSchema,
   githubWebhookPayloadSchema,
   preTransformGitHubDiscussionEventSchema,
   preTransformGitHubIssuesEventSchema,
@@ -74,6 +79,7 @@ export type {
 } from "./providers/linear/schemas";
 
 export {
+  linearWebhookEventTypeSchema,
   linearWebhookPayloadSchema,
   preTransformLinearCommentWebhookSchema,
   preTransformLinearCycleWebhookSchema,
@@ -104,6 +110,7 @@ export {
   preTransformSentryEventAlertWebhookSchema,
   preTransformSentryIssueWebhookSchema,
   preTransformSentryMetricAlertWebhookSchema,
+  sentryWebhookEventTypeSchema,
   sentryWebhookPayloadSchema,
 } from "./providers/sentry/schemas";
 export {
@@ -206,6 +213,7 @@ export {
   encodeSentryToken,
   sentryAccountInfoSchema,
   sentryConfigSchema,
+  sentryInstallationTokenSchema,
   sentryOAuthRawSchema,
   sentryOAuthResponseSchema,
   sentryProviderConfigSchema,
@@ -238,6 +246,7 @@ export type {
 // ── Provider Config (JSONB shapes for workspace_integrations.provider_config) ─
 export {
   EVENT_REGISTRY,
+  eventRegistryEntrySchema,
   getDefaultSyncEvents,
   getProvider,
   PROVIDER_ENVS,
@@ -265,6 +274,7 @@ export {
   baseProviderAccountInfoSchema,
   callbackResultSchema,
   oAuthTokensSchema,
+  transformContextSchema,
 } from "./types";
 export {
   logValidationErrors,

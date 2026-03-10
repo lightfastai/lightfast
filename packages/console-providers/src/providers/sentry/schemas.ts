@@ -226,11 +226,15 @@ export type SentryActor = z.infer<typeof sentryActorSchema>;
 export type SentryIssue = z.infer<typeof sentryIssueSchema>;
 export type SentryErrorEvent = z.infer<typeof sentryErrorEventSchema>;
 
-export type SentryWebhookEventType =
-  | "issue"
-  | "error"
-  | "event_alert"
-  | "metric_alert";
+export const sentryWebhookEventTypeSchema = z.enum([
+  "issue",
+  "error",
+  "event_alert",
+  "metric_alert",
+]);
+export type SentryWebhookEventType = z.infer<
+  typeof sentryWebhookEventTypeSchema
+>;
 
 export type PreTransformSentryIssueWebhook = z.infer<
   typeof preTransformSentryIssueWebhookSchema

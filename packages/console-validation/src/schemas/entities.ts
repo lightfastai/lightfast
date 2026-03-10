@@ -68,37 +68,26 @@ export type LLMEntityExtractionResponse = z.infer<
 /**
  * Entity extracted from observation content
  */
-export interface ExtractedEntity {
-  /** Entity classification */
-  category: EntityCategory;
-  /** Extraction confidence (0.0 - 1.0) */
-  confidence: number;
-  /** Text snippet providing extraction context */
-  evidence: string;
-  /** Canonical key (e.g., "@sarah", "POST /api/users", "#123") */
-  key: string;
-  /** Human-readable value/description */
-  value?: string;
-}
+export const extractedEntitySchema = z.object({
+  category: entityCategorySchema,
+  confidence: z.number(),
+  evidence: z.string(),
+  key: z.string(),
+  value: z.string().optional(),
+});
+export type ExtractedEntity = z.infer<typeof extractedEntitySchema>;
 
 /**
  * Entity search result for hybrid retrieval
  */
-export interface EntitySearchResult {
-  /** Extraction confidence */
-  confidence: number;
-  /** Entity category */
-  entityCategory: EntityCategory;
-  /** Entity database ID */
-  entityId: string;
-  /** Entity key */
-  entityKey: string;
-  /** Linked observation ID */
-  observationId: string;
-  /** Content snippet */
-  observationSnippet: string;
-  /** Observation title */
-  observationTitle: string;
-  /** How many times this entity has been seen */
-  occurrenceCount: number;
-}
+export const entitySearchResultSchema = z.object({
+  confidence: z.number(),
+  entityCategory: entityCategorySchema,
+  entityId: z.string(),
+  entityKey: z.string(),
+  observationId: z.string(),
+  observationSnippet: z.string(),
+  observationTitle: z.string(),
+  occurrenceCount: z.number(),
+});
+export type EntitySearchResult = z.infer<typeof entitySearchResultSchema>;

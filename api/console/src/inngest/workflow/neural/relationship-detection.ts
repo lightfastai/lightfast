@@ -21,21 +21,10 @@ import type {
   PostTransformEvent,
   PostTransformReference,
 } from "@repo/console-providers";
+import type { DetectedRelationship } from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
 import { and, eq, or, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
-
-/**
- * Detected relationship before database insertion
- */
-interface DetectedRelationship {
-  confidence: number;
-  linkingKey: string;
-  linkingKeyType: string;
-  metadata?: Record<string, unknown>;
-  relationshipType: RelationshipType;
-  targetObservationId: number;
-}
 
 /**
  * Detect relationships for a new observation
@@ -265,7 +254,7 @@ export async function detectAndCreateRelationships(
       workspaceId,
       sourceObservationId: observationId,
       targetObservationId: rel.targetObservationId,
-      relationshipType: rel.relationshipType,
+      relationshipType: rel.relationshipType as RelationshipType,
       linkingKey: rel.linkingKey,
       linkingKeyType: rel.linkingKeyType,
       confidence: rel.confidence,

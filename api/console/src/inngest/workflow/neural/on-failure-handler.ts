@@ -27,18 +27,13 @@
  * ```
  */
 
-import type { WorkflowOutput } from "@repo/console-validation";
+import type {
+  NeuralFailureOutput,
+  WorkflowOutput,
+} from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
 import { completeJob, getJobByInngestRunId } from "../../../lib/jobs";
 import type { Events } from "../../client/client";
-
-/** Base shape all neural workflow failure outputs must satisfy */
-interface NeuralFailureOutput {
-  error: string;
-  inngestFunctionId: string;
-  status: "failure";
-  [key: string]: unknown;
-}
 
 /**
  * Creates a consistent onFailure handler for neural Inngest workflows.

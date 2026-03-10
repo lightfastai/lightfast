@@ -328,17 +328,4 @@ export const operationMetricSchema = z.discriminatedUnion("type", [
   clusterAffinityMetricSchema,
 ]);
 
-export type OperationMetric =
-  | z.infer<typeof jobDurationMetricSchema>
-  | z.infer<typeof documentsIndexedMetricSchema>
-  | z.infer<typeof errorMetricSchema>
-  | z.infer<typeof observationCapturedMetricSchema>
-  | z.infer<typeof observationFilteredMetricSchema>
-  | z.infer<typeof observationDuplicateMetricSchema>
-  | z.infer<typeof observationBelowThresholdMetricSchema>
-  | z.infer<typeof entitiesExtractedMetricSchema>
-  | z.infer<typeof clusterAssignedMetricSchema>
-  | z.infer<typeof clusterSummaryGeneratedMetricSchema>
-  | z.infer<typeof profileUpdatedMetricSchema>
-  | z.infer<typeof actorResolutionMetricSchema>
-  | z.infer<typeof clusterAffinityMetricSchema>;
+export type OperationMetric = z.infer<typeof operationMetricSchema>;

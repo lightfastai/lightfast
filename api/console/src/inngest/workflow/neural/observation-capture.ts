@@ -36,10 +36,12 @@ import {
 import type {
   ClassificationResponse,
   ExtractedEntity,
+  MultiViewEmbeddingResult,
   NeuralObservationCaptureInput,
   NeuralObservationCaptureOutputFailure,
   NeuralObservationCaptureOutputFiltered,
   NeuralObservationCaptureOutputSuccess,
+  ObservationVectorMetadata,
 } from "@repo/console-validation";
 import { classificationResponseSchema } from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
@@ -71,47 +73,6 @@ import {
 import { createNeuralOnFailureHandler } from "./on-failure-handler";
 import { detectAndCreateRelationships } from "./relationship-detection";
 import { SIGNIFICANCE_THRESHOLD, scoreSignificance } from "./scoring";
-
-/**
- * Observation vector metadata stored in Pinecone
- * All values must be string, number, boolean, or string[] per Pinecone constraints
- */
-interface ObservationVectorMetadata {
-  actorName: string;
-  layer: string;
-  /** Pre-generated database ID for direct lookup (Phase 3 optimization) */
-  observationId: string;
-  observationType: string;
-  occurredAt: string;
-  snippet: string;
-  source: string;
-  sourceId: string;
-  sourceType: string;
-  title: string;
-  view: "title" | "content" | "summary"; // Identifies embedding view for multi-view retrieval
-  // HACK: Index signature required to satisfy Pinecone's RecordMetadata constraint.
-  // TODO: Re-export RecordMetadata from @repo/console-pinecone and extend it properly.
-  [key: string]: string | number | boolean | string[];
-}
-
-/**
- * Result of multi-view embedding generation
- */
-interface MultiViewEmbeddingResult {
-  content: {
-    vectorId: string;
-    vector: number[];
-  };
-  legacyVectorId: string;
-  summary: {
-    vectorId: string;
-    vector: number[];
-  };
-  title: {
-    vectorId: string;
-    vector: number[];
-  };
-}
 
 /**
  * Extract topics from source event

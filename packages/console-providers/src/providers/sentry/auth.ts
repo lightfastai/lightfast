@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { syncSchema } from "../../sync";
+import { syncSchema } from "../../types";
 
 // ── Raw OAuth Response Shape ──
 
@@ -50,10 +50,13 @@ export const sentryOAuthResponseSchema = z.object({
 
 // ── Sentry Token Encoding ──
 
-export interface SentryInstallationToken {
-  installationId: string;
-  token: string;
-}
+export const sentryInstallationTokenSchema = z.object({
+  installationId: z.string(),
+  token: z.string(),
+});
+export type SentryInstallationToken = z.infer<
+  typeof sentryInstallationTokenSchema
+>;
 
 export function encodeSentryToken(t: SentryInstallationToken): string {
   if (t.installationId.includes(":")) {
@@ -78,7 +81,7 @@ export const sentryProviderConfigSchema = z.object({
   sourceType: z.literal("sentry"),
   type: z.literal("project"),
   projectId: z.string(),
-  sync: syncSchema.omit({ branches: true, paths: true }),
+  sync: syncSchema,
 });
 
 export type SentryProviderConfig = z.infer<typeof sentryProviderConfigSchema>;

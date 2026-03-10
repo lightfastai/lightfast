@@ -1,5 +1,6 @@
 import type { EventKey, PostTransformEvent } from "@repo/console-providers";
 import { EVENT_REGISTRY } from "@repo/console-providers";
+import type { SignificanceResult } from "@repo/console-validation";
 
 /**
  * Minimum significance score for observation capture.
@@ -39,11 +40,6 @@ export const SIGNIFICANCE_THRESHOLD = 40;
  * });
  * ```
  */
-
-interface SignificanceResult {
-  factors: string[];
-  score: number;
-}
 
 /**
  * Content signals that increase significance.
