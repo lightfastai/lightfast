@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { ProviderApi, RateLimit } from "../../define";
 import { decodeSentryToken } from "./auth";
 
@@ -19,11 +20,88 @@ export function parseSentryRateLimit(headers: Headers): RateLimit | null {
   return { remaining: r, limit: l, resetAt: new Date(s * 1000) };
 }
 
+// ── Response Schemas ────────────────────────────────────────────────────────────
+
+export const sentryIssueSchema = z
+  .object({
+    id: z.string(),
+    shortId: z.string().optional(),
+    title: z.string(),
+    culprit: z.string().optional(),
+    permalink: z.string().optional(),
+    level: z.string().optional(),
+    status: z.string(),
+    platform: z.string().optional(),
+    project: z
+      .object({
+        id: z.string(),
+        name: z.string().optional(),
+        slug: z.string(),
+      })
+      .passthrough(),
+    type: z.string().optional(),
+    firstSeen: z.string(),
+    lastSeen: z.string(),
+    count: z.string().optional(),
+    userCount: z.number().optional(),
+    assignedTo: z
+      .object({
+        type: z.string(),
+        id: z.string(),
+        name: z.string(),
+      })
+      .passthrough()
+      .nullable()
+      .optional(),
+    metadata: z
+      .object({
+        type: z.string().optional(),
+        value: z.string().optional(),
+        filename: z.string().optional(),
+        function: z.string().optional(),
+        title: z.string().optional(),
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+export type SentryIssue = z.infer<typeof sentryIssueSchema>;
+
+export const sentryErrorEventSchema = z
+  .object({
+    eventID: z.string(),
+    title: z.string().optional(),
+    message: z.string().optional(),
+    dateCreated: z.string(),
+    platform: z.string().optional(),
+    tags: z
+      .array(z.object({ key: z.string(), value: z.string() }))
+      .optional(),
+  })
+  .passthrough();
+
+export type SentryErrorEvent = z.infer<typeof sentryErrorEventSchema>;
+
 // ── API Definition ──────────────────────────────────────────────────────────────
 
 export const sentryApi: ProviderApi = {
   baseUrl: "https://sentry.io",
   buildAuthHeader: (token) => `Bearer ${decodeSentryToken(token).token}`,
   parseRateLimit: parseSentryRateLimit,
-  endpoints: {},
+  endpoints: {
+    "list-org-issues": {
+      method: "GET",
+      path: "/api/0/organizations/{organization_slug}/issues/",
+      description:
+        "List issues for an organization (filter by project via query param)",
+      responseSchema: z.array(sentryIssueSchema),
+    },
+    "list-events": {
+      method: "GET",
+      path: "/api/0/projects/{organization_slug}/{project_slug}/events/",
+      description: "List error events for a Sentry project",
+      responseSchema: z.array(sentryErrorEventSchema),
+    },
+  },
 } as const;
