@@ -27,10 +27,13 @@ export const sentryIssueSchema = z
     id: z.string(),
     shortId: z.string().optional(),
     title: z.string(),
-    culprit: z.string().optional(),
-    permalink: z.string().optional(),
-    level: z.string().optional(),
-    status: z.string(),
+    culprit: z.string().nullable().optional(),
+    permalink: z.string().nullable().optional(),
+    level: z
+      .enum(["fatal", "error", "warning", "info", "debug"])
+      .catch("error")
+      .optional(),
+    status: z.enum(["unresolved", "resolved", "ignored"]).catch("unresolved"),
     platform: z.string().optional(),
     project: z
       .object({
@@ -39,7 +42,7 @@ export const sentryIssueSchema = z
         slug: z.string(),
       })
       .passthrough(),
-    type: z.string().optional(),
+    type: z.enum(["error", "default"]).catch("error").optional(),
     firstSeen: z.string(),
     lastSeen: z.string(),
     count: z.string().optional(),
@@ -50,7 +53,6 @@ export const sentryIssueSchema = z
         id: z.string(),
         name: z.string(),
       })
-      .passthrough()
       .nullable()
       .optional(),
     metadata: z
@@ -75,9 +77,37 @@ export const sentryErrorEventSchema = z
     message: z.string().optional(),
     dateCreated: z.string(),
     platform: z.string().optional(),
-    tags: z
-      .array(z.object({ key: z.string(), value: z.string() }))
+    tags: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
+    metadata: z
+      .object({
+        type: z.string().optional(),
+        value: z.string().optional(),
+        filename: z.string().optional(),
+        function: z.string().optional(),
+      })
       .optional(),
+    exception: z
+      .object({
+        values: z.array(
+          z.object({
+            type: z.string(),
+            value: z.string().optional(),
+          })
+        ),
+      })
+      .optional(),
+    user: z
+      .object({
+        id: z.string().optional(),
+        email: z.string().optional(),
+        username: z.string().optional(),
+        ip_address: z.string().optional(),
+      })
+      .optional(),
+    sdk: z.object({ name: z.string(), version: z.string() }).optional(),
+    culprit: z.string().optional(),
+    location: z.string().optional(),
+    web_url: z.string().optional(),
   })
   .passthrough();
 

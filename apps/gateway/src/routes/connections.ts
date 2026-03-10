@@ -5,11 +5,16 @@ import {
   gwResources,
   gwTokens,
 } from "@db/console/schema";
-import type { ProviderDefinition, RuntimeConfig, SourceType } from "@repo/console-providers";
-import { getProvider, PROVIDERS } from "@repo/console-providers";
+import type {
+  ProviderDefinition,
+  RuntimeConfig,
+  SourceType,
+} from "@repo/console-providers";
 import {
   BACKFILL_TERMINAL_STATUSES,
   backfillRunRecord,
+  getProvider,
+  PROVIDERS,
 } from "@repo/console-providers";
 import { decrypt, nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
@@ -19,6 +24,7 @@ import { Hono } from "hono";
 import { html, raw } from "hono/html";
 import { env } from "../env.js";
 import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
+import { getEncryptionKey } from "../lib/encryption.js";
 import { updateTokenRecord, writeTokenRecord } from "../lib/token-store.js";
 import { consoleUrl, gatewayBaseUrl } from "../lib/urls.js";
 import { apiKeyAuth } from "../middleware/auth.js";
@@ -31,6 +37,9 @@ import { tenantMiddleware } from "../middleware/tenant.js";
 const runtime: RuntimeConfig = { callbackBaseUrl: gatewayBaseUrl };
 
 /** Configs keyed by provider name */
+// SAFETY: env is validated by @t3-oss/env-core at startup; the gateway's combined
+// env object is structurally compatible with Record<string, string> (all env vars
+// are strings). The intersection type from createEnv() cannot be expressed generically.
 const providerConfigs: Record<string, unknown> = Object.fromEntries(
   Object.entries(PROVIDERS).map(([name, p]) => [
     name,
@@ -97,7 +106,9 @@ connections.get(
       .expire(key, 600)
       .exec();
 
-    // config is typed as unknown from providerConfigs — cast as never since runtime consistency is guaranteed
+    // SAFETY: config is providerConfigs[providerName], created by the same provider's
+    // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
+    // statically because it serves all providers from a single Record<string, unknown>.
     const url = providerDef.oauth.buildAuthUrl(config as never, state);
 
     return c.json({ url, state });
@@ -232,6 +243,9 @@ connections.get("/:provider/callback", async (c) => {
     }
 
     // Pure provider logic — no DB, no Hono coupling
+    // SAFETY: config is providerConfigs[providerName], created by the same provider's
+    // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
+    // statically because it serves all providers from a single Record<string, unknown>.
     const result = await providerDef.oauth.processCallback(
       config as never,
       query
@@ -518,8 +532,11 @@ async function getActiveTokenForInstallation(
     }
     const decryptedRefresh = await decrypt(
       tokenRow.refreshToken,
-      env.ENCRYPTION_KEY!
+      getEncryptionKey()
     );
+    // SAFETY: config is providerConfigs[providerName], created by the same provider's
+    // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
+    // statically because it serves all providers from a single Record<string, unknown>.
     const refreshed = await providerDef.oauth.refreshToken(
       config as never,
       decryptedRefresh
@@ -534,9 +551,12 @@ async function getActiveTokenForInstallation(
   }
 
   const decryptedAccessToken = tokenRow
-    ? await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY!)
+    ? await decrypt(tokenRow.accessToken, getEncryptionKey())
     : null;
 
+  // SAFETY: config is providerConfigs[providerName], created by the same provider's
+  // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
+  // statically because it serves all providers from a single Record<string, unknown>.
   const token = await providerDef.oauth.getActiveToken(
     config as never,
     installation.externalId,
@@ -566,13 +586,21 @@ async function forceRefreshToken(
     try {
       const decryptedRefresh = await decrypt(
         row.refreshToken,
-        env.ENCRYPTION_KEY!
+        getEncryptionKey()
       );
+      // SAFETY: config is providerConfigs[providerName], created by the same provider's
+      // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
+      // statically because it serves all providers from a single Record<string, unknown>.
       const refreshed = await providerDef.oauth.refreshToken(
         config as never,
         decryptedRefresh
       );
-      await updateTokenRecord(row.id, refreshed, row.refreshToken, row.expiresAt);
+      await updateTokenRecord(
+        row.id,
+        refreshed,
+        row.refreshToken,
+        row.expiresAt
+      );
       return refreshed.accessToken;
     } catch {
       // Refresh failed — fall through to getActiveToken
@@ -580,6 +608,9 @@ async function forceRefreshToken(
   }
 
   try {
+    // SAFETY: config is providerConfigs[providerName], created by the same provider's
+    // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
+    // statically because it serves all providers from a single Record<string, unknown>.
     return await providerDef.oauth.getActiveToken(
       config as never,
       installation.externalId,
@@ -625,6 +656,9 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
   try {
     const providerDef = getProvider(providerName);
 
+    // SAFETY: getProvider() returns the full generic ProviderDefinition<TConfig, ...>
+    // but the helper takes the base ProviderDefinition. The generic parameters are
+    // erased at runtime — the cast is safe because the concrete type is a supertype.
     const { token, expiresAt } = await getActiveTokenForInstallation(
       installation,
       config,
@@ -635,9 +669,7 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
       accessToken: token,
       provider: providerName,
       expiresIn: expiresAt
-        ? Math.floor(
-            (new Date(expiresAt).getTime() - Date.now()) / 1000
-          )
+        ? Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)
         : 3600, // GitHub installation tokens expire in 1 hour
     });
   } catch (err) {
@@ -764,6 +796,9 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   // Get active token
   let token: string;
   try {
+    // SAFETY: getProvider() returns the full generic ProviderDefinition<TConfig, ...>
+    // but the helper takes the base ProviderDefinition. The generic parameters are
+    // erased at runtime — the cast is safe because the concrete type is a supertype.
     ({ token } = await getActiveTokenForInstallation(
       installation,
       config,
@@ -785,7 +820,7 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
 
   let url = `${providerDef.api.baseUrl}${path}`;
   if (body.queryParams && Object.keys(body.queryParams).length > 0) {
-    url += "?" + new URLSearchParams(body.queryParams).toString();
+    url += `?${new URLSearchParams(body.queryParams).toString()}`;
   }
 
   // Build headers
@@ -814,6 +849,9 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   let response = await fetch(url, fetchOptions);
 
   if (response.status === 401) {
+    // SAFETY: getProvider() returns the full generic ProviderDefinition<TConfig, ...>
+    // but the helper takes the base ProviderDefinition. The generic parameters are
+    // erased at runtime — the cast is safe because the concrete type is a supertype.
     const freshToken = await forceRefreshToken(
       installation,
       config,

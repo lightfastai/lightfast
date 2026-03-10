@@ -1,10 +1,11 @@
 import { z } from "zod";
 import type { BackfillContext, BackfillDef } from "../../define";
+import { typedEntityHandler } from "../../define";
 import {
-  sentryErrorEventSchema,
-  sentryIssueSchema,
   type SentryErrorEvent,
   type SentryIssue,
+  sentryErrorEventSchema,
+  sentryIssueSchema,
 } from "./api";
 import type {
   PreTransformSentryErrorWebhook,
@@ -18,12 +19,18 @@ import type {
  *  Handles attribute ordering variations — Sentry puts rel/results/cursor
  *  in a consistent order today, but RFC 5988 doesn't mandate it. */
 export function parseSentryLinkCursor(linkHeader?: string): string | null {
-  if (!linkHeader) return null;
+  if (!linkHeader) {
+    return null;
+  }
   // Split on comma to isolate each link value, then find the "next" one
   const parts = linkHeader.split(",").map((s) => s.trim());
   for (const part of parts) {
-    if (!part.includes('rel="next"')) continue;
-    if (!part.includes('results="true"')) return null; // next exists but no more results
+    if (!part.includes('rel="next"')) {
+      continue;
+    }
+    if (!part.includes('results="true"')) {
+      return null; // next exists but no more results
+    }
     const cursorMatch = part.match(/cursor="([^"]+)"/);
     return cursorMatch?.[1] ?? null;
   }
@@ -32,11 +39,11 @@ export function parseSentryLinkCursor(linkHeader?: string): string | null {
 
 // ── Adapter Functions ─────────────────────────────────────────────────────────
 
-const STATUS_TO_ACTION: Record<string, string> = {
+const STATUS_TO_ACTION = {
   unresolved: "created",
   resolved: "resolved",
   ignored: "ignored",
-};
+} as const;
 
 export function adaptSentryIssueForTransformer(
   issue: SentryIssue,
@@ -52,10 +59,8 @@ export function adaptSentryIssueForTransformer(
         shortId: issue.shortId ?? issue.id,
         title: issue.title,
         culprit: issue.culprit ?? null,
-        status: (issue.status as "unresolved" | "resolved" | "ignored") || "unresolved",
-        level:
-          (issue.level as "fatal" | "error" | "warning" | "info" | "debug") ||
-          "error",
+        status: issue.status,
+        level: issue.level ?? "error",
         platform: issue.platform ?? "other",
         firstSeen: issue.firstSeen,
         lastSeen: issue.lastSeen,
@@ -75,7 +80,7 @@ export function adaptSentryIssueForTransformer(
         },
         assignedTo: issue.assignedTo ?? null,
         statusDetails: {},
-        type: (issue.type as "error" | "default") || "error",
+        type: issue.type ?? "error",
         annotations: [],
         isPublic: false,
         isBookmarked: false,
@@ -90,7 +95,7 @@ export function adaptSentryIssueForTransformer(
       id: "sentry",
       name: "Sentry",
     },
-  } as unknown as PreTransformSentryIssueWebhook;
+  } satisfies PreTransformSentryIssueWebhook;
 }
 
 export function adaptSentryErrorForTransformer(
@@ -98,8 +103,6 @@ export function adaptSentryErrorForTransformer(
   ctx: BackfillContext
 ): PreTransformSentryErrorWebhook {
   const projectId = Number(ctx.resource.providerResourceId);
-  // full=true response may include extra fields via .passthrough() — forward them
-  const extra = event as Record<string, unknown>;
   return {
     action: "created",
     data: {
@@ -113,32 +116,23 @@ export function adaptSentryErrorForTransformer(
         title: event.title ?? event.message ?? "",
         type: "error",
         metadata: {
-          type: (extra.metadata as Record<string, unknown>)?.type as
-            | string
-            | undefined,
-          value:
-            ((extra.metadata as Record<string, unknown>)?.value as
-              | string
-              | undefined) ?? event.message,
-          filename: (extra.metadata as Record<string, unknown>)?.filename as
-            | string
-            | undefined,
-          function: (extra.metadata as Record<string, unknown>)?.function as
-            | string
-            | undefined,
+          type: event.metadata?.type,
+          value: event.metadata?.value ?? event.message,
+          filename: event.metadata?.filename,
+          function: event.metadata?.function,
         },
         tags: event.tags ?? [],
         // Rich fields from full=true — transformer uses these when present
-        ...(extra.exception ? { exception: extra.exception } : {}),
-        ...(extra.user ? { user: extra.user } : {}),
-        ...(extra.sdk ? { sdk: extra.sdk } : {}),
-        ...(extra.culprit ? { culprit: extra.culprit } : {}),
-        ...(extra.location ? { location: extra.location } : {}),
-        ...(extra.web_url ? { web_url: extra.web_url } : {}),
+        ...(event.exception ? { exception: event.exception } : {}),
+        ...(event.user ? { user: event.user } : {}),
+        ...(event.sdk ? { sdk: event.sdk } : {}),
+        ...(event.culprit ? { culprit: event.culprit } : {}),
+        ...(event.location ? { location: event.location } : {}),
+        ...(event.web_url ? { web_url: event.web_url } : {}),
       },
     },
     installation: { uuid: ctx.installationId },
-  } as unknown as PreTransformSentryErrorWebhook;
+  } satisfies PreTransformSentryErrorWebhook;
 }
 
 // ── Backfill Definition ───────────────────────────────────────────────────────
@@ -147,11 +141,12 @@ export const sentryBackfill: BackfillDef = {
   supportedEntityTypes: ["issue", "error"],
   defaultEntityTypes: ["issue", "error"],
   entityTypes: {
-    issue: {
+    issue: typedEntityHandler<string>({
       endpointId: "list-org-issues",
-      buildRequest(ctx: BackfillContext, cursor: unknown) {
+      buildRequest(ctx: BackfillContext, cursor: string | null) {
         // resourceName format: "orgSlug/projectSlug" (set during resource linking)
-        const [orgSlug = ""] = (ctx.resource.resourceName ?? "").split("/");
+        const [orgSlug = ""] = ctx.resource.resourceName.split("/");
+        const cursorStr = typeof cursor === "string" ? cursor : undefined;
         return {
           pathParams: { organization_slug: orgSlug },
           queryParams: {
@@ -162,14 +157,14 @@ export const sentryBackfill: BackfillDef = {
             query: "",
             limit: "100",
             collapse: "stats",
-            ...(cursor ? { cursor: cursor as string } : {}),
+            ...(cursorStr ? { cursor: cursorStr } : {}),
           },
         };
       },
       processResponse(
         data: unknown,
         ctx: BackfillContext,
-        _cursor: unknown,
+        _cursor: string | null,
         responseHeaders?: Record<string, string>
       ) {
         const issues = z.array(sentryIssueSchema).parse(data);
@@ -181,14 +176,14 @@ export const sentryBackfill: BackfillDef = {
         }));
         return { events, nextCursor, rawCount: issues.length };
       },
-    },
-    error: {
+    }),
+    error: typedEntityHandler<string>({
       endpointId: "list-events",
-      buildRequest(ctx: BackfillContext, cursor: unknown) {
+      buildRequest(ctx: BackfillContext, cursor: string | null) {
         // resourceName format: "orgSlug/projectSlug" (set during resource linking)
-        const [orgSlug = "", projectSlug = ""] = (
-          ctx.resource.resourceName ?? ""
-        ).split("/");
+        const [orgSlug = "", projectSlug = ""] =
+          ctx.resource.resourceName.split("/");
+        const cursorStr = typeof cursor === "string" ? cursor : undefined;
         return {
           pathParams: {
             organization_slug: orgSlug,
@@ -198,14 +193,14 @@ export const sentryBackfill: BackfillDef = {
             start: ctx.since,
             end: new Date().toISOString(),
             full: "true",
-            ...(cursor ? { cursor: cursor as string } : {}),
+            ...(cursorStr ? { cursor: cursorStr } : {}),
           },
         };
       },
       processResponse(
         data: unknown,
         ctx: BackfillContext,
-        _cursor: unknown,
+        _cursor: string | null,
         responseHeaders?: Record<string, string>
       ) {
         const events = z.array(sentryErrorEventSchema).parse(data);
@@ -217,6 +212,6 @@ export const sentryBackfill: BackfillDef = {
         }));
         return { events: adapted, nextCursor, rawCount: events.length };
       },
-    },
+    }),
   },
 };

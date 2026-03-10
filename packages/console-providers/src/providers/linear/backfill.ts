@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { BackfillContext, BackfillDef } from "../../define";
+import { typedEntityHandler } from "../../define";
 import type {
   PreTransformLinearCommentWebhook,
   PreTransformLinearIssueWebhook,
@@ -29,7 +30,9 @@ const linearIssueNodeSchema = z
       .object({
         id: z.string(),
         name: z.string(),
-        type: z.string(),
+        type: z
+          .enum(["backlog", "unstarted", "started", "completed", "canceled"])
+          .catch("backlog"),
       })
       .passthrough(),
     assignee: z
@@ -121,7 +124,16 @@ const linearProjectNodeSchema = z
     id: z.string(),
     name: z.string(),
     description: z.string().nullable().optional(),
-    state: z.string(),
+    state: z
+      .enum([
+        "backlog",
+        "planned",
+        "started",
+        "paused",
+        "completed",
+        "canceled",
+      ])
+      .catch("backlog"),
     url: z.string(),
     createdAt: z.string(),
     updatedAt: z.string(),
@@ -265,12 +277,7 @@ export function adaptLinearIssueForTransformer(
         id: issue.state.id,
         name: issue.state.name,
         color: "",
-        type: issue.state.type as
-          | "backlog"
-          | "unstarted"
-          | "started"
-          | "completed"
-          | "canceled",
+        type: issue.state.type,
       },
       assignee: issue.assignee
         ? {
@@ -297,7 +304,7 @@ export function adaptLinearIssueForTransformer(
         color: "",
       })),
     },
-  } as unknown as PreTransformLinearIssueWebhook;
+  } satisfies PreTransformLinearIssueWebhook;
 }
 
 export function adaptLinearCommentForTransformer(
@@ -328,7 +335,7 @@ export function adaptLinearCommentForTransformer(
         url: "",
       },
     },
-  } as unknown as PreTransformLinearCommentWebhook;
+  } satisfies PreTransformLinearCommentWebhook;
 }
 
 export function adaptLinearProjectForTransformer(
@@ -336,7 +343,7 @@ export function adaptLinearProjectForTransformer(
   ctx: BackfillContext
 ): PreTransformLinearProjectWebhook {
   const teamId = ctx.resource.providerResourceId;
-  const teamName = ctx.resource.resourceName ?? "";
+  const teamName = ctx.resource.resourceName;
   return {
     action: "create",
     createdAt: project.updatedAt,
@@ -348,13 +355,7 @@ export function adaptLinearProjectForTransformer(
       id: project.id,
       name: project.name,
       description: project.description ?? undefined,
-      state: project.state as
-        | "backlog"
-        | "planned"
-        | "started"
-        | "paused"
-        | "completed"
-        | "canceled",
+      state: project.state,
       color: "",
       url: project.url,
       slugId: project.id,
@@ -374,7 +375,7 @@ export function adaptLinearProjectForTransformer(
       members: [],
       teams: [{ id: teamId, key: "", name: teamName }],
     },
-  } as unknown as PreTransformLinearProjectWebhook;
+  } satisfies PreTransformLinearProjectWebhook;
 }
 
 // ── Backfill Definition ───────────────────────────────────────────────────────
@@ -383,9 +384,9 @@ export const linearBackfill: BackfillDef = {
   supportedEntityTypes: ["Issue", "Comment", "Project"],
   defaultEntityTypes: ["Issue", "Comment", "Project"],
   entityTypes: {
-    Issue: {
+    Issue: typedEntityHandler<string>({
       endpointId: "graphql",
-      buildRequest(ctx: BackfillContext, cursor: unknown) {
+      buildRequest(ctx: BackfillContext, cursor: string | null) {
         return {
           body: {
             query: LINEAR_ISSUES_QUERY,
@@ -397,7 +398,11 @@ export const linearBackfill: BackfillDef = {
           },
         };
       },
-      processResponse(data: unknown, ctx: BackfillContext, _cursor: unknown) {
+      processResponse(
+        data: unknown,
+        ctx: BackfillContext,
+        _cursor: string | null
+      ) {
         const parsed = issuesQueryResponseSchema.parse(data);
         const issues = parsed.data.issues;
         const events = issues.nodes.map((issue) => ({
@@ -413,10 +418,10 @@ export const linearBackfill: BackfillDef = {
           rawCount: issues.nodes.length,
         };
       },
-    },
-    Comment: {
+    }),
+    Comment: typedEntityHandler<string>({
       endpointId: "graphql",
-      buildRequest(ctx: BackfillContext, cursor: unknown) {
+      buildRequest(ctx: BackfillContext, cursor: string | null) {
         return {
           body: {
             query: LINEAR_COMMENTS_QUERY,
@@ -428,7 +433,11 @@ export const linearBackfill: BackfillDef = {
           },
         };
       },
-      processResponse(data: unknown, ctx: BackfillContext, _cursor: unknown) {
+      processResponse(
+        data: unknown,
+        ctx: BackfillContext,
+        _cursor: string | null
+      ) {
         const parsed = commentsQueryResponseSchema.parse(data);
         const comments = parsed.data.comments;
         const events = comments.nodes.map((comment) => ({
@@ -444,10 +453,10 @@ export const linearBackfill: BackfillDef = {
           rawCount: comments.nodes.length,
         };
       },
-    },
-    Project: {
+    }),
+    Project: typedEntityHandler<string>({
       endpointId: "graphql",
-      buildRequest(ctx: BackfillContext, cursor: unknown) {
+      buildRequest(ctx: BackfillContext, cursor: string | null) {
         return {
           body: {
             query: LINEAR_PROJECTS_QUERY,
@@ -459,7 +468,11 @@ export const linearBackfill: BackfillDef = {
           },
         };
       },
-      processResponse(data: unknown, ctx: BackfillContext, _cursor: unknown) {
+      processResponse(
+        data: unknown,
+        ctx: BackfillContext,
+        _cursor: string | null
+      ) {
         const parsed = projectsQueryResponseSchema.parse(data);
         const projects = parsed.data.projects;
         const events = projects.nodes.map((project) => ({
@@ -475,6 +488,6 @@ export const linearBackfill: BackfillDef = {
           rawCount: projects.nodes.length,
         };
       },
-    },
+    }),
   },
 };

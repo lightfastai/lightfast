@@ -3,7 +3,7 @@ import { gwTokens } from "@db/console/schema";
 import type { OAuthTokens } from "@repo/console-providers";
 import { encrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
-import { env } from "../env.js";
+import { getEncryptionKey } from "./encryption.js";
 
 /**
  * Write an encrypted token record for an installation.
@@ -15,10 +15,10 @@ export async function writeTokenRecord(
 ): Promise<void> {
   const encryptedAccess = await encrypt(
     oauthTokens.accessToken,
-    env.ENCRYPTION_KEY!
+    getEncryptionKey()
   );
   const encryptedRefresh = oauthTokens.refreshToken
-    ? await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY!)
+    ? await encrypt(oauthTokens.refreshToken, getEncryptionKey())
     : null;
 
   const expiresAt = oauthTokens.expiresIn
@@ -84,14 +84,14 @@ export async function updateTokenRecord(
 ): Promise<void> {
   const encryptedAccess = await encrypt(
     oauthTokens.accessToken,
-    env.ENCRYPTION_KEY!
+    getEncryptionKey()
   );
 
   let newEncryptedRefresh: string | null;
   if (oauthTokens.refreshToken) {
     newEncryptedRefresh = await encrypt(
       oauthTokens.refreshToken,
-      env.ENCRYPTION_KEY!
+      getEncryptionKey()
     );
   } else if (existingEncryptedRefreshToken) {
     assertEncryptedFormat(existingEncryptedRefreshToken);

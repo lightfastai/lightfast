@@ -20,7 +20,8 @@
   "dependencies": {
     "@repo/console-providers": "workspace:*",
     "@repo/console-validation": "workspace:*",
-    "@vendor/related-projects": "workspace:*"
+    "@vendor/related-projects": "workspace:*",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

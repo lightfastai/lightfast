@@ -73,8 +73,27 @@ function createReplayStep(journal: JournalEntry[]) {
   };
 }
 
+// ── Result interfaces (for typed assertions without as any) ──
+
+interface WorkerResult {
+  eventsDispatched: number;
+  eventsProduced: number;
+  pagesProcessed: number;
+}
+
+interface OrchestratorResult {
+  completed: number;
+  eventsDispatched: number;
+  eventsProduced: number;
+  failed: number;
+  success: boolean;
+}
+
 // ── Module mocks ──
 
+// SAFETY: Test infrastructure — captures Inngest createFunction handlers with
+// loose typing. The handler signature matches at runtime; full Inngest types
+// would require importing internal generics not exposed in the public API.
 const handlers: Record<
   string,
   (args: { event: any; step: any }) => Promise<unknown>
@@ -85,6 +104,9 @@ vi.mock("../inngest/client", () => ({
     createFunction: (
       config: { id: string },
       _trigger: unknown,
+      // SAFETY: Test infrastructure — captures Inngest createFunction handlers with
+      // loose typing. The handler signature matches at runtime; full Inngest types
+      // would require importing internal generics not exposed in the public API.
       handler: (args: { event: any; step: any }) => Promise<unknown>
     ) => {
       handlers[config.id] = handler;
@@ -149,9 +171,17 @@ beforeEach(() => {
   vi.resetAllMocks();
   mockGetProvider.mockReturnValue(mockProvider);
   mockBuildRequest.mockReturnValue({});
-  mockProcessResponse.mockReturnValue({ events: [], nextCursor: null, rawCount: 0 });
+  mockProcessResponse.mockReturnValue({
+    events: [],
+    nextCursor: null,
+    rawCount: 0,
+  });
   mockParseRateLimit.mockReturnValue(null);
-  mockGatewayClient.executeApi.mockResolvedValue({ status: 200, data: [], headers: {} });
+  mockGatewayClient.executeApi.mockResolvedValue({
+    status: 200,
+    data: [],
+    headers: {},
+  });
   mockGatewayClient.getConnection.mockResolvedValue({
     id: "inst-1",
     provider: "github",
@@ -231,8 +261,9 @@ describe("entity-worker step memoization replay", () => {
     // ── Assert identical results ──
     expect(replayResult).toEqual(recordResult);
     // Sanity: the counts are non-zero
-    expect((recordResult as any).eventsDispatched).toBe(3);
-    expect((recordResult as any).eventsProduced).toBe(3);
+    const workerResult = recordResult as WorkerResult;
+    expect(workerResult.eventsDispatched).toBe(3);
+    expect(workerResult.eventsProduced).toBe(3);
   });
 
   it("replay produces identical result to recording (multi-page)", async () => {
@@ -281,8 +312,9 @@ describe("entity-worker step memoization replay", () => {
 
     // ── Assert identical results ──
     expect(replayResult).toEqual(recordResult);
-    expect((recordResult as any).eventsDispatched).toBe(3);
-    expect((recordResult as any).pagesProcessed).toBe(2);
+    const workerResult = recordResult as WorkerResult;
+    expect(workerResult.eventsDispatched).toBe(3);
+    expect(workerResult.pagesProcessed).toBe(2);
   });
 });
 
@@ -333,9 +365,10 @@ describe("orchestrator step memoization replay", () => {
     // ── Assert identical results ──
     expect(replayResult).toEqual(recordResult);
     // Sanity: the result reflects the completion data
-    expect((recordResult as any).success).toBe(true);
-    expect((recordResult as any).eventsProduced).toBe(10);
-    expect((recordResult as any).eventsDispatched).toBe(10);
+    const orchResult = recordResult as OrchestratorResult;
+    expect(orchResult.success).toBe(true);
+    expect(orchResult.eventsProduced).toBe(10);
+    expect(orchResult.eventsDispatched).toBe(10);
   });
 
   it("replay produces identical result with mixed success/failure", async () => {
@@ -396,8 +429,9 @@ describe("orchestrator step memoization replay", () => {
 
     // ── Assert identical results ──
     expect(replayResult).toEqual(recordResult);
-    expect((recordResult as any).success).toBe(false);
-    expect((recordResult as any).failed).toBe(1);
-    expect((recordResult as any).completed).toBe(1);
+    const orchResult = recordResult as OrchestratorResult;
+    expect(orchResult.success).toBe(false);
+    expect(orchResult.failed).toBe(1);
+    expect(orchResult.completed).toBe(1);
   });
 });

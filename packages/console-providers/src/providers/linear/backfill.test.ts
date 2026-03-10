@@ -51,7 +51,7 @@ const issueNode = {
   url: "https://linear.app/team/issue/ENG-42",
   createdAt: "2026-01-10T10:00:00.000Z",
   updatedAt: "2026-01-15T12:00:00.000Z",
-  state: { id: "state-1", name: "In Progress", type: "started" },
+  state: { id: "state-1", name: "In Progress", type: "started" as const },
   assignee: { id: "user-1", name: "Alice", email: "alice@example.com" },
   team: { id: "team-123", key: "ENG", name: "Engineering" },
   project: { id: "proj-1", name: "Backfill Project" },
@@ -64,14 +64,18 @@ const commentNode = {
   createdAt: "2026-01-12T09:00:00.000Z",
   updatedAt: "2026-01-12T09:30:00.000Z",
   user: { id: "user-2", name: "Bob" },
-  issue: { id: "issue-abc", identifier: "ENG-42", title: "Fix the backfill pipeline" },
+  issue: {
+    id: "issue-abc",
+    identifier: "ENG-42",
+    title: "Fix the backfill pipeline",
+  },
 };
 
 const projectNode = {
   id: "proj-1",
   name: "Backfill Project",
   description: "A project for testing backfill.",
-  state: "started",
+  state: "started" as const,
   url: "https://linear.app/team/project/backfill-project",
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-20T08:00:00.000Z",
@@ -369,9 +373,7 @@ describe("Linear Issue: adapter → transformer round-trip", () => {
   });
 
   it("transformer does not throw", () => {
-    expect(() =>
-      transformLinearIssue(adapted, transformCtx, "")
-    ).not.toThrow();
+    expect(() => transformLinearIssue(adapted, transformCtx, "")).not.toThrow();
   });
 
   it("produces a PostTransformEvent with non-empty sourceId", () => {

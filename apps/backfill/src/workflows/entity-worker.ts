@@ -2,6 +2,7 @@ import { type BackfillContext, getProvider } from "@repo/console-providers";
 import {
   createGatewayClient,
   createRelayClient,
+  HttpError,
 } from "@repo/gateway-service-clients";
 import { NonRetriableError } from "@vendor/inngest";
 
@@ -72,7 +73,7 @@ export const backfillEntityWorker = inngest.createFunction(
       installationId,
       resource: {
         providerResourceId: resource.providerResourceId,
-        resourceName: resource.resourceName,
+        resourceName: resource.resourceName ?? "",
       },
       since,
     };
@@ -100,9 +101,10 @@ export const backfillEntityWorker = inngest.createFunction(
           });
 
           if (raw.status !== 200) {
-            const err = new Error(`Provider API returned ${raw.status}`);
-            (err as any).status = raw.status;
-            throw err;
+            throw new HttpError(
+              `Provider API returned ${raw.status}`,
+              raw.status
+            );
           }
 
           const processed = entityHandler.processResponse(
@@ -172,10 +174,7 @@ export const backfillEntityWorker = inngest.createFunction(
       if (fetchResult.rateLimit) {
         const { remaining, resetAt, limit } = fetchResult.rateLimit;
         if (remaining < limit * 0.1) {
-          const sleepMs = Math.max(
-            0,
-            new Date(resetAt).getTime() - Date.now()
-          );
+          const sleepMs = Math.max(0, new Date(resetAt).getTime() - Date.now());
           if (sleepMs > 0) {
             await step.sleep(
               `rate-limit-${entityType}-p${pageNum}`,

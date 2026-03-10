@@ -88,7 +88,7 @@ export const vercelBackfill: BackfillDef = {
       },
       processResponse(data: unknown, ctx: BackfillContext, _cursor: unknown) {
         const projectName =
-          ctx.resource.resourceName ?? ctx.resource.providerResourceId;
+          ctx.resource.resourceName || ctx.resource.providerResourceId;
         const parsed = vercelDeploymentsResponseSchema.parse(data);
         const { deployments, pagination } = parsed;
         const sinceTimestamp = new Date(ctx.since).getTime();

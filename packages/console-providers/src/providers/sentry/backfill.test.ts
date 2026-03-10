@@ -42,8 +42,7 @@ const sentryListIssue = {
   shortId: "MY-PROJECT-42",
   title: "ValueError: invalid literal for int() with base 10",
   culprit: "my_app.process_request",
-  permalink:
-    "https://my-org.sentry.io/issues/987654321/",
+  permalink: "https://my-org.sentry.io/issues/987654321/",
   level: "error",
   status: "unresolved",
   platform: "python",
@@ -153,10 +152,10 @@ describe("sentryBackfill.issue.buildRequest", () => {
     expect(req.queryParams?.start).toBe(ctx.since);
   });
 
-  it("handles missing resourceName gracefully", () => {
+  it("handles empty resourceName gracefully", () => {
     const ctxNoName: BackfillContext = {
       ...ctx,
-      resource: { ...ctx.resource, resourceName: null },
+      resource: { ...ctx.resource, resourceName: "" },
     };
     const req = issueHandler.buildRequest(ctxNoName, null);
     expect(req.pathParams?.organization_slug).toBe("");
@@ -211,8 +210,7 @@ describe("sentryBackfill.issue.processResponse", () => {
 
   it("extracts cursor from Link header when results=true", () => {
     const cursor = "0:100:0";
-    const linkHeader =
-      `<https://sentry.io/api/0/organizations/my-org/issues/?cursor=${cursor}>; rel="next"; results="true"; cursor="${cursor}"`;
+    const linkHeader = `<https://sentry.io/api/0/organizations/my-org/issues/?cursor=${cursor}>; rel="next"; results="true"; cursor="${cursor}"`;
     const result = issueHandler.processResponse([sentryListIssue], ctx, null, {
       link: linkHeader,
     });
@@ -354,7 +352,11 @@ describe("Sentry Issue: adapter → transformer round-trip", () => {
       >[0],
       ctx
     );
-    const event = transformSentryIssue(resolvedAdapted, transformContext, "issue");
+    const event = transformSentryIssue(
+      resolvedAdapted,
+      transformContext,
+      "issue"
+    );
     expect(event.sourceType).toContain("resolved");
   });
 
@@ -366,7 +368,11 @@ describe("Sentry Issue: adapter → transformer round-trip", () => {
       >[0],
       ctx
     );
-    const event = transformSentryIssue(ignoredAdapted, transformContext, "issue");
+    const event = transformSentryIssue(
+      ignoredAdapted,
+      transformContext,
+      "issue"
+    );
     expect(event.sourceType).toContain("ignored");
   });
 });
@@ -428,13 +434,17 @@ describe("Sentry Error: adapter → transformer round-trip", () => {
           {
             type: "ValueError",
             value: "bad input",
-            stacktrace: { frames: [{ filename: "app.py", lineno: 42, function: "run" }] },
+            stacktrace: {
+              frames: [{ filename: "app.py", lineno: 42, function: "run" }],
+            },
           },
         ],
       },
     };
     const richAdapted = adaptSentryErrorForTransformer(
-      richEvent as unknown as Parameters<typeof adaptSentryErrorForTransformer>[0],
+      richEvent as unknown as Parameters<
+        typeof adaptSentryErrorForTransformer
+      >[0],
       ctx
     );
     const result = transformSentryError(richAdapted, transformContext, "error");

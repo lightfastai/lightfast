@@ -4,6 +4,7 @@ import type {
   BackfillDef,
   BackfillWebhookEvent,
 } from "../../define";
+import { typedEntityHandler } from "../../define";
 import {
   githubIssueSchema,
   githubPullRequestSchema,
@@ -60,7 +61,7 @@ export function adaptGitHubReleaseForTransformer(
 // ── Helper ────────────────────────────────────────────────────────────────────────
 
 function buildRepoData(ctx: BackfillContext): Record<string, unknown> {
-  const repoFullName = ctx.resource.resourceName ?? "";
+  const repoFullName = ctx.resource.resourceName;
   const repoId = Number(ctx.resource.providerResourceId);
   return {
     full_name: repoFullName,
@@ -75,12 +76,12 @@ export const githubBackfill: BackfillDef = {
   supportedEntityTypes: ["pull_request", "issue", "release"],
   defaultEntityTypes: ["pull_request", "issue", "release"],
   entityTypes: {
-    pull_request: {
+    pull_request: typedEntityHandler<{ page: number }>({
       endpointId: "list-pull-requests",
-      buildRequest(ctx: BackfillContext, cursor: unknown) {
-        const repoFullName = ctx.resource.resourceName ?? "";
+      buildRequest(ctx: BackfillContext, cursor: { page: number } | null) {
+        const repoFullName = ctx.resource.resourceName;
         const [owner = "", repo = ""] = repoFullName.split("/");
-        const page = (cursor as { page: number } | null)?.page ?? 1;
+        const page = cursor?.page ?? 1;
         return {
           pathParams: { owner, repo },
           queryParams: {
@@ -92,7 +93,11 @@ export const githubBackfill: BackfillDef = {
           },
         };
       },
-      processResponse(data: unknown, ctx: BackfillContext, cursor: unknown) {
+      processResponse(
+        data: unknown,
+        ctx: BackfillContext,
+        cursor: { page: number } | null
+      ) {
         const repoData = buildRepoData(ctx);
         const items = z.array(githubPullRequestSchema).parse(data);
         const sinceDate = new Date(ctx.since);
@@ -111,7 +116,7 @@ export const githubBackfill: BackfillDef = {
             repoData
           ),
         }));
-        const page = (cursor as { page: number } | null)?.page ?? 1;
+        const page = cursor?.page ?? 1;
         const hasMore =
           items.length === 100 && filtered.length === items.length;
         return {
@@ -120,13 +125,13 @@ export const githubBackfill: BackfillDef = {
           rawCount: items.length,
         };
       },
-    },
-    issue: {
+    }),
+    issue: typedEntityHandler<{ page: number }>({
       endpointId: "list-issues",
-      buildRequest(ctx: BackfillContext, cursor: unknown) {
-        const repoFullName = ctx.resource.resourceName ?? "";
+      buildRequest(ctx: BackfillContext, cursor: { page: number } | null) {
+        const repoFullName = ctx.resource.resourceName;
         const [owner = "", repo = ""] = repoFullName.split("/");
-        const page = (cursor as { page: number } | null)?.page ?? 1;
+        const page = cursor?.page ?? 1;
         return {
           pathParams: { owner, repo },
           queryParams: {
@@ -139,7 +144,11 @@ export const githubBackfill: BackfillDef = {
           },
         };
       },
-      processResponse(data: unknown, ctx: BackfillContext, cursor: unknown) {
+      processResponse(
+        data: unknown,
+        ctx: BackfillContext,
+        cursor: { page: number } | null
+      ) {
         const repoData = buildRepoData(ctx);
         const items = z.array(githubIssueSchema).parse(data);
         const issuesOnly = items.filter(
@@ -156,7 +165,7 @@ export const githubBackfill: BackfillDef = {
             repoData
           ),
         }));
-        const page = (cursor as { page: number } | null)?.page ?? 1;
+        const page = cursor?.page ?? 1;
         const hasMore = items.length === 100;
         return {
           events,
@@ -164,13 +173,13 @@ export const githubBackfill: BackfillDef = {
           rawCount: items.length,
         };
       },
-    },
-    release: {
+    }),
+    release: typedEntityHandler<{ page: number }>({
       endpointId: "list-releases",
-      buildRequest(ctx: BackfillContext, cursor: unknown) {
-        const repoFullName = ctx.resource.resourceName ?? "";
+      buildRequest(ctx: BackfillContext, cursor: { page: number } | null) {
+        const repoFullName = ctx.resource.resourceName;
         const [owner = "", repo = ""] = repoFullName.split("/");
-        const page = (cursor as { page: number } | null)?.page ?? 1;
+        const page = cursor?.page ?? 1;
         return {
           pathParams: { owner, repo },
           queryParams: {
@@ -179,7 +188,11 @@ export const githubBackfill: BackfillDef = {
           },
         };
       },
-      processResponse(data: unknown, ctx: BackfillContext, cursor: unknown) {
+      processResponse(
+        data: unknown,
+        ctx: BackfillContext,
+        cursor: { page: number } | null
+      ) {
         const repoData = buildRepoData(ctx);
         const items = z.array(githubReleaseSchema).parse(data);
         const sinceDate = new Date(ctx.since);
@@ -201,7 +214,7 @@ export const githubBackfill: BackfillDef = {
             repoData
           ),
         }));
-        const page = (cursor as { page: number } | null)?.page ?? 1;
+        const page = cursor?.page ?? 1;
         const hasMore =
           items.length === 100 && filtered.length === items.length;
         return {
@@ -210,6 +223,6 @@ export const githubBackfill: BackfillDef = {
           rawCount: items.length,
         };
       },
-    },
+    }),
   },
 };

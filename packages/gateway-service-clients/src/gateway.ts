@@ -1,11 +1,19 @@
-import type {
-  GatewayConnection,
-  GatewayTokenResult,
-  ProxyEndpointsResponse,
-  ProxyExecuteResponse,
+import {
+  type BackfillRunReadRecord,
+  type BackfillRunRecord,
+  backfillRunReadRecord,
+  type GatewayConnection,
+  type GatewayTokenResult,
+  gatewayConnectionSchema,
+  gatewayTokenResultSchema,
+  type ProxyEndpointsResponse,
+  type ProxyExecuteResponse,
+  proxyEndpointsResponseSchema,
+  proxyExecuteResponseSchema,
 } from "@repo/console-providers";
-import type { BackfillRunRecord } from "@repo/console-providers";
+import { z } from "zod";
 
+import { HttpError } from "./errors.js";
 import type { ServiceClientConfig } from "./headers.js";
 import { buildServiceHeaders } from "./headers.js";
 import { gatewayUrl } from "./urls.js";
@@ -31,7 +39,8 @@ export function createGatewayClient(config: ServiceClientConfig) {
           `Gateway getConnection failed: ${response.status} for ${installationId}`
         );
       }
-      return response.json() as Promise<GatewayConnection>;
+      const data = await response.json();
+      return gatewayConnectionSchema.parse(data);
     },
 
     async getToken(installationId: string): Promise<GatewayTokenResult> {
@@ -44,13 +53,14 @@ export function createGatewayClient(config: ServiceClientConfig) {
           `Gateway getToken failed: ${response.status} for ${installationId}`
         );
       }
-      return response.json() as Promise<GatewayTokenResult>;
+      const data = await response.json();
+      return gatewayTokenResultSchema.parse(data);
     },
 
     async getBackfillRuns(
       installationId: string,
       status?: string
-    ): Promise<BackfillRunRecord[]> {
+    ): Promise<BackfillRunReadRecord[]> {
       const url = `${gatewayUrl}/gateway/${installationId}/backfill-runs${status ? `?status=${status}` : ""}`;
       const response = await fetch(url, {
         headers: h,
@@ -60,12 +70,13 @@ export function createGatewayClient(config: ServiceClientConfig) {
       if (!response?.ok) {
         return [];
       }
-      return response.json() as Promise<BackfillRunRecord[]>;
+      const data = await response.json();
+      return z.array(backfillRunReadRecord).parse(data);
     },
 
     async upsertBackfillRun(
       installationId: string,
-      record: Record<string, unknown>
+      record: BackfillRunRecord
     ): Promise<void> {
       await fetch(`${gatewayUrl}/gateway/${installationId}/backfill-runs`, {
         method: "POST",
@@ -96,13 +107,13 @@ export function createGatewayClient(config: ServiceClientConfig) {
         }
       );
       if (!response.ok) {
-        const err = new Error(
-          `Gateway executeApi failed: ${response.status} for ${installationId}`
+        throw new HttpError(
+          `Gateway executeApi failed: ${response.status} for ${installationId}`,
+          response.status
         );
-        (err as any).status = response.status;
-        throw err;
       }
-      return response.json() as Promise<ProxyExecuteResponse>;
+      const data = await response.json();
+      return proxyExecuteResponseSchema.parse(data);
     },
 
     async getApiEndpoints(
@@ -117,7 +128,8 @@ export function createGatewayClient(config: ServiceClientConfig) {
           `Gateway getApiEndpoints failed: ${response.status} for ${installationId}`
         );
       }
-      return response.json() as Promise<ProxyEndpointsResponse>;
+      const data = await response.json();
+      return proxyEndpointsResponseSchema.parse(data);
     },
 
     /**
@@ -142,7 +154,8 @@ export function createGatewayClient(config: ServiceClientConfig) {
       if (!response.ok) {
         throw new Error(`Gateway getAuthorizeUrl failed: ${response.status}`);
       }
-      return response.json() as Promise<{ url: string; state: string }>;
+      const data = await response.json();
+      return z.object({ url: z.string(), state: z.string() }).parse(data);
     },
   };
 }

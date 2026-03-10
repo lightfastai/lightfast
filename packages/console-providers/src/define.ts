@@ -164,7 +164,7 @@ export const backfillContextSchema = z.object({
   /** Single resource for this work unit */
   resource: z.object({
     providerResourceId: z.string(),
-    resourceName: z.string().nullable(),
+    resourceName: z.string(),
   }),
   /** ISO timestamp = now - depth days */
   since: z.string(),
@@ -231,6 +231,37 @@ export interface BackfillEntityHandler {
     nextCursor: unknown | null;
     rawCount: number;
   };
+}
+
+/** Type-safe factory that narrows cursor type within a handler implementation,
+ *  then erases to BackfillEntityHandler for the heterogeneous entityTypes record.
+ *
+ *  Usage:
+ *    issue: typedEntityHandler<string>({ endpointId: "...", buildRequest(ctx, cursor) { ... }, processResponse(data, ctx, cursor) { ... } })
+ *    pull_request: typedEntityHandler<{ page: number }>({ ... })
+ */
+export function typedEntityHandler<TCursor>(handler: {
+  endpointId: string;
+  buildRequest(
+    ctx: BackfillContext,
+    cursor: TCursor | null
+  ): {
+    pathParams?: Record<string, string>;
+    queryParams?: Record<string, string>;
+    body?: unknown;
+  };
+  processResponse(
+    data: unknown,
+    ctx: BackfillContext,
+    cursor: TCursor | null,
+    responseHeaders?: Record<string, string>
+  ): {
+    events: BackfillWebhookEvent[];
+    nextCursor: TCursor | null;
+    rawCount: number;
+  };
+}): BackfillEntityHandler {
+  return handler as BackfillEntityHandler;
 }
 
 /** Backfill definition — required on every ProviderDefinition */
@@ -340,6 +371,9 @@ export function defineProvider<
       _env ??= createEnv({
         clientPrefix: "" as const,
         client: {},
+        // SAFETY: envSchema values are always z.string() variants (env vars are strings).
+        // @t3-oss/env-core requires ZodType<string> but ProviderDefinition uses ZodType
+        // to avoid coupling the interface to env-core's constraints.
         server: def.envSchema as Record<string, z.ZodType<string>>,
         runtimeEnv: Object.fromEntries(
           Object.keys(def.envSchema).map((k) => [k, process.env[k]])
@@ -352,6 +386,9 @@ export function defineProvider<
       return _env;
     },
   };
+  // SAFETY: Object.freeze() returns Readonly<T> which is structurally identical
+  // to ProviderDefinition (all fields are already readonly). The cast is needed
+  // because the computed `get env()` accessor confuses TypeScript's freeze inference.
   return Object.freeze(result) as ProviderDefinition<
     TConfig,
     TAccountInfo,

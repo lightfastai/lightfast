@@ -40,9 +40,8 @@ export const backfillOrchestrator = inngest.createFunction(
       depth,
       entityTypes,
       holdForReplay,
-      correlationId: rawCorrelationId,
+      correlationId,
     } = event.data;
-    const correlationId = rawCorrelationId as string | undefined;
 
     if (depth <= 0) {
       throw new NonRetriableError(
@@ -62,6 +61,12 @@ export const backfillOrchestrator = inngest.createFunction(
       if (conn.status !== "active") {
         throw new NonRetriableError(
           `Connection is not active: ${installationId} (status: ${conn.status})`
+        );
+      }
+      // Tenant isolation: verify caller-supplied orgId matches the DB-canonical value
+      if (conn.orgId !== orgId) {
+        throw new NonRetriableError(
+          `orgId mismatch: event has "${orgId}" but connection belongs to "${conn.orgId}"`
         );
       }
       return conn;
@@ -96,7 +101,8 @@ export const backfillOrchestrator = inngest.createFunction(
         entityType,
         resource: {
           providerResourceId: resource.providerResourceId,
-          resourceName: resource.resourceName,
+          // Normalize null → "" so provider handlers never need to guard
+          resourceName: resource.resourceName ?? "",
         },
         // Stable ID for step naming
         workUnitId: `${resource.providerResourceId}-${entityType}`,

@@ -29,10 +29,15 @@ const mockRelayClient = {
   dispatchWebhook: vi.fn().mockResolvedValue(undefined),
   replayCatchup: vi.fn(),
 };
-vi.mock("@repo/gateway-service-clients", () => ({
-  createGatewayClient: () => mockGatewayClient,
-  createRelayClient: () => mockRelayClient,
-}));
+vi.mock("@repo/gateway-service-clients", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@repo/gateway-service-clients")>();
+  return {
+    ...actual,
+    createGatewayClient: () => mockGatewayClient,
+    createRelayClient: () => mockRelayClient,
+  };
+});
 
 const mockBuildRequest = vi.fn();
 const mockProcessResponse = vi.fn();
@@ -95,7 +100,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockGetProvider.mockReturnValue(mockProvider);
   mockBuildRequest.mockReturnValue({});
-  mockProcessResponse.mockReturnValue({ events: [], nextCursor: null, rawCount: 0 });
+  mockProcessResponse.mockReturnValue({
+    events: [],
+    nextCursor: null,
+    rawCount: 0,
+  });
   mockParseRateLimit.mockReturnValue(null);
   mockGatewayClient.executeApi.mockResolvedValue({
     status: 200,
@@ -348,6 +357,27 @@ describe("completion", () => {
     expect(result.eventsProduced).toBe(5);
     expect(result.eventsDispatched).toBe(5);
     expect(result.pagesProcessed).toBe(2);
+  });
+});
+
+describe("orgId forwarding", () => {
+  it("dispatches to relay with orgId from event.data", async () => {
+    mockProcessResponse.mockReturnValueOnce({
+      events: [
+        { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
+      ],
+      nextCursor: null,
+      rawCount: 1,
+    });
+    const step = makeStep();
+
+    await capturedHandler({ event: makeEvent({ orgId: "org-42" }), step });
+
+    expect(mockRelayClient.dispatchWebhook).toHaveBeenCalledWith(
+      "github",
+      expect.objectContaining({ orgId: "org-42" }),
+      undefined
+    );
   });
 });
 

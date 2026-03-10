@@ -11,6 +11,7 @@ import type { WorkflowContext } from "@vendor/upstash-workflow";
 import { serve } from "@vendor/upstash-workflow/hono";
 import { env } from "../env.js";
 import { resourceKey } from "../lib/cache.js";
+import { getEncryptionKey } from "../lib/encryption.js";
 import { gatewayBaseUrl } from "../lib/urls.js";
 
 interface TeardownPayload {
@@ -82,7 +83,7 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       try {
         const decryptedToken = await decrypt(
           tokenRow.accessToken,
-          env.ENCRYPTION_KEY!
+          getEncryptionKey()
         );
         await providerDef.oauth.revokeToken(config as never, decryptedToken);
       } catch {
