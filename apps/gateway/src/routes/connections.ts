@@ -835,7 +835,10 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
 
   // Return raw response — no parsing, no transformation
   const data = await response.json().catch(() => null);
-  const responseHeaders = Object.fromEntries(response.headers.entries());
+  const responseHeaders: Record<string, string> = {};
+  response.headers.forEach((value, key) => {
+    responseHeaders[key] = value;
+  });
 
   return c.json({
     status: response.status,
