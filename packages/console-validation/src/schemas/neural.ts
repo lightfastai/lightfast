@@ -114,3 +114,22 @@ export const neuralFailureOutputSchema = z
   .catchall(z.unknown());
 
 export type NeuralFailureOutput = z.infer<typeof neuralFailureOutputSchema>;
+
+// ── Cluster Summary (AI SDK output) ─────────────────────────────────────────
+
+export const clusterSummarySchema = z.object({
+  summary: z.string().max(500).describe("Concise summary of cluster activity"),
+  keyTopics: z
+    .array(z.string())
+    .max(5)
+    .describe("Top 5 topics or themes in this cluster"),
+  keyContributors: z
+    .array(z.string())
+    .max(5)
+    .describe("Top contributors to this cluster"),
+  status: z
+    .enum(["active", "completed", "stalled"])
+    .describe("Cluster activity status"),
+});
+
+export type ClusterSummary = z.infer<typeof clusterSummarySchema>;

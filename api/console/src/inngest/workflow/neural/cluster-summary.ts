@@ -12,14 +12,15 @@ import {
   workspaceObservationClusters,
 } from "@db/console/schema";
 import type {
+  ClusterSummary,
   NeuralClusterSummaryInput,
   NeuralClusterSummaryOutputFailure,
   NeuralClusterSummaryOutputSkipped,
   NeuralClusterSummaryOutputSuccess,
 } from "@repo/console-validation";
+import { clusterSummarySchema } from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
 import { and, desc, eq } from "drizzle-orm";
-import { z } from "zod";
 import {
   completeJob,
   createJob,
@@ -36,23 +37,6 @@ import { createNeuralOnFailureHandler } from "./on-failure-handler";
 
 const SUMMARY_THRESHOLD = 5; // Generate summary after 5 observations
 const SUMMARY_AGE_HOURS = 24; // Regenerate if summary > 24 hours old
-
-const clusterSummarySchema = z.object({
-  summary: z.string().max(500).describe("Concise summary of cluster activity"),
-  keyTopics: z
-    .array(z.string())
-    .max(5)
-    .describe("Top 5 topics or themes in this cluster"),
-  keyContributors: z
-    .array(z.string())
-    .max(5)
-    .describe("Top contributors to this cluster"),
-  status: z
-    .enum(["active", "completed", "stalled"])
-    .describe("Cluster activity status"),
-});
-
-type ClusterSummary = z.infer<typeof clusterSummarySchema>;
 
 export const clusterSummaryCheck = inngest.createFunction(
   {
