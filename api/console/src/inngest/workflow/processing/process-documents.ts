@@ -30,58 +30,46 @@ import {
 import type { VectorMetadata } from "@repo/console-pinecone";
 import { pineconeClient } from "@repo/console-pinecone";
 import type { SourceType } from "@repo/console-providers";
+import { processDocumentEventSchema } from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
 import { and, eq } from "drizzle-orm";
+import { z } from "zod";
 import { inngest } from "../../client/client";
 
 /**
- * Generic document processing event
- * Works with any source type
+ * In-flight processing types (file-local)
+ * ProcessDocumentEvent schema lives in @repo/console-validation
  */
-interface ProcessDocumentEvent {
-  content: string;
-  contentHash: string;
-  documentId: string;
-  metadata?: Record<string, unknown>;
 
-  // Optional fields
-  parentDocId?: string;
-  relationships?: Record<string, unknown>;
-  sourceId: string;
-  sourceMetadata: Record<string, unknown>;
+const skippedDocumentSchema = z.object({
+  docId: z.string().optional(),
+  event: processDocumentEventSchema,
+  reason: z.string(),
+  status: z.literal("skipped"),
+});
 
-  // Source identification (discriminated union)
-  sourceType: SourceType;
+const readyDocumentSchema = z.object({
+  chunks: z.custom<Chunk[]>(),
+  configHash: z.string(),
+  contentHash: z.string(),
+  docId: z.string(),
+  embeddings: z.array(z.array(z.number())).optional(),
+  event: processDocumentEventSchema,
+  existingDoc: z.custom<WorkspaceKnowledgeDocument>().nullable().optional(),
+  indexName: z.string(),
+  slug: z.string(),
+  status: z.literal("ready"),
+  workspace: z.custom<OrgWorkspace>(),
+});
 
-  // Document content
-  title: string;
-  workspaceId: string;
-}
+type ReadyDocument = z.infer<typeof readyDocumentSchema>;
 
-type PreparedDocument = ReadyDocument | SkippedDocument;
+const preparedDocumentSchema = z.discriminatedUnion("status", [
+  readyDocumentSchema,
+  skippedDocumentSchema,
+]);
 
-interface BasePrepared {
-  docId?: string;
-  event: ProcessDocumentEvent;
-}
-
-interface ReadyDocument extends BasePrepared {
-  chunks: Chunk[];
-  configHash: string;
-  contentHash: string;
-  docId: string;
-  embeddings?: number[][];
-  existingDoc?: WorkspaceKnowledgeDocument | null;
-  indexName: string;
-  slug: string;
-  status: "ready";
-  workspace: OrgWorkspace;
-}
-
-interface SkippedDocument extends BasePrepared {
-  reason: string;
-  status: "skipped";
-}
+type PreparedDocument = z.infer<typeof preparedDocumentSchema>;
 
 /**
  * Compute configuration hash for a workspace
