@@ -502,7 +502,7 @@ async function getActiveTokenForInstallation(
   installation: { id: string; externalId: string; provider: string },
   config: unknown,
   providerDef: ProviderDefinition
-): Promise<string> {
+): Promise<{ token: string; expiresAt: string | null }> {
   const tokenRows = await db
     .select()
     .from(gwTokens)
@@ -530,18 +530,20 @@ async function getActiveTokenForInstallation(
       tokenRow.refreshToken,
       tokenRow.expiresAt
     );
-    return refreshed.accessToken;
+    return { token: refreshed.accessToken, expiresAt: tokenRow.expiresAt };
   }
 
   const decryptedAccessToken = tokenRow
     ? await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY!)
     : null;
 
-  return providerDef.oauth.getActiveToken(
+  const token = await providerDef.oauth.getActiveToken(
     config as never,
     installation.externalId,
     decryptedAccessToken
   );
+
+  return { token, expiresAt: tokenRow?.expiresAt ?? null };
 }
 
 /**
@@ -623,27 +625,18 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
   try {
     const providerDef = getProvider(providerName);
 
-    const token = await getActiveTokenForInstallation(
+    const { token, expiresAt } = await getActiveTokenForInstallation(
       installation,
       config,
       providerDef as ProviderDefinition
     );
 
-    // Query token row for expiry info after helper may have refreshed it
-    const tokenRows = await db
-      .select({ expiresAt: gwTokens.expiresAt })
-      .from(gwTokens)
-      .where(eq(gwTokens.installationId, id))
-      .limit(1);
-
-    const tokenRow = tokenRows[0];
-
     return c.json({
       accessToken: token,
       provider: providerName,
-      expiresIn: tokenRow?.expiresAt
+      expiresIn: expiresAt
         ? Math.floor(
-            (new Date(tokenRow.expiresAt).getTime() - Date.now()) / 1000
+            (new Date(expiresAt).getTime() - Date.now()) / 1000
           )
         : 3600, // GitHub installation tokens expire in 1 hour
     });
@@ -771,13 +764,14 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   // Get active token
   let token: string;
   try {
-    token = await getActiveTokenForInstallation(
+    ({ token } = await getActiveTokenForInstallation(
       installation,
       config,
       providerDef as ProviderDefinition
-    );
+    ));
   } catch (err) {
     const message = err instanceof Error ? err.message : "token_error";
+    console.error(`[${providerName}] proxy token error:`, err);
     return c.json({ error: "token_error", message }, 502);
   }
 
