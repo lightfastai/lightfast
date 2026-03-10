@@ -548,9 +548,6 @@ importers:
       '@repo/console-auth-middleware':
         specifier: workspace:*
         version: link:../../packages/console-auth-middleware
-      '@repo/console-backfill':
-        specifier: workspace:*
-        version: link:../../packages/console-backfill
       '@repo/console-clerk-cache':
         specifier: workspace:*
         version: link:../../packages/console-clerk-cache
@@ -1436,25 +1433,6 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
-  packages/console-backfill:
-    dependencies:
-      '@repo/console-providers':
-        specifier: workspace:*
-        version: link:../console-providers
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 20.19.22
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
-
   packages/console-chunking:
     dependencies:
       gray-matter:
@@ -2037,9 +2015,6 @@ importers:
       '@repo/console-api-key':
         specifier: workspace:*
         version: link:../console-api-key
-      '@repo/console-backfill':
-        specifier: workspace:*
-        version: link:../console-backfill
       '@repo/console-providers':
         specifier: workspace:*
         version: link:../console-providers

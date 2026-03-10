@@ -27,7 +27,6 @@ const config: NextConfig = withSentry(
         // @repo packages
         "@repo/console-api-services",
         "@repo/console-auth-middleware",
-        "@repo/console-backfill",
         "@repo/console-embed",
         "@repo/console-octokit-github",
         "@repo/console-pinecone",
@@ -55,7 +54,7 @@ const config: NextConfig = withSentry(
           "shiki",
           "date-fns",
           "octokit",
-          // Internal packages (all transpilePackages except console-backfill)
+          // Internal packages
           "@repo/console-ai",
           "@repo/console-ai-types",
           "@repo/console-api-key",

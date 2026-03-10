@@ -30,7 +30,6 @@
     "@repo/console-api-key": "0.1.0",
     "@repo/console-api-services": "0.1.0",
     "@repo/console-auth-middleware": "0.1.0",
-    "@repo/console-backfill": "0.1.0",
     "@repo/console-billing": "0.1.0",
     "@repo/console-chunking": "0.1.0",
     "@repo/console-clerk-cache": "0.0.1",

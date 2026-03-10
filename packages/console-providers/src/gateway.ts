@@ -96,26 +96,6 @@ export const gatewayTokenResultSchema = z.object({
 });
 export type GatewayTokenResult = z.infer<typeof gatewayTokenResultSchema>;
 
-// ── Installation Statuses ──
-
-export const installationStatusSchema = z.enum([
-  "pending",
-  "active",
-  "error",
-  "revoked",
-]);
-export type InstallationStatus = z.infer<typeof installationStatusSchema>;
-
-// ── Resource Statuses ──
-
-export const resourceStatusSchema = z.enum(["active", "removed"]);
-export type ResourceStatus = z.infer<typeof resourceStatusSchema>;
-
-// ── Delivery Statuses ──
-
-export const deliveryStatusSchema = z.enum(["delivered", "dlq", "duplicate"]);
-export type DeliveryStatus = z.infer<typeof deliveryStatusSchema>;
-
 // ── Backfill Depth (internal) ──
 
 export const backfillDepthSchema = z.union([

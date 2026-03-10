@@ -23,7 +23,6 @@ export default mergeConfig(
             "@vendor/related-projects",
             "@vendor/upstash-workflow",
             "@db/console",
-            "@repo/console-backfill",
             "@api/console",
             "@vercel/related-projects",
             "@repo/console-api-key",

@@ -10,7 +10,6 @@
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": [
         "@repo/console-auth-middleware",
-        "@repo/console-backfill",
         "@repo/lib",
         "@vitest/expect",
         "zustand"
@@ -85,7 +84,6 @@
       ],
       "project": ["src/**/*.ts"],
       "ignoreDependencies": [
-        "@repo/console-backfill",
         "@repo/lib",
         "@relay/webhook-delivery",
         "@vendor/inngest",
