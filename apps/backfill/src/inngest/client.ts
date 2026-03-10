@@ -16,7 +16,6 @@ const eventsMap = {
     correlationId: z.string().max(128).optional(),
   }),
   "apps-backfill/entity.requested": z.object({
-    /** Correlation ID — matches the orchestrator's trigger event */
     installationId: z.string(),
     /** Provider name */
     provider: z.string(),
@@ -27,7 +26,7 @@ const eventsMap = {
     /** Single resource for this work unit */
     resource: z.object({
       providerResourceId: z.string(),
-      resourceName: z.string().nullable(),
+      resourceName: z.string(),
     }),
     /** ISO timestamp — computed once by orchestrator */
     since: z.string().datetime(),

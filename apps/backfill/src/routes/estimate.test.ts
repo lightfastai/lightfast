@@ -224,7 +224,6 @@ describe("POST /api/estimate", () => {
     expect(json.totals.estimatedItems).toBe(150); // 50 per entity type × 3
     expect(json.totals.estimatedPages).toBe(6); // 2 resources × 3 entity types, no hasMore
     expect(json.totals.estimatedApiCalls).toBe(14); // 6*2 + 2
-    expect(json.totals.rateLimitUsage).toBeDefined();
 
     // executeApi called 6 times (2 resources × 3 entity types)
     expect(mockGatewayClient.executeApi).toHaveBeenCalledTimes(6);

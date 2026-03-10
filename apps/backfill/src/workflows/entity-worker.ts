@@ -73,7 +73,7 @@ export const backfillEntityWorker = inngest.createFunction(
       installationId,
       resource: {
         providerResourceId: resource.providerResourceId,
-        resourceName: resource.resourceName ?? "",
+        resourceName: resource.resourceName,
       },
       since,
     };

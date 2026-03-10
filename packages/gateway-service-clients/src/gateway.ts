@@ -65,7 +65,10 @@ export function createGatewayClient(config: ServiceClientConfig) {
       const response = await fetch(url, {
         headers: h,
         signal: AbortSignal.timeout(10_000),
-      }).catch(() => null);
+      }).catch((err) => {
+        console.warn("[gateway-client] getBackfillRuns failed", err);
+        return null;
+      });
 
       if (!response?.ok) {
         return [];

@@ -8,7 +8,6 @@ import { createGatewayClient } from "@repo/gateway-service-clients";
 import { Hono } from "hono";
 
 import { env } from "../env.js";
-import { GITHUB_RATE_LIMIT_BUDGET } from "../lib/constants.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 const estimateSchema = backfillEstimatePayload;
@@ -53,7 +52,7 @@ estimate.post("/", async (c) => {
   }
 
   // Tenant isolation: verify orgId matches the connection
-  if (orgId && connection.orgId !== orgId) {
+  if (connection.orgId !== orgId) {
     return c.json({ error: "org_mismatch" }, 403);
   }
 
@@ -197,7 +196,6 @@ estimate.post("/", async (c) => {
       estimatedItems: totalEstimatedItems,
       estimatedPages: totalEstimatedPages,
       estimatedApiCalls,
-      rateLimitUsage: `${((estimatedApiCalls / GITHUB_RATE_LIMIT_BUDGET) * 100).toFixed(1)}%`,
     },
   });
 });

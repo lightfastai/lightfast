@@ -61,7 +61,7 @@ trigger.post("/", async (c) => {
         depth: body.depth,
         entityTypes: body.entityTypes,
         holdForReplay: body.holdForReplay,
-        correlationId: c.get("correlationId"),
+        correlationId: body.correlationId ?? c.get("correlationId"),
       },
     });
   } catch (err) {
