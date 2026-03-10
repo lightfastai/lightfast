@@ -5,7 +5,7 @@ import {
   gwResources,
   gwTokens,
 } from "@db/console/schema";
-import type { RuntimeConfig, SourceType } from "@repo/console-providers";
+import type { ProviderDefinition, RuntimeConfig, SourceType } from "@repo/console-providers";
 import { getProvider, PROVIDERS } from "@repo/console-providers";
 import {
   BACKFILL_TERMINAL_STATUSES,
@@ -492,6 +492,102 @@ connections.get("/:id", apiKeyAuth, async (c) => {
   });
 });
 
+// ── Token Helpers ──
+
+/**
+ * Get the active token for an installation, handling expiry and on-demand refresh.
+ * Shared by GET /:id/token and POST /:id/proxy/execute.
+ */
+async function getActiveTokenForInstallation(
+  installation: { id: string; externalId: string; provider: string },
+  config: unknown,
+  providerDef: ProviderDefinition
+): Promise<string> {
+  const tokenRows = await db
+    .select()
+    .from(gwTokens)
+    .where(eq(gwTokens.installationId, installation.id))
+    .limit(1);
+
+  const tokenRow = tokenRows[0];
+
+  // Handle refresh if expired
+  if (tokenRow?.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
+    if (!tokenRow.refreshToken) {
+      throw new Error("token_expired:no_refresh_token");
+    }
+    const decryptedRefresh = await decrypt(
+      tokenRow.refreshToken,
+      env.ENCRYPTION_KEY!
+    );
+    const refreshed = await providerDef.oauth.refreshToken(
+      config as never,
+      decryptedRefresh
+    );
+    await updateTokenRecord(
+      tokenRow.id,
+      refreshed,
+      tokenRow.refreshToken,
+      tokenRow.expiresAt
+    );
+    return refreshed.accessToken;
+  }
+
+  const decryptedAccessToken = tokenRow
+    ? await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY!)
+    : null;
+
+  return providerDef.oauth.getActiveToken(
+    config as never,
+    installation.externalId,
+    decryptedAccessToken
+  );
+}
+
+/**
+ * Force-refresh the token — used for 401 retry in POST /:id/proxy/execute.
+ * Returns null if all refresh attempts fail.
+ */
+async function forceRefreshToken(
+  installation: { id: string; externalId: string; provider: string },
+  config: unknown,
+  providerDef: ProviderDefinition
+): Promise<string | null> {
+  const tokenRows = await db
+    .select()
+    .from(gwTokens)
+    .where(eq(gwTokens.installationId, installation.id))
+    .limit(1);
+  const row = tokenRows[0];
+
+  if (row?.refreshToken) {
+    try {
+      const decryptedRefresh = await decrypt(
+        row.refreshToken,
+        env.ENCRYPTION_KEY!
+      );
+      const refreshed = await providerDef.oauth.refreshToken(
+        config as never,
+        decryptedRefresh
+      );
+      await updateTokenRecord(row.id, refreshed, row.refreshToken, row.expiresAt);
+      return refreshed.accessToken;
+    } catch {
+      // Refresh failed — fall through to getActiveToken
+    }
+  }
+
+  try {
+    return await providerDef.oauth.getActiveToken(
+      config as never,
+      installation.externalId,
+      null
+    );
+  } catch {
+    return null;
+  }
+}
+
 /**
  * GET /connections/:id/token
  *
@@ -527,55 +623,20 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
   try {
     const providerDef = getProvider(providerName);
 
-    // Read stored token — may be absent (e.g., GitHub App generates tokens on-demand)
+    const token = await getActiveTokenForInstallation(
+      installation,
+      config,
+      providerDef as ProviderDefinition
+    );
+
+    // Query token row for expiry info after helper may have refreshed it
     const tokenRows = await db
-      .select()
+      .select({ expiresAt: gwTokens.expiresAt })
       .from(gwTokens)
       .where(eq(gwTokens.installationId, id))
       .limit(1);
 
     const tokenRow = tokenRows[0];
-
-    // Handle token refresh if stored token is expired
-    if (tokenRow?.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
-      if (!tokenRow.refreshToken) {
-        throw new Error("token_expired:no_refresh_token");
-      }
-
-      const decryptedRefresh = await decrypt(
-        tokenRow.refreshToken,
-        env.ENCRYPTION_KEY!
-      );
-      const refreshed = await providerDef.oauth.refreshToken(
-        config as never,
-        decryptedRefresh
-      );
-
-      await updateTokenRecord(
-        tokenRow.id,
-        refreshed,
-        tokenRow.refreshToken,
-        tokenRow.expiresAt
-      );
-
-      return c.json({
-        accessToken: refreshed.accessToken,
-        provider: providerName,
-        expiresIn: refreshed.expiresIn ?? null,
-      });
-    }
-
-    // Decrypt stored token if present (null for providers that generate tokens on-demand)
-    const decryptedAccessToken = tokenRow
-      ? await decrypt(tokenRow.accessToken, env.ENCRYPTION_KEY!)
-      : null;
-
-    // Provider handles token generation: GitHub creates JWT on-demand, others return stored token
-    const token = await providerDef.oauth.getActiveToken(
-      config as never,
-      installation.externalId,
-      decryptedAccessToken
-    );
 
     return c.json({
       accessToken: token,
@@ -599,6 +660,188 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
     }
     return c.json({ error: "token_generation_failed", message }, 502);
   }
+});
+
+/**
+ * GET /connections/:id/proxy/endpoints
+ *
+ * Returns the provider's API catalog — available endpoints and their specs.
+ * Strips responseSchema (Zod types aren't JSON-serializable). Internal-only, requires X-API-Key.
+ */
+connections.get("/:id/proxy/endpoints", apiKeyAuth, async (c) => {
+  const id = c.req.param("id");
+
+  const installation = await db.query.gwInstallations.findFirst({
+    where: eq(gwInstallations.id, id),
+  });
+
+  if (!installation) {
+    return c.json({ error: "not_found" }, 404);
+  }
+
+  const providerDef = getProvider(installation.provider);
+  if (!providerDef) {
+    return c.json({ error: "unknown_provider" }, 400);
+  }
+
+  // Strip responseSchema (Zod types aren't serializable)
+  const endpoints: Record<
+    string,
+    { method: string; path: string; description: string; timeout?: number }
+  > = {};
+  for (const [key, ep] of Object.entries(providerDef.api.endpoints)) {
+    endpoints[key] = {
+      method: ep.method,
+      path: ep.path,
+      description: ep.description,
+      ...(ep.timeout ? { timeout: ep.timeout } : {}),
+    };
+  }
+
+  return c.json({
+    provider: installation.provider,
+    baseUrl: providerDef.api.baseUrl,
+    endpoints,
+  });
+});
+
+/**
+ * POST /connections/:id/proxy/execute
+ *
+ * Pure authenticated API proxy. Zero domain knowledge.
+ * Gateway handles: endpoint validation, auth injection, 401 retry.
+ * Gateway returns: raw { status, data, headers }.
+ * Internal-only, requires X-API-Key.
+ */
+connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
+  const id = c.req.param("id");
+
+  let body: {
+    endpointId: string;
+    pathParams?: Record<string, string>;
+    queryParams?: Record<string, string>;
+    body?: unknown;
+  };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid_json" }, 400);
+  }
+
+  if (!body.endpointId) {
+    return c.json({ error: "missing_endpoint_id" }, 400);
+  }
+
+  const installation = await db.query.gwInstallations.findFirst({
+    where: eq(gwInstallations.id, id),
+  });
+
+  if (!installation) {
+    return c.json({ error: "not_found" }, 404);
+  }
+
+  if (installation.status !== "active") {
+    return c.json(
+      { error: "installation_not_active", status: installation.status },
+      400
+    );
+  }
+
+  const providerName = installation.provider;
+  const providerDef = getProvider(providerName);
+  if (!providerDef) {
+    return c.json({ error: "unknown_provider" }, 400);
+  }
+
+  const config = providerConfigs[providerName];
+
+  // Validate endpoint exists in catalog
+  const endpoint = providerDef.api.endpoints[body.endpointId];
+  if (!endpoint) {
+    return c.json(
+      {
+        error: "unknown_endpoint",
+        endpointId: body.endpointId,
+        available: Object.keys(providerDef.api.endpoints),
+      },
+      400
+    );
+  }
+
+  // Get active token
+  let token: string;
+  try {
+    token = await getActiveTokenForInstallation(
+      installation,
+      config,
+      providerDef as ProviderDefinition
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "token_error";
+    return c.json({ error: "token_error", message }, 502);
+  }
+
+  // Build URL
+  let path = endpoint.path;
+  if (body.pathParams) {
+    for (const [key, val] of Object.entries(body.pathParams)) {
+      path = path.replace(`{${key}}`, encodeURIComponent(val));
+    }
+  }
+
+  let url = `${providerDef.api.baseUrl}${path}`;
+  if (body.queryParams && Object.keys(body.queryParams).length > 0) {
+    url += "?" + new URLSearchParams(body.queryParams).toString();
+  }
+
+  // Build headers
+  const authHeader = providerDef.api.buildAuthHeader
+    ? providerDef.api.buildAuthHeader(token)
+    : `Bearer ${token}`;
+
+  const headers: Record<string, string> = {
+    Authorization: authHeader,
+    ...(providerDef.api.defaultHeaders ?? {}),
+  };
+
+  // Build fetch options
+  const fetchOptions: RequestInit = {
+    method: endpoint.method,
+    headers,
+    signal: AbortSignal.timeout(endpoint.timeout ?? 30_000),
+  };
+
+  if (body.body) {
+    fetchOptions.body = JSON.stringify(body.body);
+    headers["Content-Type"] = "application/json";
+  }
+
+  // Execute with 401 retry
+  let response = await fetch(url, fetchOptions);
+
+  if (response.status === 401) {
+    const freshToken = await forceRefreshToken(
+      installation,
+      config,
+      providerDef as ProviderDefinition
+    );
+    if (freshToken && freshToken !== token) {
+      headers.Authorization = providerDef.api.buildAuthHeader
+        ? providerDef.api.buildAuthHeader(freshToken)
+        : `Bearer ${freshToken}`;
+      response = await fetch(url, { ...fetchOptions, headers });
+    }
+  }
+
+  // Return raw response — no parsing, no transformation
+  const data = await response.json().catch(() => null);
+  const responseHeaders = Object.fromEntries(response.headers.entries());
+
+  return c.json({
+    status: response.status,
+    data,
+    headers: responseHeaders,
+  });
 });
 
 /**
