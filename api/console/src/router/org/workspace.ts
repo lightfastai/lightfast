@@ -15,7 +15,7 @@ import {
   PROVIDERS,
   sourceTypeSchema,
 } from "@repo/console-providers";
-import type { BackfillTriggerPayload } from "@repo/console-validation";
+import type { BackfillTriggerPayload } from "@repo/console-providers";
 import {
   workspaceCreateInputSchema,
   workspaceIntegrationDisconnectInputSchema,

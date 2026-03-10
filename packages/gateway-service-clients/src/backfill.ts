@@ -1,7 +1,7 @@
 import type {
   BackfillEstimatePayload,
   BackfillTriggerPayload,
-} from "@repo/console-validation";
+} from "@repo/console-providers";
 
 import type { ServiceClientConfig } from "./headers.js";
 import { buildServiceHeaders } from "./headers.js";

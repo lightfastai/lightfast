@@ -7,11 +7,12 @@
 
 export * from "./activities";
 export * from "./classification";
+export * from "./documents";
 export * from "./entities";
-export * from "./gateway";
 export * from "./ingestion";
 export * from "./job";
 export * from "./metrics";
+export * from "./neural";
 export * from "./org-api-key";
 export * from "./organization";
 export * from "./post-transform-event";

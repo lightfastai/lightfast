@@ -154,16 +154,34 @@ export {
 // ── Event Normalization ───────────────────────────────────────────────────────
 export { deriveObservationType, getBaseEventType } from "./event-normalization";
 export type {
+  BackfillEstimatePayload,
+  BackfillRunRecord,
+  BackfillTriggerPayload,
+  DeliveryStatus,
   GatewayConnection,
   GatewayTokenResult,
+  GwInstallationBackfillConfig,
+  InstallationStatus,
+  ResourceStatus,
   ServiceAuthWebhookBody,
   WebhookEnvelope,
   WebhookReceiptPayload,
 } from "./gateway";
 // ── Gateway Service Contracts ─────────────────────────────────────────────────
 export {
+  BACKFILL_DEPTH_OPTIONS,
+  BACKFILL_TERMINAL_STATUSES,
+  backfillDepthSchema,
+  backfillEstimatePayload,
+  backfillRunRecord,
+  backfillTerminalStatusSchema,
+  backfillTriggerPayload,
+  deliveryStatusSchema,
   gatewayConnectionSchema,
   gatewayTokenResultSchema,
+  gwInstallationBackfillConfigSchema,
+  installationStatusSchema,
+  resourceStatusSchema,
   serviceAuthWebhookBodySchema,
   webhookEnvelopeSchema,
   webhookReceiptPayloadSchema,

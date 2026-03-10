@@ -10,7 +10,7 @@ import { getProvider, PROVIDERS } from "@repo/console-providers";
 import {
   BACKFILL_TERMINAL_STATUSES,
   backfillRunRecord,
-} from "@repo/console-validation";
+} from "@repo/console-providers";
 import { decrypt, nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";

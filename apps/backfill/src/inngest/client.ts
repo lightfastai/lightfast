@@ -1,7 +1,7 @@
 import {
   backfillDepthSchema,
   backfillTriggerPayload,
-} from "@repo/console-validation";
+} from "@repo/console-providers";
 import { EventSchemas, Inngest } from "@vendor/inngest";
 import { z } from "zod";
 

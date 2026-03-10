@@ -106,8 +106,8 @@ export {
   V1SearchResponseSchema,
 } from "./schemas/api/v1/search";
 export * from "./schemas/classification";
+export * from "./schemas/documents";
 export * from "./schemas/entities";
-export * from "./schemas/gateway";
 export * from "./schemas/ingestion";
 export * from "./schemas/job";
 export * from "./schemas/metrics";

@@ -1,5 +1,5 @@
 import { timingSafeStringEqual } from "@repo/console-providers";
-import { backfillTriggerPayload } from "@repo/console-validation";
+import { backfillTriggerPayload } from "@repo/console-providers";
 import { Hono } from "hono";
 import { z } from "zod";
 

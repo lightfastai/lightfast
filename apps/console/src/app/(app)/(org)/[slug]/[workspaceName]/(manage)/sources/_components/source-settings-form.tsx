@@ -1,9 +1,8 @@
 "use client";
 
 import type { CategoryDef, SourceType } from "@repo/console-providers";
-import { PROVIDERS } from "@repo/console-providers";
+import { BACKFILL_DEPTH_OPTIONS, PROVIDERS } from "@repo/console-providers";
 import { useTRPC } from "@repo/console-trpc/react";
-import { BACKFILL_DEPTH_OPTIONS } from "@repo/console-validation";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
