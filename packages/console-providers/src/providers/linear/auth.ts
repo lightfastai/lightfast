@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { syncSchema } from "../../sync";
+import { syncSchema } from "../../types";
 
 // ── Raw OAuth Response Shape ──
 
@@ -59,7 +59,7 @@ export const linearProviderConfigSchema = z.object({
   sourceType: z.literal("linear"),
   type: z.literal("team"),
   teamId: z.string(),
-  sync: syncSchema.omit({ branches: true, paths: true }),
+  sync: syncSchema,
 });
 
 export type LinearProviderConfig = z.infer<typeof linearProviderConfigSchema>;

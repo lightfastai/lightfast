@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { syncSchema } from "../../sync";
+import { syncSchema } from "../../types";
 
 // ── Raw OAuth Response Shape ──
 
@@ -61,7 +61,7 @@ export const vercelProviderConfigSchema = z.object({
   projectId: z.string(),
   teamId: z.string().optional(),
   configurationId: z.string(),
-  sync: syncSchema.omit({ branches: true, paths: true }),
+  sync: syncSchema,
 });
 
 export type VercelProviderConfig = z.infer<typeof vercelProviderConfigSchema>;
