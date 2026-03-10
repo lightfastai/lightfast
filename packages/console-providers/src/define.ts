@@ -27,7 +27,8 @@ export interface SimpleEventDef<S extends z.ZodType = z.ZodType> {
   readonly schema: S;
   readonly transform: (
     payload: z.infer<S>,
-    ctx: TransformContext
+    ctx: TransformContext,
+    eventType: string
   ) => PostTransformEvent;
   readonly weight: number;
 }
@@ -43,7 +44,8 @@ export interface ActionEventDef<
   readonly schema: S;
   readonly transform: (
     payload: z.infer<S>,
-    ctx: TransformContext
+    ctx: TransformContext,
+    eventType: string
   ) => PostTransformEvent;
   readonly weight: number;
 }

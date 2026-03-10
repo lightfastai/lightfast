@@ -17,7 +17,8 @@ import type {
 
 export function transformSentryIssue(
   payload: PreTransformSentryIssueWebhook,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const { issue } = payload.data;
   const refs: PostTransformReference[] = [];
@@ -133,7 +134,8 @@ export function transformSentryIssue(
 
 export function transformSentryError(
   payload: PreTransformSentryErrorWebhook,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const { error: errorEvent } = payload.data;
   const refs: PostTransformReference[] = [];
@@ -213,7 +215,8 @@ export function transformSentryError(
 
 export function transformSentryEventAlert(
   payload: PreTransformSentryEventAlertWebhook,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const { event, triggered_rule } = payload.data;
   const refs: PostTransformReference[] = [];
@@ -272,7 +275,8 @@ export function transformSentryEventAlert(
 
 export function transformSentryMetricAlert(
   payload: PreTransformSentryMetricAlertWebhook,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const { metric_alert } = payload.data;
   const alertRule = metric_alert.alert_rule;

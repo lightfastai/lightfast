@@ -33,8 +33,7 @@ export function transformWebhook(
     webhook.payload,
     {
       deliveryId: generateDeliveryId(),
-      receivedAt: new Date(),
-      eventType: webhook.eventType,
+      receivedAt: Date.now(),
     }
   );
 

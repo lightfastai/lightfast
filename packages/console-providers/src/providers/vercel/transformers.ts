@@ -15,9 +15,10 @@ import type {
 
 export function transformVercelDeployment(
   payload: PreTransformVercelWebhookPayload,
-  context: TransformContext
+  context: TransformContext,
+  eventType: string
 ): PostTransformEvent {
-  const eventType = context.eventType as VercelWebhookEventType;
+  const vercelEventType = eventType as VercelWebhookEventType;
   const deployment = payload.payload.deployment;
   const project = payload.payload.project;
   const team = payload.payload.team;
@@ -83,17 +84,18 @@ export function transformVercelDeployment(
     "deployment.cleanup": "Deployment Cleanup",
   };
 
-  const actionTitle = eventTitleMap[eventType];
+  const actionTitle = eventTitleMap[vercelEventType];
   const branch = gitMeta?.githubCommitRef ?? "unknown";
   const target = payload.payload.target;
   const isProduction = target === "production";
 
   const emoji =
-    eventType === "deployment.succeeded" || eventType === "deployment.ready"
+    vercelEventType === "deployment.succeeded" ||
+    vercelEventType === "deployment.ready"
       ? "+"
-      : eventType === "deployment.error"
+      : vercelEventType === "deployment.error"
         ? "x"
-        : eventType === "deployment.canceled"
+        : vercelEventType === "deployment.canceled"
           ? "!"
           : ">";
 

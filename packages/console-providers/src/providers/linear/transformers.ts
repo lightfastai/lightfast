@@ -28,7 +28,8 @@ function linearSourceType(entity: string, action: string): string {
 
 export function transformLinearIssue(
   payload: PreTransformLinearIssueWebhook,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const issue = payload.data;
   const refs: PostTransformReference[] = [];
@@ -185,7 +186,8 @@ export function transformLinearIssue(
 
 export function transformLinearComment(
   payload: PreTransformLinearCommentWebhook,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const comment = payload.data;
   const refs: PostTransformReference[] = [];
@@ -248,7 +250,8 @@ export function transformLinearComment(
 
 export function transformLinearProject(
   payload: PreTransformLinearProjectWebhook,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const project = payload.data;
   const refs: PostTransformReference[] = [];
@@ -342,7 +345,8 @@ export function transformLinearProject(
 
 export function transformLinearCycle(
   payload: PreTransformLinearCycleWebhook,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const cycle = payload.data;
   const refs: PostTransformReference[] = [];
@@ -418,7 +422,8 @@ export function transformLinearCycle(
 
 export function transformLinearProjectUpdate(
   payload: PreTransformLinearProjectUpdateWebhook,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const update = payload.data;
   const refs: PostTransformReference[] = [];

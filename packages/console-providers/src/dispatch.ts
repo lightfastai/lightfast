@@ -28,5 +28,5 @@ export function transformWebhookPayload(
   }
 
   const parsed = eventDef.schema.parse(payload);
-  return eventDef.transform(parsed, { ...context, eventType });
+  return eventDef.transform(parsed, context, eventType);
 }

@@ -1,10 +1,11 @@
 import { z } from "zod";
 
-export interface TransformContext {
-  deliveryId: string;
-  eventType: string;
-  receivedAt: Date;
-}
+export const transformContextSchema = z.object({
+  deliveryId: z.string(),
+  receivedAt: z.number(),
+});
+
+export type TransformContext = z.infer<typeof transformContextSchema>;
 
 // ── Sync Settings ──
 
@@ -43,7 +44,9 @@ export const baseProviderAccountInfoSchema = z.object({
 
 /** Structural base type — used as a type constraint in define.ts.
  * The concrete discriminated union is `ProviderAccountInfo` exported from registry.ts. */
-export type BaseProviderAccountInfo = z.infer<typeof baseProviderAccountInfoSchema>;
+export type BaseProviderAccountInfo = z.infer<
+  typeof baseProviderAccountInfoSchema
+>;
 
 // ── Callback Result Schema ──
 
@@ -77,8 +80,9 @@ export const callbackResultSchema = z.discriminatedUnion("status", [
 
 export type CallbackResult<
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
-> = z.infer<typeof callbackResultSchema> extends infer U
-  ? U extends { accountInfo: BaseProviderAccountInfo }
-    ? Omit<U, "accountInfo"> & { accountInfo: TAccountInfo }
-    : U
-  : never;
+> =
+  z.infer<typeof callbackResultSchema> extends infer U
+    ? U extends { accountInfo: BaseProviderAccountInfo }
+      ? Omit<U, "accountInfo"> & { accountInfo: TAccountInfo }
+      : U
+    : never;

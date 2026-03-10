@@ -18,7 +18,8 @@ import type {
 
 export function transformGitHubPush(
   payload: PreTransformGitHubPushEvent,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const refs: PostTransformReference[] = [];
   const branch = payload.ref.replace("refs/heads/", "");
@@ -85,7 +86,8 @@ export function transformGitHubPush(
 
 export function transformGitHubPullRequest(
   payload: PreTransformGitHubPullRequestEvent,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const pr = payload.pull_request;
   const refs: PostTransformReference[] = [];
@@ -213,7 +215,8 @@ export function transformGitHubPullRequest(
 
 export function transformGitHubIssue(
   payload: PreTransformGitHubIssuesEvent,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const issue = payload.issue;
   const refs: PostTransformReference[] = [];
@@ -292,7 +295,8 @@ export function transformGitHubIssue(
 
 export function transformGitHubRelease(
   payload: PreTransformGitHubReleaseEvent,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const release = payload.release;
   const refs: PostTransformReference[] = [];
@@ -353,7 +357,8 @@ export function transformGitHubRelease(
 
 export function transformGitHubDiscussion(
   payload: PreTransformGitHubDiscussionEvent,
-  context: TransformContext
+  context: TransformContext,
+  _eventType: string
 ): PostTransformEvent {
   const discussion = payload.discussion;
   const refs: PostTransformReference[] = [];

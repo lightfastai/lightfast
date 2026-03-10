@@ -18,8 +18,7 @@ export function transformEnvelope(
     envelope.payload,
     {
       deliveryId: envelope.deliveryId,
-      receivedAt: new Date(envelope.receivedAt),
-      eventType: envelope.eventType,
+      receivedAt: envelope.receivedAt,
     }
   );
 }
