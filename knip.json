@@ -49,10 +49,7 @@
       "project": ["src/**/*.ts"]
     },
     "core/ai-sdk": {
-      "entry": [
-        "src/core/memory/adapters/*.ts",
-        "src/core/test-utils/*.ts"
-      ],
+      "entry": ["src/core/memory/adapters/*.ts", "src/core/test-utils/*.ts"],
       "project": ["src/**/*.ts"]
     },
     "db/*": {
