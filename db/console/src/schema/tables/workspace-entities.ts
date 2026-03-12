@@ -16,14 +16,14 @@ import {
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
- * Neural entities extracted from observations
+ * Workspace entities extracted from events
  *
- * Stores structured entities discovered in observation content.
+ * Stores structured entities discovered in event content.
  * Entities are deduplicated by (workspaceId, category, key) and
  * occurrence counts track how many times each entity is seen.
  */
-export const workspaceNeuralEntities = pgTable(
-  "lightfast_workspace_neural_entities",
+export const workspaceEntities = pgTable(
+  "lightfast_workspace_entities",
   {
     /**
      * Internal BIGINT primary key - maximum join/query performance
@@ -96,7 +96,7 @@ export const workspaceNeuralEntities = pgTable(
       .notNull(),
 
     /**
-     * When this entity was last seen in an observation
+     * When this entity was last seen in an event
      */
     lastSeenAt: timestamp("last_seen_at", {
       mode: "string",
@@ -158,6 +158,5 @@ export const workspaceNeuralEntities = pgTable(
 );
 
 // Type exports
-export type WorkspaceNeuralEntity = typeof workspaceNeuralEntities.$inferSelect;
-export type InsertWorkspaceNeuralEntity =
-  typeof workspaceNeuralEntities.$inferInsert;
+export type WorkspaceEntity = typeof workspaceEntities.$inferSelect;
+export type InsertWorkspaceEntity = typeof workspaceEntities.$inferInsert;

@@ -11,24 +11,24 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
-import { workspaceNeuralObservations } from "./workspace-neural-observations";
+import { workspaceEvents } from "./workspace-events";
 
 /**
- * Versioned AI interpretations of observations.
+ * Versioned AI interpretations of events.
  *
  * Separates mutable AI outputs (topics, significance, embeddings) from
- * immutable observation facts. Supports reprocessing by creating new versions.
+ * immutable event facts. Supports reprocessing by creating new versions.
  */
-export const workspaceObservationInterpretations = pgTable(
-  "lightfast_workspace_observation_interpretations",
+export const workspaceInterpretations = pgTable(
+  "lightfast_workspace_interpretations",
   {
     id: bigint("id", { mode: "number" })
       .primaryKey()
       .generatedAlwaysAsIdentity(),
 
-    observationId: bigint("observation_id", { mode: "number" })
+    eventId: bigint("event_id", { mode: "number" })
       .notNull()
-      .references(() => workspaceNeuralObservations.id, {
+      .references(() => workspaceEvents.id, {
         onDelete: "cascade",
       }),
 
@@ -65,14 +65,14 @@ export const workspaceObservationInterpretations = pgTable(
       .notNull(),
   },
   (table) => ({
-    // Latest interpretation for an observation
-    obsVersionIdx: uniqueIndex("interp_obs_version_idx").on(
-      table.observationId,
+    // Latest interpretation for an event
+    eventVersionIdx: uniqueIndex("interp_event_version_idx").on(
+      table.eventId,
       table.version
     ),
 
-    // Lookup by observation
-    obsIdx: index("interp_obs_idx").on(table.observationId),
+    // Lookup by event
+    eventIdx: index("interp_event_idx").on(table.eventId),
 
     // Reprocessing queries
     workspaceProcessedIdx: index("interp_workspace_processed_idx").on(
@@ -80,7 +80,7 @@ export const workspaceObservationInterpretations = pgTable(
       table.processedAt
     ),
 
-    // Vector ID lookups (replaces observation row indexes)
+    // Vector ID lookups (replaces event row indexes)
     embeddingTitleIdx: index("interp_embedding_title_idx").on(
       table.workspaceId,
       table.embeddingTitleId
@@ -96,7 +96,7 @@ export const workspaceObservationInterpretations = pgTable(
   })
 );
 
-export type WorkspaceObservationInterpretation =
-  typeof workspaceObservationInterpretations.$inferSelect;
-export type InsertWorkspaceObservationInterpretation =
-  typeof workspaceObservationInterpretations.$inferInsert;
+export type WorkspaceInterpretation =
+  typeof workspaceInterpretations.$inferSelect;
+export type InsertWorkspaceInterpretation =
+  typeof workspaceInterpretations.$inferInsert;

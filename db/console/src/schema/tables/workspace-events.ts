@@ -1,121 +1,206 @@
-import type { PostTransformEvent, SourceType } from "@repo/console-providers";
+import { nanoid } from "@repo/lib";
+import { sql } from "drizzle-orm";
 import {
   bigint,
   index,
   jsonb,
   pgTable,
+  text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
- * Workspace Events table stores transformed PostTransformEvent objects
- * produced by the ingress pipeline's per-provider transformers.
- *
- * Only successfully transformed events are stored (unsupported event types
- * are skipped). Raw payloads exist upstream in QStash and gwWebhookDeliveries.
- *
- * Primary consumers:
- * - SSE endpoint (/api/gateway/stream) — catch-up on reconnect via Last-Event-ID
- * - Future: dashboard real-time feed, agent VM notifications
- *
- * The BIGINT identity PK serves as a monotonic cursor for SSE Last-Event-ID.
+ * Reference to related entities extracted from observation
+ */
+export interface ObservationReference {
+  id: string;
+  label: string | null;
+  type:
+    | "commit"
+    | "branch"
+    | "pr"
+    | "issue"
+    | "deployment"
+    | "project"
+    | "cycle"
+    | "assignee"
+    | "reviewer"
+    | "team"
+    | "label";
+  url: string | null;
+}
+
+/**
+ * Actor who performed the action
+ */
+export interface ObservationActor {
+  avatarUrl: string | null;
+  email: string | null;
+  id: string;
+  name: string;
+}
+
+/**
+ * Source-specific metadata
+ * NOTE: Use metadata for structured fields (repo, branch, labels, etc.)
+ * NOT the content body, to avoid token waste on non-semantic labels.
+ * layer field: 'observations' | 'documents' | 'clusters' | 'profiles' (for Pinecone metadata filtering)
+ */
+export type ObservationMetadata = Record<string, unknown>;
+
+/**
+ * Workspace events - atomic engineering events from GitHub, Vercel, etc.
  */
 export const workspaceEvents = pgTable(
   "lightfast_workspace_events",
   {
     /**
-     * Monotonic cursor — used as SSE Last-Event-ID for catch-up on reconnect.
+     * Internal BIGINT primary key - maximum join/query performance
      */
     id: bigint("id", { mode: "number" })
       .primaryKey()
       .generatedAlwaysAsIdentity(),
 
     /**
-     * Workspace this event belongs to (cascade delete when workspace deleted).
+     * External identifier for API responses and Pinecone metadata
+     */
+    externalId: varchar("external_id", { length: 21 })
+      .notNull()
+      .unique()
+      .$defaultFn(() => nanoid()),
+
+    /**
+     * Workspace this event belongs to
      */
     workspaceId: varchar("workspace_id", { length: 191 })
       .notNull()
       .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
-    /**
-     * Delivery ID from relay — traces back to gwWebhookDeliveries for debugging.
-     */
-    deliveryId: varchar("delivery_id", { length: 191 }).notNull(),
+    // ========== TEMPORAL ==========
 
     /**
-     * Source integration: "github" | "vercel" | "linear" | "sentry".
-     * Denormalized from sourceEvent for efficient btree filtering.
+     * When the event occurred in the source system
      */
-    source: varchar("source", { length: 50 }).notNull().$type<SourceType>(),
-
-    /**
-     * Internal event type in kebab-case entity.action format.
-     * e.g., "pull-request.merged", "deployment.succeeded", "issue.created".
-     * Denormalized from sourceEvent for efficient btree filtering.
-     */
-    sourceType: varchar("source_type", { length: 100 }).notNull(),
-
-    /**
-     * Full transformed event — the canonical event representation.
-     * Contains: source, sourceType, sourceId, title, body, actor,
-     * occurredAt, references, metadata.
-     */
-    sourceEvent: jsonb("source_event").$type<PostTransformEvent>().notNull(),
-
-    /**
-     * How this event was ingested: webhook, backfill, manual, or api.
-     */
-    ingestionSource: varchar("ingestion_source", { length: 20 })
-      .default("webhook")
-      .notNull(),
-
-    /**
-     * When the original webhook was received by the relay service.
-     */
-    receivedAt: timestamp("received_at", {
+    occurredAt: timestamp("occurred_at", {
       mode: "string",
       withTimezone: true,
     }).notNull(),
 
     /**
-     * When this record was created.
+     * When the event was captured
      */
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    capturedAt: timestamp("captured_at", {
+      mode: "string",
+      withTimezone: true,
+    })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+
+    // ========== ACTOR ==========
+
+    /**
+     * Actor who performed the action
+     */
+    actor: jsonb("actor").$type<ObservationActor | null>(),
+
+    /**
+     * Reference to resolved actor profile
+     */
+    actorId: bigint("actor_id", { mode: "number" }),
+
+    // ========== CONTENT ==========
+
+    /**
+     * Observation type (e.g., "pr_merged", "deployment_succeeded")
+     */
+    observationType: varchar("observation_type", { length: 100 }).notNull(),
+
+    /**
+     * Short title (<=120 chars, embeddable headline)
+     */
+    title: text("title").notNull(),
+
+    /**
+     * Full content for detailed embedding
+     */
+    content: text("content").notNull(),
+
+    // ========== SOURCE ==========
+
+    /**
+     * Source system (github, vercel, linear, sentry)
+     */
+    source: varchar("source", { length: 50 }).notNull(),
+
+    /**
+     * Source-specific event type (e.g., "pull_request_merged")
+     */
+    sourceType: varchar("source_type", { length: 100 }).notNull(),
+
+    /**
+     * Unique source identifier (e.g., "pr:lightfastai/lightfast#123")
+     */
+    sourceId: varchar("source_id", { length: 255 }).notNull(),
+
+    /**
+     * References to related entities
+     */
+    sourceReferences:
+      jsonb("source_references").$type<ObservationReference[]>(),
+
+    /**
+     * Source-specific metadata
+     */
+    metadata: jsonb("metadata").$type<ObservationMetadata>(),
+
+    // ========== INGESTION ==========
+
+    /**
+     * How this event was ingested: webhook, backfill, manual, or api
+     */
+    ingestionSource: varchar("ingestion_source", { length: 20 })
+      .default("webhook")
+      .notNull(),
+
+    // ========== TIMESTAMPS ==========
+
+    createdAt: timestamp("created_at", {
+      mode: "string",
+      withTimezone: true,
+    })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
   },
   (table) => ({
-    /**
-     * SSE catch-up: WHERE workspace_id = ? AND id > ? ORDER BY id LIMIT 1000
-     * Composite index enables efficient B-tree range scan.
-     */
-    workspaceEventCursorIdx: index("workspace_event_cursor_idx").on(
+    // External ID lookup (API requests)
+    externalIdIdx: uniqueIndex("event_external_id_idx").on(table.externalId),
+
+    // Workspace + time range queries
+    workspaceOccurredIdx: index("event_workspace_occurred_idx").on(
       table.workspaceId,
-      table.id
+      table.occurredAt
     ),
 
-    /**
-     * Trace back to relay's delivery tracking for debugging.
-     */
-    eventDeliveryIdx: index("event_delivery_idx").on(table.deliveryId),
-
-    /**
-     * Filter events by source integration and event type within a workspace.
-     */
-    workspaceSourceIdx: index("workspace_event_source_idx").on(
+    // Source filtering
+    sourceIdx: index("event_source_idx").on(
       table.workspaceId,
       table.source,
       table.sourceType
     ),
 
-    /**
-     * Date-range filtering: WHERE workspace_id = ? AND received_at >= ?
-     */
-    workspaceEventDateIdx: index("workspace_event_date_idx").on(
+    // Deduplication by source ID
+    sourceIdIdx: index("event_source_id_idx").on(
       table.workspaceId,
-      table.receivedAt
+      table.sourceId
+    ),
+
+    // Type filtering
+    typeIdx: index("event_type_idx").on(
+      table.workspaceId,
+      table.observationType
     ),
   })
 );

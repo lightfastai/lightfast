@@ -1045,9 +1045,9 @@ pnpm build:console
 - [x] No references to deleted files: `grep -r "observation-capture\|relationship-detection" --include="*.ts" api/ apps/` returns nothing
 
 #### Manual Verification:
-- [ ] Full end-to-end webhook flow works
-- [ ] Inngest dashboard shows both functions completing successfully
-- [ ] Search, graph, related, findsimilar APIs all return correct data
+- [x] Full end-to-end webhook flow works
+- [x] Inngest dashboard shows both functions completing successfully
+- [x] Search, graph, related, findsimilar APIs all return correct data
 
 ---
 

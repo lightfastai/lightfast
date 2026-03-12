@@ -9,7 +9,6 @@ export type {
   ObservationActor,
   ObservationMetadata,
   ObservationReference,
-  RelationshipMetadata,
   WorkflowInput,
   WorkflowOutput,
 } from "./schema";
@@ -33,13 +32,13 @@ export {
   type InsertGwWebhookDelivery,
   type InsertOrgApiKey,
   type InsertOrgWorkspace,
+  type InsertWorkspaceEdge,
+  type InsertWorkspaceEntity,
   type InsertWorkspaceEvent,
+  type InsertWorkspaceIngestLogEntry,
   type InsertWorkspaceIntegration,
   type InsertWorkspaceKnowledgeDocument,
   type InsertWorkspaceKnowledgeVectorChunk,
-  type InsertWorkspaceNeuralEntity,
-  type InsertWorkspaceNeuralObservation,
-  type InsertWorkspaceObservationRelationship,
   type InsertWorkspaceUserActivity,
   type InsertWorkspaceWorkflowRun,
   type OrgApiKey,
@@ -48,18 +47,24 @@ export {
   // Org-scoped tables
   orgWorkspaces,
   orgWorkspacesRelations,
-  type RelationshipType,
+  type WorkspaceEdge,
+  type WorkspaceEntity,
   type WorkspaceEvent,
+  type WorkspaceIngestLogEntry,
   type WorkspaceIntegration,
   type WorkspaceKnowledgeDocument,
   type WorkspaceKnowledgeVectorChunk,
-  type WorkspaceNeuralEntity,
-  type WorkspaceNeuralObservation,
-  type WorkspaceObservationRelationship,
   type WorkspaceUserActivity,
   type WorkspaceWorkflowRun,
-  // Workspace event storage
+  // Entity↔entity edges
+  workspaceEdges,
+  // Workspace entities
+  workspaceEntities,
+  // Workspace events (neural observations)
   workspaceEvents,
+  workspaceEventsRelations,
+  // Workspace ingest log (raw webhook ingress log)
+  workspaceIngestLog,
   workspaceIntegrations,
   workspaceIntegrationsRelations,
   // Workspace-scoped tables
@@ -67,13 +72,6 @@ export {
   workspaceKnowledgeDocumentsRelations,
   workspaceKnowledgeVectorChunks,
   workspaceKnowledgeVectorChunksRelations,
-  workspaceNeuralEntities,
-  // Neural memory tables
-  workspaceNeuralObservations,
-  workspaceNeuralObservationsRelations,
-  // Relationship graph tables
-  workspaceObservationRelationships,
-  workspaceObservationRelationshipsRelations,
   workspaceUserActivities,
   workspaceUserActivitiesRelations,
   workspaceWorkflowRuns,

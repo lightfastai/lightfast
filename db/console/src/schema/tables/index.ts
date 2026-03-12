@@ -33,23 +33,52 @@ export {
   type OrgWorkspace,
   orgWorkspaces,
 } from "./org-workspaces";
-// Entity-observation junction
+// Entity↔entity edges
 export {
-  type InsertWorkspaceEntityObservation,
-  type WorkspaceEntityObservation,
-  workspaceEntityObservations,
-} from "./workspace-entity-observations";
-// Workspace event storage
+  type InsertWorkspaceEdge,
+  type WorkspaceEdge,
+  workspaceEdges,
+} from "./workspace-edges";
+// Workspace entities
+export {
+  type InsertWorkspaceEntity,
+  type WorkspaceEntity,
+  workspaceEntities,
+} from "./workspace-entities";
+// Entity-event junction
+export {
+  type InsertWorkspaceEntityEvent,
+  type WorkspaceEntityEvent,
+  workspaceEntityEvents,
+} from "./workspace-entity-events";
+// Workspace events (neural observations)
+export type {
+  ObservationActor,
+  ObservationMetadata,
+  ObservationReference,
+} from "./workspace-events";
 export {
   type InsertWorkspaceEvent,
   type WorkspaceEvent,
   workspaceEvents,
 } from "./workspace-events";
+// Workspace ingest log (raw webhook ingress log)
+export {
+  type InsertWorkspaceIngestLogEntry,
+  type WorkspaceIngestLogEntry,
+  workspaceIngestLog,
+} from "./workspace-ingest-log";
 export {
   type InsertWorkspaceIntegration,
   type WorkspaceIntegration,
   workspaceIntegrations,
 } from "./workspace-integrations";
+// Interpretations table
+export {
+  type InsertWorkspaceInterpretation,
+  type WorkspaceInterpretation,
+  workspaceInterpretations,
+} from "./workspace-interpretations";
 // Workspace-scoped tables
 export {
   type InsertWorkspaceKnowledgeDocument,
@@ -61,36 +90,6 @@ export {
   type WorkspaceKnowledgeVectorChunk,
   workspaceKnowledgeVectorChunks,
 } from "./workspace-knowledge-vector-chunks";
-export {
-  type InsertWorkspaceNeuralEntity,
-  type WorkspaceNeuralEntity,
-  workspaceNeuralEntities,
-} from "./workspace-neural-entities";
-export type {
-  ObservationActor,
-  ObservationMetadata,
-  ObservationReference,
-} from "./workspace-neural-observations";
-// Neural memory tables
-export {
-  type InsertWorkspaceNeuralObservation,
-  type WorkspaceNeuralObservation,
-  workspaceNeuralObservations,
-} from "./workspace-neural-observations";
-// Interpretation table
-export {
-  type InsertWorkspaceObservationInterpretation,
-  type WorkspaceObservationInterpretation,
-  workspaceObservationInterpretations,
-} from "./workspace-observation-interpretations";
-export type { RelationshipMetadata } from "./workspace-observation-relationships";
-// Relationship graph tables
-export {
-  type InsertWorkspaceObservationRelationship,
-  type RelationshipType,
-  type WorkspaceObservationRelationship,
-  workspaceObservationRelationships,
-} from "./workspace-observation-relationships";
 export {
   type InsertWorkspaceUserActivity,
   type WorkspaceUserActivity,

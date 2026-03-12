@@ -6,13 +6,13 @@ export {
   gwResourcesRelations,
   gwTokensRelations,
   orgWorkspacesRelations,
-  workspaceEntityObservationsRelations,
+  workspaceEdgesRelations,
+  workspaceEntityEventsRelations,
+  workspaceEventsRelations,
   workspaceIntegrationsRelations,
+  workspaceInterpretationsRelations,
   workspaceKnowledgeDocumentsRelations,
   workspaceKnowledgeVectorChunksRelations,
-  workspaceNeuralObservationsRelations,
-  workspaceObservationInterpretationsRelations,
-  workspaceObservationRelationshipsRelations,
   workspaceUserActivitiesRelations,
 } from "./relations";
 
@@ -22,7 +22,6 @@ export type {
   ObservationActor,
   ObservationMetadata,
   ObservationReference,
-  RelationshipMetadata,
   WorkflowInput,
   WorkflowOutput,
 } from "./tables";
@@ -45,15 +44,15 @@ export {
   type InsertGwWebhookDelivery,
   type InsertOrgApiKey,
   type InsertOrgWorkspace,
-  type InsertWorkspaceEntityObservation,
+  type InsertWorkspaceEdge,
+  type InsertWorkspaceEntity,
+  type InsertWorkspaceEntityEvent,
   type InsertWorkspaceEvent,
+  type InsertWorkspaceIngestLogEntry,
   type InsertWorkspaceIntegration,
+  type InsertWorkspaceInterpretation,
   type InsertWorkspaceKnowledgeDocument,
   type InsertWorkspaceKnowledgeVectorChunk,
-  type InsertWorkspaceNeuralEntity,
-  type InsertWorkspaceNeuralObservation,
-  type InsertWorkspaceObservationInterpretation,
-  type InsertWorkspaceObservationRelationship,
   type InsertWorkspaceUserActivity,
   type InsertWorkspaceWorkflowRun,
   type OrgApiKey,
@@ -61,33 +60,33 @@ export {
   orgApiKeys,
   // Org-scoped tables
   orgWorkspaces,
-  type RelationshipType,
-  type WorkspaceEntityObservation,
+  type WorkspaceEdge,
+  type WorkspaceEntity,
+  type WorkspaceEntityEvent,
   type WorkspaceEvent,
+  type WorkspaceIngestLogEntry,
   type WorkspaceIntegration,
+  type WorkspaceInterpretation,
   type WorkspaceKnowledgeDocument,
   type WorkspaceKnowledgeVectorChunk,
-  type WorkspaceNeuralEntity,
-  type WorkspaceNeuralObservation,
-  type WorkspaceObservationInterpretation,
-  type WorkspaceObservationRelationship,
   type WorkspaceUserActivity,
   type WorkspaceWorkflowRun,
-  // Entity-observation junction
-  workspaceEntityObservations,
-  // Workspace event storage
+  // Entity↔entity edges
+  workspaceEdges,
+  // Workspace entities
+  workspaceEntities,
+  // Entity-event junction
+  workspaceEntityEvents,
+  // Workspace events (neural observations)
   workspaceEvents,
+  // Workspace ingest log (raw webhook ingress log)
+  workspaceIngestLog,
   workspaceIntegrations,
+  // Interpretations table
+  workspaceInterpretations,
   // Workspace-scoped tables
   workspaceKnowledgeDocuments,
   workspaceKnowledgeVectorChunks,
-  workspaceNeuralEntities,
-  // Neural memory tables
-  workspaceNeuralObservations,
-  // Interpretation table
-  workspaceObservationInterpretations,
-  // Relationship graph tables
-  workspaceObservationRelationships,
   workspaceUserActivities,
   workspaceWorkflowRuns,
 } from "./tables";

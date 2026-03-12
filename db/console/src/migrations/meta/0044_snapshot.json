@@ -1,6 +1,6 @@
 {
-  "id": "8c7a13fa-52fd-41c7-b2d5-87a65cc9e24c",
-  "prevId": "73339909-fee8-40f4-9592-6a8ed4a48169",
+  "id": "5feb16ef-93e3-4ab6-be66-b2132dea21e4",
+  "prevId": "682e9d5f-4a9c-427f-bba0-1f4da82b5515",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -896,8 +896,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.lightfast_workspace_events": {
-      "name": "lightfast_workspace_events",
+    "public.lightfast_workspace_entity_observations": {
+      "name": "lightfast_workspace_entity_observations",
       "schema": "",
       "columns": {
         "id": {
@@ -907,7 +907,148 @@
           "notNull": true,
           "identity": {
             "type": "always",
-            "name": "lightfast_workspace_events_id_seq",
+            "name": "lightfast_workspace_entity_observations_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observation_id": {
+          "name": "observation_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ref_label": {
+          "name": "ref_label",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "eo_entity_obs_idx": {
+          "name": "eo_entity_obs_idx",
+          "columns": [
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "eo_entity_idx": {
+          "name": "eo_entity_idx",
+          "columns": [
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "eo_observation_idx": {
+          "name": "eo_observation_idx",
+          "columns": [
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "lightfast_workspace_entity_observations_entity_id_lightfast_workspace_neural_entities_id_fk": {
+          "name": "lightfast_workspace_entity_observations_entity_id_lightfast_workspace_neural_entities_id_fk",
+          "tableFrom": "lightfast_workspace_entity_observations",
+          "tableTo": "lightfast_workspace_neural_entities",
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "lightfast_workspace_entity_observations_observation_id_lightfast_workspace_neural_observations_id_fk": {
+          "name": "lightfast_workspace_entity_observations_observation_id_lightfast_workspace_neural_observations_id_fk",
+          "tableFrom": "lightfast_workspace_entity_observations",
+          "tableTo": "lightfast_workspace_neural_observations",
+          "columnsFrom": ["observation_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "lightfast_workspace_entity_observations_workspace_id_lightfast_org_workspaces_id_fk": {
+          "name": "lightfast_workspace_entity_observations_workspace_id_lightfast_org_workspaces_id_fk",
+          "tableFrom": "lightfast_workspace_entity_observations",
+          "tableTo": "lightfast_org_workspaces",
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.lightfast_workspace_ingest_log": {
+      "name": "lightfast_workspace_ingest_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "lightfast_workspace_ingest_log_id_seq",
             "schema": "public",
             "increment": "1",
             "startWith": "1",
@@ -1055,9 +1196,9 @@
         }
       },
       "foreignKeys": {
-        "lightfast_workspace_events_workspace_id_lightfast_org_workspaces_id_fk": {
-          "name": "lightfast_workspace_events_workspace_id_lightfast_org_workspaces_id_fk",
-          "tableFrom": "lightfast_workspace_events",
+        "lightfast_workspace_ingest_log_workspace_id_lightfast_org_workspaces_id_fk": {
+          "name": "lightfast_workspace_ingest_log_workspace_id_lightfast_org_workspaces_id_fk",
+          "tableFrom": "lightfast_workspace_ingest_log",
           "tableTo": "lightfast_org_workspaces",
           "columnsFrom": ["workspace_id"],
           "columnsTo": ["id"],
@@ -1659,12 +1800,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "source_observation_id": {
-          "name": "source_observation_id",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
         "evidence_snippet": {
           "name": "evidence_snippet",
           "type": "text",
@@ -1830,15 +1965,6 @@
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
-        },
-        "lightfast_workspace_neural_entities_source_observation_id_lightfast_workspace_neural_observations_id_fk": {
-          "name": "lightfast_workspace_neural_entities_source_observation_id_lightfast_workspace_neural_observations_id_fk",
-          "tableFrom": "lightfast_workspace_neural_entities",
-          "tableTo": "lightfast_workspace_neural_observations",
-          "columnsFrom": ["source_observation_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1929,18 +2055,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "topics": {
-          "name": "topics",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "significance_score": {
-          "name": "significance_score",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": false
-        },
         "source": {
           "name": "source",
           "type": "varchar(50)",
@@ -1968,30 +2082,6 @@
         "metadata": {
           "name": "metadata",
           "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "embedding_vector_id": {
-          "name": "embedding_vector_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "embedding_title_id": {
-          "name": "embedding_title_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "embedding_content_id": {
-          "name": "embedding_content_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "embedding_summary_id": {
-          "name": "embedding_summary_id",
-          "type": "varchar(191)",
           "primaryKey": false,
           "notNull": false
         },
@@ -2115,69 +2205,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "obs_embedding_title_idx": {
-          "name": "obs_embedding_title_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "embedding_title_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "obs_embedding_content_idx": {
-          "name": "obs_embedding_content_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "embedding_content_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "obs_embedding_summary_idx": {
-          "name": "obs_embedding_summary_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "embedding_summary_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -2199,6 +2226,250 @@
           "columns": ["external_id"]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.lightfast_workspace_observation_interpretations": {
+      "name": "lightfast_workspace_observation_interpretations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "lightfast_workspace_observation_interpretations_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "observation_id": {
+          "name": "observation_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "primary_category": {
+          "name": "primary_category",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "topics": {
+          "name": "topics",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "significance_score": {
+          "name": "significance_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding_title_id": {
+          "name": "embedding_title_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding_content_id": {
+          "name": "embedding_content_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding_summary_id": {
+          "name": "embedding_summary_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "model_version": {
+          "name": "model_version",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "interp_obs_version_idx": {
+          "name": "interp_obs_version_idx",
+          "columns": [
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "interp_obs_idx": {
+          "name": "interp_obs_idx",
+          "columns": [
+            {
+              "expression": "observation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "interp_workspace_processed_idx": {
+          "name": "interp_workspace_processed_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "processed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "interp_embedding_title_idx": {
+          "name": "interp_embedding_title_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "embedding_title_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "interp_embedding_content_idx": {
+          "name": "interp_embedding_content_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "embedding_content_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "interp_embedding_summary_idx": {
+          "name": "interp_embedding_summary_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "embedding_summary_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "lightfast_workspace_observation_interpretations_observation_id_lightfast_workspace_neural_observations_id_fk": {
+          "name": "lightfast_workspace_observation_interpretations_observation_id_lightfast_workspace_neural_observations_id_fk",
+          "tableFrom": "lightfast_workspace_observation_interpretations",
+          "tableTo": "lightfast_workspace_neural_observations",
+          "columnsFrom": ["observation_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "lightfast_workspace_observation_interpretations_workspace_id_lightfast_org_workspaces_id_fk": {
+          "name": "lightfast_workspace_observation_interpretations_workspace_id_lightfast_org_workspaces_id_fk",
+          "tableFrom": "lightfast_workspace_observation_interpretations",
+          "tableTo": "lightfast_org_workspaces",
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

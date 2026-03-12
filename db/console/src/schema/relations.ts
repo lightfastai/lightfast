@@ -3,14 +3,14 @@ import { gwInstallations } from "./tables/gw-installations";
 import { gwResources } from "./tables/gw-resources";
 import { gwTokens } from "./tables/gw-tokens";
 import { orgWorkspaces } from "./tables/org-workspaces";
-import { workspaceEntityObservations } from "./tables/workspace-entity-observations";
+import { workspaceEdges } from "./tables/workspace-edges";
+import { workspaceEntities } from "./tables/workspace-entities";
+import { workspaceEntityEvents } from "./tables/workspace-entity-events";
+import { workspaceEvents } from "./tables/workspace-events";
 import { workspaceIntegrations } from "./tables/workspace-integrations";
+import { workspaceInterpretations } from "./tables/workspace-interpretations";
 import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-documents";
 import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
-import { workspaceNeuralEntities } from "./tables/workspace-neural-entities";
-import { workspaceNeuralObservations } from "./tables/workspace-neural-observations";
-import { workspaceObservationInterpretations } from "./tables/workspace-observation-interpretations";
-import { workspaceObservationRelationships } from "./tables/workspace-observation-relationships";
 import { workspaceUserActivities } from "./tables/workspace-user-activities";
 
 /**
@@ -47,7 +47,7 @@ export const gwResourcesRelations = relations(gwResources, ({ one }) => ({
 export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
   documents: many(workspaceKnowledgeDocuments),
   vectorChunks: many(workspaceKnowledgeVectorChunks),
-  neuralObservations: many(workspaceNeuralObservations),
+  events: many(workspaceEvents),
 }));
 
 export const workspaceKnowledgeDocumentsRelations = relations(
@@ -103,67 +103,68 @@ export const workspaceIntegrationsRelations = relations(
   })
 );
 
-export const workspaceNeuralObservationsRelations = relations(
-  workspaceNeuralObservations,
+export const workspaceEventsRelations = relations(
+  workspaceEvents,
   ({ one, many }) => ({
     workspace: one(orgWorkspaces, {
-      fields: [workspaceNeuralObservations.workspaceId],
+      fields: [workspaceEvents.workspaceId],
       references: [orgWorkspaces.id],
     }),
-    interpretations: many(workspaceObservationInterpretations),
-    entityObservations: many(workspaceEntityObservations),
+    interpretations: many(workspaceInterpretations),
+    entityEvents: many(workspaceEntityEvents),
   })
 );
 
 // Interpretation relations
-export const workspaceObservationInterpretationsRelations = relations(
-  workspaceObservationInterpretations,
+export const workspaceInterpretationsRelations = relations(
+  workspaceInterpretations,
   ({ one }) => ({
-    observation: one(workspaceNeuralObservations, {
-      fields: [workspaceObservationInterpretations.observationId],
-      references: [workspaceNeuralObservations.id],
+    event: one(workspaceEvents, {
+      fields: [workspaceInterpretations.eventId],
+      references: [workspaceEvents.id],
     }),
     workspace: one(orgWorkspaces, {
-      fields: [workspaceObservationInterpretations.workspaceId],
+      fields: [workspaceInterpretations.workspaceId],
       references: [orgWorkspaces.id],
     }),
   })
 );
 
-// Entity-observation junction relations
-export const workspaceEntityObservationsRelations = relations(
-  workspaceEntityObservations,
+// Entity-event junction relations
+export const workspaceEntityEventsRelations = relations(
+  workspaceEntityEvents,
   ({ one }) => ({
-    entity: one(workspaceNeuralEntities, {
-      fields: [workspaceEntityObservations.entityId],
-      references: [workspaceNeuralEntities.id],
+    entity: one(workspaceEntities, {
+      fields: [workspaceEntityEvents.entityId],
+      references: [workspaceEntities.id],
     }),
-    observation: one(workspaceNeuralObservations, {
-      fields: [workspaceEntityObservations.observationId],
-      references: [workspaceNeuralObservations.id],
+    event: one(workspaceEvents, {
+      fields: [workspaceEntityEvents.eventId],
+      references: [workspaceEvents.id],
     }),
     workspace: one(orgWorkspaces, {
-      fields: [workspaceEntityObservations.workspaceId],
+      fields: [workspaceEntityEvents.workspaceId],
       references: [orgWorkspaces.id],
     }),
   })
 );
 
-// Workspace observation relationships - edges in the relationship graph
-export const workspaceObservationRelationshipsRelations = relations(
-  workspaceObservationRelationships,
-  ({ one }) => ({
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceObservationRelationships.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
-    sourceObservation: one(workspaceNeuralObservations, {
-      fields: [workspaceObservationRelationships.sourceObservationId],
-      references: [workspaceNeuralObservations.id],
-    }),
-    targetObservation: one(workspaceNeuralObservations, {
-      fields: [workspaceObservationRelationships.targetObservationId],
-      references: [workspaceNeuralObservations.id],
-    }),
-  })
-);
+// Entity↔entity edges relations
+export const workspaceEdgesRelations = relations(workspaceEdges, ({ one }) => ({
+  workspace: one(orgWorkspaces, {
+    fields: [workspaceEdges.workspaceId],
+    references: [orgWorkspaces.id],
+  }),
+  sourceEntity: one(workspaceEntities, {
+    fields: [workspaceEdges.sourceEntityId],
+    references: [workspaceEntities.id],
+  }),
+  targetEntity: one(workspaceEntities, {
+    fields: [workspaceEdges.targetEntityId],
+    references: [workspaceEntities.id],
+  }),
+  sourceEvent: one(workspaceEvents, {
+    fields: [workspaceEdges.sourceEventId],
+    references: [workspaceEvents.id],
+  }),
+}));
