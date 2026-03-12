@@ -12,4 +12,4 @@ export {
   stressScenario,
 } from "./loader";
 export type { TriggerOptions, TriggerResult } from "./trigger";
-export { triggerObservationCapture } from "./trigger";
+export { triggerEventCapture } from "./trigger";

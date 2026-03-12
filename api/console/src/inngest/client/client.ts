@@ -127,10 +127,10 @@ const eventsMap = {
   }),
 
   // ============================================================================
-  // NEURAL MEMORY EVENTS
+  // EVENT PIPELINE
   // ============================================================================
 
-  "apps-console/neural/observation.capture": z.object({
+  "apps-console/event.capture": z.object({
     /** Workspace DB UUID */
     workspaceId: z.string(),
     /** Clerk organization ID (optional for backwards compat, resolved at webhook handler) */
@@ -177,9 +177,9 @@ const eventsMap = {
     ingestionSource: ingestionSourceSchema.optional(),
   }),
 
-  "apps-console/neural/observation.stored": z.object({
-    /** Observation external ID (nanoid) */
-    observationId: z.string(),
+  "apps-console/event.stored": z.object({
+    /** Event external ID (nanoid) */
+    eventExternalId: z.string(),
     /** Workspace DB UUID */
     workspaceId: z.string(),
     /** Clerk organization ID */
@@ -198,21 +198,21 @@ const eventsMap = {
         label: z.string().nullable(),
       })
     ),
-    /** Internal observation ID for DB queries */
-    internalObservationId: z.number(),
+    /** Internal event ID for DB queries */
+    internalEventId: z.number(),
   }),
 
-  "apps-console/neural/observation.captured": z.object({
+  "apps-console/event.interpreted": z.object({
     /** Workspace DB UUID */
     workspaceId: z.string(),
     /** Clerk organization ID (passed from parent workflow) */
     clerkOrgId: z.string().optional(),
-    /** Observation DB UUID */
-    observationId: z.string(),
+    /** Event external ID (nanoid) */
+    eventExternalId: z.string(),
     /** Source ID for correlation */
     sourceId: z.string(),
-    /** Observation type (e.g., "push", "pull_request_merged") */
-    observationType: z.string(),
+    /** Event type (e.g., "push", "pull_request_merged") */
+    eventType: z.string(),
     /** Significance score (0-100) */
     significanceScore: z.number().optional(),
     /** Topics extracted */

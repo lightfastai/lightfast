@@ -20,7 +20,7 @@ export const backfillEntityWorker = inngest.createFunction(
       // (one org with multiple connections shares this budget)
       { limit: 5, key: "event.data.orgId" },
       // Global: max 10 entity workers across all orgs
-      // (~20 concurrent steps for backfill, leaves ~80 for observation.capture + live webhooks)
+      // (~20 concurrent steps for backfill, leaves ~80 for event.capture + live webhooks)
       { limit: 10 },
     ],
     throttle: {

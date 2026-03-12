@@ -33,10 +33,10 @@ const chunk = <T>(arr: T[], size: number): T[][] => {
 };
 
 /**
- * Trigger observation capture events for a batch of PostTransformEvents
+ * Trigger event capture for a batch of PostTransformEvents
  * Uses Promise.all with batching for better performance
  */
-export const triggerObservationCapture = async (
+export const triggerEventCapture = async (
   events: PostTransformEvent[],
   options: TriggerOptions
 ): Promise<TriggerResult> => {
@@ -64,7 +64,7 @@ export const triggerObservationCapture = async (
         const eventId = `${runId}:${event.sourceId}`;
 
         await inngest.send({
-          name: "apps-console/neural/observation.capture",
+          name: "apps-console/event.capture",
           id: eventId,
           data: {
             workspaceId: options.workspaceId,

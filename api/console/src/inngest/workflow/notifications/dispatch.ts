@@ -1,7 +1,7 @@
 /**
  * Notification dispatch workflow
  *
- * Listens for observation.captured events and triggers Knock notifications
+ * Listens for event.interpreted events and triggers Knock notifications
  * for high-significance observations (score >= 70).
  *
  * This workflow acts as the bridge between Inngest events and Knock's
@@ -31,13 +31,13 @@ export const notificationDispatch = inngest.createFunction(
       key: "event.data.workspaceId",
     },
   },
-  { event: "apps-console/neural/observation.captured" },
+  { event: "apps-console/event.interpreted" },
   async ({ event, step }) => {
     const {
       workspaceId,
       clerkOrgId,
-      observationId,
-      observationType,
+      eventExternalId,
+      eventType,
       significanceScore,
       topics,
     } = event.data;
@@ -77,8 +77,8 @@ export const notificationDispatch = inngest.createFunction(
         recipients: [{ id: clerkOrgId }],
         tenant: clerkOrgId,
         data: {
-          observationId,
-          observationType,
+          eventExternalId,
+          eventType,
           significanceScore,
           topics: topics ?? [],
           workspaceId,
@@ -87,7 +87,7 @@ export const notificationDispatch = inngest.createFunction(
 
       log.info("Knock notification triggered", {
         workspaceId,
-        observationId,
+        eventExternalId,
         clerkOrgId,
         significanceScore,
       });
@@ -95,7 +95,7 @@ export const notificationDispatch = inngest.createFunction(
 
     return {
       status: "sent",
-      observationId,
+      eventExternalId,
       clerkOrgId,
       significanceScore,
     };

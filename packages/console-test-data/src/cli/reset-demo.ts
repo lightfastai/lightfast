@@ -21,7 +21,7 @@ import {
 import { pineconeClient } from "@repo/console-pinecone";
 import { eq, sql } from "drizzle-orm";
 import { loadDataset } from "../loader/index.js";
-import { triggerObservationCapture } from "../trigger/trigger.js";
+import { triggerEventCapture } from "../trigger/trigger.js";
 
 interface ResetOptions {
   dryRun: boolean;
@@ -125,7 +125,7 @@ async function resetDemoEnvironment(options: ResetOptions) {
     const dataset = loadDataset("sandbox-1");
     console.log(`   Found ${dataset.events.length} events to inject`);
 
-    const result = await triggerObservationCapture(dataset.events, {
+    const result = await triggerEventCapture(dataset.events, {
       workspaceId,
       batchSize: 5,
       delayMs: 500,

@@ -1,18 +1,18 @@
 /**
- * Neural observation interpret workflow (slow path)
+ * Event interpret workflow (slow path)
  *
- * Classifies, embeds, and stores interpretations for observations stored by
- * the fast path (observation-store.ts). Triggered by observation.stored.
+ * Classifies, embeds, and stores interpretations for events stored by
+ * the fast path (event-store.ts). Triggered by event.stored.
  *
  * Workflow steps:
- * 1. Fetch observation from DB
+ * 1. Fetch event from DB
  * 2. Fetch workspace for embedding config
- * 3. Classify observation with Claude Haiku
+ * 3. Classify event with Claude Haiku
  * 4. Generate multi-view embeddings (title, content, summary)
  * 5. Upsert vectors to Pinecone
- * 6. Store interpretation row in workspace_observation_interpretations
- * 7. resolve-edges (Phase 3 - entity-mediated relationship detection)
- * 8. Emit observation.captured for downstream systems
+ * 6. Store interpretation row in workspace_interpretations
+ * 7. resolve-edges (entity-mediated relationship detection)
+ * 8. Emit event.interpreted for downstream systems
  */
 
 import { db } from "@db/console/client";
@@ -94,16 +94,16 @@ function extractTopics(obs: {
 }
 
 /**
- * Neural observation interpret workflow
+ * Event interpret workflow
  *
  * Slow path: LLM classification + embeddings + Pinecone.
- * Triggered by apps-console/neural/observation.stored.
+ * Triggered by apps-console/event.stored.
  */
-export const observationInterpret = inngest.createFunction(
+export const eventInterpret = inngest.createFunction(
   {
-    id: "apps-console/neural.observation.interpret",
-    name: "Neural Observation Interpret",
-    description: "Classifies and embeds neural observations (slow path)",
+    id: "apps-console/event.interpret",
+    name: "Event Interpret",
+    description: "Classifies and embeds events (slow path)",
     retries: 3,
 
     timeouts: {
@@ -111,63 +111,62 @@ export const observationInterpret = inngest.createFunction(
       finish: "10m",
     },
   },
-  { event: "apps-console/neural/observation.stored" },
+  { event: "apps-console/event.stored" },
   async ({ event, step }) => {
     const {
       workspaceId,
       clerkOrgId,
-      internalObservationId,
+      internalEventId,
       significanceScore,
       entityRefs,
-      observationId,
+      eventExternalId,
     } = event.data;
 
-    // Step 1: Fetch observation from DB
-    const obs = await step.run("fetch-observation", async () => {
-      const observation = await db.query.workspaceEvents.findFirst({
-        where: eq(workspaceEvents.id, internalObservationId),
-        columns: {
-          id: true,
-          externalId: true,
-          title: true,
-          content: true,
-          source: true,
-          sourceType: true,
-          sourceId: true,
-          actor: true,
-          occurredAt: true,
-          sourceReferences: true,
-          observationType: true,
-        },
-      });
+    // Step 1+2: Fetch observation and workspace in parallel
+    const { obs, workspace } = await step.run(
+      "fetch-observation-and-workspace",
+      async () => {
+        const [observation, ws] = await Promise.all([
+          db.query.workspaceEvents.findFirst({
+            where: eq(workspaceEvents.id, internalEventId),
+            columns: {
+              id: true,
+              externalId: true,
+              title: true,
+              content: true,
+              source: true,
+              sourceType: true,
+              sourceId: true,
+              actor: true,
+              occurredAt: true,
+              sourceReferences: true,
+              observationType: true,
+            },
+          }),
+          db.query.orgWorkspaces.findFirst({
+            where: eq(orgWorkspaces.id, workspaceId),
+          }),
+        ]);
 
-      if (!observation) {
-        throw new NonRetriableError(
-          `Observation not found: ${internalObservationId}`
-        );
+        if (!observation) {
+          throw new NonRetriableError(
+            `Observation not found: ${internalEventId}`
+          );
+        }
+
+        if (!ws) {
+          throw new NonRetriableError(`Workspace not found: ${workspaceId}`);
+        }
+
+        if ((ws.settings.version as number) !== 1) {
+          throw new NonRetriableError(
+            `Workspace ${workspaceId} has invalid settings version`
+          );
+        }
+
+        return { obs: observation, workspace: ws };
       }
-
-      return observation;
-    });
-
-    // Step 2: Fetch workspace for embedding config
-    const workspace = await step.run("fetch-workspace", async () => {
-      const ws = await db.query.orgWorkspaces.findFirst({
-        where: eq(orgWorkspaces.id, workspaceId),
-      });
-
-      if (!ws) {
-        throw new NonRetriableError(`Workspace not found: ${workspaceId}`);
-      }
-
-      if ((ws.settings.version as number) !== 1) {
-        throw new NonRetriableError(
-          `Workspace ${workspaceId} has invalid settings version`
-        );
-      }
-
-      return ws;
-    });
+    );
 
     // Step 3: Classification with Claude Haiku (uses step.ai.wrap)
     const classificationResult = await (async () => {
@@ -215,7 +214,7 @@ export const observationInterpret = inngest.createFunction(
         // Fallback to regex-based classification on LLM failure
         log.warn("Classification LLM failed, using fallback", {
           error: String(error),
-          observationId: internalObservationId,
+          observationId: internalEventId,
         });
         const fallback = classifyObservationFallback(sourceEventLike);
         const keywordTopics = extractTopics(obs);
@@ -359,22 +358,25 @@ export const observationInterpret = inngest.createFunction(
 
     // Step 6: Store interpretation row
     await step.run("store-interpretation", async () => {
-      await db.insert(workspaceInterpretations).values({
-        eventId: internalObservationId,
-        workspaceId,
-        version: 1,
-        primaryCategory: classification.primaryCategory,
-        topics,
-        significanceScore,
-        embeddingTitleId: embeddingResult.title.vectorId,
-        embeddingContentId: embeddingResult.content.vectorId,
-        embeddingSummaryId: embeddingResult.summary.vectorId,
-        modelVersion: "claude-3-5-haiku",
-        processedAt: new Date().toISOString(),
-      });
+      await db
+        .insert(workspaceInterpretations)
+        .values({
+          eventId: internalEventId,
+          workspaceId,
+          version: 1,
+          primaryCategory: classification.primaryCategory,
+          topics,
+          significanceScore,
+          embeddingTitleId: embeddingResult.title.vectorId,
+          embeddingContentId: embeddingResult.content.vectorId,
+          embeddingSummaryId: embeddingResult.summary.vectorId,
+          modelVersion: "claude-3-5-haiku",
+          processedAt: new Date().toISOString(),
+        })
+        .onConflictDoNothing();
 
       log.info("Interpretation stored", {
-        observationId: internalObservationId,
+        observationId: internalEventId,
         primaryCategory: classification.primaryCategory,
         topicCount: topics.length,
       });
@@ -382,23 +384,18 @@ export const observationInterpret = inngest.createFunction(
 
     // Step 7: Resolve edges via entity-mediated relationship detection
     await step.run("resolve-edges", async () => {
-      return resolveEdges(
-        workspaceId,
-        internalObservationId,
-        obs.source,
-        entityRefs
-      );
+      return resolveEdges(workspaceId, internalEventId, obs.source, entityRefs);
     });
 
-    // Step 8: Emit observation.captured for downstream systems (notifications, etc.)
-    await step.sendEvent("emit-observation-captured", {
-      name: "apps-console/neural/observation.captured" as const,
+    // Step 8: Emit event.interpreted for downstream systems (notifications, etc.)
+    await step.sendEvent("emit-event-interpreted", {
+      name: "apps-console/event.interpreted" as const,
       data: {
         workspaceId,
         clerkOrgId,
-        observationId,
+        eventExternalId,
         sourceId: obs.sourceId,
-        observationType: obs.observationType,
+        eventType: obs.observationType,
         significanceScore,
         topics,
         entitiesExtracted: entityRefs.length,
@@ -406,14 +403,14 @@ export const observationInterpret = inngest.createFunction(
     });
 
     log.info("Observation interpreted", {
-      observationId,
+      eventExternalId,
       topicCount: topics.length,
       source: obs.source,
     });
 
     return {
       status: "interpreted",
-      observationId,
+      eventExternalId,
       topicCount: topics.length,
     };
   }

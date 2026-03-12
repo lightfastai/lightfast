@@ -1,17 +1,17 @@
 /**
- * Neural observation store workflow (fast path)
+ * Event store workflow (fast path)
  *
- * Stores facts from PostTransformEvents: observation row + entities + junction rows.
+ * Stores facts from PostTransformEvents: event row + entities + junction rows.
  * No LLM calls, no embeddings — completes in <2s.
  *
  * Workflow steps:
- * 1. Check for duplicate observations (idempotency)
+ * 1. Check for duplicate events (idempotency)
  * 2. Check if event is allowed by source config (filtering)
  * 3. Evaluate significance (GATE - return early if below threshold)
  * 4. Extract entities (structural categories from updated extractFromReferences)
- * 5. Store observation row (null for interpretation columns)
+ * 5. Store event row (null for interpretation columns)
  * 6. Upsert entities + create junction rows
- * 7. Emit observation.stored (triggers interpretation slow path)
+ * 7. Emit event.stored (triggers interpretation slow path)
  * 8. Complete job
  */
 
@@ -28,11 +28,11 @@ import {
   getBaseEventType,
 } from "@repo/console-providers";
 import type {
+  EventCaptureInput,
+  EventCaptureOutputFailure,
+  EventCaptureOutputFiltered,
+  EventCaptureOutputSuccess,
   ExtractedEntity,
-  NeuralObservationCaptureInput,
-  NeuralObservationCaptureOutputFailure,
-  NeuralObservationCaptureOutputFiltered,
-  NeuralObservationCaptureOutputSuccess,
 } from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
 import { and, eq, sql } from "drizzle-orm";
@@ -99,16 +99,16 @@ async function resolveClerkOrgId(
 }
 
 /**
- * Neural observation store workflow
+ * Event store workflow
  *
  * Fast path: stores facts only. No LLM, no embeddings.
- * Emits observation.stored to trigger the interpret workflow.
+ * Emits event.stored to trigger the interpret workflow.
  */
-export const observationStore = inngest.createFunction(
+export const eventStore = inngest.createFunction(
   {
-    id: "apps-console/neural.observation.store",
-    name: "Neural Observation Store",
-    description: "Stores engineering events as neural observations (fast path)",
+    id: "apps-console/event.store",
+    name: "Event Store",
+    description: "Stores engineering events (fast path)",
     retries: 3,
 
     // Idempotency by workspace + source ID to prevent duplicate observations per workspace
@@ -127,25 +127,22 @@ export const observationStore = inngest.createFunction(
     },
 
     // Handle failures gracefully - complete job as failed
-    onFailure: createNeuralOnFailureHandler(
-      "apps-console/neural/observation.capture",
-      {
-        logMessage: "Neural observation store failed",
-        logContext: ({ workspaceId, sourceEvent }) => ({
-          workspaceId,
+    onFailure: createNeuralOnFailureHandler("apps-console/event.capture", {
+      logMessage: "Neural observation store failed",
+      logContext: ({ workspaceId, sourceEvent }) => ({
+        workspaceId,
+        sourceId: sourceEvent.sourceId,
+      }),
+      buildOutput: ({ data: { sourceEvent }, error }) =>
+        ({
+          inngestFunctionId: "event.capture",
+          status: "failure",
           sourceId: sourceEvent.sourceId,
-        }),
-        buildOutput: ({ data: { sourceEvent }, error }) =>
-          ({
-            inngestFunctionId: "neural.observation.capture",
-            status: "failure",
-            sourceId: sourceEvent.sourceId,
-            error,
-          }) satisfies NeuralObservationCaptureOutputFailure,
-      }
-    ),
+          error,
+        }) satisfies EventCaptureOutputFailure,
+    }),
   },
-  { event: "apps-console/neural/observation.capture" },
+  { event: "apps-console/event.capture" },
   async ({ event, step }) => {
     const {
       workspaceId,
@@ -183,16 +180,16 @@ export const observationStore = inngest.createFunction(
         clerkOrgId,
         workspaceId,
         inngestRunId,
-        inngestFunctionId: "neural.observation.capture",
+        inngestFunctionId: "event.capture",
         name: `Capture ${sourceEvent.source}/${sourceEvent.sourceType}`,
         trigger: "webhook",
         input: {
-          inngestFunctionId: "neural.observation.capture",
+          inngestFunctionId: "event.capture",
           sourceId: sourceEvent.sourceId,
           source: sourceEvent.source,
           sourceType: sourceEvent.sourceType,
           title: sourceEvent.title,
-        } satisfies NeuralObservationCaptureInput,
+        } satisfies EventCaptureInput,
       });
     });
 
@@ -225,11 +222,11 @@ export const observationStore = inngest.createFunction(
           jobId,
           status: "completed",
           output: {
-            inngestFunctionId: "neural.observation.capture",
+            inngestFunctionId: "event.capture",
             status: "filtered",
             reason: "duplicate",
             sourceId: sourceEvent.sourceId,
-          } satisfies NeuralObservationCaptureOutputFiltered,
+          } satisfies EventCaptureOutputFiltered,
         });
       });
 
@@ -314,11 +311,11 @@ export const observationStore = inngest.createFunction(
           jobId,
           status: "completed",
           output: {
-            inngestFunctionId: "neural.observation.capture",
+            inngestFunctionId: "event.capture",
             status: "filtered",
             reason: "event_not_allowed",
             sourceId: sourceEvent.sourceId,
-          } satisfies NeuralObservationCaptureOutputFiltered,
+          } satisfies EventCaptureOutputFiltered,
         });
       });
 
@@ -348,12 +345,12 @@ export const observationStore = inngest.createFunction(
           jobId,
           status: "completed",
           output: {
-            inngestFunctionId: "neural.observation.capture",
+            inngestFunctionId: "event.capture",
             status: "filtered",
             reason: "below_threshold",
             sourceId: sourceEvent.sourceId,
             significanceScore: significance.score,
-          } satisfies NeuralObservationCaptureOutputFiltered,
+          } satisfies EventCaptureOutputFiltered,
         });
       });
 
@@ -503,8 +500,8 @@ export const observationStore = inngest.createFunction(
       }
     );
 
-    // Build structural entity refs for the observation.stored event
-    // (used by observation-interpret for edge resolution in Phase 3)
+    // Build structural entity refs for the event.stored event
+    // (used by event-interpret for edge resolution)
     const entityRefs = extractedEntities
       .filter((e) => STRUCTURAL_TYPES.has(e.category))
       .map((e) => ({
@@ -513,18 +510,18 @@ export const observationStore = inngest.createFunction(
         label: e.value ?? null,
       }));
 
-    // Step 7: Emit observation.stored to trigger the slow path
-    await step.sendEvent("emit-observation-stored", {
-      name: "apps-console/neural/observation.stored" as const,
+    // Step 7: Emit event.stored to trigger the slow path
+    await step.sendEvent("emit-event-stored", {
+      name: "apps-console/event.stored" as const,
       data: {
-        observationId: observation.externalId,
+        eventExternalId: observation.externalId,
         workspaceId,
         clerkOrgId,
         source: sourceEvent.source,
         sourceType: sourceEvent.sourceType,
         significanceScore: significance.score,
         entityRefs,
-        internalObservationId: observation.id,
+        internalEventId: observation.id,
       },
     });
 
@@ -535,13 +532,13 @@ export const observationStore = inngest.createFunction(
         jobId,
         status: "completed",
         output: {
-          inngestFunctionId: "neural.observation.capture",
+          inngestFunctionId: "event.capture",
           status: "success",
           observationId: observation.externalId,
           observationType: observation.observationType,
           significanceScore: significance.score,
           entitiesExtracted: entitiesStored,
-        } satisfies NeuralObservationCaptureOutputSuccess,
+        } satisfies EventCaptureOutputSuccess,
       });
     });
 

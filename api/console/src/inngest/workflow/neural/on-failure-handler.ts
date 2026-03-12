@@ -12,12 +12,12 @@
  * @example
  * ```ts
  * onFailure: createNeuralOnFailureHandler(
- *   "apps-console/neural/observation.capture",
+ *   "apps-console/event.capture",
  *   {
- *     logMessage: "Neural observation capture failed",
+ *     logMessage: "Event capture failed",
  *     logContext: ({ workspaceId, sourceEvent }) => ({ workspaceId, sourceId: sourceEvent.sourceId }),
  *     buildOutput: ({ data: { sourceEvent }, error }) => ({
- *       inngestFunctionId: "neural.observation.capture",
+ *       inngestFunctionId: "event.capture",
  *       status: "failure",
  *       sourceId: sourceEvent.sourceId,
  *       error,

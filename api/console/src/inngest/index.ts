@@ -9,8 +9,8 @@ import { inngest } from "./client/client";
 // Infrastructure workflows
 // Note: ensureStore removed - workspace now has embedding config directly
 import { recordActivity } from "./workflow/infrastructure/record-activity";
-// Neural memory workflows
-import { observationInterpret, observationStore } from "./workflow/neural";
+// Event pipeline workflows
+import { eventInterpret, eventStore } from "./workflow/neural";
 // Notification workflows
 import { notificationDispatch } from "./workflow/notifications";
 import { deleteDocuments } from "./workflow/processing/delete-documents";
@@ -26,8 +26,8 @@ export { processDocuments, deleteDocuments };
 // Export infrastructure workflows
 export { recordActivity };
 
-// Export neural memory workflows
-export { observationInterpret, observationStore };
+// Export event pipeline workflows
+export { eventInterpret, eventStore };
 
 // Export notification workflows
 export { notificationDispatch };
@@ -42,8 +42,8 @@ export { notificationDispatch };
  * 1. processDocuments - Generic document processor (all sources)
  * 2. deleteDocuments - Generic document deleter (all sources)
  * 3. recordActivity - Activity logging
- * 4. observationStore - Neural memory fast path (store facts + entities)
- * 5. observationInterpret - Neural memory slow path (classify + embed)
+ * 4. eventStore - Event pipeline fast path (store facts + entities)
+ * 5. eventInterpret - Event pipeline slow path (classify + embed)
  * 6. notificationDispatch - User-facing notifications
  *
  * @example
@@ -68,9 +68,9 @@ export function createInngestRouteContext() {
       // Infrastructure
       recordActivity,
 
-      // Neural memory (fast path + slow path)
-      observationStore,
-      observationInterpret,
+      // Event pipeline (fast path + slow path)
+      eventStore,
+      eventInterpret,
 
       // Notifications
       notificationDispatch,

@@ -2,11 +2,11 @@ import { sourceTypeSchema } from "@repo/console-providers";
 import { z } from "zod";
 
 // =============================================================================
-// NEURAL OBSERVATION CAPTURE - INPUT
+// EVENT CAPTURE - INPUT
 // =============================================================================
 
-const neuralObservationCaptureInputSchema = z.object({
-  inngestFunctionId: z.literal("neural.observation.capture"),
+const eventCaptureInputSchema = z.object({
+  inngestFunctionId: z.literal("event.capture"),
   sourceId: z.string(),
   source: z.string(), // github, vercel
   sourceType: z.string(), // push, pull_request, deployment.succeeded
@@ -30,23 +30,21 @@ const backfillOrchestratorInputSchema = z.object({
 // =============================================================================
 
 export const workflowInputSchema = z.discriminatedUnion("inngestFunctionId", [
-  // Neural workflows
-  neuralObservationCaptureInputSchema,
+  // Event pipeline
+  eventCaptureInputSchema,
   // Backfill workflows
   backfillOrchestratorInputSchema,
 ]);
 
 export type WorkflowInput = z.infer<typeof workflowInputSchema>;
-export type NeuralObservationCaptureInput = z.infer<
-  typeof neuralObservationCaptureInputSchema
->;
+export type EventCaptureInput = z.infer<typeof eventCaptureInputSchema>;
 
 // =============================================================================
-// NEURAL OBSERVATION CAPTURE - OUTPUT (SUCCESS)
+// EVENT CAPTURE - OUTPUT (SUCCESS)
 // =============================================================================
 
-const neuralObservationCaptureOutputSuccessSchema = z.object({
-  inngestFunctionId: z.literal("neural.observation.capture"),
+const eventCaptureOutputSuccessSchema = z.object({
+  inngestFunctionId: z.literal("event.capture"),
   status: z.literal("success"),
   observationId: z.string(), // externalId (nanoid)
   observationType: z.string(),
@@ -55,11 +53,11 @@ const neuralObservationCaptureOutputSuccessSchema = z.object({
 });
 
 // =============================================================================
-// NEURAL OBSERVATION CAPTURE - OUTPUT (FILTERED/SKIPPED)
+// EVENT CAPTURE - OUTPUT (FILTERED/SKIPPED)
 // =============================================================================
 
-const neuralObservationCaptureOutputFilteredSchema = z.object({
-  inngestFunctionId: z.literal("neural.observation.capture"),
+const eventCaptureOutputFilteredSchema = z.object({
+  inngestFunctionId: z.literal("event.capture"),
   status: z.literal("filtered"),
   reason: z.enum(["duplicate", "event_not_allowed", "below_threshold"]),
   sourceId: z.string(),
@@ -67,11 +65,11 @@ const neuralObservationCaptureOutputFilteredSchema = z.object({
 });
 
 // =============================================================================
-// NEURAL OBSERVATION CAPTURE - OUTPUT (FAILURE)
+// EVENT CAPTURE - OUTPUT (FAILURE)
 // =============================================================================
 
-const neuralObservationCaptureOutputFailureSchema = z.object({
-  inngestFunctionId: z.literal("neural.observation.capture"),
+const eventCaptureOutputFailureSchema = z.object({
+  inngestFunctionId: z.literal("event.capture"),
   status: z.literal("failure"),
   sourceId: z.string(),
   error: z.string(),
@@ -113,10 +111,10 @@ const backfillOrchestratorOutputFailureSchema = z.object({
 // have duplicate values across schemas. Instead, use a regular union.
 // TypeScript will still narrow properly when you check both fields.
 export const workflowOutputSchema = z.union([
-  // Neural workflows
-  neuralObservationCaptureOutputSuccessSchema,
-  neuralObservationCaptureOutputFilteredSchema,
-  neuralObservationCaptureOutputFailureSchema,
+  // Event pipeline
+  eventCaptureOutputSuccessSchema,
+  eventCaptureOutputFilteredSchema,
+  eventCaptureOutputFailureSchema,
   // Backfill workflows
   backfillOrchestratorOutputSuccessSchema,
   backfillOrchestratorOutputFailureSchema,
@@ -124,15 +122,15 @@ export const workflowOutputSchema = z.union([
 
 export type WorkflowOutput = z.infer<typeof workflowOutputSchema>;
 
-// Neural workflow output type exports
-export type NeuralObservationCaptureOutputSuccess = z.infer<
-  typeof neuralObservationCaptureOutputSuccessSchema
+// Event pipeline output type exports
+export type EventCaptureOutputSuccess = z.infer<
+  typeof eventCaptureOutputSuccessSchema
 >;
-export type NeuralObservationCaptureOutputFiltered = z.infer<
-  typeof neuralObservationCaptureOutputFilteredSchema
+export type EventCaptureOutputFiltered = z.infer<
+  typeof eventCaptureOutputFilteredSchema
 >;
-export type NeuralObservationCaptureOutputFailure = z.infer<
-  typeof neuralObservationCaptureOutputFailureSchema
+export type EventCaptureOutputFailure = z.infer<
+  typeof eventCaptureOutputFailureSchema
 >;
 
 // Backfill workflow type exports

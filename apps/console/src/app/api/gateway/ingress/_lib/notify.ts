@@ -17,7 +17,7 @@ export async function publishInngestNotification(
   workspace: ResolvedWorkspace
 ): Promise<void> {
   await inngest.send({
-    name: "apps-console/neural/observation.capture",
+    name: "apps-console/event.capture",
     data: {
       workspaceId: workspace.workspaceId,
       clerkOrgId: workspace.clerkOrgId,

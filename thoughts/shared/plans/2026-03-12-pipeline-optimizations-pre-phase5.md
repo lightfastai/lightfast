@@ -1,34 +1,38 @@
-# Pipeline Optimizations + Column Accessor Migration
+# Pipeline Optimizations + Alias Cleanup
 
 ## Overview
 
-Apply 8 performance and correctness optimizations to the entity-edge pipeline, fix the duplicate schema constraint on `workspace_edges`, and complete the `.observationId` → `.eventId` column accessor migration on 5 remaining files. These changes land on `feat/backfill-depth-entitytypes-run-tracking` before the Phase 6 Inngest rename.
+Apply 8 performance and correctness optimizations to the entity-edge pipeline, fix the duplicate schema constraint on `workspace_edges`, add 3 targeted code quality fixes, clean up select-shape aliases, and fix lint errors. These changes land on `feat/backfill-depth-entitytypes-run-tracking` before the Phase 6 Inngest rename.
 
 Based on validation: this conversation's validation report.
 Extends: `thoughts/shared/plans/2026-03-12-pipeline-restructure-v2.md`
 
 ## Current State Analysis
 
-Phase 5 import renames are **fully complete**:
+Phase 5 import renames and column accessor fixes are **fully complete**:
 - All 4 table files renamed (`workspace-entities.ts`, `workspace-entity-events.ts`, `workspace-events.ts`, `workspace-interpretations.ts`)
 - Barrel exports (`tables/index.ts`, `schema/index.ts`, `db/console/src/index.ts`) use new names exclusively
 - Relations file uses new names and new column accessors (`.eventId` not `.observationId`)
-- **All 9 consumer files already import new names** (`workspaceEvents`, `workspaceEntities`, `workspaceEntityEvents`, `workspaceInterpretations`)
-- `edge-resolver.ts`, `observation-store.ts`, `observation-interpret.ts` are clean — zero type errors
+- **All consumer files** import new names and use `.eventId` as the Drizzle column accessor
+- `npx turbo typecheck --force` passes with zero errors (43/43 packages)
 
-**5 files still reference `.observationId` on renamed columns** (`workspaceEntityEvents.eventId`, `workspaceInterpretations.eventId`):
+**Two remaining naming issues:**
 
-| File | Error | Line |
-|---|---|---|
-| `apps/console/src/lib/neural/entity-search.ts` | `.observationId` on `workspaceEntityEvents` | 118 |
-| `apps/console/src/lib/neural/four-path-search.ts` | `.observationId` on `workspaceInterpretations` | 138 |
-| `apps/console/src/lib/neural/four-path-search.ts` | `.observationId` on `workspaceEntityEvents` | 613 |
-| `apps/console/src/lib/neural/four-path-search.ts` | `.observationId` on `workspaceEntityEvents` | 618 |
-| `apps/console/src/lib/neural/id-resolver.ts` | `observationId` column select on `workspaceInterpretations` | 126 |
-| `apps/console/src/lib/neural/id-resolver.ts` | `.observationId` on interpretation result | 153 |
-| `apps/console/src/lib/neural/id-resolver.ts` | `.observationId` on `workspaceInterpretations` | 242 |
-| `apps/console/src/lib/v1/findsimilar.ts` | `.observationId` on `workspaceInterpretations` | 99 |
-| `packages/console-test-data/src/cli/reconcile-pinecone-external-ids.ts` | `.observationId` on `workspaceInterpretations` | 115 |
+1. **Select-shape aliases** — 7 files alias `.eventId` back to `observationId` in Drizzle select shapes (e.g., `observationId: workspaceEntityEvents.eventId`), then downstream JS code uses `j.observationId`. This is confusing — the DB column is `event_id` but the JS variable says `observationId`.
+
+   | File | Line | Pattern |
+   |---|---|---|
+   | `apps/console/src/lib/v1/graph.ts` | 147 | `observationId: workspaceEntityEvents.eventId` |
+   | `apps/console/src/lib/v1/related.ts` | 171 | `observationId: workspaceEntityEvents.eventId` |
+   | `apps/console/src/lib/neural/entity-search.ts` | 118 | `observationId: workspaceEntityEvents.eventId` |
+   | `apps/console/src/lib/neural/four-path-search.ts` | 138 | `observationId: workspaceInterpretations.eventId` |
+   | `apps/console/src/lib/neural/four-path-search.ts` | 602 | `observationId: workspaceEntityEvents.eventId` |
+   | `apps/console/src/lib/neural/id-resolver.ts` | 239 | `observationId: workspaceInterpretations.eventId` |
+   | `apps/console/src/lib/v1/findsimilar.ts` | 99 | `observationId: workspaceInterpretations.eventId` |
+
+2. **10 lint errors** across 7 files (import sorting + formatting):
+   - `entity-search.ts`, `four-path-search.ts`, `url-resolver.ts`, `findsimilar.ts` — unsorted imports
+   - `four-path-search.ts`, `id-resolver.ts`, `findsimilar.ts`, `graph.ts`, `workspace-events.ts`, `reconcile-pinecone-external-ids.ts` — formatting
 
 ### Key Discoveries:
 - `workspace-edges.ts:33` has both `.unique()` AND `uniqueIndex("edge_external_id_idx")` on `externalId` — two Postgres indexes for one column
@@ -40,10 +44,13 @@ Phase 5 import renames are **fully complete**:
 - `related.ts:128-148` clobbers `neighborEntityInfo` when an entity participates in multiple edges
 - `observation-interpret.ts:362` — interpretation insert has no conflict guard (correctness bug on Inngest retry)
 - `observation-interpret.ts:126-154` — two independent DB reads run as separate Inngest steps (unnecessary overhead)
+- `scoring.ts:106` — `EVENT_REGISTRY[eventKey].weight` crashes on unknown event types (unguarded `as EventKey` cast)
+- `entity-search.ts:121`, `graph.ts:88`, `related.ts:77` — junction queries missing `workspaceId` filter (data isolation gap)
+- `findsimilar.ts:371-377` — `sameSourceOnly` filter silently overwritten by `filters.sourceTypes`
 
 ## Desired End State
 
-- All `.observationId` column accessors migrated to `.eventId`
+- Select-shape aliases renamed from `observationId: ...eventId` → `eventId: ...eventId` on all 7 files
 - `workspace_edges` has exactly one unique constraint on `external_id` (not two)
 - Edge queries in `graph.ts` and `related.ts` select only consumed columns
 - `allowedTypes` filter pushed to DB WHERE clause
@@ -52,16 +59,15 @@ Phase 5 import renames are **fully complete**:
 - Multi-edge entities preserve highest-confidence relationship info
 - Interpretation insert is idempotent on Inngest retry
 - `observation-interpret.ts` merges independent DB reads into one Inngest step
-- `npx turbo typecheck --force` passes with zero errors
-- `pnpm check` and `pnpm build:console` pass
+- `scoring.ts` handles unknown event types gracefully instead of crashing
+- Junction queries in `entity-search.ts`, `graph.ts`, `related.ts` include `workspaceId` filter
+- `findsimilar.ts` `sameSourceOnly` takes precedence over `filters.sourceTypes`
+- `pnpm check`, `npx turbo typecheck --force`, and `pnpm build:console` all pass
 
 ### Verification
 ```bash
 pnpm check && npx turbo typecheck --force
 pnpm build:console
-
-# Zero matches for old names outside migration files
-grep -r "workspaceNeuralObservations\|workspaceNeuralEntities\|workspaceEntityObservations\|workspaceObservationInterpretations" --include="*.ts" apps/ api/ packages/ db/console/src/ | grep -v "node_modules\|migrations/"
 ```
 
 ## What We're NOT Doing
@@ -69,14 +75,21 @@ grep -r "workspaceNeuralObservations\|workspaceNeuralEntities\|workspaceEntityOb
 - Phase 6 Inngest event/function ID renames (separate scope)
 - Inngest file renames (`observation-store.ts` → `event-store.ts`, etc.)
 - API response shape changes
+- Renaming API-level `observationId` fields (`EntitySearchResult.observationId`, `NormalizedMatch.observationId`, `input.observationId`, Pinecone `metadata.observationId`) — these are external contracts
 - New indexes or query plan analysis
 - `EntityCategory` Zod schema change
 - Recursive CTE rewrite for graph BFS (future optimization)
 - Shared `normalizeVectorMatches` extraction from findsimilar/four-path-search (future cleanup)
+- Wrapping classification IIFE in `step.run` in `observation-interpret.ts` (structural change to Inngest step memoization — separate scope)
+- Batching entity upserts in `observation-store.ts` (changes storage pattern — `occurrenceCount` drift is acceptable pre-production)
+- `resolveClerkOrgId` fail-fast on missing workspace (separate correctness scope)
+- Empty content embedding fallback in `findsimilar.ts` (needs design decision on fallback strategy)
+- Score boost cap fix in `four-path-search.ts` (needs scoring semantics discussion)
+- Custom error types for 404 vs 500 in `graph.ts`/`related.ts` (API error handling redesign)
 
 ## Implementation Approach
 
-3 phases. Phase 1 is schema cleanup (generates a migration). Phase 2 applies performance and correctness optimizations to 4 key pipeline files. Phase 3 fixes the remaining `.observationId` → `.eventId` column accessors on 5 files.
+3 phases. Phase 1 is schema cleanup (generates a migration). Phase 2 applies performance, correctness, and code quality optimizations to 6 key pipeline files. Phase 3 cleans up select-shape aliases, cascading JS variables, and lint errors across 9 files.
 
 ---
 
@@ -124,7 +137,7 @@ Review the generated SQL — it should drop the inline unique constraint while k
 ## Phase 2: Optimize Key Pipeline Files
 
 ### Overview
-Apply 8 performance/correctness optimizations to `edge-resolver.ts`, `graph.ts`, `related.ts`, and `observation-interpret.ts`. These are the highest-traffic pipeline files. Import renames are already complete on all files — this phase is optimizations only.
+Apply 8 performance/correctness optimizations plus 3 code quality fixes to `edge-resolver.ts`, `graph.ts`, `related.ts`, `observation-interpret.ts`, `scoring.ts`, and `findsimilar.ts`. Import renames are already complete on all files — this phase is optimizations and fixes only.
 
 ### Changes Required
 
@@ -196,8 +209,6 @@ Remove the module-level `getEdgeRules` function (lines 239-242).
 #### 2. Optimize `graph.ts`
 
 **File**: `apps/console/src/lib/v1/graph.ts`
-
-Imports are already correct (`workspaceEvents`, `workspaceEntityEvents`, `workspaceEdges`). This phase applies optimizations only.
 
 **Change A — SELECT only needed columns from edges (line 107-118)**
 
@@ -281,8 +292,6 @@ Update the downstream references: replace `filteredEdges` with `edges` on the li
 #### 3. Optimize `related.ts`
 
 **File**: `apps/console/src/lib/v1/related.ts`
-
-Imports are already correct. This phase applies optimizations only.
 
 **Change A — SELECT only needed columns from edges (lines 97-108)**
 
@@ -468,6 +477,84 @@ const { obs, workspace } = await step.run("fetch-observation-and-workspace", asy
 });
 ```
 
+#### 5. Guard `EVENT_REGISTRY` lookup in `scoring.ts`
+
+**File**: `api/console/src/inngest/workflow/neural/scoring.ts:104-106`
+
+The `as EventKey` cast at line 105 suppresses TypeScript's protection. If `sourceEvent.source` or `sourceEvent.sourceType` produces an unrecognized key (new provider, backfill data), `EVENT_REGISTRY[eventKey]` is `undefined` and `.weight` throws `TypeError`, crashing the scoring step and silently dropping the event after retry exhaustion.
+
+```typescript
+// Old
+const eventKey =
+  `${sourceEvent.source}:${sourceEvent.sourceType}` as EventKey;
+let score = EVENT_REGISTRY[eventKey].weight;
+factors.push(`base:${sourceEvent.source}:${sourceEvent.sourceType}`);
+
+// New
+const eventKey =
+  `${sourceEvent.source}:${sourceEvent.sourceType}` as EventKey;
+const registryEntry = EVENT_REGISTRY[eventKey];
+let score = registryEntry?.weight ?? 0.3;
+factors.push(`base:${sourceEvent.source}:${sourceEvent.sourceType}`);
+```
+
+Default weight of `0.3` (low significance) ensures unknown event types are processed rather than dropped.
+
+#### 6. Add `workspaceId` filter to junction queries
+
+Three junction table queries rely on upstream invariant for workspace scoping but have no defense-in-depth filter. Add explicit `workspaceId` guards.
+
+**File**: `apps/console/src/lib/v1/graph.ts:85-88`
+```typescript
+// Old
+const rootJunctions = await db
+  .select({ entityId: workspaceEntityEvents.entityId })
+  .from(workspaceEntityEvents)
+  .where(eq(workspaceEntityEvents.eventId, rootObs.id));
+
+// New
+const rootJunctions = await db
+  .select({ entityId: workspaceEntityEvents.entityId })
+  .from(workspaceEntityEvents)
+  .where(
+    and(
+      eq(workspaceEntityEvents.eventId, rootObs.id),
+      eq(workspaceEntityEvents.workspaceId, auth.workspaceId)
+    )
+  );
+```
+
+Apply the same pattern to:
+- `apps/console/src/lib/v1/graph.ts:144-151` — BFS junction query (add `workspaceId` to the `where`)
+- `apps/console/src/lib/v1/related.ts:74-77` — source entity junction query
+- `apps/console/src/lib/v1/related.ts:168-174` — neighbor entity junction query
+
+Note: `entity-search.ts:115-122` also lacks this filter, but that file is touched in Phase 3. The fix will be applied there.
+
+#### 7. Fix `sameSourceOnly` filter precedence in `findsimilar.ts`
+
+**File**: `apps/console/src/lib/v1/findsimilar.ts:371-377`
+
+If both `sameSourceOnly: true` and `filters.sourceTypes` are provided, the `$eq` constraint is silently overwritten by `$in`. `sameSourceOnly` should take precedence as the stricter filter.
+
+```typescript
+// Old
+if (input.sameSourceOnly) {
+  pineconeFilter.source = { $eq: sourceContent.source };
+}
+
+if (input.filters?.sourceTypes?.length) {
+  pineconeFilter.source = { $in: input.filters.sourceTypes };
+}
+
+// New
+if (input.sameSourceOnly) {
+  pineconeFilter.source = { $eq: sourceContent.source };
+} else if (input.filters?.sourceTypes?.length) {
+  pineconeFilter.source = { $in: input.filters.sourceTypes };
+}
+```
+
 ### Success Criteria
 
 #### Automated Verification:
@@ -480,45 +567,161 @@ const { obs, workspace } = await step.run("fetch-observation-and-workspace", asy
 - [ ] `/v1/related` returns correct related events with proper relationship types
 - [ ] Edge resolver creates entity↔entity edges on webhook ingress
 - [ ] Interpretation retry (cancel + re-trigger in Inngest dashboard) does not throw unique constraint error
+- [ ] Unknown event type (e.g., backfill data with new `sourceType`) does not crash scoring step
 
 **Implementation Note**: After completing this phase, pause for manual confirmation before proceeding.
 
 ---
 
-## Phase 3: Fix Column Accessor Renames
+## Phase 3: Alias Cleanup + Lint Fixes
 
 ### Overview
-Fix the remaining `.observationId` → `.eventId` column accessor references on 5 files. Import names are already correct — only column property access needs updating. No logic changes.
+Rename select-shape aliases from `observationId: table.eventId` → `eventId: table.eventId` in 7 files, cascade to downstream JS variables, add `workspaceId` filter to `entity-search.ts` junction query, and fix all lint errors. No logic changes beyond the `entity-search.ts` filter addition.
+
+### What's In Scope vs Out of Scope for `observationId`
+
+**In scope** (internal DB-to-JS aliases representing internal bigint event IDs):
+- Select-shape aliases: `observationId: workspaceEntityEvents.eventId` → `eventId: workspaceEntityEvents.eventId`
+- Downstream JS variables: `j.observationId` → `j.eventId`, `interp.observationId` → `interp.eventId`
+- Local variable names: `observationIds` → `eventIds`, `obsInternalIds` → `eventInternalIds`
+- Map key names: `relatedObsInfo` → `relatedEventInfo`, `internalToExternal` stays (generic name)
+
+**Out of scope** (external-facing API contracts):
+- `EntitySearchResult.observationId` (Zod schema in `console-validation/src/schemas/entities.ts:95`)
+- `NormalizedMatch.observationId` (interface in `findsimilar.ts:36`)
+- `input.observationId` (API input parameter in `graph.ts:14`, `related.ts:13`)
+- `match.metadata?.observationId` (Pinecone metadata field)
+- `entity.observationId`, `entity.observationTitle`, `entity.observationSnippet` (fields on `EntitySearchResult`)
+- Comments and JSDoc referencing "observation" as a concept
 
 ### Changes Required
 
-#### Accessor rename (applied to all files below):
-- `.observationId` → `.eventId` (on `workspaceEntityEvents` and `workspaceInterpretations` table accessors)
-- `{ observationId: true }` → `{ eventId: true }` (in Drizzle column selection objects)
-- Local variables named `observationId` that receive junction/interpretation column values → `eventId`
+#### 1. `apps/console/src/lib/v1/graph.ts`
 
-#### 1. `apps/console/src/lib/neural/entity-search.ts`
-- Line 118: `workspaceEntityEvents.observationId` → `workspaceEntityEvents.eventId`
-- Any local variables receiving this value (e.g., `j.observationId` → `j.eventId`)
+Select alias rename (line 147):
+```typescript
+// Old
+observationId: workspaceEntityEvents.eventId,
+// New
+eventId: workspaceEntityEvents.eventId,
+```
 
-#### 2. `apps/console/src/lib/neural/four-path-search.ts`
-- Line 138: `workspaceInterpretations.observationId` → `workspaceInterpretations.eventId`
-- Line 613: `workspaceEntityEvents.observationId` → `workspaceEntityEvents.eventId`
-- Line 618: `workspaceEntityEvents.observationId` → `workspaceEntityEvents.eventId`
-- Any local variables receiving these values
+Cascade to downstream variables (lines 153-157):
+- `j.observationId` → `j.eventId`
+- `allEventIds.add(j.observationId)` → `allEventIds.add(j.eventId)`
+- `existing.push(j.observationId)` → `existing.push(j.eventId)`
 
-#### 3. `apps/console/src/lib/neural/id-resolver.ts`
-- Line 126: `{ observationId: true }` → `{ eventId: true }` in column selection
-- Line 153: `interp.observationId` → `interp.eventId`
-- Line 242: `workspaceInterpretations.observationId` → `workspaceInterpretations.eventId`
-- Any local variables receiving these values (e.g., `i.observationId` → `i.eventId`)
+#### 2. `apps/console/src/lib/v1/related.ts`
 
-#### 4. `apps/console/src/lib/v1/findsimilar.ts`
-- Line 99: `workspaceInterpretations.observationId` → `workspaceInterpretations.eventId`
-- Any local variables receiving this value (e.g., `interp.observationId` → `interp.eventId`)
+Select alias rename (line 171):
+```typescript
+// Old
+observationId: workspaceEntityEvents.eventId,
+// New
+eventId: workspaceEntityEvents.eventId,
+```
 
-#### 5. `packages/console-test-data/src/cli/reconcile-pinecone-external-ids.ts`
-- Line 115: `workspaceInterpretations.observationId` → `workspaceInterpretations.eventId`
+Cascade to downstream variables (lines 176-187):
+- Map name: `relatedObsInfo` → `relatedEventInfo` (lines 177, 182, 186-187, 192)
+- `j.observationId` → `j.eventId` (lines 182, 186, 187)
+- `relatedObsIds` → `relatedEventIds` (line 192)
+- `relatedObs` → `relatedEvents` is tempting but touches the response builder too broadly — keep as-is
+
+#### 3. `apps/console/src/lib/neural/entity-search.ts`
+
+Select alias rename (line 118):
+```typescript
+// Old
+observationId: workspaceEntityEvents.eventId,
+// New
+eventId: workspaceEntityEvents.eventId,
+```
+
+Cascade to downstream variables (lines 129, 138, 147):
+- `j.observationId` → `j.eventId`
+- `observationIds` → `eventIds`
+- `obsMap.get(junction.observationId)` → `obsMap.get(junction.eventId)`
+
+**Add `workspaceId` filter to junction query (line 121):**
+```typescript
+// Old
+.where(inArray(workspaceEntityEvents.entityId, entityIds))
+
+// New
+.where(
+  and(
+    inArray(workspaceEntityEvents.entityId, entityIds),
+    eq(workspaceEntityEvents.workspaceId, workspaceId)
+  )
+)
+```
+
+Requires adding `and, eq` to the `drizzle-orm` import if not already present.
+
+#### 4. `apps/console/src/lib/neural/four-path-search.ts`
+
+Interpretation select alias rename (line 138):
+```typescript
+// Old
+observationId: workspaceInterpretations.eventId,
+// New
+eventId: workspaceInterpretations.eventId,
+```
+
+Cascade (lines 157, 168, 190):
+- `i.observationId` → `i.eventId`
+- `obsInternalIds` → `eventInternalIds`
+- `internalToExternal.get(interp.observationId)` → `internalToExternal.get(interp.eventId)`
+
+Junction select alias rename (line 602):
+```typescript
+// Old
+observationId: workspaceEntityEvents.eventId,
+// New
+eventId: workspaceEntityEvents.eventId,
+```
+
+Cascade (line 628):
+- `internalToExternalMap.get(junction.observationId)` → `internalToExternalMap.get(junction.eventId)`
+
+#### 5. `apps/console/src/lib/neural/id-resolver.ts`
+
+Select alias rename (line 239):
+```typescript
+// Old
+observationId: workspaceInterpretations.eventId,
+// New
+eventId: workspaceInterpretations.eventId,
+```
+
+Cascade (lines 271, 281, 295):
+- `interpretations.map((i) => i.observationId)` → `interpretations.map((i) => i.eventId)`
+- `obsById.get(interp.observationId)` → `obsById.get(interp.eventId)`
+
+#### 6. `apps/console/src/lib/v1/findsimilar.ts`
+
+Select alias rename (line 99):
+```typescript
+// Old
+observationId: workspaceInterpretations.eventId,
+// New
+eventId: workspaceInterpretations.eventId,
+```
+
+Cascade (lines 118, 136):
+- `interpretations.map((i) => i.observationId)` → `interpretations.map((i) => i.eventId)`
+- `internalToExternal.get(interp.observationId)` → `internalToExternal.get(interp.eventId)`
+
+#### 7. Fix all lint errors
+
+After all renames are complete, run auto-fix:
+```bash
+pnpm check --write
+```
+
+This fixes:
+- 4 unsorted imports (`entity-search.ts`, `four-path-search.ts`, `url-resolver.ts`, `findsimilar.ts`)
+- 6 formatting issues (`four-path-search.ts`, `id-resolver.ts`, `findsimilar.ts`, `graph.ts`, `workspace-events.ts`, `reconcile-pinecone-external-ids.ts`)
 
 ### Success Criteria
 
@@ -526,7 +729,7 @@ Fix the remaining `.observationId` → `.eventId` column accessor references on 
 - [ ] Type checking passes (full, no cache): `npx turbo typecheck --force`
 - [ ] Linting passes: `pnpm check`
 - [ ] Build succeeds: `pnpm build:console`
-- [ ] Zero old column accessors remain: `grep -rn "\.observationId" --include="*.ts" apps/console/src/lib/ packages/console-test-data/ | grep -v "node_modules\|migrations/"` returns only log/metadata fields, no Drizzle column accesses
+- [ ] Zero select-shape aliases remain: `grep -rn "observationId.*workspaceEntityEvents\.\|observationId.*workspaceInterpretations\." --include="*.ts" apps/ packages/ | grep -v "node_modules\|migrations/"` returns zero matches
 
 #### Manual Verification:
 - [ ] `/v1/search` and `/v1/findsimilar` return correct results
@@ -541,8 +744,8 @@ Fix the remaining `.observationId` → `.eventId` column accessor references on 
 pnpm check && npx turbo typecheck --force
 pnpm build:console
 
-# Verify zero old table name identifiers
-grep -r "workspaceNeuralObservations\|workspaceNeuralEntities\|workspaceEntityObservations\|workspaceObservationInterpretations" --include="*.ts" apps/ api/ packages/ db/console/src/ | grep -v "node_modules\|migrations/"
+# Verify zero select-shape aliases
+grep -rn "observationId.*workspaceEntityEvents\.\|observationId.*workspaceInterpretations\." --include="*.ts" apps/ packages/ | grep -v "node_modules\|migrations/"
 ```
 
 ### Manual:
@@ -552,6 +755,7 @@ grep -r "workspaceNeuralObservations\|workspaceNeuralEntities\|workspaceEntityOb
 4. `/v1/related` → verify `bySource` includes correct providers and relationship types
 5. Verify search/findsimilar/graph/related all return data
 6. Re-trigger an interpretation in Inngest dashboard → verify no unique constraint error
+7. Send a webhook with an unregistered `sourceType` → verify it processes with default significance (not crash)
 
 ## Performance Considerations
 
@@ -562,12 +766,14 @@ grep -r "workspaceNeuralObservations\|workspaceNeuralEntities\|workspaceEntityOb
 - **Dynamic `bySource`**: Single-pass O(N) instead of 4-pass O(4N) + cleanup.
 - **Inngest step merge**: Eliminates one step serialization round trip on the interpretation slow path (~50-200ms saved per event).
 - **Conflict guard**: Prevents cascading retry failures on interpretation step — changes retry from "always fail again" to "succeed silently".
+- **`EVENT_REGISTRY` guard**: Prevents event loss on unknown event types — processes with default significance instead of crashing.
+- **`workspaceId` filter on junctions**: Defense-in-depth for multi-tenant data isolation. Marginal query cost (column is already indexed).
 
 ## Migration Notes
 
 - Phase 1 generates a migration for the duplicate index removal. Review the generated SQL to confirm it drops only the inline constraint, not the named index.
 - No data migration needed — pre-production, tables are empty.
-- Phase 3 is pure column accessor renames — no DB changes, no import changes.
+- Phase 3 is pure rename + lint fixes — no DB changes, no import changes.
 
 ## References
 
@@ -585,3 +791,20 @@ grep -r "workspaceNeuralObservations\|workspaceNeuralEntities\|workspaceEntityOb
   - Added `observation-interpret.ts` conflict guard (correctness) and step merge (performance)
   - Updated Current State Analysis with exact typecheck error table
 - **Impact on remaining work**: Significantly reduced scope — ~60% less mechanical work, more focus on quality optimizations.
+
+### 2026-03-12 — Reclassify Phase 3 for alias cleanup, add code quality fixes
+- **Trigger**: Re-validation discovered all `.observationId` column accessors are already fixed (`npx turbo typecheck --force` passes 43/43). The remaining issue is select-shape aliases (e.g., `observationId: workspaceEntityEvents.eventId`) and downstream JS variables. Code quality audit also identified 3 critical issues in files Phase 2 already touches.
+- **Changes**:
+  - Updated Current State Analysis: removed stale error table, added alias + lint error tables
+  - Phase 2: added 3 new items:
+    - §5: `EVENT_REGISTRY` guard in `scoring.ts` (prevents event loss on unknown types)
+    - §6: `workspaceId` filter on junction queries in `graph.ts`/`related.ts` (data isolation)
+    - §7: `sameSourceOnly` precedence fix in `findsimilar.ts` (correctness)
+  - Phase 3: fully rewritten from "column accessor fixes" to "alias cleanup + lint":
+    - 7 select-shape aliases renamed `observationId → eventId`
+    - Cascading JS variable renames with explicit in-scope/out-of-scope boundary
+    - `entity-search.ts` junction `workspaceId` filter added (same pattern as Phase 2 §6)
+    - Lint auto-fix (`pnpm check --write`) for 10 errors across 7 files
+  - Updated "What We're NOT Doing" with 8 items from code quality audit (deferred to separate scope)
+  - Renamed plan title from "Column Accessor Migration" to "Alias Cleanup" to reflect actual scope
+- **Impact on remaining work**: Phase 2 grows by 3 small targeted fixes (same files). Phase 3 is now alias renames + lint — simpler than the original column accessor migration since there are no type errors to fix.
