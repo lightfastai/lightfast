@@ -110,7 +110,6 @@ export * from "./schemas/documents";
 export * from "./schemas/entities";
 export * from "./schemas/ingestion";
 export * from "./schemas/job";
-export * from "./schemas/metrics";
 export * from "./schemas/neural";
 export * from "./schemas/org-api-key";
 export * from "./schemas/organization";

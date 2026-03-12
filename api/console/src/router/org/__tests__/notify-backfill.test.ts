@@ -24,7 +24,6 @@ vi.mock("@db/console/schema", () => ({
   workspaceWorkflowRuns: {},
   workspaceIntegrations: {},
   gwInstallations: { id: "id", backfillConfig: "backfillConfig" },
-  workspaceActorProfiles: {},
   workspaceEvents: {},
 }));
 
@@ -69,10 +68,6 @@ vi.mock("../../../trpc", () => ({
 
 vi.mock("../../../lib/activity", () => ({
   recordActivity: vi.fn(),
-}));
-
-vi.mock("../../../lib/actor-linking", () => ({
-  ensureActorLinked: vi.fn(),
 }));
 
 vi.mock("../../../env", () => ({

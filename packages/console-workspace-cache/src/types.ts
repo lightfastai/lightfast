@@ -5,7 +5,6 @@
 export interface CachedWorkspaceConfig {
   embeddingDim: number;
   embeddingModel: string;
-  hasActors: boolean;
   indexName: string;
   namespaceName: string;
 }

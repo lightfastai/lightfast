@@ -21,16 +21,8 @@ import type { EntitySearchResult } from "@repo/console-validation";
 import { getCachedWorkspaceConfig } from "@repo/console-workspace-cache";
 import { log } from "@vendor/observability/log";
 import { and, eq, inArray, or } from "drizzle-orm";
-import { searchActorProfiles } from "./actor-search";
 import { searchByEntities } from "./entity-search";
 import type { FilterCandidate } from "./llm-filter";
-
-// ============================================================================
-// EMPTY RESULT CONSTANTS
-// ============================================================================
-
-/** Empty actor result for skipped path */
-const EMPTY_ACTOR_RESULT = { results: [], latency: 0 } as const;
 
 // ============================================================================
 // VECTOR ID NORMALIZATION
@@ -271,12 +263,6 @@ export interface FourPathSearchParams {
 }
 
 export interface FourPathSearchResult {
-  /** Actor profile results */
-  actors: {
-    displayName: string;
-    expertiseDomains: string[];
-    score: number;
-  }[];
   /** Merged candidates ready for reranking */
   candidates: FilterCandidate[];
   /** Latency breakdown */
@@ -284,7 +270,6 @@ export interface FourPathSearchResult {
     embedding: number;
     vector: number;
     entity: number;
-    actor: number;
     normalize: number;
     total: number;
   };
@@ -292,7 +277,6 @@ export interface FourPathSearchResult {
   paths: {
     vector: boolean;
     entity: boolean;
-    actor: boolean;
   };
   /** Total candidates before dedup */
   total: number;
@@ -410,8 +394,7 @@ export async function fourPathParallelSearch(
     );
   }
 
-  const { indexName, namespaceName, embeddingModel, embeddingDim, hasActors } =
-    workspace;
+  const { indexName, namespaceName, embeddingModel, embeddingDim } = workspace;
 
   // 2. Generate query embedding
   const embedStart = Date.now();
@@ -432,11 +415,11 @@ export async function fourPathParallelSearch(
     throw new Error("Failed to generate query embedding");
   }
 
-  // 3. Execute 3-path parallel retrieval (skip empty paths)
+  // 3. Execute 2-path parallel retrieval
   const pineconeFilter = buildPineconeFilter(filters);
   const parallelStart = Date.now();
 
-  const [vectorResults, entityResults, actorResults] = await Promise.all([
+  const [vectorResults, entityResults] = await Promise.all([
     // Path 1: Vector similarity search (always execute)
     (async () => {
       const start = Date.now();
@@ -479,30 +462,13 @@ export async function fourPathParallelSearch(
         return { results: [], latency: Date.now() - start, success: false };
       }
     })(),
-
-    // Path 3: Actor profile search (skip if no actors)
-    hasActors
-      ? (async () => {
-          try {
-            return await searchActorProfiles(workspaceId, query, 5);
-          } catch (error) {
-            log.error("Actor search failed", {
-              requestId,
-              error: error instanceof Error ? error.message : String(error),
-            });
-            return EMPTY_ACTOR_RESULT;
-          }
-        })()
-      : Promise.resolve(EMPTY_ACTOR_RESULT),
   ]);
 
-  log.info("3-path parallel search complete", {
+  log.info("2-path parallel search complete", {
     requestId,
     totalLatency: Date.now() - parallelStart,
     vectorMatches: vectorResults.results.matches.length,
     entityMatches: entityResults.results.length,
-    actorMatches: actorResults.results.length,
-    actorSkipped: !hasActors,
   });
 
   // 4. Normalize vector IDs to observation IDs
@@ -514,7 +480,7 @@ export async function fourPathParallelSearch(
   );
   const normalizeLatency = Date.now() - normalizeStart;
 
-  log.info("4-path search normalized", {
+  log.info("2-path search normalized", {
     requestId,
     inputVectorCount: vectorResults.results.matches.length,
     outputObsCount: normalizedVectorResults.length,
@@ -530,16 +496,10 @@ export async function fourPathParallelSearch(
 
   return {
     candidates: mergedCandidates,
-    actors: actorResults.results.map((a) => ({
-      displayName: a.displayName,
-      expertiseDomains: a.expertiseDomains,
-      score: a.score,
-    })),
     latency: {
       embedding: embedLatency,
       vector: vectorResults.latency,
       entity: entityResults.latency,
-      actor: actorResults.latency,
       normalize: normalizeLatency,
       total: Date.now() - startTime,
     },
@@ -547,7 +507,6 @@ export async function fourPathParallelSearch(
     paths: {
       vector: vectorResults.success,
       entity: entityResults.success,
-      actor: actorResults.results.length > 0,
     },
   };
 }

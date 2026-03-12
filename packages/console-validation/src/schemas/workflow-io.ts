@@ -14,16 +14,6 @@ const neuralObservationCaptureInputSchema = z.object({
 });
 
 // =============================================================================
-// NEURAL PROFILE UPDATE - INPUT
-// =============================================================================
-
-const neuralProfileUpdateInputSchema = z.object({
-  inngestFunctionId: z.literal("neural.profile.update"),
-  actorId: z.string(),
-  observationId: z.string(),
-});
-
-// =============================================================================
 // BACKFILL ORCHESTRATOR - INPUT
 // =============================================================================
 
@@ -42,7 +32,6 @@ const backfillOrchestratorInputSchema = z.object({
 export const workflowInputSchema = z.discriminatedUnion("inngestFunctionId", [
   // Neural workflows
   neuralObservationCaptureInputSchema,
-  neuralProfileUpdateInputSchema,
   // Backfill workflows
   backfillOrchestratorInputSchema,
 ]);
@@ -50,9 +39,6 @@ export const workflowInputSchema = z.discriminatedUnion("inngestFunctionId", [
 export type WorkflowInput = z.infer<typeof workflowInputSchema>;
 export type NeuralObservationCaptureInput = z.infer<
   typeof neuralObservationCaptureInputSchema
->;
-export type NeuralProfileUpdateInput = z.infer<
-  typeof neuralProfileUpdateInputSchema
 >;
 
 // =============================================================================
@@ -90,29 +76,6 @@ const neuralObservationCaptureOutputFailureSchema = z.object({
   sourceId: z.string(),
   error: z.string(),
   step: z.string().optional(), // Which step failed
-});
-
-// =============================================================================
-// NEURAL PROFILE UPDATE - OUTPUT (SUCCESS)
-// =============================================================================
-
-const neuralProfileUpdateOutputSuccessSchema = z.object({
-  inngestFunctionId: z.literal("neural.profile.update"),
-  status: z.literal("success"),
-  actorId: z.string(),
-  observationCount: z.number().int().nonnegative(),
-  isNewProfile: z.boolean(),
-});
-
-// =============================================================================
-// NEURAL PROFILE UPDATE - OUTPUT (FAILURE)
-// =============================================================================
-
-const neuralProfileUpdateOutputFailureSchema = z.object({
-  inngestFunctionId: z.literal("neural.profile.update"),
-  status: z.literal("failure"),
-  actorId: z.string(),
-  error: z.string(),
 });
 
 // =============================================================================
@@ -154,8 +117,6 @@ export const workflowOutputSchema = z.union([
   neuralObservationCaptureOutputSuccessSchema,
   neuralObservationCaptureOutputFilteredSchema,
   neuralObservationCaptureOutputFailureSchema,
-  neuralProfileUpdateOutputSuccessSchema,
-  neuralProfileUpdateOutputFailureSchema,
   // Backfill workflows
   backfillOrchestratorOutputSuccessSchema,
   backfillOrchestratorOutputFailureSchema,
@@ -172,12 +133,6 @@ export type NeuralObservationCaptureOutputFiltered = z.infer<
 >;
 export type NeuralObservationCaptureOutputFailure = z.infer<
   typeof neuralObservationCaptureOutputFailureSchema
->;
-export type NeuralProfileUpdateOutputSuccess = z.infer<
-  typeof neuralProfileUpdateOutputSuccessSchema
->;
-export type NeuralProfileUpdateOutputFailure = z.infer<
-  typeof neuralProfileUpdateOutputFailureSchema
 >;
 
 // Backfill workflow type exports

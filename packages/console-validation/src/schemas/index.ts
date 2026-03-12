@@ -11,7 +11,6 @@ export * from "./documents";
 export * from "./entities";
 export * from "./ingestion";
 export * from "./job";
-export * from "./metrics";
 export * from "./neural";
 export * from "./org-api-key";
 export * from "./organization";

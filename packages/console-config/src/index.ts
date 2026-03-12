@@ -12,11 +12,6 @@ export {
   matchFiles,
   validateGlobPatterns,
 } from "./glob";
-// Export neural memory configuration
-export {
-  LLM_ENTITY_EXTRACTION_CONFIG,
-  type LLMEntityExtractionConfig,
-} from "./neural";
 // Export parsing functions and errors
 export { ConfigError, loadConfig, validateConfig } from "./parse";
 

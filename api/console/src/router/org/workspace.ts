@@ -2,7 +2,6 @@ import { db } from "@db/console/client";
 import {
   gwInstallations,
   orgWorkspaces,
-  workspaceActorProfiles,
   workspaceEvents,
   workspaceIntegrations,
   workspaceKnowledgeDocuments,
@@ -34,22 +33,10 @@ import { createBackfillClient } from "@repo/gateway-service-clients";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
-import {
-  and,
-  avg,
-  count,
-  desc,
-  eq,
-  gte,
-  inArray,
-  like,
-  sql,
-  sum,
-} from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, inArray, sql, sum } from "drizzle-orm";
 import { z } from "zod";
 import { env } from "../../env";
 import { recordActivity } from "../../lib/activity";
-import { ensureActorLinked } from "../../lib/actor-linking";
 import { orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 
 /**
@@ -128,7 +115,7 @@ export const workspaceRouter = {
     .input(workspaceStatisticsInputSchema)
     .query(async ({ ctx, input }) => {
       // Resolve workspace from name (user-facing)
-      const { workspaceId, clerkOrgId } = await resolveWorkspaceByName({
+      const { workspaceId } = await resolveWorkspaceByName({
         clerkOrgSlug: input.clerkOrgSlug,
         workspaceName: input.workspaceName,
         userId: ctx.auth.userId,
@@ -145,19 +132,6 @@ export const workspaceRouter = {
           message: "Workspace not found",
         });
       }
-
-      // Lazy actor linking: connect Clerk user to their GitHub-based actor identity
-      // Fire-and-forget to avoid blocking workspace access
-      // Changed to org-level linking: links once per org, not per workspace
-      void (async () => {
-        try {
-          const clerk = await clerkClient();
-          const user = await clerk.users.getUser(ctx.auth.userId);
-          await ensureActorLinked(clerkOrgId, user);
-        } catch {
-          // Silently ignore linking errors - this is best-effort
-        }
-      })();
 
       return {
         id: workspace.id,
@@ -1247,50 +1221,6 @@ export const workspaceRouter = {
         };
       }),
   },
-
-  /**
-   * Get workspace actors for filtering
-   * Returns actor profiles with display names for autocomplete
-   */
-  getActors: orgScopedProcedure
-    .input(
-      z.object({
-        clerkOrgSlug: z.string(),
-        workspaceName: z.string(),
-        search: z.string().optional(),
-        limit: z.number().min(1).max(50).default(20),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      // Resolve workspace from name
-      const { workspaceId } = await resolveWorkspaceByName({
-        clerkOrgSlug: input.clerkOrgSlug,
-        workspaceName: input.workspaceName,
-        userId: ctx.auth.userId,
-      });
-
-      // Build where conditions
-      const conditions = [eq(workspaceActorProfiles.workspaceId, workspaceId)];
-
-      if (input.search) {
-        conditions.push(
-          like(workspaceActorProfiles.displayName, `%${input.search}%`)
-        );
-      }
-
-      // Query actors
-      const actors = await db.query.workspaceActorProfiles.findMany({
-        where: and(...conditions),
-        limit: input.limit,
-        orderBy: [desc(workspaceActorProfiles.observationCount)],
-      });
-
-      return actors.map((a) => ({
-        id: a.id,
-        displayName: a.displayName,
-        observationCount: a.observationCount,
-      }));
-    }),
 
   /**
    * Events sub-router

@@ -21,12 +21,6 @@ export {
   gwWebhookDeliveries,
   type InsertGwWebhookDelivery,
 } from "./gw-webhook-deliveries";
-export {
-  type InsertOrgActorIdentity,
-  type OrgActorIdentity,
-  orgActorIdentities,
-} from "./org-actor-identities";
-
 // Organization API Keys (org-scoped authentication)
 export {
   type InsertOrgApiKey,
@@ -39,11 +33,6 @@ export {
   type OrgWorkspace,
   orgWorkspaces,
 } from "./org-workspaces";
-export {
-  type InsertWorkspaceActorProfile,
-  type WorkspaceActorProfile,
-  workspaceActorProfiles,
-} from "./workspace-actor-profiles";
 // Workspace event storage
 export {
   type InsertWorkspaceEvent,
@@ -91,30 +80,6 @@ export {
   type WorkspaceObservationRelationship,
   workspaceObservationRelationships,
 } from "./workspace-observation-relationships";
-export type {
-  ActorResolutionTags,
-  DocumentsIndexedTags,
-  EntityExtractionTags,
-  ErrorTags,
-  JobDurationTags,
-  NeuralObservationTags,
-  ProfileUpdateTags,
-} from "./workspace-operations-metrics";
-export {
-  type InsertWorkspaceOperationMetric,
-  type OperationMetricTags,
-  type WorkspaceOperationMetric,
-  workspaceOperationsMetrics,
-} from "./workspace-operations-metrics";
-export type {
-  TemporalEntityType,
-  TemporalStateType,
-} from "./workspace-temporal-states";
-export {
-  type InsertWorkspaceTemporalState,
-  type WorkspaceTemporalState,
-  workspaceTemporalStates,
-} from "./workspace-temporal-states";
 export {
   type InsertWorkspaceUserActivity,
   type WorkspaceUserActivity,

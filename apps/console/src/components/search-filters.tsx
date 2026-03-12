@@ -19,7 +19,6 @@ import {
 import { Switch } from "@repo/ui/components/ui/switch";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { ActorFilter } from "./actor-filter";
 import {
   AGE_PRESET_OPTIONS,
   OBSERVATION_TYPE_OPTIONS,
@@ -27,7 +26,6 @@ import {
 } from "./search-constants";
 
 interface SearchFiltersProps {
-  actorNames: string[];
   agePreset: string;
   // Content toggles
   includeContext: boolean;
@@ -36,7 +34,6 @@ interface SearchFiltersProps {
   limit: number;
   observationTypes: string[];
   offset: number;
-  onActorNamesChange: (names: string[]) => void;
   onAgePresetChange: (preset: string) => void;
   onIncludeContextChange: (value: boolean) => void;
   onIncludeHighlightsChange: (value: boolean) => void;
@@ -44,11 +41,8 @@ interface SearchFiltersProps {
   onObservationTypesChange: (types: string[]) => void;
   onOffsetChange: (offset: number) => void;
   onSourceTypesChange: (types: string[]) => void;
-  // For ActorFilter
-  orgSlug: string;
   // Filters
   sourceTypes: string[];
-  workspaceName: string;
 }
 
 export function SearchFilters({
@@ -64,12 +58,8 @@ export function SearchFilters({
   onSourceTypesChange,
   observationTypes,
   onObservationTypesChange,
-  actorNames,
-  onActorNamesChange,
   agePreset,
   onAgePresetChange,
-  orgSlug,
-  workspaceName,
 }: SearchFiltersProps) {
   // Local display state for number inputs to allow empty field during editing
   const [displayLimit, setDisplayLimit] = useState(String(limit));
@@ -278,17 +268,6 @@ export function SearchFilters({
               </div>
             </PopoverContent>
           </Popover>
-
-          {/* Actor Filter */}
-          <div>
-            <Label className="font-medium text-sm">Actors</Label>
-          </div>
-          <ActorFilter
-            onSelectionChange={onActorNamesChange}
-            orgSlug={orgSlug}
-            selectedActors={actorNames}
-            workspaceName={workspaceName}
-          />
 
           {/* Max Content Age */}
           <div>

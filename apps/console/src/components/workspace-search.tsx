@@ -75,8 +75,6 @@ export function WorkspaceSearch({
     setSourceTypes,
     observationTypes,
     setObservationTypes,
-    actorNames,
-    setActorNames,
     expandedId,
     setExpandedId,
     limit,
@@ -158,7 +156,6 @@ export function WorkspaceSearch({
       filters: {
         ...(sourceTypes.length > 0 && { sourceTypes }),
         ...(observationTypes.length > 0 && { observationTypes }),
-        ...(actorNames.length > 0 && { actorNames }),
         ...dateRangeFromPreset(agePreset),
       },
       includeContext,
@@ -222,7 +219,6 @@ export function WorkspaceSearch({
                 isClearDisabled={
                   sourceTypes.length === 0 &&
                   observationTypes.length === 0 &&
-                  actorNames.length === 0 &&
                   agePreset === "none"
                 }
                 isSubmitDisabled={isSearching || !inputValue.trim() || !store}
@@ -241,14 +237,12 @@ export function WorkspaceSearch({
 
               <div className="mt-12">
                 <SearchFilters
-                  actorNames={actorNames}
                   agePreset={agePreset}
                   includeContext={includeContext}
                   includeHighlights={includeHighlights}
                   limit={limit}
                   observationTypes={observationTypes}
                   offset={offset}
-                  onActorNamesChange={setActorNames}
                   onAgePresetChange={(v) =>
                     void setAgePreset(v as typeof agePreset)
                   }
@@ -258,9 +252,7 @@ export function WorkspaceSearch({
                   onObservationTypesChange={setObservationTypes}
                   onOffsetChange={setOffset}
                   onSourceTypesChange={setSourceTypes}
-                  orgSlug={orgSlug}
                   sourceTypes={sourceTypes}
-                  workspaceName={workspaceName}
                 />
               </div>
 

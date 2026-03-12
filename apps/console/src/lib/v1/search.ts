@@ -116,20 +116,12 @@ export async function searchLogic(
   }));
 
   // 6. Build context (if requested)
-  const context = input.includeContext
-    ? {
-        relevantActors: searchResult.actors.slice(0, 3).map((a) => ({
-          displayName: a.displayName,
-          expertiseDomains: a.expertiseDomains,
-        })),
-      }
-    : undefined;
+  const context = input.includeContext ? {} : undefined;
 
   // 7. Calculate maxParallel (bottleneck among parallel operations)
   const maxParallel = Math.max(
     searchResult.latency.vector,
-    searchResult.latency.entity,
-    searchResult.latency.actor
+    searchResult.latency.entity
   );
 
   // 8. Build response
@@ -146,7 +138,7 @@ export async function searchLogic(
         vector: searchResult.paths.vector,
         entity: searchResult.paths.entity,
         cluster: false,
-        actor: searchResult.paths.actor,
+        actor: false,
       },
     },
     latency: {
@@ -158,7 +150,7 @@ export async function searchLogic(
       retrieval: searchResult.latency.vector,
       entitySearch: searchResult.latency.entity,
       clusterSearch: 0,
-      actorSearch: searchResult.latency.actor,
+      actorSearch: 0,
       rerank: rerankLatency,
       enrich: enrichLatency,
       maxParallel,

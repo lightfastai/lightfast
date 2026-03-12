@@ -120,9 +120,51 @@ Remove cluster_assigned metric (lines 1178-1190):
 
 Remove cluster-related return value fields.
 
-#### 4. Update neural workflow index
+#### 4. Delete actor logic files entirely
+**Delete these files:**
+- `api/console/src/inngest/workflow/neural/actor-resolution.ts` (~141 lines) — `resolveActor` function
+- `api/console/src/inngest/workflow/neural/profile-update.ts` (~278 lines) — actor profile upsert workflow
+- `api/console/src/lib/actor-identity.ts` — `upsertOrgActorIdentity` (only caller: profile-update.ts)
+- `api/console/src/lib/actor-linking.ts` — `ensureActorLinked` (lazy Clerk linking)
+- `apps/console/src/lib/neural/actor-search.ts` — `searchActorProfiles` (only caller: four-path-search.ts)
+
+#### 5. Remove actor logic from observation-capture.ts
+**File**: `api/console/src/inngest/workflow/neural/observation-capture.ts`
+**Changes**:
+
+Remove import:
+```typescript
+// DELETE
+import { resolveActor } from "./actor-resolution";
+```
+
+Remove `resolveActor` from the parallel `Promise.all` step (line 657-659). The `resolvedActor` variable and all downstream uses disappear:
+- Remove `resolve-actor` step from `Promise.all`
+- Remove `getActorResolutionMethod` helper function (lines 662-696)
+- Remove `profile.update` event from `step.sendEvent("emit-events")` (lines 904-917)
+- Simplify `Promise.all` to only: `generate-multi-view-embeddings` + `extract-entities`
+
+Note: The raw `sourceEvent.actor` JSONB is still stored on the observation row (it's a fact). We're only removing the resolution/profile layer.
+
+#### 6. Remove actor filter UI components
+**File**: `apps/console/src/components/actor-filter.tsx` — **Delete entire file**
+**File**: `apps/console/src/components/search-filters.tsx` — Remove `<ActorFilter>` import and rendering (line 286), remove `actorNames`/`onActorNamesChange` props
+
+#### 7. Remove actor tRPC procedures and lazy linking
+**File**: `api/console/src/router/org/workspace.ts`
+**Changes**:
+- Remove `import { ensureActorLinked } from "../../lib/actor-linking"` (line 52)
+- Remove `ensureActorLinked(...)` call in workspace `get` procedure (line 156)
+- Remove `import { workspaceActorProfiles } from "@db/console/schema"` (line 5)
+- Remove entire `getActors` tRPC procedure (lines 1273-1292)
+
+**File**: `api/console/src/router/org/__tests__/notify-backfill.test.ts`
+- Remove `vi.mock("../../../lib/actor-linking", ...)` mock (line 74-76)
+- Remove `workspaceActorProfiles` mock if present
+
+#### 8. Update neural workflow index
 **File**: `api/console/src/inngest/workflow/neural/index.ts`
-**Changes**: Remove deleted exports
+**Changes**: Remove all deleted exports
 
 ```typescript
 // BEFORE
@@ -133,32 +175,25 @@ export { profileUpdate } from "./profile-update";
 
 // AFTER
 export { observationCapture } from "./observation-capture";
-export { profileUpdate } from "./profile-update";
 ```
 
-#### 5. Update Inngest function registry
+#### 9. Update Inngest function registry
 **File**: `api/console/src/inngest/index.ts`
-**Changes**: Remove deleted workflow imports and registrations
+**Changes**: Remove all deleted workflow imports and registrations
 
-Remove imports of `clusterSummaryCheck` and `llmEntityExtractionWorkflow` from `"./workflow/neural"`.
+Remove imports of `clusterSummaryCheck`, `llmEntityExtractionWorkflow`, and `profileUpdate` from `"./workflow/neural"`.
 
-Remove from exports:
+Remove from exports and `createInngestRouteContext` functions array:
 ```typescript
-// DELETE these from the export block
+// DELETE all three
 clusterSummaryCheck,
 llmEntityExtractionWorkflow,
-```
-
-Remove from `createInngestRouteContext` functions array:
-```typescript
-// DELETE
-clusterSummaryCheck,
-llmEntityExtractionWorkflow,
+profileUpdate,
 ```
 
 Update the JSDoc comment listing registered functions.
 
-#### 6. Update Inngest client event schemas
+#### 10. Update Inngest client event schemas
 **File**: `api/console/src/inngest/client/client.ts`
 **Changes**: Remove deleted event schemas
 
@@ -167,6 +202,7 @@ Remove these event definitions from `eventsMap`:
 // DELETE
 "apps-console/neural/cluster.check-summary": z.object({ ... })
 "apps-console/neural/llm-entity-extraction.requested": z.object({ ... })
+"apps-console/neural/profile.update": z.object({ ... })
 ```
 
 Remove `clusterId` and `clusterIsNew` from `observation.captured` event:
@@ -198,35 +234,39 @@ const { workspaceId, clerkOrgId, observationId, observationType, significanceSco
 
 Remove `clusterId` from Knock workflow data (line 85).
 
-#### 8. Update four-path search → three-path search
+#### 12. Update four-path search → two-path search
 **File**: `apps/console/src/lib/neural/four-path-search.ts`
-**Changes**: Remove cluster search path
+**Changes**: Remove cluster AND actor search paths — only vector + entity remain
 
-Remove `searchClusters` import from `"./cluster-search"`.
-Remove `hasClusters` from workspace config destructuring (line 432).
-Remove entire Path 3 (cluster search) from the `Promise.all` array (lines 504-523).
-Remove `clusterResults` from destructuring and logging.
-Update `clusterSkipped` log field removal.
-Remove `EMPTY_CLUSTER_RESULT` if defined in this file.
+Remove imports:
+- `searchClusters` from `"./cluster-search"`
+- `searchActorProfiles` from `"./actor-search"`
 
-Note: The `ClusterSearchResult` type import also gets removed since `cluster-search.ts` is deleted.
+Remove `hasClusters` and `hasActors` from workspace config destructuring (line 432).
+Remove `EMPTY_CLUSTER_RESULT` and `EMPTY_ACTOR_RESULT` constants.
+Remove Path 3 (cluster search) and Path 4 (actor search) from the `Promise.all` array.
+Update destructuring to `[vectorResults, entityResults]`.
+Remove `clusterResults`, `actorResults`, `clusterMatches`, `actorMatches`, `clusterSkipped`, `actorSkipped` from logging.
 
-#### 9. Update workspace cache
+Rename file/function from "four-path" to "search" if desired (optional, cosmetic).
+
+#### 13. Update workspace cache
 **File**: `packages/console-workspace-cache/src/config.ts`
-**Changes**: Remove cluster count query and `hasClusters` flag
+**Changes**: Remove cluster AND actor queries
 
-Remove `workspaceObservationClusters` import.
-Remove cluster count query from `fetchWorkspaceConfigFromDB` (lines 97-101).
-Remove `hasClusters` from returned config (line 124).
+Remove imports of `workspaceObservationClusters` and `workspaceActorProfiles`.
+Remove cluster count query (lines 97-101) and actor count query (lines 103-107) from `fetchWorkspaceConfigFromDB`.
+Remove `hasClusters` and `hasActors` from returned config.
+Simplify `Promise.all` to just the workspace settings query.
 
 **File**: `packages/console-workspace-cache/src/types.ts`
-**Changes**: Remove `hasClusters` from `CachedWorkspaceConfig`
+**Changes**: Remove both capability flags
 
 ```typescript
 export interface CachedWorkspaceConfig {
   embeddingDim: number;
   embeddingModel: string;
-  hasActors: boolean;
+  // DELETED: hasActors: boolean;
   // DELETED: hasClusters: boolean;
   indexName: string;
   namespaceName: string;
@@ -277,6 +317,10 @@ Remove the `workspaceObservationClusters` table, the `clusterId` column from obs
 #### 1. Remove cluster table schema
 **Delete file**: `db/console/src/schema/tables/workspace-observation-clusters.ts`
 
+#### 1b. Remove actor tables
+**Delete file**: `db/console/src/schema/tables/workspace-actor-profiles.ts`
+**Delete file**: `db/console/src/schema/tables/org-actor-identities.ts`
+
 #### 2. Remove clusterId column from observations
 **File**: `db/console/src/schema/tables/workspace-neural-observations.ts`
 **Changes**:
@@ -293,37 +337,40 @@ Remove `clusterIdx` index (line 232):
 clusterIdx: index("obs_cluster_idx").on(table.clusterId),
 ```
 
-#### 3. Remove cluster relations
+#### 3. Remove cluster + actor relations
 **File**: `db/console/src/schema/relations.ts`
 **Changes**:
 
-Remove `workspaceObservationClusters` import (line 12).
+Remove imports: `workspaceObservationClusters` (line 12), `workspaceActorProfiles` (line 7), `orgActorIdentities` (line 5).
 Remove `observationClusters: many(workspaceObservationClusters)` from `orgWorkspacesRelations` (line 52).
+Remove `actorProfiles: many(workspaceActorProfiles)` from `orgWorkspacesRelations` (line 53).
 Remove `cluster` relation from `workspaceNeuralObservationsRelations` (lines 117-119).
 Delete entire `workspaceObservationClustersRelations` block (lines 124-133).
+Delete entire `workspaceActorProfilesRelations` block (lines 136-145).
+Delete entire `orgActorIdentitiesRelations` block (lines 160-166).
 
-#### 4. Remove cluster exports from schema barrel files
+#### 4. Remove cluster + actor exports from schema barrel files
 **File**: `db/console/src/schema/tables/index.ts`
-**Changes**: Remove lines 86-90 (cluster table exports)
+**Changes**: Remove exports for all 3 deleted tables:
 
 ```typescript
-// DELETE
-export {
-  type InsertWorkspaceObservationCluster,
-  type WorkspaceObservationCluster,
-  workspaceObservationClusters,
-} from "./workspace-observation-clusters";
+// DELETE — cluster
+export { type InsertWorkspaceObservationCluster, type WorkspaceObservationCluster, workspaceObservationClusters } from "./workspace-observation-clusters";
+
+// DELETE — actor profiles
+export { type InsertWorkspaceActorProfile, type WorkspaceActorProfile, workspaceActorProfiles } from "./workspace-actor-profiles";
+
+// DELETE — actor identities
+export { type InsertOrgActorIdentity, type OrgActorIdentity, orgActorIdentities } from "./org-actor-identities";
 ```
 
 **File**: `db/console/src/schema/index.ts`
 **Changes**:
-- Remove `workspaceObservationClustersRelations` from relations re-export (line 15)
-- Remove `InsertWorkspaceObservationCluster` from type re-exports (line 69)
-- Remove `WorkspaceObservationCluster` from type re-exports (line 91)
-- Remove `workspaceObservationClusters` from table re-exports (line 107)
+- Remove `workspaceObservationClustersRelations`, `workspaceActorProfilesRelations`, `orgActorIdentitiesRelations` from relations re-export
+- Remove all type/table re-exports for the 3 deleted tables
 
 **File**: `db/console/src/index.ts`
-**Changes**: Remove cluster table and relations re-exports
+**Changes**: Remove all re-exports for the 3 deleted tables and their relations
 
 #### 5. Clean up metrics schemas
 **File**: `packages/console-validation/src/schemas/metrics.ts`
@@ -376,6 +423,8 @@ cd db/console && pnpm db:generate
 
 This will generate a migration that:
 - Drops `lightfast_workspace_observation_clusters` table
+- Drops `lightfast_workspace_actor_profiles` table (Phase 2 addition)
+- Drops `lightfast_org_actor_identities` table (Phase 2 addition)
 - Drops `cluster_id` column from `lightfast_workspace_neural_observations`
 - Drops `obs_cluster_idx` index
 
@@ -396,28 +445,75 @@ This will generate a migration that:
 
 ---
 
-## Phase 3: Validation & Cleanup
+## Phase 3: Dead Tables, Orphaned Schemas & Final Cleanup
 
 ### Overview
-Final verification pass. Ensure no orphaned references, clean up validation schemas, and verify the pipeline end-to-end.
+Drop dead tables, remove orphaned validation schemas from the simplification, and verify the pipeline end-to-end.
 
 ### Changes Required:
 
-#### 1. Clean up validation schemas
-**File**: `packages/console-validation/src/schemas/workflow-io.ts`
-**Changes**: If there are workflow input/output schemas for deleted workflows (cluster summary, LLM entity extraction), remove them.
+#### 1. Drop `workspaceTemporalStates` table (zero runtime consumers)
+**Delete file**: `db/console/src/schema/tables/workspace-temporal-states.ts`
 
-#### 2. Verify observation-capture.ts is clean
+Remove from:
+- `db/console/src/schema/relations.ts` — import (line 14), `temporalStates: many(workspaceTemporalStates)` on orgWorkspaces (line 54), `workspaceTemporalStatesRelations` block (lines 148-156)
+- `db/console/src/schema/tables/index.ts` — re-exports of `TemporalEntityType`, `TemporalStateType`, `InsertWorkspaceTemporalState`, `WorkspaceTemporalState`, `workspaceTemporalStates` (lines 116-124)
+- `db/console/src/schema/index.ts` — re-exports of `workspaceTemporalStatesRelations` (line 17), `TemporalEntityType`, `TemporalStateType` types (lines from tables re-export)
+- `db/console/src/index.ts` — re-exports of table + relations
+
+#### 2. Drop `workspaceOperationsMetrics` table (write-only, never read)
+**Delete file**: `db/console/src/schema/tables/workspace-operations-metrics.ts`
+
+Remove from:
+- `db/console/src/schema/tables/index.ts` — re-exports of `ActorResolutionTags`, `ClusterAffinityTags`, `ClusterTags`, `DocumentsIndexedTags`, `EntityExtractionTags`, `ErrorTags`, `JobDurationTags`, `NeuralObservationTags`, `ProfileUpdateTags`, `InsertWorkspaceOperationMetric`, `OperationMetricTags`, `WorkspaceOperationMetric`, `workspaceOperationsMetrics` (lines 99-115)
+- `db/console/src/schema/index.ts` — all metrics type re-exports
+- `db/console/src/index.ts` — table + type re-exports
+- `api/console/src/lib/jobs.ts` — delete the entire `recordJobMetric()` function and its type imports
+- `api/console/src/inngest/workflow/neural/observation-capture.ts` — remove all `void recordJobMetric(...)` calls (6 call sites)
+- `api/console/src/inngest/workflow/neural/profile-update.ts` — remove `recordJobMetric(...)` call
+- `api/console/src/router/m2m/jobs.ts` — remove `recordJobMetric(...)` call
+- `packages/console-validation/src/schemas/metrics.ts` — delete the entire file (all metric types are for this table)
+
+#### 3. Clean up orphaned validation schemas
+**File**: `packages/console-validation/src/schemas/workflow-io.ts`
+**Changes**: Remove dead schemas for deleted workflows:
+- `neuralClusterSummaryInputSchema` and its type (lines 30-34)
+- `neuralLLMEntityExtractionInputSchema` and its type (lines 40-44)
+- 6 output schemas: `NeuralClusterSummaryOutputSuccess/Skipped/Failure`, `NeuralLLMEntityExtractionOutputSuccess/Skipped/Failure` (lines 150-217)
+- Remove from `workflowOutputSchema` union (lines 253-269)
+
+**File**: `packages/console-validation/src/schemas/neural.ts`
+**Changes**: Remove dead cluster schemas:
+- `clusterAssignmentInputSchema` + `ClusterAssignmentInput` (lines 79-93)
+- `clusterAssignmentResultSchema` + `ClusterAssignmentResult` (lines 96-104)
+- `clusterSummarySchema` + `ClusterSummary` (lines 120-135)
+
+**File**: `packages/console-config/src/neural.ts`
+**Changes**: Delete `LLM_ENTITY_EXTRACTION_CONFIG` and `LLMEntityExtractionConfig` (entire file if nothing else in it). Remove re-export from `packages/console-config/src/index.ts`.
+
+#### 4. Verify observation-capture.ts is clean
 After all removals, verify:
 - No references to `clusterId`, `clusterResult`, `assignToCluster`
 - No references to `reconcileVercelActorsForCommit`
 - No references to `llm-entity-extraction`
+- No references to `recordJobMetric`
 - `step.sendEvent("emit-events")` only emits: `observation.captured` and `profile.update`
 - Store observation step doesn't write cluster-related fields
 
-#### 3. Clean up on-failure-handler.ts
+#### 5. Clean up on-failure-handler.ts
 **File**: `api/console/src/inngest/workflow/neural/on-failure-handler.ts`
 **Changes**: If JSDoc references deleted events, update the comments.
+
+#### 6. Generate migration
+```bash
+cd db/console && pnpm db:generate
+```
+
+This will additionally generate drops for:
+- `lightfast_workspace_temporal_states` table
+- `lightfast_workspace_operations_metrics` table
+
+Note: Combined with Phase 2, the single migration drops 6 tables total.
 
 ### Success Criteria:
 
@@ -426,49 +522,66 @@ After all removals, verify:
 - [x] Full lint passes: `pnpm check`
 - [x] No orphaned imports: `pnpm check` catches unused imports
 - [x] Build succeeds: `pnpm build:console`
+- [x] `grep -r "workspaceTemporalStates\|workspaceOperationsMetrics\|recordJobMetric\|ClusterAssignmentInput\|ClusterSummary\|LLM_ENTITY_EXTRACTION_CONFIG" --include="*.ts" db/ api/ apps/ packages/` returns no matches (excluding migration files)
 
 #### Manual Verification:
 - [ ] Send a test webhook through relay → observe it flowing through the simplified pipeline
-- [ ] Search works via v1/search endpoint (now 3-path: vector + entity + actor)
+- [ ] Search works via v1/search endpoint (now 2-path: vector + entity)
 - [ ] Verify no Inngest function registration errors in dev console
 
 ---
 
 ## Deletion Summary
 
-### Files Deleted (6 files, ~1,031 lines)
+### Files Deleted (17 files, ~2,800+ lines)
 | File | Lines | What it did |
 |------|-------|-------------|
 | `api/console/src/inngest/workflow/neural/cluster-assignment.ts` | 300 | Cluster affinity scoring + assignment |
 | `api/console/src/inngest/workflow/neural/cluster-summary.ts` | 315 | LLM-generated cluster summaries |
-| `apps/console/src/lib/neural/cluster-search.ts` | 97 | Pinecone centroid search for clusters |
 | `api/console/src/inngest/workflow/neural/llm-entity-extraction-workflow.ts` | 277 | Async LLM entity extraction for rich content |
 | `api/console/src/inngest/workflow/neural/llm-entity-extraction.ts` | 42 | Helper for LLM entity extraction |
+| `api/console/src/inngest/workflow/neural/actor-resolution.ts` | ~141 | Actor ID resolution from source events |
+| `api/console/src/inngest/workflow/neural/profile-update.ts` | ~278 | Actor profile upsert workflow |
+| `api/console/src/lib/actor-identity.ts` | ~65 | Org-level actor identity upsert |
+| `api/console/src/lib/actor-linking.ts` | ~65 | Lazy Clerk user → actor linking |
+| `apps/console/src/lib/neural/cluster-search.ts` | 97 | Pinecone centroid search for clusters |
+| `apps/console/src/lib/neural/actor-search.ts` | ~160 | Actor profile search for search pipeline |
+| `apps/console/src/components/actor-filter.tsx` | ~50 | Actor filter UI component |
 | `db/console/src/schema/tables/workspace-observation-clusters.ts` | ~157 | Cluster table schema |
+| `db/console/src/schema/tables/workspace-actor-profiles.ts` | ~140 | Actor profiles table schema |
+| `db/console/src/schema/tables/org-actor-identities.ts` | ~100 | Org-level actor identities table schema |
+| `db/console/src/schema/tables/workspace-temporal-states.ts` | ~193 | SCD Type 2 state history (never used) |
+| `db/console/src/schema/tables/workspace-operations-metrics.ts` | ~210 | Write-only metrics table (never read) |
+| `packages/console-validation/src/schemas/metrics.ts` | ~340 | All metric type schemas (consumers of dead table) |
+| `packages/console-config/src/neural.ts` | ~35 | Dead LLM extraction config |
 
-### Code Removed from Existing Files (~300+ lines)
+### Code Removed from Existing Files (~700+ lines)
 | File | Lines removed | What |
 |------|---------------|------|
-| `observation-capture.ts` | ~190 | Cluster assignment, reconciliation, extraction events, metrics |
-| `client.ts` | ~20 | 2 event schemas + clusterId/clusterIsNew fields |
+| `observation-capture.ts` | ~300 | Cluster assignment, actor reconciliation, actor resolution step, extraction/profile events, all `recordJobMetric` calls |
+| `jobs.ts` | ~100 | `recordJobMetric()` function + all metric type imports |
+| `client.ts` | ~40 | 3 event schemas (cluster, LLM extraction, profile.update) + clusterId/clusterIsNew fields |
 | `dispatch.ts` | ~3 | clusterId destructuring + Knock data |
-| `four-path-search.ts` | ~30 | Cluster search path |
+| `four-path-search.ts` | ~60 | Cluster + actor search paths (4-path → 2-path) |
 | `id-resolver.ts` | ~20 | clusterId from interface + all query results |
 | `findsimilar.ts` | ~20 | clusterId + sameCluster logic |
-| `config.ts` + `types.ts` | ~10 | hasClusters query + flag |
-| `relations.ts` | ~15 | Cluster relations |
-| Various barrel exports | ~20 | Cluster re-exports through schema chain |
-| `metrics.ts` | ~40 | 3 metric types + schemas |
-| `jobs.ts` | ~15 | 3 metric overloads |
+| `config.ts` + `types.ts` | ~20 | hasClusters + hasActors queries + flags |
+| `relations.ts` | ~40 | Cluster + actor profile + actor identity + temporal state relations |
+| `workspace.ts` (router) | ~25 | ensureActorLinked call + getActors tRPC procedure |
+| `search-filters.tsx` | ~10 | ActorFilter import + rendering |
+| `workflow-io.ts` | ~90 | Dead cluster/LLM extraction/profile update workflow schemas |
+| `neural.ts` (validation) | ~60 | Dead cluster + resolvedActor schemas |
+| Various barrel exports | ~60 | Dead re-exports for 6 dropped tables through schema chain |
+| `m2m/jobs.ts` | ~5 | `recordJobMetric` call |
 
-### Total: ~1,400 lines deleted/removed
+### Total: ~3,500+ lines deleted/removed (6 tables dropped)
 
 ### What Remains
-- `observation-capture.ts` (~1,000 lines): dedup → filter → significance → classify → embed → extract → actor → store → link → emit
-- `profile-update.ts` (278 lines): actor profile maintenance (user-facing)
+- `observation-capture.ts` (~900 lines): dedup → filter → significance → classify → embed → extract → store → link → emit
 - `relationship-detection.ts` (494 lines): observation edge creation (necessary)
-- Actor profiles table + search: used by tRPC workspace router and search
-- Three-path search: vector + entity + actor
+- `classification.ts` (225 lines), `entity-extraction-patterns.ts` (222 lines), `scoring.ts` (142 lines): pipeline helpers
+- Two-path search: vector + entity
+- Raw `actor` JSONB on observation row (fact from source — no resolution layer)
 
 ## References
 

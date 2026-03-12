@@ -44,14 +44,8 @@ import { log } from "@vendor/observability/log";
 import { and, eq, sql } from "drizzle-orm";
 import { NonRetriableError } from "inngest";
 import { nanoid } from "nanoid";
-import {
-  completeJob,
-  createJob,
-  recordJobMetric,
-  updateJobStatus,
-} from "../../../lib/jobs";
+import { completeJob, createJob, updateJobStatus } from "../../../lib/jobs";
 import { inngest } from "../../client/client";
-import { resolveActor } from "./actor-resolution";
 import {
   buildNeuralTelemetry,
   createTracedModel,
@@ -299,20 +293,6 @@ export const observationCapture = inngest.createFunction(
         });
       });
 
-      // Record duplicate metric (non-blocking)
-      void recordJobMetric({
-        clerkOrgId, // Now valid from early resolution
-        workspaceId,
-        type: "observation_duplicate",
-        value: 1,
-        unit: "count",
-        tags: {
-          source: sourceEvent.source,
-          sourceType: sourceEvent.sourceType,
-          durationMs: Date.now() - startTime,
-        },
-      });
-
       return {
         status: "duplicate",
         observationId: existing.id,
@@ -408,20 +388,6 @@ export const observationCapture = inngest.createFunction(
         });
       });
 
-      // Record filtered metric (non-blocking)
-      void recordJobMetric({
-        clerkOrgId, // Now valid from early resolution
-        workspaceId,
-        type: "observation_filtered",
-        value: 1,
-        unit: "count",
-        tags: {
-          source: sourceEvent.source,
-          sourceType: sourceEvent.sourceType,
-          durationMs: Date.now() - startTime,
-        },
-      });
-
       return {
         status: "filtered",
         reason: "Event type not enabled in source config",
@@ -457,21 +423,6 @@ export const observationCapture = inngest.createFunction(
             significanceScore: significance.score,
           } satisfies NeuralObservationCaptureOutputFiltered,
         });
-      });
-
-      // Record below_threshold metric (non-blocking)
-      void recordJobMetric({
-        clerkOrgId, // Now valid from early resolution
-        workspaceId,
-        type: "observation_below_threshold",
-        value: 1,
-        unit: "count",
-        tags: {
-          source: sourceEvent.source,
-          sourceType: sourceEvent.sourceType,
-          significanceScore: significance.score,
-          durationMs: Date.now() - startTime,
-        },
       });
 
       return {
@@ -564,136 +515,94 @@ export const observationCapture = inngest.createFunction(
     })();
 
     // Step 5b: PARALLEL processing (no interdependencies)
-    const [embeddingResult, extractedEntities, resolvedActor] =
-      await Promise.all([
-        // Multi-view embedding generation (title, content, summary)
-        step.run(
-          "generate-multi-view-embeddings",
-          async (): Promise<MultiViewEmbeddingResult> => {
-            const embeddingProvider = createEmbeddingProviderForWorkspace(
-              {
-                id: workspace.id,
-                embeddingModel: workspace.settings.embedding.embeddingModel,
-                embeddingDim: workspace.settings.embedding.embeddingDim,
-              },
-              { inputType: "search_document" }
-            );
-
-            // Prepare texts for each view
-            const titleText = sourceEvent.title;
-            const contentText = sourceEvent.body;
-            const summaryText = `${sourceEvent.title}\n\n${sourceEvent.body.slice(0, 1000)}`;
-
-            // Generate all 3 embeddings in parallel (single batch call)
-            const result = await embeddingProvider.embed([
-              titleText,
-              contentText,
-              summaryText,
-            ]);
-
-            if (
-              !(
-                result.embeddings[0] &&
-                result.embeddings[1] &&
-                result.embeddings[2]
-              )
-            ) {
-              throw new Error("Failed to generate all multi-view embeddings");
-            }
-
-            // Generate view-specific vector IDs
-            const baseId = sourceEvent.sourceId.replace(/[^a-zA-Z0-9]/g, "_");
-
-            return {
-              title: {
-                vectorId: `obs_title_${baseId}`,
-                vector: result.embeddings[0],
-              },
-              content: {
-                vectorId: `obs_content_${baseId}`,
-                vector: result.embeddings[1],
-              },
-              summary: {
-                vectorId: `obs_summary_${baseId}`,
-                vector: result.embeddings[2],
-              },
-              // Keep legacy ID for backwards compatibility during migration
-              legacyVectorId: `obs_${baseId}`,
-            };
-          }
-        ),
-
-        // Entity extraction (inline, not fire-and-forget)
-        step.run("extract-entities", () => {
-          const textEntities = extractEntities(
-            sourceEvent.title,
-            sourceEvent.body
+    const [embeddingResult, extractedEntities] = await Promise.all([
+      // Multi-view embedding generation (title, content, summary)
+      step.run(
+        "generate-multi-view-embeddings",
+        async (): Promise<MultiViewEmbeddingResult> => {
+          const embeddingProvider = createEmbeddingProviderForWorkspace(
+            {
+              id: workspace.id,
+              embeddingModel: workspace.settings.embedding.embeddingModel,
+              embeddingDim: workspace.settings.embedding.embeddingDim,
+            },
+            { inputType: "search_document" }
           );
-          const references = sourceEvent.references as {
-            type: string;
-            id: string;
-            label?: string;
-          }[];
-          const refEntities = extractFromReferences(references);
 
-          // Combine and deduplicate
-          const allEntities = [...textEntities, ...refEntities];
-          const entityMap = new Map<string, ExtractedEntity>();
+          // Prepare texts for each view
+          const titleText = sourceEvent.title;
+          const contentText = sourceEvent.body;
+          const summaryText = `${sourceEvent.title}\n\n${sourceEvent.body.slice(0, 1000)}`;
 
-          for (const entity of allEntities) {
-            const key = `${entity.category}:${entity.key.toLowerCase()}`;
-            const existing = entityMap.get(key);
-            if (!existing || existing.confidence < entity.confidence) {
-              entityMap.set(key, entity);
-            }
+          // Generate all 3 embeddings in parallel (single batch call)
+          const result = await embeddingProvider.embed([
+            titleText,
+            contentText,
+            summaryText,
+          ]);
+
+          if (
+            !(
+              result.embeddings[0] &&
+              result.embeddings[1] &&
+              result.embeddings[2]
+            )
+          ) {
+            throw new Error("Failed to generate all multi-view embeddings");
           }
 
-          // Limit to prevent runaway extraction
-          const deduplicated = Array.from(entityMap.values());
-          return deduplicated.slice(0, 50); // MAX_ENTITIES_PER_OBSERVATION
-        }),
+          // Generate view-specific vector IDs
+          const baseId = sourceEvent.sourceId.replace(/[^a-zA-Z0-9]/g, "_");
 
-        // Actor resolution (Tier 2: email matching)
-        step.run("resolve-actor", async () => {
-          return resolveActor(workspaceId, sourceEvent);
-        }),
-      ]);
+          return {
+            title: {
+              vectorId: `obs_title_${baseId}`,
+              vector: result.embeddings[0],
+            },
+            content: {
+              vectorId: `obs_content_${baseId}`,
+              vector: result.embeddings[1],
+            },
+            summary: {
+              vectorId: `obs_summary_${baseId}`,
+              vector: result.embeddings[2],
+            },
+            // Keep legacy ID for backwards compatibility during migration
+            legacyVectorId: `obs_${baseId}`,
+          };
+        }
+      ),
 
-    // Record actor_resolution analytics metric (non-blocking)
-    // Determines resolution method based on source and actor ID format
-    const getActorResolutionMethod = ():
-      | "github_id"
-      | "commit_sha"
-      | "username"
-      | "none" => {
-      if (!resolvedActor.actorId) {
-        return "none";
-      }
-      if (sourceEvent.source === "github") {
-        return "github_id";
-      }
-      // For Vercel: check if we got a numeric ID (resolved via commit SHA) or username
-      if (sourceEvent.source === "vercel") {
-        const actorIdPart = resolvedActor.actorId.split(":")[1];
-        return actorIdPart && /^\d+$/.test(actorIdPart)
-          ? "commit_sha"
-          : "username";
-      }
-      return "github_id";
-    };
+      // Entity extraction (inline, not fire-and-forget)
+      step.run("extract-entities", () => {
+        const textEntities = extractEntities(
+          sourceEvent.title,
+          sourceEvent.body
+        );
+        const references = sourceEvent.references as {
+          type: string;
+          id: string;
+          label?: string;
+        }[];
+        const refEntities = extractFromReferences(references);
 
-    void recordJobMetric({
-      clerkOrgId,
-      workspaceId,
-      type: "actor_resolution",
-      value: 1,
-      unit: "count",
-      tags: {
-        resolved: !!resolvedActor.actorId,
-        source: sourceEvent.source,
-        method: getActorResolutionMethod(),
-      },
-    });
+        // Combine and deduplicate
+        const allEntities = [...textEntities, ...refEntities];
+        const entityMap = new Map<string, ExtractedEntity>();
+
+        for (const entity of allEntities) {
+          const key = `${entity.category}:${entity.key.toLowerCase()}`;
+          const existing = entityMap.get(key);
+          if (!existing || existing.confidence < entity.confidence) {
+            entityMap.set(key, entity);
+          }
+        }
+
+        // Limit to prevent runaway extraction
+        const deduplicated = Array.from(entityMap.values());
+        return deduplicated.slice(0, 50); // MAX_ENTITIES_PER_OBSERVATION
+      }),
+    ]);
 
     const { topics } = classificationResult;
     // embeddingResult is now MultiViewEmbeddingResult with title, content, summary views
@@ -900,21 +809,6 @@ export const observationCapture = inngest.createFunction(
           entitiesExtracted: extractedEntities.length,
         },
       },
-      // Profile update (if actor resolved)
-      ...(resolvedActor.actorId
-        ? [
-            {
-              name: "apps-console/neural/profile.update" as const,
-              data: {
-                workspaceId,
-                clerkOrgId, // Propagate for metrics tracking
-                actorId: resolvedActor.actorId,
-                observationId: observation.externalId, // Public nanoid
-                sourceActor: resolvedActor.sourceActor ?? null,
-              },
-            },
-          ]
-        : []),
     ]);
 
     // Complete job with success output
@@ -933,42 +827,6 @@ export const observationCapture = inngest.createFunction(
         } satisfies NeuralObservationCaptureOutputSuccess,
       });
     });
-
-    // Record success metrics (non-blocking, in parallel)
-    const metricsPromises = [
-      // Observation captured metric
-      recordJobMetric({
-        clerkOrgId, // Use pre-resolved value for consistency
-        workspaceId,
-        type: "observation_captured",
-        value: 1,
-        unit: "count",
-        tags: {
-          source: sourceEvent.source,
-          sourceType: sourceEvent.sourceType,
-          observationType: observation.observationType,
-          significanceScore: significance.score,
-          durationMs: finalDuration,
-        },
-      }),
-
-      // Entities extracted metric
-      recordJobMetric({
-        clerkOrgId, // Use pre-resolved value for consistency
-        workspaceId,
-        type: "entities_extracted",
-        value: entitiesStored,
-        unit: "count",
-        tags: {
-          observationId: observation.externalId,
-          entityCount: entitiesStored,
-          source: sourceEvent.source,
-        },
-      }),
-    ];
-
-    // Fire-and-forget metrics recording
-    void Promise.all(metricsPromises);
 
     return {
       status: "captured",

@@ -196,26 +196,6 @@ const eventsMap = {
     entitiesExtracted: z.number().optional(),
   }),
 
-  "apps-console/neural/profile.update": z.object({
-    /** Workspace DB UUID */
-    workspaceId: z.string(),
-    /** Clerk organization ID (passed from parent workflow) */
-    clerkOrgId: z.string().optional(),
-    /** Canonical actor ID (source:id format) */
-    actorId: z.string(),
-    /** Observation that triggered update */
-    observationId: z.string(),
-    /** Source actor data for profile enrichment */
-    sourceActor: z
-      .object({
-        id: z.string(),
-        name: z.string(),
-        email: z.string().nullable(),
-        avatarUrl: z.string().nullable(),
-      })
-      .nullable(),
-  }),
-
   // ============================================================================
   // NOTIFICATION EVENTS
   // ============================================================================

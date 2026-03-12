@@ -2,15 +2,12 @@ import { relations } from "drizzle-orm";
 import { gwInstallations } from "./tables/gw-installations";
 import { gwResources } from "./tables/gw-resources";
 import { gwTokens } from "./tables/gw-tokens";
-import { orgActorIdentities } from "./tables/org-actor-identities";
 import { orgWorkspaces } from "./tables/org-workspaces";
-import { workspaceActorProfiles } from "./tables/workspace-actor-profiles";
 import { workspaceIntegrations } from "./tables/workspace-integrations";
 import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-documents";
 import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
 import { workspaceNeuralObservations } from "./tables/workspace-neural-observations";
 import { workspaceObservationRelationships } from "./tables/workspace-observation-relationships";
-import { workspaceTemporalStates } from "./tables/workspace-temporal-states";
 import { workspaceUserActivities } from "./tables/workspace-user-activities";
 
 /**
@@ -48,8 +45,6 @@ export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
   documents: many(workspaceKnowledgeDocuments),
   vectorChunks: many(workspaceKnowledgeVectorChunks),
   neuralObservations: many(workspaceNeuralObservations),
-  actorProfiles: many(workspaceActorProfiles),
-  temporalStates: many(workspaceTemporalStates),
 }));
 
 export const workspaceKnowledgeDocumentsRelations = relations(
@@ -112,39 +107,6 @@ export const workspaceNeuralObservationsRelations = relations(
       fields: [workspaceNeuralObservations.workspaceId],
       references: [orgWorkspaces.id],
     }),
-  })
-);
-
-// Actor Profile relations
-export const workspaceActorProfilesRelations = relations(
-  workspaceActorProfiles,
-  ({ one }) => ({
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceActorProfiles.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
-    // Note: identities relation removed - now using org-level orgActorIdentities
-  })
-);
-
-// Temporal states relation
-export const workspaceTemporalStatesRelations = relations(
-  workspaceTemporalStates,
-  ({ one }) => ({
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceTemporalStates.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
-  })
-);
-
-// Org-level actor identities relation
-// No direct FK to orgWorkspaces - clerkOrgId is a logical reference to Clerk
-export const orgActorIdentitiesRelations = relations(
-  orgActorIdentities,
-  () => ({
-    // No direct FK relations - clerkOrgId references Clerk org (external)
-    // canonicalActorId links logically to workspaceActorProfiles.actorId
   })
 );
 
