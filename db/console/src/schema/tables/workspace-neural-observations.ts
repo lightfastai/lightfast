@@ -5,7 +5,6 @@ import {
   index,
   jsonb,
   pgTable,
-  real,
   text,
   timestamp,
   uniqueIndex,
@@ -129,18 +128,6 @@ export const workspaceNeuralObservations = pgTable(
      */
     content: text("content").notNull(),
 
-    // ========== CLASSIFICATION ==========
-
-    /**
-     * Topics extracted from content
-     */
-    topics: jsonb("topics").$type<string[]>(),
-
-    /**
-     * Significance score (0-100)
-     */
-    significanceScore: real("significance_score"),
-
     // ========== SOURCE ==========
 
     /**
@@ -168,32 +155,6 @@ export const workspaceNeuralObservations = pgTable(
      * Source-specific metadata
      */
     metadata: jsonb("metadata").$type<ObservationMetadata>(),
-
-    // ========== EMBEDDINGS ==========
-
-    /**
-     * @deprecated Use view-specific embedding IDs instead
-     * Legacy Pinecone vector ID for combined title+content embedding
-     */
-    embeddingVectorId: varchar("embedding_vector_id", { length: 191 }),
-
-    /**
-     * Pinecone vector ID for title-only embedding
-     * Optimized for topic/headline searches
-     */
-    embeddingTitleId: varchar("embedding_title_id", { length: 191 }),
-
-    /**
-     * Pinecone vector ID for content-only embedding
-     * Optimized for detailed content searches
-     */
-    embeddingContentId: varchar("embedding_content_id", { length: 191 }),
-
-    /**
-     * Pinecone vector ID for summary embedding
-     * Combines title and truncated content for balanced retrieval
-     */
-    embeddingSummaryId: varchar("embedding_summary_id", { length: 191 }),
 
     // ========== INGESTION ==========
 
@@ -238,20 +199,6 @@ export const workspaceNeuralObservations = pgTable(
 
     // Type filtering
     typeIdx: index("obs_type_idx").on(table.workspaceId, table.observationType),
-
-    // Vector ID lookups (fallback path)
-    embeddingTitleIdx: index("obs_embedding_title_idx").on(
-      table.workspaceId,
-      table.embeddingTitleId
-    ),
-    embeddingContentIdx: index("obs_embedding_content_idx").on(
-      table.workspaceId,
-      table.embeddingContentId
-    ),
-    embeddingSummaryIdx: index("obs_embedding_summary_idx").on(
-      table.workspaceId,
-      table.embeddingSummaryId
-    ),
   })
 );
 

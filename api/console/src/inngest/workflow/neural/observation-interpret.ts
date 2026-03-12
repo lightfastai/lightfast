@@ -43,6 +43,7 @@ import {
   buildClassificationPrompt,
   classifyObservationFallback,
 } from "./classification";
+import { resolveEdges } from "./edge-resolver";
 
 /**
  * Extract topics from stored observation data
@@ -379,7 +380,15 @@ export const observationInterpret = inngest.createFunction(
       });
     });
 
-    // Step 7: resolve-edges — Phase 3 adds entity-mediated relationship detection here
+    // Step 7: Resolve edges via entity-mediated relationship detection
+    await step.run("resolve-edges", async () => {
+      return resolveEdges(
+        workspaceId,
+        internalObservationId,
+        obs.source,
+        entityRefs
+      );
+    });
 
     // Step 8: Emit observation.captured for downstream systems (notifications, etc.)
     await step.sendEvent("emit-observation-captured", {

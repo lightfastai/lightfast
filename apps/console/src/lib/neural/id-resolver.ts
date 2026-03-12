@@ -11,7 +11,10 @@
  */
 
 import { db } from "@db/console/client";
-import { workspaceNeuralObservations } from "@db/console/schema";
+import {
+  workspaceNeuralObservations,
+  workspaceObservationInterpretations,
+} from "@db/console/schema";
 import { and, eq, inArray, or } from "drizzle-orm";
 
 /**
@@ -114,8 +117,24 @@ export async function resolveObservationById(
     };
   }
 
-  // Fallback: Try vector ID columns if it looks like a vector ID
+  // Fallback: Try interpretation table if it looks like a vector ID
   if (!isVectorId(id)) {
+    return null;
+  }
+
+  const interp = await db.query.workspaceObservationInterpretations.findFirst({
+    columns: { observationId: true },
+    where: and(
+      eq(workspaceObservationInterpretations.workspaceId, workspaceId),
+      or(
+        eq(workspaceObservationInterpretations.embeddingTitleId, id),
+        eq(workspaceObservationInterpretations.embeddingContentId, id),
+        eq(workspaceObservationInterpretations.embeddingSummaryId, id)
+      )
+    ),
+  });
+
+  if (!interp) {
     return null;
   }
 
@@ -131,15 +150,7 @@ export async function resolveObservationById(
       occurredAt: true,
       metadata: true,
     },
-    where: and(
-      eq(workspaceNeuralObservations.workspaceId, workspaceId),
-      or(
-        eq(workspaceNeuralObservations.embeddingTitleId, id),
-        eq(workspaceNeuralObservations.embeddingContentId, id),
-        eq(workspaceNeuralObservations.embeddingSummaryId, id),
-        eq(workspaceNeuralObservations.embeddingVectorId, id) // Legacy
-      )
-    ),
+    where: eq(workspaceNeuralObservations.id, interp.observationId),
   });
 
   if (byVectorId) {
@@ -224,47 +235,67 @@ export async function resolveObservationsById(
     }
   }
 
-  // For vector IDs, we need to query differently since we don't know which column
-  // The OR query approach may be slow without indexes, but indexes are added in this phase
+  // For vector IDs, query the interpretation table then fetch observations
   if (vectorIds.length > 0) {
-    const byVectorIds = await db
+    const interpretations = await db
       .select({
-        id: workspaceNeuralObservations.id,
-        externalId: workspaceNeuralObservations.externalId,
-        embeddingTitleId: workspaceNeuralObservations.embeddingTitleId,
-        embeddingContentId: workspaceNeuralObservations.embeddingContentId,
-        embeddingSummaryId: workspaceNeuralObservations.embeddingSummaryId,
-        embeddingVectorId: workspaceNeuralObservations.embeddingVectorId,
-        title: workspaceNeuralObservations.title,
-        content: workspaceNeuralObservations.content,
-        source: workspaceNeuralObservations.source,
-        sourceId: workspaceNeuralObservations.sourceId,
-        observationType: workspaceNeuralObservations.observationType,
-        occurredAt: workspaceNeuralObservations.occurredAt,
-        metadata: workspaceNeuralObservations.metadata,
+        observationId: workspaceObservationInterpretations.observationId,
+        embeddingTitleId: workspaceObservationInterpretations.embeddingTitleId,
+        embeddingContentId:
+          workspaceObservationInterpretations.embeddingContentId,
+        embeddingSummaryId:
+          workspaceObservationInterpretations.embeddingSummaryId,
       })
-      .from(workspaceNeuralObservations)
+      .from(workspaceObservationInterpretations)
       .where(
         and(
-          eq(workspaceNeuralObservations.workspaceId, workspaceId),
+          eq(workspaceObservationInterpretations.workspaceId, workspaceId),
           or(
-            inArray(workspaceNeuralObservations.embeddingTitleId, vectorIds),
-            inArray(workspaceNeuralObservations.embeddingContentId, vectorIds),
-            inArray(workspaceNeuralObservations.embeddingSummaryId, vectorIds),
-            inArray(workspaceNeuralObservations.embeddingVectorId, vectorIds)
+            inArray(
+              workspaceObservationInterpretations.embeddingTitleId,
+              vectorIds
+            ),
+            inArray(
+              workspaceObservationInterpretations.embeddingContentId,
+              vectorIds
+            ),
+            inArray(
+              workspaceObservationInterpretations.embeddingSummaryId,
+              vectorIds
+            )
           )
         )
       );
 
-    // Map each observation to ALL matching vector IDs from the request
-    for (const obs of byVectorIds) {
-      const matchingIds = vectorIds.filter(
-        (vid) =>
-          vid === obs.embeddingTitleId ||
-          vid === obs.embeddingContentId ||
-          vid === obs.embeddingSummaryId ||
-          vid === obs.embeddingVectorId
-      );
+    const obsInternalIds = [
+      ...new Set(interpretations.map((i) => i.observationId)),
+    ];
+    const obsRows =
+      obsInternalIds.length > 0
+        ? await db
+            .select({
+              id: workspaceNeuralObservations.id,
+              externalId: workspaceNeuralObservations.externalId,
+              title: workspaceNeuralObservations.title,
+              content: workspaceNeuralObservations.content,
+              source: workspaceNeuralObservations.source,
+              sourceId: workspaceNeuralObservations.sourceId,
+              observationType: workspaceNeuralObservations.observationType,
+              occurredAt: workspaceNeuralObservations.occurredAt,
+              metadata: workspaceNeuralObservations.metadata,
+            })
+            .from(workspaceNeuralObservations)
+            .where(inArray(workspaceNeuralObservations.id, obsInternalIds))
+        : [];
+
+    const obsById = new Map(obsRows.map((o) => [o.id, o]));
+
+    // Map each vector ID to its resolved observation
+    for (const interp of interpretations) {
+      const obs = obsById.get(interp.observationId);
+      if (!obs) {
+        continue;
+      }
 
       const resolved: ResolvedObservation = {
         id: obs.id,
@@ -278,6 +309,12 @@ export async function resolveObservationsById(
         metadata: obs.metadata as Record<string, unknown> | null,
       };
 
+      const matchingIds = vectorIds.filter(
+        (vid) =>
+          vid === interp.embeddingTitleId ||
+          vid === interp.embeddingContentId ||
+          vid === interp.embeddingSummaryId
+      );
       for (const vid of matchingIds) {
         result.set(vid, resolved);
       }

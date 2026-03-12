@@ -408,19 +408,11 @@ export const observationStore = inngest.createFunction(
           observationType,
           title: sourceEvent.title,
           content: sourceEvent.body,
-          // Interpretation columns written null — set by observation-interpret (Phase 2+)
-          topics: null,
-          significanceScore: null,
           source: sourceEvent.source,
           sourceType: sourceEvent.sourceType,
           sourceId: sourceEvent.sourceId,
           sourceReferences: sourceEvent.references,
           metadata: sourceEvent.metadata,
-          // Embedding columns written null — set by observation-interpret (Phase 2+)
-          embeddingVectorId: null,
-          embeddingTitleId: null,
-          embeddingContentId: null,
-          embeddingSummaryId: null,
           ingestionSource: event.data.ingestionSource ?? "webhook",
         })
         .returning();
@@ -456,7 +448,6 @@ export const observationStore = inngest.createFunction(
                 category: entity.category,
                 key: entity.key,
                 value: entity.value,
-                sourceObservationId: observation.id,
                 evidenceSnippet: entity.evidence,
                 confidence: entity.confidence,
               })

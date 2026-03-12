@@ -1,5 +1,6 @@
 import { db } from "@db/console/client";
 import {
+  workspaceEntityObservations,
   workspaceNeuralEntities,
   workspaceNeuralObservations,
 } from "@db/console/schema";
@@ -92,7 +93,6 @@ export async function searchByEntities(
       id: workspaceNeuralEntities.id,
       key: workspaceNeuralEntities.key,
       category: workspaceNeuralEntities.category,
-      sourceObservationId: workspaceNeuralEntities.sourceObservationId,
       occurrenceCount: workspaceNeuralEntities.occurrenceCount,
       confidence: workspaceNeuralEntities.confidence,
     })
@@ -110,17 +110,23 @@ export async function searchByEntities(
     return [];
   }
 
-  // 3. Fetch linked observations
-  // sourceObservationId is now BIGINT (number), query by internal id
-  const observationIds = matchedEntities
-    .map((e) => e.sourceObservationId)
-    .filter((id): id is number => id !== null);
+  // 3. Query junction table for all observations for these entities
+  const entityIds = matchedEntities.map((e) => e.id);
+  const junctions = await db
+    .select({
+      entityId: workspaceEntityObservations.entityId,
+      observationId: workspaceEntityObservations.observationId,
+    })
+    .from(workspaceEntityObservations)
+    .where(inArray(workspaceEntityObservations.entityId, entityIds))
+    .limit(limit * 3);
 
-  if (observationIds.length === 0) {
+  if (junctions.length === 0) {
     return [];
   }
 
-  // Query by internal id (BIGINT)
+  // 4. Fetch unique observations
+  const observationIds = [...new Set(junctions.map((j) => j.observationId))];
   const observations = await db
     .select({
       id: workspaceNeuralObservations.id,
@@ -131,26 +137,23 @@ export async function searchByEntities(
     .from(workspaceNeuralObservations)
     .where(inArray(workspaceNeuralObservations.id, observationIds));
 
-  // 4. Build result map keyed by internal id (BIGINT)
+  // 5. Build result maps
   const obsMap = new Map(observations.map((o) => [o.id, o]));
+  const entityMap = new Map(matchedEntities.map((e) => [e.id, e]));
 
   const results: EntitySearchResult[] = [];
-  for (const entity of matchedEntities) {
-    const obsId = entity.sourceObservationId;
-    if (obsId === null) {
-      continue;
-    }
-
-    const obs = obsMap.get(obsId);
-    if (!obs) {
+  for (const junction of junctions) {
+    const entity = entityMap.get(junction.entityId);
+    const obs = obsMap.get(junction.observationId);
+    if (!(entity && obs)) {
       continue;
     }
 
     results.push({
-      entityId: String(entity.id), // Convert BIGINT to string for API response
+      entityId: String(entity.id),
       entityKey: entity.key,
       entityCategory: entity.category,
-      observationId: obs.externalId, // Return externalId (nanoid) for API
+      observationId: obs.externalId,
       observationTitle: obs.title,
       observationSnippet: obs.content.substring(0, 200),
       occurrenceCount: entity.occurrenceCount,
@@ -158,5 +161,5 @@ export async function searchByEntities(
     });
   }
 
-  return results;
+  return results.slice(0, limit);
 }

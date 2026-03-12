@@ -3,6 +3,7 @@ import { db } from "@db/console/client";
 import {
   workspaceKnowledgeDocuments,
   workspaceNeuralObservations,
+  workspaceObservationInterpretations,
 } from "@db/console/schema";
 import { createEmbeddingProvider } from "@repo/console-embed";
 import { consolePineconeClient } from "@repo/console-pinecone";
@@ -92,41 +93,69 @@ async function normalizeAndDeduplicate(
   if (withoutObsId.length > 0) {
     const vectorIds = withoutObsId.map((m) => m.id);
 
-    const observations = await db
+    // Query interpretation table for embedding IDs
+    const interpretations = await db
       .select({
-        id: workspaceNeuralObservations.id,
-        externalId: workspaceNeuralObservations.externalId,
-        embeddingTitleId: workspaceNeuralObservations.embeddingTitleId,
-        embeddingContentId: workspaceNeuralObservations.embeddingContentId,
-        embeddingSummaryId: workspaceNeuralObservations.embeddingSummaryId,
-        embeddingVectorId: workspaceNeuralObservations.embeddingVectorId,
+        observationId: workspaceObservationInterpretations.observationId,
+        embeddingTitleId: workspaceObservationInterpretations.embeddingTitleId,
+        embeddingContentId:
+          workspaceObservationInterpretations.embeddingContentId,
+        embeddingSummaryId:
+          workspaceObservationInterpretations.embeddingSummaryId,
       })
-      .from(workspaceNeuralObservations)
+      .from(workspaceObservationInterpretations)
       .where(
         and(
-          eq(workspaceNeuralObservations.workspaceId, workspaceId),
+          eq(workspaceObservationInterpretations.workspaceId, workspaceId),
           or(
-            inArray(workspaceNeuralObservations.embeddingTitleId, vectorIds),
-            inArray(workspaceNeuralObservations.embeddingContentId, vectorIds),
-            inArray(workspaceNeuralObservations.embeddingSummaryId, vectorIds),
-            inArray(workspaceNeuralObservations.embeddingVectorId, vectorIds)
+            inArray(
+              workspaceObservationInterpretations.embeddingTitleId,
+              vectorIds
+            ),
+            inArray(
+              workspaceObservationInterpretations.embeddingContentId,
+              vectorIds
+            ),
+            inArray(
+              workspaceObservationInterpretations.embeddingSummaryId,
+              vectorIds
+            )
           )
         )
       );
 
+    // Resolve internal observation IDs to externalIds (nanoid)
+    const obsInternalIds = [
+      ...new Set(interpretations.map((i) => i.observationId)),
+    ];
+    const obsRows =
+      obsInternalIds.length > 0
+        ? await db
+            .select({
+              id: workspaceNeuralObservations.id,
+              externalId: workspaceNeuralObservations.externalId,
+            })
+            .from(workspaceNeuralObservations)
+            .where(inArray(workspaceNeuralObservations.id, obsInternalIds))
+        : [];
+    const internalToExternal = new Map(
+      obsRows.map((o) => [o.id, o.externalId])
+    );
+
     const vectorToObs = new Map<string, string>();
-    for (const obs of observations) {
-      if (obs.embeddingTitleId) {
-        vectorToObs.set(obs.embeddingTitleId, obs.externalId);
+    for (const interp of interpretations) {
+      const externalId = internalToExternal.get(interp.observationId);
+      if (!externalId) {
+        continue;
       }
-      if (obs.embeddingContentId) {
-        vectorToObs.set(obs.embeddingContentId, obs.externalId);
+      if (interp.embeddingTitleId) {
+        vectorToObs.set(interp.embeddingTitleId, externalId);
       }
-      if (obs.embeddingSummaryId) {
-        vectorToObs.set(obs.embeddingSummaryId, obs.externalId);
+      if (interp.embeddingContentId) {
+        vectorToObs.set(interp.embeddingContentId, externalId);
       }
-      if (obs.embeddingVectorId) {
-        vectorToObs.set(obs.embeddingVectorId, obs.externalId);
+      if (interp.embeddingSummaryId) {
+        vectorToObs.set(interp.embeddingSummaryId, externalId);
       }
     }
 

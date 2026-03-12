@@ -879,9 +879,9 @@ const relationshipsCreated = await step.run("resolve-edges", async () => {
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm check`
-- [ ] Build succeeds: `pnpm build:console`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm check`
+- [x] Build succeeds: `pnpm build:console`
 
 #### Manual Verification:
 - [ ] Send two webhooks with shared commit SHA → verify `same_commit` edge created
@@ -992,11 +992,11 @@ cd db/console && pnpm db:generate
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Migration generates cleanly: `cd db/console && pnpm db:generate`
-- [ ] No remaining references to dropped columns: `grep -r "embeddingTitleId\|embeddingContentId\|embeddingSummaryId\|embeddingVectorId\|sourceObservationId" --include="*.ts" apps/ api/ packages/ db/` returns only the interpretation table and migration files
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm check`
-- [ ] Build succeeds: `pnpm build:console`
+- [x] Migration generates cleanly: `cd db/console && pnpm db:generate`
+- [x] No remaining references to dropped columns: `grep -r "embeddingTitleId\|embeddingContentId\|embeddingSummaryId\|embeddingVectorId\|sourceObservationId" --include="*.ts" apps/ api/ packages/ db/` returns only the interpretation table and migration files
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm check` (4 pre-existing migration JSON format errors)
+- [x] Build succeeds: `pnpm build:console`
 
 #### Manual Verification:
 - [ ] Search works via API (vector + entity paths)
@@ -1039,10 +1039,10 @@ pnpm build:console
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] No dead imports: `pnpm typecheck` passes cleanly
-- [ ] Lint passes: `pnpm check`
-- [ ] Build succeeds: `pnpm build:console`
-- [ ] No references to deleted files: `grep -r "observation-capture\|relationship-detection" --include="*.ts" api/ apps/` returns nothing
+- [x] No dead imports: `pnpm typecheck` passes cleanly
+- [x] Lint passes: `pnpm check` (4 pre-existing migration JSON format errors)
+- [x] Build succeeds: `pnpm build:console`
+- [x] No references to deleted files: `grep -r "observation-capture\|relationship-detection" --include="*.ts" api/ apps/` returns nothing
 
 #### Manual Verification:
 - [ ] Full end-to-end webhook flow works

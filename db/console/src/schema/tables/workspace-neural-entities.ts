@@ -14,7 +14,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
-import { workspaceNeuralObservations } from "./workspace-neural-observations";
 
 /**
  * Neural entities extracted from observations
@@ -73,15 +72,6 @@ export const workspaceNeuralEntities = pgTable(
     aliases: jsonb("aliases").$type<string[]>(),
 
     // ========== PROVENANCE ==========
-
-    /**
-     * First observation where this entity was discovered (BIGINT FK)
-     */
-    sourceObservationId: bigint("source_observation_id", {
-      mode: "number",
-    }).references(() => workspaceNeuralObservations.id, {
-      onDelete: "set null",
-    }),
 
     /**
      * Text snippet providing evidence for extraction
