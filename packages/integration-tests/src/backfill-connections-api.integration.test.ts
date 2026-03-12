@@ -542,4 +542,3 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
     expect(res.status).toBe(404);
   });
 });
-

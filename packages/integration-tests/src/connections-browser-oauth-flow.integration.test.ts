@@ -396,17 +396,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
           events: ["push"],
           installedAt: "2026-01-01T00:00:00Z",
           lastValidatedAt: "2026-01-01T00:00:00Z",
-          raw: {
-            account: {
-              login: "test-org",
-              id: 67_890,
-              type: "Organization" as const,
-              avatar_url: "",
-            },
-            permissions: {},
-            events: ["push"],
-            created_at: "2026-01-01T00:00:00Z",
-          },
+          raw: {},
         },
       });
 

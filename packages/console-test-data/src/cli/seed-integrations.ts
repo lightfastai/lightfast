@@ -44,8 +44,6 @@ const DEMO_SOURCES: DemoSource[] = [
       type: "repository",
       repoId: "901234567",
       sync: {
-        branches: ["main"],
-        paths: ["**/*"],
         events: ["push", "pull_request", "issues", "release", "discussion"],
         autoSync: true,
       },

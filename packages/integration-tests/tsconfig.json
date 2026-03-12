@@ -14,9 +14,7 @@
       "@repo/lib": ["../../packages/lib/src/index.ts"],
       "@gateway/cache": ["../../apps/gateway/src/lib/cache.ts"],
       "@relay/cache": ["../../apps/relay/src/lib/cache.ts"],
-      "@relay/webhook-delivery": [
-        "../../apps/relay/src/workflows/webhook-delivery.ts"
-      ],
+      "@relay/webhook-delivery": ["../../apps/relay/src/routes/workflows.ts"],
       "@backfill/orchestrator": [
         "../../apps/backfill/src/workflows/backfill-orchestrator.ts"
       ],

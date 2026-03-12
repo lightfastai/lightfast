@@ -46,9 +46,7 @@
   "paths": {
     "/v1/search": {
       "post": {
-        "tags": [
-          "Search"
-        ],
+        "tags": ["Search"],
         "operationId": "search",
         "summary": "Search",
         "description": "Search across your team's knowledge with semantic understanding and multi-path retrieval.",
@@ -91,9 +89,7 @@
     },
     "/v1/contents": {
       "post": {
-        "tags": [
-          "Contents"
-        ],
+        "tags": ["Contents"],
         "operationId": "get-contents",
         "summary": "Get Contents",
         "description": "Fetch full content for specific documents or observations by their IDs. Batch endpoint supporting up to 50 IDs per request.",
@@ -136,9 +132,7 @@
     },
     "/v1/findsimilar": {
       "post": {
-        "tags": [
-          "Find Similar"
-        ],
+        "tags": ["Find Similar"],
         "operationId": "find-similar",
         "summary": "Find Similar",
         "description": "Find content similar to a given document or URL using vector similarity, entity overlap, and cluster analysis.",
@@ -181,9 +175,7 @@
     },
     "/v1/graph": {
       "post": {
-        "tags": [
-          "Graph"
-        ],
+        "tags": ["Graph"],
         "operationId": "graph",
         "summary": "Relationship Graph",
         "description": "Traverse the relationship graph starting from a specific observation. Returns connected nodes and edges with relationship metadata.",
@@ -226,9 +218,7 @@
     },
     "/v1/related": {
       "post": {
-        "tags": [
-          "Related"
-        ],
+        "tags": ["Related"],
         "operationId": "find-related",
         "summary": "Find Related Events",
         "description": "Find events related to a specific observation, grouped by source and relationship type.",
@@ -298,11 +288,7 @@
             "default": "balanced",
             "description": "Search quality mode: 'fast' (speed), 'balanced' (default), 'thorough' (quality)",
             "type": "string",
-            "enum": [
-              "fast",
-              "balanced",
-              "thorough"
-            ]
+            "enum": ["fast", "balanced", "thorough"]
           },
           "filters": {
             "description": "Optional filters to scope results by source type, observation type, actors, or date range",
@@ -354,9 +340,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "query"
-        ]
+        "required": ["query"]
       },
       "V1ContentsRequest": {
         "type": "object",
@@ -371,9 +355,7 @@
             "description": "Array of document or observation IDs to fetch (1-50 IDs)"
           }
         },
-        "required": [
-          "ids"
-        ]
+        "required": ["ids"]
       },
       "V1FindSimilarRequest": {
         "type": "object",
@@ -476,9 +458,7 @@
             }
           }
         },
-        "required": [
-          "id"
-        ]
+        "required": ["id"]
       },
       "V1RelatedRequest": {
         "type": "object",
@@ -488,9 +468,7 @@
             "description": "Observation ID to find related events for"
           }
         },
-        "required": [
-          "id"
-        ]
+        "required": ["id"]
       },
       "V1SearchResponse": {
         "type": "object",
@@ -538,10 +516,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "key",
-                      "category"
-                    ],
+                    "required": ["key", "category"],
                     "additionalProperties": false
                   }
                 },
@@ -563,10 +538,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "type",
-                      "id"
-                    ],
+                    "required": ["type", "id"],
                     "additionalProperties": false
                   }
                 },
@@ -630,11 +602,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "topic",
-                    "summary",
-                    "keywords"
-                  ],
+                  "required": ["topic", "summary", "keywords"],
                   "additionalProperties": false
                 }
               },
@@ -653,10 +621,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "displayName",
-                    "expertiseDomains"
-                  ],
+                  "required": ["displayName", "expertiseDomains"],
                   "additionalProperties": false
                 }
               }
@@ -682,11 +647,7 @@
               },
               "mode": {
                 "type": "string",
-                "enum": [
-                  "fast",
-                  "balanced",
-                  "thorough"
-                ]
+                "enum": ["fast", "balanced", "thorough"]
               },
               "paths": {
                 "type": "object",
@@ -704,23 +665,11 @@
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "vector",
-                  "entity",
-                  "cluster",
-                  "actor"
-                ],
+                "required": ["vector", "entity", "cluster", "actor"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "total",
-              "limit",
-              "offset",
-              "took",
-              "mode",
-              "paths"
-            ],
+            "required": ["total", "limit", "offset", "took", "mode", "paths"],
             "additionalProperties": false
           },
           "latency": {
@@ -775,23 +724,14 @@
                 "minimum": 0
               }
             },
-            "required": [
-              "total",
-              "retrieval",
-              "rerank"
-            ],
+            "required": ["total", "retrieval", "rerank"],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": [
-          "data",
-          "meta",
-          "latency",
-          "requestId"
-        ],
+        "required": ["data", "meta", "latency", "requestId"],
         "additionalProperties": false
       },
       "V1ContentsResponse": {
@@ -843,14 +783,7 @@
                   "additionalProperties": {}
                 }
               },
-              "required": [
-                "id",
-                "title",
-                "url",
-                "snippet",
-                "source",
-                "type"
-              ],
+              "required": ["id", "title", "url", "snippet", "source", "type"],
               "additionalProperties": false
             }
           },
@@ -864,11 +797,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "items",
-          "missing",
-          "requestId"
-        ],
+        "required": ["items", "missing", "requestId"],
         "additionalProperties": false
       },
       "V1FindSimilarResponse": {
@@ -903,18 +832,11 @@
                     "type": "number"
                   }
                 },
-                "required": [
-                  "topic",
-                  "memberCount"
-                ],
+                "required": ["topic", "memberCount"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "id",
-              "title",
-              "type"
-            ],
+            "required": ["id", "title", "type"],
             "additionalProperties": false
           },
           "similar": {
@@ -990,30 +912,18 @@
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "found",
-                  "generated"
-                ],
+                "required": ["found", "generated"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "total",
-              "took",
-              "inputEmbedding"
-            ],
+            "required": ["total", "took", "inputEmbedding"],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": [
-          "source",
-          "similar",
-          "meta",
-          "requestId"
-        ],
+        "required": ["source", "similar", "meta", "requestId"],
         "additionalProperties": false
       },
       "GraphResponse": {
@@ -1038,12 +948,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "id",
-                  "title",
-                  "source",
-                  "type"
-                ],
+                "required": ["id", "title", "source", "type"],
                 "additionalProperties": false
               },
               "nodes": {
@@ -1137,11 +1042,7 @@
                 }
               }
             },
-            "required": [
-              "root",
-              "nodes",
-              "edges"
-            ],
+            "required": ["root", "nodes", "edges"],
             "additionalProperties": false
           },
           "meta": {
@@ -1160,23 +1061,14 @@
                 "type": "number"
               }
             },
-            "required": [
-              "depth",
-              "nodeCount",
-              "edgeCount",
-              "took"
-            ],
+            "required": ["depth", "nodeCount", "edgeCount", "took"],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": [
-          "data",
-          "meta",
-          "requestId"
-        ],
+        "required": ["data", "meta", "requestId"],
         "additionalProperties": false
       },
       "RelatedResponse": {
@@ -1198,11 +1090,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "id",
-                  "title",
-                  "source"
-                ],
+                "required": ["id", "title", "source"],
                 "additionalProperties": false
               },
               "related": {
@@ -1247,10 +1135,7 @@
                     },
                     "direction": {
                       "type": "string",
-                      "enum": [
-                        "outgoing",
-                        "incoming"
-                      ]
+                      "enum": ["outgoing", "incoming"]
                     }
                   },
                   "required": [
@@ -1313,10 +1198,7 @@
                       },
                       "direction": {
                         "type": "string",
-                        "enum": [
-                          "outgoing",
-                          "incoming"
-                        ]
+                        "enum": ["outgoing", "incoming"]
                       }
                     },
                     "required": [
@@ -1334,11 +1216,7 @@
                 }
               }
             },
-            "required": [
-              "source",
-              "related",
-              "bySource"
-            ],
+            "required": ["source", "related", "bySource"],
             "additionalProperties": false
           },
           "meta": {
@@ -1351,21 +1229,14 @@
                 "type": "number"
               }
             },
-            "required": [
-              "total",
-              "took"
-            ],
+            "required": ["total", "took"],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": [
-          "data",
-          "meta",
-          "requestId"
-        ],
+        "required": ["data", "meta", "requestId"],
         "additionalProperties": false
       }
     },
