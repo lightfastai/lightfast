@@ -290,6 +290,38 @@ export const linear = defineProvider({
   api: linearApi,
   backfill: linearBackfill,
 
+  edgeRules: [
+    {
+      refType: "issue",
+      selfLabel: "linked",
+      matchProvider: "sentry",
+      matchRefType: "issue",
+      relationshipType: "triggers",
+      confidence: 0.8,
+    },
+    {
+      refType: "pr",
+      matchProvider: "github",
+      matchRefType: "pr",
+      relationshipType: "tracked_in",
+      confidence: 1.0,
+    },
+    {
+      refType: "issue",
+      matchProvider: "*",
+      matchRefType: "issue",
+      relationshipType: "references",
+      confidence: 0.8,
+    },
+    {
+      refType: "branch",
+      matchProvider: "*",
+      matchRefType: "branch",
+      relationshipType: "same_branch",
+      confidence: 0.9,
+    },
+  ],
+
   webhook: {
     headersSchema: z.object({
       "linear-signature": z.string(),

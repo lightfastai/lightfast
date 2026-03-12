@@ -177,6 +177,31 @@ const eventsMap = {
     ingestionSource: ingestionSourceSchema.optional(),
   }),
 
+  "apps-console/neural/observation.stored": z.object({
+    /** Observation external ID (nanoid) */
+    observationId: z.string(),
+    /** Workspace DB UUID */
+    workspaceId: z.string(),
+    /** Clerk organization ID */
+    clerkOrgId: z.string().optional(),
+    /** Source provider for routing */
+    source: z.string(),
+    /** Source event type for routing */
+    sourceType: z.string(),
+    /** Significance score (pre-computed in store step) */
+    significanceScore: z.number(),
+    /** Extracted L0 entity refs (small, needed by interpretation) */
+    entityRefs: z.array(
+      z.object({
+        type: z.string(),
+        key: z.string(),
+        label: z.string().nullable(),
+      })
+    ),
+    /** Internal observation ID for DB queries */
+    internalObservationId: z.number(),
+  }),
+
   "apps-console/neural/observation.captured": z.object({
     /** Workspace DB UUID */
     workspaceId: z.string(),

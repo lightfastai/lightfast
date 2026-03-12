@@ -340,6 +340,60 @@ export const github = defineProvider({
   api: githubApi,
   backfill: githubBackfill,
 
+  edgeRules: [
+    {
+      refType: "commit",
+      matchProvider: "vercel",
+      matchRefType: "commit",
+      relationshipType: "deploys",
+      confidence: 1.0,
+    },
+    {
+      refType: "commit",
+      selfLabel: "resolved_by",
+      matchProvider: "sentry",
+      matchRefType: "commit",
+      relationshipType: "resolves",
+      confidence: 1.0,
+    },
+    {
+      refType: "commit",
+      matchProvider: "*",
+      matchRefType: "commit",
+      relationshipType: "same_commit",
+      confidence: 1.0,
+    },
+    {
+      refType: "branch",
+      matchProvider: "*",
+      matchRefType: "branch",
+      relationshipType: "same_branch",
+      confidence: 0.9,
+    },
+    {
+      refType: "pr",
+      matchProvider: "*",
+      matchRefType: "pr",
+      relationshipType: "tracked_in",
+      confidence: 1.0,
+    },
+    {
+      refType: "issue",
+      selfLabel: "fixes",
+      matchProvider: "*",
+      matchRefType: "issue",
+      relationshipType: "fixes",
+      confidence: 1.0,
+    },
+    {
+      refType: "issue",
+      matchProvider: "*",
+      matchRefType: "issue",
+      relationshipType: "references",
+      confidence: 0.8,
+    },
+  ],
+
   envSchema: {
     GITHUB_APP_SLUG: z.string().min(1),
     GITHUB_APP_ID: z.string().min(1),

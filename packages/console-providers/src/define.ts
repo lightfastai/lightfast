@@ -4,6 +4,7 @@ import type { PostTransformEvent } from "./post-transform-event";
 import type {
   BaseProviderAccountInfo,
   CallbackResult,
+  EdgeRule,
   OAuthTokens,
   TransformContext,
 } from "./types";
@@ -306,6 +307,8 @@ export interface ProviderDefinition<
   readonly deriveObservationType: (sourceType: string) => string;
   readonly description: string;
   readonly displayName: string;
+  /** Declarative edge rules for entity-mediated relationship detection */
+  readonly edgeRules?: EdgeRule[];
   /** Pre-built createEnv() preset — for use in @t3-oss/env-core `extends` arrays.
    *  Lazy: only validates on first access. */
   readonly env: Record<string, string>;

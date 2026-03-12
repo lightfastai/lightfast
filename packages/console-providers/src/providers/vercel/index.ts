@@ -170,6 +170,30 @@ export const vercel = defineProvider({
   api: vercelApi,
   backfill: vercelBackfill,
 
+  edgeRules: [
+    {
+      refType: "commit",
+      matchProvider: "github",
+      matchRefType: "commit",
+      relationshipType: "deploys",
+      confidence: 1.0,
+    },
+    {
+      refType: "commit",
+      matchProvider: "*",
+      matchRefType: "commit",
+      relationshipType: "same_commit",
+      confidence: 1.0,
+    },
+    {
+      refType: "deployment",
+      matchProvider: "*",
+      matchRefType: "deployment",
+      relationshipType: "references",
+      confidence: 0.8,
+    },
+  ],
+
   webhook: {
     headersSchema: z.object({
       "x-vercel-signature": z.string(),

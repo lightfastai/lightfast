@@ -25,6 +25,7 @@ import { workspaceNeuralObservations } from "./workspace-neural-observations";
  * Relationship types between observations
  */
 export type RelationshipType =
+  | "co_occurs" // Fallback: two observations share an entity but no specific rule
   | "fixes" // PR/commit fixes an issue
   | "resolves" // Commit resolves a Sentry issue
   | "triggers" // Sentry error triggers Linear issue

@@ -7,13 +7,20 @@ import { z } from "zod";
  * Used for semantic grouping and targeted search.
  */
 export const entityCategorySchema = z.enum([
+  // Structural types (from references — used for graph matching)
+  "commit",
+  "branch",
+  "pr",
+  "issue",
+  "deployment",
+  // Semantic types (from text extraction — used for search enrichment)
   "engineer", // Team members, contributors (@mentions, emails)
   "project", // Features, repos, tickets (#123, ENG-456)
   "endpoint", // API routes (POST /api/users)
   "config", // Environment variables (DATABASE_URL)
   "definition", // File paths, technical terms
   "service", // External services, dependencies
-  "reference", // Generic references (commits, branches)
+  "reference", // Generic references
 ]);
 
 export type EntityCategory = z.infer<typeof entityCategorySchema>;

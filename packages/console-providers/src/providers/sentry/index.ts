@@ -190,6 +190,24 @@ export const sentry = defineProvider({
   api: sentryApi,
   backfill: sentryBackfill,
 
+  edgeRules: [
+    {
+      refType: "commit",
+      selfLabel: "resolved_by",
+      matchProvider: "*",
+      matchRefType: "commit",
+      relationshipType: "resolves",
+      confidence: 1.0,
+    },
+    {
+      refType: "issue",
+      matchProvider: "linear",
+      matchRefType: "issue",
+      relationshipType: "triggers",
+      confidence: 0.8,
+    },
+  ],
+
   webhook: {
     headersSchema: z.object({
       "sentry-hook-signature": z.string(),

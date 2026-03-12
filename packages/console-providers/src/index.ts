@@ -161,6 +161,7 @@ export {
   vercelWebhookPayloadSchema,
 } from "./providers/vercel/schemas";
 export { transformVercelDeployment } from "./providers/vercel/transformers";
+export type { EdgeRule } from "./types";
 
 // ── Event Registry (derived from provider definitions) ───────────────────────
 // EVENT_REGISTRY, EventKey, and ALL_*_EVENTS are now derived from PROVIDERS

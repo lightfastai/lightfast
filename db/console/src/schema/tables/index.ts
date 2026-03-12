@@ -33,6 +33,12 @@ export {
   type OrgWorkspace,
   orgWorkspaces,
 } from "./org-workspaces";
+// Entity-observation junction
+export {
+  type InsertWorkspaceEntityObservation,
+  type WorkspaceEntityObservation,
+  workspaceEntityObservations,
+} from "./workspace-entity-observations";
 // Workspace event storage
 export {
   type InsertWorkspaceEvent,
@@ -65,13 +71,18 @@ export type {
   ObservationMetadata,
   ObservationReference,
 } from "./workspace-neural-observations";
-
 // Neural memory tables
 export {
   type InsertWorkspaceNeuralObservation,
   type WorkspaceNeuralObservation,
   workspaceNeuralObservations,
 } from "./workspace-neural-observations";
+// Interpretation table
+export {
+  type InsertWorkspaceObservationInterpretation,
+  type WorkspaceObservationInterpretation,
+  workspaceObservationInterpretations,
+} from "./workspace-observation-interpretations";
 export type { RelationshipMetadata } from "./workspace-observation-relationships";
 // Relationship graph tables
 export {

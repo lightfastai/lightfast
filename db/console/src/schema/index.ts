@@ -6,10 +6,12 @@ export {
   gwResourcesRelations,
   gwTokensRelations,
   orgWorkspacesRelations,
+  workspaceEntityObservationsRelations,
   workspaceIntegrationsRelations,
   workspaceKnowledgeDocumentsRelations,
   workspaceKnowledgeVectorChunksRelations,
   workspaceNeuralObservationsRelations,
+  workspaceObservationInterpretationsRelations,
   workspaceObservationRelationshipsRelations,
   workspaceUserActivitiesRelations,
 } from "./relations";
@@ -43,12 +45,14 @@ export {
   type InsertGwWebhookDelivery,
   type InsertOrgApiKey,
   type InsertOrgWorkspace,
+  type InsertWorkspaceEntityObservation,
   type InsertWorkspaceEvent,
   type InsertWorkspaceIntegration,
   type InsertWorkspaceKnowledgeDocument,
   type InsertWorkspaceKnowledgeVectorChunk,
   type InsertWorkspaceNeuralEntity,
   type InsertWorkspaceNeuralObservation,
+  type InsertWorkspaceObservationInterpretation,
   type InsertWorkspaceObservationRelationship,
   type InsertWorkspaceUserActivity,
   type InsertWorkspaceWorkflowRun,
@@ -58,15 +62,19 @@ export {
   // Org-scoped tables
   orgWorkspaces,
   type RelationshipType,
+  type WorkspaceEntityObservation,
   type WorkspaceEvent,
   type WorkspaceIntegration,
   type WorkspaceKnowledgeDocument,
   type WorkspaceKnowledgeVectorChunk,
   type WorkspaceNeuralEntity,
   type WorkspaceNeuralObservation,
+  type WorkspaceObservationInterpretation,
   type WorkspaceObservationRelationship,
   type WorkspaceUserActivity,
   type WorkspaceWorkflowRun,
+  // Entity-observation junction
+  workspaceEntityObservations,
   // Workspace event storage
   workspaceEvents,
   workspaceIntegrations,
@@ -76,6 +84,8 @@ export {
   workspaceNeuralEntities,
   // Neural memory tables
   workspaceNeuralObservations,
+  // Interpretation table
+  workspaceObservationInterpretations,
   // Relationship graph tables
   workspaceObservationRelationships,
   workspaceUserActivities,

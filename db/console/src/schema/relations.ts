@@ -3,10 +3,13 @@ import { gwInstallations } from "./tables/gw-installations";
 import { gwResources } from "./tables/gw-resources";
 import { gwTokens } from "./tables/gw-tokens";
 import { orgWorkspaces } from "./tables/org-workspaces";
+import { workspaceEntityObservations } from "./tables/workspace-entity-observations";
 import { workspaceIntegrations } from "./tables/workspace-integrations";
 import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-documents";
 import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
+import { workspaceNeuralEntities } from "./tables/workspace-neural-entities";
 import { workspaceNeuralObservations } from "./tables/workspace-neural-observations";
+import { workspaceObservationInterpretations } from "./tables/workspace-observation-interpretations";
 import { workspaceObservationRelationships } from "./tables/workspace-observation-relationships";
 import { workspaceUserActivities } from "./tables/workspace-user-activities";
 
@@ -102,9 +105,45 @@ export const workspaceIntegrationsRelations = relations(
 
 export const workspaceNeuralObservationsRelations = relations(
   workspaceNeuralObservations,
-  ({ one }) => ({
+  ({ one, many }) => ({
     workspace: one(orgWorkspaces, {
       fields: [workspaceNeuralObservations.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+    interpretations: many(workspaceObservationInterpretations),
+    entityObservations: many(workspaceEntityObservations),
+  })
+);
+
+// Interpretation relations
+export const workspaceObservationInterpretationsRelations = relations(
+  workspaceObservationInterpretations,
+  ({ one }) => ({
+    observation: one(workspaceNeuralObservations, {
+      fields: [workspaceObservationInterpretations.observationId],
+      references: [workspaceNeuralObservations.id],
+    }),
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceObservationInterpretations.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+  })
+);
+
+// Entity-observation junction relations
+export const workspaceEntityObservationsRelations = relations(
+  workspaceEntityObservations,
+  ({ one }) => ({
+    entity: one(workspaceNeuralEntities, {
+      fields: [workspaceEntityObservations.entityId],
+      references: [workspaceNeuralEntities.id],
+    }),
+    observation: one(workspaceNeuralObservations, {
+      fields: [workspaceEntityObservations.observationId],
+      references: [workspaceNeuralObservations.id],
+    }),
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceEntityObservations.workspaceId],
       references: [orgWorkspaces.id],
     }),
   })
