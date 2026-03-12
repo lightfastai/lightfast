@@ -793,7 +793,6 @@ export const observationCapture = inngest.createFunction(
             occurredAt: sourceEvent.occurredAt,
             actor: sourceEvent.actor ?? null,
             // actorId: null until Phase 5 (actor_profiles still uses varchar)
-            // clusterId: null until Phase 5 (clusters still uses varchar)
             observationType,
             title: sourceEvent.title,
             content: sourceEvent.body,

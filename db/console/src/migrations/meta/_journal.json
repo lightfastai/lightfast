@@ -281,6 +281,13 @@
       "when": 1772848981239,
       "tag": "0039_luxuriant_imperial_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1773279794199,
+      "tag": "0040_friendly_payback",
+      "breakpoints": true
     }
   ]
 }

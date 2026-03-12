@@ -382,10 +382,10 @@ This will generate a migration that:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Migration generates cleanly: `cd db/console && pnpm db:generate`
-- [ ] No TypeScript errors: `pnpm typecheck`
-- [ ] No lint errors: `pnpm check`
-- [ ] `grep -r "workspaceObservationClusters\|clusterId\|ClusterTags\|ClusterAffinityTags\|cluster_assigned\|cluster_affinity\|cluster_summary" --include="*.ts" db/ api/ apps/ packages/` returns no matches (excluding migration files)
+- [x] Migration generates cleanly: `cd db/console && pnpm db:generate`
+- [x] No TypeScript errors: `pnpm typecheck`
+- [x] No lint errors: `pnpm check`
+- [x] `grep -r "workspaceObservationClusters\|clusterId\|ClusterTags\|ClusterAffinityTags\|cluster_assigned\|cluster_affinity\|cluster_summary" --include="*.ts" db/ api/ apps/ packages/` returns no matches (excluding migration files)
 
 #### Manual Verification:
 - [ ] Migration applies cleanly: `cd db/console && pnpm db:migrate`
@@ -422,10 +422,10 @@ After all removals, verify:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Full typecheck passes: `pnpm typecheck`
-- [ ] Full lint passes: `pnpm check`
-- [ ] No orphaned imports: `pnpm check` catches unused imports
-- [ ] Build succeeds: `pnpm build:console`
+- [x] Full typecheck passes: `pnpm typecheck`
+- [x] Full lint passes: `pnpm check`
+- [x] No orphaned imports: `pnpm check` catches unused imports
+- [x] Build succeeds: `pnpm build:console`
 
 #### Manual Verification:
 - [ ] Send a test webhook through relay → observe it flowing through the simplified pipeline

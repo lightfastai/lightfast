@@ -12,7 +12,6 @@ export {
   workspaceKnowledgeDocumentsRelations,
   workspaceKnowledgeVectorChunksRelations,
   workspaceNeuralObservationsRelations,
-  workspaceObservationClustersRelations,
   workspaceObservationRelationshipsRelations,
   workspaceTemporalStatesRelations,
   workspaceUserActivitiesRelations,
@@ -21,8 +20,6 @@ export {
 // Re-exported types from tables
 export type {
   ActorResolutionTags,
-  ClusterAffinityTags,
-  ClusterTags,
   DocumentsIndexedTags,
   EntityExtractionTags,
   ErrorTags,
@@ -66,7 +63,6 @@ export {
   type InsertWorkspaceKnowledgeVectorChunk,
   type InsertWorkspaceNeuralEntity,
   type InsertWorkspaceNeuralObservation,
-  type InsertWorkspaceObservationCluster,
   type InsertWorkspaceObservationRelationship,
   type InsertWorkspaceOperationMetric,
   type InsertWorkspaceTemporalState,
@@ -88,7 +84,6 @@ export {
   type WorkspaceKnowledgeVectorChunk,
   type WorkspaceNeuralEntity,
   type WorkspaceNeuralObservation,
-  type WorkspaceObservationCluster,
   type WorkspaceObservationRelationship,
   type WorkspaceOperationMetric,
   type WorkspaceTemporalState,
@@ -104,7 +99,6 @@ export {
   workspaceNeuralEntities,
   // Neural memory tables
   workspaceNeuralObservations,
-  workspaceObservationClusters,
   // Relationship graph tables
   workspaceObservationRelationships,
   workspaceOperationsMetrics,

@@ -16,8 +16,6 @@ import {
 } from "@db/console/schema";
 import type {
   ActorResolutionTags,
-  ClusterAffinityTags,
-  ClusterTags,
   DocumentsIndexedTags,
   EntityExtractionTags,
   ErrorTags,
@@ -327,18 +325,6 @@ export async function recordJobMetric(
         tags: EntityExtractionTags;
       }
     | {
-        type: "cluster_assigned";
-        value: 1;
-        unit: "count";
-        tags: ClusterTags;
-      }
-    | {
-        type: "cluster_summary_generated";
-        value: 1;
-        unit: "count";
-        tags: ClusterTags;
-      }
-    | {
         type: "profile_updated";
         value: 1;
         unit: "count";
@@ -350,12 +336,6 @@ export async function recordJobMetric(
         value: 1;
         unit: "count";
         tags: ActorResolutionTags;
-      }
-    | {
-        type: "cluster_affinity";
-        value: 1;
-        unit: "count";
-        tags: ClusterAffinityTags;
       }
   ) & {
     clerkOrgId: string;

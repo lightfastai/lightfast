@@ -29,13 +29,10 @@ import { jobTriggerSchema } from "./job";
  * - observation_duplicate: Duplicate observations skipped
  * - observation_below_threshold: Observations below significance threshold
  * - entities_extracted: Entity extraction counts
- * - cluster_assigned: Cluster assignments
- * - cluster_summary_generated: Cluster summary generations
  * - profile_updated: Actor profile updates
  *
  * Analytics metrics:
  * - actor_resolution: Actor resolution attempts (success/failure, method used)
- * - cluster_affinity: Cluster affinity scores (how well observation fits cluster)
  */
 export const operationMetricTypeSchema = z.enum([
   "job_duration",
@@ -47,12 +44,9 @@ export const operationMetricTypeSchema = z.enum([
   "observation_duplicate",
   "observation_below_threshold",
   "entities_extracted",
-  "cluster_assigned",
-  "cluster_summary_generated",
   "profile_updated",
   // Analytics metrics
   "actor_resolution",
-  "cluster_affinity",
 ]);
 
 export type OperationMetricType = z.infer<typeof operationMetricTypeSchema>;
@@ -126,15 +120,6 @@ export const entityExtractionTagsSchema = z.object({
 });
 
 /**
- * Cluster metric tags
- */
-export const clusterTagsSchema = z.object({
-  clusterId: z.string(),
-  isNew: z.boolean().optional(),
-  observationCount: z.number().optional(),
-});
-
-/**
  * Profile update metric tags
  */
 export const profileUpdateTagsSchema = z.object({
@@ -145,7 +130,6 @@ export const profileUpdateTagsSchema = z.object({
 // Neural metric type exports
 export type NeuralObservationTags = z.infer<typeof neuralObservationTagsSchema>;
 export type EntityExtractionTags = z.infer<typeof entityExtractionTagsSchema>;
-export type ClusterTags = z.infer<typeof clusterTagsSchema>;
 export type ProfileUpdateTags = z.infer<typeof profileUpdateTagsSchema>;
 
 // ============================================================================
@@ -165,22 +149,8 @@ export const actorResolutionTagsSchema = z.object({
   method: z.enum(["github_id", "commit_sha", "username", "none"]).optional(),
 });
 
-/**
- * Cluster affinity metric tags
- * Tracks how well observations fit into clusters
- */
-export const clusterAffinityTagsSchema = z.object({
-  /** Affinity score (0-1, how well observation matches cluster) */
-  affinityScore: z.number(),
-  /** Whether observation joined existing cluster (vs creating new) */
-  joined: z.boolean(),
-  /** Cluster ID that observation was assigned to */
-  clusterId: z.string().optional(),
-});
-
 // Analytics metric type exports
 export type ActorResolutionTags = z.infer<typeof actorResolutionTagsSchema>;
-export type ClusterAffinityTags = z.infer<typeof clusterAffinityTagsSchema>;
 
 /**
  * Discriminated Union: Operation Metric with Type-Specific Tags
@@ -257,22 +227,6 @@ export const entitiesExtractedMetricSchema = z.object({
   tags: entityExtractionTagsSchema,
 });
 
-// Cluster Assigned Metric
-export const clusterAssignedMetricSchema = z.object({
-  type: z.literal("cluster_assigned"),
-  value: z.literal(1),
-  unit: z.literal("count"),
-  tags: clusterTagsSchema,
-});
-
-// Cluster Summary Generated Metric
-export const clusterSummaryGeneratedMetricSchema = z.object({
-  type: z.literal("cluster_summary_generated"),
-  value: z.literal(1),
-  unit: z.literal("count"),
-  tags: clusterTagsSchema,
-});
-
 // Profile Updated Metric
 export const profileUpdatedMetricSchema = z.object({
   type: z.literal("profile_updated"),
@@ -291,14 +245,6 @@ export const actorResolutionMetricSchema = z.object({
   value: z.literal(1),
   unit: z.literal("count"),
   tags: actorResolutionTagsSchema,
-});
-
-// Cluster Affinity Metric
-export const clusterAffinityMetricSchema = z.object({
-  type: z.literal("cluster_affinity"),
-  value: z.literal(1),
-  unit: z.literal("count"),
-  tags: clusterAffinityTagsSchema,
 });
 
 /**
@@ -320,12 +266,9 @@ export const operationMetricSchema = z.discriminatedUnion("type", [
   observationDuplicateMetricSchema,
   observationBelowThresholdMetricSchema,
   entitiesExtractedMetricSchema,
-  clusterAssignedMetricSchema,
-  clusterSummaryGeneratedMetricSchema,
   profileUpdatedMetricSchema,
   // Analytics metrics
   actorResolutionMetricSchema,
-  clusterAffinityMetricSchema,
 ]);
 
 export type OperationMetric = z.infer<typeof operationMetricSchema>;

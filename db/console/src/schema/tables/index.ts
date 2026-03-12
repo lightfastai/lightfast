@@ -83,11 +83,6 @@ export {
   type WorkspaceNeuralObservation,
   workspaceNeuralObservations,
 } from "./workspace-neural-observations";
-export {
-  type InsertWorkspaceObservationCluster,
-  type WorkspaceObservationCluster,
-  workspaceObservationClusters,
-} from "./workspace-observation-clusters";
 export type { RelationshipMetadata } from "./workspace-observation-relationships";
 // Relationship graph tables
 export {
@@ -98,8 +93,6 @@ export {
 } from "./workspace-observation-relationships";
 export type {
   ActorResolutionTags,
-  ClusterAffinityTags,
-  ClusterTags,
   DocumentsIndexedTags,
   EntityExtractionTags,
   ErrorTags,

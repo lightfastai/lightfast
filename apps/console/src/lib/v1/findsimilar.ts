@@ -206,7 +206,6 @@ async function fetchSourceContent(
             : "",
         type: "file",
         source: doc.sourceType,
-        clusterId: null,
       };
     }
     return null;

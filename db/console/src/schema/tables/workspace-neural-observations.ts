@@ -80,11 +80,6 @@ export const workspaceNeuralObservations = pgTable(
       .notNull()
       .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
-    /**
-     * Cluster this observation is assigned to
-     */
-    clusterId: bigint("cluster_id", { mode: "number" }),
-
     // ========== TEMPORAL ==========
 
     /**
@@ -227,9 +222,6 @@ export const workspaceNeuralObservations = pgTable(
       table.workspaceId,
       table.occurredAt
     ),
-
-    // Cluster membership
-    clusterIdx: index("obs_cluster_idx").on(table.clusterId),
 
     // Source filtering
     sourceIdx: index("obs_source_idx").on(

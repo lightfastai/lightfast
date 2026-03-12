@@ -9,7 +9,6 @@ import { workspaceIntegrations } from "./tables/workspace-integrations";
 import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-documents";
 import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
 import { workspaceNeuralObservations } from "./tables/workspace-neural-observations";
-import { workspaceObservationClusters } from "./tables/workspace-observation-clusters";
 import { workspaceObservationRelationships } from "./tables/workspace-observation-relationships";
 import { workspaceTemporalStates } from "./tables/workspace-temporal-states";
 import { workspaceUserActivities } from "./tables/workspace-user-activities";
@@ -49,7 +48,6 @@ export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
   documents: many(workspaceKnowledgeDocuments),
   vectorChunks: many(workspaceKnowledgeVectorChunks),
   neuralObservations: many(workspaceNeuralObservations),
-  observationClusters: many(workspaceObservationClusters),
   actorProfiles: many(workspaceActorProfiles),
   temporalStates: many(workspaceTemporalStates),
 }));
@@ -114,21 +112,6 @@ export const workspaceNeuralObservationsRelations = relations(
       fields: [workspaceNeuralObservations.workspaceId],
       references: [orgWorkspaces.id],
     }),
-    cluster: one(workspaceObservationClusters, {
-      fields: [workspaceNeuralObservations.clusterId],
-      references: [workspaceObservationClusters.id],
-    }),
-  })
-);
-
-export const workspaceObservationClustersRelations = relations(
-  workspaceObservationClusters,
-  ({ one, many }) => ({
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceObservationClusters.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
-    observations: many(workspaceNeuralObservations),
   })
 );
 

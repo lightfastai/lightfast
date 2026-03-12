@@ -6,8 +6,6 @@ export { db } from "./client";
 // Re-exported types from schema
 export type {
   ActorResolutionTags,
-  ClusterAffinityTags,
-  ClusterTags,
   DocumentsIndexedTags,
   EntityExtractionTags,
   ErrorTags,
@@ -52,7 +50,6 @@ export {
   type InsertWorkspaceKnowledgeVectorChunk,
   type InsertWorkspaceNeuralEntity,
   type InsertWorkspaceNeuralObservation,
-  type InsertWorkspaceObservationCluster,
   type InsertWorkspaceObservationRelationship,
   type InsertWorkspaceOperationMetric,
   type InsertWorkspaceTemporalState,
@@ -76,7 +73,6 @@ export {
   type WorkspaceKnowledgeVectorChunk,
   type WorkspaceNeuralEntity,
   type WorkspaceNeuralObservation,
-  type WorkspaceObservationCluster,
   type WorkspaceObservationRelationship,
   type WorkspaceOperationMetric,
   type WorkspaceTemporalState,
@@ -97,8 +93,6 @@ export {
   // Neural memory tables
   workspaceNeuralObservations,
   workspaceNeuralObservationsRelations,
-  workspaceObservationClusters,
-  workspaceObservationClustersRelations,
   // Relationship graph tables
   workspaceObservationRelationships,
   workspaceObservationRelationshipsRelations,

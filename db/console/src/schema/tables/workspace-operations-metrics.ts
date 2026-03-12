@@ -1,7 +1,5 @@
 import type {
   ActorResolutionTags,
-  ClusterAffinityTags,
-  ClusterTags,
   DocumentsIndexedTags,
   EntityExtractionTags,
   ErrorTags,
@@ -158,8 +156,6 @@ export type InsertWorkspaceOperationMetric =
 // Type re-exports from validation schemas
 export type {
   ActorResolutionTags,
-  ClusterAffinityTags,
-  ClusterTags,
   DocumentsIndexedTags,
   EntityExtractionTags,
   ErrorTags,
@@ -182,12 +178,10 @@ export type {
  * Neural workflow metrics:
  * - observation_*: requires source and sourceType
  * - entities_extracted: requires observationId and entityCount
- * - cluster_*: requires clusterId
  * - profile_updated: requires actorId
  *
  * Analytics metrics:
  * - actor_resolution: requires resolved, source, and optional method
- * - cluster_affinity: requires affinityScore, joined, and optional clusterId
  */
 export type OperationMetricTags =
   | JobDurationTags
@@ -195,7 +189,5 @@ export type OperationMetricTags =
   | ErrorTags
   | NeuralObservationTags
   | EntityExtractionTags
-  | ClusterTags
   | ProfileUpdateTags
-  | ActorResolutionTags
-  | ClusterAffinityTags;
+  | ActorResolutionTags;
