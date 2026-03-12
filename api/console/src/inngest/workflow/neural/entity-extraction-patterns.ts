@@ -188,16 +188,25 @@ export function extractFromReferences(
     let key: string;
 
     switch (ref.type) {
-      case "issue":
-      case "pr":
-        category = "project";
+      case "commit":
+        category = "commit";
+        key = ref.id.substring(0, 7);
+        break;
+      case "branch":
+        category = "branch";
         key = ref.id;
         break;
-      case "commit":
-      case "branch":
-        category = "reference";
-        key =
-          ref.type === "branch" ? `branch:${ref.id}` : ref.id.substring(0, 7);
+      case "pr":
+        category = "pr";
+        key = ref.id;
+        break;
+      case "issue":
+        category = "issue";
+        key = ref.id;
+        break;
+      case "deployment":
+        category = "deployment";
+        key = ref.id;
         break;
       case "assignee":
       case "reviewer":

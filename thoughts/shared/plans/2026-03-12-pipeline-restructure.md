@@ -604,9 +604,9 @@ export { observationInterpret } from "./observation-interpret";
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm check`
-- [ ] Build succeeds: `pnpm build:console`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm check` (3 pre-existing migration format errors unrelated to Phase 2)
+- [x] Build succeeds: `pnpm build:console`
 
 #### Manual Verification:
 - [ ] Send test webhook through relay → verify observation stored (fast path completes)
