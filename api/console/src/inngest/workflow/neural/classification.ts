@@ -4,7 +4,7 @@
  * Classifies source events into semantic categories using Claude Haiku.
  * Provides primary category, secondary tags, topics, and confidence scores.
  *
- * Used by observation-capture.ts step.ai.wrap() for inline classification.
+ * Used by observation-interpret.ts for LLM-based classification.
  */
 
 import type { PostTransformEvent } from "@repo/console-providers";
