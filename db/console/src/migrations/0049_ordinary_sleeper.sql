@@ -1,0 +1,2 @@
+ALTER TABLE "lightfast_workspace_entities" DROP CONSTRAINT "lightfast_workspace_entities_external_id_unique";--> statement-breakpoint
+ALTER TABLE "lightfast_workspace_events" DROP CONSTRAINT "lightfast_workspace_events_external_id_unique";

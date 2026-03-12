@@ -30,7 +30,6 @@ export const workspaceEdges = pgTable(
 
     externalId: varchar("external_id", { length: 21 })
       .notNull()
-      .unique()
       .$defaultFn(() => nanoid()),
 
     workspaceId: varchar("workspace_id", { length: 191 })

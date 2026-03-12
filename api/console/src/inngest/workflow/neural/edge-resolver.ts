@@ -92,25 +92,24 @@ export async function resolveEdges(
   // 4. Get unique co-occurring event IDs and their sources
   const coEventIds = [...new Set(coOccurring.map((c) => c.eventId))];
 
-  const coEvents = await db
-    .select({
-      id: workspaceEvents.id,
-      source: workspaceEvents.source,
-    })
-    .from(workspaceEvents)
-    .where(inArray(workspaceEvents.id, coEventIds));
+  const [coEvents, coEventEntityJunctions] = await Promise.all([
+    db
+      .select({ id: workspaceEvents.id, source: workspaceEvents.source })
+      .from(workspaceEvents)
+      .where(inArray(workspaceEvents.id, coEventIds)),
+    db
+      .select({
+        eventId: workspaceEntityEvents.eventId,
+        entityId: workspaceEntityEvents.entityId,
+        refLabel: workspaceEntityEvents.refLabel,
+      })
+      .from(workspaceEntityEvents)
+      .where(inArray(workspaceEntityEvents.eventId, coEventIds)),
+  ]);
 
   const coEventSourceMap = new Map(coEvents.map((e) => [e.id, e.source]));
 
   // 5. Load ALL entity refs for co-occurring events
-  const coEventEntityJunctions = await db
-    .select({
-      eventId: workspaceEntityEvents.eventId,
-      entityId: workspaceEntityEvents.entityId,
-      refLabel: workspaceEntityEvents.refLabel,
-    })
-    .from(workspaceEntityEvents)
-    .where(inArray(workspaceEntityEvents.eventId, coEventIds));
 
   // Load entity details for co-occurring events' entities
   const coEntityIds = [
@@ -153,7 +152,18 @@ export async function resolveEdges(
   }
 
   // 6. Evaluate cross-entity-type rules
-  const myRules = getEdgeRules(source);
+  const rulesCache = new Map<string, EdgeRule[]>();
+  function getCachedEdgeRules(src: string): EdgeRule[] {
+    let rules = rulesCache.get(src);
+    if (!rules) {
+      const provider = Object.values(PROVIDERS).find((p) => p.name === src);
+      rules = provider?.edgeRules ?? [];
+      rulesCache.set(src, rules);
+    }
+    return rules;
+  }
+
+  const myRules = getCachedEdgeRules(source);
   const candidates: EdgeCandidate[] = [];
 
   for (const coEventId of coEventIds) {
@@ -163,7 +173,7 @@ export async function resolveEdges(
     }
 
     const otherEntities = coEventEntitiesMap.get(coEventId) ?? [];
-    const otherRules = getEdgeRules(otherSource);
+    const otherRules = getCachedEdgeRules(otherSource);
 
     // Enumerate all pairs: (our entity, their entity)
     for (const ourEntity of ourEntities) {
@@ -234,11 +244,6 @@ export async function resolveEdges(
     log.error("Failed to create entity edges", { error, workspaceId });
     return 0;
   }
-}
-
-function getEdgeRules(source: string): EdgeRule[] {
-  const provider = Object.values(PROVIDERS).find((p) => p.name === source);
-  return provider?.edgeRules ?? [];
 }
 
 function findBestRule(

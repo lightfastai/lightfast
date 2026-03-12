@@ -37,7 +37,6 @@ export const workspaceEntities = pgTable(
      */
     externalId: varchar("external_id", { length: 21 })
       .notNull()
-      .unique()
       .$defaultFn(() => nanoid()),
 
     /**

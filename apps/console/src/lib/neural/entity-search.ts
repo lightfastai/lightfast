@@ -115,7 +115,7 @@ export async function searchByEntities(
   const junctions = await db
     .select({
       entityId: workspaceEntityEvents.entityId,
-      observationId: workspaceEntityEvents.eventId,
+      eventId: workspaceEntityEvents.eventId,
     })
     .from(workspaceEntityEvents)
     .where(inArray(workspaceEntityEvents.entityId, entityIds))
@@ -126,7 +126,7 @@ export async function searchByEntities(
   }
 
   // 4. Fetch unique observations
-  const observationIds = [...new Set(junctions.map((j) => j.observationId))];
+  const observationIds = [...new Set(junctions.map((j) => j.eventId))];
   const observations = await db
     .select({
       id: workspaceEvents.id,
@@ -144,7 +144,7 @@ export async function searchByEntities(
   const results: EntitySearchResult[] = [];
   for (const junction of junctions) {
     const entity = entityMap.get(junction.entityId);
-    const obs = obsMap.get(junction.observationId);
+    const obs = obsMap.get(junction.eventId);
     if (!(entity && obs)) {
       continue;
     }

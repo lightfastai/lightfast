@@ -135,7 +135,7 @@ async function normalizeVectorIds(
     // Query interpretation table for embedding IDs
     const interpretations = await db
       .select({
-        observationId: workspaceInterpretations.eventId,
+        eventId: workspaceInterpretations.eventId,
         embeddingTitleId: workspaceInterpretations.embeddingTitleId,
         embeddingContentId: workspaceInterpretations.embeddingContentId,
         embeddingSummaryId: workspaceInterpretations.embeddingSummaryId,
@@ -153,9 +153,7 @@ async function normalizeVectorIds(
       );
 
     // Resolve internal observation IDs to externalIds (nanoid)
-    const obsInternalIds = [
-      ...new Set(interpretations.map((i) => i.observationId)),
-    ];
+    const obsInternalIds = [...new Set(interpretations.map((i) => i.eventId))];
     const obsRows =
       obsInternalIds.length > 0
         ? await db
@@ -176,7 +174,7 @@ async function normalizeVectorIds(
       { id: string; view: "title" | "content" | "summary" | "legacy" }
     >();
     for (const interp of interpretations) {
-      const externalId = internalToExternal.get(interp.observationId);
+      const externalId = internalToExternal.get(interp.eventId);
       if (!externalId) {
         continue;
       }
@@ -599,7 +597,7 @@ export async function enrichSearchResults(
     internalObsIds.length > 0
       ? await db
           .select({
-            observationId: workspaceEntityEvents.eventId,
+            eventId: workspaceEntityEvents.eventId,
             entityId: workspaceEntityEvents.entityId,
           })
           .from(workspaceEntityEvents)
@@ -625,7 +623,7 @@ export async function enrichSearchResults(
   // Group entities by externalId (for result matching)
   const entityMap = new Map<string, { key: string; category: string }[]>();
   for (const junction of junctions) {
-    const externalId = internalToExternalMap.get(junction.observationId);
+    const externalId = internalToExternalMap.get(junction.eventId);
     const entityDetail = entityDetailsMap.get(junction.entityId);
     if (externalId && entityDetail) {
       const existing = entityMap.get(externalId) ?? [];

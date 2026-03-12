@@ -13,10 +13,12 @@ export type {
   WorkflowOutput,
 } from "./schema";
 export {
+  type GwBackfillRun,
   type GwInstallation,
   type GwResource,
   type GwToken,
   type GwWebhookDelivery,
+  gwBackfillRuns,
   // Gateway-owned tables
   gwInstallations,
   // Relations
@@ -26,6 +28,7 @@ export {
   gwTokens,
   gwTokensRelations,
   gwWebhookDeliveries,
+  type InsertGwBackfillRun,
   type InsertGwInstallation,
   type InsertGwResource,
   type InsertGwToken,
@@ -34,9 +37,11 @@ export {
   type InsertOrgWorkspace,
   type InsertWorkspaceEdge,
   type InsertWorkspaceEntity,
+  type InsertWorkspaceEntityEvent,
   type InsertWorkspaceEvent,
   type InsertWorkspaceIngestLogEntry,
   type InsertWorkspaceIntegration,
+  type InsertWorkspaceInterpretation,
   type InsertWorkspaceKnowledgeDocument,
   type InsertWorkspaceKnowledgeVectorChunk,
   type InsertWorkspaceUserActivity,
@@ -49,17 +54,23 @@ export {
   orgWorkspacesRelations,
   type WorkspaceEdge,
   type WorkspaceEntity,
+  type WorkspaceEntityEvent,
   type WorkspaceEvent,
   type WorkspaceIngestLogEntry,
   type WorkspaceIntegration,
+  type WorkspaceInterpretation,
   type WorkspaceKnowledgeDocument,
   type WorkspaceKnowledgeVectorChunk,
   type WorkspaceUserActivity,
   type WorkspaceWorkflowRun,
   // Entity↔entity edges
   workspaceEdges,
+  workspaceEdgesRelations,
   // Workspace entities
   workspaceEntities,
+  // Entity-event junction
+  workspaceEntityEvents,
+  workspaceEntityEventsRelations,
   // Workspace events (neural observations)
   workspaceEvents,
   workspaceEventsRelations,
@@ -67,6 +78,9 @@ export {
   workspaceIngestLog,
   workspaceIntegrations,
   workspaceIntegrationsRelations,
+  // Interpretations table
+  workspaceInterpretations,
+  workspaceInterpretationsRelations,
   // Workspace-scoped tables
   workspaceKnowledgeDocuments,
   workspaceKnowledgeDocumentsRelations,

@@ -96,7 +96,7 @@ async function normalizeAndDeduplicate(
     // Query interpretation table for embedding IDs
     const interpretations = await db
       .select({
-        observationId: workspaceInterpretations.eventId,
+        eventId: workspaceInterpretations.eventId,
         embeddingTitleId: workspaceInterpretations.embeddingTitleId,
         embeddingContentId: workspaceInterpretations.embeddingContentId,
         embeddingSummaryId: workspaceInterpretations.embeddingSummaryId,
@@ -114,9 +114,7 @@ async function normalizeAndDeduplicate(
       );
 
     // Resolve internal observation IDs to externalIds (nanoid)
-    const obsInternalIds = [
-      ...new Set(interpretations.map((i) => i.observationId)),
-    ];
+    const obsInternalIds = [...new Set(interpretations.map((i) => i.eventId))];
     const obsRows =
       obsInternalIds.length > 0
         ? await db
@@ -133,7 +131,7 @@ async function normalizeAndDeduplicate(
 
     const vectorToObs = new Map<string, string>();
     for (const interp of interpretations) {
-      const externalId = internalToExternal.get(interp.observationId);
+      const externalId = internalToExternal.get(interp.eventId);
       if (!externalId) {
         continue;
       }

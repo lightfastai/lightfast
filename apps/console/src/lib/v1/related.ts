@@ -95,7 +95,12 @@ export async function relatedLogic(
 
   // Step 3: Find direct entity edges
   const edges = await db
-    .select()
+    .select({
+      sourceEntityId: workspaceEdges.sourceEntityId,
+      targetEntityId: workspaceEdges.targetEntityId,
+      relationshipType: workspaceEdges.relationshipType,
+      confidence: workspaceEdges.confidence,
+    })
     .from(workspaceEdges)
     .where(
       and(
@@ -127,23 +132,37 @@ export async function relatedLogic(
   const sourceEntitySet = new Set(sourceEntityIds);
   const neighborEntityInfo = new Map<
     number,
-    { relationshipType: string; direction: "outgoing" | "incoming" }
+    {
+      relationshipType: string;
+      direction: "outgoing" | "incoming";
+      confidence: number;
+    }
   >();
 
   for (const edge of edges) {
     const isSource = sourceEntitySet.has(edge.sourceEntityId);
     const isTarget = sourceEntitySet.has(edge.targetEntityId);
 
+    let neighborId: number | undefined;
+    let direction: "outgoing" | "incoming" | undefined;
+
     if (isSource && !isTarget) {
-      neighborEntityInfo.set(edge.targetEntityId, {
-        relationshipType: edge.relationshipType,
-        direction: "outgoing",
-      });
+      neighborId = edge.targetEntityId;
+      direction = "outgoing";
     } else if (isTarget && !isSource) {
-      neighborEntityInfo.set(edge.sourceEntityId, {
-        relationshipType: edge.relationshipType,
-        direction: "incoming",
-      });
+      neighborId = edge.sourceEntityId;
+      direction = "incoming";
+    }
+
+    if (neighborId !== undefined && direction) {
+      const existing = neighborEntityInfo.get(neighborId);
+      if (!existing || edge.confidence > existing.confidence) {
+        neighborEntityInfo.set(neighborId, {
+          relationshipType: edge.relationshipType,
+          direction,
+          confidence: edge.confidence,
+        });
+      }
     }
   }
 
@@ -168,23 +187,23 @@ export async function relatedLogic(
   const neighborJunctions = await db
     .select({
       entityId: workspaceEntityEvents.entityId,
-      observationId: workspaceEntityEvents.eventId,
+      eventId: workspaceEntityEvents.eventId,
     })
     .from(workspaceEntityEvents)
     .where(inArray(workspaceEntityEvents.entityId, neighborEntityIds));
 
-  // Map: observationId → { relationshipType, direction }
+  // Map: eventId → { relationshipType, direction }
   const relatedObsInfo = new Map<
     number,
     { relationshipType: string; direction: "outgoing" | "incoming" }
   >();
   for (const j of neighborJunctions) {
-    if (j.observationId === sourceObs.id) {
+    if (j.eventId === sourceObs.id) {
       continue; // Skip self
     }
     const info = neighborEntityInfo.get(j.entityId);
-    if (info && !relatedObsInfo.has(j.observationId)) {
-      relatedObsInfo.set(j.observationId, info);
+    if (info && !relatedObsInfo.has(j.eventId)) {
+      relatedObsInfo.set(j.eventId, info);
     }
   }
 
@@ -230,17 +249,13 @@ export async function relatedLogic(
   });
 
   // Group by source
-  const bySource: Record<string, RelatedItem[]> = {
-    github: related.filter((r) => r.source === "github"),
-    vercel: related.filter((r) => r.source === "vercel"),
-    sentry: related.filter((r) => r.source === "sentry"),
-    linear: related.filter((r) => r.source === "linear"),
-  };
-
-  // Remove empty arrays
-  for (const key of Object.keys(bySource)) {
-    if (bySource[key]?.length === 0) {
-      delete bySource[key];
+  const bySource: Record<string, RelatedItem[]> = {};
+  for (const item of related) {
+    const arr = bySource[item.source];
+    if (arr) {
+      arr.push(item);
+    } else {
+      bySource[item.source] = [item];
     }
   }
 

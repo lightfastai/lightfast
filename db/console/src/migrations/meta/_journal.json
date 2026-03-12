@@ -337,6 +337,20 @@
       "when": 1773300357667,
       "tag": "0047_chief_power_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1773304829127,
+      "tag": "0048_next_gauntlet",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1773305315485,
+      "tag": "0049_ordinary_sleeper",
+      "breakpoints": true
     }
   ]
 }

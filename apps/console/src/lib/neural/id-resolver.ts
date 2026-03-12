@@ -236,7 +236,7 @@ export async function resolveObservationsById(
   if (vectorIds.length > 0) {
     const interpretations = await db
       .select({
-        observationId: workspaceInterpretations.eventId,
+        eventId: workspaceInterpretations.eventId,
         embeddingTitleId: workspaceInterpretations.embeddingTitleId,
         embeddingContentId: workspaceInterpretations.embeddingContentId,
         embeddingSummaryId: workspaceInterpretations.embeddingSummaryId,
@@ -253,9 +253,7 @@ export async function resolveObservationsById(
         )
       );
 
-    const obsInternalIds = [
-      ...new Set(interpretations.map((i) => i.observationId)),
-    ];
+    const obsInternalIds = [...new Set(interpretations.map((i) => i.eventId))];
     const obsRows =
       obsInternalIds.length > 0
         ? await db
@@ -278,7 +276,7 @@ export async function resolveObservationsById(
 
     // Map each vector ID to its resolved observation
     for (const interp of interpretations) {
-      const obs = obsById.get(interp.observationId);
+      const obs = obsById.get(interp.eventId);
       if (!obs) {
         continue;
       }

@@ -97,7 +97,12 @@ export async function graphLogic(
   // Step 3: BFS over entity↔entity edges
   let entityFrontier = rootEntityIds;
   const visitedEntityIds = new Set(rootEntityIds);
-  const collectedEdges: (typeof workspaceEdges.$inferSelect)[] = [];
+  const collectedEdges: {
+    sourceEntityId: number;
+    targetEntityId: number;
+    relationshipType: string;
+    confidence: number;
+  }[] = [];
   const allEventIds = new Set([rootObs.id]);
 
   const depth = Math.min(input.depth, 3);
@@ -105,7 +110,12 @@ export async function graphLogic(
 
   for (let d = 0; d < depth && entityFrontier.length > 0; d++) {
     const edges = await db
-      .select()
+      .select({
+        sourceEntityId: workspaceEdges.sourceEntityId,
+        targetEntityId: workspaceEdges.targetEntityId,
+        relationshipType: workspaceEdges.relationshipType,
+        confidence: workspaceEdges.confidence,
+      })
       .from(workspaceEdges)
       .where(
         and(
@@ -113,19 +123,18 @@ export async function graphLogic(
           or(
             inArray(workspaceEdges.sourceEntityId, entityFrontier),
             inArray(workspaceEdges.targetEntityId, entityFrontier)
-          )
+          ),
+          allowedTypes
+            ? inArray(workspaceEdges.relationshipType, allowedTypes)
+            : undefined
         )
       );
 
-    const filteredEdges = allowedTypes
-      ? edges.filter((e) => allowedTypes.includes(e.relationshipType))
-      : edges;
-
-    collectedEdges.push(...filteredEdges);
+    collectedEdges.push(...edges);
 
     // Collect new entity IDs from this BFS level
     const newEntityIds = new Set<number>();
-    for (const edge of filteredEdges) {
+    for (const edge of edges) {
       if (!visitedEntityIds.has(edge.sourceEntityId)) {
         newEntityIds.add(edge.sourceEntityId);
       }
@@ -144,15 +153,15 @@ export async function graphLogic(
       const junctions = await db
         .select({
           entityId: workspaceEntityEvents.entityId,
-          observationId: workspaceEntityEvents.eventId,
+          eventId: workspaceEntityEvents.eventId,
         })
         .from(workspaceEntityEvents)
         .where(inArray(workspaceEntityEvents.entityId, [...newEntityIds]));
 
       for (const j of junctions) {
-        allEventIds.add(j.observationId);
+        allEventIds.add(j.eventId);
         const existing = entityToEventsMap.get(j.entityId) ?? [];
-        existing.push(j.observationId);
+        existing.push(j.eventId);
         entityToEventsMap.set(j.entityId, existing);
       }
     }
