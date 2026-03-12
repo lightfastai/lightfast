@@ -14,9 +14,9 @@ import { parseArgs as nodeParseArgs } from "node:util";
 import { db } from "@db/console/client";
 import {
   orgWorkspaces,
-  workspaceNeuralEntities,
-  workspaceNeuralObservations,
-  workspaceObservationRelationships,
+  workspaceEdges,
+  workspaceEntities,
+  workspaceEvents,
 } from "@db/console/schema";
 import { pineconeClient } from "@repo/console-pinecone";
 import { eq, sql } from "drizzle-orm";
@@ -40,23 +40,23 @@ async function resetDemoEnvironment(options: ResetOptions) {
   // Step 1: Count existing data
   const [obsResult] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(workspaceNeuralObservations)
-    .where(eq(workspaceNeuralObservations.workspaceId, workspaceId));
+    .from(workspaceEvents)
+    .where(eq(workspaceEvents.workspaceId, workspaceId));
 
   const [entityResult] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(workspaceNeuralEntities)
-    .where(eq(workspaceNeuralEntities.workspaceId, workspaceId));
+    .from(workspaceEntities)
+    .where(eq(workspaceEntities.workspaceId, workspaceId));
 
-  const [relResult] = await db
+  const [edgeResult] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(workspaceObservationRelationships)
-    .where(eq(workspaceObservationRelationships.workspaceId, workspaceId));
+    .from(workspaceEdges)
+    .where(eq(workspaceEdges.workspaceId, workspaceId));
 
   console.log("📊 Found:");
   console.log(`   - ${obsResult?.count ?? 0} observations`);
   console.log(`   - ${entityResult?.count ?? 0} entities`);
-  console.log(`   - ${relResult?.count ?? 0} relationships`);
+  console.log(`   - ${edgeResult?.count ?? 0} edges`);
 
   if (dryRun) {
     console.log(
@@ -99,22 +99,22 @@ async function resetDemoEnvironment(options: ResetOptions) {
   // Step 4: Delete database records (order matters for FKs)
   console.log("\n🗑️  Clearing database records...");
 
-  // Delete relationships first (FK to observations)
+  // Delete entity edges first (FK to entities)
   await db
-    .delete(workspaceObservationRelationships)
-    .where(eq(workspaceObservationRelationships.workspaceId, workspaceId));
-  console.log("   ✓ Deleted relationships");
+    .delete(workspaceEdges)
+    .where(eq(workspaceEdges.workspaceId, workspaceId));
+  console.log("   ✓ Deleted edges");
 
   // Delete entities (FK to observations)
   await db
-    .delete(workspaceNeuralEntities)
-    .where(eq(workspaceNeuralEntities.workspaceId, workspaceId));
+    .delete(workspaceEntities)
+    .where(eq(workspaceEntities.workspaceId, workspaceId));
   console.log("   ✓ Deleted entities");
 
   // Delete observations
   await db
-    .delete(workspaceNeuralObservations)
-    .where(eq(workspaceNeuralObservations.workspaceId, workspaceId));
+    .delete(workspaceEvents)
+    .where(eq(workspaceEvents.workspaceId, workspaceId));
   console.log("   ✓ Deleted observations");
 
   console.log("\n✅ Cleanup complete!");

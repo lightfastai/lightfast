@@ -2,7 +2,7 @@ import { db } from "@db/console/client";
 import {
   gwInstallations,
   orgWorkspaces,
-  workspaceEvents,
+  workspaceIngestLog,
   workspaceIntegrations,
   workspaceKnowledgeDocuments,
   workspaceWorkflowRuns,
@@ -1224,7 +1224,7 @@ export const workspaceRouter = {
 
   /**
    * Events sub-router
-   * Queries the workspace_events table for transformed SourceEvent records
+   * Queries the workspace_ingest_log table for transformed SourceEvent records
    */
   events: {
     /**
@@ -1251,39 +1251,39 @@ export const workspaceRouter = {
 
         const { limit, cursor, search, receivedAfter } = input;
 
-        const conditions = [eq(workspaceEvents.workspaceId, workspaceId)];
+        const conditions = [eq(workspaceIngestLog.workspaceId, workspaceId)];
 
         if (input.source) {
-          conditions.push(eq(workspaceEvents.source, input.source));
+          conditions.push(eq(workspaceIngestLog.source, input.source));
         }
 
         if (cursor) {
-          conditions.push(sql`${workspaceEvents.id} < ${cursor}`);
+          conditions.push(sql`${workspaceIngestLog.id} < ${cursor}`);
         }
 
         if (search) {
           conditions.push(
-            sql`${workspaceEvents.sourceEvent}->>'title' ILIKE ${`%${search}%`}`
+            sql`${workspaceIngestLog.sourceEvent}->>'title' ILIKE ${`%${search}%`}`
           );
         }
 
         if (receivedAfter) {
-          conditions.push(gte(workspaceEvents.receivedAt, receivedAfter));
+          conditions.push(gte(workspaceIngestLog.receivedAt, receivedAfter));
         }
 
         const rows = await db
           .select({
-            id: workspaceEvents.id,
-            source: workspaceEvents.source,
-            sourceType: workspaceEvents.sourceType,
-            sourceEvent: workspaceEvents.sourceEvent,
-            ingestionSource: workspaceEvents.ingestionSource,
-            receivedAt: workspaceEvents.receivedAt,
-            createdAt: workspaceEvents.createdAt,
+            id: workspaceIngestLog.id,
+            source: workspaceIngestLog.source,
+            sourceType: workspaceIngestLog.sourceType,
+            sourceEvent: workspaceIngestLog.sourceEvent,
+            ingestionSource: workspaceIngestLog.ingestionSource,
+            receivedAt: workspaceIngestLog.receivedAt,
+            createdAt: workspaceIngestLog.createdAt,
           })
-          .from(workspaceEvents)
+          .from(workspaceIngestLog)
           .where(and(...conditions))
-          .orderBy(desc(workspaceEvents.id))
+          .orderBy(desc(workspaceIngestLog.id))
           .limit(limit + 1);
 
         const hasMore = rows.length > limit;

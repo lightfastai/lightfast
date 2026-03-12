@@ -1,86 +1,86 @@
 import { db } from "@db/console/client";
-import type { RelationshipType } from "@db/console/schema";
 import {
-  workspaceEntityObservations,
-  workspaceNeuralEntities,
-  workspaceNeuralObservations,
-  workspaceObservationRelationships,
+  workspaceEdges,
+  workspaceEntities,
+  workspaceEntityEvents,
+  workspaceEvents,
 } from "@db/console/schema";
 import type { EdgeRule } from "@repo/console-providers";
 import { PROVIDERS } from "@repo/console-providers";
-import type { DetectedRelationship } from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
 import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
+const STRUCTURAL_TYPES = ["commit", "branch", "pr", "issue", "deployment"];
+
 /**
- * Resolve edges for a new observation using entity-mediated bidirectional matching.
+ * Resolve entity↔entity edges for a newly processed event.
  *
  * Algorithm:
- * 1. Query junction table for all observations sharing any of this observation's entities
- * 2. For each co-occurring observation, load both providers' edge rules
- * 3. Evaluate rules bidirectionally (most specific wins)
- * 4. Insert detected edges
- *
- * Handles out-of-order events: when the second event arrives, it finds the first
- * through the shared entity in the junction table.
+ * 1. Find entities for our event's structural refs
+ * 2. Find co-occurring events via shared entities in junction table
+ * 3. For each co-occurring event, load ALL its entity refs
+ * 4. Enumerate cross-entity-type pairs, evaluate rules
+ * 5. Insert entity↔entity edges
  */
 export async function resolveEdges(
   workspaceId: string,
-  observationId: number,
+  eventId: number,
   source: string,
   entityRefs: Array<{ type: string; key: string; label: string | null }>
 ): Promise<number> {
-  if (entityRefs.length === 0) {
-    return 0;
-  }
-
-  // 1. Find entity IDs for this observation's structural refs
-  const structuralTypes = ["commit", "branch", "pr", "issue", "deployment"];
+  // 1. Filter to structural refs only
   const structuralRefs = entityRefs.filter((r) =>
-    structuralTypes.includes(r.type)
+    STRUCTURAL_TYPES.includes(r.type)
   );
   if (structuralRefs.length === 0) {
     return 0;
   }
 
-  // Query entity IDs by (workspace, category, key)
+  // 2. Find entity IDs for our refs
   const entityConditions = structuralRefs.map(
     (ref) =>
-      sql`(${workspaceNeuralEntities.category} = ${ref.type} AND ${workspaceNeuralEntities.key} = ${ref.key})`
+      sql`(${workspaceEntities.category} = ${ref.type} AND ${workspaceEntities.key} = ${ref.key})`
   );
 
-  const entities = await db
+  const ourEntities = await db
     .select({
-      id: workspaceNeuralEntities.id,
-      category: workspaceNeuralEntities.category,
-      key: workspaceNeuralEntities.key,
+      id: workspaceEntities.id,
+      category: workspaceEntities.category,
+      key: workspaceEntities.key,
     })
-    .from(workspaceNeuralEntities)
+    .from(workspaceEntities)
     .where(
       and(
-        eq(workspaceNeuralEntities.workspaceId, workspaceId),
+        eq(workspaceEntities.workspaceId, workspaceId),
         sql`(${sql.join(entityConditions, sql` OR `)})`
       )
     );
 
-  if (entities.length === 0) {
+  if (ourEntities.length === 0) {
     return 0;
   }
 
-  const entityIds = entities.map((e) => e.id);
+  const ourEntityIds = ourEntities.map((e) => e.id);
 
-  // 2. Find co-occurring observations through junction table
+  // Build ref label map: (category, key) → label
+  const refLabelMap = new Map(
+    structuralRefs
+      .filter((r) => r.label)
+      .map((r) => [`${r.type}:${r.key}`, r.label])
+  );
+
+  // 3. Find co-occurring events via junction table
   const coOccurring = await db
     .select({
-      observationId: workspaceEntityObservations.observationId,
-      entityId: workspaceEntityObservations.entityId,
+      eventId: workspaceEntityEvents.eventId,
+      entityId: workspaceEntityEvents.entityId,
     })
-    .from(workspaceEntityObservations)
+    .from(workspaceEntityEvents)
     .where(
       and(
-        inArray(workspaceEntityObservations.entityId, entityIds),
-        ne(workspaceEntityObservations.observationId, observationId)
+        inArray(workspaceEntityEvents.entityId, ourEntityIds),
+        ne(workspaceEntityEvents.eventId, eventId)
       )
     )
     .limit(100);
@@ -89,104 +89,149 @@ export async function resolveEdges(
     return 0;
   }
 
-  // 3. Load co-occurring observation sources
-  const coObsIds = [...new Set(coOccurring.map((c) => c.observationId))];
-  const coObservations = await db
+  // 4. Get unique co-occurring event IDs and their sources
+  const coEventIds = [...new Set(coOccurring.map((c) => c.eventId))];
+
+  const coEvents = await db
     .select({
-      id: workspaceNeuralObservations.id,
-      source: workspaceNeuralObservations.source,
+      id: workspaceEvents.id,
+      source: workspaceEvents.source,
     })
-    .from(workspaceNeuralObservations)
-    .where(inArray(workspaceNeuralObservations.id, coObsIds));
+    .from(workspaceEvents)
+    .where(inArray(workspaceEvents.id, coEventIds));
 
-  const coObsSourceMap = new Map(coObservations.map((o) => [o.id, o.source]));
-  const entityMap = new Map(entities.map((e) => [e.id, e]));
+  const coEventSourceMap = new Map(coEvents.map((e) => [e.id, e.source]));
 
-  // 4. Evaluate edge rules bidirectionally
+  // 5. Load ALL entity refs for co-occurring events
+  const coEventEntityJunctions = await db
+    .select({
+      eventId: workspaceEntityEvents.eventId,
+      entityId: workspaceEntityEvents.entityId,
+      refLabel: workspaceEntityEvents.refLabel,
+    })
+    .from(workspaceEntityEvents)
+    .where(inArray(workspaceEntityEvents.eventId, coEventIds));
+
+  // Load entity details for co-occurring events' entities
+  const coEntityIds = [
+    ...new Set(coEventEntityJunctions.map((j) => j.entityId)),
+  ];
+  const allCoEntities = await db
+    .select({
+      id: workspaceEntities.id,
+      category: workspaceEntities.category,
+      key: workspaceEntities.key,
+    })
+    .from(workspaceEntities)
+    .where(inArray(workspaceEntities.id, coEntityIds));
+
+  const coEntityMap = new Map(allCoEntities.map((e) => [e.id, e]));
+
+  // Group co-event junctions by event ID
+  const coEventEntitiesMap = new Map<
+    number,
+    Array<{
+      entityId: number;
+      category: string;
+      key: string;
+      refLabel: string | null;
+    }>
+  >();
+  for (const j of coEventEntityJunctions) {
+    const entity = coEntityMap.get(j.entityId);
+    if (!entity) {
+      continue;
+    }
+    const arr = coEventEntitiesMap.get(j.eventId) ?? [];
+    arr.push({
+      entityId: j.entityId,
+      category: entity.category,
+      key: entity.key,
+      refLabel: j.refLabel,
+    });
+    coEventEntitiesMap.set(j.eventId, arr);
+  }
+
+  // 6. Evaluate cross-entity-type rules
   const myRules = getEdgeRules(source);
-  const detected: DetectedRelationship[] = [];
+  const candidates: EdgeCandidate[] = [];
 
-  for (const coOcc of coOccurring) {
-    const otherSource = coObsSourceMap.get(coOcc.observationId);
+  for (const coEventId of coEventIds) {
+    const otherSource = coEventSourceMap.get(coEventId);
     if (!otherSource) {
       continue;
     }
 
-    const entity = entityMap.get(coOcc.entityId);
-    if (!entity) {
-      continue;
-    }
-
-    // Find matching ref from this observation
-    const matchingRef = entityRefs.find(
-      (r) => r.type === entity.category && r.key === entity.key
-    );
-
+    const otherEntities = coEventEntitiesMap.get(coEventId) ?? [];
     const otherRules = getEdgeRules(otherSource);
 
-    // Try my rules first (most specific wins)
-    const rule =
-      findBestRule(
-        myRules,
-        entity.category,
-        matchingRef?.label ?? null,
-        otherSource,
-        entity.category
-      ) ??
-      findBestRule(otherRules, entity.category, null, source, entity.category);
+    // Enumerate all pairs: (our entity, their entity)
+    for (const ourEntity of ourEntities) {
+      const ourLabel =
+        refLabelMap.get(`${ourEntity.category}:${ourEntity.key}`) ?? null;
 
-    if (rule) {
-      detected.push({
-        targetObservationId: coOcc.observationId,
-        relationshipType: rule.relationshipType,
-        linkingKey: entity.key,
-        linkingKeyType: entity.category,
-        confidence: rule.confidence,
-        metadata: { detectionMethod: "entity_cooccurrence" as const },
-      });
-    } else {
-      // Fallback: co_occurs at low confidence
-      detected.push({
-        targetObservationId: coOcc.observationId,
-        relationshipType: "co_occurs",
-        linkingKey: entity.key,
-        linkingKeyType: entity.category,
-        confidence: 0.5,
-        metadata: { detectionMethod: "entity_cooccurrence" as const },
-      });
+      for (const theirEntity of otherEntities) {
+        // Skip self-edges (same entity)
+        if (ourEntity.id === theirEntity.entityId) {
+          continue;
+        }
+
+        // Try our rules first, then their rules
+        const rule =
+          findBestRule(
+            myRules,
+            ourEntity.category,
+            ourLabel,
+            otherSource,
+            theirEntity.category
+          ) ??
+          findBestRule(
+            otherRules,
+            theirEntity.category,
+            theirEntity.refLabel,
+            source,
+            ourEntity.category
+          );
+
+        if (rule) {
+          candidates.push({
+            sourceEntityId: ourEntity.id,
+            targetEntityId: theirEntity.entityId,
+            relationshipType: rule.relationshipType,
+            confidence: rule.confidence,
+          });
+        }
+      }
     }
   }
 
-  // 5. Deduplicate and insert
-  const deduped = deduplicateEdges(detected);
+  // 7. Deduplicate: keep highest confidence per (source, target, type)
+  const deduped = deduplicateEdgeCandidates(candidates);
   if (deduped.length === 0) {
     return 0;
   }
 
-  const inserts = deduped.map((rel) => ({
+  // 8. Insert entity↔entity edges
+  const inserts = deduped.map((edge) => ({
     externalId: nanoid(),
     workspaceId,
-    sourceObservationId: observationId,
-    targetObservationId: rel.targetObservationId,
-    relationshipType: rel.relationshipType as RelationshipType,
-    linkingKey: rel.linkingKey,
-    linkingKeyType: rel.linkingKeyType,
-    confidence: rel.confidence,
-    metadata: rel.metadata,
+    sourceEntityId: edge.sourceEntityId,
+    targetEntityId: edge.targetEntityId,
+    relationshipType: edge.relationshipType,
+    sourceEventId: eventId,
+    confidence: edge.confidence,
+    metadata: { detectionMethod: "entity_cooccurrence" },
   }));
 
   try {
-    await db
-      .insert(workspaceObservationRelationships)
-      .values(inserts)
-      .onConflictDoNothing();
-    log.info("Entity-mediated edges created", {
-      observationId,
+    await db.insert(workspaceEdges).values(inserts).onConflictDoNothing();
+    log.info("Entity edges created", {
+      eventId,
       count: inserts.length,
     });
     return inserts.length;
   } catch (error) {
-    log.error("Failed to create edges", { error, workspaceId });
+    log.error("Failed to create entity edges", { error, workspaceId });
     return 0;
   }
 }
@@ -203,29 +248,26 @@ function findBestRule(
   matchProvider: string,
   matchRefType: string
 ): EdgeRule | null {
-  // Most specific first: selfLabel match > provider-specific > wildcard
   const candidates = rules.filter(
     (r) => r.refType === refType && r.matchRefType === matchRefType
   );
 
   // 1. selfLabel + specific provider
-  const labelSpecific = candidates.find(
-    (r) =>
-      r.selfLabel === selfLabel &&
-      selfLabel !== null &&
-      r.matchProvider === matchProvider
-  );
-  if (labelSpecific) {
-    return labelSpecific;
-  }
+  if (selfLabel) {
+    const labelSpecific = candidates.find(
+      (r) => r.selfLabel === selfLabel && r.matchProvider === matchProvider
+    );
+    if (labelSpecific) {
+      return labelSpecific;
+    }
 
-  // 2. selfLabel + wildcard provider
-  const labelWild = candidates.find(
-    (r) =>
-      r.selfLabel === selfLabel && selfLabel !== null && r.matchProvider === "*"
-  );
-  if (labelWild) {
-    return labelWild;
+    // 2. selfLabel + wildcard provider
+    const labelWild = candidates.find(
+      (r) => r.selfLabel === selfLabel && r.matchProvider === "*"
+    );
+    if (labelWild) {
+      return labelWild;
+    }
   }
 
   // 3. No selfLabel + specific provider
@@ -243,16 +285,23 @@ function findBestRule(
   return noLabelWild ?? null;
 }
 
-function deduplicateEdges(
-  relationships: DetectedRelationship[]
-): DetectedRelationship[] {
-  const byTarget = new Map<string, DetectedRelationship>();
-  for (const rel of relationships) {
-    const key = `${rel.targetObservationId}-${rel.relationshipType}`;
-    const existing = byTarget.get(key);
-    if (!existing || rel.confidence > existing.confidence) {
-      byTarget.set(key, rel);
+function deduplicateEdgeCandidates(
+  candidates: EdgeCandidate[]
+): EdgeCandidate[] {
+  const byKey = new Map<string, EdgeCandidate>();
+  for (const c of candidates) {
+    const key = `${c.sourceEntityId}-${c.targetEntityId}-${c.relationshipType}`;
+    const existing = byKey.get(key);
+    if (!existing || c.confidence > existing.confidence) {
+      byKey.set(key, c);
     }
   }
-  return Array.from(byTarget.values());
+  return Array.from(byKey.values());
+}
+
+interface EdgeCandidate {
+  confidence: number;
+  relationshipType: string;
+  sourceEntityId: number;
+  targetEntityId: number;
 }

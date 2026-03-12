@@ -18,10 +18,10 @@
 import { db } from "@db/console/client";
 import {
   orgWorkspaces,
-  workspaceEntityObservations,
+  workspaceEntities,
+  workspaceEntityEvents,
+  workspaceEvents,
   workspaceIntegrations,
-  workspaceNeuralEntities,
-  workspaceNeuralObservations,
 } from "@db/console/schema";
 import {
   deriveObservationType,
@@ -202,10 +202,10 @@ export const observationStore = inngest.createFunction(
 
     // Step 1: Check for duplicate
     const existing = await step.run("check-duplicate", async () => {
-      const obs = await db.query.workspaceNeuralObservations.findFirst({
+      const obs = await db.query.workspaceEvents.findFirst({
         where: and(
-          eq(workspaceNeuralObservations.workspaceId, workspaceId),
-          eq(workspaceNeuralObservations.sourceId, sourceEvent.sourceId)
+          eq(workspaceEvents.workspaceId, workspaceId),
+          eq(workspaceEvents.sourceId, sourceEvent.sourceId)
         ),
       });
 
@@ -399,7 +399,7 @@ export const observationStore = inngest.createFunction(
       );
 
       const [obs] = await db
-        .insert(workspaceNeuralObservations)
+        .insert(workspaceEvents)
         .values({
           externalId,
           workspaceId,
@@ -442,7 +442,7 @@ export const observationStore = inngest.createFunction(
         const entityResults = await Promise.all(
           extractedEntities.map((entity) =>
             db
-              .insert(workspaceNeuralEntities)
+              .insert(workspaceEntities)
               .values({
                 workspaceId,
                 category: entity.category,
@@ -453,17 +453,17 @@ export const observationStore = inngest.createFunction(
               })
               .onConflictDoUpdate({
                 target: [
-                  workspaceNeuralEntities.workspaceId,
-                  workspaceNeuralEntities.category,
-                  workspaceNeuralEntities.key,
+                  workspaceEntities.workspaceId,
+                  workspaceEntities.category,
+                  workspaceEntities.key,
                 ],
                 set: {
                   lastSeenAt: new Date().toISOString(),
-                  occurrenceCount: sql`${workspaceNeuralEntities.occurrenceCount} + 1`,
+                  occurrenceCount: sql`${workspaceEntities.occurrenceCount} + 1`,
                   updatedAt: new Date().toISOString(),
                 },
               })
-              .returning({ id: workspaceNeuralEntities.id })
+              .returning({ id: workspaceEntities.id })
           )
         );
 
@@ -477,7 +477,7 @@ export const observationStore = inngest.createFunction(
             const entity = extractedEntities[i]!;
             return {
               entityId,
-              observationId: observation.id,
+              eventId: observation.id,
               workspaceId,
               // Only structural ref entities carry a contextual label
               refLabel: STRUCTURAL_TYPES.has(entity.category)
@@ -489,7 +489,7 @@ export const observationStore = inngest.createFunction(
 
         if (junctionRows.length > 0) {
           await db
-            .insert(workspaceEntityObservations)
+            .insert(workspaceEntityEvents)
             .values(junctionRows)
             .onConflictDoNothing();
         }

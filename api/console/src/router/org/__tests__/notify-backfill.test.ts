@@ -24,7 +24,7 @@ vi.mock("@db/console/schema", () => ({
   workspaceWorkflowRuns: {},
   workspaceIntegrations: {},
   gwInstallations: { id: "id", backfillConfig: "backfillConfig" },
-  workspaceEvents: {},
+  workspaceIngestLog: {},
 }));
 
 vi.mock("drizzle-orm", () => ({

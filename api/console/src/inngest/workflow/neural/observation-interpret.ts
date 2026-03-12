@@ -18,8 +18,8 @@
 import { db } from "@db/console/client";
 import {
   orgWorkspaces,
-  workspaceNeuralObservations,
-  workspaceObservationInterpretations,
+  workspaceEvents,
+  workspaceInterpretations,
 } from "@db/console/schema";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import { consolePineconeClient } from "@repo/console-pinecone";
@@ -124,8 +124,8 @@ export const observationInterpret = inngest.createFunction(
 
     // Step 1: Fetch observation from DB
     const obs = await step.run("fetch-observation", async () => {
-      const observation = await db.query.workspaceNeuralObservations.findFirst({
-        where: eq(workspaceNeuralObservations.id, internalObservationId),
+      const observation = await db.query.workspaceEvents.findFirst({
+        where: eq(workspaceEvents.id, internalObservationId),
         columns: {
           id: true,
           externalId: true,
@@ -359,8 +359,8 @@ export const observationInterpret = inngest.createFunction(
 
     // Step 6: Store interpretation row
     await step.run("store-interpretation", async () => {
-      await db.insert(workspaceObservationInterpretations).values({
-        observationId: internalObservationId,
+      await db.insert(workspaceInterpretations).values({
+        eventId: internalObservationId,
         workspaceId,
         version: 1,
         primaryCategory: classification.primaryCategory,

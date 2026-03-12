@@ -12,8 +12,8 @@
 import { db } from "@db/console/client";
 import {
   orgWorkspaces,
-  workspaceNeuralObservations,
-  workspaceObservationInterpretations,
+  workspaceEvents,
+  workspaceInterpretations,
 } from "@db/console/schema";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import { eq } from "drizzle-orm";
@@ -100,23 +100,18 @@ async function reconcile(workspaceId: string, dryRun: boolean) {
   // Fetch all interpretations joined with observation externalIds
   const rawInterps = await db
     .select({
-      id: workspaceNeuralObservations.id,
-      externalId: workspaceNeuralObservations.externalId,
-      embeddingTitleId: workspaceObservationInterpretations.embeddingTitleId,
-      embeddingContentId:
-        workspaceObservationInterpretations.embeddingContentId,
-      embeddingSummaryId:
-        workspaceObservationInterpretations.embeddingSummaryId,
+      id: workspaceEvents.id,
+      externalId: workspaceEvents.externalId,
+      embeddingTitleId: workspaceInterpretations.embeddingTitleId,
+      embeddingContentId: workspaceInterpretations.embeddingContentId,
+      embeddingSummaryId: workspaceInterpretations.embeddingSummaryId,
     })
-    .from(workspaceObservationInterpretations)
+    .from(workspaceInterpretations)
     .innerJoin(
-      workspaceNeuralObservations,
-      eq(
-        workspaceObservationInterpretations.observationId,
-        workspaceNeuralObservations.id
-      )
+      workspaceEvents,
+      eq(workspaceInterpretations.eventId, workspaceEvents.id)
     )
-    .where(eq(workspaceObservationInterpretations.workspaceId, workspaceId));
+    .where(eq(workspaceInterpretations.workspaceId, workspaceId));
 
   // Alias as observations for the rest of the script
   const observations = rawInterps;

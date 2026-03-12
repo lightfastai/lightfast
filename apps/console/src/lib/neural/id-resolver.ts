@@ -11,10 +11,7 @@
  */
 
 import { db } from "@db/console/client";
-import {
-  workspaceNeuralObservations,
-  workspaceObservationInterpretations,
-} from "@db/console/schema";
+import { workspaceEvents, workspaceInterpretations } from "@db/console/schema";
 import { and, eq, inArray, or } from "drizzle-orm";
 
 /**
@@ -85,7 +82,7 @@ export async function resolveObservationById(
   }
 ): Promise<ResolvedObservation | null> {
   // Try externalId first (most common case - API callers use nanoid)
-  const byExternalId = await db.query.workspaceNeuralObservations.findFirst({
+  const byExternalId = await db.query.workspaceEvents.findFirst({
     columns: {
       id: true,
       externalId: true,
@@ -98,8 +95,8 @@ export async function resolveObservationById(
       metadata: true,
     },
     where: and(
-      eq(workspaceNeuralObservations.workspaceId, workspaceId),
-      eq(workspaceNeuralObservations.externalId, id)
+      eq(workspaceEvents.workspaceId, workspaceId),
+      eq(workspaceEvents.externalId, id)
     ),
   });
 
@@ -122,14 +119,14 @@ export async function resolveObservationById(
     return null;
   }
 
-  const interp = await db.query.workspaceObservationInterpretations.findFirst({
-    columns: { observationId: true },
+  const interp = await db.query.workspaceInterpretations.findFirst({
+    columns: { eventId: true },
     where: and(
-      eq(workspaceObservationInterpretations.workspaceId, workspaceId),
+      eq(workspaceInterpretations.workspaceId, workspaceId),
       or(
-        eq(workspaceObservationInterpretations.embeddingTitleId, id),
-        eq(workspaceObservationInterpretations.embeddingContentId, id),
-        eq(workspaceObservationInterpretations.embeddingSummaryId, id)
+        eq(workspaceInterpretations.embeddingTitleId, id),
+        eq(workspaceInterpretations.embeddingContentId, id),
+        eq(workspaceInterpretations.embeddingSummaryId, id)
       )
     ),
   });
@@ -138,7 +135,7 @@ export async function resolveObservationById(
     return null;
   }
 
-  const byVectorId = await db.query.workspaceNeuralObservations.findFirst({
+  const byVectorId = await db.query.workspaceEvents.findFirst({
     columns: {
       id: true,
       externalId: true,
@@ -150,7 +147,7 @@ export async function resolveObservationById(
       occurredAt: true,
       metadata: true,
     },
-    where: eq(workspaceNeuralObservations.id, interp.observationId),
+    where: eq(workspaceEvents.id, interp.eventId),
   });
 
   if (byVectorId) {
@@ -202,7 +199,7 @@ export async function resolveObservationsById(
 
   // Batch query for externalIds (nanoids)
   if (externalIds.length > 0) {
-    const byExternalIds = await db.query.workspaceNeuralObservations.findMany({
+    const byExternalIds = await db.query.workspaceEvents.findMany({
       columns: {
         id: true,
         externalId: true,
@@ -215,8 +212,8 @@ export async function resolveObservationsById(
         metadata: true,
       },
       where: and(
-        eq(workspaceNeuralObservations.workspaceId, workspaceId),
-        inArray(workspaceNeuralObservations.externalId, externalIds)
+        eq(workspaceEvents.workspaceId, workspaceId),
+        inArray(workspaceEvents.externalId, externalIds)
       ),
     });
 
@@ -239,30 +236,19 @@ export async function resolveObservationsById(
   if (vectorIds.length > 0) {
     const interpretations = await db
       .select({
-        observationId: workspaceObservationInterpretations.observationId,
-        embeddingTitleId: workspaceObservationInterpretations.embeddingTitleId,
-        embeddingContentId:
-          workspaceObservationInterpretations.embeddingContentId,
-        embeddingSummaryId:
-          workspaceObservationInterpretations.embeddingSummaryId,
+        observationId: workspaceInterpretations.eventId,
+        embeddingTitleId: workspaceInterpretations.embeddingTitleId,
+        embeddingContentId: workspaceInterpretations.embeddingContentId,
+        embeddingSummaryId: workspaceInterpretations.embeddingSummaryId,
       })
-      .from(workspaceObservationInterpretations)
+      .from(workspaceInterpretations)
       .where(
         and(
-          eq(workspaceObservationInterpretations.workspaceId, workspaceId),
+          eq(workspaceInterpretations.workspaceId, workspaceId),
           or(
-            inArray(
-              workspaceObservationInterpretations.embeddingTitleId,
-              vectorIds
-            ),
-            inArray(
-              workspaceObservationInterpretations.embeddingContentId,
-              vectorIds
-            ),
-            inArray(
-              workspaceObservationInterpretations.embeddingSummaryId,
-              vectorIds
-            )
+            inArray(workspaceInterpretations.embeddingTitleId, vectorIds),
+            inArray(workspaceInterpretations.embeddingContentId, vectorIds),
+            inArray(workspaceInterpretations.embeddingSummaryId, vectorIds)
           )
         )
       );
@@ -274,18 +260,18 @@ export async function resolveObservationsById(
       obsInternalIds.length > 0
         ? await db
             .select({
-              id: workspaceNeuralObservations.id,
-              externalId: workspaceNeuralObservations.externalId,
-              title: workspaceNeuralObservations.title,
-              content: workspaceNeuralObservations.content,
-              source: workspaceNeuralObservations.source,
-              sourceId: workspaceNeuralObservations.sourceId,
-              observationType: workspaceNeuralObservations.observationType,
-              occurredAt: workspaceNeuralObservations.occurredAt,
-              metadata: workspaceNeuralObservations.metadata,
+              id: workspaceEvents.id,
+              externalId: workspaceEvents.externalId,
+              title: workspaceEvents.title,
+              content: workspaceEvents.content,
+              source: workspaceEvents.source,
+              sourceId: workspaceEvents.sourceId,
+              observationType: workspaceEvents.observationType,
+              occurredAt: workspaceEvents.occurredAt,
+              metadata: workspaceEvents.metadata,
             })
-            .from(workspaceNeuralObservations)
-            .where(inArray(workspaceNeuralObservations.id, obsInternalIds))
+            .from(workspaceEvents)
+            .where(inArray(workspaceEvents.id, obsInternalIds))
         : [];
 
     const obsById = new Map(obsRows.map((o) => [o.id, o]));

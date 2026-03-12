@@ -1,7 +1,8 @@
 import { db } from "@db/console/client";
 import {
-  workspaceNeuralObservations,
-  workspaceObservationRelationships,
+  workspaceEdges,
+  workspaceEntityEvents,
+  workspaceEvents,
 } from "@db/console/schema";
 import { log } from "@vendor/observability/log";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
@@ -52,10 +53,10 @@ export async function relatedLogic(
   });
 
   // Step 1: Get the source observation
-  const sourceObs = await db.query.workspaceNeuralObservations.findFirst({
+  const sourceObs = await db.query.workspaceEvents.findFirst({
     where: and(
-      eq(workspaceNeuralObservations.workspaceId, auth.workspaceId),
-      eq(workspaceNeuralObservations.externalId, input.observationId)
+      eq(workspaceEvents.workspaceId, auth.workspaceId),
+      eq(workspaceEvents.externalId, input.observationId)
     ),
     columns: {
       id: true,
@@ -69,75 +70,151 @@ export async function relatedLogic(
     throw new Error(`Observation not found: ${input.observationId}`);
   }
 
-  // Step 2: Find direct relationships
-  const relationships = await db
+  // Step 2: Get source observation's entity IDs
+  const sourceJunctions = await db
+    .select({ entityId: workspaceEntityEvents.entityId })
+    .from(workspaceEntityEvents)
+    .where(eq(workspaceEntityEvents.eventId, sourceObs.id));
+  const sourceEntityIds = sourceJunctions.map((j) => j.entityId);
+
+  if (sourceEntityIds.length === 0) {
+    return {
+      data: {
+        source: {
+          id: sourceObs.externalId,
+          title: sourceObs.title,
+          source: sourceObs.source,
+        },
+        related: [],
+        bySource: {},
+      },
+      meta: { total: 0, took: Date.now() - startTime },
+      requestId: input.requestId,
+    };
+  }
+
+  // Step 3: Find direct entity edges
+  const edges = await db
     .select()
-    .from(workspaceObservationRelationships)
+    .from(workspaceEdges)
     .where(
       and(
-        eq(workspaceObservationRelationships.workspaceId, auth.workspaceId),
+        eq(workspaceEdges.workspaceId, auth.workspaceId),
         or(
-          eq(
-            workspaceObservationRelationships.sourceObservationId,
-            sourceObs.id
-          ),
-          eq(
-            workspaceObservationRelationships.targetObservationId,
-            sourceObs.id
-          )
+          inArray(workspaceEdges.sourceEntityId, sourceEntityIds),
+          inArray(workspaceEdges.targetEntityId, sourceEntityIds)
         )
       )
     );
 
-  // Step 3: Collect related observation IDs
-  const relatedIds = new Set<number>();
-  const relMap = new Map<
+  if (edges.length === 0) {
+    return {
+      data: {
+        source: {
+          id: sourceObs.externalId,
+          title: sourceObs.title,
+          source: sourceObs.source,
+        },
+        related: [],
+        bySource: {},
+      },
+      meta: { total: 0, took: Date.now() - startTime },
+      requestId: input.requestId,
+    };
+  }
+
+  // Step 4: Collect neighbor entity IDs and their directions
+  const sourceEntitySet = new Set(sourceEntityIds);
+  const neighborEntityInfo = new Map<
     number,
-    { type: string; direction: "outgoing" | "incoming" }
+    { relationshipType: string; direction: "outgoing" | "incoming" }
   >();
 
-  for (const rel of relationships) {
-    if (rel.sourceObservationId === sourceObs.id) {
-      relatedIds.add(rel.targetObservationId);
-      relMap.set(rel.targetObservationId, {
-        type: rel.relationshipType,
+  for (const edge of edges) {
+    const isSource = sourceEntitySet.has(edge.sourceEntityId);
+    const isTarget = sourceEntitySet.has(edge.targetEntityId);
+
+    if (isSource && !isTarget) {
+      neighborEntityInfo.set(edge.targetEntityId, {
+        relationshipType: edge.relationshipType,
         direction: "outgoing",
       });
-    } else {
-      relatedIds.add(rel.sourceObservationId);
-      relMap.set(rel.sourceObservationId, {
-        type: rel.relationshipType,
+    } else if (isTarget && !isSource) {
+      neighborEntityInfo.set(edge.sourceEntityId, {
+        relationshipType: edge.relationshipType,
         direction: "incoming",
       });
     }
   }
 
-  // Step 4: Fetch related observations
+  const neighborEntityIds = [...neighborEntityInfo.keys()];
+  if (neighborEntityIds.length === 0) {
+    return {
+      data: {
+        source: {
+          id: sourceObs.externalId,
+          title: sourceObs.title,
+          source: sourceObs.source,
+        },
+        related: [],
+        bySource: {},
+      },
+      meta: { total: 0, took: Date.now() - startTime },
+      requestId: input.requestId,
+    };
+  }
+
+  // Step 5: Find events for neighbor entities via junction table
+  const neighborJunctions = await db
+    .select({
+      entityId: workspaceEntityEvents.entityId,
+      observationId: workspaceEntityEvents.eventId,
+    })
+    .from(workspaceEntityEvents)
+    .where(inArray(workspaceEntityEvents.entityId, neighborEntityIds));
+
+  // Map: observationId → { relationshipType, direction }
+  const relatedObsInfo = new Map<
+    number,
+    { relationshipType: string; direction: "outgoing" | "incoming" }
+  >();
+  for (const j of neighborJunctions) {
+    if (j.observationId === sourceObs.id) {
+      continue; // Skip self
+    }
+    const info = neighborEntityInfo.get(j.entityId);
+    if (info && !relatedObsInfo.has(j.observationId)) {
+      relatedObsInfo.set(j.observationId, info);
+    }
+  }
+
+  // Step 6: Fetch related observation details
+  const relatedObsIds = [...relatedObsInfo.keys()];
   const relatedObs =
-    relatedIds.size > 0
+    relatedObsIds.length > 0
       ? await db
           .select({
-            id: workspaceNeuralObservations.id,
-            externalId: workspaceNeuralObservations.externalId,
-            title: workspaceNeuralObservations.title,
-            source: workspaceNeuralObservations.source,
-            observationType: workspaceNeuralObservations.observationType,
-            occurredAt: workspaceNeuralObservations.occurredAt,
-            metadata: workspaceNeuralObservations.metadata,
+            id: workspaceEvents.id,
+            externalId: workspaceEvents.externalId,
+            title: workspaceEvents.title,
+            source: workspaceEvents.source,
+            observationType: workspaceEvents.observationType,
+            occurredAt: workspaceEvents.occurredAt,
+            metadata: workspaceEvents.metadata,
           })
-          .from(workspaceNeuralObservations)
+          .from(workspaceEvents)
           .where(
             and(
-              eq(workspaceNeuralObservations.workspaceId, auth.workspaceId),
-              inArray(workspaceNeuralObservations.id, Array.from(relatedIds))
+              eq(workspaceEvents.workspaceId, auth.workspaceId),
+              inArray(workspaceEvents.id, relatedObsIds)
             )
           )
-          .orderBy(desc(workspaceNeuralObservations.occurredAt))
+          .orderBy(desc(workspaceEvents.occurredAt))
       : [];
 
-  // Step 5: Format response
+  // Step 7: Format response
   const related: RelatedItem[] = relatedObs.map((obs) => {
-    const relInfo = relMap.get(obs.id);
+    const relInfo = relatedObsInfo.get(obs.id);
     const metadata = obs.metadata as Record<string, unknown> | undefined;
     const metadataUrl = metadata?.url;
     return {
@@ -147,7 +224,7 @@ export async function relatedLogic(
       type: obs.observationType,
       occurredAt: obs.occurredAt,
       url: typeof metadataUrl === "string" ? metadataUrl : null,
-      relationshipType: relInfo?.type ?? "references",
+      relationshipType: relInfo?.relationshipType ?? "references",
       direction: relInfo?.direction ?? "outgoing",
     };
   });

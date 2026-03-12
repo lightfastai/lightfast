@@ -1,8 +1,8 @@
 import { db } from "@db/console/client";
 import {
-  workspaceEntityObservations,
-  workspaceNeuralEntities,
-  workspaceNeuralObservations,
+  workspaceEntities,
+  workspaceEntityEvents,
+  workspaceEvents,
 } from "@db/console/schema";
 import type {
   EntityCategory,
@@ -90,20 +90,20 @@ export async function searchByEntities(
   const entityKeys = queryEntities.map((e) => e.key);
   const matchedEntities = await db
     .select({
-      id: workspaceNeuralEntities.id,
-      key: workspaceNeuralEntities.key,
-      category: workspaceNeuralEntities.category,
-      occurrenceCount: workspaceNeuralEntities.occurrenceCount,
-      confidence: workspaceNeuralEntities.confidence,
+      id: workspaceEntities.id,
+      key: workspaceEntities.key,
+      category: workspaceEntities.category,
+      occurrenceCount: workspaceEntities.occurrenceCount,
+      confidence: workspaceEntities.confidence,
     })
-    .from(workspaceNeuralEntities)
+    .from(workspaceEntities)
     .where(
       and(
-        eq(workspaceNeuralEntities.workspaceId, workspaceId),
-        inArray(workspaceNeuralEntities.key, entityKeys)
+        eq(workspaceEntities.workspaceId, workspaceId),
+        inArray(workspaceEntities.key, entityKeys)
       )
     )
-    .orderBy(desc(workspaceNeuralEntities.occurrenceCount))
+    .orderBy(desc(workspaceEntities.occurrenceCount))
     .limit(limit);
 
   if (matchedEntities.length === 0) {
@@ -114,11 +114,11 @@ export async function searchByEntities(
   const entityIds = matchedEntities.map((e) => e.id);
   const junctions = await db
     .select({
-      entityId: workspaceEntityObservations.entityId,
-      observationId: workspaceEntityObservations.observationId,
+      entityId: workspaceEntityEvents.entityId,
+      observationId: workspaceEntityEvents.eventId,
     })
-    .from(workspaceEntityObservations)
-    .where(inArray(workspaceEntityObservations.entityId, entityIds))
+    .from(workspaceEntityEvents)
+    .where(inArray(workspaceEntityEvents.entityId, entityIds))
     .limit(limit * 3);
 
   if (junctions.length === 0) {
@@ -129,13 +129,13 @@ export async function searchByEntities(
   const observationIds = [...new Set(junctions.map((j) => j.observationId))];
   const observations = await db
     .select({
-      id: workspaceNeuralObservations.id,
-      externalId: workspaceNeuralObservations.externalId,
-      title: workspaceNeuralObservations.title,
-      content: workspaceNeuralObservations.content,
+      id: workspaceEvents.id,
+      externalId: workspaceEvents.externalId,
+      title: workspaceEvents.title,
+      content: workspaceEvents.content,
     })
-    .from(workspaceNeuralObservations)
-    .where(inArray(workspaceNeuralObservations.id, observationIds));
+    .from(workspaceEvents)
+    .where(inArray(workspaceEvents.id, observationIds));
 
   // 5. Build result maps
   const obsMap = new Map(observations.map((o) => [o.id, o]));

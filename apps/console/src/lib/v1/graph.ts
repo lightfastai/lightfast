@@ -1,7 +1,8 @@
 import { db } from "@db/console/client";
 import {
-  workspaceNeuralObservations,
-  workspaceObservationRelationships,
+  workspaceEdges,
+  workspaceEntityEvents,
+  workspaceEvents,
 } from "@db/console/schema";
 import { log } from "@vendor/observability/log";
 import { and, eq, inArray, or } from "drizzle-orm";
@@ -60,10 +61,10 @@ export async function graphLogic(
   });
 
   // Step 1: Get the root observation
-  const rootObs = await db.query.workspaceNeuralObservations.findFirst({
+  const rootObs = await db.query.workspaceEvents.findFirst({
     where: and(
-      eq(workspaceNeuralObservations.workspaceId, auth.workspaceId),
-      eq(workspaceNeuralObservations.externalId, input.observationId)
+      eq(workspaceEvents.workspaceId, auth.workspaceId),
+      eq(workspaceEvents.externalId, input.observationId)
     ),
     columns: {
       id: true,
@@ -80,112 +81,152 @@ export async function graphLogic(
     throw new Error(`Observation not found: ${input.observationId}`);
   }
 
-  // Step 2: BFS traversal to find connected observations
-  const visited = new Set<number>([rootObs.id]);
-  const edges: GraphLogicOutput["data"]["edges"] = [];
-  const nodeMap = new Map<number, typeof rootObs>();
-  nodeMap.set(rootObs.id, rootObs);
+  // Step 2: Get root observation's entity IDs
+  const rootJunctions = await db
+    .select({ entityId: workspaceEntityEvents.entityId })
+    .from(workspaceEntityEvents)
+    .where(eq(workspaceEntityEvents.eventId, rootObs.id));
+  const rootEntityIds = rootJunctions.map((j) => j.entityId);
 
-  let frontier = [rootObs.id];
+  // Map: entityId → list of event IDs that reference it
+  const entityToEventsMap = new Map<number, number[]>();
+  for (const entityId of rootEntityIds) {
+    entityToEventsMap.set(entityId, [rootObs.id]);
+  }
+
+  // Step 3: BFS over entity↔entity edges
+  let entityFrontier = rootEntityIds;
+  const visitedEntityIds = new Set(rootEntityIds);
+  const collectedEdges: (typeof workspaceEdges.$inferSelect)[] = [];
+  const allEventIds = new Set([rootObs.id]);
+
   const depth = Math.min(input.depth, 3);
+  const allowedTypes = input.allowedTypes;
 
-  for (let d = 0; d < depth && frontier.length > 0; d++) {
-    // Find all relationships involving frontier nodes
-    const relationships = await db
+  for (let d = 0; d < depth && entityFrontier.length > 0; d++) {
+    const edges = await db
       .select()
-      .from(workspaceObservationRelationships)
+      .from(workspaceEdges)
       .where(
         and(
-          eq(workspaceObservationRelationships.workspaceId, auth.workspaceId),
+          eq(workspaceEdges.workspaceId, auth.workspaceId),
           or(
-            inArray(
-              workspaceObservationRelationships.sourceObservationId,
-              frontier
-            ),
-            inArray(
-              workspaceObservationRelationships.targetObservationId,
-              frontier
-            )
+            inArray(workspaceEdges.sourceEntityId, entityFrontier),
+            inArray(workspaceEdges.targetEntityId, entityFrontier)
           )
         )
       );
 
-    // Filter by allowed types if specified
-    const allowedTypes = input.allowedTypes;
-    const filteredRels = allowedTypes
-      ? relationships.filter((r) => allowedTypes.includes(r.relationshipType))
-      : relationships;
+    const filteredEdges = allowedTypes
+      ? edges.filter((e) => allowedTypes.includes(e.relationshipType))
+      : edges;
 
-    // Collect new node IDs
-    const newNodeIds = new Set<number>();
-    for (const rel of filteredRels) {
-      if (!visited.has(rel.sourceObservationId)) {
-        newNodeIds.add(rel.sourceObservationId);
+    collectedEdges.push(...filteredEdges);
+
+    // Collect new entity IDs from this BFS level
+    const newEntityIds = new Set<number>();
+    for (const edge of filteredEdges) {
+      if (!visitedEntityIds.has(edge.sourceEntityId)) {
+        newEntityIds.add(edge.sourceEntityId);
       }
-      if (!visited.has(rel.targetObservationId)) {
-        newNodeIds.add(rel.targetObservationId);
+      if (!visitedEntityIds.has(edge.targetEntityId)) {
+        newEntityIds.add(edge.targetEntityId);
       }
     }
 
-    // Fetch new nodes
-    if (newNodeIds.size > 0) {
-      const newNodes = await db
+    entityFrontier = [...newEntityIds];
+    for (const id of newEntityIds) {
+      visitedEntityIds.add(id);
+    }
+
+    // Resolve new entities back to events via junction table
+    if (newEntityIds.size > 0) {
+      const junctions = await db
         .select({
-          id: workspaceNeuralObservations.id,
-          externalId: workspaceNeuralObservations.externalId,
-          title: workspaceNeuralObservations.title,
-          source: workspaceNeuralObservations.source,
-          observationType: workspaceNeuralObservations.observationType,
-          occurredAt: workspaceNeuralObservations.occurredAt,
-          metadata: workspaceNeuralObservations.metadata,
+          entityId: workspaceEntityEvents.entityId,
+          observationId: workspaceEntityEvents.eventId,
         })
-        .from(workspaceNeuralObservations)
-        .where(inArray(workspaceNeuralObservations.id, Array.from(newNodeIds)));
+        .from(workspaceEntityEvents)
+        .where(inArray(workspaceEntityEvents.entityId, [...newEntityIds]));
 
-      for (const node of newNodes) {
-        nodeMap.set(node.id, node);
-        visited.add(node.id);
+      for (const j of junctions) {
+        allEventIds.add(j.observationId);
+        const existing = entityToEventsMap.get(j.entityId) ?? [];
+        existing.push(j.observationId);
+        entityToEventsMap.set(j.entityId, existing);
       }
     }
-
-    // Record edges
-    for (const rel of filteredRels) {
-      const sourceNode = nodeMap.get(rel.sourceObservationId);
-      const targetNode = nodeMap.get(rel.targetObservationId);
-      if (sourceNode && targetNode) {
-        edges.push({
-          source: sourceNode.externalId,
-          target: targetNode.externalId,
-          type: rel.relationshipType,
-          linkingKey: rel.linkingKey,
-          confidence: rel.confidence,
-        });
-      }
-    }
-
-    // Update frontier
-    frontier = Array.from(newNodeIds);
   }
 
-  // Step 3: Format response
-  const nodes = Array.from(nodeMap.values()).map((node) => {
-    const metadata = node.metadata as Record<string, unknown> | undefined;
+  // Step 4: Fetch all event details
+  const events =
+    allEventIds.size > 0
+      ? await db
+          .select({
+            id: workspaceEvents.id,
+            externalId: workspaceEvents.externalId,
+            title: workspaceEvents.title,
+            source: workspaceEvents.source,
+            observationType: workspaceEvents.observationType,
+            occurredAt: workspaceEvents.occurredAt,
+            metadata: workspaceEvents.metadata,
+          })
+          .from(workspaceEvents)
+          .where(inArray(workspaceEvents.id, [...allEventIds]))
+      : [];
+
+  const eventMap = new Map(events.map((e) => [e.id, e]));
+
+  // Step 5: Map entity↔entity edges to event-level edges for API response
+  const edgeSet = new Set<string>();
+  const responseEdges: GraphLogicOutput["data"]["edges"] = [];
+
+  for (const edge of collectedEdges) {
+    // Use the first event associated with each entity as the representative
+    const sourceEventId = entityToEventsMap.get(edge.sourceEntityId)?.[0];
+    const targetEventId = entityToEventsMap.get(edge.targetEntityId)?.[0];
+    if (!(sourceEventId && targetEventId)) {
+      continue;
+    }
+
+    const sourceEvent = eventMap.get(sourceEventId);
+    const targetEvent = eventMap.get(targetEventId);
+    if (!(sourceEvent && targetEvent) || sourceEvent.id === targetEvent.id) {
+      continue;
+    }
+
+    const edgeKey = `${sourceEvent.externalId}-${targetEvent.externalId}-${edge.relationshipType}`;
+    if (!edgeSet.has(edgeKey)) {
+      edgeSet.add(edgeKey);
+      responseEdges.push({
+        source: sourceEvent.externalId,
+        target: targetEvent.externalId,
+        type: edge.relationshipType,
+        linkingKey: null,
+        confidence: edge.confidence,
+      });
+    }
+  }
+
+  // Step 6: Format response
+  const nodes = events.map((obs) => {
+    const metadata = obs.metadata as Record<string, unknown> | undefined;
     const metadataUrl = metadata?.url;
     return {
-      id: node.externalId,
-      title: node.title,
-      source: node.source,
-      type: node.observationType,
-      occurredAt: node.occurredAt,
+      id: obs.externalId,
+      title: obs.title,
+      source: obs.source,
+      type: obs.observationType,
+      occurredAt: obs.occurredAt,
       url: typeof metadataUrl === "string" ? metadataUrl : null,
-      isRoot: node.id === rootObs.id,
+      isRoot: obs.id === rootObs.id,
     };
   });
 
   log.debug("v1/graph logic complete", {
     requestId: input.requestId,
     nodeCount: nodes.length,
-    edgeCount: edges.length,
+    edgeCount: responseEdges.length,
   });
 
   return {
@@ -197,12 +238,12 @@ export async function graphLogic(
         type: rootObs.observationType,
       },
       nodes,
-      edges,
+      edges: responseEdges,
     },
     meta: {
       depth,
       nodeCount: nodes.length,
-      edgeCount: edges.length,
+      edgeCount: responseEdges.length,
       took: Date.now() - startTime,
     },
     requestId: input.requestId,

@@ -191,14 +191,15 @@ export const sentry = defineProvider({
   backfill: sentryBackfill,
 
   edgeRules: [
+    // Sentry issue resolved by commit (when commit has "resolved_by" label)
     {
-      refType: "commit",
-      selfLabel: "resolved_by",
+      refType: "issue",
       matchProvider: "*",
       matchRefType: "commit",
       relationshipType: "resolves",
       confidence: 1.0,
     },
+    // Sentry issue triggers Linear issue
     {
       refType: "issue",
       matchProvider: "linear",

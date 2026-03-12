@@ -11,10 +11,10 @@
 
 import { db } from "@db/console/client";
 import {
-  workspaceEntityObservations,
-  workspaceNeuralEntities,
-  workspaceNeuralObservations,
-  workspaceObservationInterpretations,
+  workspaceEntities,
+  workspaceEntityEvents,
+  workspaceEvents,
+  workspaceInterpretations,
 } from "@db/console/schema";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import type { VectorMetadata } from "@repo/console-pinecone";
@@ -135,30 +135,19 @@ async function normalizeVectorIds(
     // Query interpretation table for embedding IDs
     const interpretations = await db
       .select({
-        observationId: workspaceObservationInterpretations.observationId,
-        embeddingTitleId: workspaceObservationInterpretations.embeddingTitleId,
-        embeddingContentId:
-          workspaceObservationInterpretations.embeddingContentId,
-        embeddingSummaryId:
-          workspaceObservationInterpretations.embeddingSummaryId,
+        observationId: workspaceInterpretations.eventId,
+        embeddingTitleId: workspaceInterpretations.embeddingTitleId,
+        embeddingContentId: workspaceInterpretations.embeddingContentId,
+        embeddingSummaryId: workspaceInterpretations.embeddingSummaryId,
       })
-      .from(workspaceObservationInterpretations)
+      .from(workspaceInterpretations)
       .where(
         and(
-          eq(workspaceObservationInterpretations.workspaceId, workspaceId),
+          eq(workspaceInterpretations.workspaceId, workspaceId),
           or(
-            inArray(
-              workspaceObservationInterpretations.embeddingTitleId,
-              vectorIds
-            ),
-            inArray(
-              workspaceObservationInterpretations.embeddingContentId,
-              vectorIds
-            ),
-            inArray(
-              workspaceObservationInterpretations.embeddingSummaryId,
-              vectorIds
-            )
+            inArray(workspaceInterpretations.embeddingTitleId, vectorIds),
+            inArray(workspaceInterpretations.embeddingContentId, vectorIds),
+            inArray(workspaceInterpretations.embeddingSummaryId, vectorIds)
           )
         )
       );
@@ -171,11 +160,11 @@ async function normalizeVectorIds(
       obsInternalIds.length > 0
         ? await db
             .select({
-              id: workspaceNeuralObservations.id,
-              externalId: workspaceNeuralObservations.externalId,
+              id: workspaceEvents.id,
+              externalId: workspaceEvents.externalId,
             })
-            .from(workspaceNeuralObservations)
-            .where(inArray(workspaceNeuralObservations.id, obsInternalIds))
+            .from(workspaceEvents)
+            .where(inArray(workspaceEvents.id, obsInternalIds))
         : [];
     const internalToExternal = new Map(
       obsRows.map((o) => [o.id, o.externalId])
@@ -582,20 +571,20 @@ export async function enrichSearchResults(
   // Query by externalId since resultIds contains nanoid strings
   const observations = await db
     .select({
-      id: workspaceNeuralObservations.id,
-      externalId: workspaceNeuralObservations.externalId,
-      title: workspaceNeuralObservations.title,
-      source: workspaceNeuralObservations.source,
-      observationType: workspaceNeuralObservations.observationType,
-      occurredAt: workspaceNeuralObservations.occurredAt,
-      metadata: workspaceNeuralObservations.metadata,
-      sourceReferences: workspaceNeuralObservations.sourceReferences,
+      id: workspaceEvents.id,
+      externalId: workspaceEvents.externalId,
+      title: workspaceEvents.title,
+      source: workspaceEvents.source,
+      observationType: workspaceEvents.observationType,
+      occurredAt: workspaceEvents.occurredAt,
+      metadata: workspaceEvents.metadata,
+      sourceReferences: workspaceEvents.sourceReferences,
     })
-    .from(workspaceNeuralObservations)
+    .from(workspaceEvents)
     .where(
       and(
-        eq(workspaceNeuralObservations.workspaceId, workspaceId),
-        inArray(workspaceNeuralObservations.externalId, resultIds)
+        eq(workspaceEvents.workspaceId, workspaceId),
+        inArray(workspaceEvents.externalId, resultIds)
       )
     );
 
@@ -610,13 +599,11 @@ export async function enrichSearchResults(
     internalObsIds.length > 0
       ? await db
           .select({
-            observationId: workspaceEntityObservations.observationId,
-            entityId: workspaceEntityObservations.entityId,
+            observationId: workspaceEntityEvents.eventId,
+            entityId: workspaceEntityEvents.entityId,
           })
-          .from(workspaceEntityObservations)
-          .where(
-            inArray(workspaceEntityObservations.observationId, internalObsIds)
-          )
+          .from(workspaceEntityEvents)
+          .where(inArray(workspaceEntityEvents.eventId, internalObsIds))
       : [];
 
   // Fetch entity details
@@ -625,12 +612,12 @@ export async function enrichSearchResults(
     junctionEntityIds.length > 0
       ? await db
           .select({
-            id: workspaceNeuralEntities.id,
-            key: workspaceNeuralEntities.key,
-            category: workspaceNeuralEntities.category,
+            id: workspaceEntities.id,
+            key: workspaceEntities.key,
+            category: workspaceEntities.category,
           })
-          .from(workspaceNeuralEntities)
-          .where(inArray(workspaceNeuralEntities.id, junctionEntityIds))
+          .from(workspaceEntities)
+          .where(inArray(workspaceEntities.id, junctionEntityIds))
       : [];
 
   const entityDetailsMap = new Map(entityRows.map((e) => [e.id, e]));

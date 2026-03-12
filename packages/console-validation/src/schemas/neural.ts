@@ -61,19 +61,6 @@ export type MultiViewEmbeddingResult = z.infer<
   typeof multiViewEmbeddingResultSchema
 >;
 
-// ── Relationship Detection ────────────────────────────────────────────────────
-
-export const detectedRelationshipSchema = z.object({
-  confidence: z.number(),
-  linkingKey: z.string(),
-  linkingKeyType: z.string(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-  relationshipType: z.string(),
-  targetObservationId: z.number(),
-});
-
-export type DetectedRelationship = z.infer<typeof detectedRelationshipSchema>;
-
 // ── Neural Failure Output ─────────────────────────────────────────────────────
 
 export const neuralFailureOutputSchema = z

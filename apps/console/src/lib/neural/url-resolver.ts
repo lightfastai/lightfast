@@ -6,8 +6,8 @@
 
 import { db } from "@db/console/client";
 import {
+  workspaceEvents,
   workspaceKnowledgeDocuments,
-  workspaceNeuralObservations,
 } from "@db/console/schema";
 import { and, desc, eq, inArray } from "drizzle-orm";
 
@@ -121,13 +121,13 @@ export async function resolveByUrl(
 
   // Query observations using indexed sourceId lookup
   // Return externalId (nanoid) for public API use
-  const observation = await db.query.workspaceNeuralObservations.findFirst({
+  const observation = await db.query.workspaceEvents.findFirst({
     columns: { externalId: true },
     where: and(
-      eq(workspaceNeuralObservations.workspaceId, workspaceId),
-      inArray(workspaceNeuralObservations.sourceId, sourceIdCandidates)
+      eq(workspaceEvents.workspaceId, workspaceId),
+      inArray(workspaceEvents.sourceId, sourceIdCandidates)
     ),
-    orderBy: [desc(workspaceNeuralObservations.occurredAt)],
+    orderBy: [desc(workspaceEvents.occurredAt)],
   });
 
   if (observation) {
