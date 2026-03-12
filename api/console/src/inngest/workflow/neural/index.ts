@@ -4,11 +4,7 @@
  * Observation pipeline:
  * 1. observationCapture - Main write path (sync)
  * 2. profileUpdate - Actor profile updates (async, fire-and-forget)
- * 3. clusterSummaryCheck - Cluster summary generation (async, fire-and-forget)
- * 4. llmEntityExtractionWorkflow - LLM entity extraction (async, fire-and-forget)
  */
 
-export { clusterSummaryCheck } from "./cluster-summary";
-export { llmEntityExtractionWorkflow } from "./llm-entity-extraction-workflow";
 export { observationCapture } from "./observation-capture";
 export { profileUpdate } from "./profile-update";

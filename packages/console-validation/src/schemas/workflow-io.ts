@@ -94,8 +94,6 @@ const neuralObservationCaptureOutputSuccessSchema = z.object({
   observationType: z.string(),
   significanceScore: z.number(),
   entitiesExtracted: z.number().int().nonnegative(),
-  clusterId: z.string(),
-  clusterIsNew: z.boolean(),
 });
 
 // =============================================================================

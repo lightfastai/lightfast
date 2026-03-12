@@ -16,7 +16,6 @@ import {
   orgWorkspaces,
   workspaceNeuralEntities,
   workspaceNeuralObservations,
-  workspaceObservationClusters,
   workspaceObservationRelationships,
 } from "@db/console/schema";
 import { pineconeClient } from "@repo/console-pinecone";
@@ -49,11 +48,6 @@ async function resetDemoEnvironment(options: ResetOptions) {
     .from(workspaceNeuralEntities)
     .where(eq(workspaceNeuralEntities.workspaceId, workspaceId));
 
-  const [clusterResult] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(workspaceObservationClusters)
-    .where(eq(workspaceObservationClusters.workspaceId, workspaceId));
-
   const [relResult] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(workspaceObservationRelationships)
@@ -62,7 +56,6 @@ async function resetDemoEnvironment(options: ResetOptions) {
   console.log("📊 Found:");
   console.log(`   - ${obsResult?.count ?? 0} observations`);
   console.log(`   - ${entityResult?.count ?? 0} entities`);
-  console.log(`   - ${clusterResult?.count ?? 0} clusters`);
   console.log(`   - ${relResult?.count ?? 0} relationships`);
 
   if (dryRun) {
@@ -123,12 +116,6 @@ async function resetDemoEnvironment(options: ResetOptions) {
     .delete(workspaceNeuralObservations)
     .where(eq(workspaceNeuralObservations.workspaceId, workspaceId));
   console.log("   ✓ Deleted observations");
-
-  // Delete clusters
-  await db
-    .delete(workspaceObservationClusters)
-    .where(eq(workspaceObservationClusters.workspaceId, workspaceId));
-  console.log("   ✓ Deleted clusters");
 
   console.log("\n✅ Cleanup complete!");
 

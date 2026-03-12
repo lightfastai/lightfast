@@ -22,7 +22,6 @@ import { resolveByUrl } from "~/lib/neural/url-resolver";
 import type { V1AuthContext } from "./types";
 
 interface SourceContent {
-  clusterId: number | null;
   content: string;
   id: string;
   internalId?: number;
@@ -220,7 +219,6 @@ async function fetchSourceContent(
     content: true,
     observationType: true,
     source: true,
-    clusterId: true,
   });
 
   if (obs) {
@@ -231,7 +229,6 @@ async function fetchSourceContent(
       content: obs.content,
       type: obs.observationType,
       source: obs.source,
-      clusterId: obs.clusterId,
     };
   }
 
@@ -241,8 +238,7 @@ async function fetchSourceContent(
 // Helper function: enrich results
 async function enrichResults(
   workspaceId: string,
-  resultIds: string[],
-  sourceClusterId: number | null
+  resultIds: string[]
 ): Promise<
   Map<
     string,
@@ -252,7 +248,6 @@ async function enrichResults(
       source: string;
       type: string;
       occurredAt?: string;
-      sameCluster: boolean;
       entityOverlap?: number;
     }
   >
@@ -265,7 +260,6 @@ async function enrichResults(
       source: string;
       type: string;
       occurredAt?: string;
-      sameCluster: boolean;
       entityOverlap?: number;
     }
   >();
@@ -287,7 +281,6 @@ async function enrichResults(
     sourceId: true,
     observationType: true,
     occurredAt: true,
-    clusterId: true,
     metadata: true,
   });
 
@@ -299,8 +292,6 @@ async function enrichResults(
       source: obs.source,
       type: obs.observationType,
       occurredAt: obs.occurredAt,
-      sameCluster:
-        sourceClusterId !== null && obs.clusterId === sourceClusterId,
     });
   }
 
@@ -405,11 +396,7 @@ export async function findsimilarLogic(
 
   // Enrich results
   const resultIds = filtered.map((m) => m.observationId);
-  const enrichedData = await enrichResults(
-    auth.workspaceId,
-    resultIds,
-    sourceContent.clusterId
-  );
+  const enrichedData = await enrichResults(auth.workspaceId, resultIds);
 
   // Build response
   const similar: V1FindSimilarResult[] = filtered.map((match) => {
@@ -428,7 +415,7 @@ export async function findsimilarLogic(
       score: match.score,
       vectorSimilarity: match.score,
       entityOverlap: data?.entityOverlap,
-      sameCluster: data?.sameCluster ?? false,
+      sameCluster: false,
       source:
         typeof metadata.source === "string"
           ? metadata.source

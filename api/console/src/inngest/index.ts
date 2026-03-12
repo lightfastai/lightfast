@@ -10,12 +10,7 @@ import { inngest } from "./client/client";
 // Note: ensureStore removed - workspace now has embedding config directly
 import { recordActivity } from "./workflow/infrastructure/record-activity";
 // Neural memory workflows
-import {
-  clusterSummaryCheck,
-  llmEntityExtractionWorkflow,
-  observationCapture,
-  profileUpdate,
-} from "./workflow/neural";
+import { observationCapture, profileUpdate } from "./workflow/neural";
 // Notification workflows
 import { notificationDispatch } from "./workflow/notifications";
 import { deleteDocuments } from "./workflow/processing/delete-documents";
@@ -32,12 +27,7 @@ export { processDocuments, deleteDocuments };
 export { recordActivity };
 
 // Export neural memory workflows
-export {
-  observationCapture,
-  profileUpdate,
-  clusterSummaryCheck,
-  llmEntityExtractionWorkflow,
-};
+export { observationCapture, profileUpdate };
 
 // Export notification workflows
 export { notificationDispatch };
@@ -54,9 +44,7 @@ export { notificationDispatch };
  * 3. recordActivity - Activity logging
  * 4. observationCapture - Neural memory observation capture
  * 5. profileUpdate - Neural memory profile update
- * 6. clusterSummaryCheck - Neural memory cluster summary
- * 7. llmEntityExtractionWorkflow - LLM entity extraction
- * 8. notificationDispatch - User-facing notifications
+ * 6. notificationDispatch - User-facing notifications
  *
  * @example
  * ```typescript
@@ -83,8 +71,6 @@ export function createInngestRouteContext() {
       // Neural memory
       observationCapture,
       profileUpdate,
-      clusterSummaryCheck,
-      llmEntityExtractionWorkflow,
 
       // Notifications
       notificationDispatch,

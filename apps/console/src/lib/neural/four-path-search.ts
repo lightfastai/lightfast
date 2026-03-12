@@ -1,11 +1,10 @@
 /**
- * Four-Path Parallel Search
+ * Three-Path Parallel Search
  *
  * Executes parallel retrieval across:
  * 1. Vector similarity (Pinecone)
  * 2. Entity search (pattern matching)
- * 3. Cluster context (topic centroids)
- * 4. Actor profiles (contributor relevance)
+ * 3. Actor profiles (contributor relevance)
  *
  * Extracted from internal search route for reuse in public API.
  */
@@ -23,16 +22,12 @@ import { getCachedWorkspaceConfig } from "@repo/console-workspace-cache";
 import { log } from "@vendor/observability/log";
 import { and, eq, inArray, or } from "drizzle-orm";
 import { searchActorProfiles } from "./actor-search";
-import { searchClusters } from "./cluster-search";
 import { searchByEntities } from "./entity-search";
 import type { FilterCandidate } from "./llm-filter";
 
 // ============================================================================
 // EMPTY RESULT CONSTANTS
 // ============================================================================
-
-/** Empty cluster result for skipped path */
-const EMPTY_CLUSTER_RESULT = { results: [], latency: 0 } as const;
 
 /** Empty actor result for skipped path */
 const EMPTY_ACTOR_RESULT = { results: [], latency: 0 } as const;
@@ -284,19 +279,11 @@ export interface FourPathSearchResult {
   }[];
   /** Merged candidates ready for reranking */
   candidates: FilterCandidate[];
-  /** Cluster context results */
-  clusters: {
-    topicLabel: string | null;
-    summary: string | null;
-    keywords: string[];
-    score: number;
-  }[];
   /** Latency breakdown */
   latency: {
     embedding: number;
     vector: number;
     entity: number;
-    cluster: number;
     actor: number;
     normalize: number;
     total: number;
@@ -305,7 +292,6 @@ export interface FourPathSearchResult {
   paths: {
     vector: boolean;
     entity: boolean;
-    cluster: boolean;
     actor: boolean;
   };
   /** Total candidates before dedup */
@@ -424,14 +410,8 @@ export async function fourPathParallelSearch(
     );
   }
 
-  const {
-    indexName,
-    namespaceName,
-    embeddingModel,
-    embeddingDim,
-    hasClusters,
-    hasActors,
-  } = workspace;
+  const { indexName, namespaceName, embeddingModel, embeddingDim, hasActors } =
+    workspace;
 
   // 2. Generate query embedding
   const embedStart = Date.now();
@@ -452,101 +432,76 @@ export async function fourPathParallelSearch(
     throw new Error("Failed to generate query embedding");
   }
 
-  // 3. Execute 4-path parallel retrieval (skip empty paths)
+  // 3. Execute 3-path parallel retrieval (skip empty paths)
   const pineconeFilter = buildPineconeFilter(filters);
   const parallelStart = Date.now();
 
-  const [vectorResults, entityResults, clusterResults, actorResults] =
-    await Promise.all([
-      // Path 1: Vector similarity search (always execute)
-      (async () => {
-        const start = Date.now();
-        try {
-          const results = await pineconeClient.query<VectorMetadata>(
-            indexName,
-            {
-              vector: queryVector,
-              topK,
-              includeMetadata: true,
-              filter: pineconeFilter,
-            },
-            namespaceName
-          );
-          return { results, latency: Date.now() - start, success: true };
-        } catch (error) {
-          log.error("Vector search failed", {
-            requestId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-          return {
-            results: { matches: [] },
-            latency: Date.now() - start,
-            success: false,
-          };
-        }
-      })(),
+  const [vectorResults, entityResults, actorResults] = await Promise.all([
+    // Path 1: Vector similarity search (always execute)
+    (async () => {
+      const start = Date.now();
+      try {
+        const results = await pineconeClient.query<VectorMetadata>(
+          indexName,
+          {
+            vector: queryVector,
+            topK,
+            includeMetadata: true,
+            filter: pineconeFilter,
+          },
+          namespaceName
+        );
+        return { results, latency: Date.now() - start, success: true };
+      } catch (error) {
+        log.error("Vector search failed", {
+          requestId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return {
+          results: { matches: [] },
+          latency: Date.now() - start,
+          success: false,
+        };
+      }
+    })(),
 
-      // Path 2: Entity search (always execute - fast pattern matching)
-      (async () => {
-        const start = Date.now();
-        try {
-          const results = await searchByEntities(query, workspaceId, topK);
-          return { results, latency: Date.now() - start, success: true };
-        } catch (error) {
-          log.error("Entity search failed", {
-            requestId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-          return { results: [], latency: Date.now() - start, success: false };
-        }
-      })(),
+    // Path 2: Entity search (always execute - fast pattern matching)
+    (async () => {
+      const start = Date.now();
+      try {
+        const results = await searchByEntities(query, workspaceId, topK);
+        return { results, latency: Date.now() - start, success: true };
+      } catch (error) {
+        log.error("Entity search failed", {
+          requestId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return { results: [], latency: Date.now() - start, success: false };
+      }
+    })(),
 
-      // Path 3: Cluster context search (skip if no clusters)
-      hasClusters
-        ? (async () => {
-            try {
-              return await searchClusters(
-                workspaceId,
-                indexName,
-                namespaceName,
-                queryVector,
-                3
-              );
-            } catch (error) {
-              log.error("Cluster search failed", {
-                requestId,
-                error: error instanceof Error ? error.message : String(error),
-              });
-              return EMPTY_CLUSTER_RESULT;
-            }
-          })()
-        : Promise.resolve(EMPTY_CLUSTER_RESULT),
+    // Path 3: Actor profile search (skip if no actors)
+    hasActors
+      ? (async () => {
+          try {
+            return await searchActorProfiles(workspaceId, query, 5);
+          } catch (error) {
+            log.error("Actor search failed", {
+              requestId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            return EMPTY_ACTOR_RESULT;
+          }
+        })()
+      : Promise.resolve(EMPTY_ACTOR_RESULT),
+  ]);
 
-      // Path 4: Actor profile search (skip if no actors)
-      hasActors
-        ? (async () => {
-            try {
-              return await searchActorProfiles(workspaceId, query, 5);
-            } catch (error) {
-              log.error("Actor search failed", {
-                requestId,
-                error: error instanceof Error ? error.message : String(error),
-              });
-              return EMPTY_ACTOR_RESULT;
-            }
-          })()
-        : Promise.resolve(EMPTY_ACTOR_RESULT),
-    ]);
-
-  log.info("4-path parallel search complete", {
+  log.info("3-path parallel search complete", {
     requestId,
     totalLatency: Date.now() - parallelStart,
     vectorMatches: vectorResults.results.matches.length,
     entityMatches: entityResults.results.length,
-    clusterMatches: clusterResults.results.length,
     actorMatches: actorResults.results.length,
-    // Add skip indicators for observability
-    clusterSkipped: !hasClusters,
     actorSkipped: !hasActors,
   });
 
@@ -575,12 +530,6 @@ export async function fourPathParallelSearch(
 
   return {
     candidates: mergedCandidates,
-    clusters: clusterResults.results.map((c) => ({
-      topicLabel: c.topicLabel,
-      summary: c.summary,
-      keywords: c.keywords,
-      score: c.score,
-    })),
     actors: actorResults.results.map((a) => ({
       displayName: a.displayName,
       expertiseDomains: a.expertiseDomains,
@@ -590,7 +539,6 @@ export async function fourPathParallelSearch(
       embedding: embedLatency,
       vector: vectorResults.latency,
       entity: entityResults.latency,
-      cluster: clusterResults.latency,
       actor: actorResults.latency,
       normalize: normalizeLatency,
       total: Date.now() - startTime,
@@ -599,7 +547,6 @@ export async function fourPathParallelSearch(
     paths: {
       vector: vectorResults.success,
       entity: entityResults.success,
-      cluster: clusterResults.results.length > 0,
       actor: actorResults.results.length > 0,
     },
   };

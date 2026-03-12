@@ -194,10 +194,6 @@ const eventsMap = {
     topics: z.array(z.string()).optional(),
     /** Number of entities extracted */
     entitiesExtracted: z.number().optional(),
-    /** Assigned cluster ID */
-    clusterId: z.string().optional(),
-    /** Whether cluster was newly created */
-    clusterIsNew: z.boolean().optional(),
   }),
 
   "apps-console/neural/profile.update": z.object({
@@ -218,26 +214,6 @@ const eventsMap = {
         avatarUrl: z.string().nullable(),
       })
       .nullable(),
-  }),
-
-  "apps-console/neural/cluster.check-summary": z.object({
-    /** Workspace DB UUID */
-    workspaceId: z.string(),
-    /** Clerk organization ID (passed from parent workflow) */
-    clerkOrgId: z.string().optional(),
-    /** Cluster to check */
-    clusterId: z.string(),
-    /** Current observation count */
-    observationCount: z.number(),
-  }),
-
-  "apps-console/neural/llm-entity-extraction.requested": z.object({
-    /** Workspace DB UUID */
-    workspaceId: z.string(),
-    /** Clerk organization ID (passed from parent workflow) */
-    clerkOrgId: z.string().optional(),
-    /** Observation to extract entities from */
-    observationId: z.string(),
   }),
 
   // ============================================================================

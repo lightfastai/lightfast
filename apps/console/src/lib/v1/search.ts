@@ -118,11 +118,6 @@ export async function searchLogic(
   // 6. Build context (if requested)
   const context = input.includeContext
     ? {
-        clusters: searchResult.clusters.slice(0, 2).map((c) => ({
-          topic: c.topicLabel,
-          summary: c.summary,
-          keywords: c.keywords,
-        })),
         relevantActors: searchResult.actors.slice(0, 3).map((a) => ({
           displayName: a.displayName,
           expertiseDomains: a.expertiseDomains,
@@ -134,7 +129,6 @@ export async function searchLogic(
   const maxParallel = Math.max(
     searchResult.latency.vector,
     searchResult.latency.entity,
-    searchResult.latency.cluster,
     searchResult.latency.actor
   );
 
@@ -148,7 +142,12 @@ export async function searchLogic(
       offset: input.offset,
       took: Date.now() - startTime,
       mode: input.mode,
-      paths: searchResult.paths,
+      paths: {
+        vector: searchResult.paths.vector,
+        entity: searchResult.paths.entity,
+        cluster: false,
+        actor: searchResult.paths.actor,
+      },
     },
     latency: {
       total: Date.now() - startTime,
@@ -158,7 +157,7 @@ export async function searchLogic(
       embedding: searchResult.latency.embedding,
       retrieval: searchResult.latency.vector,
       entitySearch: searchResult.latency.entity,
-      clusterSearch: searchResult.latency.cluster,
+      clusterSearch: 0,
       actorSearch: searchResult.latency.actor,
       rerank: rerankLatency,
       enrich: enrichLatency,

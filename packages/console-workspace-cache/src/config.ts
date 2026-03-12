@@ -1,9 +1,5 @@
 import { db } from "@db/console/client";
-import {
-  orgWorkspaces,
-  workspaceActorProfiles,
-  workspaceObservationClusters,
-} from "@db/console/schema";
+import { orgWorkspaces, workspaceActorProfiles } from "@db/console/schema";
 import { log } from "@vendor/observability/log";
 import { redis } from "@vendor/upstash";
 import { eq, sql } from "drizzle-orm";
@@ -78,14 +74,13 @@ export async function getCachedWorkspaceConfig(
  *
  * Runs parallel queries for:
  * 1. Workspace settings (indexName, namespace, embedding config)
- * 2. Cluster count (capability detection)
- * 3. Actor count (capability detection)
+ * 2. Actor count (capability detection)
  */
 async function fetchWorkspaceConfigFromDB(
   workspaceId: string
 ): Promise<CachedWorkspaceConfig | null> {
   // Run all queries in parallel for efficiency
-  const [workspace, clusterCountResult, actorCountResult] = await Promise.all([
+  const [workspace, actorCountResult] = await Promise.all([
     // 1. Workspace settings
     db.query.orgWorkspaces.findFirst({
       where: eq(orgWorkspaces.id, workspaceId),
@@ -93,13 +88,7 @@ async function fetchWorkspaceConfigFromDB(
         settings: true,
       },
     }),
-    // 2. Cluster count (just need to know if > 0)
-    db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(workspaceObservationClusters)
-      .where(eq(workspaceObservationClusters.workspaceId, workspaceId))
-      .limit(1),
-    // 3. Actor count (just need to know if > 0)
+    // 2. Actor count (just need to know if > 0)
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(workspaceActorProfiles)
@@ -111,7 +100,6 @@ async function fetchWorkspaceConfigFromDB(
     return null;
   }
 
-  const clusterCount = clusterCountResult[0]?.count ?? 0;
   const actorCount = actorCountResult[0]?.count ?? 0;
 
   const { embedding } = workspace.settings;
@@ -121,7 +109,6 @@ async function fetchWorkspaceConfigFromDB(
     namespaceName: embedding.namespaceName,
     embeddingModel: embedding.embeddingModel,
     embeddingDim: embedding.embeddingDim,
-    hasClusters: clusterCount > 0,
     hasActors: actorCount > 0,
   };
 }

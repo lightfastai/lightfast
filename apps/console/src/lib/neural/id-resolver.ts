@@ -18,7 +18,6 @@ import { and, eq, inArray, or } from "drizzle-orm";
  * Observation data returned by the resolver
  */
 export interface ResolvedObservation {
-  clusterId: number | null;
   content: string;
   externalId: string; // Public nanoid for API responses
   id: number; // Internal BIGINT
@@ -79,7 +78,6 @@ export async function resolveObservationById(
     sourceId?: true;
     observationType?: true;
     occurredAt?: true;
-    clusterId?: true;
     metadata?: true;
   }
 ): Promise<ResolvedObservation | null> {
@@ -94,7 +92,6 @@ export async function resolveObservationById(
       sourceId: true,
       observationType: true,
       occurredAt: true,
-      clusterId: true,
       metadata: true,
     },
     where: and(
@@ -113,7 +110,6 @@ export async function resolveObservationById(
       sourceId: byExternalId.sourceId,
       observationType: byExternalId.observationType,
       occurredAt: byExternalId.occurredAt,
-      clusterId: byExternalId.clusterId,
       metadata: byExternalId.metadata as Record<string, unknown> | null,
     };
   }
@@ -133,7 +129,6 @@ export async function resolveObservationById(
       sourceId: true,
       observationType: true,
       occurredAt: true,
-      clusterId: true,
       metadata: true,
     },
     where: and(
@@ -157,7 +152,6 @@ export async function resolveObservationById(
       sourceId: byVectorId.sourceId,
       observationType: byVectorId.observationType,
       occurredAt: byVectorId.occurredAt,
-      clusterId: byVectorId.clusterId,
       metadata: byVectorId.metadata as Record<string, unknown> | null,
     };
   }
@@ -183,7 +177,6 @@ export async function resolveObservationsById(
     sourceId?: true;
     observationType?: true;
     occurredAt?: true;
-    clusterId?: true;
     metadata?: true;
   }
 ): Promise<Map<string, ResolvedObservation>> {
@@ -208,7 +201,6 @@ export async function resolveObservationsById(
         sourceId: true,
         observationType: true,
         occurredAt: true,
-        clusterId: true,
         metadata: true,
       },
       where: and(
@@ -227,7 +219,6 @@ export async function resolveObservationsById(
         sourceId: obs.sourceId,
         observationType: obs.observationType,
         occurredAt: obs.occurredAt,
-        clusterId: obs.clusterId,
         metadata: obs.metadata as Record<string, unknown> | null,
       });
     }
@@ -250,7 +241,6 @@ export async function resolveObservationsById(
         sourceId: workspaceNeuralObservations.sourceId,
         observationType: workspaceNeuralObservations.observationType,
         occurredAt: workspaceNeuralObservations.occurredAt,
-        clusterId: workspaceNeuralObservations.clusterId,
         metadata: workspaceNeuralObservations.metadata,
       })
       .from(workspaceNeuralObservations)
@@ -285,7 +275,6 @@ export async function resolveObservationsById(
         sourceId: obs.sourceId,
         observationType: obs.observationType,
         occurredAt: obs.occurredAt,
-        clusterId: obs.clusterId,
         metadata: obs.metadata as Record<string, unknown> | null,
       };
 

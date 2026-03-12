@@ -24,11 +24,7 @@ import {
 } from "@db/console/schema";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import { consolePineconeClient } from "@repo/console-pinecone";
-import type {
-  PostTransformActor,
-  PostTransformEvent,
-  PostTransformReference,
-} from "@repo/console-providers";
+import type { PostTransformEvent } from "@repo/console-providers";
 import {
   deriveObservationType,
   getBaseEventType,
@@ -65,7 +61,6 @@ import {
   buildClassificationPrompt,
   classifyObservationFallback,
 } from "./classification";
-import { assignToCluster } from "./cluster-assignment";
 import {
   extractEntities,
   extractFromReferences,
@@ -161,117 +156,6 @@ async function resolveClerkOrgId(
   });
 
   return workspace?.clerkOrgId ?? "";
-}
-
-/**
- * Reconcile Vercel actor IDs when a GitHub push provides numeric ID.
- *
- * When a GitHub push arrives with a commit SHA, we find any Vercel observations
- * that reference the same commit but have username-based actor IDs. We then
- * update those observations with the numeric GitHub ID from the push event.
- *
- * This ensures cross-source actor consistency: Vercel deployments triggered
- * by the same commit as a GitHub push will share the same canonical actor ID.
- *
- * @returns Array of updated observation IDs
- */
-async function reconcileVercelActorsForCommit(
-  workspaceId: string,
-  commitSha: string,
-  numericActorId: string,
-  sourceActor: PostTransformActor
-): Promise<string[]> {
-  if (!(commitSha && numericActorId)) {
-    return [];
-  }
-
-  // Only reconcile if the actor ID is actually numeric
-  if (!/^\d+$/.test(numericActorId)) {
-    return [];
-  }
-
-  try {
-    // Find Vercel observations with this commit SHA that have non-numeric actor IDs
-    // Using PostgreSQL JSONB containment to search within the sourceReferences array
-    const vercelObservations =
-      await db.query.workspaceNeuralObservations.findMany({
-        where: and(
-          eq(workspaceNeuralObservations.workspaceId, workspaceId),
-          eq(workspaceNeuralObservations.source, "vercel"),
-          // Check if sourceReferences contains a commit with this SHA
-          sql`${workspaceNeuralObservations.sourceReferences}::jsonb @> ${JSON.stringify([{ type: "commit", id: commitSha }])}::jsonb`
-        ),
-        columns: {
-          id: true,
-          externalId: true,
-          actor: true,
-        },
-      });
-
-    if (vercelObservations.length === 0) {
-      return [];
-    }
-
-    const updatedIds: string[] = [];
-
-    for (const obs of vercelObservations) {
-      const currentActor = obs.actor as PostTransformActor | null;
-
-      // Skip if no actor or already has numeric ID
-      if (!currentActor?.id) {
-        continue;
-      }
-      if (/^\d+$/.test(currentActor.id)) {
-        continue;
-      }
-
-      // Update the actor with numeric ID and enriched profile data
-      const updatedActor: PostTransformActor = {
-        ...currentActor,
-        id: numericActorId,
-        // Preserve existing name, or use the GitHub actor's name (may be null at runtime despite type)
-        name:
-          (currentActor.name as string | null | undefined) ?? sourceActor.name,
-        // Add email/avatar from GitHub if not present
-        email: currentActor.email ?? sourceActor.email,
-        avatarUrl: currentActor.avatarUrl ?? sourceActor.avatarUrl,
-      };
-
-      await db
-        .update(workspaceNeuralObservations)
-        .set({
-          actor: updatedActor,
-        })
-        .where(eq(workspaceNeuralObservations.id, obs.id));
-
-      updatedIds.push(obs.externalId);
-
-      log.info("Reconciled Vercel actor with numeric GitHub ID", {
-        observationId: obs.externalId,
-        commitSha,
-        previousActorId: currentActor.id,
-        numericActorId,
-      });
-    }
-
-    if (updatedIds.length > 0) {
-      log.info("Reconciled Vercel actors for commit", {
-        workspaceId,
-        commitSha,
-        numericActorId,
-        reconciled: updatedIds.length,
-      });
-    }
-
-    return updatedIds;
-  } catch (error) {
-    log.warn("Failed to reconcile Vercel actors for commit", {
-      workspaceId,
-      commitSha,
-      error,
-    });
-    return [];
-  }
 }
 
 /**
@@ -814,41 +698,6 @@ export const observationCapture = inngest.createFunction(
     const { topics } = classificationResult;
     // embeddingResult is now MultiViewEmbeddingResult with title, content, summary views
 
-    // Step 5.5: Assign to cluster (use content embedding for best semantic matching)
-    const clusterResult = await step.run("assign-cluster", async () => {
-      // Extract entity IDs from extracted entities
-      const entityIds = extractedEntities.map((e) => `${e.category}:${e.key}`);
-
-      return assignToCluster({
-        workspaceId,
-        embeddingVector: embeddingResult.content.vector,
-        vectorId: embeddingResult.content.vectorId,
-        topics,
-        entityIds,
-        // Use resolved actor ID for cluster affinity
-        actorId: resolvedActor.actorId,
-        occurredAt: sourceEvent.occurredAt,
-        title: sourceEvent.title,
-        indexName: workspace.settings.embedding.indexName,
-        namespace: workspace.settings.embedding.namespaceName,
-      });
-    });
-
-    // Record cluster_affinity analytics metric (non-blocking)
-    // Tracks how well observations fit into clusters
-    void recordJobMetric({
-      clerkOrgId,
-      workspaceId,
-      type: "cluster_affinity",
-      value: 1,
-      unit: "count",
-      tags: {
-        affinityScore: clusterResult.affinityScore ?? 0,
-        joined: !clusterResult.isNew,
-        clusterId: String(clusterResult.clusterId),
-      },
-    });
-
     // Step 6: Upsert multi-view vectors to Pinecone
     await step.run("upsert-multi-view-vectors", async () => {
       const namespace = workspace.settings.embedding.namespaceName;
@@ -1034,36 +883,6 @@ export const observationCapture = inngest.createFunction(
       relationshipsCreated,
     });
 
-    // Step 7.6: Reconcile Vercel actors (only for GitHub push events)
-    // When a GitHub push arrives, update any Vercel observations that reference
-    // the same commit SHA but have username-based actor IDs
-    if (sourceEvent.source === "github" && sourceEvent.sourceType === "push") {
-      await step.run("reconcile-vercel-actors", async () => {
-        // Extract commit SHAs from the push event references
-        const references = sourceEvent.references as PostTransformReference[];
-        const commitRefs = references.filter((ref) => ref.type === "commit");
-
-        if (commitRefs.length === 0 || !resolvedActor.sourceActor?.id) {
-          return { reconciled: 0 };
-        }
-
-        let totalReconciled = 0;
-
-        // Reconcile for each commit SHA in the push
-        for (const commitRef of commitRefs) {
-          const reconciledIds = await reconcileVercelActorsForCommit(
-            workspaceId,
-            commitRef.id,
-            resolvedActor.sourceActor.id,
-            resolvedActor.sourceActor
-          );
-          totalReconciled += reconciledIds.length;
-        }
-
-        return { reconciled: totalReconciled };
-      });
-    }
-
     // Step 8: Fire-and-forget events
     // Note: Using externalId for public-facing events, convert BIGINT ids to strings for events
     // All child events receive clerkOrgId for metrics tracking (Phase: clerkOrgId propagation)
@@ -1080,8 +899,6 @@ export const observationCapture = inngest.createFunction(
           significanceScore: significance.score,
           topics,
           entitiesExtracted: extractedEntities.length,
-          clusterId: String(clusterResult.clusterId), // Convert BIGINT to string for events
-          clusterIsNew: clusterResult.isNew,
         },
       },
       // Profile update (if actor resolved)
@@ -1095,29 +912,6 @@ export const observationCapture = inngest.createFunction(
                 actorId: resolvedActor.actorId,
                 observationId: observation.externalId, // Public nanoid
                 sourceActor: resolvedActor.sourceActor ?? null,
-              },
-            },
-          ]
-        : []),
-      // Cluster summary check
-      {
-        name: "apps-console/neural/cluster.check-summary" as const,
-        data: {
-          workspaceId,
-          clerkOrgId, // Propagate for metrics tracking
-          clusterId: String(clusterResult.clusterId), // Convert BIGINT to string for events
-          observationCount: clusterResult.isNew ? 1 : 0, // Will be fetched in workflow
-        },
-      },
-      // LLM entity extraction for observations with rich content (>200 chars)
-      ...(sourceEvent.body.length > 200
-        ? [
-            {
-              name: "apps-console/neural/llm-entity-extraction.requested" as const,
-              data: {
-                workspaceId,
-                clerkOrgId, // Propagate for metrics tracking
-                observationId: observation.externalId, // Public nanoid
               },
             },
           ]
@@ -1137,8 +931,6 @@ export const observationCapture = inngest.createFunction(
           observationType: observation.observationType,
           significanceScore: significance.score,
           entitiesExtracted: entitiesStored,
-          clusterId: String(clusterResult.clusterId),
-          clusterIsNew: clusterResult.isNew,
         } satisfies NeuralObservationCaptureOutputSuccess,
       });
     });
@@ -1172,19 +964,6 @@ export const observationCapture = inngest.createFunction(
           observationId: observation.externalId,
           entityCount: entitiesStored,
           source: sourceEvent.source,
-        },
-      }),
-
-      // Cluster assigned metric
-      recordJobMetric({
-        clerkOrgId, // Use pre-resolved value for consistency
-        workspaceId,
-        type: "cluster_assigned",
-        value: 1,
-        unit: "count",
-        tags: {
-          clusterId: String(clusterResult.clusterId),
-          isNew: clusterResult.isNew,
         },
       }),
     ];

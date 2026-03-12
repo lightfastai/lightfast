@@ -12,14 +12,14 @@
  * @example
  * ```ts
  * onFailure: createNeuralOnFailureHandler(
- *   "apps-console/neural/cluster.check-summary",
+ *   "apps-console/neural/observation.capture",
  *   {
- *     logMessage: "Neural cluster summary failed",
- *     logContext: ({ workspaceId, clusterId }) => ({ workspaceId, clusterId }),
- *     buildOutput: ({ data: { clusterId }, error }) => ({
- *       inngestFunctionId: "neural.cluster.summary",
+ *     logMessage: "Neural observation capture failed",
+ *     logContext: ({ workspaceId, sourceEvent }) => ({ workspaceId, sourceId: sourceEvent.sourceId }),
+ *     buildOutput: ({ data: { sourceEvent }, error }) => ({
+ *       inngestFunctionId: "neural.observation.capture",
  *       status: "failure",
- *       clusterId,
+ *       sourceId: sourceEvent.sourceId,
  *       error,
  *     }),
  *   }

@@ -40,7 +40,6 @@ export const notificationDispatch = inngest.createFunction(
       observationType,
       significanceScore,
       topics,
-      clusterId,
     } = event.data;
 
     // Guard: Knock client must be configured
@@ -82,7 +81,6 @@ export const notificationDispatch = inngest.createFunction(
           observationType,
           significanceScore,
           topics: topics ?? [],
-          clusterId,
           workspaceId,
         },
       });
