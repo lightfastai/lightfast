@@ -22,7 +22,6 @@ export function buildAnswerSystemPrompt(options: AnswerPromptOptions): string {
       "workspaceSearch",
       "workspaceContents",
       "workspaceFindSimilar",
-      "workspaceGraph",
       "workspaceRelated",
     ],
     features: {

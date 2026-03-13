@@ -1,7 +1,7 @@
 /**
  * Search tRPC router
  *
- * Implements /v1/search endpoint using Pinecone vector search
+ * Implements search using Pinecone vector search with canonical schemas.
  */
 
 import { randomUUID } from "node:crypto";
@@ -32,10 +32,8 @@ export const searchRouter = {
    * ```typescript
    * const result = await trpc.search.query.query({
    *   query: "how to authenticate users",
-   *   topK: 10,
-   *   filters: {
-   *     labels: ["store:docs"]
-   *   }
+   *   limit: 10,
+   *   mode: "balanced",
    * });
    * ```
    */
@@ -60,7 +58,9 @@ export const searchRouter = {
         workspaceId,
         userId: ctx.auth.userId,
         query: input.query,
-        topK: input.topK,
+        limit: input.limit,
+        offset: input.offset,
+        mode: input.mode,
         filters: input.filters,
       });
 
@@ -104,7 +104,6 @@ export const searchRouter = {
         });
 
         // Generate query embedding using workspace's embedding configuration
-        const embedStart = Date.now();
         const embedding = createEmbeddingProviderForWorkspace(
           {
             id: workspace.id,
@@ -116,7 +115,6 @@ export const searchRouter = {
           }
         );
         const { embeddings } = await embedding.embed([input.query]);
-        const embedLatency = Date.now() - embedStart;
 
         const queryVector = embeddings[0];
         if (!queryVector) {
@@ -126,19 +124,13 @@ export const searchRouter = {
           });
         }
 
-        log.info("Generated embedding", {
-          requestId,
-          embedLatency,
-          dimension: queryVector.length,
-        });
-
         // Query Pinecone
         const queryStart = Date.now();
         const results = await pineconeClient.query<VectorMetadata>(
           indexName,
           {
             vector: queryVector,
-            topK: input.topK,
+            topK: input.limit,
             includeMetadata: true,
           },
           namespaceName
@@ -152,29 +144,36 @@ export const searchRouter = {
           matchCount: results.matches.length,
         });
 
-        // Map results to SearchResponse format
+        // Map results to canonical SearchResponse format
         const searchResults = results.matches.map((match) => ({
           id: match.id,
-          title: match.metadata?.title ?? "",
-          url: match.metadata?.url ?? "",
-          snippet: match.metadata?.snippet ?? "",
+          title: String(match.metadata?.title ?? ""),
+          source: String(match.metadata?.source ?? ""),
+          type: String(match.metadata?.type ?? ""),
+          url: match.metadata?.url ? String(match.metadata.url) : null,
+          occurredAt: match.metadata?.occurredAt
+            ? String(match.metadata.occurredAt)
+            : null,
+          snippet: String(match.metadata?.snippet ?? ""),
           score: match.score,
-          metadata: match.metadata ?? {},
+          entities: undefined,
+          references: undefined,
         }));
 
         const response: SearchResponse = {
-          results: searchResults,
-          requestId,
-          latency: {
-            total: Date.now() - startTime,
-            retrieval: queryLatency,
-            // TODO: Add rerank latency when reranking is implemented
+          data: searchResults,
+          meta: {
+            total: searchResults.length,
+            limit: input.limit,
+            offset: input.offset,
+            mode: input.mode,
           },
+          requestId,
         };
 
         log.info("Search complete", {
           requestId,
-          totalLatency: response.latency.total,
+          totalLatency: Date.now() - startTime,
           resultCount: searchResults.length,
         });
 

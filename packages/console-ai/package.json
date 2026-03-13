@@ -13,9 +13,6 @@
     "./workspace-find-similar": {
       "default": "./src/workspace-find-similar.ts"
     },
-    "./workspace-graph": {
-      "default": "./src/workspace-graph.ts"
-    },
     "./workspace-related": {
       "default": "./src/workspace-related.ts"
     }

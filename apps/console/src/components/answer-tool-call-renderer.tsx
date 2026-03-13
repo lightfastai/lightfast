@@ -47,7 +47,6 @@ const TOOL_NAMES = {
   workspaceSearch: "workspace search",
   workspaceContents: "workspace contents",
   workspaceFindSimilar: "find similar",
-  workspaceGraph: "graph",
   workspaceRelated: "related",
 };
 

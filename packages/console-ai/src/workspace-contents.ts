@@ -1,6 +1,6 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
 import type { LightfastAnswerRuntimeContext } from "@repo/console-ai-types";
-import { V1ContentsResponseSchema } from "@repo/console-validation";
+import { ContentsResponseSchema } from "@repo/console-validation";
 import { z } from "zod";
 
 const inputSchema = z.object({
@@ -9,7 +9,7 @@ const inputSchema = z.object({
     .meta({ description: "Array of observation IDs to fetch content for" }),
 });
 
-const outputSchema = V1ContentsResponseSchema;
+const outputSchema = ContentsResponseSchema;
 
 export function workspaceContentsTool() {
   return createTool<LightfastAnswerRuntimeContext>({

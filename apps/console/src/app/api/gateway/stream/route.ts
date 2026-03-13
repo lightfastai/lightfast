@@ -7,7 +7,7 @@ import type { NextRequest } from "next/server";
 import {
   createAuthErrorResponse,
   withApiKeyAuth,
-} from "~/app/(api)/v1/lib/with-api-key-auth";
+} from "~/app/(api)/lib/with-api-key-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

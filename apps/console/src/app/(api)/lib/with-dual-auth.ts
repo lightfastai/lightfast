@@ -1,5 +1,5 @@
 /**
- * Dual Authentication Middleware for v1 Routes
+ * Dual Authentication Middleware for API Routes
  *
  * Supports both API key and Clerk session authentication.
  * - API key: Uses existing withApiKeyAuth, trusts X-Workspace-ID

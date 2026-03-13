@@ -1,7 +1,7 @@
 /**
  * Contents tRPC router
  *
- * Implements /v1/contents endpoint for fetching full documents
+ * Implements contents endpoint for fetching full documents with canonical schemas.
  */
 
 import { randomUUID } from "node:crypto";
@@ -93,14 +93,11 @@ export const contentsRouter = {
           requested: input.ids.length,
         });
 
-        // Map to response format, extracting data from sourceMetadata
-        const mappedDocs = documents.map((doc) => {
+        // Map to canonical ContentItem response format
+        const items = documents.map((doc) => {
           const metadata = doc.sourceMetadata as Record<string, unknown>;
           const frontmatter =
             (metadata.frontmatter as Record<string, unknown> | undefined) ?? {};
-
-          // Extract path: use sourceMetadata.path (GitHub) or sourceId (other sources)
-          const path = (metadata.path as string | undefined) ?? doc.sourceId;
 
           // Extract committedAt from sourceMetadata or use current date
           const committedAt =
@@ -109,28 +106,35 @@ export const contentsRouter = {
 
           return {
             id: doc.id,
-            path,
-            title: (frontmatter.title as string | undefined) ?? null,
-            description:
-              (frontmatter.description as string | undefined) ?? null,
-            content: "", // TODO: Phase 2 - Fetch from storage if needed
+            title: (frontmatter.title as string | undefined) ?? doc.id,
+            source: doc.sourceType,
+            type: (metadata.type as string | undefined) ?? doc.sourceType,
+            url: (metadata.url as string | undefined) ?? null,
+            occurredAt: committedAt,
+            snippet: (metadata.snippet as string | undefined) ?? "",
+            content: "", // TODO: Fetch from storage if needed
             metadata: frontmatter,
-            committedAt,
           };
         });
 
-        // Log any missing documents
+        // Track missing IDs
         const foundIds = new Set(documents.map((d) => d.id));
-        const missingIds = input.ids.filter((id: string) => !foundIds.has(id));
-        if (missingIds.length > 0) {
+        const missing = input.ids.filter((id: string) => !foundIds.has(id));
+        if (missing.length > 0) {
           log.warn("Some documents not found", {
             requestId,
-            missingIds,
+            missing,
           });
         }
 
         const response: ContentsResponse = {
-          documents: mappedDocs,
+          data: {
+            items,
+            missing,
+          },
+          meta: {
+            total: items.length,
+          },
           requestId,
         };
 
