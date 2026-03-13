@@ -32,49 +32,77 @@ export function EventDetail({ event }: EventDetailProps) {
         </div>
       )}
 
-      {/* References */}
-      {sourceEvent.references.length > 0 && (
+      {/* Entity */}
+      <div>
+        <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+          Entity
+        </p>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-1">
+          <dt className="truncate text-muted-foreground text-xs">Type</dt>
+          <dd className="truncate font-mono text-xs">
+            {sourceEvent.entity.entityType}
+          </dd>
+          <dt className="truncate text-muted-foreground text-xs">ID</dt>
+          <dd className="truncate font-mono text-xs">
+            {sourceEvent.entity.entityId}
+          </dd>
+          {sourceEvent.entity.state && (
+            <>
+              <dt className="truncate text-muted-foreground text-xs">State</dt>
+              <dd className="truncate font-mono text-xs">
+                {sourceEvent.entity.state}
+              </dd>
+            </>
+          )}
+        </dl>
+      </div>
+
+      {/* Relations */}
+      {sourceEvent.relations.length > 0 && (
         <div>
           <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-            References
+            Relations
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {sourceEvent.references.map((ref, i) => (
+            {sourceEvent.relations.map((rel, i) => (
               <span
                 className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted px-2 py-0.5 text-xs"
                 key={i}
               >
                 <span className="text-muted-foreground capitalize">
-                  {ref.type}
+                  {rel.entityType}
                 </span>
-                {ref.url ? (
+                {rel.url ? (
                   <a
                     className="font-mono text-primary hover:underline"
-                    href={ref.url}
+                    href={rel.url}
                     rel="noopener noreferrer"
                     target="_blank"
                   >
-                    {ref.label ?? ref.id}
+                    {rel.entityId}
                   </a>
                 ) : (
-                  <span className="font-mono">{ref.label ?? ref.id}</span>
+                  <span className="font-mono">{rel.entityId}</span>
                 )}
+                <span className="text-muted-foreground/70">
+                  {rel.relationshipType}
+                </span>
               </span>
             ))}
           </div>
         </div>
       )}
 
-      {/* Metadata */}
+      {/* Attributes */}
       {(() => {
-        const entries = Object.entries(sourceEvent.metadata);
+        const entries = Object.entries(sourceEvent.attributes);
         if (entries.length === 0) {
           return null;
         }
         return (
           <div>
             <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-              Metadata
+              Attributes
             </p>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1">
               {entries.map(([key, value]) => (

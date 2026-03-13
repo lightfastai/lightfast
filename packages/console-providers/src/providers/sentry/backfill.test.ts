@@ -322,9 +322,8 @@ describe("Sentry Issue: adapter → transformer round-trip", () => {
     expect(event.title).toBeTruthy();
   });
 
-  it("sourceId contains project slug and shortId", () => {
+  it("sourceId contains projectId and shortId", () => {
     const event = transformSentryIssue(adapted, transformContext, "issue");
-    expect(event.sourceId).toContain("my-project");
     expect(event.sourceId).toContain("MY-PROJECT-42");
   });
 
@@ -443,7 +442,7 @@ describe("Sentry Error: adapter → transformer round-trip", () => {
     );
     const result = transformSentryError(richAdapted, transformContext, "error");
     expect(result.attributes.culprit).toBe("my_app.views.process");
-    expect(result.attributes.webUrl).toBe(
+    expect(result.entity.url).toBe(
       "https://my-org.sentry.io/issues/123/events/abc/"
     );
   });

@@ -7,11 +7,10 @@ import { connectSSE } from "../lib/sse.js";
 interface SourceEventNotification {
   payloadId: number;
   sourceEvent: {
-    source: string;
-    sourceType: string;
+    provider: string;
+    eventType: string;
     sourceId: string;
     title: string;
-    actor?: { name: string };
     occurredAt: string;
   };
 }
@@ -87,12 +86,9 @@ export const listenCommand = new Command("listen")
         // Real-time events have full PostTransformEvent
         const e = data;
         const time = new Date(e.sourceEvent.occurredAt).toLocaleTimeString();
-        const source = colorProvider(e.sourceEvent.source);
-        const actor = e.sourceEvent.actor?.name
-          ? pc.dim(` by ${e.sourceEvent.actor.name}`)
-          : "";
+        const source = colorProvider(e.sourceEvent.provider);
         console.log(
-          `  ${pc.dim(time)}  ${source}  ${pc.bold(e.sourceEvent.sourceType)}  ${e.sourceEvent.title}${actor}`
+          `  ${pc.dim(time)}  ${source}  ${pc.bold(e.sourceEvent.eventType)}  ${e.sourceEvent.title}`
         );
       },
     });

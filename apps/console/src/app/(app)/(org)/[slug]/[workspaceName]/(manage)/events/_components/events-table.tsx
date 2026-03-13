@@ -151,7 +151,7 @@ export function EventsTable({
       if (notification.workspaceId !== data.workspaceId) {
         return;
       }
-      if (source && notification.sourceEvent.source !== source) {
+      if (source && notification.sourceEvent.provider !== source) {
         return;
       }
       setLiveEvents((prev) => [notification, ...prev]);
@@ -174,8 +174,8 @@ export function EventsTable({
 
     const liveAsEvents: EventData[] = newLive.map((e) => ({
       id: e.eventId,
-      source: e.sourceEvent.source,
-      sourceType: e.sourceEvent.sourceType,
+      source: e.sourceEvent.provider,
+      sourceType: e.sourceEvent.eventType,
       sourceEvent: e.sourceEvent,
       ingestionSource: "webhook",
       receivedAt: new Date().toISOString(),

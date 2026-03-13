@@ -47,8 +47,8 @@ export function transformWebhook(
   event.sourceId = `${event.sourceId}:test:${index}`;
 
   // Mark as test data
-  event.metadata = {
-    ...event.metadata,
+  event.attributes = {
+    ...event.attributes,
     testData: true,
   };
 

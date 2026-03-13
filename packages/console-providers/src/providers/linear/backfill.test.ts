@@ -501,9 +501,9 @@ describe("Linear Project: adapter → transformer round-trip", () => {
     expect(event.eventType).toContain("created");
   });
 
-  it("metadata contains projectId", () => {
+  it("entity.entityId is projectId", () => {
     const event = transformLinearProject(adapted, transformCtx, "");
-    expect(event.attributes.projectId).toBe("proj-1");
+    expect(event.entity.entityId).toBe("proj-1");
   });
 });
 
