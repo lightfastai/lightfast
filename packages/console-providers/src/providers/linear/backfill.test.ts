@@ -449,12 +449,6 @@ describe("Linear Comment: adapter → transformer round-trip", () => {
     expect(event.title).toContain("ENG-42");
   });
 
-  it("actor is populated from comment.user", () => {
-    const event = transformLinearComment(adapted, transformCtx, "");
-    expect(event.actor).toBeDefined();
-    expect(event.actor!.name).toBe("Bob");
-  });
-
   it("sourceType contains 'created'", () => {
     const event = transformLinearComment(adapted, transformCtx, "");
     expect(event.sourceType).toContain("created");

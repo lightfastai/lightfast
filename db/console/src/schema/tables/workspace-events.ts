@@ -34,16 +34,6 @@ export interface ObservationReference {
 }
 
 /**
- * Actor who performed the action
- */
-export interface ObservationActor {
-  avatarUrl: string | null;
-  email: string | null;
-  id: string;
-  name: string;
-}
-
-/**
  * Source-specific metadata
  * NOTE: Use metadata for structured fields (repo, branch, labels, etc.)
  * NOT the content body, to avoid token waste on non-semantic labels.
@@ -97,18 +87,6 @@ export const workspaceEvents = pgTable(
     })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-
-    // ========== ACTOR ==========
-
-    /**
-     * Actor who performed the action
-     */
-    actor: jsonb("actor").$type<ObservationActor | null>(),
-
-    /**
-     * Reference to resolved actor profile
-     */
-    actorId: bigint("actor_id", { mode: "number" }),
 
     // ========== CONTENT ==========
 

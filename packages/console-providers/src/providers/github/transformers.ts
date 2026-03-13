@@ -55,12 +55,6 @@ export function transformGitHubPush(
     sourceId: `push:${payload.repository.full_name}:${payload.after}`,
     title: sanitizeTitle(`[Push] ${rawTitle}`),
     body: sanitizeBody(rawBody),
-    actor: {
-      id: String(payload.sender.id),
-      name: payload.sender.login,
-      email: payload.pusher.email ?? null,
-      avatarUrl: payload.sender.avatar_url,
-    },
     occurredAt: payload.head_commit?.timestamp ?? new Date().toISOString(),
     references: refs,
     metadata: {
@@ -176,14 +170,6 @@ export function transformGitHubPullRequest(
     sourceId: `pr:${payload.repository.full_name}#${pr.number}:${effectiveAction}`,
     title: sanitizeTitle(`[${actionTitle}] ${pr.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
-    actor: pr.user
-      ? {
-          id: String(pr.user.id),
-          name: pr.user.login,
-          email: null,
-          avatarUrl: pr.user.avatar_url,
-        }
-      : null,
     occurredAt: pr.updated_at,
     references: refs,
     metadata: {
@@ -263,14 +249,6 @@ export function transformGitHubIssue(
     sourceId: `issue:${payload.repository.full_name}#${issue.number}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${issue.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
-    actor: issue.user
-      ? {
-          id: String(issue.user.id),
-          name: issue.user.login,
-          email: null,
-          avatarUrl: issue.user.avatar_url,
-        }
-      : null,
     occurredAt: issue.updated_at,
     references: refs,
     metadata: {
@@ -325,12 +303,6 @@ export function transformGitHubRelease(
       `[${actionTitle}] ${release.name ?? release.tag_name}`
     ),
     body: sanitizeBody(rawBody),
-    actor: {
-      id: String(release.author.id),
-      name: release.author.login,
-      email: null,
-      avatarUrl: release.author.avatar_url,
-    },
     occurredAt: release.published_at ?? release.created_at,
     references: refs,
     metadata: {
@@ -386,12 +358,6 @@ export function transformGitHubDiscussion(
     sourceId: `discussion:${payload.repository.full_name}#${discussion.number}`,
     title: sanitizeTitle(`[${actionTitle}] ${discussion.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
-    actor: {
-      id: String(discussion.user.id),
-      name: discussion.user.login,
-      email: null,
-      avatarUrl: discussion.user.avatar_url,
-    },
     occurredAt: discussion.updated_at,
     references: refs,
     metadata: {

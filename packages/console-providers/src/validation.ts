@@ -54,15 +54,6 @@ export function sanitizePostTransformEvent(
 
   return {
     ...event,
-    actor: event.actor
-      ? {
-          ...event.actor,
-          avatarUrl:
-            event.actor.avatarUrl && isValidUrl(event.actor.avatarUrl)
-              ? event.actor.avatarUrl
-              : null,
-        }
-      : null,
     references: event.references.map((ref) => ({
       ...ref,
       url: ref.url && isValidUrl(ref.url) ? ref.url : null,

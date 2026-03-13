@@ -42,12 +42,6 @@ const eventsMap = {
   "apps-console/activity.record": z.object({
     /** Workspace DB UUID */
     workspaceId: z.string(),
-    /** Actor type */
-    actorType: z.enum(["user", "system", "webhook", "api"]),
-    /** Actor user ID (if actorType is user) */
-    actorUserId: z.string().optional(),
-    /** Actor email (denormalized for privacy) */
-    actorEmail: z.string().optional(),
     /** Activity category */
     category: z.enum([
       "auth",
@@ -142,14 +136,6 @@ const eventsMap = {
       sourceId: z.string(),
       title: z.string(),
       body: z.string(),
-      actor: z
-        .object({
-          id: z.string(),
-          name: z.string(),
-          email: z.string().nullable(),
-          avatarUrl: z.string().nullable(),
-        })
-        .nullable(),
       occurredAt: z.string(),
       references: z.array(
         z.object({

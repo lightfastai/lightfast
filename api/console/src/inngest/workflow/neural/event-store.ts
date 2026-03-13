@@ -401,7 +401,6 @@ export const eventStore = inngest.createFunction(
           externalId,
           workspaceId,
           occurredAt: sourceEvent.occurredAt,
-          actor: sourceEvent.actor ?? null,
           observationType,
           title: sourceEvent.title,
           content: sourceEvent.body,

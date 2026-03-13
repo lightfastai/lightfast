@@ -92,12 +92,6 @@ export function transformSentryIssue(
       `[${actionTitles[payload.action]}] ${errorType}: ${errorValue.slice(0, 80)}`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: {
-      id: String(payload.actor.id),
-      name: payload.actor.name,
-      email: payload.actor.email ?? null,
-      avatarUrl: null,
-    },
     occurredAt: issue.lastSeen,
     references: refs,
     metadata: {
@@ -175,15 +169,6 @@ export function transformSentryError(
     sourceId: `sentry-error:${errorEvent.project}:${errorEvent.event_id}`,
     title: sanitizeTitle(`[Error] ${errorType}: ${errorValue.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: errorEvent.user
-      ? {
-          id: errorEvent.user.id ?? errorEvent.user.email ?? "unknown",
-          name:
-            errorEvent.user.username ?? errorEvent.user.email ?? "Unknown User",
-          email: errorEvent.user.email ?? null,
-          avatarUrl: null,
-        }
-      : null,
     occurredAt: String(errorEvent.timestamp),
     references: refs,
     metadata: {
@@ -245,7 +230,6 @@ export function transformSentryEventAlert(
     sourceId: `sentry-alert:${event.project}:${event.event_id}:${triggered_rule.replace(/\s/g, "-")}`,
     title: sanitizeTitle(`[Alert Triggered] ${triggered_rule}: ${errorType}`),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: null,
     occurredAt: String(event.timestamp),
     references: refs,
     metadata: {
@@ -306,7 +290,6 @@ export function transformSentryMetricAlert(
     sourceId: `sentry-metric-alert:${alertRule.organization_id}:${metric_alert.id}:${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${alertRule.name}`),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: null,
     occurredAt: metric_alert.date_detected,
     references: refs,
     metadata: {

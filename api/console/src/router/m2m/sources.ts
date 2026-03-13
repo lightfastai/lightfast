@@ -161,7 +161,6 @@ export const sourcesM2MRouter = {
       sources.forEach((source) => {
         recordSystemActivity({
           workspaceId: source.workspaceId,
-          actorType: "webhook",
           category: "integration",
           action: "integration.disconnected",
           entityType: "integration",
@@ -243,7 +242,6 @@ export const sourcesM2MRouter = {
       installationSources.forEach((source) => {
         recordSystemActivity({
           workspaceId: source.workspaceId,
-          actorType: "webhook",
           category: "integration",
           action: "integration.disconnected",
           entityType: "integration",
@@ -324,7 +322,6 @@ export const sourcesM2MRouter = {
       githubSources.forEach((source) => {
         recordSystemActivity({
           workspaceId: source.workspaceId,
-          actorType: "webhook",
           category: "integration",
           action: "integration.deleted",
           entityType: "integration",
@@ -390,7 +387,6 @@ export const sourcesM2MRouter = {
       githubSources.forEach((source) => {
         recordSystemActivity({
           workspaceId: source.workspaceId,
-          actorType: "webhook",
           category: "integration",
           action: "integration.metadata_updated",
           entityType: "integration",

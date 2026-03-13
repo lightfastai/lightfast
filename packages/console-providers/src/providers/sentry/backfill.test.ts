@@ -333,12 +333,6 @@ describe("Sentry Issue: adapter → transformer round-trip", () => {
     expect(new Date(event.occurredAt).getTime()).not.toBeNaN();
   });
 
-  it("actor is populated with Sentry application actor", () => {
-    const event = transformSentryIssue(adapted, transformContext, "issue");
-    expect(event.actor).toBeDefined();
-    expect(event.actor!.name).toBe("Sentry");
-  });
-
   it("sourceType includes action", () => {
     const event = transformSentryIssue(adapted, transformContext, "issue");
     expect(event.sourceType).toContain("created");
@@ -452,7 +446,5 @@ describe("Sentry Error: adapter → transformer round-trip", () => {
     expect(result.metadata.webUrl).toBe(
       "https://my-org.sentry.io/issues/123/events/abc/"
     );
-    expect(result.actor).toBeDefined();
-    expect(result.actor!.name).toBe("alice");
   });
 });

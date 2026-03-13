@@ -133,14 +133,6 @@ export function transformLinearIssue(
       `[${actionTitles[payload.action]}] ${issue.identifier}: ${issue.title.slice(0, 80)}`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: issue.creator
-      ? {
-          id: issue.creator.id,
-          name: issue.creator.displayName ?? issue.creator.name,
-          email: issue.creator.email ?? null,
-          avatarUrl: issue.creator.avatarUrl ?? null,
-        }
-      : null,
     occurredAt: payload.createdAt,
     references: refs,
     metadata: {
@@ -218,12 +210,6 @@ export function transformLinearComment(
       `[${actionTitles[payload.action]}] ${comment.issue.identifier}: ${comment.body.slice(0, 60)}...`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: {
-      id: comment.user.id,
-      name: comment.user.displayName ?? comment.user.name,
-      email: comment.user.email ?? null,
-      avatarUrl: comment.user.avatarUrl ?? null,
-    },
     occurredAt: payload.createdAt,
     references: refs,
     metadata: {
@@ -302,14 +288,6 @@ export function transformLinearProject(
       `[${actionTitles[payload.action]}] Project: ${project.name}`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: project.lead
-      ? {
-          id: project.lead.id,
-          name: project.lead.displayName ?? project.lead.name,
-          email: project.lead.email ?? null,
-          avatarUrl: project.lead.avatarUrl ?? null,
-        }
-      : null,
     occurredAt: payload.createdAt,
     references: refs,
     metadata: {
@@ -390,7 +368,6 @@ export function transformLinearCycle(
       `[${actionTitles[payload.action]}] ${cycleName} (${cycle.team.name})`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: null,
     occurredAt: payload.createdAt,
     references: refs,
     metadata: {
@@ -461,12 +438,6 @@ export function transformLinearProjectUpdate(
       `[${actionTitles[payload.action]}] ${update.project.name}: ${update.body.slice(0, 60)}...`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
-    actor: {
-      id: update.user.id,
-      name: update.user.displayName ?? update.user.name,
-      email: update.user.email ?? null,
-      avatarUrl: update.user.avatarUrl ?? null,
-    },
     occurredAt: payload.createdAt,
     references: refs,
     metadata: {

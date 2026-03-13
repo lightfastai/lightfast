@@ -90,11 +90,6 @@ export function adaptSentryIssueForTransformer(
       },
     },
     installation: { uuid: ctx.installationId },
-    actor: {
-      type: "application" as const,
-      id: "sentry",
-      name: "Sentry",
-    },
   } satisfies PreTransformSentryIssueWebhook;
 }
 

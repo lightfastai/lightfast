@@ -164,7 +164,7 @@ export const preTransformSentryIssueWebhookSchema = z.object({
   ]),
   data: z.object({ issue: sentryIssueSchema }),
   installation: z.object({ uuid: z.string() }),
-  actor: sentryActorSchema,
+  actor: sentryActorSchema.optional(),
 });
 
 export const preTransformSentryErrorWebhookSchema = z.object({
@@ -222,7 +222,6 @@ export const sentryWebhookPayloadSchema = z
 
 // ─── Inferred types ───────────────────────────────────────────────────────────
 
-export type SentryActor = z.infer<typeof sentryActorSchema>;
 export type SentryIssue = z.infer<typeof sentryIssueSchema>;
 export type SentryErrorEvent = z.infer<typeof sentryErrorEventSchema>;
 

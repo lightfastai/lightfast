@@ -53,7 +53,6 @@ export {
 } from "./workspace-entity-events";
 // Workspace events (neural observations)
 export type {
-  ObservationActor,
   ObservationMetadata,
   ObservationReference,
 } from "./workspace-events";

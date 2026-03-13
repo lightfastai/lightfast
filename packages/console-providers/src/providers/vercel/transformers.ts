@@ -114,14 +114,6 @@ export function transformVercelDeployment(
       `[${actionTitle}] ${project.name ?? project.id} from ${branch}`
     ),
     body: sanitizeBody(rawBody),
-    actor: gitMeta?.githubCommitAuthorName
-      ? {
-          id: gitMeta.githubCommitAuthorName,
-          name: gitMeta.githubCommitAuthorName,
-          email: null,
-          avatarUrl: null,
-        }
-      : null,
     occurredAt: new Date(payload.createdAt).toISOString(),
     references: refs,
     metadata: {

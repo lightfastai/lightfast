@@ -29,7 +29,6 @@ import type {
   ActivityCategory,
   ActivityMetadata,
   ActivityType,
-  ActorType,
 } from "@repo/console-validation";
 import { activityTypeSchema } from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
@@ -62,12 +61,6 @@ import { inngest } from "../inngest/client/client";
 export interface ActivityData {
   /** Action performed - must match one of the defined activity types */
   action: ActivityType["action"];
-  /** Actor email (optional, denormalized for privacy) */
-  actorEmail?: string;
-  /** Actor type (user, system, webhook, api) */
-  actorType: ActorType;
-  /** Actor user ID (required if actorType is 'user') */
-  actorUserId?: string;
   /** Activity category */
   category: ActivityCategory;
   /** Entity ID */
@@ -146,9 +139,6 @@ export async function recordCriticalActivity(
       .insert(workspaceUserActivities)
       .values({
         workspaceId: data.workspaceId,
-        actorType: data.actorType,
-        actorUserId: data.actorUserId ?? null,
-        actorEmail: data.actorEmail ?? null,
         category: data.category,
         action: data.action,
         entityType: data.entityType,
@@ -245,9 +235,6 @@ export async function recordActivity(
       name: "apps-console/activity.record",
       data: {
         workspaceId: data.workspaceId,
-        actorType: data.actorType,
-        actorUserId: data.actorUserId,
-        actorEmail: data.actorEmail,
         category: data.category,
         action: data.action,
         entityType: data.entityType,
@@ -338,9 +325,6 @@ export function recordSystemActivity(data: ActivityData): void {
       name: "apps-console/activity.record",
       data: {
         workspaceId: data.workspaceId,
-        actorType: data.actorType,
-        actorUserId: data.actorUserId,
-        actorEmail: data.actorEmail,
         category: data.category,
         action: data.action,
         entityType: data.entityType,

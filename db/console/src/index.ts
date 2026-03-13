@@ -6,7 +6,6 @@ export { db } from "./client";
 // Re-exported types from schema
 export type {
   GitHubSourceMetadata,
-  ObservationActor,
   ObservationMetadata,
   ObservationReference,
   WorkflowInput,

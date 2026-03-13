@@ -262,7 +262,6 @@ export const linearWebhookPayloadSchema = z
 
 // ─── Inferred types ───────────────────────────────────────────────────────────
 
-export type LinearActor = z.infer<typeof linearActorSchema>;
 export type LinearUser = z.infer<typeof linearUserSchema>;
 export type LinearLabel = z.infer<typeof linearLabelSchema>;
 export type LinearAttachment = z.infer<typeof linearAttachmentSchema>;

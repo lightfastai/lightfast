@@ -38,7 +38,6 @@ export const activitiesRouter = {
             "settings",
           ])
           .optional(),
-        actorUserId: z.string().optional(),
         startDate: z.string().datetime().optional(),
         endDate: z.string().datetime().optional(),
       })
@@ -62,12 +61,6 @@ export const activitiesRouter = {
         );
       }
 
-      if (input.actorUserId) {
-        whereConditions.push(
-          eq(workspaceUserActivities.actorUserId, input.actorUserId)
-        );
-      }
-
       if (input.startDate) {
         whereConditions.push(
           gte(workspaceUserActivities.timestamp, input.startDate)
@@ -84,9 +77,6 @@ export const activitiesRouter = {
       const activities = await db
         .select({
           id: workspaceUserActivities.id,
-          actorType: workspaceUserActivities.actorType,
-          actorUserId: workspaceUserActivities.actorUserId,
-          actorEmail: workspaceUserActivities.actorEmail,
           category: workspaceUserActivities.category,
           action: workspaceUserActivities.action,
           entityType: workspaceUserActivities.entityType,
@@ -143,7 +133,6 @@ export const activitiesRouter = {
       const activities = await db
         .select({
           category: workspaceUserActivities.category,
-          actorType: workspaceUserActivities.actorType,
         })
         .from(workspaceUserActivities)
         .where(
@@ -163,20 +152,9 @@ export const activitiesRouter = {
         {} as Record<string, number>
       );
 
-      // Count by actor type
-      const byActorType = activities.reduce(
-        (acc, activity) => {
-          const actorType = activity.actorType;
-          acc[actorType] = (acc[actorType] ?? 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>
-      );
-
       return {
         total: activities.length,
         byCategory,
-        byActorType,
         timeRange: input.timeRange,
       };
     }),

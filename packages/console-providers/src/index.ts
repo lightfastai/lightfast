@@ -32,13 +32,11 @@ export {
   typedEntityHandler,
 } from "./define";
 export type {
-  PostTransformActor,
   PostTransformEvent,
   PostTransformReference,
 } from "./post-transform-event";
 // ── Post-Transform Event (canonical source of truth) ─────────────────────────
 export {
-  postTransformActorSchema,
   postTransformEventSchema,
   postTransformReferenceSchema,
 } from "./post-transform-event";
@@ -83,7 +81,6 @@ export {
   parseLinearRateLimit,
 } from "./providers/linear/api";
 export type {
-  LinearActor,
   LinearAttachment,
   LinearComment,
   LinearCycle,
@@ -124,7 +121,6 @@ export type {
   PreTransformSentryEventAlertWebhook,
   PreTransformSentryIssueWebhook,
   PreTransformSentryMetricAlertWebhook,
-  SentryActor,
   SentryErrorEvent,
   SentryIssue,
   SentryWebhookEventType,

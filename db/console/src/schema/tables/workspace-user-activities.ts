@@ -17,7 +17,6 @@
 import type {
   ActivityCategory,
   ActivityMetadata,
-  ActorType,
 } from "@repo/console-validation";
 import { sql } from "drizzle-orm";
 import {
@@ -48,37 +47,6 @@ export const workspaceUserActivities = pgTable(
     workspaceId: varchar("workspace_id", { length: 191 })
       .notNull()
       .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
-
-    /**
-     * Actor Type
-     * - user: Human user action (via UI or API)
-     * - system: Automated system action (cron, job)
-     * - webhook: External webhook trigger
-     * - api: API client or integration
-     */
-    actorType: varchar("actor_type", { length: 20 })
-      .notNull()
-      .$type<ActorType>(),
-
-    /**
-     * Actor User ID (Clerk user ID)
-     * Null for system/webhook actions
-     */
-    actorUserId: varchar("actor_user_id", { length: 191 }),
-
-    /**
-     * Actor Email
-     * Stored for display and GDPR export
-     * Anonymized on user deletion
-     */
-    actorEmail: varchar("actor_email", { length: 255 }),
-
-    /**
-     * Actor IP Address
-     * For security auditing
-     * IPv4 or IPv6 format
-     */
-    actorIp: varchar("actor_ip", { length: 45 }),
 
     /**
      * Activity Category
@@ -177,9 +145,6 @@ export const workspaceUserActivities = pgTable(
       table.workspaceId,
       table.timestamp
     ),
-
-    // Filter by actor (user activity history)
-    actorIdx: index("activity_actor_idx").on(table.actorUserId),
 
     // Filter by category
     categoryIdx: index("activity_category_idx").on(table.category),

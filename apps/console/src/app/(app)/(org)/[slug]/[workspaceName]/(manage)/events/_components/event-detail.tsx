@@ -2,7 +2,6 @@
 
 import type { PostTransformEvent } from "@repo/console-providers";
 import { formatDistanceToNow } from "date-fns";
-import Image from "next/image";
 
 interface EventDetailProps {
   event: {
@@ -30,33 +29,6 @@ export function EventDetail({ event }: EventDetailProps) {
               ? `${sourceEvent.body.slice(0, 1000)}…`
               : sourceEvent.body}
           </p>
-        </div>
-      )}
-
-      {/* Actor */}
-      {sourceEvent.actor && (
-        <div>
-          <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-            Actor
-          </p>
-          <div className="flex items-center gap-2">
-            {sourceEvent.actor.avatarUrl && (
-              <Image
-                alt={sourceEvent.actor.name}
-                className="rounded-full"
-                height={20}
-                src={sourceEvent.actor.avatarUrl}
-                unoptimized
-                width={20}
-              />
-            )}
-            <span>{sourceEvent.actor.name}</span>
-            {sourceEvent.actor.email && (
-              <span className="text-muted-foreground">
-                {sourceEvent.actor.email}
-              </span>
-            )}
-          </div>
         </div>
       )}
 

@@ -168,12 +168,6 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
     expect(event.sourceId).toContain("42");
   });
 
-  it("actor is populated from pr.user", () => {
-    const event = transformGitHubPullRequest(adapted, context, "");
-    expect(event.actor).toBeDefined();
-    expect(event.actor!.name).toBe("alice");
-  });
-
   it("occurredAt is a valid, parseable ISO timestamp", () => {
     const event = transformGitHubPullRequest(adapted, context, "");
     const parsed = new Date(event.occurredAt);
@@ -232,12 +226,6 @@ describe("GitHub Issue: adapter → transformer round-trip", () => {
     expect(event.source).toBe("github");
   });
 
-  it("actor is populated from issue.user", () => {
-    const event = transformGitHubIssue(adapted, context, "");
-    expect(event.actor).toBeDefined();
-    expect(event.actor!.name).toBe("carol");
-  });
-
   it("title is non-empty", () => {
     const event = transformGitHubIssue(adapted, context, "");
     expect(event.title).toBeTruthy();
@@ -266,12 +254,6 @@ describe("GitHub Release: adapter → transformer round-trip", () => {
   it("source is github", () => {
     const event = transformGitHubRelease(adapted, context, "");
     expect(event.source).toBe("github");
-  });
-
-  it("actor is populated from release.author", () => {
-    const event = transformGitHubRelease(adapted, context, "");
-    expect(event.actor).toBeDefined();
-    expect(event.actor!.name).toBe("alice");
   });
 
   it("references include branch ref (target_commitish)", () => {

@@ -316,8 +316,6 @@ export const jobsRouter = {
       // Record activity (Tier 2: Queue-based)
       await recordActivity({
         workspaceId,
-        actorType: "user",
-        actorUserId: ctx.auth.userId,
         category: "job",
         action: "job.cancelled",
         entityType: "job",

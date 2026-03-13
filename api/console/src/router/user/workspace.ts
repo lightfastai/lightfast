@@ -167,8 +167,6 @@ export const workspaceAccessRouter = {
         // Record activity (Tier 2: Queue-based)
         await recordActivity({
           workspaceId,
-          actorType: "user",
-          actorUserId: ctx.auth.userId,
           category: "workspace",
           action: "workspace.created",
           entityType: "workspace",
@@ -262,8 +260,6 @@ export const workspaceAccessRouter = {
           // Record integration activity
           await recordActivity({
             workspaceId,
-            actorType: "user",
-            actorUserId: ctx.auth.userId,
             category: "integration",
             action: "integration.connected",
             entityType: "integration",

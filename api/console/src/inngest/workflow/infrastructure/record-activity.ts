@@ -76,9 +76,6 @@ export const recordActivity = inngest.createFunction(
 
         return {
           workspaceId: data.workspaceId,
-          actorType: data.actorType,
-          actorUserId: data.actorUserId ?? null,
-          actorEmail: data.actorEmail ?? null,
           category: data.category,
           action: data.action,
           entityType: data.entityType,

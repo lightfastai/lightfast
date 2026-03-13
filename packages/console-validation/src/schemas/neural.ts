@@ -1,4 +1,3 @@
-import type { PostTransformActor } from "@repo/console-providers";
 import { z } from "zod";
 
 // ── Significance Scoring ──────────────────────────────────────────────────────
@@ -10,20 +9,10 @@ export const significanceResultSchema = z.object({
 
 export type SignificanceResult = z.infer<typeof significanceResultSchema>;
 
-// ── Actor Resolution ──────────────────────────────────────────────────────────
-
-export const resolvedActorSchema = z.object({
-  actorId: z.string().nullable(),
-  sourceActor: z.custom<PostTransformActor>().nullable(),
-});
-
-export type ResolvedActor = z.infer<typeof resolvedActorSchema>;
-
 // ── Observation Vector Metadata ───────────────────────────────────────────────
 
 export const observationVectorMetadataSchema = z
   .object({
-    actorName: z.string(),
     layer: z.string(),
     observationId: z.string(),
     observationType: z.string(),

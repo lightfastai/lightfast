@@ -137,7 +137,6 @@ export const eventInterpret = inngest.createFunction(
               source: true,
               sourceType: true,
               sourceId: true,
-              actor: true,
               occurredAt: true,
               sourceReferences: true,
               observationType: true,
@@ -304,7 +303,6 @@ export const eventInterpret = inngest.createFunction(
         sourceType: obs.sourceType,
         sourceId: obs.sourceId,
         occurredAt: obs.occurredAt,
-        actorName: obs.actor?.name ?? "unknown",
         observationId: obs.externalId,
       };
 

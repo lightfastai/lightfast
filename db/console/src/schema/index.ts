@@ -19,7 +19,6 @@ export {
 // Re-exported types from tables
 export type {
   GitHubSourceMetadata,
-  ObservationActor,
   ObservationMetadata,
   ObservationReference,
   WorkflowInput,
