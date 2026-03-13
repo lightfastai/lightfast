@@ -7,16 +7,9 @@ const inputSchema = z.object({
   id: z
     .string()
     .meta({ description: "The observation ID to find related events for" }),
-  depth: z
-    .number()
-    .int()
-    .min(1)
-    .max(3)
-    .default(1)
-    .meta({
-      description:
-        "Traversal depth: 1=direct connections, 2=transitive, 3=deep",
-    }),
+  depth: z.number().int().min(1).max(3).default(1).meta({
+    description: "Traversal depth: 1=direct connections, 2=transitive, 3=deep",
+  }),
   types: z
     .array(z.string())
     .optional()

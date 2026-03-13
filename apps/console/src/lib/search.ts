@@ -1,7 +1,4 @@
-import type {
-  SearchRequest,
-  SearchResponse,
-} from "@repo/console-validation";
+import type { SearchRequest, SearchResponse } from "@repo/console-validation";
 import type { AuthContext } from "./types";
 
 export async function searchLogic(

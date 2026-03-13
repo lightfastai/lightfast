@@ -74,7 +74,7 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
         workspaceId: workspace.workspaceId,
         deliveryId: envelope.deliveryId,
         source: envelope.provider,
-        sourceType: sourceEvent.sourceType,
+        sourceType: sourceEvent.eventType,
         sourceEvent,
         receivedAt: new Date(envelope.receivedAt).toISOString(),
         ingestionSource: "webhook",

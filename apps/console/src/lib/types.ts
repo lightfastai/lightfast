@@ -1,6 +1,6 @@
 export interface AuthContext {
-  workspaceId: string;
-  userId: string;
-  authType: "api-key" | "session";
   apiKeyId?: string;
+  authType: "api-key" | "session";
+  userId: string;
+  workspaceId: string;
 }

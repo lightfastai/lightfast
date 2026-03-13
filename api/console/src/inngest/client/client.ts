@@ -1,5 +1,8 @@
 import { sentryMiddleware } from "@inngest/middleware-sentry";
-import { sourceTypeSchema } from "@repo/console-providers";
+import {
+  postTransformEventSchema,
+  sourceTypeSchema,
+} from "@repo/console-providers";
 import { ingestionSourceSchema } from "@repo/console-validation";
 import { env } from "@vendor/inngest/env";
 import type { GetEvents } from "inngest";
@@ -130,35 +133,7 @@ const eventsMap = {
     /** Clerk organization ID (optional for backwards compat, resolved at webhook handler) */
     clerkOrgId: z.string().optional(),
     /** Standardized source event */
-    sourceEvent: z.object({
-      source: z.string(),
-      sourceType: z.string(),
-      sourceId: z.string(),
-      title: z.string(),
-      body: z.string(),
-      occurredAt: z.string(),
-      references: z.array(
-        z.object({
-          type: z.enum([
-            "commit",
-            "branch",
-            "pr",
-            "issue",
-            "deployment",
-            "project",
-            "cycle",
-            "assignee",
-            "reviewer",
-            "team",
-            "label",
-          ]),
-          id: z.string(),
-          url: z.string().nullable(),
-          label: z.string().nullable(),
-        })
-      ),
-      metadata: z.record(z.string(), z.unknown()),
-    }),
+    sourceEvent: postTransformEventSchema,
     /** How this event was ingested (webhook, backfill, manual, api). Defaults to "webhook" in the consumer. */
     ingestionSource: ingestionSourceSchema.optional(),
   }),

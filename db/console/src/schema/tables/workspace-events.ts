@@ -1,3 +1,4 @@
+import type { EntityRelation } from "@repo/console-providers";
 import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
@@ -125,13 +126,15 @@ export const workspaceEvents = pgTable(
     /**
      * References to related entities
      */
-    sourceReferences:
-      jsonb("source_references").$type<ObservationReference[]>(),
+    sourceReferences: jsonb("source_references").$type<EntityRelation[]>(),
 
     /**
-     * Source-specific metadata
+     * Source-specific attributes
      */
-    metadata: jsonb("metadata").$type<ObservationMetadata>(),
+    metadata:
+      jsonb("metadata").$type<
+        Record<string, string | number | boolean | null>
+      >(),
 
     // ========== INGESTION ==========
 

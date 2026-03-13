@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { FindSimilarRequestSchema } from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { findSimilarLogic } from "~/lib/findsimilar";
 import {
   createDualAuthErrorResponse,

@@ -175,55 +175,54 @@ export function extractEntities(
 }
 
 /**
- * Extract entities specifically from source references
+ * Extract entities specifically from source relations
  * (Already-structured data from GitHub/Vercel events)
  */
-export function extractFromReferences(
-  references: { type: string; id: string; label?: string }[]
+export function extractFromRelations(
+  relations: {
+    entityType: string;
+    entityId: string;
+    relationshipType: string;
+  }[]
 ): ExtractedEntity[] {
   const entities: ExtractedEntity[] = [];
 
-  for (const ref of references) {
+  for (const rel of relations) {
     let category: EntityCategory;
     let key: string;
 
-    switch (ref.type) {
+    switch (rel.entityType) {
       case "commit":
         category = "commit";
-        key = ref.id.substring(0, 7);
+        key = rel.entityId.substring(0, 7);
         break;
       case "branch":
         category = "branch";
-        key = ref.id;
+        key = rel.entityId;
         break;
       case "pr":
         category = "pr";
-        key = ref.id;
+        key = rel.entityId;
         break;
       case "issue":
         category = "issue";
-        key = ref.id;
+        key = rel.entityId;
         break;
       case "deployment":
         category = "deployment";
-        key = ref.id;
-        break;
-      case "assignee":
-      case "reviewer":
-        category = "engineer";
-        key = `@${ref.id}`;
+        key = rel.entityId;
         break;
       default:
         category = "reference";
-        key = ref.id;
+        key = rel.entityId;
     }
 
     entities.push({
       category,
       key,
-      value: ref.label,
+      value: rel.relationshipType,
       confidence: 0.98, // High confidence - from structured data
-      evidence: `Reference: ${ref.type}`,
+      evidence: `Relation: ${rel.entityType}`,
     });
   }
 

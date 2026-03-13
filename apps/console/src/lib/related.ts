@@ -1,7 +1,4 @@
-import type {
-  RelatedRequest,
-  RelatedResponse,
-} from "@repo/console-validation";
+import type { RelatedRequest, RelatedResponse } from "@repo/console-validation";
 import type { AuthContext } from "./types";
 
 export async function relatedLogic(

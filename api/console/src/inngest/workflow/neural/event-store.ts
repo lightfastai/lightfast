@@ -8,7 +8,7 @@
  * 1. Check for duplicate events (idempotency)
  * 2. Check if event is allowed by source config (filtering)
  * 3. Evaluate significance (GATE - return early if below threshold)
- * 4. Extract entities (structural categories from updated extractFromReferences)
+ * 4. Extract entities (structural categories from relations)
  * 5. Store event row (null for interpretation columns)
  * 6. Upsert entities + create junction rows
  * 7. Emit event.stored (triggers interpretation slow path)
@@ -23,6 +23,7 @@ import {
   workspaceEvents,
   workspaceIntegrations,
 } from "@db/console/schema";
+import type { ProviderConfig } from "@repo/console-providers";
 import {
   deriveObservationType,
   getBaseEventType,
@@ -42,7 +43,7 @@ import { completeJob, createJob, updateJobStatus } from "../../../lib/jobs";
 import { inngest } from "../../client/client";
 import {
   extractEntities,
-  extractFromReferences,
+  extractFromRelations,
 } from "./entity-extraction-patterns";
 import { createNeuralOnFailureHandler } from "./on-failure-handler";
 import { SIGNIFICANCE_THRESHOLD, scoreSignificance } from "./scoring";
@@ -59,12 +60,12 @@ const STRUCTURAL_TYPES = new Set([
  * Check if an event type is allowed for a source based on providerConfig.sync.events
  */
 function isEventAllowed(
-  providerConfig: { sync?: { events?: string[] } } | null | undefined,
+  providerConfig: ProviderConfig | null | undefined,
   baseEventType: string
 ): boolean {
   const events = providerConfig?.sync?.events;
   if (!events || events.length === 0) {
-    return false;
+    return true;
   }
   return events.includes(baseEventType);
 }
@@ -167,8 +168,8 @@ export const eventStore = inngest.createFunction(
       workspaceId,
       clerkOrgId,
       externalId,
-      source: sourceEvent.source,
-      sourceType: sourceEvent.sourceType,
+      provider: sourceEvent.provider,
+      eventType: sourceEvent.eventType,
       sourceId: sourceEvent.sourceId,
     });
 
@@ -181,13 +182,13 @@ export const eventStore = inngest.createFunction(
         workspaceId,
         inngestRunId,
         inngestFunctionId: "event.capture",
-        name: `Capture ${sourceEvent.source}/${sourceEvent.sourceType}`,
+        name: `Capture ${sourceEvent.provider}/${sourceEvent.eventType}`,
         trigger: "webhook",
         input: {
           inngestFunctionId: "event.capture",
           sourceId: sourceEvent.sourceId,
-          source: sourceEvent.source,
-          sourceType: sourceEvent.sourceType,
+          source: sourceEvent.provider,
+          sourceType: sourceEvent.eventType,
           title: sourceEvent.title,
         } satisfies EventCaptureInput,
       });
@@ -239,30 +240,38 @@ export const eventStore = inngest.createFunction(
 
     // Step 2: Check if event is allowed by source config
     const eventAllowed = await step.run("check-event-allowed", async () => {
-      const metadata = sourceEvent.metadata;
+      const attributes = sourceEvent.attributes;
 
       let resourceId: string | undefined;
-      switch (sourceEvent.source) {
+      switch (sourceEvent.provider) {
         case "github":
-          resourceId = (metadata.repoId as string | undefined)?.toString();
+          resourceId =
+            attributes.repoId != null ? String(attributes.repoId) : undefined;
           break;
         case "vercel":
-          resourceId = (metadata.projectId as string | undefined)?.toString();
+          resourceId =
+            attributes.projectId != null
+              ? String(attributes.projectId)
+              : undefined;
           break;
         case "sentry":
-          resourceId = (metadata.projectId as string | undefined)?.toString();
+          resourceId =
+            attributes.projectId != null
+              ? String(attributes.projectId)
+              : undefined;
           break;
         case "linear":
-          resourceId = (metadata.teamId as string | undefined)?.toString();
+          resourceId =
+            attributes.teamId != null ? String(attributes.teamId) : undefined;
           break;
         default:
           resourceId = undefined;
       }
 
       if (!resourceId) {
-        log.info("No resource ID in metadata, rejecting event", {
-          source: sourceEvent.source,
-          sourceType: sourceEvent.sourceType,
+        log.info("No resource ID in attributes, rejecting event", {
+          provider: sourceEvent.provider,
+          eventType: sourceEvent.eventType,
         });
         return false;
       }
@@ -278,27 +287,24 @@ export const eventStore = inngest.createFunction(
         log.info("Integration not found for resource, rejecting event", {
           workspaceId,
           resourceId,
-          source: sourceEvent.source,
+          provider: sourceEvent.provider,
         });
         return false;
       }
 
       const baseEventType = getBaseEventType(
-        sourceEvent.source,
-        sourceEvent.sourceType
+        sourceEvent.provider,
+        sourceEvent.eventType
       );
-      const providerConfig = integration.providerConfig as {
-        sync?: { events?: string[] };
-      };
-      const allowed = isEventAllowed(providerConfig, baseEventType);
+      const allowed = isEventAllowed(integration.providerConfig, baseEventType);
 
       if (!allowed) {
         log.info("Event filtered by provider config", {
           workspaceId,
           resourceId,
-          sourceType: sourceEvent.sourceType,
+          eventType: sourceEvent.eventType,
           baseEventType,
-          configuredEvents: providerConfig.sync?.events,
+          configuredEvents: integration.providerConfig?.sync?.events,
         });
       }
 
@@ -362,15 +368,10 @@ export const eventStore = inngest.createFunction(
       };
     }
 
-    // Step 4: Extract entities (structural categories from updated extractFromReferences)
+    // Step 4: Extract entities (structural categories from relations)
     const extractedEntities = await step.run("extract-entities", () => {
       const textEntities = extractEntities(sourceEvent.title, sourceEvent.body);
-      const references = sourceEvent.references as {
-        type: string;
-        id: string;
-        label?: string;
-      }[];
-      const refEntities = extractFromReferences(references);
+      const refEntities = extractFromRelations(sourceEvent.relations);
 
       // Combine and deduplicate
       const allEntities = [...textEntities, ...refEntities];
@@ -391,8 +392,8 @@ export const eventStore = inngest.createFunction(
     // Step 5: Store observation row (null for interpretation columns)
     const observation = await step.run("store-observation", async () => {
       const observationType = deriveObservationType(
-        sourceEvent.source,
-        sourceEvent.sourceType
+        sourceEvent.provider,
+        sourceEvent.eventType
       );
 
       const [obs] = await db
@@ -404,11 +405,11 @@ export const eventStore = inngest.createFunction(
           observationType,
           title: sourceEvent.title,
           content: sourceEvent.body,
-          source: sourceEvent.source,
-          sourceType: sourceEvent.sourceType,
+          source: sourceEvent.provider,
+          sourceType: sourceEvent.eventType,
           sourceId: sourceEvent.sourceId,
-          sourceReferences: sourceEvent.references,
-          metadata: sourceEvent.metadata,
+          sourceReferences: sourceEvent.relations,
+          metadata: sourceEvent.attributes,
           ingestionSource: event.data.ingestionSource ?? "webhook",
         })
         .returning();
@@ -499,15 +500,20 @@ export const eventStore = inngest.createFunction(
       }
     );
 
-    // Build structural entity refs for the event.stored event
-    // (used by event-interpret for edge resolution)
-    const entityRefs = extractedEntities
-      .filter((e) => STRUCTURAL_TYPES.has(e.category))
-      .map((e) => ({
-        type: e.category,
-        key: e.key,
-        label: e.value ?? null,
-      }));
+    // Build entity refs for the event.stored event
+    // (used by event-interpret for edge resolution via edge-resolver.ts)
+    const entityRefs = [
+      {
+        type: sourceEvent.entity.entityType,
+        key: sourceEvent.entity.entityId,
+        label: null,
+      },
+      ...sourceEvent.relations.map((rel) => ({
+        type: rel.entityType,
+        key: rel.entityId,
+        label: rel.relationshipType,
+      })),
+    ];
 
     // Step 7: Emit event.stored to trigger the slow path
     await step.sendEvent("emit-event-stored", {
@@ -516,8 +522,8 @@ export const eventStore = inngest.createFunction(
         eventExternalId: observation.externalId,
         workspaceId,
         clerkOrgId,
-        source: sourceEvent.source,
-        sourceType: sourceEvent.sourceType,
+        source: sourceEvent.provider,
+        sourceType: sourceEvent.eventType,
         significanceScore: significance.score,
         entityRefs,
         internalEventId: observation.id,

@@ -134,11 +134,7 @@ export function ContentsToolResult({ data }: { data: ContentsResponse }) {
 /**
  * Render find similar results
  */
-export function FindSimilarToolResult({
-  data,
-}: {
-  data: FindSimilarResponse;
-}) {
+export function FindSimilarToolResult({ data }: { data: FindSimilarResponse }) {
   const similar = data.data.similar;
   if (similar.length === 0) {
     return (

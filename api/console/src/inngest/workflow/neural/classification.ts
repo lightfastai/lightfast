@@ -7,19 +7,19 @@
  * Used by observation-interpret.ts for LLM-based classification.
  */
 
-import type { PostTransformEvent } from "@repo/console-providers";
+import type { ClassificationInput } from "@repo/console-providers";
 
 /**
  * Build the classification prompt for Claude Haiku
  */
 export function buildClassificationPrompt(
-  sourceEvent: PostTransformEvent
+  sourceEvent: ClassificationInput
 ): string {
   return `Classify this engineering event into categories.
 
 EVENT DETAILS:
-- Source: ${sourceEvent.source}
-- Type: ${sourceEvent.sourceType}
+- Source: ${sourceEvent.provider}
+- Type: ${sourceEvent.eventType}
 - Title: ${sourceEvent.title}
 ${sourceEvent.body ? `- Description: ${sourceEvent.body.slice(0, 1000)}` : ""}
 
@@ -196,13 +196,13 @@ const CATEGORY_PATTERNS: { category: string; patterns: RegExp[] }[] = [
  * Fallback regex-based classification for when LLM is unavailable
  * or for low-priority events that don't warrant LLM cost.
  */
-export function classifyObservationFallback(sourceEvent: PostTransformEvent): {
+export function classifyObservationFallback(sourceEvent: ClassificationInput): {
   primaryCategory: string;
   secondaryCategories: string[];
 } {
   const body = sourceEvent.body || "";
   const text =
-    `${sourceEvent.sourceType} ${sourceEvent.title} ${body}`.toLowerCase();
+    `${sourceEvent.eventType} ${sourceEvent.title} ${body}`.toLowerCase();
 
   // Priority-ordered patterns - first match wins
   let primaryCategory = "other";

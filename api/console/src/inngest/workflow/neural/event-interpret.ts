@@ -23,9 +23,8 @@ import {
 } from "@db/console/schema";
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import { consolePineconeClient } from "@repo/console-pinecone";
-import type { PostTransformEvent } from "@repo/console-providers";
+import type { ClassificationInput } from "@repo/console-providers";
 import type {
-  ClassificationResponse,
   MultiViewEmbeddingResult,
   ObservationVectorMetadata,
 } from "@repo/console-validation";
@@ -52,10 +51,6 @@ function extractTopics(obs: {
   source: string;
   observationType: string;
   title: string;
-  sourceReferences:
-    | { type: string; id: string; label?: string | null }[]
-    | null
-    | undefined;
 }): string[] {
   const topics: string[] = [];
 
@@ -64,13 +59,6 @@ function extractTopics(obs: {
 
   // Add observation type
   topics.push(obs.observationType);
-
-  // Extract from labels
-  for (const ref of obs.sourceReferences ?? []) {
-    if (ref.type === "label") {
-      topics.push(ref.id.toLowerCase());
-    }
-  }
 
   // Extract common keywords from title
   const keywords = [
@@ -157,7 +145,7 @@ export const eventInterpret = inngest.createFunction(
           throw new NonRetriableError(`Workspace not found: ${workspaceId}`);
         }
 
-        if ((ws.settings.version as number) !== 1) {
+        if (ws.settings.version !== 1) {
           throw new NonRetriableError(
             `Workspace ${workspaceId} has invalid settings version`
           );
@@ -169,35 +157,38 @@ export const eventInterpret = inngest.createFunction(
 
     // Step 3: Classification with Claude Haiku (uses step.ai.wrap)
     const classificationResult = await (async () => {
-      // Build a minimal PostTransformEvent-like object for the classification helpers
-      const sourceEventLike = {
-        source: obs.source,
-        sourceType: obs.sourceType,
+      // Build a ClassificationInput from stored observation data
+      const classificationInput: ClassificationInput = {
+        provider: obs.source,
+        eventType: obs.sourceType,
         title: obs.title,
         body: obs.content,
-      } as unknown as PostTransformEvent;
+      };
 
       try {
-        const llmResult = (await step.ai.wrap(
+        const generateOptions: Parameters<typeof generateObject>[0] = {
+          model: createTracedModel("anthropic/claude-3-5-haiku-latest"),
+          schema: classificationResponseSchema,
+          prompt: buildClassificationPrompt(classificationInput),
+          temperature: 0.2,
+          experimental_telemetry: buildNeuralTelemetry(
+            "neural-classification",
+            {
+              workspaceId,
+              sourceType: obs.sourceType,
+              source: obs.source,
+            }
+          ),
+        };
+        const llmResult = await step.ai.wrap(
           "classify-observation",
           generateObject,
-          {
-            model: createTracedModel("anthropic/claude-3-5-haiku-latest"),
-            schema: classificationResponseSchema,
-            prompt: buildClassificationPrompt(sourceEventLike),
-            temperature: 0.2,
-            experimental_telemetry: buildNeuralTelemetry(
-              "neural-classification",
-              {
-                workspaceId,
-                sourceType: obs.sourceType,
-                source: obs.source,
-              }
-            ),
-          } as Parameters<typeof generateObject>[0]
-        )) as { object: ClassificationResponse };
+          generateOptions
+        );
 
-        const classification = llmResult.object;
+        const classification = classificationResponseSchema.parse(
+          llmResult.object
+        );
         const keywordTopics = extractTopics(obs);
 
         // Merge and deduplicate topics
@@ -215,7 +206,7 @@ export const eventInterpret = inngest.createFunction(
           error: String(error),
           observationId: internalEventId,
         });
-        const fallback = classifyObservationFallback(sourceEventLike);
+        const fallback = classifyObservationFallback(classificationInput);
         const keywordTopics = extractTopics(obs);
         const topics = [
           ...keywordTopics,
@@ -225,13 +216,13 @@ export const eventInterpret = inngest.createFunction(
 
         return {
           topics,
-          classification: {
+          classification: classificationResponseSchema.parse({
             primaryCategory: fallback.primaryCategory,
             secondaryCategories: fallback.secondaryCategories,
             topics: [],
             confidence: 0.5,
             reasoning: "Fallback regex classification",
-          } as ClassificationResponse,
+          }),
         };
       }
     })();

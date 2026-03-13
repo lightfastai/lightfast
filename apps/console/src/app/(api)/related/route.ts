@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { RelatedRequestSchema } from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { relatedLogic } from "~/lib/related";
 import {
   createDualAuthErrorResponse,

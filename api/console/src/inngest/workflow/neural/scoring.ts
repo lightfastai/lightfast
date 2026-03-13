@@ -1,6 +1,12 @@
-import type { EventKey, PostTransformEvent } from "@repo/console-providers";
+import type { PostTransformEvent } from "@repo/console-providers";
 import { EVENT_REGISTRY } from "@repo/console-providers";
 import type { SignificanceResult } from "@repo/console-validation";
+
+// Type-safe event weight lookup — avoids `as EventKey` cast
+const EVENT_WEIGHT_MAP = new Map<string, number>(
+  Object.entries(EVENT_REGISTRY).map(([k, v]) => [k, v.weight])
+);
+const DEFAULT_EVENT_WEIGHT = 50;
 
 /**
  * Minimum significance score for observation capture.
@@ -101,10 +107,9 @@ export function scoreSignificance(
   const factors: string[] = [];
 
   // 1. Event type base weight (from EVENT_REGISTRY)
-  const eventKey =
-    `${sourceEvent.source}:${sourceEvent.sourceType}` as EventKey;
-  let score = EVENT_REGISTRY[eventKey].weight;
-  factors.push(`base:${sourceEvent.source}:${sourceEvent.sourceType}`);
+  const eventKey = `${sourceEvent.provider}:${sourceEvent.eventType}`;
+  let score = EVENT_WEIGHT_MAP.get(eventKey) ?? DEFAULT_EVENT_WEIGHT;
+  factors.push(`base:${sourceEvent.provider}:${sourceEvent.eventType}`);
 
   // 2. Content signal matching
   const textToAnalyze =
@@ -118,7 +123,7 @@ export function scoreSignificance(
   }
 
   // 3. Reference density bonus (linked issues, PRs)
-  const refCount = sourceEvent.references.length;
+  const refCount = sourceEvent.relations.length;
   if (refCount > 0) {
     const refBonus = Math.min(refCount * 3, 15); // Max 15 points for references
     score += refBonus;
