@@ -1,6 +1,6 @@
 import type {
+  EntityRelation,
   PostTransformEvent,
-  PostTransformReference,
 } from "../../post-transform-event";
 import { sanitizeBody, sanitizeTitle } from "../../sanitize";
 import type { TransformContext } from "../../types";
@@ -22,7 +22,7 @@ const ACTION_SUFFIX: Record<string, string> = {
   remove: "deleted",
 };
 
-function linearSourceType(entity: string, action: string): string {
+function linearEventType(entity: string, action: string): string {
   return `${entity}.${ACTION_SUFFIX[action] ?? action}`;
 }
 
@@ -32,73 +32,39 @@ export function transformLinearIssue(
   _eventType: string
 ): PostTransformEvent {
   const issue = payload.data;
-  const refs: PostTransformReference[] = [];
-
-  refs.push({
-    type: "issue",
-    id: issue.identifier,
-    url: issue.url,
-    label: null,
-  });
-  refs.push({
-    type: "team",
-    id: issue.team.key,
-    url: null,
-    label: issue.team.name,
-  });
+  const relations: EntityRelation[] = [];
 
   if (issue.project) {
-    refs.push({
-      type: "project",
-      id: issue.project.name,
-      url: issue.project.url,
-      label: null,
+    relations.push({
+      provider: "linear",
+      entityType: "project",
+      entityId: issue.project.id,
+      title: issue.project.name,
+      url: issue.project.url ?? null,
+      relationshipType: "belongs_to",
     });
   }
 
   if (issue.cycle) {
-    refs.push({ type: "cycle", id: issue.cycle.name, url: null, label: null });
-  }
-
-  if (issue.assignee) {
-    refs.push({
-      type: "assignee",
-      id: issue.assignee.email ?? issue.assignee.name,
+    relations.push({
+      provider: "linear",
+      entityType: "cycle",
+      entityId: issue.cycle.id,
+      title: issue.cycle.name ?? null,
       url: null,
-      label: null,
+      relationshipType: "in_cycle",
     });
   }
 
-  for (const label of issue.labels) {
-    refs.push({ type: "label", id: label.name, url: null, label: null });
-  }
-
-  if (issue.branchName) {
-    refs.push({ type: "branch", id: issue.branchName, url: null, label: null });
-  }
-
-  if (issue.attachments?.nodes) {
-    for (const attachment of issue.attachments.nodes) {
-      if (attachment.sourceType === "githubPr" && attachment.metadata?.number) {
-        refs.push({
-          type: "pr",
-          id: `#${attachment.metadata.number}`,
-          url: attachment.url ?? null,
-          label: "tracked_in",
-        });
-      }
-      if (
-        attachment.sourceType === "sentryIssue" &&
-        attachment.metadata?.shortId
-      ) {
-        refs.push({
-          type: "issue",
-          id: attachment.metadata.shortId,
-          url: attachment.url ?? null,
-          label: "linked",
-        });
-      }
-    }
+  if (issue.parent) {
+    relations.push({
+      provider: "linear",
+      entityType: "issue",
+      entityId: issue.parent.identifier,
+      title: issue.parent.title,
+      url: null,
+      relationshipType: "parent",
+    });
   }
 
   const actionTitles: Record<string, string> = {
@@ -126,45 +92,44 @@ export function transformLinearIssue(
   ].filter(Boolean);
 
   const event: PostTransformEvent = {
-    source: "linear",
-    sourceType: linearSourceType("issue", payload.action),
-    sourceId: `linear-issue:${issue.team.key}:${issue.identifier}:${payload.action}`,
+    deliveryId: context.deliveryId,
+    sourceId: `linear:issue:${issue.identifier}:issue.${ACTION_SUFFIX[payload.action] ?? payload.action}`,
+    provider: "linear",
+    eventType: linearEventType("issue", payload.action),
     title: sanitizeTitle(
       `[${actionTitles[payload.action]}] ${issue.identifier}: ${issue.title.slice(0, 80)}`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
     occurredAt: payload.createdAt,
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      issueId: issue.id,
-      identifier: issue.identifier,
-      number: issue.number,
+    entity: {
+      provider: "linear",
+      entityType: "issue",
+      entityId: issue.identifier,
+      title: issue.title,
+      url: issue.url,
+      state: issue.state.name,
+    },
+    relations,
+    attributes: {
       teamId: issue.team.id,
       teamKey: issue.team.key,
       teamName: issue.team.name,
+      issueId: issue.id,
+      identifier: issue.identifier,
+      number: issue.number,
       stateId: issue.state.id,
       stateName: issue.state.name,
       stateType: issue.state.type,
       priority: issue.priority,
       priorityLabel: issue.priorityLabel,
-      estimate: issue.estimate,
-      projectId: issue.project?.id,
-      projectName: issue.project?.name,
-      cycleId: issue.cycle?.id,
-      cycleName: issue.cycle?.name,
-      assigneeId: issue.assignee?.id,
-      assigneeName: issue.assignee?.displayName ?? issue.assignee?.name,
-      labels: issue.labels.map((l) => l.name),
-      branchName: issue.branchName,
-      dueDate: issue.dueDate,
-      startedAt: issue.startedAt,
-      completedAt: issue.completedAt,
-      canceledAt: issue.canceledAt,
+      estimate: issue.estimate ?? null,
+      projectId: issue.project?.id ?? null,
+      projectName: issue.project?.name ?? null,
+      cycleId: issue.cycle?.id ?? null,
+      cycleName: issue.cycle?.name ?? null,
+      branchName: issue.branchName ?? null,
+      dueDate: issue.dueDate ?? null,
       action: payload.action,
-      organizationId: payload.organizationId,
-      webhookId: payload.webhookId,
-      updatedFrom: payload.updatedFrom,
     },
   };
 
@@ -182,14 +147,27 @@ export function transformLinearComment(
   _eventType: string
 ): PostTransformEvent {
   const comment = payload.data;
-  const refs: PostTransformReference[] = [];
+  const relations: EntityRelation[] = [
+    {
+      provider: "linear",
+      entityType: "issue",
+      entityId: comment.issue.identifier,
+      title: comment.issue.title,
+      url: comment.issue.url ?? null,
+      relationshipType: "belongs_to",
+    },
+  ];
 
-  refs.push({
-    type: "issue",
-    id: comment.issue.identifier,
-    url: comment.issue.url,
-    label: null,
-  });
+  if (comment.parent) {
+    relations.push({
+      provider: "linear",
+      entityType: "comment",
+      entityId: comment.parent.id,
+      title: null,
+      url: null,
+      relationshipType: "parent",
+    });
+  }
 
   const actionTitles: Record<string, string> = {
     create: "Comment Added",
@@ -203,26 +181,31 @@ export function transformLinearComment(
   ];
 
   const event: PostTransformEvent = {
-    source: "linear",
-    sourceType: linearSourceType("comment", payload.action),
-    sourceId: `linear-comment:${comment.issue.identifier}:${comment.id}:${payload.action}`,
+    deliveryId: context.deliveryId,
+    sourceId: `linear:comment:${comment.id}:comment.${ACTION_SUFFIX[payload.action] ?? payload.action}`,
+    provider: "linear",
+    eventType: linearEventType("comment", payload.action),
     title: sanitizeTitle(
       `[${actionTitles[payload.action]}] ${comment.issue.identifier}: ${comment.body.slice(0, 60)}...`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
     occurredAt: payload.createdAt,
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
+    entity: {
+      provider: "linear",
+      entityType: "comment",
+      entityId: comment.id,
+      title: comment.body.slice(0, 100),
+      url: null,
+      state: null,
+    },
+    relations,
+    attributes: {
       commentId: comment.id,
       issueId: comment.issue.id,
       issueIdentifier: comment.issue.identifier,
       issueTitle: comment.issue.title,
-      parentCommentId: comment.parent?.id,
-      editedAt: comment.editedAt,
+      parentCommentId: comment.parent?.id ?? null,
       action: payload.action,
-      organizationId: payload.organizationId,
-      webhookId: payload.webhookId,
     },
   };
 
@@ -240,27 +223,6 @@ export function transformLinearProject(
   _eventType: string
 ): PostTransformEvent {
   const project = payload.data;
-  const refs: PostTransformReference[] = [];
-
-  refs.push({
-    type: "project",
-    id: project.name,
-    url: project.url,
-    label: null,
-  });
-
-  if (project.lead) {
-    refs.push({
-      type: "assignee",
-      id: project.lead.email ?? project.lead.name,
-      url: null,
-      label: "lead",
-    });
-  }
-
-  for (const team of project.teams) {
-    refs.push({ type: "team", id: team.key, url: null, label: team.name });
-  }
 
   const actionTitles: Record<string, string> = {
     create: "Project Created",
@@ -280,36 +242,36 @@ export function transformLinearProject(
     `Teams: ${project.teams.map((t) => t.name).join(", ")}`,
   ].filter(Boolean);
 
+  const teamId = project.teams[0]?.id ?? null;
+
   const event: PostTransformEvent = {
-    source: "linear",
-    sourceType: linearSourceType("project", payload.action),
-    sourceId: `linear-project:${project.slugId}:${payload.action}`,
+    deliveryId: context.deliveryId,
+    sourceId: `linear:project:${project.id}:project.${ACTION_SUFFIX[payload.action] ?? payload.action}`,
+    provider: "linear",
+    eventType: linearEventType("project", payload.action),
     title: sanitizeTitle(
       `[${actionTitles[payload.action]}] Project: ${project.name}`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
     occurredAt: payload.createdAt,
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      projectId: project.id,
+    entity: {
+      provider: "linear",
+      entityType: "project",
+      entityId: project.id,
+      title: project.name,
+      url: project.url ?? null,
+      state: project.state,
+    },
+    relations: [],
+    attributes: {
+      teamId: teamId ?? "",
       projectName: project.name,
       slugId: project.slugId,
       state: project.state,
       progress: project.progress,
       scope: project.scope,
-      targetDate: project.targetDate,
-      startDate: project.startDate,
-      startedAt: project.startedAt,
-      completedAt: project.completedAt,
-      canceledAt: project.canceledAt,
-      leadId: project.lead?.id,
-      leadName: project.lead?.displayName ?? project.lead?.name,
-      teamIds: project.teams.map((t) => t.id),
-      memberIds: project.members.map((m) => m.id),
+      targetDate: project.targetDate ?? null,
       action: payload.action,
-      organizationId: payload.organizationId,
-      webhookId: payload.webhookId,
     },
   };
 
@@ -327,20 +289,6 @@ export function transformLinearCycle(
   _eventType: string
 ): PostTransformEvent {
   const cycle = payload.data;
-  const refs: PostTransformReference[] = [];
-
-  refs.push({
-    type: "cycle",
-    id: cycle.name ?? `Cycle ${cycle.number}`,
-    url: cycle.url,
-    label: null,
-  });
-  refs.push({
-    type: "team",
-    id: cycle.team.key,
-    url: null,
-    label: cycle.team.name,
-  });
 
   const actionTitles: Record<string, string> = {
     create: "Cycle Created",
@@ -361,31 +309,35 @@ export function transformLinearCycle(
   ].filter(Boolean);
 
   const event: PostTransformEvent = {
-    source: "linear",
-    sourceType: linearSourceType("cycle", payload.action),
-    sourceId: `linear-cycle:${cycle.team.key}:${cycle.number}:${payload.action}`,
+    deliveryId: context.deliveryId,
+    sourceId: `linear:cycle:${cycle.id}:cycle.${ACTION_SUFFIX[payload.action] ?? payload.action}`,
+    provider: "linear",
+    eventType: linearEventType("cycle", payload.action),
     title: sanitizeTitle(
       `[${actionTitles[payload.action]}] ${cycleName} (${cycle.team.name})`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
     occurredAt: payload.createdAt,
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      cycleId: cycle.id,
-      cycleNumber: cycle.number,
-      cycleName: cycle.name,
+    entity: {
+      provider: "linear",
+      entityType: "cycle",
+      entityId: cycle.id,
+      title: cycleName,
+      url: cycle.url ?? null,
+      state: null,
+    },
+    relations: [],
+    attributes: {
       teamId: cycle.team.id,
       teamKey: cycle.team.key,
       teamName: cycle.team.name,
+      cycleNumber: cycle.number,
+      cycleName: cycle.name ?? null,
       startsAt: cycle.startsAt,
       endsAt: cycle.endsAt,
-      completedAt: cycle.completedAt,
       progress: cycle.progress,
       scope: cycle.scope,
       action: payload.action,
-      organizationId: payload.organizationId,
-      webhookId: payload.webhookId,
     },
   };
 
@@ -403,14 +355,17 @@ export function transformLinearProjectUpdate(
   _eventType: string
 ): PostTransformEvent {
   const update = payload.data;
-  const refs: PostTransformReference[] = [];
 
-  refs.push({
-    type: "project",
-    id: update.project.name,
-    url: update.project.url,
-    label: null,
-  });
+  const relations: EntityRelation[] = [
+    {
+      provider: "linear",
+      entityType: "project",
+      entityId: update.project.id,
+      title: update.project.name,
+      url: update.project.url ?? null,
+      relationshipType: "belongs_to",
+    },
+  ];
 
   const actionTitles: Record<string, string> = {
     create: "Project Update Posted",
@@ -431,25 +386,30 @@ export function transformLinearProjectUpdate(
   ];
 
   const event: PostTransformEvent = {
-    source: "linear",
-    sourceType: linearSourceType("project-update", payload.action),
-    sourceId: `linear-project-update:${update.project.id}:${update.id}:${payload.action}`,
+    deliveryId: context.deliveryId,
+    sourceId: `linear:project-update:${update.id}:project-update.${ACTION_SUFFIX[payload.action] ?? payload.action}`,
+    provider: "linear",
+    eventType: linearEventType("project-update", payload.action),
     title: sanitizeTitle(
       `[${actionTitles[payload.action]}] ${update.project.name}: ${update.body.slice(0, 60)}...`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
     occurredAt: payload.createdAt,
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
+    entity: {
+      provider: "linear",
+      entityType: "project-update",
+      entityId: update.id,
+      title: update.body.slice(0, 100),
+      url: null,
+      state: update.health,
+    },
+    relations,
+    attributes: {
       updateId: update.id,
       projectId: update.project.id,
       projectName: update.project.name,
       health: update.health,
-      editedAt: update.editedAt,
       action: payload.action,
-      organizationId: payload.organizationId,
-      webhookId: payload.webhookId,
     },
   };
 

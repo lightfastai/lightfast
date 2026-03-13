@@ -16,7 +16,7 @@ export function logValidationErrors(
     `[Transformer:${transformerName}] Invalid PostTransformEvent:`,
     {
       sourceId: event.sourceId,
-      sourceType: event.sourceType,
+      eventType: event.eventType,
       errors,
     }
   );
@@ -54,9 +54,16 @@ export function sanitizePostTransformEvent(
 
   return {
     ...event,
-    references: event.references.map((ref) => ({
-      ...ref,
-      url: ref.url && isValidUrl(ref.url) ? ref.url : null,
+    entity: {
+      ...event.entity,
+      url:
+        event.entity.url && isValidUrl(event.entity.url)
+          ? event.entity.url
+          : null,
+    },
+    relations: event.relations.map((rel) => ({
+      ...rel,
+      url: rel.url && isValidUrl(rel.url) ? rel.url : null,
     })),
   };
 }

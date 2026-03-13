@@ -383,7 +383,7 @@ describe("Linear Issue: adapter → transformer round-trip", () => {
 
   it("source is linear", () => {
     const event = transformLinearIssue(adapted, transformCtx, "");
-    expect(event.source).toBe("linear");
+    expect(event.provider).toBe("linear");
   });
 
   it("title contains issue identifier", () => {
@@ -410,12 +410,12 @@ describe("Linear Issue: adapter → transformer round-trip", () => {
 
   it("sourceType contains 'created' for action create", () => {
     const event = transformLinearIssue(adapted, transformCtx, "");
-    expect(event.sourceType).toContain("created");
+    expect(event.eventType).toContain("created");
   });
 
   it("metadata contains issueId", () => {
     const event = transformLinearIssue(adapted, transformCtx, "");
-    expect(event.metadata.issueId).toBe("issue-abc");
+    expect(event.attributes.issueId).toBe("issue-abc");
   });
 });
 
@@ -441,7 +441,7 @@ describe("Linear Comment: adapter → transformer round-trip", () => {
 
   it("source is linear", () => {
     const event = transformLinearComment(adapted, transformCtx, "");
-    expect(event.source).toBe("linear");
+    expect(event.provider).toBe("linear");
   });
 
   it("title contains issue identifier", () => {
@@ -451,12 +451,12 @@ describe("Linear Comment: adapter → transformer round-trip", () => {
 
   it("sourceType contains 'created'", () => {
     const event = transformLinearComment(adapted, transformCtx, "");
-    expect(event.sourceType).toContain("created");
+    expect(event.eventType).toContain("created");
   });
 
   it("metadata contains commentId", () => {
     const event = transformLinearComment(adapted, transformCtx, "");
-    expect(event.metadata.commentId).toBe("comment-xyz");
+    expect(event.attributes.commentId).toBe("comment-xyz");
   });
 });
 
@@ -482,7 +482,7 @@ describe("Linear Project: adapter → transformer round-trip", () => {
 
   it("source is linear", () => {
     const event = transformLinearProject(adapted, transformCtx, "");
-    expect(event.source).toBe("linear");
+    expect(event.provider).toBe("linear");
   });
 
   it("title contains project name", () => {
@@ -498,12 +498,12 @@ describe("Linear Project: adapter → transformer round-trip", () => {
 
   it("sourceType contains 'created'", () => {
     const event = transformLinearProject(adapted, transformCtx, "");
-    expect(event.sourceType).toContain("created");
+    expect(event.eventType).toContain("created");
   });
 
   it("metadata contains projectId", () => {
     const event = transformLinearProject(adapted, transformCtx, "");
-    expect(event.metadata.projectId).toBe("proj-1");
+    expect(event.attributes.projectId).toBe("proj-1");
   });
 });
 

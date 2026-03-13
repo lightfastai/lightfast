@@ -314,7 +314,7 @@ describe("Sentry Issue: adapter → transformer round-trip", () => {
 
   it("source is sentry", () => {
     const event = transformSentryIssue(adapted, transformContext, "issue");
-    expect(event.source).toBe("sentry");
+    expect(event.provider).toBe("sentry");
   });
 
   it("title is non-empty", () => {
@@ -335,7 +335,7 @@ describe("Sentry Issue: adapter → transformer round-trip", () => {
 
   it("sourceType includes action", () => {
     const event = transformSentryIssue(adapted, transformContext, "issue");
-    expect(event.sourceType).toContain("created");
+    expect(event.eventType).toContain("created");
   });
 
   it("resolved issue maps to resolved action", () => {
@@ -351,7 +351,7 @@ describe("Sentry Issue: adapter → transformer round-trip", () => {
       transformContext,
       "issue"
     );
-    expect(event.sourceType).toContain("resolved");
+    expect(event.eventType).toContain("resolved");
   });
 
   it("ignored issue maps to ignored action", () => {
@@ -367,7 +367,7 @@ describe("Sentry Issue: adapter → transformer round-trip", () => {
       transformContext,
       "issue"
     );
-    expect(event.sourceType).toContain("ignored");
+    expect(event.eventType).toContain("ignored");
   });
 });
 
@@ -396,7 +396,7 @@ describe("Sentry Error: adapter → transformer round-trip", () => {
 
   it("source is sentry", () => {
     const event = transformSentryError(adapted, transformContext, "error");
-    expect(event.source).toBe("sentry");
+    expect(event.provider).toBe("sentry");
   });
 
   it("sourceId contains eventID", () => {
@@ -442,8 +442,8 @@ describe("Sentry Error: adapter → transformer round-trip", () => {
       ctx
     );
     const result = transformSentryError(richAdapted, transformContext, "error");
-    expect(result.metadata.culprit).toBe("my_app.views.process");
-    expect(result.metadata.webUrl).toBe(
+    expect(result.attributes.culprit).toBe("my_app.views.process");
+    expect(result.attributes.webUrl).toBe(
       "https://my-org.sentry.io/issues/123/events/abc/"
     );
   });

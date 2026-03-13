@@ -1,7 +1,4 @@
-import type {
-  PostTransformEvent,
-  PostTransformReference,
-} from "../../post-transform-event";
+import type { PostTransformEvent } from "../../post-transform-event";
 import { sanitizeBody, sanitizeTitle } from "../../sanitize";
 import type { TransformContext } from "../../types";
 import {
@@ -21,40 +18,6 @@ export function transformSentryIssue(
   _eventType: string
 ): PostTransformEvent {
   const { issue } = payload.data;
-  const refs: PostTransformReference[] = [];
-
-  refs.push({
-    type: "issue",
-    id: issue.shortId,
-    url: issue.permalink ?? null,
-    label: null,
-  });
-  refs.push({
-    type: "project",
-    id: issue.project.slug,
-    url: `https://sentry.io/organizations/_/projects/${issue.project.slug}/`,
-    label: null,
-  });
-
-  if (issue.assignedTo) {
-    refs.push({
-      type: "assignee",
-      id: issue.assignedTo.email ?? issue.assignedTo.name,
-      url: null,
-      label: null,
-    });
-  }
-
-  if (issue.statusDetails?.inCommit?.commit) {
-    refs.push({
-      type: "commit",
-      id: issue.statusDetails.inCommit.commit,
-      url: issue.statusDetails.inCommit.repository
-        ? `https://github.com/${issue.statusDetails.inCommit.repository}/commit/${issue.statusDetails.inCommit.commit}`
-        : null,
-      label: "resolved_by",
-    });
-  }
 
   const actionTitles: Record<string, string> = {
     created: "Issue Created",
@@ -85,36 +48,40 @@ export function transformSentryIssue(
   ].filter(Boolean);
 
   const event: PostTransformEvent = {
-    source: "sentry",
-    sourceType: `issue.${payload.action}`,
-    sourceId: `sentry-issue:${issue.project.slug}:${issue.shortId}:${payload.action}`,
+    deliveryId: context.deliveryId,
+    sourceId: `sentry:issue:${issue.project.id}:${issue.shortId}:issue.${payload.action}`,
+    provider: "sentry",
+    eventType: `issue.${payload.action}`,
     title: sanitizeTitle(
       `[${actionTitles[payload.action]}] ${errorType}: ${errorValue.slice(0, 80)}`
     ),
     body: sanitizeBody(bodyParts.join("\n")),
     occurredAt: issue.lastSeen,
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      issueId: issue.id,
-      shortId: issue.shortId,
+    entity: {
+      provider: "sentry",
+      entityType: "issue",
+      entityId: `${issue.project.id}:${issue.shortId}`,
+      title: issue.title,
+      url: issue.permalink,
+      state: issue.status,
+    },
+    relations: [],
+    attributes: {
       projectId: issue.project.id,
       projectSlug: issue.project.slug,
       projectName: issue.project.name,
+      issueId: issue.id,
+      shortId: issue.shortId,
       level: issue.level,
       platform: issue.platform,
-      errorType: issue.metadata.type,
-      errorValue: issue.metadata.value,
-      filename: issue.metadata.filename,
-      function: issue.metadata.function,
+      errorType: issue.metadata.type ?? null,
+      errorValue: issue.metadata.value ?? null,
+      filename: issue.metadata.filename ?? null,
       culprit: issue.culprit,
-      count: issue.count,
-      userCount: issue.userCount,
       firstSeen: issue.firstSeen,
       lastSeen: issue.lastSeen,
       status: issue.status,
       action: payload.action,
-      installationId: payload.installation.uuid,
     },
   };
 
@@ -132,14 +99,6 @@ export function transformSentryError(
   _eventType: string
 ): PostTransformEvent {
   const { error: errorEvent } = payload.data;
-  const refs: PostTransformReference[] = [];
-
-  refs.push({
-    type: "project",
-    id: String(errorEvent.project),
-    url: null,
-    label: null,
-  });
 
   const stackInfo =
     errorEvent.exception?.values
@@ -164,28 +123,31 @@ export function transformSentryError(
   ].filter(Boolean);
 
   const event: PostTransformEvent = {
-    source: "sentry",
-    sourceType: "error",
-    sourceId: `sentry-error:${errorEvent.project}:${errorEvent.event_id}`,
+    deliveryId: context.deliveryId,
+    sourceId: `sentry:error:${errorEvent.project}:${errorEvent.event_id}:error.created`,
+    provider: "sentry",
+    eventType: "error.created",
     title: sanitizeTitle(`[Error] ${errorType}: ${errorValue.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
     occurredAt: String(errorEvent.timestamp),
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      eventId: errorEvent.event_id,
+    entity: {
+      provider: "sentry",
+      entityType: "error",
+      entityId: `${errorEvent.project}:${errorEvent.event_id}`,
+      title: errorEvent.title,
+      url: errorEvent.web_url ?? null,
+      state: null,
+    },
+    relations: [],
+    attributes: {
       projectId: errorEvent.project,
+      eventId: errorEvent.event_id,
       platform: errorEvent.platform,
-      errorType: errorEvent.metadata.type,
-      errorValue: errorEvent.metadata.value,
-      filename: errorEvent.metadata.filename,
-      function: errorEvent.metadata.function,
-      location: errorEvent.location,
-      culprit: errorEvent.culprit,
-      tags: errorEvent.tags,
-      sdkName: errorEvent.sdk?.name,
-      sdkVersion: errorEvent.sdk?.version,
-      webUrl: errorEvent.web_url,
+      errorType: errorEvent.metadata.type ?? null,
+      errorValue: errorEvent.metadata.value ?? null,
+      filename: errorEvent.metadata.filename ?? null,
+      location: errorEvent.location ?? null,
+      culprit: errorEvent.culprit ?? null,
       installationId: payload.installation.uuid,
     },
   };
@@ -204,14 +166,6 @@ export function transformSentryEventAlert(
   _eventType: string
 ): PostTransformEvent {
   const { event, triggered_rule } = payload.data;
-  const refs: PostTransformReference[] = [];
-
-  refs.push({
-    type: "project",
-    id: String(event.project),
-    url: null,
-    label: null,
-  });
 
   const errorType = event.metadata.type ?? "Alert";
   const errorValue = event.metadata.value ?? event.title;
@@ -225,22 +179,29 @@ export function transformSentryEventAlert(
   ].filter(Boolean);
 
   const eventOut: PostTransformEvent = {
-    source: "sentry",
-    sourceType: "event-alert",
-    sourceId: `sentry-alert:${event.project}:${event.event_id}:${triggered_rule.replace(/\s/g, "-")}`,
+    deliveryId: context.deliveryId,
+    sourceId: `sentry:alert:${event.project}:${event.event_id}:event-alert.triggered`,
+    provider: "sentry",
+    eventType: "event-alert.triggered",
     title: sanitizeTitle(`[Alert Triggered] ${triggered_rule}: ${errorType}`),
     body: sanitizeBody(bodyParts.join("\n")),
     occurredAt: String(event.timestamp),
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      eventId: event.event_id,
+    entity: {
+      provider: "sentry",
+      entityType: "alert",
+      entityId: `${event.project}:${event.event_id}`,
+      title: `${triggered_rule}: ${errorValue}`,
+      url: event.web_url ?? null,
+      state: null,
+    },
+    relations: [],
+    attributes: {
       projectId: event.project,
+      eventId: event.event_id,
       triggeredRule: triggered_rule,
       platform: event.platform,
-      errorType: event.metadata.type,
+      errorType: event.metadata.type ?? null,
       errorValue,
-      webUrl: event.web_url,
       installationId: payload.installation.uuid,
     },
   };
@@ -264,7 +225,6 @@ export function transformSentryMetricAlert(
 ): PostTransformEvent {
   const { metric_alert } = payload.data;
   const alertRule = metric_alert.alert_rule;
-  const refs: PostTransformReference[] = [];
 
   const metricActionTitles: Record<string, string> = {
     critical: "Metric Alert Critical",
@@ -285,15 +245,23 @@ export function transformSentryMetricAlert(
   ].filter(Boolean);
 
   const event: PostTransformEvent = {
-    source: "sentry",
-    sourceType: "metric-alert",
-    sourceId: `sentry-metric-alert:${alertRule.organization_id}:${metric_alert.id}:${payload.action}`,
+    deliveryId: context.deliveryId,
+    sourceId: `sentry:metric-alert:${alertRule.organization_id}:${metric_alert.id}:metric-alert.${payload.action}`,
+    provider: "sentry",
+    eventType: `metric-alert.${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${alertRule.name}`),
     body: sanitizeBody(bodyParts.join("\n")),
     occurredAt: metric_alert.date_detected,
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
+    entity: {
+      provider: "sentry",
+      entityType: "metric-alert",
+      entityId: `${alertRule.organization_id}:${metric_alert.id}`,
+      title: alertRule.name,
+      url: null,
+      state: payload.action,
+    },
+    relations: [],
+    attributes: {
       alertId: metric_alert.id,
       alertRuleId: alertRule.id,
       alertRuleName: alertRule.name,

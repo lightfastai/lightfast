@@ -1,6 +1,6 @@
 import type {
+  EntityRelation,
   PostTransformEvent,
-  PostTransformReference,
 } from "../../post-transform-event";
 import { sanitizeBody, sanitizeTitle } from "../../sanitize";
 import type { TransformContext } from "../../types";
@@ -21,22 +21,19 @@ export function transformGitHubPush(
   context: TransformContext,
   _eventType: string
 ): PostTransformEvent {
-  const refs: PostTransformReference[] = [];
   const branch = payload.ref.replace("refs/heads/", "");
+  const repoId = String(payload.repository.id);
 
-  refs.push({
-    type: "commit",
-    id: payload.after,
-    url: `${payload.repository.html_url}/commit/${payload.after}`,
-    label: null,
-  });
-
-  refs.push({
-    type: "branch",
-    id: branch,
-    url: `${payload.repository.html_url}/tree/${branch}`,
-    label: null,
-  });
+  const relations: EntityRelation[] = [
+    {
+      provider: "github",
+      entityType: "branch",
+      entityId: `${repoId}:${branch}`,
+      title: branch,
+      url: `${payload.repository.html_url}/tree/${branch}`,
+      relationshipType: "pushed_to",
+    },
+  ];
 
   const fileCount = payload.commits.reduce(
     (sum, c) => sum + c.added.length + c.modified.length + c.removed.length,
@@ -50,17 +47,25 @@ export function transformGitHubPush(
   const rawBody = payload.head_commit?.message ?? "";
 
   const event: PostTransformEvent = {
-    source: "github",
-    sourceType: "push",
-    sourceId: `push:${payload.repository.full_name}:${payload.after}`,
+    deliveryId: context.deliveryId,
+    sourceId: `github:commit:${payload.after}:push`,
+    provider: "github",
+    eventType: "push",
     title: sanitizeTitle(`[Push] ${rawTitle}`),
     body: sanitizeBody(rawBody),
     occurredAt: payload.head_commit?.timestamp ?? new Date().toISOString(),
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      repoFullName: payload.repository.full_name,
+    entity: {
+      provider: "github",
+      entityType: "commit",
+      entityId: payload.after,
+      title: rawTitle,
+      url: `${payload.repository.html_url}/commit/${payload.after}`,
+      state: null,
+    },
+    relations,
+    attributes: {
       repoId: payload.repository.id,
+      repoFullName: payload.repository.full_name,
       branch,
       beforeSha: payload.before,
       afterSha: payload.after,
@@ -84,70 +89,65 @@ export function transformGitHubPullRequest(
   _eventType: string
 ): PostTransformEvent {
   const pr = payload.pull_request;
-  const refs: PostTransformReference[] = [];
+  const repoId = String(payload.repository.id);
+  const effectiveAction =
+    payload.action === "closed" && pr.merged ? "merged" : payload.action;
 
-  refs.push({ type: "pr", id: `#${pr.number}`, url: pr.html_url, label: null });
-  refs.push({
-    type: "branch",
-    id: pr.head.ref,
-    url: `${payload.repository.html_url}/tree/${pr.head.ref}`,
-    label: null,
-  });
+  const relations: EntityRelation[] = [];
 
   if (pr.head.sha) {
-    refs.push({
-      type: "commit",
-      id: pr.head.sha,
+    relations.push({
+      provider: "github",
+      entityType: "commit",
+      entityId: pr.head.sha,
+      title: null,
       url: `${payload.repository.html_url}/commit/${pr.head.sha}`,
-      label: null,
+      relationshipType: "head_commit",
     });
   }
 
   if (pr.merge_commit_sha) {
-    refs.push({
-      type: "commit",
-      id: pr.merge_commit_sha,
+    relations.push({
+      provider: "github",
+      entityType: "commit",
+      entityId: pr.merge_commit_sha,
+      title: null,
       url: `${payload.repository.html_url}/commit/${pr.merge_commit_sha}`,
-      label: "merge",
+      relationshipType: "merge_commit",
     });
   }
 
-  const linkedIssues = extractLinkedIssues(pr.body ?? "");
+  relations.push({
+    provider: "github",
+    entityType: "branch",
+    entityId: `${repoId}:${pr.head.ref}`,
+    title: pr.head.ref,
+    url: `${payload.repository.html_url}/tree/${pr.head.ref}`,
+    relationshipType: "from_branch",
+  });
+
+  relations.push({
+    provider: "github",
+    entityType: "branch",
+    entityId: `${repoId}:${pr.base.ref}`,
+    title: pr.base.ref,
+    url: `${payload.repository.html_url}/tree/${pr.base.ref}`,
+    relationshipType: "to_branch",
+  });
+
+  const linkedIssues = extractLinkedIssues(
+    pr.body ?? "",
+    repoId,
+    payload.repository.html_url
+  );
   for (const issue of linkedIssues) {
-    refs.push({
-      type: "issue",
-      id: issue.id,
+    relations.push({
+      provider: "github",
+      entityType: "issue",
+      entityId: issue.entityId,
+      title: null,
       url: issue.url,
-      label: issue.label,
-    });
-  }
-
-  for (const reviewer of pr.requested_reviewers ?? []) {
-    if ("login" in reviewer) {
-      refs.push({
-        type: "reviewer",
-        id: reviewer.login,
-        url: `https://github.com/${reviewer.login}`,
-        label: null,
-      });
-    }
-  }
-
-  for (const assignee of pr.assignees ?? []) {
-    refs.push({
-      type: "assignee",
-      id: assignee.login,
-      url: `https://github.com/${assignee.login}`,
-      label: null,
-    });
-  }
-
-  for (const label of pr.labels ?? []) {
-    refs.push({
-      type: "label",
-      id: typeof label === "string" ? label : label.name,
-      url: null,
-      label: null,
+      relationshipType: issue.relationshipType,
     });
   }
 
@@ -161,33 +161,38 @@ export function transformGitHubPullRequest(
 
   const actionTitle = actionMap[payload.action] ?? `PR ${payload.action}`;
   const rawBody = [pr.title, pr.body ?? ""].join("\n");
-  const effectiveAction =
-    payload.action === "closed" && pr.merged ? "merged" : payload.action;
+
+  const prState = pr.merged ? "merged" : pr.state;
 
   const event: PostTransformEvent = {
-    source: "github",
-    sourceType: `pull-request.${effectiveAction}`,
-    sourceId: `pr:${payload.repository.full_name}#${pr.number}:${effectiveAction}`,
+    deliveryId: context.deliveryId,
+    sourceId: `github:pr:${repoId}#${pr.number}:pull-request.${effectiveAction}`,
+    provider: "github",
+    eventType: `pull-request.${effectiveAction}`,
     title: sanitizeTitle(`[${actionTitle}] ${pr.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
     occurredAt: pr.updated_at,
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      repoFullName: payload.repository.full_name,
+    entity: {
+      provider: "github",
+      entityType: "pr",
+      entityId: `${repoId}#${pr.number}`,
+      title: pr.title,
+      url: pr.html_url,
+      state: prState,
+    },
+    relations,
+    attributes: {
       repoId: payload.repository.id,
+      repoFullName: payload.repository.full_name,
       prNumber: pr.number,
-      action: payload.action,
-      merged: pr.merged,
-      draft: pr.draft,
       additions: pr.additions,
       deletions: pr.deletions,
       changedFiles: pr.changed_files,
+      isDraft: pr.draft,
+      isMerged: pr.merged ?? false,
       headRef: pr.head.ref,
       baseRef: pr.base.ref,
       headSha: pr.head.sha,
-      authorLogin: pr.user?.login,
-      authorId: pr.user?.id,
     },
   };
 
@@ -205,32 +210,7 @@ export function transformGitHubIssue(
   _eventType: string
 ): PostTransformEvent {
   const issue = payload.issue;
-  const refs: PostTransformReference[] = [];
-
-  refs.push({
-    type: "issue",
-    id: `#${issue.number}`,
-    url: issue.html_url,
-    label: null,
-  });
-
-  for (const assignee of issue.assignees ?? []) {
-    refs.push({
-      type: "assignee",
-      id: assignee.login,
-      url: `https://github.com/${assignee.login}`,
-      label: null,
-    });
-  }
-
-  for (const label of issue.labels ?? []) {
-    refs.push({
-      type: "label",
-      id: typeof label === "string" ? label : label.name,
-      url: null,
-      label: null,
-    });
-  }
+  const repoId = String(payload.repository.id);
 
   const actionMap: Record<string, string> = {
     opened: "Issue Opened",
@@ -244,22 +224,27 @@ export function transformGitHubIssue(
   const rawBody = [issue.title, issue.body ?? ""].join("\n");
 
   const event: PostTransformEvent = {
-    source: "github",
-    sourceType: `issue.${payload.action}`,
-    sourceId: `issue:${payload.repository.full_name}#${issue.number}:${payload.action}`,
+    deliveryId: context.deliveryId,
+    sourceId: `github:issue:${repoId}#${issue.number}:issue.${payload.action}`,
+    provider: "github",
+    eventType: `issue.${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${issue.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
     occurredAt: issue.updated_at,
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      repoFullName: payload.repository.full_name,
+    entity: {
+      provider: "github",
+      entityType: "issue",
+      entityId: `${repoId}#${issue.number}`,
+      title: issue.title,
+      url: issue.html_url,
+      state: issue.state,
+    },
+    relations: [],
+    attributes: {
       repoId: payload.repository.id,
+      repoFullName: payload.repository.full_name,
       issueNumber: issue.number,
       action: payload.action,
-      state: issue.state,
-      authorLogin: issue.user?.login,
-      authorId: issue.user?.id,
     },
   };
 
@@ -277,14 +262,18 @@ export function transformGitHubRelease(
   _eventType: string
 ): PostTransformEvent {
   const release = payload.release;
-  const refs: PostTransformReference[] = [];
+  const repoId = String(payload.repository.id);
 
-  refs.push({
-    type: "branch",
-    id: release.target_commitish,
-    url: `${payload.repository.html_url}/tree/${release.target_commitish}`,
-    label: null,
-  });
+  const relations: EntityRelation[] = [
+    {
+      provider: "github",
+      entityType: "branch",
+      entityId: `${repoId}:${release.target_commitish}`,
+      title: release.target_commitish,
+      url: `${payload.repository.html_url}/tree/${release.target_commitish}`,
+      relationshipType: "from_branch",
+    },
+  ];
 
   const actionMap: Record<string, string> = {
     published: "Release Published",
@@ -296,26 +285,36 @@ export function transformGitHubRelease(
   const rawBody = release.body ?? "";
 
   const event: PostTransformEvent = {
-    source: "github",
-    sourceType: `release.${payload.action}`,
-    sourceId: `release:${payload.repository.full_name}:${release.tag_name}`,
+    deliveryId: context.deliveryId,
+    sourceId: `github:release:${repoId}:${release.tag_name}:release.${payload.action}`,
+    provider: "github",
+    eventType: `release.${payload.action}`,
     title: sanitizeTitle(
       `[${actionTitle}] ${release.name ?? release.tag_name}`
     ),
     body: sanitizeBody(rawBody),
     occurredAt: release.published_at ?? release.created_at,
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      repoFullName: payload.repository.full_name,
+    entity: {
+      provider: "github",
+      entityType: "release",
+      entityId: `${repoId}:${release.tag_name}`,
+      title: release.name ?? release.tag_name,
+      url: release.html_url ?? null,
+      state: release.draft
+        ? "draft"
+        : release.prerelease
+          ? "prerelease"
+          : "published",
+    },
+    relations,
+    attributes: {
       repoId: payload.repository.id,
+      repoFullName: payload.repository.full_name,
       tagName: release.tag_name,
       targetCommitish: release.target_commitish,
       action: payload.action,
       prerelease: release.prerelease,
-      draft: release.draft,
-      authorLogin: release.author.login,
-      authorId: release.author.id,
+      isDraft: release.draft,
     },
   };
 
@@ -333,14 +332,7 @@ export function transformGitHubDiscussion(
   _eventType: string
 ): PostTransformEvent {
   const discussion = payload.discussion;
-  const refs: PostTransformReference[] = [];
-
-  refs.push({
-    type: "label",
-    id: discussion.category.name,
-    url: null,
-    label: null,
-  });
+  const repoId = String(payload.repository.id);
 
   const actionMap: Record<string, string> = {
     created: "Discussion Created",
@@ -353,23 +345,29 @@ export function transformGitHubDiscussion(
   const rawBody = [discussion.title, discussion.body ?? ""].join("\n");
 
   const event: PostTransformEvent = {
-    source: "github",
-    sourceType: `discussion.${payload.action}`,
-    sourceId: `discussion:${payload.repository.full_name}#${discussion.number}`,
+    deliveryId: context.deliveryId,
+    sourceId: `github:discussion:${repoId}#${discussion.number}:discussion.${payload.action}`,
+    provider: "github",
+    eventType: `discussion.${payload.action}`,
     title: sanitizeTitle(`[${actionTitle}] ${discussion.title.slice(0, 100)}`),
     body: sanitizeBody(rawBody),
     occurredAt: discussion.updated_at,
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      repoFullName: payload.repository.full_name,
+    entity: {
+      provider: "github",
+      entityType: "discussion",
+      entityId: `${repoId}#${discussion.number}`,
+      title: discussion.title,
+      url: discussion.html_url ?? null,
+      state: discussion.answer_html_url !== null ? "answered" : "open",
+    },
+    relations: [],
+    attributes: {
       repoId: payload.repository.id,
+      repoFullName: payload.repository.full_name,
       discussionNumber: discussion.number,
       action: payload.action,
       category: discussion.category.name,
       answered: discussion.answer_html_url !== null,
-      authorLogin: discussion.user.login,
-      authorId: discussion.user.id,
     },
   };
 
@@ -382,30 +380,29 @@ export function transformGitHubDiscussion(
 }
 
 function extractLinkedIssues(
-  body: string
-): { id: string; url: string | null; label: string }[] {
-  const matches: { id: string; url: string | null; label: string }[] = [];
+  body: string,
+  repoId: string,
+  repoUrl: string
+): { entityId: string; url: string | null; relationshipType: string }[] {
+  const matches: {
+    entityId: string;
+    url: string | null;
+    relationshipType: string;
+  }[] = [];
 
   const githubPattern = /(fix(?:es)?|close[sd]?|resolve[sd]?)\s+#(\d+)/gi;
   let match;
 
   while ((match = githubPattern.exec(body)) !== null) {
-    matches.push({
-      id: `#${match[2]}`,
-      url: null,
-      label: match[1]?.toLowerCase().replace(/e?s$/, "") ?? "fixes",
-    });
-  }
-
-  const externalPattern =
-    /(fix(?:es)?|close[sd]?|resolve[sd]?)\s+(?:Sentry\s+)?([A-Z]+-\d+)/gi;
-
-  while ((match = externalPattern.exec(body)) !== null) {
-    matches.push({
-      id: match[2] ?? "",
-      url: null,
-      label: match[1]?.toLowerCase().replace(/e?s$/, "") ?? "fixes",
-    });
+    const issueNumber = match[2];
+    if (issueNumber) {
+      matches.push({
+        entityId: `${repoId}#${issueNumber}`,
+        url: `${repoUrl}/issues/${issueNumber}`,
+        relationshipType:
+          match[1]?.toLowerCase().replace(/e?s$/, "") ?? "fixes",
+      });
+    }
   }
 
   return matches;

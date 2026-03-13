@@ -190,24 +190,7 @@ export const sentry = defineProvider({
   api: sentryApi,
   backfill: sentryBackfill,
 
-  edgeRules: [
-    // Sentry issue resolved by commit (when commit has "resolved_by" label)
-    {
-      refType: "issue",
-      matchProvider: "*",
-      matchRefType: "commit",
-      relationshipType: "resolves",
-      confidence: 1.0,
-    },
-    // Sentry issue triggers Linear issue
-    {
-      refType: "issue",
-      matchProvider: "linear",
-      matchRefType: "issue",
-      relationshipType: "triggers",
-      confidence: 0.8,
-    },
-  ],
+  edgeRules: [],
 
   webhook: {
     headersSchema: z.object({

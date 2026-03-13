@@ -341,7 +341,7 @@ export const github = defineProvider({
   backfill: githubBackfill,
 
   edgeRules: [
-    // GitHub commit deploys to Vercel deployment
+    // GitHub commit deploys to Vercel deployment (entity co-occurrence)
     {
       refType: "commit",
       matchProvider: "vercel",
@@ -349,24 +349,7 @@ export const github = defineProvider({
       relationshipType: "deploys",
       confidence: 1.0,
     },
-    // GitHub commit resolves Sentry issue (when commit has "resolved_by" label)
-    {
-      refType: "commit",
-      selfLabel: "resolved_by",
-      matchProvider: "sentry",
-      matchRefType: "issue",
-      relationshipType: "resolves",
-      confidence: 1.0,
-    },
-    // GitHub PR tracked in Linear issue
-    {
-      refType: "pr",
-      matchProvider: "linear",
-      matchRefType: "issue",
-      relationshipType: "tracked_in",
-      confidence: 1.0,
-    },
-    // GitHub issue fixes another issue (cross-tool, when labeled "fixes")
+    // GitHub issue fixes another issue (self-referential, from extractLinkedIssues)
     {
       refType: "issue",
       selfLabel: "fixes",
@@ -375,7 +358,7 @@ export const github = defineProvider({
       relationshipType: "fixes",
       confidence: 1.0,
     },
-    // GitHub issue references another issue (cross-tool)
+    // GitHub issue references another issue
     {
       refType: "issue",
       matchProvider: "*",

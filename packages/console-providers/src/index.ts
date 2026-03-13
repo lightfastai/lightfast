@@ -32,13 +32,16 @@ export {
   typedEntityHandler,
 } from "./define";
 export type {
+  ClassificationInput,
+  EntityRef,
+  EntityRelation,
   PostTransformEvent,
-  PostTransformReference,
 } from "./post-transform-event";
 // ── Post-Transform Event (canonical source of truth) ─────────────────────────
 export {
+  entityRefSchema,
+  entityRelationSchema,
   postTransformEventSchema,
-  postTransformReferenceSchema,
 } from "./post-transform-event";
 // GitHub API
 export {

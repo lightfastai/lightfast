@@ -8,44 +8,50 @@
 
 import { z } from "zod";
 
-export const postTransformReferenceSchema = z.object({
-  type: z.enum([
-    "commit",
-    "branch",
-    "pr",
-    "issue",
-    "deployment",
-    "project",
-    "cycle",
-    "assignee",
-    "reviewer",
-    "team",
-    "label",
-  ]),
-  id: z.string().min(1),
+export const entityRefSchema = z.object({
+  provider: z.string().min(1),
+  entityType: z.string().min(1),
+  entityId: z.string().min(1),
+  title: z.string(),
   url: z.string().url().nullable(),
-  label: z.string().nullable(),
+  state: z.string().nullable(),
 });
 
-/**
- * Zod schema for PostTransformEvent.
- *
- * `source` is z.string() (not an enum) to avoid a circular dependency
- * with the PROVIDERS registry. Runtime enum validation can be done via
- * `sourceTypeSchema` from the registry if needed at boundaries.
- */
+export const entityRelationSchema = z.object({
+  provider: z.string().min(1),
+  entityType: z.string().min(1),
+  entityId: z.string().min(1),
+  title: z.string().nullable(),
+  url: z.string().url().nullable(),
+  relationshipType: z.string().min(1),
+});
+
 export const postTransformEventSchema = z.object({
-  source: z.string().min(1),
-  sourceType: z.string().min(1),
+  deliveryId: z.string().min(1),
   sourceId: z.string().min(1),
+  provider: z.string().min(1),
+  eventType: z.string().min(1),
+  occurredAt: z.iso.datetime(),
+  entity: entityRefSchema,
+  relations: z.array(entityRelationSchema),
   title: z.string().min(1).max(200),
   body: z.string().max(50_000),
-  occurredAt: z.iso.datetime(),
-  references: z.array(postTransformReferenceSchema),
-  metadata: z.record(z.string(), z.unknown()),
+  attributes: z.record(
+    z.string(),
+    z.union([z.string(), z.number(), z.boolean(), z.null()])
+  ),
 });
 
+export type EntityRef = z.infer<typeof entityRefSchema>;
+export type EntityRelation = z.infer<typeof entityRelationSchema>;
 export type PostTransformEvent = z.infer<typeof postTransformEventSchema>;
-export type PostTransformReference = z.infer<
-  typeof postTransformReferenceSchema
+
+/**
+ * Narrow input type for classification functions.
+ * These functions only need provider, eventType, title, body — not the full event.
+ * Eliminates the `as unknown as PostTransformEvent` double cast in event-interpret.ts.
+ */
+export type ClassificationInput = Pick<
+  PostTransformEvent,
+  "provider" | "eventType" | "title" | "body"
 >;

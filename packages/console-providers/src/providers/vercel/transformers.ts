@@ -1,24 +1,22 @@
-import type {
-  PostTransformEvent,
-  PostTransformReference,
-} from "../../post-transform-event";
+import type { PostTransformEvent } from "../../post-transform-event";
 import { sanitizeBody, sanitizeTitle } from "../../sanitize";
 import type { TransformContext } from "../../types";
 import {
   logValidationErrors,
   validatePostTransformEvent,
 } from "../../validation";
-import type {
-  PreTransformVercelWebhookPayload,
-  VercelWebhookEventType,
+import {
+  type PreTransformVercelWebhookPayload,
+  type VercelWebhookEventType,
+  vercelWebhookEventTypeSchema,
 } from "./schemas";
 
 export function transformVercelDeployment(
   payload: PreTransformVercelWebhookPayload,
   context: TransformContext,
-  eventType: string
+  rawEventType: string
 ): PostTransformEvent {
-  const vercelEventType = eventType as VercelWebhookEventType;
+  const eventType = vercelWebhookEventTypeSchema.parse(rawEventType);
   const deployment = payload.payload.deployment;
   const project = payload.payload.project;
   const team = payload.payload.team;
@@ -28,49 +26,9 @@ export function transformVercelDeployment(
   }
 
   const gitMeta = deployment.meta;
-  const refs: PostTransformReference[] = [];
-
-  if (gitMeta?.githubCommitSha) {
-    refs.push({
-      type: "commit",
-      id: gitMeta.githubCommitSha,
-      url:
-        gitMeta.githubOrg && gitMeta.githubRepo
-          ? `https://github.com/${gitMeta.githubOrg}/${gitMeta.githubRepo}/commit/${gitMeta.githubCommitSha}`
-          : null,
-      label: null,
-    });
-  }
-
-  if (gitMeta?.githubCommitRef) {
-    refs.push({
-      type: "branch",
-      id: gitMeta.githubCommitRef,
-      url:
-        gitMeta.githubOrg && gitMeta.githubRepo
-          ? `https://github.com/${gitMeta.githubOrg}/${gitMeta.githubRepo}/tree/${gitMeta.githubCommitRef}`
-          : null,
-      label: null,
-    });
-  }
-
-  if (gitMeta?.githubPrId && gitMeta.githubOrg && gitMeta.githubRepo) {
-    refs.push({
-      type: "pr",
-      id: `#${gitMeta.githubPrId}`,
-      url: `https://github.com/${gitMeta.githubOrg}/${gitMeta.githubRepo}/pull/${gitMeta.githubPrId}`,
-      label: null,
-    });
-  }
-
-  refs.push({
-    type: "deployment",
-    id: deployment.id,
-    url: deployment.url ? `https://${deployment.url}` : null,
-    label: null,
-  });
-
-  refs.push({ type: "project", id: project.id, url: null, label: null });
+  const target = payload.payload.target;
+  const isProduction = target === "production";
+  const branch = gitMeta?.githubCommitRef ?? "unknown";
 
   const eventTitleMap: Record<VercelWebhookEventType, string> = {
     "deployment.created": "Deployment Started",
@@ -84,18 +42,14 @@ export function transformVercelDeployment(
     "deployment.cleanup": "Deployment Cleanup",
   };
 
-  const actionTitle = eventTitleMap[vercelEventType];
-  const branch = gitMeta?.githubCommitRef ?? "unknown";
-  const target = payload.payload.target;
-  const isProduction = target === "production";
+  const actionTitle = eventTitleMap[eventType];
 
   const emoji =
-    vercelEventType === "deployment.succeeded" ||
-    vercelEventType === "deployment.ready"
+    eventType === "deployment.succeeded" || eventType === "deployment.ready"
       ? "+"
-      : vercelEventType === "deployment.error"
+      : eventType === "deployment.error"
         ? "x"
-        : vercelEventType === "deployment.canceled"
+        : eventType === "deployment.canceled"
           ? "!"
           : ">";
 
@@ -106,33 +60,41 @@ export function transformVercelDeployment(
     .filter(Boolean)
     .join("\n");
 
+  const deploymentState = deployment.readyState?.toLowerCase() ?? null;
+
   const event: PostTransformEvent = {
-    source: "vercel",
-    sourceType: eventType,
-    sourceId: `deployment:${deployment.id}`,
+    deliveryId: context.deliveryId,
+    sourceId: `vercel:deployment:${deployment.id}:${eventType}`,
+    provider: "vercel",
+    eventType,
     title: sanitizeTitle(
       `[${actionTitle}] ${project.name ?? project.id} from ${branch}`
     ),
     body: sanitizeBody(rawBody),
     occurredAt: new Date(payload.createdAt).toISOString(),
-    references: refs,
-    metadata: {
-      deliveryId: context.deliveryId,
-      webhookId: payload.id,
-      deploymentId: deployment.id,
-      deploymentUrl: deployment.url,
+    entity: {
+      provider: "vercel",
+      entityType: "deployment",
+      entityId: deployment.id,
+      title: `${project.name ?? project.id} — ${branch}`,
+      url: deployment.url ? `https://${deployment.url}` : null,
+      state: deploymentState,
+    },
+    relations: [],
+    attributes: {
       projectId: project.id,
-      projectName: project.name,
-      teamId: team?.id,
+      projectName: project.name ?? null,
+      teamId: team?.id ?? null,
+      deploymentId: deployment.id,
+      deploymentUrl: deployment.url ?? null,
       environment: isProduction ? "production" : "preview",
       branch,
-      region: payload.region,
-      gitCommitSha: gitMeta?.githubCommitSha,
-      gitCommitRef: gitMeta?.githubCommitRef,
-      gitCommitMessage: gitMeta?.githubCommitMessage,
-      gitCommitAuthor: gitMeta?.githubCommitAuthorName,
-      gitRepo: gitMeta?.githubRepo,
-      gitOrg: gitMeta?.githubOrg,
+      region: payload.region ?? null,
+      gitCommitSha: gitMeta?.githubCommitSha ?? null,
+      gitCommitRef: gitMeta?.githubCommitRef ?? null,
+      gitCommitMessage: gitMeta?.githubCommitMessage ?? null,
+      gitRepo: gitMeta?.githubRepo ?? null,
+      gitOrg: gitMeta?.githubOrg ?? null,
     },
   };
 

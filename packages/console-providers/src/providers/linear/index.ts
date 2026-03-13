@@ -291,24 +291,7 @@ export const linear = defineProvider({
   backfill: linearBackfill,
 
   edgeRules: [
-    // Linear issue linked to Sentry issue
-    {
-      refType: "issue",
-      selfLabel: "linked",
-      matchProvider: "sentry",
-      matchRefType: "issue",
-      relationshipType: "triggers",
-      confidence: 0.8,
-    },
-    // Linear issue tracked in GitHub PR
-    {
-      refType: "issue",
-      matchProvider: "github",
-      matchRefType: "pr",
-      relationshipType: "tracked_in",
-      confidence: 1.0,
-    },
-    // Linear issue references another issue (cross-tool)
+    // Linear issue references another issue
     {
       refType: "issue",
       matchProvider: "*",
