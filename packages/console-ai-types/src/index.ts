@@ -1,10 +1,9 @@
 import type { RuntimeContext } from "@lightfastai/ai-sdk/server/adapters/types";
 import type {
-  GraphResponse,
+  ContentsResponse,
+  FindSimilarResponse,
   RelatedResponse,
-  V1ContentsResponse,
-  V1FindSimilarResponse,
-  V1SearchResponse,
+  SearchResponse,
 } from "@repo/console-validation";
 import type { DeepPartial, UIMessage } from "ai";
 
@@ -12,12 +11,13 @@ import type { DeepPartial, UIMessage } from "ai";
 
 export interface SearchToolInput {
   filters?: {
-    sourceTypes?: string[];
+    dateRange?: { end?: string; start?: string };
     observationTypes?: string[];
-    actorNames?: string[];
+    sourceTypes?: string[];
   };
-  limit?: number;
-  mode?: "fast" | "balanced" | "thorough";
+  limit: number;
+  mode: "fast" | "balanced" | "thorough";
+  offset: number;
   query: string;
 }
 
@@ -26,29 +26,30 @@ export interface ContentsToolInput {
 }
 
 export interface FindSimilarToolInput {
-  id: string;
-  limit?: number;
-  threshold?: number;
-}
-
-export interface GraphToolInput {
-  depth?: number;
-  id: string;
-  limit?: number;
+  excludeIds?: string[];
+  filters?: {
+    observationTypes?: string[];
+    sourceTypes?: string[];
+  };
+  id?: string;
+  limit: number;
+  sameSourceOnly: boolean;
+  threshold: number;
+  url?: string;
 }
 
 export interface RelatedToolInput {
+  depth: number;
   id: string;
-  limit?: number;
+  types?: string[];
 }
 
 // ─── Tool Output Types ───────────────────────────────────────────
-// Re-export from @repo/console-types for single import convenience
+// Re-export from @repo/console-validation for single import convenience
 
-export type SearchToolOutput = V1SearchResponse;
-export type ContentsToolOutput = V1ContentsResponse;
-export type FindSimilarToolOutput = V1FindSimilarResponse;
-export type GraphToolOutput = GraphResponse;
+export type SearchToolOutput = SearchResponse;
+export type ContentsToolOutput = ContentsResponse;
+export type FindSimilarToolOutput = FindSimilarResponse;
 export type RelatedToolOutput = RelatedResponse;
 
 // ─── Tool Set Definition ─────────────────────────────────────────
@@ -61,10 +62,6 @@ export interface AnswerToolSet {
   workspaceFindSimilar: {
     input: FindSimilarToolInput;
     output: FindSimilarToolOutput;
-  };
-  workspaceGraph: {
-    input: GraphToolInput;
-    output: GraphToolOutput;
   };
   workspaceRelated: {
     input: RelatedToolInput;
@@ -128,11 +125,6 @@ export type FindSimilarToolUIPart = ToolUIPartState<
   FindSimilarToolInput,
   FindSimilarToolOutput
 >;
-export type GraphToolUIPart = ToolUIPartState<
-  "workspaceGraph",
-  GraphToolInput,
-  GraphToolOutput
->;
 export type RelatedToolUIPart = ToolUIPartState<
   "workspaceRelated",
   RelatedToolInput,
@@ -143,7 +135,6 @@ export type AnswerToolUIPart =
   | SearchToolUIPart
   | ContentsToolUIPart
   | FindSimilarToolUIPart
-  | GraphToolUIPart
   | RelatedToolUIPart;
 
 // ─── Message Types ───────────────────────────────────────────────
@@ -168,9 +159,6 @@ export type ContentsToolHandler = (
 export type FindSimilarToolHandler = (
   input: FindSimilarToolInput
 ) => Promise<FindSimilarToolOutput>;
-export type GraphToolHandler = (
-  input: GraphToolInput
-) => Promise<GraphToolOutput>;
 export type RelatedToolHandler = (
   input: RelatedToolInput
 ) => Promise<RelatedToolOutput>;
@@ -179,7 +167,6 @@ export type RelatedToolHandler = (
 export interface AnswerToolRuntimeConfig {
   workspaceContents?: { handler: ContentsToolHandler };
   workspaceFindSimilar?: { handler: FindSimilarToolHandler };
-  workspaceGraph?: { handler: GraphToolHandler };
   workspaceRelated?: { handler: RelatedToolHandler };
   workspaceSearch?: { handler: SearchToolHandler };
 }

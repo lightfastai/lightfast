@@ -23,8 +23,6 @@ export const V1SearchFiltersSchema = z.object({
   sourceTypes: z.array(z.string()).optional(),
   /** Observation types to include (e.g., ["commit", "issue"]) */
   observationTypes: z.array(z.string()).optional(),
-  /** Actor names to filter by (e.g., ["@sarah", "@mike"]) */
-  actorNames: z.array(z.string()).optional(),
   /** Date range filter */
   dateRange: z
     .object({
@@ -160,15 +158,6 @@ export const V1SearchContextSchema = z.object({
       })
     )
     .optional(),
-  /** Relevant actors/contributors */
-  relevantActors: z
-    .array(
-      z.object({
-        displayName: z.string(),
-        expertiseDomains: z.array(z.string()),
-      })
-    )
-    .optional(),
 });
 
 export type V1SearchContext = z.infer<typeof V1SearchContextSchema>;
@@ -193,8 +182,6 @@ export const V1SearchLatencySchema = z.object({
   entitySearch: z.number().nonnegative().optional(),
   /** Cluster search */
   clusterSearch: z.number().nonnegative().optional(),
-  /** Actor search */
-  actorSearch: z.number().nonnegative().optional(),
   /** Reranking latency */
   rerank: z.number().nonnegative(),
   /** Database enrichment (fetch full observation metadata + entities) */
@@ -227,7 +214,6 @@ export const V1SearchMetaSchema = z.object({
     vector: z.boolean(),
     entity: z.boolean(),
     cluster: z.boolean(),
-    actor: z.boolean(),
   }),
 });
 

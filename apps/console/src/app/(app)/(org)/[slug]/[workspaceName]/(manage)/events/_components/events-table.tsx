@@ -279,7 +279,6 @@ export function EventsTable({
                 <TableHead className="w-8" />
                 <TableHead>Event</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Actor</TableHead>
                 <TableHead className="text-right">Time</TableHead>
               </TableRow>
             </TableHeader>

@@ -38,39 +38,6 @@ export function SearchResultsList({
         <Badge variant="outline">{searchResults.meta.mode}</Badge>
       </div>
 
-      {/* Context clusters & actors */}
-      {/* Temporarily commented out - see thoughts/shared/research/2026-02-09-search-results-topics-linear-only.md */}
-      {/* {searchResults.context && (
-        <div className="flex flex-wrap gap-4 text-xs">
-          {searchResults.context.clusters &&
-            searchResults.context.clusters.length > 0 && (
-              <div>
-                <span className="text-muted-foreground">Topics: </span>
-                {searchResults.context.clusters.map((c, i) => (
-                  <Badge key={i} variant="secondary" className="mr-1 text-xs">
-                    {c.topic ?? "Uncategorized"}
-                    {c.keywords.length > 0 &&
-                      ` (${c.keywords.slice(0, 2).join(", ")})`}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          {searchResults.context.relevantActors &&
-            searchResults.context.relevantActors.length > 0 && (
-              <div>
-                <span className="text-muted-foreground">Contributors: </span>
-                {searchResults.context.relevantActors.map((a, i) => (
-                  <Badge key={i} variant="secondary" className="mr-1 text-xs">
-                    {a.displayName}
-                    {a.expertiseDomains.length > 0 &&
-                      ` (${a.expertiseDomains[0]})`}
-                  </Badge>
-                ))}
-              </div>
-            )}
-        </div>
-      )} */}
-
       {/* Result cards */}
       {searchResults.data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">

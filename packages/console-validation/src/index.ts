@@ -57,6 +57,65 @@ export * from "./primitives/names";
 export * from "./primitives/slugs";
 export * from "./schemas/activities";
 export type {
+  EventBase,
+  RerankMode,
+  SearchFilters,
+  SourceReference,
+} from "./schemas/api/common";
+export {
+  EventBaseSchema,
+  RerankModeSchema,
+  SearchFiltersSchema,
+  SourceReferenceSchema,
+} from "./schemas/api/common";
+// Canonical API schemas (versioning-free) — import from @repo/console-validation/api for subpath
+export type {
+  ContentItem,
+  ContentsRequest,
+  ContentsResponse,
+} from "./schemas/api/contents";
+export {
+  ContentItemSchema,
+  ContentsRequestSchema,
+  ContentsResponseSchema,
+} from "./schemas/api/contents";
+export type {
+  FindSimilarRequest,
+  FindSimilarResponse,
+  FindSimilarResult,
+  FindSimilarSource,
+} from "./schemas/api/findsimilar";
+export {
+  FindSimilarRequestSchema,
+  FindSimilarResponseSchema,
+  FindSimilarResultSchema,
+  FindSimilarSourceSchema,
+} from "./schemas/api/findsimilar";
+export type {
+  RelatedEdge,
+  RelatedNode,
+  RelatedRequest,
+  RelatedResponse,
+} from "./schemas/api/related";
+export {
+  RelatedEdgeSchema,
+  RelatedNodeSchema,
+  RelatedRequestSchema,
+  RelatedResponseSchema,
+} from "./schemas/api/related";
+export type {
+  SearchRequest,
+  SearchResponse,
+  SearchResult,
+} from "./schemas/api/search";
+export {
+  SearchRequestSchema,
+  SearchResponseSchema,
+  SearchResultSchema,
+} from "./schemas/api/search";
+
+// V1 public API schemas — kept for backward compat (SDK, MCP, OpenAPI consumers)
+export type {
   V1ContentItem,
   V1ContentsRequest,
   V1ContentsResponse,
@@ -80,18 +139,16 @@ export type {
   GraphNode,
   GraphResponse,
   RelatedEvent,
-  RelatedResponse,
   V1GraphRequest,
   V1RelatedRequest,
 } from "./schemas/api/v1/graph";
 export {
   GraphResponseSchema,
-  RelatedResponseSchema,
   V1GraphRequestSchema,
   V1RelatedRequestSchema,
 } from "./schemas/api/v1/graph";
 export type {
-  RerankMode,
+  // Note: RerankMode is now exported from canonical common above
   V1SearchContext,
   V1SearchFilters,
   V1SearchLatency,
@@ -105,6 +162,7 @@ export {
   V1SearchRequestSchema,
   V1SearchResponseSchema,
 } from "./schemas/api/v1/search";
+
 export * from "./schemas/classification";
 export * from "./schemas/documents";
 export * from "./schemas/entities";

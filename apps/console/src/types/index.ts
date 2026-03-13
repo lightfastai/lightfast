@@ -96,7 +96,6 @@ export type HealthOverview = RouterOutputs["workspace"]["health"]["overview"];
 export type ActivitiesListResponse = RouterOutputs["activities"]["list"];
 export type WorkspaceActivity = ActivitiesListResponse["activities"][number];
 export type ActivityCategory = WorkspaceActivity["category"];
-export type ActorType = WorkspaceActivity["actorType"];
 
 export type ActivitiesStats = RouterOutputs["activities"]["stats"];
 

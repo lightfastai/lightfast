@@ -1,6 +1,6 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
 import type { LightfastAnswerRuntimeContext } from "@repo/console-ai-types";
-import { V1SearchResponseSchema } from "@repo/console-validation";
+import { SearchResponseSchema } from "@repo/console-validation";
 import { z } from "zod";
 
 const inputSchema = z.object({
@@ -13,9 +13,15 @@ const inputSchema = z.object({
     .number()
     .int()
     .min(1)
-    .max(20)
+    .max(100)
     .default(10)
-    .meta({ description: "Max results" }),
+    .meta({ description: "Max results (1-100)" }),
+  offset: z
+    .number()
+    .int()
+    .min(0)
+    .default(0)
+    .meta({ description: "Result offset for pagination" }),
   filters: z
     .object({
       sourceTypes: z.array(z.string()).optional().meta({
@@ -24,15 +30,18 @@ const inputSchema = z.object({
       observationTypes: z.array(z.string()).optional().meta({
         description: "Filter by type: commit, pull_request, issue, deployment",
       }),
-      actorNames: z
-        .array(z.string())
+      dateRange: z
+        .object({
+          start: z.string().optional(),
+          end: z.string().optional(),
+        })
         .optional()
-        .meta({ description: "Filter by actor name" }),
+        .meta({ description: "Filter by date range" }),
     })
     .optional(),
 });
 
-const outputSchema = V1SearchResponseSchema;
+const outputSchema = SearchResponseSchema;
 
 export function workspaceSearchTool() {
   return createTool<LightfastAnswerRuntimeContext>({

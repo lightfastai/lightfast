@@ -79,9 +79,6 @@ export function EventRow({ event }: EventRowProps) {
               {eventLabel}
             </Badge>
           </TableCell>
-          <TableCell className="py-3 text-muted-foreground text-sm">
-            {event.sourceEvent.actor?.name ?? "—"}
-          </TableCell>
           <TableCell className="py-3 text-right text-muted-foreground text-sm">
             {formatDistanceToNow(new Date(event.sourceEvent.occurredAt), {
               addSuffix: true,
@@ -91,7 +88,7 @@ export function EventRow({ event }: EventRowProps) {
       </CollapsibleTrigger>
       <CollapsibleContent asChild>
         <tr>
-          <td className="p-0" colSpan={6}>
+          <td className="p-0" colSpan={5}>
             <EventDetail event={event} />
           </td>
         </tr>

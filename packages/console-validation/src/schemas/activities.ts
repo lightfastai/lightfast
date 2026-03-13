@@ -8,20 +8,6 @@
 import { z } from "zod";
 
 /**
- * Actor Type Enum
- *
- * Defines who or what triggered the activity.
- *
- * - user: Human user action (via UI or API)
- * - system: Automated system action (cron, job completion)
- * - webhook: External webhook trigger (GitHub, Linear, etc.)
- * - api: API client or integration (using API key)
- */
-export const actorTypeSchema = z.enum(["user", "system", "webhook", "api"]);
-
-export type ActorType = z.infer<typeof actorTypeSchema>;
-
-/**
  * Activity Category Enum
  *
  * High-level grouping of activity types for filtering and reporting.
@@ -629,12 +615,6 @@ export type SearchContentsMetadata = z.infer<
  */
 export const insertActivitySchema = z.object({
   workspaceId: z.string(),
-
-  // Actor information
-  actorType: actorTypeSchema,
-  actorUserId: z.string().optional(),
-  actorEmail: z.string().email().optional(),
-  actorIp: z.ipv4().or(z.ipv6()).optional(),
 
   // Activity classification
   category: activityCategorySchema,

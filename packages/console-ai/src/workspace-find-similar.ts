@@ -1,17 +1,21 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
 import type { LightfastAnswerRuntimeContext } from "@repo/console-ai-types";
-import { V1FindSimilarResponseSchema } from "@repo/console-validation";
+import { FindSimilarResponseSchema } from "@repo/console-validation";
 import { z } from "zod";
 
 const inputSchema = z.object({
   id: z
     .string()
+    .optional()
     .meta({ description: "The observation ID to find similar items for" }),
+  url: z.string().optional().meta({
+    description: "URL to find similar content for (alternative to id)",
+  }),
   limit: z
     .number()
     .int()
     .min(1)
-    .max(20)
+    .max(50)
     .default(5)
     .meta({ description: "Max similar items to return" }),
   threshold: z
@@ -20,9 +24,24 @@ const inputSchema = z.object({
     .max(1)
     .default(0.5)
     .meta({ description: "Similarity threshold (0-1)" }),
+  sameSourceOnly: z
+    .boolean()
+    .default(false)
+    .meta({ description: "Only return results from the same source type" }),
+  excludeIds: z
+    .array(z.string())
+    .optional()
+    .meta({ description: "IDs to exclude from results" }),
+  filters: z
+    .object({
+      sourceTypes: z.array(z.string()).optional(),
+      observationTypes: z.array(z.string()).optional(),
+    })
+    .optional()
+    .meta({ description: "Optional filters to scope results" }),
 });
 
-const outputSchema = V1FindSimilarResponseSchema;
+const outputSchema = FindSimilarResponseSchema;
 
 export function workspaceFindSimilarTool() {
   return createTool<LightfastAnswerRuntimeContext>({
