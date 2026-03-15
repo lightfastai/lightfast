@@ -8,10 +8,10 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { gwInstallations } from "./gw-installations";
+import { gatewayInstallations } from "./gateway-installations";
 
-export const gwBackfillRuns = pgTable(
-  "lightfast_gw_backfill_runs",
+export const gatewayBackfillRuns = pgTable(
+  "lightfast_gateway_backfill_runs",
   {
     id: varchar("id", { length: 191 })
       .notNull()
@@ -20,7 +20,7 @@ export const gwBackfillRuns = pgTable(
 
     installationId: varchar("installation_id", { length: 191 })
       .notNull()
-      .references(() => gwInstallations.id, { onDelete: "cascade" }),
+      .references(() => gatewayInstallations.id, { onDelete: "cascade" }),
 
     entityType: varchar("entity_type", { length: 50 }).notNull(),
 
@@ -53,13 +53,13 @@ export const gwBackfillRuns = pgTable(
   },
   (table) => ({
     // One tracking row per installation + entity type (upsert target)
-    installationEntityIdx: uniqueIndex("gw_br_installation_entity_idx").on(
+    installationEntityIdx: uniqueIndex("gateway_br_installation_entity_idx").on(
       table.installationId,
       table.entityType
     ),
-    installationIdx: index("gw_br_installation_idx").on(table.installationId),
+    installationIdx: index("gateway_br_installation_idx").on(table.installationId),
   })
 );
 
-export type GwBackfillRun = typeof gwBackfillRuns.$inferSelect;
-export type InsertGwBackfillRun = typeof gwBackfillRuns.$inferInsert;
+export type GatewayBackfillRun = typeof gatewayBackfillRuns.$inferSelect;
+export type InsertGatewayBackfillRun = typeof gatewayBackfillRuns.$inferInsert;

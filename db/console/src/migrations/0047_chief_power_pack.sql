@@ -70,11 +70,11 @@ DROP TABLE "lightfast_workspace_entity_observations" CASCADE;--> statement-break
 DROP TABLE "lightfast_workspace_neural_entities" CASCADE;--> statement-breakpoint
 DROP TABLE "lightfast_workspace_neural_observations" CASCADE;--> statement-breakpoint
 DROP TABLE "lightfast_workspace_observation_interpretations" CASCADE;--> statement-breakpoint
-ALTER TABLE "lightfast_workspace_edges" DROP CONSTRAINT "lightfast_workspace_edges_source_entity_id_lightfast_workspace_neural_entities_id_fk";
+ALTER TABLE "lightfast_workspace_edges" DROP CONSTRAINT IF EXISTS "lightfast_workspace_edges_source_entity_id_lightfast_workspace_neural_entities_id_fk";
 --> statement-breakpoint
-ALTER TABLE "lightfast_workspace_edges" DROP CONSTRAINT "lightfast_workspace_edges_target_entity_id_lightfast_workspace_neural_entities_id_fk";
+ALTER TABLE "lightfast_workspace_edges" DROP CONSTRAINT IF EXISTS "lightfast_workspace_edges_target_entity_id_lightfast_workspace_neural_entities_id_fk";
 --> statement-breakpoint
-ALTER TABLE "lightfast_workspace_edges" DROP CONSTRAINT "lightfast_workspace_edges_source_event_id_lightfast_workspace_neural_observations_id_fk";
+ALTER TABLE "lightfast_workspace_edges" DROP CONSTRAINT IF EXISTS "lightfast_workspace_edges_source_event_id_lightfast_workspace_neural_observations_id_fk";
 --> statement-breakpoint
 ALTER TABLE "lightfast_workspace_entities" ADD CONSTRAINT "lightfast_workspace_entities_workspace_id_lightfast_org_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."lightfast_org_workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "lightfast_workspace_entity_events" ADD CONSTRAINT "lightfast_workspace_entity_events_entity_id_lightfast_workspace_entities_id_fk" FOREIGN KEY ("entity_id") REFERENCES "public"."lightfast_workspace_entities"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

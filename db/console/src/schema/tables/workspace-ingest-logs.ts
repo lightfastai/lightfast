@@ -14,7 +14,7 @@ import { orgWorkspaces } from "./org-workspaces";
  * produced by the ingress pipeline's per-provider transformers.
  *
  * Only successfully transformed events are stored (unsupported event types
- * are skipped). Raw payloads exist upstream in QStash and gwWebhookDeliveries.
+ * are skipped). Raw payloads exist upstream in QStash and gatewayWebhookDeliveries.
  *
  * Primary consumers:
  * - SSE endpoint (/api/gateway/stream) — catch-up on reconnect via Last-Event-ID
@@ -22,8 +22,8 @@ import { orgWorkspaces } from "./org-workspaces";
  *
  * The BIGINT identity PK serves as a monotonic cursor for SSE Last-Event-ID.
  */
-export const workspaceIngestLog = pgTable(
-  "lightfast_workspace_ingest_log",
+export const workspaceIngestLogs = pgTable(
+  "lightfast_workspace_ingest_logs",
   {
     /**
      * Monotonic cursor — used as SSE Last-Event-ID for catch-up on reconnect.
@@ -40,7 +40,7 @@ export const workspaceIngestLog = pgTable(
       .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
     /**
-     * Delivery ID from relay — traces back to gwWebhookDeliveries for debugging.
+     * Delivery ID from relay — traces back to gatewayWebhookDeliveries for debugging.
      */
     deliveryId: varchar("delivery_id", { length: 191 }).notNull(),
 
@@ -59,8 +59,8 @@ export const workspaceIngestLog = pgTable(
 
     /**
      * Full transformed event — the canonical event representation.
-     * Contains: source, sourceType, sourceId, title, body, actor,
-     * occurredAt, references, metadata.
+     * Contains: deliveryId, sourceId, provider, eventType, occurredAt,
+     * entity, relations, title, body, attributes.
      */
     sourceEvent: jsonb("source_event").$type<PostTransformEvent>().notNull(),
 
@@ -121,6 +121,5 @@ export const workspaceIngestLog = pgTable(
 );
 
 // Type exports
-export type WorkspaceIngestLogEntry = typeof workspaceIngestLog.$inferSelect;
-export type InsertWorkspaceIngestLogEntry =
-  typeof workspaceIngestLog.$inferInsert;
+export type WorkspaceIngestLog = typeof workspaceIngestLogs.$inferSelect;
+export type InsertWorkspaceIngestLog = typeof workspaceIngestLogs.$inferInsert;

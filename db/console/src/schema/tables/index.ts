@@ -1,26 +1,26 @@
-// Gateway-owned tables (gw_*)
+// Gateway-owned tables (gateway_*)
 
 export {
-  type GwBackfillRun,
-  gwBackfillRuns,
-  type InsertGwBackfillRun,
-} from "./gw-backfill-runs";
+  type GatewayBackfillRun,
+  gatewayBackfillRuns,
+  type InsertGatewayBackfillRun,
+} from "./gateway-backfill-runs";
 export {
-  type GwInstallation,
-  gwInstallations,
-  type InsertGwInstallation,
-} from "./gw-installations";
+  type GatewayInstallation,
+  gatewayInstallations,
+  type InsertGatewayInstallation,
+} from "./gateway-installations";
 export {
-  type GwResource,
-  gwResources,
-  type InsertGwResource,
-} from "./gw-resources";
-export { type GwToken, gwTokens, type InsertGwToken } from "./gw-tokens";
+  type GatewayResource,
+  gatewayResources,
+  type InsertGatewayResource,
+} from "./gateway-resources";
+export { type GatewayToken, gatewayTokens, type InsertGatewayToken } from "./gateway-tokens";
 export {
-  type GwWebhookDelivery,
-  gwWebhookDeliveries,
-  type InsertGwWebhookDelivery,
-} from "./gw-webhook-deliveries";
+  type GatewayWebhookDelivery,
+  gatewayWebhookDeliveries,
+  type InsertGatewayWebhookDelivery,
+} from "./gateway-webhook-deliveries";
 // Organization API Keys (org-scoped authentication)
 export {
   type InsertOrgApiKey,
@@ -35,10 +35,10 @@ export {
 } from "./org-workspaces";
 // Entity↔entity edges
 export {
-  type InsertWorkspaceEdge,
-  type WorkspaceEdge,
-  workspaceEdges,
-} from "./workspace-edges";
+  type InsertWorkspaceEntityEdge,
+  type WorkspaceEntityEdge,
+  workspaceEntityEdges,
+} from "./workspace-entity-edges";
 // Workspace entities
 export {
   type InsertWorkspaceEntity,
@@ -47,15 +47,11 @@ export {
 } from "./workspace-entities";
 // Entity-event junction
 export {
-  type InsertWorkspaceEntityEvent,
-  type WorkspaceEntityEvent,
-  workspaceEntityEvents,
-} from "./workspace-entity-events";
+  type InsertWorkspaceEventEntity,
+  type WorkspaceEventEntity,
+  workspaceEventEntities,
+} from "./workspace-event-entities";
 // Workspace events (neural observations)
-export type {
-  ObservationMetadata,
-  ObservationReference,
-} from "./workspace-events";
 export {
   type InsertWorkspaceEvent,
   type WorkspaceEvent,
@@ -63,32 +59,15 @@ export {
 } from "./workspace-events";
 // Workspace ingest log (raw webhook ingress log)
 export {
-  type InsertWorkspaceIngestLogEntry,
-  type WorkspaceIngestLogEntry,
-  workspaceIngestLog,
-} from "./workspace-ingest-log";
+  type InsertWorkspaceIngestLog,
+  type WorkspaceIngestLog,
+  workspaceIngestLogs,
+} from "./workspace-ingest-logs";
 export {
   type InsertWorkspaceIntegration,
   type WorkspaceIntegration,
   workspaceIntegrations,
 } from "./workspace-integrations";
-// Interpretations table
-export {
-  type InsertWorkspaceInterpretation,
-  type WorkspaceInterpretation,
-  workspaceInterpretations,
-} from "./workspace-interpretations";
-// Workspace-scoped tables
-export {
-  type InsertWorkspaceKnowledgeDocument,
-  type WorkspaceKnowledgeDocument,
-  workspaceKnowledgeDocuments,
-} from "./workspace-knowledge-documents";
-export {
-  type InsertWorkspaceKnowledgeVectorChunk,
-  type WorkspaceKnowledgeVectorChunk,
-  workspaceKnowledgeVectorChunks,
-} from "./workspace-knowledge-vector-chunks";
 export {
   type InsertWorkspaceUserActivity,
   type WorkspaceUserActivity,

@@ -8,8 +8,8 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-export const gwWebhookDeliveries = pgTable(
-  "lightfast_gw_webhook_deliveries",
+export const gatewayWebhookDeliveries = pgTable(
+  "lightfast_gateway_webhook_deliveries",
   {
     id: varchar("id", { length: 191 })
       .notNull()
@@ -32,13 +32,13 @@ export const gwWebhookDeliveries = pgTable(
     }).notNull(),
   },
   (table) => ({
-    providerDeliveryIdx: uniqueIndex("gw_wd_provider_delivery_idx").on(
+    providerDeliveryIdx: uniqueIndex("gateway_wd_provider_delivery_idx").on(
       table.provider,
       table.deliveryId
     ),
-    statusIdx: index("gw_wd_status_idx").on(table.status),
+    statusIdx: index("gateway_wd_status_idx").on(table.status),
   })
 );
 
-export type GwWebhookDelivery = typeof gwWebhookDeliveries.$inferSelect;
-export type InsertGwWebhookDelivery = typeof gwWebhookDeliveries.$inferInsert;
+export type GatewayWebhookDelivery = typeof gatewayWebhookDeliveries.$inferSelect;
+export type InsertGatewayWebhookDelivery = typeof gatewayWebhookDeliveries.$inferInsert;

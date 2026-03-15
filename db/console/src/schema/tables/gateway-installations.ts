@@ -16,8 +16,8 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-export const gwInstallations = pgTable(
-  "lightfast_gw_installations",
+export const gatewayInstallations = pgTable(
+  "lightfast_gateway_installations",
   {
     id: varchar("id", { length: 191 })
       .notNull()
@@ -67,18 +67,18 @@ export const gwInstallations = pgTable(
       .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
-    providerExternalIdx: uniqueIndex("gw_inst_provider_external_idx").on(
+    providerExternalIdx: uniqueIndex("gateway_inst_provider_external_idx").on(
       table.provider,
       table.externalId
     ),
-    orgIdIdx: index("gw_inst_org_id_idx").on(table.orgId),
-    orgProviderIdx: index("gw_inst_org_provider_idx").on(
+    orgIdIdx: index("gateway_inst_org_id_idx").on(table.orgId),
+    orgProviderIdx: index("gateway_inst_org_provider_idx").on(
       table.orgId,
       table.provider
     ),
-    connectedByIdx: index("gw_inst_connected_by_idx").on(table.connectedBy),
+    connectedByIdx: index("gateway_inst_connected_by_idx").on(table.connectedBy),
   })
 );
 
-export type GwInstallation = typeof gwInstallations.$inferSelect;
-export type InsertGwInstallation = typeof gwInstallations.$inferInsert;
+export type GatewayInstallation = typeof gatewayInstallations.$inferSelect;
+export type InsertGatewayInstallation = typeof gatewayInstallations.$inferInsert;

@@ -7,10 +7,10 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { gwInstallations } from "./gw-installations";
+import { gatewayInstallations } from "./gateway-installations";
 
-export const gwResources = pgTable(
-  "lightfast_gw_resources",
+export const gatewayResources = pgTable(
+  "lightfast_gateway_resources",
   {
     id: varchar("id", { length: 191 })
       .notNull()
@@ -19,7 +19,7 @@ export const gwResources = pgTable(
 
     installationId: varchar("installation_id", { length: 191 })
       .notNull()
-      .references(() => gwInstallations.id, { onDelete: "cascade" }),
+      .references(() => gatewayInstallations.id, { onDelete: "cascade" }),
 
     providerResourceId: varchar("provider_resource_id", {
       length: 191,
@@ -37,15 +37,15 @@ export const gwResources = pgTable(
       .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
-    installationIdIdx: index("gw_res_installation_id_idx").on(
+    installationIdIdx: index("gateway_res_installation_id_idx").on(
       table.installationId
     ),
-    providerResourceIdx: uniqueIndex("gw_res_provider_resource_idx").on(
+    providerResourceIdx: uniqueIndex("gateway_res_provider_resource_idx").on(
       table.installationId,
       table.providerResourceId
     ),
   })
 );
 
-export type GwResource = typeof gwResources.$inferSelect;
-export type InsertGwResource = typeof gwResources.$inferInsert;
+export type GatewayResource = typeof gatewayResources.$inferSelect;
+export type InsertGatewayResource = typeof gatewayResources.$inferInsert;

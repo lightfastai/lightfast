@@ -1,4 +1,4 @@
-ALTER TABLE "lightfast_workspace_neural_entities" DROP CONSTRAINT "lightfast_workspace_neural_entities_source_observation_id_lightfast_workspace_neural_observations_id_fk";
+ALTER TABLE "lightfast_workspace_neural_entities" DROP CONSTRAINT IF EXISTS "lightfast_workspace_neural_entities_source_observation_id_lightfast_workspace_neural_observations_id_fk";
 --> statement-breakpoint
 DROP INDEX "obs_embedding_title_idx";--> statement-breakpoint
 DROP INDEX "obs_embedding_content_idx";--> statement-breakpoint

@@ -1,16 +1,13 @@
 import { relations } from "drizzle-orm";
-import { gwInstallations } from "./tables/gw-installations";
-import { gwResources } from "./tables/gw-resources";
-import { gwTokens } from "./tables/gw-tokens";
+import { gatewayInstallations } from "./tables/gateway-installations";
+import { gatewayResources } from "./tables/gateway-resources";
+import { gatewayTokens } from "./tables/gateway-tokens";
 import { orgWorkspaces } from "./tables/org-workspaces";
-import { workspaceEdges } from "./tables/workspace-edges";
+import { workspaceEntityEdges } from "./tables/workspace-entity-edges";
 import { workspaceEntities } from "./tables/workspace-entities";
-import { workspaceEntityEvents } from "./tables/workspace-entity-events";
+import { workspaceEventEntities } from "./tables/workspace-event-entities";
 import { workspaceEvents } from "./tables/workspace-events";
 import { workspaceIntegrations } from "./tables/workspace-integrations";
-import { workspaceInterpretations } from "./tables/workspace-interpretations";
-import { workspaceKnowledgeDocuments } from "./tables/workspace-knowledge-documents";
-import { workspaceKnowledgeVectorChunks } from "./tables/workspace-knowledge-vector-chunks";
 import { workspaceUserActivities } from "./tables/workspace-user-activities";
 
 /**
@@ -21,59 +18,32 @@ import { workspaceUserActivities } from "./tables/workspace-user-activities";
  */
 
 // Gateway relations
-export const gwInstallationsRelations = relations(
-  gwInstallations,
+export const gatewayInstallationsRelations = relations(
+  gatewayInstallations,
   ({ many }) => ({
-    tokens: many(gwTokens),
-    resources: many(gwResources),
+    tokens: many(gatewayTokens),
+    resources: many(gatewayResources),
     workspaceIntegrations: many(workspaceIntegrations),
   })
 );
 
-export const gwTokensRelations = relations(gwTokens, ({ one }) => ({
-  installation: one(gwInstallations, {
-    fields: [gwTokens.installationId],
-    references: [gwInstallations.id],
+export const gatewayTokensRelations = relations(gatewayTokens, ({ one }) => ({
+  installation: one(gatewayInstallations, {
+    fields: [gatewayTokens.installationId],
+    references: [gatewayInstallations.id],
   }),
 }));
 
-export const gwResourcesRelations = relations(gwResources, ({ one }) => ({
-  installation: one(gwInstallations, {
-    fields: [gwResources.installationId],
-    references: [gwInstallations.id],
+export const gatewayResourcesRelations = relations(gatewayResources, ({ one }) => ({
+  installation: one(gatewayInstallations, {
+    fields: [gatewayResources.installationId],
+    references: [gatewayInstallations.id],
   }),
 }));
 
 export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
-  documents: many(workspaceKnowledgeDocuments),
-  vectorChunks: many(workspaceKnowledgeVectorChunks),
   events: many(workspaceEvents),
 }));
-
-export const workspaceKnowledgeDocumentsRelations = relations(
-  workspaceKnowledgeDocuments,
-  ({ one, many }) => ({
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceKnowledgeDocuments.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
-    vectorChunks: many(workspaceKnowledgeVectorChunks),
-  })
-);
-
-export const workspaceKnowledgeVectorChunksRelations = relations(
-  workspaceKnowledgeVectorChunks,
-  ({ one }) => ({
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceKnowledgeVectorChunks.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
-    document: one(workspaceKnowledgeDocuments, {
-      fields: [workspaceKnowledgeVectorChunks.docId],
-      references: [workspaceKnowledgeDocuments.id],
-    }),
-  })
-);
 
 export const workspaceUserActivitiesRelations = relations(
   workspaceUserActivities,
@@ -96,9 +66,9 @@ export const workspaceIntegrationsRelations = relations(
       fields: [workspaceIntegrations.workspaceId],
       references: [orgWorkspaces.id],
     }),
-    installation: one(gwInstallations, {
+    installation: one(gatewayInstallations, {
       fields: [workspaceIntegrations.installationId],
-      references: [gwInstallations.id],
+      references: [gatewayInstallations.id],
     }),
   })
 );
@@ -110,61 +80,45 @@ export const workspaceEventsRelations = relations(
       fields: [workspaceEvents.workspaceId],
       references: [orgWorkspaces.id],
     }),
-    interpretations: many(workspaceInterpretations),
-    entityEvents: many(workspaceEntityEvents),
-  })
-);
-
-// Interpretation relations
-export const workspaceInterpretationsRelations = relations(
-  workspaceInterpretations,
-  ({ one }) => ({
-    event: one(workspaceEvents, {
-      fields: [workspaceInterpretations.eventId],
-      references: [workspaceEvents.id],
-    }),
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceInterpretations.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
+    entityEvents: many(workspaceEventEntities),
   })
 );
 
 // Entity-event junction relations
-export const workspaceEntityEventsRelations = relations(
-  workspaceEntityEvents,
+export const workspaceEventEntitiesRelations = relations(
+  workspaceEventEntities,
   ({ one }) => ({
     entity: one(workspaceEntities, {
-      fields: [workspaceEntityEvents.entityId],
+      fields: [workspaceEventEntities.entityId],
       references: [workspaceEntities.id],
     }),
     event: one(workspaceEvents, {
-      fields: [workspaceEntityEvents.eventId],
+      fields: [workspaceEventEntities.eventId],
       references: [workspaceEvents.id],
     }),
     workspace: one(orgWorkspaces, {
-      fields: [workspaceEntityEvents.workspaceId],
+      fields: [workspaceEventEntities.workspaceId],
       references: [orgWorkspaces.id],
     }),
   })
 );
 
 // Entity↔entity edges relations
-export const workspaceEdgesRelations = relations(workspaceEdges, ({ one }) => ({
+export const workspaceEntityEdgesRelations = relations(workspaceEntityEdges, ({ one }) => ({
   workspace: one(orgWorkspaces, {
-    fields: [workspaceEdges.workspaceId],
+    fields: [workspaceEntityEdges.workspaceId],
     references: [orgWorkspaces.id],
   }),
   sourceEntity: one(workspaceEntities, {
-    fields: [workspaceEdges.sourceEntityId],
+    fields: [workspaceEntityEdges.sourceEntityId],
     references: [workspaceEntities.id],
   }),
   targetEntity: one(workspaceEntities, {
-    fields: [workspaceEdges.targetEntityId],
+    fields: [workspaceEntityEdges.targetEntityId],
     references: [workspaceEntities.id],
   }),
   sourceEvent: one(workspaceEvents, {
-    fields: [workspaceEdges.sourceEventId],
+    fields: [workspaceEntityEdges.sourceEventId],
     references: [workspaceEvents.id],
   }),
 }));

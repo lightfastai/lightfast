@@ -21,8 +21,8 @@ import { workspaceEvents } from "./workspace-events";
  * entities (e.g., commit deploys deployment), not between events.
  * The sourceEventId provides provenance — which event caused this edge.
  */
-export const workspaceEdges = pgTable(
-  "lightfast_workspace_edges",
+export const workspaceEntityEdges = pgTable(
+  "lightfast_workspace_entity_edges",
   {
     id: bigint("id", { mode: "number" })
       .primaryKey()
@@ -82,5 +82,5 @@ export const workspaceEdges = pgTable(
   })
 );
 
-export type WorkspaceEdge = typeof workspaceEdges.$inferSelect;
-export type InsertWorkspaceEdge = typeof workspaceEdges.$inferInsert;
+export type WorkspaceEntityEdge = typeof workspaceEntityEdges.$inferSelect;
+export type InsertWorkspaceEntityEdge = typeof workspaceEntityEdges.$inferInsert;

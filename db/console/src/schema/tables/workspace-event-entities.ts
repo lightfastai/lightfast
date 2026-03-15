@@ -18,8 +18,8 @@ import { workspaceEvents } from "./workspace-events";
  * replacing the single source_event_id FK on the entity table.
  * Enables "all events for entity X" and "all entities for event Y".
  */
-export const workspaceEntityEvents = pgTable(
-  "lightfast_workspace_entity_events",
+export const workspaceEventEntities = pgTable(
+  "lightfast_workspace_event_entities",
   {
     id: bigint("id", { mode: "number" })
       .primaryKey()
@@ -51,19 +51,19 @@ export const workspaceEntityEvents = pgTable(
   },
   (table) => ({
     // Unique constraint: one junction row per entity+event pair
-    uniqueEntityEvent: uniqueIndex("ee_entity_event_idx").on(
+    uniqueEntityEvent: uniqueIndex("event_entity_idx").on(
       table.entityId,
       table.eventId
     ),
 
     // "All events for entity X"
-    entityIdx: index("ee_entity_idx").on(table.entityId),
+    entityIdx: index("event_entity_entity_idx").on(table.entityId),
 
     // "All entities for event Y"
-    eventIdx: index("ee_event_idx").on(table.eventId),
+    eventIdx: index("event_entity_event_idx").on(table.eventId),
   })
 );
 
-export type WorkspaceEntityEvent = typeof workspaceEntityEvents.$inferSelect;
-export type InsertWorkspaceEntityEvent =
-  typeof workspaceEntityEvents.$inferInsert;
+export type WorkspaceEventEntity = typeof workspaceEventEntities.$inferSelect;
+export type InsertWorkspaceEventEntity =
+  typeof workspaceEventEntities.$inferInsert;

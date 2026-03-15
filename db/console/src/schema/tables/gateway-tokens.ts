@@ -7,10 +7,10 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { gwInstallations } from "./gw-installations";
+import { gatewayInstallations } from "./gateway-installations";
 
-export const gwTokens = pgTable(
-  "lightfast_gw_tokens",
+export const gatewayTokens = pgTable(
+  "lightfast_gateway_tokens",
   {
     id: varchar("id", { length: 191 })
       .notNull()
@@ -19,7 +19,7 @@ export const gwTokens = pgTable(
 
     installationId: varchar("installation_id", { length: 191 })
       .notNull()
-      .references(() => gwInstallations.id, { onDelete: "cascade" }),
+      .references(() => gatewayInstallations.id, { onDelete: "cascade" }),
 
     accessToken: text("access_token").notNull(), // AES-256-GCM encrypted
     refreshToken: text("refresh_token"),
@@ -33,11 +33,11 @@ export const gwTokens = pgTable(
       .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
-    installationIdIdx: uniqueIndex("gw_tok_installation_id_idx").on(
+    installationIdIdx: uniqueIndex("gateway_tok_installation_id_idx").on(
       table.installationId
     ),
   })
 );
 
-export type GwToken = typeof gwTokens.$inferSelect;
-export type InsertGwToken = typeof gwTokens.$inferInsert;
+export type GatewayToken = typeof gatewayTokens.$inferSelect;
+export type InsertGatewayToken = typeof gatewayTokens.$inferInsert;
