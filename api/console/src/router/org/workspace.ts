@@ -909,6 +909,14 @@ export async function notifyBackfill(params: {
   let resolvedDepth = params.depth;
   let resolvedEntityTypes = params.entityTypes;
 
+  console.log("[notifyBackfill] starting", {
+    installationId: params.installationId,
+    provider: params.provider,
+    orgId: params.orgId,
+    depthOverride: params.depth,
+    entityTypesOverride: params.entityTypes,
+  });
+
   // Load stored defaults when caller omits depth or entityTypes
   if (resolvedDepth === undefined || resolvedEntityTypes === undefined) {
     try {
@@ -919,6 +927,16 @@ export async function notifyBackfill(params: {
       if (installation?.backfillConfig) {
         resolvedDepth ??= installation.backfillConfig.depth;
         resolvedEntityTypes ??= installation.backfillConfig.entityTypes;
+        console.log("[notifyBackfill] loaded config from DB", {
+          installationId: params.installationId,
+          depth: resolvedDepth,
+          entityTypes: resolvedEntityTypes,
+        });
+      } else {
+        console.log("[notifyBackfill] no backfillConfig in DB, using hardcoded fallback", {
+          installationId: params.installationId,
+          fallbackDepth: resolvedDepth ?? 30,
+        });
       }
     } catch (err) {
       console.error("[console] Failed to load backfill config defaults", {
@@ -937,9 +955,15 @@ export async function notifyBackfill(params: {
     holdForReplay: params.holdForReplay,
   };
 
+  console.log("[notifyBackfill] triggering backfill", payload);
+
   try {
     const client = createBackfillClient({ apiKey: env.GATEWAY_API_KEY });
     await client.trigger(payload);
+    console.log("[notifyBackfill] backfill triggered successfully", {
+      installationId: params.installationId,
+      provider: params.provider,
+    });
   } catch (err) {
     console.error("[console] Failed to trigger backfill", {
       installationId: params.installationId,
