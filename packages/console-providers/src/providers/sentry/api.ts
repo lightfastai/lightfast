@@ -40,7 +40,7 @@ export const sentryIssueSchema = z
         name: z.string().optional(),
         slug: z.string(),
       })
-      .passthrough(),
+      .loose(),
     type: z.enum(["error", "default"]).catch("error").optional(),
     firstSeen: z.string(),
     lastSeen: z.string(),
@@ -62,10 +62,10 @@ export const sentryIssueSchema = z
         function: z.string().optional(),
         title: z.string().optional(),
       })
-      .passthrough()
+      .loose()
       .optional(),
   })
-  .passthrough();
+  .loose();
 
 export type SentryIssue = z.infer<typeof sentryIssueSchema>;
 
@@ -84,6 +84,7 @@ export const sentryErrorEventSchema = z
         filename: z.string().optional(),
         function: z.string().optional(),
       })
+      .nullable()
       .optional(),
     exception: z
       .object({
@@ -97,18 +98,18 @@ export const sentryErrorEventSchema = z
       .optional(),
     user: z
       .object({
-        id: z.string().optional(),
-        email: z.string().optional(),
-        username: z.string().optional(),
-        ip_address: z.string().optional(),
+        id: z.string().nullish(),
+        email: z.string().nullish(),
+        username: z.string().nullish(),
+        ip_address: z.string().nullish(),
       })
-      .optional(),
+      .nullish(),
     sdk: z.object({ name: z.string(), version: z.string() }).optional(),
     culprit: z.string().optional(),
-    location: z.string().optional(),
+    location: z.string().nullish(),
     web_url: z.string().optional(),
   })
-  .passthrough();
+  .loose();
 
 export type SentryErrorEvent = z.infer<typeof sentryErrorEventSchema>;
 
@@ -121,16 +122,16 @@ export const sentryProjectSchema = z
     name: z.string(),
     platform: z.string().nullable().optional(),
     status: z.string().optional(),
-    organization: z.object({ slug: z.string() }).passthrough(),
+    organization: z.object({ slug: z.string() }).loose(),
   })
-  .passthrough();
+  .loose();
 
 export const sentryOrganizationSchema = z
   .object({
     name: z.string().optional(),
     slug: z.string().optional(),
   })
-  .passthrough();
+  .loose();
 
 export const sentryApi: ProviderApi = {
   baseUrl: "https://sentry.io",

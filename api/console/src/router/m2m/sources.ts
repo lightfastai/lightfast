@@ -1,5 +1,8 @@
 import { db } from "@db/console/client";
-import { gatewayInstallations, workspaceIntegrations } from "@db/console/schema";
+import {
+  gatewayInstallations,
+  workspaceIntegrations,
+} from "@db/console/schema";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
@@ -296,16 +299,10 @@ export const sourcesM2MRouter = {
       }
 
       const updateQueries = githubSources.map((source) => {
-        const updatedConfig = {
-          ...source.providerConfig,
-          isArchived: true,
-        };
-
         return db
           .update(workspaceIntegrations)
           .set({
             isActive: false,
-            providerConfig: updatedConfig,
             lastSyncedAt: now,
             lastSyncStatus: "failed",
             lastSyncError: "Repository deleted on GitHub",

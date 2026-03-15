@@ -5,7 +5,11 @@
  * External services (Redis, providers, workflow, env) are still mocked.
  */
 
-import { gatewayInstallations, gatewayResources, gatewayTokens } from "@db/console/schema";
+import {
+  gatewayInstallations,
+  gatewayResources,
+  gatewayTokens,
+} from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
 import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";

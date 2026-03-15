@@ -3,8 +3,8 @@ import { gatewayInstallations } from "./tables/gateway-installations";
 import { gatewayResources } from "./tables/gateway-resources";
 import { gatewayTokens } from "./tables/gateway-tokens";
 import { orgWorkspaces } from "./tables/org-workspaces";
-import { workspaceEntityEdges } from "./tables/workspace-entity-edges";
 import { workspaceEntities } from "./tables/workspace-entities";
+import { workspaceEntityEdges } from "./tables/workspace-entity-edges";
 import { workspaceEventEntities } from "./tables/workspace-event-entities";
 import { workspaceEvents } from "./tables/workspace-events";
 import { workspaceIntegrations } from "./tables/workspace-integrations";
@@ -34,12 +34,15 @@ export const gatewayTokensRelations = relations(gatewayTokens, ({ one }) => ({
   }),
 }));
 
-export const gatewayResourcesRelations = relations(gatewayResources, ({ one }) => ({
-  installation: one(gatewayInstallations, {
-    fields: [gatewayResources.installationId],
-    references: [gatewayInstallations.id],
-  }),
-}));
+export const gatewayResourcesRelations = relations(
+  gatewayResources,
+  ({ one }) => ({
+    installation: one(gatewayInstallations, {
+      fields: [gatewayResources.installationId],
+      references: [gatewayInstallations.id],
+    }),
+  })
+);
 
 export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
   events: many(workspaceEvents),
@@ -104,21 +107,24 @@ export const workspaceEventEntitiesRelations = relations(
 );
 
 // Entity↔entity edges relations
-export const workspaceEntityEdgesRelations = relations(workspaceEntityEdges, ({ one }) => ({
-  workspace: one(orgWorkspaces, {
-    fields: [workspaceEntityEdges.workspaceId],
-    references: [orgWorkspaces.id],
-  }),
-  sourceEntity: one(workspaceEntities, {
-    fields: [workspaceEntityEdges.sourceEntityId],
-    references: [workspaceEntities.id],
-  }),
-  targetEntity: one(workspaceEntities, {
-    fields: [workspaceEntityEdges.targetEntityId],
-    references: [workspaceEntities.id],
-  }),
-  sourceEvent: one(workspaceEvents, {
-    fields: [workspaceEntityEdges.sourceEventId],
-    references: [workspaceEvents.id],
-  }),
-}));
+export const workspaceEntityEdgesRelations = relations(
+  workspaceEntityEdges,
+  ({ one }) => ({
+    workspace: one(orgWorkspaces, {
+      fields: [workspaceEntityEdges.workspaceId],
+      references: [orgWorkspaces.id],
+    }),
+    sourceEntity: one(workspaceEntities, {
+      fields: [workspaceEntityEdges.sourceEntityId],
+      references: [workspaceEntities.id],
+    }),
+    targetEntity: one(workspaceEntities, {
+      fields: [workspaceEntityEdges.targetEntityId],
+      references: [workspaceEntities.id],
+    }),
+    sourceEvent: one(workspaceEvents, {
+      fields: [workspaceEntityEdges.sourceEventId],
+      references: [workspaceEvents.id],
+    }),
+  })
+);

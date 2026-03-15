@@ -32,10 +32,10 @@ export {
   type InsertGatewayWebhookDelivery,
   type InsertOrgApiKey,
   type InsertOrgWorkspace,
-  type InsertWorkspaceEntityEdge,
   type InsertWorkspaceEntity,
-  type InsertWorkspaceEventEntity,
+  type InsertWorkspaceEntityEdge,
   type InsertWorkspaceEvent,
+  type InsertWorkspaceEventEntity,
   type InsertWorkspaceIngestLog,
   type InsertWorkspaceIntegration,
   type InsertWorkspaceUserActivity,
@@ -46,19 +46,19 @@ export {
   // Org-scoped tables
   orgWorkspaces,
   orgWorkspacesRelations,
-  type WorkspaceEntityEdge,
   type WorkspaceEntity,
-  type WorkspaceEventEntity,
+  type WorkspaceEntityEdge,
   type WorkspaceEvent,
+  type WorkspaceEventEntity,
   type WorkspaceIngestLog,
   type WorkspaceIntegration,
   type WorkspaceUserActivity,
   type WorkspaceWorkflowRun,
+  // Workspace entities
+  workspaceEntities,
   // Entity↔entity edges
   workspaceEntityEdges,
   workspaceEntityEdgesRelations,
-  // Workspace entities
-  workspaceEntities,
   // Entity-event junction
   workspaceEventEntities,
   workspaceEventEntitiesRelations,

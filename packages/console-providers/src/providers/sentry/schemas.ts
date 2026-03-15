@@ -17,7 +17,7 @@ const sentryIssueMetadataSchema = z
     function: z.string().optional(),
     title: z.string().optional(),
   })
-  .passthrough();
+  .loose();
 
 const sentryIssueSchema = z.object({
   id: z.string(),
@@ -63,7 +63,7 @@ const sentryIssueSchema = z.object({
       ignoreUserCount: z.number().optional(),
       ignoreUserWindow: z.number().optional(),
     })
-    .passthrough()
+    .loose()
     .optional(),
   logger: z.string().optional(),
   type: z.enum(["error", "default"]),
@@ -125,12 +125,12 @@ const sentryErrorEventSchema = z.object({
   contexts: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
   user: z
     .object({
-      id: z.string().optional(),
-      email: z.string().optional(),
-      username: z.string().optional(),
-      ip_address: z.string().optional(),
+      id: z.string().nullish(),
+      email: z.string().nullish(),
+      username: z.string().nullish(),
+      ip_address: z.string().nullish(),
     })
-    .optional(),
+    .nullish(),
   sdk: z.object({ name: z.string(), version: z.string() }).optional(),
   context: z.record(z.string(), z.unknown()).optional(),
   exception: z
@@ -218,7 +218,7 @@ export const sentryWebhookPayloadSchema = z
   .object({
     installation: z.object({ uuid: z.string() }).optional(),
   })
-  .passthrough();
+  .loose();
 
 // ─── Inferred types ───────────────────────────────────────────────────────────
 

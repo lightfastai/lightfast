@@ -15,7 +15,11 @@ export {
   gatewayResources,
   type InsertGatewayResource,
 } from "./gateway-resources";
-export { type GatewayToken, gatewayTokens, type InsertGatewayToken } from "./gateway-tokens";
+export {
+  type GatewayToken,
+  gatewayTokens,
+  type InsertGatewayToken,
+} from "./gateway-tokens";
 export {
   type GatewayWebhookDelivery,
   gatewayWebhookDeliveries,
@@ -33,18 +37,18 @@ export {
   type OrgWorkspace,
   orgWorkspaces,
 } from "./org-workspaces";
-// Entity↔entity edges
-export {
-  type InsertWorkspaceEntityEdge,
-  type WorkspaceEntityEdge,
-  workspaceEntityEdges,
-} from "./workspace-entity-edges";
 // Workspace entities
 export {
   type InsertWorkspaceEntity,
   type WorkspaceEntity,
   workspaceEntities,
 } from "./workspace-entities";
+// Entity↔entity edges
+export {
+  type InsertWorkspaceEntityEdge,
+  type WorkspaceEntityEdge,
+  workspaceEntityEdges,
+} from "./workspace-entity-edges";
 // Entity-event junction
 export {
   type InsertWorkspaceEventEntity,

@@ -35,7 +35,10 @@ export async function getInstallationTokenWithRefresh(
       provider: gatewayInstallations.provider,
     })
     .from(gatewayTokens)
-    .innerJoin(gatewayInstallations, eq(gatewayTokens.installationId, gatewayInstallations.id))
+    .innerJoin(
+      gatewayInstallations,
+      eq(gatewayTokens.installationId, gatewayInstallations.id)
+    )
     .where(eq(gatewayTokens.installationId, installationId))
     .limit(1);
 

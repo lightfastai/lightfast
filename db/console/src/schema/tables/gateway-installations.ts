@@ -76,9 +76,12 @@ export const gatewayInstallations = pgTable(
       table.orgId,
       table.provider
     ),
-    connectedByIdx: index("gateway_inst_connected_by_idx").on(table.connectedBy),
+    connectedByIdx: index("gateway_inst_connected_by_idx").on(
+      table.connectedBy
+    ),
   })
 );
 
 export type GatewayInstallation = typeof gatewayInstallations.$inferSelect;
-export type InsertGatewayInstallation = typeof gatewayInstallations.$inferInsert;
+export type InsertGatewayInstallation =
+  typeof gatewayInstallations.$inferInsert;

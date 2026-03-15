@@ -87,4 +87,5 @@ export const workspaceEntityEdges = pgTable(
 );
 
 export type WorkspaceEntityEdge = typeof workspaceEntityEdges.$inferSelect;
-export type InsertWorkspaceEntityEdge = typeof workspaceEntityEdges.$inferInsert;
+export type InsertWorkspaceEntityEdge =
+  typeof workspaceEntityEdges.$inferInsert;

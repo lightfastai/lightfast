@@ -15,7 +15,9 @@ export const fixtures = {
    * Build a gatewayInstallations insert object with sensible defaults.
    * All fields can be overridden. The `id` field is always guaranteed to be a string.
    */
-  installation(overrides?: Partial<InsertGatewayInstallation>): InstallationFixture {
+  installation(
+    overrides?: Partial<InsertGatewayInstallation>
+  ): InstallationFixture {
     return {
       provider: "github",
       externalId: nanoid(),
@@ -31,7 +33,8 @@ export const fixtures = {
    * Build a gatewayTokens insert object. Requires installationId FK.
    */
   token(
-    overrides: Pick<InsertGatewayToken, "installationId"> & Partial<InsertGatewayToken>
+    overrides: Pick<InsertGatewayToken, "installationId"> &
+      Partial<InsertGatewayToken>
   ): TokenFixture {
     return {
       accessToken: `ghu_${nanoid()}`,

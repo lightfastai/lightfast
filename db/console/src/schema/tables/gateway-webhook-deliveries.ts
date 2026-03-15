@@ -40,5 +40,7 @@ export const gatewayWebhookDeliveries = pgTable(
   })
 );
 
-export type GatewayWebhookDelivery = typeof gatewayWebhookDeliveries.$inferSelect;
-export type InsertGatewayWebhookDelivery = typeof gatewayWebhookDeliveries.$inferInsert;
+export type GatewayWebhookDelivery =
+  typeof gatewayWebhookDeliveries.$inferSelect;
+export type InsertGatewayWebhookDelivery =
+  typeof gatewayWebhookDeliveries.$inferInsert;

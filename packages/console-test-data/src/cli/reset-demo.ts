@@ -13,8 +13,8 @@ import { parseArgs as nodeParseArgs } from "node:util";
 import { db } from "@db/console/client";
 import {
   orgWorkspaces,
-  workspaceEntityEdges,
   workspaceEntities,
+  workspaceEntityEdges,
   workspaceEvents,
 } from "@db/console/schema";
 import { eq, sql } from "drizzle-orm";

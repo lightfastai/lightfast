@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { parseVercelRateLimit } from "./api";
+import type { z } from "zod";
+import { parseVercelRateLimit, type vercelDeploymentSchema } from "./api";
 import { adaptVercelDeploymentForTransformer } from "./backfill";
 
 function makeDeployment(
-  overrides: Record<string, unknown> = {}
-): Record<string, unknown> {
+  overrides: Partial<z.infer<typeof vercelDeploymentSchema>> = {}
+): z.infer<typeof vercelDeploymentSchema> & { uid: string } {
   return {
     uid: "dpl-abc123",
     name: "my-app",
@@ -14,7 +15,7 @@ function makeDeployment(
     created: 1_700_000_000_000,
     meta: {},
     ...overrides,
-  };
+  } as z.infer<typeof vercelDeploymentSchema> & { uid: string };
 }
 
 describe("adaptVercelDeploymentForTransformer — readyState mapping", () => {

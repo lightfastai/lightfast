@@ -7,15 +7,15 @@ export const vercelDeploymentSchema = z
   .object({
     uid: z.string(),
     name: z.string(),
-    url: z.string().optional(),
+    url: z.string().nullish(),
     created: z.number(),
     readyState: z.string().optional(),
     state: z.string().optional(),
     meta: z.record(z.string(), z.unknown()).optional(),
-    creator: z.object({ uid: z.string() }).passthrough().optional(),
+    creator: z.object({ uid: z.string() }).loose().optional(),
     projectId: z.string().optional(),
   })
-  .passthrough();
+  .loose();
 
 export const vercelDeploymentsResponseSchema = z.object({
   deployments: z.array(vercelDeploymentSchema),
@@ -35,7 +35,7 @@ export const vercelProjectsListSchema = z.object({
         framework: z.string().nullable().optional(),
         updatedAt: z.number().optional(),
       })
-      .passthrough()
+      .loose()
   ),
   pagination: z.object({
     count: z.number(),
@@ -78,7 +78,9 @@ export const vercelApi: ProviderApi = {
       method: "GET",
       path: "/v2/user",
       description: "Get the authenticated Vercel user",
-      responseSchema: z.object({ user: z.record(z.string(), z.unknown()).optional() }).passthrough(),
+      responseSchema: z
+        .object({ user: z.record(z.string(), z.unknown()).optional() })
+        .loose(),
     },
     "list-projects": {
       method: "GET",

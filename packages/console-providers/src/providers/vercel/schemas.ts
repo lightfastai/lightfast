@@ -11,7 +11,7 @@ export const preTransformVercelWebhookPayloadSchema = z.object({
         .object({
           id: z.string(),
           name: z.string(),
-          url: z.string().optional(),
+          url: z.string().nullish(),
           readyState: z
             .enum([
               "READY",
@@ -71,7 +71,7 @@ export const preTransformVercelWebhookPayloadSchema = z.object({
       fromDeploymentId: z.string().optional(),
       toDeploymentId: z.string().optional(),
     })
-    .passthrough(),
+    .loose(),
 });
 
 export const vercelWebhookEventTypeSchema = z.enum([
@@ -97,10 +97,10 @@ export const vercelWebhookPayloadSchema = z
         project: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
         team: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
       })
-      .passthrough()
+      .loose()
       .optional(),
   })
-  .passthrough();
+  .loose();
 
 export type PreTransformVercelWebhookPayload = z.infer<
   typeof preTransformVercelWebhookPayloadSchema

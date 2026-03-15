@@ -1,5 +1,9 @@
 import { db } from "@db/console/client";
-import { gatewayInstallations, gatewayResources, gatewayTokens } from "@db/console/schema";
+import {
+  gatewayInstallations,
+  gatewayResources,
+  gatewayTokens,
+} from "@db/console/schema";
 import type { RuntimeConfig, SourceType } from "@repo/console-providers";
 import { getProvider } from "@repo/console-providers";
 import { backfillUrl } from "@repo/gateway-service-clients";

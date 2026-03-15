@@ -5,7 +5,11 @@
  * instead of hollow chain mocks. Validates actual query logic.
  */
 
-import { gatewayInstallations, gatewayResources, gatewayTokens } from "@db/console/schema";
+import {
+  gatewayInstallations,
+  gatewayResources,
+  gatewayTokens,
+} from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
 import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
@@ -104,7 +108,9 @@ describe("gatewayTokens", () => {
     const token = fixtures.token({ installationId: inst.id });
     await db.insert(gatewayTokens).values(token);
 
-    await db.delete(gatewayInstallations).where(eq(gatewayInstallations.id, inst.id));
+    await db
+      .delete(gatewayInstallations)
+      .where(eq(gatewayInstallations.id, inst.id));
 
     const remaining = await db
       .select()
@@ -144,7 +150,9 @@ describe("gatewayResources", () => {
     const res = fixtures.resource({ installationId: inst.id });
     await db.insert(gatewayResources).values(res);
 
-    await db.delete(gatewayInstallations).where(eq(gatewayInstallations.id, inst.id));
+    await db
+      .delete(gatewayInstallations)
+      .where(eq(gatewayInstallations.id, inst.id));
 
     const remaining = await db
       .select()

@@ -1,7 +1,7 @@
 import { db } from "@db/console/client";
 import {
-  workspaceEntityEdges,
   workspaceEntities,
+  workspaceEntityEdges,
   workspaceEventEntities,
   workspaceEvents,
 } from "@db/console/schema";

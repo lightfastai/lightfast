@@ -91,7 +91,10 @@ vi.mock("@db/console/schema", () => ({
     providerResourceId: "providerResourceId",
     status: "status",
   },
-  gatewayTokens: { installationId: "installationId", accessToken: "accessToken" },
+  gatewayTokens: {
+    installationId: "installationId",
+    accessToken: "accessToken",
+  },
 }));
 
 vi.mock("@repo/lib", () => ({

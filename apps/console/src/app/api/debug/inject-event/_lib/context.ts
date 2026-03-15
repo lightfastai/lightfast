@@ -1,4 +1,7 @@
-import type { GatewayInstallation, WorkspaceIntegration } from "@db/console/schema";
+import type {
+  GatewayInstallation,
+  WorkspaceIntegration,
+} from "@db/console/schema";
 import type { EventKey } from "@repo/console-providers";
 
 export function buildContext(

@@ -158,7 +158,9 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
   const deliveries = await db
     .select()
     .from(gatewayWebhookDeliveries)
-    .where(and(or(...pairConditions), eq(gatewayWebhookDeliveries.status, "dlq")));
+    .where(
+      and(or(...pairConditions), eq(gatewayWebhookDeliveries.status, "dlq"))
+    );
 
   if (deliveries.length === 0) {
     return c.json(
@@ -216,7 +218,9 @@ admin.post("/replay/catchup", apiKeyAuth, async (c) => {
     eq(gatewayWebhookDeliveries.status, "received"),
   ];
 
-  conditions.push(eq(gatewayWebhookDeliveries.installationId, body.installationId));
+  conditions.push(
+    eq(gatewayWebhookDeliveries.installationId, body.installationId)
+  );
 
   if (body.provider) {
     conditions.push(eq(gatewayWebhookDeliveries.provider, body.provider));
@@ -249,7 +253,9 @@ admin.post("/replay/catchup", apiKeyAuth, async (c) => {
   const [remaining] = await db
     .select({ count: sql<number>`count(*)` })
     .from(gatewayWebhookDeliveries)
-    .where(and(...conditions, notInArray(gatewayWebhookDeliveries.id, replayedIds)));
+    .where(
+      and(...conditions, notInArray(gatewayWebhookDeliveries.id, replayedIds))
+    );
 
   return c.json({
     status: "replayed",

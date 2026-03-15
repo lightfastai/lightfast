@@ -34,14 +34,14 @@ const linearIssueNodeSchema = z
           .enum(["backlog", "unstarted", "started", "completed", "canceled"])
           .catch("backlog"),
       })
-      .passthrough(),
+      .loose(),
     assignee: z
       .object({
         id: z.string(),
         name: z.string(),
         email: z.string().optional(),
       })
-      .passthrough()
+      .loose()
       .nullable()
       .optional(),
     team: z
@@ -50,24 +50,22 @@ const linearIssueNodeSchema = z
         key: z.string(),
         name: z.string(),
       })
-      .passthrough(),
+      .loose(),
     project: z
       .object({
         id: z.string(),
         name: z.string(),
       })
-      .passthrough()
+      .loose()
       .nullable()
       .optional(),
     labels: z
       .object({
-        nodes: z.array(
-          z.object({ id: z.string(), name: z.string() }).passthrough()
-        ),
+        nodes: z.array(z.object({ id: z.string(), name: z.string() }).loose()),
       })
       .optional(),
   })
-  .passthrough();
+  .loose();
 
 export type LinearIssueNode = z.infer<typeof linearIssueNodeSchema>;
 
@@ -93,7 +91,7 @@ const linearCommentNodeSchema = z
         id: z.string(),
         name: z.string(),
       })
-      .passthrough()
+      .loose()
       .nullable()
       .optional(),
     issue: z
@@ -102,9 +100,9 @@ const linearCommentNodeSchema = z
         identifier: z.string(),
         title: z.string(),
       })
-      .passthrough(),
+      .loose(),
   })
-  .passthrough();
+  .loose();
 
 export type LinearCommentNode = z.infer<typeof linearCommentNodeSchema>;
 
@@ -142,13 +140,13 @@ const linearProjectNodeSchema = z
         id: z.string(),
         name: z.string(),
       })
-      .passthrough()
+      .loose()
       .nullable()
       .optional(),
     startDate: z.string().nullable().optional(),
     targetDate: z.string().nullable().optional(),
   })
-  .passthrough();
+  .loose();
 
 export type LinearProjectNode = z.infer<typeof linearProjectNodeSchema>;
 

@@ -1,7 +1,10 @@
 import { gateway } from "@ai-sdk/gateway";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@db/console/client";
-import { gatewayInstallations, workspaceIntegrations } from "@db/console/schema";
+import {
+  gatewayInstallations,
+  workspaceIntegrations,
+} from "@db/console/schema";
 import type { EventKey } from "@repo/console-providers";
 import { EVENT_REGISTRY } from "@repo/console-providers";
 import { createRelayClient } from "@repo/gateway-service-clients";

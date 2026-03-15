@@ -1,13 +1,22 @@
+import type { z } from "zod";
 import type {
   BackfillContext,
   BackfillDef,
   BackfillWebhookEvent,
 } from "../../define";
-import { vercelDeploymentsResponseSchema } from "./api";
+import { typedEntityHandler } from "../../define";
+import {
+  type vercelDeploymentSchema,
+  vercelDeploymentsResponseSchema,
+} from "./api";
 import type {
   PreTransformVercelWebhookPayload,
   VercelWebhookEventType,
 } from "./schemas";
+
+// ── Type Aliases ──────────────────────────────────────────────────────────────────
+
+type VercelDeployment = z.infer<typeof vercelDeploymentSchema>;
 
 // ── Adapter Functions ─────────────────────────────────────────────────────────────
 
@@ -25,26 +34,24 @@ function mapReadyStateToEventType(readyState?: string): VercelWebhookEventType {
 }
 
 export function adaptVercelDeploymentForTransformer(
-  deployment: Record<string, unknown>,
+  deployment: VercelDeployment & { uid: string },
   projectName: string
 ): {
   webhookPayload: PreTransformVercelWebhookPayload;
   eventType: VercelWebhookEventType;
 } {
-  const eventType = mapReadyStateToEventType(
-    deployment.readyState as string | undefined
-  );
-  const createdAt = (deployment.created as number | undefined) ?? Date.now();
+  const eventType = mapReadyStateToEventType(deployment.readyState);
+  const createdAt = deployment.created ?? Date.now();
 
   const webhookPayload: PreTransformVercelWebhookPayload = {
-    id: `backfill-${deployment.uid as string}`,
+    id: `backfill-${deployment.uid}`,
     type: eventType,
     createdAt,
     payload: {
       deployment: {
-        id: deployment.uid as string,
-        name: deployment.name as string,
-        url: deployment.url as string | undefined,
+        id: deployment.uid,
+        name: deployment.name,
+        url: deployment.url,
         readyState: deployment.readyState as
           | "READY"
           | "ERROR"
@@ -59,7 +66,7 @@ export function adaptVercelDeploymentForTransformer(
           : never,
       },
       project: {
-        id: (deployment.projectId as string | undefined) ?? "",
+        id: deployment.projectId ?? "",
         name: projectName,
       },
     },
@@ -74,19 +81,23 @@ export const vercelBackfill: BackfillDef = {
   supportedEntityTypes: ["deployment"],
   defaultEntityTypes: ["deployment"],
   entityTypes: {
-    deployment: {
+    deployment: typedEntityHandler<number>({
       endpointId: "list-deployments",
-      buildRequest(ctx: BackfillContext, cursor: unknown) {
+      buildRequest(ctx: BackfillContext, cursor: number | null) {
         const queryParams: Record<string, string> = {
           projectId: ctx.resource.providerResourceId,
           limit: "100",
         };
-        if (cursor !== null && cursor !== undefined) {
+        if (cursor !== null) {
           queryParams.until = String(cursor);
         }
         return { queryParams };
       },
-      processResponse(data: unknown, ctx: BackfillContext, _cursor: unknown) {
+      processResponse(
+        data: unknown,
+        ctx: BackfillContext,
+        _cursor: number | null
+      ) {
         const projectName =
           ctx.resource.resourceName || ctx.resource.providerResourceId;
         const parsed = vercelDeploymentsResponseSchema.parse(data);
@@ -102,10 +113,7 @@ export const vercelBackfill: BackfillDef = {
 
         const events: BackfillWebhookEvent[] = filtered.map((deployment) => {
           const { webhookPayload, eventType } =
-            adaptVercelDeploymentForTransformer(
-              deployment as unknown as Record<string, unknown>,
-              projectName
-            );
+            adaptVercelDeploymentForTransformer(deployment, projectName);
           return {
             deliveryId: `backfill-${ctx.installationId}-${ctx.resource.providerResourceId}-deploy-${deployment.uid}`,
             eventType,
@@ -122,6 +130,6 @@ export const vercelBackfill: BackfillDef = {
           rawCount: deployments.length,
         };
       },
-    },
+    }),
   },
 };
