@@ -46,7 +46,9 @@
   "paths": {
     "/v1/search": {
       "post": {
-        "tags": ["Search"],
+        "tags": [
+          "Search"
+        ],
         "operationId": "search",
         "summary": "Search",
         "description": "Search across your team's knowledge with semantic understanding and multi-path retrieval.",
@@ -89,7 +91,9 @@
     },
     "/v1/contents": {
       "post": {
-        "tags": ["Contents"],
+        "tags": [
+          "Contents"
+        ],
         "operationId": "get-contents",
         "summary": "Get Contents",
         "description": "Fetch full content for specific documents or observations by their IDs. Batch endpoint supporting up to 50 IDs per request.",
@@ -132,7 +136,9 @@
     },
     "/v1/findsimilar": {
       "post": {
-        "tags": ["Find Similar"],
+        "tags": [
+          "Find Similar"
+        ],
         "operationId": "find-similar",
         "summary": "Find Similar",
         "description": "Find content similar to a given document or URL using vector similarity, entity overlap, and cluster analysis.",
@@ -173,52 +179,11 @@
         }
       }
     },
-    "/v1/graph": {
-      "post": {
-        "tags": ["Graph"],
-        "operationId": "graph",
-        "summary": "Relationship Graph",
-        "description": "Traverse the relationship graph starting from a specific observation. Returns connected nodes and edges with relationship metadata.",
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RelatedRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Graph traversal results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RelatedResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request parameters"
-          },
-          "401": {
-            "description": "Invalid or missing API key"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
     "/v1/related": {
       "post": {
-        "tags": ["Related"],
+        "tags": [
+          "Related"
+        ],
         "operationId": "find-related",
         "summary": "Find Related Events",
         "description": "Find events related to a specific observation, grouped by source and relationship type.",
@@ -288,7 +253,11 @@
             "default": "balanced",
             "description": "Search quality mode: 'fast' (speed), 'balanced' (default), 'thorough' (quality)",
             "type": "string",
-            "enum": ["fast", "balanced", "thorough"]
+            "enum": [
+              "fast",
+              "balanced",
+              "thorough"
+            ]
           },
           "filters": {
             "description": "Optional filters to scope results by source type, observation type, or date range",
@@ -320,11 +289,25 @@
                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                   }
                 }
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "entityTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             }
           }
         },
-        "required": ["query"]
+        "required": [
+          "query"
+        ]
       },
       "ContentsRequest": {
         "type": "object",
@@ -339,7 +322,9 @@
             "description": "Array of document or observation IDs to fetch (1-50 IDs)"
           }
         },
-        "required": ["ids"]
+        "required": [
+          "ids"
+        ]
       },
       "FindSimilarRequest": {
         "type": "object",
@@ -409,6 +394,18 @@
                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                   }
                 }
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "entityTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -433,7 +430,9 @@
             }
           }
         },
-        "required": ["id"]
+        "required": [
+          "id"
+        ]
       },
       "SearchResponse": {
         "type": "object",
@@ -489,6 +488,9 @@
                 "totalEvents": {
                   "type": "number"
                 },
+                "significanceScore": {
+                  "type": "number"
+                },
                 "entities": {
                   "type": "array",
                   "items": {
@@ -501,7 +503,10 @@
                         "type": "string"
                       }
                     },
-                    "required": ["key", "category"],
+                    "required": [
+                      "key",
+                      "category"
+                    ],
                     "additionalProperties": false
                   }
                 },
@@ -523,7 +528,10 @@
                         "type": "string"
                       }
                     },
-                    "required": ["type", "id"],
+                    "required": [
+                      "type",
+                      "id"
+                    ],
                     "additionalProperties": false
                   }
                 }
@@ -576,7 +584,11 @@
                       }
                     }
                   },
-                  "required": ["topic", "summary", "keywords"],
+                  "required": [
+                    "topic",
+                    "summary",
+                    "keywords"
+                  ],
                   "additionalProperties": false
                 }
               }
@@ -602,7 +614,11 @@
               },
               "mode": {
                 "type": "string",
-                "enum": ["fast", "balanced", "thorough"]
+                "enum": [
+                  "fast",
+                  "balanced",
+                  "thorough"
+                ]
               },
               "paths": {
                 "type": "object",
@@ -617,11 +633,22 @@
                     "type": "boolean"
                   }
                 },
-                "required": ["vector", "entity", "cluster"],
+                "required": [
+                  "vector",
+                  "entity",
+                  "cluster"
+                ],
                 "additionalProperties": false
               }
             },
-            "required": ["total", "limit", "offset", "took", "mode", "paths"],
+            "required": [
+              "total",
+              "limit",
+              "offset",
+              "took",
+              "mode",
+              "paths"
+            ],
             "additionalProperties": false
           },
           "latency": {
@@ -672,14 +699,22 @@
                 "minimum": 0
               }
             },
-            "required": ["total", "retrieval", "rerank"],
+            "required": [
+              "total",
+              "retrieval",
+              "rerank"
+            ],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": ["data", "meta", "requestId"],
+        "required": [
+          "data",
+          "meta",
+          "requestId"
+        ],
         "additionalProperties": false
       },
       "ContentsResponse": {
@@ -760,7 +795,10 @@
                 }
               }
             },
-            "required": ["items", "missing"],
+            "required": [
+              "items",
+              "missing"
+            ],
             "additionalProperties": false
           },
           "meta": {
@@ -770,14 +808,20 @@
                 "type": "number"
               }
             },
-            "required": ["total"],
+            "required": [
+              "total"
+            ],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": ["data", "meta", "requestId"],
+        "required": [
+          "data",
+          "meta",
+          "requestId"
+        ],
         "additionalProperties": false
       },
       "FindSimilarResponse": {
@@ -799,7 +843,11 @@
                     "type": "string"
                   }
                 },
-                "required": ["id", "title", "type"],
+                "required": [
+                  "id",
+                  "title",
+                  "type"
+                ],
                 "additionalProperties": false
               },
               "similar": {
@@ -868,7 +916,10 @@
                 }
               }
             },
-            "required": ["source", "similar"],
+            "required": [
+              "source",
+              "similar"
+            ],
             "additionalProperties": false
           },
           "meta": {
@@ -881,14 +932,21 @@
                 "type": "number"
               }
             },
-            "required": ["total", "took"],
+            "required": [
+              "total",
+              "took"
+            ],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": ["data", "meta", "requestId"],
+        "required": [
+          "data",
+          "meta",
+          "requestId"
+        ],
         "additionalProperties": false
       },
       "RelatedResponse": {
@@ -1038,7 +1096,11 @@
                 }
               }
             },
-            "required": ["root", "nodes", "edges"],
+            "required": [
+              "root",
+              "nodes",
+              "edges"
+            ],
             "additionalProperties": false
           },
           "meta": {
@@ -1057,212 +1119,23 @@
                 "type": "number"
               }
             },
-            "required": ["depth", "nodeCount", "edgeCount", "took"],
+            "required": [
+              "depth",
+              "nodeCount",
+              "edgeCount",
+              "took"
+            ],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": ["data", "meta", "requestId"],
-        "additionalProperties": false
-      },
-      "GraphRequest": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "depth": {
-            "default": 1,
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 3
-          },
-          "types": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": ["id", "depth"],
-        "additionalProperties": false
-      },
-      "GraphResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "object",
-            "properties": {
-              "root": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "title": {
-                    "type": "string"
-                  },
-                  "source": {
-                    "type": "string"
-                  },
-                  "type": {
-                    "type": "string"
-                  },
-                  "url": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "occurredAt": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "format": "date-time",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "id",
-                  "title",
-                  "source",
-                  "type",
-                  "url",
-                  "occurredAt"
-                ],
-                "additionalProperties": false
-              },
-              "nodes": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "source": {
-                      "type": "string"
-                    },
-                    "type": {
-                      "type": "string"
-                    },
-                    "url": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "occurredAt": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "isRoot": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "title",
-                    "source",
-                    "type",
-                    "url",
-                    "occurredAt"
-                  ],
-                  "additionalProperties": false
-                }
-              },
-              "edges": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "source": {
-                      "type": "string"
-                    },
-                    "target": {
-                      "type": "string"
-                    },
-                    "type": {
-                      "type": "string"
-                    },
-                    "linkingKey": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "confidence": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "source",
-                    "target",
-                    "type",
-                    "linkingKey",
-                    "confidence"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            },
-            "required": ["root", "nodes", "edges"],
-            "additionalProperties": false
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "depth": {
-                "type": "number"
-              },
-              "nodeCount": {
-                "type": "number"
-              },
-              "edgeCount": {
-                "type": "number"
-              },
-              "took": {
-                "type": "number"
-              }
-            },
-            "required": ["depth", "nodeCount", "edgeCount", "took"],
-            "additionalProperties": false
-          },
-          "requestId": {
-            "type": "string"
-          }
-        },
-        "required": ["data", "meta", "requestId"],
+        "required": [
+          "data",
+          "meta",
+          "requestId"
+        ],
         "additionalProperties": false
       }
     },
