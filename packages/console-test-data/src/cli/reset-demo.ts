@@ -3,8 +3,7 @@
 /**
  * Reset Demo Environment
  *
- * Cleans workspace observations, entities, clusters, relationships,
- * and Pinecone vectors, then optionally injects demo dataset.
+ * Cleans workspace events, entities, edges, and optionally injects demo dataset.
  *
  * Usage:
  *   pnpm --filter @repo/console-test-data reset-demo -- -w <workspaceId> [-i] [--dry-run]
@@ -14,11 +13,10 @@ import { parseArgs as nodeParseArgs } from "node:util";
 import { db } from "@db/console/client";
 import {
   orgWorkspaces,
-  workspaceEdges,
+  workspaceEntityEdges,
   workspaceEntities,
   workspaceEvents,
 } from "@db/console/schema";
-import { pineconeClient } from "@repo/console-pinecone";
 import { eq, sql } from "drizzle-orm";
 import { loadDataset } from "../loader/index.js";
 import { triggerEventCapture } from "../trigger/trigger.js";
@@ -50,8 +48,8 @@ async function resetDemoEnvironment(options: ResetOptions) {
 
   const [edgeResult] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(workspaceEdges)
-    .where(eq(workspaceEdges.workspaceId, workspaceId));
+    .from(workspaceEntityEdges)
+    .where(eq(workspaceEntityEdges.workspaceId, workspaceId));
 
   console.log("📊 Found:");
   console.log(`   - ${obsResult?.count ?? 0} observations`);
@@ -65,7 +63,7 @@ async function resetDemoEnvironment(options: ResetOptions) {
     return;
   }
 
-  // Step 2: Get workspace settings for Pinecone
+  // Step 2: Verify workspace exists
   const workspace = await db.query.orgWorkspaces.findFirst({
     where: eq(orgWorkspaces.id, workspaceId),
   });
@@ -75,34 +73,13 @@ async function resetDemoEnvironment(options: ResetOptions) {
     process.exit(1);
   }
 
-  // Step 3: Delete Pinecone vectors
-  const settings = workspace.settings as {
-    embedding?: { indexName: string; namespaceName: string };
-  } | null;
-  if (settings?.embedding) {
-    console.log("\n🗑️  Clearing Pinecone vectors...");
-    const { indexName, namespaceName } = settings.embedding;
-    try {
-      await pineconeClient.deleteByMetadata(
-        indexName,
-        { layer: { $eq: "observations" } },
-        namespaceName
-      );
-      console.log(`   ✓ Cleared vectors from ${indexName}/${namespaceName}`);
-    } catch (error) {
-      console.log(
-        `   ⚠ Could not clear Pinecone: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  // Step 4: Delete database records (order matters for FKs)
+  // Step 3: Delete database records (order matters for FKs)
   console.log("\n🗑️  Clearing database records...");
 
   // Delete entity edges first (FK to entities)
   await db
-    .delete(workspaceEdges)
-    .where(eq(workspaceEdges.workspaceId, workspaceId));
+    .delete(workspaceEntityEdges)
+    .where(eq(workspaceEntityEdges.workspaceId, workspaceId));
   console.log("   ✓ Deleted edges");
 
   // Delete entities (FK to observations)
@@ -119,7 +96,7 @@ async function resetDemoEnvironment(options: ResetOptions) {
 
   console.log("\n✅ Cleanup complete!");
 
-  // Step 5: Optionally inject demo data
+  // Step 4: Optionally inject demo data
   if (inject) {
     console.log("\n📥 Injecting sandbox-1 dataset...");
     const dataset = loadDataset("sandbox-1");

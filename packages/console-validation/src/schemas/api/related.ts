@@ -17,9 +17,22 @@ export const RelatedEdgeSchema = z.object({
   source: z.string(),
   target: z.string(),
   type: z.string(),
+  linkingKey: z.string().nullable(),
   confidence: z.number(),
 });
 export type RelatedEdge = z.infer<typeof RelatedEdgeSchema>;
+
+export const RelatedEventSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  source: z.string(),
+  type: z.string(),
+  occurredAt: z.string().nullable(),
+  url: z.string().nullable(),
+  relationshipType: z.string(),
+  direction: z.enum(["outgoing", "incoming"]),
+});
+export type RelatedEvent = z.infer<typeof RelatedEventSchema>;
 
 export const RelatedResponseSchema = z.object({
   data: z.object({
@@ -31,6 +44,7 @@ export const RelatedResponseSchema = z.object({
     depth: z.number(),
     nodeCount: z.number(),
     edgeCount: z.number(),
+    took: z.number(),
   }),
   requestId: z.string(),
 });

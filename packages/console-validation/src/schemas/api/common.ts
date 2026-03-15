@@ -23,6 +23,8 @@ export const SearchFiltersSchema = z.object({
       end: z.string().datetime().optional(),
     })
     .optional(),
+  sources: z.array(z.string()).optional(),
+  entityTypes: z.array(z.string()).optional(),
 });
 export type SearchFilters = z.infer<typeof SearchFiltersSchema>;
 

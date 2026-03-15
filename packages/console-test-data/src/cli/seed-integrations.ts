@@ -12,7 +12,7 @@
 import { db } from "@db/console";
 import type { InsertWorkspaceIntegration } from "@db/console/schema";
 import {
-  gwInstallations,
+  gatewayInstallations,
   orgWorkspaces,
   workspaceIntegrations,
 } from "@db/console/schema";
@@ -112,7 +112,7 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
   console.log(`\nSeeding integrations for workspace: ${workspaceId}`);
   console.log(`  User: ${userId}\n`);
 
-  // Look up the workspace to get clerkOrgId (needed for gwInstallations.orgId)
+  // Look up the workspace to get clerkOrgId (needed for gatewayInstallations.orgId)
   const workspace = await db.query.orgWorkspaces.findFirst({
     where: eq(orgWorkspaces.id, workspaceId),
     columns: { clerkOrgId: true },
@@ -129,11 +129,11 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
     const provider = source.providerConfig.sourceType;
 
     // Find or create gwInstallation for this provider
-    let installation = await db.query.gwInstallations.findFirst({
+    let installation = await db.query.gatewayInstallations.findFirst({
       where: and(
-        eq(gwInstallations.provider, provider),
-        eq(gwInstallations.externalId, source.gwExternalId),
-        eq(gwInstallations.orgId, orgId)
+        eq(gatewayInstallations.provider, provider),
+        eq(gatewayInstallations.externalId, source.gwExternalId),
+        eq(gatewayInstallations.orgId, orgId)
       ),
       columns: { id: true },
     });
@@ -142,7 +142,7 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       console.log(`  [skip] ${provider} gwInstallation already exists`);
     } else {
       const [created] = await db
-        .insert(gwInstallations)
+        .insert(gatewayInstallations)
         .values({
           id: `gw-${provider}-${nanoid(8)}`,
           provider,
@@ -151,7 +151,7 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
           orgId,
           status: "active",
         })
-        .returning({ id: gwInstallations.id });
+        .returning({ id: gatewayInstallations.id });
       installation = created;
       console.log(`  [created] ${provider} gwInstallation`);
     }

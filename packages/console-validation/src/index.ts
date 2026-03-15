@@ -93,84 +93,38 @@ export {
 } from "./schemas/api/findsimilar";
 export type {
   RelatedEdge,
+  RelatedEvent,
   RelatedNode,
   RelatedRequest,
   RelatedResponse,
 } from "./schemas/api/related";
 export {
   RelatedEdgeSchema,
+  RelatedEventSchema,
   RelatedNodeSchema,
   RelatedRequestSchema,
   RelatedResponseSchema,
 } from "./schemas/api/related";
 export type {
+  SearchContext,
+  SearchLatency,
   SearchRequest,
   SearchResponse,
   SearchResult,
 } from "./schemas/api/search";
 export {
+  SearchContextSchema,
+  SearchLatencySchema,
   SearchRequestSchema,
   SearchResponseSchema,
   SearchResultSchema,
 } from "./schemas/api/search";
 
-// V1 public API schemas — kept for backward compat (SDK, MCP, OpenAPI consumers)
-export type {
-  V1ContentItem,
-  V1ContentsRequest,
-  V1ContentsResponse,
-} from "./schemas/api/v1/contents";
-export {
-  V1ContentsRequestSchema,
-  V1ContentsResponseSchema,
-} from "./schemas/api/v1/contents";
-export type {
-  V1FindSimilarRequest,
-  V1FindSimilarResponse,
-  V1FindSimilarResult,
-  V1FindSimilarSource,
-} from "./schemas/api/v1/findsimilar";
-export {
-  V1FindSimilarRequestSchema,
-  V1FindSimilarResponseSchema,
-} from "./schemas/api/v1/findsimilar";
-export type {
-  GraphEdge,
-  GraphNode,
-  GraphResponse,
-  RelatedEvent,
-  V1GraphRequest,
-  V1RelatedRequest,
-} from "./schemas/api/v1/graph";
-export {
-  GraphResponseSchema,
-  V1GraphRequestSchema,
-  V1RelatedRequestSchema,
-} from "./schemas/api/v1/graph";
-export type {
-  // Note: RerankMode is now exported from canonical common above
-  V1SearchContext,
-  V1SearchFilters,
-  V1SearchLatency,
-  V1SearchMeta,
-  V1SearchRequest,
-  V1SearchResponse,
-  V1SearchResult,
-} from "./schemas/api/v1/search";
-// API schemas (re-exported from api submodule for root import convenience)
-export {
-  V1SearchRequestSchema,
-  V1SearchResponseSchema,
-} from "./schemas/api/v1/search";
-
-export * from "./schemas/classification";
-export * from "./schemas/documents";
 export * from "./schemas/entities";
 export * from "./schemas/ingestion";
 export * from "./schemas/job";
 export * from "./schemas/neural";
 export * from "./schemas/org-api-key";
-export * from "./schemas/organization";
 export * from "./schemas/source-metadata";
 export * from "./schemas/sources";
 export * from "./schemas/store";

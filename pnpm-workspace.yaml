@@ -38,6 +38,7 @@ catalog:
   dotenv-cli: ^8.0.0
   drizzle-orm: ^0.45.1
   drizzle-zod: ^0.8.3
+  fast-check: ^3.23.2
   geist: ^1.7.0
   hono: ^4.12.5
   import-in-the-middle: ^1.8.1

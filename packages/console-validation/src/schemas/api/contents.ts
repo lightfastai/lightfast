@@ -2,7 +2,11 @@ import { z } from "zod";
 import { EventBaseSchema } from "./common";
 
 export const ContentsRequestSchema = z.object({
-  ids: z.array(z.string()).min(1).max(50),
+  ids: z
+    .array(z.string())
+    .min(1, "At least one ID required")
+    .max(50, "Maximum 50 IDs per request")
+    .describe("Array of document or observation IDs to fetch (1-50 IDs)"),
 });
 export type ContentsRequest = z.infer<typeof ContentsRequestSchema>;
 

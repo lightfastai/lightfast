@@ -6,14 +6,11 @@
  */
 
 export * from "./activities";
-export * from "./classification";
-export * from "./documents";
 export * from "./entities";
 export * from "./ingestion";
 export * from "./job";
 export * from "./neural";
 export * from "./org-api-key";
-export * from "./organization";
 export * from "./post-transform-event";
 export * from "./source-metadata";
 export * from "./sources";

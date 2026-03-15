@@ -59,9 +59,8 @@ const eventCaptureOutputSuccessSchema = z.object({
 const eventCaptureOutputFilteredSchema = z.object({
   inngestFunctionId: z.literal("event.capture"),
   status: z.literal("filtered"),
-  reason: z.enum(["duplicate", "event_not_allowed", "below_threshold"]),
+  reason: z.enum(["duplicate", "event_not_allowed"]),
   sourceId: z.string(),
-  significanceScore: z.number().optional(),
 });
 
 // =============================================================================

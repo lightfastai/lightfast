@@ -9,46 +9,41 @@ export const significanceResultSchema = z.object({
 
 export type SignificanceResult = z.infer<typeof significanceResultSchema>;
 
-// ── Observation Vector Metadata ───────────────────────────────────────────────
+// ── Entity Vector Metadata ────────────────────────────────────────────────────
 
-export const observationVectorMetadataSchema = z
+/**
+ * Pinecone vector metadata for entity narrative embeddings (layer="entities").
+ *
+ * occurredAt and createdAt are Unix timestamps in milliseconds — use numbers
+ * for reliable Pinecone range filter operators ($gte / $lte). ISO strings sort
+ * incorrectly for non-UTC timezone variants.
+ */
+export const entityVectorMetadataSchema = z
   .object({
-    layer: z.string(),
-    observationId: z.string(),
-    observationType: z.string(),
-    occurredAt: z.string(),
-    snippet: z.string(),
-    source: z.string(),
-    sourceId: z.string(),
-    sourceType: z.string(),
+    layer: z.literal("entities"),
+    entityExternalId: z.string(),
+    entityType: z.string(),
+    provider: z.string(),
+    /** Last known action derived from latest event's sourceType, e.g. "merged" */
+    latestAction: z.string(), // "" when unknown — Pinecone disallows null
     title: z.string(),
-    view: z.enum(["title", "content", "summary"]),
+    snippet: z.string(),
+    /** Unix timestamp in milliseconds of latest event for this entity */
+    occurredAt: z.number(),
+    /** Unix timestamp in milliseconds of entity.extractedAt (first seen) */
+    createdAt: z.number(),
+    /** SHA-256 prefix of narrative text for content-dedup */
+    narrativeHash: z.string(),
+    /** Total number of events seen for this entity (entity.occurrenceCount) */
+    totalEvents: z.number(),
+    /** Max significance score (0-100) across all events for this entity */
+    significanceScore: z.number(),
   })
   .catchall(
     z.union([z.string(), z.number(), z.boolean(), z.array(z.string())])
   );
 
-export type ObservationVectorMetadata = z.infer<
-  typeof observationVectorMetadataSchema
->;
-
-// ── Multi-View Embedding Result ───────────────────────────────────────────────
-
-const embeddingViewSchema = z.object({
-  vectorId: z.string(),
-  vector: z.array(z.number()),
-});
-
-export const multiViewEmbeddingResultSchema = z.object({
-  content: embeddingViewSchema,
-  legacyVectorId: z.string(),
-  summary: embeddingViewSchema,
-  title: embeddingViewSchema,
-});
-
-export type MultiViewEmbeddingResult = z.infer<
-  typeof multiViewEmbeddingResultSchema
->;
+export type EntityVectorMetadata = z.infer<typeof entityVectorMetadataSchema>;
 
 // ── Neural Failure Output ─────────────────────────────────────────────────────
 
