@@ -16,7 +16,7 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { gwInstallations } from "./gw-installations";
+import { gatewayInstallations } from "./gateway-installations";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
@@ -49,7 +49,7 @@ export const workspaceIntegrations = pgTable(
     // Gateway installation FK (org-scoped)
     installationId: varchar("installation_id", { length: 191 })
       .notNull()
-      .references(() => gwInstallations.id, { onDelete: "cascade" }),
+      .references(() => gatewayInstallations.id, { onDelete: "cascade" }),
 
     // Denormalized provider for fast filtering (replaces providerConfig.sourceType join)
     provider: varchar("provider", { length: 50 }).notNull().$type<SourceType>(),

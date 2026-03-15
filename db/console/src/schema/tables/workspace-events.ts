@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   index,
+  integer,
   jsonb,
   pgTable,
   text,
@@ -12,35 +13,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
-
-/**
- * Reference to related entities extracted from observation
- */
-export interface ObservationReference {
-  id: string;
-  label: string | null;
-  type:
-    | "commit"
-    | "branch"
-    | "pr"
-    | "issue"
-    | "deployment"
-    | "project"
-    | "cycle"
-    | "assignee"
-    | "reviewer"
-    | "team"
-    | "label";
-  url: string | null;
-}
-
-/**
- * Source-specific metadata
- * NOTE: Use metadata for structured fields (repo, branch, labels, etc.)
- * NOT the content body, to avoid token waste on non-semantic labels.
- * layer field: 'observations' | 'documents' | 'clusters' | 'profiles' (for Pinecone metadata filtering)
- */
-export type ObservationMetadata = Record<string, unknown>;
 
 /**
  * Workspace events - atomic engineering events from GitHub, Vercel, etc.
@@ -144,6 +116,13 @@ export const workspaceEvents = pgTable(
     ingestionSource: varchar("ingestion_source", { length: 20 })
       .default("webhook")
       .notNull(),
+
+    /**
+     * Significance score (0-100) computed at ingestion time.
+     * Used for search ranking and notification thresholds.
+     * Null for events ingested before this column was added.
+     */
+    significanceScore: integer("significance_score"),
 
     // ========== TIMESTAMPS ==========
 
