@@ -13,6 +13,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { orgWorkspaces } from "./org-workspaces";
+import { workspaceIngestLogs } from "./workspace-ingest-logs";
 
 /**
  * Workspace events - atomic engineering events from GitHub, Vercel, etc.
@@ -116,6 +117,15 @@ export const workspaceEvents = pgTable(
     ingestionSource: varchar("ingestion_source", { length: 20 })
       .default("webhook")
       .notNull(),
+
+    /**
+     * FK back to the ingest log that produced this event.
+     * Null for backfill-ingested events and test-data paths.
+     */
+    ingestLogId: bigint("ingest_log_id", { mode: "number" }).references(
+      () => workspaceIngestLogs.id,
+      { onDelete: "set null" }
+    ),
 
     /**
      * Significance score (0-100) computed at ingestion time.

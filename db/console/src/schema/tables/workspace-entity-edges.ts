@@ -53,6 +53,10 @@ export const workspaceEntityEdges = pgTable(
 
     confidence: real().default(1.0).notNull(),
 
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+
     metadata: jsonb().$type<Record<string, unknown>>(),
 
     createdAt: timestamp("created_at", {

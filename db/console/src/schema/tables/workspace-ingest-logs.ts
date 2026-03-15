@@ -1,4 +1,5 @@
-import type { PostTransformEvent, SourceType } from "@repo/console-providers";
+import type { PostTransformEvent } from "@repo/console-providers";
+import { sql } from "drizzle-orm";
 import {
   bigint,
   index,
@@ -45,19 +46,6 @@ export const workspaceIngestLogs = pgTable(
     deliveryId: varchar("delivery_id", { length: 191 }).notNull(),
 
     /**
-     * Source integration: "github" | "vercel" | "linear" | "sentry".
-     * Denormalized from sourceEvent for efficient btree filtering.
-     */
-    source: varchar("source", { length: 50 }).notNull().$type<SourceType>(),
-
-    /**
-     * Internal event type in kebab-case entity.action format.
-     * e.g., "pull-request.merged", "deployment.succeeded", "issue.created".
-     * Denormalized from sourceEvent for efficient btree filtering.
-     */
-    sourceType: varchar("source_type", { length: 100 }).notNull(),
-
-    /**
      * Full transformed event — the canonical event representation.
      * Contains: deliveryId, sourceId, provider, eventType, occurredAt,
      * entity, relations, title, body, attributes.
@@ -102,12 +90,11 @@ export const workspaceIngestLogs = pgTable(
     eventDeliveryIdx: index("event_delivery_idx").on(table.deliveryId),
 
     /**
-     * Filter events by source integration and event type within a workspace.
+     * Filter events by provider (replaces dropped source/sourceType columns).
+     * Expression index on JSONB provider field.
      */
-    workspaceSourceIdx: index("workspace_event_source_idx").on(
-      table.workspaceId,
-      table.source,
-      table.sourceType
+    eventProviderIdx: index("workspace_ingest_log_provider_idx").on(
+      sql`(${table.sourceEvent}->>'provider')`
     ),
 
     /**

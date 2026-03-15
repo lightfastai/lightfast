@@ -82,6 +82,16 @@ export const workspaceEntities = pgTable(
      */
     confidence: real("confidence").default(0.8),
 
+    /**
+     * Entity lifecycle state (e.g., "open", "merged", "resolved", "closed")
+     */
+    state: varchar("state", { length: 100 }),
+
+    /**
+     * Canonical source URL for this entity
+     */
+    url: varchar("url", { length: 2048 }),
+
     // ========== METRICS ==========
 
     /**

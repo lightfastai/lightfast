@@ -42,6 +42,9 @@ export const workspaceEventEntities = pgTable(
     /** Contextual label from reference (e.g., "resolved_by", "fixes", null) */
     refLabel: varchar("ref_label", { length: 50 }),
 
+    /** Entity category denormalized from workspaceEntities for join-free edge resolution */
+    category: varchar("category", { length: 50 }),
+
     createdAt: timestamp("created_at", {
       mode: "string",
       withTimezone: true,
