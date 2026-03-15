@@ -1,8 +1,5 @@
 import { sentryMiddleware } from "@inngest/middleware-sentry";
-import {
-  postTransformEventSchema,
-  sourceTypeSchema,
-} from "@repo/console-providers";
+import { postTransformEventSchema } from "@repo/console-providers";
 import { ingestionSourceSchema } from "@repo/console-validation";
 import { env } from "@vendor/inngest/env";
 import type { GetEvents } from "inngest";
@@ -13,31 +10,11 @@ import { z } from "zod";
  * Inngest event schemas for console application
  *
  * Events are organized by:
- * 1. Infrastructure Events (Store provisioning)
- * 2. Activity Tracking Events
- * 3. Document Processing Events
- * 4. Neural Memory Events
- * 5. Backfill Events
- * 6. Notification Events
+ * 1. Activity Tracking Events
+ * 2. Event Pipeline (capture → store → entity graph → entity embed)
+ * 3. Notification Events
  */
 const eventsMap = {
-  // ============================================================================
-  // INFRASTRUCTURE EVENTS
-  // ============================================================================
-
-  "apps-console/store.ensure": z.object({
-    /** Workspace DB UUID (also used as store ID) */
-    workspaceId: z.string(),
-    /** Canonical external workspace key for naming (e.g., ws-<slug>) */
-    workspaceKey: z.string().optional(),
-    /** Embedding dimension (defaults to provider's dimension) */
-    embeddingDim: z.number().optional(),
-    /** GitHub repository ID to link (optional) */
-    githubRepoId: z.union([z.number(), z.string()]).optional(),
-    /** Repository full name to link (optional) */
-    repoFullName: z.string().optional(),
-  }),
-
   // ============================================================================
   // USER ACTIVITY TRACKING EVENTS
   // ============================================================================
@@ -73,57 +50,6 @@ const eventsMap = {
   }),
 
   // ============================================================================
-  // DOCUMENT PROCESSING EVENTS (Generic, Multi-Source)
-  // ============================================================================
-
-  "apps-console/documents.process": z.object({
-    /** Workspace DB UUID (also store ID, 1:1 relationship) */
-    workspaceId: z.string(),
-    /** Deterministic document ID */
-    documentId: z.string(),
-    /** Source type (discriminated union) */
-    sourceType: sourceTypeSchema,
-    /** Source-specific identifier */
-    sourceId: z.string(),
-    /** Source-specific metadata */
-    sourceMetadata: z.record(z.string(), z.unknown()),
-    /** Document title */
-    title: z.string(),
-    /** Document content */
-    content: z.string(),
-    /** Content hash for idempotency */
-    contentHash: z.string(),
-    /** Optional parent document ID */
-    parentDocId: z.string().optional(),
-    /** Additional metadata */
-    metadata: z.record(z.string(), z.unknown()).optional(),
-    /** Relationships to extract */
-    relationships: z.record(z.string(), z.unknown()).optional(),
-  }),
-
-  "apps-console/documents.delete": z.object({
-    /** Workspace DB UUID (also store ID, 1:1 relationship) */
-    workspaceId: z.string(),
-    /** Document ID to delete */
-    documentId: z.string(),
-    /** Source type */
-    sourceType: sourceTypeSchema,
-    /** Source-specific identifier */
-    sourceId: z.string(),
-  }),
-
-  "apps-console/relationships.extract": z.object({
-    /** Document ID */
-    documentId: z.string(),
-    /** Workspace ID (also store ID, 1:1 relationship) */
-    workspaceId: z.string(),
-    /** Source type */
-    sourceType: sourceTypeSchema,
-    /** Relationships to extract */
-    relationships: z.record(z.string(), z.unknown()),
-  }),
-
-  // ============================================================================
   // EVENT PIPELINE
   // ============================================================================
 
@@ -138,20 +64,37 @@ const eventsMap = {
     ingestionSource: ingestionSourceSchema.optional(),
   }),
 
+  /**
+   * Emitted by event-store after an observation is stored successfully.
+   * Consumed by notificationDispatch to trigger Knock notifications for
+   * high-significance events (score >= 70).
+   */
   "apps-console/event.stored": z.object({
-    /** Event external ID (nanoid) */
-    eventExternalId: z.string(),
-    /** Workspace DB UUID */
     workspaceId: z.string(),
-    /** Clerk organization ID */
-    clerkOrgId: z.string().optional(),
-    /** Source provider for routing */
-    source: z.string(),
-    /** Source event type for routing */
+    clerkOrgId: z.string(),
+    eventExternalId: z.string(),
+    /** Event type string (e.g. "pull_request_merged") */
     sourceType: z.string(),
-    /** Significance score (pre-computed in store step) */
     significanceScore: z.number(),
-    /** Extracted L0 entity refs (small, needed by interpretation) */
+  }),
+
+  // ============================================================================
+  // ENTITY PIPELINE (chained from event pipeline)
+  // ============================================================================
+
+  /**
+   * Emitted by event-store after a primary entity is upserted.
+   * Carries internalEventId + entityRefs so entity-graph can call resolveEdges()
+   * without an extra DB lookup.
+   */
+  "apps-console/entity.upserted": z.object({
+    workspaceId: z.string(),
+    entityExternalId: z.string(),
+    entityType: z.string(),
+    provider: z.string(),
+    /** Internal workspaceEvents.id — required by resolveEdges() */
+    internalEventId: z.number(),
+    /** Entity refs for edge resolution (primary entity + relations) */
     entityRefs: z.array(
       z.object({
         type: z.string(),
@@ -159,46 +102,20 @@ const eventsMap = {
         label: z.string().nullable(),
       })
     ),
-    /** Internal event ID for DB queries */
-    internalEventId: z.number(),
+    occurredAt: z.string(),
   }),
 
-  "apps-console/event.interpreted": z.object({
-    /** Workspace DB UUID */
+  /**
+   * Emitted by entity-graph after edge resolution completes.
+   * entity-embed subscribes to THIS event (not entity.upserted) to guarantee
+   * graph edges are written before the narrative is built.
+   */
+  "apps-console/entity.graphed": z.object({
     workspaceId: z.string(),
-    /** Clerk organization ID (passed from parent workflow) */
-    clerkOrgId: z.string().optional(),
-    /** Event external ID (nanoid) */
-    eventExternalId: z.string(),
-    /** Source ID for correlation */
-    sourceId: z.string(),
-    /** Event type (e.g., "push", "pull_request_merged") */
-    eventType: z.string(),
-    /** Significance score (0-100) */
-    significanceScore: z.number().optional(),
-    /** Topics extracted */
-    topics: z.array(z.string()).optional(),
-    /** Number of entities extracted */
-    entitiesExtracted: z.number().optional(),
-  }),
-
-  // ============================================================================
-  // NOTIFICATION EVENTS
-  // ============================================================================
-
-  "apps-console/notification.dispatch": z.object({
-    /** Workspace DB UUID */
-    workspaceId: z.string(),
-    /** Clerk organization ID */
-    clerkOrgId: z.string().optional(),
-    /** Knock workflow key */
-    workflowKey: z.string(),
-    /** Recipients (Clerk user IDs) */
-    recipients: z.array(z.string()),
-    /** Tenant ID for workspace scoping */
-    tenant: z.string().optional(),
-    /** Notification data payload */
-    payload: z.record(z.string(), z.unknown()),
+    entityExternalId: z.string(),
+    entityType: z.string(),
+    provider: z.string(),
+    occurredAt: z.string(),
   }),
 };
 

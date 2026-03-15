@@ -9,20 +9,6 @@ const EVENT_WEIGHT_MAP = new Map<string, number>(
 const DEFAULT_EVENT_WEIGHT = 50;
 
 /**
- * Minimum significance score for observation capture.
- * Events below this threshold are logged but not stored.
- *
- * Scoring scale (0-100):
- * - 60-100: High significance (releases, incidents, major features)
- * - 40-59: Medium significance (PRs, issues, deployments)
- * - 20-39: Low significance (routine commits, minor updates)
- * - 0-19: Noise (dependency bumps, typo fixes, WIP)
- *
- * TODO (Future): Make configurable per workspace
- */
-export const SIGNIFICANCE_THRESHOLD = 40;
-
-/**
  * Significance scoring for neural observations.
  *
  * Current implementation: Rule-based scoring using event type weights,

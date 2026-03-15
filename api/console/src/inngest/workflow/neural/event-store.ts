@@ -7,11 +7,11 @@
  * Workflow steps:
  * 1. Check for duplicate events (idempotency)
  * 2. Check if event is allowed by source config (filtering)
- * 3. Evaluate significance (GATE - return early if below threshold)
+ * 3. Evaluate significance (stored as metadata, not a gate)
  * 4. Extract entities (structural categories from relations)
- * 5. Store event row (null for interpretation columns)
+ * 5. Store event row
  * 6. Upsert entities + create junction rows
- * 7. Emit event.stored (triggers interpretation slow path)
+ * 7. Emit entity.upserted (triggers entity-graph → entity-embed chain)
  * 8. Complete job
  */
 
@@ -19,7 +19,7 @@ import { db } from "@db/console/client";
 import {
   orgWorkspaces,
   workspaceEntities,
-  workspaceEntityEvents,
+  workspaceEventEntities,
   workspaceEvents,
   workspaceIntegrations,
 } from "@db/console/schema";
@@ -29,6 +29,7 @@ import {
   getBaseEventType,
 } from "@repo/console-providers";
 import type {
+  EntityCategory,
   EventCaptureInput,
   EventCaptureOutputFailure,
   EventCaptureOutputFiltered,
@@ -46,7 +47,7 @@ import {
   extractFromRelations,
 } from "./entity-extraction-patterns";
 import { createNeuralOnFailureHandler } from "./on-failure-handler";
-import { SIGNIFICANCE_THRESHOLD, scoreSignificance } from "./scoring";
+import { scoreSignificance } from "./scoring";
 
 const STRUCTURAL_TYPES = new Set([
   "commit",
@@ -103,7 +104,7 @@ async function resolveClerkOrgId(
  * Event store workflow
  *
  * Fast path: stores facts only. No LLM, no embeddings.
- * Emits event.stored to trigger the interpret workflow.
+ * Emits entity.upserted to trigger the entity-graph → entity-embed chain.
  */
 export const eventStore = inngest.createFunction(
   {
@@ -332,49 +333,35 @@ export const eventStore = inngest.createFunction(
       };
     }
 
-    // Step 3: Evaluate significance (early gate)
+    // Step 3: Evaluate significance (metadata annotation, not a gate)
     const significance = await step.run("evaluate-significance", () => {
       return scoreSignificance(sourceEvent);
     });
-
-    if (significance.score < SIGNIFICANCE_THRESHOLD) {
-      log.info("Observation below significance threshold, skipping", {
-        workspaceId,
-        sourceId: sourceEvent.sourceId,
-        significanceScore: significance.score,
-        threshold: SIGNIFICANCE_THRESHOLD,
-        factors: significance.factors,
-      });
-
-      await step.run("complete-job-below-threshold", async () => {
-        await completeJob({
-          jobId,
-          status: "completed",
-          output: {
-            inngestFunctionId: "event.capture",
-            status: "filtered",
-            reason: "below_threshold",
-            sourceId: sourceEvent.sourceId,
-            significanceScore: significance.score,
-          } satisfies EventCaptureOutputFiltered,
-        });
-      });
-
-      return {
-        status: "below_threshold",
-        significanceScore: significance.score,
-        threshold: SIGNIFICANCE_THRESHOLD,
-        duration: Date.now() - startTime,
-      };
-    }
 
     // Step 4: Extract entities (structural categories from relations)
     const extractedEntities = await step.run("extract-entities", () => {
       const textEntities = extractEntities(sourceEvent.title, sourceEvent.body);
       const refEntities = extractFromRelations(sourceEvent.relations);
 
-      // Combine and deduplicate
-      const allEntities = [...textEntities, ...refEntities];
+      // Primary entity from sourceEvent.entity — always upserted with highest
+      // confidence so entity-embed can always find it by (workspaceId, category, key).
+      // value is undefined so refLabel on the junction row stays null (it has no
+      // relationship-type label — it IS the event's primary subject).
+      const primaryEntityExtracted: ExtractedEntity = {
+        category: sourceEvent.entity.entityType as EntityCategory,
+        key: sourceEvent.entity.entityId,
+        value: undefined,
+        confidence: 1.0,
+        evidence: `Primary entity: ${sourceEvent.entity.entityType}`,
+      };
+
+      // Primary entity first — Map insertion order preserved, so it is always
+      // at index 0 of deduplicated (used to retrieve externalId after upsert).
+      const allEntities = [
+        primaryEntityExtracted,
+        ...textEntities,
+        ...refEntities,
+      ];
       const entityMap = new Map<string, ExtractedEntity>();
 
       for (const entity of allEntities) {
@@ -389,7 +376,7 @@ export const eventStore = inngest.createFunction(
       return deduplicated.slice(0, 50); // MAX_ENTITIES_PER_OBSERVATION
     });
 
-    // Step 5: Store observation row (null for interpretation columns)
+    // Step 5: Store observation row
     const observation = await step.run("store-observation", async () => {
       const observationType = deriveObservationType(
         sourceEvent.provider,
@@ -411,6 +398,7 @@ export const eventStore = inngest.createFunction(
           sourceReferences: sourceEvent.relations,
           metadata: sourceEvent.attributes,
           ingestionSource: event.data.ingestionSource ?? "webhook",
+          significanceScore: significance.score,
         })
         .returning();
 
@@ -428,14 +416,15 @@ export const eventStore = inngest.createFunction(
     });
 
     // Step 6: Upsert entities and create junction rows
-    const entitiesStored = await step.run(
+    const entityUpsertResult = await step.run(
       "upsert-entities-and-junctions",
       async () => {
         if (extractedEntities.length === 0) {
-          return 0;
+          return { count: 0, primaryEntityExternalId: null as string | null };
         }
 
-        // Upsert each entity and get back its ID for junction inserts
+        // Upsert each entity and get back its ID + externalId for junction inserts.
+        // externalId is needed to emit entity.upserted with the stable Pinecone vector key.
         const entityResults = await Promise.all(
           extractedEntities.map((entity) =>
             db
@@ -460,9 +449,17 @@ export const eventStore = inngest.createFunction(
                   updatedAt: new Date().toISOString(),
                 },
               })
-              .returning({ id: workspaceEntities.id })
+              .returning({
+                id: workspaceEntities.id,
+                externalId: workspaceEntities.externalId,
+              })
           )
         );
+
+        // Primary entity is always at index 0 (inserted first in extractedEntities,
+        // Map insertion order preserved, and confidence 1.0 ensures it wins dedup).
+        const primaryEntityExternalId =
+          entityResults[0]?.[0]?.externalId ?? null;
 
         // Create junction rows mapping entities to this observation
         const junctionRows = entityResults
@@ -476,7 +473,8 @@ export const eventStore = inngest.createFunction(
               entityId,
               eventId: observation.id,
               workspaceId,
-              // Only structural ref entities carry a contextual label
+              // Only structural ref entities carry a contextual relationship label.
+              // The primary entity (index 0) has value=undefined → refLabel=null.
               refLabel: STRUCTURAL_TYPES.has(entity.category)
                 ? (entity.value ?? null)
                 : null,
@@ -486,7 +484,7 @@ export const eventStore = inngest.createFunction(
 
         if (junctionRows.length > 0) {
           await db
-            .insert(workspaceEntityEvents)
+            .insert(workspaceEventEntities)
             .values(junctionRows)
             .onConflictDoNothing();
         }
@@ -496,12 +494,11 @@ export const eventStore = inngest.createFunction(
           entitiesStored: junctionRows.length,
         });
 
-        return junctionRows.length;
+        return { count: junctionRows.length, primaryEntityExternalId };
       }
     );
 
-    // Build entity refs for the event.stored event
-    // (used by event-interpret for edge resolution via edge-resolver.ts)
+    // Build entity refs for entity-graph downstream step.
     const entityRefs = [
       {
         type: sourceEvent.entity.entityType,
@@ -515,18 +512,31 @@ export const eventStore = inngest.createFunction(
       })),
     ];
 
-    // Step 7: Emit event.stored to trigger the slow path
+    // Step 7: Emit entity.upserted (triggers entity-graph → entity-embed chain)
+    if (entityUpsertResult.primaryEntityExternalId) {
+      await step.sendEvent("emit-downstream-events", {
+        name: "apps-console/entity.upserted" as const,
+        data: {
+          workspaceId,
+          entityExternalId: entityUpsertResult.primaryEntityExternalId,
+          entityType: sourceEvent.entity.entityType,
+          provider: sourceEvent.provider,
+          internalEventId: observation.id,
+          entityRefs,
+          occurredAt: sourceEvent.occurredAt,
+        },
+      });
+    }
+
+    // Step 7b: Emit event.stored (triggers notification dispatch)
     await step.sendEvent("emit-event-stored", {
       name: "apps-console/event.stored" as const,
       data: {
-        eventExternalId: observation.externalId,
         workspaceId,
         clerkOrgId,
-        source: sourceEvent.provider,
+        eventExternalId: observation.externalId,
         sourceType: sourceEvent.eventType,
         significanceScore: significance.score,
-        entityRefs,
-        internalEventId: observation.id,
       },
     });
 
@@ -542,7 +552,7 @@ export const eventStore = inngest.createFunction(
           observationId: observation.externalId,
           observationType: observation.observationType,
           significanceScore: significance.score,
-          entitiesExtracted: entitiesStored,
+          entitiesExtracted: entityUpsertResult.count,
         } satisfies EventCaptureOutputSuccess,
       });
     });

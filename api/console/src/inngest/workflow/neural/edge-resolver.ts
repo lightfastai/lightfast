@@ -1,14 +1,14 @@
 import { db } from "@db/console/client";
 import {
-  workspaceEdges,
+  workspaceEntityEdges,
   workspaceEntities,
-  workspaceEntityEvents,
+  workspaceEventEntities,
   workspaceEvents,
 } from "@db/console/schema";
 import type { EdgeRule } from "@repo/console-providers";
 import { PROVIDERS } from "@repo/console-providers";
 import { log } from "@vendor/observability/log";
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 const STRUCTURAL_TYPES = ["commit", "branch", "pr", "issue", "deployment"];
@@ -73,20 +73,32 @@ export async function resolveEdges(
   // 3. Find co-occurring events via junction table
   const coOccurring = await db
     .select({
-      eventId: workspaceEntityEvents.eventId,
-      entityId: workspaceEntityEvents.entityId,
+      eventId: workspaceEventEntities.eventId,
+      entityId: workspaceEventEntities.entityId,
     })
-    .from(workspaceEntityEvents)
+    .from(workspaceEventEntities)
     .where(
       and(
-        inArray(workspaceEntityEvents.entityId, ourEntityIds),
-        ne(workspaceEntityEvents.eventId, eventId)
+        inArray(workspaceEventEntities.entityId, ourEntityIds),
+        ne(workspaceEventEntities.eventId, eventId)
       )
     )
+    .orderBy(desc(workspaceEventEntities.eventId))
     .limit(100);
 
   if (coOccurring.length === 0) {
     return 0;
+  }
+
+  if (coOccurring.length === 100) {
+    log.warn(
+      "Edge resolver co-occurrence limit reached, recent events preferred",
+      {
+        eventId,
+        workspaceId,
+        entityCount: ourEntityIds.length,
+      }
+    );
   }
 
   // 4. Get unique co-occurring event IDs and their sources
@@ -99,12 +111,12 @@ export async function resolveEdges(
       .where(inArray(workspaceEvents.id, coEventIds)),
     db
       .select({
-        eventId: workspaceEntityEvents.eventId,
-        entityId: workspaceEntityEvents.entityId,
-        refLabel: workspaceEntityEvents.refLabel,
+        eventId: workspaceEventEntities.eventId,
+        entityId: workspaceEventEntities.entityId,
+        refLabel: workspaceEventEntities.refLabel,
       })
-      .from(workspaceEntityEvents)
-      .where(inArray(workspaceEntityEvents.eventId, coEventIds)),
+      .from(workspaceEventEntities)
+      .where(inArray(workspaceEventEntities.eventId, coEventIds)),
   ]);
 
   const coEventSourceMap = new Map(coEvents.map((e) => [e.id, e.source]));
@@ -186,16 +198,26 @@ export async function resolveEdges(
           continue;
         }
 
-        // Try our rules first, then their rules
-        const rule =
-          findBestRule(
-            myRules,
-            ourEntity.category,
-            ourLabel,
-            otherSource,
-            theirEntity.category
-          ) ??
-          findBestRule(
+        // Try our rules first
+        const myMatch = findBestRule(
+          myRules,
+          ourEntity.category,
+          ourLabel,
+          otherSource,
+          theirEntity.category
+        );
+
+        if (myMatch) {
+          // Our rule — our entity is the source
+          candidates.push({
+            sourceEntityId: ourEntity.id,
+            targetEntityId: theirEntity.entityId,
+            relationshipType: myMatch.relationshipType,
+            confidence: myMatch.confidence,
+          });
+        } else {
+          // Fallback: try their rules (from their perspective)
+          const otherMatch = findBestRule(
             otherRules,
             theirEntity.category,
             theirEntity.refLabel,
@@ -203,13 +225,15 @@ export async function resolveEdges(
             ourEntity.category
           );
 
-        if (rule) {
-          candidates.push({
-            sourceEntityId: ourEntity.id,
-            targetEntityId: theirEntity.entityId,
-            relationshipType: rule.relationshipType,
-            confidence: rule.confidence,
-          });
+          if (otherMatch) {
+            // Their rule — their entity is the source, ours is the target
+            candidates.push({
+              sourceEntityId: theirEntity.entityId,
+              targetEntityId: ourEntity.id,
+              relationshipType: otherMatch.relationshipType,
+              confidence: otherMatch.confidence,
+            });
+          }
         }
       }
     }
@@ -234,7 +258,7 @@ export async function resolveEdges(
   }));
 
   try {
-    await db.insert(workspaceEdges).values(inserts).onConflictDoNothing();
+    await db.insert(workspaceEntityEdges).values(inserts).onConflictDoNothing();
     log.info("Entity edges created", {
       eventId,
       count: inserts.length,
@@ -295,10 +319,15 @@ function deduplicateEdgeCandidates(
 ): EdgeCandidate[] {
   const byKey = new Map<string, EdgeCandidate>();
   for (const c of candidates) {
-    const key = `${c.sourceEntityId}-${c.targetEntityId}-${c.relationshipType}`;
+    // Canonical key: order entity IDs so (A,B) and (B,A) map to the same key.
+    // Store in canonical direction too so cross-call inserts always conflict
+    // rather than inserting both (A,B) and (B,A) as separate DB rows.
+    const lo = Math.min(c.sourceEntityId, c.targetEntityId);
+    const hi = Math.max(c.sourceEntityId, c.targetEntityId);
+    const key = `${lo}-${hi}-${c.relationshipType}`;
     const existing = byKey.get(key);
     if (!existing || c.confidence > existing.confidence) {
-      byKey.set(key, c);
+      byKey.set(key, { ...c, sourceEntityId: lo, targetEntityId: hi });
     }
   }
   return Array.from(byKey.values());

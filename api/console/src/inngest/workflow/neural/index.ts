@@ -1,10 +1,14 @@
 /**
  * Neural Memory Workflows
  *
- * Event pipeline (two-function split):
- * 1. eventStore     - Fast path: store facts + entities + junctions (<2s)
- * 2. eventInterpret - Slow path: classify + embed + store interpretation (5-30s)
+ * Event pipeline (three-function fast path):
+ * 1. eventStore  - Fast path: store facts + entities + junctions (<2s)
+ *                  Emits: entity.upserted → entityGraph
+ * 2. entityGraph - Fast path: resolve entity↔entity edges via co-occurrence (<500ms)
+ *                  Emits: entity.graphed → entityEmbed
+ * 3. entityEmbed - Fast path: build narrative + embed to Pinecone layer="entities" (~2s, debounced 30s)
  */
 
-export { eventInterpret } from "./event-interpret";
+export { entityEmbed } from "./entity-embed";
+export { entityGraph } from "./entity-graph";
 export { eventStore } from "./event-store";

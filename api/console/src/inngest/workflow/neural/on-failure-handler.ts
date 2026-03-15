@@ -82,9 +82,9 @@ export function createNeuralOnFailureHandler<TEventName extends keyof Events>(
         await completeJob({
           jobId: job.id,
           status: "failed",
-          // `NeuralFailureOutput` is intentionally broad so the factory stays
-          // generic. Type safety is enforced per-workflow via `satisfies` in
-          // each `buildOutput` callback; the cast here is therefore safe.
+          // NeuralFailureOutput's .catchall(z.unknown()) index signature is
+          // structurally incompatible with Drizzle's WorkflowOutput column type.
+          // The cast is safe: each workflow's buildOutput validates via satisfies.
           output: config.buildOutput({
             data,
             error: error.message,
