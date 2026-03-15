@@ -261,8 +261,9 @@ describe("oauth.processCallback", () => {
       installation_id: "12345",
     });
     if (result.status === "connected-no-token") {
-      expect(result.accountInfo.events).toContain("push");
       expect(result.accountInfo.events).toContain("pull_request");
+      expect(result.accountInfo.events).toContain("issues");
+      expect(result.accountInfo.events).not.toContain("push");
       // raw is empty — display data (account login, avatar) is resolved live
       expect(result.accountInfo.raw).toEqual({});
     }

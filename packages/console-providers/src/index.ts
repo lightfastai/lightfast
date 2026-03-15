@@ -51,36 +51,26 @@ export {
 export {
   githubIssueSchema,
   githubPullRequestSchema,
-  githubReleaseSchema,
   githubUserSchema,
   parseGitHubRateLimit,
 } from "./providers/github/api";
 export type {
   GitHubWebhookEventType,
   GitHubWebhookPayload,
-  PreTransformGitHubDiscussionEvent,
   PreTransformGitHubIssuesEvent,
   PreTransformGitHubPullRequestEvent,
-  PreTransformGitHubPushEvent,
-  PreTransformGitHubReleaseEvent,
 } from "./providers/github/schemas";
 // ── Pre-Transform Schemas & Types ─────────────────────────────────────────────
 export {
   githubWebhookEventTypeSchema,
   githubWebhookPayloadSchema,
-  preTransformGitHubDiscussionEventSchema,
   preTransformGitHubIssuesEventSchema,
   preTransformGitHubPullRequestEventSchema,
-  preTransformGitHubPushEventSchema,
-  preTransformGitHubReleaseEventSchema,
 } from "./providers/github/schemas";
 // ── Transformer Functions ─────────────────────────────────────────────────────
 export {
-  transformGitHubDiscussion,
   transformGitHubIssue,
   transformGitHubPullRequest,
-  transformGitHubPush,
-  transformGitHubRelease,
 } from "./providers/github/transformers";
 // Linear API
 export {

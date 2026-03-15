@@ -29,7 +29,6 @@ describe("ProviderName", () => {
 describe("EventKey derivation", () => {
   // Positive: known keys exist
   it("includes simple events", () => {
-    expectTypeOf<"github:push">().toMatchTypeOf<EventKey>();
     expectTypeOf<"sentry:error">().toMatchTypeOf<EventKey>();
     expectTypeOf<"sentry:event_alert">().toMatchTypeOf<EventKey>();
     expectTypeOf<"sentry:metric_alert">().toMatchTypeOf<EventKey>();
@@ -39,8 +38,6 @@ describe("EventKey derivation", () => {
     expectTypeOf<"github:pull_request.opened">().toMatchTypeOf<EventKey>();
     expectTypeOf<"github:pull_request.merged">().toMatchTypeOf<EventKey>();
     expectTypeOf<"github:issues.opened">().toMatchTypeOf<EventKey>();
-    expectTypeOf<"github:release.published">().toMatchTypeOf<EventKey>();
-    expectTypeOf<"github:discussion.created">().toMatchTypeOf<EventKey>();
     expectTypeOf<"vercel:deployment.created">().toMatchTypeOf<EventKey>();
     expectTypeOf<"vercel:deployment.error">().toMatchTypeOf<EventKey>();
     expectTypeOf<"linear:Issue.created">().toMatchTypeOf<EventKey>();
@@ -159,7 +156,7 @@ describe("EVENT_REGISTRY", () => {
 
   it("entries are indexable by known event keys", () => {
     expectTypeOf(
-      EVENT_REGISTRY["github:push"]
+      EVENT_REGISTRY["github:pull_request.opened"]
     ).toEqualTypeOf<EventRegistryEntry>();
   });
 });

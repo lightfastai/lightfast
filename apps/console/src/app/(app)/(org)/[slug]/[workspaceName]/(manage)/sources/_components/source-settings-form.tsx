@@ -3,7 +3,6 @@
 import type { CategoryDef, SourceType } from "@repo/console-providers";
 import { BACKFILL_DEPTH_OPTIONS, PROVIDERS } from "@repo/console-providers";
 import { useTRPC } from "@repo/console-trpc/react";
-import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
@@ -17,7 +16,6 @@ import {
 } from "@repo/ui/components/ui/select";
 import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import type { Source } from "~/types";
 
@@ -45,8 +43,6 @@ export function SourceSettingsForm({
   // Backwards compat: empty array = all events
   const activeEvents =
     currentEvents.length === 0 ? allEventKeys : currentEvents;
-  const showPushWarning =
-    provider === "github" && !activeEvents.includes("push");
 
   // Available entity types come from provider categories
   const availableEntityTypes = allEventKeys;
@@ -100,16 +96,6 @@ export function SourceSettingsForm({
       <div className="mb-3 font-medium text-foreground text-sm">
         Event Subscriptions
       </div>
-
-      {showPushWarning && (
-        <Alert className="mb-3" variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            Push events are disabled — file syncing is stopped for this
-            repository.
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* 2-column event grid */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-2">

@@ -12,7 +12,7 @@ export const githubUserSchema = z
     avatar_url: z.string().optional(),
     html_url: z.string().optional(),
   })
-  .passthrough();
+  .loose();
 
 export const githubPullRequestSchema = z
   .object({
@@ -25,12 +25,12 @@ export const githubPullRequestSchema = z
     updated_at: z.string(),
     closed_at: z.string().nullable(),
     merged_at: z.string().nullable(),
-    merged: z.boolean().optional(),
+    merged: z.boolean().nullable().optional(),
     html_url: z.string(),
-    head: z.object({ ref: z.string(), sha: z.string() }).passthrough(),
-    base: z.object({ ref: z.string(), sha: z.string() }).passthrough(),
+    head: z.object({ ref: z.string(), sha: z.string() }).loose(),
+    base: z.object({ ref: z.string(), sha: z.string() }).loose(),
   })
-  .passthrough();
+  .loose();
 
 export const githubIssueSchema = z
   .object({
@@ -44,24 +44,9 @@ export const githubIssueSchema = z
     closed_at: z.string().nullable(),
     html_url: z.string(),
     pull_request: z.unknown().optional(),
-    labels: z.array(z.object({ name: z.string() }).passthrough()).optional(),
+    labels: z.array(z.object({ name: z.string() }).loose()).optional(),
   })
-  .passthrough();
-
-export const githubReleaseSchema = z
-  .object({
-    id: z.number(),
-    tag_name: z.string(),
-    name: z.string().nullable(),
-    body: z.string().nullable(),
-    draft: z.boolean(),
-    prerelease: z.boolean(),
-    author: githubUserSchema.nullable(),
-    created_at: z.string(),
-    published_at: z.string().nullable(),
-    html_url: z.string(),
-  })
-  .passthrough();
+  .loose();
 
 export const githubAppInstallationSchema = z
   .object({
@@ -75,7 +60,7 @@ export const githubAppInstallationSchema = z
       .nullable()
       .optional(),
   })
-  .passthrough();
+  .loose();
 
 // ── App JWT Builder ──────────────────────────────────────────────────────────────
 
@@ -123,12 +108,12 @@ export const githubInstallationReposSchema = z
           language: z.string().nullable().optional(),
           stargazers_count: z.number().optional(),
           updated_at: z.string().nullable().optional(),
-          owner: z.object({ login: z.string() }).passthrough(),
+          owner: z.object({ login: z.string() }).loose(),
         })
-        .passthrough()
+        .loose()
     ),
   })
-  .passthrough();
+  .loose();
 
 // ── API Definition ──────────────────────────────────────────────────────────────
 
@@ -140,29 +125,38 @@ export const githubApi: ProviderApi = {
     "get-app-installation": {
       method: "GET",
       path: "/app/installations/{installation_id}",
-      description: "Get a GitHub App installation by installation ID (requires App JWT)",
+      description:
+        "Get a GitHub App installation by installation ID (requires App JWT)",
       responseSchema: githubAppInstallationSchema,
       buildAuth: buildGitHubAppAuth,
     },
     "list-installation-repos": {
       method: "GET",
       path: "/installation/repositories",
-      description: "List repositories accessible to the GitHub App installation",
+      description:
+        "List repositories accessible to the GitHub App installation",
       responseSchema: githubInstallationReposSchema,
     },
     "get-repo": {
       method: "GET",
       path: "/repos/{owner}/{repo}",
       description: "Get repository metadata including default branch",
-      responseSchema: z.object({ default_branch: z.string() }).passthrough(),
+      responseSchema: z.object({ default_branch: z.string() }).loose(),
     },
     "get-file-contents": {
       method: "GET",
       path: "/repos/{owner}/{repo}/contents/{path}",
       description: "Get file contents from a repository",
       responseSchema: z.union([
-        z.object({ type: z.string(), content: z.string(), sha: z.string(), size: z.number().optional() }).passthrough(),
-        z.array(z.object({ type: z.string(), name: z.string() }).passthrough()),
+        z
+          .object({
+            type: z.string(),
+            content: z.string(),
+            sha: z.string(),
+            size: z.number().optional(),
+          })
+          .loose(),
+        z.array(z.object({ type: z.string(), name: z.string() }).loose()),
       ]),
     },
     "list-pull-requests": {
@@ -177,12 +171,6 @@ export const githubApi: ProviderApi = {
       description:
         "List issues for a repository (includes PRs — filter client-side)",
       responseSchema: z.array(githubIssueSchema),
-    },
-    "list-releases": {
-      method: "GET",
-      path: "/repos/{owner}/{repo}/releases",
-      description: "List releases for a repository",
-      responseSchema: z.array(githubReleaseSchema),
     },
   },
 } as const;

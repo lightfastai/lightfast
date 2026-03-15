@@ -20,12 +20,10 @@ import { transformVercelDeployment } from "../vercel/transformers";
 import {
   adaptGitHubIssueForTransformer,
   adaptGitHubPRForTransformer,
-  adaptGitHubReleaseForTransformer,
 } from "./backfill";
 import {
   transformGitHubIssue,
   transformGitHubPullRequest,
-  transformGitHubRelease,
 } from "./transformers";
 
 // Minimal TransformContext — matches { deliveryId: string, receivedAt: number }
@@ -88,24 +86,6 @@ const githubListIssue = {
   labels: [{ name: "feature-request" }],
 };
 
-const githubListRelease = {
-  id: 999,
-  tag_name: "v2.0.0",
-  name: "Version 2.0.0",
-  body: "Major release with backfill support.",
-  target_commitish: "main",
-  draft: false,
-  prerelease: false,
-  author: {
-    id: 1234,
-    login: "alice",
-    avatar_url: "https://avatars.githubusercontent.com/u/1234",
-  },
-  published_at: "2026-01-20T14:00:00Z",
-  created_at: "2026-01-20T13:00:00Z",
-  html_url: "https://github.com/owner/repo/releases/tag/v2.0.0",
-};
-
 const repoData = {
   full_name: "owner/repo",
   html_url: "https://github.com/owner/repo",
@@ -135,8 +115,10 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
 
   beforeAll(() => {
     adapted = adaptGitHubPRForTransformer(
-      githubListPR as unknown as Record<string, unknown>,
-      repoData as unknown as Record<string, unknown>
+      githubListPR as unknown as Parameters<
+        typeof adaptGitHubPRForTransformer
+      >[0],
+      repoData as Record<string, unknown>
     );
   });
 
@@ -187,11 +169,12 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
 
   it("open PR produces opened eventType", () => {
     const openPR = adaptGitHubPRForTransformer(
-      { ...githubListPR, state: "open", merged: false } as unknown as Record<
-        string,
-        unknown
-      >,
-      repoData as unknown as Record<string, unknown>
+      {
+        ...githubListPR,
+        state: "open",
+        merged: false,
+      } as unknown as Parameters<typeof adaptGitHubPRForTransformer>[0],
+      repoData as Record<string, unknown>
     );
     const event = transformGitHubPullRequest(openPR, context, "");
     expect(event.eventType).toContain("opened");
@@ -203,8 +186,10 @@ describe("GitHub Issue: adapter → transformer round-trip", () => {
 
   beforeAll(() => {
     adapted = adaptGitHubIssueForTransformer(
-      githubListIssue as unknown as Record<string, unknown>,
-      repoData as unknown as Record<string, unknown>
+      githubListIssue as unknown as Parameters<
+        typeof adaptGitHubIssueForTransformer
+      >[0],
+      repoData as Record<string, unknown>
     );
   });
 
@@ -228,38 +213,6 @@ describe("GitHub Issue: adapter → transformer round-trip", () => {
   });
 });
 
-describe("GitHub Release: adapter → transformer round-trip", () => {
-  let adapted: ReturnType<typeof adaptGitHubReleaseForTransformer>;
-
-  beforeAll(() => {
-    adapted = adaptGitHubReleaseForTransformer(
-      githubListRelease as unknown as Record<string, unknown>,
-      repoData as unknown as Record<string, unknown>
-    );
-  });
-
-  it("transformer does not throw", () => {
-    expect(() => transformGitHubRelease(adapted, context, "")).not.toThrow();
-  });
-
-  it("produces a PostTransformEvent with non-empty sourceId containing tag", () => {
-    const event = transformGitHubRelease(adapted, context, "");
-    expect(event.sourceId).toContain("v2.0.0");
-  });
-
-  it("provider is github", () => {
-    const event = transformGitHubRelease(adapted, context, "");
-    expect(event.provider).toBe("github");
-  });
-
-  it("relations include branch ref (target_commitish)", () => {
-    const event = transformGitHubRelease(adapted, context, "");
-    const branchRels = event.relations.filter((r) => r.entityType === "branch");
-    expect(branchRels.length).toBeGreaterThan(0);
-    expect(branchRels[0]!.entityId).toContain("main");
-  });
-});
-
 describe("Vercel Deployment: adapter → transformer round-trip", () => {
   let webhookPayload: ReturnType<
     typeof adaptVercelDeploymentForTransformer
@@ -270,7 +223,9 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
 
   beforeAll(() => {
     const result = adaptVercelDeploymentForTransformer(
-      vercelListDeployment as unknown as Record<string, unknown>,
+      vercelListDeployment as Parameters<
+        typeof adaptVercelDeploymentForTransformer
+      >[0],
       "my-app"
     );
     webhookPayload = result.webhookPayload;
@@ -318,10 +273,10 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
   it("ERROR deployment produces error eventType", () => {
     const { webhookPayload: errPayload, eventType: errType } =
       adaptVercelDeploymentForTransformer(
-        { ...vercelListDeployment, readyState: "ERROR" } as unknown as Record<
-          string,
-          unknown
-        >,
+        {
+          ...vercelListDeployment,
+          readyState: "ERROR",
+        } as Parameters<typeof adaptVercelDeploymentForTransformer>[0],
         "my-app"
       );
     const event = transformVercelDeployment(errPayload, context, errType);

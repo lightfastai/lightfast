@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { computeHmac, timingSafeEqual } from "../../crypto";
-import { actionEvent, defineProvider, simpleEvent } from "../../define";
+import { actionEvent, defineProvider } from "../../define";
 import { createRS256JWT } from "../../jwt";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { githubApi } from "./api";
@@ -14,18 +14,12 @@ import {
 import { githubBackfill } from "./backfill";
 import {
   githubWebhookPayloadSchema,
-  preTransformGitHubDiscussionEventSchema,
   preTransformGitHubIssuesEventSchema,
   preTransformGitHubPullRequestEventSchema,
-  preTransformGitHubPushEventSchema,
-  preTransformGitHubReleaseEventSchema,
 } from "./schemas";
 import {
-  transformGitHubDiscussion,
   transformGitHubIssue,
   transformGitHubPullRequest,
-  transformGitHubPush,
-  transformGitHubRelease,
 } from "./transformers";
 
 // ── GitHub-Specific Capabilities ──
@@ -84,11 +78,6 @@ export const github = defineProvider({
   providerConfigSchema: githubProviderConfigSchema,
 
   categories: {
-    push: {
-      label: "Push",
-      description: "Sync files and capture observations when code is pushed",
-      type: "sync+observation",
-    },
     pull_request: {
       label: "Pull Requests",
       description: "Capture PR opens, merges, closes, and reopens",
@@ -99,25 +88,9 @@ export const github = defineProvider({
       description: "Capture issue opens, closes, and reopens",
       type: "observation",
     },
-    release: {
-      label: "Releases",
-      description: "Capture published releases",
-      type: "observation",
-    },
-    discussion: {
-      label: "Discussions",
-      description: "Capture discussion threads and answers",
-      type: "observation",
-    },
   },
 
   events: {
-    push: simpleEvent({
-      label: "Push",
-      weight: 30,
-      schema: preTransformGitHubPushEventSchema,
-      transform: transformGitHubPush,
-    }),
     pull_request: actionEvent({
       label: "Pull Requests",
       weight: 50,
@@ -140,26 +113,6 @@ export const github = defineProvider({
         opened: { label: "Issue Opened", weight: 45 },
         closed: { label: "Issue Closed", weight: 40 },
         reopened: { label: "Issue Reopened", weight: 40 },
-      },
-    }),
-    release: actionEvent({
-      label: "Releases",
-      weight: 75,
-      schema: preTransformGitHubReleaseEventSchema,
-      transform: transformGitHubRelease,
-      actions: {
-        published: { label: "Release Published", weight: 75 },
-        created: { label: "Release Created", weight: 70 },
-      },
-    }),
-    discussion: actionEvent({
-      label: "Discussions",
-      weight: 35,
-      schema: preTransformGitHubDiscussionEventSchema,
-      transform: transformGitHubDiscussion,
-      actions: {
-        created: { label: "Discussion Created", weight: 35 },
-        answered: { label: "Discussion Answered", weight: 40 },
       },
     }),
   },
@@ -292,7 +245,7 @@ export const github = defineProvider({
         accountInfo: {
           version: 1 as const,
           sourceType: "github" as const,
-          events: ["push", "pull_request", "issues", "release", "discussion"],
+          events: ["pull_request", "issues"],
           installedAt: now,
           lastValidatedAt: now,
           raw: {},
@@ -301,13 +254,7 @@ export const github = defineProvider({
     },
   },
 
-  defaultSyncEvents: [
-    "push",
-    "pull_request",
-    "issues",
-    "release",
-    "discussion",
-  ],
+  defaultSyncEvents: ["pull_request", "issues"],
 
   buildProviderConfig: ({ resourceId, defaultSyncEvents }) => ({
     version: 1 as const,
@@ -315,8 +262,6 @@ export const github = defineProvider({
     type: "repository" as const,
     repoId: resourceId,
     sync: {
-      branches: ["main"],
-      paths: ["**/*"],
       events: [...defaultSyncEvents],
       autoSync: true,
     },

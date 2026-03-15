@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { parseGitHubRateLimit } from "./api";
+import type { z } from "zod";
+import {
+  type githubIssueSchema,
+  type githubPullRequestSchema,
+  parseGitHubRateLimit,
+} from "./api";
 import {
   adaptGitHubIssueForTransformer,
   adaptGitHubPRForTransformer,
-  adaptGitHubReleaseForTransformer,
 } from "./backfill";
 
 const repo = {
@@ -12,38 +16,55 @@ const repo = {
   id: 12_345,
 };
 
+const basePR: z.infer<typeof githubPullRequestSchema> = {
+  number: 1,
+  title: "Test PR",
+  state: "open",
+  body: null,
+  user: { login: "alice", id: 1, avatar_url: "" },
+  created_at: "2024-01-01T00:00:00Z",
+  updated_at: "2024-01-01T00:00:00Z",
+  closed_at: null,
+  merged_at: null,
+  html_url: "https://github.com/owner/repo/pull/1",
+  head: { ref: "feature", sha: "abc123" },
+  base: { ref: "main", sha: "def456" },
+};
+
+const baseIssue: z.infer<typeof githubIssueSchema> = {
+  number: 10,
+  title: "Test Issue",
+  state: "open",
+  body: null,
+  user: { login: "alice", id: 1, avatar_url: "" },
+  created_at: "2024-01-01T00:00:00Z",
+  updated_at: "2024-01-01T00:00:00Z",
+  closed_at: null,
+  html_url: "https://github.com/owner/repo/issues/10",
+};
+
 describe("adaptGitHubPRForTransformer", () => {
   it("maps open PR to action: opened", () => {
-    const pr = { state: "open", number: 1, user: { login: "alice" } };
+    const pr = { ...basePR, state: "open", number: 1 };
     const result = adaptGitHubPRForTransformer(pr, repo);
     expect(result.action).toBe("opened");
   });
 
   it("maps closed PR to action: closed", () => {
-    const pr = {
-      state: "closed",
-      number: 2,
-      user: { login: "alice" },
-      merged: false,
-    };
+    const pr = { ...basePR, state: "closed", number: 2, merged: false };
     const result = adaptGitHubPRForTransformer(pr, repo);
     expect(result.action).toBe("closed");
   });
 
   it("maps merged PR (state: closed, merged: true) to action: closed", () => {
     // Transformer handles merge detection separately via pr.merged
-    const pr = {
-      state: "closed",
-      number: 3,
-      user: { login: "alice" },
-      merged: true,
-    };
+    const pr = { ...basePR, state: "closed", number: 3, merged: true };
     const result = adaptGitHubPRForTransformer(pr, repo);
     expect(result.action).toBe("closed");
   });
 
   it("output has pull_request, repository, sender fields", () => {
-    const pr = { state: "open", number: 4, user: { login: "alice" } };
+    const pr = { ...basePR, state: "open", number: 4 };
     const result = adaptGitHubPRForTransformer(pr, repo);
     expect(result).toMatchObject({
       action: "opened",
@@ -55,7 +76,7 @@ describe("adaptGitHubPRForTransformer", () => {
 
   it("sender equals pr.user", () => {
     const user = { login: "bob", id: 99 };
-    const pr = { state: "open", number: 5, user };
+    const pr = { ...basePR, number: 5, user };
     const result = adaptGitHubPRForTransformer(pr, repo);
     expect(result.sender).toBe(user);
   });
@@ -66,27 +87,44 @@ describe("adaptGitHubPRForTransformer", () => {
       html_url: "https://github.com/other/repo",
       id: 99,
     };
-    const pr = { state: "open", number: 6, user: { login: "alice" } };
+    const pr = { ...basePR, number: 6 };
     const result = adaptGitHubPRForTransformer(pr, customRepo);
     expect(result.repository).toBe(customRepo);
+  });
+
+  it("derives merged=true from merged_at when merged field is absent", () => {
+    const pr = {
+      ...basePR,
+      state: "closed",
+      number: 7,
+      merged_at: "2024-01-01T00:00:00Z",
+    };
+    const result = adaptGitHubPRForTransformer(pr, repo);
+    expect((result.pull_request as Record<string, unknown>).merged).toBe(true);
+  });
+
+  it("derives merged=false when merged_at is null and merged is absent", () => {
+    const pr = { ...basePR, state: "closed", number: 8, merged_at: null };
+    const result = adaptGitHubPRForTransformer(pr, repo);
+    expect((result.pull_request as Record<string, unknown>).merged).toBe(false);
   });
 });
 
 describe("adaptGitHubIssueForTransformer", () => {
   it("maps open issue to action: opened", () => {
-    const issue = { state: "open", number: 10, user: { login: "alice" } };
+    const issue = { ...baseIssue, state: "open", number: 10 };
     const result = adaptGitHubIssueForTransformer(issue, repo);
     expect(result.action).toBe("opened");
   });
 
   it("maps closed issue to action: closed", () => {
-    const issue = { state: "closed", number: 11, user: { login: "alice" } };
+    const issue = { ...baseIssue, state: "closed", number: 11 };
     const result = adaptGitHubIssueForTransformer(issue, repo);
     expect(result.action).toBe("closed");
   });
 
   it("output has issue, repository, sender fields", () => {
-    const issue = { state: "open", number: 12, user: { login: "alice" } };
+    const issue = { ...baseIssue, number: 12 };
     const result = adaptGitHubIssueForTransformer(issue, repo);
     expect(result).toMatchObject({
       action: "opened",
@@ -98,35 +136,9 @@ describe("adaptGitHubIssueForTransformer", () => {
 
   it("sender equals issue.user", () => {
     const user = { login: "carol", id: 77 };
-    const issue = { state: "open", number: 13, user };
+    const issue = { ...baseIssue, number: 13, user };
     const result = adaptGitHubIssueForTransformer(issue, repo);
     expect(result.sender).toBe(user);
-  });
-});
-
-describe("adaptGitHubReleaseForTransformer", () => {
-  it("always produces action: published regardless of input state", () => {
-    const release = { id: 1, author: { login: "alice" }, tag_name: "v1.0.0" };
-    const result = adaptGitHubReleaseForTransformer(release, repo);
-    expect(result.action).toBe("published");
-  });
-
-  it("output has release, repository, sender fields", () => {
-    const release = { id: 2, author: { login: "alice" }, tag_name: "v2.0.0" };
-    const result = adaptGitHubReleaseForTransformer(release, repo);
-    expect(result).toMatchObject({
-      action: "published",
-      release,
-      repository: repo,
-      sender: release.author,
-    });
-  });
-
-  it("sender equals release.author", () => {
-    const author = { login: "dave", id: 55 };
-    const release = { id: 3, author, tag_name: "v3.0.0" };
-    const result = adaptGitHubReleaseForTransformer(release, repo);
-    expect(result.sender).toBe(author);
   });
 });
 
