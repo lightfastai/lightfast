@@ -24,7 +24,10 @@ import {
   workspaceUpdateNameInputSchema,
 } from "@repo/console-validation/schemas";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
-import { createBackfillClient } from "@repo/gateway-service-clients";
+import {
+  createBackfillClient,
+  createGatewayClient,
+} from "@repo/gateway-service-clients";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
@@ -550,6 +553,22 @@ export const workspaceRouter = {
               .update(workspaceIntegrations)
               .set({ isActive: true, updatedAt: new Date().toISOString() })
               .where(eq(workspaceIntegrations.id, existing.id));
+            await createGatewayClient({ apiKey: env.GATEWAY_API_KEY })
+              .registerResource(installationId, {
+                providerResourceId: projectId,
+                resourceName: input.projectName,
+              })
+              .catch((err: unknown) =>
+                console.error(
+                  "[linkVercelProject] gateway registerResource failed",
+                  { installationId, projectId, err }
+                )
+              );
+            void notifyBackfill({
+              installationId,
+              provider: "vercel",
+              orgId: ctx.auth.orgId,
+            });
             return { id: existing.id, created: false, reactivated: true };
           }
           return { id: existing.id, created: false, reactivated: false };
@@ -589,6 +608,22 @@ export const workspaceRouter = {
             message: "Failed to create Vercel integration",
           });
         }
+        await createGatewayClient({ apiKey: env.GATEWAY_API_KEY })
+          .registerResource(installationId, {
+            providerResourceId: projectId,
+            resourceName: input.projectName,
+          })
+          .catch((err: unknown) =>
+            console.error(
+              "[linkVercelProject] gateway registerResource failed",
+              { installationId, projectId, err }
+            )
+          );
+        void notifyBackfill({
+          installationId,
+          provider: "vercel",
+          orgId: ctx.auth.orgId,
+        });
         return { id: insertedId, created: true, reactivated: false };
       }),
 
@@ -717,13 +752,14 @@ export const workspaceRouter = {
         }
 
         // 2. Verify org owns the installation for this provider
-        const gwInstallation = await ctx.db.query.gatewayInstallations.findFirst({
-          where: and(
-            eq(gatewayInstallations.id, gwInstallationId),
-            eq(gatewayInstallations.orgId, ctx.auth.orgId),
-            eq(gatewayInstallations.provider, provider)
-          ),
-        });
+        const gwInstallation =
+          await ctx.db.query.gatewayInstallations.findFirst({
+            where: and(
+              eq(gatewayInstallations.id, gwInstallationId),
+              eq(gatewayInstallations.orgId, ctx.auth.orgId),
+              eq(gatewayInstallations.provider, provider)
+            ),
+          });
 
         if (!gwInstallation) {
           throw new TRPCError({
@@ -746,7 +782,11 @@ export const workspaceRouter = {
 
         // 4. Categorize resources
         const toCreate: typeof resources = [];
-        const toReactivate: string[] = [];
+        const toReactivate: Array<{
+          id: string;
+          providerResourceId: string;
+          resourceName: string;
+        }> = [];
         const alreadyActive: string[] = [];
 
         for (const resource of resources) {
@@ -756,20 +796,51 @@ export const workspaceRouter = {
           } else if (existingIntegration.isActive) {
             alreadyActive.push(resource.resourceId);
           } else {
-            toReactivate.push(existingIntegration.id);
+            toReactivate.push({
+              id: existingIntegration.id,
+              providerResourceId: resource.resourceId,
+              resourceName: resource.resourceName,
+            });
           }
         }
 
         const now = new Date().toISOString();
         const typedProvider = provider as ProviderName;
         const defaultSyncEvents = getDefaultSyncEvents(typedProvider);
+        const gw = createGatewayClient({ apiKey: env.GATEWAY_API_KEY });
 
         // 5. Reactivate inactive integrations
         if (toReactivate.length > 0) {
           await ctx.db
             .update(workspaceIntegrations)
             .set({ isActive: true, updatedAt: now })
-            .where(inArray(workspaceIntegrations.id, toReactivate));
+            .where(
+              inArray(
+                workspaceIntegrations.id,
+                toReactivate.map((r) => r.id)
+              )
+            );
+
+          // Register reactivated resources in gateway (best-effort)
+          await Promise.allSettled(
+            toReactivate.map((r) =>
+              gw
+                .registerResource(gwInstallationId, {
+                  providerResourceId: r.providerResourceId,
+                  resourceName: r.resourceName,
+                })
+                .catch((err: unknown) =>
+                  console.error(
+                    "[bulkLinkResources] gateway registerResource failed (reactivate)",
+                    {
+                      installationId: gwInstallationId,
+                      providerResourceId: r.providerResourceId,
+                      err,
+                    }
+                  )
+                )
+            )
+          );
 
           // Trigger backfill for reactivated sources (best-effort)
           void notifyBackfill({
@@ -802,6 +873,27 @@ export const workspaceRouter = {
             .insert(workspaceIntegrations)
             .values(integrations)
             .returning({ id: workspaceIntegrations.id });
+
+          // Register new resources in gateway (best-effort)
+          await Promise.allSettled(
+            toCreate.map((resource) =>
+              gw
+                .registerResource(gwInstallationId, {
+                  providerResourceId: resource.resourceId,
+                  resourceName: resource.resourceName,
+                })
+                .catch((err: unknown) =>
+                  console.error(
+                    "[bulkLinkResources] gateway registerResource failed (create)",
+                    {
+                      installationId: gwInstallationId,
+                      providerResourceId: resource.resourceId,
+                      err,
+                    }
+                  )
+                )
+            )
+          );
 
           // Trigger backfill (best-effort)
           void notifyBackfill({
@@ -874,8 +966,7 @@ export const workspaceRouter = {
           .select({
             id: workspaceIngestLogs.id,
             source: sql<string>`${workspaceIngestLogs.sourceEvent}->>'provider'`,
-            sourceType:
-              sql<string>`${workspaceIngestLogs.sourceEvent}->>'eventType'`,
+            sourceType: sql<string>`${workspaceIngestLogs.sourceEvent}->>'eventType'`,
             sourceEvent: workspaceIngestLogs.sourceEvent,
             ingestionSource: workspaceIngestLogs.ingestionSource,
             receivedAt: workspaceIngestLogs.receivedAt,
@@ -943,10 +1034,13 @@ export async function notifyBackfill(params: {
           entityTypes: resolvedEntityTypes,
         });
       } else {
-        console.log("[notifyBackfill] no backfillConfig in DB, using hardcoded fallback", {
-          installationId: params.installationId,
-          fallbackDepth: resolvedDepth ?? 1,
-        });
+        console.log(
+          "[notifyBackfill] no backfillConfig in DB, using hardcoded fallback",
+          {
+            installationId: params.installationId,
+            fallbackDepth: resolvedDepth ?? 1,
+          }
+        );
       }
     } catch (err) {
       console.error("[console] Failed to load backfill config defaults", {

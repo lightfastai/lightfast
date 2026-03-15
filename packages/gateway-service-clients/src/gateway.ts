@@ -139,6 +139,27 @@ export function createGatewayClient(config: ServiceClientConfig) {
       return proxyEndpointsResponseSchema.parse(data);
     },
 
+    async registerResource(
+      installationId: string,
+      resource: { providerResourceId: string; resourceName?: string }
+    ): Promise<void> {
+      const response = await fetch(
+        `${gatewayUrl}/gateway/${installationId}/resources`,
+        {
+          method: "POST",
+          headers: { ...h, "Content-Type": "application/json" },
+          body: JSON.stringify(resource),
+          signal: AbortSignal.timeout(10_000),
+        }
+      );
+      // 409 = already registered — treat as success (idempotent)
+      if (!response.ok && response.status !== 409) {
+        throw new Error(
+          `Gateway registerResource failed: ${response.status} for ${installationId}/${resource.providerResourceId}`
+        );
+      }
+    },
+
     /**
      * Get OAuth authorize URL from the gateway.
      * Console-specific: requires orgId and userId context headers.

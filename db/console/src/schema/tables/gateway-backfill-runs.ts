@@ -22,6 +22,10 @@ export const gatewayBackfillRuns = pgTable(
       .notNull()
       .references(() => gatewayInstallations.id, { onDelete: "cascade" }),
 
+    providerResourceId: varchar("provider_resource_id", { length: 191 })
+      .notNull()
+      .default(""),
+
     entityType: varchar("entity_type", { length: 50 }).notNull(),
 
     // Oldest date we fetched from (ISO timestamp)
@@ -52,12 +56,13 @@ export const gatewayBackfillRuns = pgTable(
       .defaultNow(),
   },
   (table) => ({
-    // One tracking row per installation + entity type (upsert target)
-    installationEntityIdx: uniqueIndex("gateway_br_installation_entity_idx").on(
-      table.installationId,
-      table.entityType
+    // One tracking row per installation + resource + entity type (upsert target)
+    installationResourceEntityIdx: uniqueIndex(
+      "gateway_br_installation_resource_entity_idx"
+    ).on(table.installationId, table.providerResourceId, table.entityType),
+    installationIdx: index("gateway_br_installation_idx").on(
+      table.installationId
     ),
-    installationIdx: index("gateway_br_installation_idx").on(table.installationId),
   })
 );
 

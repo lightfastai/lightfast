@@ -322,7 +322,10 @@ connections.get("/:provider/callback", async (c) => {
         providerAccountInfo: result.accountInfo,
       })
       .onConflictDoUpdate({
-        target: [gatewayInstallations.provider, gatewayInstallations.externalId],
+        target: [
+          gatewayInstallations.provider,
+          gatewayInstallations.externalId,
+        ],
         set: {
           status: "active",
           connectedBy,
@@ -779,7 +782,9 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   const providerName = installation.provider;
   const providerDef = getProvider(providerName);
   if (!providerDef) {
-    console.warn(`[proxy/execute] unknown_provider: ${providerName} for id=${id}`);
+    console.warn(
+      `[proxy/execute] unknown_provider: ${providerName} for id=${id}`
+    );
     return c.json({ error: "unknown_provider" }, 400);
   }
 
@@ -1019,10 +1024,15 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
       status: "active",
     })
     .onConflictDoUpdate({
-      target: [gatewayResources.installationId, gatewayResources.providerResourceId],
+      target: [
+        gatewayResources.installationId,
+        gatewayResources.providerResourceId,
+      ],
       set: {
         status: "active",
-        resourceName: body.resourceName,
+        ...(body.resourceName !== undefined
+          ? { resourceName: body.resourceName }
+          : {}),
         updatedAt: sql`CURRENT_TIMESTAMP`,
       },
     })
@@ -1063,7 +1073,10 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
     .select()
     .from(gatewayResources)
     .where(
-      and(eq(gatewayResources.id, resourceId), eq(gatewayResources.installationId, id))
+      and(
+        eq(gatewayResources.id, resourceId),
+        eq(gatewayResources.installationId, id)
+      )
     )
     .limit(1);
 
@@ -1114,6 +1127,7 @@ connections.get("/:id/backfill-runs", apiKeyAuth, async (c) => {
   const runs = await db
     .select({
       entityType: gatewayBackfillRuns.entityType,
+      providerResourceId: gatewayBackfillRuns.providerResourceId,
       since: gatewayBackfillRuns.since,
       depth: gatewayBackfillRuns.depth,
       status: gatewayBackfillRuns.status,
@@ -1170,11 +1184,16 @@ connections.post("/:id/backfill-runs", apiKeyAuth, async (c) => {
     .values({
       installationId,
       entityType: data.entityType,
+      providerResourceId: data.providerResourceId,
       ...sharedFields,
       startedAt: data.status === "running" ? now : null,
     })
     .onConflictDoUpdate({
-      target: [gatewayBackfillRuns.installationId, gatewayBackfillRuns.entityType],
+      target: [
+        gatewayBackfillRuns.installationId,
+        gatewayBackfillRuns.providerResourceId,
+        gatewayBackfillRuns.entityType,
+      ],
       set: sharedFields,
     });
 

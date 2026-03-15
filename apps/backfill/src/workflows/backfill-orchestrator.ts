@@ -96,26 +96,38 @@ export const backfillOrchestrator = inngest.createFunction(
     );
 
     // ── Step 3: Enumerate work units (resource x entityType) ──
-    const workUnits = connection.resources.flatMap((resource) =>
-      resolvedEntityTypes.map((entityType: string) => ({
+    const workUnits = connection.resources.flatMap((resource) => {
+      const resourceName = resource.resourceName;
+      if (!resourceName) {
+        console.warn(
+          "[backfill] skipping resource with null/empty resourceName",
+          {
+            installationId,
+            providerResourceId: resource.providerResourceId,
+          }
+        );
+        return [];
+      }
+      return resolvedEntityTypes.map((entityType: string) => ({
         entityType,
         resource: {
           providerResourceId: resource.providerResourceId,
-          // Normalize null → "" so provider handlers never need to guard
-          resourceName: resource.resourceName ?? "",
+          resourceName,
         },
         // Stable ID for step naming
         workUnitId: `${resource.providerResourceId}-${entityType}`,
-      }))
-    );
+      }));
+    });
 
-    // ── Gap-aware filtering: skip entity types fully covered by prior runs ──
-    // A prior run "covers" an entity type if its `since` is earlier-or-equal
+    // ── Gap-aware filtering: skip (resource, entityType) pairs covered by prior runs ──
+    // A prior run "covers" a (resource, entityType) pair if its `since` is earlier-or-equal
     // to the requested `since` — meaning it already fetched a wider or equal range.
     // deliveryId dedup at the relay handles any overlap on boundaries.
     const filteredWorkUnits = workUnits.filter((wu) => {
       const priorRun = backfillHistory.find(
-        (h) => h.entityType === wu.entityType
+        (h) =>
+          h.entityType === wu.entityType &&
+          h.providerResourceId === wu.resource.providerResourceId
       );
       if (!priorRun) {
         return true; // No prior run — must fetch
@@ -182,34 +194,20 @@ export const backfillOrchestrator = inngest.createFunction(
     const succeeded = completionResults.filter((r) => r.success);
     const failed = completionResults.filter((r) => !r.success);
 
-    // ── Step 6b: Persist consolidated run records ──
-    // One record per entityType, with stats summed across all resources.
-    // Only writes "completed" when ALL resources for that entityType succeeded.
+    // ── Step 6b: Persist run records — one per (resource, entityType) ──
     if (completionResults.length > 0) {
       await step.run("persist-run-records", async () => {
-        const byEntityType = new Map<string, typeof completionResults>();
         for (const r of completionResults) {
-          const existing = byEntityType.get(r.entityType) ?? [];
-          existing.push(r);
-          byEntityType.set(r.entityType, existing);
-        }
-
-        for (const [entityType, results] of byEntityType) {
-          const allSucceeded = results.every((r) => r.success);
           await gw.upsertBackfillRun(installationId, {
-            entityType,
+            entityType: r.entityType,
+            providerResourceId: r.resourceId,
             since,
             depth,
-            status: allSucceeded ? "completed" : "failed",
-            pagesProcessed: results.reduce((s, r) => s + r.pagesProcessed, 0),
-            eventsProduced: results.reduce((s, r) => s + r.eventsProduced, 0),
-            eventsDispatched: results.reduce(
-              (s, r) => s + r.eventsDispatched,
-              0
-            ),
-            error: allSucceeded
-              ? undefined
-              : results.find((r) => !r.success)?.error,
+            status: r.success ? "completed" : "failed",
+            pagesProcessed: r.pagesProcessed,
+            eventsProduced: r.eventsProduced,
+            eventsDispatched: r.eventsDispatched,
+            error: r.success ? undefined : r.error,
           });
         }
       });

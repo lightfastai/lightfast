@@ -342,20 +342,27 @@ function configureOrchestratorMocks(s: OrchestratorScenario) {
     })),
   });
 
-  // Gap history
+  // Gap history — must cross resources x entityTypes for per-(resource, entityType) filter
   const coveredEntityTypes =
     s.gapCoverage === "none"
       ? []
       : s.gapCoverage === "partial"
         ? [s.entityTypes[0]]
         : s.entityTypes;
+  const resourceIds = Array.from(
+    { length: s.resourceCount },
+    (_, i) => `${(i + 1) * 100}`
+  );
   mockGatewayClient.getBackfillRuns.mockResolvedValue(
-    coveredEntityTypes.map((et) => ({
-      entityType: et,
-      since: "2020-01-01T00:00:00Z",
-      depth: 90,
-      status: "completed",
-    }))
+    resourceIds.flatMap((providerResourceId) =>
+      coveredEntityTypes.map((et) => ({
+        entityType: et,
+        providerResourceId,
+        since: "2020-01-01T00:00:00Z",
+        depth: 90,
+        status: "completed",
+      }))
+    )
   );
 }
 

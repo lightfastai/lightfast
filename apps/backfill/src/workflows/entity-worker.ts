@@ -134,7 +134,7 @@ export const backfillEntityWorker = inngest.createFunction(
         }
       );
 
-      eventsProduced += fetchResult.rawCount;
+      eventsProduced += fetchResult.events.length;
 
       // Dispatch each event to Relay service
       // Return count from step so it survives memoized replay (callbacks are skipped on retry)

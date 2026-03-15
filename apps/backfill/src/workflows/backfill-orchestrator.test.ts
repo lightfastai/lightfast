@@ -449,8 +449,8 @@ describe("aggregation", () => {
 });
 
 describe("persist-run-records", () => {
-  it("upsertBackfillRun called once per unique entityType with summed stats", async () => {
-    // 2 resources, 1 entity type = 2 workers for same entityType
+  it("upsertBackfillRun called once per (resource, entityType) with per-worker stats", async () => {
+    // 2 resources, 1 entity type = 2 workers → 2 upsert calls (not aggregated)
     const step = makeStep({
       invoke: vi
         .fn()
@@ -469,20 +469,25 @@ describe("persist-run-records", () => {
 
     await capturedHandler({ event, step });
 
-    expect(mockGatewayClient.upsertBackfillRun).toHaveBeenCalledOnce();
-    const [_, record] = mockGatewayClient.upsertBackfillRun.mock.calls[0] as [
+    expect(mockGatewayClient.upsertBackfillRun).toHaveBeenCalledTimes(2);
+    const calls = mockGatewayClient.upsertBackfillRun.mock.calls as [
       string,
       Record<string, unknown>,
-    ];
-    expect(record.entityType).toBe("pull_request");
-    expect(record.status).toBe("completed");
-    expect(record.eventsProduced).toBe(30);
-    expect(record.eventsDispatched).toBe(30);
-    expect(record.pagesProcessed).toBe(3);
+    ][];
+    // First call: resource 100, 10 events
+    expect(calls[0]![1].entityType).toBe("pull_request");
+    expect(calls[0]![1].status).toBe("completed");
+    expect(calls[0]![1].eventsProduced).toBe(10);
+    expect(calls[0]![1].pagesProcessed).toBe(1);
+    // Second call: resource 200, 20 events
+    expect(calls[1]![1].entityType).toBe("pull_request");
+    expect(calls[1]![1].status).toBe("completed");
+    expect(calls[1]![1].eventsProduced).toBe(20);
+    expect(calls[1]![1].pagesProcessed).toBe(2);
   });
 
-  it("partial failure writes status: failed with error", async () => {
-    // 2 resources for pull_request: 1 succeeds, 1 fails
+  it("partial failure writes status: failed with error for failed worker", async () => {
+    // 2 resources for pull_request: resource 100 succeeds, resource 200 fails
     const step = makeStep({
       invoke: vi
         .fn()
@@ -497,13 +502,16 @@ describe("persist-run-records", () => {
 
     await capturedHandler({ event, step });
 
-    expect(mockGatewayClient.upsertBackfillRun).toHaveBeenCalledOnce();
-    const [_, record] = mockGatewayClient.upsertBackfillRun.mock.calls[0] as [
+    expect(mockGatewayClient.upsertBackfillRun).toHaveBeenCalledTimes(2);
+    const calls = mockGatewayClient.upsertBackfillRun.mock.calls as [
       string,
       Record<string, unknown>,
-    ];
-    expect(record.status).toBe("failed");
-    expect(record.error).toBe("rate limited");
+    ][];
+    // First call: resource 100 succeeded
+    expect(calls[0]![1].status).toBe("completed");
+    // Second call: resource 200 failed
+    expect(calls[1]![1].status).toBe("failed");
+    expect(calls[1]![1].error).toBe("rate limited");
   });
 
   it("all-success writes status: completed", async () => {
@@ -533,27 +541,31 @@ describe("persist-run-records", () => {
   });
 
   it("persist is skipped when all work units are gap-filtered", async () => {
-    // All entity types covered by prior runs
-    const history = [
+    // All (resource, entityType) pairs covered by prior runs
+    // Default connection has 2 resources: "100" and "200"
+    const history = ["100", "200"].flatMap((providerResourceId) => [
       {
         entityType: "pull_request",
+        providerResourceId,
         since: "2020-01-01T00:00:00Z",
         depth: 30,
         status: "completed",
       },
       {
         entityType: "issue",
+        providerResourceId,
         since: "2020-01-01T00:00:00Z",
         depth: 30,
         status: "completed",
       },
       {
         entityType: "release",
+        providerResourceId,
         since: "2020-01-01T00:00:00Z",
         depth: 30,
         status: "completed",
       },
-    ];
+    ]);
     mockGatewayClient.getBackfillRuns.mockResolvedValue(history);
     const step = makeStep();
 
@@ -566,9 +578,19 @@ describe("persist-run-records", () => {
 
 describe("gap-aware filtering", () => {
   it("skips entity types fully covered by prior runs", async () => {
+    // "issue" covered for both resources (100 and 200)
     const history = [
       {
         entityType: "issue",
+        providerResourceId: "100",
+        since: "2020-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+        completedAt: "2026-01-02T00:00:00Z",
+      },
+      {
+        entityType: "issue",
+        providerResourceId: "200",
         since: "2020-01-01T00:00:00Z",
         depth: 30,
         status: "completed",
@@ -627,26 +649,30 @@ describe("gap-aware filtering", () => {
   });
 
   it("returns early when all work units are skipped", async () => {
-    const history = [
+    // All (resource, entityType) pairs covered — default connection has resources "100" and "200"
+    const history = ["100", "200"].flatMap((providerResourceId) => [
       {
         entityType: "pull_request",
+        providerResourceId,
         since: "2020-01-01T00:00:00Z",
         depth: 30,
         status: "completed",
       },
       {
         entityType: "issue",
+        providerResourceId,
         since: "2020-01-01T00:00:00Z",
         depth: 30,
         status: "completed",
       },
       {
         entityType: "release",
+        providerResourceId,
         since: "2020-01-01T00:00:00Z",
         depth: 30,
         status: "completed",
       },
-    ];
+    ]);
     mockGatewayClient.getBackfillRuns.mockResolvedValue(history);
     const step = makeStep();
 

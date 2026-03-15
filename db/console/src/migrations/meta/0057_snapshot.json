@@ -1,6 +1,6 @@
 {
-  "id": "b42efb10-97a9-40f4-b7f8-ca7ba4e7b0d5",
-  "prevId": "5af549b2-5d45-4c21-8a69-c6658a829da8",
+  "id": "9f367ce3-f2fd-4b41-bfe3-e2da89753e5f",
+  "prevId": "62c7a8ce-c0b3-41e4-9d26-0ea5989937c7",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -19,6 +19,13 @@
           "type": "varchar(191)",
           "primaryKey": false,
           "notNull": true
+        },
+        "provider_resource_id": {
+          "name": "provider_resource_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
         },
         "entity_type": {
           "name": "entity_type",
@@ -99,11 +106,17 @@
         }
       },
       "indexes": {
-        "gateway_br_installation_entity_idx": {
-          "name": "gateway_br_installation_entity_idx",
+        "gateway_br_installation_resource_entity_idx": {
+          "name": "gateway_br_installation_resource_entity_idx",
           "columns": [
             {
               "expression": "installation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "provider_resource_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -966,6 +979,18 @@
           "notNull": false,
           "default": 0.8
         },
+        "state": {
+          "name": "state",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url": {
+          "name": "url",
+          "type": "varchar(2048)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "extracted_at": {
           "name": "extracted_at",
           "type": "timestamp with time zone",
@@ -1190,6 +1215,13 @@
           "notNull": true,
           "default": 1
         },
+        "last_seen_at": {
+          "name": "last_seen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
         "metadata": {
           "name": "metadata",
           "type": "jsonb",
@@ -1400,6 +1432,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "category": {
+          "name": "category",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -1597,6 +1635,12 @@
           "notNull": true,
           "default": "'webhook'"
         },
+        "ingest_log_id": {
+          "name": "ingest_log_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
         "significance_score": {
           "name": "significance_score",
           "type": "integer",
@@ -1727,6 +1771,15 @@
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "lightfast_workspace_events_ingest_log_id_lightfast_workspace_ingest_logs_id_fk": {
+          "name": "lightfast_workspace_events_ingest_log_id_lightfast_workspace_ingest_logs_id_fk",
+          "tableFrom": "lightfast_workspace_events",
+          "tableTo": "lightfast_workspace_ingest_logs",
+          "columnsFrom": ["ingest_log_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1765,18 +1818,6 @@
         "delivery_id": {
           "name": "delivery_id",
           "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "source": {
-          "name": "source",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "source_type": {
-          "name": "source_type",
-          "type": "varchar(100)",
           "primaryKey": false,
           "notNull": true
         },
@@ -1844,25 +1885,13 @@
           "method": "btree",
           "with": {}
         },
-        "workspace_event_source_idx": {
-          "name": "workspace_event_source_idx",
+        "workspace_ingest_log_provider_idx": {
+          "name": "workspace_ingest_log_provider_idx",
           "columns": [
             {
-              "expression": "workspace_id",
-              "isExpression": false,
+              "expression": "(\"source_event\"->>'provider')",
               "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "source",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "source_type",
-              "isExpression": false,
-              "asc": true,
+              "isExpression": true,
               "nulls": "last"
             }
           ],

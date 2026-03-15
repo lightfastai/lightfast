@@ -201,6 +201,7 @@ export type ProxyEndpointsResponse = z.infer<
 /** Schema for upserting a backfill run (POST body — client sends this). */
 export const backfillRunRecord = z.object({
   entityType: z.string().min(1),
+  providerResourceId: z.string().default(""),
   since: z.string().min(1),
   depth: backfillDepthSchema,
   status: backfillRunStatusSchema,
