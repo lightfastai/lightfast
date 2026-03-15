@@ -1,14 +1,15 @@
 "use client";
 
-import type { ProviderName } from "@repo/console-providers";
+import type {
+  NormalizedInstallation,
+  NormalizedResource,
+  ProviderSlug,
+} from "@repo/console-providers";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useState } from "react";
-import type { NormalizedInstallation, NormalizedResource } from "./adapters";
 
 export interface ProviderSelectionState {
   installations: NormalizedInstallation[];
-  /** Raw (un-normalized) resources — passed to buildLinkResources for provider-specific fields */
-  rawSelectedResources: unknown[];
   selectedInstallation: NormalizedInstallation | null;
   selectedResources: NormalizedResource[];
 }
@@ -17,29 +18,26 @@ const EMPTY_STATE: ProviderSelectionState = {
   installations: [],
   selectedInstallation: null,
   selectedResources: [],
-  rawSelectedResources: [],
 };
 
 interface SourceSelectionContextValue {
-  getState: (provider: ProviderName) => ProviderSelectionState;
+  getState: (provider: ProviderSlug) => ProviderSelectionState;
   hasAnySelection: () => boolean;
   setInstallations: (
-    provider: ProviderName,
+    provider: ProviderSlug,
     installations: NormalizedInstallation[]
   ) => void;
   setSelectedInstallation: (
-    provider: ProviderName,
+    provider: ProviderSlug,
     installation: NormalizedInstallation | null
   ) => void;
   setSelectedResources: (
-    provider: ProviderName,
-    resources: NormalizedResource[],
-    rawResources: unknown[]
+    provider: ProviderSlug,
+    resources: NormalizedResource[]
   ) => void;
   toggleResource: (
-    provider: ProviderName,
-    resource: NormalizedResource,
-    rawResource: unknown
+    provider: ProviderSlug,
+    resource: NormalizedResource
   ) => void;
 }
 
@@ -48,18 +46,18 @@ const SourceSelectionContext =
 
 export function SourceSelectionProvider({ children }: { children: ReactNode }) {
   const [stateMap, setStateMap] = useState<
-    Map<ProviderName, ProviderSelectionState>
+    Map<ProviderSlug, ProviderSelectionState>
   >(new Map());
 
   const getState = useCallback(
-    (provider: ProviderName): ProviderSelectionState =>
+    (provider: ProviderSlug): ProviderSelectionState =>
       stateMap.get(provider) ?? EMPTY_STATE,
     [stateMap]
   );
 
   const updateProvider = useCallback(
     (
-      provider: ProviderName,
+      provider: ProviderSlug,
       updater: (prev: ProviderSelectionState) => ProviderSelectionState
     ) => {
       setStateMap((prev) => {
@@ -72,51 +70,40 @@ export function SourceSelectionProvider({ children }: { children: ReactNode }) {
   );
 
   const setInstallations = useCallback(
-    (provider: ProviderName, installations: NormalizedInstallation[]) =>
+    (provider: ProviderSlug, installations: NormalizedInstallation[]) =>
       updateProvider(provider, (s) => ({ ...s, installations })),
     [updateProvider]
   );
 
   const setSelectedInstallation = useCallback(
-    (provider: ProviderName, installation: NormalizedInstallation | null) =>
+    (provider: ProviderSlug, installation: NormalizedInstallation | null) =>
       updateProvider(provider, (s) => ({
         ...s,
         selectedInstallation: installation,
         selectedResources: [],
-        rawSelectedResources: [],
       })),
     [updateProvider]
   );
 
   const setSelectedResources = useCallback(
-    (
-      provider: ProviderName,
-      resources: NormalizedResource[],
-      rawResources: unknown[]
-    ) =>
+    (provider: ProviderSlug, resources: NormalizedResource[]) =>
       updateProvider(provider, (s) => ({
         ...s,
         selectedResources: resources,
-        rawSelectedResources: rawResources,
       })),
     [updateProvider]
   );
 
   const toggleResource = useCallback(
-    (
-      provider: ProviderName,
-      resource: NormalizedResource,
-      rawResource: unknown
-    ) =>
+    (provider: ProviderSlug, resource: NormalizedResource) =>
       updateProvider(provider, (s) => {
         const exists = s.selectedResources.some((r) => r.id === resource.id);
         if (exists) {
-          return { ...s, selectedResources: [], rawSelectedResources: [] };
+          return { ...s, selectedResources: [] };
         }
         return {
           ...s,
           selectedResources: [resource],
-          rawSelectedResources: [rawResource],
         };
       }),
     [updateProvider]

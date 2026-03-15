@@ -12,7 +12,6 @@ import {
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ADAPTERS } from "./adapters";
 import { useSourceSelection } from "./source-selection-provider";
 
 interface LinkSourcesButtonProps {
@@ -61,12 +60,14 @@ export function LinkSourcesButton({
       if (!installation) {
         return null;
       }
-      const adapter = ADAPTERS[providerKey];
       return linkMutation.mutateAsync({
         provider: providerKey,
         workspaceId,
         gwInstallationId: installation.id,
-        resources: adapter.buildLinkResources(state.rawSelectedResources),
+        resources: state.selectedResources.map((r) => ({
+          resourceId: r.id,
+          resourceName: r.linkName ?? r.name,
+        })),
       });
     }).filter(Boolean);
 

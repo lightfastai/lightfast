@@ -1,6 +1,6 @@
+import { PROVIDER_SLUGS } from "@repo/console-providers";
 import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
 import { Suspense } from "react";
-import { ORDERED_ADAPTERS } from "./_components/adapters";
 import { LinkSourcesButton } from "./_components/link-sources-button";
 import { SourceSelectionProvider } from "./_components/source-selection-provider";
 import { SourcesSection } from "./_components/sources-section";
@@ -14,8 +14,10 @@ export default async function AddSourcesPage({
   const { slug, workspaceName } = await params;
 
   // Prefetch connection status for all providers
-  for (const adapter of ORDERED_ADAPTERS) {
-    prefetch(adapter.getConnectionQueryOptions(orgTrpc));
+  for (const provider of PROVIDER_SLUGS) {
+    void prefetch(
+      orgTrpc.connections.generic.listInstallations.queryOptions({ provider })
+    );
   }
 
   // Prefetch workspace sources

@@ -27,7 +27,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Input } from "@repo/ui/components/ui/input";
 import { cn } from "@repo/ui/lib/utils";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
   ChevronDown,
@@ -208,7 +208,24 @@ export function InstalledSources({
 
 function ResourceRow({ integration }: { integration: Source }) {
   const [isOpen, setIsOpen] = useState(false);
+  const trpc = useTRPC();
   const { metadata } = integration;
+
+  const rawResourceId = getResourceLabel(metadata);
+
+  const { data: resourcesData } = useQuery({
+    ...trpc.connections.generic.listResources.queryOptions({
+      provider: metadata.sourceType,
+      installationId: integration.installationId,
+    }),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  const resourceName =
+    resourcesData?.resources.find((r) => r.id === rawResourceId)?.name ??
+    rawResourceId;
 
   const isAwaitingConfig =
     metadata.sourceType === "github" &&
@@ -218,7 +235,6 @@ function ResourceRow({ integration }: { integration: Source }) {
     subscribedEvents.length === 0
       ? "All events"
       : `${subscribedEvents.length} events`;
-  const resourceName = getResourceLabel(metadata);
 
   return (
     <Collapsible onOpenChange={setIsOpen} open={isOpen}>

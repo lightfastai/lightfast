@@ -1,6 +1,7 @@
 "use client";
 
-import { PROVIDER_DISPLAY } from "@repo/console-providers";
+import type { NormalizedResource } from "@repo/console-providers";
+import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/console-providers";
 import { useTRPC } from "@repo/console-trpc/react";
 import {
   AccordionContent,
@@ -23,15 +24,13 @@ import { Loader2, Search } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useOAuthPopup } from "~/hooks/use-oauth-popup";
-import type { NormalizedResource, ProviderConnectAdapter } from "./adapters";
 import { useSourceSelection } from "./source-selection-provider";
 
 interface Props {
-  adapter: ProviderConnectAdapter;
+  provider: ProviderSlug;
 }
 
-export function ProviderSourceItem({ adapter }: Props) {
-  const { provider, installationMode, resourceLabel } = adapter;
+export function ProviderSourceItem({ provider }: Props) {
   const display = PROVIDER_DISPLAY[provider];
   const Icon = IntegrationLogoIcons[provider];
   const trpc = useTRPC();
@@ -50,12 +49,13 @@ export function ProviderSourceItem({ adapter }: Props) {
   const installationIdsBeforeRef = useRef<Set<string>>(new Set());
 
   // ── OAuth ────────────────────────────────────────────────────────────────
-  const connectionQueryOpts = adapter.getConnectionQueryOptions(trpc);
+  const listInstallationsOpts =
+    trpc.connections.generic.listInstallations.queryOptions({ provider });
   const { handleConnect: connectOAuth, openCustomUrl } = useOAuthPopup({
     provider,
     queryKeysToInvalidate: [
-      connectionQueryOpts.queryKey,
-      ...adapter.resourceQueryKeys,
+      listInstallationsOpts.queryKey,
+      ["connections", "generic", "listResources"],
     ],
     onSuccess: () => {
       preferNewestRef.current = true;
@@ -69,24 +69,30 @@ export function ProviderSourceItem({ adapter }: Props) {
     void connectOAuth();
   };
 
+  const customConnectUrl =
+    provider === "github"
+      ? (data: { url: string; state: string }) =>
+          `https://github.com/apps/${process.env.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target?state=${data.state}`
+      : undefined;
+
   const handleAdjustPermissions =
-    adapter.customConnectUrl && openCustomUrl
+    customConnectUrl && openCustomUrl
       ? () => {
           installationIdsBeforeRef.current = new Set(
             state.installations.map((i) => i.id)
           );
-          void openCustomUrl(adapter.customConnectUrl!);
+          void openCustomUrl(customConnectUrl);
         }
       : null;
 
   // ── Connection query ─────────────────────────────────────────────────────
   const { data: connectionData } = useSuspenseQuery({
-    ...connectionQueryOpts,
+    ...trpc.connections.generic.listInstallations.queryOptions({ provider }),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
-  const installations = adapter.extractInstallations(connectionData);
+  const { installationMode, resourceLabel, installations } = connectionData;
   const hasConnection = installations.length > 0;
 
   // ── Sync installations to context ────────────────────────────────────────
@@ -136,11 +142,10 @@ export function ProviderSourceItem({ adapter }: Props) {
   const selectedInstallation = state.selectedInstallation;
 
   const singleResourceQuery = useQuery({
-    ...adapter.getResourceQueryOptions(
-      trpc,
-      selectedInstallation?.id ?? "",
-      selectedInstallation?.externalId ?? ""
-    ),
+    ...trpc.connections.generic.listResources.queryOptions({
+      provider,
+      installationId: selectedInstallation?.id ?? "",
+    }),
     enabled: installationMode !== "merged" && Boolean(selectedInstallation),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -151,7 +156,10 @@ export function ProviderSourceItem({ adapter }: Props) {
     queries:
       installationMode === "merged"
         ? installations.map((inst) => ({
-            ...adapter.getResourceQueryOptions(trpc, inst.id, inst.externalId),
+            ...trpc.connections.generic.listResources.queryOptions({
+              provider,
+              installationId: inst.id,
+            }),
             refetchOnMount: false,
             refetchOnWindowFocus: false,
             retry: false,
@@ -161,7 +169,6 @@ export function ProviderSourceItem({ adapter }: Props) {
 
   // ── Normalize resources ──────────────────────────────────────────────────
   let allResources: NormalizedResource[] = [];
-  let rawResources: unknown[] = [];
   let isLoadingResources = false;
   let resourcesError: Error | null = null;
 
@@ -170,32 +177,18 @@ export function ProviderSourceItem({ adapter }: Props) {
     resourcesError =
       mergedResourceQueries.every((q) => q.error) &&
       mergedResourceQueries.length > 0
-        ? ((mergedResourceQueries[0]?.error as Error) ?? null)
+        ? ((mergedResourceQueries[0]?.error as unknown as Error) ?? null)
         : null;
-    for (let i = 0; i < installations.length; i++) {
-      const query = mergedResourceQueries[i];
+    for (const query of mergedResourceQueries) {
       if (query?.data) {
-        const normalized = adapter.extractResources(query.data);
-        const raw =
-          (query.data as any)?.teams ?? (query.data as any)?.projects ?? [];
-        for (let j = 0; j < normalized.length; j++) {
-          allResources.push(normalized[j]!);
-          rawResources.push({
-            ...(raw[j] as object),
-            _installationId: installations[i]!.id,
-          });
-        }
+        allResources = allResources.concat(query.data.resources);
       }
     }
   } else {
     isLoadingResources = singleResourceQuery.isLoading;
-    resourcesError = singleResourceQuery.error as Error | null;
+    resourcesError = singleResourceQuery.error as unknown as Error | null;
     if (singleResourceQuery.data) {
-      allResources = adapter.extractResources(singleResourceQuery.data);
-      const data = singleResourceQuery.data as any;
-      rawResources = Array.isArray(data)
-        ? data
-        : (data?.projects ?? data?.teams ?? []);
+      allResources = singleResourceQuery.data.resources;
     }
   }
 
@@ -289,7 +282,7 @@ export function ProviderSourceItem({ adapter }: Props) {
                     </Button>
                     <Button
                       onClick={() => {
-                        setSelectedResources(provider, [], []);
+                        setSelectedResources(provider, []);
                         setShowPicker(true);
                       }}
                       size="sm"
@@ -385,7 +378,7 @@ export function ProviderSourceItem({ adapter }: Props) {
                     </div>
                   ) : (
                     <div className="divide-y">
-                      {filteredResources.map((resource, idx) => (
+                      {filteredResources.map((resource) => (
                         <button
                           className={`flex w-full cursor-pointer items-center gap-3 p-4 text-left transition-colors hover:bg-accent ${
                             selectedResource?.id === resource.id
@@ -394,11 +387,7 @@ export function ProviderSourceItem({ adapter }: Props) {
                           }`}
                           key={resource.id}
                           onClick={() => {
-                            toggleResource(
-                              provider,
-                              resource,
-                              rawResources[idx]!
-                            );
+                            toggleResource(provider, resource);
                             if (selectedResource?.id !== resource.id) {
                               setShowPicker(false);
                             }

@@ -1,3 +1,4 @@
+import { PROVIDER_SLUGS } from "@repo/console-providers";
 import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
@@ -15,6 +16,13 @@ export default async function SourcesPage({
 }) {
   const { slug, workspaceName } = await params;
   const { search = "", status = "all" } = await searchParams;
+
+  // Prefetch connection status for all providers (for resource name lookups)
+  for (const provider of PROVIDER_SLUGS) {
+    void prefetch(
+      orgTrpc.connections.generic.listInstallations.queryOptions({ provider })
+    );
+  }
 
   // Prefetch workspace sources - tRPC procedure will verify org access
   // No blocking access check here - let query handle verification
