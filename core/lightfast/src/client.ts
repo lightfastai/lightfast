@@ -10,16 +10,15 @@ import {
 } from "./errors";
 import type {
   ContentsInput,
+  ContentsResponse,
   FindSimilarInput,
+  FindSimilarResponse,
   GraphInput,
-  GraphResponse,
   LightfastConfig,
   RelatedInput,
   RelatedResponse,
   SearchInput,
-  V1ContentsResponse,
-  V1FindSimilarResponse,
-  V1SearchResponse,
+  SearchResponse,
 } from "./types";
 
 const DEFAULT_BASE_URL = "https://lightfast.ai";
@@ -82,17 +81,13 @@ export class Lightfast {
    * });
    * ```
    */
-  async search(request: SearchInput): Promise<V1SearchResponse> {
-    // Apply defaults for optional fields (see types.ts for SDK input type pattern)
-    // These must match the .default() values in @repo/console-types/src/api/v1/search.ts
-    return this.request<V1SearchResponse>("/v1/search", {
+  async search(request: SearchInput): Promise<SearchResponse> {
+    return this.request<SearchResponse>("/v1/search", {
       query: request.query,
-      limit: request.limit ?? 10, // matches schema .default(10)
-      offset: request.offset ?? 0, // matches schema .default(0)
-      mode: request.mode ?? "balanced", // matches schema .default("balanced")
+      limit: request.limit ?? 10,
+      offset: request.offset ?? 0,
+      mode: request.mode ?? "balanced",
       filters: request.filters,
-      includeContext: request.includeContext ?? true, // matches schema .default(true)
-      includeHighlights: request.includeHighlights ?? true, // matches schema .default(true)
     });
   }
 
@@ -109,8 +104,8 @@ export class Lightfast {
    * });
    * ```
    */
-  async contents(request: ContentsInput): Promise<V1ContentsResponse> {
-    return this.request<V1ContentsResponse>("/v1/contents", {
+  async contents(request: ContentsInput): Promise<ContentsResponse> {
+    return this.request<ContentsResponse>("/v1/contents", {
       ids: request.ids,
     });
   }
@@ -130,12 +125,12 @@ export class Lightfast {
    * });
    * ```
    */
-  async findSimilar(request: FindSimilarInput): Promise<V1FindSimilarResponse> {
+  async findSimilar(request: FindSimilarInput): Promise<FindSimilarResponse> {
     if (!(request.id || request.url)) {
       throw new ValidationError("Either 'id' or 'url' must be provided");
     }
 
-    return this.request<V1FindSimilarResponse>("/v1/findsimilar", {
+    return this.request<FindSimilarResponse>("/v1/findsimilar", {
       id: request.id,
       url: request.url,
       limit: request.limit ?? 10,
@@ -161,8 +156,8 @@ export class Lightfast {
    * });
    * ```
    */
-  async graph(request: GraphInput): Promise<GraphResponse> {
-    return this.request<GraphResponse>("/v1/graph", {
+  async graph(request: GraphInput): Promise<RelatedResponse> {
+    return this.request<RelatedResponse>("/v1/graph", {
       id: request.id,
       depth: request.depth ?? 2,
       types: request.types,

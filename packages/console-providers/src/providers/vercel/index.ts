@@ -170,16 +170,75 @@ export const vercel = defineProvider({
   api: vercelApi,
   backfill: vercelBackfill,
 
-  edgeRules: [
-    // Vercel deployment deploys GitHub commit
-    {
-      refType: "deployment",
-      matchProvider: "github",
-      matchRefType: "commit",
-      relationshipType: "deploys",
-      confidence: 1.0,
+  resourcePicker: {
+    installationMode: "multi",
+    resourceLabel: "projects",
+
+    enrichInstallation: async (executeApi, inst) => {
+      const info = inst.providerAccountInfo as {
+        raw?: { team_id?: string; user_id?: string; configuration_id?: string };
+      } | null;
+      try {
+        if (info?.raw?.team_id) {
+          const res = await executeApi({
+            endpointId: "get-team",
+            pathParams: { team_id: info.raw.team_id },
+          });
+          const data = res.data as { slug?: string };
+          return {
+            id: inst.id,
+            externalId: inst.externalId,
+            label: data.slug ?? info.raw.team_id,
+          };
+        }
+        const res = await executeApi({ endpointId: "get-user" });
+        const data = res.data as { user?: { username?: string } };
+        return {
+          id: inst.id,
+          externalId: inst.externalId,
+          label: data.user?.username ?? inst.externalId,
+        };
+      } catch {
+        const fallbackLabel =
+          info?.raw?.team_id ?? info?.raw?.user_id ?? inst.externalId;
+        return {
+          id: inst.id,
+          externalId: inst.externalId,
+          label: fallbackLabel,
+        };
+      }
     },
-  ],
+
+    listResources: async (executeApi, installation) => {
+      const info = installation.providerAccountInfo as {
+        raw?: { team_id?: string };
+      } | null;
+      const queryParams: Record<string, string> = { limit: "100" };
+      if (info?.raw?.team_id) {
+        queryParams.teamId = info.raw.team_id;
+      }
+
+      const res = await executeApi({
+        endpointId: "list-projects",
+        queryParams,
+      });
+      const data = res.data as {
+        projects: Array<{
+          id: string;
+          name: string;
+          framework?: string | null;
+        }>;
+      };
+      return data.projects.map((p) => ({
+        id: String(p.id),
+        name: p.name,
+        badge: p.framework ?? null,
+        subtitle: null,
+      }));
+    },
+  },
+
+  edgeRules: [],
 
   webhook: {
     headersSchema: z.object({

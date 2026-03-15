@@ -113,6 +113,18 @@ export class CohereEmbedding implements EmbeddingProvider {
         model: this.model,
         inputType: this.inputType,
         embeddingTypes: ["float"],
+        // truncate: "NONE" — surface an error if any text exceeds the model's
+        // 512-token context window instead of silently discarding from the tail.
+        //
+        // The default Cohere behaviour when this field is omitted is "END":
+        // tokens beyond the limit are silently cut from the end of the input,
+        // returning a valid embedding with no error or warning.
+        //
+        // All callers in this codebase apply a NARRATIVE_CHAR_CAP (1,800 chars ≈
+        // 450 tokens) before reaching this point. If "NONE" ever throws, it means
+        // a caller bypassed the cap or Section 1 of the narrative (entity.value)
+        // grew unexpectedly long — both are conditions worth surfacing.
+        truncate: "NONE",
       });
 
       // Extract embeddings from response

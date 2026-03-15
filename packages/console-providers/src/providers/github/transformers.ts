@@ -379,6 +379,17 @@ export function transformGitHubDiscussion(
   return event;
 }
 
+const LINKED_ISSUE_KEYWORD_MAP: Record<string, string> = {
+  fix: "fixes",
+  fixes: "fixes",
+  close: "closes",
+  closed: "closes",
+  closes: "closes",
+  resolve: "resolves",
+  resolved: "resolves",
+  resolves: "resolves",
+};
+
 function extractLinkedIssues(
   body: string,
   repoId: string,
@@ -400,7 +411,7 @@ function extractLinkedIssues(
         entityId: `${repoId}#${issueNumber}`,
         url: `${repoUrl}/issues/${issueNumber}`,
         relationshipType:
-          match[1]?.toLowerCase().replace(/e?s$/, "") ?? "fixes",
+          LINKED_ISSUE_KEYWORD_MAP[match[1]?.toLowerCase() ?? ""] ?? "fixes",
       });
     }
   }

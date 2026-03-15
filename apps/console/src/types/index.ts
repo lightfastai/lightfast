@@ -20,9 +20,6 @@ export type RunningJob = Job & { status: "running" };
 export type CompletedJob = Job & { status: "completed" };
 export type FailedJob = Job & { status: "failed" };
 
-// Recent job type (subset returned by workspace.jobs.recent)
-export type RecentJob = RouterOutputs["workspace"]["jobs"]["recent"][number];
-
 // ============================================================================
 // Workspace
 // ============================================================================
@@ -30,12 +27,6 @@ export type RecentJob = RouterOutputs["workspace"]["jobs"]["recent"][number];
 export type Workspace =
   RouterOutputs["workspace"]["listByClerkOrgSlug"][number];
 export type WorkspaceDetail = RouterOutputs["workspace"]["getByName"];
-
-// Workspace performance metrics
-export type JobPercentiles = RouterOutputs["workspace"]["jobPercentiles"];
-export type PerformanceTimeSeries =
-  RouterOutputs["workspace"]["performanceTimeSeries"];
-export type PerformanceTimeSeriesPoint = PerformanceTimeSeries[number];
 
 // ============================================================================
 // Sources & Store (granular endpoints)
@@ -47,26 +38,6 @@ export type Source = SourcesList["list"][number];
 
 // Store type (1:1 relationship: each workspace has exactly one store)
 export type Store = NonNullable<RouterOutputs["workspace"]["store"]["get"]>;
-
-export type DocumentsStats = RouterOutputs["workspace"]["documents"]["stats"];
-export type JobsStats = RouterOutputs["workspace"]["jobs"]["stats"];
-
-// ============================================================================
-// Workspace Statistics Helpers (for component props)
-// ============================================================================
-
-/**
- * Helper types for extracting specific metrics from granular endpoints
- * Used by presentational components that receive individual stat fields
- */
-export interface WorkspaceMetricsSummary {
-  avgDurationMs: JobsStats["avgDurationMs"];
-  recentJobsCount: JobsStats["total"];
-  sourcesCount: SourcesList["total"];
-  successRate: JobsStats["successRate"];
-  totalChunks: DocumentsStats["chunks"];
-  totalDocuments: DocumentsStats["total"];
-}
 
 // ============================================================================
 // Integration
@@ -81,23 +52,6 @@ export type EnrichedConnection =
 
 export type Organization =
   RouterOutputs["organization"]["listUserOrganizations"][number];
-export type OrganizationDetail = RouterOutputs["organization"]["find"];
-
-// ============================================================================
-// System Health
-// ============================================================================
-
-export type HealthOverview = RouterOutputs["workspace"]["health"]["overview"];
-
-// ============================================================================
-// Activities
-// ============================================================================
-
-export type ActivitiesListResponse = RouterOutputs["activities"]["list"];
-export type WorkspaceActivity = ActivitiesListResponse["activities"][number];
-export type ActivityCategory = WorkspaceActivity["category"];
-
-export type ActivitiesStats = RouterOutputs["activities"]["stats"];
 
 // ============================================================================
 // Re-exports (for advanced usage)

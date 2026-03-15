@@ -1,5 +1,5 @@
 import { db } from "@db/console/client";
-import { orgWorkspaces, workspaceIngestLog } from "@db/console/schema";
+import { orgWorkspaces, workspaceIngestLogs } from "@db/console/schema";
 import type { WebhookEnvelope } from "@repo/console-providers";
 import { sanitizePostTransformEvent } from "@repo/console-providers";
 import { serve } from "@vendor/upstash-workflow/nextjs";
@@ -69,7 +69,7 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
 
     // Store transformed event — returns monotonic cursor for SSE
     const [record] = await db
-      .insert(workspaceIngestLog)
+      .insert(workspaceIngestLogs)
       .values({
         workspaceId: workspace.workspaceId,
         deliveryId: envelope.deliveryId,
@@ -79,7 +79,7 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
         receivedAt: new Date(envelope.receivedAt).toISOString(),
         ingestionSource: "webhook",
       })
-      .returning({ id: workspaceIngestLog.id });
+      .returning({ id: workspaceIngestLogs.id });
 
     if (!record) {
       throw new Error("Failed to insert workspace event record");

@@ -129,7 +129,10 @@ export function transformSentryError(
     eventType: "error.created",
     title: sanitizeTitle(`[Error] ${errorType}: ${errorValue.slice(0, 80)}`),
     body: sanitizeBody(bodyParts.join("\n")),
-    occurredAt: String(errorEvent.timestamp),
+    occurredAt:
+      typeof errorEvent.timestamp === "number"
+        ? new Date(errorEvent.timestamp * 1000).toISOString()
+        : errorEvent.timestamp,
     entity: {
       provider: "sentry",
       entityType: "error",
@@ -185,7 +188,10 @@ export function transformSentryEventAlert(
     eventType: "event-alert.triggered",
     title: sanitizeTitle(`[Alert Triggered] ${triggered_rule}: ${errorType}`),
     body: sanitizeBody(bodyParts.join("\n")),
-    occurredAt: String(event.timestamp),
+    occurredAt:
+      typeof event.timestamp === "number"
+        ? new Date(event.timestamp * 1000).toISOString()
+        : event.timestamp,
     entity: {
       provider: "sentry",
       entityType: "alert",

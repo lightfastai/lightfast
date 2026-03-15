@@ -1,9 +1,9 @@
-import type { GwInstallation, WorkspaceIntegration } from "@db/console/schema";
+import type { GatewayInstallation, WorkspaceIntegration } from "@db/console/schema";
 import type { EventKey } from "@repo/console-providers";
 
 export function buildContext(
   integration: WorkspaceIntegration,
-  installation: GwInstallation,
+  installation: GatewayInstallation,
   eventKey: EventKey,
   context?: string
 ): string {

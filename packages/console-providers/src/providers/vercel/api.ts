@@ -26,6 +26,24 @@ export const vercelDeploymentsResponseSchema = z.object({
   }),
 });
 
+export const vercelProjectsListSchema = z.object({
+  projects: z.array(
+    z
+      .object({
+        id: z.string(),
+        name: z.string(),
+        framework: z.string().nullable().optional(),
+        updatedAt: z.number().optional(),
+      })
+      .passthrough()
+  ),
+  pagination: z.object({
+    count: z.number(),
+    next: z.number().nullable(),
+    prev: z.number().nullable(),
+  }),
+});
+
 // ── Rate Limit Parser ───────────────────────────────────────────────────────────
 
 export function parseVercelRateLimit(headers: Headers): RateLimit | null {
@@ -50,6 +68,24 @@ export const vercelApi: ProviderApi = {
   baseUrl: "https://api.vercel.com",
   parseRateLimit: parseVercelRateLimit,
   endpoints: {
+    "get-team": {
+      method: "GET",
+      path: "/v2/teams/{team_id}",
+      description: "Get Vercel team details by team ID",
+      responseSchema: z.record(z.string(), z.unknown()),
+    },
+    "get-user": {
+      method: "GET",
+      path: "/v2/user",
+      description: "Get the authenticated Vercel user",
+      responseSchema: z.object({ user: z.record(z.string(), z.unknown()).optional() }).passthrough(),
+    },
+    "list-projects": {
+      method: "GET",
+      path: "/v9/projects",
+      description: "List Vercel projects for a team or personal account",
+      responseSchema: vercelProjectsListSchema,
+    },
     "list-deployments": {
       method: "GET",
       path: "/v6/deployments",

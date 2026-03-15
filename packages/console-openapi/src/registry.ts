@@ -1,14 +1,12 @@
 import {
-  GraphResponseSchema,
+  ContentsRequestSchema,
+  ContentsResponseSchema,
+  FindSimilarRequestSchema,
+  FindSimilarResponseSchema,
+  RelatedRequestSchema,
   RelatedResponseSchema,
-  V1ContentsRequestSchema,
-  V1ContentsResponseSchema,
-  V1FindSimilarRequestSchema,
-  V1FindSimilarResponseSchema,
-  V1GraphRequestSchema,
-  V1RelatedRequestSchema,
-  V1SearchRequestSchema,
-  V1SearchResponseSchema,
+  SearchRequestSchema,
+  SearchResponseSchema,
 } from "@repo/console-validation/api";
 import { createDocument } from "zod-openapi";
 
@@ -54,15 +52,13 @@ export function generateOpenAPIDocument() {
         },
       },
       schemas: {
-        V1SearchRequest: V1SearchRequestSchema,
-        V1SearchResponse: V1SearchResponseSchema,
-        V1ContentsRequest: V1ContentsRequestSchema,
-        V1ContentsResponse: V1ContentsResponseSchema,
-        V1FindSimilarRequest: V1FindSimilarRequestSchema,
-        V1FindSimilarResponse: V1FindSimilarResponseSchema,
-        V1GraphRequest: V1GraphRequestSchema,
-        GraphResponse: GraphResponseSchema,
-        V1RelatedRequest: V1RelatedRequestSchema,
+        SearchRequest: SearchRequestSchema,
+        SearchResponse: SearchResponseSchema,
+        ContentsRequest: ContentsRequestSchema,
+        ContentsResponse: ContentsResponseSchema,
+        FindSimilarRequest: FindSimilarRequestSchema,
+        FindSimilarResponse: FindSimilarResponseSchema,
+        RelatedRequest: RelatedRequestSchema,
         RelatedResponse: RelatedResponseSchema,
       },
     },
@@ -78,7 +74,7 @@ export function generateOpenAPIDocument() {
           requestBody: {
             content: {
               "application/json": {
-                schema: V1SearchRequestSchema,
+                schema: SearchRequestSchema,
               },
             },
           },
@@ -87,7 +83,7 @@ export function generateOpenAPIDocument() {
               description: "Search results",
               content: {
                 "application/json": {
-                  schema: V1SearchResponseSchema,
+                  schema: SearchResponseSchema,
                 },
               },
             },
@@ -108,7 +104,7 @@ export function generateOpenAPIDocument() {
           requestBody: {
             content: {
               "application/json": {
-                schema: V1ContentsRequestSchema,
+                schema: ContentsRequestSchema,
               },
             },
           },
@@ -117,7 +113,7 @@ export function generateOpenAPIDocument() {
               description: "Content items",
               content: {
                 "application/json": {
-                  schema: V1ContentsResponseSchema,
+                  schema: ContentsResponseSchema,
                 },
               },
             },
@@ -138,7 +134,7 @@ export function generateOpenAPIDocument() {
           requestBody: {
             content: {
               "application/json": {
-                schema: V1FindSimilarRequestSchema,
+                schema: FindSimilarRequestSchema,
               },
             },
           },
@@ -147,37 +143,7 @@ export function generateOpenAPIDocument() {
               description: "Similar content items",
               content: {
                 "application/json": {
-                  schema: V1FindSimilarResponseSchema,
-                },
-              },
-            },
-            "400": { description: "Invalid request parameters" },
-            "401": { description: "Invalid or missing API key" },
-            "500": { description: "Internal server error" },
-          },
-        },
-      },
-      "/v1/graph": {
-        post: {
-          tags: ["Graph"],
-          operationId: "graph",
-          summary: "Relationship Graph",
-          description:
-            "Traverse the relationship graph starting from a specific observation. Returns connected nodes and edges with relationship metadata.",
-          security: [{ apiKey: [] }],
-          requestBody: {
-            content: {
-              "application/json": {
-                schema: V1GraphRequestSchema,
-              },
-            },
-          },
-          responses: {
-            "200": {
-              description: "Graph traversal results",
-              content: {
-                "application/json": {
-                  schema: GraphResponseSchema,
+                  schema: FindSimilarResponseSchema,
                 },
               },
             },
@@ -198,7 +164,7 @@ export function generateOpenAPIDocument() {
           requestBody: {
             content: {
               "application/json": {
-                schema: V1RelatedRequestSchema,
+                schema: RelatedRequestSchema,
               },
             },
           },

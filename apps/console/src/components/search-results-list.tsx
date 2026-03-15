@@ -1,6 +1,6 @@
 "use client";
 
-import type { V1SearchResponse } from "@repo/console-validation";
+import type { SearchResponse } from "@repo/console-validation";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { FileText } from "lucide-react";
 import { SearchResultCard } from "./search-result-card";
@@ -9,7 +9,7 @@ interface SearchResultsListProps {
   expandedId: string;
   offset: number;
   onExpandedIdChange: (id: string) => void;
-  searchResults: V1SearchResponse;
+  searchResults: SearchResponse;
   storeId: string;
 }
 
@@ -27,9 +27,9 @@ export function SearchResultsList({
         <p className="text-muted-foreground text-sm">
           {searchResults.data.length} results
           <span className="ml-1">
-            ({searchResults.latency.total}ms total,{" "}
-            {searchResults.latency.retrieval}ms retrieval
-            {searchResults.latency.rerank
+            ({searchResults.latency?.total ?? 0}ms total,{" "}
+            {searchResults.latency?.retrieval ?? 0}ms retrieval
+            {searchResults.latency?.rerank != null
               ? `, ${searchResults.latency.rerank}ms ${searchResults.meta.mode}`
               : ""}
             )

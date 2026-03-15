@@ -1,5 +1,5 @@
 import { db } from "@db/console/client";
-import { orgWorkspaces, workspaceIngestLog } from "@db/console/schema";
+import { orgWorkspaces, workspaceIngestLogs } from "@db/console/schema";
 import type { EventNotification } from "@repo/console-upstash-realtime";
 import { realtime } from "@repo/console-upstash-realtime";
 import { and, eq, gt } from "drizzle-orm";
@@ -92,18 +92,18 @@ export async function GET(request: NextRequest): Promise<Response> {
           if (!Number.isNaN(lastId)) {
             const missed = await db
               .select({
-                id: workspaceIngestLog.id,
-                workspaceId: workspaceIngestLog.workspaceId,
-                sourceEvent: workspaceIngestLog.sourceEvent,
+                id: workspaceIngestLogs.id,
+                workspaceId: workspaceIngestLogs.workspaceId,
+                sourceEvent: workspaceIngestLogs.sourceEvent,
               })
-              .from(workspaceIngestLog)
+              .from(workspaceIngestLogs)
               .where(
                 and(
-                  eq(workspaceIngestLog.workspaceId, row.id),
-                  gt(workspaceIngestLog.id, lastId)
+                  eq(workspaceIngestLogs.workspaceId, row.id),
+                  gt(workspaceIngestLogs.id, lastId)
                 )
               )
-              .orderBy(workspaceIngestLog.id)
+              .orderBy(workspaceIngestLogs.id)
               .limit(1000);
 
             for (const missed_row of missed) {

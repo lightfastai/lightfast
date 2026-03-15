@@ -290,6 +290,61 @@ export const linear = defineProvider({
   api: linearApi,
   backfill: linearBackfill,
 
+  resourcePicker: {
+    installationMode: "merged",
+    resourceLabel: "teams",
+
+    enrichInstallation: async (executeApi, inst) => {
+      try {
+        const res = await executeApi({
+          endpointId: "graphql",
+          body: { query: "{ viewer { organization { name urlKey } } }" },
+        });
+        const data = res.data as {
+          data?: { viewer?: { organization?: { name?: string } } };
+        };
+        return {
+          id: inst.id,
+          externalId: inst.externalId,
+          label: data.data?.viewer?.organization?.name ?? inst.id,
+        };
+      } catch {
+        return { id: inst.id, externalId: inst.externalId, label: inst.id };
+      }
+    },
+
+    listResources: async (executeApi) => {
+      const res = await executeApi({
+        endpointId: "graphql",
+        body: {
+          query: "{ teams { nodes { id name key description color } } }",
+        },
+      });
+      const data = res.data as {
+        data?: {
+          teams?: {
+            nodes?: Array<{
+              id: string;
+              name: string;
+              key: string;
+              description?: string | null;
+              color?: string | null;
+            }>;
+          };
+        };
+      };
+      const teams = data.data?.teams?.nodes ?? [];
+      return teams.map((t) => ({
+        id: t.id,
+        name: t.name,
+        subtitle: t.description ?? null,
+        badge: t.key,
+        iconColor: t.color ?? null,
+        iconLabel: t.key.substring(0, 2),
+      }));
+    },
+  },
+
   edgeRules: [
     // Linear issue references another issue
     {

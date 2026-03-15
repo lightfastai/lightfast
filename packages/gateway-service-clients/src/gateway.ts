@@ -110,6 +110,10 @@ export function createGatewayClient(config: ServiceClientConfig) {
         }
       );
       if (!response.ok) {
+        const errBody = await response.text().catch(() => "");
+        console.error(
+          `[executeApi] ${response.status} for ${installationId}: ${errBody}`
+        );
         throw new HttpError(
           `Gateway executeApi failed: ${response.status} for ${installationId}`,
           response.status

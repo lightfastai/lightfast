@@ -10,10 +10,15 @@ export type {
   CategoryDef,
   EventDefinition,
   IconDef,
+  InstallationMode,
+  NormalizedInstallation,
+  NormalizedResource,
   OAuthDef,
   ProviderApi,
   ProviderDefinition,
   RateLimit,
+  ResourcePickerDef,
+  ResourcePickerExecuteApiFn,
   RuntimeConfig,
   SimpleEventDef,
   WebhookDef,
@@ -32,7 +37,6 @@ export {
   typedEntityHandler,
 } from "./define";
 export type {
-  ClassificationInput,
   EntityRef,
   EntityRelation,
   PostTransformEvent,

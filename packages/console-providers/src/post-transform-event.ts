@@ -45,13 +45,3 @@ export const postTransformEventSchema = z.object({
 export type EntityRef = z.infer<typeof entityRefSchema>;
 export type EntityRelation = z.infer<typeof entityRelationSchema>;
 export type PostTransformEvent = z.infer<typeof postTransformEventSchema>;
-
-/**
- * Narrow input type for classification functions.
- * These functions only need provider, eventType, title, body — not the full event.
- * Eliminates the `as unknown as PostTransformEvent` double cast in event-interpret.ts.
- */
-export type ClassificationInput = Pick<
-  PostTransformEvent,
-  "provider" | "eventType" | "title" | "body"
->;

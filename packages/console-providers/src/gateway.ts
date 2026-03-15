@@ -104,7 +104,7 @@ export const backfillDepthSchema = z.union([
   z.literal(90),
 ]);
 
-// ── Installation-level Backfill Config (gwInstallations.backfillConfig) ──
+// ── Installation-level Backfill Config (gatewayInstallations.backfillConfig) ──
 
 export const gwInstallationBackfillConfigSchema = z.object({
   depth: backfillDepthSchema,

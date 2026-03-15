@@ -190,6 +190,44 @@ export const sentry = defineProvider({
   api: sentryApi,
   backfill: sentryBackfill,
 
+  resourcePicker: {
+    installationMode: "single",
+    resourceLabel: "projects",
+
+    enrichInstallation: async (executeApi, inst) => {
+      try {
+        const res = await executeApi({ endpointId: "list-organizations" });
+        const orgs = res.data as Array<{ name?: string; slug?: string }>;
+        const org = orgs[0];
+        return {
+          id: inst.id,
+          externalId: inst.externalId,
+          label: org?.name ?? "Sentry",
+        };
+      } catch {
+        return { id: inst.id, externalId: inst.externalId, label: "Sentry" };
+      }
+    },
+
+    listResources: async (executeApi) => {
+      const res = await executeApi({ endpointId: "list-projects" });
+      const projects = res.data as Array<{
+        id: string;
+        name: string;
+        slug: string;
+        platform?: string | null;
+        organization?: { slug?: string };
+      }>;
+      return projects.map((p) => ({
+        id: p.id,
+        name: p.name,
+        subtitle: p.slug,
+        badge: p.platform ?? null,
+        linkName: `${p.organization?.slug ?? ""}/${p.slug}`,
+      }));
+    },
+  },
+
   edgeRules: [],
 
   webhook: {

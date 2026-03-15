@@ -1,6 +1,6 @@
 "use client";
 
-import type { V1SearchResponse } from "@repo/console-validation";
+import type { SearchResponse } from "@repo/console-validation";
 import {
   CodeBlock,
   CodeBlockContent,
@@ -21,7 +21,7 @@ interface SearchResultsPanelProps {
   offset: number;
   onActiveTabChange: (tab: string) => void;
   onExpandedIdChange: (id: string) => void;
-  searchResults: V1SearchResponse | null;
+  searchResults: SearchResponse | null;
   storeId: string;
 }
 

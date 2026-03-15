@@ -26,6 +26,3 @@ export {
   consolePineconeClient as pineconeClient,
   createConsolePineconeClient,
 } from "./client";
-
-// Export console-specific types
-export type { VectorMetadata } from "./types";

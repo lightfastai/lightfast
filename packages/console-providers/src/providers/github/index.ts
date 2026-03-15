@@ -340,6 +340,58 @@ export const github = defineProvider({
   api: githubApi,
   backfill: githubBackfill,
 
+  resourcePicker: {
+    installationMode: "multi",
+    resourceLabel: "repositories",
+
+    enrichInstallation: async (executeApi, inst) => {
+      try {
+        const res = await executeApi({
+          endpointId: "get-app-installation",
+          pathParams: { installation_id: inst.externalId },
+        });
+        const data = res.data as {
+          account?: { login?: string; type?: string; avatar_url?: string };
+        };
+        return {
+          id: inst.id,
+          externalId: inst.externalId,
+          label: data.account?.login ?? inst.externalId,
+          avatarUrl: data.account?.avatar_url ?? null,
+        };
+      } catch {
+        return {
+          id: inst.id,
+          externalId: inst.externalId,
+          label: inst.externalId,
+          avatarUrl: null,
+        };
+      }
+    },
+
+    listResources: async (executeApi) => {
+      const res = await executeApi({
+        endpointId: "list-installation-repos",
+        queryParams: { per_page: "100" },
+      });
+      const data = res.data as {
+        repositories: Array<{
+          id: number;
+          name: string;
+          full_name: string;
+          description?: string | null;
+          private?: boolean;
+        }>;
+      };
+      return (data.repositories ?? []).map((r) => ({
+        id: String(r.id),
+        name: r.full_name ?? r.name,
+        subtitle: r.description ?? null,
+        badge: r.private ? "Private" : null,
+      }));
+    },
+  },
+
   edgeRules: [
     // GitHub commit deploys to Vercel deployment (entity co-occurrence)
     {

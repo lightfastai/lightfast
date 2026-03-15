@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { ProviderApi, RateLimit } from "../../define";
-import { decodeSentryToken } from "./auth";
 
 // ── Rate Limit Parser ───────────────────────────────────────────────────────────
 
@@ -115,11 +114,41 @@ export type SentryErrorEvent = z.infer<typeof sentryErrorEventSchema>;
 
 // ── API Definition ──────────────────────────────────────────────────────────────
 
+export const sentryProjectSchema = z
+  .object({
+    id: z.string(),
+    slug: z.string(),
+    name: z.string(),
+    platform: z.string().nullable().optional(),
+    status: z.string().optional(),
+    organization: z.object({ slug: z.string() }).passthrough(),
+  })
+  .passthrough();
+
+export const sentryOrganizationSchema = z
+  .object({
+    name: z.string().optional(),
+    slug: z.string().optional(),
+  })
+  .passthrough();
+
 export const sentryApi: ProviderApi = {
   baseUrl: "https://sentry.io",
-  buildAuthHeader: (token) => `Bearer ${decodeSentryToken(token).token}`,
+  buildAuthHeader: (token) => `Bearer ${token}`,
   parseRateLimit: parseSentryRateLimit,
   endpoints: {
+    "list-projects": {
+      method: "GET",
+      path: "/api/0/projects/",
+      description: "List all projects in the Sentry organization",
+      responseSchema: z.array(sentryProjectSchema),
+    },
+    "list-organizations": {
+      method: "GET",
+      path: "/api/0/organizations/",
+      description: "List Sentry organizations for the authenticated user",
+      responseSchema: z.array(sentryOrganizationSchema),
+    },
     "list-org-issues": {
       method: "GET",
       path: "/api/0/organizations/{organization_slug}/issues/",

@@ -67,12 +67,9 @@ const results = await lightfast.search({
   mode: "balanced", // "fast" | "balanced" | "thorough"
   limit: 10,
   offset: 0,
-  includeContext: true,
-  includeHighlights: true,
   filters: {
     sourceTypes: ["github"],
     observationTypes: ["commit", "pull_request"],
-    actorNames: ["@sarah"],
     dateRange: {
       start: "2024-01-01T00:00:00Z",
       end: "2024-12-31T23:59:59Z",
@@ -81,40 +78,26 @@ const results = await lightfast.search({
 });
 
 // Response structure
-interface V1SearchResponse {
+interface SearchResponse {
   data: Array<{
     id: string;
     title: string;
-    url: string;
+    url: string | null;
     snippet: string;
     score: number;
     source: string; // e.g., "github", "linear"
     type: string; // e.g., "commit", "issue"
-    occurredAt?: string;
-    entities?: Array<{
-      key: string;
-      category: string;
-    }>;
-    references?: Array<{
-      type: string;
-      id: string;
-      url?: string;
-      label?: string;
-    }>;
-    highlights?: {
-      title?: string;
-      snippet?: string;
-    };
+    occurredAt: string | null;
+    entities?: Array<{ key: string; category: string }>;
+    references?: Array<{ type: string; id: string; url?: string; label?: string }>;
+    latestAction?: string;
+    totalEvents?: number;
   }>;
   context?: {
     clusters?: Array<{
       topic: string | null;
       summary: string | null;
       keywords: string[];
-    }>;
-    relevantActors?: Array<{
-      displayName: string;
-      expertiseDomains: string[];
     }>;
   };
   meta: {
@@ -123,26 +106,14 @@ interface V1SearchResponse {
     offset: number;
     took: number;
     mode: "fast" | "balanced" | "thorough";
-    paths: {
-      vector: boolean;
-      entity: boolean;
-      cluster: boolean;
-      actor: boolean;
-    };
+    paths: { vector: boolean; entity: boolean; cluster: boolean };
   };
-  latency: {
+  latency?: {
     total: number;
-    auth?: number;
-    parse?: number;
-    search?: number;
-    embedding?: number;
     retrieval: number;
-    entitySearch?: number;
-    clusterSearch?: number;
-    actorSearch?: number;
     rerank: number;
+    embedding?: number;
     enrich?: number;
-    maxParallel?: number;
   };
   requestId: string;
 }
@@ -173,9 +144,6 @@ results.data.forEach((item) => {
   console.log(`${item.title} (score: ${item.score})`);
   console.log(`Source: ${item.source} | Type: ${item.type}`);
   console.log(`Snippet: ${item.snippet}`);
-  if (item.highlights?.snippet) {
-    console.log(`Highlights: ${item.highlights.snippet}`);
-  }
 });
 
 // Check context
@@ -197,19 +165,22 @@ const contents = await lightfast.contents({
 });
 
 // Response structure
-interface V1ContentsResponse {
-  items: Array<{
-    id: string;
-    title: string | null;
-    url: string;
-    snippet: string;
-    content?: string; // Full content for observations
-    source: string;
-    type: string;
-    occurredAt?: string;
-    metadata?: Record<string, unknown>;
-  }>;
-  missing: string[]; // IDs that were not found
+interface ContentsResponse {
+  data: {
+    items: Array<{
+      id: string;
+      title: string;
+      url: string | null;
+      snippet: string;
+      content?: string;
+      source: string;
+      type: string;
+      occurredAt: string | null;
+      metadata?: Record<string, unknown>;
+    }>;
+    missing: string[]; // IDs that were not found
+  };
+  meta: { total: number };
   requestId: string;
 }
 ```
@@ -220,14 +191,14 @@ const contents = await lightfast.contents({
   ids: ["obs_abc123", "obs_def456"],
 });
 
-contents.items.forEach((item) => {
+contents.data.items.forEach((item) => {
   console.log(`${item.title} (${item.type})`);
   console.log(`Content: ${item.content || item.snippet}`);
-  console.log(`URL: ${item.url}`);
+  if (item.url) console.log(`URL: ${item.url}`);
 });
 
-if (contents.missing.length > 0) {
-  console.log("Not found:", contents.missing);
+if (contents.data.missing.length > 0) {
+  console.log("Not found:", contents.data.missing);
 }
 ```
 
@@ -245,37 +216,23 @@ const similar = await lightfast.findSimilar({
 });
 
 // Response structure
-interface V1FindSimilarResponse {
-  source: {
-    id: string;
-    title: string;
-    type: string;
-    cluster?: {
-      topic: string | null;
-      memberCount: number;
-    };
+interface FindSimilarResponse {
+  data: {
+    source: { id: string; title: string; type: string };
+    similar: Array<{
+      id: string;
+      title: string;
+      url: string | null;
+      snippet?: string;
+      score: number;
+      similarity: number;
+      entityOverlap?: number;
+      source: string;
+      type: string;
+      occurredAt: string | null;
+    }>;
   };
-  similar: Array<{
-    id: string;
-    title: string;
-    url: string;
-    snippet?: string;
-    score: number;
-    vectorSimilarity: number;
-    entityOverlap?: number;
-    sameCluster: boolean;
-    source: string;
-    type: string;
-    occurredAt?: string;
-  }>;
-  meta: {
-    total: number;
-    took: number;
-    inputEmbedding: {
-      found: boolean;
-      generated: boolean;
-    };
-  };
+  meta: { total: number; took: number };
   requestId: string;
 }
 ```
@@ -289,13 +246,11 @@ const similar = await lightfast.findSimilar({
   sameSourceOnly: true,
 });
 
-console.log(`Finding similar to: ${similar.source.title}`);
+console.log(`Finding similar to: ${similar.data.source.title}`);
 console.log(`Found ${similar.meta.total} similar items`);
 
-similar.similar.forEach((item) => {
-  console.log(`${item.title} (similarity: ${item.score.toFixed(2)})`);
-  console.log(`Vector: ${item.vectorSimilarity.toFixed(2)}`);
-  console.log(`Same cluster: ${item.sameCluster}`);
+similar.data.similar.forEach((item) => {
+  console.log(`${item.title} (similarity: ${item.similarity.toFixed(2)})`);
 });
 ```
 
@@ -308,30 +263,14 @@ const related = await lightfast.related({
   id: "obs_abc123",
 });
 
-// Response structure
+// Response structure (same shape as graph())
 interface RelatedResponse {
   data: {
-    source: {
-      id: string;
-      title: string;
-      source: string;
-    };
-    related: Array<{
-      id: string;
-      title: string;
-      source: string;
-      type: string;
-      occurredAt: string | null;
-      url: string | null;
-      relationshipType: string;
-      direction: "outgoing" | "incoming";
-    }>;
-    bySource: Record<string, Array<RelatedEvent>>;
+    root: { id: string; title: string; source: string; type: string; url: string | null; occurredAt: string | null };
+    nodes: Array<{ id: string; title: string; source: string; type: string; url: string | null; occurredAt: string | null; isRoot?: boolean }>;
+    edges: Array<{ source: string; target: string; type: string; linkingKey: string | null; confidence: number }>;
   };
-  meta: {
-    total: number;
-    took: number;
-  };
+  meta: { depth: number; nodeCount: number; edgeCount: number; took: number };
   requestId: string;
 }
 ```
@@ -342,19 +281,12 @@ const related = await lightfast.related({
   id: "obs_abc123",
 });
 
-console.log(`Related to: ${related.data.source.title}`);
-console.log(`Found ${related.meta.total} related observations`);
+console.log(`Root: ${related.data.root.title}`);
+console.log(`Nodes: ${related.meta.nodeCount}, Edges: ${related.meta.edgeCount}`);
 
-// Access all related items
-related.data.related.forEach((item) => {
-  console.log(`${item.title} (${item.relationshipType}, ${item.direction})`);
-  console.log(`Source: ${item.source} | Type: ${item.type}`);
-});
-
-// Access by source system
-Object.entries(related.data.bySource).forEach(([source, items]) => {
-  console.log(`\n${source}: ${items.length} items`);
-  items.forEach((item) => console.log(`  - ${item.title}`));
+related.data.nodes.forEach((node) => {
+  console.log(`${node.title} (${node.type})`);
+  console.log(`Source: ${node.source}`);
 });
 ```
 
@@ -369,40 +301,7 @@ const graph = await lightfast.graph({
   types: ["references", "mentioned_in"],
 });
 
-// Response structure
-interface GraphResponse {
-  data: {
-    root: {
-      id: string;
-      title: string;
-      source: string;
-      type: string;
-    };
-    nodes: Array<{
-      id: string;
-      title: string;
-      source: string;
-      type: string;
-      occurredAt: string | null;
-      url: string | null;
-      isRoot?: boolean;
-    }>;
-    edges: Array<{
-      source: string;
-      target: string;
-      type: string;
-      linkingKey: string | null;
-      confidence: number;
-    }>;
-  };
-  meta: {
-    depth: number;
-    nodeCount: number;
-    edgeCount: number;
-    took: number;
-  };
-  requestId: string;
-}
+// Response structure — same RelatedResponse shape as related()
 ```
 
 **Example:**
@@ -498,16 +397,15 @@ The SDK is written in TypeScript and provides full type definitions:
 import type {
   LightfastConfig,
   SearchInput,
-  V1SearchResponse,
+  SearchResponse,
   ContentsInput,
-  V1ContentsResponse,
+  ContentsResponse,
   FindSimilarInput,
-  V1FindSimilarResponse,
+  FindSimilarResponse,
   RelatedInput,
   RelatedResponse,
   GraphInput,
-  GraphResponse,
-} from "lightfast/types";
+} from "lightfast";
 ```
 
 ## Environment Variables
@@ -578,7 +476,7 @@ async function getRelatedCode(filePath: string) {
 
   return {
     file: searchResults.data[0],
-    discussions: related.data.related,
+    relatedNodes: related.data.nodes,
   };
 }
 ```
@@ -596,7 +494,7 @@ async function findSimilarIssues(issueId: string) {
     },
   });
 
-  return similar.similar.filter((item) => item.type === "issue");
+  return similar.data.similar.filter((item) => item.type === "issue");
 }
 ```
 

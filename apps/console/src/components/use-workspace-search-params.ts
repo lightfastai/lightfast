@@ -3,7 +3,6 @@
 import type { RerankMode } from "@repo/console-validation";
 import {
   parseAsArrayOf,
-  parseAsBoolean,
   parseAsInteger,
   parseAsString,
   parseAsStringLiteral,
@@ -34,8 +33,6 @@ export function useWorkspaceSearchParams(initialQuery = "") {
       expanded: parseAsString.withDefault(""),
       limit: parseAsInteger.withDefault(20),
       offset: parseAsInteger.withDefault(0),
-      ctx: parseAsBoolean.withDefault(true),
-      hl: parseAsBoolean.withDefault(true),
       age: parseAsStringLiteral(agePresets).withDefault("none"),
       view: parseAsStringLiteral(viewTabs).withDefault("list"),
     },
@@ -60,10 +57,6 @@ export function useWorkspaceSearchParams(initialQuery = "") {
     setLimit: (v: number) => setParams({ limit: v }),
     offset: params.offset,
     setOffset: (v: number) => setParams({ offset: v }),
-    includeContext: params.ctx,
-    setIncludeContext: (v: boolean) => setParams({ ctx: v }),
-    includeHighlights: params.hl,
-    setIncludeHighlights: (v: boolean) => setParams({ hl: v }),
     agePreset: params.age as (typeof agePresets)[number],
     setAgePreset: (v: (typeof agePresets)[number]) => setParams({ age: v }),
     activeTab: params.view as (typeof viewTabs)[number],

@@ -59,7 +59,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/V1SearchRequest"
+                "$ref": "#/components/schemas/SearchRequest"
               }
             }
           }
@@ -70,7 +70,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/V1SearchResponse"
+                  "$ref": "#/components/schemas/SearchResponse"
                 }
               }
             }
@@ -102,7 +102,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/V1ContentsRequest"
+                "$ref": "#/components/schemas/ContentsRequest"
               }
             }
           }
@@ -113,7 +113,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/V1ContentsResponse"
+                  "$ref": "#/components/schemas/ContentsResponse"
                 }
               }
             }
@@ -145,7 +145,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/V1FindSimilarRequest"
+                "$ref": "#/components/schemas/FindSimilarRequest"
               }
             }
           }
@@ -156,7 +156,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/V1FindSimilarResponse"
+                  "$ref": "#/components/schemas/FindSimilarResponse"
                 }
               }
             }
@@ -188,7 +188,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/V1GraphRequest"
+                "$ref": "#/components/schemas/RelatedRequest"
               }
             }
           }
@@ -199,7 +199,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GraphResponse"
+                  "$ref": "#/components/schemas/RelatedResponse"
                 }
               }
             }
@@ -231,7 +231,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/V1RelatedRequest"
+                "$ref": "#/components/schemas/RelatedRequest"
               }
             }
           }
@@ -262,7 +262,7 @@
   },
   "components": {
     "schemas": {
-      "V1SearchRequest": {
+      "SearchRequest": {
         "type": "object",
         "properties": {
           "query": {
@@ -291,7 +291,7 @@
             "enum": ["fast", "balanced", "thorough"]
           },
           "filters": {
-            "description": "Optional filters to scope results by source type, observation type, actors, or date range",
+            "description": "Optional filters to scope results by source type, observation type, or date range",
             "type": "object",
             "properties": {
               "sourceTypes": {
@@ -301,12 +301,6 @@
                 }
               },
               "observationTypes": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "actorNames": {
                 "type": "array",
                 "items": {
                   "type": "string"
@@ -328,21 +322,11 @@
                 }
               }
             }
-          },
-          "includeContext": {
-            "default": true,
-            "description": "Include contextual information like topic clusters (default: true)",
-            "type": "boolean"
-          },
-          "includeHighlights": {
-            "default": true,
-            "description": "Include highlighted text snippets (default: true)",
-            "type": "boolean"
           }
         },
         "required": ["query"]
       },
-      "V1ContentsRequest": {
+      "ContentsRequest": {
         "type": "object",
         "properties": {
           "ids": {
@@ -357,7 +341,7 @@
         },
         "required": ["ids"]
       },
-      "V1FindSimilarRequest": {
+      "FindSimilarRequest": {
         "type": "object",
         "properties": {
           "id": {
@@ -396,7 +380,7 @@
             }
           },
           "filters": {
-            "description": "Optional filters to scope results by source type, observation type, actors, or date range",
+            "description": "Optional filters to scope results",
             "type": "object",
             "properties": {
               "sourceTypes": {
@@ -406,12 +390,6 @@
                 }
               },
               "observationTypes": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "actorNames": {
                 "type": "array",
                 "items": {
                   "type": "string"
@@ -436,22 +414,19 @@
           }
         }
       },
-      "V1GraphRequest": {
+      "RelatedRequest": {
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": "Observation ID to start graph traversal from"
+            "type": "string"
           },
           "depth": {
-            "default": 2,
-            "description": "Traversal depth (1-3)",
+            "default": 1,
             "type": "integer",
             "minimum": 1,
             "maximum": 3
           },
           "types": {
-            "description": "Filter by relationship types",
             "type": "array",
             "items": {
               "type": "string"
@@ -460,17 +435,7 @@
         },
         "required": ["id"]
       },
-      "V1RelatedRequest": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Observation ID to find related events for"
-          }
-        },
-        "required": ["id"]
-      },
-      "V1SearchResponse": {
+      "SearchResponse": {
         "type": "object",
         "properties": {
           "data": {
@@ -484,8 +449,33 @@
                 "title": {
                   "type": "string"
                 },
-                "url": {
+                "source": {
                   "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "url": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "occurredAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 },
                 "snippet": {
                   "type": "string"
@@ -493,16 +483,11 @@
                 "score": {
                   "type": "number"
                 },
-                "source": {
+                "latestAction": {
                   "type": "string"
                 },
-                "type": {
-                  "type": "string"
-                },
-                "occurredAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "totalEvents": {
+                  "type": "number"
                 },
                 "entities": {
                   "type": "array",
@@ -541,28 +526,17 @@
                     "required": ["type", "id"],
                     "additionalProperties": false
                   }
-                },
-                "highlights": {
-                  "type": "object",
-                  "properties": {
-                    "title": {
-                      "type": "string"
-                    },
-                    "snippet": {
-                      "type": "string"
-                    }
-                  },
-                  "additionalProperties": false
                 }
               },
               "required": [
                 "id",
                 "title",
-                "url",
-                "snippet",
-                "score",
                 "source",
-                "type"
+                "type",
+                "url",
+                "occurredAt",
+                "snippet",
+                "score"
               ],
               "additionalProperties": false
             }
@@ -605,25 +579,6 @@
                   "required": ["topic", "summary", "keywords"],
                   "additionalProperties": false
                 }
-              },
-              "relevantActors": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "displayName": {
-                      "type": "string"
-                    },
-                    "expertiseDomains": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": ["displayName", "expertiseDomains"],
-                  "additionalProperties": false
-                }
               }
             },
             "additionalProperties": false
@@ -660,12 +615,9 @@
                   },
                   "cluster": {
                     "type": "boolean"
-                  },
-                  "actor": {
-                    "type": "boolean"
                   }
                 },
-                "required": ["vector", "entity", "cluster", "actor"],
+                "required": ["vector", "entity", "cluster"],
                 "additionalProperties": false
               }
             },
@@ -707,10 +659,6 @@
                 "type": "number",
                 "minimum": 0
               },
-              "actorSearch": {
-                "type": "number",
-                "minimum": 0
-              },
               "rerank": {
                 "type": "number",
                 "minimum": 0
@@ -731,167 +679,197 @@
             "type": "string"
           }
         },
-        "required": ["data", "meta", "latency", "requestId"],
+        "required": ["data", "meta", "requestId"],
         "additionalProperties": false
       },
-      "V1ContentsResponse": {
+      "ContentsResponse": {
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "title": {
-                  "anyOf": [
-                    {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
                       "type": "string"
                     },
-                    {
-                      "type": "null"
+                    "title": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "occurredAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "snippet": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
                     }
-                  ]
-                },
-                "url": {
-                  "type": "string"
-                },
-                "snippet": {
-                  "type": "string"
-                },
-                "content": {
-                  "type": "string"
-                },
-                "source": {
-                  "type": "string"
-                },
-                "type": {
-                  "type": "string"
-                },
-                "occurredAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                },
-                "metadata": {
-                  "type": "object",
-                  "propertyNames": {
-                    "type": "string"
                   },
-                  "additionalProperties": {}
+                  "required": [
+                    "id",
+                    "title",
+                    "source",
+                    "type",
+                    "url",
+                    "occurredAt",
+                    "snippet"
+                  ],
+                  "additionalProperties": false
                 }
               },
-              "required": ["id", "title", "url", "snippet", "source", "type"],
-              "additionalProperties": false
-            }
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["items", "missing"],
+            "additionalProperties": false
           },
-          "missing": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "number"
+              }
+            },
+            "required": ["total"],
+            "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": ["items", "missing", "requestId"],
+        "required": ["data", "meta", "requestId"],
         "additionalProperties": false
       },
-      "V1FindSimilarResponse": {
+      "FindSimilarResponse": {
         "type": "object",
         "properties": {
-          "source": {
+          "data": {
             "type": "object",
             "properties": {
-              "id": {
-                "type": "string"
-              },
-              "title": {
-                "type": "string"
-              },
-              "type": {
-                "type": "string"
-              },
-              "cluster": {
+              "source": {
                 "type": "object",
                 "properties": {
-                  "topic": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                  "id": {
+                    "type": "string"
                   },
-                  "memberCount": {
-                    "type": "number"
+                  "title": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
                   }
                 },
-                "required": ["topic", "memberCount"],
+                "required": ["id", "title", "type"],
                 "additionalProperties": false
+              },
+              "similar": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "occurredAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "snippet": {
+                      "type": "string"
+                    },
+                    "score": {
+                      "type": "number"
+                    },
+                    "similarity": {
+                      "type": "number"
+                    },
+                    "entityOverlap": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "source",
+                    "type",
+                    "url",
+                    "occurredAt",
+                    "score",
+                    "similarity"
+                  ],
+                  "additionalProperties": false
+                }
               }
             },
-            "required": ["id", "title", "type"],
+            "required": ["source", "similar"],
             "additionalProperties": false
-          },
-          "similar": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "title": {
-                  "type": "string"
-                },
-                "url": {
-                  "type": "string"
-                },
-                "snippet": {
-                  "type": "string"
-                },
-                "score": {
-                  "type": "number"
-                },
-                "vectorSimilarity": {
-                  "type": "number"
-                },
-                "entityOverlap": {
-                  "type": "number"
-                },
-                "sameCluster": {
-                  "type": "boolean"
-                },
-                "source": {
-                  "type": "string"
-                },
-                "type": {
-                  "type": "string"
-                },
-                "occurredAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                }
-              },
-              "required": [
-                "id",
-                "title",
-                "url",
-                "score",
-                "vectorSimilarity",
-                "sameCluster",
-                "source",
-                "type"
-              ],
-              "additionalProperties": false
-            }
           },
           "meta": {
             "type": "object",
@@ -901,32 +879,19 @@
               },
               "took": {
                 "type": "number"
-              },
-              "inputEmbedding": {
-                "type": "object",
-                "properties": {
-                  "found": {
-                    "type": "boolean"
-                  },
-                  "generated": {
-                    "type": "boolean"
-                  }
-                },
-                "required": ["found", "generated"],
-                "additionalProperties": false
               }
             },
-            "required": ["total", "took", "inputEmbedding"],
+            "required": ["total", "took"],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": ["source", "similar", "meta", "requestId"],
+        "required": ["data", "meta", "requestId"],
         "additionalProperties": false
       },
-      "GraphResponse": {
+      "RelatedResponse": {
         "type": "object",
         "properties": {
           "data": {
@@ -946,9 +911,38 @@
                   },
                   "type": {
                     "type": "string"
+                  },
+                  "url": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "occurredAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
-                "required": ["id", "title", "source", "type"],
+                "required": [
+                  "id",
+                  "title",
+                  "source",
+                  "type",
+                  "url",
+                  "occurredAt"
+                ],
                 "additionalProperties": false
               },
               "nodes": {
@@ -968,7 +962,7 @@
                     "type": {
                       "type": "string"
                     },
-                    "occurredAt": {
+                    "url": {
                       "anyOf": [
                         {
                           "type": "string"
@@ -978,10 +972,12 @@
                         }
                       ]
                     },
-                    "url": {
+                    "occurredAt": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                         },
                         {
                           "type": "null"
@@ -997,8 +993,8 @@
                     "title",
                     "source",
                     "type",
-                    "occurredAt",
-                    "url"
+                    "url",
+                    "occurredAt"
                   ],
                   "additionalProperties": false
                 }
@@ -1071,13 +1067,35 @@
         "required": ["data", "meta", "requestId"],
         "additionalProperties": false
       },
-      "RelatedResponse": {
+      "GraphRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "depth": {
+            "default": 1,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["id", "depth"],
+        "additionalProperties": false
+      },
+      "GraphResponse": {
         "type": "object",
         "properties": {
           "data": {
             "type": "object",
             "properties": {
-              "source": {
+              "root": {
                 "type": "object",
                 "properties": {
                   "id": {
@@ -1088,12 +1106,44 @@
                   },
                   "source": {
                     "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "occurredAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
-                "required": ["id", "title", "source"],
+                "required": [
+                  "id",
+                  "title",
+                  "source",
+                  "type",
+                  "url",
+                  "occurredAt"
+                ],
                 "additionalProperties": false
               },
-              "related": {
+              "nodes": {
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -1110,16 +1160,6 @@
                     "type": {
                       "type": "string"
                     },
-                    "occurredAt": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
                     "url": {
                       "anyOf": [
                         {
@@ -1130,12 +1170,20 @@
                         }
                       ]
                     },
-                    "relationshipType": {
-                      "type": "string"
+                    "occurredAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
-                    "direction": {
-                      "type": "string",
-                      "enum": ["outgoing", "incoming"]
+                    "isRoot": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -1143,93 +1191,71 @@
                     "title",
                     "source",
                     "type",
-                    "occurredAt",
                     "url",
-                    "relationshipType",
-                    "direction"
+                    "occurredAt"
                   ],
                   "additionalProperties": false
                 }
               },
-              "bySource": {
-                "type": "object",
-                "propertyNames": {
-                  "type": "string"
-                },
-                "additionalProperties": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "title": {
-                        "type": "string"
-                      },
-                      "source": {
-                        "type": "string"
-                      },
-                      "type": {
-                        "type": "string"
-                      },
-                      "occurredAt": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "url": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      },
-                      "relationshipType": {
-                        "type": "string"
-                      },
-                      "direction": {
-                        "type": "string",
-                        "enum": ["outgoing", "incoming"]
-                      }
+              "edges": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "string"
                     },
-                    "required": [
-                      "id",
-                      "title",
-                      "source",
-                      "type",
-                      "occurredAt",
-                      "url",
-                      "relationshipType",
-                      "direction"
-                    ],
-                    "additionalProperties": false
-                  }
+                    "target": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "linkingKey": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "confidence": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "target",
+                    "type",
+                    "linkingKey",
+                    "confidence"
+                  ],
+                  "additionalProperties": false
                 }
               }
             },
-            "required": ["source", "related", "bySource"],
+            "required": ["root", "nodes", "edges"],
             "additionalProperties": false
           },
           "meta": {
             "type": "object",
             "properties": {
-              "total": {
+              "depth": {
+                "type": "number"
+              },
+              "nodeCount": {
+                "type": "number"
+              },
+              "edgeCount": {
                 "type": "number"
               },
               "took": {
                 "type": "number"
               }
             },
-            "required": ["total", "took"],
+            "required": ["depth", "nodeCount", "edgeCount", "took"],
             "additionalProperties": false
           },
           "requestId": {

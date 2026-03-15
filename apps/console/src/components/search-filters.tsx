@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { Switch } from "@repo/ui/components/ui/switch";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import {
@@ -27,16 +26,11 @@ import {
 
 interface SearchFiltersProps {
   agePreset: string;
-  // Content toggles
-  includeContext: boolean;
-  includeHighlights: boolean;
   // Pagination
   limit: number;
   observationTypes: string[];
   offset: number;
   onAgePresetChange: (preset: string) => void;
-  onIncludeContextChange: (value: boolean) => void;
-  onIncludeHighlightsChange: (value: boolean) => void;
   onLimitChange: (limit: number) => void;
   onObservationTypesChange: (types: string[]) => void;
   onOffsetChange: (offset: number) => void;
@@ -50,10 +44,6 @@ export function SearchFilters({
   onLimitChange,
   offset,
   onOffsetChange,
-  includeContext,
-  onIncludeContextChange,
-  includeHighlights,
-  onIncludeHighlightsChange,
   sourceTypes,
   onSourceTypesChange,
   observationTypes,
@@ -135,40 +125,6 @@ export function SearchFilters({
             type="number"
             value={displayOffset}
           />
-        </div>
-      </div>
-
-      {/* Content Toggles */}
-      <div>
-        <h3 className="mb-6 font-medium text-muted-foreground text-xs">
-          Contents
-        </h3>
-        <div className="grid grid-cols-[1fr_1fr] gap-x-8 gap-y-6">
-          <div>
-            <Label className="font-medium text-sm" htmlFor="include-context">
-              Include Context
-            </Label>
-          </div>
-          <div className="flex justify-end">
-            <Switch
-              checked={includeContext}
-              id="include-context"
-              onCheckedChange={onIncludeContextChange}
-            />
-          </div>
-
-          <div>
-            <Label className="font-medium text-sm" htmlFor="include-highlights">
-              Highlights
-            </Label>
-          </div>
-          <div className="flex justify-end">
-            <Switch
-              checked={includeHighlights}
-              id="include-highlights"
-              onCheckedChange={onIncludeHighlightsChange}
-            />
-          </div>
         </div>
       </div>
 

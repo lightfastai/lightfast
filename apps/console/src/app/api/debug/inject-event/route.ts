@@ -1,7 +1,7 @@
 import { gateway } from "@ai-sdk/gateway";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@db/console/client";
-import { gwInstallations, workspaceIntegrations } from "@db/console/schema";
+import { gatewayInstallations, workspaceIntegrations } from "@db/console/schema";
 import type { EventKey } from "@repo/console-providers";
 import { EVENT_REGISTRY } from "@repo/console-providers";
 import { createRelayClient } from "@repo/gateway-service-clients";
@@ -68,8 +68,8 @@ export async function POST(request: Request) {
   });
 
   // 2. Look up gw installation for orgId
-  const installation = await db.query.gwInstallations.findFirst({
-    where: eq(gwInstallations.id, integration.installationId),
+  const installation = await db.query.gatewayInstallations.findFirst({
+    where: eq(gatewayInstallations.id, integration.installationId),
   });
   if (!installation) {
     console.debug("[inject-event] Installation not found", {

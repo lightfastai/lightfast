@@ -1,5 +1,6 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
+import type { ProxyExecuteResponse } from "./gateway";
 import type { PostTransformEvent } from "./post-transform-event";
 import type {
   BaseProviderAccountInfo,
@@ -176,6 +177,14 @@ export type BackfillContext = z.infer<typeof backfillContextSchema>;
 // ── API Surface interfaces (contain functions — cannot be Zod) ──────────────────
 
 export interface ApiEndpoint {
+  /**
+   * Optional auth override for this endpoint.
+   * When present, the gateway calls this instead of the default oauth.getActiveToken flow.
+   * Receives the provider config (typed as unknown — gateway erases generics).
+   * Use for endpoints that require different credentials than the per-installation token
+   * (e.g. GitHub App JWT for app-level endpoints, basic auth, API key, etc.).
+   */
+  readonly buildAuth?: (config: unknown) => Promise<string>;
   /** Human-readable description */
   readonly description: string;
   /** HTTP method */
@@ -272,6 +281,68 @@ export interface BackfillDef {
   readonly supportedEntityTypes: readonly string[];
 }
 
+// ── Resource Picker Types (server-side normalization for sources/new UI) ─────
+
+/** Callback signature for gateway proxy calls inside resourcePicker functions.
+ *  The generic tRPC procedure binds the installationId and passes this to the provider. */
+export type ResourcePickerExecuteApiFn = (request: {
+  endpointId: string;
+  pathParams?: Record<string, string>;
+  queryParams?: Record<string, string>;
+  body?: unknown;
+}) => Promise<ProxyExecuteResponse>;
+
+export interface NormalizedInstallation {
+  readonly avatarUrl?: string | null;
+  readonly externalId: string;
+  readonly id: string;
+  readonly label: string;
+}
+
+export interface NormalizedResource {
+  readonly badge?: string | null;
+  readonly iconColor?: string | null;
+  readonly iconLabel?: string | null;
+  readonly id: string;
+  /** Resource name used when linking via bulkLinkResources.
+   *  Falls back to `name` when absent. Sentry uses "orgSlug/projectSlug". */
+  readonly linkName?: string;
+  readonly name: string;
+  readonly subtitle?: string | null;
+}
+
+export type InstallationMode = "multi" | "merged" | "single";
+
+export interface ResourcePickerDef {
+  /** Enrich a gateway installation with display data from the provider API.
+   *  Called once per installation. Should handle errors internally and return fallback data. */
+  readonly enrichInstallation: (
+    executeApi: ResourcePickerExecuteApiFn,
+    installation: {
+      id: string;
+      externalId: string;
+      providerAccountInfo: unknown;
+    }
+  ) => Promise<NormalizedInstallation>;
+  /** How installations are displayed: multi=select dropdown, merged=all fetched, single=static label */
+  readonly installationMode: InstallationMode;
+
+  /** List resources for a single installation, returning normalized items.
+   *  Called per installation (merged mode calls this for each).
+   *  Installation context is included so providers can read providerAccountInfo
+   *  (e.g. Vercel needs team_id from providerAccountInfo.raw to scope the API call). */
+  readonly listResources: (
+    executeApi: ResourcePickerExecuteApiFn,
+    installation: {
+      readonly id: string;
+      readonly externalId: string;
+      readonly providerAccountInfo: unknown;
+    }
+  ) => Promise<NormalizedResource[]>;
+  /** Human label for resources, e.g. "repositories", "projects", "teams" */
+  readonly resourceLabel: string;
+}
+
 export interface ProviderDefinition<
   TConfig = unknown,
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
@@ -323,6 +394,8 @@ export interface ProviderDefinition<
   readonly providerConfigSchema: TProviderConfigSchema;
   /** Normalize wire eventType to dispatch category key. Use identity `(et) => et` if 1:1. */
   readonly resolveCategory: (eventType: string) => string;
+  /** UI resource picker configuration for sources/new — installation enrichment + resource listing */
+  readonly resourcePicker: ResourcePickerDef;
   readonly webhook: WebhookDef<TConfig>;
 }
 
