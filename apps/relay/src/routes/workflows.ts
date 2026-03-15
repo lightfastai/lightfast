@@ -17,6 +17,7 @@ import {
   webhookSeenKey,
 } from "../lib/cache.js";
 import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
+import { log } from "../logger.js";
 
 const qstash = getQStashClient();
 
@@ -55,6 +56,12 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       // Workflow ends gracefully — duplicate delivery, no further action.
       return;
     }
+
+    log.info("[webhook-delivery] dedup passed", {
+      provider: data.provider,
+      deliveryId: data.deliveryId,
+      correlationId: data.correlationId,
+    });
 
     // Step 2: Persist — store webhook for long-term replayability
     await context.run("persist-delivery", async () => {
@@ -126,6 +133,16 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
         return { connectionId: row.installationId, orgId: row.orgId };
       }
     );
+
+    if (connectionInfo) {
+      log.info("[webhook-delivery] connection resolved", {
+        provider: data.provider,
+        deliveryId: data.deliveryId,
+        connectionId: connectionInfo.connectionId,
+        orgId: connectionInfo.orgId,
+        correlationId: data.correlationId,
+      });
+    }
 
     // Step 3a: Update persisted record with installationId when connection is found
     if (connectionInfo) {
@@ -202,6 +219,12 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       });
     });
 
+    log.info("[webhook-delivery] published to console ingress", {
+      provider: data.provider,
+      deliveryId: data.deliveryId,
+      correlationId: data.correlationId,
+    });
+
     // Step 4b-ii: Mark webhook as enqueued (QStash accepted, pending Console delivery)
     await context.run("update-status-enqueued", async () => {
       await db
@@ -216,11 +239,10 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     });
   },
   {
-    failureFunction: ({ context, failStatus, failResponse }) => {
-      console.error("[webhook-delivery] workflow failed", {
+    failureFunction: ({ context: _context, failStatus, failResponse }) => {
+      log.error("[webhook-delivery] workflow failed", {
         failStatus,
-        failResponse,
-        context,
+        failResponse: String(failResponse),
       });
       return Promise.resolve();
     },

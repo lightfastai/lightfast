@@ -7,6 +7,7 @@ import { NonRetriableError } from "@vendor/inngest";
 
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
+import { log } from "../logger.js";
 import { backfillEntityWorker } from "./entity-worker.js";
 
 export const backfillOrchestrator = inngest.createFunction(
@@ -43,6 +44,14 @@ export const backfillOrchestrator = inngest.createFunction(
       correlationId,
     } = event.data;
 
+    log.info("[backfill-orchestrator] starting", {
+      installationId,
+      provider,
+      depth,
+      entityTypes,
+      correlationId,
+    });
+
     if (depth <= 0) {
       throw new NonRetriableError(
         `Invalid depth: ${depth} — must be a positive number of days`
@@ -72,6 +81,13 @@ export const backfillOrchestrator = inngest.createFunction(
       return conn;
     });
 
+    log.info("[backfill-orchestrator] connection fetched", {
+      installationId,
+      provider,
+      resourceCount: connection.resources.length,
+      correlationId,
+    });
+
     // ── Step 1b: Fetch backfill history from Gateway ──
     const backfillHistory = await step.run("get-backfill-history", () =>
       gw.getBackfillRuns(installationId, "completed")
@@ -99,13 +115,11 @@ export const backfillOrchestrator = inngest.createFunction(
     const workUnits = connection.resources.flatMap((resource) => {
       const resourceName = resource.resourceName;
       if (!resourceName) {
-        console.warn(
-          "[backfill] skipping resource with null/empty resourceName",
-          {
-            installationId,
-            providerResourceId: resource.providerResourceId,
-          }
-        );
+        log.warn("[backfill] skipping resource with null/empty resourceName", {
+          installationId,
+          providerResourceId: resource.providerResourceId,
+          correlationId,
+        });
         return [];
       }
       return resolvedEntityTypes.map((entityType: string) => ({
@@ -136,6 +150,16 @@ export const backfillOrchestrator = inngest.createFunction(
       return new Date(priorRun.since) > new Date(since);
     });
 
+    log.info("[backfill-orchestrator] work units planned", {
+      installationId,
+      provider,
+      total: workUnits.length,
+      afterFilter: filteredWorkUnits.length,
+      skippedByGapFilter: workUnits.length - filteredWorkUnits.length,
+      since,
+      correlationId,
+    });
+
     if (filteredWorkUnits.length === 0) {
       return {
         success: true,
@@ -148,6 +172,14 @@ export const backfillOrchestrator = inngest.createFunction(
         eventsDispatched: 0,
       };
     }
+
+    log.info("[backfill-orchestrator] dispatching entity workers", {
+      installationId,
+      provider,
+      count: filteredWorkUnits.length,
+      workUnitIds: filteredWorkUnits.map((wu) => wu.workUnitId),
+      correlationId,
+    });
 
     // ── Step 4: Invoke entity workers directly ──
     const completionResults = await Promise.all(
@@ -218,6 +250,11 @@ export const backfillOrchestrator = inngest.createFunction(
     // After all workers complete, drain them through the admin catchup endpoint
     // so Console receives historical events in chronological order as a single batch.
     if (holdForReplay && succeeded.length > 0) {
+      log.info("[backfill-orchestrator] replaying held webhooks", {
+        installationId,
+        succeededWorkers: succeeded.length,
+        correlationId,
+      });
       const relay = createRelayClient({
         apiKey: env.GATEWAY_API_KEY,
         correlationId,
@@ -243,14 +280,31 @@ export const backfillOrchestrator = inngest.createFunction(
         }
 
         if (iterations >= MAX_ITERATIONS && remaining > 0) {
-          console.error("[backfill] replay-held-webhooks hit iteration cap", {
+          log.error("[backfill] replay-held-webhooks hit iteration cap", {
             installationId,
             iterations,
             remaining,
+            correlationId,
           });
         }
       });
     }
+
+    log.info("[backfill-orchestrator] complete", {
+      installationId,
+      provider,
+      completed: succeeded.length,
+      failed: failed.length,
+      eventsProduced: completionResults.reduce(
+        (sum, r) => sum + r.eventsProduced,
+        0
+      ),
+      eventsDispatched: completionResults.reduce(
+        (sum, r) => sum + r.eventsDispatched,
+        0
+      ),
+      correlationId,
+    });
 
     return {
       success: failed.length === 0,

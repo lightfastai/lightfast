@@ -60,7 +60,8 @@ export const entityEmbed = inngest.createFunction(
   },
   { event: "apps-console/entity.graphed" },
   async ({ event, step }) => {
-    const { workspaceId, entityExternalId, provider } = event.data;
+    const { workspaceId, entityExternalId, provider, correlationId } =
+      event.data;
 
     // Step 1: Fetch all narrative inputs in a single step.
     // Throws NonRetriableError for missing rows so Inngest does not retry infinitely.
@@ -257,6 +258,7 @@ export const entityEmbed = inngest.createFunction(
         totalEvents: entity.occurrenceCount,
         edgeCount: edges.length,
         narrativeHash: hash,
+        correlationId,
       });
     });
 

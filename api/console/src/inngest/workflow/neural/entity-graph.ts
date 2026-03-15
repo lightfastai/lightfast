@@ -9,6 +9,7 @@
  * and should not be blocked by classification latency.
  */
 
+import { log } from "@vendor/observability/log";
 import { inngest } from "../../client/client";
 import { resolveEdges } from "./edge-resolver";
 
@@ -22,11 +23,26 @@ export const entityGraph = inngest.createFunction(
   },
   { event: "apps-console/entity.upserted" },
   async ({ event, step }) => {
-    const { workspaceId, internalEventId, provider, entityRefs } = event.data;
+    const {
+      workspaceId,
+      internalEventId,
+      provider,
+      entityRefs,
+      correlationId,
+    } = event.data;
 
     const edgeCount = await step.run("resolve-edges", () =>
       resolveEdges(workspaceId, internalEventId, provider, entityRefs)
     );
+
+    log.info("[entity-graph] edges resolved", {
+      workspaceId,
+      internalEventId,
+      provider,
+      entityExternalId: event.data.entityExternalId,
+      edgeCount,
+      correlationId,
+    });
 
     await step.sendEvent("emit-entity-graphed", {
       name: "apps-console/entity.graphed" as const,
@@ -36,6 +52,7 @@ export const entityGraph = inngest.createFunction(
         entityType: event.data.entityType,
         provider,
         occurredAt: event.data.occurredAt,
+        correlationId,
       },
     });
 

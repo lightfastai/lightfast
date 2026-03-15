@@ -151,6 +151,7 @@ export const eventStore = inngest.createFunction(
       clerkOrgId: eventClerkOrgId,
       sourceEvent,
       ingestLogId,
+      correlationId,
     } = event.data;
 
     // Generate replay-safe values inside steps so they're memoized across retries.
@@ -173,6 +174,8 @@ export const eventStore = inngest.createFunction(
       provider: sourceEvent.provider,
       eventType: sourceEvent.eventType,
       sourceId: sourceEvent.sourceId,
+      ingestLogId,
+      correlationId,
     });
 
     // Step 0: Create job record for tracking
@@ -414,6 +417,8 @@ export const eventStore = inngest.createFunction(
         observationId: obs.id,
         externalId: obs.externalId,
         observationType,
+        ingestLogId,
+        correlationId,
       });
 
       return obs;
@@ -501,6 +506,8 @@ export const eventStore = inngest.createFunction(
         log.info("Entities and junctions stored", {
           observationId: observation.id,
           entitiesStored: junctionRows.length,
+          ingestLogId,
+          correlationId,
         });
 
         return { count: junctionRows.length, primaryEntityExternalId };
@@ -533,6 +540,7 @@ export const eventStore = inngest.createFunction(
           internalEventId: observation.id,
           entityRefs,
           occurredAt: sourceEvent.occurredAt,
+          correlationId,
         },
       });
     }

@@ -31,7 +31,9 @@ import {
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
+import { log } from "@vendor/observability/log";
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { z } from "zod";
 import { env } from "../../env";
 import { recordActivity } from "../../lib/activity";
@@ -559,9 +561,13 @@ export const workspaceRouter = {
                 resourceName: input.projectName,
               })
               .catch((err: unknown) =>
-                console.error(
+                log.error(
                   "[linkVercelProject] gateway registerResource failed",
-                  { installationId, projectId, err }
+                  {
+                    installationId,
+                    projectId,
+                    err,
+                  }
                 )
               );
             void notifyBackfill({
@@ -582,14 +588,9 @@ export const workspaceRouter = {
             workspaceId,
             installationId,
             provider: "vercel",
-            connectedBy: ctx.auth.userId,
             providerConfig: {
-              version: 1 as const,
-              sourceType: "vercel" as const,
+              provider: "vercel" as const,
               type: "project" as const,
-              projectId,
-              teamId: providerAccountInfo.raw.team_id ?? undefined,
-              configurationId: providerAccountInfo.raw.installation_id,
               sync: {
                 events: [...getDefaultSyncEvents("vercel")],
                 autoSync: true,
@@ -614,10 +615,11 @@ export const workspaceRouter = {
             resourceName: input.projectName,
           })
           .catch((err: unknown) =>
-            console.error(
-              "[linkVercelProject] gateway registerResource failed",
-              { installationId, projectId, err }
-            )
+            log.error("[linkVercelProject] gateway registerResource failed", {
+              installationId,
+              projectId,
+              err,
+            })
           );
         void notifyBackfill({
           installationId,
@@ -736,6 +738,13 @@ export const workspaceRouter = {
       .mutation(async ({ ctx, input }) => {
         const { provider, workspaceId, gwInstallationId, resources } = input;
 
+        log.info("[bulkLinkResources] starting", {
+          provider,
+          workspaceId,
+          gwInstallationId,
+          resourceCount: resources.length,
+        });
+
         // 1. Verify workspace access
         const workspace = await ctx.db.query.orgWorkspaces.findFirst({
           where: and(
@@ -804,6 +813,14 @@ export const workspaceRouter = {
           }
         }
 
+        log.info("[bulkLinkResources] resources categorized", {
+          provider,
+          gwInstallationId,
+          toCreate: toCreate.length,
+          toReactivate: toReactivate.length,
+          alreadyActive: alreadyActive.length,
+        });
+
         const now = new Date().toISOString();
         const typedProvider = provider as ProviderName;
         const defaultSyncEvents = getDefaultSyncEvents(typedProvider);
@@ -830,7 +847,7 @@ export const workspaceRouter = {
                   resourceName: r.resourceName,
                 })
                 .catch((err: unknown) =>
-                  console.error(
+                  log.error(
                     "[bulkLinkResources] gateway registerResource failed (reactivate)",
                     {
                       installationId: gwInstallationId,
@@ -843,10 +860,12 @@ export const workspaceRouter = {
           );
 
           // Trigger backfill for reactivated sources (best-effort)
+          const correlationId = nanoid();
           void notifyBackfill({
             installationId: gwInstallationId,
             provider,
             orgId: ctx.auth.orgId,
+            correlationId,
           });
         }
 
@@ -856,13 +875,8 @@ export const workspaceRouter = {
             workspaceId,
             installationId: gwInstallationId,
             provider,
-            connectedBy: ctx.auth.userId,
             providerResourceId: resource.resourceId,
             providerConfig: PROVIDERS[typedProvider].buildProviderConfig({
-              resourceId: resource.resourceId,
-              resourceName: resource.resourceName,
-              installationExternalId: gwInstallation.externalId,
-              providerAccountInfo: gwInstallation.providerAccountInfo,
               defaultSyncEvents,
             }),
             isActive: true,
@@ -883,7 +897,7 @@ export const workspaceRouter = {
                   resourceName: resource.resourceName,
                 })
                 .catch((err: unknown) =>
-                  console.error(
+                  log.error(
                     "[bulkLinkResources] gateway registerResource failed (create)",
                     {
                       installationId: gwInstallationId,
@@ -896,12 +910,22 @@ export const workspaceRouter = {
           );
 
           // Trigger backfill (best-effort)
+          const correlationId = nanoid();
           void notifyBackfill({
             installationId: gwInstallationId,
             provider,
             orgId: ctx.auth.orgId,
+            correlationId,
           });
         }
+
+        log.info("[bulkLinkResources] complete", {
+          provider,
+          gwInstallationId,
+          created: toCreate.length,
+          reactivated: toReactivate.length,
+          skipped: alreadyActive.length,
+        });
 
         return {
           created: toCreate.length,
@@ -1010,12 +1034,13 @@ export async function notifyBackfill(params: {
   let resolvedDepth = params.depth;
   let resolvedEntityTypes = params.entityTypes;
 
-  console.log("[notifyBackfill] starting", {
+  log.info("[notifyBackfill] starting", {
     installationId: params.installationId,
     provider: params.provider,
     orgId: params.orgId,
     depthOverride: params.depth,
     entityTypesOverride: params.entityTypes,
+    correlationId: params.correlationId,
   });
 
   // Load stored defaults when caller omits depth or entityTypes
@@ -1028,24 +1053,27 @@ export async function notifyBackfill(params: {
       if (installation?.backfillConfig) {
         resolvedDepth ??= installation.backfillConfig.depth;
         resolvedEntityTypes ??= installation.backfillConfig.entityTypes;
-        console.log("[notifyBackfill] loaded config from DB", {
+        log.info("[notifyBackfill] loaded config from DB", {
           installationId: params.installationId,
           depth: resolvedDepth,
           entityTypes: resolvedEntityTypes,
+          correlationId: params.correlationId,
         });
       } else {
-        console.log(
+        log.info(
           "[notifyBackfill] no backfillConfig in DB, using hardcoded fallback",
           {
             installationId: params.installationId,
             fallbackDepth: resolvedDepth ?? 1,
+            correlationId: params.correlationId,
           }
         );
       }
     } catch (err) {
-      console.error("[console] Failed to load backfill config defaults", {
+      log.error("[console] Failed to load backfill config defaults", {
         installationId: params.installationId,
         err,
+        correlationId: params.correlationId,
       });
     }
   }
@@ -1059,20 +1087,25 @@ export async function notifyBackfill(params: {
     holdForReplay: params.holdForReplay,
   };
 
-  console.log("[notifyBackfill] triggering backfill", payload);
+  log.info("[notifyBackfill] triggering backfill", {
+    ...payload,
+    correlationId: params.correlationId,
+  });
 
   try {
     const client = createBackfillClient({ apiKey: env.GATEWAY_API_KEY });
     await client.trigger(payload);
-    console.log("[notifyBackfill] backfill triggered successfully", {
+    log.info("[notifyBackfill] backfill triggered successfully", {
       installationId: params.installationId,
       provider: params.provider,
+      correlationId: params.correlationId,
     });
   } catch (err) {
-    console.error("[console] Failed to trigger backfill", {
+    log.error("[console] Failed to trigger backfill", {
       installationId: params.installationId,
       provider: params.provider,
       err,
+      correlationId: params.correlationId,
     });
   }
 }

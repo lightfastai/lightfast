@@ -11,6 +11,7 @@ import { workflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
 import { webhookSeenKey } from "../lib/cache.js";
 import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
+import { log } from "../logger.js";
 import type { WebhookVariables } from "../middleware/webhook.js";
 import {
   payloadParseAndExtract,
@@ -76,6 +77,13 @@ webhooks.post(
         return c.json({ status: "duplicate", deliveryId });
       }
 
+      log.info("[webhooks] new delivery, dedup passed", {
+        provider: providerName,
+        deliveryId,
+        eventType,
+        correlationId: c.get("correlationId"),
+      });
+
       // Persist for long-term replayability
       await db
         .insert(gatewayWebhookDeliveries)
@@ -116,6 +124,12 @@ webhooks.post(
         retries: 5,
       });
 
+      log.info("[webhooks] published to console ingress", {
+        provider: providerName,
+        deliveryId,
+        correlationId,
+      });
+
       // Update persisted status — best-effort after QStash accepted
       try {
         await db
@@ -128,14 +142,11 @@ webhooks.post(
             )
           );
       } catch (err) {
-        console.error(
-          "[webhooks] failed to update delivery status after enqueue",
-          {
-            provider: providerName,
-            deliveryId,
-            error: err,
-          }
-        );
+        log.error("[webhooks] failed to update delivery status after enqueue", {
+          provider: providerName,
+          deliveryId,
+          error: err,
+        });
       }
 
       return c.json({ status: "accepted", deliveryId });
@@ -159,6 +170,13 @@ webhooks.post(
       url: `${relayBaseUrl}/workflows/webhook-delivery`,
       body: JSON.stringify(workflowPayload),
       headers: { "Content-Type": "application/json" },
+    });
+
+    log.info("[webhooks] workflow triggered", {
+      provider: providerName,
+      deliveryId,
+      eventType,
+      correlationId: c.get("correlationId"),
     });
 
     return c.json({ status: "accepted", deliveryId }, 200);

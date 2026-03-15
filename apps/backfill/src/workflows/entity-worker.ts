@@ -9,6 +9,7 @@ import { NonRetriableError } from "@vendor/inngest";
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
 import { GITHUB_RATE_LIMIT_BUDGET, MAX_PAGES } from "../lib/constants.js";
+import { log } from "../logger.js";
 
 export const backfillEntityWorker = inngest.createFunction(
   {
@@ -49,6 +50,15 @@ export const backfillEntityWorker = inngest.createFunction(
       holdForReplay,
       correlationId,
     } = event.data;
+
+    log.info("[entity-worker] starting", {
+      installationId,
+      provider,
+      entityType,
+      resource: resource.providerResourceId,
+      since,
+      correlationId,
+    });
 
     const gw = createGatewayClient({
       apiKey: env.GATEWAY_API_KEY,
@@ -134,6 +144,18 @@ export const backfillEntityWorker = inngest.createFunction(
         }
       );
 
+      log.info("[entity-worker] page fetched", {
+        installationId,
+        entityType,
+        resource: resource.providerResourceId,
+        page: pageNum,
+        events: fetchResult.events.length,
+        ...(fetchResult.rateLimit && {
+          rateLimitRemaining: fetchResult.rateLimit.remaining,
+        }),
+        correlationId,
+      });
+
       eventsProduced += fetchResult.events.length;
 
       // Dispatch each event to Relay service
@@ -168,6 +190,15 @@ export const backfillEntityWorker = inngest.createFunction(
           return count;
         }
       );
+      log.info("[entity-worker] page dispatched", {
+        installationId,
+        entityType,
+        resource: resource.providerResourceId,
+        page: pageNum,
+        dispatched,
+        correlationId,
+      });
+
       eventsDispatched += dispatched;
 
       // Rate limit sleep if near threshold (dynamic, based on response headers)
@@ -176,6 +207,14 @@ export const backfillEntityWorker = inngest.createFunction(
         if (remaining < limit * 0.1) {
           const sleepMs = Math.max(0, new Date(resetAt).getTime() - Date.now());
           if (sleepMs > 0) {
+            log.info("[entity-worker] rate limit sleep", {
+              installationId,
+              entityType,
+              resource: resource.providerResourceId,
+              sleepMs,
+              resetAt,
+              correlationId,
+            });
             await step.sleep(
               `rate-limit-${entityType}-p${pageNum}`,
               `${Math.ceil(sleepMs / 1000)}s`
@@ -188,15 +227,28 @@ export const backfillEntityWorker = inngest.createFunction(
         break;
       }
       if (pageNum >= MAX_PAGES) {
-        console.warn(
-          `[backfill] entity-worker hit MAX_PAGES cap (${MAX_PAGES})`,
-          { installationId, entityType, resource: resource.providerResourceId }
-        );
+        log.warn(`[backfill] entity-worker hit MAX_PAGES cap (${MAX_PAGES})`, {
+          installationId,
+          entityType,
+          resource: resource.providerResourceId,
+          correlationId,
+        });
         break;
       }
       cursor = fetchResult.nextCursor;
       pageNum++;
     }
+
+    log.info("[entity-worker] complete", {
+      installationId,
+      provider,
+      entityType,
+      resource: resource.providerResourceId,
+      eventsProduced,
+      eventsDispatched,
+      pagesProcessed: pageNum,
+      correlationId,
+    });
 
     return {
       entityType,

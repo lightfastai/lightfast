@@ -64,6 +64,8 @@ const eventsMap = {
     ingestionSource: ingestionSourceSchema.optional(),
     /** FK back to workspaceIngestLogs.id — null for backfill and test-data paths */
     ingestLogId: z.number().optional(),
+    /** Correlation ID from the upstream delivery — for log tracing */
+    correlationId: z.string().optional(),
   }),
 
   /**
@@ -105,6 +107,7 @@ const eventsMap = {
       })
     ),
     occurredAt: z.string(),
+    correlationId: z.string().optional(),
   }),
 
   /**
@@ -118,6 +121,7 @@ const eventsMap = {
     entityType: z.string(),
     provider: z.string(),
     occurredAt: z.string(),
+    correlationId: z.string().optional(),
   }),
 };
 

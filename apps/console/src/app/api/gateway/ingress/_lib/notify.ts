@@ -15,7 +15,8 @@ export interface ResolvedWorkspace {
 export async function publishInngestNotification(
   sourceEvent: PostTransformEvent,
   workspace: ResolvedWorkspace,
-  ingestLogId: number
+  ingestLogId: number,
+  correlationId?: string
 ): Promise<void> {
   await inngest.send({
     name: "apps-console/event.capture",
@@ -25,6 +26,7 @@ export async function publishInngestNotification(
       sourceEvent,
       ingestionSource: "webhook",
       ingestLogId,
+      correlationId,
     },
   });
 }

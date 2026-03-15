@@ -2,6 +2,7 @@ import { db } from "@db/console/client";
 import { orgWorkspaces, workspaceIngestLogs } from "@db/console/schema";
 import type { WebhookEnvelope } from "@repo/console-providers";
 import { sanitizePostTransformEvent } from "@repo/console-providers";
+import { log } from "@vendor/observability/log";
 import { serve } from "@vendor/upstash-workflow/nextjs";
 import { eq } from "drizzle-orm";
 import {
@@ -48,21 +49,41 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
 
   // Unknown org — graceful skip (org may have been deleted or not yet synced)
   if (!workspace) {
-    console.warn(
-      `[ingress] Unknown orgId: ${envelope.orgId}, deliveryId: ${envelope.deliveryId}`
-    );
+    log.warn("[ingress] Unknown orgId", {
+      orgId: envelope.orgId,
+      deliveryId: envelope.deliveryId,
+      correlationId: envelope.correlationId,
+    });
     return;
   }
+
+  log.info("[ingress] workspace resolved", {
+    workspaceId: workspace.workspaceId,
+    workspaceName: workspace.workspaceName,
+    provider: envelope.provider,
+    deliveryId: envelope.deliveryId,
+    correlationId: envelope.correlationId,
+  });
 
   // Step 2: Transform, store, and fan out to all consumers
   await context.run("transform-store-and-fan-out", async () => {
     const rawEvent = transformEnvelope(envelope);
     if (!rawEvent) {
-      console.log(
-        `[ingress] No transformer for ${envelope.provider}:${envelope.eventType}, skipping`
-      );
+      log.info("[ingress] No transformer, skipping", {
+        provider: envelope.provider,
+        eventType: envelope.eventType,
+        deliveryId: envelope.deliveryId,
+        correlationId: envelope.correlationId,
+      });
       return;
     }
+
+    log.info("[ingress] event transformed", {
+      provider: envelope.provider,
+      eventType: envelope.eventType,
+      deliveryId: envelope.deliveryId,
+      correlationId: envelope.correlationId,
+    });
 
     // Strip any invalid URL fields (e.g. from AI-generated test payloads)
     const sourceEvent = sanitizePostTransformEvent(rawEvent);
@@ -83,9 +104,21 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
       throw new Error("Failed to insert workspace event record");
     }
 
+    log.info("[ingress] event stored", {
+      ingestLogId: record.id,
+      workspaceId: workspace.workspaceId,
+      deliveryId: envelope.deliveryId,
+      correlationId: envelope.correlationId,
+    });
+
     // Fan out to consumers in parallel
     await Promise.all([
-      publishInngestNotification(sourceEvent, workspace, record.id),
+      publishInngestNotification(
+        sourceEvent,
+        workspace,
+        record.id,
+        envelope.correlationId
+      ),
       publishEventNotification({
         orgId: envelope.orgId,
         workspaceId: workspace.workspaceId,
@@ -93,5 +126,11 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
         sourceEvent,
       }),
     ]);
+
+    log.info("[ingress] fan-out complete", {
+      ingestLogId: record.id,
+      workspaceId: workspace.workspaceId,
+      correlationId: envelope.correlationId,
+    });
   });
 });
