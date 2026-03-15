@@ -1,5 +1,5 @@
 import { db } from "@db/console/client";
-import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import { gatewayInstallations, gatewayResources, gatewayTokens } from "@db/console/schema";
 import type { RuntimeConfig, SourceType } from "@repo/console-providers";
 import { getProvider } from "@repo/console-providers";
 import { backfillUrl } from "@repo/gateway-service-clients";
@@ -71,8 +71,8 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
 
       const tokenRows = await db
         .select()
-        .from(gwTokens)
-        .where(eq(gwTokens.installationId, installationId))
+        .from(gatewayTokens)
+        .where(eq(gatewayTokens.installationId, installationId))
         .limit(1);
 
       const tokenRow = tokenRows[0];
@@ -94,12 +94,12 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
     // Step 3: Clean up Redis cache for linked resources
     await context.run("cleanup-cache", async () => {
       const linkedResources = await db
-        .select({ providerResourceId: gwResources.providerResourceId })
-        .from(gwResources)
+        .select({ providerResourceId: gatewayResources.providerResourceId })
+        .from(gatewayResources)
         .where(
           and(
-            eq(gwResources.installationId, installationId),
-            eq(gwResources.status, "active")
+            eq(gatewayResources.installationId, installationId),
+            eq(gatewayResources.status, "active")
           )
         );
 
@@ -116,13 +116,13 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       // Batch: atomic soft-delete (neon-http doesn't support transactions)
       await db.batch([
         db
-          .update(gwInstallations)
+          .update(gatewayInstallations)
           .set({ status: "revoked", updatedAt: new Date().toISOString() })
-          .where(eq(gwInstallations.id, installationId)),
+          .where(eq(gatewayInstallations.id, installationId)),
         db
-          .update(gwResources)
+          .update(gatewayResources)
           .set({ status: "removed", updatedAt: new Date().toISOString() })
-          .where(eq(gwResources.installationId, installationId)),
+          .where(eq(gatewayResources.installationId, installationId)),
       ] as const);
     });
   },

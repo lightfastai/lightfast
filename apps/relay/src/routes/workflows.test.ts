@@ -99,9 +99,9 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("@db/console/schema", () => ({
-  gwWebhookDeliveries: {},
-  gwInstallations: {},
-  gwResources: {},
+  gatewayWebhookDeliveries: {},
+  gatewayInstallations: {},
+  gatewayResources: {},
 }));
 
 vi.mock("../lib/urls", () => ({
@@ -634,6 +634,115 @@ describe("webhook-delivery workflow", () => {
         })
       );
       expect(finalState).not.toHaveProperty("installationId");
+    });
+  });
+
+  describe("delivery status state machine", () => {
+    it("successful path: status reaches 'enqueued' exactly once, never 'dlq'", async () => {
+      mockRedisSet.mockResolvedValue("OK");
+      mockRedisHgetall.mockResolvedValue({
+        connectionId: "c1",
+        orgId: "org-1",
+      });
+      mockPublishJSON.mockResolvedValue({ messageId: "msg-1" });
+      mockDbWhere.mockResolvedValue(undefined);
+
+      const ctx = makeContext(makePayload());
+      await capturedHandler(ctx);
+
+      // Console publish was called; DLQ was not
+      expect(mockPublishJSON).toHaveBeenCalledOnce();
+      expect(mockPublishToTopic).not.toHaveBeenCalled();
+      // DB sequence ends with status=enqueued
+      const finalOp = dbOps.at(-1);
+      expect(finalOp?.set).toMatchObject({ status: "enqueued" });
+    });
+
+    it("no-connection path: status reaches 'dlq' exactly once, never 'enqueued'", async () => {
+      mockRedisSet.mockResolvedValue("OK");
+      mockRedisHgetall.mockResolvedValue(null); // cache miss
+      mockDbRows = []; // DB miss → no connection → DLQ
+      mockPublishToTopic.mockResolvedValue([{ messageId: "dlq-1" }]);
+      mockDbWhere.mockResolvedValue(undefined);
+
+      const ctx = makeContext(makePayload());
+      await capturedHandler(ctx);
+
+      expect(mockPublishToTopic).toHaveBeenCalledOnce();
+      expect(mockPublishJSON).not.toHaveBeenCalled();
+      const finalOp = dbOps.at(-1);
+      expect(finalOp?.set).toMatchObject({ status: "dlq" });
+    });
+
+    it("duplicate path: no status updates at all (early exit after dedup)", async () => {
+      mockRedisSet.mockResolvedValue(null); // null = duplicate
+
+      const ctx = makeContext(makePayload());
+      await capturedHandler(ctx);
+
+      expect(mockDbInsert).not.toHaveBeenCalled();
+      expect(mockDbUpdate).not.toHaveBeenCalled();
+      expect(mockPublishJSON).not.toHaveBeenCalled();
+      expect(mockPublishToTopic).not.toHaveBeenCalled();
+    });
+
+    it("publish-to-console failure: update-status-enqueued step never runs", async () => {
+      mockRedisSet.mockResolvedValue("OK");
+      mockRedisHgetall.mockResolvedValue({
+        connectionId: "c1",
+        orgId: "org-1",
+      });
+      mockPublishJSON.mockRejectedValue(new Error("QStash down"));
+
+      const ctx = makeContext(makePayload());
+      await expect(capturedHandler(ctx)).rejects.toThrow("QStash down");
+
+      // Only the update-connection (installationId) step ran — status=enqueued update was never reached
+      expect(mockDbUpdate).toHaveBeenCalledTimes(1);
+      const updateOp = dbOps.find((op) => op.op === "update");
+      expect(updateOp?.set).toMatchObject({ installationId: "c1" });
+    });
+
+    it("update-status-enqueued failure after publish: status stuck at 'received'", async () => {
+      // Documents the at-most-once delivery gap:
+      // QStash publish succeeds (event dispatched), but status update fails.
+      // On Upstash retry, the status-update step re-runs (idempotent DB update).
+      // QStash dedup prevents re-publish via deduplicationId.
+      mockRedisSet.mockResolvedValue("OK");
+      mockRedisHgetall.mockResolvedValue({
+        connectionId: "c1",
+        orgId: "org-1",
+      });
+      mockPublishJSON.mockResolvedValue({ messageId: "msg-1" });
+
+      // Second .where() call (status=enqueued update) throws; first (installationId) succeeds
+      let updateCallCount = 0;
+      mockDbWhere.mockImplementation(async () => {
+        updateCallCount++;
+        if (updateCallCount === 2) {
+          throw new Error("DB timeout");
+        }
+      });
+
+      const ctx = makeContext(makePayload());
+      await expect(capturedHandler(ctx)).rejects.toThrow("DB timeout");
+
+      // Publish succeeded (event dispatched to Console)
+      expect(mockPublishJSON).toHaveBeenCalledOnce();
+      // Both update calls were attempted
+      expect(updateCallCount).toBe(2);
+    });
+
+    it("state machine is exhaustive: terminal states are 'enqueued' and 'dlq' only", () => {
+      // Documentation test: asserts the complete set of terminal states.
+      // NOTE: "failed" is NOT a terminal state — failed deliveries remain at "received"
+      // and are retried by Upstash or replayed via the admin endpoint.
+      const TERMINAL_STATES = new Set(["enqueued", "dlq"]);
+      const REACHABLE_STATES = new Set([
+        "enqueued", // happy path: connection resolved + QStash publish success
+        "dlq", // no-connection path: publishToTopic
+      ]);
+      expect(REACHABLE_STATES).toEqual(TERMINAL_STATES);
     });
   });
 

@@ -301,6 +301,222 @@ describe("rate limit injection", () => {
   });
 });
 
+describe("rate-limit boundary conditions", () => {
+  it("resetAt in the past → sleepMs = 0 → no sleep, pagination continues", async () => {
+    // resetAt already passed — clock is ahead of reset time
+    const pastResetAt = new Date(Date.now() - 5000); // 5 seconds ago
+    mockParseRateLimit.mockReturnValueOnce({
+      remaining: 0,
+      limit: 5000,
+      resetAt: pastResetAt,
+    });
+    const step = makeStep();
+
+    await capturedHandler({ event: makeEvent(), step });
+
+    // sleepMs = Math.max(0, pastResetAt - now) = 0 → no sleep
+    expect(step.sleep).not.toHaveBeenCalled();
+  });
+
+  it("resetAt is epoch date (far past) → sleepMs = 0 → no sleep, no crash", async () => {
+    // epoch = 1970-01-01, far in the past → sleepMs = Math.max(0, negative) = 0
+    mockParseRateLimit.mockReturnValueOnce({
+      remaining: 0,
+      limit: 5000,
+      resetAt: new Date(0), // epoch — always in the past
+    });
+    const step = makeStep();
+
+    // Should not throw — sleepMs = 0 → if (0 > 0) is false → no sleep
+    await expect(
+      capturedHandler({ event: makeEvent(), step })
+    ).resolves.toBeDefined();
+    expect(step.sleep).not.toHaveBeenCalled();
+  });
+
+  it("remaining === limit * 0.1 → NO sleep (boundary is exclusive)", async () => {
+    // remaining < limit * 0.1 triggers sleep. Exactly AT limit * 0.1 does NOT.
+    const limit = 5000;
+    mockParseRateLimit.mockReturnValueOnce({
+      remaining: limit * 0.1, // exactly 500 — NOT less than 500
+      limit,
+      resetAt: new Date(Date.now() + 60_000),
+    });
+    const step = makeStep();
+
+    await capturedHandler({ event: makeEvent(), step });
+
+    expect(step.sleep).not.toHaveBeenCalled();
+  });
+
+  it("remaining === limit * 0.1 - 1 → sleep IS triggered", async () => {
+    const limit = 5000;
+    mockParseRateLimit.mockReturnValueOnce({
+      remaining: limit * 0.1 - 1, // 499 — less than 500
+      limit,
+      resetAt: new Date(Date.now() + 60_000),
+    });
+    const step = makeStep();
+
+    await capturedHandler({ event: makeEvent(), step });
+
+    expect(step.sleep).toHaveBeenCalledOnce();
+  });
+
+  it("rateLimit = null → sleep never called regardless of page count", async () => {
+    // Provider returns no rate limit headers → parseRateLimit returns null
+    mockParseRateLimit.mockReturnValue(null);
+    mockGatewayClient.executeApi
+      .mockResolvedValueOnce({ status: 200, data: [], headers: {} })
+      .mockResolvedValueOnce({ status: 200, data: [], headers: {} });
+    mockProcessResponse
+      .mockReturnValueOnce({ events: [], nextCursor: { page: 2 }, rawCount: 0 })
+      .mockReturnValueOnce({ events: [], nextCursor: null, rawCount: 0 });
+    const step = makeStep();
+
+    await capturedHandler({ event: makeEvent(), step });
+
+    expect(step.sleep).not.toHaveBeenCalled();
+  });
+
+  it("always-rate-limited provider terminates at MAX_PAGES (500), not infinite loop", async () => {
+    // Provider always returns: remaining = 0, resetAt = past (so sleepMs = 0)
+    // The worker must terminate via the MAX_PAGES cap, not loop forever.
+    let fetchCount = 0;
+    mockGatewayClient.executeApi.mockImplementation(async () => {
+      fetchCount++;
+      return { status: 200, data: [], headers: {} };
+    });
+    mockProcessResponse.mockImplementation(() => ({
+      events: [
+        {
+          deliveryId: `d-${fetchCount}`,
+          eventType: "pull_request",
+          payload: {},
+        },
+      ],
+      nextCursor: { page: fetchCount + 1 },
+      rawCount: 1,
+    }));
+    mockParseRateLimit.mockReturnValue({
+      remaining: 0,
+      limit: 5000,
+      resetAt: new Date(Date.now() - 1000), // always in the past → sleepMs = 0
+    });
+    const step = makeStep();
+
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
+
+    expect(result.pagesProcessed).toBe(500); // capped at MAX_PAGES
+    expect(step.sleep).not.toHaveBeenCalled(); // sleepMs = 0 each time
+  });
+
+  it("sleep duration uses Math.ceil: 1500ms future resetAt rounds up to 2s", async () => {
+    // Freeze Date.now() so sleepMs is exactly predictable
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const resetAt = new Date(Date.now() + 1500); // exactly 1500ms from fake-frozen now
+      mockParseRateLimit.mockReturnValueOnce({
+        remaining: 0,
+        limit: 5000,
+        resetAt,
+      });
+      const step = makeStep();
+
+      await capturedHandler({ event: makeEvent(), step });
+
+      // sleepMs = 1500 → Math.ceil(1500 / 1000) = 2 → "2s"
+      const sleepArg = step.sleep.mock.calls[0]?.[1] as string;
+      expect(sleepArg).toBe("2s");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("cancellation mid-page semantics", () => {
+  it("step.run throwing on page 3 propagates — handler rejects with the error", async () => {
+    // Inngest step semantics: if a step throws, the whole function retries.
+    // Verify the handler propagates the throw correctly.
+    let pageNum = 0;
+    mockGatewayClient.executeApi.mockImplementation(async () => {
+      return { status: 200, data: [], headers: {} };
+    });
+    mockProcessResponse.mockImplementation(() => {
+      pageNum++;
+      if (pageNum === 3) {
+        throw new Error("InngestFunctionCancelled");
+      }
+      return {
+        events: [
+          {
+            deliveryId: `d-${pageNum}`,
+            eventType: "pull_request",
+            payload: {},
+          },
+        ],
+        nextCursor: { page: pageNum + 1 },
+        rawCount: 1,
+      };
+    });
+
+    const step = makeStep();
+
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "InngestFunctionCancelled"
+    );
+  });
+
+  it("dispatch step on page 2 failing — step names track all attempted steps", async () => {
+    // Documents step naming convention and that step names are deterministic.
+    mockGatewayClient.executeApi.mockResolvedValue({
+      status: 200,
+      data: [],
+      headers: {},
+    });
+    mockProcessResponse
+      .mockReturnValueOnce({
+        events: [{ deliveryId: "d1", eventType: "pull_request", payload: {} }],
+        nextCursor: { page: 2 },
+        rawCount: 1,
+      })
+      .mockReturnValueOnce({
+        events: [{ deliveryId: "d2", eventType: "pull_request", payload: {} }],
+        nextCursor: null,
+        rawCount: 1,
+      });
+
+    let dispatchCount = 0;
+    mockRelayClient.dispatchWebhook.mockImplementation(async () => {
+      dispatchCount++;
+      if (dispatchCount === 2) {
+        throw new Error("relay down");
+      }
+    });
+
+    const stepNames: string[] = [];
+    const step = makeStep({
+      run: vi.fn(async (name: string, fn: () => unknown) => {
+        stepNames.push(name);
+        return fn();
+      }) as ReturnType<typeof vi.fn>,
+    });
+
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "relay down"
+    );
+
+    // Both fetch steps and both dispatch steps were attempted
+    expect(stepNames).toContain("fetch-pull_request-p1");
+    expect(stepNames).toContain("fetch-pull_request-p2");
+    expect(stepNames).toContain("dispatch-pull_request-p1");
+    expect(stepNames).toContain("dispatch-pull_request-p2");
+  });
+});
+
 describe("completion", () => {
   it("returns correct stats with eventsProduced and eventsDispatched", async () => {
     mockProcessResponse.mockReturnValueOnce({
@@ -378,6 +594,138 @@ describe("orgId forwarding", () => {
       expect.objectContaining({ orgId: "org-42" }),
       undefined
     );
+  });
+});
+
+describe("pagination — empty pages", () => {
+  it("empty events with nextCursor: null → completes with zero dispatches", async () => {
+    mockGatewayClient.executeApi.mockResolvedValueOnce({
+      status: 200,
+      data: [],
+      headers: {},
+    });
+    mockProcessResponse.mockReturnValueOnce({
+      events: [],
+      nextCursor: null,
+      rawCount: 0,
+    });
+    const step = makeStep();
+
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
+    expect(result.eventsProduced).toBe(0);
+    expect(result.eventsDispatched).toBe(0);
+    expect(result.pagesProcessed).toBe(1);
+    expect(mockRelayClient.dispatchWebhook).not.toHaveBeenCalled();
+  });
+
+  it("empty events with nextCursor set → continues pagination, exits on null", async () => {
+    mockGatewayClient.executeApi
+      .mockResolvedValueOnce({ status: 200, data: [], headers: {} })
+      .mockResolvedValueOnce({ status: 200, data: [], headers: {} });
+    mockProcessResponse
+      .mockReturnValueOnce({
+        events: [],
+        nextCursor: { page: 2 },
+        rawCount: 0,
+      })
+      .mockReturnValueOnce({
+        events: [
+          { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
+        ],
+        nextCursor: null,
+        rawCount: 1,
+      });
+    const step = makeStep();
+
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
+    expect(result.eventsProduced).toBe(1);
+    expect(result.eventsDispatched).toBe(1);
+    expect(result.pagesProcessed).toBe(2);
+  });
+});
+
+describe("dispatch batching", () => {
+  it("12 events are dispatched in 3 batches of 5+5+2", async () => {
+    const events = Array.from({ length: 12 }, (_, i) => ({
+      deliveryId: `d${i + 1}`,
+      eventType: "pull_request",
+      payload: { pr: i + 1 },
+    }));
+    mockProcessResponse.mockReturnValueOnce({
+      events,
+      nextCursor: null,
+      rawCount: 12,
+    });
+    const step = makeStep();
+
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
+    expect(result.eventsProduced).toBe(12);
+    expect(result.eventsDispatched).toBe(12);
+    expect(mockRelayClient.dispatchWebhook).toHaveBeenCalledTimes(12);
+  });
+
+  it("exactly 5 events dispatch in a single batch", async () => {
+    const events = Array.from({ length: 5 }, (_, i) => ({
+      deliveryId: `d${i + 1}`,
+      eventType: "pull_request",
+      payload: { pr: i + 1 },
+    }));
+    mockProcessResponse.mockReturnValueOnce({
+      events,
+      nextCursor: null,
+      rawCount: 5,
+    });
+    const step = makeStep();
+
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
+    expect(result.eventsDispatched).toBe(5);
+    expect(mockRelayClient.dispatchWebhook).toHaveBeenCalledTimes(5);
+  });
+});
+
+describe("pagination safety cap", () => {
+  it("breaks out of loop when MAX_PAGES is reached", async () => {
+    // MAX_PAGES is 500 — simulate a provider that always returns nextCursor.
+    // We'll mock enough pages to verify the cap kicks in.
+    // We use a counter to track how many pages are fetched.
+    let fetchCount = 0;
+    mockGatewayClient.executeApi.mockImplementation(async () => {
+      fetchCount++;
+      return { status: 200, data: [], headers: {} };
+    });
+    mockProcessResponse.mockImplementation(() => ({
+      events: [
+        {
+          deliveryId: `d-${fetchCount}`,
+          eventType: "pull_request",
+          payload: {},
+        },
+      ],
+      nextCursor: { page: fetchCount + 1 }, // always has more
+      rawCount: 1,
+    }));
+    const step = makeStep();
+
+    const result = (await capturedHandler({
+      event: makeEvent(),
+      step,
+    })) as Record<string, unknown>;
+
+    // Should stop at MAX_PAGES (500), not loop forever
+    expect(result.pagesProcessed).toBe(500);
+    expect(fetchCount).toBe(500);
   });
 });
 

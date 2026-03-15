@@ -1,8 +1,8 @@
 import { db } from "@db/console/client";
 import {
-  gwInstallations,
-  gwResources,
-  gwWebhookDeliveries,
+  gatewayInstallations,
+  gatewayResources,
+  gatewayWebhookDeliveries,
 } from "@db/console/schema";
 import type { SourceType } from "@repo/console-providers";
 import { and, eq, gte, lte, notInArray, or, sql } from "@vendor/db";
@@ -68,17 +68,17 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
   for (;;) {
     const batch = await db
       .select({
-        provider: gwInstallations.provider,
-        providerResourceId: gwResources.providerResourceId,
-        installationId: gwResources.installationId,
-        orgId: gwInstallations.orgId,
+        provider: gatewayInstallations.provider,
+        providerResourceId: gatewayResources.providerResourceId,
+        installationId: gatewayResources.installationId,
+        orgId: gatewayInstallations.orgId,
       })
-      .from(gwResources)
+      .from(gatewayResources)
       .innerJoin(
-        gwInstallations,
-        eq(gwResources.installationId, gwInstallations.id)
+        gatewayInstallations,
+        eq(gatewayResources.installationId, gatewayInstallations.id)
       )
-      .where(eq(gwResources.status, "active"))
+      .where(eq(gatewayResources.status, "active"))
       .limit(BATCH_SIZE)
       .offset(offset);
 
@@ -120,11 +120,11 @@ admin.get("/dlq", apiKeyAuth, async (c) => {
 
   const dlqItems = await db
     .select()
-    .from(gwWebhookDeliveries)
-    .where(eq(gwWebhookDeliveries.status, "dlq"))
+    .from(gatewayWebhookDeliveries)
+    .where(eq(gatewayWebhookDeliveries.status, "dlq"))
     .limit(limit)
     .offset(offset)
-    .orderBy(gwWebhookDeliveries.receivedAt);
+    .orderBy(gatewayWebhookDeliveries.receivedAt);
 
   return c.json({ items: dlqItems, limit, offset });
 });
@@ -149,16 +149,16 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
   // Build compound (provider, deliveryId) filter — prevents cross-provider collisions
   const pairConditions = body.deliveryIds.map((item) =>
     and(
-      eq(gwWebhookDeliveries.provider, item.provider),
-      eq(gwWebhookDeliveries.deliveryId, item.deliveryId)
+      eq(gatewayWebhookDeliveries.provider, item.provider),
+      eq(gatewayWebhookDeliveries.deliveryId, item.deliveryId)
     )
   );
 
   // Fetch only DLQ entries with stored payloads
   const deliveries = await db
     .select()
-    .from(gwWebhookDeliveries)
-    .where(and(or(...pairConditions), eq(gwWebhookDeliveries.status, "dlq")));
+    .from(gatewayWebhookDeliveries)
+    .where(and(or(...pairConditions), eq(gatewayWebhookDeliveries.status, "dlq")));
 
   if (deliveries.length === 0) {
     return c.json(
@@ -213,26 +213,26 @@ admin.post("/replay/catchup", apiKeyAuth, async (c) => {
 
   // Build query: status = "received" (persisted but never delivered)
   const conditions: Parameters<typeof and>[0][] = [
-    eq(gwWebhookDeliveries.status, "received"),
+    eq(gatewayWebhookDeliveries.status, "received"),
   ];
 
-  conditions.push(eq(gwWebhookDeliveries.installationId, body.installationId));
+  conditions.push(eq(gatewayWebhookDeliveries.installationId, body.installationId));
 
   if (body.provider) {
-    conditions.push(eq(gwWebhookDeliveries.provider, body.provider));
+    conditions.push(eq(gatewayWebhookDeliveries.provider, body.provider));
   }
   if (body.since) {
-    conditions.push(gte(gwWebhookDeliveries.receivedAt, body.since));
+    conditions.push(gte(gatewayWebhookDeliveries.receivedAt, body.since));
   }
   if (body.until) {
-    conditions.push(lte(gwWebhookDeliveries.receivedAt, body.until));
+    conditions.push(lte(gatewayWebhookDeliveries.receivedAt, body.until));
   }
 
   const deliveries = await db
     .select()
-    .from(gwWebhookDeliveries)
+    .from(gatewayWebhookDeliveries)
     .where(and(...conditions))
-    .orderBy(gwWebhookDeliveries.receivedAt)
+    .orderBy(gatewayWebhookDeliveries.receivedAt)
     .limit(batchSize);
 
   if (deliveries.length === 0) {
@@ -248,8 +248,8 @@ admin.post("/replay/catchup", apiKeyAuth, async (c) => {
   const replayedIds = deliveries.map((d) => d.id);
   const [remaining] = await db
     .select({ count: sql<number>`count(*)` })
-    .from(gwWebhookDeliveries)
-    .where(and(...conditions, notInArray(gwWebhookDeliveries.id, replayedIds)));
+    .from(gatewayWebhookDeliveries)
+    .where(and(...conditions, notInArray(gatewayWebhookDeliveries.id, replayedIds)));
 
   return c.json({
     status: "replayed",
@@ -289,12 +289,12 @@ admin.post("/delivery-status", qstashAuth, async (c) => {
       state === "delivered" ? "delivered" : state === "error" ? "dlq" : null;
     if (newStatus) {
       const provider = c.req.query("provider");
-      const conditions = [eq(gwWebhookDeliveries.deliveryId, deliveryId)];
+      const conditions = [eq(gatewayWebhookDeliveries.deliveryId, deliveryId)];
       if (provider) {
-        conditions.push(eq(gwWebhookDeliveries.provider, provider));
+        conditions.push(eq(gatewayWebhookDeliveries.provider, provider));
       }
       await db
-        .update(gwWebhookDeliveries)
+        .update(gatewayWebhookDeliveries)
         .set({ status: newStatus })
         .where(and(...conditions));
     }

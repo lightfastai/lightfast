@@ -8,7 +8,7 @@ import { NonRetriableError } from "@vendor/inngest";
 
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { GITHUB_RATE_LIMIT_BUDGET } from "../lib/constants.js";
+import { GITHUB_RATE_LIMIT_BUDGET, MAX_PAGES } from "../lib/constants.js";
 
 export const backfillEntityWorker = inngest.createFunction(
   {
@@ -185,6 +185,13 @@ export const backfillEntityWorker = inngest.createFunction(
       }
 
       if (!fetchResult.nextCursor) {
+        break;
+      }
+      if (pageNum >= MAX_PAGES) {
+        console.warn(
+          `[backfill] entity-worker hit MAX_PAGES cap (${MAX_PAGES})`,
+          { installationId, entityType, resource: resource.providerResourceId }
+        );
         break;
       }
       cursor = fetchResult.nextCursor;

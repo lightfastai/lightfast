@@ -85,13 +85,13 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("@db/console/schema", () => ({
-  gwInstallations: { id: "id", status: "status" },
-  gwResources: {
+  gatewayInstallations: { id: "id", status: "status" },
+  gatewayResources: {
     installationId: "installationId",
     providerResourceId: "providerResourceId",
     status: "status",
   },
-  gwTokens: { installationId: "installationId", accessToken: "accessToken" },
+  gatewayTokens: { installationId: "installationId", accessToken: "accessToken" },
 }));
 
 vi.mock("@repo/lib", () => ({

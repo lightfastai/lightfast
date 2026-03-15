@@ -89,7 +89,7 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("@db/console/schema", () => ({
-  gwWebhookDeliveries: {},
+  gatewayWebhookDeliveries: {},
 }));
 
 // ── Import app after mocks ──
@@ -623,6 +623,52 @@ describe("POST /webhooks/:provider", () => {
     }
     return state;
   }
+
+  describe("service-auth webhook — contract fuzzing", () => {
+    const VALID_BODY = {
+      connectionId: "conn-1",
+      orgId: "org-1",
+      deliveryId: "del-001",
+      eventType: "push",
+      payload: { repository: { id: 42 } },
+      receivedAt: 1_700_000_000,
+    };
+
+    it.each([
+      ["missing connectionId", { ...VALID_BODY, connectionId: undefined }],
+      ["missing orgId", { ...VALID_BODY, orgId: undefined }],
+      ["missing deliveryId", { ...VALID_BODY, deliveryId: undefined }],
+      ["missing eventType", { ...VALID_BODY, eventType: undefined }],
+      ["deliveryId is number", { ...VALID_BODY, deliveryId: 12_345 }],
+      ["receivedAt is string", { ...VALID_BODY, receivedAt: "not-a-number" }],
+      ["payload is string", { ...VALID_BODY, payload: "bad" }],
+    ])("returns 400 for: %s", async (_label, body) => {
+      const res = await request("/webhooks/github", {
+        body: body as Record<string, unknown>,
+        headers: { "X-API-Key": "test-api-key" },
+      });
+      expect(res.status).toBe(400);
+      // No DB side effects — validation rejected before handler runs
+      expect(dbOps).toHaveLength(0);
+      expect(mockPublishJSON).not.toHaveBeenCalled();
+    });
+
+    it("extra unknown fields are accepted (payload passthrough)", async () => {
+      const res = await request("/webhooks/github", {
+        body: { ...VALID_BODY, unknownField: "ignored" },
+        headers: { "X-API-Key": "test-api-key" },
+      });
+      expect(res.status).toBe(200);
+    });
+
+    it("malformed JSON body → 400, no crash", async () => {
+      const res = await request("/webhooks/github", {
+        body: "{ invalid json",
+        headers: { "X-API-Key": "test-api-key" },
+      });
+      expect(res.status).toBe(400);
+    });
+  });
 
   describe("service auth final DB state parity", () => {
     it("happy path final state matches workflow happy path", async () => {

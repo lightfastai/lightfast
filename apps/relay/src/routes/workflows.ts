@@ -1,8 +1,8 @@
 import { db } from "@db/console/client";
 import {
-  gwInstallations,
-  gwResources,
-  gwWebhookDeliveries,
+  gatewayInstallations,
+  gatewayResources,
+  gatewayWebhookDeliveries,
 } from "@db/console/schema";
 import type { WebhookReceiptPayload } from "@repo/console-providers";
 import { and, eq } from "@vendor/db";
@@ -59,7 +59,7 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     // Step 2: Persist — store webhook for long-term replayability
     await context.run("persist-delivery", async () => {
       await db
-        .insert(gwWebhookDeliveries)
+        .insert(gatewayWebhookDeliveries)
         .values({
           provider: data.provider,
           deliveryId: data.deliveryId,
@@ -92,18 +92,18 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
         // Fallthrough to PlanetScale
         const rows = await db
           .select({
-            installationId: gwResources.installationId,
-            orgId: gwInstallations.orgId,
+            installationId: gatewayResources.installationId,
+            orgId: gatewayInstallations.orgId,
           })
-          .from(gwResources)
+          .from(gatewayResources)
           .innerJoin(
-            gwInstallations,
-            eq(gwResources.installationId, gwInstallations.id)
+            gatewayInstallations,
+            eq(gatewayResources.installationId, gatewayInstallations.id)
           )
           .where(
             and(
-              eq(gwResources.providerResourceId, data.resourceId),
-              eq(gwResources.status, "active")
+              eq(gatewayResources.providerResourceId, data.resourceId),
+              eq(gatewayResources.status, "active")
             )
           )
           .limit(1);
@@ -131,12 +131,12 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     if (connectionInfo) {
       await context.run("update-connection", async () => {
         await db
-          .update(gwWebhookDeliveries)
+          .update(gatewayWebhookDeliveries)
           .set({ installationId: connectionInfo.connectionId })
           .where(
             and(
-              eq(gwWebhookDeliveries.provider, data.provider),
-              eq(gwWebhookDeliveries.deliveryId, data.deliveryId)
+              eq(gatewayWebhookDeliveries.provider, data.provider),
+              eq(gatewayWebhookDeliveries.deliveryId, data.deliveryId)
             )
           );
       });
@@ -165,12 +165,12 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       // Step 3b-ii: Update persisted status to dlq — separate step for idempotent retries
       await context.run("update-status-dlq", async () => {
         await db
-          .update(gwWebhookDeliveries)
+          .update(gatewayWebhookDeliveries)
           .set({ status: "dlq" })
           .where(
             and(
-              eq(gwWebhookDeliveries.provider, data.provider),
-              eq(gwWebhookDeliveries.deliveryId, data.deliveryId)
+              eq(gatewayWebhookDeliveries.provider, data.provider),
+              eq(gatewayWebhookDeliveries.deliveryId, data.deliveryId)
             )
           );
       });
@@ -205,12 +205,12 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     // Step 4b-ii: Mark webhook as enqueued (QStash accepted, pending Console delivery)
     await context.run("update-status-enqueued", async () => {
       await db
-        .update(gwWebhookDeliveries)
+        .update(gatewayWebhookDeliveries)
         .set({ status: "enqueued" })
         .where(
           and(
-            eq(gwWebhookDeliveries.provider, data.provider),
-            eq(gwWebhookDeliveries.deliveryId, data.deliveryId)
+            eq(gatewayWebhookDeliveries.provider, data.provider),
+            eq(gatewayWebhookDeliveries.deliveryId, data.deliveryId)
           )
         );
     });

@@ -124,7 +124,7 @@ vi.mock("@console/env", () => ({
   },
 }));
 
-// Mock @repo/console-octokit-github for github.validate and github.repositories procedures
+// Mock @repo/console-octokit-github for github.validate procedure
 vi.mock("@repo/console-octokit-github", () => ({
   createGitHubApp: mockCreateGitHubApp,
   getAppInstallation: mockGetAppInstallation,
@@ -146,7 +146,7 @@ import { connectionsRouter } from "@console/router/org/connections";
 import type { createUserTRPCContext } from "@console/trpc";
 // ── Imports after mocks ──
 import { createCallerFactory, createTRPCRouter } from "@console/trpc";
-import { gwInstallations, orgWorkspaces } from "@db/console/schema";
+import { gatewayInstallations, orgWorkspaces } from "@db/console/schema";
 import gatewayApp from "@gateway/app";
 import type { GitHubAccountInfo } from "@repo/console-providers";
 import {
@@ -162,7 +162,7 @@ function uid() {
 
 /**
  * Builds a valid GitHub providerAccountInfo JSONB blob for seeding test rows.
- * raw is empty — display data is resolved live via connections.github.list.
+ * raw is empty — display data is resolved live via connections.generic.listInstallations.
  */
 function makeGitHubAccountInfo(): GitHubAccountInfo {
   return {
@@ -568,18 +568,22 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
     });
   });
 
-  describe("8.4 — github.list procedure", () => {
-    it("Returns null when no GitHub installations exist", async () => {
+  describe("8.4 — generic.listInstallations procedure", () => {
+    it("Returns empty installations when no GitHub installations exist", async () => {
       const orgId = `org_${uid()}`;
       const caller = clerkActiveCaller("user_1", orgId);
-      const result = await caller.github.list();
-      expect(result).toBeNull();
+      const result = await caller.generic.listInstallations({
+        provider: "github",
+      });
+      expect(result.installationMode).toBe("multi");
+      expect(result.resourceLabel).toBe("repositories");
+      expect(result.installations).toHaveLength(0);
     });
 
-    it("Returns connection with installations for a single row", async () => {
+    it("Returns enriched installation for a single GitHub row", async () => {
       const orgId = `org_${uid()}`;
       const rowId = uid();
-      await db.insert(gwInstallations).values({
+      await db.insert(gatewayInstallations).values({
         id: rowId,
         provider: "github",
         externalId: "12345",
@@ -589,93 +593,34 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         providerAccountInfo: makeGitHubAccountInfo(),
       });
 
-      // github.list makes a live API call per installation — mock the response
-      mockGetAppInstallation.mockResolvedValueOnce({
-        account: {
-          id: 67_890,
-          login: "test-org",
-          type: "Organization",
-          avatar_url: "",
-        },
-        permissions: {},
-        events: [],
-        created_at: "2026-01-01T00:00:00Z",
-      });
-
-      const caller = clerkActiveCaller("user_1", orgId);
-      const result = await caller.github.list();
-
-      expect(result).not.toBeNull();
-      if (!result) {
-        throw new Error("Expected result to be non-null");
+      const restore = installServiceRouter({ gatewayApp });
+      try {
+        const caller = clerkActiveCaller("user_1", orgId);
+        const result = await caller.generic.listInstallations({
+          provider: "github",
+        });
+        expect(result.installations).toHaveLength(1);
+        expect(result.installations[0]?.id).toBe(rowId);
+        expect(result.installationMode).toBe("multi");
+      } finally {
+        restore();
       }
-      expect(result.installations).toHaveLength(1);
-      expect(result.installations[0]?.accountLogin).toBe("test-org");
-      expect(result.installations[0]?.gwInstallationId).toBe(rowId);
     });
 
-    it("Merges installations from multiple rows (different externalId)", async () => {
+    it("Returns correct installationMode for linear (merged)", async () => {
       const orgId = `org_${uid()}`;
-      await db.insert(gwInstallations).values([
-        {
-          provider: "github",
-          externalId: "11111",
-          connectedBy: "user_1",
-          orgId,
-          status: "active",
-          providerAccountInfo: makeGitHubAccountInfo(),
-        },
-        {
-          provider: "github",
-          externalId: "22222",
-          connectedBy: "user_1",
-          orgId,
-          status: "active",
-          providerAccountInfo: makeGitHubAccountInfo(),
-        },
-      ]);
-
-      // github.list makes a live API call per installation — mock both responses
-      mockGetAppInstallation
-        .mockResolvedValueOnce({
-          account: {
-            id: 11_111,
-            login: "org-a",
-            type: "Organization",
-            avatar_url: "",
-          },
-          permissions: {},
-          events: [],
-          created_at: "2026-01-01T00:00:00Z",
-        })
-        .mockResolvedValueOnce({
-          account: {
-            id: 22_222,
-            login: "org-b",
-            type: "Organization",
-            avatar_url: "",
-          },
-          permissions: {},
-          events: [],
-          created_at: "2026-01-01T00:00:00Z",
-        });
-
       const caller = clerkActiveCaller("user_1", orgId);
-      const result = await caller.github.list();
-
-      expect(result).not.toBeNull();
-      if (!result) {
-        throw new Error("Expected result to be non-null");
-      }
-      expect(result.installations).toHaveLength(2);
-      const logins = result.installations.map((i) => i.accountLogin);
-      expect(logins).toContain("org-a");
-      expect(logins).toContain("org-b");
+      const result = await caller.generic.listInstallations({
+        provider: "linear",
+      });
+      expect(result.installationMode).toBe("merged");
+      expect(result.resourceLabel).toBe("teams");
+      expect(result.installations).toHaveLength(0);
     });
 
     it("Ignores non-active (revoked) rows", async () => {
       const orgId = `org_${uid()}`;
-      await db.insert(gwInstallations).values([
+      await db.insert(gatewayInstallations).values([
         {
           provider: "github",
           externalId: "33333",
@@ -694,56 +639,16 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         },
       ]);
 
-      // Only the active installation triggers a live API call
-      mockGetAppInstallation.mockResolvedValueOnce({
-        account: {
-          id: 33_333,
-          login: "active-org",
-          type: "Organization",
-          avatar_url: "",
-        },
-        permissions: {},
-        events: [],
-        created_at: "2026-01-01T00:00:00Z",
-      });
-
-      const caller = clerkActiveCaller("user_1", orgId);
-      const result = await caller.github.list();
-
-      expect(result).not.toBeNull();
-      if (!result) {
-        throw new Error("Expected result to be non-null");
+      const restore = installServiceRouter({ gatewayApp });
+      try {
+        const caller = clerkActiveCaller("user_1", orgId);
+        const result = await caller.generic.listInstallations({
+          provider: "github",
+        });
+        expect(result.installations).toHaveLength(1);
+      } finally {
+        restore();
       }
-      expect(result.installations).toHaveLength(1);
-      expect(result.installations[0]?.accountLogin).toBe("active-org");
-    });
-
-    it("Ignores non-github providers (vercel row returns null)", async () => {
-      const orgId = `org_${uid()}`;
-      await db.insert(gwInstallations).values({
-        provider: "vercel",
-        externalId: "vercel-config-55555",
-        connectedBy: "user_1",
-        orgId,
-        status: "active",
-        providerAccountInfo: {
-          version: 1 as const,
-          sourceType: "vercel" as const,
-          events: [],
-          installedAt: "2026-01-01T00:00:00Z",
-          lastValidatedAt: "2026-01-01T00:00:00Z",
-          raw: {
-            token_type: "Bearer",
-            installation_id: "icfg_55555",
-            user_id: "user-vercel",
-            team_id: null,
-          },
-        },
-      });
-
-      const caller = clerkActiveCaller("user_1", orgId);
-      const result = await caller.github.list();
-      expect(result).toBeNull();
     });
   });
 
@@ -759,7 +664,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
     it("Updates lastValidatedAt after GitHub API validation", async () => {
       const orgId = `org_${uid()}`;
       const rowId = uid();
-      await db.insert(gwInstallations).values({
+      await db.insert(gatewayInstallations).values({
         id: rowId,
         provider: "github",
         externalId: "12345",
@@ -787,7 +692,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
       await caller.github.validate();
 
       // Verify DB was updated — lastValidatedAt is refreshed, raw stays empty
-      const allRows = await db.select().from(gwInstallations);
+      const allRows = await db.select().from(gatewayInstallations);
       const updated = allRows.find((r) => r.id === rowId);
       expect(updated?.providerAccountInfo?.sourceType).toBe("github");
       if (updated?.providerAccountInfo?.sourceType === "github") {
@@ -800,7 +705,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
 
     it("Returns correct added/removed/total counts (1 existing installation)", async () => {
       const orgId = `org_${uid()}`;
-      await db.insert(gwInstallations).values({
+      await db.insert(gatewayInstallations).values({
         provider: "github",
         externalId: "12345",
         connectedBy: "user_1",
@@ -818,7 +723,7 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
 
     it("Throws INTERNAL_SERVER_ERROR for inconsistent sourceType in providerAccountInfo", async () => {
       const orgId = `org_${uid()}`;
-      await db.insert(gwInstallations).values({
+      await db.insert(gatewayInstallations).values({
         provider: "github",
         externalId: "12345",
         connectedBy: "user_1",
@@ -847,72 +752,23 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
     });
   });
 
-  describe("8.6 — github.repositories procedure", () => {
-    it("Throws NOT_FOUND for unknown integrationId", async () => {
+  describe("8.6 — generic.listResources procedure", () => {
+    it("Throws NOT_FOUND for unknown installationId", async () => {
       const orgId = `org_${uid()}`;
       const caller = clerkActiveCaller("user_1", orgId);
       await expect(
-        caller.github.repositories({
-          integrationId: "nonexistent-id",
-          installationId: "12345",
+        caller.generic.listResources({
+          provider: "github",
+          installationId: "nonexistent-id",
         })
       ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
 
-    it("Throws NOT_FOUND when installationId not in providerAccountInfo", async () => {
-      const orgId = `org_${uid()}`;
-      const rowId = uid();
-      await db.insert(gwInstallations).values({
-        id: rowId,
-        provider: "github",
-        externalId: "12345",
-        connectedBy: "user_1",
-        orgId,
-        status: "active",
-        providerAccountInfo: makeGitHubAccountInfo(),
-      });
-
-      const caller = clerkActiveCaller("user_1", orgId);
-      await expect(
-        caller.github.repositories({
-          integrationId: rowId,
-          installationId: "99999", // not in providerAccountInfo
-        })
-      ).rejects.toMatchObject({ code: "NOT_FOUND" });
-    });
-
-    it("Returns normalized repository list", async () => {
-      const orgId = `org_${uid()}`;
-      const rowId = uid();
-      await db.insert(gwInstallations).values({
-        id: rowId,
-        provider: "github",
-        externalId: "12345",
-        connectedBy: "user_1",
-        orgId,
-        status: "active",
-        providerAccountInfo: makeGitHubAccountInfo(),
-      });
-
-      const caller = clerkActiveCaller("user_1", orgId);
-      const result = await caller.github.repositories({
-        integrationId: rowId,
-        installationId: "12345",
-      });
-
-      expect(result).toHaveLength(1);
-      const repo = result[0];
-      expect(repo?.id).toBe("123"); // number → string
-      expect(repo?.name).toBe("test-repo");
-      expect(repo?.fullName).toBe("test-org/test-repo");
-      expect(repo?.isPrivate).toBe(false);
-    });
-
-    it("Denies cross-org access (org B cannot access org A's row)", async () => {
+    it("Denies cross-org access (org B cannot access org A's installation)", async () => {
       const orgA = `org_${uid()}`;
       const orgB = `org_${uid()}`;
       const rowId = uid();
-      await db.insert(gwInstallations).values({
+      await db.insert(gatewayInstallations).values({
         id: rowId,
         provider: "github",
         externalId: "12345",
@@ -922,20 +778,19 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         providerAccountInfo: makeGitHubAccountInfo(),
       });
 
-      // Caller scoped to org B tries to access org A's installation
       const caller = clerkActiveCaller("user_1", orgB);
       await expect(
-        caller.github.repositories({
-          integrationId: rowId,
-          installationId: "12345",
+        caller.generic.listResources({
+          provider: "github",
+          installationId: rowId,
         })
       ).rejects.toMatchObject({ code: "NOT_FOUND" });
     });
 
-    it("Handles empty repository list", async () => {
+    it("Returns normalized resource list via gateway proxy", async () => {
       const orgId = `org_${uid()}`;
       const rowId = uid();
-      await db.insert(gwInstallations).values({
+      await db.insert(gatewayInstallations).values({
         id: rowId,
         provider: "github",
         externalId: "12345",
@@ -945,16 +800,18 @@ describe("Suite 8 — api/console connections tRPC procedures", () => {
         providerAccountInfo: makeGitHubAccountInfo(),
       });
 
-      mockGetInstallationRepositories.mockResolvedValueOnce({
-        repositories: [],
-      });
-
-      const caller = clerkActiveCaller("user_1", orgId);
-      const result = await caller.github.repositories({
-        integrationId: rowId,
-        installationId: "12345",
-      });
-      expect(result).toEqual([]);
+      const restore = installServiceRouter({ gatewayApp });
+      try {
+        const caller = clerkActiveCaller("user_1", orgId);
+        const result = await caller.generic.listResources({
+          provider: "github",
+          installationId: rowId,
+        });
+        expect(result).toHaveProperty("resources");
+        expect(Array.isArray(result.resources)).toBe(true);
+      } finally {
+        restore();
+      }
     });
   });
 });

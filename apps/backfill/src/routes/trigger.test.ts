@@ -8,6 +8,10 @@ vi.mock("../env", () => ({
   env: { GATEWAY_API_KEY: "test-key" },
 }));
 
+vi.mock("../logger", () => ({
+  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}));
+
 vi.mock("../inngest/client", () => ({
   inngest: { send: mockInngestSend },
 }));
@@ -160,6 +164,34 @@ describe("POST /trigger/", () => {
       headers: { "X-API-Key": "test-key" },
     });
     expect(res.status).toBe(502);
+  });
+});
+
+describe("POST /trigger — contract fuzzing", () => {
+  const VALID_BODY = {
+    installationId: "inst-1",
+    provider: "github",
+    orgId: "org-1",
+    depth: 30,
+  };
+
+  it.each([
+    ["missing installationId", { ...VALID_BODY, installationId: undefined }],
+    ["missing provider", { ...VALID_BODY, provider: undefined }],
+    ["missing orgId", { ...VALID_BODY, orgId: undefined }],
+    ["invalid depth: 0", { ...VALID_BODY, depth: 0 }],
+    ["invalid depth: fractional (0.5)", { ...VALID_BODY, depth: 0.5 }],
+    ["invalid depth: negative (-1)", { ...VALID_BODY, depth: -1 }],
+    ["invalid depth: non-enum (15)", { ...VALID_BODY, depth: 15 }],
+    ["invalid provider: unknown", { ...VALID_BODY, provider: "notion" }],
+  ])("returns 400 for: %s", async (_label, body) => {
+    const res = await request("/trigger", {
+      body: body as Record<string, unknown>,
+      headers: { "X-API-Key": "test-key" },
+    });
+    expect(res.status).toBe(400);
+    // Inngest event must NOT have been sent
+    expect(mockInngestSend).not.toHaveBeenCalled();
   });
 });
 

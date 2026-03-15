@@ -139,7 +139,7 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
 vi.mock("@db/console/client", () => ({
   db: {
     query: {
-      gwInstallations: {
+      gatewayInstallations: {
         findFirst: (...args: unknown[]) => mockFindFirst(...args),
       },
     },
@@ -183,14 +183,14 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("@db/console/schema", () => ({
-  gwInstallations: { id: "id", provider: "provider", status: "status" },
-  gwResources: {
+  gatewayInstallations: { id: "id", provider: "provider", status: "status" },
+  gatewayResources: {
     id: "id",
     installationId: "installationId",
     providerResourceId: "providerResourceId",
     status: "status",
   },
-  gwBackfillRuns: {
+  gatewayBackfillRuns: {
     installationId: "installationId",
     entityType: "entityType",
     since: "since",
@@ -201,7 +201,7 @@ vi.mock("@db/console/schema", () => ({
     eventsDispatched: "eventsDispatched",
     completedAt: "completedAt",
   },
-  gwTokens: {
+  gatewayTokens: {
     id: "id",
     installationId: "installationId",
     accessToken: "accessToken",

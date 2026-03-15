@@ -466,7 +466,7 @@ export async function makeApiKeyFixture(
  *
  * @example
  *   const result = await withEventPermutations({
- *     setup:  async () => { await db.insert(gwInstallations).values(inst); },
+ *     setup:  async () => { await db.insert(gatewayInstallations).values(inst); },
  *     effects: [
  *       { label: "cancel-backfill", deliver: async () => { ... } },
  *       { label: "clear-redis",     deliver: async () => { ... } },
@@ -481,6 +481,49 @@ export async function makeApiKeyFixture(
  *   expect(result.failures).toHaveLength(0);
  *   expect(result.permutationsRun).toBe(6); // 3! = 6
  */
+
+/**
+ * Generates all combinations of dimension arrays.
+ *
+ * Exported here to avoid duplication; per-service test files have local copies
+ * for historical reasons.
+ *
+ * @example
+ *   const cases = cartesian({ provider: ["github", "linear"] as const, status: ["active", "revoked"] as const });
+ *   // → 4 entries: [{provider:"github",status:"active"}, ...]
+ */
+export function cartesian<T extends Record<string, readonly unknown[]>>(
+  dims: T
+): Array<{ [K in keyof T]: T[K][number] }> {
+  const keys = Object.keys(dims) as (keyof T)[];
+  const values = keys.map((k) => dims[k]);
+  if (values.some((v) => (v?.length ?? 0) === 0)) {
+    return [];
+  }
+  const indices = values.map(() => 0);
+  const results: Array<{ [K in keyof T]: T[K][number] }> = [];
+  while (true) {
+    const entry = {} as { [K in keyof T]: T[K][number] };
+    for (let i = 0; i < keys.length; i++) {
+      (entry as Record<keyof T, unknown>)[keys[i]!] = values[i]![indices[i]!];
+    }
+    results.push(entry);
+    let carry = 1;
+    for (let i = indices.length - 1; i >= 0 && carry; i--) {
+      indices[i]! += carry;
+      if (indices[i]! >= values[i]!.length) {
+        indices[i] = 0;
+        carry = 1;
+      } else {
+        carry = 0;
+      }
+    }
+    if (carry) {
+      break;
+    }
+  }
+  return results;
+}
 
 export interface LabeledEffect {
   deliver: () => void | Promise<void>;

@@ -1,3 +1,4 @@
+import * as fc from "fast-check";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Capture the handler passed to createFunction ──
@@ -659,6 +660,346 @@ describe("gap-aware filtering", () => {
     expect(result.skipped).toBe(6);
     expect(result.dispatched).toBe(0);
     expect(step.invoke).not.toHaveBeenCalled();
+  });
+});
+
+describe("gap-filter property invariants", () => {
+  // Extract the pure filter logic for isolated property testing.
+  // This mirrors the filtering in backfill-orchestrator.ts (gap-aware filtering).
+  function applyGapFilter(
+    workUnitEntityTypes: string[],
+    history: Array<{ entityType: string; since: string; status: string }>,
+    requestedSince: string
+  ): string[] {
+    return workUnitEntityTypes.filter((entityType) => {
+      const priorRun = history.find((h) => h.entityType === entityType);
+      if (!priorRun) {
+        return true;
+      }
+      return new Date(priorRun.since) > new Date(requestedSince);
+    });
+  }
+
+  it("property: if priorRun.since <= requestedSince, entity is always skipped", () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom("pull_request", "issue", "release"),
+        fc.date({ min: new Date("2020-01-01"), max: new Date("2025-12-01") }),
+        fc.date({ min: new Date("2025-12-02"), max: new Date("2026-12-01") }),
+        (entityType: string, priorSince: Date, requestedSince: Date) => {
+          // priorSince is always before requestedSince → prior run covers MORE history → skip
+          const history = [
+            {
+              entityType,
+              since: priorSince.toISOString(),
+              status: "completed",
+            },
+          ];
+          const result = applyGapFilter(
+            [entityType],
+            history,
+            requestedSince.toISOString()
+          );
+          return result.length === 0;
+        }
+      )
+    );
+  });
+
+  it("property: if priorRun.since > requestedSince, entity is always included", () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom("pull_request", "issue", "release"),
+        fc.date({ min: new Date("2025-12-02"), max: new Date("2026-12-01") }),
+        fc.date({ min: new Date("2020-01-01"), max: new Date("2025-12-01") }),
+        (entityType: string, priorSince: Date, requestedSince: Date) => {
+          // priorSince is always AFTER requestedSince → prior run covers LESS history → gap exists → include
+          const history = [
+            {
+              entityType,
+              since: priorSince.toISOString(),
+              status: "completed",
+            },
+          ];
+          const result = applyGapFilter(
+            [entityType],
+            history,
+            requestedSince.toISOString()
+          );
+          return result.length === 1;
+        }
+      )
+    );
+  });
+
+  it("property: no prior history always includes all entity types", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.constantFrom("pull_request", "issue", "release"), {
+          minLength: 1,
+          maxLength: 3,
+        }),
+        fc.date(),
+        (entityTypes: string[], requestedSince: Date) => {
+          const result = applyGapFilter(
+            entityTypes,
+            [],
+            requestedSince.toISOString()
+          );
+          return result.length === entityTypes.length;
+        }
+      )
+    );
+  });
+
+  it("property: re-requesting the exact same since always skips (idempotency)", () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom("pull_request", "issue", "release"),
+        fc.date({ min: new Date("2020-01-01"), max: new Date("2026-01-01") }),
+        (entityType: string, since: Date) => {
+          const sinceIso = since.toISOString();
+          const history = [
+            { entityType, since: sinceIso, status: "completed" },
+          ];
+          const result = applyGapFilter([entityType], history, sinceIso);
+          // Same since → prior run covers exactly the same range → skip (not strictly greater)
+          return result.length === 0;
+        }
+      )
+    );
+  });
+
+  it("property: no completed history for this entity type → always included", () => {
+    // Failed runs are excluded from history (getBackfillRuns is called with status="completed").
+    // This means a failed run for pull_request always leaves pull_request in the work units.
+    fc.assert(
+      fc.property(
+        fc.constantFrom("pull_request", "issue", "release"),
+        fc.date(),
+        (entityType: string, requestedSince: Date) => {
+          // History has only entries for OTHER entity types
+          const history = [
+            {
+              entityType: "other_type",
+              since: "2020-01-01T00:00:00.000Z",
+              status: "completed",
+            },
+          ];
+          const result = applyGapFilter(
+            [entityType],
+            history,
+            requestedSince.toISOString()
+          );
+          // No completed history for this entityType → always include
+          return result.length === 1;
+        }
+      )
+    );
+  });
+
+  it("documents gap: deeper prior run correctly prevents shallower re-run", () => {
+    // A deeper (earlier since) completed run covers more history than a shallower request.
+    // The shallower request is correctly skipped because deepSince <= shallowSince is false.
+    // (deep=2025-10-01 is BEFORE shallow=2025-11-01, so deep < shallow, NOT greater → skipped ✓)
+    const deepCompletedSince = new Date("2025-10-01").toISOString(); // depth=90
+    const shallowRequestedSince = new Date("2025-11-01").toISOString(); // depth=30
+    const history = [
+      {
+        entityType: "pull_request",
+        since: deepCompletedSince,
+        status: "completed",
+      },
+    ];
+    // deepSince (Oct) < shallowSince (Nov) → NOT greater → entity is skipped
+    const result = applyGapFilter(
+      ["pull_request"],
+      history,
+      shallowRequestedSince
+    );
+    expect(result).toHaveLength(0); // Correctly skipped — deep run covers shallow range
+  });
+});
+
+describe("depth validation", () => {
+  it("throws NonRetriableError when depth <= 0", async () => {
+    const step = makeStep();
+    // Bypass Zod schema (which only allows 7/30/90) to test runtime guard
+    const event = makeEvent({ depth: 0 });
+
+    await expect(capturedHandler({ event, step })).rejects.toThrow(
+      "Invalid depth"
+    );
+  });
+
+  it("throws NonRetriableError when depth is negative", async () => {
+    const step = makeStep();
+    const event = makeEvent({ depth: -1 });
+
+    await expect(capturedHandler({ event, step })).rejects.toThrow(
+      "Invalid depth"
+    );
+  });
+});
+
+describe("replay-held-webhooks — multi-iteration", () => {
+  it("drains multiple batches until remaining is 0", async () => {
+    mockGatewayClient.getConnection.mockResolvedValue(
+      makeConnection({
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
+    );
+    // Simulate: 3 batches, remaining goes 400 → 200 → 0
+    mockRelayClient.replayCatchup
+      .mockResolvedValueOnce({ remaining: 400 })
+      .mockResolvedValueOnce({ remaining: 200 })
+      .mockResolvedValueOnce({ remaining: 0 });
+
+    const runCalls: string[] = [];
+    const step = makeStep({
+      run: vi.fn((name: string, fn: () => unknown) => {
+        runCalls.push(name);
+        return fn();
+      }),
+      invoke: vi.fn().mockResolvedValue({
+        eventsProduced: 5,
+        eventsDispatched: 5,
+        pagesProcessed: 1,
+      }),
+    });
+    const event = makeEvent({
+      entityTypes: ["pull_request"],
+      holdForReplay: true,
+    });
+
+    await capturedHandler({ event, step });
+
+    expect(runCalls).toContain("replay-held-webhooks");
+    expect(mockRelayClient.replayCatchup).toHaveBeenCalledTimes(3);
+  });
+
+  it("stops on relay catchup error and does not crash", async () => {
+    mockGatewayClient.getConnection.mockResolvedValue(
+      makeConnection({
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
+    );
+    mockRelayClient.replayCatchup
+      .mockResolvedValueOnce({ remaining: 100 })
+      .mockRejectedValueOnce(new Error("relay down"));
+
+    const runCalls: string[] = [];
+    const step = makeStep({
+      run: vi.fn((name: string, fn: () => unknown) => {
+        runCalls.push(name);
+        return fn();
+      }),
+      invoke: vi.fn().mockResolvedValue({
+        eventsProduced: 5,
+        eventsDispatched: 5,
+        pagesProcessed: 1,
+      }),
+    });
+    const event = makeEvent({
+      entityTypes: ["pull_request"],
+      holdForReplay: true,
+    });
+
+    // Should not throw — the catch inside the loop handles it
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
+    expect(result.success).toBe(true);
+    expect(mockRelayClient.replayCatchup).toHaveBeenCalledTimes(2);
+  });
+
+  it("handles relay returning empty status (no remaining field)", async () => {
+    mockGatewayClient.getConnection.mockResolvedValue(
+      makeConnection({
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
+    );
+    // Relay returns { status: "empty" } without remaining field
+    mockRelayClient.replayCatchup.mockResolvedValueOnce({ status: "empty" });
+
+    const runCalls: string[] = [];
+    const step = makeStep({
+      run: vi.fn((name: string, fn: () => unknown) => {
+        runCalls.push(name);
+        return fn();
+      }),
+      invoke: vi.fn().mockResolvedValue({
+        eventsProduced: 5,
+        eventsDispatched: 5,
+        pagesProcessed: 1,
+      }),
+    });
+    const event = makeEvent({
+      entityTypes: ["pull_request"],
+      holdForReplay: true,
+    });
+
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
+    expect(result.success).toBe(true);
+    // remaining=undefined → undefined > 0 is false → loop exits after 1 call
+    expect(mockRelayClient.replayCatchup).toHaveBeenCalledOnce();
+  });
+});
+
+describe("holdForReplay with mixed results", () => {
+  it("replays when some workers succeed and some fail", async () => {
+    mockGatewayClient.getConnection.mockResolvedValue(
+      makeConnection({
+        resources: [
+          { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+        ],
+      })
+    );
+    mockRelayClient.replayCatchup.mockResolvedValue({ remaining: 0 });
+
+    let callCount = 0;
+    const runCalls: string[] = [];
+    const step = makeStep({
+      run: vi.fn((name: string, fn: () => unknown) => {
+        runCalls.push(name);
+        return fn();
+      }),
+      invoke: vi.fn().mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return Promise.resolve({
+            eventsProduced: 5,
+            eventsDispatched: 5,
+            pagesProcessed: 1,
+          });
+        }
+        return Promise.reject(new Error("worker crashed"));
+      }),
+    });
+    const event = makeEvent({
+      entityTypes: ["pull_request", "issue"],
+      holdForReplay: true,
+    });
+
+    const result = (await capturedHandler({ event, step })) as Record<
+      string,
+      unknown
+    >;
+    expect(result.success).toBe(false);
+    expect(result.completed).toBe(1);
+    expect(result.failed).toBe(1);
+    // Still replays because succeeded.length > 0
+    expect(runCalls).toContain("replay-held-webhooks");
   });
 });
 

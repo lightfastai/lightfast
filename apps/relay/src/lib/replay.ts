@@ -1,6 +1,6 @@
 import { db } from "@db/console/client";
-import type { GwWebhookDelivery } from "@db/console/schema";
-import { gwWebhookDeliveries } from "@db/console/schema";
+import type { GatewayWebhookDelivery } from "@db/console/schema";
+import { gatewayWebhookDeliveries } from "@db/console/schema";
 import type {
   SourceType,
   WebhookReceiptPayload,
@@ -29,7 +29,7 @@ interface ReplayResult {
  * 4. Updates status to "received" (workflow will advance to delivered/dlq)
  */
 export async function replayDeliveries(
-  deliveries: GwWebhookDelivery[]
+  deliveries: GatewayWebhookDelivery[]
 ): Promise<ReplayResult> {
   const replayed: string[] = [];
   const skipped: string[] = [];
@@ -79,12 +79,12 @@ export async function replayDeliveries(
       // Reset status — workflow will advance to delivered or dlq
       try {
         await db
-          .update(gwWebhookDeliveries)
+          .update(gatewayWebhookDeliveries)
           .set({ status: "received" })
           .where(
             and(
-              eq(gwWebhookDeliveries.provider, delivery.provider),
-              eq(gwWebhookDeliveries.deliveryId, delivery.deliveryId)
+              eq(gatewayWebhookDeliveries.provider, delivery.provider),
+              eq(gatewayWebhookDeliveries.deliveryId, delivery.deliveryId)
             )
           );
       } catch (err) {

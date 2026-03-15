@@ -97,7 +97,7 @@ vi.mock("@vendor/related-projects", () => ({
   withRelatedProject: ({ defaultHost }: { defaultHost: string }) => defaultHost,
 }));
 
-import { gwInstallations } from "@db/console/schema";
+import { gatewayInstallations } from "@db/console/schema";
 // ── Import app after mocks are registered ──
 import gatewayApp from "@gateway/app";
 import { oauthResultKey, oauthStateKey } from "@gateway/cache";
@@ -384,7 +384,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
 
     it("Callback with missing state falls back to externalId DB lookup", async () => {
       // Seed a pre-existing gwInstallation with matching externalId
-      await db.insert(gwInstallations).values({
+      await db.insert(gatewayInstallations).values({
         provider: "github",
         externalId: "55555",
         connectedBy: "user_original",

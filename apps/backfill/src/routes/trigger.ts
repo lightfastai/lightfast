@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
+import { log } from "../logger.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 const cancelSchema = z.object({
@@ -65,7 +66,11 @@ trigger.post("/", async (c) => {
       },
     });
   } catch (err) {
-    console.error("Failed to send backfill event to Inngest", err);
+    log.error("[backfill] failed to send backfill event to Inngest", {
+      installationId: body.installationId,
+      provider: body.provider,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return c.json(
       { error: "temporary_failure", message: "Failed to enqueue backfill" },
       502
@@ -124,7 +129,10 @@ trigger.post("/cancel", async (c) => {
       },
     });
   } catch (err) {
-    console.error("Failed to send cancel event to Inngest", err);
+    log.error("[backfill] failed to send cancel event to Inngest", {
+      installationId: body.installationId,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return c.json(
       { error: "temporary_failure", message: "Failed to enqueue cancellation" },
       502

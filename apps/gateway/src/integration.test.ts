@@ -5,7 +5,7 @@
  * instead of hollow chain mocks. Validates actual query logic.
  */
 
-import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import { gatewayInstallations, gatewayResources, gatewayTokens } from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
 import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
@@ -26,15 +26,15 @@ afterAll(async () => {
   await closeTestDb();
 });
 
-describe("gwInstallations", () => {
+describe("gatewayInstallations", () => {
   it("inserts and retrieves an installation", async () => {
     const inst = fixtures.installation({ provider: "github", orgId: "org-1" });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const rows = await db
       .select()
-      .from(gwInstallations)
-      .where(eq(gwInstallations.id, inst.id));
+      .from(gatewayInstallations)
+      .where(eq(gatewayInstallations.id, inst.id));
 
     expect(rows).toHaveLength(1);
     expect(rows[0]!.provider).toBe("github");
@@ -47,7 +47,7 @@ describe("gwInstallations", () => {
       provider: "github",
       externalId: "ext-123",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const duplicate = fixtures.installation({
       provider: "github",
@@ -55,7 +55,7 @@ describe("gwInstallations", () => {
     });
 
     await expect(
-      db.insert(gwInstallations).values(duplicate)
+      db.insert(gatewayInstallations).values(duplicate)
     ).rejects.toThrow();
   });
 
@@ -63,15 +63,15 @@ describe("gwInstallations", () => {
     const inst1 = fixtures.installation({ provider: "github", orgId: "org-1" });
     const inst2 = fixtures.installation({ provider: "vercel", orgId: "org-1" });
     const inst3 = fixtures.installation({ provider: "github", orgId: "org-2" });
-    await db.insert(gwInstallations).values([inst1, inst2, inst3]);
+    await db.insert(gatewayInstallations).values([inst1, inst2, inst3]);
 
     const rows = await db
       .select()
-      .from(gwInstallations)
+      .from(gatewayInstallations)
       .where(
         and(
-          eq(gwInstallations.orgId, "org-1"),
-          eq(gwInstallations.provider, "github")
+          eq(gatewayInstallations.orgId, "org-1"),
+          eq(gatewayInstallations.provider, "github")
         )
       );
 
@@ -80,18 +80,18 @@ describe("gwInstallations", () => {
   });
 });
 
-describe("gwTokens", () => {
+describe("gatewayTokens", () => {
   it("inserts a token linked to an installation", async () => {
     const inst = fixtures.installation();
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const token = fixtures.token({ installationId: inst.id });
-    await db.insert(gwTokens).values(token);
+    await db.insert(gatewayTokens).values(token);
 
     const rows = await db
       .select()
-      .from(gwTokens)
-      .where(eq(gwTokens.installationId, inst.id));
+      .from(gatewayTokens)
+      .where(eq(gatewayTokens.installationId, inst.id));
 
     expect(rows).toHaveLength(1);
     expect(rows[0]!.accessToken).toBe(token.accessToken);
@@ -99,38 +99,38 @@ describe("gwTokens", () => {
 
   it("cascades deletion from installation to tokens", async () => {
     const inst = fixtures.installation();
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const token = fixtures.token({ installationId: inst.id });
-    await db.insert(gwTokens).values(token);
+    await db.insert(gatewayTokens).values(token);
 
-    await db.delete(gwInstallations).where(eq(gwInstallations.id, inst.id));
+    await db.delete(gatewayInstallations).where(eq(gatewayInstallations.id, inst.id));
 
     const remaining = await db
       .select()
-      .from(gwTokens)
-      .where(eq(gwTokens.id, token.id));
+      .from(gatewayTokens)
+      .where(eq(gatewayTokens.id, token.id));
 
     expect(remaining).toHaveLength(0);
   });
 });
 
-describe("gwResources", () => {
+describe("gatewayResources", () => {
   it("inserts a resource linked to an installation", async () => {
     const inst = fixtures.installation();
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const resource = fixtures.resource({
       installationId: inst.id,
       providerResourceId: "my-org/my-repo",
       resourceName: "my-repo",
     });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     const rows = await db
       .select()
-      .from(gwResources)
-      .where(eq(gwResources.installationId, inst.id));
+      .from(gatewayResources)
+      .where(eq(gatewayResources.installationId, inst.id));
 
     expect(rows).toHaveLength(1);
     expect(rows[0]!.providerResourceId).toBe("my-org/my-repo");
@@ -139,17 +139,17 @@ describe("gwResources", () => {
 
   it("cascades deletion from installation to resources", async () => {
     const inst = fixtures.installation();
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = fixtures.resource({ installationId: inst.id });
-    await db.insert(gwResources).values(res);
+    await db.insert(gatewayResources).values(res);
 
-    await db.delete(gwInstallations).where(eq(gwInstallations.id, inst.id));
+    await db.delete(gatewayInstallations).where(eq(gatewayInstallations.id, inst.id));
 
     const remaining = await db
       .select()
-      .from(gwResources)
-      .where(eq(gwResources.id, res.id));
+      .from(gatewayResources)
+      .where(eq(gatewayResources.id, res.id));
 
     expect(remaining).toHaveLength(0);
   });
@@ -161,12 +161,12 @@ describe("gwResources", () => {
 describe("resetTestDb isolation", () => {
   it("first test inserts data", async () => {
     const inst = fixtures.installation({ orgId: "org-leak-check" });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const rows = await db
       .select()
-      .from(gwInstallations)
-      .where(eq(gwInstallations.orgId, "org-leak-check"));
+      .from(gatewayInstallations)
+      .where(eq(gatewayInstallations.orgId, "org-leak-check"));
 
     expect(rows).toHaveLength(1);
   });
@@ -174,8 +174,8 @@ describe("resetTestDb isolation", () => {
   it("second test sees empty table (proves reset works)", async () => {
     const rows = await db
       .select()
-      .from(gwInstallations)
-      .where(eq(gwInstallations.orgId, "org-leak-check"));
+      .from(gatewayInstallations)
+      .where(eq(gatewayInstallations.orgId, "org-leak-check"));
 
     expect(rows).toHaveLength(0);
   });

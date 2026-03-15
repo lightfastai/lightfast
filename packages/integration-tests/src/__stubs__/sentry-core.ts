@@ -27,6 +27,12 @@ export function withScope(
 }
 export function captureException(_err: unknown) {}
 export function captureMessage(_msg: string, _level?: string) {}
+export function createStackParser(..._parsers: unknown[]) {
+  return () => [];
+}
+export function nodeStackLineParser() {
+  return () => undefined;
+}
 export function trpcMiddleware() {
   return async ({ next }: { next: () => Promise<unknown> }) => next();
 }

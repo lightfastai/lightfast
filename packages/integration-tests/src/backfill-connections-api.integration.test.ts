@@ -9,7 +9,7 @@
  * router (localhost:4110 → gatewayApp), Inngest function capture.
  */
 
-import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import { gatewayInstallations, gatewayResources, gatewayTokens } from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
 import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
@@ -259,7 +259,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
       orgId: "org-api-1",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const resource = fixtures.resource({
       installationId: inst.id,
@@ -267,7 +267,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
       resourceName: "repo-api",
       status: "active",
     });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     const res = await connReq(`/services/gateway/${inst.id}`);
 
@@ -307,7 +307,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
       provider: "github",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const activeResource = fixtures.resource({
       installationId: inst.id,
@@ -317,7 +317,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
       installationId: inst.id,
       status: "removed",
     });
-    await db.insert(gwResources).values([activeResource, removedResource]);
+    await db.insert(gatewayResources).values([activeResource, removedResource]);
 
     const res = await connReq(`/services/gateway/${inst.id}`);
     expect(res.status).toBe(200);
@@ -340,14 +340,14 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
       orgId: "org-orch-1",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const resource = fixtures.resource({
       installationId: inst.id,
       providerResourceId: "owner/orch-repo",
       status: "active",
     });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
     if (!orchHandler) {
@@ -397,7 +397,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
       orgId: "org-orch-2",
       status: "revoked",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
     if (!orchHandler) {
@@ -447,7 +447,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
       orgId: "org-orch-3",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
     // No resources inserted
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
@@ -491,7 +491,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
       orgId: "org-token-1",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     // Encrypt and store token in DB (as it would be stored by real OAuth flow)
     const encryptedToken = await encrypt(plainToken, ENCRYPTION_KEY);
@@ -499,7 +499,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
       installationId: inst.id,
       accessToken: encryptedToken,
     });
-    await db.insert(gwTokens).values(token);
+    await db.insert(gatewayTokens).values(token);
 
     const res = await connReq(`/services/gateway/${inst.id}/token`);
 
@@ -520,7 +520,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
       provider: "sentry",
       status: "revoked",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await connReq(`/services/gateway/${inst.id}/token`);
 
@@ -534,7 +534,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
       provider: "sentry",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
     // No token inserted
 
     const res = await connReq(`/services/gateway/${inst.id}/token`);

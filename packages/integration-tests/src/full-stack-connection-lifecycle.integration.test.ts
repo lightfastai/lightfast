@@ -14,7 +14,7 @@
  * service router (all three apps).
  */
 
-import { gwInstallations, gwResources } from "@db/console/schema";
+import { gatewayInstallations, gatewayResources } from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
 import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
@@ -298,14 +298,14 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
       orgId: "org-lifecycle-orch",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const resource = fixtures.resource({
       installationId: inst.id,
       providerResourceId: "owner/lifecycle-repo",
       status: "active",
     });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
     if (!orchHandler) {
@@ -444,7 +444,7 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
       orgId: "org-teardown-1",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await gatewayApp.request(
       `/services/gateway/github/${inst.id}`,
@@ -513,7 +513,7 @@ describe("Suite 5.3 — Full teardown path", () => {
       orgId: "org-teardown-path",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const resource = fixtures.resource({
       installationId: inst.id,
@@ -521,7 +521,7 @@ describe("Suite 5.3 — Full teardown path", () => {
       resourceName: "teardown-repo",
       status: "active",
     });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     // Populate Redis resource cache (simulates what POST /services/gateway/:id/resources does)
     const cacheKey = "gw:resource:github:owner/teardown-repo";

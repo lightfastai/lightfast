@@ -13,7 +13,12 @@
  * service router (all three apps).
  */
 
-import { gwInstallations, gwResources } from "@db/console/schema";
+import {
+  gatewayInstallations,
+  gatewayResources,
+  workspaceEntityEdges,
+} from "@db/console/schema";
+import type { PostTransformEvent } from "@repo/console-providers";
 import type { TestDb } from "@repo/console-test-db";
 import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
@@ -40,6 +45,7 @@ const {
   capturedHandlers,
   inngestSendMock,
   inngestEventsSent,
+  neuralCapturedHandlers,
 } = await vi.hoisted(async () => {
   const { makeRedisMock, makeQStashMock } = await import("./harness.js");
   const redisStore = new Map<string, unknown>();
@@ -64,6 +70,11 @@ const {
     }
   );
 
+  const neuralCapturedHandlers = new Map<
+    string,
+    (args: { event: unknown; step: unknown }) => Promise<unknown>
+  >();
+
   return {
     redisMock: makeRedisMock(redisStore),
     redisStore,
@@ -72,6 +83,7 @@ const {
     capturedHandlers,
     inngestSendMock: sendMock,
     inngestEventsSent,
+    neuralCapturedHandlers,
   };
 });
 
@@ -155,6 +167,38 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
   serve: vi.fn(() => () => new Response("ok")),
 }));
 
+// ── Neural pipeline mocks (used by Suite 6.7) ──
+
+vi.mock("@console/inngest-client", () => ({
+  inngest: {
+    createFunction: (
+      config: { id: string },
+      _trigger: unknown,
+      handler: (args: { event: unknown; step: unknown }) => Promise<unknown>
+    ) => {
+      neuralCapturedHandlers.set(config.id, handler);
+      return { id: config.id };
+    },
+    send: vi.fn(),
+  },
+}));
+
+vi.mock("@repo/console-pinecone", () => ({
+  consolePineconeClient: { upsertVectors: vi.fn() },
+}));
+
+vi.mock("@repo/console-embed", () => ({
+  createEmbeddingProviderForWorkspace: vi.fn().mockReturnValue({
+    embed: vi.fn().mockResolvedValue({
+      embeddings: [new Array(1024).fill(0.1)],
+      model: "test-model",
+    }),
+    dimension: 1024,
+  }),
+}));
+
+vi.mock("@vendor/knock", () => ({ notifications: null, Knock: class {} }));
+
 // ── Import all apps after mocks ──
 import backfillApp from "@backfill/app";
 import relayApp from "@relay/app";
@@ -164,7 +208,7 @@ await import("@backfill/orchestrator");
 
 import { cancelBackfillService } from "@gateway/urls";
 // ── Utilities ──
-import { withEventPermutations } from "./harness.js";
+import { makeStep, withEventPermutations } from "./harness.js";
 
 const API_KEY = "0".repeat(64);
 
@@ -289,8 +333,8 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
     const result = await withEventPermutations({
       setup: async () => {
         restoreMockImpls();
-        await db.insert(gwInstallations).values(inst);
-        await db.insert(gwResources).values(resource);
+        await db.insert(gatewayInstallations).values(inst);
+        await db.insert(gatewayResources).values(resource);
         redisStore.set(cacheKey, {
           connectionId: inst.id,
           orgId: "org-perm-teardown",
@@ -334,10 +378,10 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
               }
             ).$client;
             await client.exec(
-              `UPDATE lightfast_gw_installations SET status = 'revoked' WHERE id = '${inst.id}'`
+              `UPDATE lightfast_gateway_installations SET status = 'revoked' WHERE id = '${inst.id}'`
             );
             await client.exec(
-              `UPDATE lightfast_gw_resources SET status = 'removed' WHERE installation_id = '${inst.id}'`
+              `UPDATE lightfast_gateway_resources SET status = 'removed' WHERE installation_id = '${inst.id}'`
             );
           },
         },
@@ -348,12 +392,12 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
         expect(redisStore.has(cacheKey)).toBe(false);
 
         // DB records soft-deleted
-        const instRow = await db.query.gwInstallations.findFirst({
+        const instRow = await db.query.gatewayInstallations.findFirst({
           where: (t, { eq }) => eq(t.id, inst.id),
         });
         expect(instRow?.status).toBe("revoked");
 
-        const resRow = await db.query.gwResources.findFirst({
+        const resRow = await db.query.gatewayResources.findFirst({
           where: (t, { eq }) => eq(t.installationId, inst.id),
         });
         expect(resRow?.status).toBe("removed");
@@ -445,7 +489,7 @@ describe("Suite 6.3 — Backfill notify + relay dispatch are order-independent",
     const result = await withEventPermutations({
       setup: async () => {
         restoreMockImpls();
-        await db.insert(gwInstallations).values(inst);
+        await db.insert(gatewayInstallations).values(inst);
       },
 
       effects: [
@@ -512,5 +556,491 @@ describe("Suite 6.3 — Backfill notify + relay dispatch are order-independent",
 
     expect(result.failures).toHaveLength(0);
     expect(result.permutationsRun).toBe(2); // 2! = 2
+  });
+});
+
+describe("Suite 6.4 — All 4 gateway teardown steps are order-independent (24 orderings)", () => {
+  it("cancel-backfill + revoke-token + cleanup-cache + soft-delete produce identical final state in all 24 orderings", async () => {
+    const mockRevokeToken = vi.fn().mockResolvedValue(undefined);
+
+    const inst = fixtures.installation({
+      provider: "linear",
+      orgId: "org-teardown-4step",
+      status: "active",
+    });
+    const resource = fixtures.resource({
+      installationId: inst.id,
+      providerResourceId: "linear-team-001",
+      status: "active",
+    });
+    const cacheKey = "gw:resource:linear:linear-team-001";
+
+    const result = await withEventPermutations({
+      setup: async () => {
+        restoreMockImpls();
+        await db.insert(gatewayInstallations).values(inst);
+        await db.insert(gatewayResources).values(resource);
+        redisStore.set(cacheKey, {
+          connectionId: inst.id,
+          orgId: "org-teardown-4step",
+        });
+        mockRevokeToken.mockClear();
+      },
+
+      effects: [
+        {
+          label: "cancel-backfill",
+          deliver: async () => {
+            // Simulate teardown step 1: publish cancel message to backfill service
+            await qstashMock.publishJSON({
+              url: "http://localhost:4109/api/trigger/cancel",
+              body: { installationId: inst.id },
+            });
+          },
+        },
+        {
+          label: "revoke-token",
+          deliver: async () => {
+            // Simulate teardown step 2: provider token revocation (best-effort, no persistent side effects)
+            await mockRevokeToken(inst.id);
+          },
+        },
+        {
+          label: "cleanup-cache",
+          deliver: async () => {
+            // Simulate teardown step 3: delete Redis cache entries for linked resources
+            redisStore.delete(cacheKey);
+          },
+        },
+        {
+          label: "soft-delete",
+          deliver: async () => {
+            // Simulate teardown step 4: soft-delete installation and resources in DB
+            const client = (
+              db as unknown as {
+                $client: { exec: (sql: string) => Promise<unknown> };
+              }
+            ).$client;
+            await client.exec(
+              `UPDATE lightfast_gateway_installations SET status = 'revoked' WHERE id = '${inst.id}'`
+            );
+            await client.exec(
+              `UPDATE lightfast_gateway_resources SET status = 'removed' WHERE installation_id = '${inst.id}'`
+            );
+          },
+        },
+      ],
+
+      invariant: async () => {
+        // Step 3 invariant: Redis cache cleared
+        expect(redisStore.has(cacheKey)).toBe(false);
+
+        // Step 4 invariant: DB records soft-deleted
+        const instRow = await db.query.gatewayInstallations.findFirst({
+          where: (t, { eq }) => eq(t.id, inst.id),
+        });
+        expect(instRow?.status).toBe("revoked");
+
+        const resRow = await db.query.gatewayResources.findFirst({
+          where: (t, { eq }) => eq(t.installationId, inst.id),
+        });
+        expect(resRow?.status).toBe("removed");
+
+        // Step 1 invariant: backfill cancel dispatched to QStash
+        const cancelMsg = qstashMessages.find(
+          (m) => typeof m.url === "string" && m.url.includes("/trigger/cancel")
+        );
+        expect(cancelMsg).toBeDefined();
+        expect(cancelMsg?.body).toMatchObject({ installationId: inst.id });
+
+        // Step 2 invariant: token revocation attempted exactly once
+        expect(mockRevokeToken).toHaveBeenCalledTimes(1);
+      },
+
+      reset: resetStores,
+    });
+
+    expect(result.failures).toHaveLength(0);
+    expect(result.permutationsRun).toBe(24); // 4! = 24
+  });
+});
+
+describe("Suite 6.6 — Post-teardown cache state is consistent in both teardown orderings", () => {
+  it("after soft-delete + cache-cleanup in any order, resource cache key is absent (no stale cache)", async () => {
+    const inst = fixtures.installation({
+      provider: "github",
+      orgId: "org-post-teardown",
+      status: "active",
+    });
+    const resource = fixtures.resource({
+      installationId: inst.id,
+      providerResourceId: "owner/teardown-repo",
+      status: "active",
+    });
+    const cacheKey = "gw:resource:github:owner/teardown-repo";
+
+    const result = await withEventPermutations({
+      setup: async () => {
+        restoreMockImpls();
+        await db.insert(gatewayInstallations).values(inst);
+        await db.insert(gatewayResources).values(resource);
+        redisStore.set(cacheKey, {
+          connectionId: inst.id,
+          orgId: "org-post-teardown",
+        });
+      },
+
+      effects: [
+        {
+          label: "soft-delete",
+          deliver: async () => {
+            const client = (
+              db as unknown as {
+                $client: { exec: (sql: string) => Promise<unknown> };
+              }
+            ).$client;
+            await client.exec(
+              `UPDATE lightfast_gateway_installations SET status = 'revoked' WHERE id = '${inst.id}'`
+            );
+            await client.exec(
+              `UPDATE lightfast_gateway_resources SET status = 'removed' WHERE installation_id = '${inst.id}'`
+            );
+          },
+        },
+        {
+          label: "cache-cleanup",
+          deliver: () => {
+            redisStore.delete(cacheKey);
+          },
+        },
+      ],
+
+      invariant: async () => {
+        // After teardown: Redis cache must not contain the resource key (no stale routing)
+        expect(redisStore.has(cacheKey)).toBe(false);
+
+        // After teardown: DB must show installation as revoked
+        const instRow = await db.query.gatewayInstallations.findFirst({
+          where: (t, { eq }) => eq(t.id, inst.id),
+        });
+        expect(instRow?.status).toBe("revoked");
+
+        // After teardown: DB must show resource as removed
+        const resRow = await db.query.gatewayResources.findFirst({
+          where: (t, { eq }) => eq(t.installationId, inst.id),
+        });
+        expect(resRow?.status).toBe("removed");
+      },
+
+      reset: resetStores,
+    });
+
+    expect(result.failures).toHaveLength(0);
+    expect(result.permutationsRun).toBe(2); // 2! = 2
+  });
+});
+
+describe("Suite 6.5 — Relay dedup prevents double-dispatch in both orderings", () => {
+  it("same deliveryId dispatches exactly once regardless of arrival order", async () => {
+    const DELIVERY_ID = "del-dedup-suite65";
+
+    async function sendWebhook() {
+      await relayApp.request("/api/webhooks/github", {
+        method: "POST",
+        headers: new Headers({
+          "Content-Type": "application/json",
+          "X-API-Key": API_KEY,
+        }),
+        body: JSON.stringify({
+          connectionId: "conn-dedup-test",
+          orgId: "org-dedup-test",
+          deliveryId: DELIVERY_ID,
+          eventType: "push",
+          payload: { repository: { id: 99 } },
+          receivedAt: Date.now(),
+        }),
+      });
+    }
+
+    const result = await withEventPermutations({
+      setup: () => {
+        restoreMockImpls();
+      },
+
+      effects: [
+        { label: "webhook-first-send", deliver: sendWebhook },
+        { label: "webhook-duplicate-send", deliver: sendWebhook },
+      ],
+
+      invariant: () => {
+        // Exactly 1 QStash message — dedup prevented double-dispatch
+        expect(qstashMessages).toHaveLength(1);
+        expect(qstashMessages[0]?.body).toMatchObject({
+          deliveryId: DELIVERY_ID,
+        });
+        // Dedup key is set in Redis
+        expect(redisStore.has(`gw:webhook:seen:github:${DELIVERY_ID}`)).toBe(
+          true
+        );
+      },
+
+      reset: resetStores,
+    });
+
+    expect(result.failures).toHaveLength(0);
+    expect(result.permutationsRun).toBe(2); // 2! = 2
+  });
+});
+
+describe("Suite 6.7 — Neural entity co-occurrence edges converge under 3! orderings", () => {
+  /**
+   * Import neural handlers once so their createFunction registrations land in
+   * neuralCapturedHandlers (via the @console/inngest-client mock).
+   */
+  beforeAll(async () => {
+    await import("@console/neural");
+  });
+
+  it("produces identical workspaceEntityEdges count for all 6 orderings", async () => {
+    // ── Fixture: 3 GitHub events where issue#50 + issue#51 co-occur via Event C
+    //   Event C (PR) lists both issues as relations → edge resolver finds issue↔issue
+    //   pair across co-occurring events regardless of processing order.
+    const REPO_ID = 999_888_777;
+    const RESOURCE_ID = String(REPO_ID);
+
+    const events: PostTransformEvent[] = [
+      {
+        deliveryId: "del_perm_graph_a",
+        sourceId: "github:issue:graph-issues#50:opened",
+        provider: "github",
+        eventType: "issues.opened",
+        occurredAt: "2026-03-14T10:00:00.000Z",
+        entity: {
+          provider: "github",
+          entityType: "issue",
+          entityId: "graph-issues#50",
+          title: "Issue 50",
+          url: null,
+          state: "open",
+        },
+        relations: [
+          {
+            provider: "github",
+            entityType: "repository",
+            entityId: "graph-org/graph-repo",
+            title: null,
+            url: null,
+            relationshipType: "belongs_to",
+          },
+        ],
+        title: "Issue 50",
+        body: "",
+        attributes: { repoId: REPO_ID },
+      },
+      {
+        deliveryId: "del_perm_graph_b",
+        sourceId: "github:issue:graph-issues#51:opened",
+        provider: "github",
+        eventType: "issues.opened",
+        occurredAt: "2026-03-14T10:01:00.000Z",
+        entity: {
+          provider: "github",
+          entityType: "issue",
+          entityId: "graph-issues#51",
+          title: "Issue 51",
+          url: null,
+          state: "open",
+        },
+        relations: [
+          {
+            provider: "github",
+            entityType: "repository",
+            entityId: "graph-org/graph-repo",
+            title: null,
+            url: null,
+            relationshipType: "belongs_to",
+          },
+        ],
+        title: "Issue 51",
+        body: "",
+        attributes: { repoId: REPO_ID },
+      },
+      {
+        deliveryId: "del_perm_graph_c",
+        sourceId: "github:pr:graph-pr#10:opened",
+        provider: "github",
+        eventType: "pull_request.opened",
+        occurredAt: "2026-03-14T10:02:00.000Z",
+        entity: {
+          provider: "github",
+          entityType: "pr",
+          entityId: "graph-pr#10",
+          title: "PR 10",
+          url: null,
+          state: "open",
+        },
+        relations: [
+          {
+            provider: "github",
+            entityType: "issue",
+            entityId: "graph-issues#50",
+            title: null,
+            url: null,
+            relationshipType: "closes",
+          },
+          {
+            provider: "github",
+            entityType: "issue",
+            entityId: "graph-issues#51",
+            title: null,
+            url: null,
+            relationshipType: "closes",
+          },
+          {
+            provider: "github",
+            entityType: "repository",
+            entityId: "graph-org/graph-repo",
+            title: null,
+            url: null,
+            relationshipType: "belongs_to",
+          },
+        ],
+        title: "PR 10",
+        body: "",
+        attributes: { repoId: REPO_ID },
+      },
+    ];
+
+    async function seedGraphFixtures() {
+      const {
+        gatewayInstallations: gw,
+        orgWorkspaces: ow,
+        workspaceIntegrations: wi,
+      } = await import("@db/console/schema");
+      await db.insert(gw).values({
+        id: "inst_graph001",
+        provider: "github",
+        externalId: "gh_install_graph",
+        connectedBy: "user_graph001",
+        orgId: "org_graph001",
+        status: "active",
+      });
+      await db.insert(ow).values({
+        id: "ws_graph001",
+        clerkOrgId: "org_graph001",
+        name: "graph-workspace",
+        slug: "graph-ws",
+        settings: {
+          version: 1,
+          embedding: {
+            indexName: "lightfast-v1",
+            namespaceName: "org_graph001:ws_ws_graph001",
+            embeddingDim: 1024,
+            embeddingModel: "embed-english-v3.0",
+            embeddingProvider: "cohere",
+            pineconeMetric: "cosine",
+            pineconeCloud: "aws",
+            pineconeRegion: "us-east-1",
+            chunkMaxTokens: 512,
+            chunkOverlap: 50,
+          },
+        },
+      });
+      await db.insert(wi).values({
+        workspaceId: "ws_graph001",
+        installationId: "inst_graph001",
+        provider: "github",
+        connectedBy: "user_graph001",
+        providerResourceId: RESOURCE_ID,
+        providerConfig: {
+          version: 1,
+          sourceType: "github",
+          type: "repository",
+          repoId: RESOURCE_ID,
+          sync: { autoSync: true },
+        },
+      });
+    }
+
+    const eventStoreHandler = neuralCapturedHandlers.get(
+      "apps-console/event.store"
+    );
+    const entityGraphHandler = neuralCapturedHandlers.get(
+      "apps-console/entity.graph"
+    );
+    expect(eventStoreHandler).toBeDefined();
+    expect(entityGraphHandler).toBeDefined();
+
+    interface StepSendEventData {
+      data: Record<string, unknown>;
+      name: string;
+    }
+    let expectedEdgeCount: number | null = null;
+
+    const result = await withEventPermutations({
+      effects: events.map((evt) => ({
+        label: evt.sourceId,
+        deliver: async () => {
+          const step = makeStep();
+          const esResult = (await eventStoreHandler!({
+            event: {
+              id: `test-run-${Date.now()}`,
+              data: {
+                workspaceId: "ws_graph001",
+                clerkOrgId: "org_graph001",
+                sourceEvent: evt,
+              },
+            },
+            step,
+          })) as { status: string } | undefined;
+
+          if (esResult?.status !== "stored") {
+            return;
+          }
+
+          const sendCalls = step.sendEvent.mock.calls as [
+            string,
+            StepSendEventData,
+          ][];
+          const upsertedCall = sendCalls.find(
+            ([, e]) => e.name === "apps-console/entity.upserted"
+          );
+          if (!upsertedCall) {
+            return;
+          }
+
+          const graphStep = makeStep();
+          await entityGraphHandler!({
+            event: { data: upsertedCall[1].data },
+            step: graphStep,
+          });
+        },
+      })),
+
+      setup: async () => {
+        vi.clearAllMocks();
+        restoreMockImpls();
+        await seedGraphFixtures();
+      },
+
+      reset: async () => {
+        await resetStores();
+      },
+
+      invariant: async () => {
+        const edges = await db.select().from(workspaceEntityEdges);
+        if (expectedEdgeCount === null) {
+          // First permutation: capture the count and assert edges were created.
+          expectedEdgeCount = edges.length;
+          expect(edges.length).toBeGreaterThan(0);
+        } else {
+          // Subsequent permutations: assert convergence (same count for every ordering).
+          expect(edges.length).toBe(expectedEdgeCount);
+        }
+      },
+    });
+
+    expect(result.failures).toHaveLength(0);
+    expect(result.permutationsRun).toBe(6); // 3! = 6
   });
 });

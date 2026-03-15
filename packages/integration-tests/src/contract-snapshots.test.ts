@@ -16,7 +16,7 @@
  * No external network calls. Each test makes a single in-process HTTP call.
  */
 
-import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import { gatewayInstallations, gatewayResources, gatewayTokens } from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
 import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
@@ -250,7 +250,7 @@ describe("0.1 — Boundary contract shapes", () => {
       orgId: "org-snap-2",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const resource = fixtures.resource({
       installationId: inst.id,
@@ -258,7 +258,7 @@ describe("0.1 — Boundary contract shapes", () => {
       resourceName: "snap-repo",
       status: "active",
     });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     const res = await connReq(`/services/gateway/${inst.id}`);
     expect(res.status).toBe(200);
@@ -273,7 +273,7 @@ describe("0.1 — Boundary contract shapes", () => {
       orgId: "org-snap-3",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const encryptedToken = await encrypt(
       "snap-access-token-xyz",
@@ -283,7 +283,7 @@ describe("0.1 — Boundary contract shapes", () => {
       installationId: inst.id,
       accessToken: encryptedToken,
     });
-    await db.insert(gwTokens).values(token);
+    await db.insert(gatewayTokens).values(token);
 
     const res = await connReq(`/services/gateway/${inst.id}/token`);
     expect(res.status).toBe(200);
@@ -305,5 +305,60 @@ describe("0.1 — Boundary contract shapes", () => {
       receivedAt: 1_700_000_000_000,
     };
     expect(shapeOf(dispatchBody)).toMatchSnapshot();
+  });
+
+  it("Shape 4: Backfill orchestrator → Gateway: upsertBackfillRun POST body", () => {
+    // Matches BackfillRunRecord schema sent by orchestrator persist-run-records step.
+    // If backfill-orchestrator.ts changes the upsert body, update this fixture.
+    const upsertBody = {
+      entityType: "pull_request",
+      since: "2026-01-01T00:00:00.000Z",
+      depth: 30,
+      status: "completed",
+      pagesProcessed: 5,
+      eventsProduced: 42,
+      eventsDispatched: 42,
+      error: undefined,
+    };
+    expect(shapeOf(upsertBody)).toMatchSnapshot();
+  });
+
+  it("Shape 5: Backfill entity worker → Gateway: executeApi POST body", () => {
+    // Matches the request object passed to gw.executeApi by entity-worker.ts.
+    // pathParams and queryParams are provider-specific (set by buildRequest).
+    const executeApiBody = {
+      endpointId: "list-pull-requests",
+      pathParams: { owner: "org", repo: "repo" },
+      queryParams: { state: "all", per_page: "100", page: "1" },
+    };
+    expect(shapeOf(executeApiBody)).toMatchSnapshot();
+  });
+
+  it("Shape 6: Backfill orchestrator → Relay: replayCatchup POST body", () => {
+    // Matches the payload sent by orchestrator replay-held-webhooks step.
+    const catchupBody = {
+      installationId: "inst-snap-6",
+      batchSize: 200,
+    };
+    expect(shapeOf(catchupBody)).toMatchSnapshot();
+  });
+
+  it("Shape 7: Relay replayCatchup response shapes (normal + empty)", () => {
+    // Normal response: remaining count returned after replay batch
+    const normalResponse = {
+      status: "replayed",
+      replayed: ["del-1", "del-2"],
+      skipped: [],
+      failed: [],
+      remaining: 42,
+    };
+    expect(shapeOf(normalResponse)).toMatchSnapshot();
+
+    // Empty response: no un-delivered webhooks found
+    const emptyResponse = {
+      status: "empty",
+      message: "No un-delivered webhooks found",
+    };
+    expect(shapeOf(emptyResponse)).toMatchSnapshot();
   });
 });

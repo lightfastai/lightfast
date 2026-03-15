@@ -1,9 +1,9 @@
 import { db } from "@db/console/client";
 import {
-  gwBackfillRuns,
-  gwInstallations,
-  gwResources,
-  gwTokens,
+  gatewayBackfillRuns,
+  gatewayInstallations,
+  gatewayResources,
+  gatewayTokens,
 } from "@db/console/schema";
 import type {
   ProviderDefinition,
@@ -200,14 +200,14 @@ connections.get("/:provider/callback", async (c) => {
     if (installationId) {
       const existing = await db
         .select({
-          orgId: gwInstallations.orgId,
-          connectedBy: gwInstallations.connectedBy,
+          orgId: gatewayInstallations.orgId,
+          connectedBy: gatewayInstallations.connectedBy,
         })
-        .from(gwInstallations)
+        .from(gatewayInstallations)
         .where(
           and(
-            eq(gwInstallations.provider, "github"),
-            eq(gwInstallations.externalId, installationId)
+            eq(gatewayInstallations.provider, "github"),
+            eq(gatewayInstallations.externalId, installationId)
           )
         )
         .limit(1);
@@ -298,12 +298,12 @@ connections.get("/:provider/callback", async (c) => {
 
     // For all connected statuses: detect reactivation and upsert installation
     const existingRows = await db
-      .select({ id: gwInstallations.id })
-      .from(gwInstallations)
+      .select({ id: gatewayInstallations.id })
+      .from(gatewayInstallations)
       .where(
         and(
-          eq(gwInstallations.provider, providerName),
-          eq(gwInstallations.externalId, result.externalId)
+          eq(gatewayInstallations.provider, providerName),
+          eq(gatewayInstallations.externalId, result.externalId)
         )
       )
       .limit(1);
@@ -312,7 +312,7 @@ connections.get("/:provider/callback", async (c) => {
 
     // Upsert installation — idempotent on (provider, externalId)
     const rows = await db
-      .insert(gwInstallations)
+      .insert(gatewayInstallations)
       .values({
         provider: providerName,
         externalId: result.externalId,
@@ -322,7 +322,7 @@ connections.get("/:provider/callback", async (c) => {
         providerAccountInfo: result.accountInfo,
       })
       .onConflictDoUpdate({
-        target: [gwInstallations.provider, gwInstallations.externalId],
+        target: [gatewayInstallations.provider, gatewayInstallations.externalId],
         set: {
           status: "active",
           connectedBy,
@@ -331,7 +331,7 @@ connections.get("/:provider/callback", async (c) => {
           updatedAt: new Date().toISOString(),
         },
       })
-      .returning({ id: gwInstallations.id });
+      .returning({ id: gatewayInstallations.id });
 
     const installation = rows[0];
     if (!installation) {
@@ -464,8 +464,8 @@ connections.get("/:provider/callback", async (c) => {
 connections.get("/:id", apiKeyAuth, async (c) => {
   const id = c.req.param("id");
 
-  const installation = await db.query.gwInstallations.findFirst({
-    where: eq(gwInstallations.id, id),
+  const installation = await db.query.gatewayInstallations.findFirst({
+    where: eq(gatewayInstallations.id, id),
     with: {
       tokens: {
         columns: {
@@ -476,7 +476,7 @@ connections.get("/:id", apiKeyAuth, async (c) => {
           updatedAt: true,
         },
       },
-      resources: { where: eq(gwResources.status, "active") },
+      resources: { where: eq(gatewayResources.status, "active") },
     },
   });
 
@@ -519,8 +519,8 @@ async function getActiveTokenForInstallation(
 ): Promise<{ token: string; expiresAt: string | null }> {
   const tokenRows = await db
     .select()
-    .from(gwTokens)
-    .where(eq(gwTokens.installationId, installation.id))
+    .from(gatewayTokens)
+    .where(eq(gatewayTokens.installationId, installation.id))
     .limit(1);
 
   const tokenRow = tokenRows[0];
@@ -577,8 +577,8 @@ async function forceRefreshToken(
 ): Promise<string | null> {
   const tokenRows = await db
     .select()
-    .from(gwTokens)
-    .where(eq(gwTokens.installationId, installation.id))
+    .from(gatewayTokens)
+    .where(eq(gatewayTokens.installationId, installation.id))
     .limit(1);
   const row = tokenRows[0];
 
@@ -633,8 +633,8 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
 
   const installationRows = await db
     .select()
-    .from(gwInstallations)
-    .where(eq(gwInstallations.id, id))
+    .from(gatewayInstallations)
+    .where(eq(gatewayInstallations.id, id))
     .limit(1);
 
   const installation = installationRows[0];
@@ -696,8 +696,8 @@ connections.get("/:id/token", apiKeyAuth, async (c) => {
 connections.get("/:id/proxy/endpoints", apiKeyAuth, async (c) => {
   const id = c.req.param("id");
 
-  const installation = await db.query.gwInstallations.findFirst({
-    where: eq(gwInstallations.id, id),
+  const installation = await db.query.gatewayInstallations.findFirst({
+    where: eq(gatewayInstallations.id, id),
   });
 
   if (!installation) {
@@ -757,15 +757,19 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
     return c.json({ error: "missing_endpoint_id" }, 400);
   }
 
-  const installation = await db.query.gwInstallations.findFirst({
-    where: eq(gwInstallations.id, id),
+  const installation = await db.query.gatewayInstallations.findFirst({
+    where: eq(gatewayInstallations.id, id),
   });
 
   if (!installation) {
+    console.warn(`[proxy/execute] installation not found: ${id}`);
     return c.json({ error: "not_found" }, 404);
   }
 
   if (installation.status !== "active") {
+    console.warn(
+      `[proxy/execute] installation_not_active: id=${id} status=${installation.status}`
+    );
     return c.json(
       { error: "installation_not_active", status: installation.status },
       400
@@ -775,6 +779,7 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   const providerName = installation.provider;
   const providerDef = getProvider(providerName);
   if (!providerDef) {
+    console.warn(`[proxy/execute] unknown_provider: ${providerName} for id=${id}`);
     return c.json({ error: "unknown_provider" }, 400);
   }
 
@@ -783,6 +788,9 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   // Validate endpoint exists in catalog
   const endpoint = providerDef.api.endpoints[body.endpointId];
   if (!endpoint) {
+    console.warn(
+      `[proxy/execute] unknown_endpoint: endpointId=${body.endpointId} provider=${providerName} available=[${Object.keys(providerDef.api.endpoints).join(", ")}]`
+    );
     return c.json(
       {
         error: "unknown_endpoint",
@@ -793,17 +801,23 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
     );
   }
 
-  // Get active token
+  // Get active token.
+  // If the endpoint declares its own buildAuth, use it (e.g. GitHub App JWT for app-level
+  // endpoints). Otherwise fall through to the default per-installation token flow.
   let token: string;
   try {
-    // SAFETY: getProvider() returns the full generic ProviderDefinition<TConfig, ...>
-    // but the helper takes the base ProviderDefinition. The generic parameters are
-    // erased at runtime — the cast is safe because the concrete type is a supertype.
-    ({ token } = await getActiveTokenForInstallation(
-      installation,
-      config,
-      providerDef as ProviderDefinition
-    ));
+    if (endpoint.buildAuth) {
+      token = await endpoint.buildAuth(config);
+    } else {
+      // SAFETY: getProvider() returns the full generic ProviderDefinition<TConfig, ...>
+      // but the helper takes the base ProviderDefinition. The generic parameters are
+      // erased at runtime — the cast is safe because the concrete type is a supertype.
+      ({ token } = await getActiveTokenForInstallation(
+        installation,
+        config,
+        providerDef as ProviderDefinition
+      ));
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "token_error";
     console.error(`[${providerName}] proxy token error:`, err);
@@ -849,14 +863,23 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   let response = await fetch(url, fetchOptions);
 
   if (response.status === 401) {
-    // SAFETY: getProvider() returns the full generic ProviderDefinition<TConfig, ...>
-    // but the helper takes the base ProviderDefinition. The generic parameters are
-    // erased at runtime — the cast is safe because the concrete type is a supertype.
-    const freshToken = await forceRefreshToken(
-      installation,
-      config,
-      providerDef as ProviderDefinition
-    );
+    let freshToken: string | null = null;
+    if (endpoint.buildAuth) {
+      try {
+        freshToken = await endpoint.buildAuth(config);
+      } catch {
+        // ignore — fall through without retry
+      }
+    } else {
+      // SAFETY: getProvider() returns the full generic ProviderDefinition<TConfig, ...>
+      // but the helper takes the base ProviderDefinition. The generic parameters are
+      // erased at runtime — the cast is safe because the concrete type is a supertype.
+      freshToken = await forceRefreshToken(
+        installation,
+        config,
+        providerDef as ProviderDefinition
+      );
+    }
     if (freshToken && freshToken !== token) {
       headers.Authorization = providerDef.api.buildAuthHeader
         ? providerDef.api.buildAuthHeader(freshToken)
@@ -871,6 +894,10 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   response.headers.forEach((value, key) => {
     responseHeaders[key] = value;
   });
+
+  console.log(
+    `[proxy/execute] ${installation.provider}/${body.endpointId} → ${response.status} (id=${id})`
+  );
 
   return c.json({
     status: response.status,
@@ -892,11 +919,11 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
 
   const installationRows = await db
     .select()
-    .from(gwInstallations)
+    .from(gatewayInstallations)
     .where(
       and(
-        eq(gwInstallations.id, id),
-        eq(gwInstallations.provider, providerName)
+        eq(gatewayInstallations.id, id),
+        eq(gatewayInstallations.provider, providerName)
       )
     )
     .limit(1);
@@ -934,8 +961,8 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
 
   const installationRows = await db
     .select()
-    .from(gwInstallations)
-    .where(eq(gwInstallations.id, id))
+    .from(gatewayInstallations)
+    .where(eq(gatewayInstallations.id, id))
     .limit(1);
 
   const installation = installationRows[0];
@@ -963,13 +990,13 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
   }
 
   const existingRows = await db
-    .select({ id: gwResources.id })
-    .from(gwResources)
+    .select({ id: gatewayResources.id })
+    .from(gatewayResources)
     .where(
       and(
-        eq(gwResources.installationId, id),
-        eq(gwResources.providerResourceId, body.providerResourceId),
-        eq(gwResources.status, "active")
+        eq(gatewayResources.installationId, id),
+        eq(gatewayResources.providerResourceId, body.providerResourceId),
+        eq(gatewayResources.status, "active")
       )
     )
     .limit(1);
@@ -984,7 +1011,7 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
   }
 
   const resourceRows = await db
-    .insert(gwResources)
+    .insert(gatewayResources)
     .values({
       installationId: id,
       providerResourceId: body.providerResourceId,
@@ -992,7 +1019,7 @@ connections.post("/:id/resources", apiKeyAuth, async (c) => {
       status: "active",
     })
     .onConflictDoUpdate({
-      target: [gwResources.installationId, gwResources.providerResourceId],
+      target: [gatewayResources.installationId, gatewayResources.providerResourceId],
       set: {
         status: "active",
         resourceName: body.resourceName,
@@ -1034,9 +1061,9 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
 
   const resourceRows = await db
     .select()
-    .from(gwResources)
+    .from(gatewayResources)
     .where(
-      and(eq(gwResources.id, resourceId), eq(gwResources.installationId, id))
+      and(eq(gatewayResources.id, resourceId), eq(gatewayResources.installationId, id))
     )
     .limit(1);
 
@@ -1051,14 +1078,14 @@ connections.delete("/:id/resources/:resourceId", apiKeyAuth, async (c) => {
   }
 
   await db
-    .update(gwResources)
+    .update(gatewayResources)
     .set({ status: "removed" })
-    .where(eq(gwResources.id, resourceId));
+    .where(eq(gatewayResources.id, resourceId));
 
   const installationRows = await db
-    .select({ provider: gwInstallations.provider })
-    .from(gwInstallations)
-    .where(eq(gwInstallations.id, id))
+    .select({ provider: gatewayInstallations.provider })
+    .from(gatewayInstallations)
+    .where(eq(gatewayInstallations.id, id))
     .limit(1);
 
   const installation = installationRows[0];
@@ -1079,23 +1106,23 @@ connections.get("/:id/backfill-runs", apiKeyAuth, async (c) => {
   const installationId = c.req.param("id");
   const statusFilter = c.req.query("status");
 
-  const conditions = [eq(gwBackfillRuns.installationId, installationId)];
+  const conditions = [eq(gatewayBackfillRuns.installationId, installationId)];
   if (statusFilter) {
-    conditions.push(eq(gwBackfillRuns.status, statusFilter));
+    conditions.push(eq(gatewayBackfillRuns.status, statusFilter));
   }
 
   const runs = await db
     .select({
-      entityType: gwBackfillRuns.entityType,
-      since: gwBackfillRuns.since,
-      depth: gwBackfillRuns.depth,
-      status: gwBackfillRuns.status,
-      pagesProcessed: gwBackfillRuns.pagesProcessed,
-      eventsProduced: gwBackfillRuns.eventsProduced,
-      eventsDispatched: gwBackfillRuns.eventsDispatched,
-      completedAt: gwBackfillRuns.completedAt,
+      entityType: gatewayBackfillRuns.entityType,
+      since: gatewayBackfillRuns.since,
+      depth: gatewayBackfillRuns.depth,
+      status: gatewayBackfillRuns.status,
+      pagesProcessed: gatewayBackfillRuns.pagesProcessed,
+      eventsProduced: gatewayBackfillRuns.eventsProduced,
+      eventsDispatched: gatewayBackfillRuns.eventsDispatched,
+      completedAt: gatewayBackfillRuns.completedAt,
     })
-    .from(gwBackfillRuns)
+    .from(gatewayBackfillRuns)
     .where(and(...conditions));
 
   return c.json(runs);
@@ -1139,7 +1166,7 @@ connections.post("/:id/backfill-runs", apiKeyAuth, async (c) => {
   };
 
   await db
-    .insert(gwBackfillRuns)
+    .insert(gatewayBackfillRuns)
     .values({
       installationId,
       entityType: data.entityType,
@@ -1147,7 +1174,7 @@ connections.post("/:id/backfill-runs", apiKeyAuth, async (c) => {
       startedAt: data.status === "running" ? now : null,
     })
     .onConflictDoUpdate({
-      target: [gwBackfillRuns.installationId, gwBackfillRuns.entityType],
+      target: [gatewayBackfillRuns.installationId, gatewayBackfillRuns.entityType],
       set: sharedFields,
     });
 

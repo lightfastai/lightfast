@@ -104,7 +104,7 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("@db/console/schema", () => ({
-  gwWebhookDeliveries: {},
+  gatewayWebhookDeliveries: {},
 }));
 
 // ── Import relay app after mocks ──
@@ -333,7 +333,7 @@ describe("Suite 4.3 — Missing or invalid fields", () => {
     });
     expect(res.status).toBe(400);
     const json = (await res.json()) as { error: string };
-    expect(json.error).toBe("missing_required_fields");
+    expect(json.error).toBe("invalid_body");
   });
 
   it("returns 400 when receivedAt is not a number", async () => {

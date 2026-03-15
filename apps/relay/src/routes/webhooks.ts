@@ -1,5 +1,5 @@
 import { db } from "@db/console/client";
-import { gwWebhookDeliveries } from "@db/console/schema";
+import { gatewayWebhookDeliveries } from "@db/console/schema";
 import type {
   WebhookEnvelope,
   WebhookReceiptPayload,
@@ -78,7 +78,7 @@ webhooks.post(
 
       // Persist for long-term replayability
       await db
-        .insert(gwWebhookDeliveries)
+        .insert(gatewayWebhookDeliveries)
         .values({
           provider: providerName,
           deliveryId,
@@ -119,12 +119,12 @@ webhooks.post(
       // Update persisted status — best-effort after QStash accepted
       try {
         await db
-          .update(gwWebhookDeliveries)
+          .update(gatewayWebhookDeliveries)
           .set({ status: "enqueued" })
           .where(
             and(
-              eq(gwWebhookDeliveries.provider, providerName),
-              eq(gwWebhookDeliveries.deliveryId, deliveryId)
+              eq(gatewayWebhookDeliveries.provider, providerName),
+              eq(gatewayWebhookDeliveries.deliveryId, deliveryId)
             )
           );
       } catch (err) {
