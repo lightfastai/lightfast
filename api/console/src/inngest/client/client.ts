@@ -62,6 +62,8 @@ const eventsMap = {
     sourceEvent: postTransformEventSchema,
     /** How this event was ingested (webhook, backfill, manual, api). Defaults to "webhook" in the consumer. */
     ingestionSource: ingestionSourceSchema.optional(),
+    /** FK back to workspaceIngestLogs.id — null for backfill and test-data paths */
+    ingestLogId: z.number().optional(),
   }),
 
   /**

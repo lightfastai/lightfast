@@ -150,6 +150,7 @@ export const eventStore = inngest.createFunction(
       workspaceId,
       clerkOrgId: eventClerkOrgId,
       sourceEvent,
+      ingestLogId,
     } = event.data;
 
     // Generate replay-safe values inside steps so they're memoized across retries.
@@ -353,6 +354,8 @@ export const eventStore = inngest.createFunction(
         value: undefined,
         confidence: 1.0,
         evidence: `Primary entity: ${sourceEvent.entity.entityType}`,
+        state: sourceEvent.entity.state ?? undefined,
+        url: sourceEvent.entity.url ?? undefined,
       };
 
       // Primary entity first — Map insertion order preserved, so it is always
@@ -398,6 +401,7 @@ export const eventStore = inngest.createFunction(
           sourceReferences: sourceEvent.relations,
           metadata: sourceEvent.attributes,
           ingestionSource: event.data.ingestionSource ?? "webhook",
+          ingestLogId: ingestLogId ?? null,
           significanceScore: significance.score,
         })
         .returning();
@@ -436,6 +440,8 @@ export const eventStore = inngest.createFunction(
                 value: entity.value,
                 evidenceSnippet: entity.evidence,
                 confidence: entity.confidence,
+                state: entity.state ?? null,
+                url: entity.url ?? null,
               })
               .onConflictDoUpdate({
                 target: [
@@ -447,6 +453,8 @@ export const eventStore = inngest.createFunction(
                   lastSeenAt: new Date().toISOString(),
                   occurrenceCount: sql`${workspaceEntities.occurrenceCount} + 1`,
                   updatedAt: new Date().toISOString(),
+                  state: sql`EXCLUDED.state`,
+                  url: sql`COALESCE(EXCLUDED.url, ${workspaceEntities.url})`,
                 },
               })
               .returning({
@@ -473,6 +481,7 @@ export const eventStore = inngest.createFunction(
               entityId,
               eventId: observation.id,
               workspaceId,
+              category: entity.category,
               // Only structural ref entities carry a contextual relationship label.
               // The primary entity (index 0) has value=undefined → refLabel=null.
               refLabel: STRUCTURAL_TYPES.has(entity.category)

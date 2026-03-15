@@ -88,9 +88,9 @@ cd db/console && pnpm db:generate && pnpm db:migrate
 ### Success Criteria
 
 #### Automated Verification
-- [ ] Migration generates cleanly: `cd db/console && pnpm db:generate`
-- [ ] Migration applies: `cd db/console && pnpm db:migrate`
-- [ ] Schema types compile: `pnpm typecheck`
+- [x] Migration generates cleanly: `cd db/console && pnpm db:generate`
+- [x] Migration applies: `cd db/console && pnpm db:migrate`
+- [x] Schema types compile: `pnpm typecheck`
 
 #### Manual Verification
 - [ ] Drizzle studio shows new columns on all four tables: `cd db/console && pnpm db:studio`
@@ -218,8 +218,8 @@ return {
 ### Success Criteria
 
 #### Automated Verification
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm check`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm check`
 - [ ] Unit tests pass: `pnpm --filter @api/console test`
 - [ ] Integration tests pass: `pnpm --filter @packages/integration-tests test`
 
@@ -273,8 +273,8 @@ The `target` matches `edge_unique_idx` at `workspace-entity-edges.ts:75–80`. `
 ### Success Criteria
 
 #### Automated Verification
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm check`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm check`
 - [ ] Integration test `event-ordering.integration.test.ts` passes (contains full scan of `workspaceEntityEdges`)
 
 #### Manual Verification
@@ -344,8 +344,8 @@ Note: `key` is removed from the map entry type because it was stored but never r
 ### Success Criteria
 
 #### Automated Verification
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm check`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm check`
 - [ ] Integration test `event-ordering.integration.test.ts` passes
 - [ ] Neural pipeline integration test `neural-pipeline.integration.test.ts` passes
 
@@ -399,10 +399,10 @@ cd db/console && pnpm db:generate && pnpm db:migrate
 ### Success Criteria
 
 #### Automated Verification
-- [ ] Migration generates cleanly: `cd db/console && pnpm db:generate`
-- [ ] Migration applies: `cd db/console && pnpm db:migrate`
-- [ ] Type checking passes: `pnpm typecheck` (no references to removed columns)
-- [ ] Linting passes: `pnpm check`
+- [x] Migration generates cleanly: `cd db/console && pnpm db:generate`
+- [x] Migration applies: `cd db/console && pnpm db:migrate`
+- [x] Type checking passes: `pnpm typecheck` (no references to removed columns)
+- [x] Linting passes: `pnpm check`
 - [ ] Integration tests pass: `pnpm --filter @packages/integration-tests test`
 
 #### Manual Verification

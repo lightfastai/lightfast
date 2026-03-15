@@ -73,8 +73,6 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
       .values({
         workspaceId: workspace.workspaceId,
         deliveryId: envelope.deliveryId,
-        source: envelope.provider,
-        sourceType: sourceEvent.eventType,
         sourceEvent,
         receivedAt: new Date(envelope.receivedAt).toISOString(),
         ingestionSource: "webhook",
@@ -87,7 +85,7 @@ export const { POST } = serve<WebhookEnvelope>(async (context) => {
 
     // Fan out to consumers in parallel
     await Promise.all([
-      publishInngestNotification(sourceEvent, workspace),
+      publishInngestNotification(sourceEvent, workspace, record.id),
       publishEventNotification({
         orgId: envelope.orgId,
         workspaceId: workspace.workspaceId,

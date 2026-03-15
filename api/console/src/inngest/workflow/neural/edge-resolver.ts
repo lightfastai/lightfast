@@ -114,6 +114,7 @@ export async function resolveEdges(
         eventId: workspaceEventEntities.eventId,
         entityId: workspaceEventEntities.entityId,
         refLabel: workspaceEventEntities.refLabel,
+        category: workspaceEventEntities.category,
       })
       .from(workspaceEventEntities)
       .where(inArray(workspaceEventEntities.eventId, coEventIds)),
@@ -121,46 +122,30 @@ export async function resolveEdges(
 
   const coEventSourceMap = new Map(coEvents.map((e) => [e.id, e.source]));
 
-  // 5. Load ALL entity refs for co-occurring events
-
-  // Load entity details for co-occurring events' entities
-  const coEntityIds = [
-    ...new Set(coEventEntityJunctions.map((j) => j.entityId)),
-  ];
-  const allCoEntities = await db
-    .select({
-      id: workspaceEntities.id,
-      category: workspaceEntities.category,
-      key: workspaceEntities.key,
-    })
-    .from(workspaceEntities)
-    .where(inArray(workspaceEntities.id, coEntityIds));
-
-  const coEntityMap = new Map(allCoEntities.map((e) => [e.id, e]));
-
-  // Group co-event junctions by event ID
+  // 5. Build co-event entity map directly from junction rows (category is now denormalized)
   const coEventEntitiesMap = new Map<
     number,
     Array<{
       entityId: number;
       category: string;
-      key: string;
       refLabel: string | null;
     }>
   >();
   for (const j of coEventEntityJunctions) {
-    const entity = coEntityMap.get(j.entityId);
-    if (!entity) {
+    if (!j.category) {
+      // Pre-migration rows without category — skip (cannot evaluate rules)
       continue;
     }
-    const arr = coEventEntitiesMap.get(j.eventId) ?? [];
+    let arr = coEventEntitiesMap.get(j.eventId);
+    if (!arr) {
+      arr = [];
+      coEventEntitiesMap.set(j.eventId, arr);
+    }
     arr.push({
       entityId: j.entityId,
-      category: entity.category,
-      key: entity.key,
+      category: j.category,
       refLabel: j.refLabel,
     });
-    coEventEntitiesMap.set(j.eventId, arr);
   }
 
   // 6. Evaluate cross-entity-type rules
@@ -258,7 +243,22 @@ export async function resolveEdges(
   }));
 
   try {
-    await db.insert(workspaceEntityEdges).values(inserts).onConflictDoNothing();
+    await db
+      .insert(workspaceEntityEdges)
+      .values(inserts)
+      .onConflictDoUpdate({
+        target: [
+          workspaceEntityEdges.workspaceId,
+          workspaceEntityEdges.sourceEntityId,
+          workspaceEntityEdges.targetEntityId,
+          workspaceEntityEdges.relationshipType,
+        ],
+        set: {
+          confidence: sql`GREATEST(EXCLUDED.confidence, ${workspaceEntityEdges.confidence})`,
+          lastSeenAt: sql`CURRENT_TIMESTAMP`,
+          sourceEventId: sql`EXCLUDED.source_event_id`,
+        },
+      });
     log.info("Entity edges created", {
       eventId,
       count: inserts.length,

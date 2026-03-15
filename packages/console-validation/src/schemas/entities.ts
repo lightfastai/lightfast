@@ -81,6 +81,8 @@ export const extractedEntitySchema = z.object({
   evidence: z.string(),
   key: z.string(),
   value: z.string().optional(),
+  state: z.string().optional(),
+  url: z.string().optional(),
 });
 export type ExtractedEntity = z.infer<typeof extractedEntitySchema>;
 
