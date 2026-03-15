@@ -99,6 +99,7 @@ export type GatewayTokenResult = z.infer<typeof gatewayTokenResultSchema>;
 // ── Backfill Depth (internal) ──
 
 export const backfillDepthSchema = z.union([
+  z.literal(1),
   z.literal(7),
   z.literal(30),
   z.literal(90),
@@ -116,7 +117,7 @@ export type GwInstallationBackfillConfig = z.infer<
 
 /** Ordered options for UI depth selectors. */
 export const BACKFILL_DEPTH_OPTIONS = [
-  7, 30, 90,
+  1, 7, 30, 90,
 ] as const satisfies readonly z.infer<typeof backfillDepthSchema>[];
 
 // ── Backfill Run Statuses (internal) ──
@@ -143,7 +144,7 @@ export const backfillTriggerPayload = z.object({
   installationId: z.string().min(1),
   provider: sourceTypeSchema,
   orgId: z.string().min(1),
-  depth: backfillDepthSchema.default(30),
+  depth: backfillDepthSchema.default(1),
   entityTypes: z.array(z.string()).optional(),
   holdForReplay: z.boolean().optional(),
   /** Cross-service correlation ID for distributed tracing */

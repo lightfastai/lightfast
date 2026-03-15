@@ -130,13 +130,13 @@ describe("POST /trigger/", () => {
     });
   });
 
-  it("depth defaults to 30 when not provided in body", async () => {
+  it("depth defaults to 1 when not provided in body", async () => {
     await request("/trigger", {
       body: validBody,
       headers: { "X-API-Key": "test-key" },
     });
     const call = mockInngestSend.mock.calls[0]![0];
-    expect(call.data.depth).toBe(30);
+    expect(call.data.depth).toBe(1);
   });
 
   it("custom depth: 90 passes through", async () => {

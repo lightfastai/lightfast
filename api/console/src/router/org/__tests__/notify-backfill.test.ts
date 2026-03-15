@@ -123,7 +123,7 @@ describe("notifyBackfill", () => {
     );
   });
 
-  it("falls back to depth 30 when DB has no backfillConfig", async () => {
+  it("falls back to depth 1 when DB has no backfillConfig", async () => {
     mockTrigger.mockResolvedValue({ status: "ok", installationId: "inst-1" });
     mockFindFirst.mockResolvedValue(null);
 
@@ -134,7 +134,7 @@ describe("notifyBackfill", () => {
     });
 
     expect(mockTrigger).toHaveBeenCalledWith(
-      expect.objectContaining({ depth: 30 })
+      expect.objectContaining({ depth: 1 })
     );
   });
 

@@ -770,6 +770,13 @@ export const workspaceRouter = {
             .update(workspaceIntegrations)
             .set({ isActive: true, updatedAt: now })
             .where(inArray(workspaceIntegrations.id, toReactivate));
+
+          // Trigger backfill for reactivated sources (best-effort)
+          void notifyBackfill({
+            installationId: gwInstallationId,
+            provider,
+            orgId: ctx.auth.orgId,
+          });
         }
 
         // 6. Create new integrations
@@ -844,7 +851,9 @@ export const workspaceRouter = {
         const conditions = [eq(workspaceIngestLogs.workspaceId, workspaceId)];
 
         if (input.source) {
-          conditions.push(eq(workspaceIngestLogs.source, input.source));
+          conditions.push(
+            sql`${workspaceIngestLogs.sourceEvent}->>'provider' = ${input.source}`
+          );
         }
 
         if (cursor) {
@@ -864,8 +873,9 @@ export const workspaceRouter = {
         const rows = await db
           .select({
             id: workspaceIngestLogs.id,
-            source: workspaceIngestLogs.source,
-            sourceType: workspaceIngestLogs.sourceType,
+            source: sql<string>`${workspaceIngestLogs.sourceEvent}->>'provider'`,
+            sourceType:
+              sql<string>`${workspaceIngestLogs.sourceEvent}->>'eventType'`,
             sourceEvent: workspaceIngestLogs.sourceEvent,
             ingestionSource: workspaceIngestLogs.ingestionSource,
             receivedAt: workspaceIngestLogs.receivedAt,
@@ -901,7 +911,7 @@ export async function notifyBackfill(params: {
   installationId: string;
   provider: SourceType;
   orgId: string;
-  depth?: 7 | 30 | 90;
+  depth?: 1 | 7 | 30 | 90;
   entityTypes?: string[];
   holdForReplay?: boolean;
   correlationId?: string;
@@ -935,7 +945,7 @@ export async function notifyBackfill(params: {
       } else {
         console.log("[notifyBackfill] no backfillConfig in DB, using hardcoded fallback", {
           installationId: params.installationId,
-          fallbackDepth: resolvedDepth ?? 30,
+          fallbackDepth: resolvedDepth ?? 1,
         });
       }
     } catch (err) {
@@ -950,7 +960,7 @@ export async function notifyBackfill(params: {
     installationId: params.installationId,
     provider: params.provider,
     orgId: params.orgId,
-    depth: resolvedDepth ?? 30,
+    depth: resolvedDepth ?? 1,
     entityTypes: resolvedEntityTypes,
     holdForReplay: params.holdForReplay,
   };
