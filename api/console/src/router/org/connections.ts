@@ -1,14 +1,11 @@
-import { gwInstallations, workspaceIntegrations } from "@db/console/schema";
+import { gatewayInstallations } from "@db/console/schema";
 import {
-  createGitHubApp,
-  getAppInstallation,
-  getInstallationRepositories,
-} from "@repo/console-octokit-github";
-import {
+  getProvider,
   gwInstallationBackfillConfigSchema,
+  type NormalizedInstallation,
+  type ResourcePickerExecuteApiFn,
   sourceTypeSchema,
 } from "@repo/console-providers";
-import type { VercelProjectsResponse } from "@repo/console-vercel/types";
 import { createGatewayClient } from "@repo/gateway-service-clients";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
@@ -16,7 +13,6 @@ import { and, eq } from "drizzle-orm";
 import yaml from "yaml";
 import { z } from "zod";
 import { env } from "../../env";
-import { getInstallationToken } from "../../lib/token-vault";
 import { apiKeyProcedure, orgScopedProcedure } from "../../trpc";
 
 /**
@@ -25,22 +21,9 @@ import { apiKeyProcedure, orgScopedProcedure } from "../../trpc";
  * Manages org-level OAuth connections (GitHub, Vercel, Linear, etc.)
  * Queries gw_installations directly (org-scoped).
  *
- * Table: gwInstallations (lightfast_gw_installations)
+ * Table: gatewayInstallations (lightfast_gateway_installations)
  * Scope: Org-scoped (active org required)
  */
-
-/**
- * Helper: Create GitHub App instance
- */
-function getGitHubApp() {
-  return createGitHubApp(
-    {
-      appId: env.GITHUB_APP_ID,
-      privateKey: env.GITHUB_APP_PRIVATE_KEY,
-    },
-    true // Format private key
-  );
-}
 
 export const connectionsRouter = {
   /**
@@ -101,11 +84,11 @@ export const connectionsRouter = {
     try {
       const installations = await ctx.db
         .select()
-        .from(gwInstallations)
+        .from(gatewayInstallations)
         .where(
           and(
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.status, "active")
+            eq(gatewayInstallations.orgId, ctx.auth.orgId),
+            eq(gatewayInstallations.status, "active")
           )
         );
 
@@ -141,15 +124,15 @@ export const connectionsRouter = {
     )
     .mutation(async ({ ctx, input }) => {
       const result = await ctx.db
-        .update(gwInstallations)
+        .update(gatewayInstallations)
         .set({ status: "revoked" })
         .where(
           and(
-            eq(gwInstallations.id, input.integrationId),
-            eq(gwInstallations.orgId, ctx.auth.orgId)
+            eq(gatewayInstallations.id, input.integrationId),
+            eq(gatewayInstallations.orgId, ctx.auth.orgId)
           )
         )
-        .returning({ id: gwInstallations.id });
+        .returning({ id: gatewayInstallations.id });
 
       if (!result[0]) {
         throw new TRPCError({
@@ -164,7 +147,7 @@ export const connectionsRouter = {
   /**
    * Update backfill configuration for a gateway installation.
    *
-   * Stores depth + entityTypes on gwInstallations.backfillConfig.
+   * Stores depth + entityTypes on gatewayInstallations.backfillConfig.
    * Used by SourceSettingsForm and as defaults for notifyBackfill().
    */
   updateBackfillConfig: orgScopedProcedure
@@ -176,15 +159,15 @@ export const connectionsRouter = {
     )
     .mutation(async ({ ctx, input }) => {
       const result = await ctx.db
-        .update(gwInstallations)
+        .update(gatewayInstallations)
         .set({ backfillConfig: input.backfillConfig })
         .where(
           and(
-            eq(gwInstallations.id, input.installationId),
-            eq(gwInstallations.orgId, ctx.auth.orgId)
+            eq(gatewayInstallations.id, input.installationId),
+            eq(gatewayInstallations.orgId, ctx.auth.orgId)
           )
         )
-        .returning({ id: gwInstallations.id });
+        .returning({ id: gatewayInstallations.id });
 
       if (!result[0]) {
         throw new TRPCError({
@@ -201,88 +184,6 @@ export const connectionsRouter = {
    */
   github: {
     /**
-     * List org's GitHub installations
-     *
-     * Returns all active GitHub App installations accessible to the org,
-     * merged across gwInstallation rows with gwInstallationId tags.
-     */
-    list: orgScopedProcedure.query(async ({ ctx }) => {
-      const results = await ctx.db
-        .select()
-        .from(gwInstallations)
-        .where(
-          and(
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, "github"),
-            eq(gwInstallations.status, "active")
-          )
-        );
-
-      if (results.length === 0) {
-        return null;
-      }
-
-      // Resolve display data from GitHub API for each installation.
-      // Uses GitHub App JWT (no stored token needed).
-      // Falls back to externalId on API error.
-      const app = getGitHubApp();
-      const allInstallations = await Promise.all(
-        results
-          .filter((row) => row.providerAccountInfo?.sourceType === "github")
-          .map(async (row) => {
-            let accountLogin = row.externalId;
-            let accountType: "User" | "Organization" = "Organization";
-            let avatarUrl = "";
-
-            try {
-              const installationIdNumber = Number.parseInt(row.externalId, 10);
-              const details = await getAppInstallation(
-                app,
-                installationIdNumber
-              );
-              const account = details.account;
-
-              if (account && "login" in account) {
-                accountLogin = account.login || row.externalId;
-                accountType =
-                  "type" in account && account.type === "User"
-                    ? "User"
-                    : "Organization";
-                avatarUrl =
-                  "avatar_url" in account ? (account.avatar_url as string) : "";
-              }
-            } catch (error) {
-              console.warn(
-                "[connections.github.list] Failed to fetch installation details, using fallback:",
-                error
-              );
-            }
-
-            return {
-              id: row.externalId,
-              accountLogin,
-              accountType,
-              avatarUrl,
-              gwInstallationId: row.id,
-            };
-          })
-      );
-
-      const first = results[0];
-      if (!first) {
-        return null;
-      }
-      return {
-        id: first.id,
-        orgId: first.orgId,
-        provider: first.provider,
-        connectedAt: first.createdAt,
-        status: first.status,
-        installations: allInstallations,
-      };
-    }),
-
-    /**
      * Validate and refresh installations from GitHub API
      *
      * Re-fetches installations from GitHub using stored access token
@@ -293,12 +194,12 @@ export const connectionsRouter = {
     validate: orgScopedProcedure.mutation(async ({ ctx }) => {
       const result = await ctx.db
         .select()
-        .from(gwInstallations)
+        .from(gatewayInstallations)
         .where(
           and(
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, "github"),
-            eq(gwInstallations.status, "active")
+            eq(gatewayInstallations.orgId, ctx.auth.orgId),
+            eq(gatewayInstallations.provider, "github"),
+            eq(gatewayInstallations.status, "active")
           )
         )
         .limit(1);
@@ -321,26 +222,35 @@ export const connectionsRouter = {
       }
 
       try {
-        const app = getGitHubApp();
-        const installationIdNumber = Number.parseInt(
-          installation.externalId,
-          10
-        );
+        const gwValidate = createGatewayClient({
+          apiKey: env.GATEWAY_API_KEY,
+          requestSource: "console-trpc",
+          correlationId: crypto.randomUUID(),
+        });
 
-        // Validate that the installation still exists on GitHub (App JWT auth)
-        await getAppInstallation(app, installationIdNumber);
+        // Validate that the installation still exists on GitHub (App JWT auth via proxy)
+        const result = await gwValidate.executeApi(installation.id, {
+          endpointId: "get-app-installation",
+          pathParams: { installation_id: installation.externalId },
+        });
+
+        if (result.status !== 200) {
+          throw new Error(
+            `GitHub installation not found: status ${result.status}`
+          );
+        }
 
         // Update only lastValidatedAt — display data is resolved live, not cached
         const existingInfo = installation.providerAccountInfo;
         const now = new Date().toISOString();
         if (existingInfo?.sourceType === "github") {
           await ctx.db
-            .update(gwInstallations)
+            .update(gatewayInstallations)
             .set({
               providerAccountInfo: { ...existingInfo, lastValidatedAt: now },
               updatedAt: now,
             })
-            .where(eq(gwInstallations.id, installation.id));
+            .where(eq(gatewayInstallations.id, installation.id));
         }
 
         return { added: 0, removed: 0, total: 1 };
@@ -359,90 +269,6 @@ export const connectionsRouter = {
     }),
 
     /**
-     * Get repositories for a GitHub App installation
-     *
-     * Validates org owns the installation, then fetches repositories
-     * using a GitHub App installation token.
-     */
-    repositories: orgScopedProcedure
-      .input(
-        z.object({
-          integrationId: z.string(), // gwInstallations.id
-          installationId: z.string(), // GitHub App installation external ID
-        })
-      )
-      .query(async ({ ctx, input }) => {
-        // Verify org owns this installation
-        const result = await ctx.db
-          .select()
-          .from(gwInstallations)
-          .where(
-            and(
-              eq(gwInstallations.id, input.integrationId),
-              eq(gwInstallations.orgId, ctx.auth.orgId)
-            )
-          )
-          .limit(1);
-
-        const installation = result[0];
-
-        if (!installation) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Installation not found or access denied",
-          });
-        }
-
-        // Verify the GitHub App installation is accessible via the table column
-        if (installation.externalId !== input.installationId) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message:
-              "Installation not found or not accessible to this connection",
-          });
-        }
-
-        try {
-          const app = getGitHubApp();
-          const installationIdNumber = Number.parseInt(
-            input.installationId,
-            10
-          );
-
-          const { repositories } = await getInstallationRepositories(
-            app,
-            installationIdNumber
-          );
-
-          return repositories.map((repo) => ({
-            id: repo.id.toString(),
-            name: repo.name,
-            fullName: repo.full_name,
-            owner: repo.owner.login,
-            description: repo.description,
-            defaultBranch: repo.default_branch,
-            isPrivate: repo.private,
-            isArchived: repo.archived,
-            url: repo.html_url,
-            language: repo.language,
-            stargazersCount: repo.stargazers_count,
-            updatedAt: repo.updated_at,
-          }));
-        } catch (error: unknown) {
-          console.error(
-            "[tRPC connections.github.repositories] Failed to fetch repositories:",
-            error
-          );
-
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch repositories from GitHub",
-            cause: error,
-          });
-        }
-      }),
-
-    /**
      * Detect repository configuration (lightfast.yml)
      *
      * Checks if the repository contains a lightfast.yml configuration file
@@ -451,7 +277,7 @@ export const connectionsRouter = {
     detectConfig: orgScopedProcedure
       .input(
         z.object({
-          integrationId: z.string(), // gwInstallations.id
+          integrationId: z.string(), // gatewayInstallations.id
           installationId: z.string(), // GitHub App installation external ID
           fullName: z.string(), // "owner/repo"
           ref: z.string().optional(), // branch/tag/sha (defaults to default branch)
@@ -461,11 +287,11 @@ export const connectionsRouter = {
         // Verify org owns this installation
         const result = await ctx.db
           .select()
-          .from(gwInstallations)
+          .from(gatewayInstallations)
           .where(
             and(
-              eq(gwInstallations.id, input.integrationId),
-              eq(gwInstallations.orgId, ctx.auth.orgId)
+              eq(gatewayInstallations.id, input.integrationId),
+              eq(gatewayInstallations.orgId, ctx.auth.orgId)
             )
           )
           .limit(1);
@@ -497,26 +323,26 @@ export const connectionsRouter = {
         }
 
         try {
-          const app = getGitHubApp();
-          const installationIdNumber = Number.parseInt(
-            input.installationId,
-            10
-          );
-
-          const octokit =
-            await app.getInstallationOctokit(installationIdNumber);
+          const gw = createGatewayClient({
+            apiKey: env.GATEWAY_API_KEY,
+            requestSource: "console-trpc",
+            correlationId: crypto.randomUUID(),
+          });
 
           let ref = input.ref;
           if (!ref) {
-            const { data: repoInfo } = await octokit.request(
-              "GET /repos/{owner}/{repo}",
-              {
-                owner,
-                repo,
-                headers: { "X-GitHub-Api-Version": "2022-11-28" },
-              }
-            );
-            ref = repoInfo.default_branch;
+            const repoResult = await gw.executeApi(input.integrationId, {
+              endpointId: "get-repo",
+              pathParams: { owner, repo },
+            });
+            if (repoResult.status !== 200) {
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to fetch repository info from GitHub",
+              });
+            }
+            const repoData = repoResult.data as { default_branch: string };
+            ref = repoData.default_branch;
           }
 
           if (ref && !/^[a-zA-Z0-9._/-]+$/.test(ref)) {
@@ -535,61 +361,62 @@ export const connectionsRouter = {
           ];
 
           for (const path of candidates) {
-            try {
-              const { data } = await octokit.request(
-                "GET /repos/{owner}/{repo}/contents/{path}",
-                {
-                  owner,
-                  repo,
-                  path,
-                  ref,
-                  headers: { "X-GitHub-Api-Version": "2022-11-28" },
-                }
+            const queryParams: Record<string, string> = {};
+            if (ref) {
+              queryParams.ref = ref;
+            }
+            const fileResult = await gw.executeApi(input.integrationId, {
+              endpointId: "get-file-contents",
+              pathParams: { owner, repo, path },
+              queryParams,
+            });
+
+            if (fileResult.status === 404) {
+              continue;
+            }
+
+            if (fileResult.status !== 200) {
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to fetch file contents from GitHub",
+              });
+            }
+
+            const data = fileResult.data as {
+              type?: string;
+              content?: string;
+              sha?: string;
+              size?: number;
+            };
+
+            if (data.content !== undefined && data.type !== undefined) {
+              const maxSize = 50 * 1024;
+              if (typeof data.size === "number" && data.size > maxSize) {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: `Config file too large. Maximum size is ${maxSize / 1024}KB.`,
+                });
+              }
+
+              const content = Buffer.from(data.content, "base64").toString(
+                "utf-8"
               );
 
-              if ("content" in data && "type" in data) {
-                const maxSize = 50 * 1024;
-                if (
-                  "size" in data &&
-                  typeof data.size === "number" &&
-                  data.size > maxSize
-                ) {
-                  throw new TRPCError({
-                    code: "BAD_REQUEST",
-                    message: `Config file too large. Maximum size is ${maxSize / 1024}KB.`,
-                  });
-                }
-
-                const content = Buffer.from(data.content, "base64").toString(
-                  "utf-8"
-                );
-
-                try {
-                  yaml.parse(content);
-                } catch {
-                  throw new TRPCError({
-                    code: "BAD_REQUEST",
-                    message: "Invalid YAML format in config file.",
-                  });
-                }
-
-                return {
-                  exists: true,
-                  path,
-                  content,
-                  sha: data.sha,
-                };
+              try {
+                yaml.parse(content);
+              } catch {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: "Invalid YAML format in config file.",
+                });
               }
-            } catch (error: unknown) {
-              if (
-                error &&
-                typeof error === "object" &&
-                "status" in error &&
-                (error as { status: number }).status === 404
-              ) {
-                continue;
-              }
-              throw error;
+
+              return {
+                exists: true,
+                path,
+                content,
+                sha: data.sha ?? "",
+              };
             }
           }
 
@@ -614,226 +441,19 @@ export const connectionsRouter = {
    */
   vercel: {
     /**
-     * List all org's Vercel installations
-     *
-     * Returns all active Vercel OAuth connections (one per team).
-     * Used by workspace creation to support multi-team selection.
-     */
-    list: orgScopedProcedure.query(async ({ ctx }) => {
-      const results = await ctx.db
-        .select()
-        .from(gwInstallations)
-        .where(
-          and(
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, "vercel"),
-            eq(gwInstallations.status, "active")
-          )
-        );
-
-      // Resolve display data from Vercel API for each installation.
-      // Uses stored OAuth token. Falls back to raw IDs on error.
-      const installations = await Promise.all(
-        results
-          .filter((inst) => inst.providerAccountInfo?.sourceType === "vercel")
-          .map(async (inst) => {
-            const info = inst.providerAccountInfo as Extract<
-              typeof inst.providerAccountInfo,
-              { sourceType: "vercel" }
-            >;
-
-            let accountLogin: string;
-            let accountType: "Team" | "User";
-
-            try {
-              const accessToken = await getInstallationToken(inst.id);
-
-              if (info.raw.team_id) {
-                const res = await fetch(
-                  `https://api.vercel.com/v2/teams/${info.raw.team_id}`,
-                  {
-                    headers: { Authorization: `Bearer ${accessToken}` },
-                    signal: AbortSignal.timeout(10_000),
-                  }
-                );
-                if (res.ok) {
-                  const data = (await res.json()) as Record<string, unknown>;
-                  accountLogin =
-                    typeof data.slug === "string"
-                      ? data.slug
-                      : info.raw.team_id;
-                } else {
-                  accountLogin = info.raw.team_id;
-                }
-                accountType = "Team";
-              } else {
-                const res = await fetch("https://api.vercel.com/v2/user", {
-                  headers: { Authorization: `Bearer ${accessToken}` },
-                  signal: AbortSignal.timeout(10_000),
-                });
-                if (res.ok) {
-                  const data = (await res.json()) as Record<string, unknown>;
-                  const user = data.user as Record<string, unknown> | undefined;
-                  accountLogin =
-                    typeof user?.username === "string"
-                      ? user.username
-                      : info.raw.user_id;
-                } else {
-                  accountLogin = info.raw.user_id;
-                }
-                accountType = "User";
-              }
-            } catch (error) {
-              // Fall back to cached IDs when token retrieval or API call fails
-              console.warn(
-                "[connections.vercel.list] Failed to fetch account info, using cached fallback:",
-                error
-              );
-              accountLogin = info.raw.team_id ?? info.raw.user_id;
-              accountType = info.raw.team_id ? "Team" : "User";
-            }
-
-            return {
-              id: inst.id,
-              orgId: inst.orgId,
-              provider: inst.provider,
-              connectedAt: inst.createdAt,
-              status: inst.status,
-              userId: info.raw.user_id,
-              teamId: info.raw.team_id ?? null,
-              configurationId: info.raw.installation_id,
-              accountLogin,
-              accountType,
-            };
-          })
-      );
-
-      return { installations };
-    }),
-
-    /**
-     * List Vercel projects for project selector
-     *
-     * Returns all projects from org's Vercel account with connection status.
-     * Used by the project selector modal to show available projects.
-     */
-    listProjects: orgScopedProcedure
-      .input(
-        z.object({
-          installationId: z.string(), // gwInstallations.id
-          workspaceId: z.string().optional(),
-          cursor: z.string().optional(),
-        })
-      )
-      .query(async ({ ctx, input }) => {
-        // 1. Verify org owns this installation
-        const installation = await ctx.db.query.gwInstallations.findFirst({
-          where: and(
-            eq(gwInstallations.id, input.installationId),
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, "vercel"),
-            eq(gwInstallations.status, "active")
-          ),
-        });
-
-        if (!installation) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Vercel connection not found",
-          });
-        }
-
-        // 2. Get access token directly from gw_tokens vault
-        const accessToken = await getInstallationToken(installation.id);
-
-        // 3. Get team ID from providerAccountInfo
-        const providerAccountInfo = installation.providerAccountInfo;
-        if (providerAccountInfo?.sourceType !== "vercel") {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Invalid provider account info",
-          });
-        }
-        const teamId = providerAccountInfo.raw.team_id;
-
-        // 4. Call Vercel API
-        const url = new URL("https://api.vercel.com/v9/projects");
-        if (teamId) {
-          url.searchParams.set("teamId", teamId);
-        }
-        url.searchParams.set("limit", "100");
-        if (input.cursor) {
-          url.searchParams.set("until", input.cursor);
-        }
-
-        const response = await fetch(url.toString(), {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-        if (response.status === 401) {
-          // Mark installation as needing re-auth
-          await ctx.db
-            .update(gwInstallations)
-            .set({ status: "error" })
-            .where(eq(gwInstallations.id, input.installationId));
-
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "Vercel connection expired. Please reconnect.",
-          });
-        }
-
-        if (!response.ok) {
-          console.error("[Vercel API Error]", response.status);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch Vercel projects",
-          });
-        }
-
-        const data = (await response.json()) as VercelProjectsResponse;
-
-        // 5. Get already-connected projects for this workspace (only when workspaceId provided)
-        let connectedIds = new Set<string>();
-        if (input.workspaceId) {
-          const connected = await ctx.db.query.workspaceIntegrations.findMany({
-            where: and(
-              eq(workspaceIntegrations.workspaceId, input.workspaceId),
-              eq(workspaceIntegrations.installationId, input.installationId),
-              eq(workspaceIntegrations.isActive, true)
-            ),
-            columns: { providerResourceId: true },
-          });
-          connectedIds = new Set(connected.map((c) => c.providerResourceId));
-        }
-
-        // 6. Return with connection status
-        return {
-          projects: data.projects.map((p) => ({
-            id: p.id,
-            name: p.name,
-            framework: p.framework,
-            updatedAt: p.updatedAt,
-            isConnected: connectedIds.has(p.id),
-          })),
-          pagination: data.pagination,
-        };
-      }),
-
-    /**
      * Disconnect Vercel integration
      */
     disconnect: orgScopedProcedure.mutation(async ({ ctx }) => {
       const result = await ctx.db
-        .update(gwInstallations)
+        .update(gatewayInstallations)
         .set({ status: "revoked" })
         .where(
           and(
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, "vercel")
+            eq(gatewayInstallations.orgId, ctx.auth.orgId),
+            eq(gatewayInstallations.provider, "vercel")
           )
         )
-        .returning({ id: gwInstallations.id });
+        .returning({ id: gatewayInstallations.id });
 
       if (!result[0]) {
         throw new TRPCError({
@@ -846,360 +466,134 @@ export const connectionsRouter = {
     }),
   },
 
-  /**
-   * Linear-specific operations
-   */
-  linear: {
-    /**
-     * List org's Linear installations
-     *
-     * Returns all active Linear OAuth connections with organization info.
-     * Linear is org-level with per-team resource linking.
-     */
-    get: orgScopedProcedure.query(async ({ ctx }) => {
-      const result = await ctx.db
-        .select()
-        .from(gwInstallations)
-        .where(
-          and(
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, "linear"),
-            eq(gwInstallations.status, "active")
-          )
+  // ── Generic Resource Picker Procedures ────────────────────────────────────
+
+  generic: {
+    listInstallations: orgScopedProcedure
+      .input(z.object({ provider: sourceTypeSchema }))
+      .query(async ({ ctx, input }) => {
+        const providerDef = getProvider(input.provider);
+        if (!providerDef) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Unknown provider: ${input.provider}`,
+          });
+        }
+
+        const installations = await ctx.db
+          .select()
+          .from(gatewayInstallations)
+          .where(
+            and(
+              eq(gatewayInstallations.orgId, ctx.auth.orgId),
+              eq(gatewayInstallations.provider, input.provider),
+              eq(gatewayInstallations.status, "active")
+            )
+          );
+
+        if (installations.length === 0) {
+          return {
+            installationMode: providerDef.resourcePicker.installationMode,
+            resourceLabel: providerDef.resourcePicker.resourceLabel,
+            installations: [] as NormalizedInstallation[],
+          };
+        }
+
+        const gw = createGatewayClient({
+          apiKey: env.GATEWAY_API_KEY,
+          correlationId: crypto.randomUUID(),
+          requestSource: "console:generic-list-installations",
+        });
+
+        const enriched = await Promise.all(
+          installations.map(async (inst) => {
+            const executeApi: ResourcePickerExecuteApiFn = (request) =>
+              gw.executeApi(inst.id, request);
+
+            return providerDef.resourcePicker.enrichInstallation(executeApi, {
+              id: inst.id,
+              externalId: inst.externalId,
+              providerAccountInfo: inst.providerAccountInfo,
+            });
+          })
         );
 
-      // Resolve display data from Linear GraphQL API for each installation.
-      // Uses stored OAuth token. Falls back to null on API error.
-      return Promise.all(
-        result.map(async (installation) => {
-          let organizationName: string | null = null;
-          let organizationUrlKey: string | null = null;
-
-          try {
-            const accessToken = await getInstallationToken(installation.id);
-            const response = await fetch("https://api.linear.app/graphql", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
-              },
-              body: JSON.stringify({
-                query: "{ viewer { organization { name urlKey } } }",
-              }),
-              signal: AbortSignal.timeout(10_000),
-            });
-
-            if (response.status === 401) {
-              await ctx.db
-                .update(gwInstallations)
-                .set({ status: "error" })
-                .where(eq(gwInstallations.id, installation.id));
-            } else if (response.ok) {
-              const data = (await response.json()) as {
-                data?: {
-                  viewer?: {
-                    organization?: { name?: string; urlKey?: string };
-                  };
-                };
-              };
-              organizationName = data.data?.viewer?.organization?.name ?? null;
-              organizationUrlKey =
-                data.data?.viewer?.organization?.urlKey ?? null;
-            }
-          } catch (error) {
-            console.warn(
-              "[connections.linear.get] Failed to fetch org info, using fallback:",
-              error
-            );
-          }
-
-          return {
-            id: installation.id,
-            orgId: installation.orgId,
-            provider: installation.provider,
-            connectedAt: installation.createdAt,
-            status: installation.status,
-            organizationName,
-            organizationUrlKey,
-          };
-        })
-      );
-    }),
-
-    /**
-     * List Linear teams for team selector
-     *
-     * Fetches teams from the Linear GraphQL API using stored OAuth token.
-     * Used by workspace creation to select which team to link.
-     */
-    listTeams: orgScopedProcedure
-      .input(
-        z.object({
-          installationId: z.string(), // gwInstallations.id
-        })
-      )
-      .query(async ({ ctx, input }) => {
-        // 1. Verify org owns this installation
-        const installation = await ctx.db.query.gwInstallations.findFirst({
-          where: and(
-            eq(gwInstallations.id, input.installationId),
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, "linear"),
-            eq(gwInstallations.status, "active")
-          ),
-        });
-
-        if (!installation) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Linear connection not found",
-          });
-        }
-
-        // 2. Get access token from gw_tokens vault
-        const accessToken = await getInstallationToken(installation.id);
-
-        // 3. Call Linear GraphQL API
-        const response = await fetch("https://api.linear.app/graphql", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            query: `{
-							teams {
-								nodes {
-									id
-									name
-									key
-									description
-									color
-								}
-							}
-						}`,
-          }),
-          signal: AbortSignal.timeout(10_000),
-        });
-
-        if (response.status === 401) {
-          await ctx.db
-            .update(gwInstallations)
-            .set({ status: "error" })
-            .where(eq(gwInstallations.id, input.installationId));
-
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "Linear connection expired. Please reconnect.",
-          });
-        }
-
-        if (!response.ok) {
-          console.error("[Linear API Error]", response.status);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch Linear teams",
-          });
-        }
-
-        const data = (await response.json()) as {
-          data?: {
-            teams?: {
-              nodes?: {
-                id: string;
-                name: string;
-                key: string;
-                description?: string;
-                color?: string;
-              }[];
-            };
-          };
-        };
-
-        const teams = data.data?.teams?.nodes ?? [];
-
         return {
-          teams: teams.map((t) => ({
-            id: t.id,
-            name: t.name,
-            key: t.key,
-            description: t.description ?? null,
-            color: t.color ?? null,
-          })),
+          installationMode: providerDef.resourcePicker.installationMode,
+          resourceLabel: providerDef.resourcePicker.resourceLabel,
+          installations: enriched,
         };
       }),
-  },
 
-  /**
-   * Sentry-specific operations
-   */
-  sentry: {
-    /**
-     * Get org's Sentry installation
-     *
-     * Returns the org's Sentry OAuth connection with organization info.
-     */
-    get: orgScopedProcedure.query(async ({ ctx }) => {
-      const result = await ctx.db
-        .select()
-        .from(gwInstallations)
-        .where(
-          and(
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, "sentry"),
-            eq(gwInstallations.status, "active")
-          )
-        )
-        .limit(1);
-
-      const installation = result[0];
-
-      if (!installation) {
-        return null;
-      }
-
-      // Resolve display data from Sentry API.
-      // Uses stored OAuth token. Falls back to null on error.
-      let organizationName: string | null = null;
-      let organizationSlug: string | null = null;
-
-      try {
-        const accessToken = await getInstallationToken(installation.id);
-        const response = await fetch("https://sentry.io/api/0/organizations/", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          signal: AbortSignal.timeout(10_000),
-        });
-
-        if (response.status === 401) {
-          await ctx.db
-            .update(gwInstallations)
-            .set({ status: "error" })
-            .where(eq(gwInstallations.id, installation.id));
-        } else if (response.ok) {
-          const orgs = (await response.json()) as Array<{
-            name?: string;
-            slug?: string;
-          }>;
-          // Sentry App installations are scoped to one org — take the first result
-          const org = orgs[0];
-          if (org) {
-            organizationName = org.name ?? null;
-            organizationSlug = org.slug ?? null;
-          }
-        }
-      } catch (error) {
-        console.warn(
-          "[connections.sentry.get] Failed to fetch org info, using fallback:",
-          error
-        );
-      }
-
-      return {
-        id: installation.id,
-        orgId: installation.orgId,
-        provider: installation.provider,
-        connectedAt: installation.createdAt,
-        status: installation.status,
-        organizationName,
-        organizationSlug,
-      };
-    }),
-
-    /**
-     * List Sentry projects for project selector
-     *
-     * Returns all projects from org's Sentry account with connection status.
-     * Used by workspace creation to select which project to link.
-     */
-    listProjects: orgScopedProcedure
+    listResources: orgScopedProcedure
       .input(
         z.object({
+          provider: sourceTypeSchema,
           installationId: z.string(),
-          workspaceId: z.string().optional(),
         })
       )
       .query(async ({ ctx, input }) => {
-        // 1. Verify org owns this installation
-        const installation = await ctx.db.query.gwInstallations.findFirst({
-          where: and(
-            eq(gwInstallations.id, input.installationId),
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, "sentry"),
-            eq(gwInstallations.status, "active")
-          ),
-        });
+        const providerDef = getProvider(input.provider);
+        if (!providerDef) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Unknown provider: ${input.provider}`,
+          });
+        }
+
+        // Verify org owns this installation
+        const installation = await ctx.db
+          .select()
+          .from(gatewayInstallations)
+          .where(
+            and(
+              eq(gatewayInstallations.id, input.installationId),
+              eq(gatewayInstallations.orgId, ctx.auth.orgId),
+              eq(gatewayInstallations.provider, input.provider),
+              eq(gatewayInstallations.status, "active")
+            )
+          )
+          .limit(1)
+          .then((rows) => rows[0]);
 
         if (!installation) {
           throw new TRPCError({
             code: "NOT_FOUND",
-            message: "Sentry connection not found",
+            message: "Installation not found or not owned by this org",
           });
         }
 
-        // 2. Get access token from gw_tokens vault
-        const accessToken = await getInstallationToken(installation.id);
-
-        // 3. Call Sentry API — /api/0/projects/ works with installation tokens
-        // (scoped to the org the app is installed on, no org slug needed)
-        const response = await fetch("https://sentry.io/api/0/projects/", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          signal: AbortSignal.timeout(10_000),
+        const gw = createGatewayClient({
+          apiKey: env.GATEWAY_API_KEY,
+          correlationId: crypto.randomUUID(),
+          requestSource: "console:generic-list-resources",
         });
 
-        if (response.status === 401) {
-          await ctx.db
-            .update(gwInstallations)
-            .set({ status: "error" })
-            .where(eq(gwInstallations.id, input.installationId));
-
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "Sentry connection expired. Please reconnect.",
-          });
-        }
-
-        if (!response.ok) {
-          console.error("[Sentry API Error]", response.status);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch Sentry projects",
-          });
-        }
-
-        const data = (await response.json()) as {
-          id: string;
-          slug: string;
-          name: string;
-          platform: string | null;
-          status: string;
-          organization: { slug: string };
-        }[];
-
-        // 5. Get already-connected projects for this workspace
-        let connectedIds = new Set<string>();
-        if (input.workspaceId) {
-          const connected = await ctx.db.query.workspaceIntegrations.findMany({
-            where: and(
-              eq(workspaceIntegrations.workspaceId, input.workspaceId),
-              eq(workspaceIntegrations.installationId, input.installationId),
-              eq(workspaceIntegrations.isActive, true)
-            ),
-            columns: { providerResourceId: true },
-          });
-          connectedIds = new Set(connected.map((c) => c.providerResourceId));
-        }
-
-        // 6. Return with connection status
-        return {
-          projects: data.map((p) => ({
-            id: p.id,
-            slug: p.slug,
-            name: p.name,
-            platform: p.platform,
-            organizationSlug: p.organization.slug,
-            isConnected: connectedIds.has(p.id),
-          })),
+        const executeApi: ResourcePickerExecuteApiFn = async (request) => {
+          const result = await gw.executeApi(installation.id, request);
+          if (result.status === 401) {
+            await ctx.db
+              .update(gatewayInstallations)
+              .set({ status: "error" })
+              .where(eq(gatewayInstallations.id, installation.id));
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Provider connection expired. Please reconnect.",
+            });
+          }
+          return result;
         };
+
+        const resources = await providerDef.resourcePicker.listResources(
+          executeApi,
+          {
+            id: installation.id,
+            externalId: installation.externalId,
+            providerAccountInfo: installation.providerAccountInfo,
+          }
+        );
+
+        return { resources };
       }),
   },
 } satisfies TRPCRouterRecord;

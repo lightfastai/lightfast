@@ -1,5 +1,5 @@
 import { db } from "@db/console/client";
-import { gwInstallations, workspaceIntegrations } from "@db/console/schema";
+import { gatewayInstallations, workspaceIntegrations } from "@db/console/schema";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
@@ -201,13 +201,13 @@ export const sourcesM2MRouter = {
         })
         .from(workspaceIntegrations)
         .innerJoin(
-          gwInstallations,
-          eq(workspaceIntegrations.installationId, gwInstallations.id)
+          gatewayInstallations,
+          eq(workspaceIntegrations.installationId, gatewayInstallations.id)
         )
         .where(
           and(
-            eq(gwInstallations.provider, "github"),
-            eq(gwInstallations.externalId, input.githubInstallationId),
+            eq(gatewayInstallations.provider, "github"),
+            eq(gatewayInstallations.externalId, input.githubInstallationId),
             eq(workspaceIntegrations.isActive, true)
           )
         );

@@ -1,11 +1,9 @@
 import { db } from "@db/console/client";
 import {
-  gwInstallations,
+  gatewayInstallations,
   orgWorkspaces,
-  workspaceIngestLog,
+  workspaceIngestLogs,
   workspaceIntegrations,
-  workspaceKnowledgeDocuments,
-  workspaceWorkflowRuns,
 } from "@db/console/schema";
 import { createCustomWorkspace, getWorkspaceKey } from "@db/console/utils";
 import type {
@@ -21,11 +19,8 @@ import {
 import {
   workspaceCreateInputSchema,
   workspaceIntegrationDisconnectInputSchema,
-  workspaceJobPercentilesInputSchema,
   workspaceListInputSchema,
-  workspacePerformanceTimeSeriesInputSchema,
   workspaceStatisticsInputSchema,
-  workspaceSystemHealthInputSchema,
   workspaceUpdateNameInputSchema,
 } from "@repo/console-validation/schemas";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
@@ -33,7 +28,7 @@ import { createBackfillClient } from "@repo/gateway-service-clients";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
-import { and, avg, count, desc, eq, gte, inArray, sql, sum } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { env } from "../../env";
 import { recordActivity } from "../../lib/activity";
@@ -214,14 +209,14 @@ export const workspaceRouter = {
         // Trigger backfill for all active connections in this org (best-effort)
         const activeInstallations = await db
           .select({
-            id: gwInstallations.id,
-            provider: gwInstallations.provider,
+            id: gatewayInstallations.id,
+            provider: gatewayInstallations.provider,
           })
-          .from(gwInstallations)
+          .from(gatewayInstallations)
           .where(
             and(
-              eq(gwInstallations.orgId, input.clerkOrgId),
-              eq(gwInstallations.status, "active")
+              eq(gatewayInstallations.orgId, input.clerkOrgId),
+              eq(gatewayInstallations.status, "active")
             )
           );
 
@@ -251,184 +246,6 @@ export const workspaceRouter = {
         }
         throw error;
       }
-    }),
-
-  /**
-   * Get job performance percentiles
-   * Returns p50, p95, p99, and max duration metrics
-   */
-  jobPercentiles: orgScopedProcedure
-    .input(workspaceJobPercentilesInputSchema)
-    .query(async ({ ctx, input }) => {
-      // Resolve workspace from name (user-facing)
-      const { workspaceId } = await resolveWorkspaceByName({
-        clerkOrgSlug: input.clerkOrgSlug,
-        workspaceName: input.workspaceName,
-        userId: ctx.auth.userId,
-      });
-
-      const { timeRange } = input;
-
-      // Calculate time range
-      const rangeHours = {
-        "24h": 24,
-        "7d": 168,
-        "30d": 720,
-      }[timeRange];
-
-      const startTime = new Date(Date.now() - rangeHours * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 19)
-        .replace("T", " ");
-
-      // Get completed jobs with durations
-      const completedJobs = await db.query.workspaceWorkflowRuns.findMany({
-        where: and(
-          eq(workspaceWorkflowRuns.workspaceId, workspaceId),
-          eq(workspaceWorkflowRuns.status, "completed"),
-          gte(workspaceWorkflowRuns.createdAt, startTime),
-          sql`${workspaceWorkflowRuns.durationMs} IS NOT NULL`
-        ),
-        columns: {
-          durationMs: true,
-        },
-      });
-
-      // Extract and parse durations
-      const durations = completedJobs
-        .map((j) => Number.parseInt(j.durationMs ?? "0", 10))
-        .filter((d) => d > 0)
-        .sort((a, b) => a - b);
-
-      if (durations.length === 0) {
-        return {
-          hasData: false,
-          p50: 0,
-          p95: 0,
-          p99: 0,
-          max: 0,
-          sampleSize: 0,
-        };
-      }
-
-      // Calculate percentiles
-      const getPercentile = (p: number) => {
-        const index = Math.ceil((p / 100) * durations.length) - 1;
-        return durations[index] ?? 0;
-      };
-
-      return {
-        hasData: true,
-        p50: getPercentile(50),
-        p95: getPercentile(95),
-        p99: getPercentile(99),
-        max: durations.at(-1) ?? 0,
-        sampleSize: durations.length,
-      };
-    }),
-
-  /**
-   * Get performance time series data
-   * Returns hourly aggregated job metrics
-   */
-  performanceTimeSeries: orgScopedProcedure
-    .input(workspacePerformanceTimeSeriesInputSchema)
-    .query(async ({ ctx, input }) => {
-      // Resolve workspace from name (user-facing)
-      const { workspaceId } = await resolveWorkspaceByName({
-        clerkOrgSlug: input.clerkOrgSlug,
-        workspaceName: input.workspaceName,
-        userId: ctx.auth.userId,
-      });
-
-      const { timeRange } = input;
-
-      // Calculate time range
-      const rangeHours = {
-        "24h": 24,
-        "7d": 168,
-        "30d": 720,
-      }[timeRange];
-
-      const startTime = new Date(Date.now() - rangeHours * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 19)
-        .replace("T", " ");
-
-      // Get all jobs in time range
-      const recentJobs = await db.query.workspaceWorkflowRuns.findMany({
-        where: and(
-          eq(workspaceWorkflowRuns.workspaceId, workspaceId),
-          gte(workspaceWorkflowRuns.createdAt, startTime)
-        ),
-        columns: {
-          createdAt: true,
-          durationMs: true,
-          status: true,
-        },
-        orderBy: [desc(workspaceWorkflowRuns.createdAt)],
-      });
-
-      // Group by hour
-      const hourBuckets = new Map<
-        string,
-        { jobs: typeof recentJobs; completed: number; totalDuration: number }
-      >();
-
-      // Initialize hour buckets
-      for (let i = 0; i < rangeHours; i++) {
-        const hourDate = new Date(Date.now() - i * 60 * 60 * 1000);
-        hourDate.setMinutes(0, 0, 0);
-        const key = hourDate.toISOString().slice(0, 13); // YYYY-MM-DDTHH
-        hourBuckets.set(key, { jobs: [], completed: 0, totalDuration: 0 });
-      }
-
-      // Populate buckets
-      for (const job of recentJobs) {
-        const jobDate = new Date(job.createdAt);
-        jobDate.setMinutes(0, 0, 0);
-        const key = jobDate.toISOString().slice(0, 13);
-        const bucket = hourBuckets.get(key);
-
-        if (bucket) {
-          bucket.jobs.push(job);
-          if (job.status === "completed") {
-            bucket.completed++;
-            const duration = Number.parseInt(job.durationMs ?? "0", 10);
-            if (duration > 0) {
-              bucket.totalDuration += duration;
-            }
-          }
-        }
-      }
-
-      // Convert to time series points
-      const points = Array.from(hourBuckets.entries())
-        .map(([timestamp, data]) => {
-          const date = new Date(timestamp);
-          const hour = date.toLocaleTimeString("en-US", {
-            hour: "numeric",
-            hour12: true,
-          });
-
-          const avgDuration =
-            data.completed > 0 ? data.totalDuration / data.completed : 0;
-          const successRate =
-            data.jobs.length > 0
-              ? (data.completed / data.jobs.length) * 100
-              : 100;
-
-          return {
-            timestamp,
-            hour,
-            jobCount: data.jobs.length,
-            avgDuration: Math.round(avgDuration),
-            successRate: Math.round(successRate),
-          };
-        })
-        .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-
-      return points;
     }),
 
   /**
@@ -519,7 +336,7 @@ export const workspaceRouter = {
         });
 
         // Get all workspace sources (read provider from denormalized column)
-        // LEFT JOIN gwInstallations to include backfill config from the installation
+        // LEFT JOIN gatewayInstallations to include backfill config from the installation
         const sources = await db
           .select({
             id: workspaceIntegrations.id,
@@ -532,12 +349,12 @@ export const workspaceRouter = {
             documentCount: workspaceIntegrations.documentCount,
             providerResourceId: workspaceIntegrations.providerResourceId,
             providerConfig: workspaceIntegrations.providerConfig,
-            backfillConfig: gwInstallations.backfillConfig,
+            backfillConfig: gatewayInstallations.backfillConfig,
           })
           .from(workspaceIntegrations)
           .innerJoin(
-            gwInstallations,
-            eq(workspaceIntegrations.installationId, gwInstallations.id)
+            gatewayInstallations,
+            eq(workspaceIntegrations.installationId, gatewayInstallations.id)
           )
           .where(
             and(
@@ -588,8 +405,7 @@ export const workspaceRouter = {
    */
   store: {
     /**
-     * Get the workspace's embedding/store configuration with document count
-     * Note: Store config is now on the workspace table directly
+     * Get the workspace's embedding/store configuration
      */
     get: orgScopedProcedure
       .input(workspaceStatisticsInputSchema)
@@ -601,255 +417,33 @@ export const workspaceRouter = {
           userId: ctx.auth.userId,
         });
 
-        // Get workspace with document count
-        const [workspaceWithCount] = await db
+        // Get workspace settings
+        const [workspace] = await db
           .select({
             id: orgWorkspaces.id,
             settings: orgWorkspaces.settings,
             createdAt: orgWorkspaces.createdAt,
-            documentCount: count(workspaceKnowledgeDocuments.id),
           })
           .from(orgWorkspaces)
-          .leftJoin(
-            workspaceKnowledgeDocuments,
-            eq(orgWorkspaces.id, workspaceKnowledgeDocuments.workspaceId)
-          )
           .where(eq(orgWorkspaces.id, workspaceId))
-          .groupBy(orgWorkspaces.id)
           .limit(1);
 
-        if (!workspaceWithCount) {
+        if (!workspace) {
           return null;
         }
 
         // Settings is always populated (NOT NULL)
-        const { embedding } = workspaceWithCount.settings;
+        const { embedding } = workspace.settings;
 
         return {
-          id: workspaceWithCount.id,
+          id: workspace.id,
           indexName: embedding.indexName,
           namespaceName: embedding.namespaceName,
           embeddingModel: embedding.embeddingModel,
           embeddingDim: embedding.embeddingDim,
           chunkMaxTokens: embedding.chunkMaxTokens,
           chunkOverlap: embedding.chunkOverlap,
-          documentCount: workspaceWithCount.documentCount,
-          createdAt: workspaceWithCount.createdAt,
-        };
-      }),
-  },
-
-  /**
-   * Documents sub-router
-   */
-  documents: {
-    /**
-     * Get document statistics (total count and chunks)
-     * Replaces the documents portion of the old statistics procedure
-     */
-    stats: orgScopedProcedure
-      .input(workspaceStatisticsInputSchema)
-      .query(async ({ ctx, input }) => {
-        // Resolve workspace from name (user-facing)
-        const { workspaceId } = await resolveWorkspaceByName({
-          clerkOrgSlug: input.clerkOrgSlug,
-          workspaceName: input.workspaceName,
-          userId: ctx.auth.userId,
-        });
-
-        // Get total document count - query directly on documents table by workspaceId
-        const [docCountResult] = await db
-          .select({ count: count() })
-          .from(workspaceKnowledgeDocuments)
-          .where(eq(workspaceKnowledgeDocuments.workspaceId, workspaceId));
-
-        // Get total chunk count (sum of all chunkCounts)
-        const [chunkCountResult] = await db
-          .select({
-            total: sql<number>`COALESCE(SUM(${workspaceKnowledgeDocuments.chunkCount}), 0)`,
-          })
-          .from(workspaceKnowledgeDocuments)
-          .where(eq(workspaceKnowledgeDocuments.workspaceId, workspaceId));
-
-        return {
-          total: docCountResult?.count ?? 0,
-          chunks: Number(chunkCountResult?.total) || 0,
-        };
-      }),
-  },
-
-  /**
-   * Jobs sub-router
-   */
-  jobs: {
-    /**
-     * Get job statistics (aggregated metrics)
-     * Replaces the job stats portion of the old statistics procedure
-     */
-    stats: orgScopedProcedure
-      .input(workspaceStatisticsInputSchema)
-      .query(async ({ ctx, input }) => {
-        // Resolve workspace from name (user-facing)
-        const { workspaceId } = await resolveWorkspaceByName({
-          clerkOrgSlug: input.clerkOrgSlug,
-          workspaceName: input.workspaceName,
-          userId: ctx.auth.userId,
-        });
-
-        // Get recent jobs (last 24 hours)
-        const oneDayAgo = new Date(
-          Date.now() - 24 * 60 * 60 * 1000
-        ).toISOString();
-
-        // Get job statistics with SQL aggregation (single query)
-        const [jobStats] = await db
-          .select({
-            total: count(),
-            queued: sum(
-              sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'queued' THEN 1 ELSE 0 END`
-            ),
-            running: sum(
-              sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'running' THEN 1 ELSE 0 END`
-            ),
-            completed: sum(
-              sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'completed' THEN 1 ELSE 0 END`
-            ),
-            failed: sum(
-              sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'failed' THEN 1 ELSE 0 END`
-            ),
-            cancelled: sum(
-              sql<number>`CASE WHEN ${workspaceWorkflowRuns.status} = 'cancelled' THEN 1 ELSE 0 END`
-            ),
-            avgDurationMs: avg(
-              sql<number>`CAST(${workspaceWorkflowRuns.durationMs} AS BIGINT)`
-            ),
-          })
-          .from(workspaceWorkflowRuns)
-          .where(
-            and(
-              eq(workspaceWorkflowRuns.workspaceId, workspaceId),
-              gte(workspaceWorkflowRuns.createdAt, oneDayAgo)
-            )
-          );
-
-        return {
-          total: jobStats?.total ?? 0,
-          completed: Number(jobStats?.completed) || 0,
-          failed: Number(jobStats?.failed) || 0,
-          successRate:
-            (jobStats?.total ?? 0) > 0
-              ? ((Number(jobStats?.completed) || 0) / (jobStats?.total ?? 0)) *
-                100
-              : 0,
-          avgDurationMs: Math.round(Number(jobStats?.avgDurationMs) || 0),
-        };
-      }),
-
-    /**
-     * Get recent jobs list
-     * Replaces the recent jobs portion of the old statistics procedure
-     */
-    recent: orgScopedProcedure
-      .input(workspaceStatisticsInputSchema)
-      .query(async ({ ctx, input }) => {
-        // Resolve workspace from name (user-facing)
-        const { workspaceId } = await resolveWorkspaceByName({
-          clerkOrgSlug: input.clerkOrgSlug,
-          workspaceName: input.workspaceName,
-          userId: ctx.auth.userId,
-        });
-
-        // Get recent jobs (last 24 hours)
-        const oneDayAgo = new Date(
-          Date.now() - 24 * 60 * 60 * 1000
-        ).toISOString();
-
-        const recentJobs = await db.query.workspaceWorkflowRuns.findMany({
-          where: and(
-            eq(workspaceWorkflowRuns.workspaceId, workspaceId),
-            gte(workspaceWorkflowRuns.createdAt, oneDayAgo)
-          ),
-          orderBy: [desc(workspaceWorkflowRuns.createdAt)],
-          limit: 5,
-        });
-
-        return recentJobs.map((j) => ({
-          id: j.id,
-          name: j.name,
-          status: j.status,
-          trigger: j.trigger,
-          createdAt: j.createdAt,
-          completedAt: j.completedAt,
-          durationMs: j.durationMs,
-          errorMessage: j.errorMessage,
-        }));
-      }),
-  },
-
-  /**
-   * Health sub-router
-   */
-  health: {
-    /**
-     * Get system health overview
-     * Refactored to avoid duplicate queries - expects sources/stores data from cache
-     */
-    overview: orgScopedProcedure
-      .input(workspaceSystemHealthInputSchema)
-      .query(async ({ ctx, input }) => {
-        // Resolve workspace from name (user-facing)
-        const { workspaceId } = await resolveWorkspaceByName({
-          clerkOrgSlug: input.clerkOrgSlug,
-          workspaceName: input.workspaceName,
-          userId: ctx.auth.userId,
-        });
-
-        // Get recent jobs for health calculation (last 24h)
-        const oneDayAgo = new Date(
-          Date.now() - 24 * 60 * 60 * 1000
-        ).toISOString();
-
-        const recentJobs = await db.query.workspaceWorkflowRuns.findMany({
-          where: and(
-            eq(workspaceWorkflowRuns.workspaceId, workspaceId),
-            gte(workspaceWorkflowRuns.createdAt, oneDayAgo)
-          ),
-          columns: {
-            status: true,
-            repositoryId: true,
-          },
-        });
-
-        // Calculate health status helper
-        const getHealthStatus = (
-          successRate: number
-        ): "healthy" | "degraded" | "down" => {
-          if (successRate >= 95) {
-            return "healthy";
-          }
-          if (successRate >= 80) {
-            return "degraded";
-          }
-          return "down";
-        };
-
-        // Calculate overall workspace health
-        const completedJobs = recentJobs.filter(
-          (j) => j.status === "completed"
-        );
-        const workspaceSuccessRate =
-          recentJobs.length > 0
-            ? (completedJobs.length / recentJobs.length) * 100
-            : 100;
-
-        // Note: Store and source details should be fetched separately via
-        // workspace.stores.list and workspace.sources.list for better caching
-        return {
-          workspaceHealth: getHealthStatus(workspaceSuccessRate),
-          totalJobs24h: recentJobs.length,
-          successRate: workspaceSuccessRate,
-          completedJobs: completedJobs.length,
-          failedJobs: recentJobs.filter((j) => j.status === "failed").length,
+          createdAt: workspace.createdAt,
         };
       }),
   },
@@ -918,11 +512,11 @@ export const workspaceRouter = {
         }
 
         // Verify org owns the Vercel installation
-        const installation = await ctx.db.query.gwInstallations.findFirst({
+        const installation = await ctx.db.query.gatewayInstallations.findFirst({
           where: and(
-            eq(gwInstallations.id, installationId),
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, "vercel")
+            eq(gatewayInstallations.id, installationId),
+            eq(gatewayInstallations.orgId, ctx.auth.orgId),
+            eq(gatewayInstallations.provider, "vercel")
           ),
         });
 
@@ -1123,11 +717,11 @@ export const workspaceRouter = {
         }
 
         // 2. Verify org owns the installation for this provider
-        const gwInstallation = await ctx.db.query.gwInstallations.findFirst({
+        const gwInstallation = await ctx.db.query.gatewayInstallations.findFirst({
           where: and(
-            eq(gwInstallations.id, gwInstallationId),
-            eq(gwInstallations.orgId, ctx.auth.orgId),
-            eq(gwInstallations.provider, provider)
+            eq(gatewayInstallations.id, gwInstallationId),
+            eq(gatewayInstallations.orgId, ctx.auth.orgId),
+            eq(gatewayInstallations.provider, provider)
           ),
         });
 
@@ -1247,39 +841,39 @@ export const workspaceRouter = {
 
         const { limit, cursor, search, receivedAfter } = input;
 
-        const conditions = [eq(workspaceIngestLog.workspaceId, workspaceId)];
+        const conditions = [eq(workspaceIngestLogs.workspaceId, workspaceId)];
 
         if (input.source) {
-          conditions.push(eq(workspaceIngestLog.source, input.source));
+          conditions.push(eq(workspaceIngestLogs.source, input.source));
         }
 
         if (cursor) {
-          conditions.push(sql`${workspaceIngestLog.id} < ${cursor}`);
+          conditions.push(sql`${workspaceIngestLogs.id} < ${cursor}`);
         }
 
         if (search) {
           conditions.push(
-            sql`${workspaceIngestLog.sourceEvent}->>'title' ILIKE ${`%${search}%`}`
+            sql`${workspaceIngestLogs.sourceEvent}->>'title' ILIKE ${`%${search}%`}`
           );
         }
 
         if (receivedAfter) {
-          conditions.push(gte(workspaceIngestLog.receivedAt, receivedAfter));
+          conditions.push(gte(workspaceIngestLogs.receivedAt, receivedAfter));
         }
 
         const rows = await db
           .select({
-            id: workspaceIngestLog.id,
-            source: workspaceIngestLog.source,
-            sourceType: workspaceIngestLog.sourceType,
-            sourceEvent: workspaceIngestLog.sourceEvent,
-            ingestionSource: workspaceIngestLog.ingestionSource,
-            receivedAt: workspaceIngestLog.receivedAt,
-            createdAt: workspaceIngestLog.createdAt,
+            id: workspaceIngestLogs.id,
+            source: workspaceIngestLogs.source,
+            sourceType: workspaceIngestLogs.sourceType,
+            sourceEvent: workspaceIngestLogs.sourceEvent,
+            ingestionSource: workspaceIngestLogs.ingestionSource,
+            receivedAt: workspaceIngestLogs.receivedAt,
+            createdAt: workspaceIngestLogs.createdAt,
           })
-          .from(workspaceIngestLog)
+          .from(workspaceIngestLogs)
           .where(and(...conditions))
-          .orderBy(desc(workspaceIngestLog.id))
+          .orderBy(desc(workspaceIngestLogs.id))
           .limit(limit + 1);
 
         const hasMore = rows.length > limit;
@@ -1301,7 +895,7 @@ export const workspaceRouter = {
  * Notify the backfill service to trigger a historical backfill for a connection.
  * Best-effort — errors are logged but never thrown.
  *
- * If depth or entityTypes are omitted, they are loaded from gwInstallations.backfillConfig.
+ * If depth or entityTypes are omitted, they are loaded from gatewayInstallations.backfillConfig.
  */
 export async function notifyBackfill(params: {
   installationId: string;
@@ -1318,8 +912,8 @@ export async function notifyBackfill(params: {
   // Load stored defaults when caller omits depth or entityTypes
   if (resolvedDepth === undefined || resolvedEntityTypes === undefined) {
     try {
-      const installation = await db.query.gwInstallations.findFirst({
-        where: eq(gwInstallations.id, params.installationId),
+      const installation = await db.query.gatewayInstallations.findFirst({
+        where: eq(gatewayInstallations.id, params.installationId),
         columns: { backfillConfig: true },
       });
       if (installation?.backfillConfig) {

@@ -1,6 +1,6 @@
 import { db } from "@db/console/client";
 import {
-  gwInstallations,
+  gatewayInstallations,
   orgWorkspaces,
   workspaceIntegrations,
 } from "@db/console/schema";
@@ -185,11 +185,11 @@ export const workspaceAccessRouter = {
           // Verify the installation belongs to this org
           const installationResult = await ctx.db
             .select()
-            .from(gwInstallations)
+            .from(gatewayInstallations)
             .where(
               and(
-                eq(gwInstallations.id, repo.gwInstallationId),
-                eq(gwInstallations.orgId, input.clerkOrgId)
+                eq(gatewayInstallations.id, repo.gwInstallationId),
+                eq(gatewayInstallations.orgId, input.clerkOrgId)
               )
             )
             .limit(1);

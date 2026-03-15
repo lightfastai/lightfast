@@ -1,5 +1,5 @@
 import { db } from "@db/console/client";
-import { gwInstallations, gwTokens } from "@db/console/schema";
+import { gatewayInstallations, gatewayTokens } from "@db/console/schema";
 import { decrypt } from "@repo/lib";
 import { eq } from "drizzle-orm";
 import { env } from "../env";
@@ -11,8 +11,8 @@ import { env } from "../env";
 export async function getInstallationToken(
   installationId: string
 ): Promise<string> {
-  const token = await db.query.gwTokens.findFirst({
-    where: eq(gwTokens.installationId, installationId),
+  const token = await db.query.gatewayTokens.findFirst({
+    where: eq(gatewayTokens.installationId, installationId),
   });
 
   if (!token) {
@@ -31,12 +31,12 @@ export async function getInstallationTokenWithRefresh(
 ): Promise<{ accessToken: string; provider: string }> {
   const results = await db
     .select({
-      token: gwTokens,
-      provider: gwInstallations.provider,
+      token: gatewayTokens,
+      provider: gatewayInstallations.provider,
     })
-    .from(gwTokens)
-    .innerJoin(gwInstallations, eq(gwTokens.installationId, gwInstallations.id))
-    .where(eq(gwTokens.installationId, installationId))
+    .from(gatewayTokens)
+    .innerJoin(gatewayInstallations, eq(gatewayTokens.installationId, gatewayInstallations.id))
+    .where(eq(gatewayTokens.installationId, installationId))
     .limit(1);
 
   const row = results[0];

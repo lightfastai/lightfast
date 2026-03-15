@@ -13,18 +13,17 @@ vi.mock("@repo/gateway-service-clients", () => ({
 vi.mock("@db/console/client", () => ({
   db: {
     query: {
-      gwInstallations: { findFirst: mockFindFirst },
+      gatewayInstallations: { findFirst: mockFindFirst },
     },
   },
 }));
 
 vi.mock("@db/console/schema", () => ({
   orgWorkspaces: {},
-  workspaceKnowledgeDocuments: {},
   workspaceWorkflowRuns: {},
   workspaceIntegrations: {},
-  gwInstallations: { id: "id", backfillConfig: "backfillConfig" },
-  workspaceIngestLog: {},
+  gatewayInstallations: { id: "id", backfillConfig: "backfillConfig" },
+  workspaceIngestLogs: {},
 }));
 
 vi.mock("drizzle-orm", () => ({
