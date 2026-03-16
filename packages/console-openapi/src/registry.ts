@@ -10,7 +10,7 @@ import {
 } from "@repo/console-validation/api";
 import { createDocument } from "zod-openapi";
 
-export function generateOpenAPIDocument() {
+export function generateOpenAPIDocument(): ReturnType<typeof createDocument> {
   return createDocument({
     openapi: "3.1.0",
     info: {
