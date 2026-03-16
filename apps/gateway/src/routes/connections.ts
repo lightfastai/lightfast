@@ -44,10 +44,13 @@ const runtime: RuntimeConfig = { callbackBaseUrl: gatewayBaseUrl };
 // they are excluded here and will return "unknown_provider" on any request.
 const providerConfigs: Record<string, unknown> = Object.fromEntries(
   Object.entries(PROVIDERS)
-    .map(([name, p]) => [
-      name,
-      p.createConfig(env as unknown as Record<string, string>, runtime),
-    ] as const)
+    .map(
+      ([name, p]) =>
+        [
+          name,
+          p.createConfig(env as unknown as Record<string, string>, runtime),
+        ] as const
+    )
     .filter(([, config]) => config !== null)
 );
 
