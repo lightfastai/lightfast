@@ -55,6 +55,7 @@ async function exchangeVercelCode(
 // ── Provider Definition ──
 
 export const vercel = defineProvider({
+  optional: true,
   envSchema: {
     VERCEL_INTEGRATION_SLUG: z.string().min(1),
     VERCEL_CLIENT_SECRET_ID: z.string().min(1),

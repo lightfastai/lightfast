@@ -80,6 +80,7 @@ async function exchangeSentryCode(
 // ── Provider Definition ──
 
 export const sentry = defineProvider({
+  optional: true,
   envSchema: {
     SENTRY_APP_SLUG: z.string().min(1),
     SENTRY_CLIENT_ID: z.string().min(1),

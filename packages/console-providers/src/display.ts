@@ -11,6 +11,8 @@ interface ProviderDisplayEntry {
   readonly displayName: string;
   readonly icon: IconDef;
   readonly name: string;
+  /** When true, the provider is not yet available and will be shown as "Coming soon" in the UI */
+  readonly comingSoon?: true;
 }
 
 export const PROVIDER_DISPLAY = {
@@ -27,6 +29,7 @@ export const PROVIDER_DISPLAY = {
     name: "vercel",
     displayName: "Vercel",
     description: "Connect your Vercel projects",
+    comingSoon: true,
     icon: {
       viewBox: "0 0 24 24",
       d: "M24 22.525H0l12-21.05 12 21.05z",
@@ -36,6 +39,7 @@ export const PROVIDER_DISPLAY = {
     name: "linear",
     displayName: "Linear",
     description: "Connect your Linear workspace",
+    comingSoon: true,
     icon: {
       viewBox: "0 0 24 24",
       d: "M2.886 4.18A11.982 11.982 0 0 1 11.99 0C18.624 0 24 5.376 24 12.009c0 3.64-1.62 6.903-4.18 9.105L2.887 4.18ZM1.817 5.626l16.556 16.556c-.524.33-1.075.62-1.65.866L.951 7.277c.247-.575.537-1.126.866-1.65ZM.322 9.163l14.515 14.515c-.71.172-1.443.282-2.195.322L0 11.358a12 12 0 0 1 .322-2.195Zm-.17 4.862 9.823 9.824a12.02 12.02 0 0 1-9.824-9.824Z",
@@ -45,6 +49,7 @@ export const PROVIDER_DISPLAY = {
     name: "sentry",
     displayName: "Sentry",
     description: "Connect your Sentry projects",
+    comingSoon: true,
     icon: {
       viewBox: "0 0 24 24",
       d: "M13.91 2.505c-.873-1.448-2.972-1.448-3.844 0L6.904 7.92a15.478 15.478 0 0 1 8.53 12.811h-2.221A13.301 13.301 0 0 0 5.784 9.814l-2.926 5.06a7.65 7.65 0 0 1 4.435 5.848H2.194a.365.365 0 0 1-.298-.534l1.413-2.402a5.16 5.16 0 0 0-1.614-.913L.296 19.275a2.182 2.182 0 0 0 .812 2.999 2.24 2.24 0 0 0 1.086.288h6.983a9.322 9.322 0 0 0-3.845-8.318l1.11-1.922a11.47 11.47 0 0 1 4.95 10.24h5.915a17.242 17.242 0 0 0-7.885-15.28l2.244-3.845a.37.37 0 0 1 .504-.13c.255.14 9.75 16.708 9.928 16.9a.365.365 0 0 1-.327.543h-2.287c.029.612.029 1.223 0 1.831h2.297a2.206 2.206 0 0 0 1.922-3.31z",
@@ -60,6 +65,11 @@ export type ProviderSlug = keyof typeof PROVIDER_DISPLAY;
 
 /** Ordered list of provider slugs — order matches PROVIDER_DISPLAY definition order */
 export const PROVIDER_SLUGS = Object.keys(PROVIDER_DISPLAY) as ProviderSlug[];
+
+/** Provider slugs that are currently active (not coming soon) */
+export const ACTIVE_PROVIDER_SLUGS = PROVIDER_SLUGS.filter(
+  (slug) => !(PROVIDER_DISPLAY[slug] as ProviderDisplayEntry).comingSoon
+);
 
 /** Value/label pairs for search filter dropdowns */
 export const SOURCE_TYPE_OPTIONS = PROVIDER_SLUGS.map((key) => ({

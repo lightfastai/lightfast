@@ -159,8 +159,10 @@ export function getDefaultSyncEvents(
 
 // ── Env Presets ───────────────────────────────────────────────────────────────
 
-/** Returns pre-built env presets for all providers — spread into @t3-oss/env-core `extends` arrays.
- *  Called at consumer's createEnv() time, so validation only runs with provider env vars present. */
+/** Returns pre-built env presets for required (non-optional) providers — spread into @t3-oss/env-core `extends` arrays.
+ *  Optional providers are excluded so builds succeed without their env vars being present. */
 export function PROVIDER_ENVS(): Record<string, string>[] {
-  return Object.values(PROVIDERS).map((p) => p.env);
+  return Object.values(PROVIDERS)
+    .filter((p) => !p.optional)
+    .map((p) => p.env);
 }

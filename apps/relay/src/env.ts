@@ -12,9 +12,10 @@ const server = {
 
   // Webhook verification secrets
   GITHUB_WEBHOOK_SECRET: z.string().min(1),
-  VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
-  LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1),
-  SENTRY_CLIENT_SECRET: z.string().min(1),
+  // Optional providers — only required when the provider is enabled
+  VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1).optional(),
+  LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
+  SENTRY_CLIENT_SECRET: z.string().min(1).optional(),
   SENTRY_DSN: z.string().url().optional(),
   LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
 };

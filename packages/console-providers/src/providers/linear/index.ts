@@ -147,6 +147,7 @@ async function exchangeLinearCode(
 // ── Provider Definition ──
 
 export const linear = defineProvider({
+  optional: true,
   envSchema: {
     LINEAR_CLIENT_ID: z.string().min(1),
     LINEAR_CLIENT_SECRET: z.string().min(1),
