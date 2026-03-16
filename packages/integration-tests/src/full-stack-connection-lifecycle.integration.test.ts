@@ -250,9 +250,9 @@ afterAll(async () => {
 // ── Tests ──
 
 describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → connection details", () => {
-  it("POST /api/trigger fires run.requested Inngest event", async () => {
+  it("POST /trigger fires run.requested Inngest event", async () => {
     // Deliver a backfill trigger directly to the backfill service
-    const res = await backfillApp.request("/api/trigger", {
+    const res = await backfillApp.request("/trigger", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
@@ -352,21 +352,24 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
     // Simulate the dispatch step at the end of the entity worker loop
     const restore = installServiceRouter({ relayApp });
     try {
-      const res = await fetch("http://localhost:4108/api/webhooks/github", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": "0".repeat(64),
-        },
-        body: JSON.stringify({
-          connectionId: "conn-lifecycle-1",
-          orgId: "org-lifecycle-1",
-          deliveryId: "del-lifecycle-e2e-1",
-          eventType: "push",
-          payload: { repository: { id: 99_999 } },
-          receivedAt: Date.now(),
-        }),
-      });
+      const res = await fetch(
+        "http://localhost:3024/services/relay/webhooks/github",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": "0".repeat(64),
+          },
+          body: JSON.stringify({
+            connectionId: "conn-lifecycle-1",
+            orgId: "org-lifecycle-1",
+            deliveryId: "del-lifecycle-e2e-1",
+            eventType: "push",
+            payload: { repository: { id: 99_999 } },
+            receivedAt: Date.now(),
+          }),
+        }
+      );
 
       const json = (await res.json()) as { status: string };
       expect(json.status).toBe("accepted");
@@ -404,7 +407,7 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     expect(capturedMsg.url).toContain("/trigger/cancel");
 
     // 2. Deliver captured QStash body to backfill cancel endpoint
-    const res = await backfillApp.request("/api/trigger/cancel", {
+    const res = await backfillApp.request("/trigger/cancel", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
@@ -466,7 +469,7 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     };
 
     // First dispatch — accepted
-    const first = await relayApp.request("/api/webhooks/github", {
+    const first = await relayApp.request("/webhooks/github", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
@@ -479,7 +482,7 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     );
 
     // Second dispatch (retry with same deliveryId) — deduplicated
-    const second = await relayApp.request("/api/webhooks/github", {
+    const second = await relayApp.request("/webhooks/github", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
@@ -554,7 +557,7 @@ describe("Suite 5.3 — Full teardown path", () => {
     );
 
     // ── 4. Deliver cancel QStash to backfill → run.cancelled fires ──
-    const cancelRes = await backfillApp.request("/api/trigger/cancel", {
+    const cancelRes = await backfillApp.request("/trigger/cancel", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",

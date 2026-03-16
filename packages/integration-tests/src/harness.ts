@@ -274,18 +274,32 @@ export function installServiceRouter(apps: ServiceApps): () => void {
     // gatewayUrl / relayUrl / backfillUrl all route through localhost:3024 in dev.
     if (port === "3024") {
       if (appPath.startsWith("/services/gateway/")) {
-        if (!gatewayApp) throw new Error(`[serviceRouter] gatewayApp not registered`);
-        return gatewayApp.request(appPath, init);
+        if (!gatewayApp) {
+          throw new Error("[serviceRouter] gatewayApp not registered");
+        }
+        return gatewayApp.request(
+          appPath.slice("/services/gateway".length),
+          init
+        );
       }
       if (appPath.startsWith("/services/relay/")) {
-        if (!relayApp) throw new Error(`[serviceRouter] relayApp not registered`);
-        return relayApp.request("/api/" + appPath.slice("/services/relay/".length), init);
+        if (!relayApp) {
+          throw new Error("[serviceRouter] relayApp not registered");
+        }
+        return relayApp.request(appPath.slice("/services/relay".length), init);
       }
       if (appPath.startsWith("/services/backfill/")) {
-        if (!backfillApp) throw new Error(`[serviceRouter] backfillApp not registered`);
-        return backfillApp.request("/api/" + appPath.slice("/services/backfill/".length), init);
+        if (!backfillApp) {
+          throw new Error("[serviceRouter] backfillApp not registered");
+        }
+        return backfillApp.request(
+          appPath.slice("/services/backfill".length),
+          init
+        );
       }
-      throw new Error(`[serviceRouter] No rewrite for path ${appPath} on port 3024`);
+      throw new Error(
+        `[serviceRouter] No rewrite for path ${appPath} on port 3024`
+      );
     }
 
     const app = portToApp[port];

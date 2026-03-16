@@ -182,7 +182,7 @@ import { Hono } from "hono";
 import { admin } from "./admin.js";
 
 const app = new Hono();
-app.route("/api/admin", admin);
+app.route("/admin", admin);
 
 function request(
   path: string,
@@ -207,7 +207,7 @@ beforeEach(resetAllMocks);
 
 // ── Tests ──
 
-describe("POST /api/admin/replay/catchup", () => {
+describe("POST /admin/replay/catchup", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDbSelect.reset();
@@ -229,7 +229,7 @@ describe("POST /api/admin/replay/catchup", () => {
   // ── Auth ──
 
   it("returns 401 without X-API-Key", async () => {
-    const res = await request("/api/admin/replay/catchup", {
+    const res = await request("/admin/replay/catchup", {
       body: {},
     });
     expect(res.status).toBe(401);
@@ -242,7 +242,7 @@ describe("POST /api/admin/replay/catchup", () => {
     // First select: deliveries query returns empty
     mockDbSelect.setResults([[]]);
 
-    const res = await request("/api/admin/replay/catchup", {
+    const res = await request("/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
       body: { installationId: "inst-1" },
     });
@@ -256,7 +256,7 @@ describe("POST /api/admin/replay/catchup", () => {
   });
 
   it("returns 400 when installationId is missing", async () => {
-    const res = await request("/api/admin/replay/catchup", {
+    const res = await request("/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
       body: {},
     });
@@ -290,7 +290,7 @@ describe("POST /api/admin/replay/catchup", () => {
       failed: [],
     });
 
-    const res = await request("/api/admin/replay/catchup", {
+    const res = await request("/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
       body: { installationId: "inst-1" },
     });
@@ -326,7 +326,7 @@ describe("POST /api/admin/replay/catchup", () => {
       failed: [],
     });
 
-    const res = await request("/api/admin/replay/catchup", {
+    const res = await request("/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
       body: { installationId: "inst-2", provider: "linear" },
     });
@@ -346,7 +346,7 @@ describe("POST /api/admin/replay/catchup", () => {
   it("clamps batchSize to minimum of 1", async () => {
     mockDbSelect.setResults([[]]);
 
-    const res = await request("/api/admin/replay/catchup", {
+    const res = await request("/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
       body: { installationId: "inst-1", batchSize: -5 },
     });
@@ -360,7 +360,7 @@ describe("POST /api/admin/replay/catchup", () => {
   it("clamps batchSize to maximum of 200", async () => {
     mockDbSelect.setResults([[]]);
 
-    const res = await request("/api/admin/replay/catchup", {
+    const res = await request("/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
       body: { installationId: "inst-1", batchSize: 500 },
     });
@@ -403,7 +403,7 @@ describe("POST /api/admin/replay/catchup", () => {
       failed: [],
     });
 
-    const res = await request("/api/admin/replay/catchup", {
+    const res = await request("/admin/replay/catchup", {
       headers: { "X-API-Key": "test-api-key" },
       body: { installationId: "inst-1" },
     });
@@ -419,12 +419,12 @@ describe("POST /api/admin/replay/catchup", () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-// GET /api/admin/health
+// GET /admin/health
 // ══════════════════════════════════════════════════════════════════════════════
 
-describe("GET /api/admin/health", () => {
+describe("GET /admin/health", () => {
   it("returns 200 with status=ok when Redis and DB are healthy", async () => {
-    const res = await request("/api/admin/health", { method: "GET" });
+    const res = await request("/admin/health", { method: "GET" });
     expect(res.status).toBe(200);
     const json = (await res.json()) as Record<string, unknown>;
     expect(json).toMatchObject({
@@ -437,7 +437,7 @@ describe("GET /api/admin/health", () => {
 
   it("returns 503 with status=degraded when Redis ping fails", async () => {
     mockRedisPing.mockRejectedValueOnce(new Error("Redis unavailable"));
-    const res = await request("/api/admin/health", { method: "GET" });
+    const res = await request("/admin/health", { method: "GET" });
     expect(res.status).toBe(503);
     expect(await res.json()).toMatchObject({
       status: "degraded",
@@ -448,7 +448,7 @@ describe("GET /api/admin/health", () => {
 
   it("returns 503 with status=degraded when DB execute fails", async () => {
     mockDbExecute.mockRejectedValueOnce(new Error("DB unavailable"));
-    const res = await request("/api/admin/health", { method: "GET" });
+    const res = await request("/admin/health", { method: "GET" });
     expect(res.status).toBe(503);
     expect(await res.json()).toMatchObject({
       status: "degraded",
@@ -460,7 +460,7 @@ describe("GET /api/admin/health", () => {
   it("returns 503 when both Redis and DB fail", async () => {
     mockRedisPing.mockRejectedValueOnce(new Error("Redis down"));
     mockDbExecute.mockRejectedValueOnce(new Error("DB down"));
-    const res = await request("/api/admin/health", { method: "GET" });
+    const res = await request("/admin/health", { method: "GET" });
     expect(res.status).toBe(503);
     expect(await res.json()).toMatchObject({
       status: "degraded",
@@ -470,7 +470,7 @@ describe("GET /api/admin/health", () => {
   });
 
   it("response always includes redis, database, and uptime_ms fields", async () => {
-    const res = await request("/api/admin/health", { method: "GET" });
+    const res = await request("/admin/health", { method: "GET" });
     const json = await res.json();
     expect(json).toHaveProperty("redis");
     expect(json).toHaveProperty("database");
@@ -479,18 +479,18 @@ describe("GET /api/admin/health", () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-// POST /api/admin/cache/rebuild
+// POST /admin/cache/rebuild
 // ══════════════════════════════════════════════════════════════════════════════
 
-describe("POST /api/admin/cache/rebuild", () => {
+describe("POST /admin/cache/rebuild", () => {
   it("returns 401 without X-API-Key", async () => {
-    const res = await request("/api/admin/cache/rebuild");
+    const res = await request("/admin/cache/rebuild");
     expect(res.status).toBe(401);
   });
 
   it("returns { status: 'rebuilt', count: 0 } when no active resources", async () => {
     mockDbSelect.setResults([[]]);
-    const res = await request("/api/admin/cache/rebuild", {
+    const res = await request("/admin/cache/rebuild", {
       headers: { "X-API-Key": "test-api-key" },
     });
     expect(res.status).toBe(200);
@@ -514,7 +514,7 @@ describe("POST /api/admin/cache/rebuild", () => {
       },
     ];
     mockDbSelect.setResults([resources]);
-    const res = await request("/api/admin/cache/rebuild", {
+    const res = await request("/admin/cache/rebuild", {
       headers: { "X-API-Key": "test-api-key" },
     });
     expect(res.status).toBe(200);
@@ -532,7 +532,7 @@ describe("POST /api/admin/cache/rebuild", () => {
     ];
     mockDbSelect.setResults([resources]);
 
-    await request("/api/admin/cache/rebuild", {
+    await request("/admin/cache/rebuild", {
       headers: { "X-API-Key": "test-api-key" },
     });
 
@@ -559,7 +559,7 @@ describe("POST /api/admin/cache/rebuild", () => {
     ];
     mockDbSelect.setResults([resources]);
 
-    await request("/api/admin/cache/rebuild", {
+    await request("/admin/cache/rebuild", {
       headers: { "X-API-Key": "test-api-key" },
     });
 
@@ -569,12 +569,12 @@ describe("POST /api/admin/cache/rebuild", () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-// GET /api/admin/dlq
+// GET /admin/dlq
 // ══════════════════════════════════════════════════════════════════════════════
 
-describe("GET /api/admin/dlq", () => {
+describe("GET /admin/dlq", () => {
   it("returns 401 without X-API-Key", async () => {
-    const res = await request("/api/admin/dlq", { method: "GET" });
+    const res = await request("/admin/dlq", { method: "GET" });
     expect(res.status).toBe(401);
   });
 
@@ -582,7 +582,7 @@ describe("GET /api/admin/dlq", () => {
     const items = [{ id: "d1", provider: "github", status: "dlq" }];
     mockDbSelect.setResults([items]);
 
-    const res = await request("/api/admin/dlq", {
+    const res = await request("/admin/dlq", {
       method: "GET",
       headers: { "X-API-Key": "test-api-key" },
     });
@@ -594,7 +594,7 @@ describe("GET /api/admin/dlq", () => {
   it("respects ?limit= and ?offset= query params", async () => {
     mockDbSelect.setResults([[]]);
 
-    const res = await request("/api/admin/dlq?limit=10&offset=20", {
+    const res = await request("/admin/dlq?limit=10&offset=20", {
       method: "GET",
       headers: { "X-API-Key": "test-api-key" },
     });
@@ -610,7 +610,7 @@ describe("GET /api/admin/dlq", () => {
   it("clamps limit to max 100", async () => {
     mockDbSelect.setResults([[]]);
 
-    const res = await request("/api/admin/dlq?limit=999", {
+    const res = await request("/admin/dlq?limit=999", {
       method: "GET",
       headers: { "X-API-Key": "test-api-key" },
     });
@@ -622,7 +622,7 @@ describe("GET /api/admin/dlq", () => {
   it("clamps limit to min 1", async () => {
     mockDbSelect.setResults([[]]);
 
-    const res = await request("/api/admin/dlq?limit=0", {
+    const res = await request("/admin/dlq?limit=0", {
       method: "GET",
       headers: { "X-API-Key": "test-api-key" },
     });
@@ -634,7 +634,7 @@ describe("GET /api/admin/dlq", () => {
   it("handles NaN limit gracefully (falls back to 50)", async () => {
     mockDbSelect.setResults([[]]);
 
-    const res = await request("/api/admin/dlq?limit=abc", {
+    const res = await request("/admin/dlq?limit=abc", {
       method: "GET",
       headers: { "X-API-Key": "test-api-key" },
     });
@@ -646,7 +646,7 @@ describe("GET /api/admin/dlq", () => {
   it("returns { items, limit, offset } shape", async () => {
     mockDbSelect.setResults([[]]);
 
-    const res = await request("/api/admin/dlq", {
+    const res = await request("/admin/dlq", {
       method: "GET",
       headers: { "X-API-Key": "test-api-key" },
     });
@@ -658,17 +658,17 @@ describe("GET /api/admin/dlq", () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-// POST /api/admin/dlq/replay
+// POST /admin/dlq/replay
 // ══════════════════════════════════════════════════════════════════════════════
 
-describe("POST /api/admin/dlq/replay", () => {
+describe("POST /admin/dlq/replay", () => {
   it("returns 401 without X-API-Key", async () => {
-    const res = await request("/api/admin/dlq/replay");
+    const res = await request("/admin/dlq/replay");
     expect(res.status).toBe(401);
   });
 
   it("returns 400 with invalid_json on malformed body", async () => {
-    const res = await request("/api/admin/dlq/replay", {
+    const res = await request("/admin/dlq/replay", {
       headers: { "X-API-Key": "test-api-key" },
       body: "not-json",
     });
@@ -677,7 +677,7 @@ describe("POST /api/admin/dlq/replay", () => {
   });
 
   it("returns 400 when deliveryIds is empty array", async () => {
-    const res = await request("/api/admin/dlq/replay", {
+    const res = await request("/admin/dlq/replay", {
       headers: { "X-API-Key": "test-api-key" },
       body: { deliveryIds: [] },
     });
@@ -686,7 +686,7 @@ describe("POST /api/admin/dlq/replay", () => {
   });
 
   it("returns 400 when deliveryIds is absent", async () => {
-    const res = await request("/api/admin/dlq/replay", {
+    const res = await request("/admin/dlq/replay", {
       headers: { "X-API-Key": "test-api-key" },
       body: {},
     });
@@ -697,7 +697,7 @@ describe("POST /api/admin/dlq/replay", () => {
   it("returns 404 when no matching DLQ entries found", async () => {
     mockDbSelect.setResults([[]]);
 
-    const res = await request("/api/admin/dlq/replay", {
+    const res = await request("/admin/dlq/replay", {
       headers: { "X-API-Key": "test-api-key" },
       body: { deliveryIds: [{ provider: "github", deliveryId: "del-1" }] },
     });
@@ -723,7 +723,7 @@ describe("POST /api/admin/dlq/replay", () => {
       failed: [],
     });
 
-    const res = await request("/api/admin/dlq/replay", {
+    const res = await request("/admin/dlq/replay", {
       headers: { "X-API-Key": "test-api-key" },
       body: { deliveryIds: [{ provider: "github", deliveryId: "del-1" }] },
     });
@@ -750,7 +750,7 @@ describe("POST /api/admin/dlq/replay", () => {
       failed: [],
     });
 
-    const res = await request("/api/admin/dlq/replay", {
+    const res = await request("/admin/dlq/replay", {
       headers: { "X-API-Key": "test-api-key" },
       body: {
         deliveryIds: [
@@ -766,12 +766,12 @@ describe("POST /api/admin/dlq/replay", () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-// POST /api/admin/delivery-status
+// POST /admin/delivery-status
 // ══════════════════════════════════════════════════════════════════════════════
 
-describe("POST /api/admin/delivery-status", () => {
+describe("POST /admin/delivery-status", () => {
   it("returns 401 without Upstash-Signature header", async () => {
-    const res = await request("/api/admin/delivery-status", {
+    const res = await request("/admin/delivery-status", {
       body: { messageId: "msg-1", state: "delivered" },
     });
     expect(res.status).toBe(401);
@@ -781,7 +781,7 @@ describe("POST /api/admin/delivery-status", () => {
   it("returns 401 when QStash signature is invalid", async () => {
     mockQStashVerify.mockRejectedValueOnce(new Error("invalid signature"));
 
-    const res = await request("/api/admin/delivery-status", {
+    const res = await request("/admin/delivery-status", {
       headers: { "Upstash-Signature": "bad-sig" },
       body: { messageId: "msg-1", state: "delivered" },
     });
@@ -790,7 +790,7 @@ describe("POST /api/admin/delivery-status", () => {
   });
 
   it("returns 400 when messageId is missing", async () => {
-    const res = await request("/api/admin/delivery-status", {
+    const res = await request("/admin/delivery-status", {
       headers: { "Upstash-Signature": "valid-sig" },
       body: { state: "delivered" },
     });
@@ -801,7 +801,7 @@ describe("POST /api/admin/delivery-status", () => {
   });
 
   it("returns 400 when state is missing", async () => {
-    const res = await request("/api/admin/delivery-status", {
+    const res = await request("/admin/delivery-status", {
       headers: { "Upstash-Signature": "valid-sig" },
       body: { messageId: "msg-1" },
     });
@@ -812,7 +812,7 @@ describe("POST /api/admin/delivery-status", () => {
   });
 
   it("returns 400 on malformed JSON", async () => {
-    const res = await request("/api/admin/delivery-status", {
+    const res = await request("/admin/delivery-status", {
       headers: { "Upstash-Signature": "valid-sig" },
       body: "not-json",
     });
@@ -821,7 +821,7 @@ describe("POST /api/admin/delivery-status", () => {
   });
 
   it("updates delivery to 'delivered' when state='delivered' and deliveryId present", async () => {
-    const res = await request("/api/admin/delivery-status", {
+    const res = await request("/admin/delivery-status", {
       headers: { "Upstash-Signature": "valid-sig" },
       body: { messageId: "msg-1", state: "delivered", deliveryId: "del-1" },
     });
@@ -835,7 +835,7 @@ describe("POST /api/admin/delivery-status", () => {
   });
 
   it("updates delivery to 'dlq' when state='error' and deliveryId present", async () => {
-    const res = await request("/api/admin/delivery-status", {
+    const res = await request("/admin/delivery-status", {
       headers: { "Upstash-Signature": "valid-sig" },
       body: { messageId: "msg-1", state: "error", deliveryId: "del-1" },
     });
@@ -848,7 +848,7 @@ describe("POST /api/admin/delivery-status", () => {
   });
 
   it("does NOT update when state is unrecognized", async () => {
-    const res = await request("/api/admin/delivery-status", {
+    const res = await request("/admin/delivery-status", {
       headers: { "Upstash-Signature": "valid-sig" },
       body: { messageId: "msg-1", state: "pending", deliveryId: "del-1" },
     });
@@ -857,7 +857,7 @@ describe("POST /api/admin/delivery-status", () => {
   });
 
   it("does NOT update when deliveryId is absent", async () => {
-    const res = await request("/api/admin/delivery-status", {
+    const res = await request("/admin/delivery-status", {
       headers: { "Upstash-Signature": "valid-sig" },
       body: { messageId: "msg-1", state: "delivered" },
     });
@@ -866,7 +866,7 @@ describe("POST /api/admin/delivery-status", () => {
   });
 
   it("applies provider query param as additional WHERE condition", async () => {
-    const res = await request("/api/admin/delivery-status?provider=github", {
+    const res = await request("/admin/delivery-status?provider=github", {
       headers: { "Upstash-Signature": "valid-sig" },
       body: { messageId: "msg-1", state: "delivered", deliveryId: "del-1" },
     });
@@ -876,7 +876,7 @@ describe("POST /api/admin/delivery-status", () => {
   });
 
   it("always returns { status: 'received' }", async () => {
-    const res = await request("/api/admin/delivery-status", {
+    const res = await request("/admin/delivery-status", {
       headers: { "Upstash-Signature": "valid-sig" },
       body: { messageId: "msg-1", state: "delivered", deliveryId: "del-1" },
     });

@@ -7,8 +7,8 @@ import { env } from "../env.js";
 export const relayBaseUrl = (() => {
   if (env.VERCEL_ENV === "preview") {
     return env.VERCEL_URL
-      ? `https://${env.VERCEL_URL}/api`
-      : "http://localhost:4108/api";
+      ? `https://${env.VERCEL_URL}`
+      : "http://localhost:4108";
   }
 
   if (env.VERCEL_ENV === "production") {
@@ -17,10 +17,10 @@ export const relayBaseUrl = (() => {
         "VERCEL_PROJECT_PRODUCTION_URL is required in production but was not set"
       );
     }
-    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}/api`;
+    return `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`;
   }
 
-  return "http://localhost:4108/api";
+  return "http://localhost:4108";
 })();
 
 const isDevelopment =
@@ -29,5 +29,5 @@ const isDevelopment =
 // Get the console URL dynamically based on environment
 export const consoleUrl = withRelatedProject({
   projectName: "lightfast-console",
-  defaultHost: isDevelopment ? "http://localhost:4107" : "https://lightfast.ai",
+  defaultHost: isDevelopment ? "http://localhost:3024" : "https://lightfast.ai",
 });

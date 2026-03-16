@@ -46,8 +46,8 @@ app.onError((err, c) => {
 app.get("/", (c) => c.json({ service: "backfill", status: "ok" }));
 
 // API routes
-app.route("/api/trigger", trigger);
-app.route("/api/estimate", estimate);
+app.route("/trigger", trigger);
+app.route("/estimate", estimate);
 app.route("/api/inngest", inngestRoute);
 
 export default app;

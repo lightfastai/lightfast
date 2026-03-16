@@ -33,7 +33,7 @@ import { Hono } from "hono";
 import { estimate } from "./estimate.js";
 
 const app = new Hono();
-app.route("/api/estimate", estimate);
+app.route("/estimate", estimate);
 
 function request(
   body: Record<string, unknown> | string,
@@ -43,7 +43,7 @@ function request(
   if (!h.has("content-type")) {
     h.set("content-type", "application/json");
   }
-  return app.request("/api/estimate", {
+  return app.request("/estimate", {
     method: "POST",
     headers: h,
     body: typeof body === "object" ? JSON.stringify(body) : body,

@@ -342,7 +342,7 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
               m.url.includes("/trigger/cancel")
             );
             if (cancelMsg) {
-              await backfillApp.request("/api/trigger/cancel", {
+              await backfillApp.request("/trigger/cancel", {
                 method: "POST",
                 headers: new Headers({
                   "Content-Type": "application/json",
@@ -421,7 +421,7 @@ describe("Suite 6.2 — Concurrent relay dispatches are order-independent", () =
       effects: deliveryIds.map((deliveryId) => ({
         label: `webhook-${deliveryId}`,
         deliver: async () => {
-          const res = await relayApp.request("/api/webhooks/github", {
+          const res = await relayApp.request("/webhooks/github", {
             method: "POST",
             headers: new Headers({
               "Content-Type": "application/json",
@@ -488,7 +488,7 @@ describe("Suite 6.3 — Backfill notify + relay dispatch are order-independent",
           label: "notify-backfill",
           deliver: async () => {
             // Deliver backfill trigger directly (previously routed via notifyBackfillService)
-            const res = await backfillApp.request("/api/trigger", {
+            const res = await backfillApp.request("/trigger", {
               method: "POST",
               headers: new Headers({
                 "Content-Type": "application/json",
@@ -506,7 +506,7 @@ describe("Suite 6.3 — Backfill notify + relay dispatch are order-independent",
         {
           label: "relay-webhook-dispatch",
           deliver: async () => {
-            await relayApp.request("/api/webhooks/github", {
+            await relayApp.request("/webhooks/github", {
               method: "POST",
               headers: new Headers({
                 "Content-Type": "application/json",
@@ -584,7 +584,7 @@ describe("Suite 6.4 — All 4 gateway teardown steps are order-independent (24 o
           deliver: async () => {
             // Simulate teardown step 1: publish cancel message to backfill service
             await qstashMock.publishJSON({
-              url: "http://localhost:4109/api/trigger/cancel",
+              url: "http://localhost:3024/services/backfill/trigger/cancel",
               body: { installationId: inst.id },
             });
           },
@@ -736,7 +736,7 @@ describe("Suite 6.5 — Relay dedup prevents double-dispatch in both orderings",
     const DELIVERY_ID = "del-dedup-suite65";
 
     async function sendWebhook() {
-      await relayApp.request("/api/webhooks/github", {
+      await relayApp.request("/webhooks/github", {
         method: "POST",
         headers: new Headers({
           "Content-Type": "application/json",

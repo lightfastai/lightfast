@@ -2,7 +2,7 @@
  * Suite 2: Backfill Trigger (QStash Contract)
  *
  * Verifies the backfill trigger endpoint auth/validation, that the
- * cancel message from cancelBackfillService matches POST /api/trigger/cancel,
+ * cancel message from cancelBackfillService matches POST /trigger/cancel,
  * and that OAuth callbacks no longer trigger backfill directly.
  *
  * Infrastructure: PGlite (for reactivated-installation test), in-memory
@@ -217,23 +217,23 @@ afterAll(async () => {
 // ── Tests ──
 
 describe("Suite 2.2 — Backfill trigger endpoint auth and validation", () => {
-  it("POST /api/trigger rejects missing API key with 401", async () => {
-    const res = await triggerReq("/api/trigger", {
+  it("POST /trigger rejects missing API key with 401", async () => {
+    const res = await triggerReq("/trigger", {
       body: { installationId: "inst-1", provider: "github", orgId: "org-1" },
     });
     expect(res.status).toBe(401);
   });
 
-  it("POST /api/trigger rejects wrong API key with 401", async () => {
-    const res = await triggerReq("/api/trigger", {
+  it("POST /trigger rejects wrong API key with 401", async () => {
+    const res = await triggerReq("/trigger", {
       body: { installationId: "inst-1", provider: "github", orgId: "org-1" },
       headers: { "X-API-Key": "wrong-secret-key" },
     });
     expect(res.status).toBe(401);
   });
 
-  it("POST /api/trigger rejects body missing required fields with 400", async () => {
-    const res = await triggerReq("/api/trigger", {
+  it("POST /trigger rejects body missing required fields with 400", async () => {
+    const res = await triggerReq("/trigger", {
       body: { installationId: "inst-1" }, // missing provider and orgId
       headers: { "X-API-Key": API_KEY },
     });
@@ -261,12 +261,12 @@ describe("Suite 2.3 — cancelBackfillService publishes cancel body", () => {
     };
 
     expect(call.url).toContain("/trigger/cancel");
-    expect(call.url).toContain("localhost:4109");
+    expect(call.url).toContain("localhost:3024");
     expect(call.headers).toMatchObject({ "X-API-Key": API_KEY });
     expect(call.body).toEqual({ installationId: "inst-cancel-1" });
   });
 
-  it("captured cancel body delivered to POST /api/trigger/cancel returns 200 and fires run.cancelled", async () => {
+  it("captured cancel body delivered to POST /trigger/cancel returns 200 and fires run.cancelled", async () => {
     await cancelBackfillService({ installationId: "inst-cancel-e2e" });
 
     const capturedMsg = qstashMessages[0];
@@ -276,7 +276,7 @@ describe("Suite 2.3 — cancelBackfillService publishes cancel body", () => {
     }
     const capturedHeaders = capturedMsg.headers ?? {};
 
-    const res = await triggerReq("/api/trigger/cancel", {
+    const res = await triggerReq("/trigger/cancel", {
       body: capturedMsg.body as Record<string, unknown>,
       headers: capturedHeaders,
     });

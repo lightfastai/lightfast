@@ -27,12 +27,12 @@ const isDevelopment =
  * Relay base URL — used for webhook registration callbacks.
  * Linear webhook callbacks must point at the relay, not the gateway service.
  */
-export const relayBaseUrl = `${withRelatedProject({
+export const relayBaseUrl = withRelatedProject({
   projectName: "lightfast-relay",
   defaultHost: isDevelopment
     ? "http://localhost:4108"
     : "https://relay.lightfast.ai",
-})}/api`;
+});
 
 // Get the console URL dynamically based on environment
 export const consoleUrl = withRelatedProject({

@@ -109,7 +109,7 @@ function webhookReq(
   body: Record<string, unknown>,
   headers: Record<string, string> = {}
 ) {
-  return relayApp.request(`/api/webhooks/${provider}`, {
+  return relayApp.request(`/webhooks/${provider}`, {
     method: "POST",
     headers: new Headers({
       "Content-Type": "application/json",
