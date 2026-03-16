@@ -82,16 +82,19 @@ async function exchangeSentryCode(
 export const sentry = defineProvider({
   optional: true,
   envSchema: {
-    SENTRY_APP_SLUG: z.string().min(1),
-    SENTRY_CLIENT_ID: z.string().min(1),
-    SENTRY_CLIENT_SECRET: z.string().min(1),
+    SENTRY_APP_SLUG: z.string().min(1).optional(),
+    SENTRY_CLIENT_ID: z.string().min(1).optional(),
+    SENTRY_CLIENT_SECRET: z.string().min(1).optional(),
   },
-  createConfig: (env, _runtime) =>
-    sentryConfigSchema.parse({
-      appSlug: env.SENTRY_APP_SLUG,
-      clientId: env.SENTRY_CLIENT_ID,
-      clientSecret: env.SENTRY_CLIENT_SECRET,
-    }),
+  createConfig: (env, _runtime): SentryConfig | null => {
+    const appSlug = env.SENTRY_APP_SLUG;
+    const clientId = env.SENTRY_CLIENT_ID;
+    const clientSecret = env.SENTRY_CLIENT_SECRET;
+    if (!appSlug || !clientId || !clientSecret) {
+      return null;
+    }
+    return sentryConfigSchema.parse({ appSlug, clientId, clientSecret });
+  },
   name: "sentry",
   displayName: "Sentry",
   description: "Connect your Sentry projects",

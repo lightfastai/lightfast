@@ -57,17 +57,24 @@ async function exchangeVercelCode(
 export const vercel = defineProvider({
   optional: true,
   envSchema: {
-    VERCEL_INTEGRATION_SLUG: z.string().min(1),
-    VERCEL_CLIENT_SECRET_ID: z.string().min(1),
-    VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1),
+    VERCEL_INTEGRATION_SLUG: z.string().min(1).optional(),
+    VERCEL_CLIENT_SECRET_ID: z.string().min(1).optional(),
+    VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1).optional(),
   },
-  createConfig: (env, runtime) =>
-    vercelConfigSchema.parse({
-      integrationSlug: env.VERCEL_INTEGRATION_SLUG,
-      clientSecretId: env.VERCEL_CLIENT_SECRET_ID,
-      clientIntegrationSecret: env.VERCEL_CLIENT_INTEGRATION_SECRET,
+  createConfig: (env, runtime): VercelConfig | null => {
+    const integrationSlug = env.VERCEL_INTEGRATION_SLUG;
+    const clientSecretId = env.VERCEL_CLIENT_SECRET_ID;
+    const clientIntegrationSecret = env.VERCEL_CLIENT_INTEGRATION_SECRET;
+    if (!integrationSlug || !clientSecretId || !clientIntegrationSecret) {
+      return null;
+    }
+    return vercelConfigSchema.parse({
+      integrationSlug,
+      clientSecretId,
+      clientIntegrationSecret,
       callbackBaseUrl: runtime.callbackBaseUrl,
-    }),
+    });
+  },
   name: "vercel",
   displayName: "Vercel",
   description: "Connect your Vercel projects",

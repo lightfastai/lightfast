@@ -73,6 +73,10 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
         teardownRuntime
       );
 
+      if (!config) {
+        return; // optional provider not configured — no token to revoke
+      }
+
       const tokenRows = await db
         .select()
         .from(gatewayTokens)
