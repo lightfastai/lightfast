@@ -217,7 +217,7 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
             correlationId: data.correlationId,
           },
           retries: 5,
-          deduplicationId: `${data.provider}:${data.deliveryId}`,
+          deduplicationId: `${data.provider}_${data.deliveryId}`,
           callback: `${relayBaseUrl}/admin/delivery-status?provider=${data.provider}`,
         });
         log.info("[webhook-delivery] qstash publish accepted", {
