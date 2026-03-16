@@ -44,10 +44,10 @@ export function createGatewayClient(config: ServiceClientConfig) {
     },
 
     async getToken(installationId: string): Promise<GatewayTokenResult> {
-      const response = await fetch(
-        `${gatewayUrl}/${installationId}/token`,
-        { headers: h, signal: AbortSignal.timeout(30_000) }
-      );
+      const response = await fetch(`${gatewayUrl}/${installationId}/token`, {
+        headers: h,
+        signal: AbortSignal.timeout(30_000),
+      });
       if (!response.ok) {
         throw new Error(
           `Gateway getToken failed: ${response.status} for ${installationId}`
@@ -169,16 +169,13 @@ export function createGatewayClient(config: ServiceClientConfig) {
       context: { orgId: string; userId: string; redirectTo?: string }
     ): Promise<{ url: string; state: string }> {
       const qs = context.redirectTo ? `?redirect_to=${context.redirectTo}` : "";
-      const response = await fetch(
-        `${gatewayUrl}/${provider}/authorize${qs}`,
-        {
-          headers: {
-            ...h,
-            "X-Org-Id": context.orgId,
-            "X-User-Id": context.userId,
-          },
-        }
-      );
+      const response = await fetch(`${gatewayUrl}/${provider}/authorize${qs}`, {
+        headers: {
+          ...h,
+          "X-Org-Id": context.orgId,
+          "X-User-Id": context.userId,
+        },
+      });
       if (!response.ok) {
         throw new Error(`Gateway getAuthorizeUrl failed: ${response.status}`);
       }

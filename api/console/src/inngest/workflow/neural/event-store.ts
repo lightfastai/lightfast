@@ -36,7 +36,7 @@ import type {
   EventCaptureOutputSuccess,
   ExtractedEntity,
 } from "@repo/console-validation";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { and, eq, sql } from "drizzle-orm";
 import { NonRetriableError } from "inngest";
 import { nanoid } from "nanoid";

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { RelatedRequestSchema } from "@repo/console-validation";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { relatedLogic } from "~/lib/related";

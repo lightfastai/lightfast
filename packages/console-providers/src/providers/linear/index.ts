@@ -157,7 +157,7 @@ export const linear = defineProvider({
     const clientId = env.LINEAR_CLIENT_ID;
     const clientSecret = env.LINEAR_CLIENT_SECRET;
     const webhookSigningSecret = env.LINEAR_WEBHOOK_SIGNING_SECRET;
-    if (!clientId || !clientSecret || !webhookSigningSecret) {
+    if (!(clientId && clientSecret && webhookSigningSecret)) {
       return null;
     }
     return linearConfigSchema.parse({

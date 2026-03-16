@@ -7,7 +7,7 @@ import {
 } from "@db/console/schema";
 import type { EdgeRule } from "@repo/console-providers";
 import { PROVIDERS } from "@repo/console-providers";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 

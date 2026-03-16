@@ -17,7 +17,7 @@ import {
   webhookSeenKey,
 } from "../lib/cache.js";
 import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
-import { log } from "../logger.js";
+import { log } from "@vendor/observability/log/edge";
 
 const qstash = getQStashClient();
 

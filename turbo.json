@@ -85,7 +85,7 @@
     "VERCEL_ENV",
     "VERCEL_URL",
     "VERCEL_PROJECT_PRODUCTION_URL",
-    "LOGTAIL_SOURCE_TOKEN"
+    "BETTERSTACK_SOURCE_TOKEN"
   ],
   "boundaries": {
     "implicitDependencies": ["~"],

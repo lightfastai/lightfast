@@ -8,7 +8,7 @@
 import { db } from "@db/console/client";
 import { orgApiKeys } from "@db/console/schema";
 import { hashApiKey, isValidApiKeyFormat } from "@repo/console-api-key";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { and, eq, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 

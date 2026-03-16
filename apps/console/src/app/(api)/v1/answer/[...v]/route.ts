@@ -8,7 +8,7 @@ import { workspaceRelatedTool } from "@repo/console-ai/workspace-related";
 import { workspaceSearchTool } from "@repo/console-ai/workspace-search";
 import type { AnswerAppRuntimeContext } from "@repo/console-ai-types";
 import { auth } from "@vendor/clerk/server";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { smoothStream, stepCountIs } from "ai";
 import type { NextRequest } from "next/server";
 import {

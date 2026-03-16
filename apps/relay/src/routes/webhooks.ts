@@ -11,7 +11,7 @@ import { workflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
 import { webhookSeenKey } from "../lib/cache.js";
 import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
-import { log } from "../logger.js";
+import { log } from "@vendor/observability/log/edge";
 import type { WebhookVariables } from "../middleware/webhook.js";
 import {
   payloadParseAndExtract,

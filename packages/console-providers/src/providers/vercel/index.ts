@@ -65,7 +65,7 @@ export const vercel = defineProvider({
     const integrationSlug = env.VERCEL_INTEGRATION_SLUG;
     const clientSecretId = env.VERCEL_CLIENT_SECRET_ID;
     const clientIntegrationSecret = env.VERCEL_CLIENT_INTEGRATION_SECRET;
-    if (!integrationSlug || !clientSecretId || !clientIntegrationSecret) {
+    if (!(integrationSlug && clientSecretId && clientIntegrationSecret)) {
       return null;
     }
     return vercelConfigSchema.parse({

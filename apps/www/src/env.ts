@@ -3,7 +3,7 @@ import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { env as emailEnv } from "@vendor/email/env";
 import { env as inngestEnv } from "@vendor/inngest/env";
 import { env as nextEnv } from "@vendor/next/env";
-import { betterstackEnv } from "@vendor/observability/betterstack-env";
+import { betterstackEnv } from "@vendor/observability/log/next";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { env as securityEnv } from "@vendor/security/env";
 import { z } from "zod";

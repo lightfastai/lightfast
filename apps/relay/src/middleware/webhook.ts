@@ -4,12 +4,14 @@ import type {
   ServiceAuthWebhookBody,
 } from "@repo/console-providers";
 import {
+  computeHmac,
   getProvider,
   serviceAuthWebhookBodySchema,
   timingSafeStringEqual,
 } from "@repo/console-providers";
 import { createMiddleware } from "hono/factory";
 import { env } from "../env.js";
+import { log } from "@vendor/observability/log/edge";
 import type { LifecycleVariables } from "./lifecycle.js";
 
 // ── Context Variables ────────────────────────────────────────────────────────
@@ -162,6 +164,10 @@ export const webhookHeaderGuard = createMiddleware<{
 
   const result = providerDef.webhook.headersSchema.safeParse(headers);
   if (!result.success) {
+    log.warn("[webhook] missing required headers", {
+      provider: c.get("providerName"),
+      missing_fields: result.error.issues.map((i) => i.path.join(".")),
+    });
     return c.json({ error: "missing_required_headers" }, 400);
   }
 
@@ -181,6 +187,15 @@ export const rawBodyCapture = createMiddleware<{
 
   const rawBody = await c.req.text();
   c.set("rawBody", rawBody);
+
+  log.info("[webhook] raw body captured", {
+    provider: c.get("providerName"),
+    body_length: rawBody.length,
+    content_type: c.req.header("content-type"),
+    content_encoding: c.req.header("content-encoding"),
+    transfer_encoding: c.req.header("transfer-encoding"),
+  });
+
   return await next();
 });
 
@@ -204,6 +219,7 @@ export const signatureVerify = createMiddleware<{
 
   const secret = env[webhookSecretEnvKey[providerName]];
   if (!secret) {
+    log.warn("[webhook] missing webhook secret", { provider: providerName });
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
 
@@ -213,6 +229,16 @@ export const signatureVerify = createMiddleware<{
     secret
   );
   if (!valid) {
+    const sigReceived = c.req.header("x-hub-signature-256") ?? "";
+    const sigExpected = `sha256=${computeHmac(rawBody, secret, "SHA-256")}`;
+    log.warn("[webhook] signature mismatch", {
+      provider: providerName,
+      body_length: rawBody.length,
+      secret_length: secret.length,
+      sig_received: sigReceived,
+      sig_expected: sigExpected,
+      sig_match: sigReceived === sigExpected,
+    });
     return c.json({ error: "invalid_signature" }, 401);
   }
 

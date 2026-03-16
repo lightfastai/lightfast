@@ -7,7 +7,7 @@ import type {
   SearchRequest,
   SearchResponse,
 } from "@repo/console-validation";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { eq } from "drizzle-orm";
 import type { AuthContext } from "./types";
 

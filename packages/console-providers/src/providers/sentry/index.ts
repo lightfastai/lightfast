@@ -90,7 +90,7 @@ export const sentry = defineProvider({
     const appSlug = env.SENTRY_APP_SLUG;
     const clientId = env.SENTRY_CLIENT_ID;
     const clientSecret = env.SENTRY_CLIENT_SECRET;
-    if (!appSlug || !clientId || !clientSecret) {
+    if (!(appSlug && clientId && clientSecret)) {
       return null;
     }
     return sentryConfigSchema.parse({ appSlug, clientId, clientSecret });

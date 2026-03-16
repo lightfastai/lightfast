@@ -9,7 +9,7 @@ import { NonRetriableError } from "@vendor/inngest";
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
 import { GITHUB_RATE_LIMIT_BUDGET, MAX_PAGES } from "../lib/constants.js";
-import { log } from "../logger.js";
+import { log } from "@vendor/observability/log/edge";
 
 export const backfillEntityWorker = inngest.createFunction(
   {

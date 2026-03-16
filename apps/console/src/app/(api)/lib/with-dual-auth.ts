@@ -10,7 +10,7 @@ import { db } from "@db/console/client";
 import { orgWorkspaces } from "@db/console/schema";
 import { LIGHTFAST_API_KEY_PREFIX } from "@repo/console-api-key";
 import { auth } from "@vendor/clerk/server";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { withApiKeyAuth } from "./with-api-key-auth";

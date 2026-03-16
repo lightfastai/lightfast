@@ -20,7 +20,7 @@ import {
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import type { EntityVectorMetadata } from "@repo/console-validation";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { asc, desc, eq, sql } from "drizzle-orm";
 import { NonRetriableError } from "inngest";
 import { inngest } from "../../client/client";

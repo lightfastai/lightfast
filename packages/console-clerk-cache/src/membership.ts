@@ -1,5 +1,5 @@
 import { clerkClient } from "@vendor/clerk/server";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { redis } from "@vendor/upstash";
 import { getUserOrgsCacheKey } from "./keys";
 import type { CachedUserOrgMembership, GetMembershipsResult } from "./types";

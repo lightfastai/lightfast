@@ -14,40 +14,32 @@
       "default": "./dist/sentry.js"
     },
     "./betterstack-env": {
-      "types": "./dist/env/betterstack-env.d.ts",
-      "default": "./dist/env/betterstack-env.js"
+      "types": "./dist/env/betterstack.d.ts",
+      "default": "./dist/env/betterstack.js"
     },
-    "./log": {
-      "types": "./dist/log.d.ts",
-      "default": "./dist/log.js"
+    "./betterstack-edge-env": {
+      "types": "./dist/env/betterstack-edge.d.ts",
+      "default": "./dist/env/betterstack-edge.js"
     },
-    "./client-log": {
-      "types": "./dist/client-log.d.ts",
-      "default": "./dist/client-log.js"
+    "./log/next": {
+      "types": "./dist/log/next.d.ts",
+      "default": "./dist/log/next.js"
     },
-    "./types": {
-      "types": "./dist/types.d.ts",
-      "default": "./dist/types.js"
+    "./log/edge": {
+      "types": "./dist/log/edge.d.ts",
+      "default": "./dist/log/edge.js"
     },
-    "./error": {
-      "types": "./dist/error.d.ts",
-      "default": "./dist/error.js"
+    "./log/types": {
+      "types": "./dist/log/types.d.ts",
+      "default": "./dist/log/types.js"
     },
-    "./async-executor": {
-      "types": "./dist/async-executor.d.ts",
-      "default": "./dist/async-executor.js"
+    "./error/next": {
+      "types": "./dist/error/next.d.ts",
+      "default": "./dist/error/next.js"
     },
-    "./error-formatter": {
-      "types": "./dist/error-formatter.d.ts",
-      "default": "./dist/error-formatter.js"
-    },
-    "./use-logger": {
-      "types": "./dist/use-logger.d.ts",
-      "default": "./dist/use-logger.js"
-    },
-    "./service-log": {
-      "types": "./dist/service-log.d.ts",
-      "default": "./dist/service-log.js"
+    "./error/edge": {
+      "types": "./dist/error/edge.d.ts",
+      "default": "./dist/error/edge.js"
     },
     "./print-routes": {
       "types": "./dist/print-routes.d.ts",
@@ -71,6 +63,8 @@
     "@logtail/edge": "^0.5.8",
     "@logtail/next": "^0.3.1",
     "@sentry/core": "catalog:",
+    "@sentry/nextjs": "catalog:",
+    "@t3-oss/env-core": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
     "zod": "catalog:"
