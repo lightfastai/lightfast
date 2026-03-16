@@ -149,17 +149,24 @@ async function exchangeLinearCode(
 export const linear = defineProvider({
   optional: true,
   envSchema: {
-    LINEAR_CLIENT_ID: z.string().min(1),
-    LINEAR_CLIENT_SECRET: z.string().min(1),
-    LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1),
+    LINEAR_CLIENT_ID: z.string().min(1).optional(),
+    LINEAR_CLIENT_SECRET: z.string().min(1).optional(),
+    LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
   },
-  createConfig: (env, runtime) =>
-    linearConfigSchema.parse({
-      clientId: env.LINEAR_CLIENT_ID,
-      clientSecret: env.LINEAR_CLIENT_SECRET,
-      webhookSigningSecret: env.LINEAR_WEBHOOK_SIGNING_SECRET,
+  createConfig: (env, runtime): LinearConfig | null => {
+    const clientId = env.LINEAR_CLIENT_ID;
+    const clientSecret = env.LINEAR_CLIENT_SECRET;
+    const webhookSigningSecret = env.LINEAR_WEBHOOK_SIGNING_SECRET;
+    if (!clientId || !clientSecret || !webhookSigningSecret) {
+      return null;
+    }
+    return linearConfigSchema.parse({
+      clientId,
+      clientSecret,
+      webhookSigningSecret,
       callbackBaseUrl: runtime.callbackBaseUrl,
-    }),
+    });
+  },
   name: "linear",
   displayName: "Linear",
   description: "Connect your Linear workspace",

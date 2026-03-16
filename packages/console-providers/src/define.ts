@@ -363,11 +363,12 @@ export interface ProviderDefinition<
   }) => z.infer<TProviderConfigSchema>;
   readonly categories: TCategories;
   readonly configSchema: z.ZodType<TConfig>;
-  /** Build runtime config from validated env + runtime values */
+  /** Build runtime config from validated env + runtime values.
+   *  Returns null for optional providers when their env vars are absent. */
   readonly createConfig: (
     env: Record<string, string>,
     runtime: RuntimeConfig
-  ) => TConfig;
+  ) => TConfig | null;
   /** Default sync event keys enabled when linking a new resource. Must be a subset of category keys. */
   readonly defaultSyncEvents: readonly string[];
   /** Map sourceType to observation type string for storage. */

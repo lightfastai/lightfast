@@ -40,19 +40,15 @@ const runtime: RuntimeConfig = { callbackBaseUrl: gatewayBaseUrl };
 // SAFETY: env is validated by @t3-oss/env-core at startup; the gateway's combined
 // env object is structurally compatible with Record<string, string> (all env vars
 // are strings). The intersection type from createEnv() cannot be expressed generically.
-// Optional providers (e.g. vercel) are skipped if their env vars are absent — they
-// will return "unknown_provider" on any request rather than crashing at startup.
+// Optional providers return null from createConfig when their env vars are absent —
+// they are excluded here and will return "unknown_provider" on any request.
 const providerConfigs: Record<string, unknown> = Object.fromEntries(
-  Object.entries(PROVIDERS).flatMap(([name, p]) => {
-    try {
-      return [
-        [name, p.createConfig(env as unknown as Record<string, string>, runtime)],
-      ];
-    } catch (err) {
-      if (p.optional) return [];
-      throw err;
-    }
-  })
+  Object.entries(PROVIDERS)
+    .map(([name, p]) => [
+      name,
+      p.createConfig(env as unknown as Record<string, string>, runtime),
+    ] as const)
+    .filter(([, config]) => config !== null)
 );
 
 const connections = new Hono<{ Variables: TenantVariables }>();
