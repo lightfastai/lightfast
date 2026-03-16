@@ -4,7 +4,7 @@ import type { ProviderSlug } from "@repo/console-providers/display";
 import { useTRPC } from "@repo/console-trpc/react";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseOAuthPopupOptions {
   errorMessage?: string;
@@ -17,6 +17,7 @@ interface UseOAuthPopupOptions {
 
 interface UseOAuthPopupReturn {
   handleConnect: () => Promise<void>;
+  isConnecting: boolean;
   openCustomUrl: (
     buildUrl: (data: { url: string; state: string }) => string
   ) => Promise<void>;
@@ -33,6 +34,7 @@ export function useOAuthPopup({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
+  const [isConnecting, setIsConnecting] = useState(false);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const successReceivedRef = useRef(false);
@@ -142,6 +144,7 @@ export function useOAuthPopup({
   );
 
   const handleConnect = useCallback(async () => {
+    setIsConnecting(true);
     try {
       const data = await queryClient.fetchQuery(
         trpc.connections.getAuthorizeUrl.queryOptions({ provider })
@@ -149,6 +152,8 @@ export function useOAuthPopup({
       openPopupAndPoll(data.url, resolvedWindowName);
     } catch {
       toast.error(resolvedErrorMessage);
+    } finally {
+      setIsConnecting(false);
     }
   }, [
     queryClient,
@@ -180,5 +185,5 @@ export function useOAuthPopup({
     ]
   );
 
-  return { handleConnect, openCustomUrl };
+  return { handleConnect, isConnecting, openCustomUrl };
 }

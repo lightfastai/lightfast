@@ -51,7 +51,7 @@ export function ProviderSourceItem({ provider }: Props) {
   // ── OAuth ────────────────────────────────────────────────────────────────
   const listInstallationsOpts =
     trpc.connections.generic.listInstallations.queryOptions({ provider });
-  const { handleConnect: connectOAuth, openCustomUrl } = useOAuthPopup({
+  const { handleConnect: connectOAuth, isConnecting, openCustomUrl } = useOAuthPopup({
     provider,
     queryKeysToInvalidate: [
       listInstallationsOpts.queryKey,
@@ -437,9 +437,10 @@ export function ProviderSourceItem({ provider }: Props) {
             <p className="text-muted-foreground text-sm">
               {display.description}
             </p>
-            <Button onClick={handleConnect} variant="outline">
+            <Button disabled={isConnecting} onClick={handleConnect} variant="outline">
               <Icon className="mr-2 h-4 w-4" />
               Connect {display.displayName}
+              {isConnecting && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
             </Button>
           </div>
         )}
