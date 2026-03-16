@@ -60,6 +60,15 @@ webhooks.post(
     const parsedPayload = c.get("parsedPayload");
     const isServiceAuth = c.get("isServiceAuth");
 
+    // Enrich the lifecycle log with webhook-specific fields. All subsequent
+    // c.set("logFields", ...) calls accumulate into the single structured
+    // log entry emitted by the lifecycle middleware on response completion.
+    c.set("logFields", {
+      deliveryId,
+      eventType,
+      auth: isServiceAuth ? "service" : "external",
+    });
+
     // ── Service auth path (backfill / internal service) ──
     if (isServiceAuth) {
       const body = c.get("serviceAuthBody");
@@ -74,15 +83,9 @@ webhooks.post(
         { nx: true, ex: 86_400 }
       );
       if (dedupResult === null) {
+        c.set("logFields", { ...c.get("logFields"), duplicate: true });
         return c.json({ status: "duplicate", deliveryId });
       }
-
-      log.info("[webhooks] new delivery, dedup passed", {
-        provider: providerName,
-        deliveryId,
-        eventType,
-        correlationId: c.get("correlationId"),
-      });
 
       // Persist for long-term replayability
       await db
@@ -103,6 +106,7 @@ webhooks.post(
       // Allow internal services to explicitly hold webhooks for batch replay.
       const holdForReplay = c.req.header("X-Backfill-Hold") === "true";
       if (holdForReplay) {
+        c.set("logFields", { ...c.get("logFields"), held: true });
         return c.json({ status: "accepted", deliveryId, held: true });
       }
 
@@ -124,11 +128,7 @@ webhooks.post(
         retries: 5,
       });
 
-      log.info("[webhooks] published to console ingress", {
-        provider: providerName,
-        deliveryId,
-        correlationId,
-      });
+      c.set("logFields", { ...c.get("logFields"), qstashPublished: true });
 
       // Update persisted status — best-effort after QStash accepted
       try {
@@ -172,12 +172,7 @@ webhooks.post(
       headers: { "Content-Type": "application/json" },
     });
 
-    log.info("[webhooks] workflow triggered", {
-      provider: providerName,
-      deliveryId,
-      eventType,
-      correlationId: c.get("correlationId"),
-    });
+    c.set("logFields", { ...c.get("logFields"), workflowTriggered: true });
 
     return c.json({ status: "accepted", deliveryId }, 200);
   }

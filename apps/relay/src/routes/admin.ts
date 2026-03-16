@@ -13,10 +13,10 @@ import { z } from "zod";
 import { env } from "../env.js";
 import { RESOURCE_CACHE_TTL, resourceKey } from "../lib/cache.js";
 import { replayDeliveries } from "../lib/replay.js";
-import { log } from "@vendor/observability/log/edge";
+import type { LifecycleVariables } from "../middleware/lifecycle.js";
 import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
 
-const admin = new Hono();
+const admin = new Hono<{ Variables: LifecycleVariables }>();
 
 const startTime = Date.now();
 
@@ -283,14 +283,17 @@ admin.post("/delivery-status", qstashAuth, async (c) => {
   const { messageId, state, deliveryId } = body as Record<string, unknown>;
 
   if (typeof messageId !== "string" || typeof state !== "string") {
-    log.warn("[delivery-status] invalid payload", { body });
+    c.set("logFields", {
+      ...c.get("logFields"),
+      validationError: "missing_required_fields",
+    });
     return c.json(
       { error: "missing_required_fields", required: ["messageId", "state"] },
       400
     );
   }
 
-  log.info("[delivery-status]", { messageId, state, deliveryId });
+  c.set("logFields", { ...c.get("logFields"), messageId, state, deliveryId });
 
   // Update webhook delivery status based on QStash callback
   if (typeof deliveryId === "string") {

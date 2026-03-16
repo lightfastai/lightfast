@@ -13,6 +13,7 @@ import { getQStashClient } from "@vendor/qstash";
 import { redis } from "@vendor/upstash";
 import type { WorkflowContext } from "@vendor/upstash-workflow";
 import { serve } from "@vendor/upstash-workflow/hono";
+import { log } from "@vendor/observability/log/edge";
 import { env } from "../env.js";
 import { resourceKey } from "../lib/cache.js";
 import { getEncryptionKey } from "../lib/encryption.js";
@@ -135,11 +136,10 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
     });
   },
   {
-    failureFunction: ({ context, failStatus, failResponse }) => {
-      console.error("[connection-teardown] workflow failed", {
+    failureFunction: ({ context: _context, failStatus, failResponse }) => {
+      log.error("[connection-teardown] workflow failed", {
         failStatus,
-        failResponse,
-        context,
+        failResponse: String(failResponse),
       });
       return Promise.resolve();
     },
