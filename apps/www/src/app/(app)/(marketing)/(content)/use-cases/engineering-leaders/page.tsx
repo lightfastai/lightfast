@@ -1,7 +1,7 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { createMetadata } from "@vendor/seo/metadata";
-import { ArrowRight } from "lucide-react";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import { UseCaseGrid } from "~/components/use-case-grid";
 import { exposureTrial } from "~/lib/fonts";
