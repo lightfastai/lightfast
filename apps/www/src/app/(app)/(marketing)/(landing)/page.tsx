@@ -11,8 +11,8 @@ import type {
 import { JsonLd } from "@vendor/seo/json-ld";
 import { Activity, Blocks, Brain, Plug, Shield, Wand2 } from "lucide-react";
 import type { Metadata } from "next";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import Image from "next/image";
-import Link from "next/link";
 import { ChangelogPreview } from "~/components/changelog-preview";
 import { FAQSection, faqs } from "~/components/faq-section";
 import { HeroChangelogBadge } from "~/components/hero-changelog-badge";
@@ -275,10 +275,10 @@ export default function HomePage() {
               </h1>
               <div>
                 <Button asChild size="sm">
-                  <Link href="/early-access">
+                  <MicrofrontendLink href="/early-access">
                     Join Early Access
                     <span className="ml-2">→</span>
-                  </Link>
+                  </MicrofrontendLink>
                 </Button>
               </div>
             </div>

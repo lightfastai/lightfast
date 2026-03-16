@@ -1,5 +1,6 @@
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import NextLink from "next/link";
 import { AppMobileNavLazy } from "./app-mobile-nav-lazy";
 import { AppNavbarMenu } from "./app-navbar-menu";
@@ -34,9 +35,9 @@ export function AppNavbar() {
 
           {/* Join Early Access Button */}
           <Button asChild className="ml-1" size="sm">
-            <NextLink href="/early-access" prefetch>
+            <MicrofrontendLink href="/early-access">
               Join Early Access
-            </NextLink>
+            </MicrofrontendLink>
           </Button>
         </nav>
 

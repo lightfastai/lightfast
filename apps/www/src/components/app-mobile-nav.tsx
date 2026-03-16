@@ -103,13 +103,12 @@ export function AppMobileNav() {
             {/* CTA buttons */}
             <div className="space-y-3 border-t p-6">
               <Button asChild className="w-full" size="lg">
-                <NextLink
+                <MicrofrontendLink
                   href="/early-access"
                   onClick={() => setOpen(false)}
-                  prefetch
                 >
                   Join Early Access
-                </NextLink>
+                </MicrofrontendLink>
               </Button>
               <Button asChild className="w-full" size="lg" variant="outline">
                 <MicrofrontendLink

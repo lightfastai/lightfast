@@ -1,6 +1,6 @@
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { ArrowRight } from "lucide-react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 
 // Dynamically imported so the Radix accordion JS ships in a separate lazy chunk.
 // The FAQ is below the fold — no need to block the critical path with
@@ -82,13 +82,13 @@ export function FAQSection() {
               <p className="mb-2 text-muted-foreground text-sm">
                 Ready to get started?
               </p>
-              <Link
+              <MicrofrontendLink
                 className="group inline-flex items-center gap-2 font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
                 href="/early-access"
               >
                 Join early access
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              </MicrofrontendLink>
             </div>
           </div>
 
