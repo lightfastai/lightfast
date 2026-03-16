@@ -31,11 +31,16 @@ interface ConnectionInfo {
  *
  * Processes verified webhook payloads with step-level durability:
  * - Step 1: Dedup — skip duplicate deliveries (idempotent, NX set)
- * - Step 2: Resolve connection from resource ID via Redis cache
- * - Step 3: Publish to Console ingress (QStash) or DLQ if unresolvable
+ * - Step 2: Persist — store webhook record for long-term replayability
+ * - Step 3: Resolve connection from resource ID (Redis → DB fallthrough)
+ * - Step 4: Route — update DB and decide console vs DLQ path
+ * - Step 5: Publish to Console ingress via QStash (console path only)
+ * - Step 6: Mark as enqueued
  *
- * If step 3 fails, only step 3 retries — dedup/resolve are already done.
- * QStash handles the retry schedule with exponential backoff.
+ * If a step fails, only that step retries — all prior steps are cached.
+ * External calls (QStash, DB) inside context.run() are wrapped with
+ * try/catch so errors surface immediately in logs rather than silently
+ * burning through Upstash's retry budget.
  */
 const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
   async (context: WorkflowContext<WebhookReceiptPayload>) => {
@@ -139,21 +144,30 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     // sees a flat, unconditional step sequence after this point.
     const route = await context.run<"console" | "dlq">("route", async () => {
       if (!connectionInfo) {
-        await qstash.publishToTopic({
-          topic: "webhook-dlq",
-          headers: data.correlationId
-            ? { "X-Correlation-Id": data.correlationId }
-            : undefined,
-          body: {
+        try {
+          await qstash.publishToTopic({
+            topic: "webhook-dlq",
+            headers: data.correlationId
+              ? { "X-Correlation-Id": data.correlationId }
+              : undefined,
+            body: {
+              provider: data.provider,
+              deliveryId: data.deliveryId,
+              eventType: data.eventType,
+              resourceId: data.resourceId,
+              payload: data.payload,
+              receivedAt: data.receivedAt,
+              correlationId: data.correlationId,
+            },
+          });
+        } catch (err) {
+          log.error("[webhook-delivery] failed to publish to DLQ topic", {
             provider: data.provider,
             deliveryId: data.deliveryId,
-            eventType: data.eventType,
-            resourceId: data.resourceId,
-            payload: data.payload,
-            receivedAt: data.receivedAt,
-            correlationId: data.correlationId,
-          },
-        });
+            error: err instanceof Error ? err.message : String(err),
+          });
+          throw err;
+        }
         await db
           .update(gatewayWebhookDeliveries)
           .set({ status: "dlq" })
@@ -193,26 +207,35 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     // Step 5: Publish to Console ingress via QStash.
     // QStash guarantees at-least-once delivery with 5 retries.
     await context.run("publish-to-console", async () => {
-      await qstash.publishJSON({
-        url: `${consoleUrl}/api/gateway/ingress`,
-        headers: data.correlationId
-          ? { "X-Correlation-Id": data.correlationId }
-          : undefined,
-        body: {
-          deliveryId: data.deliveryId,
-          connectionId: connectionInfo!.connectionId,
-          orgId: connectionInfo!.orgId,
+      try {
+        await qstash.publishJSON({
+          url: `${consoleUrl}/api/gateway/ingress`,
+          headers: data.correlationId
+            ? { "X-Correlation-Id": data.correlationId }
+            : undefined,
+          body: {
+            deliveryId: data.deliveryId,
+            connectionId: connectionInfo!.connectionId,
+            orgId: connectionInfo!.orgId,
+            provider: data.provider,
+            eventType: data.eventType,
+            payload: data.payload,
+            receivedAt: data.receivedAt,
+            correlationId: data.correlationId,
+          },
+          retries: 5,
+          // Note: QStash rejects deduplicationId values containing ':' — use '_' as separator.
+          deduplicationId: `${data.provider}_${data.deliveryId}`,
+          callback: `${relayBaseUrl}/admin/delivery-status?provider=${data.provider}`,
+        });
+      } catch (err) {
+        log.error("[webhook-delivery] failed to publish to console ingress", {
           provider: data.provider,
-          eventType: data.eventType,
-          payload: data.payload,
-          receivedAt: data.receivedAt,
-          correlationId: data.correlationId,
-        },
-        retries: 5,
-        // Note: QStash rejects deduplicationId values containing ':' — use '_' as separator.
-        deduplicationId: `${data.provider}_${data.deliveryId}`,
-        callback: `${relayBaseUrl}/admin/delivery-status?provider=${data.provider}`,
-      });
+          deliveryId: data.deliveryId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        throw err;
+      }
     });
 
     log.info("[webhook-delivery] published to console ingress", {
@@ -235,8 +258,12 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     });
   },
   {
-    failureFunction: ({ context: _context, failStatus, failResponse }) => {
+    failureFunction: ({ context, failStatus, failResponse }) => {
+      const data = context.requestPayload;
       log.error("[webhook-delivery] workflow failed", {
+        provider: data.provider,
+        deliveryId: data.deliveryId,
+        correlationId: data.correlationId,
         failStatus,
         failResponse: String(failResponse),
       });
