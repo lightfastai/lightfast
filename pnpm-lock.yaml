@@ -220,7 +220,7 @@ importers:
         version: 50.28.0(encoding@0.1.13)(rollup@4.59.0)(typescript@5.9.3)
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@25.3.3)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@25.3.3)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   api/console:
     dependencies:
@@ -338,7 +338,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   apps/auth:
     dependencies:
@@ -377,7 +377,7 @@ importers:
         version: link:../../vendor/upstash
       '@vercel/microfrontends':
         specifier: ^2.3.0
-        version: 2.3.0(@vercel/analytics@1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
+        version: 2.3.0(@vercel/analytics@1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.0.1
@@ -459,7 +459,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   apps/backfill:
     dependencies:
@@ -520,7 +520,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   apps/console:
     dependencies:
@@ -661,7 +661,7 @@ importers:
         version: link:../../vendor/upstash-workflow
       '@vercel/microfrontends':
         specifier: ^2.3.0
-        version: 2.3.0(@vercel/analytics@1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
+        version: 2.3.0(@vercel/analytics@1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.0.1
@@ -758,7 +758,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   apps/docs:
     dependencies:
@@ -952,7 +952,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   apps/relay:
     dependencies:
@@ -1019,7 +1019,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   apps/www:
     dependencies:
@@ -1345,7 +1345,7 @@ importers:
     dependencies:
       vitest:
         specifier: 'catalog:'
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@25.3.3)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@25.3.3)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/cms-workflows:
     dependencies:
@@ -1686,12 +1686,15 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.22
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/console-remotion:
     dependencies:
@@ -2094,7 +2097,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/lib:
     dependencies:
@@ -2128,7 +2131,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 'catalog:'
-        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/og:
     dependencies:
@@ -2377,10 +2380,10 @@ importers:
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       '@vercel/analytics':
         specifier: ^1.6.1
-        version: 1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       '@vercel/speed-insights':
         specifier: ^1.3.1
-        version: 1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       next:
         specifier: catalog:next16
         version: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -2659,7 +2662,7 @@ importers:
     dependencies:
       '@logtail/next':
         specifier: ^0.3.1
-        version: 0.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 0.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       '@next/bundle-analyzer':
         specifier: ^16.0.0
         version: 16.1.6(bufferutil@4.1.0)
@@ -2674,7 +2677,7 @@ importers:
         version: link:../observability
       '@vercel/toolbar':
         specifier: ^0.2.2
-        version: 0.2.2(@vercel/analytics@1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
+        version: 0.2.2(@vercel/analytics@1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       next-secure-headers:
         specifier: ^2.2.0
         version: 2.2.0
@@ -2699,7 +2702,7 @@ importers:
         version: 0.5.8(@cloudflare/workers-types@4.20260301.1)
       '@logtail/next':
         specifier: ^0.3.1
-        version: 0.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 0.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       '@sentry/core':
         specifier: 'catalog:'
         version: 10.42.0
@@ -2719,6 +2722,9 @@ importers:
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -16793,7 +16799,7 @@ snapshots:
       minimatch: 9.0.9
       stack-trace: 0.0.10
 
-  '@logtail/next@0.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
+  '@logtail/next@0.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
     dependencies:
       next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
@@ -21102,7 +21108,7 @@ snapshots:
       '@use-gesture/core': 10.3.1
       react: 19.2.4
 
-  '@vercel/analytics@1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
+  '@vercel/analytics@1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
     optionalDependencies:
       next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
@@ -21281,7 +21287,7 @@ snapshots:
       - rollup
       - supports-color
 
-  '@vercel/microfrontends@2.0.1(@vercel/analytics@1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))':
+  '@vercel/microfrontends@2.0.1(@vercel/analytics@1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@next/env': 15.5.4
       '@types/md5': 2.3.6
@@ -21296,36 +21302,12 @@ snapshots:
       path-to-regexp: 6.3.0
       semver: 7.7.3
     optionalDependencies:
-      '@vercel/analytics': 1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
-      '@vercel/speed-insights': 1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@vercel/analytics': 1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@vercel/speed-insights': 1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
       vite: 7.1.10(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
-    transitivePeerDependencies:
-      - debug
-
-  '@vercel/microfrontends@2.3.0(@vercel/analytics@1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))':
-    dependencies:
-      '@next/env': 16.0.10
-      '@types/md5': 2.3.6
-      ajv: 8.18.0
-      commander: 12.1.0
-      cookie: 1.0.2
-      fast-glob: 3.3.3
-      http-proxy: 1.18.1
-      jsonc-parser: 3.3.1
-      md5: 2.3.0
-      nanoid: 3.3.11
-      path-to-regexp: 6.3.0
-      semver: 7.7.3
-    optionalDependencies:
-      '@vercel/analytics': 1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
-      '@vercel/speed-insights': 1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
-      next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
-      vite: 7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - debug
 
@@ -21344,12 +21326,36 @@ snapshots:
       path-to-regexp: 6.3.0
       semver: 7.7.3
     optionalDependencies:
-      '@vercel/analytics': 1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
-      '@vercel/speed-insights': 1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@vercel/analytics': 1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@vercel/speed-insights': 1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
       vite: 7.1.10(@types/node@20.19.22)(jiti@1.21.7)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+    transitivePeerDependencies:
+      - debug
+
+  '@vercel/microfrontends@2.3.0(@vercel/analytics@1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))':
+    dependencies:
+      '@next/env': 16.0.10
+      '@types/md5': 2.3.6
+      ajv: 8.18.0
+      commander: 12.1.0
+      cookie: 1.0.2
+      fast-glob: 3.3.3
+      http-proxy: 1.18.1
+      jsonc-parser: 3.3.1
+      md5: 2.3.0
+      nanoid: 3.3.11
+      path-to-regexp: 6.3.0
+      semver: 7.7.3
+    optionalDependencies:
+      '@vercel/analytics': 1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@vercel/speed-insights': 1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+      vite: 7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - debug
 
@@ -21489,7 +21495,7 @@ snapshots:
       '@iarna/toml': 2.2.5
       execa: 5.1.1
 
-  '@vercel/speed-insights@1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
+  '@vercel/speed-insights@1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
     optionalDependencies:
       next: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
@@ -21507,10 +21513,10 @@ snapshots:
       json-schema-to-ts: 1.6.4
       ts-morph: 12.0.0
 
-  '@vercel/toolbar@0.2.2(@vercel/analytics@1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))':
+  '@vercel/toolbar@0.2.2(@vercel/analytics@1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
       '@tinyhttp/app': 1.3.0
-      '@vercel/microfrontends': 2.0.1(@vercel/analytics@1.6.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
+      '@vercel/microfrontends': 2.0.1(@vercel/analytics@1.6.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(@vercel/speed-insights@1.3.1(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4))(next@16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.1.10(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       chokidar: 3.6.0
       execa: 5.1.1
       fast-glob: 3.3.3
@@ -21541,7 +21547,7 @@ snapshots:
       obug: 2.1.1
       std-env: 3.10.0
       tinyrainbow: 3.0.3
-      vitest: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+      vitest: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.1)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   '@vitest/expect@4.0.18':
     dependencies:
@@ -27252,7 +27258,7 @@ snapshots:
 
   term-size@2.2.1: {}
 
-  terser-webpack-plugin@5.3.16(esbuild@0.25.0)(webpack@5.105.0(esbuild@0.25.0)):
+  terser-webpack-plugin@5.3.16(esbuild@0.25.0)(webpack@5.105.0):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -27875,6 +27881,48 @@ snapshots:
       - tsx
       - yaml
 
+  vitest@4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2):
+    dependencies:
+      '@vitest/expect': 4.0.18
+      '@vitest/mocker': 4.0.18(vite@7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
+      '@vitest/pretty-format': 4.0.18
+      '@vitest/runner': 4.0.18
+      '@vitest/snapshot': 4.0.18
+      '@vitest/spy': 4.0.18
+      '@vitest/utils': 4.0.18
+      es-module-lexer: 1.7.0
+      expect-type: 1.2.2
+      magic-string: 0.30.21
+      obug: 2.1.1
+      pathe: 2.0.3
+      picomatch: 4.0.3
+      std-env: 3.10.0
+      tinybench: 2.9.0
+      tinyexec: 1.0.2
+      tinyglobby: 0.2.15
+      tinyrainbow: 3.0.3
+      vite: 7.1.10(@types/node@20.19.22)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@edge-runtime/vm': 3.2.0
+      '@opentelemetry/api': 1.9.0
+      '@types/node': 20.19.22
+      '@vitest/ui': 4.0.18(vitest@4.0.18)
+      happy-dom: 20.8.3(bufferutil@4.1.0)
+      jsdom: 27.0.1(bufferutil@4.1.0)(postcss@8.5.8)
+    transitivePeerDependencies:
+      - jiti
+      - less
+      - lightningcss
+      - msw
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - terser
+      - tsx
+      - yaml
+
   vitest@4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@24.9.1)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2):
     dependencies:
       '@vitest/expect': 4.0.18
@@ -27917,7 +27965,7 @@ snapshots:
       - tsx
       - yaml
 
-  vitest@4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@25.3.3)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2):
+  vitest@4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@25.3.3)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2):
     dependencies:
       '@vitest/expect': 4.0.18
       '@vitest/mocker': 4.0.18(vite@7.1.10(@types/node@25.3.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
@@ -28048,7 +28096,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.0
-      terser-webpack-plugin: 5.3.16(esbuild@0.25.0)(webpack@5.105.0(esbuild@0.25.0))
+      terser-webpack-plugin: 5.3.16(esbuild@0.25.0)(webpack@5.105.0)
       watchpack: 2.5.1
       webpack-sources: 3.3.4
     transitivePeerDependencies:

@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsup && tsc --incremental false",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc --watch",
     "test": "vitest run",
@@ -32,6 +32,7 @@
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
+    "tsup": "^8.5.1",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
