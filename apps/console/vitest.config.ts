@@ -13,6 +13,7 @@ export default mergeConfig(
       environment: "happy-dom",
       setupFiles: ["./src/__tests__/setup.ts"],
       include: ["src/**/*.{test,spec}.{ts,tsx}"],
+      passWithNoTests: true,
       server: {
         deps: {
           inline: [
