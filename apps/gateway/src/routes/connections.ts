@@ -27,7 +27,9 @@ import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
 import { getEncryptionKey } from "../lib/encryption.js";
 import { updateTokenRecord, writeTokenRecord } from "../lib/token-store.js";
 import { consoleUrl, gatewayBaseUrl } from "../lib/urls.js";
+import { log } from "@vendor/observability/log/edge";
 import { apiKeyAuth } from "../middleware/auth.js";
+import type { LifecycleVariables } from "../middleware/lifecycle.js";
 import type { TenantVariables } from "../middleware/tenant.js";
 import { tenantMiddleware } from "../middleware/tenant.js";
 
@@ -54,7 +56,7 @@ const providerConfigs: Record<string, unknown> = Object.fromEntries(
     .filter(([, config]) => config !== null)
 );
 
-const connections = new Hono<{ Variables: TenantVariables }>();
+const connections = new Hono<{ Variables: TenantVariables & LifecycleVariables }>();
 
 // ── OAuth ──
 
@@ -411,7 +413,8 @@ connections.get("/:provider/callback", async (c) => {
     return c.redirect(redirectUrl.toString());
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";
-    console.error(`[${providerName}] callback error:`, err);
+    c.set("logFields", { ...c.get("logFields"), provider: providerName, callbackError: message });
+    log.error("[connections] oauth callback failed", { provider: providerName, error: message });
 
     // Store error result for CLI polling
     await redis
@@ -772,14 +775,17 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   });
 
   if (!installation) {
-    console.warn(`[proxy/execute] installation not found: ${id}`);
+    c.set("logFields", { ...c.get("logFields"), connectionId: id, connectionError: "not_found" });
     return c.json({ error: "not_found" }, 404);
   }
 
   if (installation.status !== "active") {
-    console.warn(
-      `[proxy/execute] installation_not_active: id=${id} status=${installation.status}`
-    );
+    c.set("logFields", {
+      ...c.get("logFields"),
+      connectionId: id,
+      connectionStatus: installation.status,
+      connectionError: "installation_not_active",
+    });
     return c.json(
       { error: "installation_not_active", status: installation.status },
       400
@@ -789,9 +795,12 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   const providerName = installation.provider;
   const providerDef = getProvider(providerName);
   if (!providerDef) {
-    console.warn(
-      `[proxy/execute] unknown_provider: ${providerName} for id=${id}`
-    );
+    c.set("logFields", {
+      ...c.get("logFields"),
+      connectionId: id,
+      provider: providerName,
+      connectionError: "unknown_provider",
+    });
     return c.json({ error: "unknown_provider" }, 400);
   }
 
@@ -800,9 +809,13 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   // Validate endpoint exists in catalog
   const endpoint = providerDef.api.endpoints[body.endpointId];
   if (!endpoint) {
-    console.warn(
-      `[proxy/execute] unknown_endpoint: endpointId=${body.endpointId} provider=${providerName} available=[${Object.keys(providerDef.api.endpoints).join(", ")}]`
-    );
+    c.set("logFields", {
+      ...c.get("logFields"),
+      connectionId: id,
+      provider: providerName,
+      endpointId: body.endpointId,
+      connectionError: "unknown_endpoint",
+    });
     return c.json(
       {
         error: "unknown_endpoint",
@@ -832,7 +845,13 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : "token_error";
-    console.error(`[${providerName}] proxy token error:`, err);
+    c.set("logFields", {
+      ...c.get("logFields"),
+      connectionId: id,
+      provider: providerName,
+      connectionError: "token_error",
+    });
+    log.error("[connections] proxy token error", { provider: providerName, connectionId: id, error: message });
     return c.json({ error: "token_error", message }, 502);
   }
 
@@ -907,9 +926,13 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
     responseHeaders[key] = value;
   });
 
-  console.log(
-    `[proxy/execute] ${installation.provider}/${body.endpointId} → ${response.status} (id=${id})`
-  );
+  c.set("logFields", {
+    ...c.get("logFields"),
+    connectionId: id,
+    provider: installation.provider,
+    endpointId: body.endpointId,
+    upstreamStatus: response.status,
+  });
 
   return c.json({
     status: response.status,

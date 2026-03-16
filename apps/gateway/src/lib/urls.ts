@@ -1,5 +1,6 @@
 import { backfillUrl as _backfillUrl } from "@repo/gateway-service-clients";
 import { getQStashClient } from "@vendor/qstash";
+import { log } from "@vendor/observability/log/edge";
 import { withRelatedProject } from "@vercel/related-projects";
 import { env } from "../env.js";
 
@@ -68,10 +69,10 @@ export async function cancelBackfillService(params: {
       deduplicationId: `backfill-cancel:${params.installationId}`,
     });
   } catch (err) {
-    console.error("[connection-teardown] Failed to cancel backfill", {
+    log.error("[connection-teardown] Failed to cancel backfill", {
       installationId: params.installationId,
       backfillUrl: _backfillUrl,
-      err,
+      error: err instanceof Error ? err.message : String(err),
     });
   }
 }
