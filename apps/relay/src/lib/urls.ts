@@ -1,4 +1,4 @@
-import { withRelatedProject } from "@vendor/related-projects";
+import { withRelatedProject } from "@vercel/related-projects";
 import { env } from "../env.js";
 
 /**

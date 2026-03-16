@@ -20,7 +20,6 @@ export default mergeConfig(
             "@vendor/upstash",
             "@vendor/qstash",
             "@vendor/inngest",
-            "@vendor/related-projects",
             "@vendor/upstash-workflow",
             "@db/console",
             "@api/console",

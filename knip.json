@@ -88,7 +88,6 @@
         "@relay/webhook-delivery",
         "@vendor/inngest",
         "@vendor/qstash",
-        "@vendor/related-projects",
         "@vendor/upstash",
         "@vendor/upstash-workflow"
       ]

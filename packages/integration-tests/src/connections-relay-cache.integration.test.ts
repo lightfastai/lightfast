@@ -77,15 +77,6 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 }));
 
 // Return localhost URLs so service router can intercept
-vi.mock("@vendor/related-projects", () => ({
-  withRelatedProject: ({
-    defaultHost,
-  }: {
-    projectName: string;
-    defaultHost: string;
-  }) => defaultHost,
-}));
-
 vi.mock("@vercel/related-projects", () => ({
   withRelatedProject: ({
     defaultHost,

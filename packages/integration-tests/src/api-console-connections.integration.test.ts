@@ -93,12 +93,6 @@ vi.mock("@vendor/qstash", () => ({
   },
 }));
 
-// @vendor/related-projects is used by the gateway service (urls.ts)
-vi.mock("@vendor/related-projects", () => ({
-  withRelatedProject: ({ defaultHost }: { defaultHost: string }) => defaultHost,
-}));
-
-// @vercel/related-projects is used by api/console connections router
 // Return with /services prefix so fetch URL aligns with connections app mount
 vi.mock("@vercel/related-projects", () => ({
   withRelatedProject: ({

@@ -93,7 +93,7 @@ vi.mock("@vendor/qstash", () => ({
   },
 }));
 
-vi.mock("@vendor/related-projects", () => ({
+vi.mock("@vercel/related-projects", () => ({
   withRelatedProject: ({ defaultHost }: { defaultHost: string }) => defaultHost,
 }));
 
