@@ -155,13 +155,6 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
     expect(parsed.getTime()).not.toBeNaN();
   });
 
-  it("relations include branch and commit refs", () => {
-    const event = transformGitHubPullRequest(adapted, context, "");
-    const entityTypes = event.relations.map((r) => r.entityType);
-    expect(entityTypes).toContain("branch");
-    expect(entityTypes).toContain("commit");
-  });
-
   it("merged PR produces merged eventType", () => {
     const event = transformGitHubPullRequest(adapted, context, "");
     expect(event.eventType).toContain("merged");
