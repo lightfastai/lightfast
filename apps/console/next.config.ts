@@ -157,23 +157,20 @@ const config: NextConfig = withSentry(
             ? "https://lightfast-docs.vercel.app"
             : "http://localhost:4105";
 
-        // Proxy gateway API routes to the gateway service
-        // Only in dev — production uses gateway.lightfast.ai directly
-        const gatewayUrl =
+        const isProd =
           vercelEnv === "production" ||
           vercelEnv === "preview" ||
-          process.env.NODE_ENV === "production"
-            ? "https://gateway.lightfast.ai"
-            : "http://localhost:4110";
+          process.env.NODE_ENV === "production";
 
-        // Proxy relay routes to the relay service
-        // Only in dev — production uses relay.lightfast.ai directly
-        const relayUrl =
-          vercelEnv === "production" ||
-          vercelEnv === "preview" ||
-          process.env.NODE_ENV === "production"
-            ? "https://relay.lightfast.ai"
-            : "http://localhost:4108";
+        const gatewayUrl = isProd
+          ? "https://lightfast-gateway.vercel.app"
+          : "http://localhost:4110";
+        const relayUrl = isProd
+          ? "https://lightfast-relay.vercel.app"
+          : "http://localhost:4108";
+        const backfillUrl = isProd
+          ? "https://lightfast-backfill.vercel.app"
+          : "http://localhost:4109";
 
         return [
           {
@@ -191,6 +188,10 @@ const config: NextConfig = withSentry(
           {
             source: "/services/relay/:path*",
             destination: `${relayUrl}/api/:path*`,
+          },
+          {
+            source: "/services/backfill/:path*",
+            destination: `${backfillUrl}/api/:path*`,
           },
         ];
       },

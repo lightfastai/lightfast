@@ -26,11 +26,7 @@
       "events": [
         "installation",
         "installation_repositories",
-        "push",
         "pull_request",
-        "issues",
-        "release",
-        "discussion",
         "repository"
       ]
     },
