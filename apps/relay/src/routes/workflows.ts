@@ -200,25 +200,40 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
     // Step 5: Publish to Console ingress via QStash.
     // QStash guarantees at-least-once delivery with 5 retries.
     await context.run("publish-to-console", async () => {
-      await qstash.publishJSON({
-        url: `${consoleUrl}/api/gateway/ingress`,
-        headers: data.correlationId
-          ? { "X-Correlation-Id": data.correlationId }
-          : undefined,
-        body: {
-          deliveryId: data.deliveryId,
-          connectionId: connectionInfo!.connectionId,
-          orgId: connectionInfo!.orgId,
+      try {
+        const result = await qstash.publishJSON({
+          url: `${consoleUrl}/api/gateway/ingress`,
+          headers: data.correlationId
+            ? { "X-Correlation-Id": data.correlationId }
+            : undefined,
+          body: {
+            deliveryId: data.deliveryId,
+            connectionId: connectionInfo!.connectionId,
+            orgId: connectionInfo!.orgId,
+            provider: data.provider,
+            eventType: data.eventType,
+            payload: data.payload,
+            receivedAt: data.receivedAt,
+            correlationId: data.correlationId,
+          },
+          retries: 5,
+          deduplicationId: `${data.provider}:${data.deliveryId}`,
+          callback: `${relayBaseUrl}/admin/delivery-status?provider=${data.provider}`,
+        });
+        log.info("[webhook-delivery] qstash publish accepted", {
           provider: data.provider,
-          eventType: data.eventType,
-          payload: data.payload,
-          receivedAt: data.receivedAt,
-          correlationId: data.correlationId,
-        },
-        retries: 5,
-        deduplicationId: `${data.provider}:${data.deliveryId}`,
-        callback: `${relayBaseUrl}/admin/delivery-status?provider=${data.provider}`,
-      });
+          deliveryId: data.deliveryId,
+          messageId: result.messageId,
+          deduplicated: result.deduplicated,
+        });
+      } catch (err) {
+        log.error("[webhook-delivery] qstash publish failed", {
+          provider: data.provider,
+          deliveryId: data.deliveryId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        throw err;
+      }
     });
 
     log.info("[webhook-delivery] published to console ingress", {
