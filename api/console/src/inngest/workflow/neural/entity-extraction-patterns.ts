@@ -40,15 +40,6 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
     keyExtractor: (m) => m[1] ?? "",
   },
 
-  // @mentions - GitHub/Slack style
-  {
-    category: "engineer",
-    pattern: /@([a-zA-Z0-9_-]{1,39})\b/g,
-    confidence: 0.9,
-    keyExtractor: (m) => `@${m[1]}`,
-    valueExtractor: (m) => m[1] ?? "",
-  },
-
   // Environment Variables - UPPERCASE_WITH_UNDERSCORES
   {
     category: "config",

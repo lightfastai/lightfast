@@ -25,46 +25,6 @@ export function transformGitHubPullRequest(
 
   const relations: EntityRelation[] = [];
 
-  if (pr.head.sha) {
-    relations.push({
-      provider: "github",
-      entityType: "commit",
-      entityId: pr.head.sha,
-      title: null,
-      url: `${payload.repository.html_url}/commit/${pr.head.sha}`,
-      relationshipType: "head_commit",
-    });
-  }
-
-  if (pr.merge_commit_sha) {
-    relations.push({
-      provider: "github",
-      entityType: "commit",
-      entityId: pr.merge_commit_sha,
-      title: null,
-      url: `${payload.repository.html_url}/commit/${pr.merge_commit_sha}`,
-      relationshipType: "merge_commit",
-    });
-  }
-
-  relations.push({
-    provider: "github",
-    entityType: "branch",
-    entityId: `${repoId}:${pr.head.ref}`,
-    title: pr.head.ref,
-    url: `${payload.repository.html_url}/tree/${pr.head.ref}`,
-    relationshipType: "from_branch",
-  });
-
-  relations.push({
-    provider: "github",
-    entityType: "branch",
-    entityId: `${repoId}:${pr.base.ref}`,
-    title: pr.base.ref,
-    url: `${payload.repository.html_url}/tree/${pr.base.ref}`,
-    relationshipType: "to_branch",
-  });
-
   const linkedIssues = extractLinkedIssues(
     pr.body ?? "",
     repoId,
