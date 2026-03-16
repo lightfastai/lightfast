@@ -1,7 +1,7 @@
 import * as schema from "@db/console/schema";
 import { PGlite } from "@electric-sql/pglite";
-import { drizzle } from "drizzle-orm/pglite";
 import { readMigrationFiles } from "drizzle-orm/migrator";
+import { drizzle } from "drizzle-orm/pglite";
 import { getMigrationsPath } from "./migrations";
 
 export type TestDb = ReturnType<typeof drizzle<typeof schema>>;
