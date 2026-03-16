@@ -1,6 +1,7 @@
 import { createEnv } from "@t3-oss/env-core";
 import { vercel } from "@t3-oss/env-core/presets-zod";
 import { dbEnv } from "@vendor/db/env";
+import { betterstackEdgeEnv } from "@vendor/observability/log/edge";
 import { qstashEnv } from "@vendor/qstash/env";
 import { upstashEnv } from "@vendor/upstash/env";
 import { z } from "zod/v3";
@@ -17,14 +18,13 @@ const server = {
   LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
   SENTRY_CLIENT_SECRET: z.string().min(1).optional(),
   SENTRY_DSN: z.string().url().optional(),
-  LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
 };
 
 /** Module-level validated env — single source of truth for all relay env vars. */
 export const env = createEnv({
   clientPrefix: "" as const,
   client: {},
-  extends: [vercel(), upstashEnv, qstashEnv, dbEnv],
+  extends: [vercel(), betterstackEdgeEnv, upstashEnv, qstashEnv, dbEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -43,7 +43,6 @@ export const env = createEnv({
     LINEAR_WEBHOOK_SIGNING_SECRET: process.env.LINEAR_WEBHOOK_SIGNING_SECRET,
     SENTRY_CLIENT_SECRET: process.env.SENTRY_CLIENT_SECRET,
     SENTRY_DSN: process.env.SENTRY_DSN,
-    LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

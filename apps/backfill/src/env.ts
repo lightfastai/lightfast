@@ -1,5 +1,6 @@
 import { createEnv } from "@t3-oss/env-core";
 import { vercel } from "@t3-oss/env-core/presets-zod";
+import { betterstackEdgeEnv } from "@vendor/observability/log/edge";
 import { z } from "zod";
 
 const server = {
@@ -8,14 +9,13 @@ const server = {
   INNGEST_APP_NAME: z.string().min(1).startsWith("lightfast-"),
   INNGEST_EVENT_KEY: z.string().min(1).optional(),
   INNGEST_SIGNING_KEY: z.string().min(1).startsWith("signkey-").optional(),
-  LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
 };
 
 /** Module-level validated env — single source of truth for all backfill env vars. */
 export const env = createEnv({
   clientPrefix: "" as const,
   client: {},
-  extends: [vercel()],
+  extends: [vercel(), betterstackEdgeEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -31,7 +31,6 @@ export const env = createEnv({
     INNGEST_APP_NAME: process.env.INNGEST_APP_NAME,
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
-    LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

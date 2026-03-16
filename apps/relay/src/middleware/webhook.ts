@@ -11,7 +11,7 @@ import {
 } from "@repo/console-providers";
 import { createMiddleware } from "hono/factory";
 import { env } from "../env.js";
-import { log } from "../logger.js";
+import { log } from "@vendor/observability/log/edge";
 import type { LifecycleVariables } from "./lifecycle.js";
 
 // ── Context Variables ────────────────────────────────────────────────────────

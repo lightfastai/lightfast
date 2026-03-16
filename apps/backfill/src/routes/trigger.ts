@@ -8,7 +8,7 @@ import { z } from "zod";
 
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { log } from "../logger.js";
+import { log } from "@vendor/observability/log/edge";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 const cancelSchema = z.object({

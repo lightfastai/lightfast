@@ -13,7 +13,7 @@ import { z } from "zod";
 import { env } from "../env.js";
 import { RESOURCE_CACHE_TTL, resourceKey } from "../lib/cache.js";
 import { replayDeliveries } from "../lib/replay.js";
-import { log } from "../logger.js";
+import { log } from "@vendor/observability/log/edge";
 import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
 
 const admin = new Hono();

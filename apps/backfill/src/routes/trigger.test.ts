@@ -8,7 +8,7 @@ vi.mock("../env", () => ({
   env: { GATEWAY_API_KEY: "test-key" },
 }));
 
-vi.mock("../logger", () => ({
+vi.mock("@vendor/observability/log/edge", () => ({
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }));
 
