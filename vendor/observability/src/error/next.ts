@@ -1,7 +1,7 @@
-/**
- * Pure function to extract error message without side effects
- * Does NOT capture to Sentry or log - caller's responsibility
- */
+// biome-ignore lint/performance/noNamespaceImport: Sentry SDK convention
+import * as Sentry from "@sentry/nextjs";
+import { log } from "../log/next";
+
 export const parseError = (error: unknown): string => {
   let message = "An error occurred";
 
@@ -13,6 +13,13 @@ export const parseError = (error: unknown): string => {
     message = error;
   } else {
     message = String(error);
+  }
+
+  try {
+    Sentry.captureException(error);
+    log.error(`Parsing error: ${message}`);
+  } catch (newError) {
+    console.error("Error parsing error:", newError);
   }
 
   return message;
