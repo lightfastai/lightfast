@@ -232,10 +232,11 @@ export function makeInngestMock(
  * Stubs `globalThis.fetch` to route requests from backfill/connections/relay
  * to in-process Hono apps instead of making real network calls.
  *
- * Port mapping (matches related-projects defaults):
- *   localhost:4108 → relayApp
- *   localhost:4109 → backfillApp
- *   localhost:4110 → gatewayApp
+ * Port mapping:
+ *   localhost:3024 → console proxy (routes to gateway/relay/backfill by path prefix)
+ *   localhost:4108 → relayApp (direct)
+ *   localhost:4109 → backfillApp (direct)
+ *   localhost:4110 → gatewayApp (direct)
  *
  * Usage:
  *   const restore = installServiceRouter({ gatewayApp, relayApp, backfillApp });
@@ -267,22 +268,32 @@ export function installServiceRouter(apps: ServiceApps): () => void {
       input instanceof Request ? input.url : input.toString()
     );
     const port = url.port;
+    const appPath = url.pathname + url.search;
+
+    // Port 3024 = console proxy — mirrors Next.js rewrites in next.config.ts.
+    // gatewayUrl / relayUrl / backfillUrl all route through localhost:3024 in dev.
+    if (port === "3024") {
+      if (appPath.startsWith("/services/gateway/")) {
+        if (!gatewayApp) throw new Error(`[serviceRouter] gatewayApp not registered`);
+        return gatewayApp.request(appPath, init);
+      }
+      if (appPath.startsWith("/services/relay/")) {
+        if (!relayApp) throw new Error(`[serviceRouter] relayApp not registered`);
+        return relayApp.request("/api/" + appPath.slice("/services/relay/".length), init);
+      }
+      if (appPath.startsWith("/services/backfill/")) {
+        if (!backfillApp) throw new Error(`[serviceRouter] backfillApp not registered`);
+        return backfillApp.request("/api/" + appPath.slice("/services/backfill/".length), init);
+      }
+      throw new Error(`[serviceRouter] No rewrite for path ${appPath} on port 3024`);
+    }
+
     const app = portToApp[port];
 
     if (!app) {
       throw new Error(
         `[serviceRouter] No app registered for port ${port}. URL: ${url.toString()}`
       );
-    }
-
-    // The gateway app mounts routes at /services/gateway/*.
-    // When the tRPC console router calls it directly (via gatewayUrl that has no
-    // /services prefix), the path arrives as /gateway/... — we need to prepend
-    // /services so it matches the Hono router.  Paths that already start with
-    // /services/ (e.g. from the backfill orchestrator) are forwarded unchanged.
-    let appPath = url.pathname + url.search;
-    if (app === gatewayApp && !appPath.startsWith("/services/")) {
-      appPath = `/services${appPath}`;
     }
 
     // Forward to Hono's in-process request handler

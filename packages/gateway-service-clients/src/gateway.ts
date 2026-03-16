@@ -30,7 +30,7 @@ export function createGatewayClient(config: ServiceClientConfig) {
 
   return {
     async getConnection(installationId: string): Promise<GatewayConnection> {
-      const response = await fetch(`${gatewayUrl}/gateway/${installationId}`, {
+      const response = await fetch(`${gatewayUrl}/${installationId}`, {
         headers: h,
         signal: AbortSignal.timeout(10_000),
       });
@@ -45,7 +45,7 @@ export function createGatewayClient(config: ServiceClientConfig) {
 
     async getToken(installationId: string): Promise<GatewayTokenResult> {
       const response = await fetch(
-        `${gatewayUrl}/gateway/${installationId}/token`,
+        `${gatewayUrl}/${installationId}/token`,
         { headers: h, signal: AbortSignal.timeout(30_000) }
       );
       if (!response.ok) {
@@ -61,7 +61,7 @@ export function createGatewayClient(config: ServiceClientConfig) {
       installationId: string,
       status?: string
     ): Promise<BackfillRunReadRecord[]> {
-      const url = `${gatewayUrl}/gateway/${installationId}/backfill-runs${status ? `?status=${status}` : ""}`;
+      const url = `${gatewayUrl}/${installationId}/backfill-runs${status ? `?status=${status}` : ""}`;
       const response = await fetch(url, {
         headers: h,
         signal: AbortSignal.timeout(10_000),
@@ -81,7 +81,7 @@ export function createGatewayClient(config: ServiceClientConfig) {
       installationId: string,
       record: BackfillRunRecord
     ): Promise<void> {
-      await fetch(`${gatewayUrl}/gateway/${installationId}/backfill-runs`, {
+      await fetch(`${gatewayUrl}/${installationId}/backfill-runs`, {
         method: "POST",
         headers: { ...h, "Content-Type": "application/json" },
         body: JSON.stringify(record),
@@ -101,7 +101,7 @@ export function createGatewayClient(config: ServiceClientConfig) {
       }
     ): Promise<ProxyExecuteResponse> {
       const response = await fetch(
-        `${gatewayUrl}/gateway/${installationId}/proxy/execute`,
+        `${gatewayUrl}/${installationId}/proxy/execute`,
         {
           method: "POST",
           headers: { ...h, "Content-Type": "application/json" },
@@ -127,7 +127,7 @@ export function createGatewayClient(config: ServiceClientConfig) {
       installationId: string
     ): Promise<ProxyEndpointsResponse> {
       const response = await fetch(
-        `${gatewayUrl}/gateway/${installationId}/proxy/endpoints`,
+        `${gatewayUrl}/${installationId}/proxy/endpoints`,
         { headers: h, signal: AbortSignal.timeout(10_000) }
       );
       if (!response.ok) {
@@ -144,7 +144,7 @@ export function createGatewayClient(config: ServiceClientConfig) {
       resource: { providerResourceId: string; resourceName?: string }
     ): Promise<void> {
       const response = await fetch(
-        `${gatewayUrl}/gateway/${installationId}/resources`,
+        `${gatewayUrl}/${installationId}/resources`,
         {
           method: "POST",
           headers: { ...h, "Content-Type": "application/json" },
@@ -170,7 +170,7 @@ export function createGatewayClient(config: ServiceClientConfig) {
     ): Promise<{ url: string; state: string }> {
       const qs = context.redirectTo ? `?redirect_to=${context.redirectTo}` : "";
       const response = await fetch(
-        `${gatewayUrl}/gateway/${provider}/authorize${qs}`,
+        `${gatewayUrl}/${provider}/authorize${qs}`,
         {
           headers: {
             ...h,
