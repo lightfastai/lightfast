@@ -25,12 +25,7 @@
       "$comment_url": "Webhooks must go DIRECTLY to the relay — not through the console proxy (lightfast.ai/services/relay/...). The Next.js proxy re-streams the body, breaking GitHub's HMAC signature. Dev: run ngrok on port 4108 and use /api/webhooks/github. Prod: use the relay Vercel URL directly.",
       "url_dev": "https://<ngrok-subdomain>.ngrok-free.dev/api/webhooks/github",
       "url_prod": "https://lightfast-relay.vercel.app/api/webhooks/github",
-      "events": [
-        "installation",
-        "meta",
-        "pull_request",
-        "issues"
-      ]
+      "events": ["installation", "meta", "pull_request", "issues"]
     },
     "permissions": {
       "repository": {
