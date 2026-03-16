@@ -25,9 +25,9 @@
       "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/relay/webhooks/github",
       "events": [
         "installation",
-        "installation_repositories",
+        "meta",
         "pull_request",
-        "repository"
+        "issues"
       ]
     },
     "permissions": {
