@@ -37,6 +37,9 @@ const isPublicRoute = createRouteMatcher([
   "/monitoring", // Sentry error reporting tunnel (tunnelRoute in vendor/next config)
   "/ingest(.*)", // PostHog analytics proxy (rewrites to us.i.posthog.com)
   "/manifest.json", // Web app manifest (requested by iOS/social crawlers)
+  "/services/gateway/(.*)", // Gateway service proxy — auth handled by Hono (X-API-Key, OAuth state)
+  "/services/relay/(.*)", // Relay service proxy — auth handled by Hono (HMAC signature)
+  "/services/backfill/(.*)", // Backfill service proxy — auth handled by Hono (X-API-Key)
 ]);
 
 // Team creation routes - accessible to pending users (authenticated but no org claimed)
