@@ -9,7 +9,7 @@
  * and should not be blocked by classification latency.
  */
 
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { inngest } from "../../client/client";
 import { resolveEdges } from "./edge-resolver";
 

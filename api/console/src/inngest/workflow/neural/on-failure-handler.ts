@@ -31,7 +31,7 @@ import type {
   NeuralFailureOutput,
   WorkflowOutput,
 } from "@repo/console-validation";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { completeJob, getJobByInngestRunId } from "../../../lib/jobs";
 import type { Events } from "../../client/client";
 

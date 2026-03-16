@@ -2,7 +2,7 @@ import { db } from "@db/console/client";
 import { orgWorkspaces, workspaceIngestLogs } from "@db/console/schema";
 import type { WebhookEnvelope } from "@repo/console-providers";
 import { sanitizePostTransformEvent } from "@repo/console-providers";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { serve } from "@vendor/upstash-workflow/nextjs";
 import { eq } from "drizzle-orm";
 import {

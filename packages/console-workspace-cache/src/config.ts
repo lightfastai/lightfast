@@ -1,6 +1,6 @@
 import { db } from "@db/console/client";
 import { orgWorkspaces } from "@db/console/schema";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { redis } from "@vendor/upstash";
 import { eq } from "drizzle-orm";
 import { getWorkspaceConfigCacheKey } from "./keys";

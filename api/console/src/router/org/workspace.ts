@@ -31,7 +31,7 @@ import {
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";

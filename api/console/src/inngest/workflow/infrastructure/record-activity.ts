@@ -15,7 +15,7 @@
 import { db } from "@db/console/client";
 import { workspaceUserActivities } from "@db/console/schema";
 import type { ActivityMetadata } from "@repo/console-validation";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { inngest } from "../../client/client";
 
 /**

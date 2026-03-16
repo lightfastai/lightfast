@@ -1,5 +1,5 @@
 import { notifications } from "@vendor/knock";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { inngest } from "../../client/client";
 
 const NOTIFICATION_SIGNIFICANCE_THRESHOLD = 70;

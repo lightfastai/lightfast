@@ -8,7 +8,7 @@
  */
 
 import { gateway } from "@ai-sdk/gateway";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { generateObject } from "ai";
 import { z } from "zod";
 import type {

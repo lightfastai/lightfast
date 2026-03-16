@@ -31,7 +31,7 @@ import type {
   ActivityType,
 } from "@repo/console-validation";
 import { activityTypeSchema } from "@repo/console-validation";
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { inngest } from "../inngest/client/client";
 
 /**

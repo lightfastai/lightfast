@@ -7,7 +7,7 @@
  * @see https://docs.cohere.com/docs/rerank-2
  */
 
-import { log } from "@vendor/observability/log";
+import { log } from "@vendor/observability/log/next";
 import { CohereClient } from "cohere-ai";
 import type {
   RerankCandidate,
