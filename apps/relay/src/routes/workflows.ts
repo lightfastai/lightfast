@@ -134,34 +134,11 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       }
     );
 
-    if (connectionInfo) {
-      log.info("[webhook-delivery] connection resolved", {
-        provider: data.provider,
-        deliveryId: data.deliveryId,
-        connectionId: connectionInfo.connectionId,
-        orgId: connectionInfo.orgId,
-        correlationId: data.correlationId,
-      });
-    }
-
-    // Step 3a: Update persisted record with installationId when connection is found
-    if (connectionInfo) {
-      await context.run("update-connection", async () => {
-        await db
-          .update(gatewayWebhookDeliveries)
-          .set({ installationId: connectionInfo.connectionId })
-          .where(
-            and(
-              eq(gatewayWebhookDeliveries.provider, data.provider),
-              eq(gatewayWebhookDeliveries.deliveryId, data.deliveryId)
-            )
-          );
-      });
-    }
-
-    // Step 3b: No connection found — route to DLQ for manual replay
-    if (!connectionInfo) {
-      await context.run("publish-to-dlq", async () => {
+    // Step 4: Route — update DB record and decide console vs DLQ path.
+    // All branching logic is inside this single step so the workflow always
+    // sees a flat, unconditional step sequence after this point.
+    const route = await context.run<"console" | "dlq">("route", async () => {
+      if (!connectionInfo) {
         await qstash.publishToTopic({
           topic: "webhook-dlq",
           headers: data.correlationId
@@ -177,10 +154,6 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
             correlationId: data.correlationId,
           },
         });
-      });
-
-      // Step 3b-ii: Update persisted status to dlq — separate step for idempotent retries
-      await context.run("update-status-dlq", async () => {
         await db
           .update(gatewayWebhookDeliveries)
           .set({ status: "dlq" })
@@ -190,13 +163,35 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
               eq(gatewayWebhookDeliveries.deliveryId, data.deliveryId)
             )
           );
+        return "dlq";
+      }
+
+      log.info("[webhook-delivery] connection resolved", {
+        provider: data.provider,
+        deliveryId: data.deliveryId,
+        connectionId: connectionInfo.connectionId,
+        orgId: connectionInfo.orgId,
+        correlationId: data.correlationId,
       });
+
+      await db
+        .update(gatewayWebhookDeliveries)
+        .set({ installationId: connectionInfo.connectionId })
+        .where(
+          and(
+            eq(gatewayWebhookDeliveries.provider, data.provider),
+            eq(gatewayWebhookDeliveries.deliveryId, data.deliveryId)
+          )
+        );
+      return "console";
+    });
+
+    if (route === "dlq") {
       return;
     }
 
-    // Step 4: Publish to Console ingress via QStash
+    // Step 5: Publish to Console ingress via QStash.
     // QStash guarantees at-least-once delivery with 5 retries.
-    // The delivery-status callback is called on final success or failure.
     await context.run("publish-to-console", async () => {
       await qstash.publishJSON({
         url: `${consoleUrl}/api/gateway/ingress`,
@@ -225,7 +220,7 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       correlationId: data.correlationId,
     });
 
-    // Step 4b-ii: Mark webhook as enqueued (QStash accepted, pending Console delivery)
+    // Step 6: Mark webhook as enqueued (QStash accepted, pending Console delivery)
     await context.run("update-status-enqueued", async () => {
       await db
         .update(gatewayWebhookDeliveries)
