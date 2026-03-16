@@ -209,6 +209,7 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
           correlationId: data.correlationId,
         },
         retries: 5,
+        // Note: QStash rejects deduplicationId values containing ':' — use '_' as separator.
         deduplicationId: `${data.provider}_${data.deliveryId}`,
         callback: `${relayBaseUrl}/admin/delivery-status?provider=${data.provider}`,
       });
