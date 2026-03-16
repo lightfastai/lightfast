@@ -1,4 +1,3 @@
-import { withRelatedProject } from "@vercel/related-projects";
 import { env } from "../env.js";
 
 /**
@@ -27,7 +26,6 @@ const isDevelopment =
   env.VERCEL_ENV !== "production" && env.VERCEL_ENV !== "preview";
 
 // Get the console URL dynamically based on environment
-export const consoleUrl = withRelatedProject({
-  projectName: "lightfast-console",
-  defaultHost: isDevelopment ? "http://localhost:4107" : "https://lightfast.ai",
-});
+export const consoleUrl = isDevelopment
+  ? "http://localhost:4107"
+  : "https://lightfast.ai";
