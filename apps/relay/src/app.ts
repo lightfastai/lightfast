@@ -62,8 +62,8 @@ app.onError((err, c) => {
 app.get("/", (c) => c.json({ service: "relay", status: "ok" }));
 
 // API routes
-app.route("/api/webhooks", webhooks);
-app.route("/api/admin", admin);
-app.route("/api/workflows", workflows);
+app.route("/webhooks", webhooks);
+app.route("/admin", admin);
+app.route("/workflows", workflows);
 
 export default app;

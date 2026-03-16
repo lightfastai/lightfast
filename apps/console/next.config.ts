@@ -183,15 +183,15 @@ const config: NextConfig = withSentry(
           },
           {
             source: "/services/gateway/:path*",
-            destination: `${gatewayUrl}/services/gateway/:path*`,
+            destination: `${gatewayUrl}/:path*`,
           },
           {
             source: "/services/relay/:path*",
-            destination: `${relayUrl}/api/:path*`,
+            destination: `${relayUrl}/:path*`,
           },
           {
             source: "/services/backfill/:path*",
-            destination: `${backfillUrl}/api/:path*`,
+            destination: `${backfillUrl}/:path*`,
           },
         ];
       },

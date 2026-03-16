@@ -44,8 +44,8 @@ app.onError((err, c) => {
 // Health check
 app.get("/", (c) => c.json({ service: "gateway", status: "ok" }));
 
-// API routes
-app.route("/services/gateway", connections);
-app.route("/services/gateway/workflows", workflows);
+// API routes (more specific first to avoid /:id capturing "workflows")
+app.route("/workflows", workflows);
+app.route("/", connections);
 
 export default app;

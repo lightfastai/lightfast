@@ -128,7 +128,7 @@ async function sendWebhook(
   deliveryId: string,
   options?: { holdForReplay?: boolean }
 ) {
-  return relayApp.request("/api/webhooks/github", {
+  return relayApp.request("/webhooks/github", {
     method: "POST",
     headers: new Headers({
       "Content-Type": "application/json",
