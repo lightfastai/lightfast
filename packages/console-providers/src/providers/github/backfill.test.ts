@@ -17,6 +17,7 @@ const repo = {
 };
 
 const basePR: z.infer<typeof githubPullRequestSchema> = {
+  id: 42,
   number: 1,
   title: "Test PR",
   state: "open",
@@ -26,12 +27,15 @@ const basePR: z.infer<typeof githubPullRequestSchema> = {
   updated_at: "2024-01-01T00:00:00Z",
   closed_at: null,
   merged_at: null,
+  merge_commit_sha: null,
+  draft: false,
   html_url: "https://github.com/owner/repo/pull/1",
   head: { ref: "feature", sha: "abc123" },
   base: { ref: "main", sha: "def456" },
 };
 
 const baseIssue: z.infer<typeof githubIssueSchema> = {
+  id: 100,
   number: 10,
   title: "Test Issue",
   state: "open",
@@ -68,7 +72,14 @@ describe("adaptGitHubPRForTransformer", () => {
     const result = adaptGitHubPRForTransformer(pr, repo);
     expect(result).toMatchObject({
       action: "opened",
-      pull_request: pr,
+      pull_request: {
+        id: pr.id,
+        number: pr.number,
+        title: pr.title,
+        html_url: pr.html_url,
+        head: { ref: pr.head.ref, sha: pr.head.sha },
+        base: { ref: pr.base.ref, sha: pr.base.sha },
+      },
       repository: repo,
       sender: pr.user,
     });
@@ -128,7 +139,13 @@ describe("adaptGitHubIssueForTransformer", () => {
     const result = adaptGitHubIssueForTransformer(issue, repo);
     expect(result).toMatchObject({
       action: "opened",
-      issue,
+      issue: {
+        id: issue.id,
+        number: issue.number,
+        title: issue.title,
+        html_url: issue.html_url,
+        state: issue.state,
+      },
       repository: repo,
       sender: issue.user,
     });

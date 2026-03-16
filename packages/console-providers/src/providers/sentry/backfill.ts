@@ -56,7 +56,7 @@ export function adaptSentryIssueForTransformer(
     data: {
       issue: {
         id: issue.id,
-        shortId: issue.shortId ?? issue.id,
+        shortId: issue.shortId,
         title: issue.title,
         culprit: issue.culprit ?? null,
         status: issue.status,
@@ -64,8 +64,8 @@ export function adaptSentryIssueForTransformer(
         platform: issue.platform ?? "other",
         firstSeen: issue.firstSeen,
         lastSeen: issue.lastSeen,
-        count: issue.count ?? "0",
-        userCount: issue.userCount ?? 0,
+        count: issue.count,
+        userCount: issue.userCount,
         permalink: issue.permalink ?? null,
         metadata: {
           type: metadata?.type,

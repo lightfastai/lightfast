@@ -24,7 +24,7 @@ export function parseSentryRateLimit(headers: Headers): RateLimit | null {
 export const sentryIssueSchema = z
   .object({
     id: z.string(),
-    shortId: z.string().optional(),
+    shortId: z.string(),
     title: z.string(),
     culprit: z.string().nullable().optional(),
     permalink: z.string().nullable().optional(),
@@ -44,12 +44,12 @@ export const sentryIssueSchema = z
     type: z.enum(["error", "default"]).catch("error").optional(),
     firstSeen: z.string(),
     lastSeen: z.string(),
-    count: z.string().optional(),
-    userCount: z.number().optional(),
+    count: z.string(),
+    userCount: z.number(),
     assignedTo: z
       .object({
         type: z.string(),
-        id: z.string(),
+        id: z.union([z.string(), z.number()]),
         name: z.string(),
       })
       .nullable()
@@ -92,6 +92,19 @@ export const sentryErrorEventSchema = z
           z.object({
             type: z.string(),
             value: z.string().optional(),
+            stacktrace: z
+              .object({
+                frames: z.array(
+                  z
+                    .object({
+                      filename: z.string().nullable().optional(),
+                      function: z.string().nullable().optional(),
+                      lineno: z.number().nullable().optional(),
+                    })
+                    .loose()
+                ),
+              })
+              .optional(),
           })
         ),
       })

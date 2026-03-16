@@ -16,6 +16,7 @@ export const githubUserSchema = z
 
 export const githubPullRequestSchema = z
   .object({
+    id: z.number(),
     number: z.number(),
     title: z.string(),
     state: z.string(),
@@ -23,20 +24,27 @@ export const githubPullRequestSchema = z
     user: githubUserSchema.nullable(),
     created_at: z.string(),
     updated_at: z.string(),
-    closed_at: z.string().nullable(),
     merged_at: z.string().nullable(),
     merged: z.boolean().nullable().optional(),
+    merge_commit_sha: z.string().nullable(),
+    draft: z.boolean(),
     html_url: z.string(),
     head: z.object({ ref: z.string(), sha: z.string() }).loose(),
     base: z.object({ ref: z.string(), sha: z.string() }).loose(),
+    // List API omits these — present only on individual PR fetch
+    additions: z.number().optional(),
+    deletions: z.number().optional(),
+    changed_files: z.number().optional(),
   })
   .loose();
 
 export const githubIssueSchema = z
   .object({
+    id: z.number(),
     number: z.number(),
     title: z.string(),
     state: z.string(),
+    state_reason: z.string().nullable().optional(),
     body: z.string().nullable(),
     user: githubUserSchema.nullable(),
     created_at: z.string(),

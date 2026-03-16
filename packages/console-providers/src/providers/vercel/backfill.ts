@@ -52,18 +52,8 @@ export function adaptVercelDeploymentForTransformer(
         id: deployment.uid,
         name: deployment.name,
         url: deployment.url,
-        readyState: deployment.readyState as
-          | "READY"
-          | "ERROR"
-          | "BUILDING"
-          | "QUEUED"
-          | "CANCELED"
-          | undefined,
-        meta: deployment.meta as PreTransformVercelWebhookPayload["payload"]["deployment"] extends {
-          meta?: infer M;
-        }
-          ? M
-          : never,
+        readyState: deployment.readyState,
+        meta: deployment.meta,
       },
       project: {
         id: deployment.projectId ?? "",

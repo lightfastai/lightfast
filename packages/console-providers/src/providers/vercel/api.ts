@@ -9,10 +9,26 @@ export const vercelDeploymentSchema = z
     name: z.string(),
     url: z.string().nullish(),
     created: z.number(),
-    readyState: z.string().optional(),
-    state: z.string().optional(),
-    meta: z.record(z.string(), z.unknown()).optional(),
-    creator: z.object({ uid: z.string() }).loose().optional(),
+    readyState: z
+      .enum([
+        "BUILDING",
+        "ERROR",
+        "INITIALIZING",
+        "QUEUED",
+        "READY",
+        "CANCELED",
+      ])
+      .optional(),
+    meta: z
+      .object({
+        githubCommitRef: z.string().optional(),
+        githubCommitSha: z.string().optional(),
+        githubCommitMessage: z.string().optional(),
+        githubOrg: z.string().optional(),
+        githubRepo: z.string().optional(),
+      })
+      .loose()
+      .optional(),
     projectId: z.string().optional(),
   })
   .loose();
