@@ -190,50 +190,28 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       return;
     }
 
-    log.info("[webhook-delivery] about to publish to console", {
-      provider: data.provider,
-      deliveryId: data.deliveryId,
-      correlationId: data.correlationId,
-      route,
-    });
-
     // Step 5: Publish to Console ingress via QStash.
     // QStash guarantees at-least-once delivery with 5 retries.
     await context.run("publish-to-console", async () => {
-      try {
-        const result = await qstash.publishJSON({
-          url: `${consoleUrl}/api/gateway/ingress`,
-          headers: data.correlationId
-            ? { "X-Correlation-Id": data.correlationId }
-            : undefined,
-          body: {
-            deliveryId: data.deliveryId,
-            connectionId: connectionInfo!.connectionId,
-            orgId: connectionInfo!.orgId,
-            provider: data.provider,
-            eventType: data.eventType,
-            payload: data.payload,
-            receivedAt: data.receivedAt,
-            correlationId: data.correlationId,
-          },
-          retries: 5,
-          deduplicationId: `${data.provider}_${data.deliveryId}`,
-          callback: `${relayBaseUrl}/admin/delivery-status?provider=${data.provider}`,
-        });
-        log.info("[webhook-delivery] qstash publish accepted", {
-          provider: data.provider,
+      await qstash.publishJSON({
+        url: `${consoleUrl}/api/gateway/ingress`,
+        headers: data.correlationId
+          ? { "X-Correlation-Id": data.correlationId }
+          : undefined,
+        body: {
           deliveryId: data.deliveryId,
-          messageId: result.messageId,
-          deduplicated: result.deduplicated,
-        });
-      } catch (err) {
-        log.error("[webhook-delivery] qstash publish failed", {
+          connectionId: connectionInfo!.connectionId,
+          orgId: connectionInfo!.orgId,
           provider: data.provider,
-          deliveryId: data.deliveryId,
-          error: err instanceof Error ? err.message : String(err),
-        });
-        throw err;
-      }
+          eventType: data.eventType,
+          payload: data.payload,
+          receivedAt: data.receivedAt,
+          correlationId: data.correlationId,
+        },
+        retries: 5,
+        deduplicationId: `${data.provider}_${data.deliveryId}`,
+        callback: `${relayBaseUrl}/admin/delivery-status?provider=${data.provider}`,
+      });
     });
 
     log.info("[webhook-delivery] published to console ingress", {
