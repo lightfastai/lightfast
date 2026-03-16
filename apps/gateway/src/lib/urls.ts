@@ -1,6 +1,6 @@
 import { backfillUrl as _backfillUrl } from "@repo/gateway-service-clients";
 import { getQStashClient } from "@vendor/qstash";
-import { withRelatedProject } from "@vendor/related-projects";
+import { withRelatedProject } from "@vercel/related-projects";
 import { env } from "../env.js";
 
 export { backfillUrl } from "@repo/gateway-service-clients";

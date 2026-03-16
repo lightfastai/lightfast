@@ -21,9 +21,9 @@
     "@vendor/inngest": "workspace:*",
     "@vendor/knock": "workspace:*",
     "@vendor/qstash": "workspace:*",
-    "@vendor/related-projects": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
+    "@vercel/related-projects": "catalog:",
     "hono": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

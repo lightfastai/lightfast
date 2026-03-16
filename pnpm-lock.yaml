@@ -904,15 +904,15 @@ importers:
       '@vendor/qstash':
         specifier: workspace:*
         version: link:../../vendor/qstash
-      '@vendor/related-projects':
-        specifier: workspace:*
-        version: link:../../vendor/related-projects
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
       '@vendor/upstash-workflow':
         specifier: workspace:*
         version: link:../../vendor/upstash-workflow
+      '@vercel/related-projects':
+        specifier: 'catalog:'
+        version: 1.0.1
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
@@ -977,15 +977,15 @@ importers:
       '@vendor/qstash':
         specifier: workspace:*
         version: link:../../vendor/qstash
-      '@vendor/related-projects':
-        specifier: workspace:*
-        version: link:../../vendor/related-projects
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
       '@vendor/upstash-workflow':
         specifier: workspace:*
         version: link:../../vendor/upstash-workflow
+      '@vercel/related-projects':
+        specifier: 'catalog:'
+        version: 1.0.1
       hono:
         specifier: 'catalog:'
         version: 4.12.5
@@ -2019,9 +2019,9 @@ importers:
       '@repo/console-validation':
         specifier: workspace:*
         version: link:../console-validation
-      '@vendor/related-projects':
-        specifier: workspace:*
-        version: link:../../vendor/related-projects
+      '@vercel/related-projects':
+        specifier: 'catalog:'
+        version: 1.0.1
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -2077,15 +2077,15 @@ importers:
       '@vendor/qstash':
         specifier: workspace:*
         version: link:../../vendor/qstash
-      '@vendor/related-projects':
-        specifier: workspace:*
-        version: link:../../vendor/related-projects
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
       '@vendor/upstash-workflow':
         specifier: workspace:*
         version: link:../../vendor/upstash-workflow
+      '@vercel/related-projects':
+        specifier: 'catalog:'
+        version: 1.0.1
       hono:
         specifier: 'catalog:'
         version: 4.12.5
@@ -2756,25 +2756,6 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.3.6
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 20.19.22
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
-  vendor/related-projects:
-    dependencies:
-      '@vercel/related-projects':
-        specifier: 'catalog:'
-        version: 1.0.1
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
