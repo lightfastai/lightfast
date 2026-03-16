@@ -200,8 +200,8 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
           : undefined,
         body: {
           deliveryId: data.deliveryId,
-          connectionId: connectionInfo.connectionId,
-          orgId: connectionInfo.orgId,
+          connectionId: connectionInfo!.connectionId,
+          orgId: connectionInfo!.orgId,
           provider: data.provider,
           eventType: data.eventType,
           payload: data.payload,
