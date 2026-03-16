@@ -1,5 +1,6 @@
 import { db } from "@db/console/client";
 import {
+  gatewayBackfillRuns,
   gatewayInstallations,
   gatewayResources,
   gatewayWebhookDeliveries,
@@ -9,8 +10,10 @@ import { and, eq, gte, lte, notInArray, or, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { Hono } from "hono";
 import { z } from "zod";
+import { env } from "../env.js";
 import { RESOURCE_CACHE_TTL, resourceKey } from "../lib/cache.js";
 import { replayDeliveries } from "../lib/replay.js";
+import { log } from "../logger.js";
 import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
 
 const admin = new Hono();
@@ -280,14 +283,14 @@ admin.post("/delivery-status", qstashAuth, async (c) => {
   const { messageId, state, deliveryId } = body as Record<string, unknown>;
 
   if (typeof messageId !== "string" || typeof state !== "string") {
-    console.warn("[delivery-status] invalid payload", JSON.stringify(body));
+    log.warn("[delivery-status] invalid payload", { body });
     return c.json(
       { error: "missing_required_fields", required: ["messageId", "state"] },
       400
     );
   }
 
-  console.log("[delivery-status]", { messageId, state, deliveryId });
+  log.info("[delivery-status]", { messageId, state, deliveryId });
 
   // Update webhook delivery status based on QStash callback
   if (typeof deliveryId === "string") {
@@ -308,5 +311,35 @@ admin.post("/delivery-status", qstashAuth, async (c) => {
 
   return c.json({ status: "received" });
 });
+
+/**
+ * POST /admin/dev/flush-dedup
+ *
+ * Dev-only: delete all webhook dedup Redis keys (gw:webhook:seen:*).
+ * Allows re-testing backfill flows without waiting 24h for TTL expiry.
+ */
+if (env.NODE_ENV !== "production") {
+  admin.post("/dev/flush-dedup", apiKeyAuth, async (c) => {
+    const keys = await redis.keys("gw:webhook:seen:*");
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+    return c.json({ flushed: keys.length });
+  });
+
+  /**
+   * DELETE /admin/dev/backfill-runs/:installationId
+   *
+   * Dev-only: clear all backfill run history for an installation.
+   * Allows re-testing by bypassing the gap-aware filter in the orchestrator.
+   */
+  admin.delete("/dev/backfill-runs/:installationId", apiKeyAuth, async (c) => {
+    const installationId = c.req.param("installationId");
+    await db
+      .delete(gatewayBackfillRuns)
+      .where(eq(gatewayBackfillRuns.installationId, installationId));
+    return c.json({ cleared: true, installationId });
+  });
+}
 
 export { admin };
