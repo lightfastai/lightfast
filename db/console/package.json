@@ -46,8 +46,10 @@
     "@repo/console-providers": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@repo/lib": "workspace:*",
+    "@t3-oss/env-core": "catalog:",
     "@vendor/db": "workspace:*",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@planetscale/database": "^1.19.0",

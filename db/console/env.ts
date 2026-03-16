@@ -1,10 +1,13 @@
-/**
- * Database environment variables for console
- *
- * Re-exports from @vendor/db/env to ensure single source of truth for validation.
- * The vendor package provides PlanetScale credential format validation:
- * - DATABASE_HOST must NOT start with credential prefixes (pscale_pw_, pscale_api_)
- * - DATABASE_USERNAME must start with pscale_api_
- * - DATABASE_PASSWORD must start with pscale_pw_
- */
-export { env } from "@vendor/db/env";
+import { createEnv } from "@t3-oss/env-core";
+import { env as vendorDbEnv } from "@vendor/db/env";
+
+export const env = createEnv({
+  extends: [vendorDbEnv],
+  clientPrefix: "" as const,
+  client: {},
+  server: {},
+  runtimeEnv: {},
+  skipValidation:
+    !!process.env.SKIP_ENV_VALIDATION ||
+    process.env.npm_lifecycle_event === "lint",
+});
